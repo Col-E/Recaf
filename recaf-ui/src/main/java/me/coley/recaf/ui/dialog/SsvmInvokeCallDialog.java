@@ -2,8 +2,11 @@ package me.coley.recaf.ui.dialog;
 
 import dev.xdark.ssvm.value.TopValue;
 import dev.xdark.ssvm.value.Value;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
@@ -16,8 +19,8 @@ import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -47,14 +50,21 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 		runButton.setOnMousePressed(e -> {
 			// Only create values when confirm button pressed
 			for (InputWrapper input : inputs) {
-				Value value = input.supplier.get();
+				Node editor = input.editor;
+				String text;
+				if (editor instanceof TextField) {
+					text = ((TextField) editor).getText();
+				} else {
+					text = ((Label) editor).getText();
+				}
+				Value value = input.supplier.apply(text);
 				values[input.slot] = value;
 				if (value.isWide()) {
 					values[input.slot + 1] = TopValue.INSTANCE;
 				}
 			}
 			// Run and get result
-			Future<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(owner, info, getValues());
+			CompletableFuture<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(owner, info, getValues());
 			ThreadUtil.run(() -> {
 				SsvmIntegration.VmRunResult result = null;
 				try {
@@ -89,7 +99,7 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 		grid.add(runButton, 0, grid.getRowCount(), 3, 1);
 		grid.add(output, 0, grid.getRowCount(), 3, 1);
 		// Run state tied to validity
-		totality.addListener((observable, oldValue, newValue) -> runButton.setDisable(!newValue));
+		runButton.disableProperty().bind(totality.not());
 	}
 
 	@Override

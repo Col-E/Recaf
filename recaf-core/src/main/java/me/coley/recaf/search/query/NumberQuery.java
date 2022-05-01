@@ -16,6 +16,7 @@ import org.objectweb.asm.*;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -194,7 +195,7 @@ public class NumberQuery implements Query {
 					whenMatched(bsmArg, builder -> addMethodInsn(builder, methodInfo.getName(),
 							methodInfo.getDescriptor(), new IndyInstruction("INVOKEDYNAMIC", name, desc,
 									new HandleInfo(bootstrapMethodHandle),
-									Lists.newArrayList(bootstrapMethodArguments).stream()
+									Arrays.stream(bootstrapMethodArguments)
 											.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
 											.collect(Collectors.toList()))));
 				}

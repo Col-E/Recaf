@@ -24,11 +24,9 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.NumberUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
-import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 import java.awt.*;
@@ -36,8 +34,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Panel for search operations.
@@ -232,48 +229,39 @@ public class SearchPane extends BorderPane {
 		}
 		Resource resource = workspace.getResources().getPrimary();
 		Set<Result> results = Collections.synchronizedSet(new TreeSet<>());
-		// Multi-thread search, using a countdown latch to track progress across threads
-		ExecutorService service = ThreadPoolFactory.newFixedThreadPool("Recaf search ui");
-		CountDownLatch latch = new CountDownLatch(resource.getClasses().size() + resource.getFiles().size());
+		// Multi-thread search, using an atomic integer to track progress across threads
+		AtomicInteger latch = new AtomicInteger(resource.getClasses().size() + resource.getFiles().size());
 		for (ClassInfo info : new HashSet<>(resource.getClasses().values())) {
-			service.execute(() -> {
+			ThreadUtil.run(() -> {
 				QueryVisitor visitor = search.createQueryVisitor(resource);
 				if (visitor != null) {
-					new ClassReader(info.getValue()).accept(visitor, 0);
+					info.getClassReader().accept(visitor, 0);
 					results.addAll(visitor.getAllResults());
-					latch.countDown();
+				}
+				if (latch.decrementAndGet() == 0) {
+					FxThreadUtil.run(() -> onSearchFinish(search, results));
 				}
 			});
 		}
 		for (FileInfo info : new HashSet<>(resource.getFiles().values())) {
-			service.execute(() -> {
+			ThreadUtil.run(() -> {
 				QueryVisitor visitor = search.createQueryVisitor(resource);
 				if (visitor != null) {
 					visitor.visitFile(info);
 					results.addAll(visitor.getAllResults());
-					latch.countDown();
+				}
+				if (latch.decrementAndGet() == 0) {
+					FxThreadUtil.run(() -> onSearchFinish(search, results));
 				}
 			});
 		}
-		service.shutdown();
-		ThreadUtil.run(() -> {
-			try {
-				long count;
-				do {
-					count = latch.getCount();
-					// TODO: Update "x classes/files remaining"
-					Thread.sleep(10);
-				} while (count > 0);
-				logger.info("Search yielded {} results", results.size());
-				FxThreadUtil.run(() -> {
-					DockTab tab = RecafDockingManager.getInstance().createTabIn(targetDockingRegion,
-							() -> new DockTab(Lang.getBinding("search.results"), new ResultsPane(search, results)));
-					targetDockingRegion.getSelectionModel().select(tab);
-				});
-			} catch (InterruptedException ex) {
-				logger.error("Interrupted search wait thread!", ex);
-			}
-		});
+	}
+
+	private void onSearchFinish(Search search, Set<Result> results) {
+		logger.info("Search yielded {} results", results.size());
+		DockTab tab = RecafDockingManager.getInstance().createTabIn(targetDockingRegion,
+				() -> new DockTab(Lang.getBinding("search.results"), new ResultsPane(search, results)));
+		targetDockingRegion.getSelectionModel().select(tab);
 	}
 
 	private void searchText(String text, TextMatchMode mode) {

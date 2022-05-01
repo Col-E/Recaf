@@ -30,7 +30,7 @@ public class WorkspaceBootClassLoader implements BootClassLoader {
 		if (info == null)
 			return null;
 		// Load into result
-		ClassReader reader = new ClassReader(info.getValue());
+		ClassReader reader = info.getClassReader();
 		ClassNode node = new ClassNode();
 		reader.accept(node, ClassReader.SKIP_FRAMES);
 		return new ClassParseResult(reader, node);

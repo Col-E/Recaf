@@ -43,7 +43,7 @@ public class MappingUtils {
 				String originalName = classInfo.getName();
 				// Apply renamer
 				ClassWriter cw = new ClassWriter(read);
-				ClassReader cr = new ClassReader(classInfo.getValue());
+				ClassReader cr = classInfo.getClassReader();
 				RemappingVisitor remapVisitor = new RemappingVisitor(cw, mappings);
 				cr.accept(remapVisitor, write);
 				// Update class if it has any modified references

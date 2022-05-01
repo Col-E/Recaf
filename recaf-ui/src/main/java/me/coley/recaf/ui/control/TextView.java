@@ -69,7 +69,9 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 	private void addUnknownExtensionWarning() {
 		GridPane warning = new GridPane();
 		warning.setPadding(new Insets(0, 0, 0, 4));
-		warning.getChildren().add(new Label(Lang.get("dialog.unknownextension")));
+		Label label = new Label();
+		label.textProperty().bind(Lang.getBinding("dialog.unknownextension"));
+		warning.getChildren().add(label);
 
 		// Align the configure/dismiss buttons to the right of the bar
 		ColumnConstraints constraint = new ColumnConstraints();
@@ -77,8 +79,10 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 
 		warning.getColumnConstraints().add(constraint);
 
-		Hyperlink configure = new Hyperlink(Lang.get("dialog.configure"));
-		Hyperlink dismiss = new Hyperlink(Lang.get("dialog.dismiss"));
+		Hyperlink configure = new Hyperlink();
+		configure.textProperty().bind(Lang.getBinding("dialog.configure"));
+		Hyperlink dismiss = new Hyperlink();
+		dismiss.textProperty().bind(Lang.getBinding("dialog.dismiss"));
 
 		warning.getChildren().addAll(configure, dismiss);
 

@@ -112,7 +112,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 				mappings.addClass(name, newName);
 				// Create the new class bytecode filtered through the renamer
 				ClassWriter cw = new ClassWriter(WRITE_FLAGS);
-				ClassReader cr = new ClassReader(info.getValue());
+				ClassReader cr = info.getClassReader();
 				cr.accept(new RemappingVisitor(cw, mappings), READ_FLAGS);
 				resource.getClasses().put(ClassInfo.read(cw.toByteArray()));
 			}

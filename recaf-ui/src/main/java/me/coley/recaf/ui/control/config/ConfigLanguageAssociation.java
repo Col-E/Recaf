@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  */
 public class ConfigLanguageAssociation extends VBox implements LanguageAssociationListener {
 	private final Map<String, ComboBox<Language>> combos = new HashMap<>();
-	private final Label noAssociationsLabel = new Label(Lang.get("menu.association.none"));
+	private final Label noAssociationsLabel = new Label();
 
 	/**
 	 * @param instance
@@ -38,6 +38,7 @@ public class ConfigLanguageAssociation extends VBox implements LanguageAssociati
 	 * 		The field reference to the map.
 	 */
 	public ConfigLanguageAssociation(ConfigContainer instance, Field field) {
+		noAssociationsLabel.textProperty().bind(Lang.getBinding("menu.association.none"));
 		Map<String, String> associations = ReflectUtil.quietGet(instance, field);
 		setSpacing(10);
 
@@ -94,7 +95,8 @@ public class ConfigLanguageAssociation extends VBox implements LanguageAssociati
 
 		combos.putIfAbsent(extension, languageCombo);
 
-		Button remove = new Button(Lang.get("menu.edit.remove"));
+		Button remove = new Button();
+		remove.textProperty().bind(Lang.getBinding("menu.edit.remove"));
 		remove.setOnMouseClicked((e) -> removeAssociation(extension));
 
 		row.getChildren().addAll(label, languageCombo, remove);

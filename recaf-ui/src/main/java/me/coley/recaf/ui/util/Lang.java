@@ -181,6 +181,49 @@ public class Lang {
 	}
 
 	/**
+	 * @param translation
+	 * 		Translation value.
+	 * @param args
+	 * 		Format arguments.
+	 *
+	 * @return JavaFX string binding for specific translation key with arguments.
+	 */
+	public static StringBinding concat(ObservableValue<String> translation, String... args) {
+		return new StringBinding() {
+			{
+				bind(translation);
+			}
+
+			@Override
+			protected String computeValue() {
+				return translation.getValue() + String.join(" ", args);
+			}
+		};
+	}
+
+	/**
+	 * @param translationKey
+	 * 		Key name.
+	 * @param args
+	 * 		Format arguments.
+	 *
+	 * @return JavaFX string binding for specific translation key with arguments.
+	 */
+	public static StringBinding concat(String translationKey, String... args) {
+		StringBinding root = getBinding(translationKey);
+		return new StringBinding() {
+			{
+				bind(root);
+			}
+
+			@Override
+			protected String computeValue() {
+				return root.getValue() + String.join(" ", args);
+			}
+		};
+	}
+
+	/**
 	 * @return Translations property.
 	 */
 	public static StringProperty translationsProperty() {

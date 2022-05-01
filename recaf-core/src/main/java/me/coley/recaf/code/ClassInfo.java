@@ -25,6 +25,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private final int access;
 	private final List<FieldInfo> fields;
 	private final List<MethodInfo> methods;
+	private ClassReader classReader;
 
 	private ClassInfo(String name, String superName, List<String> interfaces, int version, int access,
 					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value) {
@@ -96,6 +97,17 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	@Override
 	public int hashCode() {
 		return Objects.hash(name, superName, interfaces, access, fields, methods);
+	}
+
+	/**
+	 * @return ASM class reader.
+	 */
+	public ClassReader getClassReader() {
+		ClassReader classReader = this.classReader;
+		if (classReader == null) {
+			return this.classReader = new ClassReader(value);
+		}
+		return classReader;
 	}
 
 	/**

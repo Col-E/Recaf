@@ -138,7 +138,6 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				// Yes this NEEDS to be done on the UI thread.
 				// Not doing so leads to SILENT failures that cause any following attempts to crash.
 				javaArea.setText("// Decompiling " + newValue.getName(), false);
-				javaArea.discardAst();
 			});
 			long timeout = Long.MAX_VALUE;
 			if (Configs.decompiler().enableDecompilerTimeout) {

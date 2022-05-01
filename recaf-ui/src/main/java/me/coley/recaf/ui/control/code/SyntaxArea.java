@@ -11,7 +11,7 @@ import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.util.SearchHelper;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
+import me.coley.recaf.util.threading.ThreadUtil;
 import org.fxmisc.richtext.CaretSelectionBind;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -40,7 +40,6 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		InteractiveText, Searchable, Cleanable, Scrollable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
-	private final ExecutorService service = ThreadPoolFactory.newFixedThreadPool("Recaf syntax ui", 3, true);
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
 	private final IndicatorFactory indicatorFactory = new IndicatorFactory(this);
 	private final SearchHelper searchHelper = new SearchHelper(this::newSearchResult);
@@ -101,7 +100,6 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		if (bracketUpdate != null) {
 			bracketUpdate.cancel(true);
 		}
-		service.shutdownNow();
 	}
 
 	@Override
@@ -328,7 +326,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		boolean hasRemovedText = !Strings.isNullOrEmpty(removedText);
 		boolean hasInsertedText = !Strings.isNullOrEmpty(insertedText);
 		if (hasRemovedText || hasInsertedText) {
-			bracketUpdate = service.submit(() -> {
+			bracketUpdate = ThreadUtil.run(() -> {
 				if (hasRemovedText)
 					bracketTracking.textRemoved(change);
 				if (Thread.interrupted())
@@ -337,7 +335,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 					bracketTracking.textInserted(change);
 			});
 		}
-		syntaxUpdate = service.submit(() -> syntax(change));
+		syntaxUpdate = ThreadUtil.run(() -> syntax(change));
 		lastContent = getContent().snapshot();
 	}
 

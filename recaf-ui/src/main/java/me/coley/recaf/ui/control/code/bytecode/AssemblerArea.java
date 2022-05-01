@@ -158,7 +158,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		}
 		// Get the target member node
 		ClassNode node = new ClassNode();
-		ClassReader cr = new ClassReader(classInfo.getValue());
+		ClassReader cr = classInfo.getClassReader();
 		cr.accept(new SingleMemberVisitor(node, targetMember), ClassReader.SKIP_FRAMES);
 		// Since we visit only the target member info, there should only be one member in the list.
 		if (targetMember.isMethod() && node.methods.isEmpty()) {
@@ -320,7 +320,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		int flags = ClassWriter.COMPUTE_FRAMES;
 		ClassWriter cw = new WorkspaceClassWriter(RecafUI.getController(), flags);
 		ClassVisitor replacer = replacerProvider.apply(cw);
-		ClassReader cr = new ClassReader(classInfo.getValue());
+		ClassReader cr = classInfo.getClassReader();
 		// Read and filter through replacer. Skip frames since we're just going to compute them anyways.
 		cr.accept(replacer, ClassReader.SKIP_FRAMES);
 		// Done, update the workspace

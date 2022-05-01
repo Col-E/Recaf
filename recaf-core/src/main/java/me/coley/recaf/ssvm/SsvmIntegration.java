@@ -54,15 +54,13 @@ public class SsvmIntegration {
 		this.workspace = workspace;
 		try {
 			vm = createVM(false, null);
-			vmThreadPool.execute(() -> {
-				try {
-					vm.bootstrap();
-					initialized = true;
-				} catch (Exception ex) {
-					initializeError = ex;
-				}
-				onPostInit();
-			});
+			try {
+				vm.bootstrap();
+				initialized = true;
+			} catch (Exception ex) {
+				initializeError = ex;
+			}
+			onPostInit();
 		} catch (Exception ex) {
 			vm = null;
 			initializeError = ex;
@@ -102,15 +100,13 @@ public class SsvmIntegration {
 			}
 		};
 		if (initialize)
-			vmThreadPool.execute(() -> {
-				try {
-					vm.bootstrap();
-					if (postInit != null)
-						postInit.accept(vm);
-				} catch (Exception ex) {
-					logger.error("Failed to initialize VM", ex);
-				}
-			});
+			try {
+				vm.bootstrap();
+				if (postInit != null)
+					postInit.accept(vm);
+			} catch (Exception ex) {
+				logger.error("Failed to initialize VM", ex);
+			}
 		return vm;
 	}
 
@@ -141,7 +137,7 @@ public class SsvmIntegration {
 	 *
 	 * @return Result of invoke.
 	 */
-	public Future<VmRunResult> runMethod(CommonClassInfo owner, MethodInfo method, Value[] parameters) {
+	public CompletableFuture<VmRunResult> runMethod(CommonClassInfo owner, MethodInfo method, Value[] parameters) {
 		return runMethod(getVm(), owner, method, parameters);
 	}
 

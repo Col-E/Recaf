@@ -33,13 +33,10 @@ public class ResultsPane extends BorderPane {
 		Workspace workspace = RecafUI.getController().getWorkspace();
 		ResultsRootItem root = new ResultsRootItem(workspace, search, results);
 		root.setup();
-		// Updating root must be on UI thread
-		FxThreadUtil.run(() -> {
-			tree.setRoot(root);
-			tree.getRoot().setExpanded(true);
-			tree.getSelectionModel().select(0);
-			tree.requestFocus();
-		});
+		tree.setRoot(root);
+		tree.getRoot().setExpanded(true);
+		tree.getSelectionModel().select(0);
+		tree.requestFocus();
 		// TODO: Since 'ResultsRootItem' implements the listener types, it should be registered so that if the
 		//       workspace updates the results can update live.
 		//       Just make sure the listener gets removed when this panel is removed / closed.

@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.window;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
@@ -50,6 +52,7 @@ import static me.coley.recaf.ui.util.Menus.*;
 public class MainMenu extends BorderPane implements ControllerListener {
 	private static final Logger logger = Logging.get(MainMenu.class);
 	private static MainMenu menu;
+	private final BooleanProperty noWorkspace = new SimpleBooleanProperty(true);
 	private final MenuLabel status = new MenuLabel("Status: IDLE");
 	private final Menu menuRecent = menu("menu.file.recent", Icons.RECENT);
 	private final Menu menuSearch = menu("menu.search", Icons.ACTION_SEARCH);
@@ -68,6 +71,13 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		itemAddToWorkspace = action("menu.file.addtoworkspace", Icons.PLUS, this::addToWorkspace);
 		itemExportPrimary = action("menu.file.exportapp", Icons.EXPORT, this::exportPrimary);
 		itemClose = action("menu.file.close", Icons.ACTION_DELETE, this::closeWorkspace);
+
+		itemAddToWorkspace.disableProperty().bind(noWorkspace);
+		itemExportPrimary.disableProperty().bind(noWorkspace);
+		itemClose.disableProperty().bind(noWorkspace);
+		menuSearch.disableProperty().bind(noWorkspace);
+		menuMappings.disableProperty().bind(noWorkspace);
+
 		MenuItem itemQuit = action("menu.file.quit", Icons.CLOSE, this::quit);
 		menuFile.getItems().add(itemAddToWorkspace);
 		menuFile.getItems().add(action("menu.file.openworkspace", Icons.OPEN_FILE, this::openWorkspace));
@@ -202,7 +212,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private void newScript() {
 		ScriptEditorPane scriptEditor = new ScriptEditorPane();
 		RecafDockingManager docking = RecafDockingManager.getInstance();
-		DockTab scriptEditorTab = docking.createTab(() -> new DockTab(Lang.get("menu.scripting.editor"), scriptEditor));
+		DockTab scriptEditorTab = docking.createTab(() -> new DockTab(Lang.getBinding("menu.scripting.editor"), scriptEditor));
 		scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
 		scriptEditor.setTab(scriptEditorTab);
 		scriptEditorTab.select();
@@ -213,7 +223,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		File file = scriptEditor.openFile();
 		if (file != null) {
 			RecafDockingManager docking = RecafDockingManager.getInstance();
-			DockTab scriptEditorTab = docking.createTab(() -> new DockTab(Lang.get("menu.scripting.editor"), scriptEditor));
+			DockTab scriptEditorTab = docking.createTab(() -> new DockTab(Lang.getBinding("menu.scripting.editor"), scriptEditor));
 			scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
 			scriptEditor.setTab(scriptEditorTab);
 			scriptEditor.setTitle();
@@ -256,11 +266,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	@Override
 	public void onNewWorkspace(Workspace oldWorkspace, Workspace newWorkspace) {
 		boolean isEmpty = newWorkspace == null;
-		itemAddToWorkspace.setDisable(isEmpty);
-		itemExportPrimary.setDisable(isEmpty);
-		itemClose.setDisable(isEmpty);
-		menuSearch.setDisable(isEmpty);
-		menuMappings.setDisable(isEmpty);
+		noWorkspace.set(isEmpty);
 		menuRecent.setDisable(menuRecent.getItems().isEmpty());
 		if (!isEmpty) {
 			Configs.recentWorkspaces().addWorkspace(newWorkspace);

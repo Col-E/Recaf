@@ -51,14 +51,13 @@ subprojects {
         def jpVersion = '3.24.0'
         def junitVersion = '5.8.2'
         def lljzipVersion = '1.1.4'
-        def ssvmVersion = '1.5.0'
+        def ssvmVersion = '1.6.0'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
         asm = "org.ow2.asm:asm:$asmVersion"
         asm_analysis = "org.ow2.asm:asm-analysis:$asmVersion"
         asm_commons = "org.ow2.asm:asm-commons:$asmVersion"
         asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
         asm_util = "org.ow2.asm:asm-util:$asmVersion"
-        awaitility = "org.awaitility:awaitility:4.1.1"
         baksmali = "org.smali:baksmali:$dexVersion"
         cafedude = "com.github.Col-E:CAFED00D:$dudeVersion"
         common_io = 'commons-io:commons-io:2.11.0'

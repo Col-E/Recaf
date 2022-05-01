@@ -11,6 +11,7 @@ import dev.xdark.ssvm.value.ArrayValue;
 import dev.xdark.ssvm.value.InstanceValue;
 import dev.xdark.ssvm.value.NullValue;
 import dev.xdark.ssvm.value.Value;
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -33,8 +34,7 @@ import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * Basic SSVM method caller dialog.
@@ -128,6 +128,10 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			grid.addRow(i + 1, index, type, input.editor);
 			argSlot += arg.getSize();
 		}
+		totality.bind(Bindings.createBooleanBinding(
+				this::validInputs,
+				inputs.stream().map(x -> x.valid).toArray(BooleanProperty[]::new)
+		));
 		values = new Value[argSlot];
 		if (!isStatic) {
 			JavaClass type = helper.tryFindClass(symbols.java_lang_Object.getClassLoader(), owner.getName(), true);
@@ -141,7 +145,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 	 * @return {@code true} when all inputs are valid.
 	 */
 	public boolean validInputs() {
-		return inputs.stream().allMatch(i -> i.valid.getAsBoolean());
+		return inputs.stream().allMatch(i -> i.valid.get());
 	}
 
 	/**
@@ -151,44 +155,52 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		return values;
 	}
 
+	protected BooleanProperty newProperty(TextField field, ErrorableConsumer<String> consumer) {
+		BooleanProperty property = new SimpleBooleanProperty(true);
+		property.bind(Bindings.createBooleanBinding(
+				() -> {
+					try {
+						consumer.accept(field.getText());
+						return true;
+					} catch(Throwable t) {
+						return false;
+					}
+				},
+				field.textProperty()
+		));
+		return property;
+	}
+
 	/**
 	 * @return Editor for integers, shorts, chars, bytes, and booleans.
 	 */
 	protected InputWrapper intEditor() {
-		BooleanProperty valid = new SimpleBooleanProperty(true);
 		TextField field = new TextField("0");
-		field.textProperty().addListener((observable, oldValue, newValue) -> handle(valid, newValue, Integer::parseInt));
-		return new InputWrapper(valid::get, field, () -> ConstNumericValue.ofInt(Integer.parseInt(field.getText())));
+		return new InputWrapper(newProperty(field, Integer::parseInt), field, text -> ConstNumericValue.ofInt(Integer.parseInt(text)));
 	}
 
 	/**
 	 * @return Editor for floats.
 	 */
 	protected InputWrapper floatEditor() {
-		BooleanProperty valid = new SimpleBooleanProperty(true);
 		TextField field = new TextField("0");
-		field.textProperty().addListener((observable, oldValue, newValue) -> handle(valid, newValue, Float::parseFloat));
-		return new InputWrapper(valid::get, field, () -> ConstNumericValue.ofFloat(Float.parseFloat(field.getText())));
+		return new InputWrapper(newProperty(field, Float::parseFloat), field, text -> ConstNumericValue.ofFloat(Float.parseFloat(text)));
 	}
 
 	/**
 	 * @return Editor for longs.
 	 */
 	protected InputWrapper longEditor() {
-		BooleanProperty valid = new SimpleBooleanProperty(true);
 		TextField field = new TextField("0");
-		field.textProperty().addListener((observable, oldValue, newValue) -> handle(valid, newValue, Long::parseLong));
-		return new InputWrapper(valid::get, field, () -> ConstNumericValue.ofLong(Long.parseLong(field.getText())));
+		return new InputWrapper(newProperty(field, Long::parseLong), field, text -> ConstNumericValue.ofLong(Long.parseLong(text)));
 	}
 
 	/**
 	 * @return Editor for doubles.
 	 */
 	protected InputWrapper doubleEditor() {
-		BooleanProperty valid = new SimpleBooleanProperty(true);
 		TextField field = new TextField("0.0");
-		field.textProperty().addListener((observable, oldValue, newValue) -> handle(valid, newValue, Double::parseDouble));
-		return new InputWrapper(valid::get, field, () -> ConstNumericValue.ofDouble(Double.parseDouble(field.getText())));
+		return new InputWrapper(newProperty(field, Double::parseDouble), field, text -> ConstNumericValue.ofDouble(Double.parseDouble(text)));
 	}
 
 	/**
@@ -198,7 +210,6 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 	 * @return Editor for the array type.
 	 */
 	protected InputWrapper arrayEditor(Type type) {
-		BooleanProperty valid = new SimpleBooleanProperty(true);
 		Type element = type.getElementType();
 		switch (element.getSort()) {
 			case Type.BOOLEAN:
@@ -207,12 +218,11 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			case Type.SHORT:
 			case Type.INT: {
 				TextField field = new TextField("1, 2, 3");
-				field.textProperty().addListener((observable, oldValue, newValue) -> handle(valid, newValue, text -> {
-					for (String part : text.split("\\s+,\\s+"))
+				return new InputWrapper(newProperty(field, input -> {
+					for (String part : input.split("\\s+,\\s+"))
 						Integer.parseInt(part);
-				}));
-				return new InputWrapper(field, () -> {
-					if (field.getText().isBlank())
+				}), field, text -> {
+					if (text.isBlank())
 						switch (element.getSort()) {
 							case Type.BOOLEAN:
 								return helper.emptyArray(primitives.booleanPrimitive);
@@ -225,7 +235,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 							case Type.INT:
 								return helper.emptyArray(primitives.intPrimitive);
 						}
-					String[] args = field.getText().split("\\s*,\\s*");
+					String[] args = text.split("\\s*,\\s*");
 					int count = args.length;
 					ArrayValue array;
 					switch (element.getSort()) {
@@ -262,14 +272,13 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			}
 			case Type.FLOAT: {
 				TextField field = new TextField("1, 2, 3");
-				field.textProperty().addListener((observable, oldValue, newValue) -> handle(valid, newValue, text -> {
-					for (String part : text.split("\\s+,\\s+"))
+				return new InputWrapper(newProperty(field, input -> {
+					for (String part : input.split("\\s+,\\s+"))
 						Float.parseFloat(part);
-				}));
-				return new InputWrapper(field, () -> {
-					if (field.getText().isBlank())
+				}), field, text -> {
+					if (text.isBlank())
 						return helper.emptyArray(primitives.floatPrimitive);
-					String[] args = field.getText().split("\\s*,\\s*");
+					String[] args = text.split("\\s*,\\s*");
 					int count = args.length;
 					ArrayValue array = helper.newArray(primitives.floatPrimitive, count);
 					for (int i = 0; i < count; i++)
@@ -279,14 +288,13 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			}
 			case Type.LONG: {
 				TextField field = new TextField("1, 2, 3");
-				field.textProperty().addListener((observable, oldValue, newValue) -> handle(valid, newValue, text -> {
-					for (String part : text.split("\\s+,\\s+"))
+				return new InputWrapper(newProperty(field, input -> {
+					for (String part : input.split("\\s+,\\s+"))
 						Long.parseLong(part);
-				}));
-				return new InputWrapper(field, () -> {
-					if (field.getText().isBlank())
+				}), field, text -> {
+					if (text.isBlank())
 						return helper.emptyArray(primitives.longPrimitive);
-					String[] args = field.getText().split("\\s*,\\s*");
+					String[] args = text.split("\\s*,\\s*");
 					int count = args.length;
 					ArrayValue array = helper.newArray(primitives.longPrimitive, count);
 					for (int i = 0; i < count; i++)
@@ -296,14 +304,13 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			}
 			case Type.DOUBLE: {
 				TextField field = new TextField("1.0, 2.0, 3.0");
-				field.textProperty().addListener((observable, oldValue, newValue) -> handle(valid, newValue, text -> {
-					for (String part : text.split("\\s+,\\s+"))
+				return new InputWrapper(newProperty(field, input -> {
+					for (String part : input.split("\\s+,\\s+"))
 						Double.parseDouble(part);
-				}));
-				return new InputWrapper(field, () -> {
-					if (field.getText().isBlank())
+				}), field, text -> {
+					if (text.isBlank())
 						return helper.emptyArray(primitives.doublePrimitive);
-					String[] args = field.getText().split("\\s*,\\s*");
+					String[] args = text.split("\\s*,\\s*");
 					int count = args.length;
 					ArrayValue array = helper.newArray(primitives.doublePrimitive, count);
 					for (int i = 0; i < count; i++)
@@ -314,10 +321,10 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			case Type.OBJECT: {
 				if (Types.STRING_TYPE.equals(element)) {
 					TextField field = new TextField("\"one\", \"two\", \"three\"");
-					return new InputWrapper(field, () -> {
-						if (field.getText().isBlank())
+					return new InputWrapper(field, text -> {
+						if (text.isBlank())
 							return helper.emptyArray(symbols.java_lang_String);
-						String[] args = field.getText().split("^\"|\"\\s*,\\s*\"|\"$");
+						String[] args = text.split("^\"|\"\\s*,\\s*\"|\"$");
 						int count = args.length;
 						ArrayValue array = helper.newArray(symbols.java_lang_String, count);
 						for (int i = 0; i < count; i++)
@@ -328,7 +335,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			}
 			default:
 				Label field = new Label("null");
-				return new InputWrapper(field, () -> NullValue.INSTANCE);
+				return new InputWrapper(field, __ -> NullValue.INSTANCE);
 		}
 	}
 
@@ -341,7 +348,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 	protected InputWrapper objectEditor(Type type) {
 		if (Types.STRING_TYPE.equals(type)) {
 			TextField field = new TextField("string_text");
-			return new InputWrapper(field, () -> ConstStringValue.ofString(helper, field.getText()));
+			return new InputWrapper(field, text -> ConstStringValue.ofString(helper, text));
 		}
 		CheckBox checkCreateDefault = new CheckBox();
 		checkCreateDefault.selectedProperty().addListener((observable, oldValue, newValue) -> {
@@ -352,7 +359,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			}
 		});
 		checkCreateDefault.setSelected(true);
-		return new InputWrapper(checkCreateDefault, () -> {
+		return new InputWrapper(checkCreateDefault, __ -> {
 			if (checkCreateDefault.isSelected()) {
 				InstanceJavaClass cls = (InstanceJavaClass) vm.findBootstrapClass(type.getInternalName(), true);
 				if (cls != null)
@@ -379,24 +386,22 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		} catch (Throwable t) {
 			valid.set(false);
 		}
-		totality.set(validInputs());
 	}
 
 	protected static class InputWrapper {
 		protected final Node editor;
-		protected final Supplier<Value> supplier;
-		protected final BooleanSupplier valid;
+		protected final Function<String, Value> supplier;
+		protected final BooleanProperty valid;
 		protected int slot;
 
-
-		public InputWrapper(BooleanSupplier valid, Node editor, Supplier<Value> supplier) {
+		public InputWrapper(BooleanProperty valid, Node editor, Function<String, Value> supplier) {
 			this.valid = valid;
 			this.editor = editor;
 			this.supplier = supplier;
 		}
 
-		public InputWrapper(Node editor, Supplier<Value> supplier) {
-			this(() -> true, editor, supplier);
+		public InputWrapper(Node editor, Function<String, Value> supplier) {
+			this(new SimpleBooleanProperty(true), editor, supplier);
 		}
 	}
 }

@@ -33,15 +33,12 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.context.DeclarableContextBuilder;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.code.*;
-import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
-import org.awaitility.Awaitility;
-import org.awaitility.core.ConditionTimeoutException;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -50,8 +47,7 @@ import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static me.coley.recaf.parse.JavaParserResolving.resolvedValueToInfo;
@@ -63,12 +59,8 @@ import static me.coley.recaf.parse.JavaParserResolving.resolvedValueToInfo;
  */
 public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	private static final Logger logger = Logging.get(JavaArea.class);
-	private final ClearableThreadPool astThreadPool = new ClearableThreadPool(1, true, "Java AST Parse");
-	private final ExecutorService selectionThreadPool = ThreadPoolFactory.newSingleThreadExecutor("Member Selection");
 	private CommonClassInfo lastInfo;
-	private CompilationUnit lastAST;
-	private boolean isLastAstCurrent;
-	private Future<?> parseFuture;
+	private CompletableFuture<CompilationUnit> parseFuture;
 	private ContextMenu menu;
 
 	/**
@@ -104,10 +96,10 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	protected void onTextChanged(PlainTextChange change) {
 		super.onTextChanged(change);
 		// Queue up new parse task, killing prior task if present
-		if (astThreadPool.hasActiveThreads()) {
-			astThreadPool.clear();
+		if (parseFuture != null) {
+			parseFuture.cancel(true);
 		}
-		parseFuture = astThreadPool.submit(this::updateParse);
+		parseFuture = ThreadUtil.run(this::updateParse);
 	}
 
 	@Override
@@ -122,55 +114,41 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 
 	@Override
 	public boolean isMemberSelectionReady() {
-		return lastAST != null && isLastAstCurrent;
+		return parseFuture.isDone();
 	}
 
 	@Override
 	public void selectMember(MemberInfo memberInfo) {
 		if (memberInfo == null)
 			return;
-		selectionThreadPool.submit(() -> {
-			// Worst case timeout that we expect: Selection after decompile
-			long timeout = Configs.decompiler().decompileTimeout;
-			try {
-				Awaitility.await()
-						.atMost(timeout, TimeUnit.MILLISECONDS)
-						.until(this::isMemberSelectionReady);
-				if (parseFuture == null) {
-					logger.warn("Cannot select member, parse thread was not initialized!");
-				} else if (!parseFuture.isDone() && lastAST == null) {
-					logger.warn("Cannot select member, parse thread yielded no valid parse result!");
-				} else {
+		parseFuture.orTimeout(Configs.decompiler().decompileTimeout, TimeUnit.MILLISECONDS)
+				.thenAcceptAsync(ast -> {
 					// Parse thread done, and AST result should be present
-					FxThreadUtil.run(() -> doSelectMember(memberInfo));
-				}
-			} catch (ConditionTimeoutException ex) {
-				logger.warn("Cannot select member, member selection timed out after {}ms!", timeout);
-			}
-		});
+					doSelectMember(ast, memberInfo);
+				}, FxThreadUtil.executor());
 	}
 
-	private void doSelectMember(MemberInfo memberInfo) {
+	private void doSelectMember(CompilationUnit ast, MemberInfo memberInfo) {
 		WorkspaceTypeSolver solver = RecafUI.getController().getServices().getTypeSolver();
 		if (memberInfo.isField()) {
-			lastAST.findFirst(FieldDeclaration.class, dec -> {
+			ast.findFirst(FieldDeclaration.class, dec -> {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
 				return memberInfo.equals(declaredInfo);
 			}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
 			// Check for enum constants, which JavaParser treats differently
 			if (memberInfo.getDescriptor().length() > 2) {
-				lastAST.findFirst(EnumConstantDeclaration.class, dec -> {
+				ast.findFirst(EnumConstantDeclaration.class, dec -> {
 					MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
 					return memberInfo.equals(declaredInfo);
 				}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
 			}
 		} else if (memberInfo.getName().equals("<init>")) {
-			lastAST.findFirst(ConstructorDeclaration.class, dec -> {
+			ast.findFirst(ConstructorDeclaration.class, dec -> {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
 				return memberInfo.equals(declaredInfo);
 			}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
 		} else {
-			lastAST.findFirst(MethodDeclaration.class, dec -> {
+			ast.findFirst(MethodDeclaration.class, dec -> {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
 				return memberInfo.equals(declaredInfo);
 			}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
@@ -185,8 +163,6 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	@Override
 	public void cleanup() {
 		super.cleanup();
-		astThreadPool.clearAndShutdown();
-		selectionThreadPool.shutdownNow();
 	}
 
 	@Override
@@ -283,7 +259,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		if (classInfo != null)
 			return classInfo.getName();
 		// Find it via the source
-		String className = JavaParserPrinting.getType(lastAST.getType(0).resolve());
+		String className = JavaParserPrinting.getType(parseFuture.getNow(null).getType(0).resolve());
 		if (className.charAt(0) == '/')
 			className = className.substring(1);
 		return className;
@@ -316,7 +292,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			menu = null;
 		}
 		// Check if there is parsable AST info
-		if (lastAST == null) {
+		if (!parseFuture.isDone()) {
 			// TODO: More visually noticeable warning to user that the AST failed to be parsed
 			//  - Offer to switch class representation?
 			logger.warn("Could not request context menu since the code is not parsable!");
@@ -419,7 +395,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		int column = hitPos.getMinor();
 		// Parse what is at the location
 		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
-		return helper.declarationAt(lastAST, line, column);
+		return helper.declarationAt(parseFuture.getNow(null), line, column);
 	}
 
 	/**
@@ -436,30 +412,16 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		int column = hitPos.getMinor();
 		// Parse what is at the location
 		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
-		return helper.at(lastAST, line, column);
+		return helper.at(parseFuture.getNow(null), line, column);
 	}
 
 	/**
-	 * Update the {@link #lastAST latest AST} and {@link #isLastAstCurrent AST is-up-to-date flag}.
+	 * Update the latest AST.
 	 */
-	private void updateParse() {
+	private CompilationUnit updateParse() {
 		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
 		ParseResult<CompilationUnit> result = helper.parseClass(getText());
-		if (result.getResult().isPresent()) {
-			lastAST = result.getResult().get();
-			isLastAstCurrent = true;
-		} else {
-			// We don't nullify the AST but do note that it is not up-to-date.
-			isLastAstCurrent = false;
-		}
-	}
-
-	/**
-	 * Discard AST information.
-	 */
-	public void discardAst() {
-		lastAST = null;
-		isLastAstCurrent = false;
+		return result.getResult().orElse(null);
 	}
 
 	/**

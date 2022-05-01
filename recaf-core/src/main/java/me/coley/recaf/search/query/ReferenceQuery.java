@@ -2,7 +2,6 @@ package me.coley.recaf.search.query;
 
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.Lists;
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.insn.FieldInstruction;
@@ -22,6 +21,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -139,7 +139,7 @@ public class ReferenceQuery implements Query {
 				Supplier<IndyInstruction> indySupplier = Suppliers.memoize(() ->
 						new IndyInstruction("INVOKEDYNAMIC", name, desc,
 								new HandleInfo(bsmHandle),
-								Lists.newArrayList(bootstrapMethodArguments).stream()
+								Arrays.stream(bootstrapMethodArguments)
 										.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
 										.collect(Collectors.toList())));
 				whenMatched(bsmHandle.getOwner(), bsmHandle.getName(), bsmHandle.getDesc(),

@@ -3,6 +3,7 @@ package me.coley.recaf.ui.pane;
 import bsh.EvalError;
 import bsh.ParseException;
 import bsh.TargetError;
+import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -165,12 +166,12 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 	}
 
 	public void setTitle() {
-		String tabTitle = Lang.get("menu.scripting.editor");
+		StringBinding tabTitle = Lang.getBinding("menu.scripting.editor");
 		if (currentFile != null)
-			tabTitle += " - " + currentFile.getName();
+			tabTitle = Lang.concat(tabTitle, " - " + currentFile.getName());
 		// TODO: Clean system for fetching tab and updating it (Another thing to consider when refactoring docking system?)
 		if (tab != null)
-			tab.setText(tabTitle);
+			tab.textProperty().bind(tabTitle);
 	}
 
 	@Override

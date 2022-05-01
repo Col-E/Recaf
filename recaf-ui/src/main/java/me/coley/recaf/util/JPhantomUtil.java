@@ -43,7 +43,7 @@ public class JPhantomUtil {
 		Map<String, byte[]> classMap = new HashMap<>();
 		Map<Type, ClassNode> nodes = new HashMap<>();
 		inputMap.forEach((name, info) -> {
-			ClassReader cr = new ClassReader(info.getValue());
+			ClassReader cr = info.getClassReader();
 			ClassNode node = new ClassNode();
 			cr.accept(node, ClassReader.SKIP_FRAMES);
 			classMap.put(name + ".class", info.getValue());

@@ -4,6 +4,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 import static me.coley.recaf.util.threading.ThreadPoolFactory.newScheduledThreadPool;
 
@@ -23,8 +24,18 @@ public class ThreadUtil {
 	 *
 	 * @return Thread future.
 	 */
-	public static Future<?> run(Runnable action) {
-		return scheduledService.submit(wrap(action));
+	public static CompletableFuture<?> run(Runnable action) {
+		return CompletableFuture.runAsync(wrap(action), scheduledService);
+	}
+
+	/**
+	 * @param action
+	 * 		Supplier to start in new thread.
+	 *
+	 * @return Thread future.
+	 */
+	public static <T> CompletableFuture<T> run(Supplier<T> action) {
+		return CompletableFuture.supplyAsync(action, scheduledService);
 	}
 
 	/**
@@ -35,8 +46,17 @@ public class ThreadUtil {
 	 *
 	 * @return Scheduled future.
 	 */
-	public static Future<?> runDelayed(long delayMs, Runnable action) {
-		return scheduledService.schedule(wrap(action), delayMs, TimeUnit.MILLISECONDS);
+	public static CompletableFuture<?> runDelayed(long delayMs, Runnable action) {
+		CompletableFuture<?> future = new CompletableFuture<>();
+		scheduledService.schedule(() -> {
+			try {
+				action.run();
+				future.complete(null);
+			} catch(Throwable t) {
+				future.completeExceptionally(t);
+			}
+		}, delayMs, TimeUnit.MILLISECONDS);
+		return future;
 	}
 
 	/**

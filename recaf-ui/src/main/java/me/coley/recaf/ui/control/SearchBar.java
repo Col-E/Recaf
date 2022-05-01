@@ -213,10 +213,12 @@ public class SearchBar extends GridPane {
 	}
 
 	private void updateIndexDisplay() {
-		if (results == null || !results.hasResults())
-			lblIndex.setText(Lang.get("menu.search.noresults"));
-		else
+		if (results == null || !results.hasResults()) {
+			lblIndex.textProperty().bind(Lang.getBinding("menu.search.noresults"));
+		} else {
+			lblIndex.textProperty().unbind();
 			lblIndex.setText((results.getIndex() + 1) + "/" + results.count());
+		}
 	}
 
 	/**
