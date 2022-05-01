@@ -343,7 +343,7 @@ public class PeepholeProcessors implements Opcodes {
 		vmi.setProcessor(INVOKESTATIC, (InstructionProcessor<MethodInsnNode>) (insn, ctx) -> {
 			Type methodType = Type.getMethodType(insn.desc);
 			// Cannot fold types that are not supported (primitives and String only)
-			if (whitelist.test(ctx) && canFoldMethodType(methodType)) {
+			if (whitelist.test(ctx)) {
 				// Ensure parameter values are constant
 				Stack stack = ctx.getStack();
 				int stackSize = stack.position();
@@ -589,25 +589,6 @@ public class PeepholeProcessors implements Opcodes {
 				}
 			}
 		});
-	}
-
-	/**
-	 * @param methodType
-	 * 		Type of the method (args/ret).
-	 *
-	 * @return {@code true} when all types are foldable <i>(Supported by {@link ConstValue})</i>
-	 */
-	private static boolean canFoldMethodType(Type methodType) {
-		// All arguments must be foldable (primitives and String)
-		Type[] argTypes = methodType.getArgumentTypes();
-		for (Type argType : argTypes) {
-			if (!canFoldType(argType)) {
-				return false;
-			}
-		}
-		// Same goes for return type.
-		Type returnType = methodType.getReturnType();
-		return canFoldType(returnType);
 	}
 
 	/**
