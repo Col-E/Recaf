@@ -185,8 +185,10 @@ public class BytecodeToAstTransformer {
 				}
 			}
 			// Second pass to do everything else.
+			AbstractInsnNode lastInsn = null;
 			for (int pos = 0; pos < method.instructions.size(); pos++) {
 				AbstractInsnNode insn = method.instructions.get(pos);
+				lastInsn = insn;
 				String op = OpcodeUtil.opcodeToName(insn.getOpcode());
 				switch (insn.getType()) {
 					case AbstractInsnNode.INSN:
@@ -305,9 +307,11 @@ public class BytecodeToAstTransformer {
 				}
 			}
 			// Add ending label
-			LabelNode end = new LabelNode();
-			labelNames.put(end, labelPrefix + StringUtil.generateName(ALPHABET, labelNames.size()));
-			code.addLabel(new Label(labelNames.get(end)));
+			if (lastInsn != null && lastInsn.getType() != AbstractInsnNode.LABEL) {
+				LabelNode end = new LabelNode();
+				labelNames.put(end, labelPrefix + StringUtil.generateName(ALPHABET, labelNames.size()));
+				code.addLabel(new Label(labelNames.get(end)));
+			}
 		}
 		// Done
 		MethodDefinition definition = new MethodDefinition(modifiers, method.name, params, retType);
