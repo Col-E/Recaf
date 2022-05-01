@@ -305,7 +305,9 @@ public class BytecodeToAstTransformer {
 				}
 			}
 			// Add ending label
-			labelNames.put(new LabelNode(), labelPrefix + StringUtil.generateName(ALPHABET, labelNames.size()));
+			LabelNode end = new LabelNode();
+			labelNames.put(end, labelPrefix + StringUtil.generateName(ALPHABET, labelNames.size()));
+			code.addLabel(new Label(labelNames.get(end)));
 		}
 		// Done
 		MethodDefinition definition = new MethodDefinition(modifiers, method.name, params, retType);
