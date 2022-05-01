@@ -2,12 +2,14 @@ package me.coley.recaf.ssvm;
 
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.asm.DelegatingInsnNode;
+import dev.xdark.ssvm.asm.Modifier;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.InstanceValue;
 import dev.xdark.ssvm.value.Value;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ListIterator;
@@ -35,23 +37,6 @@ public class VirtualMachineUtil {
 	}
 
 	/**
-	 * SSVM will patch some methods for better performance or due to its internals.
-	 * This method may be used to undo all changes.
-	 *
-	 * @param node
-	 * 		Method node to patch.
-	 */
-	public static void restoreMethod(MethodNode node) {
-		ListIterator<AbstractInsnNode> iterator = node.instructions.iterator();
-		while (iterator.hasNext()) {
-			AbstractInsnNode insn = iterator.next();
-			if (insn instanceof DelegatingInsnNode) {
-				iterator.set(((DelegatingInsnNode<?>) insn).getDelegate());
-			}
-		}
-	}
-
-	/**
 	 * SSVM will patch some classes for better performance or due to its internals.
 	 * This method may be used to undo all changes.
 	 *
@@ -59,8 +44,41 @@ public class VirtualMachineUtil {
 	 * 		Class node to patch.
 	 */
 	public static void restoreClass(ClassNode node) {
+		node.access = Modifier.eraseClass(node.access);
+		for (FieldNode field : node.fields) {
+			restoreField(field);
+		}
 		for (MethodNode mn : node.methods) {
 			restoreMethod(mn);
+		}
+	}
+
+	/**
+	 * SSVM will patch some fields for better performance or due to its internals.
+	 * This method may be used to undo all changes.
+	 *
+	 * @param node
+	 * 		Field node to patch.
+	 */
+	public static void restoreField(FieldNode node) {
+		node.access = Modifier.eraseField(node.access);
+	}
+
+	/**
+	 * SSVM will patch some methods for better performance or due to its internals.
+	 * This method may be used to undo all changes.
+	 *
+	 * @param node
+	 * 		Method node to patch.
+	 */
+	public static void restoreMethod(MethodNode node) {
+		node.access = Modifier.eraseMethod(node.access);
+		ListIterator<AbstractInsnNode> iterator = node.instructions.iterator();
+		while (iterator.hasNext()) {
+			AbstractInsnNode insn = iterator.next();
+			if (insn instanceof DelegatingInsnNode) {
+				iterator.set(((DelegatingInsnNode<?>) insn).getDelegate());
+			}
 		}
 	}
 

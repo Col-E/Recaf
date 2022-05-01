@@ -479,6 +479,9 @@ public class FlowRevisitingProcessors implements Opcodes {
 			Stack stack = ctx.getStack();
 			Value[] table = localsSnapshot.getTable();
 			for (int i = 0; i < node.maxLocals; i++) {
+				// Uninitialized values are null, this is intentional
+				if (table[i] == null)
+					continue;
 				locals.set(i, table[i]);
 			}
 			// Clear context's stack

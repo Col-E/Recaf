@@ -121,6 +121,8 @@ public class PeepholeProcessors implements Opcodes {
 			ctx.getStack().push(new TrackedArrayValue(value));
 			return Result.CONTINUE;
 		});
+		// BASTORE/IASTORE/etc
+		//  - Use bitset of array size to track if the values at those indices are constant
 	}
 
 	/**
@@ -392,7 +394,7 @@ public class PeepholeProcessors implements Opcodes {
 							contributingInstructioncount += contributingInstructions.size();
 						}
 						instructions.set(insn, InstructionUtil.createPush(returnValue));
-						logger.trace("Folding {} instructions in {}.{}{}",
+						logger.debug("Folding {} instructions in {}.{}{}",
 								contributingInstructioncount,
 								ctx.getOwner().getInternalName(),
 								ctx.getMethod().getName(),

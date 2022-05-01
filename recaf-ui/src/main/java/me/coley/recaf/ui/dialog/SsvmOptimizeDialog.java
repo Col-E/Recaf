@@ -15,6 +15,7 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.scripting.impl.WorkspaceAPI;
 import me.coley.recaf.ssvm.SsvmIntegration;
+import me.coley.recaf.ssvm.VirtualMachineUtil;
 import me.coley.recaf.ssvm.processing.FlowRevisitingProcessors;
 import me.coley.recaf.ssvm.processing.PeepholeProcessors;
 import me.coley.recaf.ui.util.Icons;
@@ -22,6 +23,7 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.visitor.WorkspaceClassWriter;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
@@ -88,7 +90,14 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 				// Pull new bytecode from VM
 				InstanceJavaClass target = (InstanceJavaClass) vm.findBootstrapClass(owner.getName());
 				ClassWriter writer = new WorkspaceClassWriter(RecafUI.getController(), ClassWriter.COMPUTE_FRAMES);
-				target.getNode().accept(writer);
+				ClassNode node = target.getNode();
+				VirtualMachineUtil.restoreClass(node);
+				try {
+					node.accept(writer);
+				} catch (Throwable t) {
+					logger.error("Failed to rewrite optimized bytecode", t);
+					return;
+				}
 				byte[] modified = writer.toByteArray();
 				// Replace in workspace
 				WorkspaceAPI.getPrimaryResource().getClasses().put(owner.getName(), ClassInfo.read(modified));
