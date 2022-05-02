@@ -125,6 +125,7 @@ public class PeepholeProcessors implements Opcodes {
 			TrackedArrayValue tracked = new TrackedArrayValue(value);
 			if (lengthValue instanceof TrackedValue) {
 				tracked.addContributing((TrackedValue) lengthValue);
+				tracked.setConstantLength(true);
 			}
 			tracked.addContributing(insn);
 			ctx.getStack().push(tracked);
@@ -867,6 +868,9 @@ public class PeepholeProcessors implements Opcodes {
 			}
 			if (value == null) {
 				value = loader.load(array, index);
+			}
+			if (value instanceof TrackedValue) {
+				((TrackedValue) value).addContributing(insn);
 			}
 			stack.pushGeneric(value);
 			return Result.CONTINUE;

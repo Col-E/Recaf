@@ -20,6 +20,7 @@ public class TrackedArrayValue extends DelegatingArrayValue<ArrayValue> implemen
 	private final List<TrackedValue> clonedValues = new ArrayList<>();
 	private final Value[] values;
 	private final IntRef constantCount;
+	private boolean constantLength;
 
 	/**
 	 * @param delegate
@@ -43,6 +44,22 @@ public class TrackedArrayValue extends DelegatingArrayValue<ArrayValue> implemen
 		super(delegate);
 		values = new Value[delegate.getLength()];
 		constantCount = new IntRef();
+	}
+
+	/**
+	 * @return {@code true} if length of this array
+	 * was determined from a constant value.
+	 */
+	public boolean isConstantLength() {
+		return constantLength;
+	}
+
+	/**
+	 * @param constantLength
+	 * 		Whether the length is constant or not.
+	 */
+	public void setConstantLength(boolean constantLength) {
+		this.constantLength = constantLength;
 	}
 
 	/**
