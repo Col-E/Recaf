@@ -364,7 +364,7 @@ public class PeepholeProcessors implements Opcodes {
 				// method call with its return value.
 				Result result = invokestatic.execute(insn, ctx);
 				// Execution of the invokestatic call done, stack should contain the return value on top
-				if (paramsAreConst && result == Result.CONTINUE) {
+				if (paramsAreConst && result == Result.CONTINUE && !Types.isVoid(methodType.getReturnType())) {
 					Value invokeReturn = ctx.getStack().peek();
 					InsnList instructions = ctx.getMethod().getNode().instructions;
 					Object returnValue = null;

@@ -23,7 +23,7 @@ import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.util.visitor.FieldReplacingVisitor;
 import me.coley.recaf.util.visitor.MethodReplacingVisitor;
 import me.coley.recaf.util.visitor.SingleMemberVisitor;
@@ -41,7 +41,6 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -61,7 +60,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 	private static final int AST_LOOP_MS = 100;
 	private static final ANTLRErrorStrategy ERR_RECOVER = new DefaultErrorStrategy();
 	private static final ANTLRErrorStrategy ERR_JUST_FAIL = new ParserBailStrategy();
-	private final ScheduledExecutorService service = ThreadPoolFactory.newScheduledThreadPool("Recaf assembler ui");
 	private final ProblemTracking problemTracking;
 	private final AssemblerPipeline pipeline;
 	private ClassInfo classInfo;
@@ -125,14 +123,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		super.cleanup();
 		// Stop parse thread
 		astParseThread.cancel(true);
-		service.shutdownNow();
 	}
 
 	/**
 	 * Creates the thread that updates the AST in the background.
 	 */
 	private void setupAstParseThread() {
-		astParseThread = service.scheduleAtFixedRate(() -> {
+		astParseThread = ThreadUtil.scheduleAtFixedRate(() -> {
 			try {
 				if (pipeline.updateAst() && pipeline.validateAst()) {
 					logger.trace("AST updated and validated");

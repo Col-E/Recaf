@@ -47,6 +47,16 @@ public class Types {
 	}
 
 	/**
+	 * @param type
+	 * 		Some type to check.
+	 *
+	 * @return {@code true} if type is a void type.
+	 */
+	public static boolean isVoid(Type type) {
+		return type != null && type.getSort() == Type.VOID;
+	}
+
+	/**
 	 * @param desc
 	 * 		Some internal type descriptor.
 	 *

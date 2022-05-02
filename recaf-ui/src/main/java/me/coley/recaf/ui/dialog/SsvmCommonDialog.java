@@ -219,7 +219,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			case Type.INT: {
 				TextField field = new TextField("1, 2, 3");
 				return new InputWrapper(newProperty(field, input -> {
-					for (String part : input.split("\\s+,\\s+"))
+					for (String part : input.split("[, ]+"))
 						Integer.parseInt(part);
 				}), field, text -> {
 					if (text.isBlank())
@@ -273,7 +273,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			case Type.FLOAT: {
 				TextField field = new TextField("1, 2, 3");
 				return new InputWrapper(newProperty(field, input -> {
-					for (String part : input.split("\\s+,\\s+"))
+					for (String part : input.split("[, ]+"))
 						Float.parseFloat(part);
 				}), field, text -> {
 					if (text.isBlank())
@@ -289,7 +289,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			case Type.LONG: {
 				TextField field = new TextField("1, 2, 3");
 				return new InputWrapper(newProperty(field, input -> {
-					for (String part : input.split("\\s+,\\s+"))
+					for (String part : input.split("[, ]+"))
 						Long.parseLong(part);
 				}), field, text -> {
 					if (text.isBlank())
@@ -305,7 +305,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			case Type.DOUBLE: {
 				TextField field = new TextField("1.0, 2.0, 3.0");
 				return new InputWrapper(newProperty(field, input -> {
-					for (String part : input.split("\\s+,\\s+"))
+					for (String part : input.split("[, ]+"))
 						Double.parseDouble(part);
 				}), field, text -> {
 					if (text.isBlank())

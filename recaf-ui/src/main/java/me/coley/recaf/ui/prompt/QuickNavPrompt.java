@@ -51,9 +51,8 @@ public class QuickNavPrompt extends GenericWindow {
 	 * Can't name shadow "close" or "hide".
 	 */
 	private static void vanish() {
-		if (showing.get()) {
+		if (showing.compareAndSet(true, false)) {
 			instance().hide();
-			showing.set(false);
 		}
 	}
 
@@ -61,8 +60,7 @@ public class QuickNavPrompt extends GenericWindow {
 	 * Shows the prompt.
 	 */
 	public static void open() {
-		if (!showing.get()) {
-			showing.set(true);
+		if (!showing.compareAndSet(false, true)) {
 			instance().show();
 			nav.search.requestFocus();
 		}
@@ -216,7 +214,7 @@ public class QuickNavPrompt extends GenericWindow {
 					list.add(new ItemWrapper(resource, info));
 				}
 			}
-			return true;
+			return !Thread.interrupted();
 		}
 
 		private static boolean searchFiles(List<ItemWrapper> list, String text, Resource resource) {
@@ -228,7 +226,7 @@ public class QuickNavPrompt extends GenericWindow {
 					list.add(new ItemWrapper(resource, info));
 				}
 			}
-			return true;
+			return !Thread.interrupted();
 		}
 
 		private static class ItemWrapper {

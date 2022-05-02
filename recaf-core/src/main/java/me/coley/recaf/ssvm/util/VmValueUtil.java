@@ -60,7 +60,7 @@ public class VmValueUtil implements Opcodes {
 			else if (value instanceof FloatValue) return InstructionUtil.createFloatPush(value.asFloat());
 			else if (value instanceof DoubleValue) return InstructionUtil.createDoublePush(value.asDouble());
 			else throw new IllegalStateException("Unknown numeric value type: " + value.getClass().getName());
-		} else if (value == NullValue.INSTANCE)
+		} else if (value.isNull())
 			return new InsnNode(ACONST_NULL);
 		throw new IllegalStateException("Cannot create constant for value: " + value);
 	}

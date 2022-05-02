@@ -192,8 +192,8 @@ public class SsvmIntegration {
 	 * @return String representation.
 	 */
 	public String toString(Value value) {
-		String valueString = value.toString();
-		if (value == NullValue.INSTANCE) {
+		String valueString = null;
+		if (value.isNull()) {
 			return "null";
 		} else if (value instanceof InstanceValue) {
 			InstanceValue instance = (InstanceValue) value;
@@ -249,6 +249,8 @@ public class SsvmIntegration {
 			}
 			valueString = "[" + String.join(", ", parts) + "]";
 		}
+		if (valueString == null)
+			valueString = value.toString();
 		return valueString;
 	}
 

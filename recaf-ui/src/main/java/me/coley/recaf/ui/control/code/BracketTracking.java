@@ -94,12 +94,16 @@ public class BracketTracking {
 				return;
 			// Pairs that end after the start of the removed text
 			if (pair.getEnd() > removalStart) {
+				if (Thread.interrupted())
+					return;
 				// Remove pairs originating in removed region
 				if (pair.getStart() > removalStart && pair.getStart() < removalEnd) {
 					removePair(pair);
 				}
 				// Offset items after the removed region
 				else if (pair.getStart() < removalStart) {
+					if (Thread.interrupted())
+						return;
 					removePair(pair);
 					int newEnd = findMatchingBracket(pair.getStart());
 					if (newEnd >= 0) {
@@ -108,6 +112,8 @@ public class BracketTracking {
 				}
 				// Offset items after the removed region
 				else if (pair.getStart() > removalEnd) {
+					if (Thread.interrupted())
+						return;
 					removePair(pair);
 					addPair(new BracketPair(pair.getStart() - removed, pair.getEnd() - removed));
 				}

@@ -16,11 +16,9 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
-import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -65,34 +63,31 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 			}
 			// Run and get result
 			CompletableFuture<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(owner, info, getValues());
-			ThreadUtil.run(() -> {
-				SsvmIntegration.VmRunResult result = null;
-				try {
-					result = resultFuture.get(1, TimeUnit.MINUTES);
-				} catch (InterruptedException ex) {
-					logger.error("Invoke future thread interrupted", ex);
-					return;
-				} catch (ExecutionException ex) {
-					logger.error("Invoke future thread encountered unhandled error", ex.getCause());
-					return;
-				} catch (TimeoutException ex) {
-					logger.error("Invoke future thread timed out", ex);
-					return;
-				}
-				if (result.hasError()) {
-					Throwable ex = ssvm.unwrap(result.getException());
-					FxThreadUtil.run(() -> {
-						output.setText(StringUtil.traceToString(ex));
-						output.setStyle("-fx-text-fill: red;");
+			resultFuture.orTimeout(1L, TimeUnit.MINUTES)
+					.whenComplete((result, throwable) -> {
+						if (throwable != null) {
+							if (throwable instanceof TimeoutException) {
+								logger.error("Invoke future thread timed out");
+							} else {
+								logger.error("Invoke future thread encountered unhandled error", throwable);
+							}
+							return;
+						}
+						throwable = result.getException();
+						if (throwable != null) {
+							Throwable ssvmThrowable = ssvm.unwrap(throwable);
+							FxThreadUtil.run(() -> {
+								output.setText(StringUtil.traceToString(ssvmThrowable));
+								output.setStyle("-fx-text-fill: red;");
+							});
+						} else {
+							String resultText = ssvm.toString(result.getValue());
+							FxThreadUtil.run(() -> {
+								output.setStyle(null);
+								output.setText(resultText);
+							});
+						}
 					});
-				} else {
-					String resultText = ssvm.toString(result.getValue());
-					FxThreadUtil.run(() -> {
-						output.setStyle(null);
-						output.setText(resultText);
-					});
-				}
-			});
 		});
 		runButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 		GridPane.setFillWidth(runButton, true);

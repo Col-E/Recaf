@@ -11,6 +11,7 @@ import org.objectweb.asm.*;
  */
 public class SingleMemberVisitor extends ClassVisitor {
 	private final MemberInfo info;
+	private boolean finished;
 
 	/**
 	 * @param cv
@@ -25,17 +26,25 @@ public class SingleMemberVisitor extends ClassVisitor {
 
 	@Override
 	public FieldVisitor visitField(int access, String name, String desc, String sig, Object value) {
-		// Only visit if matching the target info
-		if (info.isField() && info.getName().equals(name) && info.getDescriptor().equals(desc))
+		// Only visit if matching the target info and searching
+		if (finished)
+			return null;
+		if (info.isField() && info.getName().equals(name) && info.getDescriptor().equals(desc)) {
+			finished = true;
 			return super.visitField(access, name, desc, sig, value);
+		}
 		return null;
 	}
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String sig, String[] exceptions) {
-		// Only visit if matching the target info
-		if (info.isMethod() && info.getName().equals(name) && info.getDescriptor().equals(desc))
+		// Only visit if matching the target info and searching
+		if (finished)
+			return null;
+		if (info.isMethod() && info.getName().equals(name) && info.getDescriptor().equals(desc)) {
+			finished = true;
 			return super.visitMethod(access, name, desc, sig, exceptions);
+		}
 		return null;
 	}
 

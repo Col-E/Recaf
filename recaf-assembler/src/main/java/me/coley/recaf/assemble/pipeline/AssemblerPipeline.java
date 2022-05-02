@@ -357,7 +357,7 @@ public class AssemblerPipeline {
 		parser.setErrorHandler(antlrErrorStrategy);
 		parser.getErrorListeners().clear();
 		antlrErrorListeners.forEach(parser::addErrorListener);
-		BytecodeParser.UnitContext unitCtx = null;
+		BytecodeParser.UnitContext unitCtx;
 		try {
 			unitCtx = parser.unit();
 		} catch (ParserException ex) {
@@ -365,6 +365,8 @@ public class AssemblerPipeline {
 			parserFailureListeners.forEach(l -> l.onAntlrParseFail(ex));
 			return true;
 		}
+		if (Thread.interrupted())
+			return false;
 		// Transform to our AST
 		logger.trace("Assembler AST updating: [ANTLR --> AST transform]");
 		AntlrToAstTransformer antlrToAstTransformer = new AntlrToAstTransformer();

@@ -2,8 +2,8 @@ package me.coley.recaf.mapping;
 
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
 import me.coley.recaf.util.threading.ThreadUtil;
+import me.coley.recaf.workspace.resource.ClassMap;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -11,6 +11,7 @@ import org.objectweb.asm.ClassWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -36,10 +37,11 @@ public class MappingUtils {
 	 */
 	public static Set<String> applyMappingsWithoutAggregation(int read, int write,
 															  Resource resource, Mappings mappings) {
-		ExecutorService service = ThreadPoolFactory.newFixedThreadPool("Recaf mapping");
-		Set<String> modifiedClasses = new HashSet<>();
+		ExecutorService service = ThreadUtil.phasingService();
+		Set<String> modifiedClasses = ConcurrentHashMap.newKeySet();
+		Set<String> newNames = new HashSet<>();
 		for (ClassInfo classInfo : new ArrayList<>(resource.getClasses().values())) {
-			service.submit(() -> {
+			service.execute(() -> {
 				String originalName = classInfo.getName();
 				// Apply renamer
 				ClassWriter cw = new ClassWriter(read);
@@ -48,12 +50,18 @@ public class MappingUtils {
 				cr.accept(remapVisitor, write);
 				// Update class if it has any modified references
 				if (remapVisitor.hasMappingBeenApplied()) {
-					modifiedClasses.add(classInfo.getName());
+					modifiedClasses.add(originalName);
 					ClassInfo updatedInfo = ClassInfo.read(cw.toByteArray());
-					resource.getClasses().put(updatedInfo);
-					// Remove old classes if they have been renamed
-					if (!originalName.equals(updatedInfo.getName())) {
-						resource.getClasses().remove(originalName);
+					String newName = updatedInfo.getName();
+					ClassMap classes = resource.getClasses();
+					synchronized(resource) {
+						newNames.add(newName);
+						classes.put(updatedInfo);
+						// Remove old classes if they have been renamed and do not occur
+						// in a set of newly applied names
+						if (!originalName.equals(newName) && !newNames.contains(originalName)) {
+							classes.remove(originalName);
+						}
 					}
 				}
 			});

@@ -18,8 +18,8 @@ import java.util.Set;
 public class RegexUtil {
 	private static final Logger logger = Logging.get(RegexUtil.class);
 	private static final Set<String> FAILED_PATTERNS = new HashSet<>();
-	private static final Map<String, Pattern> PATTERNS = new HashMap<>();
-	private static final Pattern INVALID_PATTERN = new Pattern("^$");
+	private static final Map<String, ThreadLocalPattern> PATTERNS = new HashMap<>();
+	private static final ThreadLocalPattern INVALID_PATTERN = new ThreadLocalPattern(new Pattern("^$"));
 
 	/**
 	 * @param pattern
@@ -30,7 +30,7 @@ public class RegexUtil {
 	 * @return Text matcher.
 	 */
 	public static Matcher getMatcher(String pattern, String text) {
-		return pattern(pattern).matcher(text);
+		return getPattern(pattern).matcher(text);
 	}
 
 	/**
@@ -44,7 +44,7 @@ public class RegexUtil {
 	 * @return {@code true} if input matches.
 	 */
 	public static boolean matches(String pattern, String input) {
-		return pattern(pattern).matches(input);
+		return getMatcher(pattern, input).matches();
 	}
 
 	/**
@@ -56,6 +56,18 @@ public class RegexUtil {
 	 * @return Compiled {@link Pattern} of the regular expression.
 	 */
 	public synchronized static Pattern pattern(String regex) {
+		return getPattern(regex).pattern;
+	}
+
+	/**
+	 * Creates new {@link ThreadLocalPattern} or gets it from cache.
+	 *
+	 * @param regex
+	 * 		Regular expression text.
+	 *
+	 * @return Compiled {@link ThreadLocalPattern} of the regular expression.
+	 */
+	private synchronized static ThreadLocalPattern getPattern(String regex) {
 		return PATTERNS.computeIfAbsent(regex, RegexUtil::generate);
 	}
 
@@ -65,15 +77,37 @@ public class RegexUtil {
 	 *
 	 * @return Compiled pattern, or {@link #INVALID_PATTERN} if the pattern is invalid.
 	 */
-	private static Pattern generate(String regex) {
+	private static ThreadLocalPattern generate(String regex) {
 		if (FAILED_PATTERNS.contains(regex))
 			return INVALID_PATTERN;
 		try {
-			return new Pattern(regex);
+			return new ThreadLocalPattern(new Pattern(regex));
 		} catch (Throwable t) {
 			FAILED_PATTERNS.add(regex);
 			logger.error("Invalid regex pattern", t);
 			return INVALID_PATTERN;
+		}
+	}
+
+	private static final class ThreadLocalPattern {
+
+		final ThreadLocal<Matcher> matcher = new ThreadLocal<>();
+		final Pattern pattern;
+
+		private ThreadLocalPattern(Pattern pattern) {
+			this.pattern = pattern;
+		}
+
+		Matcher matcher(String input) {
+			ThreadLocal<Matcher> tlc = this.matcher;
+			Matcher matcher = tlc.get();
+			if (matcher == null) {
+				matcher = pattern.matcher(input);
+				tlc.set(matcher);
+			} else {
+				matcher.setTarget(input);
+			}
+			return matcher;
 		}
 	}
 }

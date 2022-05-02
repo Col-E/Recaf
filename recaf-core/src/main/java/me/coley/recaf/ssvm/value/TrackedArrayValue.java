@@ -5,6 +5,7 @@ import dev.xdark.ssvm.value.DelegatingArrayValue;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 /**
@@ -16,6 +17,7 @@ public class TrackedArrayValue extends DelegatingArrayValue<ArrayValue> implemen
 	private final List<AbstractInsnNode> contributing = new ArrayList<>();
 	private final List<AbstractInsnNode> associatedPops = new ArrayList<>();
 	private final List<TrackedValue> clonedValues = new ArrayList<>();
+	private final BitSet constants;
 
 	/**
 	 * @param delegate
@@ -23,6 +25,19 @@ public class TrackedArrayValue extends DelegatingArrayValue<ArrayValue> implemen
 	 */
 	public TrackedArrayValue(ArrayValue delegate) {
 		super(delegate);
+		constants = new BitSet(delegate.getLength());
+	}
+
+	public void setConstant(int index) {
+		constants.set(index);
+	}
+
+	public void clearConstant(int index) {
+		constants.clear(index);
+	}
+
+	public boolean isConstant(int index) {
+		return constants.get(index);
 	}
 
 	@Override
