@@ -2,10 +2,10 @@ package me.coley.recaf.ssvm.value;
 
 import dev.xdark.ssvm.value.ArrayValue;
 import dev.xdark.ssvm.value.DelegatingArrayValue;
+import dev.xdark.ssvm.value.Value;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.List;
 
 /**
@@ -16,8 +16,24 @@ import java.util.List;
 public class TrackedArrayValue extends DelegatingArrayValue<ArrayValue> implements TrackedValue {
 	private final List<AbstractInsnNode> contributing = new ArrayList<>();
 	private final List<AbstractInsnNode> associatedPops = new ArrayList<>();
+	private final List<TrackedValue> parentValues = new ArrayList<>();
 	private final List<TrackedValue> clonedValues = new ArrayList<>();
-	private final BitSet constants;
+	private final Value[] values;
+	private final IntRef constantCount;
+
+	/**
+	 * @param delegate
+	 * 		Wrapped array value.
+	 * @param values
+	 * 		Tracked values of this array.
+	 * @param constantCount
+	 * 		Current amount of constant values.
+	 */
+	private TrackedArrayValue(ArrayValue delegate, Value[] values, IntRef constantCount) {
+		super(delegate);
+		this.values = values;
+		this.constantCount = constantCount;
+	}
 
 	/**
 	 * @param delegate
@@ -25,19 +41,56 @@ public class TrackedArrayValue extends DelegatingArrayValue<ArrayValue> implemen
 	 */
 	public TrackedArrayValue(ArrayValue delegate) {
 		super(delegate);
-		constants = new BitSet(delegate.getLength());
+		values = new Value[delegate.getLength()];
+		constantCount = new IntRef();
 	}
 
-	public void setConstant(int index) {
-		constants.set(index);
+	/**
+	 * @param index
+	 * 		Index to get tracked value from.
+	 *
+	 * @return Tracked value.
+	 */
+	public Value getTrackedValue(int index) {
+		return values[index];
 	}
 
-	public void clearConstant(int index) {
-		constants.clear(index);
+	/**
+	 * Tracks a value.
+	 *
+	 * @param index
+	 * 		Index at which value was set.
+	 * @param value
+	 * 		Value to track.
+	 */
+	public void trackValue(int index, Value value) {
+		Value[] values = this.values;
+		Value current = values[index];
+		values[index] = value;
+		if (current == null) {
+			if (value instanceof ConstValue) {
+				constantCount.increment();
+			}
+		} else {
+			if (current instanceof ConstValue) {
+				if (!(value instanceof ConstValue)) {
+					constantCount.decrement();
+				}
+			} else if (value instanceof ConstValue) {
+				constantCount.increment();
+			}
+		}
+		if (value instanceof TrackedValue) {
+			addContributing((TrackedValue) value);
+		}
 	}
 
-	public boolean isConstant(int index) {
-		return constants.get(index);
+	/**
+	 * @return {@code true} if all values of this
+	 * array are constant values.
+	 */
+	public boolean areAllValuesConstant() {
+		return constantCount.value == values.length;
 	}
 
 	@Override
@@ -48,6 +101,11 @@ public class TrackedArrayValue extends DelegatingArrayValue<ArrayValue> implemen
 	@Override
 	public List<AbstractInsnNode> getAssociatedPops() {
 		return associatedPops;
+	}
+
+	@Override
+	public List<TrackedValue> getParentValues() {
+		return parentValues;
 	}
 
 	@Override
@@ -66,17 +124,34 @@ public class TrackedArrayValue extends DelegatingArrayValue<ArrayValue> implemen
 	}
 
 	@Override
+	public void addParentValue(TrackedValue value) {
+		parentValues.add(value);
+	}
+
+	@Override
 	public void addClonedValue(TrackedValue value) {
 		clonedValues.add(value);
 	}
 
 	@Override
 	public TrackedArrayValue clone() {
-		return new TrackedArrayValue(getDelegate());
+		return new TrackedArrayValue(getDelegate(), values, constantCount);
 	}
 
 	@Override
 	public String toString() {
 		return "TrackedArrayValue[" + getDelegate().toString() + "]";
+	}
+
+	private static final class IntRef {
+		int value;
+
+		void increment() {
+			value++;
+		}
+
+		void decrement() {
+			value--;
+		}
 	}
 }

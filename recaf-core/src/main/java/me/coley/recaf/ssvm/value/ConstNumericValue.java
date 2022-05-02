@@ -15,6 +15,7 @@ import java.util.List;
 public class ConstNumericValue extends SimpleDelegatingValue<NumericValue> implements ConstValue {
 	private final List<AbstractInsnNode> contributing = new ArrayList<>();
 	private final List<AbstractInsnNode> associatedPops = new ArrayList<>();
+	private final List<TrackedValue> parentValues = new ArrayList<>();
 	private final List<TrackedValue> clonedValues = new ArrayList<>();
 
 	/**
@@ -76,6 +77,11 @@ public class ConstNumericValue extends SimpleDelegatingValue<NumericValue> imple
 	}
 
 	@Override
+	public List<TrackedValue> getParentValues() {
+		return parentValues;
+	}
+
+	@Override
 	public List<TrackedValue> getClonedValues() {
 		return clonedValues;
 	}
@@ -88,6 +94,11 @@ public class ConstNumericValue extends SimpleDelegatingValue<NumericValue> imple
 	@Override
 	public void addAssociatedPop(AbstractInsnNode pop) {
 		associatedPops.add(pop);
+	}
+
+	@Override
+	public void addParentValue(TrackedValue value) {
+		parentValues.add(value);
 	}
 
 	@Override

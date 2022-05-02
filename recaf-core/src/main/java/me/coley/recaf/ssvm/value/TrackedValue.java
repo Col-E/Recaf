@@ -23,6 +23,11 @@ public interface TrackedValue extends Value {
 	List<AbstractInsnNode> getAssociatedPops();
 
 	/**
+	 * @return Values that contributed to this one as a result of a clone operation such as {@code DUP}.
+	 */
+	List<TrackedValue> getParentValues();
+
+	/**
 	 * @return Values that spawned from this one as a result of a clone operation such as {@code DUP}.
 	 */
 	List<TrackedValue> getClonedValues();
@@ -42,14 +47,23 @@ public interface TrackedValue extends Value {
 	}
 
 	/**
+	 * @param value
+	 * 		Value to that contribute to this value.
+	 */
+	default void addContributing(TrackedValue value) {
+		addParentValue(value);
+		addContributing(value.getContributingInstructions());
+		value.getAssociatedPops().forEach(this::addAssociatedPop);
+		value.getClonedValues().forEach(this::addClonedValue);
+	}
+
+	/**
 	 * @param values
 	 * 		Values to that contribute to this value.
 	 */
 	default void addContributing(TrackedValue... values) {
 		for (TrackedValue value : values) {
-			addContributing(value.getContributingInstructions());
-			value.getAssociatedPops().forEach(this::addAssociatedPop);
-			value.getClonedValues().forEach(this::addClonedValue);
+			addContributing(value);
 		}
 	}
 
@@ -58,6 +72,12 @@ public interface TrackedValue extends Value {
 	 *        {@code POP} or {@code POP2} instruction that may operate on this value in the future.
 	 */
 	void addAssociatedPop(AbstractInsnNode pop);
+
+	/**
+	 * @param value
+	 * 		Parent of this value.
+	 */
+	void addParentValue(TrackedValue value);
 
 	/**
 	 * @param value

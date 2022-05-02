@@ -1,23 +1,14 @@
 package me.coley.recaf.ssvm.value;
 
 import dev.xdark.ssvm.util.VMHelper;
-import dev.xdark.ssvm.value.DelegatingInstanceValue;
 import dev.xdark.ssvm.value.InstanceValue;
-import org.objectweb.asm.tree.AbstractInsnNode;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A constant {@code String} value.
  *
  * @author Matt Coley
  */
-public class ConstStringValue extends DelegatingInstanceValue<InstanceValue> implements ConstValue {
-	private final List<AbstractInsnNode> contributing = new ArrayList<>();
-	private final List<AbstractInsnNode> associatedPops = new ArrayList<>();
-	private final List<TrackedValue> clonedValues = new ArrayList<>();
-
+public class ConstStringValue extends TrackedInstanceValue implements ConstValue {
 	/**
 	 * @param delegate
 	 * 		Wrapped string value.
@@ -38,36 +29,6 @@ public class ConstStringValue extends DelegatingInstanceValue<InstanceValue> imp
 	 */
 	public static ConstStringValue ofString(VMHelper helper, String value) {
 		return new ConstStringValue((InstanceValue) helper.newUtf8(value));
-	}
-
-	@Override
-	public List<AbstractInsnNode> getContributingInstructions() {
-		return contributing;
-	}
-
-	@Override
-	public List<AbstractInsnNode> getAssociatedPops() {
-		return associatedPops;
-	}
-
-	@Override
-	public List<TrackedValue> getClonedValues() {
-		return clonedValues;
-	}
-
-	@Override
-	public void addContributing(AbstractInsnNode insn) {
-		contributing.add(insn);
-	}
-
-	@Override
-	public void addAssociatedPop(AbstractInsnNode pop) {
-		associatedPops.add(pop);
-	}
-
-	@Override
-	public void addClonedValue(TrackedValue value) {
-		clonedValues.add(value);
 	}
 
 	@Override

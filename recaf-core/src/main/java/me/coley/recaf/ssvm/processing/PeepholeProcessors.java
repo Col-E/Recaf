@@ -6,10 +6,13 @@ import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.VMInterface;
 import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.InstructionProcessor;
+import dev.xdark.ssvm.execution.Locals;
 import dev.xdark.ssvm.execution.Result;
 import dev.xdark.ssvm.execution.Stack;
 import dev.xdark.ssvm.jit.JitHelper;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
+import dev.xdark.ssvm.thread.Backtrace;
+import dev.xdark.ssvm.util.AsmUtil;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.*;
 import me.coley.recaf.ssvm.util.VmValueUtil;
@@ -27,6 +30,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static me.coley.recaf.ssvm.value.ConstNumericValue.*;
 import static me.coley.recaf.ssvm.value.ValueOperations.evaluate;
@@ -52,6 +56,7 @@ public class PeepholeProcessors implements Opcodes {
 		installValuePushing(vm);
 		installStackManipulationInstructionTracking(vm);
 		installArrays(vm);
+		installStringFolding(vm);
 		// Processors that modify code
 		installOperationFolding(vm, whitelist);
 		installReturnValueFolding(vm, whitelist);
@@ -113,16 +118,34 @@ public class PeepholeProcessors implements Opcodes {
 	 */
 	public static void installArrays(VirtualMachine vm) {
 		VMInterface vmi = vm.getInterface();
-		VMHelper helper = vm.getHelper();
 		vmi.setProcessor(NEWARRAY, (IntInsnNode insn, ExecutionContext ctx) -> {
-			// TODO: We need to be able to track if all values in an array are supplied in a constant manner.
-			//  So if we have `new String(new byte[] { ... })' we would want to be able to inline to a single "bla".
-			ArrayValue value = (ArrayValue) JitHelper.allocatePrimitiveArray(insn.operand, ctx);
-			ctx.getStack().push(new TrackedArrayValue(value));
+			Stack stack = ctx.getStack();
+			Value lengthValue = stack.pop();
+			ArrayValue value = (ArrayValue) JitHelper.allocatePrimitiveArray(lengthValue.asInt(), insn.operand, ctx);
+			TrackedArrayValue tracked = new TrackedArrayValue(value);
+			if (lengthValue instanceof TrackedValue) {
+				tracked.addContributing((TrackedValue) lengthValue);
+			}
+			tracked.addContributing(insn);
+			ctx.getStack().push(tracked);
 			return Result.CONTINUE;
 		});
-		// BASTORE/IASTORE/etc
-		//  - Use bitset of array size to track if the values at those indices are constant
+		vmi.setProcessor(IASTORE, arraySet((array, index, value) -> array.setInt(index, value.asInt())));
+		vmi.setProcessor(LASTORE, arraySet((array, index, value) -> array.setLong(index, value.asLong())));
+		vmi.setProcessor(FASTORE, arraySet((array, index, value) -> array.setFloat(index, value.asFloat())));
+		vmi.setProcessor(DASTORE, arraySet((array, index, value) -> array.setDouble(index, value.asDouble())));
+		vmi.setProcessor(AASTORE, arraySet((array, index, value) -> array.setValue(index, (ObjectValue) value)));
+		vmi.setProcessor(BASTORE, arraySet((array, index, value) -> array.setByte(index, value.asByte())));
+		vmi.setProcessor(CASTORE, arraySet((array, index, value) -> array.setChar(index, value.asChar())));
+		vmi.setProcessor(SASTORE, arraySet((array, index, value) -> array.setShort(index, value.asShort())));
+		vmi.setProcessor(IALOAD, arrayLoad((array, index) -> IntValue.of(array.getInt(index))));
+		vmi.setProcessor(LALOAD, arrayLoad((array, index) -> LongValue.of(array.getLong(index))));
+		vmi.setProcessor(FALOAD, arrayLoad((array, index) -> new FloatValue(array.getFloat(index))));
+		vmi.setProcessor(DALOAD, arrayLoad((array, index) -> new DoubleValue(array.getDouble(index))));
+		vmi.setProcessor(AALOAD, arrayLoad(ArrayValue::getValue));
+		vmi.setProcessor(BALOAD, arrayLoad((array, index) -> IntValue.of(array.getByte(index))));
+		vmi.setProcessor(CALOAD, arrayLoad((array, index) -> IntValue.of(array.getChar(index))));
+		vmi.setProcessor(SALOAD, arrayLoad((array, index) -> IntValue.of(array.getShort(index))));
 	}
 
 	/**
@@ -594,13 +617,77 @@ public class PeepholeProcessors implements Opcodes {
 	}
 
 	/**
-	 * @param type
-	 * 		Type to check.
+	 * Installs peephole optimizations that inline
+	 * some of {@code String} operations.
 	 *
-	 * @return {@code true} when the type is foldable <i>(Supported by {@link ConstValue})</i>
+	 * @param vm
+	 * 		Virtual machine to install into.
 	 */
-	private static boolean canFoldType(Type type) {
-		return Types.isPrimitive(type) || Types.STRING_TYPE.equals(type);
+	public static void installStringFolding(VirtualMachine vm) {
+		VMInterface vmi = vm.getInterface();
+		InstanceJavaClass jc = vm.getSymbols().java_lang_String;
+		InstructionProcessor<TypeInsnNode> newProcessor = vmi.getProcessor(NEW);
+		vmi.setProcessor(NEW, (TypeInsnNode insn, ExecutionContext ctx) -> {
+			Result result = newProcessor.execute(insn, ctx);
+			Stack stack = ctx.getStack();
+			InstanceValue value = stack.peek();
+			if (jc == value.getJavaClass()) {
+				// If we allocate a string,
+				// pop it off the stack & replace with our tracked value.
+				stack.pop();
+				TrackedInstanceValue replacement = new TrackedInstanceValue(value);
+				replacement.addContributing(insn);
+				stack.push(replacement);
+			}
+			return result;
+		});
+		vmi.registerMethodEnter(jc, "<init>", "([B)V", ctx -> {
+			Locals locals = ctx.getLocals();
+			Value _this = locals.load(0);
+			if (!(_this instanceof TrackedInstanceValue)) {
+				return;
+			}
+			Value bytes = locals.load(1);
+			if (!(bytes instanceof TrackedArrayValue)) {
+				return;
+			}
+			TrackedArrayValue array = (TrackedArrayValue) bytes;
+			if (array.areAllValuesConstant()) {
+				byte[] raw = ctx.getHelper().toJavaBytes(array);
+				String str = new String(raw);
+				Backtrace backtrace = ctx.getVM().currentThread().getBacktrace();
+				// Get context of a method that invoked this <init> method,
+				// usually its the 1 before this one, so we subtract 2.
+				ExecutionContext caller = backtrace.get(backtrace.count() - 2).getExecutionContext();
+				InsnList instructions = caller.getMethod().getNode().instructions;
+				AbstractInsnNode callerNode = instructions.get(caller.getInsnPosition() - 1);
+				AbstractInsnNode nextNode = callerNode.getNext();
+				TrackedInstanceValue tracked = (TrackedInstanceValue) _this;
+				// Find NEW instruction that allocates string value, we will
+				// replace it with LDC
+				PeepholeProcessors.<TrackedValue>recurse(tracked, value -> value.getParentValues().stream())
+						.flatMap(x -> x.getContributingInstructions().stream())
+						.filter(x -> x.getOpcode() == NEW)
+						.findFirst()
+						.ifPresent(x -> {
+							instructions.set(x, new LdcInsnNode(str));
+							// Because we invoke <init>([B)V of a string, we need
+							// to POP value off the stack
+							instructions.insertBefore(callerNode, new InsnNode(POP));
+							instructions.remove(callerNode);
+							// Remove all byte array instructions that contributed to this string
+							PeepholeProcessors.<TrackedValue>recurse(array, value -> value.getClonedValues().stream())
+									.flatMap(y -> y.getContributingInstructions().stream())
+									.forEach(y -> {
+										if (instructions.contains(y))
+											instructions.remove(y);
+									});
+							// TODO: make ssvm use instructions instead of indices
+							instructions.toArray();
+							caller.setInsnPosition(AsmUtil.getIndex(nextNode));
+						});
+			}
+		});
 	}
 
 	/**
@@ -727,5 +814,76 @@ public class PeepholeProcessors implements Opcodes {
 			((TrackedValue) value).addAssociatedPop(insn);
 			map.put(ctx, (TrackedValue) value);
 		}
+	}
+
+	/**
+	 * Creates instruction processor for array setter.
+	 *
+	 * @param setter
+	 * 		Array setter.
+	 *
+	 * @return New processor.
+	 */
+	private static InstructionProcessor<AbstractInsnNode> arraySet(ArraySetter setter) {
+		return (insn, ctx) -> {
+			VMHelper helper = ctx.getHelper();
+			Stack stack = ctx.getStack();
+			Value value = stack.pop();
+			Value indexValue = stack.pop();
+			int index = indexValue.asInt();
+			ArrayValue array = helper.checkNotNullArray(stack.pop());
+			helper.rangeCheck(array, index);
+			setter.set(array, index, value);
+			if (array instanceof TrackedArrayValue) {
+				TrackedArrayValue tracked = (TrackedArrayValue) array;
+				tracked.addContributing(insn);
+				if (indexValue instanceof TrackedValue) {
+					tracked.addContributing((TrackedValue) indexValue);
+				}
+				tracked.trackValue(index, value);
+			}
+			return Result.CONTINUE;
+		};
+	}
+
+	/**
+	 * Creates instruction processor for array getter.
+	 *
+	 * @param loader
+	 * 		Array getter.
+	 *
+	 * @return New processor.
+	 */
+	private static InstructionProcessor<AbstractInsnNode> arrayLoad(ArrayLoader loader) {
+		return (insn, ctx) -> {
+			VMHelper helper = ctx.getHelper();
+			Stack stack = ctx.getStack();
+			int index = stack.pop().asInt();
+			ArrayValue array = helper.checkNotNullArray(stack.pop());
+			helper.rangeCheck(array, index);
+			Value value = null;
+			if (array instanceof TrackedArrayValue) {
+				value = ((TrackedArrayValue) array).getTrackedValue(index);
+			}
+			if (value == null) {
+				value = loader.load(array, index);
+			}
+			stack.pushGeneric(value);
+			return Result.CONTINUE;
+		};
+	}
+
+	private static <T> Stream<T> recurse(T seed, Function<T, Stream<T>> fn) {
+		return Stream.concat(Stream.of(seed), Stream.of(seed)
+				.flatMap(fn)
+				.flatMap(child -> recurse(child, fn)));
+	}
+
+	private interface ArraySetter {
+		void set(ArrayValue array, int index, Value value);
+	}
+
+	private interface ArrayLoader {
+		Value load(ArrayValue array, int index);
 	}
 }
