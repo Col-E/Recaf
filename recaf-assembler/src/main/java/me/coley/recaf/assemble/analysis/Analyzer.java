@@ -1083,8 +1083,8 @@ public class Analyzer {
 	}
 
 	private static void binaryOpWide(boolean rightIsWide, Frame frame, Type type, BiFunction<Number, Number, Number> function) {
-		Value value2 = rightIsWide ? frame.popWide() : frame.pop();
-		Value value1 = frame.popWide();
+		Value value1 = rightIsWide ? frame.popWide() : frame.pop();
+		Value value2 = frame.popWide();
 		evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
 	}
 
