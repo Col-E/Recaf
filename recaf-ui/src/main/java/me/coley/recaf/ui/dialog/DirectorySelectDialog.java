@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.dialog;
 
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -18,7 +19,7 @@ import java.util.TreeSet;
  * @author Matt Coley
  */
 public class DirectorySelectDialog extends ConfirmDialog {
-	private final DirectoryListView directoryList = new DirectoryListView();
+	private DirectoryListView directoryList;
 	private String currentDirectory;
 
 	/**
@@ -75,6 +76,7 @@ public class DirectorySelectDialog extends ConfirmDialog {
 	public void setCurrentDirectory(String currentDirectory) {
 		this.currentDirectory = currentDirectory;
 		updateSelection();
+		rebindButtonProperty();
 	}
 
 	/**
@@ -87,17 +89,20 @@ public class DirectorySelectDialog extends ConfirmDialog {
 	@Override
 	protected void init() {
 		super.init();
+		directoryList = new DirectoryListView();
 		GridPane.setHgrow(directoryList, Priority.ALWAYS);
 		grid.add(directoryList, 0, 0);
 		grid.setPrefWidth(600);
 		// Ensure confirmation is only allowed when a new value is provided.
-		Node confirmButton = getDialogPane().lookupButton(confirmType);
-		confirmButton.setDisable(true);
-		directoryList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			confirmButton.setDisable(newValue.trim().isEmpty() || newValue.equals(currentDirectory));
-		});
+		rebindButtonProperty();
 		// Window appears with directories list focused.
 		setOnShown(e -> directoryList.requestFocus());
+	}
+
+	private void rebindButtonProperty() {
+		Node confirmButton = getDialogPane().lookupButton(confirmType);
+		ReadOnlyObjectProperty<String> itemProperty = directoryList.getSelectionModel().selectedItemProperty();
+		confirmButton.disableProperty().bind(itemProperty.isEqualTo("").or(itemProperty.isEqualTo(currentDirectory)));
 	}
 
 	private void updateSelection() {

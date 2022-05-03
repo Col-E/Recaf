@@ -5,6 +5,7 @@ import me.coley.recaf.util.PlatformType;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -19,7 +20,7 @@ public final class BindingCreator {
 	private BindingCreator(Binding defaultBinding, OSBinding... osBindings) {
 		this.defaultBinding = defaultBinding;
 		this.osBindings = Arrays.stream(PlatformType.values())
-				.collect(Collectors.toMap(os -> os, os -> defaultBinding));
+				.collect(Collectors.toMap(Function.identity(), os -> defaultBinding));
 		this.osBindings.putAll(
 				Arrays.stream(osBindings)
 						.collect(Collectors.toMap(

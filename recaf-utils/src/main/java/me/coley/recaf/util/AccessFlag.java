@@ -521,7 +521,7 @@ public enum AccessFlag {
 		}
 
 		private int index(AccessFlag flag) {
-			if (recommendOrder.isEmpty()) return 0; // not intialized yet
+			if (recommendOrder.isEmpty()) return 0; // not initialized yet
 			int idx = recommendOrder.indexOf(flag);
 			return idx == -1 ? Integer.MAX_VALUE : idx;
 		}

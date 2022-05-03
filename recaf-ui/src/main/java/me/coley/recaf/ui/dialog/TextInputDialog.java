@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.dialog;
 
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
@@ -28,11 +29,7 @@ public class TextInputDialog extends ConfirmDialog {
 		GridPane.setHgrow(text, Priority.ALWAYS);
 		grid.add(text, 0, 0);
 		// Ensure confirmation is only allowed when a new value is provided.
-		Node confirmButton = getDialogPane().lookupButton(confirmType);
-		confirmButton.setDisable(true);
-		text.textProperty().addListener((observable, oldValue, newValue) -> {
-			confirmButton.setDisable(newValue.trim().isEmpty() || newValue.equals(presetName));
-		});
+		rebindButtonProperty();
 		// Window appears with text box focused.
 		setOnShown(e -> text.requestFocus());
 	}
@@ -45,6 +42,7 @@ public class TextInputDialog extends ConfirmDialog {
 		presetName = name;
 		text.setText(name);
 		text.positionCaret(name.length());
+		rebindButtonProperty();
 	}
 
 	/**
@@ -52,5 +50,11 @@ public class TextInputDialog extends ConfirmDialog {
 	 */
 	public String getText() {
 		return text.getText();
+	}
+
+	private void rebindButtonProperty() {
+		Node confirmButton = getDialogPane().lookupButton(confirmType);
+		StringProperty textProperty = text.textProperty();
+		confirmButton.disableProperty().bind(textProperty.isEmpty().or(textProperty.isEqualTo(presetName)));
 	}
 }

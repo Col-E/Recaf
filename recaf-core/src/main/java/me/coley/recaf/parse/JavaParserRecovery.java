@@ -19,7 +19,6 @@ import java.io.LineNumberReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 
@@ -82,9 +81,9 @@ public class JavaParserRecovery {
 		ListMultimap<Integer, LexicalError> lexerErrorMap = MultimapBuilder.ListMultimapBuilder
 				.treeKeys()
 				.arrayListValues().build();
-		for (Problem problem : new HashSet<>(problems)) {
+		for (Problem problem : problems) {
 			String message = problem.getMessage();
-			if (!problem.getLocation().isPresent() && message.contains("at line ")) {
+			if (problem.getLocation().isEmpty() && message.contains("at line ")) {
 				Matcher matcher = PATTERN_LOCATION.matcher(message);
 				if (matcher.find()) {
 					int line = Integer.parseInt(matcher.group(GROUP_LINE));

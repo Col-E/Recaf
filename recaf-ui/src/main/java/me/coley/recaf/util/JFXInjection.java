@@ -69,7 +69,7 @@ public class JFXInjection {
 				// Add the file to the paths list we will use later to inject
 				dependencyPaths.add(dependencyFilePath);
 				// Write to local directory if they are not already downloaded
-				if (!Files.exists(dependencyFilePath)) {
+				if (!IOUtil.isRegularFile(dependencyFilePath)) {
 					URL depURL = new URL(dependencyUrlPath);
 					Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
 				}
@@ -118,9 +118,9 @@ public class JFXInjection {
 		toolkit.beep();
 		// Collect some debug info
 		StringWriter writer = new StringWriter();
-		writer.append("OS: " + System.getProperty("os.name") + "\n");
-		writer.append("Version: " + System.getProperty("java.version") + "\n");
-		writer.append("Vendor: " + System.getProperty("java.vm.vendor") + "\n\n");
+		writer.append("OS: ").append(System.getProperty("os.name")).append("\n");
+		writer.append("Version: ").append(System.getProperty("java.version")).append("\n");
+		writer.append("Vendor: ").append(System.getProperty("java.vm.vendor")).append("\n\n");
 		writer.append("Exception: ");
 		// Append exception to string
 		ex.printStackTrace(new PrintWriter(writer));

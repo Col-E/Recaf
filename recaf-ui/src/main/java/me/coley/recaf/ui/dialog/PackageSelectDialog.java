@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.dialog;
 
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -18,7 +19,7 @@ import java.util.TreeSet;
  * @author Matt Coley
  */
 public class PackageSelectDialog extends ConfirmDialog {
-	private final PackageListView packageList = new PackageListView();
+	private PackageListView packageList;
 	private String currentPackage;
 
 	/**
@@ -75,6 +76,7 @@ public class PackageSelectDialog extends ConfirmDialog {
 	public void setCurrentPackage(String currentPackage) {
 		this.currentPackage = currentPackage;
 		updateSelection();
+		rebindButtonProperty();
 	}
 
 	/**
@@ -87,18 +89,20 @@ public class PackageSelectDialog extends ConfirmDialog {
 	@Override
 	protected void init() {
 		super.init();
+		packageList = new PackageListView();
 		GridPane.setHgrow(packageList, Priority.ALWAYS);
 		grid.add(packageList, 0, 0);
 		grid.setPrefWidth(600);
 		// Ensure confirmation is only allowed when a new value is provided.
-		Node confirmButton = getDialogPane().lookupButton(confirmType);
-		confirmButton.setDisable(true);
-		packageList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-			// TODO: Warn if name will collide with item in target package
-			confirmButton.setDisable(newValue.trim().isEmpty() || newValue.equals(currentPackage));
-		});
+		rebindButtonProperty();
 		// Window appears with package list focused.
 		setOnShown(e -> packageList.requestFocus());
+	}
+
+	private void rebindButtonProperty() {
+		Node confirmButton = getDialogPane().lookupButton(confirmType);
+		ReadOnlyObjectProperty<String> itemProperty = packageList.getSelectionModel().selectedItemProperty();
+		confirmButton.disableProperty().bind(itemProperty.isEqualTo("").or(itemProperty.isEqualTo(currentPackage)));
 	}
 
 	private void updateSelection() {

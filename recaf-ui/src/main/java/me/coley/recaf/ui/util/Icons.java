@@ -192,17 +192,7 @@ public class Icons {
 	 * @return Cached image.
 	 */
 	public static Image getImage(String path) {
-		Image image = IMAGE_CACHE.get(path);
-		if (image == null) {
-			InputStream stream = ResourceUtil.resource(path);
-			image = new Image(stream);
-			Image cached = IMAGE_CACHE.putIfAbsent(path, image);
-			if (cached != null) {
-				IOUtil.closeQuietly(stream);
-				image = cached;
-			}
-		}
-		return image;
+		return IMAGE_CACHE.computeIfAbsent(path, k -> new Image(ResourceUtil.resource(path)));
 	}
 
 	/**

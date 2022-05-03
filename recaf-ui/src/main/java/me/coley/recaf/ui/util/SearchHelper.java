@@ -34,7 +34,7 @@ public class SearchHelper implements Searchable {
 	 */
 	public void setText(String newText) {
 		// Skip if the same
-		if (text != null && text.equals(newText))
+		if (newText.equals(text))
 			return;
 		// Set new text, invalidate prior results
 		text = newText;

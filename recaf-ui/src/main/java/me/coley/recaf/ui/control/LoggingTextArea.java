@@ -37,10 +37,6 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 
 	@Override
 	public void accept(String loggerName, Level level, String messageContent) {
-		if (!Platform.isFxApplicationThread()) {
-			FxThreadUtil.run(() -> accept(loggerName, level, messageContent));
-			return;
-		}
 		addLog(loggerName, level, messageContent);
 	}
 
@@ -55,8 +51,9 @@ public class LoggingTextArea extends BorderPane implements LogConsumer<String> {
 		throwable.printStackTrace(new PrintWriter(writer));
 		// Add logging + error
 		addLog(loggerName, level, messageContent);
+		writer.append("\n");
 		synchronized (codeArea) {
-			codeArea.append(writer.toString() + "\n", "log-error");
+			codeArea.append(writer.toString(), "log-error");
 		}
 		scrollToBottom();
 

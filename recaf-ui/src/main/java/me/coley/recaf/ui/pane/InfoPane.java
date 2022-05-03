@@ -13,12 +13,12 @@ import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.control.SubLabeled;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.DesktopUtil;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import javax.tools.ToolProvider;
-import java.awt.*;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -85,7 +85,7 @@ public class InfoPane extends GridPane {
 			clip.setContent(content);
 		}), new ActionButton(Lang.getBinding("help.opendir"), () -> {
 			try {
-				Desktop.getDesktop().open(baseDir.toFile());
+				DesktopUtil.showDocument(baseDir.toUri());
 			} catch (Exception ex) {
 				logger.error("Failed to open Recaf directory", ex);
 			}

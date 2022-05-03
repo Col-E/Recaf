@@ -53,7 +53,6 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 		Button runButton = new Button();
 		runButton.textProperty().bind(Lang.getBinding("dialog.vm.optimize"));
 		runButton.setGraphic(Icons.getIconView(Icons.PLAY));
-		runButton.setDisable(!validInputs());
 		runButton.setOnMousePressed(e -> {
 			// Only create values when confirm button pressed
 			for (InputWrapper input : inputs) {
@@ -79,11 +78,11 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 					if (ex instanceof InterruptedException) {
 						logger.error("Invoke future thread interrupted", ex);
 					} else if (ex instanceof ExecutionException) {
-						logger.error("Invoke future thread encountered unhandled error", ex.getCause());
+						logger.error("Invoke future thread encountered unhandled error\n{}", encodeThrowable(ex.getCause()));
 					} else if (ex instanceof TimeoutException) {
 						logger.error("Invoke future thread timed out", ex);
 					} else {
-						logger.error("Invoke future thread encountered unhandled error", ex);
+						logger.error("Invoke future thread encountered unhandled error\n{}", encodeThrowable(ex));
 					}
 					return;
 				}

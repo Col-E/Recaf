@@ -91,10 +91,9 @@ public class ManifestArea extends SyntaxArea {
 				if (mainClass == null)
 					return;
 				// Hacky manifest lime length limiting stuff
-				StringBuffer trueLine = new StringBuffer("Main-Class: " + mainClass);
-				make72Safe(trueLine);
+				int lineLength = make72Safe("Main-Class: " + mainClass);
 				int start = getText().indexOf("Main-Class: ") + "Main-Class: ".length();
-				int end = start + trueLine.length() - "Main-Class: ".length();
+				int end = start + lineLength - "Main-Class: ".length();
 				// Some line wrapping cases lead the main class start/end positions to be off by one.
 				if (getText().charAt(start) == ' ') {
 					start++;
@@ -120,14 +119,16 @@ public class ManifestArea extends SyntaxArea {
 	 *
 	 * @param line
 	 * 		Text input.
+	 *
+	 * @return Expected length.
 	 */
-	private static void make72Safe(StringBuffer line) {
+	private static int make72Safe(String line) {
 		int length = line.length();
 		int index = 72;
 		while (index < length) {
-			line.insert(index, "\r\n ");
 			index += 74; // + line width + line break ("\r\n")
 			length += 3; // + line break ("\r\n") and space
 		}
+		return length;
 	}
 }

@@ -2,6 +2,7 @@ package me.coley.recaf.ui.window;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleListProperty;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
@@ -77,6 +78,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		itemClose.disableProperty().bind(noWorkspace);
 		menuSearch.disableProperty().bind(noWorkspace);
 		menuMappings.disableProperty().bind(noWorkspace);
+		SimpleListProperty<MenuItem> recentItemsProperty = new SimpleListProperty<>(menuRecent.getItems());
+		menuRecent.disableProperty().bind(recentItemsProperty.emptyProperty());
 
 		MenuItem itemQuit = action("menu.file.quit", Icons.CLOSE, this::quit);
 		menuFile.getItems().add(itemAddToWorkspace);
@@ -267,7 +270,6 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	public void onNewWorkspace(Workspace oldWorkspace, Workspace newWorkspace) {
 		boolean isEmpty = newWorkspace == null;
 		noWorkspace.set(isEmpty);
-		menuRecent.setDisable(menuRecent.getItems().isEmpty());
 		if (!isEmpty) {
 			Configs.recentWorkspaces().addWorkspace(newWorkspace);
 		}

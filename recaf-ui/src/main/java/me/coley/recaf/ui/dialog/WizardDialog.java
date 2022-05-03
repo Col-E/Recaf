@@ -24,7 +24,7 @@ public class WizardDialog<R> extends DialogBase<R> {
 		getDialogPane().setMinWidth(MIN_WIDTH);
 		wizard.setOnCancel(() -> {
 			// the dummy button is needed
-			getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL);
+			getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
 			close();
 		});
 		init();

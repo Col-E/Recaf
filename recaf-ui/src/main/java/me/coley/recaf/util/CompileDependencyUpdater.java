@@ -4,7 +4,6 @@ import me.coley.recaf.Controller;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.EmptyContentSource;
@@ -17,8 +16,7 @@ import java.util.Map;
  * to the compiler classpath. Plus then any missing data is generated <i>(Phantom classes of library
  * code the user has not specified)</i> and also adding that to the classpath.
  * <br>
- * This utility registers listeners that ensure this information is generated and in the compiler classpath directory.
- * To save space it also removes lots of information we don't need if we're just using it to compile against.
+ * This utility registers listeners that ensure this information is generated.
  *
  * @author Matt Coley
  */
@@ -32,14 +30,12 @@ public class CompileDependencyUpdater {
 	 */
 	public static void install(Controller controller) {
 		controller.addListener((oldWorkspace, newWorkspace) -> {
-			ThreadUtil.run(() -> {
-				if (newWorkspace != null) {
-					// Analyze and create phantoms. Abandon any prior analysis.
-					if (phantomThreadPool.hasActiveThreads())
-						phantomThreadPool.clear();
-					phantomThreadPool.submit(() -> createPhantoms(newWorkspace));
-				}
-			});
+			if (newWorkspace != null) {
+				// Analyze and create phantoms. Abandon any prior analysis.
+				if (phantomThreadPool.hasActiveThreads())
+					phantomThreadPool.clear();
+				phantomThreadPool.submit(() -> createPhantoms(newWorkspace));
+			}
 		});
 	}
 

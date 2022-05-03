@@ -28,6 +28,7 @@ public class Lang {
 	private static final List<String> translationKeys = new ArrayList<>();
 	private static final Logger logger = Logging.get(Lang.class);
 	private static final Map<String, Map<String, String>> translations = new HashMap<>();
+	private static final Map<String, StringBinding> translationBindings = new HashMap<>();
 	private static Map<String, String> currentTranslationMap;
 	private static final StringProperty currentTranslation = new SimpleStringProperty(DEFAULT_TRANSLATIONS);
 
@@ -99,17 +100,20 @@ public class Lang {
 	 *
 	 * @return JavaFX string binding for specific translation key.
 	 */
-	public static StringBinding getBinding(String translationKey) {
-		return new StringBinding() {
-			{
-				bind(currentTranslation);
-			}
+	public static synchronized StringBinding getBinding(String translationKey) {
+		return translationBindings.computeIfAbsent(translationKey, k -> {
+			StringProperty currentTranslation = Lang.currentTranslation;
+			return new StringBinding() {
+				{
+					bind(currentTranslation);
+				}
 
-			@Override
-			protected String computeValue() {
-				return Lang.get(getCurrentTranslations(), translationKey);
-			}
-		};
+				@Override
+				protected String computeValue() {
+					return Lang.get(currentTranslation.get(), translationKey);
+				}
+			};
+		});
 	}
 
 	/**

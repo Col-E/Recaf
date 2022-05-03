@@ -67,9 +67,7 @@ public class JPhantomUtil {
 		// Remove duplicate constraints for faster analysis
 		Set<String> existingConstraints = new HashSet<>();
 		ClassAccessStateMachine.v().getConstraints().removeIf(c -> {
-			boolean isDuplicate = existingConstraints.contains(c.toString());
-			existingConstraints.add(c.toString());
-			return isDuplicate;
+			return !existingConstraints.add(c.toString());
 		});
 		// Execute and populate the current resource with generated classes
 		JPhantom phantom = new JPhantom(nodes, hierarchy, members);
@@ -148,7 +146,8 @@ public class JPhantomUtil {
 	 * @return modified class that clearly indicates it is generated.
 	 */
 	private static byte[] decorate(byte[] generated) {
-		ClassWriter cw = new ClassWriter(0);
+		ClassReader classReader = new ClassReader(generated);
+		ClassWriter cw = new ClassWriter(classReader, 0);
 		ClassVisitor cv = new ClassVisitor(RecafConstants.ASM_VERSION, cw) {
 			@Override
 			public void visitEnd() {
@@ -157,7 +156,7 @@ public class JPhantomUtil {
 				super.visitEnd();
 			}
 		};
-		new ClassReader(generated).accept(cv, ClassReader.SKIP_FRAMES);
+		classReader.accept(cv, ClassReader.SKIP_FRAMES);
 		return cw.toByteArray();
 	}
 }

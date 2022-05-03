@@ -113,7 +113,7 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 
 		try {
 			Path path = file.toPath();
-			bshArea.setText(new String(Files.readAllBytes(path)));
+			bshArea.setText(Files.readString(path));
 			currentFile = file;
 		} catch (IOException e) {
 			logger.error("Failed to open script: {}", e.getLocalizedMessage());
@@ -185,7 +185,7 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 		}
 
 		try {
-			Files.write(currentFile.toPath(), bshArea.getText().getBytes());
+			Files.writeString(currentFile.toPath(), bshArea.getText());
 			logger.info("Saved script to {}", currentFile.getPath());
 			return SaveResult.SUCCESS;
 		} catch (IOException e) {

@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.analysis;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.IllegalAstException;
 import me.coley.recaf.assemble.ast.Code;
+import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.FlowControl;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
@@ -42,6 +43,7 @@ public class Analyzer {
 	private final Code code;
 	private ExpressionToAstTransformer expressionToAstTransformer;
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
+	private Element currentlyVisiting;
 
 	/**
 	 * @param selfType
@@ -154,6 +156,7 @@ public class Analyzer {
 			logger.info("Executing {} : {}", pc, instruction.print());
 			logger.info(" - Stack PRE: {}", frame.getStack());
 		}
+		currentlyVisiting = instruction;
 		// Collect flow control paths, track if the path is forced.
 		// If it is forced we won't be going to the next instruction.
 		boolean continueNextExec = true;
@@ -198,6 +201,12 @@ public class Analyzer {
 			Label label = (Label) instruction;
 			String type = catchHandlerTypes.get(label);
 			if (type != null) {
+				List<Value> stack = frame.getStack();
+				// We will enforce exception type here,
+				// because there are some obfuscators
+				// that make jumps into handler blocks
+				while(!stack.isEmpty())
+					frame.pop();
 				frame.push(new Value.ObjectValue(Type.getObjectType(type)));
 			}
 		} else {
@@ -684,19 +693,19 @@ public class Analyzer {
 					binaryOp(frame, INT_TYPE, NumberUtil::shiftLeft);
 					break;
 				case LSHL:
-					binaryOpWide(frame, LONG_TYPE, NumberUtil::shiftLeft);
+					binaryOpWide(false, frame, LONG_TYPE, NumberUtil::shiftLeft);
 					break;
 				case ISHR:
 					binaryOp(frame, INT_TYPE, NumberUtil::shiftRight);
 					break;
 				case LSHR:
-					binaryOpWide(frame, LONG_TYPE, NumberUtil::shiftRight);
+					binaryOpWide(false, frame, LONG_TYPE, NumberUtil::shiftRight);
 					break;
 				case IUSHR:
 					binaryOp(frame, INT_TYPE, NumberUtil::shiftRightU);
 					break;
 				case LUSHR:
-					binaryOpWide(frame, LONG_TYPE, NumberUtil::shiftRightU);
+					binaryOpWide(false, frame, LONG_TYPE, NumberUtil::shiftRightU);
 					break;
 				case LCMP:
 					binaryOpWide(frame, INT_TYPE, NumberUtil::cmp);
@@ -746,25 +755,25 @@ public class Analyzer {
 					break;
 				case FCMPL:
 					binaryOp(frame, INT_TYPE, (n1, n2) -> {
-						if (Float.isNaN(n1.floatValue())) return -1;
+						if (Float.isNaN(n1.floatValue()) || Float.isNaN(n2.floatValue())) return -1;
 						return NumberUtil.cmp(n1, n2);
 					});
 					break;
 				case FCMPG:
 					binaryOp(frame, INT_TYPE, (n1, n2) -> {
-						if (Float.isNaN(n1.floatValue())) return 1;
+						if (Float.isNaN(n1.floatValue()) || Float.isNaN(n2.floatValue())) return 1;
 						return NumberUtil.cmp(n1, n2);
 					});
 					break;
 				case DCMPL:
 					binaryOpWide(frame, INT_TYPE, (n1, n2) -> {
-						if (Double.isNaN(n1.doubleValue())) return -1;
+						if (Double.isNaN(n1.doubleValue()) || Double.isNaN(n2.doubleValue())) return -1;
 						return NumberUtil.cmp(n1, n2);
 					});
 					break;
 				case DCMPG:
 					binaryOpWide(frame, INT_TYPE, (n1, n2) -> {
-						if (Double.isNaN(n1.doubleValue())) return 1;
+						if (Double.isNaN(n1.doubleValue()) || Double.isNaN(n2.doubleValue())) return 1;
 						return NumberUtil.cmp(n1, n2);
 					});
 					break;
@@ -902,8 +911,8 @@ public class Analyzer {
 						frame.pop();
 					// Push return value
 					Type retType = type.getReturnType();
-					if (retType.getSort() == VOID) {
-						// nothin
+					if (Types.isVoid(retType)) {
+						// nothing
 					} else if (retType.getSort() <= Type.DOUBLE) {
 						frame.push(new Value.NumericValue(retType));
 						if (Types.isWide(retType))
@@ -929,7 +938,9 @@ public class Analyzer {
 							frame.pop();
 					}
 					Type retType = type.getReturnType();
-					if (retType.getSort() <= Type.DOUBLE) {
+					if (Types.isVoid(retType)) {
+						// nothing
+					} else if (retType.getSort() <= Type.DOUBLE) {
 						frame.push(new Value.NumericValue(retType));
 						if (Types.isWide(retType))
 							frame.push(new Value.WideReservedValue());
@@ -1068,30 +1079,24 @@ public class Analyzer {
 	private static void binaryOp(Frame frame, Type type, BiFunction<Number, Number, Number> function) {
 		Value value1 = frame.pop();
 		Value value2 = frame.pop();
-		Value.NumericValue result;
-		try {
-			Number arg1 = ((Value.NumericValue) value1).getNumber();
-			Number arg2 = ((Value.NumericValue) value2).getNumber();
-			if (arg1 == null || arg2 == null)
-				result = new Value.NumericValue(type);
-			else
-				result = new Value.NumericValue(type, function.apply(arg1, arg2));
-		} catch (Exception ex) {
-			logger.debug("Binary operation Error", ex);
-			result = new Value.NumericValue(type);
-			frame.markWonky();
-		}
-		frame.push(result);
-		if (Types.isWide(type)) frame.push(new Value.WideReservedValue());
+		evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
+	}
+
+	private static void binaryOpWide(boolean rightIsWide, Frame frame, Type type, BiFunction<Number, Number, Number> function) {
+		Value value2 = rightIsWide ? frame.popWide() : frame.pop();
+		Value value1 = frame.popWide();
+		evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
 	}
 
 	private static void binaryOpWide(Frame frame, Type type, BiFunction<Number, Number, Number> function) {
-		Value value1 = frame.popWide();
-		Value value2 = frame.popWide();
+		binaryOpWide(true, frame, type, function);
+	}
+
+	private static void evaluateMathOp(Frame frame, Type type, BiFunction<Number, Number, Number> function, Value.NumericValue value2, Value.NumericValue value1) {
 		Value.NumericValue result;
 		try {
-			Number arg1 = ((Value.NumericValue) value1).getNumber();
-			Number arg2 = ((Value.NumericValue) value2).getNumber();
+			Number arg1 = value1.getNumber();
+			Number arg2 = value2.getNumber();
 			if (arg1 == null || arg2 == null)
 				result = new Value.NumericValue(type);
 			else
@@ -1105,30 +1110,20 @@ public class Analyzer {
 		if (Types.isWide(type)) frame.push(new Value.WideReservedValue());
 	}
 
-
 	private static void unaryOp(Frame frame, Type type, Function<Number, Number> function) {
 		Value value = frame.pop();
-		Value.NumericValue result;
-		try {
-			Number arg = ((Value.NumericValue) value).getNumber();
-			if (arg == null)
-				result = new Value.NumericValue(type);
-			else
-				result = new Value.NumericValue(type, function.apply(arg));
-		} catch (Exception ex) {
-			logger.debug("Unnary operation Error", ex);
-			result = new Value.NumericValue(type);
-			frame.markWonky();
-		}
-		frame.push(result);
-		if (Types.isWide(type)) frame.push(new Value.WideReservedValue());
+		evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
 	}
 
 	private static void unaryOpWide(Frame frame, Type type, Function<Number, Number> function) {
 		Value value = frame.popWide();
+		evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
+	}
+
+	private static void evaluateUnaryOp(Frame frame, Type type, Function<Number, Number> function, Value.NumericValue value) {
 		Value.NumericValue result;
 		try {
-			Number arg = ((Value.NumericValue) value).getNumber();
+			Number arg = value.getNumber();
 			if (arg == null)
 				result = new Value.NumericValue(type);
 			else

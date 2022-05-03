@@ -7,9 +7,9 @@ import javafx.scene.layout.Region;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,7 +67,7 @@ public class DragAndDrop {
 		if (db.hasFiles()) {
 			try {
 				List<Path> paths = db.getFiles().stream()
-						.map(file -> Paths.get(file.getAbsolutePath()))
+						.map(File::toPath)
 						.collect(Collectors.toList());
 				listener.onDragDrop(region, event, paths);
 			} catch (IOException ex) {

@@ -40,7 +40,7 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 
 	@Override
 	public boolean closeWorkspace(Workspace workspace) {
-		boolean doClose = false;
+		boolean doClose;
 		if (Configs.display().promptCloseWorkspace) {
 			doClose = WorkspaceClosePrompt.prompt(workspace);
 		} else {

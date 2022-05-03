@@ -1,5 +1,7 @@
 package me.coley.recaf.ui.pane;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Button;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
@@ -51,13 +53,11 @@ public class WorkspaceButtonsPane extends BorderPane {
 		button.setTooltip(tooltip);
 		button.setGraphic(getIconView(Icons.EYE));
 		button.setOnAction(e -> tree.toggleHideLibraries());
-		tree.hideLibrarySubElementsProperty().addListener((ob, old, current) -> {
-			if (old) {
-				button.setGraphic(getIconView(Icons.EYE));
-			} else {
-				button.setGraphic(getIconView(Icons.EYE_DISABLED));
-			}
-		});
+		SimpleBooleanProperty hideProperty = tree.hideLibrarySubElementsProperty();
+		button.graphicProperty().bind(Bindings.createObjectBinding(
+				() -> getIconView(hideProperty.get() ? Icons.EYE_DISABLED : Icons.EYE),
+				hideProperty
+		));
 		return button;
 	}
 
@@ -68,13 +68,11 @@ public class WorkspaceButtonsPane extends BorderPane {
 		button.setTooltip(tooltip);
 		button.setGraphic(getIconView(Icons.CASE_SENSITIVITY));
 		button.setOnAction(e -> tree.toggleCaseSensitivity());
-		tree.caseSensitiveProperty().addListener((ob, old, current) -> {
-			if (old) {
-				button.setOpacity(1.0);
-			} else {
-				button.setOpacity(0.4);
-			}
-		});
+		SimpleBooleanProperty caseProperty = tree.caseSensitiveProperty();
+		button.opacityProperty().bind(Bindings.createDoubleBinding(
+				() -> caseProperty.get() ? 0.4D : 1.0D,
+				caseProperty
+		));
 		return button;
 	}
 }

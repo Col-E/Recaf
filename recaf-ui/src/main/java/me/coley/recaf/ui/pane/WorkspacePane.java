@@ -33,7 +33,8 @@ public class WorkspacePane extends BorderPane implements ControllerListener {
 		setBottom(bottomWrapper);
 		// Any typing in the tree should be fed into the filter
 		tree.setOnKeyPressed(e -> {
-			if (e.getText() != null && !e.getText().isEmpty()) {
+			String text = e.getText();
+			if (text != null && !text.isEmpty()) {
 				filter.requestFocus();
 			} else if (e.getCode() == KeyCode.ESCAPE) {
 				filter.clear();

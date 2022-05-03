@@ -44,7 +44,6 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 		Button runButton = new Button();
 		runButton.textProperty().bind(Lang.getBinding("dialog.vm.execute"));
 		runButton.setGraphic(Icons.getIconView(Icons.PLAY));
-		runButton.setDisable(!validInputs());
 		runButton.setOnMousePressed(e -> {
 			// Only create values when confirm button pressed
 			for (InputWrapper input : inputs) {
@@ -69,7 +68,7 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 							if (throwable instanceof TimeoutException) {
 								logger.error("Invoke future thread timed out");
 							} else {
-								logger.error("Invoke future thread encountered unhandled error", throwable);
+								logger.error("Invoke future thread encountered unhandled error:\n{}", encodeThrowable(throwable));
 							}
 							return;
 						}

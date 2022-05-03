@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.dialog;
 
 import dev.xdark.ssvm.VirtualMachine;
+import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.memory.MemoryManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
@@ -386,6 +387,19 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		} catch (Throwable t) {
 			valid.set(false);
 		}
+	}
+
+	protected Object encodeThrowable(Throwable t) {
+		if (t instanceof VMException) {
+			VMHelper helper = this.helper;
+			InstanceValue oop = ((VMException) t).getOop();
+			InstanceValue stringWriter = helper.newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/StringWriter"), "()V");
+			InstanceValue printWriter = helper.newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/PrintWriter"), "(Ljava/io/Writer;)V", stringWriter);
+			helper.invokeVirtual("printStackTrace", "(Ljava/io/PrintWriter;)V", new Value[0], new Value[]{oop, printWriter});
+			Value throwableAsString = helper.invokeVirtual("toString", "()Ljava/lang/String;", new Value[0], new Value[]{stringWriter}).getResult();
+			return helper.readUtf8(throwableAsString);
+		}
+		return StringUtil.traceToString(t);
 	}
 
 	protected static class InputWrapper {

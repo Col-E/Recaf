@@ -1,5 +1,6 @@
 package me.coley.recaf.presentation;
 
+import javafx.application.Platform;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.RecafUI;
@@ -49,14 +50,14 @@ public class GuiPresentation implements Presentation {
 		CompileDependencyUpdater.install(controller);
 		DecompileInterception.install(controller);
 		// Open UI
-		JFXUtils.runSafe(() -> {
+		Platform.runLater(() -> {
 			try {
 				RecafUI.initialize(controller);
 				RecafUI.getWindows().getMainWindow().show();
 			} catch (Throwable ex) {
 				logger.error("Recaf crashed due to an unhandled error." +
 						"Please open a bug report: " + RecafConstants.URL_BUG_REPORT, ex);
-				JFXUtils.shutdownSafe();
+				Platform.exit();
 				System.exit(-1);
 			}
 		});

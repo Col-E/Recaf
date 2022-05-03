@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -102,7 +101,7 @@ public class WorkspaceIOPrompts {
 		File saveLocation = fcExport.showSaveDialog(parent());
 		if (saveLocation != null) {
 			config().appExportLocation = getParent(saveLocation);
-			ExportUtil.write(Paths.get(saveLocation.getAbsolutePath()));
+			ExportUtil.write(saveLocation.toPath());
 		}
 	}
 
@@ -120,7 +119,7 @@ public class WorkspaceIOPrompts {
 		} else {
 			config().appLoadLocation = getParent(files.get(0));
 			paths = files.stream()
-					.map(f -> Paths.get(f.getAbsolutePath()))
+					.map(File::toPath)
 					.collect(Collectors.toList());
 		}
 		return paths;
@@ -238,8 +237,7 @@ public class WorkspaceIOPrompts {
 	}
 
 	private static String getParent(File file) {
-		file = new File(file.getAbsolutePath());
-		return file.getParent();
+		return file.getAbsoluteFile().getParent();
 	}
 
 	private static DialogConfig config() {
