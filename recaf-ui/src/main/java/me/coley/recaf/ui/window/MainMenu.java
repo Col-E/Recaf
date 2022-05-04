@@ -21,10 +21,7 @@ import me.coley.recaf.mapping.MappingsTool;
 import me.coley.recaf.ui.control.MenuLabel;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.menu.ClosableActionMenuItem;
-import me.coley.recaf.ui.docking.DockTab;
-import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.pane.InfoPane;
-import me.coley.recaf.ui.pane.ScriptEditorPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
@@ -39,8 +36,8 @@ import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 import java.awt.*;
-import java.io.File;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 
 import static me.coley.recaf.ui.util.Menus.*;
@@ -58,6 +55,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private final Menu menuRecent = menu("menu.file.recent", Icons.RECENT);
 	private final Menu menuSearch = menu("menu.search", Icons.ACTION_SEARCH);
 	private final Menu menuMappings = menu("menu.mappings", Icons.DOCUMENTATION);
+	private final Menu menuScripting =  menu("menu.scripting", Icons.CODE);
 	private final MenuItem itemAddToWorkspace;
 	private final MenuItem itemExportPrimary;
 	private final MenuItem itemClose;
@@ -117,9 +115,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 				menuExport.getItems().add(actionLiteral(name, null, () -> exportMappings(mappingsTool)));
 		}
 
-		Menu menuScripting = menu("menu.scripting", Icons.CODE);
-		menuScripting.getItems().add(action("menu.scripting.new", Icons.PLUS, this::newScript));
-		menuScripting.getItems().add(action("menu.scripting.open", Icons.OPEN_FILE, this::openScript));
+		updateScriptMenu(null);
 
 		menu.getMenus().add(menuFile);
 		menu.getMenus().add(menuConfig);
@@ -212,26 +208,19 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		WorkspaceIOPrompts.promptMappingExport(targetMappings);
 	}
 
-	private void newScript() {
-		ScriptEditorPane scriptEditor = new ScriptEditorPane();
-		RecafDockingManager docking = RecafDockingManager.getInstance();
-		DockTab scriptEditorTab = docking.createTab(() -> new DockTab(Lang.getBinding("menu.scripting.editor"), scriptEditor));
-		scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
-		scriptEditor.setTab(scriptEditorTab);
-		scriptEditorTab.select();
-	}
-
-	private void openScript() {
-		ScriptEditorPane scriptEditor = new ScriptEditorPane();
-		File file = scriptEditor.openFile();
-		if (file != null) {
-			RecafDockingManager docking = RecafDockingManager.getInstance();
-			DockTab scriptEditorTab = docking.createTab(() -> new DockTab(Lang.getBinding("menu.scripting.editor"), scriptEditor));
-			scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
-			scriptEditor.setTab(scriptEditorTab);
-			scriptEditor.setTitle();
-			scriptEditorTab.select();
+	/**
+	 * Updates the 'Scripting' menu with a list of menu items.
+	 *
+	 * @param scriptItems
+	 * 		The script menu items
+	 */
+	public void updateScriptMenu(Collection<MenuItem> scriptItems) {
+		menuScripting.getItems().clear();
+		if(scriptItems != null && !scriptItems.isEmpty()) {
+			menuScripting.getItems().addAll(scriptItems);
+			menuScripting.getItems().add(separator());
 		}
+		menuScripting.getItems().add(action("menu.scripting.manage", Icons.OPEN_FILE, this::openScripts));
 	}
 
 	private void exportPrimary() {
@@ -251,6 +240,14 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		window.titleProperty().bind(Lang.getBinding("menu.config"));
 		window.getStage().setWidth(1080);
 		window.getStage().setHeight(600);
+		window.show();
+	}
+
+	private void openScripts() {
+		GenericWindow window = RecafUI.getWindows().getScriptsWindow();
+		window.titleProperty().bind(Lang.getBinding("menu.scripting.manage"));
+		window.getStage().setWidth(750);
+		window.getStage().setHeight(450);
 		window.show();
 	}
 

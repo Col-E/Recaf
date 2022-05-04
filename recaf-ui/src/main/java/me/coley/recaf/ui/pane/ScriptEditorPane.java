@@ -15,6 +15,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.scripting.Script;
 import me.coley.recaf.scripting.ScriptEngine;
 import me.coley.recaf.scripting.ScriptResult;
 import me.coley.recaf.ui.behavior.Cleanable;
@@ -26,6 +27,7 @@ import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
@@ -103,25 +105,32 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 	}
 
 	public ScriptResult execute() {
-		return ScriptEngine.execute(bshArea.getText());
+		return Script.fromSource(bshArea.getText()).execute();
 	}
 
-	public File openFile() {
-		File file = new FileChooser().showOpenDialog(RecafUI.getWindows().getMainWindow());
-		if (file == null)
-			return null;
-
+	/**
+	 * Opens a file in the editor.
+	 *
+	 * @param file The file to open
+	 */
+	public void openFile(File file) {
 		try {
 			Path path = file.toPath();
 			bshArea.setText(Files.readString(path));
 			currentFile = file;
 		} catch (IOException e) {
 			logger.error("Failed to open script: {}", e.getLocalizedMessage());
-			return null;
+			return;
 		}
 
 		logger.info("Opened script {}", currentFile.getName());
-		return file;
+	}
+
+	/**
+	 * Set the editor text.
+	 */
+	public void setText(String text) {
+		bshArea.setText(text);
 	}
 
 	private void handleBshError(ScriptResult result) {
@@ -178,7 +187,10 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 	public SaveResult save() {
 		// Not linked to a file on disk yet
 		if (currentFile == null) {
-			currentFile = new FileChooser().showSaveDialog(RecafUI.getWindows().getMainWindow());
+			FileChooser chooser = scriptsDirChooser();
+			chooser.setInitialFileName("untitled.bsh");
+
+			currentFile = chooser.showSaveDialog(RecafUI.getWindows().getMainWindow());
 			if (currentFile == null)
 				return SaveResult.FAILURE;
 			setTitle();
@@ -192,6 +204,12 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 			logger.error("Failed to save script: {}", e.getLocalizedMessage());
 			return SaveResult.FAILURE;
 		}
+	}
+
+	private FileChooser scriptsDirChooser() {
+		FileChooser chooser = new FileChooser();
+		chooser.setInitialDirectory(Directories.getScriptsDirectory().toFile());
+		return chooser;
 	}
 
 	@Override

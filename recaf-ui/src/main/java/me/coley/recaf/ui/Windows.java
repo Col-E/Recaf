@@ -1,6 +1,7 @@
 package me.coley.recaf.ui;
 
 import me.coley.recaf.ui.pane.ConfigPane;
+import me.coley.recaf.ui.pane.ScriptManagerPane;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.ui.window.MainWindow;
 
@@ -12,6 +13,7 @@ import me.coley.recaf.ui.window.MainWindow;
 public class Windows {
 	private MainWindow mainWindow;
 	private GenericWindow configWindow;
+	private GenericWindow scriptManagerWindow;
 
 	/**
 	 * Initialize the windows.
@@ -19,6 +21,7 @@ public class Windows {
 	public void initialize() {
 		mainWindow = new MainWindow();
 		configWindow = new GenericWindow(new ConfigPane());
+		scriptManagerWindow = new GenericWindow(ScriptManagerPane.getInstance());
 	}
 
 	/**
@@ -33,5 +36,12 @@ public class Windows {
 	 */
 	public GenericWindow getConfigWindow() {
 		return configWindow;
+	}
+
+	/**
+	 * @return Scripts window.
+	 */
+	public GenericWindow getScriptsWindow() {
+		return scriptManagerWindow;
 	}
 }
