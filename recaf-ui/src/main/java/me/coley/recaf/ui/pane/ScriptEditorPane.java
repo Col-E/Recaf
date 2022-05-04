@@ -111,13 +111,12 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 	/**
 	 * Opens a file in the editor.
 	 *
-	 * @param file The file to open
+	 * @param path Path of the file to open
 	 */
-	public void openFile(File file) {
+	public void openFile(Path path) {
 		try {
-			Path path = file.toPath();
 			bshArea.setText(Files.readString(path));
-			currentFile = file;
+			currentFile = path.toFile();
 		} catch (IOException e) {
 			logger.error("Failed to open script: {}", e.getLocalizedMessage());
 			return;

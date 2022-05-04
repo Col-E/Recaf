@@ -1,13 +1,10 @@
 package me.coley.recaf.ui.pane;
 
 import javafx.application.Platform;
+import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -21,9 +18,9 @@ import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.MainMenu;
+import me.coley.recaf.util.DesktopUtil;
 import me.coley.recaf.util.Directories;
 
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.WatchKey;
@@ -33,7 +30,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static java.nio.file.StandardWatchEventKinds.*;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 public class ScriptManagerPane extends BorderPane {
     private static final ScriptManagerPane instance = new ScriptManagerPane();
@@ -78,15 +76,21 @@ public class ScriptManagerPane extends BorderPane {
         HBox left = new HBox();
         left.setSpacing(4);
 
-        Button newScript = new Button(Lang.get("menu.scripting.new"), Icons.getIconView(Icons.PLUS));
+        Button newScript = new Button();
+        newScript.textProperty().bind(Lang.getBinding("menu.scripting.new"));
+        newScript.setGraphic(Icons.getIconView(Icons.PLUS));
         newScript.setOnAction(event -> createNewScript());
 
-        Button browseScripts = new Button(Lang.get("menu.scripting.browse"), Icons.getIconView(Icons.FOLDER));
+        Button browseScripts = new Button();
+        browseScripts.textProperty().bind(Lang.getBinding("menu.scripting.browse"));
+        browseScripts.setGraphic(Icons.getIconView(Icons.FOLDER));
         browseScripts.setOnAction(event -> browseScripts());
 
         left.getChildren().addAll(newScript, browseScripts);
 
-        Button refresh = new Button(Lang.get("menu.scripting.refresh"), Icons.getIconView(Icons.ACTION_SEARCH));
+        Button refresh = new Button();
+        refresh.textProperty().bind(Lang.getBinding("menu.scripting.refresh"));
+        refresh.setGraphic(Icons.getIconView(Icons.ACTION_SEARCH));
         refresh.setOnAction(event -> populateScripts());
         refresh.setAlignment(Pos.CENTER_RIGHT);
 
@@ -104,7 +108,8 @@ public class ScriptManagerPane extends BorderPane {
         List<Script> scripts = Script.getAvailableScripts();
 
         if (scripts == null || scripts.isEmpty()) {
-            Label label = new Label(Lang.get("menu.scripting.none-found"));
+            Label label = new Label();
+            label.textProperty().bind(Lang.getBinding("menu.scripting.none-found"));
             label.setAlignment(Pos.CENTER);
             label.getStyleClass().addAll("h2", "b");
             scrollPane.setContent(label);
@@ -150,7 +155,7 @@ public class ScriptManagerPane extends BorderPane {
 
     private void editScript(Script script) {
         ScriptEditorPane scriptEditor = new ScriptEditorPane();
-        scriptEditor.openFile(script.getPath().toFile());
+        scriptEditor.openFile(script.getPath());
         showScriptEditor(scriptEditor);
     }
 
@@ -158,15 +163,27 @@ public class ScriptManagerPane extends BorderPane {
      * Open the 'scripts' directory in the file explorer.
      */
     private void browseScripts() {
-        EventQueue.invokeLater(() -> {
-            try {
-                Desktop.getDesktop().open(Directories.getScriptsDirectory().toFile());
-            } catch (IOException ignored) {}
-        });
+        try {
+            DesktopUtil.showDocument(Directories.getScriptsDirectory().toUri());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private Label makeAttribLabel(String text) {
+    private Label makeAttribLabel(StringBinding langBinding, String text) {
         Label label = new Label(text);
+        if(langBinding != null) {
+            label.textProperty().bind(new StringBinding() {
+                {
+                    bind(langBinding);
+                }
+
+                @Override
+                protected String computeValue() {
+                    return String.format("  • %s: %s", langBinding.get(), text);
+                }
+            });
+        }
         label.setMinSize(350, 20);
         return label;
     }
@@ -188,19 +205,28 @@ public class ScriptManagerPane extends BorderPane {
         String url = script.getTag("url");
 
         if(description != null)
-            info.getChildren().add(makeAttribLabel(description));
+            info.getChildren().add(makeAttribLabel(null, description));
         if(author != null)
-            info.getChildren().add(makeAttribLabel(String.format("  • %s: %s", Lang.get("menu.scripting.author"), author)));
+            info.getChildren().add(makeAttribLabel(Lang.getBinding("menu.scripting.author"), author));
         if(version != null)
-            info.getChildren().add(makeAttribLabel(String.format("  • %s: %s", Lang.get("menu.scripting.version"), version)));
-        if(url != null)
-            info.getChildren().add(makeAttribLabel(String.format("  • URL: %s", url)));
+            info.getChildren().add(makeAttribLabel(Lang.getBinding("menu.scripting.version"), version));
+        if(url != null) {
+            info.getChildren().add(makeAttribLabel(new StringBinding() {
+                @Override
+                protected String computeValue() {
+                    return "URL";
+                }
+            }, url));
+        }
 
         VBox actions = new VBox();
         actions.setSpacing(4);
         actions.setAlignment(Pos.CENTER_RIGHT);
 
-        Button executeButton = new Button(Lang.get("menu.scripting.execute"), Icons.getIconView(Icons.PLAY));
+        Button executeButton = new Button();
+        executeButton.textProperty().bind(Lang.getBinding("menu.scripting.execute"));
+        executeButton.setGraphic(Icons.getIconView(Icons.PLAY));
+
         executeButton.setOnAction(event -> {
             ScriptResult result = script.execute();
             if(result.wasSuccess())
@@ -208,11 +234,14 @@ public class ScriptManagerPane extends BorderPane {
             else
                 Animations.animateFailure(scrollPane, 1000);
         });
-        executeButton.setPrefSize(80, 30);
+        executeButton.setPrefSize(130, 30);
 
-        Button editButton = new Button(Lang.get("menu.scripting.edit"), Icons.getIconView(Icons.ACTION_EDIT));
+        Button editButton = new Button();
+        editButton.textProperty().bind(Lang.getBinding("menu.scripting.edit"));
+        editButton.setGraphic(Icons.getIconView(Icons.ACTION_EDIT));
+
         editButton.setOnAction(event -> editScript(script));
-        editButton.setPrefSize(80, 30);
+        editButton.setPrefSize(130, 30);
 
         actions.getChildren().addAll(executeButton, editButton);
 

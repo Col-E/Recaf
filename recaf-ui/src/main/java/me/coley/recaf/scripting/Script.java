@@ -3,17 +3,17 @@ package me.coley.recaf.scripting;
 import me.coley.recaf.util.Directories;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents an executable Beanshell script.
@@ -38,7 +38,8 @@ public class Script {
         if(isFile) {
             try {
                 parseTags();
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -74,16 +75,14 @@ public class Script {
      *      A list of scrips or {@code null} if none could be found
      */
     public static List<Script> getAvailableScripts() {
-        File[] scripts = Directories.getScriptsDirectory()
-                .toFile()
-                .listFiles(f -> f.getName().endsWith(Script.EXTENSION));
-
-        if(scripts == null)
-            return null; // No scripts
-
-        return Arrays.stream(scripts).map(
-                f -> Script.fromPath(f.toPath())
-        ).collect(Collectors.toList());
+        try(Stream<Path> stream = Files.walk(Directories.getScriptsDirectory(), FileVisitOption.FOLLOW_LINKS)) {
+            return stream.filter(
+                    f -> f.toString().endsWith(Script.EXTENSION)
+            ).map(Script::fromPath).collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -116,7 +115,8 @@ public class Script {
                     tags.put(key, value);
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
