@@ -187,6 +187,9 @@ welcome.github.description=Check out the project page on GitHub: Source code, op
 ## Workspace
 workspace.title=Workspace
 
+## Java area
+java.unparsable=JavaParser failed to interpret source, context actions only available 'Fields & Methods' tab
+
 ## Outline
 outline.title=Fields & methods
 

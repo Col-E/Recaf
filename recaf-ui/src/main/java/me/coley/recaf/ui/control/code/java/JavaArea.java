@@ -33,6 +33,7 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.context.DeclarableContextBuilder;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.code.*;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.JavaVersion;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
@@ -50,6 +51,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.javaparser.ast.Node.Parsedness.UNPARSABLE;
 import static me.coley.recaf.parse.JavaParserResolving.resolvedValueToInfo;
 
 /**
@@ -421,11 +423,22 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	private CompilationUnit updateParse() {
 		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
 		ParseResult<CompilationUnit> result = helper.parseClass(getText());
-		return result.getResult().orElse(null);
+		CompilationUnit unit = result.getResult().orElse(null);
+		// Display warning to users that code was unparsable so that they stop asking us why right-click doesn't work.
+		if (unit == null || unit.getParsed() == UNPARSABLE) {
+			if (getProblemTracking() != null) {
+				getProblemTracking().addProblem(-2, new ProblemInfo(
+						ProblemOrigin.JAVA_SYNTAX, ProblemLevel.WARNING, -2,
+						Lang.getBinding("java.unparsable").get()));
+			}
+		} else {
+			getProblemTracking().removeProblem(-2);
+		}
+		return unit;
 	}
 
 	/**
-	 * Select the position of an AST element and {@link #centerParagraph(int) center it on the screen}.
+	 * Select the position of an AST element and center it on the screen.
 	 *
 	 * @param pos
 	 * 		Position to select.
