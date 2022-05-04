@@ -20,6 +20,8 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.MainMenu;
 import me.coley.recaf.util.DesktopUtil;
 import me.coley.recaf.util.Directories;
+import me.coley.recaf.util.logging.Logging;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -34,6 +36,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 public class ScriptManagerPane extends BorderPane {
+    private static final Logger logger = Logging.get(ScriptManagerPane.class);
     private static final ScriptManagerPane instance = new ScriptManagerPane();
 
     private final VBox scriptsList = new VBox();
@@ -57,8 +60,8 @@ public class ScriptManagerPane extends BorderPane {
                     if (!wk.reset())
                         break;
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
+            } catch (IOException | InterruptedException ex) {
+                logger.error("Filesystem watch error", ex);
             }
         });
     }
@@ -143,11 +146,11 @@ public class ScriptManagerPane extends BorderPane {
     private void createNewScript() {
         String metadataTemplate =
                 "//==Metadata==\n" +
-                "// @name New Script\n" +
-                "// @description Script Description\n" +
-                "// @version 1.0\n" +
-                "// @author Script Author\n" +
-                "// ==/Metadata==\n\n";
+                        "// @name New Script\n" +
+                        "// @description Script Description\n" +
+                        "// @version 1.0\n" +
+                        "// @author Script Author\n" +
+                        "// ==/Metadata==\n\n";
         ScriptEditorPane scriptEditor = new ScriptEditorPane();
         scriptEditor.setText(metadataTemplate);
         showScriptEditor(scriptEditor);
@@ -165,14 +168,14 @@ public class ScriptManagerPane extends BorderPane {
     private void browseScripts() {
         try {
             DesktopUtil.showDocument(Directories.getScriptsDirectory().toUri());
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ex) {
+            logger.error("Failed to show scripts directory", ex);
         }
     }
 
     private Label makeAttribLabel(StringBinding langBinding, String text) {
         Label label = new Label(text);
-        if(langBinding != null) {
+        if (langBinding != null) {
             label.textProperty().bind(new StringBinding() {
                 {
                     bind(langBinding);
@@ -204,13 +207,13 @@ public class ScriptManagerPane extends BorderPane {
         String version = script.getTag("version");
         String url = script.getTag("url");
 
-        if(description != null)
+        if (description != null)
             info.getChildren().add(makeAttribLabel(null, description));
-        if(author != null)
+        if (author != null)
             info.getChildren().add(makeAttribLabel(Lang.getBinding("menu.scripting.author"), author));
-        if(version != null)
+        if (version != null)
             info.getChildren().add(makeAttribLabel(Lang.getBinding("menu.scripting.version"), version));
-        if(url != null) {
+        if (url != null) {
             info.getChildren().add(makeAttribLabel(new StringBinding() {
                 @Override
                 protected String computeValue() {
@@ -229,7 +232,7 @@ public class ScriptManagerPane extends BorderPane {
 
         executeButton.setOnAction(event -> {
             ScriptResult result = script.execute();
-            if(result.wasSuccess())
+            if (result.wasSuccess())
                 Animations.animateSuccess(scrollPane, 1000);
             else
                 Animations.animateFailure(scrollPane, 1000);
