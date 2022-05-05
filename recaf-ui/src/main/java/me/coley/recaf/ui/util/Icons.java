@@ -38,6 +38,9 @@ public class Icons {
 	public static final String ANNOTATION = "icons/class/annotation.png";
 	public static final String INTERFACE = "icons/class/interface.png";
 	public static final String ENUM = "icons/class/enum.png";
+	public static final String NULL = "icons/class/null.png";
+	public static final String PRIMITIVE = "icons/class/prim.png";
+	public static final String INTERNAL = "icons/class/internal.png";
 	// Member definitions
 	public static final String FIELD = "icons/member/field.png";
 	public static final String METHOD = "icons/member/method.png";

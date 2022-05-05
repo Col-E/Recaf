@@ -204,6 +204,9 @@ logging.title=Logging
 ## Assembler
 assembler.title=Assembler
 assembler.analysis.title=Analysis
+assembler.analysis.stack=Stack
+assembler.analysis.name-column=Name
+assembler.analysis.value-column=Value
 assembler.playground.title=Java to Bytecode
 assembler.playground.comment=You can write regular Java in here and have it translated to bytecode
 assembler.vartable.title=Variables

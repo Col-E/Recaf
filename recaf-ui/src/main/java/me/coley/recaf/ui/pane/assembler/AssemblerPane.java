@@ -105,9 +105,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		Tab tab = new Tab();
 		tab.textProperty().bind(Lang.getBinding("assembler.analysis.title"));
 		tab.setGraphic(Icons.getIconView(Icons.SMART));
-		// TODO: Show stack / locals at current line
-		//  - register 'AssemblerAstListener' to listen for updates
-		tab.setContent(new Label("(PENDING) stack analysis and local variable values"));
+		tab.setContent(new StackAnalysisPane(assemblerArea, pipeline));
 		return tab;
 	}
 

@@ -3,7 +3,9 @@ package me.coley.recaf.assemble.analysis;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import org.objectweb.asm.Type;
 
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Base value type.
@@ -145,6 +147,14 @@ public class Value {
 		}
 
 		@Override
+		public String toString() {
+			return "[" + Arrays.stream(getArray())
+					.map(Object::toString)
+					.collect(Collectors.joining(", ")) +
+					"]";
+		}
+
+		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
@@ -256,6 +266,13 @@ public class Value {
 		public TypeValue(Type type) {
 			super(CLASS_TYPE);
 			this.argumentType = Objects.requireNonNull(type, "Type cannot be null!");
+		}
+
+		/**
+		 * @return Class type.
+		 */
+		public Type getArgumentType() {
+			return argumentType;
 		}
 
 		@Override
