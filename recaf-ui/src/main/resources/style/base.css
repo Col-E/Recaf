@@ -15,7 +15,7 @@
 	-fx-accent: rgb(51, 51, 52);
 	-fx-focus-color: rgb(51, 51, 52);
 	/* Non-focused-selected elements */
-	-fx-selection-bar-non-focused: rgb(45, 45, 46);
+	-fx-selection-bar-non-focused: rgb(46, 56, 59);
 }
 * {
 	-fx-highlight-fill: rgba(0, 180, 255, 0.4);

@@ -203,7 +203,7 @@ logging.title=Logging
 
 ## Assembler
 assembler.title=Assembler
-assembler.analysis.title=Analysis
+assembler.analysis.title=Variables & Stack
 assembler.analysis.stack=Stack
 assembler.analysis.name-column=Name
 assembler.analysis.value-column=Value

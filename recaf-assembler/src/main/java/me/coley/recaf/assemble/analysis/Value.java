@@ -369,7 +369,9 @@ public class Value {
 
 		@Override
 		public String toString() {
-			return type.getInternalName() + ":" + (number == null ? "?" : number);
+			if (number == null)
+				return type.getClassName();
+			return type.getClassName() + " " + number;
 		}
 
 		@Override

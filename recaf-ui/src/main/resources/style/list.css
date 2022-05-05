@@ -1,0 +1,12 @@
+.analysis-list-header {
+    /* The size here is used to perfectly align with the adjacent cell height of the local variable table headers */
+    -fx-padding: 1 0 2 0;
+    /* Match adjacent table style */
+    -fx-background-color: rgb(29, 29, 31);
+    -fx-font-weight: bold;
+    -fx-text-alignment: center;
+}
+.analysis-list-cell {
+    /* The size here is used to perfectly align with the adjacent cell height of the local variable table cells */
+    -fx-padding: 4 8 3 8;
+}

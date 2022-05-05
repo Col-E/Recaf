@@ -2,6 +2,7 @@ package me.coley.recaf.ui.pane.assembler;
 
 import javafx.beans.value.ObservableValueBase;
 import javafx.collections.FXCollections;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -45,7 +46,14 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 	 */
 	public StackAnalysisPane(AssemblerArea assemblerArea, AssemblerPipeline pipeline) {
 		this.pipeline = pipeline;
-		setCenter(new SplitPane(variableView, stackView));
+		BorderPane stackWrapper = new BorderPane(stackView);
+		Label stackTitle = new Label();
+		stackTitle.getStyleClass().add("analysis-list-header");
+		stackTitle.textProperty().bind(Lang.getBinding("assembler.analysis.stack"));
+		stackTitle.prefWidthProperty().bind(stackWrapper.widthProperty());
+		stackTitle.setAlignment(Pos.CENTER);
+		stackWrapper.setTop(stackTitle);
+		setCenter(new SplitPane(variableView, stackWrapper));
 		assemblerArea.currentParagraphProperty().addListener((observable, oldIndex, currentIndex) -> {
 			onIndexChange(currentIndex);
 		});
@@ -118,6 +126,14 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		return this;
 	}
 
+	/**
+	 * Populates the table/list cell with text/graphics for the given value.
+	 *
+	 * @param cell
+	 * 		Cell to update.
+	 * @param item
+	 * 		Cell value.
+	 */
 	private static void populate(IndexedCell<Value> cell, Value item) {
 		if (item instanceof Value.EmptyPoppedValue || item instanceof Value.WideReservedValue) {
 			// Internal
@@ -130,65 +146,85 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 			cell.setGraphic(Icons.getIconView(Icons.NULL));
 		} else if (item instanceof Value.ObjectValue) {
 			// Object
-			Node graphic = null;
-			Type type = ((Value.ObjectValue) item).getType();
-			if (item instanceof Value.TypeValue) {
-				// Class<T> object
-				type = ((Value.TypeValue) item).getArgumentType();
-			}
-			String internalName = type.getInternalName();
-			Workspace workspace = RecafUI.getController().getWorkspace();
-			if (workspace != null) {
-				ClassInfo info = workspace.getResources().getClass(internalName);
-				if (info != null) {
-					graphic = Icons.getClassIcon(info);
-				}
-			}
-			if (graphic == null) {
-				graphic = Icons.getIconView(Icons.CLASS);
-			}
-			cell.setGraphic(graphic);
+			cell.setGraphic(createObjectGraphic((Value.ObjectValue) item));
 		} else if (item instanceof Value.HandleValue) {
 			// Handle reference
-			HandleInfo handleInfo = ((Value.HandleValue) item).getInfo();
-			Workspace workspace = RecafUI.getController().getWorkspace();
-			Node graphic = null;
-			if (workspace != null) {
-				ClassInfo info = workspace.getResources().getClass(handleInfo.getOwner());
-				if (info != null) {
-					if (handleInfo.getDesc().charAt(0) == '(') {
-						MethodInfo methodInfo = info.findMethod(handleInfo.getName(), handleInfo.getDesc());
-						if (methodInfo != null) {
-							graphic = Icons.getMethodIcon(methodInfo);
-						}
-					} else {
-						FieldInfo fieldInfo = info.findField(handleInfo.getName(), handleInfo.getDesc());
-						if (fieldInfo != null) {
-							graphic = Icons.getFieldIcon(fieldInfo);
-						}
-					}
-				}
-			}
-			if (graphic == null) {
-				graphic = Icons.getIconView(Icons.INTERNAL);
-			}
-			cell.setGraphic(graphic);
+			cell.setGraphic(createHandleGraphic((Value.HandleValue) item));
 		} else {
 			cell.setGraphic(null);
 		}
 		cell.setText(item.toString());
 	}
 
+	private static Node createObjectGraphic(Value.ObjectValue item) {
+		Node graphic = null;
+		Type type = item.getType();
+		if (item instanceof Value.TypeValue) {
+			// Class<T> object
+			type = ((Value.TypeValue) item).getArgumentType();
+		}
+		String internalName = type.getInternalName();
+		Workspace workspace = RecafUI.getController().getWorkspace();
+		if (workspace != null) {
+			ClassInfo info = workspace.getResources().getClass(internalName);
+			if (info != null) {
+				graphic = Icons.getClassIcon(info);
+			}
+		}
+		if (graphic == null) {
+			graphic = Icons.getIconView(Icons.CLASS);
+		}
+		return graphic;
+	}
+
+	private static Node createHandleGraphic(Value.HandleValue item) {
+		HandleInfo handleInfo = item.getInfo();
+		Workspace workspace = RecafUI.getController().getWorkspace();
+		Node graphic = null;
+		if (workspace != null) {
+			ClassInfo info = workspace.getResources().getClass(handleInfo.getOwner());
+			if (info != null) {
+				if (handleInfo.getDesc().charAt(0) == '(') {
+					MethodInfo methodInfo = info.findMethod(handleInfo.getName(), handleInfo.getDesc());
+					if (methodInfo != null) {
+						graphic = Icons.getMethodIcon(methodInfo);
+					}
+				} else {
+					FieldInfo fieldInfo = info.findField(handleInfo.getName(), handleInfo.getDesc());
+					if (fieldInfo != null) {
+						graphic = Icons.getFieldIcon(fieldInfo);
+					}
+				}
+			}
+		}
+		if (graphic == null) {
+			graphic = Icons.getIconView(Icons.INTERNAL);
+		}
+		return graphic;
+	}
+
+	/**
+	 * Wrapper of list-view to support drawing {@link Value} cells.
+	 */
 	static class FrameStackView extends ListView<Value> {
 		public FrameStackView() {
+			getStyleClass().add("analysis-list");
 			setCellFactory(param -> new ValueListCell());
 		}
 
+		/**
+		 * @param frame
+		 * 		Frame to pull stack data from.
+		 */
 		public void update(Frame frame) {
 			setItems(FXCollections.observableArrayList(frame.getStack()));
 		}
 
-		static class ValueListCell extends ListCell<Value> {
+		private static class ValueListCell extends ListCell<Value> {
+			public ValueListCell() {
+				getStyleClass().add("analysis-list-cell");
+			}
+
 			@Override
 			protected void updateItem(Value item, boolean empty) {
 				super.updateItem(item, empty);
@@ -203,11 +239,15 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		}
 	}
 
+	/**
+	 * Wrapper of table-view to support drawing {@link Value} cells.
+	 */
 	static class FrameVariableTable extends TableView<String> {
 		private Frame frame;
 
 		@SuppressWarnings("unchecked")
 		public FrameVariableTable() {
+			getStyleClass().add("analysis-table");
 			TableColumn<String, String> colName = new TableColumn<>();
 			colName.textProperty().bind(Lang.getBinding("assembler.analysis.name-column"));
 			colName.setCellValueFactory(param -> new ObservableValueBase<>() {
@@ -216,7 +256,6 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 					return param.getValue();
 				}
 			});
-
 			TableColumn<String, Value> colValue = new TableColumn<>();
 			colValue.textProperty().bind(Lang.getBinding("assembler.analysis.value-column"));
 			colValue.setCellFactory(param -> new ValueTableCell());
@@ -228,10 +267,15 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 					return frame.getLocal(param.getValue());
 				}
 			});
-
+			colName.prefWidthProperty().bind(widthProperty().multiply(0.295));
+			colValue.prefWidthProperty().bind(widthProperty().multiply(0.70));
 			getColumns().addAll(colName, colValue);
 		}
 
+		/**
+		 * @param frame
+		 * 		Frame to pull local variable data from.
+		 */
 		public void update(Frame frame) {
 			this.frame = frame;
 			if (frame == null) {
@@ -242,7 +286,7 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 			}
 		}
 
-		static class ValueTableCell extends TableCell<String, Value> {
+		private static class ValueTableCell extends TableCell<String, Value> {
 			@Override
 			protected void updateItem(Value item, boolean empty) {
 				super.updateItem(item, empty);
