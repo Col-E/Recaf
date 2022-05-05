@@ -2,11 +2,7 @@ package me.coley.recaf.assemble.analysis;
 
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.IllegalAstException;
-import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.Element;
-import me.coley.recaf.assemble.ast.FlowControl;
-import me.coley.recaf.assemble.ast.HandleInfo;
-import me.coley.recaf.assemble.ast.Unit;
+import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.*;
@@ -731,17 +727,23 @@ public class Analyzer {
 					break;
 				case D2F:
 				case L2F:
+					unaryOpWide(frame, FLOAT_TYPE, Number::floatValue);
+					break;
 				case I2F:
 					unaryOp(frame, FLOAT_TYPE, Number::floatValue);
 					break;
-				case F2D:
 				case L2D:
+					unaryOpWide(frame, DOUBLE_TYPE, Number::doubleValue);
+					break;
+				case F2D:
 				case I2D:
 					unaryOp(frame, DOUBLE_TYPE, Number::doubleValue);
 					break;
 				case L2I:
-				case F2I:
 				case D2I:
+					unaryOpWide(frame, INT_TYPE, Number::intValue);
+					break;
+				case F2I:
 					unaryOp(frame, INT_TYPE, Number::intValue);
 					break;
 				case I2B:
