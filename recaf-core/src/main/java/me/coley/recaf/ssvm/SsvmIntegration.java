@@ -52,20 +52,22 @@ public class SsvmIntegration {
 	 */
 	public SsvmIntegration(Workspace workspace) {
 		this.workspace = workspace;
-		try {
-			vm = createVM(false, null);
+		vmThreadPool.submit(() -> {
 			try {
-				vm.bootstrap();
-				initialized = true;
+				vm = createVM(false, null);
+				try {
+					vm.bootstrap();
+					initialized = true;
+				} catch (Exception ex) {
+					initializeError = ex;
+				}
+				onPostInit();
 			} catch (Exception ex) {
+				vm = null;
 				initializeError = ex;
+				onPostInit();
 			}
-			onPostInit();
-		} catch (Exception ex) {
-			vm = null;
-			initializeError = ex;
-			onPostInit();
-		}
+		});
 	}
 
 	private void onPostInit() {
