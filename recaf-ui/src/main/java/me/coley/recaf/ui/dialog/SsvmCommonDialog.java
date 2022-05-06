@@ -163,7 +163,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 					try {
 						consumer.accept(field.getText());
 						return true;
-					} catch(Throwable t) {
+					} catch (Throwable t) {
 						return false;
 					}
 				},
@@ -336,7 +336,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			}
 			default:
 				Label field = new Label("null");
-				return new InputWrapper(field, __ -> NullValue.INSTANCE);
+				return new InputWrapper(field, unused -> NullValue.INSTANCE);
 		}
 	}
 
@@ -360,7 +360,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			}
 		});
 		checkCreateDefault.setSelected(true);
-		return new InputWrapper(checkCreateDefault, __ -> {
+		return new InputWrapper(checkCreateDefault, unused -> {
 			if (checkCreateDefault.isSelected()) {
 				InstanceJavaClass cls = (InstanceJavaClass) vm.findBootstrapClass(type.getInternalName(), true);
 				if (cls != null)
@@ -416,6 +416,17 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 
 		public InputWrapper(Node editor, Function<String, Value> supplier) {
 			this(new SimpleBooleanProperty(true), editor, supplier);
+		}
+
+		public Value toValue() {
+			String text = null;
+			if (editor instanceof TextField) {
+				text = ((TextField) editor).getText();
+			} else if (editor instanceof Label) {
+				text = ((Label) editor).getText();
+			}
+			// 'editor' can be something else, but typically means text input goes ignored, so 'null' is fine.
+			return supplier.apply(text);
 		}
 	}
 }
