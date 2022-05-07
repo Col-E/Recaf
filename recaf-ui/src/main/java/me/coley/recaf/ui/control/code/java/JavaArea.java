@@ -41,7 +41,6 @@ import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
 import org.fxmisc.richtext.CharacterHit;
-import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
 import org.slf4j.Logger;
 
@@ -50,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static com.github.javaparser.ast.Node.Parsedness.UNPARSABLE;
 import static me.coley.recaf.parse.JavaParserResolving.resolvedValueToInfo;
@@ -63,6 +63,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	private static final Logger logger = Logging.get(JavaArea.class);
 	private CommonClassInfo lastInfo;
 	private CompletableFuture<CompilationUnit> parseFuture;
+	private Consumer<CompilationUnit> queuedParseAction;
 	private ContextMenu menu;
 
 	/**
@@ -92,16 +93,22 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 					contextBuilder.search();
 			}
 		});
-	}
-
-	@Override
-	protected void onTextChanged(PlainTextChange change) {
-		super.onTextChanged(change);
-		// Queue up new parse task, killing prior task if present
-		if (parseFuture != null) {
-			parseFuture.cancel(true);
-		}
-		parseFuture = ThreadUtil.run(this::updateParse);
+		textProperty().addListener((observable, oldValue, newValue) -> {
+			// Queue up new parse task, killing prior task if present
+			if (parseFuture != null) {
+				parseFuture.cancel(true);
+			}
+			CompletableFuture<CompilationUnit> unitFuture = ThreadUtil.run(this::updateParse);
+			if (queuedParseAction != null) {
+				Consumer<CompilationUnit> action = queuedParseAction;
+				unitFuture = unitFuture.thenApplyAsync(ast -> {
+					action.accept(ast);
+					return ast;
+				}, FxThreadUtil.executor());
+				queuedParseAction = null;
+			}
+			parseFuture = unitFuture;
+		});
 	}
 
 	@Override
@@ -116,13 +123,24 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 
 	@Override
 	public boolean isMemberSelectionReady() {
-		return parseFuture.isDone();
+		return parseFuture != null && parseFuture.isDone();
 	}
 
 	@Override
 	public void selectMember(MemberInfo memberInfo) {
 		if (memberInfo == null)
 			return;
+		if (isMemberSelectionReady())
+			internalSelect(memberInfo);
+		else
+			internalQueueSelect(memberInfo);
+	}
+
+	private void internalQueueSelect(MemberInfo memberInfo) {
+		queuedParseAction = ast -> doSelectMember(ast, memberInfo);
+	}
+
+	private void internalSelect(MemberInfo memberInfo) {
 		parseFuture.orTimeout(Configs.decompiler().decompileTimeout, TimeUnit.MILLISECONDS)
 				.thenAcceptAsync(ast -> {
 					// Parse thread done, and AST result should be present

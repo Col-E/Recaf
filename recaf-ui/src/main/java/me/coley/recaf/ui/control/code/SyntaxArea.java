@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.IntFunction;
 
@@ -269,7 +268,14 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			// Restore scroll and caret position
 			snapshot.restore();
 		} else {
+			int pos = getCaretPosition();
 			replaceText(text);
+			// Common case for initial text placement.
+			// Using 'replaceText' pushes the caret to the end of the document, which we do not want to do.
+			if (pos == 0) {
+				moveTo(pos);
+				requestFollowCaret();
+			}
 		}
 		// Wipe history if initial set call
 		if (isInitialSet) {

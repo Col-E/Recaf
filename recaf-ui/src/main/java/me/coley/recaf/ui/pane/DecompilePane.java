@@ -1,13 +1,17 @@
 package me.coley.recaf.ui.pane;
 
+import javafx.animation.FadeTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
@@ -16,11 +20,13 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.ui.behavior.*;
+import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
@@ -42,6 +48,7 @@ import java.util.function.BiConsumer;
 public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable, Scrollable {
 	private static final Logger log = Logging.get(DecompilePane.class);
 	private final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "Decompile");
+	private final VBox overlay = new VBox();
 	private final JavaArea javaArea;
 	private Decompiler decompiler;
 	private CommonClassInfo lastClass;
@@ -55,14 +62,18 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		this.javaArea = new JavaArea(tracking);
 		// Wrap content, create error display
-		Node node = new VirtualizedScrollPane<>(javaArea);
+		StackPane node = new StackPane(new VirtualizedScrollPane<>(javaArea));
 		Node errorDisplay = new ErrorDisplay(javaArea, tracking);
+		// Overlay for 'pls wait for decompile' message
+		overlay.setAlignment(Pos.CENTER);
+		overlay.getChildren().addAll(new ProgressBar(-1.0), new BoundLabel(Lang.getBinding("java.decompiling")));
+		overlay.getChildren().forEach(n -> n.opacityProperty().bind(overlay.opacityProperty()));
+		overlay.getStyleClass().add("progress-overlay");
 		// Layout
-		StackPane stack = new StackPane();
 		StackPane.setAlignment(errorDisplay, Configs.editor().errorIndicatorPos);
 		StackPane.setMargin(errorDisplay, new Insets(16, 25, 25, 53));
-		stack.getChildren().add(node);
-		stack.getChildren().add(errorDisplay);
+		StackPane stack = new StackPane();
+		stack.getChildren().addAll(node, errorDisplay, overlay);
 		setCenter(stack);
 		// Search support
 		SearchBar.install(this, javaArea);
@@ -99,6 +110,30 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		return box;
 	}
 
+	/**
+	 * Fades in the <i>"decompile is in progress bla bla bla"</i> overlay.
+	 */
+	private void showOverlay() {
+		// Makethe element click-opaque
+		overlay.setMouseTransparent(false);
+		FadeTransition ft = new FadeTransition(Duration.millis(1000), overlay);
+		ft.setFromValue(overlay.getOpacity());
+		ft.setToValue(0.9);
+		ft.play();
+	}
+
+	/**
+	 * Fades out the <i>"decompile is in progress bla bla bla"</i> overlay.
+	 */
+	private void hideOverlay() {
+		// Make the element click-through
+		overlay.setMouseTransparent(true);
+		FadeTransition ft = new FadeTransition(Duration.millis(1000), overlay);
+		ft.setFromValue(overlay.getOpacity());
+		ft.setToValue(0.0);
+		ft.play();
+	}
+
 	@Override
 	public boolean supportsMemberSelection() {
 		return javaArea.supportsMemberSelection();
@@ -116,6 +151,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 
 	@Override
 	public void onUpdate(CommonClassInfo newValue) {
+		boolean isInitialDecompile = lastClass == null;
 		lastClass = newValue;
 		javaArea.onUpdate(newValue);
 		if (newValue instanceof ClassInfo) {
@@ -131,12 +167,10 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 			if (threadPool.hasActiveThreads()) {
 				threadPool.clear();
 			}
-			ScrollSnapshot scrollSnapshot = makeScrollSnapshot();
-			FxThreadUtil.run(() -> {
-				// Yes this NEEDS to be done on the UI thread.
-				// Not doing so leads to SILENT failures that cause any following attempts to crash.
-				javaArea.setText("// Decompiling " + newValue.getName(), false);
-			});
+			// Only snapshot if the code is being re-decompiled.
+			// We don't need to do scroll-state snapshotting for the initial decompile.
+			ScrollSnapshot scrollSnapshot = isInitialDecompile ? null : makeScrollSnapshot();
+			showOverlay();
 			long timeout = Long.MAX_VALUE;
 			if (Configs.decompiler().enableDecompilerTimeout) {
 				timeout = Configs.decompiler().decompileTimeout + 500;
@@ -150,6 +184,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 			}, threadPool).orTimeout(timeout, TimeUnit.MILLISECONDS);
 			long finalTimeout = timeout;
 			BiConsumer<String, Throwable> onComplete = (code, t) -> {
+				hideOverlay();
 				log.debug("Finished decompilation of {}", newValue.getName(), t);
 				if (t != null) {
 					if (t instanceof TimeoutException) {
@@ -171,11 +206,13 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 				} else {
 					// Decompile success
 					javaArea.setText(code, false);
-					FxThreadUtil.delayedRun(100, scrollSnapshot::restore);
+					if (scrollSnapshot != null)
+						FxThreadUtil.delayedRun(100, scrollSnapshot::restore);
 				}
 			};
 			decompileFuture.whenCompleteAsync(onComplete, FxThreadUtil.executor())
 					.exceptionally(t -> {
+						hideOverlay();
 						log.error("Uncaught error while updating decompiler output for {}", newValue.getName(), t);
 						return null;
 					});

@@ -1,0 +1,9 @@
+.progress-overlay {
+    -fx-background-color: rgb(45, 45, 46);
+}
+.progress-bar {
+    -fx-accent: rgb(44, 108, 131);
+}
+.progress-indicator {
+    -fx-progress-color: rgb(44, 108, 131);
+}
