@@ -69,8 +69,7 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 	private void addUnknownExtensionWarning() {
 		GridPane warning = new GridPane();
 		warning.setPadding(new Insets(0, 0, 0, 4));
-		Label label = new Label();
-		label.textProperty().bind(Lang.getBinding("dialog.unknownextension"));
+		Label label = new BoundLabel(Lang.getBinding("dialog.unknownextension"));
 		warning.getChildren().add(label);
 
 		// Align the configure/dismiss buttons to the right of the bar

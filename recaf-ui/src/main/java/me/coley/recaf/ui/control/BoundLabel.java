@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.control;
 
 import javafx.beans.binding.StringBinding;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Label;
 
 /**
@@ -13,7 +14,7 @@ public class BoundLabel extends Label {
 	 * @param binding
 	 * 		Text binding.
 	 */
-	public BoundLabel(StringBinding binding) {
+	public BoundLabel(ObservableValue<String> binding) {
 		textProperty().bind(binding);
 	}
 }

@@ -13,6 +13,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.scripting.FileScript;
 import me.coley.recaf.scripting.Script;
 import me.coley.recaf.scripting.ScriptResult;
+import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.util.Animations;
@@ -113,8 +114,7 @@ public class ScriptManagerPane extends BorderPane {
 		List<Script> scripts = Script.getAvailableScripts();
 
 		if (scripts == null || scripts.isEmpty()) {
-			Label label = new Label();
-			label.textProperty().bind(Lang.getBinding("menu.scripting.none-found"));
+			Label label = new BoundLabel(Lang.getBinding("menu.scripting.none-found"));
 			label.setAlignment(Pos.CENTER);
 			label.getStyleClass().addAll("h2", "b");
 			scrollPane.setContent(label);

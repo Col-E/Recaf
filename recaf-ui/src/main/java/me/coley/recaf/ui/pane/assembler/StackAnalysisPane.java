@@ -18,6 +18,7 @@ import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.code.*;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
@@ -47,9 +48,8 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 	public StackAnalysisPane(AssemblerArea assemblerArea, AssemblerPipeline pipeline) {
 		this.pipeline = pipeline;
 		BorderPane stackWrapper = new BorderPane(stackView);
-		Label stackTitle = new Label();
+		Label stackTitle = new BoundLabel(Lang.getBinding("assembler.analysis.stack"));
 		stackTitle.getStyleClass().add("analysis-list-header");
-		stackTitle.textProperty().bind(Lang.getBinding("assembler.analysis.stack"));
 		stackTitle.prefWidthProperty().bind(stackWrapper.widthProperty());
 		stackTitle.setAlignment(Pos.CENTER);
 		stackWrapper.setTop(stackTitle);

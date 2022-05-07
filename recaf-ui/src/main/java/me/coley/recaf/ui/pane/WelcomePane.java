@@ -14,6 +14,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import me.coley.recaf.BuildConfig;
+import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.util.Help;
 import me.coley.recaf.ui.util.Icons;
@@ -115,10 +116,8 @@ public class WelcomePane extends FlowPane {
 		private FlowGridItem(String iconPath, ObservableValue<String> titleText, ObservableValue<String> descriptionText) {
 			setHgap(H_GAP);
 			IconView image = Icons.getIconView(iconPath, 64);
-			Label title = new Label();
-			title.textProperty().bind(titleText);
-			Label description = new Label();
-			description.textProperty().bind(descriptionText);
+			Label title = new BoundLabel(titleText);
+			Label description = new BoundLabel(descriptionText);
 			title.getStyleClass().addAll("h1", "u");
 			image.setOpacity(0.8);
 			// Fill column 1, with 2 rows

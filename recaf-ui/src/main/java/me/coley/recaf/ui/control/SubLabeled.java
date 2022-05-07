@@ -34,10 +34,8 @@ public class SubLabeled extends VBox {
 	public SubLabeled(ObservableValue<String> primary, ObservableValue<String> secondary, String primaryClass) {
 		this.primary = primary;
 		this.secondary = secondary;
-		Label lblPrimary = new Label();
-		lblPrimary.textProperty().bind(primary);
-		Label lblSecondary = new Label();
-		lblSecondary.textProperty().bind(secondary);
+		Label lblPrimary = new BoundLabel(primary);
+		Label lblSecondary = new BoundLabel(secondary);
 		lblPrimary.getStyleClass().add(primaryClass);
 		lblSecondary.getStyleClass().add("faint");
 		getChildren().addAll(lblPrimary, lblSecondary);

@@ -17,6 +17,7 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.threading.FxThreadUtil;
@@ -95,8 +96,7 @@ public class VariableTable extends BorderPane implements MemberEditor {
 		// TODO: Adjust pipeline order OR force a single compilation on opening the window
 		//       so that the variable information is instantly available.
 		//        - Then also change the placeholder text when this change is made in the lang files
-		Label empty = new Label();
-		empty.textProperty().bind(Lang.getBinding("assembler.vartable.empty"));
+		Label empty = new BoundLabel(Lang.getBinding("assembler.vartable.empty"));
 		tableView.setPlaceholder(empty);
 
 		setCenter(tableView);

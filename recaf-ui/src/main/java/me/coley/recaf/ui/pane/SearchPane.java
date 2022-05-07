@@ -15,6 +15,7 @@ import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.search.query.QueryVisitor;
 import me.coley.recaf.search.result.Result;
 import me.coley.recaf.ui.control.ActionButton;
+import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.ColumnPane;
 import me.coley.recaf.ui.control.EnumComboBox;
 import me.coley.recaf.ui.docking.DockTab;
@@ -78,11 +79,9 @@ public class SearchPane extends BorderPane {
 		// Layout
 		ColumnPane columns = new ColumnPane();
 		SearchPane searchPane = new SearchPane(title, columns);
-		Label textLabel = new Label();
-		textLabel.textProperty().bind(Lang.getBinding("search.text"));
+		Label textLabel = new BoundLabel(Lang.getBinding("search.text"));
 		columns.add(textLabel, txtText);
-		Label modeLabel = new Label();
-		modeLabel.textProperty().bind(Lang.getBinding("search.textmode"));
+		Label modeLabel = new BoundLabel(Lang.getBinding("search.textmode"));
 		columns.add(modeLabel, comboMode);
 		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchText(txtText.getText(), comboMode.getValue());
@@ -112,11 +111,9 @@ public class SearchPane extends BorderPane {
 		// Layout
 		ColumnPane columns = new ColumnPane();
 		SearchPane searchPane = new SearchPane(title, columns);
-		Label numberLabel = new Label();
-		numberLabel.textProperty().bind(Lang.getBinding("search.number"));
+		Label numberLabel = new BoundLabel(Lang.getBinding("search.number"));
 		columns.add(numberLabel, txtNumber);
-		Label modeLabel = new Label();
-		modeLabel.textProperty().bind(Lang.getBinding("search.numbermode"));
+		Label modeLabel = new BoundLabel(Lang.getBinding("search.numbermode"));
 		columns.add(modeLabel, comboMode);
 		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchNumber(NumberUtil.parse(txtNumber.getText()), comboMode.getValue());
@@ -152,17 +149,13 @@ public class SearchPane extends BorderPane {
 		// Layout
 		ColumnPane columns = new ColumnPane();
 		SearchPane searchPane = new SearchPane(title, columns);
-		Label ownerLabel = new Label();
-		ownerLabel.textProperty().bind(Lang.getBinding("search.refowner"));
+		Label ownerLabel = new BoundLabel(Lang.getBinding("search.refowner"));
 		columns.add(ownerLabel, txtOwner);
-		Label nameLabel = new Label();
-		nameLabel.textProperty().bind(Lang.getBinding("search.refname"));
+		Label nameLabel = new BoundLabel(Lang.getBinding("search.refname"));
 		columns.add(nameLabel, txtName);
-		Label descLabel = new Label();
-		descLabel.textProperty().bind(Lang.getBinding("search.refdesc"));
+		Label descLabel = new BoundLabel(Lang.getBinding("search.refdesc"));
 		columns.add(descLabel, txtDesc);
-		Label modeLabel = new Label();
-		modeLabel.textProperty().bind(Lang.getBinding("search.textmode"));
+		Label modeLabel = new BoundLabel(Lang.getBinding("search.textmode"));
 		columns.add(modeLabel, comboMode);
 		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchReference(
@@ -200,17 +193,13 @@ public class SearchPane extends BorderPane {
 		// Layout
 		ColumnPane columns = new ColumnPane();
 		SearchPane searchPane = new SearchPane(title, columns);
-		Label ownerLabel = new Label();
-		ownerLabel.textProperty().bind(Lang.getBinding("search.refowner"));
+		Label ownerLabel = new BoundLabel(Lang.getBinding("search.refowner"));
 		columns.add(ownerLabel, txtOwner);
-		Label nameLabel = new Label();
-		nameLabel.textProperty().bind(Lang.getBinding("search.refname"));
+		Label nameLabel = new BoundLabel(Lang.getBinding("search.refname"));
 		columns.add(nameLabel, txtName);
-		Label descLabel = new Label();
-		descLabel.textProperty().bind(Lang.getBinding("search.refdesc"));
+		Label descLabel = new BoundLabel(Lang.getBinding("search.refdesc"));
 		columns.add(descLabel, txtDesc);
-		Label modeLabel = new Label();
-		modeLabel.textProperty().bind(Lang.getBinding("search.textmode"));
+		Label modeLabel = new BoundLabel(Lang.getBinding("search.textmode"));
 		columns.add(modeLabel, comboMode);
 		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchDeclaration(

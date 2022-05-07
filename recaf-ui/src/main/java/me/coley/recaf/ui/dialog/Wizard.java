@@ -8,6 +8,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.util.Lang;
 
 import java.util.Stack;
@@ -131,8 +132,7 @@ public class Wizard extends StackPane {
 
 			setSpacing(5);
 
-			Label lblTitle = new Label();
-			lblTitle.textProperty().bind(title);
+			Label lblTitle = new BoundLabel(title);
 			lblTitle.setStyle("-fx-font-weight: bold; -fx-padding: 0 0 5 0;");
 			idProperty().bind(title);
 

@@ -20,6 +20,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.config.binds.Binding;
 import me.coley.recaf.ui.behavior.WindowShownListener;
+import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.config.*;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
@@ -99,8 +100,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 		for (Map.Entry<String, List<Field>> e : groupedFieldMap.entrySet()) {
 			String groupKey = e.getKey();
 			List<Field> fields = e.getValue();
-			Label groupLabel = new Label();
-			groupLabel.textProperty().bind(Lang.getBinding(groupKey));
+			Label groupLabel = new BoundLabel(Lang.getBinding(groupKey));
 			groupLabel.getStyleClass().add("h1");
 			groupLabel.getStyleClass().add("b");
 			content.add(groupLabel, 0, baseRow, 3, 1);
@@ -110,8 +110,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 				String idKey = groupKey + '.' + id.value();
 				Node editor = getConfigComponent(container, field, idKey);
 				if (editor instanceof Unlabeled) {
-					Label editorLabel = new Label();
-					editorLabel.textProperty().bind(Lang.getBinding(idKey));
+					Label editorLabel = new BoundLabel(Lang.getBinding(idKey));
 					content.add(editorLabel, 1, i, 1, 1);
 					content.add(editor, 2, i, 1, 1);
 				} else {

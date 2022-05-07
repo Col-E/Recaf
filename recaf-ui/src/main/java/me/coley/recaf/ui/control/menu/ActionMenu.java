@@ -6,6 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.layout.HBox;
+import me.coley.recaf.ui.control.BoundLabel;
 
 /**
  * Menu with an on-click runnable action.
@@ -27,11 +28,9 @@ public class ActionMenu extends Menu {
 		// Works well enough without having to screw with CSS.
 		HBox pane = new HBox();
 		pane.setAlignment(Pos.CENTER);
-		Label label = new Label();
-		label.textProperty().bind(text);
-		pane.setStyle(
-				"-fx-background-insets: -8 -21 -8 -21;" +
-						"-fx-background-color: rgba(0, 0, 0, 0.001);");
+		Label label = new BoundLabel(text);
+		pane.setStyle("-fx-background-insets: -8 -21 -8 -21;" +
+				"-fx-background-color: rgba(0, 0, 0, 0.001);");
 
 		pane.getChildren().add(graphic);
 		pane.getChildren().add(label);
