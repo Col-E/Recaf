@@ -56,14 +56,7 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 		runButton.setOnMousePressed(e -> {
 			// Only create values when confirm button pressed
 			for (InputWrapper input : inputs) {
-				Node editor = input.editor;
-				String text;
-				if (editor instanceof TextField) {
-					text = ((TextField) editor).getText();
-				} else {
-					text = ((Label) editor).getText();
-				}
-				Value value = input.supplier.apply(text);
+				Value value = input.toValue();
 				values[input.slot] = value;
 				if (value.isWide()) {
 					values[input.slot + 1] = TopValue.INSTANCE;
