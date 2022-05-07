@@ -85,7 +85,7 @@ subprojects {
         regex = 'net.sourceforge.jregex:jregex:1.2_01'
         richtextfx = 'org.fxmisc.richtext:richtextfx:0.10.9'
         smali = "org.smali:smali:$dexVersion"
-        beanshell = 'org.beanshell:bsh-core:2.0b4'
+        beanshell = 'org.apache-extras.beanshell:bsh:2.0b6'
         ssvm = "com.github.xxdark:ssvm:$ssvmVersion"
     }
 }

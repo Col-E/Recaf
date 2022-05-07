@@ -146,7 +146,7 @@ public class ScriptManagerPane extends BorderPane {
 	}
 
 	private void createNewScript() {
-		String metadataTemplate = "//==Metadata==\n" +
+		String metadataTemplate = "// ==Metadata==\n" +
 				"// @name New Script\n" +
 				"// @description Script Description\n" +
 				"// @version 1.0\n" +

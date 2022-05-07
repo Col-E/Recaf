@@ -22,6 +22,8 @@ public class ScriptEngine {
 	private static final Logger logger = Logging.get(ScriptEngine.class);
 	private static final Interpreter interpreter = new Interpreter();
 	private static final String[] defaultImportedPackages = {
+			"java.io",
+			"java.nio.file",
 			"java.util",
 			"me.coley.recaf",
 			"me.coley.recaf.util",
@@ -51,7 +53,7 @@ public class ScriptEngine {
 		try {
 			return new ScriptResult(interpreter.eval(reader), null);
 		} catch (EvalError e) {
-			logger.error("Failed to evaluate BeanShell script: {}", e.getLocalizedMessage());
+			logger.error("Failed to evaluate BeanShell script", e);
 			return new ScriptResult(null, e);
 		}
 	}
