@@ -249,6 +249,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		window.getStage().setWidth(750);
 		window.getStage().setHeight(450);
 		window.show();
+		window.requestFocus();
 	}
 
 	private void showSearch(String key, SearchPane content) {

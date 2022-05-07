@@ -47,7 +47,7 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 	private static final Logger logger = Logging.get(ScriptEditorPane.class);
 	private final ProblemTracking tracking = new ProblemTracking();
 	private final SyntaxArea bshArea;
-	private File currentFile;
+	private Path currentFile;
 	private Tab tab;
 
 	/**
@@ -111,18 +111,19 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 	/**
 	 * Opens a file in the editor.
 	 *
-	 * @param path Path of the file to open
+	 * @param path
+	 * 		Path of the file to open
 	 */
 	public void openFile(Path path) {
 		try {
 			bshArea.setText(Files.readString(path));
-			currentFile = path.toFile();
+			currentFile = path;
 		} catch (IOException e) {
 			logger.error("Failed to open script: {}", e.getLocalizedMessage());
 			return;
 		}
 
-		logger.info("Opened script {}", currentFile.getName());
+		logger.info("Opened script {}", currentFile.getFileName());
 	}
 
 	/**
@@ -176,7 +177,7 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 	public void setTitle() {
 		StringBinding tabTitle = Lang.getBinding("menu.scripting.editor");
 		if (currentFile != null)
-			tabTitle = Lang.concat(tabTitle, " - " + currentFile.getName());
+			tabTitle = Lang.concat(tabTitle, " - " + currentFile.getFileName());
 		// TODO: Clean system for fetching tab and updating it (Another thing to consider when refactoring docking system?)
 		if (tab != null)
 			tab.textProperty().bind(tabTitle);
@@ -189,15 +190,16 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 			FileChooser chooser = scriptsDirChooser();
 			chooser.setInitialFileName("untitled.bsh");
 
-			currentFile = chooser.showSaveDialog(RecafUI.getWindows().getMainWindow());
-			if (currentFile == null)
+			File result = chooser.showSaveDialog(RecafUI.getWindows().getMainWindow());
+			if (result == null)
 				return SaveResult.FAILURE;
+			currentFile = result.toPath();
 			setTitle();
 		}
 
 		try {
-			Files.writeString(currentFile.toPath(), bshArea.getText());
-			logger.info("Saved script to {}", currentFile.getPath());
+			Files.writeString(currentFile, bshArea.getText());
+			logger.info("Saved script to {}", currentFile);
 			return SaveResult.SUCCESS;
 		} catch (IOException e) {
 			logger.error("Failed to save script: {}", e.getLocalizedMessage());

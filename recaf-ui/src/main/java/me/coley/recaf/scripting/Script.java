@@ -1,6 +1,8 @@
 package me.coley.recaf.scripting;
 
+import jregex.Matcher;
 import me.coley.recaf.util.Directories;
+import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -12,151 +14,133 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * Represents an executable Beanshell script.
+ *
+ * @author yapht
  */
-public class Script {
-    private static final Logger logger = Logging.get(Script.class);
-    private static final String EXTENSION = ".bsh";
+public abstract class Script {
+	private static final Logger logger = Logging.get(Script.class);
+	// Matches:
+	//      @key   value
+	private static final String TAG_PATTERN = "//(\\s+)?@({key}\\S+)\\s+({value}.+)";
+	private static final String EXTENSION = ".bsh";
+	private final Map<String, String> tags = new HashMap<>();
+	protected String name;
 
-    private String name;
-    private final String source;
-    private final boolean isFile;
-    private final Map<String, String> tags = new HashMap<>();
+	/**
+	 * @return Reader for the source.
+	 *
+	 * @throws IOException
+	 * 		When the source cannot be read.
+	 */
+	protected abstract BufferedReader reader() throws IOException;
 
-    // Matches:
-    //      @key   value
-    private static final Pattern TAG_PATTERN = Pattern.compile("//(\\s+)?@(?<key>\\S+)\\s+(?<value>.+)");
+	/**
+	 * Execute the script and return a result.
+	 *
+	 * @return Execution {@link ScriptResult result}.
+	 */
+	public abstract ScriptResult execute();
 
-    // No public construction
-    private Script(String source, boolean isFile) {
-        this.source = source;
-        this.isFile = isFile;
+	/**
+	 * @return Script's name from either metadata or filename
+	 */
+	public abstract String getName();
 
-        if (isFile)
-            parseTags();
-    }
+	/**
+	 * @return Script's source code.
+	 */
+	public abstract String getSource();
 
-    /**
-     * Instantiate a new script from a file.
-     *
-     * @param path The script file path
-     * @return The script instance
-     */
-    public static Script fromPath(Path path) {
-        return new Script(path.toString(), true);
-    }
+	/**
+	 * Parses the metadata tags.
+	 */
+	protected void parseTags() {
+		// Stream in the lines, so we don't have load the entire file into memory
+		try (BufferedReader reader = reader()) {
+			String line;
+			boolean started = false;
+			while ((line = reader.readLine()) != null) {
+				if (!line.startsWith("//"))
+					continue;
 
-    /**
-     * Instantiate a new script from raw source code.
-     *
-     * @param source The script source
-     * @return The script instance
-     */
-    public static Script fromSource(String source) {
-        return new Script(source, false);
-    }
+				if (line.contains("==Metadata==")) {
+					started = true;
+					continue;
+				}
 
-    /**
-     * Scan the 'scripts' directory for scripts.
-     *
-     * @return A list of scrips or {@code null} if none could be found
-     */
-    public static List<Script> getAvailableScripts() {
-        try (Stream<Path> stream = Files.walk(Directories.getScriptsDirectory(), FileVisitOption.FOLLOW_LINKS)) {
-            return stream.filter(
-                    f -> f.toString().endsWith(Script.EXTENSION)
-            ).map(Script::fromPath).collect(Collectors.toList());
-        } catch (IOException ex) {
-            logger.error("Failed to fetch available scripts", ex);
-            return null;
-        }
-    }
+				if (started && line.contains("==/Metadata=="))
+					return; // End of metadata, we're done
 
-    /**
-     * Parses the metadata tags.
-     */
-    private void parseTags() {
-        // Stream in the lines, so we don't have load the entire file into memory
-        try (BufferedReader reader = Files.newBufferedReader(Path.of(source))) {
-            String line;
-            boolean started = false;
-            while ((line = reader.readLine()) != null) {
-                if (!line.startsWith("//"))
-                    continue;
+				if (!started)
+					continue;
 
-                if (line.contains("==Metadata==")) {
-                    started = true;
-                    continue;
-                }
+				Matcher matcher = RegexUtil.getMatcher(TAG_PATTERN, line);
+				if (matcher.matches()) {
+					String key = matcher.group("key").toLowerCase();
+					String value = matcher.group("value");
+					tags.put(key, value);
+				}
+			}
+		} catch (IOException ex) {
+			logger.error("Failed to parse script tags", ex);
+		}
+	}
 
-                if (started && line.contains("==/Metadata=="))
-                    return; // End of metadata, we're done
 
-                if (!started)
-                    continue;
+	/**
+	 * Instantiate a new script from a file.
+	 *
+	 * @param path
+	 * 		The script file path
+	 *
+	 * @return The script instance
+	 */
+	public static FileScript fromPath(Path path) {
+		return new FileScript(path);
+	}
 
-                Matcher matcher = TAG_PATTERN.matcher(line);
-                if (matcher.matches()) {
-                    String key = matcher.group("key").toLowerCase();
-                    String value = matcher.group("value");
-                    tags.put(key, value);
-                }
-            }
-        } catch (IOException ex) {
-            logger.error("Failed to parse script tags", ex);
-        }
-    }
+	/**
+	 * Instantiate a new script from raw source code.
+	 *
+	 * @param source
+	 * 		The script source
+	 *
+	 * @return The script instance
+	 */
+	public static SourceScript fromSource(String source) {
+		return new SourceScript(source);
+	}
 
-    /**
-     * Execute the script and return a result.
-     *
-     * @return The execution {@link ScriptResult result}.
-     */
-    public ScriptResult execute() {
-        if (isFile)
-            return ScriptEngine.execute(Path.of(source));
+	/**
+	 * Scan the 'scripts' directory for scripts.
+	 *
+	 * @return A list of scrips or {@code null} if none could be found
+	 */
+	public static List<Script> getAvailableScripts() {
+		try (Stream<Path> stream = Files.walk(Directories.getScriptsDirectory(), FileVisitOption.FOLLOW_LINKS)) {
+			return stream.filter(f -> f.toString().endsWith(Script.EXTENSION))
+					.map(Script::fromPath)
+					.collect(Collectors.toList());
+		} catch (IOException ex) {
+			logger.error("Failed to fetch available scripts", ex);
+			return null;
+		}
+	}
 
-        return ScriptEngine.execute(source);
-    }
-
-    /**
-     * @return The script's name from either metadata or filename
-     */
-    public String getName() {
-        if (name == null) {
-            String taggedName = getTag("name");
-
-            if (taggedName != null)
-                name = taggedName;
-            else if (isFile)
-                name = Path.of(source).getFileName().toString();
-            else
-                name = "Untitled script";
-        }
-
-        return name;
-    }
-
-    /**
-     * @return The script's source as a path
-     */
-    public Path getPath() {
-        return Path.of(source);
-    }
-
-    /**
-     * Get a metadata tag by key.
-     *
-     * @param key The tag's key
-     * @return The tag or {@code null} if it doesn't exist
-     */
-    public String getTag(String key) {
-        return tags.getOrDefault(key, null);
-    }
+	/**
+	 * Get a metadata tag by key.
+	 *
+	 * @param key
+	 * 		The tag's key
+	 *
+	 * @return The tag or {@code null} if it doesn't exist
+	 */
+	public String getTag(String key) {
+		return tags.getOrDefault(key, null);
+	}
 }
