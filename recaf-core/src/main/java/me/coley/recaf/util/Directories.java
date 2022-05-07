@@ -22,6 +22,7 @@ public class Directories {
 	private static final Path dependenciesDirectory = resolveDirectory("dependencies");
 	private static final Path pluginDirectory = resolveDirectory("plugins");
 	private static final Path styleDirectory = resolveDirectory("style");
+	private static final Path scriptsDirectory = resolveDirectory("scripts");
 
 	/**
 	 * @return Base Recaf directory.
@@ -65,6 +66,11 @@ public class Directories {
 	public static Path getStyleDirectory() {
 		return styleDirectory;
 	}
+
+	/**
+	 * @return Directory where scripts are stored.
+	 */
+	public static Path getScriptsDirectory() { return scriptsDirectory; }
 
 	private static Path resolveDirectory(String dir) {
 		Path path = baseDirectory.resolve(dir);
