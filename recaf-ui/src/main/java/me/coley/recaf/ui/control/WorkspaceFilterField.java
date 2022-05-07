@@ -5,6 +5,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.control.tree.item.BaseTreeValue;
+import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.threading.FxThreadUtil;
 
 import java.util.ArrayList;
@@ -28,14 +29,11 @@ public class WorkspaceFilterField extends TextField {
 	public WorkspaceFilterField(WorkspaceTreeWrapper tree) {
 		setPromptText("Filter: Class/file name..."); // TODO: Add "+tag -tag" when metadata system is set up
 		isCaseSensitive = tree::isCaseSensitive;
-		setOnKeyPressed(e -> {
+		NodeEvents.addKeyPressHandler(this, e -> {
 			if (e.getCode() == KeyCode.ESCAPE) {
 				setText("");
 			} else if (e.getCode() == KeyCode.UP || e.getCode() == KeyCode.DOWN) {
-				FxThreadUtil.run(() -> {
-					getParent().requestFocus();
-					tree.requestFocus();
-				});
+				FxThreadUtil.delayedRun(10, tree::focusTree);
 				e.consume();
 			}
 		});

@@ -11,6 +11,7 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.behavior.Undoable;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.util.NodeEvents;
 
 import static javafx.scene.input.KeyCode.*;
 import static me.coley.recaf.config.binds.Binding.newBind;
@@ -137,7 +138,7 @@ public class KeybindConfig implements ConfigContainer {
 	 * 		Component to install editor keybinds into.
 	 */
 	public void installEditorKeys(Parent parent) {
-		parent.setOnKeyPressed(e -> {
+		NodeEvents.addKeyPressHandler(parent, e -> {
 			// Shouldn't happen, but just for sanity
 			if (isEditingBind())
 				return;

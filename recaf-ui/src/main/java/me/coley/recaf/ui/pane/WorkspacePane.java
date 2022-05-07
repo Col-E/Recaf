@@ -6,6 +6,7 @@ import me.coley.recaf.ControllerListener;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.WorkspaceFilterField;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
+import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.workspace.Workspace;
 
 /**
@@ -32,7 +33,7 @@ public class WorkspacePane extends BorderPane implements ControllerListener {
 		setCenter(tree);
 		setBottom(bottomWrapper);
 		// Any typing in the tree should be fed into the filter
-		tree.setOnKeyPressed(e -> {
+		NodeEvents.addKeyPressHandler(tree, e -> {
 			String text = e.getText();
 			if (text != null && !text.isEmpty()) {
 				filter.requestFocus();

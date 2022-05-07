@@ -87,6 +87,13 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 	}
 
 	/**
+	 * Calls {@link #requestFocus()} on {@link #tree}
+	 */
+	public void focusTree() {
+		tree.requestFocus();
+	}
+
+	/**
 	 * Clear any overlay item.
 	 */
 	public void clearOverlay() {

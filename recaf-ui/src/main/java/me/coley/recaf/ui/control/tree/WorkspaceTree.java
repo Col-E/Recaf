@@ -7,6 +7,7 @@ import javafx.scene.input.KeyEvent;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.control.tree.item.*;
+import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
 
@@ -22,10 +23,10 @@ public class WorkspaceTree extends TreeView<BaseTreeValue> {
 	 */
 	public WorkspaceTree(CellOriginType treeType) {
 		setCellFactory(new WorkspaceCellFactory(treeType));
-		setOnKeyReleased(this::onKeyRelease);
+		NodeEvents.addKeyPressHandler(this, this::onKeyPressed);
 	}
 
-	private void onKeyRelease(KeyEvent e) {
+	private void onKeyPressed(KeyEvent e) {
 		TreeItem<?> item = getSelectionModel().getSelectedItem();
 		if (e.getCode() == KeyCode.ENTER) {
 			// Open selected
