@@ -59,9 +59,10 @@ subprojects {
         asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
         asm_util = "org.ow2.asm:asm-util:$asmVersion"
         baksmali = "org.smali:baksmali:$dexVersion"
+        beanshell = 'com.github.Col-E:beanshell:3.0.0-1'
         cafedude = "com.github.Col-E:CAFED00D:$dudeVersion"
-        common_io = 'commons-io:commons-io:2.11.0'
         cfr = 'org.benf:cfr:0.152'
+        common_io = 'commons-io:commons-io:2.11.0'
         dexlib = "org.smali:dexlib2:$dexVersion"
         directories = 'dev.dirs:directories:26'
         docking = 'com.github.Col-E:tiwulfx-dock:1.2.1'
@@ -71,21 +72,20 @@ subprojects {
         jadx = "io.github.skylot:jadx-core:$jadxVersion"
         jadx_input = "io.github.skylot:jadx-java-input:$jadxVersion"
         java_parser = "com.github.javaparser:javaparser-symbol-solver-core:$jpVersion"
+        javassist = 'org.javassist:javassist:3.28.0-GA'
         javax_annos = 'javax.annotation:javax.annotation-api:1.3.2'
+        jelf = 'net.fornwall:jelf:0.7.0'
         jphantom = 'com.github.Col-E:jphantom:1.4.3'
         junit_api = "org.junit.jupiter:junit-jupiter-api:$junitVersion"
         junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
         junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
-        logback_classic = 'ch.qos.logback:logback-classic:1.2.10'
         llzip = "com.github.Col-E:LL-Java-Zip:$lljzipVersion"
+        logback_classic = 'ch.qos.logback:logback-classic:1.2.10'
         pe = 'com.github.cademtz:JavaPeParser:1.0.0'
-        javassist = 'org.javassist:javassist:3.28.0-GA'
-        jelf = 'net.fornwall:jelf:0.7.0'
         picocli = 'info.picocli:picocli:4.6.3'
         regex = 'net.sourceforge.jregex:jregex:1.2_01'
         richtextfx = 'org.fxmisc.richtext:richtextfx:0.10.9'
         smali = "org.smali:smali:$dexVersion"
-        beanshell = 'org.apache-extras.beanshell:bsh:2.0b6'
         ssvm = "com.github.xxdark:ssvm:$ssvmVersion"
     }
 }
