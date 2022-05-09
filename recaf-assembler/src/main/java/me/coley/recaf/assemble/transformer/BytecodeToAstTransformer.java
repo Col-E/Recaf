@@ -29,7 +29,7 @@ public class BytecodeToAstTransformer {
 	private final Map<Key, String> variableNames = new HashMap<>();
 	private final MethodNode method;
 	private final FieldNode field;
-	private String labelPrefix;
+	private String labelPrefix = "";
 	private Unit unit;
 
 	/**
@@ -122,9 +122,7 @@ public class BytecodeToAstTransformer {
 			} else {
 				continue;
 			}
-			String name = StringUtil.generateName(ALPHABET, labelNames.size());
-			if (labelPrefix != null)
-				name = labelPrefix + name;
+			String name = labelPrefix + StringUtil.generateName(ALPHABET, labelNames.size());
 			labelNames.put(label, name);
 		}
 		// If there are no labels, we must add some.
