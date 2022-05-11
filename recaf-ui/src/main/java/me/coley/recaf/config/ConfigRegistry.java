@@ -74,6 +74,7 @@ public class ConfigRegistry {
 					jsonContainer = gson.fromJson(reader, container.getClass());
 				}
 				ReflectUtil.copyTo(jsonContainer, container);
+				jsonContainer.onLoad();
 			}
 		}
 	}
