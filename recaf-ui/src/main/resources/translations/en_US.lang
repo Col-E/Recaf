@@ -17,6 +17,7 @@ menu.file.quit=Quit
 menu.goto.class=Go to class
 menu.goto.field=Go to field
 menu.goto.method=Go to method
+menu.goto.instruction=Go to instruction
 menu.goto.file=Go to file
 menu.edit.assemble.field=Edit field
 menu.edit.assemble.method=Edit method

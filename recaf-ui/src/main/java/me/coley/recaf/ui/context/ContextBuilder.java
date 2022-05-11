@@ -77,6 +77,18 @@ public abstract class ContextBuilder {
 	}
 
 	/**
+	 * @param ownerInfo
+	 * 		Owner info of the class defining the method.
+	 * @param methodInfo
+	 * 		Method info to operate on.
+	 *
+	 * @return Builder.
+	 */
+	public static InstructionContextBuilder forMethodInstruction(CommonClassInfo ownerInfo, MethodInfo methodInfo) {
+		return new InstructionContextBuilder().setOwnerInfo(ownerInfo).setMethodInfo(methodInfo);
+	}
+
+	/**
 	 * @param packageName
 	 * 		Name of package to operate on.
 	 *
