@@ -11,7 +11,6 @@ import dev.xdark.ssvm.mirror.JavaClass;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.ArrayValue;
 import dev.xdark.ssvm.value.InstanceValue;
-import dev.xdark.ssvm.value.NullValue;
 import dev.xdark.ssvm.value.Value;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
@@ -29,7 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -162,6 +160,9 @@ public class SsvmIntegration {
 		if (vmClass == null) {
 			return CompletableFuture.completedFuture(
 					new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName())));
+		}
+		if (vmClass.shouldBeInitialized()) {
+			vmClass.initialize();
 		}
 		VMHelper helper = vm.getHelper();
 		int access = method.getAccess();
