@@ -4,12 +4,8 @@ import me.coley.recaf.assemble.*;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.parser.BytecodeLexer;
 import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
-import me.coley.recaf.assemble.transformer.AstToFieldTransformer;
-import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
-import me.coley.recaf.assemble.transformer.Variables;
+import me.coley.recaf.assemble.transformer.*;
 import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.util.ReflectiveClassSupplier;
@@ -18,14 +14,12 @@ import me.coley.recaf.assemble.validation.MessageLevel;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.assemble.validation.bytecode.BytecodeValidator;
 import me.coley.recaf.util.logging.Logging;
-import org.antlr.v4.runtime.*;
+import me.darknet.assembler.parser.*;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * All in one utility for using the assembler from start to finish.
@@ -35,16 +29,15 @@ import java.util.Objects;
 public class AssemblerPipeline {
 	private static final Logger logger = Logging.get(AssemblerPipeline.class);
 	// Input config
-	private ANTLRErrorStrategy antlrErrorStrategy = new DefaultErrorStrategy();
 	private ClassSupplier classSupplier = ReflectiveClassSupplier.getInstance();
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 	// Listeners
-	private final List<BaseErrorListener> antlrErrorListeners = new ArrayList<>();
 	private final List<ParserFailureListener> parserFailureListeners = new ArrayList<>();
 	private final List<AstValidationListener> astValidationListeners = new ArrayList<>();
 	private final List<BytecodeFailureListener> bytecodeFailureListeners = new ArrayList<>();
 	private final List<BytecodeValidationListener> bytecodeValidationListeners = new ArrayList<>();
 	private final List<PipelineCompletionListener> pipelineCompletionListeners = new ArrayList<>();
+	private final List<ParserCompletionListener> parserCompletionListeners = new ArrayList<>();
 	// Inputs
 	private String type;
 	private String text;
@@ -59,37 +52,6 @@ public class AssemblerPipeline {
 	private MethodNode lastMethod;
 	private Analysis lastAnalysis;
 
-	/**
-	 * @return Error handling strategy for the ANTLR parse step.
-	 */
-	public ANTLRErrorStrategy getAntlrErrorStrategy() {
-		return antlrErrorStrategy;
-	}
-
-	/**
-	 * @param antlrErrorStrategy
-	 * 		New error handling strategy for the ANTLR parse step.
-	 */
-	public void setAntlrErrorStrategy(ANTLRErrorStrategy antlrErrorStrategy) {
-		this.antlrErrorStrategy = antlrErrorStrategy;
-	}
-
-	/**
-	 * @param listener
-	 * 		ANTLR parser error listener to add.
-	 */
-	public void addAntlrErrorListener(BaseErrorListener listener) {
-		if (!antlrErrorListeners.contains(listener))
-			antlrErrorListeners.add(listener);
-	}
-
-	/**
-	 * @param listener
-	 * 		ANTLR parser error listener to remove.
-	 */
-	public void removeAntlrErrorListener(BaseErrorListener listener) {
-		antlrErrorListeners.remove(listener);
-	}
 
 	/**
 	 * @param listener
@@ -174,6 +136,23 @@ public class AssemblerPipeline {
 	 */
 	public void removePipelineCompletionListener(PipelineCompletionListener listener) {
 		pipelineCompletionListeners.remove(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Parser completion listener to add.
+	 */
+	public void addParserCompletionListener(ParserCompletionListener listener) {
+		if (!parserCompletionListeners.contains(listener))
+			parserCompletionListeners.add(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Parser completion listener to remove.
+	 */
+	public void removeParserCompletionListener(ParserCompletionListener listener) {
+		parserCompletionListeners.remove(listener);
 	}
 
 	/**
@@ -347,39 +326,45 @@ public class AssemblerPipeline {
 		if (code == null)
 			return false;
 		// ANTLR tokenize
-		logger.trace("Assembler AST updating: [ANTLR tokenize]");
-		CharStream is = CharStreams.fromString(code);
-		BytecodeLexer lexer = new BytecodeLexer(is);
-		CommonTokenStream stream = new CommonTokenStream(lexer);
+		logger.trace("Assembler AST updating: [JASM tokenize]");
+		Parser parser = new Parser();
+		List<Token> tokens = parser.tokenize("<assembler>", code);
 		// ANTLR parse
-		logger.trace("Assembler AST updating: [ANTLR parse]");
-		BytecodeParser parser = new BytecodeParser(stream);
-		parser.setErrorHandler(antlrErrorStrategy);
-		parser.getErrorListeners().clear();
-		antlrErrorListeners.forEach(parser::addErrorListener);
+		logger.trace("Assembler AST updating: [JASM parse]");
+		ParserContext ctx = new ParserContext(new LinkedList<>(tokens), parser); // convert to linked list to get a queue
+		Collection<Group> parsed;
 		BytecodeParser.UnitContext unitCtx;
 		try {
-			unitCtx = parser.unit();
-		} catch (ParserException ex) {
+			parsed = new ArrayList<>(ctx.parse());
+		} catch (AssemblerException ex) {
 			// Parser problems are fatal
-			parserFailureListeners.forEach(l -> l.onAntlrParseFail(ex));
+			parserFailureListeners.forEach(l -> l.onParseFail(ex));
+			// this is being set to null to invalidate the unit so that the validator will fail
+			// until the unit is valid again
+			this.unit = null;
 			return true;
 		}
 		if (Thread.interrupted())
 			return false;
+		parserCompletionListeners.forEach(l -> l.onCompleteParse(parsed));
 		// Transform to our AST
-		logger.trace("Assembler AST updating: [ANTLR --> AST transform]");
-		AntlrToAstTransformer antlrToAstTransformer = new AntlrToAstTransformer();
+		logger.trace("Assembler AST updating: [JASM --> AST transform]");
+		JasmToAstTransformer transformer = new JasmToAstTransformer(parsed);
 		Unit unit;
 		try {
-			unit = antlrToAstTransformer.visitUnit(unitCtx);
+			unit = transformer.generateUnit();
 			// Done creating the AST
 			this.unit = unit;
+			for(ParserCompletionListener l : parserCompletionListeners)
+				l.onCompleteTransform(unit);
 			unitOutdated = false;
 			outputOutdated = true;
-		} catch (ParserException ex) {
+		} catch (AssemblerException ex) {
 			// Parser problems are fatal
-			parserFailureListeners.forEach(l -> l.onAntlrTransformFail(ex));
+			parserFailureListeners.forEach(l -> l.onParserTransformFail(ex));
+			// this is being set to null to invalidate the unit so that the validator will fail
+			// until the unit is valid
+			this.unit = null;
 			return true;
 		}
 		logger.trace("Assembler AST up-to-date!");

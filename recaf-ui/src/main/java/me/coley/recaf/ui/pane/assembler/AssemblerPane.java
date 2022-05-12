@@ -109,6 +109,14 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		return tab;
 	}
 
+	private Tab createDebug() {
+		Tab tab = new Tab();
+		tab.textProperty().bind(Lang.getBinding("Debug"));
+		tab.setGraphic(Icons.getIconView(Icons.EYE));
+		tab.setContent(new DebugPane(assemblerArea, pipeline));
+		return tab;
+	}
+
 	private Tab createVariableTable() {
 		Tab tab = new Tab();
 		tab.textProperty().bind(Lang.getBinding("assembler.vartable.title"));
@@ -188,13 +196,23 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 				bottomTabs.getTabs().addAll(
 						createVariableTable(),
 						createStackAnalysis(),
-						createPlayground()
+						createPlayground(),
+						createDebug()
 				);
 				bottomTabs.setup();
 				split.getItems().add(bottomTabs);
 			}
 			tab.setGraphic(Icons.getMethodIcon((MethodInfo) targetMember));
 		} else if (targetMember.isField()) {
+			if (bottomTabs.getTabs().isEmpty()) {
+				bottomTabs.setSide(Side.BOTTOM);
+				bottomTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+				bottomTabs.getTabs().addAll(
+						createDebug()
+				);
+				bottomTabs.setup();
+				split.getItems().add(bottomTabs);
+			}
 			tab.setGraphic(Icons.getFieldIcon((FieldInfo) targetMember));
 		}
 	}

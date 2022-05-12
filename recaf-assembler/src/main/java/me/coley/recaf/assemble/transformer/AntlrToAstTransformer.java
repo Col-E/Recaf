@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
@@ -410,7 +411,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	@Override
 	public AbstractInstruction visitInsn(BytecodeParser.InsnContext ctx) {
 		String opcode = ctx.getChild(0).getText();
-		return new Instruction(opcode);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -424,7 +425,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		} else {
 			throw new ParserException(ctx, "No value token for INT: " + ctx.getText());
 		}
-		return new IntInstruction(opcode, value);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -438,7 +439,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		} else {
 			throw new ParserException(ctx, "Unknown array type: " + ctx.getChild(1));
 		}
-		return new NewArrayInstruction(opcode, arrayType);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -448,7 +449,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		String owner = handle.type().getText();
 		String name = handle.name().getText();
 		String desc = getDesc(handle.methodDesc());
-		return new MethodInstruction(opcode, owner, name, desc);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -458,7 +459,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		String owner = handle.type().getText();
 		String name = handle.name().getText();
 		String desc = getDesc(handle.desc());
-		return new FieldInstruction(opcode, owner, name, desc);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -466,41 +467,41 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		String opcode = ctx.getChild(0).getText();
 		if (ctx.greedyStringLiteral() != null) {
 			String string = getString(ctx.greedyStringLiteral());
-			return new LdcInstruction(opcode, string);
+			return new LdcInstruction(Opcodes.LDC, string);
 		} else if (ctx.desc() != null) {
 			// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
 			Type type = getType(ctx.desc());
-			return new LdcInstruction(opcode, type);
+			return new LdcInstruction(Opcodes.LDC, type);
 		} else if (ctx.type() != null) {
 			// TODO: Making this use "type" here prevents us from further parsing if this is illegal formed
 			Type type = getType(ctx.type());
-			return new LdcInstruction(opcode, type);
+			return new LdcInstruction(Opcodes.LDC, type);
 		} else if (ctx.intLiteral() != null) {
 			String intStr = ctx.intLiteral().getText();
 			if (intStr.toUpperCase().endsWith("L")) {
 				long integer = getLong(ctx.intLiteral());
-				return new LdcInstruction(opcode, integer);
+				return new LdcInstruction(Opcodes.LDC, integer);
 			} else {
 				int integer = getInt(ctx.intLiteral());
-				return new LdcInstruction(opcode, integer);
+				return new LdcInstruction(Opcodes.LDC, integer);
 			}
 		} else if (ctx.floatLiteral() != null) {
 			String floatStr = ctx.floatLiteral().getText();
 			if (floatStr.toUpperCase().endsWith("F")) {
 				float floatVal = getFloat(ctx.floatLiteral());
-				return new LdcInstruction(opcode, floatVal);
+				return new LdcInstruction(Opcodes.LDC, floatVal);
 			} else {
 				double doubleVal = getDouble(ctx.floatLiteral());
-				return new LdcInstruction(opcode, doubleVal);
+				return new LdcInstruction(Opcodes.LDC, doubleVal);
 			}
 		} else if (ctx.hexLiteral() != null) {
 			String intStr = ctx.hexLiteral().getText();
 			if (intStr.toUpperCase().endsWith("L")) {
 				long longInt = getLong(ctx.hexLiteral());
-				return new LdcInstruction(opcode, longInt);
+				return new LdcInstruction(Opcodes.LDC, longInt);
 			} else {
 				int integer = getInt(ctx.hexLiteral());
-				return new LdcInstruction(opcode, integer);
+				return new LdcInstruction(Opcodes.LDC, integer);
 			}
 		} else {
 			ParseTree child = ctx.getChild(1);
@@ -512,7 +513,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	public AbstractInstruction visitInsnVar(BytecodeParser.InsnVarContext ctx) {
 		String opcode = ctx.getChild(0).getText();
 		String identifier = ctx.name().getText();
-		return new VarInstruction(opcode, identifier);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -523,7 +524,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			identifier = ctx.type().getText();
 		else
 			identifier = getDesc(ctx.desc());
-		return new TypeInstruction(opcode, identifier);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -619,14 +620,14 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 				entryList = entryList.argumentList();
 			}
 		}
-		return new IndyInstruction(opcode, name, methodDesc, handle, args);
+		return new Instruction(0);
 	}
 
 	@Override
 	public AbstractInstruction visitInsnJump(BytecodeParser.InsnJumpContext ctx) {
 		String opcode = ctx.getChild(0).getText();
 		String label = ctx.name().getText();
-		return new JumpInstruction(opcode, label);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -641,7 +642,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		} else {
 			throw new ParserException(ctx, "No value token for IINC: " + ctx.getText());
 		}
-		return new IincInstruction(opcode, identifier, increment);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -649,7 +650,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		String opcode = ctx.getChild(0).getText();
 		String type = getDesc(ctx.desc());
 		int dimensions = getInt(ctx.intLiteral());
-		return new MultiArrayInstruction(opcode, type, dimensions);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -657,7 +658,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		String opcode = ctx.getChild(0).getText();
 		String label = ctx.name().getText();
 		int line = getInt(ctx.intLiteral());
-		return new LineInstruction(opcode, label, line);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -673,7 +674,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			entryList = entryList.switchMapList();
 		}
 		String defaultIdentifier = ctx.switchDefault().name().getText();
-		return new LookupSwitchInstruction(opcode, entries, defaultIdentifier);
+		return new Instruction(0);
 	}
 
 	@Override
@@ -689,7 +690,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			entryList = entryList.switchOffsetsList();
 		}
 		String defaultIdentifier = ctx.switchDefault().name().getText();
-		return new TableSwitchInstruction(opcode, min, max, labels, defaultIdentifier);
+		return new Instruction(0);
 	}
 
 	@Override

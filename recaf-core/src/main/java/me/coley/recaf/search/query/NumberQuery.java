@@ -153,7 +153,7 @@ public class NumberQuery implements Query {
 				if (opcode >= Opcodes.ICONST_M1 && opcode <= Opcodes.DCONST_1) {
 					whenMatched(getValue(opcode), builder -> addMethodInsn(builder, methodInfo.getName(),
 							methodInfo.getDescriptor(),
-							new Instruction(OpcodeUtil.opcodeToName(opcode))));
+							new Instruction(opcode)));
 				}
 			}
 
@@ -162,7 +162,7 @@ public class NumberQuery implements Query {
 				super.visitIntInsn(opcode, operand);
 				whenMatched(operand, builder -> addMethodInsn(builder, methodInfo.getName(),
 						methodInfo.getDescriptor(),
-						new IntInstruction(OpcodeUtil.opcodeToName(opcode), operand)));
+						new IntInstruction(opcode, operand)));
 			}
 
 			@Override
@@ -170,10 +170,10 @@ public class NumberQuery implements Query {
 				super.visitTableSwitchInsn(min, max, dflt, labels);
 				whenMatched(min, builder -> addMethodInsn(builder, methodInfo.getName(),
 						methodInfo.getDescriptor(),
-						new TableSwitchInstruction("TABLESWITCH", min, max, Collections.emptyList(), "?")));
+						new TableSwitchInstruction(TABLESWITCH, min, max, Collections.emptyList(), "?")));
 				whenMatched(max, builder -> addMethodInsn(builder, methodInfo.getName(),
 						methodInfo.getDescriptor(),
-						new TableSwitchInstruction("TABLESWITCH", min, max, Collections.emptyList(), "?")));
+						new TableSwitchInstruction(TABLESWITCH, min, max, Collections.emptyList(), "?")));
 			}
 
 			@Override
@@ -182,7 +182,7 @@ public class NumberQuery implements Query {
 				for (int key : keys)
 					whenMatched(key, builder -> addMethodInsn(builder, methodInfo.getName(),
 							methodInfo.getDescriptor(),
-							new LookupSwitchInstruction("LOOKUPSWITCH", Lists.newArrayList(key).stream()
+							new LookupSwitchInstruction(LOOKUPSWITCH, Lists.newArrayList(key).stream()
 									.map(i -> new LookupSwitchInstruction.Entry(i, "?")).collect(Collectors.toList()),
 									"?")));
 			}
@@ -193,7 +193,7 @@ public class NumberQuery implements Query {
 				super.visitInvokeDynamicInsn(name, desc, bootstrapMethodHandle, bootstrapMethodArguments);
 				for (Object bsmArg : bootstrapMethodArguments) {
 					whenMatched(bsmArg, builder -> addMethodInsn(builder, methodInfo.getName(),
-							methodInfo.getDescriptor(), new IndyInstruction("INVOKEDYNAMIC", name, desc,
+							methodInfo.getDescriptor(), new IndyInstruction(INVOKEDYNAMIC, name, desc,
 									new HandleInfo(bootstrapMethodHandle),
 									Arrays.stream(bootstrapMethodArguments)
 											.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))

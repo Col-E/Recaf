@@ -45,7 +45,7 @@ public class MethodParameters extends BaseElement implements Element, Descriptor
 	public String print() {
 		return parameters.stream()
 				.map(MethodParameter::print)
-				.collect(Collectors.joining(", "));
+				.collect(Collectors.joining(","));
 	}
 
 	@Override

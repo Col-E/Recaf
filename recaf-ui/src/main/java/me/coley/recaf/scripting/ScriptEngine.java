@@ -31,7 +31,8 @@ public class ScriptEngine {
 			"me.coley.recaf.search.result",
 			"me.coley.recaf.workspace",
 			"me.coley.recaf.workspace.resource",
-			"me.coley.recaf.scripting.impl"
+			"me.coley.recaf.scripting.impl",
+			"me.coley.recaf.util.threading",
 	};
 
 	static {

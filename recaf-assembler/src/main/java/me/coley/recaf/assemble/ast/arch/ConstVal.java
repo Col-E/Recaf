@@ -58,7 +58,7 @@ public class ConstVal extends BaseElement implements CodeEntry {
 		this(value, ArgType.LONG);
 	}
 
-	private ConstVal(Object value, ArgType type) {
+	public ConstVal(Object value, ArgType type) {
 		this.type = type;
 		this.value = value;
 	}

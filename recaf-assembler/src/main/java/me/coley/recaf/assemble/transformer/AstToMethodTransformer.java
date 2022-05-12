@@ -175,7 +175,7 @@ public class AstToMethodTransformer {
 		MethodNode method = new MethodNode(access, name, descriptor, signature, null);
 		List<AnnotationNode> visibleAnnotations = new ArrayList<>();
 		List<AnnotationNode> invisibleAnnotations = new ArrayList<>();
-		for (Annotation annotation : code.getAnnotations()) {
+		for (Annotation annotation : definition.getAnnotations()) {
 			AnnotationNode node = new AnnotationNode("L" + annotation.getType() + ";");
 			node.values = new ArrayList<>();
 			annotation.getArgs().forEach((argName, argVal) -> {
@@ -198,7 +198,7 @@ public class AstToMethodTransformer {
 			method.invisibleAnnotations = null;
 		method.instructions = instructions;
 		method.localVariables = variableList;
-		method.exceptions.addAll(code.getThrownExceptions().stream()
+		method.exceptions.addAll(definition.getThrownExceptions().stream()
 				.map(ThrownException::getExceptionType)
 				.collect(Collectors.toList()));
 		method.tryCatchBlocks.addAll(tryBlocks);

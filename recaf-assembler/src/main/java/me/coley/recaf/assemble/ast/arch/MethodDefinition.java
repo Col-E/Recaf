@@ -2,6 +2,9 @@ package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.BaseElement;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Definition of a method.
  *
@@ -12,6 +15,9 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 	private final String name;
 	private final MethodParameters params;
 	private final String returnType;
+
+	private List<ThrownException> thrownExceptions = new ArrayList<>();
+	private List<Annotation> annotations = new ArrayList<>();
 
 	/**
 	 * @param modifiers
@@ -33,8 +39,13 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 	@Override
 	public String print() {
 		StringBuilder sb = new StringBuilder();
+		for(ThrownException thrownException : thrownExceptions)
+			sb.append(thrownException.print()).append("\n");
+		for(Annotation annotation : annotations)
+			sb.append(annotation.print());
+		sb.append("method ");
 		if (modifiers.value() > 0) {
-			sb.append(modifiers.print()).append(' ');
+			sb.append(modifiers.print().toLowerCase()).append(' ');
 		}
 		sb.append(name);
 		sb.append('(').append(params.print()).append(')');
@@ -50,6 +61,24 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 	@Override
 	public Modifiers getModifiers() {
 		return modifiers;
+	}
+
+	public List<ThrownException> getThrownExceptions() {
+		return thrownExceptions;
+	}
+
+	@Override
+	public List<Annotation> getAnnotations() {
+		return annotations;
+	}
+
+	@Override
+	public void addAnnotation(Annotation annotation) {
+		annotations.add(annotation);
+	}
+
+	public void addThrownException(ThrownException thrownException) {
+		thrownExceptions.add(thrownException);
 	}
 
 	@Override

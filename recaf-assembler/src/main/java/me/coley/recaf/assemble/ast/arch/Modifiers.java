@@ -36,7 +36,7 @@ public class Modifiers extends BaseElement implements Element {
 	@Override
 	public String print() {
 		return modifiers.stream()
-				.map(Modifier::getName)
+				.map(m -> '.' + m.getName())
 				.collect(Collectors.joining(" "));
 	}
 }

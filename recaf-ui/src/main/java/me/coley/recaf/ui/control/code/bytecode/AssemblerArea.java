@@ -29,6 +29,7 @@ import me.coley.recaf.util.visitor.MethodReplacingVisitor;
 import me.coley.recaf.util.visitor.SingleMemberVisitor;
 import me.coley.recaf.util.visitor.WorkspaceClassWriter;
 import me.coley.recaf.workspace.resource.Resource;
+import me.darknet.assembler.parser.AssemblerException;
 import org.antlr.v4.runtime.*;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -95,17 +96,16 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		pipeline.addParserFailureListener(this);
 		pipeline.addBytecodeFailureListener(this);
 		pipeline.addBytecodeValidationListener(this);
-		pipeline.addAntlrErrorListener(new BaseErrorListener() {
+		/*pipeline.addAntlrErrorListener(new BaseErrorListener() {
 			@Override
 			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
 									int line, int charPositionInLine, String msg, RecognitionException e) {
 				ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.WARNING, line, msg);
 				problemTracking.addProblem(line, problem);
 			}
-		});
+		});*/
 		boolean recover = Configs.assembler().attemptRecover;
 		boolean validate = Configs.assembler().astValidation;
-		pipeline.setAntlrErrorStrategy(recover ? ERR_RECOVER : ERR_JUST_FAIL);
 		if (validate) {
 			pipeline.addAstValidationListener(this);
 		}
@@ -384,16 +384,16 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 	}
 
 	@Override
-	public void onAntlrParseFail(ParserException ex) {
-		int line = ex.getNode().getStart().getLine();
+	public void onParseFail(AssemblerException ex) {
+		int line = ex.getLocation().getLine();
 		String msg = ex.getMessage();
 		ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
 		problemTracking.addProblem(line, problem);
 	}
 
 	@Override
-	public void onAntlrTransformFail(ParserException ex) {
-		int line = ex.getNode().getStart().getLine();
+	public void onParserTransformFail(AssemblerException ex) {
+		int line = ex.getLocation().getLine();
 		String msg = ex.getMessage();
 		ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
 		problemTracking.addProblem(line, problem);

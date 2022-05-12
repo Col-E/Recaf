@@ -4,6 +4,8 @@ import me.coley.recaf.assemble.ast.Named;
 import me.coley.recaf.assemble.ast.Descriptor;
 import me.coley.recaf.assemble.ast.Element;
 
+import java.util.List;
+
 /**
  * Outlines a {@link FieldDefinition} or {@link MethodDefinition}.
  *
@@ -26,4 +28,9 @@ public interface MemberDefinition extends Element, Descriptor, Named {
 	 * @return Member's modifiers.
 	 */
 	Modifiers getModifiers();
+
+	List<Annotation> getAnnotations();
+
+	void addAnnotation(Annotation annotation);
+
 }

@@ -31,8 +31,6 @@ public class Code extends BaseElement {
 	private final List<AbstractInstruction> instructions = new ArrayList<>();
 	private final List<Comment> comments = new ArrayList<>();
 	private final List<TryCatch> tryCatches = new ArrayList<>();
-	private final List<ThrownException> thrownExceptions = new ArrayList<>();
-	private final List<Annotation> annotations = new ArrayList<>();
 	private final List<Expression> expressions = new ArrayList<>();
 	private final List<Unmatched> unmatched = new ArrayList<>();
 	private ConstVal constVal;
@@ -81,24 +79,6 @@ public class Code extends BaseElement {
 	public void addTryCatch(TryCatch tryCatch) {
 		tryCatches.add(tryCatch);
 		addInternal(tryCatch);
-	}
-
-	/**
-	 * @param thrownException
-	 * 		Thrown exception of a single type.
-	 */
-	public void addThrownException(ThrownException thrownException) {
-		thrownExceptions.add(thrownException);
-		addInternal(thrownException);
-	}
-
-	/**
-	 * @param annotation
-	 * 		Annotation to add.
-	 */
-	public void addAnnotation(Annotation annotation) {
-		annotations.add(annotation);
-		addInternal(annotation);
 	}
 
 	/**
@@ -247,24 +227,10 @@ public class Code extends BaseElement {
 	}
 
 	/**
-	 * @return All thrown exceptions of the method body.
-	 */
-	public List<ThrownException> getThrownExceptions() {
-		return thrownExceptions;
-	}
-
-	/**
 	 * @return All try-catch ranges of the method body.
 	 */
 	public List<TryCatch> getTryCatches() {
 		return tryCatches;
-	}
-
-	/**
-	 * @return All annotations.
-	 */
-	public List<Annotation> getAnnotations() {
-		return annotations;
 	}
 
 	/**
@@ -305,7 +271,11 @@ public class Code extends BaseElement {
 	@Override
 	public String print() {
 		return entries.stream()
-				.map(Element::print)
-				.collect(Collectors.joining("\n"));
+				.map(e -> {
+					if(e instanceof Label)
+						return e.print();
+					return '\t' + e.print();
+				})
+				.collect(Collectors.joining("\n")) + "\nend";
 	}
 }

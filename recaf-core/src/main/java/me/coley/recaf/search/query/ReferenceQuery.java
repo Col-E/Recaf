@@ -18,6 +18,7 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -121,7 +122,7 @@ public class ReferenceQuery implements Query {
 				super.visitFieldInsn(opcode, owner, name, desc);
 				whenMatched(owner, name, desc,
 						builder -> addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(),
-								new FieldInstruction(OpcodeUtil.opcodeToName(opcode), owner, name, desc)));
+								new FieldInstruction(opcode, owner, name, desc)));
 			}
 
 			@Override
@@ -129,7 +130,7 @@ public class ReferenceQuery implements Query {
 				super.visitMethodInsn(opcode, owner, name, desc, isInterface);
 				whenMatched(owner, name, desc,
 						builder -> addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(),
-								new MethodInstruction(OpcodeUtil.opcodeToName(opcode), owner, name, desc)));
+								new MethodInstruction(opcode, owner, name, desc)));
 			}
 
 			@Override
@@ -137,7 +138,7 @@ public class ReferenceQuery implements Query {
 											   Object... bootstrapMethodArguments) {
 				super.visitInvokeDynamicInsn(name, descriptor, bsmHandle, bootstrapMethodArguments);
 				Supplier<IndyInstruction> indySupplier = Suppliers.memoize(() ->
-						new IndyInstruction("INVOKEDYNAMIC", name, desc,
+						new IndyInstruction(Opcodes.INVOKEDYNAMIC, name, desc,
 								new HandleInfo(bsmHandle),
 								Arrays.stream(bootstrapMethodArguments)
 										.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))

@@ -5,6 +5,7 @@ import me.coley.recaf.scripting.ScriptEngine;
 import me.coley.recaf.scripting.ScriptResult;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
 import java.nio.file.Files;
@@ -34,12 +35,14 @@ public class Main {
 		if (parameters.getScriptPath() != null) {
 			Path scriptPath = parameters.getScriptPath().toPath();
 			if (Files.isRegularFile(scriptPath)) {
-				ScriptResult result = ScriptEngine.execute(scriptPath);
-				if (result.wasSuccess()) {
-					logger.info("Script execute result: {}", result.getResult());
-				} else {
-					logger.error("Script encountered error: ", result.getException());
-				}
+				ThreadUtil.run(() -> {
+					ScriptResult result = ScriptEngine.execute(scriptPath);
+					if (result.wasSuccess()) {
+						logger.info("Script execute result: {}", result.getResult());
+					} else {
+						logger.error("Script encountered error: ", result.getException());
+					}
+				});
 			} else {
 				logger.error("No script found: {}", scriptPath);
 			}

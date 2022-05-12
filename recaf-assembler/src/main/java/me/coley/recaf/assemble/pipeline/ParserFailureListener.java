@@ -5,6 +5,7 @@ import me.coley.recaf.assemble.ParserException;
 import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
+import me.darknet.assembler.parser.AssemblerException;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
@@ -20,7 +21,7 @@ public interface ParserFailureListener {
 	 * @param ex
 	 * 		Exception wrapper detailing the failure.
 	 */
-	void onAntlrParseFail(ParserException ex);
+	void onParseFail(AssemblerException ex);
 
 	/**
 	 * Called when {@link AntlrToAstTransformer#visit(ParseTree)} fails.
@@ -28,7 +29,7 @@ public interface ParserFailureListener {
 	 * @param ex
 	 * 		Exception wrapper detailing the failure.
 	 */
-	void onAntlrTransformFail(ParserException ex);
+	void onParserTransformFail(AssemblerException ex);
 
 	/**
 	 * Called when {@link AstValidator#visit()} fails.

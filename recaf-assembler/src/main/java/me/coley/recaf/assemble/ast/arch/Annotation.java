@@ -52,7 +52,7 @@ public class Annotation extends BaseElement implements CodeEntry {
 
 	@Override
 	public void insertInto(Code code) {
-		code.addAnnotation(this);
+		code.add(this);
 	}
 
 	@Override

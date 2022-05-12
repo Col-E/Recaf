@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.analysis;
 
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.IllegalAstException;
+import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
@@ -14,6 +15,7 @@ import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.util.NumberUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.logging.Logging;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
@@ -86,8 +88,17 @@ public class Analyzer {
 	public Analysis analyze() throws AstException {
 		List<AbstractInstruction> instructions = code.getChildrenOfType(AbstractInstruction.class);
 		Analysis analysis = new Analysis(instructions.size());
-		fillBlocks(analysis, instructions);
-		fillFrames(analysis, instructions);
+		try {
+			if(!instructions.isEmpty()) {
+				fillBlocks(analysis, instructions);
+				fillFrames(analysis, instructions);
+			}
+		} catch (AstException e) {
+			throw e;
+		} catch (Exception t) {
+			t.printStackTrace();
+			throw new MethodCompileException(code, t, "Uncaught exception during analysis!");
+		}
 		return analysis;
 	}
 
@@ -295,7 +306,7 @@ public class Analyzer {
 							frame.push(new Value.WideReservedValue());
 							break;
 						case HANDLE:
-							frame.push(new Value.HandleValue((HandleInfo) ldcInstruction.getValue()));
+							frame.push(new Value.HandleValue(new HandleInfo((Handle) ldcInstruction.getValue())));
 							break;
 						case ANNO:
 						case ANNO_LIST:

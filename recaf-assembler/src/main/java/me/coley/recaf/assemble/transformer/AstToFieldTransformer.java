@@ -57,7 +57,7 @@ public class AstToFieldTransformer {
 		}
 		List<AnnotationNode> visibleAnnotations = new ArrayList<>();
 		List<AnnotationNode> invisibleAnnotations = new ArrayList<>();
-		for (Annotation annotation : code.getAnnotations()) {
+		for (Annotation annotation : definition.getAnnotations()) {
 			AnnotationNode node = new AnnotationNode("L" + annotation.getType() + ";");
 			node.values = new ArrayList<>();
 			annotation.getArgs().forEach((argName, argVal) -> {

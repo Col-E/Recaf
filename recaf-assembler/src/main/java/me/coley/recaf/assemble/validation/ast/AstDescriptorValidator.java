@@ -5,6 +5,7 @@ import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.util.Types;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 
 import java.util.function.Predicate;
@@ -60,7 +61,7 @@ public class AstDescriptorValidator implements AstValidationVisitor {
 								instruction.getOpcode() + " const descriptor '" + desc + "' is malformed"));
 					}
 				} else if (ldc.getValueType() == ArgType.HANDLE) {
-					String desc = ((HandleInfo) ldc.getValue()).getDesc();
+					String desc = ((Handle) ldc.getValue()).getDesc();
 					if (!isValid.test(desc)) {
 						validator.addMessage(error(ILLEGAL_DESC, instruction,
 								instruction.getOpcode() + " const handle descriptor '" + desc + "' is malformed"));
