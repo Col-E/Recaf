@@ -348,7 +348,7 @@ conf.ssvm=SSVM
 conf.ssvm.access=File IO access
 conf.ssvm.access.read=Allow read
 conf.ssvm.access.write=Allow write
-conf.ssvm.access.read.warn=Enabling this will allow the VM to read files on your system.\nBe careful when enabling this option.
-conf.ssvm.access.write.warn=Enabling this will allow the VM to write files to your system.\nBe VERY careful when enabling this option.
+conf.ssvm.access.read.warn=Enabling this will allow SSVM actions to read files on your system.\nBe careful when enabling this option.
+conf.ssvm.access.write.warn=Enabling this will allow SSVM actions to write files to your system.\nBe VERY careful when enabling this option.
 
 conf.undefined=Undefined

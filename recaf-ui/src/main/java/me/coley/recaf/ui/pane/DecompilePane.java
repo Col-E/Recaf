@@ -114,7 +114,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	 * Fades in the <i>"decompile is in progress bla bla bla"</i> overlay.
 	 */
 	private void showOverlay() {
-		// Makethe element click-opaque
+		// Make the element click-opaque
 		overlay.setMouseTransparent(false);
 		FadeTransition ft = new FadeTransition(Duration.millis(1000), overlay);
 		ft.setFromValue(overlay.getOpacity());
