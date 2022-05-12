@@ -40,4 +40,9 @@ public interface ConfigContainer {
 	default boolean isInternal() {
 		return false;
 	}
+
+	/**
+	 * Invoked when {@link ConfigRegistry#load()} initializes this container.
+	 */
+	default void onLoad() {}
 }

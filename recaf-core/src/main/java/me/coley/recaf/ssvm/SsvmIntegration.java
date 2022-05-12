@@ -6,12 +6,12 @@ import dev.xdark.ssvm.classloading.CompositeBootClassLoader;
 import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.fs.FileDescriptorManager;
+import dev.xdark.ssvm.fs.HostFileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.ArrayValue;
 import dev.xdark.ssvm.value.InstanceValue;
-import dev.xdark.ssvm.value.NullValue;
 import dev.xdark.ssvm.value.Value;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
@@ -24,12 +24,12 @@ import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -45,6 +45,8 @@ public class SsvmIntegration {
 	private VirtualMachine vm;
 	private boolean initialized;
 	private Exception initializeError;
+	private boolean allowRead;
+	private boolean allowWrite;
 
 	/**
 	 * @param workspace
@@ -90,7 +92,38 @@ public class SsvmIntegration {
 		VirtualMachine vm = new VirtualMachine() {
 			@Override
 			protected FileDescriptorManager createFileDescriptorManager() {
-				return new DenyingFileDescriptorManager();
+				return new HostFileDescriptorManager() {
+					@Override
+					public long open(String path, int mode) throws IOException {
+						long fd = newFD();
+						if ((allowRead && mode == READ) || (allowWrite && (mode == WRITE || mode == APPEND)))
+							logger.trace("VM file handle[{}:{}]: {}",
+									VirtualMachineUtil.describeFileMode(mode), fd, path);
+						switch (mode) {
+							case READ: {
+								InputStream in;
+								if (allowRead)
+									in = new FileInputStream(path);
+								else
+									in = new ByteArrayInputStream(new byte[0]);
+								inputs.put(fd, in);
+								return fd;
+							}
+							case WRITE:
+							case APPEND: {
+								OutputStream out;
+								if (allowWrite)
+									out = new FileOutputStream(path, mode == APPEND);
+								else
+									out = new ByteArrayOutputStream();
+								outputs.put(fd, out);
+								return fd;
+							}
+							default:
+								throw new IOException("Unknown mode: " + mode);
+						}
+					}
+				};
 			}
 
 			@Override
@@ -126,6 +159,47 @@ public class SsvmIntegration {
 		return initialized;
 	}
 
+	/**
+	 * {@code false} by default.
+	 *
+	 * @return {@code true} when the VM should have access to host user's file system for reading.
+	 * {@code false} provides the VM an empty file instead.
+	 */
+	public boolean doAllowRead() {
+		return allowRead;
+	}
+
+	/**
+	 * {@code false} by default.
+	 *
+	 * @param allowRead
+	 *        {@code true} when the VM should have access to host user's file contents.
+	 *        {@code false} provides the VM an empty file instead.
+	 */
+	public void setAllowRead(boolean allowRead) {
+		this.allowRead = allowRead;
+	}
+
+	/**
+	 * {@code false} by default.
+	 *
+	 * @return {@code true} when the VM should have access to host user's file system for writing.
+	 * {@code false} provides a no-op write behavior.
+	 */
+	public boolean doAllowWrite() {
+		return allowWrite;
+	}
+
+	/**
+	 * {@code false} by default.
+	 *
+	 * @param allowWrite
+	 *        {@code true} when the VM should have access to host user's file system for writing.
+	 *        {@code false} provides a no-op write behavior.
+	 */
+	public void setAllowWrite(boolean allowWrite) {
+		this.allowWrite = allowWrite;
+	}
 
 	/**
 	 * Run the method in the {@link #getVm() current VM}.
@@ -162,6 +236,9 @@ public class SsvmIntegration {
 		if (vmClass == null) {
 			return CompletableFuture.completedFuture(
 					new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName())));
+		}
+		if (vmClass.shouldBeInitialized()) {
+			vmClass.initialize();
 		}
 		VMHelper helper = vm.getHelper();
 		int access = method.getAccess();

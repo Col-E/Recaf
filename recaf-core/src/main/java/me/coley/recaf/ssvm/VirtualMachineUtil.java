@@ -3,6 +3,7 @@ package me.coley.recaf.ssvm;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.asm.DelegatingInsnNode;
 import dev.xdark.ssvm.asm.Modifier;
+import dev.xdark.ssvm.fs.FileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.InstanceValue;
@@ -116,5 +117,24 @@ public class VirtualMachineUtil {
 			addUrlTo = scl.getValue("ucp", "Ljdk/internal/loader/URLClassPath;");
 		}
 		helper.invokeVirtual("addURL", "(Ljava/net/URL;)V", new Value[0], new Value[]{addUrlTo, url});
+	}
+
+	/**
+	 * @param mode
+	 * 		Access mode for {@link FileDescriptorManager}.
+	 *
+	 * @return Name representation of mode.
+	 */
+	public static String describeFileMode(int mode) {
+		switch (mode) {
+			case FileDescriptorManager.READ:
+				return "READ";
+			case FileDescriptorManager.WRITE:
+				return "WRITE";
+			case FileDescriptorManager.APPEND:
+				return "APPEND";
+			default:
+				return "?";
+		}
 	}
 }

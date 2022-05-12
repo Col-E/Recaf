@@ -27,6 +27,7 @@ public class GuiPresentation implements Presentation {
 	@Override
 	public void initialize(Controller controller) {
 		this.controller = controller;
+		RecafUI.set(controller);
 		// Patch JDK restrictions
 		AccessPatcher.patch();
 		// Setup JavaFX
@@ -52,7 +53,7 @@ public class GuiPresentation implements Presentation {
 		// Open UI
 		Platform.runLater(() -> {
 			try {
-				RecafUI.initialize(controller);
+				RecafUI.initialize();
 				RecafUI.getWindows().getMainWindow().show();
 			} catch (Throwable ex) {
 				logger.error("Recaf crashed due to an unhandled error." +

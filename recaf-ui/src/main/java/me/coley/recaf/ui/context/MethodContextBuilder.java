@@ -71,7 +71,11 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		}
 		if (canUseVm()) {
 			Menu vm = menu("menu.vm", Icons.VM);
-			vm.getItems().add(action("menu.vm.run", Icons.PLAY, this::vmRun));
+			String name = methodInfo.getName();
+			if (name.charAt(0) != '<' && name.charAt(1) != 'i') {
+				// Run should not be used on static-initializers/constructors
+				vm.getItems().add(action("menu.vm.run", Icons.PLAY, this::vmRun));
+			}
 			vm.getItems().add(action("menu.vm.optimize", Icons.CONFIG, this::vmOptimize));
 			menu.getItems().add(vm);
 		}
@@ -237,10 +241,6 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		// SSVM must have been initialized
 		SsvmIntegration ssvm = RecafUI.getController().getServices().getSsvmIntegration();
 		if (!ssvm.isInitialized())
-			return false;
-		// Cannot run on static initializer/constructors
-		String name = methodInfo.getName();
-		if (name.charAt(0) == '<')
 			return false;
 		// Cannot run on abstract/native methods
 		int access = methodInfo.getAccess();

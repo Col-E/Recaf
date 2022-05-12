@@ -27,14 +27,20 @@ public class RecafUI {
 	}
 
 	/**
-	 * Setup UI components.
+	 * Assign the controller.
 	 *
 	 * @param controller
 	 * 		Controller instance.
 	 */
-	public static void initialize(Controller controller) {
+	public static void set(Controller controller) {
+		RecafUI.controller = controller;
+	}
+
+	/**
+	 * Setup UI components.
+	 */
+	public static void initialize() {
 		if (!initialized) {
-			RecafUI.controller = controller;
 			windows = new Windows();
 			windows.initialize();
 			initialized = true;

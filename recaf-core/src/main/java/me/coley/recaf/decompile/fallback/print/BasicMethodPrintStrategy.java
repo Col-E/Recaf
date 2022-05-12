@@ -1,13 +1,22 @@
 package me.coley.recaf.decompile.fallback.print;
 
+import me.coley.cafedude.classfile.ConstPool;
 import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.cafedude.classfile.attribute.CodeAttribute;
 import me.coley.cafedude.classfile.attribute.LocalVariableTableAttribute;
+import me.coley.cafedude.classfile.constant.*;
+import me.coley.cafedude.classfile.instruction.Instruction;
+import me.coley.cafedude.classfile.instruction.IntOperandInstruction;
+import me.coley.cafedude.io.InstructionReader;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.MethodModel;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.StringUtil;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.Collection;
 import java.util.List;
@@ -93,11 +102,64 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 		// For now just hex dump the code, will disassemble later
 		CodeAttribute code = model.getCodeAttribute();
 		StringBuilder sb = new StringBuilder();
-		byte[] raw = code.getCode();
-		for (int i = 0; i < code.getCode().length; i++) {
-			sb.append(StringUtil.toHexString(raw[i])).append(' ');
-			if ((i + 1) % 16 == 0)
-				sb.append("\n");
+		InstructionReader ir = new InstructionReader();
+		List<Instruction> instructions = ir.read(code);
+		for (Instruction instruction : instructions) {
+			int rawOp = instruction.getOpcode();
+			int asmOp = OpcodeUtil.deindexVarOp(rawOp);
+			int asmType = OpcodeUtil.opcodeToType(asmOp);
+			String name = OpcodeUtil.opcodeToName(asmOp);
+			if (asmOp != rawOp) {
+				int index = OpcodeUtil.indexFromVarOp(instruction.getOpcode());
+				name += "_" + index;
+			}
+			sb.append(String.format("%-16s : %s", instruction, name));
+			switch (asmType) {
+				case AbstractInsnNode.INSN:
+					if (asmOp != Opcodes.BIPUSH && asmOp != Opcodes.SIPUSH)
+						break;
+				case AbstractInsnNode.METHOD_INSN:
+				case AbstractInsnNode.TYPE_INSN:
+				case AbstractInsnNode.FIELD_INSN:
+				case AbstractInsnNode.LDC_INSN: {
+					IntOperandInstruction intOp = (IntOperandInstruction) instruction;
+					sb.append(" ").append(printCp(model.getPool(), model.getPool().get(intOp.getOperand())));
+					break;
+				}
+				case AbstractInsnNode.VAR_INSN: {
+					LocalVariableTableAttribute lvt = model.getLocalVariableTable();
+					if (lvt == null)
+						break;
+					int index;
+					if (rawOp != asmOp)
+						// Raw op is not ASM op, the index is associated with the op
+						index = OpcodeUtil.indexFromVarOp(rawOp);
+					else
+						// Variable op that has an operand instead
+						index = ((IntOperandInstruction) instruction).getOperand();
+					// Get variables of that index
+					List<LocalVariableTableAttribute.VarEntry> collect = lvt.getEntries().stream()
+							.filter(e -> e.getIndex() == index)
+							.collect(Collectors.toList());
+					// Append matching variable names
+					if (collect.size() == 1) {
+						int varNameIndex = collect.get(0).getNameIndex();
+						ConstPoolEntry cpName = model.getPool().get(varNameIndex);
+						if (cpName instanceof CpUtf8) {
+							sb.append(" ").append(((CpUtf8) cpName).getText());
+						}
+					} else if (collect.size() > 1) {
+						String varName = collect.stream()
+								.filter(e -> model.getPool().get(e.getNameIndex()) instanceof CpUtf8)
+								.map(e -> model.getPool().getUtf(e.getNameIndex()))
+								.distinct()
+								.collect(Collectors.joining(", "));
+						sb.append(" ").append(varName);
+					}
+					break;
+				}
+			}
+			sb.append('\n');
 		}
 		Printer disassemblePrinter = new Printer();
 		disassemblePrinter.setIndent("    ");
@@ -236,6 +298,51 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 				.map(StringUtil::shortenPath)
 				.collect(Collectors.joining(", "));
 		sb.append(" throws ").append(shortNames);
+	}
+
+	private static String printCp(ConstPool pool, ConstPoolEntry cp) {
+		if (cp instanceof CpString) {
+			int i = ((CpString) cp).getIndex();
+			return "CP_STRING(" + i + ":" + EscapeUtil.escape(pool.getUtf(i)) + ")";
+		} else if (cp instanceof CpClass) {
+			int i = ((CpClass) cp).getIndex();
+			return "CP_CLASS(" + i + ":" + EscapeUtil.escape(pool.getUtf(i)) + ")";
+		} else if (cp instanceof ConstRef) {
+			String type = "";
+			boolean method = true;
+			if (cp instanceof CpMethodRef) {
+				type = "CP_METHOD_REF";
+			} else if (cp instanceof CpInterfaceMethodRef) {
+				type = "CP_INTERFACE_METHOD_REF";
+			} else if (cp instanceof CpFieldRef) {
+				type = "CP_FIELD_REF";
+				method = false;
+			}
+			int c = ((ConstRef) cp).getClassIndex();
+			int n = ((ConstRef) cp).getNameTypeIndex();
+			try {
+				CpNameType nt = (CpNameType) pool.get(n);
+				int c2 = ((CpClass) pool.get(c)).getIndex();
+				String rn = pool.getUtf(nt.getNameIndex());
+				String rt = pool.getUtf(nt.getTypeIndex());
+				String r = method ? (rn + rt) : (rt + " " + rn);
+				String ref = EscapeUtil.escape(r);
+				return type + "("
+						+ c + ":" + EscapeUtil.escape(pool.getUtf(c2)) + ", " +
+						+n + ":" + ref + ")";
+			} catch (Throwable t) {
+				return type + "(INVALID)";
+			}
+		} else if (cp instanceof CpInt) {
+			return "CP_INT(" + ((CpInt) cp).getValue() + ")";
+		} else if (cp instanceof CpLong) {
+			return "CP_LONG(" + ((CpLong) cp).getValue() + ")";
+		} else if (cp instanceof CpDouble) {
+			return "CP_DOUBLE(" + ((CpDouble) cp).getValue() + ")";
+		} else if (cp instanceof CpFloat) {
+			return "CP_FLOAT(" + ((CpFloat) cp).getValue() + ")";
+		}
+		return "";
 	}
 
 	private static LocalVariableTableAttribute.VarEntry getLocal(LocalVariableTableAttribute table, int index) {

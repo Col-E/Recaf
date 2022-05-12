@@ -20,6 +20,7 @@ public class Configs {
 	private static final DecompilerConfig decompiler = new DecompilerConfig();
 	private static final ExportConfig export = new ExportConfig();
 	private static final RecentWorkspacesConfig recentWorkspaces = new RecentWorkspacesConfig();
+	private static final SsvmConfig ssvmConfig = new SsvmConfig();
 
 	/**
 	 * @return Collection of all config container instances.
@@ -34,7 +35,8 @@ public class Configs {
 				compiler,
 				decompiler,
 				export,
-				recentWorkspaces
+				recentWorkspaces,
+				ssvmConfig
 		);
 	}
 
@@ -99,5 +101,12 @@ public class Configs {
 	 */
 	public static RecentWorkspacesConfig recentWorkspaces() {
 		return recentWorkspaces;
+	}
+
+	/**
+	 * @return SSVM config instance.
+	 */
+	public static SsvmConfig ssvmConfig() {
+		return ssvmConfig;
 	}
 }

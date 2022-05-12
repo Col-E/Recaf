@@ -193,7 +193,15 @@ public class CellFactory {
 					.build());
 		});
 		ITEM_MAP.put(InsnItem.class, (type, cell, resource, item) -> {
+			Resources resources = RecafUI.getController().getWorkspace().getResources();
+			MethodItem i = (MethodItem) ((InsnItem) item).getParent();
+			MethodInfo methodInfo = i.getInfo();
+			CommonClassInfo owner = resources.getClass(methodInfo.getOwner());
 			cell.setGraphic(getIconView(CODE));
+			cell.setContextMenu(ContextBuilder.forMethodInstruction(owner, methodInfo)
+					.withResource(resource)
+					.setWhere(from(type))
+					.build());
 		});
 	}
 }

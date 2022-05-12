@@ -17,6 +17,7 @@ menu.file.quit=Quit
 menu.goto.class=Go to class
 menu.goto.field=Go to field
 menu.goto.method=Go to method
+menu.goto.instruction=Go to instruction
 menu.goto.file=Go to file
 menu.edit.assemble.field=Edit field
 menu.edit.assemble.method=Edit method
@@ -85,6 +86,7 @@ dialog.next=Next
 dialog.previous=Previous
 dialog.dismiss=Dismiss
 dialog.configure=Configure
+dialog.warning=Warning
 dialog.restart=To change this configuration option, a restart is recommended.\nAre you sure you want to apply?
 dialog.unknownextension=Unknown file extension. Do you want to configure a language association?
 
@@ -341,5 +343,12 @@ conf.export.general.compress=Use compression in archives
 conf.recent=Recent
 conf.recent.max=Max tracked items
 conf.recent.workspaces=Recent workspaces
+
+conf.ssvm=SSVM
+conf.ssvm.access=File IO access
+conf.ssvm.access.read=Allow read
+conf.ssvm.access.write=Allow write
+conf.ssvm.access.read.warn=Enabling this will allow SSVM actions to read files on your system.\nBe careful when enabling this option.
+conf.ssvm.access.write.warn=Enabling this will allow SSVM actions to write files to your system.\nBe VERY careful when enabling this option.
 
 conf.undefined=Undefined

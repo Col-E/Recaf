@@ -739,6 +739,9 @@ public class OpcodeUtil implements Opcodes, NonAbstractOpcodes {
 		putType(LOOKUPSWITCH, AbstractInsnNode.LOOKUPSWITCH_INSN);
 		putType(MULTIANEWARRAY, AbstractInsnNode.MULTIANEWARRAY_INSN);
 		// Handle opcodes that ASM abstracts away
+		putOpcode(NonAbstractOpcodes.GOTO_W, "GOTO_W");
+		putOpcode(NonAbstractOpcodes.LDC2_W, "LDC2_W");
+		putOpcode(NonAbstractOpcodes.LDC_W, "LDC_W");
 		putType(NonAbstractOpcodes.GOTO_W, AbstractInsnNode.JUMP_INSN);
 		putType(NonAbstractOpcodes.LDC2_W, AbstractInsnNode.LDC_INSN);
 		putType(NonAbstractOpcodes.LDC_W, AbstractInsnNode.LDC_INSN);

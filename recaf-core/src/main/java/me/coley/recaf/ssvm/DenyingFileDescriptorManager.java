@@ -11,19 +11,6 @@ public class DenyingFileDescriptorManager extends SimpleFileDescriptorManager {
 	@Override
 	public long open(String path, int mode) {
 		// Deny any file IO
-		throw new IllegalStateException("Denied IO access[" + describe(mode) + "] to: " + path);
-	}
-
-	private static String describe(int mode) {
-		switch (mode) {
-			case READ:
-				return "READ";
-			case WRITE:
-				return "WRITE";
-			case APPEND:
-				return "APPEND";
-			default:
-				return "?";
-		}
+		throw new IllegalStateException("Denied IO access[" + VirtualMachineUtil.describeFileMode(mode) + "] to: " + path);
 	}
 }
