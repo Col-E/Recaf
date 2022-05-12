@@ -1,6 +1,7 @@
 package me.coley.recaf.parse;
 
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.InitializerDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
@@ -56,10 +57,19 @@ public class ParseHitResult {
 			return true;
 		// Check for field declaration. Its the 2nd parent up. You can't rely on the 1st being a
 		// 'VariableDeclarator' because then you'd treat local variables as fields...
+		// We need to check the parent of the 'VariableDeclarator' which yields us the 'FieldDeclaration'
+		// just to be sure its what we're looking for.
 		if (info instanceof FieldInfo && node.getParentNode().isPresent() &&
-				node.getParentNode().get().getParentNode().isPresent() &&
-				node.getParentNode().get().getParentNode().get() instanceof FieldDeclaration)
-			return true;
+				node.getParentNode().get().getParentNode().isPresent()) {
+			Node node = this.node.getParentNode().get();
+			// Enum constant declarations are the immediate parent
+			if (node instanceof EnumConstantDeclaration)
+				return true;
+			// The parent of the parent is typically the field declaration
+			node = node.getParentNode().get();
+			if (node instanceof FieldDeclaration)
+				return true;
+		}
 		// Not a declaration
 		return false;
 	}
