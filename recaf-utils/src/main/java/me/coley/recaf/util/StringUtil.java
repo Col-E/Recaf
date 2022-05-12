@@ -219,11 +219,12 @@ public class StringUtil {
 		int bufferSize = Math.min(4096, maxEntropy);
 		CharBuffer charBuf = CharBuffer.wrap(new char[bufferSize]);
 		while (true) {
-			CoderResult result = buffer.hasRemaining() ? decoder.decode(buffer, charBuf, true) : CoderResult.UNDERFLOW;
+			if (!buffer.hasRemaining()) {
+				return true;
+			}
+			CoderResult result = decoder.decode(buffer, charBuf, true);
 			if (result.isUnderflow())
-				result = decoder.flush(charBuf);
-			if (result.isUnderflow())
-				break;
+				decoder.flush(charBuf);
 			charBuf.flip();
 			nonText = calculateNonText(charBuf, nonText);
 			if (nonText >= maxEntropy) {
@@ -231,7 +232,6 @@ public class StringUtil {
 			}
 			charBuf.rewind();
 		}
-		return true;
 	}
 
 	private static int calculateNonText(CharBuffer charBuf, int nonText) {
