@@ -133,6 +133,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 			try {
 				if (pipeline.updateAst() && pipeline.validateAst()) {
 					logger.trace("AST updated and validated");
+					if (pipeline.isMethod() &&
+							pipeline.isOutputOutdated() &&
+							pipeline.generateMethod())
+						logger.trace("AST compiled to method and analysis executed");
 				}
 			} catch (Throwable t) {
 				// Shouldn't occur, but make sure its known if it does
@@ -185,6 +189,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		// We do not want to update the class, this is to initialize the pipeline state without the user needing
 		// to manually trigger a save first.
 		pipeline.updateAst();
+		if (pipeline.isMethod())
+			pipeline.generateMethod();
+		else
+			pipeline.generateField();
 		SaveResult initialBuild = targetMember.isMethod() ? generateMethod(false) : generateField(false);
 		if (initialBuild == SaveResult.SUCCESS)
 			logger.trace("Initial build of disassemble successful!");
@@ -273,8 +281,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 	 * @return Generation result status.
 	 */
 	private SaveResult generateMethod(boolean apply) {
-		// Generate method
-		if (!pipeline.generateMethod())
+		// Generate method if not up-to-date
+		if (pipeline.isUnitOutdated() && !pipeline.generateMethod())
 			return SaveResult.FAILURE;
 		MethodNode methodAssembled = pipeline.getLastMethod();
 		// Check if there were reported errors

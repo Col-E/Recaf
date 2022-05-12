@@ -1,6 +1,9 @@
 package me.coley.recaf.assemble.pipeline;
 
-import me.coley.recaf.assemble.*;
+import me.coley.recaf.assemble.AstException;
+import me.coley.recaf.assemble.BytecodeException;
+import me.coley.recaf.assemble.MethodCompileException;
+import me.coley.recaf.assemble.ParserException;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
@@ -49,9 +52,9 @@ public class AssemblerPipeline {
 	private String type;
 	private String text;
 	// States
-	private boolean textDirty;
-	private boolean unitOutdated;
-	private boolean outputOutdated;
+	private boolean textDirty = true;
+	private boolean unitOutdated = true;
+	private boolean outputOutdated = true;
 	// Outputs
 	private Unit unit;
 	private Variables lastVariables;
@@ -275,6 +278,14 @@ public class AssemblerPipeline {
 	 */
 	public boolean isUnitOutdated() {
 		return unitOutdated;
+	}
+
+	/**
+	 * @return {@code true} when the {@link #getLastMethod()} has not been updated with {@link #generateMethod()}.
+	 * {@code false} when up-to-date.
+	 */
+	public boolean isOutputOutdated() {
+		return outputOutdated || (isMethod() ? lastMethod != null : lastField != null);
 	}
 
 	/**
