@@ -8,6 +8,10 @@
     -fx-border-color: rgb(85, 85, 85);
     -fx-tab-size: 4;
 }
+.paragraph-text {
+    /* For RichTextFX */
+    -fx-tab-size: 4;
+}
 .filter-field {
     -fx-border-color: black;
     -fx-border-width: 1 0 0 0;
