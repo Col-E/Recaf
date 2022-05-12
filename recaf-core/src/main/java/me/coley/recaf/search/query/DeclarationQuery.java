@@ -85,7 +85,7 @@ public class DeclarationQuery implements Query {
 		public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 			MethodInfo methodInfo = currentClass.findMethod(name, desc);
 			if (methodInfo != null)
-				whenMatched(owner, name, desc,
+				whenMatched(currentClass.getName(), name, desc,
 						builder -> addMethod(builder, methodInfo.getName(), methodInfo.getDescriptor()));
 			return null;
 		}
@@ -94,7 +94,7 @@ public class DeclarationQuery implements Query {
 		public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
 			FieldInfo fieldInfo = currentClass.findField(name, desc);
 			if (fieldInfo != null)
-				whenMatched(owner, name, desc,
+				whenMatched(currentClass.getName(), name, desc,
 						builder -> addField(builder, fieldInfo.getName(), fieldInfo.getDescriptor()));
 			return null;
 		}

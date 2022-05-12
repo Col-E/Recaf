@@ -23,6 +23,13 @@ public class DeclarationSearchTests extends TestUtils {
 	}
 
 	@Test
+	void testZeroMatch() {
+		List<Result> results = search(snake, TextMatchMode.EQUALS, "NoMatch", null, null);
+		assertEquals(0, results.size(), "Should zero matches");
+	}
+
+
+	@Test
 	void testFindMain() {
 		List<Result> results = search(snake, TextMatchMode.EQUALS, null, "main", "([Ljava/lang/String;)V");
 		assertEquals(1, results.size(), "Should contain exactly one match for 'main(String[])'");
