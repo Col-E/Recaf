@@ -13,7 +13,6 @@ configurations {
 dependencies {
     implementation project(':recaf-core')
     implementation docking
-    implementation hppc
     implementation richtextfx
 
     // TODO: Replace once 0.0.4 is released officially

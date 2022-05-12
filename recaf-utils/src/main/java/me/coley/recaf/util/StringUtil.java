@@ -1,8 +1,12 @@
 package me.coley.recaf.util;
 
+import com.carrotsearch.hppc.IntByteHashMap;
+import com.carrotsearch.hppc.IntByteMap;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /**
  * Various utilities for {@link String} manipulation.
@@ -11,6 +15,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class StringUtil {
 	private static final char NULL_TERMINATOR = '\0';
+	private static final IntByteMap IS_TEXT_CACHE = new IntByteHashMap(100);
 
 	/**
 	 * @param text
@@ -196,12 +201,32 @@ public class StringUtil {
 	}
 
 	/**
+	 * Uses a cache to wrap around {@link #computeIstext(byte[])}.
+	 *
 	 * @param data
 	 * 		Some data to check.
 	 *
 	 * @return {@code true} when it contains only text.
 	 */
 	public static boolean isText(byte[] data) {
+		if (data == null || data.length == 0)
+			return false;
+		int hash = Arrays.hashCode(data);
+		byte result = IS_TEXT_CACHE.getOrDefault(hash, (byte) -1);
+		if (result == -1) {
+			boolean compute = computeIstext(data);
+			IS_TEXT_CACHE.put(hash, result = (byte) (compute ? 1 : 0));
+		}
+		return result != 0;
+	}
+
+	/**
+	 * @param data
+	 * 		Some data to check.
+	 *
+	 * @return {@code true} when it contains only text.
+	 */
+	private static boolean computeIstext(byte[] data) {
 		String string = new String(data, StandardCharsets.UTF_8);
 		int nonText = 0;
 		for (int i = 0; i < string.length(); i++) {
