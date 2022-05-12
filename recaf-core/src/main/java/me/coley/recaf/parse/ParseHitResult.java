@@ -2,6 +2,7 @@ package me.coley.recaf.parse;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.InitializerDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithDeclaration;
 import me.coley.recaf.code.ClassInfo;
@@ -49,7 +50,7 @@ public class ParseHitResult {
 	public boolean isDeclaration() {
 		// Because of the way we handle JavaParser resolving this works fine for methods/classes...
 		// But for fields, we could just be matching a 'SimpleName'.
-		if (info instanceof MethodInfo && node instanceof NodeWithDeclaration)
+		if (info instanceof MethodInfo && (node instanceof NodeWithDeclaration || node instanceof InitializerDeclaration))
 			return true;
 		if (info instanceof ClassInfo && node instanceof TypeDeclaration)
 			return true;

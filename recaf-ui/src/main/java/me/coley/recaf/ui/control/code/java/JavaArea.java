@@ -2,10 +2,7 @@ package me.coley.recaf.ui.control.code.java;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ConstructorDeclaration;
-import com.github.javaparser.ast.body.EnumConstantDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.nodeTypes.NodeWithRange;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
@@ -167,6 +164,9 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
 				return memberInfo.equals(declaredInfo);
 			}).flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
+		} else if (memberInfo.getName().equals("<clinit>")) {
+			ast.findFirst(InitializerDeclaration.class, InitializerDeclaration::isStatic)
+					.flatMap(NodeWithRange::getBegin).ifPresent(this::selectPosition);
 		} else {
 			ast.findFirst(MethodDeclaration.class, dec -> {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());

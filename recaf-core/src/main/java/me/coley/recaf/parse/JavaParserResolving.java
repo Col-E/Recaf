@@ -4,6 +4,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.ast.body.InitializerDeclaration;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedType;
@@ -62,6 +63,13 @@ public class JavaParserResolving {
 				}
 			}
 		}
+		// Edge case for <clinit>
+		if (node instanceof InitializerDeclaration) {
+			InitializerDeclaration init = (InitializerDeclaration) node;
+			if (init.isStatic()) {
+				return true;
+			}
+		}
 		return false;
 	}
 
@@ -113,6 +121,21 @@ public class JavaParserResolving {
 			} catch (Exception ex) {
 				// Some of the facade implementations just throw exceptions when they don't resolve values.
 				// We can ignore them and assume they failed to get anything useful.
+			}
+		}
+		if (node instanceof InitializerDeclaration) {
+			InitializerDeclaration init = (InitializerDeclaration) node;
+			if (init.isStatic()) {
+				ItemInfo unitInfo = of(typeSolver, node.getParentNode().get());
+				if (unitInfo instanceof CommonClassInfo) {
+					Optional<MethodInfo> initializerInfo = ((CommonClassInfo) unitInfo).getMethods()
+							.stream()
+							.filter(m -> m.getName().equals("<clinit>"))
+							.findFirst();
+					if (initializerInfo.isPresent()) {
+						return initializerInfo.get();
+					}
+				}
 			}
 		}
 		return objectToInfo(typeSolver, value);
