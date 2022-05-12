@@ -72,7 +72,7 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		if (canUseVm()) {
 			Menu vm = menu("menu.vm", Icons.VM);
 			String name = methodInfo.getName();
-			if (name.charAt(0) != '<' && name.charAt(1) != 'i') {
+			if (!("<clinit>".equals(name) || "<init>".equals(name))) {
 				// Run should not be used on static-initializers/constructors
 				vm.getItems().add(action("menu.vm.run", Icons.PLAY, this::vmRun));
 			}
