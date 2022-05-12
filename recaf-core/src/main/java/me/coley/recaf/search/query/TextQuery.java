@@ -15,6 +15,7 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.*;
 import org.slf4j.Logger;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -75,7 +76,7 @@ public class TextQuery implements Query {
 		public void visitFile(FileInfo fileInfo) {
 			byte[] raw = fileInfo.getValue();
 			if (StringUtil.isText(raw)) {
-				String text = new String(raw);
+				String text = new String(raw, StandardCharsets.UTF_8);
 				String[] lines = text.split("[\\n\\r]+");
 				for (String line : lines)
 					whenMatched(line.trim(), builder -> addFileText(builder, fileInfo));

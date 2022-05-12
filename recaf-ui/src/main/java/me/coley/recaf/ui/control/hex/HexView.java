@@ -234,7 +234,7 @@ public class HexView extends BorderPane implements ToolSideTabbed, Searchable, C
 				data[i - start] = (byte) hex.getHexAtOffset(i);
 			}
 			ClipboardContent clipboard = new ClipboardContent();
-			clipboard.putString(new String(data));
+			clipboard.putString(new String(data, StandardCharsets.ISO_8859_1));
 			Clipboard.getSystemClipboard().setContent(clipboard);
 		}));
 		menuCopy.getItems().add(Menus.separator());

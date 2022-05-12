@@ -131,7 +131,7 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 			ignoreNextDecompile = false;
 			return;
 		}
-		area.setText(new String(info.getValue()));
+		area.setText(new String(info.getValue(), StandardCharsets.UTF_8));
 	}
 
 	@Override
