@@ -127,16 +127,20 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 					break;
 				}
 				case AbstractInsnNode.VAR_INSN: {
-					LocalVariableTableAttribute lvt = model.getLocalVariableTable();
-					if (lvt == null)
-						break;
 					int index;
-					if (rawOp != asmOp)
+					boolean indexed = rawOp != asmOp;
+					if (indexed)
 						// Raw op is not ASM op, the index is associated with the op
 						index = OpcodeUtil.indexFromVarOp(rawOp);
 					else
 						// Variable op that has an operand instead
 						index = ((IntOperandInstruction) instruction).getOperand();
+					LocalVariableTableAttribute lvt = model.getLocalVariableTable();
+					if (lvt == null) {
+						if (!indexed)
+							sb.append(" ").append(index);
+						break;
+					}
 					// Get variables of that index
 					List<LocalVariableTableAttribute.VarEntry> collect = lvt.getEntries().stream()
 							.filter(e -> e.getIndex() == index)
