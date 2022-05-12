@@ -211,7 +211,7 @@ public class BracketTracking {
 		// Begin the search in the given direction
 		int bracketCount = 1;
 		int steps = 0;
-		while (index > -1 && index < editor.getLength() && steps < MAX_SEARCH_DISTANCE) {
+		while (index > -1 && index < editor.getLength() - 1 && steps < MAX_SEARCH_DISTANCE) {
 			char code = editor.getText(index, index + 1).charAt(0);
 			// Handle bracket nesting level
 			if (code == origin) {
