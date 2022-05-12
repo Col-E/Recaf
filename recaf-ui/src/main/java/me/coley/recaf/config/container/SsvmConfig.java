@@ -20,29 +20,18 @@ public class SsvmConfig implements ConfigContainer {
 	 */
 	@Group("access")
 	@ConfigID("read")
-	public boolean allowRead; // TODO: Warn user when they toggle this to 'true'
+	public boolean allowRead;
 	/**
 	 * @see SsvmIntegration#doAllowWrite()
 	 */
 	@Group("access")
 	@ConfigID("write")
-	public boolean allowWrite;  // TODO: Warn user when they toggle this to 'true'
+	public boolean allowWrite;
 
 	@Override
 	public void onLoad() {
-		// TODO: If we change the UI control for the above to include warnings, we may as well have them
-		//  live update the 'SsvmIntegration' instance, and then we can remove this logic here.
-		Runnable updateTask = () -> {
-			Controller controller = RecafUI.getController();
-			SsvmIntegration ssvm = controller.getServices().getSsvmIntegration();
-			ssvm.setAllowRead(allowRead);
-			ssvm.setAllowWrite(allowWrite);
-		};
 		// Register listener to update SSVM integration access rules.
-		ThreadUtil.runDelayed(1000, () -> {
-			RecafUI.getController().addListener((old, current) -> updateTask.run());
-			updateTask.run();
-		});
+		RecafUI.getController().addListener((old, current) -> updateAccess());
 	}
 
 	@Override
@@ -53,5 +42,17 @@ public class SsvmConfig implements ConfigContainer {
 	@Override
 	public String internalName() {
 		return "conf.ssvm";
+	}
+
+	/**
+	 * Update {@link SsvmIntegration} with current access flags.
+	 */
+	public void updateAccess() {
+		Controller controller = RecafUI.getController();
+		SsvmIntegration ssvm = controller.getServices().getSsvmIntegration();
+		if (ssvm != null) {
+			ssvm.setAllowRead(allowRead);
+			ssvm.setAllowWrite(allowWrite);
+		}
 	}
 }

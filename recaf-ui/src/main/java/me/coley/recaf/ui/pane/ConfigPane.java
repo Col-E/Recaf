@@ -6,14 +6,15 @@ import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Popup;
+import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Configs;
@@ -24,11 +25,13 @@ import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.config.*;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.window.WindowBase;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * Display for config values defined in {@link ConfigContainer} instances.
@@ -37,6 +40,7 @@ import java.util.*;
  */
 public class ConfigPane extends BorderPane implements WindowShownListener {
 	private static final Logger logger = Logging.get(ConfigPane.class);
+	private static final Map<String, BiFunction<ConfigContainer, Field, Node>> ID_OVERRIDES = new HashMap<>();
 	private static final String TAB_TITLE_PADDING = "  ";
 	private static final int WIDTH = 200;
 	private final List<Runnable> onShownQueue = new ArrayList<>();
@@ -145,7 +149,9 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 
 	private static Node getConfigComponent(ConfigContainer container, Field field, String idKey) {
 		Class<?> type = field.getType();
-		if (boolean.class.equals(type) || Boolean.class.equals(type)) {
+		if (ID_OVERRIDES.containsKey(idKey)) {
+			return ID_OVERRIDES.get(idKey).apply(container, field);
+		} else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
 			return new ConfigBoolean(container, field, Lang.getBinding(idKey));
 		} else if (ConfigRanged.hasBounds(field)) {
 			return new ConfigRanged(container, field);
@@ -155,14 +161,6 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigPos(container, field);
 		} else if (type.isEnum()) {
 			return new ConfigEnum(container, field);
-		} else if (idKey.equals("conf.compiler.general.impl")) {
-			return new ConfigCompiler(container, field);
-		} else if (idKey.equals("conf.decompiler.general.impl")) {
-			return new ConfigDecompiler(container, field);
-		} else if (idKey.equals("conf.display.general.language")) {
-			return new ConfigLanguage(container, field);
-		} else if (idKey.equals("conf.editor.assoc.fileextassociations")) {
-			return new ConfigLanguageAssociation(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");
@@ -172,5 +170,36 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 	@Override
 	public void onShown(WindowEvent e) {
 		onShownQueue.forEach(Runnable::run);
+	}
+
+	static {
+		ID_OVERRIDES.put("conf.compiler.general.impl", ConfigCompiler::new);
+		ID_OVERRIDES.put("conf.decompiler.general.impl", ConfigDecompiler::new);
+		ID_OVERRIDES.put("conf.display.general.language", ConfigLanguage::new);
+		ID_OVERRIDES.put("conf.editor.assoc.fileextassociations", ConfigLanguageAssociation::new);
+		ID_OVERRIDES.put("conf.ssvm.access.read", (c, f) ->
+				new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.access.read"), value -> {
+					if (value) {
+						Alert a = new Alert(Alert.AlertType.WARNING);
+						WindowBase.installStyle(a.getDialogPane().getStylesheets());
+						WindowBase.installLogo((Stage) a.getDialogPane().getScene().getWindow());
+						a.headerTextProperty().bind(Lang.getBinding("conf.ssvm.access"));
+						a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.read.warn"));
+						a.show();
+					}
+					Configs.ssvmConfig().updateAccess();
+				}));
+		ID_OVERRIDES.put("conf.ssvm.access.write", (c, f) ->
+				new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.access.write"), value -> {
+					if (value) {
+						Alert a = new Alert(Alert.AlertType.WARNING);
+						WindowBase.installStyle(a.getDialogPane().getStylesheets());
+						WindowBase.installLogo((Stage) a.getDialogPane().getScene().getWindow());
+						a.headerTextProperty().bind(Lang.getBinding("conf.ssvm.access"));
+						a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.write.warn"));
+						a.show();
+					}
+					Configs.ssvmConfig().updateAccess();
+				}));
 	}
 }

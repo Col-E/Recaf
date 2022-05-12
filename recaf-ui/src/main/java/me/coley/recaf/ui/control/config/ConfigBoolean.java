@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.control.config;
 
-import javafx.beans.binding.StringBinding;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.CheckBox;
 import me.coley.recaf.config.ConfigContainer;
@@ -14,7 +13,6 @@ import java.lang.reflect.Field;
  * @author Matt Coley
  */
 public class ConfigBoolean extends CheckBox {
-
 	/**
 	 * @param instance
 	 * 		Config container.
@@ -25,20 +23,6 @@ public class ConfigBoolean extends CheckBox {
 	 */
 	public ConfigBoolean(ConfigContainer instance, Field field, ObservableValue<String> text) {
 		textProperty().bind(text);
-		setSelected(ReflectUtil.quietGet(instance, field));
-		selectedProperty().addListener((observable, old, current) -> ReflectUtil.quietSet(instance, field, current));
-	}
-
-	/**
-	 * @param instance
-	 * 		Config container.
-	 * @param field
-	 * 		Config field.
-	 * @param text
-	 * 		Text to represent the field.
-	 */
-	public ConfigBoolean(ConfigContainer instance, Field field, String text) {
-		super(text);
 		setSelected(ReflectUtil.quietGet(instance, field));
 		selectedProperty().addListener((observable, old, current) -> ReflectUtil.quietSet(instance, field, current));
 	}

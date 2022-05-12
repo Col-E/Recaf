@@ -110,7 +110,10 @@ public class Lang {
 
 				@Override
 				protected String computeValue() {
-					return Lang.get(currentTranslation.get(), translationKey);
+					String translated = Lang.get(currentTranslation.get(), translationKey);
+					if (translated != null)
+						translated = translated.replace("\\n", "\n");
+					return translated;
 				}
 			};
 		});
