@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.ast;
 
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -89,9 +90,9 @@ public class HandleInfo extends BaseElement {
 	@Override
 	public String print() {
 		if (isMethod) {
-			return String.format("%s %s.%s%s", tag, owner, name, desc);
+			return String.format("%s %s.%s%s", tag, owner, EscapeUtil.escapeSpace(name), desc);
 		} else {
-			return String.format("%s %s.%s %s", tag, owner, name, desc);
+			return String.format("%s %s.%s %s", tag, owner, EscapeUtil.escapeSpace(name), desc);
 		}
 	}
 }
