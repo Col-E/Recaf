@@ -20,7 +20,6 @@ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.slf4j.Logger;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.Manifest;
@@ -35,8 +34,8 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 	private final Map<String, Object> fernFlowerProperties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
 	private final ThreadLocal<String> targetClass = new ThreadLocal<>();
 	private final ThreadLocal<String> targetDecompiled = new ThreadLocal<>();
+	private final ThreadLocal<ClassesProcessor> processor = new ThreadLocal<>();
 	private final LazyLoader loader = new LazyLoader(this);
-	private ClassesProcessor classProcessor;
 
 	public QuiltFlowerDecompiler() {
 		super("QuiltFlower", "1.8.1");
@@ -47,7 +46,8 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
 		try {
 			StructContext structContext = new StructContext(this, this, loader);
-			classProcessor = new ClassesProcessor(structContext);
+			ClassesProcessor classesProcessor = new ClassesProcessor(structContext);
+			processor.set(classesProcessor);
 			IFernflowerLogger ffLogger = new IFernflowerLogger() {
 				@Override
 				public void writeMessage(String message, Severity severity) {
@@ -59,7 +59,7 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 					logger.error("QuiltFlower: {}", message, t);
 				}
 			};
-			DecompilerContext decompilerContext = new DecompilerContext(fernFlowerProperties, ffLogger, structContext, classProcessor,
+			DecompilerContext decompilerContext = new DecompilerContext(fernFlowerProperties, ffLogger, structContext, classesProcessor,
 					null, s -> new IdentityRenamerFactory());
 			// Reset input
 			String name = classInfo.getName();
@@ -72,16 +72,18 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 			// Load in the data
 			byte[] code = applyInterceptors(classInfo.getValue());
 			structContext.addData(name, qualified, code, true);
-			classProcessor.loadClasses(null);
+			classesProcessor.loadClasses(null);
 			// Decompile
 			structContext.saveContext();
 			structContext.close();
 			// Cleanup and yield value
+			processor.set(null);
 			String decompiled = targetDecompiled.get();
 			if (decompiled == null)
 				return "// Failed to decompile: " + name;
 			return decompiled;
 		} catch (Exception e) {
+			processor.set(null);
 			logger.error("QuiltFlower encountered an error when decompiling", e);
 			return "// " + StringUtil.traceToString(e).replace("\n", "\n// ");
 		}
@@ -95,7 +97,10 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 
 	@Override
 	public String getClassEntryName(StructClass cl, String entryName) {
-		ClassesProcessor.ClassNode node = classProcessor.getMapRootClasses().get(cl.qualifiedName);
+		ClassesProcessor proc = processor.get();
+		if (proc == null)
+			return null;
+		ClassesProcessor.ClassNode node = proc.getMapRootClasses().get(cl.qualifiedName);
 		if (node == null || node.type != ClassesProcessor.ClassNode.CLASS_ROOT) {
 			return null;
 		} else {
@@ -106,8 +111,11 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 	@Override
 	public String getClassContent(StructClass cl) {
 		try {
+			ClassesProcessor proc = processor.get();
+			if (proc == null)
+				throw new IllegalStateException("Thread local ClassesProcessor not available!");
 			TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
-			classProcessor.writeClass(cl, buffer);
+			proc.writeClass(cl, buffer);
 			return buffer.convertToStringAndAllowDataDiscard();
 		} catch (Throwable t) {
 			DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", t);
