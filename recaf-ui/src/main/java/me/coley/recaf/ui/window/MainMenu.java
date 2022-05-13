@@ -29,6 +29,7 @@ import me.coley.recaf.ui.util.Help;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -164,7 +165,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 			menuRecent.getItems().add(new ClosableActionMenuItem(title, graphic, () -> {
 				try {
 					Workspace workspace = model.loadWorkspace();
-					RecafUI.getController().setWorkspace(workspace);
+					FxThreadUtil.run(() -> RecafUI.getController().setWorkspace(workspace));
 				} catch (Exception ex) {
 					Toolkit.getDefaultToolkit().beep();
 					Configs.recentWorkspaces().recentWorkspaces.remove(model);

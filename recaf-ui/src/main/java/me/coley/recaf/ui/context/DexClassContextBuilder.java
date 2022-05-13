@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.context;
 
+import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.DexClassInfo;
@@ -19,6 +20,7 @@ import static me.coley.recaf.ui.util.Menus.createHeader;
  */
 public class DexClassContextBuilder extends DeclarableContextBuilder {
 	private DexClassInfo info;
+	private Node icon;
 
 	/**
 	 * @param info
@@ -31,11 +33,26 @@ public class DexClassContextBuilder extends DeclarableContextBuilder {
 		return this;
 	}
 
+	/**
+	 * @param icon
+	 * 		Class icon.
+	 *
+	 * @return Builder.
+	 */
+	public DexClassContextBuilder setIcon(Node icon) {
+		this.icon = icon;
+		return this;
+	}
+
 	@Override
 	public ContextMenu build() {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
+		Node icon = this.icon;
+		if (icon == null) {
+			icon = Icons.getClassIcon(info);
+		}
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), icon));
 		menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 
 		// TODO: Android dex class context menu items

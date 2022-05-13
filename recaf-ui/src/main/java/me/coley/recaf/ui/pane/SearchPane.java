@@ -31,10 +31,10 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
 
 import java.awt.*;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -217,7 +217,7 @@ public class SearchPane extends BorderPane {
 			return;
 		}
 		Resource resource = workspace.getResources().getPrimary();
-		Set<Result> results = Collections.synchronizedSet(new TreeSet<>());
+		Set<Result> results = ConcurrentHashMap.newKeySet(1024);
 		// Multi-thread search, using an atomic integer to track progress across threads
 		AtomicInteger latch = new AtomicInteger(resource.getClasses().size() + resource.getFiles().size());
 		for (ClassInfo info : new HashSet<>(resource.getClasses().values())) {
@@ -225,10 +225,10 @@ public class SearchPane extends BorderPane {
 				QueryVisitor visitor = search.createQueryVisitor(resource);
 				if (visitor != null) {
 					info.getClassReader().accept(visitor, 0);
-					results.addAll(visitor.getAllResults());
+					visitor.storeResults(results);
 				}
 				if (latch.decrementAndGet() == 0) {
-					FxThreadUtil.run(() -> onSearchFinish(search, results));
+					onSearchFinish(search, results);
 				}
 			});
 		}
@@ -237,10 +237,10 @@ public class SearchPane extends BorderPane {
 				QueryVisitor visitor = search.createQueryVisitor(resource);
 				if (visitor != null) {
 					visitor.visitFile(info);
-					results.addAll(visitor.getAllResults());
+					visitor.storeResults(results);
 				}
 				if (latch.decrementAndGet() == 0) {
-					FxThreadUtil.run(() -> onSearchFinish(search, results));
+					onSearchFinish(search, results);
 				}
 			});
 		}
@@ -248,9 +248,13 @@ public class SearchPane extends BorderPane {
 
 	private void onSearchFinish(Search search, Set<Result> results) {
 		logger.info("Search yielded {} results", results.size());
-		DockTab tab = RecafDockingManager.getInstance().createTabIn(targetDockingRegion,
-				() -> new DockTab(Lang.getBinding("search.results"), new ResultsPane(search, results)));
-		targetDockingRegion.getSelectionModel().select(tab);
+		TreeSet<Result> sorted = new TreeSet<>(results);
+		ResultsPane resultsPane = new ResultsPane(search, sorted);
+		FxThreadUtil.run(() -> {
+			DockTab tab = RecafDockingManager.getInstance().createTabIn(targetDockingRegion,
+				() -> new DockTab(Lang.getBinding("search.results"), resultsPane));
+			targetDockingRegion.getSelectionModel().select(tab);
+		});
 	}
 
 	private void searchText(String text, TextMatchMode mode) {

@@ -18,10 +18,11 @@ public class ClassLocation implements Location {
 	private final MethodInfo containingMethod;
 	private final String containingAnnotation;
 	private final AbstractInstruction instruction;
+	private String comparisonString;
+	private String instructionAsString;
 
 	/**
-	 * @param builder
-	 * 		Builder containing information about the parent result.
+	 * @param builder Builder containing information about the parent result.
 	 */
 	public ClassLocation(ResultBuilder builder) {
 		this.containingClass = builder.getContainingClass();
@@ -71,41 +72,99 @@ public class ClassLocation implements Location {
 	}
 
 	@Override
+	public int compareTo(Location o) {
+		if (!(o instanceof ClassLocation)) {
+			return Location.super.compareTo(o);
+		}
+		ClassLocation other = (ClassLocation) o;
+		int cmp = containingClass.getName().compareTo(other.containingClass.getName());
+		if (cmp != 0)
+			return cmp;
+		FieldInfo thisField = this.containingField;
+		FieldInfo otherField = other.containingField;
+		if (thisField != null) {
+			cmp = doComparison(other, otherField, thisField.getName());
+		} else {
+			cmp = doComparison(other, otherField, containingMethod.getName());
+		}
+		if (cmp != 0)
+			return cmp;
+		String containingAnnotation = this.containingAnnotation;
+		String otherAnnotation = other.containingAnnotation;
+		return containingAnnotation == null ? 1 : otherAnnotation == null ? -1 : containingAnnotation.compareTo(otherAnnotation);
+	}
+
+	@Override
 	public String comparableString() {
-		StringBuilder sb = new StringBuilder(containingClass.getName());
-		if (containingField != null) {
-			sb.append(" ").append(containingField.getName());
-		} else if (containingMethod != null) {
-			sb.append(" ").append(containingMethod.getName());
-			if (getInstruction() != null) {
-				sb.append(" ").append(instruction);
+		String comparisonString = this.comparisonString;
+		if (comparisonString == null) {
+			StringBuilder sb = new StringBuilder(containingClass.getName());
+			if (containingField != null) {
+				sb.append(' ').append(containingField.getName());
+			} else if (containingMethod != null) {
+				sb.append(' ').append(containingMethod.getName());
+				if (getInstruction() != null) {
+					sb.append(' ').append(instruction);
+				}
 			}
+			if (containingAnnotation != null) {
+				sb.append(' ').append(containingAnnotation);
+			}
+			return this.comparisonString = sb.toString();
 		}
-		if (containingAnnotation != null) {
-			sb.append(" ").append(containingAnnotation);
-		}
-		return sb.toString();
+		return comparisonString;
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
 		ClassLocation that = (ClassLocation) o;
 		return Objects.equals(containingClass, that.containingClass) &&
-				Objects.equals(containingField, that.containingField) &&
-				Objects.equals(containingMethod, that.containingMethod) &&
-				Objects.equals(containingAnnotation, that.containingAnnotation) &&
-				Objects.equals(instruction, that.instruction);
+			Objects.equals(containingField, that.containingField) &&
+			Objects.equals(containingMethod, that.containingMethod) &&
+			Objects.equals(containingAnnotation, that.containingAnnotation) &&
+			Objects.equals(instruction, that.instruction);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(containingClass, containingField, containingMethod, containingAnnotation, instruction);
+		int result = Objects.hashCode(containingClass);
+		result = 31 * result + Objects.hashCode(containingField);
+		result = 31 * result + Objects.hashCode(containingMethod);
+		result = 31 * result + Objects.hashCode(containingAnnotation);
+		result = 31 * result + Objects.hashCode(instruction);
+		return result;
 	}
 
 	@Override
 	public String toString() {
 		return comparableString();
+	}
+
+	private int doComparison(ClassLocation other, FieldInfo otherField, String name) {
+		int cmp;
+		if (otherField != null) {
+			cmp = name.compareTo(otherField.getName());
+		} else {
+			cmp = name.compareTo(other.containingMethod.getName());
+			if (cmp == 0) {
+				cmp = getInstructionAsString().compareTo(other.getInstructionAsString());
+			}
+		}
+		return cmp;
+	}
+
+	private String getInstructionAsString() {
+		String instructionAsString = this.instructionAsString;
+		if (instructionAsString == null) {
+			AbstractInstruction instruction = this.instruction;
+			return instruction == null ? "" : (this.instructionAsString = instruction.toString());
+		}
+		return instructionAsString;
 	}
 }

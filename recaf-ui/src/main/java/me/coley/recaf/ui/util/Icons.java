@@ -298,29 +298,43 @@ public class Icons {
 	 * @param info
 	 * 		Class to represent.
 	 *
-	 * @return Node to represent the class.
+	 * @return Icon provider for a node to represent the file type.
 	 */
-	public static Node getClassIcon(CommonClassInfo info) {
+	public static IconProvider getClassIconProvider(CommonClassInfo info) {
 		int access = info.getAccess();
 		if (AccessFlag.isAnnotation(access)) {
-			return getIconView(ANNOTATION);
+			return () -> getIconView(ANNOTATION);
 		} else if (AccessFlag.isInterface(access)) {
-			return getIconView(INTERFACE);
+			return () -> getIconView(INTERFACE);
 		} else if (AccessFlag.isEnum(access)) {
-			return getIconView(ENUM);
+			return () -> getIconView(ENUM);
 		}
 		// Normal class, consider other edge cases
 		boolean isAbstract = AccessFlag.isAbstract(access);
 		String name = info.getName();
 		if (!getGraph().getCommon(name, "java/lang/Throwable").equals("java/lang/Object")) {
-			return getIconView(isAbstract ? CLASS_ABSTRACT_EXCEPTION : CLASS_EXCEPTION);
+			if (isAbstract) {
+				return () -> getIconView(CLASS_ABSTRACT_EXCEPTION);
+			} else {
+				return () -> getIconView(CLASS_EXCEPTION);
+			}
 		} else if (name.matches(".+\\$\\d+")) {
-			return getIconView(CLASS_ANONYMOUS);
+			return () -> getIconView(CLASS_ANONYMOUS);
 		} else if (isAbstract) {
-			return getIconView(CLASS_ABSTRACT);
+			return () -> getIconView(CLASS_ABSTRACT);
 		}
 		// Default, normal class
-		return getIconView(CLASS);
+		return () -> getIconView(CLASS);
+	}
+
+	/**
+	 * @param info
+	 * 		Class to represent.
+	 *
+	 * @return Node to represent the class.
+	 */
+	public static Node getClassIcon(CommonClassInfo info) {
+		return getClassIconProvider(info).makeIcon();
 	}
 
 	/**
@@ -371,7 +385,7 @@ public class Icons {
 	 * @param file
 	 * 		File information.
 	 *
-	 * @return Icon provider providing a node to represent the file type.
+	 * @return Icon provider for a node to represent the file type.
 	 */
 	public static IconProvider getFileIconProvider(FileInfo file) {
 		String name = file.getName();
@@ -426,7 +440,7 @@ public class Icons {
 	 * @return Node to represent the file type.
 	 */
 	public static Node getFileIcon(FileInfo file) {
-		return getFileIconProvider(file).getIcon();
+		return getFileIconProvider(file).makeIcon();
 	}
 
 	/**

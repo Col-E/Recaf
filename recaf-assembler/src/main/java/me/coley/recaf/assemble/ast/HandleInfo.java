@@ -89,9 +89,9 @@ public class HandleInfo extends BaseElement {
 	@Override
 	public String print() {
 		if (isMethod) {
-			return String.format("%s %s.%s%s", tag, owner, name, desc);
+			return tag + " " + owner + '.' + name + desc;
 		} else {
-			return String.format("%s %s.%s %s", tag, owner, name, desc);
+			return tag + " " + owner + '.' + name + ' ' + desc;
 		}
 	}
 }

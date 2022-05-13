@@ -81,7 +81,11 @@ public abstract class MemberInfo implements ItemInfo {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(owner, getName(), descriptor, access);
+		int result = Objects.hashCode(owner);
+		result = 31 * result + Objects.hashCode(name);
+		result = 31 * result + Objects.hashCode(descriptor);
+		result = 31 * result + access;
+		return result;
 	}
 
 	@Override

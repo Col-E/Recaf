@@ -13,5 +13,5 @@ public interface IconProvider {
 	/**
 	 * @return Provided icon.
 	 */
-	Node getIcon();
+	Node makeIcon();
 }
