@@ -293,6 +293,16 @@ public class OpcodeUtil implements Opcodes, NonAbstractOpcodes {
 	}
 
 	/**
+	 * @param opcode
+	 * 		Opcode value.
+	 *
+	 * @return {@code true} if there is a mapping to an ASM type group.
+	 */
+	public static boolean opcodeHasType(int opcode) {
+		return opcodeToType.containsKey(opcode);
+	}
+
+	/**
 	 * Retrieves the ASM type of the given opcode.
 	 *
 	 * @param opcode
