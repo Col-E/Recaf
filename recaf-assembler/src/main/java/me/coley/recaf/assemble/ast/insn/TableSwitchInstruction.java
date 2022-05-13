@@ -90,9 +90,21 @@ public class TableSwitchInstruction extends AbstractInstruction implements FlowC
 
 	@Override
 	public String print() {
-		String offsets = String.join(", ", labels);
-		return String.format("%s range(%d:%d) offsets(%s) default(%s)",
-				getOpcode(), getMin(), getMax(), offsets, getDefaultIdentifier());
+		StringBuilder builder = new StringBuilder();
+		builder.append(getOpcode()).append(" range(");
+		builder.append(getMin()).append(':').append(getMax()).append(") ");
+		builder.append("offsets(");
+		List<String> labels = this.labels;
+		if (!labels.isEmpty()) {
+			int i = 0;
+			for (int j = labels.size() - 1; i < j; i++) {
+				builder.append(labels.get(i)).append(", ");
+			}
+			builder.append(labels.get(i));
+		}
+		builder.append(") default(");
+		builder.append(getDefaultIdentifier()).append(')');
+		return builder.toString();
 	}
 
 	@Override

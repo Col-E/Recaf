@@ -3,6 +3,7 @@ package me.coley.recaf.search.result;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.code.MethodInfo;
 
 import java.util.Objects;
@@ -80,14 +81,24 @@ public class ClassLocation implements Location {
 		int cmp = containingClass.getName().compareTo(other.containingClass.getName());
 		if (cmp != 0)
 			return cmp;
-		FieldInfo thisField = this.containingField;
-		FieldInfo otherField = other.containingField;
-		MethodInfo thisMethod = this.containingMethod;
-		if (thisField != null) {
-			cmp = doComparison(other, otherField, thisField.getName());
-		} else if (thisMethod != null) {
-			cmp = doComparison(other, otherField, thisMethod.getName());
-		}
+		MemberInfo thisMember = this.containingMethod;
+		if (thisMember == null)
+			thisMember = this.containingField;
+		if (thisMember == null)
+			return -1;
+		MemberInfo otherMember = other.containingMethod;
+		if (otherMember == null)
+			otherMember = other.containingField;
+		if (otherMember == null)
+			return 1;
+		cmp = thisMember.getName().compareTo(otherMember.getName());
+		if (cmp != 0)
+			return cmp;
+		if (instruction == null)
+			return -1;
+		if (other.instruction == null)
+			return 1;
+		cmp = getInstructionAsString().compareTo(other.getInstructionAsString());
 		if (cmp != 0)
 			return cmp;
 		String containingAnnotation = this.containingAnnotation;
@@ -145,19 +156,6 @@ public class ClassLocation implements Location {
 	@Override
 	public String toString() {
 		return comparableString();
-	}
-
-	private int doComparison(ClassLocation other, FieldInfo otherField, String name) {
-		int cmp;
-		if (otherField != null) {
-			cmp = name.compareTo(otherField.getName());
-		} else {
-			cmp = name.compareTo(other.containingMethod.getName());
-			if (cmp == 0) {
-				cmp = getInstructionAsString().compareTo(other.getInstructionAsString());
-			}
-		}
-		return cmp;
 	}
 
 	private String getInstructionAsString() {

@@ -44,6 +44,6 @@ public class MultiArrayInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
-		return String.format("%s %s %d", getOpcode(), getDesc(), getDimensions());
+		return getOpcode() + " " + getDesc() + " " + getDimensions();
 	}
 }

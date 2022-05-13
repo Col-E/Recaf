@@ -65,6 +65,6 @@ public class VarInstruction extends AbstractInstruction implements Opcodes, Name
 
 	@Override
 	public String print() {
-		return String.format("%s %s", getOpcode(), getVariableIdentifier());
+		return getOpcode() + " " + getVariableIdentifier();
 	}
 }

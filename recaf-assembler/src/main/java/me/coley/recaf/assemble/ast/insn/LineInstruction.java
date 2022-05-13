@@ -44,6 +44,6 @@ public class LineInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
-		return String.format("%s %s %d", getOpcode(), getLabel(), getLineNo());
+		return getOpcode() + ' ' + getLabel() + " " + getLineNo();
 	}
 }

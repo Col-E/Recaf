@@ -1,9 +1,11 @@
 package me.coley.recaf.ui.control.tree.item;
 
 import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.control.TreeItem;
 import me.coley.recaf.code.*;
 import me.coley.recaf.search.Search;
 import me.coley.recaf.search.result.*;
+import me.coley.recaf.ui.util.Events;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
@@ -63,16 +65,31 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 					}
 				} else if (classLocation.getContainingMethod() != null) {
 					boolean hasInsn = classLocation.getInstruction() != null;
-					MethodItem methodItem = getMethod(ownerItem, classLocation.getContainingMethod(), hasInsn);
-					// Result is in a method
-					if (hasInsn) {
-						// Result is on an instruction
-						InsnItem insnItem = new InsnItem(classLocation.getInstruction());
-						methodItem.addChild(insnItem);
-					} else if (classLocation.getContainingAnnotation() != null) {
-						// Result is on an annotation applied to the method
-						methodItem.setAnnotationType(classLocation.getContainingAnnotation());
-					}
+					TreeItem<BaseTreeValue> parent = ownerItem.getParent();
+					if (parent == null)
+						parent = ownerItem;
+					// Once parent package or the class itself becomes visible,
+					// add all information for methods/instructions
+					Events.dispatchAndRemoveIf(parent.expandedProperty(), parentExpanded -> {
+						if (parentExpanded) {
+							MethodItem methodItem = getMethod(ownerItem, classLocation.getContainingMethod(), hasInsn);
+							// Result is in a method
+							if (hasInsn) {
+								// Result is on an instruction
+								Events.dispatchAndRemoveIf(ownerItem.expandedProperty(), ownerExpanded -> {
+									if (ownerExpanded) {
+										InsnItem insnItem = new InsnItem(classLocation.getInstruction());
+										methodItem.addChild(insnItem, false);
+									}
+									return ownerExpanded;
+								});
+							} else if (classLocation.getContainingAnnotation() != null) {
+								// Result is on an annotation applied to the method
+								methodItem.setAnnotationType(classLocation.getContainingAnnotation());
+							}
+						}
+						return parentExpanded;
+					});
 				} else if (classLocation.getContainingAnnotation() != null) {
 					// Result is on an annotation applied to the class
 					((ClassItem) ownerItem).setAnnotationType(classLocation.getContainingAnnotation());
@@ -87,23 +104,18 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 				if (result instanceof TextResult) {
 					TextResult textResult = (TextResult) result;
 					ownerItem.addChild(new DummyItem(path,
-							new SimpleStringProperty(textResult.getMatchedText())));
+							new SimpleStringProperty(textResult.getMatchedText())), false);
 				} else if (result instanceof NumberResult) {
 					NumberResult numberResult = (NumberResult) result;
 					ownerItem.addChild(new DummyItem(path,
-							new SimpleStringProperty(numberResult.getMatchedNumber().toString())));
+							new SimpleStringProperty(numberResult.getMatchedNumber().toString())), false);
 				}
 			}
 		}
 	}
 
 	private BaseTreeItem getFile(FileInfo fileInfo) {
-		BaseTreeItem item = this;
-		String[] pieces = fileInfo.getName().split("/");
-		for (String piece : pieces) {
-			if (item == null) break;
-			item = item.getChildDirectory(piece);
-		}
+		BaseTreeItem item = getLastItem(this, fileInfo.getName());
 		if (!(item instanceof FileItem)) {
 			item = addPath(this, fileInfo.getName(), FileItem::new, DirectoryItem::new);
 		}
@@ -111,12 +123,7 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 	}
 
 	private BaseTreeItem getClass(CommonClassInfo ownerInfo) {
-		BaseTreeItem item = this;
-		String[] pieces = ownerInfo.getName().split("/");
-		for (String piece : pieces) {
-			if (item == null) break;
-			item = item.getChildDirectory(piece);
-		}
+		BaseTreeItem item = getLastItem(this, ownerInfo.getName());
 		if (!(item instanceof ClassItem)) {
 			item = addPath(this, ownerInfo.getName(), n -> new ClassItem(n, true), PackageItem::new);
 		}
@@ -131,7 +138,7 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 		}
 		if (item == null) {
 			item = new MethodItem(info, hasInsn);
-			ownerItem.addChild(item);
+			ownerItem.addChild(item, false);
 		}
 		return item;
 	}
@@ -141,7 +148,22 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 		FieldItem item = (FieldItem) ownerItem.getChildFile(key);
 		if (item == null) {
 			item = new FieldItem(info);
-			ownerItem.addChild(item);
+			ownerItem.addChild(item, false);
+		}
+		return item;
+	}
+
+	private static BaseTreeItem getLastItem(BaseTreeItem item, String fileName) {
+		int index;
+		int previous = 0;
+		while (item != null && (index = fileName.indexOf('/', previous)) != -1) {
+			String part = fileName.substring(previous, index);
+			item = item.getChildDirectory(part);
+			previous = index + 1;
+		}
+		String rest = fileName.substring(previous);
+		if (item != null && !rest.isEmpty()) {
+			item = item.getChildDirectory(rest);
 		}
 		return item;
 	}

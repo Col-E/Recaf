@@ -64,8 +64,10 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 	 *
 	 * @param item
 	 * 		Child to add.
+	 * @param sort
+	 *      Whether the item should be sorted.
 	 */
-	public void addChild(BaseTreeItem item) {
+	public void addChild(BaseTreeItem item, boolean sort) {
 		// Update child maps
 		BaseTreeValue value = item.getValue();
 		if (value.getItemType().isDirectory()) {
@@ -74,7 +76,21 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 			fileChildren.put(value.getPathElementValue(), item);
 		}
 		// Add to tree
-		addSourceChild(item);
+		if (sort) {
+			addAndSortChild(item);
+		} else {
+			addSortedChild(item);
+		}
+	}
+
+	/**
+	 * Add the given child to the current item.
+	 *
+	 * @param item
+	 * 		Child to add.
+	 */
+	public void addChild(BaseTreeItem item) {
+		addChild(item, true);
 	}
 
 	/**
