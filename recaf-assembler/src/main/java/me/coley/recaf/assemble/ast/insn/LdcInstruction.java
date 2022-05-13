@@ -154,7 +154,7 @@ public class LdcInstruction extends AbstractInstruction {
 			case STRING:
 				// We escape whatever string value is here because it makes parsing much simpler.
 				// However, if the user wishes to insert unescaped text that's on them.
-				return getOpcode() + "\"" + EscapeUtil.escape((String) getValue()) + '\"';
+				return getOpcode() + " \"" + EscapeUtil.escape((String) getValue()) + '\"';
 			case TYPE:
 				Type type = (Type) getValue();
 				if (type.getSort() == Type.OBJECT)
