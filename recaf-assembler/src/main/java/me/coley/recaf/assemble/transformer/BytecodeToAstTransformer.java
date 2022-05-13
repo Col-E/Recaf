@@ -82,27 +82,26 @@ public class BytecodeToAstTransformer {
 			modifiers.add(Modifier.byName(flag.getName()));
 		}
 		// Setup other attributes
-		Code code = new Code();
+		FieldDefinition definition = new FieldDefinition(modifiers, field.name, field.desc);
 		if (field.signature != null && !field.signature.equals(field.desc))
-			code.setSignature(new Signature(field.signature));
+			definition.setSignature(new Signature(field.signature));
 		if (field.value != null) {
 			Object v = field.value;
 			if (v instanceof String)
-				code.setConstVal(new ConstVal((String) v));
+				definition.setConstVal(new ConstVal((String) v));
 			else if (v instanceof Integer)
-				code.setConstVal(new ConstVal((int) v));
+				definition.setConstVal(new ConstVal((int) v));
 			else if (v instanceof Float)
-				code.setConstVal(new ConstVal((float) v));
+				definition.setConstVal(new ConstVal((float) v));
 			else if (v instanceof Double)
-				code.setConstVal(new ConstVal((double) v));
+				definition.setConstVal(new ConstVal((double) v));
 			else if (v instanceof Long)
-				code.setConstVal(new ConstVal((long) v));
+				definition.setConstVal(new ConstVal((long) v));
 		}
-		AnnotationHelper.visitAnnos(code, true, field.visibleAnnotations);
-		AnnotationHelper.visitAnnos(code, false, field.invisibleAnnotations);
+		AnnotationHelper.visitAnnos(definition, true, field.visibleAnnotations);
+		AnnotationHelper.visitAnnos(definition, false, field.invisibleAnnotations);
 		// Done
-		FieldDefinition definition = new FieldDefinition(modifiers, field.name, field.desc);
-		unit = new Unit(definition, code);
+		unit = new Unit(definition, new Code());
 	}
 
 	/**
@@ -148,13 +147,14 @@ public class BytecodeToAstTransformer {
 			argVarIndex += argType.getSize();
 		}
 		String retType = methodType.getReturnType().getDescriptor();
+		MethodDefinition definition = new MethodDefinition(modifiers, method.name, params, retType);
 		// Setup other attributes
 		Code code = new Code();
 		if (method.signature != null && !method.signature.equals(method.desc))
-			code.setSignature(new Signature(method.signature));
+			definition.setSignature(new Signature(method.signature));
 		if (method.exceptions != null) {
 			for (String ex : method.exceptions)
-				code.addThrownException(new ThrownException(ex));
+				definition.addThrownException(new ThrownException(ex));
 		}
 		if (method.tryCatchBlocks != null) {
 			for (TryCatchBlockNode tryCatch : method.tryCatchBlocks) {
@@ -165,8 +165,8 @@ public class BytecodeToAstTransformer {
 				code.addTryCatch(new TryCatch(start, end, handler, type));
 			}
 		}
-		AnnotationHelper.visitAnnos(code, true, method.visibleAnnotations);
-		AnnotationHelper.visitAnnos(code, false, method.invisibleAnnotations);
+		AnnotationHelper.visitAnnos(definition, true, method.visibleAnnotations);
+		AnnotationHelper.visitAnnos(definition, false, method.invisibleAnnotations);
 		if (method.instructions != null) {
 			// Add fallback if needed so variables have a starting range label.
 			if (fallbackInitialLabel != null)
@@ -187,7 +187,7 @@ public class BytecodeToAstTransformer {
 			for (int pos = 0; pos < method.instructions.size(); pos++) {
 				AbstractInsnNode insn = method.instructions.get(pos);
 				lastInsn = insn;
-				String op = OpcodeUtil.opcodeToName(insn.getOpcode());
+				int op = insn.getOpcode();
 				switch (insn.getType()) {
 					case AbstractInsnNode.INSN:
 						code.addInstruction(new Instruction(op));
@@ -295,7 +295,7 @@ public class BytecodeToAstTransformer {
 						break;
 					case AbstractInsnNode.LINE:
 						// Edge case, technically has no "opcode"
-						op = "LINE";
+						op = -1;
 						LineNumberNode lineInsn = (LineNumberNode) insn;
 						String lineTarget = labelNames.get(lineInsn.start);
 						if (lineTarget == null)
@@ -312,7 +312,6 @@ public class BytecodeToAstTransformer {
 			}
 		}
 		// Done
-		MethodDefinition definition = new MethodDefinition(modifiers, method.name, params, retType);
 		unit = new Unit(definition, code);
 	}
 

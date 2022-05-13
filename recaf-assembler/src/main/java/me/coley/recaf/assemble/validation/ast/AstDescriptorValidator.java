@@ -92,7 +92,7 @@ public class AstDescriptorValidator implements AstValidationVisitor {
 									instruction.getOpcode() + " bsm-arg descriptor '" + desc + "' is malformed"));
 						}
 					} else if (arg.getType() == ArgType.HANDLE) {
-						desc = ((HandleInfo) arg.getValue()).getDesc();
+						desc = ((Handle) arg.getValue()).getDesc();
 						if (!isValid.test(desc)) {
 							validator.addMessage(error(ILLEGAL_DESC, instruction,
 									instruction.getOpcode() + " bsm-arg handle descriptor '" + desc + "' is malformed"));

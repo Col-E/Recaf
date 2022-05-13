@@ -101,7 +101,7 @@ public class AstToMethodTransformer {
 		int access = definition.getModifiers().value();
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
-		String signature = code.getSignature() != null ? code.getSignature().getSignature() : null;
+		String signature = definition.getSignature() != null ? definition.getSignature().getSignature() : null;
 		int stack = 0xFF;
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			LabelNode start = labelMap.get(tryCatch.getStartLabel());
@@ -408,6 +408,7 @@ public class AstToMethodTransformer {
 						if (value == null)
 							throw new MethodCompileException(instruction,
 									"No identifier mapping to label instance for '" + name + "'");
+						labels[i] = value;
 					}
 					String dfltName = table.getDefaultIdentifier();
 					LabelNode dflt = labelMap.get(dfltName);

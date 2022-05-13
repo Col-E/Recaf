@@ -35,7 +35,6 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 	 * <br>
 	 * See {@link #visitUnmatched(BytecodeParser.UnmatchedContext)} for usage.
 	 */
-	private Unmatched lastUnmatched;
 
 	@Override
 	public Unit visitUnit(BytecodeParser.UnitContext ctx) {
@@ -46,7 +45,7 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		if (ctx.code() != null) {
 			code = visitCode(ctx.code());
 		}
-		return wrap(ctx, new Unit(definition, code));
+		return null;
 	}
 
 	@Override
@@ -341,13 +340,6 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 
 	@Override
 	public CodeEntry visitCodeEntry(BytecodeParser.CodeEntryContext ctx) {
-		if (ctx.unmatched() != null) {
-			Unmatched unmatched = visitUnmatched(ctx.unmatched());
-			if (unmatched == null)
-				return SKIP.INSTANCE;
-			return unmatched;
-		}
-		lastUnmatched = null;
 		if (ctx.instruction() != null) {
 			return visitInstruction(ctx.instruction());
 		} else if (ctx.label() != null) {
@@ -356,14 +348,10 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			return visitTryCatch(ctx.tryCatch());
 		} else if (ctx.throwEx() != null) {
 			return visitThrowEx(ctx.throwEx());
-		} else if (ctx.signature() != null) {
-			return visitSignature(ctx.signature());
 		} else if (ctx.annotation() != null) {
 			return visitAnnotation(ctx.annotation());
 		} else if (ctx.expr() != null) {
 			return visitExpr(ctx.expr());
-		} else if (ctx.constVal() != null) {
-			return wrap(ctx.constVal(), visitConstVal(ctx.constVal()));
 		} else if (ctx.comment() != null && ctx.comment().size() > 0) {
 			String comment = ctx.comment().stream().map(c -> {
 				String text = c.getText();
@@ -380,26 +368,6 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 		}
 	}
 
-	@Override
-	public Unmatched visitUnmatched(BytecodeParser.UnmatchedContext ctx) {
-		// 'getText()' excluded skipped whitespace, using 'getText' on the input stream
-		// gives the original text with whitespace included.
-		int start = lastUnmatched != null ? lastUnmatched.getStop() + 1 : ctx.start.getStartIndex();
-		int stop = ctx.stop.getStopIndex();
-		Interval interval = new Interval(start, stop);
-		String text = ctx.start.getInputStream().getText(interval);
-		// We reset the last unmatched value if any other match is made.
-		// So if it's not null this means they are consecutive and can be merged.
-		if (lastUnmatched != null) {
-			lastUnmatched.setRange(lastUnmatched.getStart(), stop);
-			lastUnmatched.append(text);
-			return null;
-		}
-		// Otherwise it's a new unmatched value at a different position in the text
-		Unmatched unmatched = wrap(ctx, new Unmatched(text));
-		lastUnmatched = unmatched;
-		return unmatched;
-	}
 
 	@Override
 	public AbstractInstruction visitInstruction(BytecodeParser.InstructionContext ctx) {

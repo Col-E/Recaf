@@ -14,7 +14,7 @@ import me.coley.recaf.util.EscapeUtil;
  *
  * @author Matt Coley
  */
-public class ConstVal extends BaseElement implements CodeEntry {
+public class ConstVal extends BaseElement {
 	private final ArgType type;
 	private final Object value;
 
@@ -77,11 +77,6 @@ public class ConstVal extends BaseElement implements CodeEntry {
 	 */
 	public ArgType getValueType() {
 		return type;
-	}
-
-	@Override
-	public void insertInto(Code code) {
-		code.setConstVal(this);
 	}
 
 	@Override

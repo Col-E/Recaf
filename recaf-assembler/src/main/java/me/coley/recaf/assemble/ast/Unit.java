@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.ast;
 
+import me.coley.recaf.assemble.ast.arch.AbstractMemberDefinition;
 import me.coley.recaf.assemble.ast.arch.MemberDefinition;
 
 /**
@@ -8,7 +9,7 @@ import me.coley.recaf.assemble.ast.arch.MemberDefinition;
  * @author Matt Coley
  */
 public class Unit extends BaseElement {
-	private final MemberDefinition definition;
+	private final AbstractMemberDefinition definition;
 	private final Code code;
 
 	/**
@@ -17,7 +18,7 @@ public class Unit extends BaseElement {
 	 * @param code
 	 * 		Optional code value; typically {@code null} if the definition represents a field or an abstract method.
 	 */
-	public Unit(MemberDefinition definition, Code code) {
+	public Unit(AbstractMemberDefinition definition, Code code) {
 		this.definition = child(definition);
 		this.code = child(code);
 	}
@@ -48,7 +49,7 @@ public class Unit extends BaseElement {
 	/**
 	 * @return Field or method definition.
 	 */
-	public MemberDefinition getDefinition() {
+	public AbstractMemberDefinition getDefinition() {
 		return definition;
 	}
 

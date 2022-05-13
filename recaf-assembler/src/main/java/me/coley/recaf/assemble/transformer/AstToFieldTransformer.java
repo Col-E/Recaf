@@ -24,7 +24,6 @@ public class AstToFieldTransformer {
 	private final Unit unit;
 	// For quick reference
 	private final FieldDefinition definition;
-	private final Code code;
 
 	/**
 	 * @param unit
@@ -33,7 +32,6 @@ public class AstToFieldTransformer {
 	public AstToFieldTransformer(Unit unit) {
 		this.unit = Objects.requireNonNull(unit);
 		this.definition = (FieldDefinition) unit.getDefinition();
-		this.code = unit.getCode();
 	}
 
 	/**
@@ -43,12 +41,12 @@ public class AstToFieldTransformer {
 		int access = definition.getModifiers().value();
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
-		String signature = code.getSignature() != null ? code.getSignature().getSignature() : null;
+		String signature = definition.getSignature() != null ? definition.getSignature().getSignature() : null;
 		Object value = null;
-		if (code.getConstVal() != null) {
-			value = code.getConstVal().getValue();
+		if (definition.getConstVal() != null) {
+			value = definition.getConstVal().getValue();
 			// Handle is the only type that we need to map to the ASM implementation
-			if (code.getConstVal().getValueType() == ArgType.HANDLE) {
+			if (definition.getConstVal().getValueType() == ArgType.HANDLE) {
 				HandleInfo info = (HandleInfo) value;
 				int tag = info.getTagVal();
 				boolean itf = tag == Opcodes.H_INVOKEINTERFACE;

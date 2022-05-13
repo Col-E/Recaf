@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.transformer;
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseArg;
 import me.coley.recaf.assemble.ast.Code;
+import me.coley.recaf.assemble.ast.arch.AbstractMemberDefinition;
 import me.coley.recaf.assemble.ast.arch.Annotation;
 import me.coley.recaf.assemble.ast.arch.MemberDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
@@ -34,7 +35,7 @@ public class AnnotationHelper {
 	 * @param annotations
 	 * 		The annotations to add.
 	 */
-	public static void visitAnnos(MemberDefinition code, boolean visible, List<AnnotationNode> annotations) {
+	public static void visitAnnos(AbstractMemberDefinition code, boolean visible, List<AnnotationNode> annotations) {
 		if (annotations == null)
 			return;
 		for (AnnotationNode annotation : annotations) {

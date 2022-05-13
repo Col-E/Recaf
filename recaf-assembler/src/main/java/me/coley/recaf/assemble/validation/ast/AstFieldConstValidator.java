@@ -21,18 +21,13 @@ public class AstFieldConstValidator implements AstValidationVisitor {
 		// Skip if no code-items
 		if (unit.getCode() == null)
 			return;
-		// Skip if no value
-		ConstVal value = unit.getCode().getConstVal();
-		if (value == null)
-			return;
-		// Check const-val on method instead of field
-		if (unit.isMethod()) {
-			validator.addMessage(error(CV_VAL_ON_METHOD, unit, "Constant value cannot be to a method"));
-		}
 		// Check const-val on field of wrong type
 		// Check const-val on field that isn't a "constant" thus it wont apply at runtime
 		if (unit.isField()) {
 			FieldDefinition def = (FieldDefinition) unit.getDefinition();
+			ConstVal value = def.getConstVal();
+			if(value == null)
+				return;
 			if (!AccessFlag.isStatic(def.getModifiers().value())) {
 				validator.addMessage(warn(CV_VAL_ON_NON_STATIC, value, "Constant value will be ignored, " +
 						"field is not 'static'"));

@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.ast.arch;
 import me.coley.recaf.assemble.ast.Named;
 import me.coley.recaf.assemble.ast.Descriptor;
 import me.coley.recaf.assemble.ast.Element;
+import me.coley.recaf.assemble.ast.meta.Signature;
 
 import java.util.List;
 
@@ -31,6 +32,6 @@ public interface MemberDefinition extends Element, Descriptor, Named {
 
 	List<Annotation> getAnnotations();
 
-	void addAnnotation(Annotation annotation);
+	Signature getSignature();
 
 }

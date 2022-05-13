@@ -32,9 +32,6 @@ public class Code extends BaseElement {
 	private final List<Comment> comments = new ArrayList<>();
 	private final List<TryCatch> tryCatches = new ArrayList<>();
 	private final List<Expression> expressions = new ArrayList<>();
-	private final List<Unmatched> unmatched = new ArrayList<>();
-	private ConstVal constVal;
-	private Signature signature;
 
 	/**
 	 * @param entry
@@ -89,34 +86,6 @@ public class Code extends BaseElement {
 		expressions.add(expression);
 		addInstruction(expression);
 	}
-
-	/**
-	 * @param unmatchedText
-	 * 		Unmatched text.
-	 */
-	public void addUnmatched(Unmatched unmatchedText) {
-		unmatched.add(unmatchedText);
-		addInternal(unmatchedText);
-	}
-
-	/**
-	 * @param constVal
-	 * 		New constant value.
-	 */
-	public void setConstVal(ConstVal constVal) {
-		this.constVal = constVal;
-		addInternal(constVal);
-	}
-
-	/**
-	 * @param signature
-	 * 		New generic signature.
-	 */
-	public void setSignature(Signature signature) {
-		this.signature = signature;
-		addInternal(signature);
-	}
-
 
 	/**
 	 * Called by any of the public facing methods for adding entries.
@@ -241,27 +210,6 @@ public class Code extends BaseElement {
 	}
 
 	/**
-	 * @return All unmatched raw items.
-	 */
-	public List<Unmatched> getUnmatched() {
-		return unmatched;
-	}
-
-	/**
-	 * @return The constant value of the field. May be {@code null}.
-	 */
-	public ConstVal getConstVal() {
-		return constVal;
-	}
-
-	/**
-	 * @return Generic signature.
-	 */
-	public Signature getSignature() {
-		return signature;
-	}
-
-	/**
 	 * @return All named labels of the code body.
 	 */
 	public Map<String, Label> getLabels() {
@@ -270,11 +218,13 @@ public class Code extends BaseElement {
 
 	@Override
 	public String print() {
+		if(entries.isEmpty())
+			return "";
 		return entries.stream()
 				.map(e -> {
 					if(e instanceof Label)
 						return e.print();
-					return '\t' + e.print();
+					return "\t" + e.print();
 				})
 				.collect(Collectors.joining("\n")) + "\nend";
 	}

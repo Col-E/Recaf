@@ -1,6 +1,6 @@
 package me.coley.recaf.assemble.ast.arch;
 
-import me.coley.recaf.assemble.ast.BaseElement;
+import me.coley.recaf.assemble.ast.meta.Signature;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,14 +10,12 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class MethodDefinition extends BaseElement implements MemberDefinition {
-	private final Modifiers modifiers;
+public class MethodDefinition extends AbstractMemberDefinition {
 	private final String name;
 	private final MethodParameters params;
 	private final String returnType;
 
-	private List<ThrownException> thrownExceptions = new ArrayList<>();
-	private List<Annotation> annotations = new ArrayList<>();
+	private final List<ThrownException> thrownExceptions = new ArrayList<>();
 
 	/**
 	 * @param modifiers
@@ -58,23 +56,8 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 		return true;
 	}
 
-	@Override
-	public Modifiers getModifiers() {
-		return modifiers;
-	}
-
 	public List<ThrownException> getThrownExceptions() {
 		return thrownExceptions;
-	}
-
-	@Override
-	public List<Annotation> getAnnotations() {
-		return annotations;
-	}
-
-	@Override
-	public void addAnnotation(Annotation annotation) {
-		annotations.add(annotation);
 	}
 
 	public void addThrownException(ThrownException thrownException) {
