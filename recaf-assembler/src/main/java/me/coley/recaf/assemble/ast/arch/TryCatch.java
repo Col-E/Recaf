@@ -73,6 +73,6 @@ public class TryCatch extends BaseElement implements CodeEntry {
 		String type = exceptionType;
 		if (type == null)
 			type = ANY_TYPE;
-		return String.format("TRY %s %s CATCH(%s) %s", startLabel, endLabel, type, handlerLabel);
+		return String.format("catch %s %s %s %s", type, startLabel, endLabel, handlerLabel);
 	}
 }

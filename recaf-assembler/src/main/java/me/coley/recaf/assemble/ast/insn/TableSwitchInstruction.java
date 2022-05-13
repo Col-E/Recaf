@@ -31,7 +31,7 @@ public class TableSwitchInstruction extends AbstractInstruction implements FlowC
 	 * @param defaultIdentifier
 	 * 		Default label identifier.
 	 */
-	public TableSwitchInstruction(String opcode, int min, int max, List<String> labels, String defaultIdentifier) {
+	public TableSwitchInstruction(int opcode, int min, int max, List<String> labels, String defaultIdentifier) {
 		super(opcode);
 		this.min = min;
 		this.max = max;
@@ -90,8 +90,8 @@ public class TableSwitchInstruction extends AbstractInstruction implements FlowC
 
 	@Override
 	public String print() {
-		String offsets = String.join(", ", labels);
-		return String.format("%s range(%d:%d) offsets(%s) default(%s)",
+		String offsets = String.join("\n        ", labels);
+		return String.format("%s %d %d\n        %s\n        default %s",
 				getOpcode(), getMin(), getMax(), offsets, getDefaultIdentifier());
 	}
 

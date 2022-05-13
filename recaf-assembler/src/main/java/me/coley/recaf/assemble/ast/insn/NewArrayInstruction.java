@@ -1,5 +1,11 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.T_BOOLEAN;
+
 /**
  * Instruction for allocating a new array of a primitive type.
  * <br>
@@ -18,6 +24,29 @@ public class NewArrayInstruction extends AbstractInstruction {
 	// short    S
 	// int      I
 	// long     J
+
+	public static final Map<String, Integer> newArrayTypes = new HashMap<>();
+	public static final Map<Integer, String> newArrayNames = new HashMap<>();
+
+	static {
+		newArrayTypes.put("byte", T_BYTE);
+		newArrayTypes.put("short", T_SHORT);
+		newArrayTypes.put("int", T_INT);
+		newArrayTypes.put("long", T_LONG);
+		newArrayTypes.put("float", T_FLOAT);
+		newArrayTypes.put("double", T_DOUBLE);
+		newArrayTypes.put("char", T_CHAR);
+		newArrayTypes.put("boolean", T_BOOLEAN);
+		newArrayNames.put(T_BYTE, "byte");
+		newArrayNames.put(T_SHORT, "short");
+		newArrayNames.put(T_INT, "int");
+		newArrayNames.put(T_LONG, "long");
+		newArrayNames.put(T_FLOAT, "float");
+		newArrayNames.put(T_DOUBLE, "double");
+		newArrayNames.put(T_CHAR, "char");
+		newArrayNames.put(T_BOOLEAN, "boolean");
+	}
+
 	private final char arrayType;
 
 	/**
@@ -26,7 +55,7 @@ public class NewArrayInstruction extends AbstractInstruction {
 	 * @param arrayType
 	 * 		Char representing the array type.
 	 */
-	public NewArrayInstruction(String opcode, char arrayType) {
+	public NewArrayInstruction(int opcode, char arrayType) {
 		super(opcode);
 		this.arrayType = arrayType;
 	}
@@ -101,6 +130,6 @@ public class NewArrayInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
-		return String.format("%s %s", getOpcode(), arrayType);
+		return String.format("%s %s", getOpcode(), newArrayNames.get(getArrayTypeInt()));
 	}
 }

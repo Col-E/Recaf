@@ -20,7 +20,7 @@ public class FieldInstruction extends AbstractInstruction {
 	 * @param desc
 	 * 		Type descriptor of the field.
 	 */
-	public FieldInstruction(String opcode, String owner, String name, String desc) {
+	public FieldInstruction(int opcode, String owner, String name, String desc) {
 		super(opcode);
 		this.owner = owner;
 		this.name = name;

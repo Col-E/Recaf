@@ -96,7 +96,7 @@ public class LdcInstruction extends AbstractInstruction {
 		this(opcode, value, ArgType.LONG);
 	}
 
-	private LdcInstruction(int opcode, Object value, ArgType type) {
+	public LdcInstruction(int opcode, Object value, ArgType type) {
 		super(opcode);
 		this.value = value;
 		this.type = type;

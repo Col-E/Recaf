@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.util.EscapeUtil;
+
 /**
  * Type instruction.
  *
@@ -14,7 +16,7 @@ public class TypeInstruction extends AbstractInstruction {
 	 * @param type
 	 * 		Type descriptor.
 	 */
-	public TypeInstruction(String opcode, String type) {
+	public TypeInstruction(int opcode, String type) {
 		super(opcode);
 		this.type = type;
 	}
@@ -33,6 +35,6 @@ public class TypeInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
-		return String.format("%s %s", getOpcode(), getType());
+		return String.format("%s %s", getOpcode(), EscapeUtil.escapeSpace(getType()));
 	}
 }

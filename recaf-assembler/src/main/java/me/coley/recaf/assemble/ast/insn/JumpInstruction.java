@@ -23,7 +23,7 @@ public class JumpInstruction extends AbstractInstruction implements FlowControl 
 	 * @param label
 	 * 		Jump target label name.
 	 */
-	public JumpInstruction(String opcode, String label) {
+	public JumpInstruction(int opcode, String label) {
 		super(opcode);
 		this.label = label;
 	}

@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.ast.insn;
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseArg;
 import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.util.EscapeUtil;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,7 +31,7 @@ public class IndyInstruction extends AbstractInstruction {
 	 * @param bsmArguments
 	 * 		Bootstrap method arguments.
 	 */
-	public IndyInstruction(String opcode, String name, String desc, HandleInfo bsmHandle, List<BsmArg> bsmArguments) {
+	public IndyInstruction(int opcode, String name, String desc, HandleInfo bsmHandle, List<BsmArg> bsmArguments) {
 		super(opcode);
 		this.name = name;
 		this.desc = desc;
@@ -76,9 +77,9 @@ public class IndyInstruction extends AbstractInstruction {
 		String handle = bsmHandle.print();
 		String args = bsmArguments.stream()
 				.map(BsmArg::print)
-				.collect(Collectors.joining(", "));
-		return String.format("%s %s %s handle(%s) args(%s)",
-				getOpcode(), getName(), getDesc(), handle, args);
+				.collect(Collectors.joining(" "));
+		return String.format("%s %s %s .handle %s args %s end",
+				getOpcode(), EscapeUtil.escapeSpace(getName()), EscapeUtil.escapeSpace(getDesc()), handle, args);
 	}
 
 	/**

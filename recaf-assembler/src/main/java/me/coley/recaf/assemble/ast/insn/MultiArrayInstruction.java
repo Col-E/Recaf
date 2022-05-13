@@ -17,7 +17,7 @@ public class MultiArrayInstruction extends AbstractInstruction {
 	 * @param dimensions
 	 * 		Dimension count.
 	 */
-	public MultiArrayInstruction(String opcode, String desc, int dimensions) {
+	public MultiArrayInstruction(int opcode, String desc, int dimensions) {
 		super(opcode);
 		this.desc = desc;
 		this.dimensions = dimensions;

@@ -20,7 +20,7 @@ public class MethodInstruction extends AbstractInstruction {
 	 * @param desc
 	 * 		Type descriptor of the method.
 	 */
-	public MethodInstruction(String opcode, String owner, String name, String desc) {
+	public MethodInstruction(int opcode, String owner, String name, String desc) {
 		super(opcode);
 		this.owner = owner;
 		this.name = name;
