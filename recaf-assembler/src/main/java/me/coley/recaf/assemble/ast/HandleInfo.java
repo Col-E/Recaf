@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.ast;
 
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -30,9 +31,9 @@ public class HandleInfo extends BaseElement {
 	public HandleInfo(String tag, String owner, String name, String desc) {
 		this.tagVal = OpcodeUtil.nameToTag(tag);
 		this.tag = tag;
-		this.owner = owner;
-		this.name = name;
-		this.desc = desc;
+		this.owner = EscapeUtil.escapeSpace(owner);
+		this.name = EscapeUtil.escapeSpace(name);
+		this.desc = EscapeUtil.escapeSpace(desc);
 		this.isMethod = desc.charAt(0) == '(';
 	}
 
