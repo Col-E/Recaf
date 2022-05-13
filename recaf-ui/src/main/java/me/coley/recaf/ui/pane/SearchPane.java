@@ -61,7 +61,7 @@ public class SearchPane extends BorderPane {
 	 * @return Empty text search panel.
 	 */
 	public static SearchPane createTextSearch() {
-		return createTextSearch(null);
+		return createTextSearch("");
 	}
 
 	/**
