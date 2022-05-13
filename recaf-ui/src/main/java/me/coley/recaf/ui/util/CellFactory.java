@@ -103,8 +103,11 @@ public class CellFactory {
 			FileInfo fileInfo = (FileInfo) info;
 			String fileName = info.getName();
 			cell.setText(StringUtil.shortenPath(fileName));
-			cell.setGraphic(getFileIcon(fileInfo));
+			IconProvider provider = getFileIconProvider(fileInfo);
+			cell.setGraphic(provider.getIcon());
+
 			cell.setContextMenu(ContextBuilder.forFile(fileInfo)
+					.setIcon(provider.getIcon())
 					.withResource(resource)
 					.setWhere(from(type))
 					.build());

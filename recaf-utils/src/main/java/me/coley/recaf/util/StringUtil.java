@@ -214,10 +214,10 @@ public class StringUtil {
 			.onMalformedInput(CodingErrorAction.REPLACE)
 			.onUnmappableCharacter(CodingErrorAction.REPLACE);
 		ByteBuffer buffer = ByteBuffer.wrap(data);
-		int nonText = 0;
 		int maxEntropy = (int) (data.length * 0.01D);
 		int bufferSize = Math.min(4096, maxEntropy);
-		CharBuffer charBuf = CharBuffer.wrap(new char[bufferSize]);
+		char[] charArray = new char[bufferSize];
+		CharBuffer charBuf = CharBuffer.wrap(charArray);
 		while (true) {
 			if (!buffer.hasRemaining()) {
 				return true;
@@ -225,26 +225,27 @@ public class StringUtil {
 			CoderResult result = decoder.decode(buffer, charBuf, true);
 			if (result.isUnderflow())
 				decoder.flush(charBuf);
-			charBuf.flip();
-			nonText = calculateNonText(charBuf, nonText);
-			if (nonText >= maxEntropy) {
+			maxEntropy = calculateNonText(charArray, maxEntropy, charBuf.position());
+			if (maxEntropy <= 0) {
 				return false;
 			}
 			charBuf.rewind();
 		}
 	}
 
-	private static int calculateNonText(CharBuffer charBuf, int nonText) {
-		while (charBuf.hasRemaining()) {
-			char c = charBuf.get();
+	private static int calculateNonText(char[] charBuf, int allowedEntropy, int length) {
+		int index = 0;
+		while (length-- != 0) {
+			char c = charBuf[index++];
 			int codePoint;
 			merge:
 			{
 				if (Character.isHighSurrogate(c)) {
-					if (charBuf.hasRemaining()) {
-						char c2 = charBuf.get(charBuf.position());
+					if (length != 0) {
+						char c2 = charBuf[index];
 						if (Character.isLowSurrogate(c2)) {
-							charBuf.get();
+							index++;
+							length--;
 							codePoint = Character.toCodePoint(c, c2);
 							break merge;
 						}
@@ -259,18 +260,21 @@ public class StringUtil {
 					case 13:
 						continue;
 					default:
-						nonText++;
+						allowedEntropy--;
 				}
 			} else if (codePoint >= 57344 && codePoint <= 63743) {
-					nonText++;
+					allowedEntropy--;
 			} else if (codePoint >= 65520 && codePoint <= 65535) {
-				nonText++;
+				allowedEntropy--;
 			} else if (codePoint >= 983040 && codePoint <= 1048573) {
-				nonText++;
+				allowedEntropy--;
 			} else if (codePoint >= 1048576 && codePoint <= 1114109) {
-				nonText++;
+				allowedEntropy--;
+			}
+			if (allowedEntropy <= 0) {
+				return 0;
 			}
 		}
-		return nonText;
+		return allowedEntropy;
 	}
 }

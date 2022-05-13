@@ -371,52 +371,62 @@ public class Icons {
 	 * @param file
 	 * 		File information.
 	 *
-	 * @return Node to represent the file type.
+	 * @return Icon provider providing a node to represent the file type.
 	 */
-	public static Node getFileIcon(FileInfo file) {
+	public static IconProvider getFileIconProvider(FileInfo file) {
 		String name = file.getName();
-		Node graphic;
-		int[] match = null;
+		IconProvider provider;
+		int[] match;
 		byte[] data = file.getValue();
 		if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.ARCHIVE_HEADERS)) {
 			String lower = name.toLowerCase();
 			if (lower.endsWith(".jar")) {
-				graphic = getIconView(Icons.FILE_JAR);
+				provider = createProvider(Icons.FILE_JAR);
 			} else {
-				graphic = getIconView(Icons.FILE_ZIP);
+				provider = createProvider(Icons.FILE_ZIP);
 			}
 		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.IMAGE_HEADERS)) {
-			graphic = getIconView(Icons.FILE_IMAGE);
+			provider = createProvider(Icons.FILE_IMAGE);
 		} else if ((match = ByteHeaderUtil.getMatch(data, ByteHeaderUtil.PROGRAM_HEADERS)) != null) {
 			if (match == ByteHeaderUtil.DEX) {
-				graphic = getIconView(Icons.ANDROID);
+				provider = createProvider(Icons.ANDROID);
 			} else if (match == ByteHeaderUtil.CLASS) {
-				graphic = getIconView(Icons.FILE_CLASS);
+				provider = createProvider(Icons.FILE_CLASS);
 			} else if (match == ByteHeaderUtil.DYLIB_32 || match == ByteHeaderUtil.DYLIB_64) {
-				graphic = getIconView(Icons.FILE_LIBRARY);
+				provider = createProvider(Icons.FILE_LIBRARY);
 			} else {
 				String lower = name.toLowerCase();
 				if (lower.endsWith(".dll")) {
-					graphic = getIconView(Icons.FILE_LIBRARY);
+					provider = createProvider(Icons.FILE_LIBRARY);
 				} else {
-					graphic = getIconView(Icons.FILE_PROGRAM);
+					provider = createProvider(Icons.FILE_PROGRAM);
 				}
 			}
 		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.AUDIO_HEADERS)) {
-			graphic = getIconView(Icons.FILE_AUDIO);
+			provider = createProvider(Icons.FILE_AUDIO);
 		} else {
 			if (StringUtil.isText(data)) {
 				String ext = file.getExtension().toLowerCase();
 				if (Languages.get(ext) != Languages.NONE) {
-					graphic = getIconView(Icons.FILE_CODE);
+					provider = createProvider(Icons.FILE_CODE);
 				} else {
-					graphic = getIconView(Icons.FILE_TEXT);
+					provider = createProvider(Icons.FILE_TEXT);
 				}
 			} else {
-				graphic = getIconView(Icons.FILE_BINARY);
+				provider = createProvider(Icons.FILE_BINARY);
 			}
 		}
-		return graphic;
+		return provider;
+	}
+
+	/**
+	 * @param file
+	 * 		File information.
+	 *
+	 * @return Node to represent the file type.
+	 */
+	public static Node getFileIcon(FileInfo file) {
+		return getFileIconProvider(file).getIcon();
 	}
 
 	/**
@@ -443,5 +453,9 @@ public class Icons {
 	 */
 	private static InheritanceGraph getGraph() {
 		return RecafUI.getController().getServices().getInheritanceGraph();
+	}
+
+	private static IconProvider createProvider(String path) {
+		return () -> getIconView(path);
 	}
 }

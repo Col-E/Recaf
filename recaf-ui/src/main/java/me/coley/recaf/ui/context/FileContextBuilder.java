@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.context;
 
 import javafx.beans.binding.StringBinding;
+import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
@@ -35,6 +36,7 @@ import static me.coley.recaf.ui.util.Menus.*;
  */
 public class FileContextBuilder extends ContextBuilder {
 	private FileInfo info;
+	private Node icon;
 
 	/**
 	 * @param info
@@ -47,12 +49,27 @@ public class FileContextBuilder extends ContextBuilder {
 		return this;
 	}
 
+	/**
+	 * @param icon
+	 * 		File icon.
+	 *
+	 * @return Builder.
+	 */
+	public FileContextBuilder setIcon(Node icon) {
+		this.icon = icon;
+		return this;
+	}
+
 	@Override
 	public ContextMenu build() {
 		String name = info.getName();
 		String extension = info.getExtension();
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getFileIcon(info)));
+		Node icon = this.icon;
+		if (icon == null) {
+			icon = Icons.getFileIcon(info);
+		}
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), icon));
 		menu.getItems().add(action("menu.goto.file", Icons.OPEN, this::openFile));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
