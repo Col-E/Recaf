@@ -99,22 +99,22 @@ public abstract class BaseArg extends BaseElement implements Printable {
 			case TYPE:
 				Type type = (Type) value;
 				if (type.getSort() == Type.OBJECT)
-					return type.getInternalName();
+					return ".type " + type.getInternalName();
 				else
-					return type.getDescriptor();
+					return ".type " + type.getDescriptor();
 			case STRING:
 				return "\"" + value + "\"";
 			case HANDLE:
 				HandleInfo info = (HandleInfo) value;
-				return "handle(" + info.print() + ")";
+				return ".handle " + info.print() + "";
 			case ANNO:
 				Annotation anno = (Annotation) value;
 				return anno.print();
 			case ANNO_LIST:
 				List<?> list = (List<?>) value;
-				return "[" + list.stream()
+				return "args" + list.stream()
 						.map(String::valueOf)
-						.collect(Collectors.joining(", ")) + "]";
+						.collect(Collectors.joining(" ")) + "end";
 			case ANNO_ENUM:
 				return (String) value;
 			case BOOLEAN:
