@@ -155,24 +155,23 @@ public class LdcInstruction extends AbstractInstruction {
 			case STRING:
 				// We escape whatever string value is here because it makes parsing much simpler.
 				// However, if the user wishes to insert unescaped text that's on them.
-				return String.format("%s \"%s\"", getOpcode(), EscapeUtil.escape((String) getValue()));
+				return getOpcode() + " \"" + EscapeUtil.escape((String) getValue()) + '\"';
 			case TYPE:
 				Type type = (Type) getValue();
 				if (type.getSort() == Type.OBJECT)
-					return String.format("%s %s", getOpcode(), type.getInternalName());
+					return getOpcode() + " " + type.getInternalName();
 				else
-					return String.format("%s %s", getOpcode(), type);
+					return getOpcode() + " " + type;
 			case INTEGER:
-				return String.format("%s %d", getOpcode(), getValue());
+				return getOpcode() + " " + getValue();
 			case LONG:
-				return String.format("%s %dL", getOpcode(), getValue());
+				return getOpcode() + " " + getValue() + 'L';
 			case FLOAT:
-				return String.format("%s %fF", getOpcode(), getValue());
+				return getOpcode() + " " + getValue() + 'F';
 			case DOUBLE:
-				return String.format("%s %fD", getOpcode(), getValue());
+				return getOpcode() + " " + getValue() + 'D';
 			case HANDLE:
-				String htext = "handle[" + ((HandleInfo) getValue()).print() + "]";
-				return String.format("%s %s", getOpcode(), htext);
+				return getOpcode() + ' ' + "handle[" + ((HandleInfo) getValue()).print() + ']';
 			default:
 				throw new IllegalStateException("Unhandled constant value type: " + getValueType());
 		}

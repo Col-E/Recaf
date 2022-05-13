@@ -832,7 +832,9 @@ public class PeepholeProcessors implements Opcodes {
 			Value value = stack.pop();
 			Value indexValue = stack.pop();
 			int index = indexValue.asInt();
-			ArrayValue array = helper.checkNotNullArray(stack.pop());
+			Value top = stack.pop();
+			ArrayValue array = (top instanceof ObjectValue) ?
+					helper.checkNotNullArray((ObjectValue) top) : helper.checkArray(top);
 			helper.rangeCheck(array, index);
 			setter.set(array, index, value);
 			if (array instanceof TrackedArrayValue) {

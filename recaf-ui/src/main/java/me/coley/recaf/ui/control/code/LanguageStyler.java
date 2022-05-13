@@ -155,7 +155,8 @@ public class LanguageStyler {
 		}
 		Pattern pattern = getPattern();
 		if (pattern == null || pattern == EMPTY_PATTERN) {
-			editor.clearStyle(start, text.length());
+			String finalText = text;
+			FxThreadUtil.run(() -> editor.clearStyle(0, finalText.length()));
 			return;
 		}
 		Matcher matcher = pattern.matcher(text);

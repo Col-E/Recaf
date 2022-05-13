@@ -210,12 +210,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 						FxThreadUtil.delayedRun(100, scrollSnapshot::restore);
 				}
 			};
-			decompileFuture.whenCompleteAsync(onComplete, FxThreadUtil.executor())
-					.exceptionally(t -> {
-						hideOverlay();
-						log.error("Uncaught error while updating decompiler output for {}", newValue.getName(), t);
-						return null;
-					});
+			decompileFuture.whenCompleteAsync(onComplete, FxThreadUtil.executor());
 		}
 	}
 

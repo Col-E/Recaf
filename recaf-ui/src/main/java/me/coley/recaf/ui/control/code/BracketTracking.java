@@ -212,6 +212,9 @@ public class BracketTracking {
 		int bracketCount = 1;
 		int steps = 0;
 		while (index > -1 && index < editor.getLength() && steps < MAX_SEARCH_DISTANCE) {
+			// This is for edge case handling where the last character of a document is a closing bracket.
+			// a simple "- 1" modification above for the document length does not allow the final char to be matched.
+			index = Math.min(index, editor.getLength() - 1);
 			char code = editor.getText(index, index + 1).charAt(0);
 			// Handle bracket nesting level
 			if (code == origin) {

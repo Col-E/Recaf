@@ -9,6 +9,8 @@ import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.control.tree.item.*;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.Resources;
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static me.coley.recaf.ui.util.Icons.*;
+import static org.reactfx.util.Tuples.*;
 
 /**
  * Utility to populate cell properties based on their content.
@@ -83,31 +86,48 @@ public class CellFactory {
 			ClassInfo classInfo = (ClassInfo) info;
 			String className = info.getName();
 			cell.setText(StringUtil.shortenPath(className));
-			cell.setGraphic(getClassIcon(classInfo));
-			cell.setContextMenu(ContextBuilder.forClass(classInfo)
+			ThreadUtil.run(() -> getClassIconProvider(classInfo))
+				.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
+				.thenApply(icons -> t(icons.get1(), ContextBuilder.forClass(classInfo)
+					.setIcon(icons.get2())
 					.withResource(resource)
 					.setWhere(from(type))
-					.build());
+					.build()))
+				.thenAcceptAsync(result -> {
+					cell.setGraphic(result.get1());
+					cell.setContextMenu(result.get2());
+				}, FxThreadUtil.executor());
 		});
 		INFO_MAP.put(DexClassInfo.class, (type, cell, resource, info) -> {
 			DexClassInfo classInfo = (DexClassInfo) info;
 			String className = info.getName();
 			cell.setText(StringUtil.shortenPath(className));
-			cell.setGraphic(getClassIcon(classInfo));
-			cell.setContextMenu(ContextBuilder.forDexClass(classInfo)
-					.withResource(resource)
-					.setWhere(from(type))
-					.build());
+			ThreadUtil.run(() -> getClassIconProvider(classInfo))
+				.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
+				.thenAcceptAsync(icons -> {
+					cell.setGraphic(icons.get1());
+					cell.setContextMenu(ContextBuilder.forDexClass(classInfo)
+						.setIcon(icons.get2())
+						.withResource(resource)
+						.setWhere(from(type))
+						.build());
+				}, FxThreadUtil.executor());
 		});
 		INFO_MAP.put(FileInfo.class, (type, cell, resource, info) -> {
 			FileInfo fileInfo = (FileInfo) info;
 			String fileName = info.getName();
 			cell.setText(StringUtil.shortenPath(fileName));
-			cell.setGraphic(getFileIcon(fileInfo));
-			cell.setContextMenu(ContextBuilder.forFile(fileInfo)
+			ThreadUtil.run(() -> getFileIconProvider(fileInfo))
+				.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
+				.thenApply(icons -> t(icons.get1(), ContextBuilder.forFile(fileInfo)
+					.setIcon(icons.get2())
 					.withResource(resource)
 					.setWhere(from(type))
-					.build());
+					.build()))
+				.thenAcceptAsync(result -> {
+					cell.setGraphic(result.get1());
+					cell.setContextMenu(result.get2());
+				}, FxThreadUtil.executor());
 		});
 		INFO_MAP.put(FieldInfo.class, (type, cell, resource, info) -> {
 			Resources resources = RecafUI.getController().getWorkspace().getResources();

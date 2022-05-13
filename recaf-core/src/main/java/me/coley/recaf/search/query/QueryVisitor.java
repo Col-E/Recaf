@@ -10,6 +10,7 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassVisitor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -65,6 +66,19 @@ public abstract class QueryVisitor extends ClassVisitor {
 	 */
 	public List<Result> getResults() {
 		return results;
+	}
+
+	/**
+	 * Stores search results into a collection.
+	 *
+	 * @param collection
+	 *      Collection to store results into.
+	 */
+	public void storeResults(Collection<? super Result> collection) {
+		collection.addAll(getResults());
+		QueryVisitor delegate = getDelegate();
+		if (delegate != null)
+			delegate.storeResults(collection);
 	}
 
 	/**

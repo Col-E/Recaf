@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.context;
 
 import javafx.beans.binding.StringBinding;
+import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
@@ -38,6 +39,7 @@ import static me.coley.recaf.ui.util.Menus.*;
 public class ClassContextBuilder extends DeclarableContextBuilder {
 	private ClassInfo info;
 	private boolean declaration;
+	private Node icon;
 
 	/**
 	 * @param info
@@ -50,11 +52,26 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		return this;
 	}
 
+	/**
+	 * @param icon
+	 * 		Class icon.
+	 *
+	 * @return Builder.
+	 */
+	public ClassContextBuilder setIcon(Node icon) {
+		this.icon = icon;
+		return this;
+	}
+
 	@Override
 	public ContextMenu build() {
 		String name = info.getName();
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getClassIcon(info)));
+		Node icon = this.icon;
+		if (icon == null) {
+			icon = Icons.getClassIcon(info);
+		}
+		menu.getItems().add(createHeader(StringUtil.shortenPath(name), icon));
 		if (!declaration)
 			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {

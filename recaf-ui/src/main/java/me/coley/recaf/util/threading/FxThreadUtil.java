@@ -16,6 +16,20 @@ public class FxThreadUtil {
 	private static final Executor jfxExecutor = FxThreadUtil::run;
 
 	/**
+	 * Dispatches action in JavaFX thread.
+	 *
+	 * @param action
+	 * 		Runnable to dispatch in UI thread.
+	 */
+	public static void dispatch(Runnable action) {
+		if (Platform.isFxApplicationThread()) {
+			action.run();
+		} else {
+			Platform.runLater(action);
+		}
+	}
+
+	/**
 	 * Run action in JavaFX thread.
 	 *
 	 * @param action
@@ -26,7 +40,6 @@ public class FxThreadUtil {
 		// That results in some wonky behavior in various use cases though.
 		Platform.runLater(ThreadUtil.wrap(action));
 	}
-
 
 	/**
 	 * Run action in JavaFX thread.

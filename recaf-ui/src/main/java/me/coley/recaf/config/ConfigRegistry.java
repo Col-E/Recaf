@@ -2,6 +2,7 @@ package me.coley.recaf.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.ReflectUtil;
@@ -66,15 +67,18 @@ public class ConfigRegistry {
 		if (!Files.isDirectory(configDirectory)) {
 			Files.createDirectories(configDirectory);
 		}
+		GsonBuilder builder = ConfigRegistry.gson.newBuilder();
+		for (ConfigContainer container : containers) {
+			builder.registerTypeAdapter(container.getClass(), (InstanceCreator<ConfigContainer>) __ -> container);
+		}
+		Gson gson = builder.create();
 		for (ConfigContainer container : containers) {
 			Path containerPath = configDirectory.resolve(container.internalName() + ".json");
 			if (Files.isRegularFile(containerPath)) {
-				ConfigContainer jsonContainer;
 				try (BufferedReader reader = Files.newBufferedReader(containerPath, StandardCharsets.UTF_8)) {
-					jsonContainer = gson.fromJson(reader, container.getClass());
+					gson.fromJson(reader, container.getClass());
 				}
-				ReflectUtil.copyTo(jsonContainer, container);
-				jsonContainer.onLoad();
+				container.onLoad();
 			}
 		}
 	}

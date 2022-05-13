@@ -1,12 +1,13 @@
 package me.coley.recaf.util;
 
-import com.carrotsearch.hppc.IntByteHashMap;
-import com.carrotsearch.hppc.IntByteMap;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 /**
  * Various utilities for {@link String} manipulation.
@@ -15,7 +16,6 @@ import java.util.Arrays;
  */
 public class StringUtil {
 	private static final char NULL_TERMINATOR = '\0';
-	private static final IntByteMap IS_TEXT_CACHE = new IntByteHashMap(100);
 
 	/**
 	 * @param text
@@ -201,239 +201,80 @@ public class StringUtil {
 	}
 
 	/**
-	 * Uses a cache to wrap around {@link #computeIstext(byte[])}.
-	 *
 	 * @param data
 	 * 		Some data to check.
 	 *
 	 * @return {@code true} when it contains only text.
 	 */
 	public static boolean isText(byte[] data) {
-		if (data == null || data.length == 0)
+		if (data.length == 0) {
 			return false;
-		int hash = Arrays.hashCode(data);
-		byte result = IS_TEXT_CACHE.getOrDefault(hash, (byte) -1);
-		if (result == -1) {
-			boolean compute = computeIstext(data);
-			IS_TEXT_CACHE.put(hash, result = (byte) (compute ? 1 : 0));
 		}
-		return result != 0;
+		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
+			.onMalformedInput(CodingErrorAction.REPLACE)
+			.onUnmappableCharacter(CodingErrorAction.REPLACE);
+		ByteBuffer buffer = ByteBuffer.wrap(data);
+		int maxEntropy = (int) (data.length * 0.01D);
+		int bufferSize = Math.min(4096, maxEntropy);
+		char[] charArray = new char[bufferSize];
+		CharBuffer charBuf = CharBuffer.wrap(charArray);
+		while (true) {
+			if (!buffer.hasRemaining()) {
+				return true;
+			}
+			CoderResult result = decoder.decode(buffer, charBuf, true);
+			if (result.isUnderflow())
+				decoder.flush(charBuf);
+			maxEntropy = calculateNonText(charArray, maxEntropy, charBuf.position());
+			if (maxEntropy <= 0) {
+				return false;
+			}
+			charBuf.rewind();
+		}
 	}
 
-	/**
-	 * @param data
-	 * 		Some data to check.
-	 *
-	 * @return {@code true} when it contains only text.
-	 */
-	private static boolean computeIstext(byte[] data) {
-		String string = new String(data, StandardCharsets.UTF_8);
-		int nonText = 0;
-		for (int i = 0; i < string.length(); i++) {
-			int codePoint = string.codePointAt(i);
-			int type = Character.getType(codePoint);
-			int skip = Character.charCount(codePoint) - 1;
-			i += skip;
-			switch (type) {
-				case Character.CONTROL:
-					if (codePoint == 13 || codePoint == 10 || codePoint == 9)
-						break; // Don't treat "\r", "\n", "\t" as standard control chars
-					nonText++;
-					break;
-				case Character.UNASSIGNED:
-					if (isEmoji(codePoint))
-						break; // Plenty of emoji land in this category
-					nonText++;
-					break;
-				default:
-					break;
+	private static int calculateNonText(char[] charBuf, int allowedEntropy, int length) {
+		int index = 0;
+		while (length-- != 0) {
+			char c = charBuf[index++];
+			int codePoint;
+			merge:
+			{
+				if (Character.isHighSurrogate(c)) {
+					if (length != 0) {
+						char c2 = charBuf[index];
+						if (Character.isLowSurrogate(c2)) {
+							index++;
+							length--;
+							codePoint = Character.toCodePoint(c, c2);
+							break merge;
+						}
+					}
+				}
+				codePoint = c;
+			}
+			if (codePoint <= 31) {
+				switch (codePoint) {
+					case 9:
+					case 10:
+					case 13:
+						continue;
+					default:
+						allowedEntropy--;
+				}
+			} else if (codePoint >= 57344 && codePoint <= 63743) {
+					allowedEntropy--;
+			} else if (codePoint >= 65520 && codePoint <= 65535) {
+				allowedEntropy--;
+			} else if (codePoint >= 983040 && codePoint <= 1048573) {
+				allowedEntropy--;
+			} else if (codePoint >= 1048576 && codePoint <= 1114109) {
+				allowedEntropy--;
+			}
+			if (allowedEntropy <= 0) {
+				return 0;
 			}
 		}
-		double nonTextPercent = (nonText / (double) data.length);
-		return nonTextPercent <= 0.01;
-	}
-
-	/**
-	 * Checks if a character code-point matches an emoji range.
-	 *
-	 * @param codePoint
-	 *        {@link Character#codePointAt(char[], int)} from a {@code char[]}.
-	 *
-	 * @return {@code true} for an emoji.
-	 */
-	public static boolean isEmoji(int codePoint) {
-		// From: http://www.unicode.org/emoji/charts/full-emoji-list.html
-		// Scraped with:
-		//   var codes = document.getElementsByClassName("code")
-		//   var i = 0
-		//   for (i = 0; i < codes.length; i++) {
-		//      console.log(codes[i].innerText)
-		//   }
-		if (codePoint == 0x23) return true;
-		if (codePoint == 0x2A) return true;
-		if (codePoint >= 0x30 && codePoint <= 0x39) return true;
-		if (codePoint == 0xA9) return true;
-		if (codePoint == 0xAE) return true;
-		if (codePoint == 0x200D) return true;
-		if (codePoint == 0x203C) return true;
-		if (codePoint == 0x2049) return true;
-		if (codePoint == 0x20E3) return true;
-		if (codePoint == 0x2122) return true;
-		if (codePoint == 0x2139) return true;
-		if (codePoint >= 0x2194 && codePoint <= 0x2199) return true;
-		if (codePoint >= 0x21A9 && codePoint <= 0x21AA) return true;
-		if (codePoint >= 0x231A && codePoint <= 0x231B) return true;
-		if (codePoint == 0x2328) return true;
-		if (codePoint == 0x23CF) return true;
-		if (codePoint >= 0x23E9 && codePoint <= 0x23F3) return true;
-		if (codePoint >= 0x23F8 && codePoint <= 0x23FA) return true;
-		if (codePoint == 0x24C2) return true;
-		if (codePoint >= 0x25AA && codePoint <= 0x25AB) return true;
-		if (codePoint == 0x25B6) return true;
-		if (codePoint == 0x25C0) return true;
-		if (codePoint >= 0x25FB && codePoint <= 0x25FE) return true;
-		if (codePoint >= 0x2600 && codePoint <= 0x2604) return true;
-		if (codePoint == 0x260E) return true;
-		if (codePoint == 0x2611) return true;
-		if (codePoint >= 0x2614 && codePoint <= 0x2615) return true;
-		if (codePoint == 0x2618) return true;
-		if (codePoint == 0x261D) return true;
-		if (codePoint == 0x2620) return true;
-		if (codePoint >= 0x2622 && codePoint <= 0x2623) return true;
-		if (codePoint == 0x2626) return true;
-		if (codePoint == 0x262A) return true;
-		if (codePoint >= 0x262E && codePoint <= 0x262F) return true;
-		if (codePoint >= 0x2638 && codePoint <= 0x263A) return true;
-		if (codePoint == 0x2640) return true;
-		if (codePoint == 0x2642) return true;
-		if (codePoint >= 0x2648 && codePoint <= 0x2653) return true;
-		if (codePoint >= 0x265F && codePoint <= 0x2660) return true;
-		if (codePoint == 0x2663) return true;
-		if (codePoint >= 0x2665 && codePoint <= 0x2666) return true;
-		if (codePoint == 0x2668) return true;
-		if (codePoint == 0x267B) return true;
-		if (codePoint >= 0x267E && codePoint <= 0x267F) return true;
-		if (codePoint >= 0x2692 && codePoint <= 0x2697) return true;
-		if (codePoint == 0x2699) return true;
-		if (codePoint >= 0x269B && codePoint <= 0x269C) return true;
-		if (codePoint >= 0x26A0 && codePoint <= 0x26A1) return true;
-		if (codePoint == 0x26A7) return true;
-		if (codePoint >= 0x26AA && codePoint <= 0x26AB) return true;
-		if (codePoint >= 0x26B0 && codePoint <= 0x26B1) return true;
-		if (codePoint >= 0x26BD && codePoint <= 0x26BE) return true;
-		if (codePoint >= 0x26C4 && codePoint <= 0x26C5) return true;
-		if (codePoint == 0x26C8) return true;
-		if (codePoint >= 0x26CE && codePoint <= 0x26CF) return true;
-		if (codePoint == 0x26D1) return true;
-		if (codePoint >= 0x26D3 && codePoint <= 0x26D4) return true;
-		if (codePoint >= 0x26E9 && codePoint <= 0x26EA) return true;
-		if (codePoint >= 0x26F0 && codePoint <= 0x26F5) return true;
-		if (codePoint >= 0x26F7 && codePoint <= 0x26FA) return true;
-		if (codePoint == 0x26FD) return true;
-		if (codePoint == 0x2702) return true;
-		if (codePoint == 0x2705) return true;
-		if (codePoint >= 0x2708 && codePoint <= 0x270D) return true;
-		if (codePoint == 0x270F) return true;
-		if (codePoint == 0x2712) return true;
-		if (codePoint == 0x2714) return true;
-		if (codePoint == 0x2716) return true;
-		if (codePoint == 0x271D) return true;
-		if (codePoint == 0x2721) return true;
-		if (codePoint == 0x2728) return true;
-		if (codePoint >= 0x2733 && codePoint <= 0x2734) return true;
-		if (codePoint == 0x2744) return true;
-		if (codePoint == 0x2747) return true;
-		if (codePoint == 0x274C) return true;
-		if (codePoint == 0x274E) return true;
-		if (codePoint >= 0x2753 && codePoint <= 0x2755) return true;
-		if (codePoint == 0x2757) return true;
-		if (codePoint >= 0x2763 && codePoint <= 0x2764) return true;
-		if (codePoint >= 0x2795 && codePoint <= 0x2797) return true;
-		if (codePoint == 0x27A1) return true;
-		if (codePoint == 0x27B0) return true;
-		if (codePoint == 0x27BF) return true;
-		if (codePoint >= 0x2934 && codePoint <= 0x2935) return true;
-		if (codePoint >= 0x2B05 && codePoint <= 0x2B07) return true;
-		if (codePoint >= 0x2B1B && codePoint <= 0x2B1C) return true;
-		if (codePoint == 0x2B50) return true;
-		if (codePoint == 0x2B55) return true;
-		if (codePoint == 0x3030) return true;
-		if (codePoint == 0x303D) return true;
-		if (codePoint == 0x3297) return true;
-		if (codePoint == 0x3299) return true;
-		if (codePoint == 0xFE0F) return true;
-		if (codePoint == 0x1F004) return true;
-		if (codePoint == 0x1F0CF) return true;
-		if (codePoint >= 0x1F170 && codePoint <= 0x1F171) return true;
-		if (codePoint >= 0x1F17E && codePoint <= 0x1F17F) return true;
-		if (codePoint == 0x1F18E) return true;
-		if (codePoint >= 0x1F191 && codePoint <= 0x1F19A) return true;
-		if (codePoint >= 0x1F1E6 && codePoint <= 0x1F1FF) return true;
-		if (codePoint >= 0x1F201 && codePoint <= 0x1F202) return true;
-		if (codePoint == 0x1F21A) return true;
-		if (codePoint == 0x1F22F) return true;
-		if (codePoint >= 0x1F232 && codePoint <= 0x1F23A) return true;
-		if (codePoint >= 0x1F250 && codePoint <= 0x1F251) return true;
-		if (codePoint >= 0x1F300 && codePoint <= 0x1F321) return true;
-		if (codePoint >= 0x1F324 && codePoint <= 0x1F393) return true;
-		if (codePoint >= 0x1F396 && codePoint <= 0x1F397) return true;
-		if (codePoint >= 0x1F399 && codePoint <= 0x1F39B) return true;
-		if (codePoint >= 0x1F39E && codePoint <= 0x1F3F0) return true;
-		if (codePoint >= 0x1F3F3 && codePoint <= 0x1F3F5) return true;
-		if (codePoint >= 0x1F3F7 && codePoint <= 0x1F3FA) return true;
-		if (codePoint >= 0x1F400 && codePoint <= 0x1F4FD) return true;
-		if (codePoint >= 0x1F4FF && codePoint <= 0x1F53D) return true;
-		if (codePoint >= 0x1F549 && codePoint <= 0x1F54E) return true;
-		if (codePoint >= 0x1F550 && codePoint <= 0x1F567) return true;
-		if (codePoint >= 0x1F56F && codePoint <= 0x1F570) return true;
-		if (codePoint >= 0x1F573 && codePoint <= 0x1F57A) return true;
-		if (codePoint == 0x1F587) return true;
-		if (codePoint >= 0x1F58A && codePoint <= 0x1F58D) return true;
-		if (codePoint == 0x1F590) return true;
-		if (codePoint >= 0x1F595 && codePoint <= 0x1F596) return true;
-		if (codePoint >= 0x1F5A4 && codePoint <= 0x1F5A5) return true;
-		if (codePoint == 0x1F5A8) return true;
-		if (codePoint >= 0x1F5B1 && codePoint <= 0x1F5B2) return true;
-		if (codePoint == 0x1F5BC) return true;
-		if (codePoint >= 0x1F5C2 && codePoint <= 0x1F5C4) return true;
-		if (codePoint >= 0x1F5D1 && codePoint <= 0x1F5D3) return true;
-		if (codePoint >= 0x1F5DC && codePoint <= 0x1F5DE) return true;
-		if (codePoint == 0x1F5E1) return true;
-		if (codePoint == 0x1F5E3) return true;
-		if (codePoint == 0x1F5E8) return true;
-		if (codePoint == 0x1F5EF) return true;
-		if (codePoint == 0x1F5F3) return true;
-		if (codePoint >= 0x1F5FA && codePoint <= 0x1F64F) return true;
-		if (codePoint >= 0x1F680 && codePoint <= 0x1F6C5) return true;
-		if (codePoint >= 0x1F6CB && codePoint <= 0x1F6D2) return true;
-		if (codePoint >= 0x1F6D5 && codePoint <= 0x1F6D7) return true;
-		if (codePoint >= 0x1F6DD && codePoint <= 0x1F6E5) return true;
-		if (codePoint == 0x1F6E9) return true;
-		if (codePoint >= 0x1F6EB && codePoint <= 0x1F6EC) return true;
-		if (codePoint == 0x1F6F0) return true;
-		if (codePoint >= 0x1F6F3 && codePoint <= 0x1F6FC) return true;
-		if (codePoint >= 0x1F7E0 && codePoint <= 0x1F7EB) return true;
-		if (codePoint == 0x1F7F0) return true;
-		if (codePoint >= 0x1F90C && codePoint <= 0x1F93A) return true;
-		if (codePoint >= 0x1F93C && codePoint <= 0x1F945) return true;
-		if (codePoint >= 0x1F947 && codePoint <= 0x1F9FF) return true;
-		if (codePoint >= 0x1FA70 && codePoint <= 0x1FA74) return true;
-		if (codePoint >= 0x1FA78 && codePoint <= 0x1FA7C) return true;
-		if (codePoint >= 0x1FA80 && codePoint <= 0x1FA86) return true;
-		if (codePoint >= 0x1FA90 && codePoint <= 0x1FAAC) return true;
-		if (codePoint >= 0x1FAB0 && codePoint <= 0x1FABA) return true;
-		if (codePoint >= 0x1FAC0 && codePoint <= 0x1FAC5) return true;
-		if (codePoint >= 0x1FAD0 && codePoint <= 0x1FAD9) return true;
-		if (codePoint >= 0x1FAE0 && codePoint <= 0x1FAE7) return true;
-		if (codePoint >= 0x1FAF0 && codePoint <= 0x1FAF6) return true;
-		if (codePoint >= 0xE0062 && codePoint <= 0xE0063) return true;
-		if (codePoint == 0xE0065) return true;
-		if (codePoint == 0xE0067) return true;
-		if (codePoint == 0xE006C) return true;
-		if (codePoint == 0xE006E) return true;
-		if (codePoint >= 0xE0073 && codePoint <= 0xE0074) return true;
-		if (codePoint == 0xE0077) return true;
-		if (codePoint == 0xE007F) return true;
-		return false;
+		return allowedEntropy;
 	}
 }

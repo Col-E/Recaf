@@ -26,6 +26,7 @@ dependencies {
     api jphantom
     api logback_classic
     api picocli
+    api quiltflower
     api ssvm
 
     // Android

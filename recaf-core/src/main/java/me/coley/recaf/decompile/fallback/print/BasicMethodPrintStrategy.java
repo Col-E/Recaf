@@ -107,7 +107,7 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 		for (Instruction instruction : instructions) {
 			int rawOp = instruction.getOpcode();
 			int asmOp = OpcodeUtil.deindexVarOp(rawOp);
-			int asmType = OpcodeUtil.opcodeToType(asmOp);
+			int asmType = OpcodeUtil.opcodeHasType(asmOp) ? OpcodeUtil.opcodeToType(asmOp) : -1;
 			String name = OpcodeUtil.opcodeToName(asmOp);
 			if (asmOp != rawOp) {
 				int index = OpcodeUtil.indexFromVarOp(instruction.getOpcode());

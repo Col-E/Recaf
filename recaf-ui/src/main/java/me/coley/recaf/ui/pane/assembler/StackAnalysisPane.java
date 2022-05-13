@@ -62,14 +62,18 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 	private void onIndexChange(int paragraphIndex) {
 		if (pipeline == null || pipeline.getUnit() == null)
 			return;
+		Analysis analysis = pipeline.getLastAnalysis();
+		if (analysis == null)
+			return;
 		Unit unit = pipeline.getUnit();
 		Element element = unit.getCode().getChildOnLine(paragraphIndex + 1);
 		if (element instanceof AbstractInstruction) {
 			int insnIndex = unit.getCode().getInstructions().indexOf(element);
-			Analysis analysis = pipeline.getLastAnalysis();
-			Frame frame = analysis.frame(insnIndex);
-			variableView.update(frame);
-			stackView.update(frame);
+			if (insnIndex < analysis.getFrames().size()) {
+				Frame frame = analysis.frame(insnIndex);
+				variableView.update(frame);
+				stackView.update(frame);
+			}
 		}
 	}
 

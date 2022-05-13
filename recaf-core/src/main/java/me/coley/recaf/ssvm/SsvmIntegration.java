@@ -237,16 +237,15 @@ public class SsvmIntegration {
 			return CompletableFuture.completedFuture(
 					new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName())));
 		}
-		if (vmClass.shouldBeInitialized()) {
-			vmClass.initialize();
-		}
-		VMHelper helper = vm.getHelper();
-		int access = method.getAccess();
-		String methodName = method.getName();
-		String methodDesc = method.getDescriptor();
 		// Invoke with parameters and return value
 		return CompletableFuture.supplyAsync(() -> {
+			VMHelper helper = vm.getHelper();
+			int access = method.getAccess();
+			String methodName = method.getName();
+			String methodDesc = method.getDescriptor();
 			try {
+				if (vmClass.shouldBeInitialized())
+					vmClass.initialize();
 				ExecutionContext context;
 				if (AccessFlag.isStatic(access)) {
 					context = helper.invokeStatic(vmClass, methodName, methodDesc,

@@ -96,7 +96,13 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(name, superName, interfaces, access, fields, methods);
+		int result = Objects.hashCode(name);
+		result = 31 * result + Objects.hashCode(superName);
+		result = 31 * result + Objects.hashCode(interfaces);
+		result = 31 * result + access;
+		result = 31 * result + Objects.hashCode(fields);
+		result = 31 * result + Objects.hashCode(methods);
+		return result;
 	}
 
 	/**

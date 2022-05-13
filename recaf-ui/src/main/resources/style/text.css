@@ -9,7 +9,8 @@
     -fx-tab-size: 4;
 }
 .paragraph-text {
--fx-tab-size: 4;
+    /* For RichTextFX */
+    -fx-tab-size: 4;
 }
 .filter-field {
     -fx-border-color: black;
