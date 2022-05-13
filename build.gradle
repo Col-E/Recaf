@@ -35,6 +35,7 @@ subprojects {
         google()
         maven { url 'https://files.minecraftforge.net/maven' }
         maven { url 'https://jitpack.io' }
+        maven { url 'https://maven.quiltmc.org/repository/release/' }
     }
 
     gradle.projectsEvaluated {
@@ -52,6 +53,7 @@ subprojects {
         def junitVersion = '5.8.2'
         def lljzipVersion = '1.1.4'
         def ssvmVersion = '1.6.1'
+        def quiltflowerVersion = '1.8.1'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
         asm = "org.ow2.asm:asm:$asmVersion"
         asm_analysis = "org.ow2.asm:asm-analysis:$asmVersion"
@@ -83,6 +85,7 @@ subprojects {
         logback_classic = 'ch.qos.logback:logback-classic:1.2.10'
         pe = 'com.github.cademtz:JavaPeParser:1.0.0'
         picocli = 'info.picocli:picocli:4.6.3'
+        quiltflower = "org.quiltmc:quiltflower:$quiltflowerVersion"
         regex = 'net.sourceforge.jregex:jregex:1.2_01'
         richtextfx = 'org.fxmisc.richtext:richtextfx:0.10.9'
         smali = "org.smali:smali:$dexVersion"
