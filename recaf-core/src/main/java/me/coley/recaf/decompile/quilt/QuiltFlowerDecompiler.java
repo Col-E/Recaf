@@ -3,7 +3,6 @@ package me.coley.recaf.decompile.quilt;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.decompile.DecompileOption;
 import me.coley.recaf.decompile.Decompiler;
-import me.coley.recaf.util.ReflectUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
@@ -22,9 +21,7 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.jar.Manifest;
 
@@ -38,68 +35,53 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 	private final Map<String, Object> fernFlowerProperties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
 	private final ThreadLocal<String> targetClass = new ThreadLocal<>();
 	private final ThreadLocal<String> targetDecompiled = new ThreadLocal<>();
-	private final Map<String, Boolean> hasClassCache = new HashMap<>();
 	private final LazyLoader loader = new LazyLoader(this);
-	private final List<Map<?, ?>> inputCaches = new ArrayList<>();
-	private final StructContext structContext;
-	private final ClassesProcessor classProcessor;
-	private final DecompilerContext decompilerContext;
-	private Workspace currentWorkspace;
+	private ClassesProcessor classProcessor;
 
 	public QuiltFlowerDecompiler() {
 		super("QuiltFlower", "1.8.1");
-		structContext = new StructContext(this, this, loader) {
-			@Override
-			public StructClass getClass(String name) {
-				prefetchMissingClass(name);
-				return super.getClass(name);
-			}
-		};
-		classProcessor = new ClassesProcessor(structContext);
-		IFernflowerLogger ffLogger = new IFernflowerLogger() {
-			@Override
-			public void writeMessage(String message, Severity severity) {
-				logger.trace("QuiltFlower: {}", message);
-			}
-
-			@Override
-			public void writeMessage(String message, Severity severity, Throwable t) {
-				logger.error("QuiltFlower: {}", message, t);
-			}
-		};
 		fernFlowerProperties.put("ind", "    ");
-		decompilerContext = new DecompilerContext(fernFlowerProperties, ffLogger, structContext, classProcessor,
-				null, s -> new IdentityRenamerFactory());
-		populateClearableCache();
 	}
 
 	@Override
-	protected synchronized String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
+	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
 		try {
-			currentWorkspace = workspace;
+			StructContext structContext = new StructContext(this, this, loader);
+			classProcessor = new ClassesProcessor(structContext);
+			IFernflowerLogger ffLogger = new IFernflowerLogger() {
+				@Override
+				public void writeMessage(String message, Severity severity) {
+					logger.trace("QuiltFlower: {}", message);
+				}
+
+				@Override
+				public void writeMessage(String message, Severity severity, Throwable t) {
+					logger.error("QuiltFlower: {}", message, t);
+				}
+			};
+			DecompilerContext decompilerContext = new DecompilerContext(fernFlowerProperties, ffLogger, structContext, classProcessor,
+					null, s -> new IdentityRenamerFactory());
 			// Reset input
 			String name = classInfo.getName();
 			targetClass.set(classInfo.getName());
 			targetDecompiled.set(null);
 			// Update the thread-local decompiler context
 			DecompilerContext.setCurrentContext(decompilerContext);
-			// Clear old content
-			hasClassCache.clear();
-			inputCaches.forEach(Map::clear);
-			// Load in the class we want to decompile
-			addClassToStructCtx(classInfo, true);
+			// FF wants some odd naming convention where '.class' suffix always exists
+			String qualified = (name + ".class");
+			// Load in the data
+			byte[] code = applyInterceptors(classInfo.getValue());
+			structContext.addData(name, qualified, code, true);
 			classProcessor.loadClasses(null);
 			// Decompile
 			structContext.saveContext();
 			structContext.close();
 			// Cleanup and yield value
-			currentWorkspace = null;
 			String decompiled = targetDecompiled.get();
 			if (decompiled == null)
 				return "// Failed to decompile: " + name;
 			return decompiled;
 		} catch (Exception e) {
-			currentWorkspace = null;
 			logger.error("QuiltFlower encountered an error when decompiling", e);
 			return "// " + StringUtil.traceToString(e).replace("\n", "\n// ");
 		}
@@ -179,65 +161,5 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 	@Override
 	public void closeArchive(String path, String archiveName) {
 		// no-op
-	}
-
-	/**
-	 * This exists because we want to clear inputs as described by {@link #populateClearableCache()}
-	 * but when we do clear the inputs FF isn't exactly aware of this, and attempts to load data cause errors.
-	 * <br>
-	 * This is cursed, and should be replaced at the first opportunity.
-	 *
-	 * @param name
-	 * 		Class to fetch.
-	 */
-	private void prefetchMissingClass(String name) {
-		if (!hasClassCache.containsKey(name)) {
-			boolean has = structContext.hasClass(name);
-			if (!has && currentWorkspace != null) {
-				ClassInfo info = currentWorkspace.getResources().getClass(name);
-				try {
-					addClassToStructCtx(info, false);
-				} catch (Exception ignored) {
-					// FF warns about a lot of classes, and seems to 'guess' about the location of some of them.
-					// This becomes very noisy, so we just ignore this.
-				}
-			}
-			hasClassCache.put(name, has);
-		}
-	}
-
-	/**
-	 * @param info
-	 * 		Class to add to the FF context for decompilation.
-	 * @param includeFlag
-	 * 		Flag to include class in decompilation, vs for just usage as a reference.
-	 *
-	 * @throws IOException
-	 * 		When FF could not parse the class.
-	 */
-	private void addClassToStructCtx(ClassInfo info, boolean includeFlag) throws IOException {
-		String name = info.getName();
-		// FF wants some odd naming convention where '.class' suffix always exists
-		String qualified = (name + ".class");
-		byte[] code = applyInterceptors(info.getValue());
-		structContext.addData(name, qualified, code, includeFlag);
-	}
-
-	/**
-	 * So, if we do not clear the cache FF seemingly wants to re-decompile everything
-	 */
-	private void populateClearableCache() {
-		// We need to be able to clear cached inputs
-		try {
-			for (String key : new String[]{"units", "classes", "ownClasses"}) {
-				Map<?, ?> map = ReflectUtil.quietGet(structContext, ReflectUtil.getDeclaredField(StructContext.class, key));
-				if (map != null)
-					inputCaches.add(map);
-				else
-					logger.error("Failed to find input map in StructContext: {}", key);
-			}
-		} catch (Exception ex) {
-			logger.error("Failed to access QuiltFlower's context inputs!", ex);
-		}
 	}
 }
