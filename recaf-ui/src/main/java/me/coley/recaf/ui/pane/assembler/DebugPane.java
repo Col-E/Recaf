@@ -1,8 +1,6 @@
 package me.coley.recaf.ui.pane.assembler;
 
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
@@ -12,6 +10,7 @@ import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.Location;
+import me.darknet.assembler.parser.Token;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,14 +19,21 @@ import java.util.List;
 public class DebugPane extends BorderPane implements ParserCompletionListener {
 
     public GroupTreeView treeView;
+    public TokenList listView;
     static AssemblerArea assemblerPane;
 
     public DebugPane(AssemblerArea pane, AssemblerPipeline pipeline) {
         super();
         treeView = new GroupTreeView();
-        setCenter(treeView);
+        listView = new TokenList();
+        setCenter(new SplitPane(treeView, listView));
         assemblerPane = pane;
         pipeline.addParserCompletionListener(this);
+    }
+
+    @Override
+    public void onCompleteTokenize(Collection<Token> tokens) {
+        listView.update(tokens);
     }
 
     @Override
@@ -40,7 +46,39 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
         // No-op
     }
 
-    static class GroupTreeView extends TreeView<Group> {
+    class TokenList extends ListView<Token> {
+        public TokenList() {
+            super();
+        }
+
+        public void update(Collection<Token> tokens) {
+            FxThreadUtil.run(() -> {
+                getItems().clear();
+                for(Token token : tokens) {
+                    getItems().add(token);
+                }
+                setCellFactory(param -> new ListCell<>() {
+                    @Override
+                    protected void updateItem(Token item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty) {
+                            setText(null);
+                        } else {
+                            setText(item.type.name() + ": " + item.content + " " + item.location.line + ":" + item.location.column);
+                            Location loc = item.location;
+                            setOnMouseClicked(event -> {
+                                if (event.getClickCount() == 2) {
+                                    assemblerPane.selectPosition(loc.line, loc.column);
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+        }
+    }
+
+    class GroupTreeView extends TreeView<Group> {
 
         public GroupTreeView() {
             getStyleClass().add("transparent-tree");
@@ -70,13 +108,13 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
 
     }
 
-    static class GroupTreeItem extends TreeItem<Group> {
+    class GroupTreeItem extends TreeItem<Group> {
         public GroupTreeItem(Group group) {
             super(group);
         }
     }
 
-    static class GroupTreeCell extends TreeCell<Group> {
+    class GroupTreeCell extends TreeCell<Group> {
 
 
         public GroupTreeCell() {
@@ -101,8 +139,9 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
                 Location loc = item.location();
                 setOnMouseClicked(event -> {
                     if(event.getClickCount() == 2) {
-                        System.out.println(loc);
                         assemblerPane.selectPosition(loc.line, loc.column);
+                        listView.getSelectionModel().select(item.value);
+                        listView.scrollTo(item.value);
                     }
                 });
             }
