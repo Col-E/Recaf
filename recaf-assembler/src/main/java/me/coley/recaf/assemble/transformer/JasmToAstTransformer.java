@@ -5,18 +5,18 @@ import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
+import me.coley.recaf.util.EscapeUtil;
 import me.darknet.assembler.compiler.FieldDescriptor;
 import me.darknet.assembler.compiler.MethodDescriptor;
 import me.darknet.assembler.parser.AssemblerException;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.MethodParameter;
+import me.darknet.assembler.parser.Token;
 import me.darknet.assembler.parser.groups.*;
 import me.darknet.assembler.transform.MethodVisitor;
 import me.darknet.assembler.transform.Transformer;
 import me.darknet.assembler.transform.Visitor;
-import me.darknet.assembler.util.GroupUtil;
 import me.darknet.assembler.util.Handles;
-import org.checkerframework.checker.units.qual.A;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -34,7 +34,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
     Collection<Group> groups;
     Unit unit;
-    MemberDefinition activeMember;
+    AbstractMemberDefinition activeMember;
     Code code = new Code();
     List<ThrownException> caughtExceptions = new ArrayList<>();
 
@@ -48,10 +48,19 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
         return unit;
     }
 
+    public String content(Group group) {
+        return EscapeUtil.unescapeUnicode(group.content());
+    }
+
+    public void add(CodeEntry element) {
+        code.add(wrap(latestGroup, (BaseElement & CodeEntry) element));
+    }
+
+    Group latestGroup;
 
     @Override
     public void visit(Group group) throws AssemblerException {
-
+        latestGroup = group;
     }
 
     @Override
@@ -65,7 +74,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
         for (CaseLabelGroup caseLabel : lookupSwitch.caseLabels) {
             entries.add(new LookupSwitchInstruction.Entry(caseLabel.key.asInt(), caseLabel.value.getLabel()));
         }
-        code.add(new LookupSwitchInstruction(Opcodes.LOOKUPSWITCH, entries, lookupSwitch.defaultLabel.getLabel()));
+        add(new LookupSwitchInstruction(Opcodes.LOOKUPSWITCH, entries, lookupSwitch.defaultLabel.getLabel()));
     }
 
     @Override
@@ -74,7 +83,11 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
         for (LabelGroup labelGroup : tableSwitch.getLabelGroups()) {
             lables.add(labelGroup.getLabel());
         }
-        code.add(new TableSwitchInstruction(Opcodes.TABLESWITCH, 0, lables.size(), lables, tableSwitch.getDefaultLabel().getLabel()));
+        add(new TableSwitchInstruction(Opcodes.TABLESWITCH,
+                tableSwitch.getMin().asInt(),
+                tableSwitch.getMax().asInt(),
+                lables,
+                tableSwitch.getDefaultLabel().getLabel()));
     }
 
     @Override
@@ -88,7 +101,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
     @Override
     public void visitVarInsn(int opcode, IdentifierGroup identifier) throws AssemblerException {
-        code.add(new VarInstruction(opcode, identifier.content()));
+        add(new VarInstruction(opcode, content(identifier)));
     }
 
     @Override
@@ -97,51 +110,53 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
     }
 
     @Override
-    public void visitMethodInsn(int opcode, MethodDescriptor md, boolean itf) throws AssemblerException {
-        code.add(new MethodInstruction(opcode, md.owner, md.name, md.getDescriptor()));
+    public void visitMethodInsn(int opcode, IdentifierGroup desc, boolean itf) throws AssemblerException {
+        MethodDescriptor md = new MethodDescriptor(desc.content(), false);
+        add(new MethodInstruction(opcode, md.owner, md.name, md.getDescriptor()));
     }
 
     @Override
-    public void visitFieldInsn(int opcode, FieldDescriptor fs) throws AssemblerException {
-        code.add(new FieldInstruction(opcode, fs.owner, fs.name, fs.desc));
+    public void visitFieldInsn(int opcode, IdentifierGroup name, IdentifierGroup desc) throws AssemblerException {
+        FieldDescriptor fs = new FieldDescriptor(name.content());
+        add(new FieldInstruction(opcode, fs.owner, fs.name, desc.content()));
     }
 
     @Override
     public void visitJumpInsn(int opcode, LabelGroup label) throws AssemblerException {
-        code.add(new JumpInstruction(opcode, label.getLabel()));
+        add(new JumpInstruction(opcode, label.getLabel()));
     }
 
     @Override
     public void visitLdcInsn(Group constant) throws AssemblerException {
-        code.add(LdcInstruction.of(convert(constant)));
+        add(new LdcInstruction(Opcodes.LDC, convert(constant), from(constant)));
     }
 
     @Override
     public void visitTypeInsn(int opcode, IdentifierGroup type) throws AssemblerException {
-        code.add(new TypeInstruction(opcode, type.content()));
+        add(new TypeInstruction(opcode, content(type)));
     }
 
     @Override
     public void visitIincInsn(IdentifierGroup var, int value) throws AssemblerException {
-        code.add(new IincInstruction(Opcodes.IINC, var.content(), value));
+        add(new IincInstruction(Opcodes.IINC, var.content(), value));
     }
 
     @Override
     public void visitIntInsn(int opcode, int value) throws AssemblerException {
         if(opcode == Opcodes.NEWARRAY) {
-            code.add(new NewArrayInstruction(opcode, NewArrayInstruction.fromInt(value)));
+            add(new NewArrayInstruction(opcode, NewArrayInstruction.fromInt(value)));
         }else
-            code.add(new IntInstruction(opcode, value));
+            add(new IntInstruction(opcode, value));
     }
 
     @Override
     public void visitLineNumber(NumberGroup line, IdentifierGroup label) throws AssemblerException {
-        code.add(new LineInstruction(-1, label.content(), line.asInt()));
+        add(new LineInstruction(-1, label.content(), line.asInt()));
     }
 
     @Override
     public void visitMultiANewArrayInsn(String desc, int dims) throws AssemblerException {
-        code.add(new MultiArrayInstruction(Opcodes.MULTIANEWARRAY, desc, dims));
+        add(new MultiArrayInstruction(Opcodes.MULTIANEWARRAY, desc, dims));
     }
 
     @Override
@@ -156,7 +171,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
         for (Group arg : args.getBody().getChildren()) {
             bsmArgs.add(new IndyInstruction.BsmArg(from(arg), convert(arg)));
         }
-        code.add(new IndyInstruction(
+        add(new IndyInstruction(
                 Opcodes.INVOKEDYNAMIC,
                 identifier,
                 descriptor.content(),
@@ -184,12 +199,12 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
     @Override
     public void visitInsn(int opcode) throws AssemblerException {
-        code.add(new Instruction(opcode));
+        add(new Instruction(opcode));
     }
 
     @Override
     public void visitExpr(ExprGroup expr) throws AssemblerException {
-        code.add(new Expression(expr.content()));
+        add(new Expression(expr.textGroup.content()));
     }
 
     @Override
@@ -210,9 +225,11 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
     @Override
     public void visitField(AccessModsGroup accessMods, IdentifierGroup name, IdentifierGroup descriptor, Group constantValue) throws AssemblerException {
 
-        activeMember = new FieldDefinition(fromAccessMods(accessMods), name.content(), descriptor.content());
+        FieldDefinition field = new FieldDefinition(fromAccessMods(accessMods), name.content(), descriptor.content());
+
+        activeMember = field;
         if(constantValue != null)
-            code.setConstVal(new ConstVal(convert(constantValue), from(constantValue)));
+            field.setConstVal(new ConstVal(convert(constantValue), from(constantValue)));
 
     }
 
@@ -277,7 +294,13 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
         } else if(group.type == Group.GroupType.TYPE) {
             TypeGroup typeGroup = (TypeGroup) group;
             try {
-                return Type.getObjectType(typeGroup.descriptor.content());
+                String desc = typeGroup.descriptor.content();
+                if(desc.isEmpty()) return Type.getType(desc);
+                if(desc.charAt(0) == '(') {
+                    return Type.getMethodType(typeGroup.descriptor.content());
+                } else {
+                    return Type.getObjectType(typeGroup.descriptor.content());
+                }
             } catch (IllegalArgumentException e) {
                 throw new AssemblerException("Invalid type: " + typeGroup.descriptor.content(), typeGroup.location());
             }
@@ -298,5 +321,15 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
         }else {
             return group.content();
         }
+    }
+
+    private static <E extends BaseElement> E wrap(Group group, E element) {
+        Token start = group.value;
+        Token end = group.end();
+        if(end == null)
+            end = start;
+        return element.setLine(start.getLocation().getLine()).setRange(
+                start.getLocation().getStartPosition(),
+                end.getLocation().getEndPosition());
     }
 }
