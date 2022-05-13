@@ -82,10 +82,11 @@ public class ClassLocation implements Location {
 			return cmp;
 		FieldInfo thisField = this.containingField;
 		FieldInfo otherField = other.containingField;
+		MethodInfo thisMethod = this.containingMethod;
 		if (thisField != null) {
 			cmp = doComparison(other, otherField, thisField.getName());
-		} else {
-			cmp = doComparison(other, otherField, containingMethod.getName());
+		} else if (thisMethod != null) {
+			cmp = doComparison(other, otherField, thisMethod.getName());
 		}
 		if (cmp != 0)
 			return cmp;
