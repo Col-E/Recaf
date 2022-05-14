@@ -78,7 +78,7 @@ public class VariableHighlighter implements IndicatorApplier {
 		Unit unit = pipeline.getUnit();
 		if (unit == null)
 			return;
-		for (AbstractInstruction instruction : unit.getCode().getInstructions()) {
+		for (AbstractInstruction instruction : unit.getMethod().getCode().getInstructions()) {
 			if (instruction instanceof VariableReference) {
 				int line = instruction.getLine();
 				if (line > 0)

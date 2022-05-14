@@ -226,6 +226,10 @@ public class Code extends BaseElement {
 						return e.print();
 					return "\t" + e.print();
 				})
-				.collect(Collectors.joining("\n")) + "\nend";
+				.collect(Collectors.joining("\n"));
+	}
+
+    public boolean isEmpty() {
+		return entries.isEmpty();
 	}
 }

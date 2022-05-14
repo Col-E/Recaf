@@ -319,9 +319,9 @@ public class AssemblerPipeline {
 	 * {@code null} if no AST is available.
 	 */
 	public Element getElementOnLine(int lineNo) {
-		if (unit == null || unit.getCode() == null)
+		if (unit == null || !unit.isMethod())
 			return null;
-		return unit.getCode().getChildOnLine(lineNo);
+		return unit.getMethod().getCode().getChildOnLine(lineNo);
 	}
 
 	/**

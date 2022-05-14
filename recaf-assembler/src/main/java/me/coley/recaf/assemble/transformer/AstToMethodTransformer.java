@@ -244,7 +244,7 @@ public class AstToMethodTransformer {
 	 * Populate the label name to instance map.
 	 */
 	private void createLabels() {
-		for (String labelName : unit.getCode().getLabels().keySet()) {
+		for (String labelName : definition.getCode().getLabels().keySet()) {
 			labelMap.put(labelName, new LabelNode());
 		}
 	}
@@ -266,7 +266,7 @@ public class AstToMethodTransformer {
 			// basic level of variable types for the analyzer to work with.
 			analysis = null; // reset first
 			if (doUseAnalysis()) {
-				Analyzer analyzer = new Analyzer(selfType, unit);
+				Analyzer analyzer = new Analyzer(selfType, definition);
 				analyzer.setInheritanceChecker(inheritanceChecker);
 				analyzer.setExpressionToAstTransformer(exprToAst);
 				try {
@@ -505,7 +505,7 @@ public class AstToMethodTransformer {
 			this.unit = unit;
 			// Convenience
 			this.definition = (MethodDefinition) unit.getDefinition();
-			this.code = unit.getCode();
+			this.code = this.definition.getCode();
 			// Initialize transformers
 			this.exprToAsm = new ExpressionToAsmTransformer(classSupplier, definition, variables, selfType);
 			this.exprToAst = new ExpressionToAstTransformer(definition, variables, exprToAsm);

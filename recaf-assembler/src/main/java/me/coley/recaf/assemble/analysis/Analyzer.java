@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.IllegalAstException;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.*;
+import me.coley.recaf.assemble.ast.arch.AbstractMemberDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.*;
@@ -37,8 +38,9 @@ public class Analyzer {
 	private static final boolean MANUAL_DEBUG = false;
 	private final Map<Label, String> catchHandlerTypes = new HashMap<>();
 	private final String selfType;
-	private final Unit unit;
 	private final Code code;
+
+	private final MethodDefinition method;
 	private ExpressionToAstTransformer expressionToAstTransformer;
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 	private Element currentlyVisiting;
@@ -46,13 +48,11 @@ public class Analyzer {
 	/**
 	 * @param selfType
 	 * 		Internal name of class defining the method.
-	 * @param unit
-	 * 		The unit containing the method code.
 	 */
-	public Analyzer(String selfType, Unit unit) {
+	public Analyzer(String selfType, MethodDefinition method) {
 		this.selfType = selfType;
-		this.unit = unit;
-		code = Objects.requireNonNull(unit.getCode(), "AST Unit must define a code region!");
+		code = method.getCode();
+		this.method = method;
 	}
 
 	/**
@@ -105,7 +105,7 @@ public class Analyzer {
 	private void fillFrames(Analysis analysis, List<AbstractInstruction> instructions) throws AstException {
 		// Initialize with method definition parameters
 		Frame entryFrame = analysis.frame(0);
-		entryFrame.initialize(selfType, (MethodDefinition) unit.getDefinition());
+		entryFrame.initialize(selfType, method);
 		// Populate handler labels
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			Label handlerLabel = code.getLabel(tryCatch.getHandlerLabel());

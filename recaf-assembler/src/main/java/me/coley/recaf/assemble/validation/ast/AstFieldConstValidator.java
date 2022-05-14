@@ -18,9 +18,6 @@ public class AstFieldConstValidator implements AstValidationVisitor {
 	@Override
 	public void visit(AstValidator validator) {
 		Unit unit = validator.getUnit();
-		// Skip if no code-items
-		if (unit.getCode() == null)
-			return;
 		// Check const-val on field of wrong type
 		// Check const-val on field that isn't a "constant" thus it wont apply at runtime
 		if (unit.isField()) {

@@ -240,7 +240,13 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
         for(MethodParameter mp : md.parameters) {
             parameters.add(new me.coley.recaf.assemble.ast.arch.MethodParameter(mp.getDescriptor(), mp.getName()));
         }
-        MethodDefinition method = new MethodDefinition(fromAccessMods(accessMods), md.name, parameters, md.returnType);
+        this.code = new Code();
+        MethodDefinition method = new MethodDefinition(
+                fromAccessMods(accessMods),
+                md.name,
+                parameters,
+                md.returnType,
+                this.code);
         for(ThrownException thrown : this.caughtExceptions) {
             method.addThrownException(thrown);
         }
@@ -279,13 +285,13 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
     @Override
     public void visitEnd() throws AssemblerException {
-        unit = new Unit(activeMember, code);
+        unit = new Unit(activeMember);
     }
 
     @Override
     public void visitEndClass() throws AssemblerException {
         if(activeMember != null && activeMember.isField())
-            unit = new Unit(activeMember, code);
+            unit = new Unit(activeMember);
     }
 
     public Object convert(Group group) throws AssemblerException {

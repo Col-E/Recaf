@@ -292,7 +292,8 @@ public class AntlrToAstTransformer extends BytecodeBaseVisitor<Element> {
 			throw new ParserException(ctx, "Could not locate return type");
 		String retType = getDesc(ctx.desc());
 		MethodParameters params = visitMethodParams(ctx.methodParams());
-		return wrap(ctx, new MethodDefinition(modifiers, name, params, retType));
+		MethodDefinition method = new MethodDefinition(modifiers, name, params, retType, new Code());
+		return wrap(ctx, method);
 	}
 
 	@Override

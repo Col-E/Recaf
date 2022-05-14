@@ -134,9 +134,9 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
                 setText("Root");
             }else {
                 String content = item.value == null ? "" : item.content();
-                setText(item.type + ": " +
+                Location loc  = item.location();
+                setText((loc.line == -1 ? "" : ""  +loc.line + " ") + item.type + ": " +
                         content);
-                Location loc = item.location();
                 setOnMouseClicked(event -> {
                     if(event.getClickCount() == 2) {
                         assemblerPane.selectPosition(loc.line, loc.column);

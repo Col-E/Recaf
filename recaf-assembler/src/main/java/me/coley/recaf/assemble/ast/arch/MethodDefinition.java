@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.ast.arch;
 
+import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.meta.Signature;
 
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ public class MethodDefinition extends AbstractMemberDefinition {
 	private final MethodParameters params;
 	private final String returnType;
 
+	private final Code code;
+
 	private final List<ThrownException> thrownExceptions = new ArrayList<>();
 
 	/**
@@ -27,11 +30,12 @@ public class MethodDefinition extends AbstractMemberDefinition {
 	 * @param returnType
 	 * 		Method return descriptor.
 	 */
-	public MethodDefinition(Modifiers modifiers, String name, MethodParameters params, String returnType) {
+	public MethodDefinition(Modifiers modifiers, String name, MethodParameters params, String returnType, Code code) {
 		this.modifiers = modifiers;
 		this.name = name;
 		this.params = params;
 		this.returnType = returnType;
+		this.code = code;
 	}
 
 	@Override
@@ -48,6 +52,10 @@ public class MethodDefinition extends AbstractMemberDefinition {
 		sb.append(name);
 		sb.append('(').append(params.print()).append(')');
 		sb.append(returnType);
+		sb.append('\n');
+		sb.append(code.print());
+		sb.append('\n');
+		sb.append("end");
 		return sb.toString();
 	}
 
@@ -87,4 +95,9 @@ public class MethodDefinition extends AbstractMemberDefinition {
 	public String getReturnType() {
 		return returnType;
 	}
+
+	public Code getCode() {
+		return code;
+	}
+
 }

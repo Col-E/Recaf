@@ -1,7 +1,9 @@
 package me.coley.recaf.assemble.ast;
 
 import me.coley.recaf.assemble.ast.arch.AbstractMemberDefinition;
+import me.coley.recaf.assemble.ast.arch.FieldDefinition;
 import me.coley.recaf.assemble.ast.arch.MemberDefinition;
+import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 
 /**
  * The complete unit of a field or method.
@@ -10,26 +12,19 @@ import me.coley.recaf.assemble.ast.arch.MemberDefinition;
  */
 public class Unit extends BaseElement {
 	private final AbstractMemberDefinition definition;
-	private final Code code;
 
 	/**
 	 * @param definition
 	 * 		Field or method definition.
-	 * @param code
-	 * 		Optional code value; typically {@code null} if the definition represents a field or an abstract method.
+	 *
 	 */
-	public Unit(AbstractMemberDefinition definition, Code code) {
+	public Unit(AbstractMemberDefinition definition) {
 		this.definition = child(definition);
-		this.code = child(code);
 	}
 
 	@Override
 	public String print() {
-		StringBuilder sb = new StringBuilder(definition.print());
-		if (code != null) {
-			sb.append('\n').append(code.print());
-		}
-		return sb.toString();
+		return definition.print();
 	}
 
 	/**
@@ -54,9 +49,26 @@ public class Unit extends BaseElement {
 	}
 
 	/**
-	 * @return Optional code value; typically {@code null} if the definition represents a field or an abstract method.
+	 * @return Method definition.
+	 * @throws IllegalStateException if the definition is not a method.
+	 * @see #isMethod()
+	 * @see #isField()
 	 */
-	public Code getCode() {
-		return code;
+	public MethodDefinition getMethod() {
+		if(!isMethod())
+			throw new IllegalStateException("Not a method");
+		return (MethodDefinition) definition;
+	}
+
+	/**
+	 * @return Field definition.
+	 * @throws IllegalStateException if the definition is not a field.
+	 * @see #isMethod()
+	 * @see #isField()
+	 */
+	public FieldDefinition getField() {
+		if(!isField())
+			throw new IllegalStateException("Not a field");
+		return (FieldDefinition) definition;
 	}
 }

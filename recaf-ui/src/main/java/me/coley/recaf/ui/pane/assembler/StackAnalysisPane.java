@@ -10,6 +10,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.analysis.Frame;
 import me.coley.recaf.assemble.analysis.Value;
+import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
@@ -66,9 +67,12 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		if (analysis == null)
 			return;
 		Unit unit = pipeline.getUnit();
-		Element element = unit.getCode().getChildOnLine(paragraphIndex + 1);
+		if(unit == null)
+			return;
+		Code code = unit.getMethod().getCode();
+		Element element = code.getChildOnLine(paragraphIndex + 1);
 		if (element instanceof AbstractInstruction) {
-			int insnIndex = unit.getCode().getInstructions().indexOf(element);
+			int insnIndex = code.getInstructions().indexOf(element);
 			if (insnIndex < analysis.getFrames().size()) {
 				Frame frame = analysis.frame(insnIndex);
 				variableView.update(frame);

@@ -130,6 +130,6 @@ public class NewArrayInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
-		return getOpcode() + " " + arrayType;
+		return getOpcode() + " " + newArrayNames.get(getArrayTypeInt());
 	}
 }

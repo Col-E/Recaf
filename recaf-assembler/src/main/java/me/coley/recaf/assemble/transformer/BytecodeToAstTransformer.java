@@ -101,7 +101,7 @@ public class BytecodeToAstTransformer {
 		AnnotationHelper.visitAnnos(definition, true, field.visibleAnnotations);
 		AnnotationHelper.visitAnnos(definition, false, field.invisibleAnnotations);
 		// Done
-		unit = new Unit(definition, new Code());
+		unit = new Unit(definition);
 	}
 
 	/**
@@ -147,9 +147,9 @@ public class BytecodeToAstTransformer {
 			argVarIndex += argType.getSize();
 		}
 		String retType = methodType.getReturnType().getDescriptor();
-		MethodDefinition definition = new MethodDefinition(modifiers, method.name, params, retType);
-		// Setup other attributes
 		Code code = new Code();
+		MethodDefinition definition = new MethodDefinition(modifiers, method.name, params, retType, code);
+		// Setup other attributes
 		if (method.signature != null && !method.signature.equals(method.desc))
 			definition.setSignature(new Signature(method.signature));
 		if (method.exceptions != null) {
@@ -312,7 +312,7 @@ public class BytecodeToAstTransformer {
 			}
 		}
 		// Done
-		unit = new Unit(definition, code);
+		unit = new Unit(definition);
 	}
 
 	/**
