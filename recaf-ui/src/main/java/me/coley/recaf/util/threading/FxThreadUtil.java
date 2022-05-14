@@ -25,7 +25,7 @@ public class FxThreadUtil {
 		if (Platform.isFxApplicationThread()) {
 			action.run();
 		} else {
-			Platform.runLater(action);
+			Platform.runLater(ThreadUtil.wrap(action));
 		}
 	}
 

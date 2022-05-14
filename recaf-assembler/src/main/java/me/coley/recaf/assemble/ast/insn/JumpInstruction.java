@@ -42,7 +42,7 @@ public class JumpInstruction extends AbstractInstruction implements FlowControl 
 
 	@Override
 	public String print() {
-		return String.format("%s %s", getOpcode(), getLabel());
+		return getOpcode() + ' ' + getLabel();
 	}
 
 	@Override

@@ -10,7 +10,9 @@ import software.coley.llzip.part.LocalFileHeader;
 import software.coley.llzip.util.ByteData;
 import software.coley.llzip.util.ByteDataUtil;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
@@ -78,6 +80,12 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Lo
 			byte[] bytes = new byte[count];
 			data.get(0L, bytes, 0, count);
 			return bytes;
+		}
+
+		@Override
+		public InputStream openStream() throws IOException {
+			ByteData data = decompress();
+			return new ByteArrayInputStream(ByteDataUtil.toByteArray(data));
 		}
 
 		private ByteData decompress() throws IOException {

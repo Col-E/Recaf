@@ -1,6 +1,7 @@
 package me.coley.recaf.io;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Lazily provides byte array form a source.
@@ -30,4 +31,14 @@ public interface ByteSource {
 	 * 		If any I/O error occurs.
 	 */
 	byte[] peek(int count) throws IOException;
+
+	/**
+	 * Streams this source.
+	 *
+	 * @return Stream for this source.
+	 *
+	 * @throws IOException
+	 * 		If any I/O error occurs.
+	 */
+	InputStream openStream() throws IOException;
 }

@@ -51,7 +51,7 @@ public class QuickNavPrompt extends GenericWindow {
 	 * Can't name shadow "close" or "hide".
 	 */
 	private static void vanish() {
-		if (showing.compareAndSet(true, false)) {
+		if (showing.getAndSet(false)) {
 			instance().hide();
 		}
 	}
@@ -60,7 +60,7 @@ public class QuickNavPrompt extends GenericWindow {
 	 * Shows the prompt.
 	 */
 	public static void open() {
-		if (!showing.compareAndSet(false, true)) {
+		if (!showing.getAndSet(true)) {
 			instance().show();
 			nav.search.requestFocus();
 		}

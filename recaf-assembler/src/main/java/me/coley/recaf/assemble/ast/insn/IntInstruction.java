@@ -33,6 +33,6 @@ public class IntInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
-		return String.format("%s %d", getOpcode(), getValue());
+		return getOpcode() + " " + getValue();
 	}
 }

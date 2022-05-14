@@ -54,7 +54,7 @@ public class ManifestArea extends SyntaxArea {
 	}
 
 	private void rangeCheck(int pos) {
-		int start = getText().indexOf("Main-Class: ") + "Main-Class: ".length();
+		int start = getText().toLowerCase().indexOf("main-class: ") + "main-class: ".length();
 		int end = start + mainClass.length();
 		if (pos >= start && pos <= end) {
 			openMainClassRef();
@@ -82,6 +82,7 @@ public class ManifestArea extends SyntaxArea {
 			// Leading whitespace should be trimmed, but a newline should always be present
 			// at the end of the text input in order for the manifest tool to succeed in parsing.
 			String formattedManifest = getText().trim() + "\n";
+			String manifestLower = formattedManifest.toLowerCase();
 			byte[] input = formattedManifest.getBytes(StandardCharsets.UTF_8);
 			InputStream in = new ByteArrayInputStream(input);
 			Manifest manifest = new Manifest(in);
@@ -91,9 +92,9 @@ public class ManifestArea extends SyntaxArea {
 				if (mainClass == null)
 					return;
 				// Hacky manifest lime length limiting stuff
-				int lineLength = make72Safe("Main-Class: " + mainClass);
-				int start = getText().indexOf("Main-Class: ") + "Main-Class: ".length();
-				int end = start + lineLength - "Main-Class: ".length();
+				int lineLength = make72Safe("main-class: " + mainClass);
+				int start = manifestLower.indexOf("main-class: ") + "main-class: ".length();
+				int end = start + lineLength - "main-class: ".length();
 				// Some line wrapping cases lead the main class start/end positions to be off by one.
 				if (getText().charAt(start) == ' ') {
 					start++;

@@ -55,6 +55,6 @@ public class FieldInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
-		return String.format("%s %s.%s %s", getOpcode(), getOwner(), getName(), getDesc());
+		return getOpcode() + " " + getOwner() + '.' + getName() + ' ' + getDesc();
 	}
 }

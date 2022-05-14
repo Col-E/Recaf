@@ -1,7 +1,8 @@
 package dev.xdark.recaf.plugin;
 
+import me.coley.recaf.io.ByteSource;
+
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -16,13 +17,12 @@ public final class SimplePluginManager implements PluginManager {
 	private final Map<? super Plugin, PluginContainer<?>> instanceMap = new IdentityHashMap<>();
 
 	@Override
-	public PluginLoader getLoader(InputStream in) throws IOException {
+	public PluginLoader getLoader(ByteSource source) throws IOException {
 		List<PluginLoader> loaders = this.loaders;
 		for (PluginLoader loader : loaders) {
-			if (loader.isSupported(in)) {
+			if (loader.isSupported(source)) {
 				return loader;
 			}
-			in.reset();
 		}
 		return null;
 	}
@@ -54,10 +54,10 @@ public final class SimplePluginManager implements PluginManager {
 	}
 
 	@Override
-	public <T extends Plugin> PluginContainer<T> loadPlugin(InputStream in) throws PluginLoadException {
+	public <T extends Plugin> PluginContainer<T> loadPlugin(ByteSource source) throws PluginLoadException {
 		for (PluginLoader loader : loaders) {
 			try {
-				PluginContainer<T> container = loader.load(in);
+				PluginContainer<T> container = loader.load(source);
 				String name = container.getInformation().getName();
 				if (nameMap.putIfAbsent(name.toLowerCase(Locale.ROOT), container) != null) {
 					// Plugin already exists, we do not allow
@@ -70,12 +70,8 @@ public final class SimplePluginManager implements PluginManager {
 				}
 				instanceMap.put(container.getPlugin(), container);
 				return container;
-			} catch(IOException | UnsupportedSourceException e) {
-				try {
-					in.reset();
-				} catch(IOException ex) {
-					throw new PluginLoadException("Could not reset input stream", ex);
-				}
+			} catch(IOException | UnsupportedSourceException ex) {
+				throw new PluginLoadException("Could not load plugin due to an error", ex);
 			}
 		}
 		throw new PluginLoadException("Plugin manager was unable to locate suitable loader for the source.");

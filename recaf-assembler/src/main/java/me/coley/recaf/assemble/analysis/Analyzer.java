@@ -212,7 +212,7 @@ public class Analyzer {
 				// We will enforce exception type here,
 				// because there are some obfuscators
 				// that make jumps into handler blocks
-				while(!stack.isEmpty())
+				while (!stack.isEmpty())
 					frame.pop();
 				frame.push(new Value.ObjectValue(Type.getObjectType(type)));
 			}
@@ -1092,13 +1092,23 @@ public class Analyzer {
 	private static void binaryOp(Frame frame, Type type, BiFunction<Number, Number, Number> function) {
 		Value value1 = frame.pop();
 		Value value2 = frame.pop();
-		evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
+		if (value1 instanceof Value.NumericValue && value2 instanceof Value.NumericValue)
+			evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
+		else {
+			frame.markWonky();
+			frame.push(new Value.NumericValue(type));
+		}
 	}
 
 	private static void binaryOpWide(boolean rightIsWide, Frame frame, Type type, BiFunction<Number, Number, Number> function) {
 		Value value1 = rightIsWide ? frame.popWide() : frame.pop();
 		Value value2 = frame.popWide();
-		evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
+		if (value1 instanceof Value.NumericValue && value2 instanceof Value.NumericValue)
+			evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
+		else {
+			frame.markWonky();
+			pushValue(frame, type, new Value.NumericValue(type));
+		}
 	}
 
 	private static void binaryOpWide(Frame frame, Type type, BiFunction<Number, Number, Number> function) {
@@ -1119,18 +1129,27 @@ public class Analyzer {
 			result = new Value.NumericValue(type);
 			frame.markWonky();
 		}
-		frame.push(result);
-		if (Types.isWide(type)) frame.push(new Value.WideReservedValue());
+		pushValue(frame, type, result);
 	}
 
 	private static void unaryOp(Frame frame, Type type, Function<Number, Number> function) {
 		Value value = frame.pop();
-		evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
+		if (value instanceof Value.NumericValue)
+			evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
+		else {
+			frame.markWonky();
+			pushValue(frame, type, new Value.NumericValue(type));
+		}
 	}
 
 	private static void unaryOpWide(Frame frame, Type type, Function<Number, Number> function) {
 		Value value = frame.popWide();
-		evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
+		if (value instanceof Value.NumericValue)
+			evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
+		else {
+			frame.markWonky();
+			pushValue(frame, type, new Value.NumericValue(type));
+		}
 	}
 
 	private static void evaluateUnaryOp(Frame frame, Type type, Function<Number, Number> function, Value.NumericValue value) {
@@ -1146,7 +1165,12 @@ public class Analyzer {
 			result = new Value.NumericValue(type);
 			frame.markWonky();
 		}
+		pushValue(frame, type, result);
+	}
+
+	private static void pushValue(Frame frame, Type type, Value result) {
 		frame.push(result);
-		if (Types.isWide(type)) frame.push(new Value.WideReservedValue());
+		if (Types.isWide(type))
+			frame.push(new Value.WideReservedValue());
 	}
 }

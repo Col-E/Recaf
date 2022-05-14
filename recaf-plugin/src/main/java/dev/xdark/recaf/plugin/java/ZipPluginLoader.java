@@ -7,6 +7,7 @@ import dev.xdark.recaf.plugin.PluginLoadException;
 import dev.xdark.recaf.plugin.PluginLoader;
 import dev.xdark.recaf.plugin.UnsupportedSourceException;
 import me.coley.recaf.RecafConstants;
+import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.CancelSignal;
 import me.coley.recaf.util.logging.Logging;
@@ -53,17 +54,16 @@ public final class ZipPluginLoader implements PluginLoader {
 	}
 
 	@Override
-	public <T extends Plugin> PluginContainer<T> load(InputStream in) throws IOException, PluginLoadException, UnsupportedSourceException {
+	public <T extends Plugin> PluginContainer<T> load(ByteSource source) throws IOException, PluginLoadException, UnsupportedSourceException {
 		// Read whole zip archive into memory.
 		Map<String, byte[]> content = new HashMap<>();
-		try(ZipInputStream zis = new ZipInputStream(in)) {
+		try(ZipInputStream zis = new ZipInputStream(source.openStream())) {
 			ZipEntry entry;
 			while((entry = zis.getNextEntry()) != null) {
 				// We don't care about directories.
 				if (entry.isDirectory()) {
 					continue;
 				}
-				// TODO: or do we?
 				byte[] bytes = IOUtils.toByteArray(zis);
 				content.put(entry.getName(), bytes);
 			}
@@ -146,13 +146,9 @@ public final class ZipPluginLoader implements PluginLoader {
 	}
 
 	@Override
-	public boolean isSupported(InputStream in) throws IOException {
-		in.mark(2);
-		byte[] header = new byte[2];
-		if (in.read(header) != 2) {
-			return false;
-		}
-		return ByteHeaderUtil.match(header, ByteHeaderUtil.ZIP);
+	public boolean isSupported(ByteSource source) throws IOException {
+		byte[] header = source.peek(4);
+		return header.length == 4 || ByteHeaderUtil.match(header, ByteHeaderUtil.ZIP);
 	}
 
 	@Override

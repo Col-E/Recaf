@@ -66,6 +66,6 @@ public class IincInstruction extends AbstractInstruction implements Named, Descr
 
 	@Override
 	public String print() {
-		return String.format("%s %s %d", getOpcode(), getVariableIdentifier(), getIncrement());
+		return getOpcode() + " " + getVariableIdentifier() + " " + getIncrement();
 	}
 }

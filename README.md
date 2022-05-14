@@ -8,6 +8,6 @@ Pre-releases and progress is tracked here: [Recaf 3X: Issues & pre-releases](htt
 
 ## Usage
 
-To build, run `gradlew clean shadowJar`, which will generate `recaf-ui\build\libs\recaf-$VERSION$-SNAPSHOT-J8-jar-with-dependencies.jar`.
+To build, run `gradlew clean shadowJar`, which will generate `recaf-ui\build\libs\recaf-$VERSION$-SNAPSHOT-J11-jar-with-dependencies.jar`.
 
-To run from inside an IDE, the main class in the `UI` module is `me.coley.recaf.RecafUI`.
+To run from inside an IDE, the main class in the `UI` module is `me.coley.recaf.Main`.
