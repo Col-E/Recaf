@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -28,7 +29,7 @@ public class Lang {
 	private static final List<String> translationKeys = new ArrayList<>();
 	private static final Logger logger = Logging.get(Lang.class);
 	private static final Map<String, Map<String, String>> translations = new HashMap<>();
-	private static final Map<String, StringBinding> translationBindings = new HashMap<>();
+	private static final Map<String, StringBinding> translationBindings = new ConcurrentHashMap<>();
 	private static Map<String, String> currentTranslationMap;
 	private static final StringProperty currentTranslation = new SimpleStringProperty(DEFAULT_TRANSLATIONS);
 
