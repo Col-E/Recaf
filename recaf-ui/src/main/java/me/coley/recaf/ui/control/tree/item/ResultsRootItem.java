@@ -5,7 +5,7 @@ import javafx.scene.control.TreeItem;
 import me.coley.recaf.code.*;
 import me.coley.recaf.search.Search;
 import me.coley.recaf.search.result.*;
-import me.coley.recaf.ui.util.Events;
+import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
@@ -70,13 +70,13 @@ public class ResultsRootItem extends BaseTreeItem implements ResourceClassListen
 						parent = ownerItem;
 					// Once parent package or the class itself becomes visible,
 					// add all information for methods/instructions
-					Events.dispatchAndRemoveIf(parent.expandedProperty(), parentExpanded -> {
+					NodeEvents.dispatchAndRemoveIf(parent.expandedProperty(), parentExpanded -> {
 						if (parentExpanded) {
 							MethodItem methodItem = getMethod(ownerItem, classLocation.getContainingMethod(), hasInsn);
 							// Result is in a method
 							if (hasInsn) {
 								// Result is on an instruction
-								Events.dispatchAndRemoveIf(ownerItem.expandedProperty(), ownerExpanded -> {
+								NodeEvents.dispatchAndRemoveIf(ownerItem.expandedProperty(), ownerExpanded -> {
 									if (ownerExpanded) {
 										InsnItem insnItem = new InsnItem(classLocation.getInstruction());
 										methodItem.addChild(insnItem, false);
