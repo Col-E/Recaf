@@ -408,6 +408,7 @@ public class AstToMethodTransformer {
 						if (value == null)
 							throw new MethodCompileException(instruction,
 									"No identifier mapping to label instance for '" + name + "'");
+						labels[i] = value;
 					}
 					String dfltName = table.getDefaultIdentifier();
 					LabelNode dflt = labelMap.get(dfltName);
