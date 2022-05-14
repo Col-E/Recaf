@@ -17,6 +17,7 @@ import me.coley.recaf.decompile.DecompileOption;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.ReflectUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.slf4j.Logger;
 
@@ -34,18 +35,38 @@ public class JadxDecompiler extends Decompiler {
 	private static final Logger logger = Logging.get(JadxDecompiler.class);
 	private final JadxArgs args = createDefaultArgs();
 	private final RootNode root = new RootNode(args);
+	private final Object lock = new Object();
+	private volatile boolean initialized;
 
 	/**
 	 * New Jadx decompiler instance.
 	 */
 	public JadxDecompiler() {
 		super("Jadx", Jadx.getVersion());
-		root.initClassPath();
-		root.initPasses();
+		ThreadUtil.run(() -> {
+			root.initClassPath();
+			root.initPasses();
+			synchronized (lock) {
+				initialized = true;
+				lock.notifyAll();
+			}
+		});
 	}
 
 	@Override
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
+		if (!initialized) {
+			synchronized (lock) {
+				while (!initialized) {
+					try {
+						lock.wait();
+					} catch (InterruptedException ignored) {
+						Thread.currentThread().interrupt();
+						return null;
+					}
+				}
+			}
+		}
 		String name = classInfo.getName();
 		// Remove old data
 		clearOldClassList();

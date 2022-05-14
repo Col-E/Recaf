@@ -16,7 +16,10 @@ import me.coley.recaf.ui.pane.WelcomePane;
 import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Main window for Recaf.
@@ -72,8 +75,10 @@ public class MainWindow extends WindowBase {
 		region1Content.setCloseIfEmpty(false);
 
 		// Create tab content
-		DockTab workspaceTab = new DockTab(Lang.getBinding("workspace.title"), WorkspacePane.getInstance());
-		DockTab loggingTab = new DockTab(Lang.getBinding("logging.title"), LoggingTextArea.getInstance());
+		CompletableFuture<DockTab> workspaceFuture = ThreadUtil.run(() -> new DockTab(Lang.getBinding("workspace.title"), WorkspacePane.getInstance()));
+		CompletableFuture<DockTab> loggingFuture = ThreadUtil.run(() -> new DockTab(Lang.getBinding("logging.title"), LoggingTextArea.getInstance()));
+		DockTab workspaceTab = workspaceFuture.join();
+		DockTab loggingTab = loggingFuture.join();
 		workspaceTab.setClosable(false);
 		loggingTab.setClosable(false);
 

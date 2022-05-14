@@ -74,7 +74,7 @@ public class InfoPane extends GridPane {
 		// Recaf
 		addRow(r++, new SubLabeled(Lang.getBinding("help.recaf"), Lang.getBinding("help.recaf.sub")));
 		addRow(r++, new Label("Version"), new Label(BuildConfig.VERSION));
-		addRow(r++, new Label("Settings directory"), new Label(baseDir.toFile().getAbsolutePath()));
+		addRow(r++, new Label("Settings directory"), new Label(baseDir.toAbsolutePath().toString()));
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 		// Copy

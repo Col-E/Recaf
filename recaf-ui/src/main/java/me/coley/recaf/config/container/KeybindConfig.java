@@ -114,7 +114,7 @@ public class KeybindConfig implements ConfigContainer {
 	 * Track if the user is updating a {@link Binding}.
 	 * Used to prevent overlapping binds from being fired during the bind process.
 	 */
-	private boolean isEditingBind;
+	private transient boolean isEditingBind;
 
 	/**
 	 * @param isEditingBind

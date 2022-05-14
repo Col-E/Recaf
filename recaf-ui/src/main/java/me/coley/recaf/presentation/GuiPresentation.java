@@ -32,7 +32,6 @@ public class GuiPresentation implements Presentation {
 		AccessPatcher.patch();
 		// Setup JavaFX
 		JFXInjection.ensureJavafxSupport();
-		JFXUtils.initializePlatform();
 		// Load translations
 		Lang.initialize();
 		// Setup config
@@ -51,13 +50,13 @@ public class GuiPresentation implements Presentation {
 		CompileDependencyUpdater.install(controller);
 		DecompileInterception.install(controller);
 		// Open UI
-		Platform.runLater(() -> {
+		JFXUtils.initializePlatform(() -> {
 			try {
 				RecafUI.initialize();
 				RecafUI.getWindows().getMainWindow().show();
 			} catch (Throwable ex) {
 				logger.error("Recaf crashed due to an unhandled error." +
-						"Please open a bug report: " + RecafConstants.URL_BUG_REPORT, ex);
+					"Please open a bug report: " + RecafConstants.URL_BUG_REPORT, ex);
 				Platform.exit();
 				System.exit(-1);
 			}

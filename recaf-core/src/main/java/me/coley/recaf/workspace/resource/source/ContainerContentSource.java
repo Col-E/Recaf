@@ -6,7 +6,9 @@ import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.io.ByteSourceConsumer;
 import me.coley.recaf.io.ByteSourceElement;
 import me.coley.recaf.io.ByteSources;
+import me.coley.recaf.util.Streams;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -31,14 +33,15 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 	@Override
 	protected void onRead(ContentCollection collection) throws IOException {
 		logger.info("Reading from file: {}", getPath());
-		stream().filter(x -> {
+		Stream<ByteSourceElement<E>> stream = stream().filter(x -> {
 			String name = getPathName(x.getElement());
 			// Skip if name contains zero-length directories
 			if (name.contains("//"))
 				return false;
 			// Skip path traversal attempts
 			return !name.contains("../");
-		}).forEach(ByteSources.consume((entry, content) -> {
+		});
+		Streams.forEachOn(stream, ByteSources.consume((entry, content) -> {
 			// Handle content
 			String name = getPathName(entry);
 			byte[] bytes = content.readAll();
@@ -82,7 +85,7 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 					collection.addFile(file);
 				}
 			}
-		}));
+		}), ThreadUtil::run);
 	}
 
 	/**

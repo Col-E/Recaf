@@ -10,11 +10,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Configs;
@@ -30,6 +27,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -82,6 +80,8 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 				return o1.compareTo(o2);
 		});
 		for (Field field : container.getClass().getDeclaredFields()) {
+			if (Modifier.isTransient(field.getModifiers()))
+				continue;
 			field.setAccessible(true);
 			Group group = field.getAnnotation(Group.class);
 			if (group == null) {
