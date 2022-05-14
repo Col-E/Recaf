@@ -1,5 +1,8 @@
 package me.coley.recaf.io;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 /**
@@ -43,5 +46,10 @@ public final class ByteArraySource implements ByteSource {
 	public byte[] peek(int count) {
 		count = Math.min(count, len);
 		return Arrays.copyOfRange(bytes, off, count);
+	}
+
+	@Override
+	public InputStream openStream() throws IOException {
+		return new ByteArrayInputStream(bytes, off, len);
 	}
 }

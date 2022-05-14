@@ -40,4 +40,9 @@ final class PathByteSource implements ByteSource {
 			return count == 0 ? buf : Arrays.copyOf(buf, offset);
 		}
 	}
+
+	@Override
+	public InputStream openStream() throws IOException {
+		return Files.newInputStream(path);
+	}
 }

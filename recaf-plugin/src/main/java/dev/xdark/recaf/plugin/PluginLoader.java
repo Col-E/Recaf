@@ -1,5 +1,7 @@
 package dev.xdark.recaf.plugin;
 
+import me.coley.recaf.io.ByteSource;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -13,12 +15,12 @@ import java.io.InputStream;
 public interface PluginLoader {
 
 	/**
-	 * Loads a plugin from {@link InputStream}.
+	 * Loads a plugin from {@link ByteSource}.
 	 *
 	 * @param in
-	 *        {@link InputStream} to load plugin from.
+	 *        {@link ByteSource} to load plugin from.
 	 *
-	 * @return loaded plugin.
+	 * @return Loaded plugin.
 	 *
 	 * @throws IOException
 	 * 		If any I/O error occurs.
@@ -27,22 +29,9 @@ public interface PluginLoader {
 	 * @throws UnsupportedSourceException
 	 * 		If loader does not support this type of source.
 	 */
-	<T extends Plugin> PluginContainer<T> load(InputStream in) throws IOException, PluginLoadException, UnsupportedSourceException;
+	<T extends Plugin> PluginContainer<T> load(ByteSource in) throws IOException, PluginLoadException, UnsupportedSourceException;
 
-	/**
-	 * Checks whether the source is supported or not.
-	 * Be aware that stream must be capable of {@link InputStream#reset()} and {@link InputStream#mark(int)}.
-	 *
-	 * @param in
-	 * 		source to check from
-	 *
-	 * @return {@code true} if the source is supported.
-	 *
-	 * @throws IOException
-	 * 		If any I/O error occurs.
-	 * @see InputStream#markSupported()
-	 */
-	boolean isSupported(InputStream in) throws IOException;
+	boolean isSupported(ByteSource source) throws IOException;
 
 	/**
 	 * Enables a plugin.
