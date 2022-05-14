@@ -74,7 +74,7 @@ public class LookupSwitchInstruction extends AbstractInstruction implements Flow
 		String mapping = getEntries().stream()
 				.map(Entry::print)
 				.collect(Collectors.joining(", "));
-		return String.format("%s mapping(%s) default(%s)", getOpcode(), mapping, getDefaultIdentifier());
+		return getOpcode() + " mapping(" + mapping + ") default(" + getDefaultIdentifier() + ')';
 	}
 
 	@Override

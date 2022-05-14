@@ -13,7 +13,8 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -105,14 +106,26 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	}
 
 	/**
-	 * Add an unfiltered child to this item.
+	 * Add an unfiltered sorted child to this item.
 	 *
 	 * @param item
 	 * 		Child item to add.
 	 */
-	public void addSourceChild(TreeItem<T> item) {
+	public void addSortedChild(TreeItem<T> item) {
 		synchronized (sourceChildren) {
-			int index = Arrays.binarySearch(getChildren().toArray(), item);
+			sourceChildren.add(item);
+		}
+	}
+
+	/**
+	 * Add an unfiltered unsorted child to this item.
+	 *
+	 * @param item
+	 * 		Child item to add.
+	 */
+	public void addAndSortChild(TreeItem<T> item) {
+		synchronized (sourceChildren) {
+			int index = Collections.binarySearch((List) getChildren(), item);
 			if (index < 0)
 				index = -(index + 1);
 			sourceChildren.add(index, item);

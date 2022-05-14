@@ -26,6 +26,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private final List<FieldInfo> fields;
 	private final List<MethodInfo> methods;
 	private ClassReader classReader;
+	private int hashCode;
 
 	private ClassInfo(String name, String superName, List<String> interfaces, int version, int access,
 					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value) {
@@ -96,13 +97,19 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hashCode(name);
-		result = 31 * result + Objects.hashCode(superName);
-		result = 31 * result + Objects.hashCode(interfaces);
-		result = 31 * result + access;
-		result = 31 * result + Objects.hashCode(fields);
-		result = 31 * result + Objects.hashCode(methods);
-		return result;
+		int hashCode = this.hashCode;
+		if (hashCode == 0) {
+			hashCode = Objects.hashCode(name);
+			hashCode = 31 * hashCode + Objects.hashCode(superName);
+			hashCode = 31 * hashCode + Objects.hashCode(interfaces);
+			hashCode = 31 * hashCode + access;
+			hashCode = 31 * hashCode + Objects.hashCode(fields);
+			hashCode = 31 * hashCode + Objects.hashCode(methods);
+			if (hashCode == 0)
+				hashCode = 1;
+			this.hashCode = hashCode;
+		}
+		return hashCode;
 	}
 
 	/**
