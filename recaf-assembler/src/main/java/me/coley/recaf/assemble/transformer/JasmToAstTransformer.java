@@ -5,6 +5,7 @@ import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
+import me.coley.recaf.assemble.ast.meta.Signature;
 import me.coley.recaf.util.EscapeUtil;
 import me.darknet.assembler.compiler.FieldDescriptor;
 import me.darknet.assembler.compiler.MethodDescriptor;
@@ -17,14 +18,12 @@ import me.darknet.assembler.transform.MethodVisitor;
 import me.darknet.assembler.transform.Transformer;
 import me.darknet.assembler.transform.Visitor;
 import me.darknet.assembler.util.Handles;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * JASM visitor to generate AST instances.
@@ -36,7 +35,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
     Unit unit;
     AbstractMemberDefinition activeMember;
     Code code = new Code();
-    List<ThrownException> caughtExceptions = new ArrayList<>();
+    Attributes currentAttributes = new Attributes();
 
     public JasmToAstTransformer(Collection<Group> groups) {
         this.groups = groups;
@@ -227,10 +226,18 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
         FieldDefinition field = new FieldDefinition(fromAccessMods(accessMods), name.content(), descriptor.content());
 
+        if(currentAttributes.getSignature() != null) {
+            field.setSignature(currentAttributes.getSignature());
+        }
+        for(Annotation annotation : currentAttributes.getAnnotations()) {
+            field.addAnnotation(annotation);
+        }
+
         activeMember = field;
         if(constantValue != null)
             field.setConstVal(new ConstVal(convert(constantValue), from(constantValue)));
 
+        currentAttributes.clear();
     }
 
     @Override
@@ -247,11 +254,17 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
                 parameters,
                 md.returnType,
                 this.code);
-        for(ThrownException thrown : this.caughtExceptions) {
+        for(ThrownException thrown : currentAttributes.getThrownExceptions()) {
             method.addThrownException(thrown);
         }
+        if(currentAttributes.getSignature() != null) {
+            method.setSignature(currentAttributes.getSignature());
+        }
+        for(Annotation annotation : currentAttributes.getAnnotations()) {
+            method.addAnnotation(annotation);
+        }
+        currentAttributes.clear();
         activeMember = method;
-        caughtExceptions.clear();
         return this;
     }
 
@@ -263,19 +276,81 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
         return modifiers;
     }
 
+    public void paramValue(String name, Group value, Map<String, Annotation.AnnoArg> map) throws AssemblerException{
+
+        if(value.type == Group.GroupType.ARGS){
+            ArgsGroup args = (ArgsGroup) value;
+            for (Group group : args.getBody().children) {
+                paramValue(name, group, map);
+            }
+        } else if(value.type == Group.GroupType.ENUM) {
+            EnumGroup enumGroup = (EnumGroup) value;
+            map.put(name,
+                        new Annotation.AnnoEnum(
+                            enumGroup.getDescriptor().content(),
+                            enumGroup.getEnumValue().content()
+                        ));
+        } else if(value.type == Group.GroupType.ANNOTATION) {
+            AnnotationGroup annotationGroup = (AnnotationGroup) value;
+            Map<String, Annotation.AnnoArg> map2 = new HashMap<>();
+            for(AnnotationParamGroup param : annotationGroup.getParams()) {
+                annotationParam(param, map2);
+            }
+            map.put(name,
+                    new Annotation.AnnoArg(
+                            ArgType.ANNO,
+                            new Annotation(
+                                    !annotationGroup.isInvisible(),
+                                    annotationGroup.getClassGroup().content(),
+                                    map2
+                            )));
+        } else {
+            map.put(name,
+                    new Annotation.AnnoArg(
+                            from(value),
+                            convert(value)
+                    ));
+        }
+
+    }
+
+    public void annotationParam(AnnotationParamGroup annotationParam, Map<String, Annotation.AnnoArg> map) throws AssemblerException {
+        if(annotationParam.value.type == Group.GroupType.ARGS) {
+            ArgsGroup args = (ArgsGroup) annotationParam.value;
+            Map<String, Annotation.AnnoArg> map2 = new HashMap<>();
+            for (Group group : args.getBody().children) {
+                paramValue(annotationParam.name.content(), group, map2);
+            }
+            map.put(annotationParam.name.content(),
+                    new Annotation.AnnoArg(
+                            ArgType.ANNO_LIST,
+                            new ArrayList<>(map2.values())
+                    ));
+        }else {
+            paramValue(annotationParam.name.content(), annotationParam.value, map);
+        }
+    }
+
     @Override
     public void visitAnnotation(AnnotationGroup annotation) throws AssemblerException {
 
+        Map<String, Annotation.AnnoArg> args = new HashMap<>();
+        for (AnnotationParamGroup param : annotation.getParams()) {
+            annotationParam(param, args);
+        }
+
+        Annotation anno = new Annotation(!annotation.isInvisible(), annotation.getClassGroup().content(), args);
+        currentAttributes.addAnnotation(anno);
     }
 
     @Override
     public void visitSignature(SignatureGroup signature) throws AssemblerException {
-
+        currentAttributes.setSignature(new Signature(signature.getDescriptor().content()));
     }
 
     @Override
     public void visitThrows(ThrowsGroup throwsGroup) throws AssemblerException {
-        caughtExceptions.add(new ThrownException(throwsGroup.getClassName().content()));
+        currentAttributes.addThrownException(new ThrownException(throwsGroup.getClassName().content()));
     }
 
     @Override

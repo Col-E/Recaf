@@ -97,6 +97,15 @@ public class AnnotationHelper {
 			for (int i = 0; i < annotation.values.size(); i += 2) {
 				String name = String.valueOf(annotation.values.get(i));
 				Object value = annotation.values.get(i + 1);
+				if(value instanceof AnnotationNode) {
+					Map<String, Annotation.AnnoArg> subArgs = mapArgs((AnnotationNode) value);
+					args.put(name,
+							new Annotation.AnnoArg(
+									ArgType.ANNO,
+									new Annotation(true, Type.getType(((AnnotationNode) value).desc).getInternalName(), subArgs
+									)));
+					continue;
+				}
 				if (value instanceof List) {
 					value = ((List<Object>) value).stream()
 							.map(v -> BaseArg.of(Annotation.AnnoArg::new, mapAnnotationArgValue(v)))

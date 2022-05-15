@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.ast.arch.Annotation;
 import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AnnotationNode;
 
 import java.util.List;
 import java.util.function.BiFunction;
@@ -57,7 +58,7 @@ public abstract class BaseArg extends BaseElement implements Printable {
 			return argMapper.apply(ArgType.LONG, value);
 		else if (value instanceof Type)
 			return argMapper.apply(ArgType.TYPE, value);
-		else if (value instanceof Annotation)
+		else if (value instanceof Annotation || value instanceof AnnotationNode)
 			return argMapper.apply(ArgType.ANNO, value);
 		else if (value instanceof List)
 			return argMapper.apply(ArgType.ANNO_LIST, value);
@@ -112,9 +113,9 @@ public abstract class BaseArg extends BaseElement implements Printable {
 				return anno.print();
 			case ANNO_LIST:
 				List<?> list = (List<?>) value;
-				return "args" + list.stream()
+				return "args " + list.stream()
 						.map(String::valueOf)
-						.collect(Collectors.joining(" ")) + "end";
+						.collect(Collectors.joining(" ")) + " end";
 			case ANNO_ENUM:
 				return (String) value;
 			case BOOLEAN:
