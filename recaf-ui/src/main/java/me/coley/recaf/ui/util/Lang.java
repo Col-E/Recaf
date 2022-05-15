@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.util;
 
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import me.coley.recaf.util.IOUtil;
@@ -14,6 +13,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -28,9 +28,9 @@ public class Lang {
 	private static final List<String> translationKeys = new ArrayList<>();
 	private static final Logger logger = Logging.get(Lang.class);
 	private static final Map<String, Map<String, String>> translations = new HashMap<>();
-	private static final Map<String, StringBinding> translationBindings = new HashMap<>();
+	private static final Map<String, StringBinding> translationBindings = new ConcurrentHashMap<>();
 	private static Map<String, String> currentTranslationMap;
-	private static final StringProperty currentTranslation = new SimpleStringProperty(DEFAULT_TRANSLATIONS);
+	private static final StringProperty currentTranslation = new SynchronizedSimpleStringProperty(DEFAULT_TRANSLATIONS);
 
 	/**
 	 * @return Provided translations, also keys for {@link #getTranslations()}.
@@ -103,13 +103,13 @@ public class Lang {
 	public static synchronized StringBinding getBinding(String translationKey) {
 		return translationBindings.computeIfAbsent(translationKey, k -> {
 			StringProperty currentTranslation = Lang.currentTranslation;
-			return new StringBinding() {
+			return new SynchronizedStringBinding() {
 				{
 					bind(currentTranslation);
 				}
 
 				@Override
-				protected String computeValue() {
+				protected synchronized String computeValue() {
 					String translated = Lang.get(currentTranslation.get(), translationKey);
 					if (translated != null)
 						translated = translated.replace("\\n", "\n");
@@ -128,13 +128,13 @@ public class Lang {
 	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
 	public static StringBinding formatBy(String format, ObservableValue<?>... args) {
-		return new StringBinding() {
+		return new SynchronizedStringBinding() {
 			{
 				bind(args);
 			}
 
 			@Override
-			protected String computeValue() {
+			protected synchronized String computeValue() {
 				return String.format(format, Arrays.stream(args)
 						.map(ObservableValue::getValue).toArray());
 			}
@@ -151,14 +151,14 @@ public class Lang {
 	 */
 	public static StringBinding format(String translationKey, ObservableValue<?>... args) {
 		StringBinding root = getBinding(translationKey);
-		return new StringBinding() {
+		return new SynchronizedStringBinding() {
 			{
 				bind(root);
 				bind(args);
 			}
 
 			@Override
-			protected String computeValue() {
+			protected synchronized String computeValue() {
 				return String.format(root.getValue(), Arrays.stream(args)
 						.map(ObservableValue::getValue).toArray());
 			}
@@ -175,13 +175,13 @@ public class Lang {
 	 */
 	public static StringBinding format(String translationKey, Object... args) {
 		StringBinding root = getBinding(translationKey);
-		return new StringBinding() {
+		return new SynchronizedStringBinding() {
 			{
 				bind(root);
 			}
 
 			@Override
-			protected String computeValue() {
+			protected synchronized String computeValue() {
 				return String.format(root.getValue(), args);
 			}
 		};
@@ -196,13 +196,13 @@ public class Lang {
 	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
 	public static StringBinding concat(ObservableValue<String> translation, String... args) {
-		return new StringBinding() {
+		return new SynchronizedStringBinding() {
 			{
 				bind(translation);
 			}
 
 			@Override
-			protected String computeValue() {
+			protected synchronized String computeValue() {
 				return translation.getValue() + String.join(" ", args);
 			}
 		};
@@ -218,13 +218,13 @@ public class Lang {
 	 */
 	public static StringBinding concat(String translationKey, String... args) {
 		StringBinding root = getBinding(translationKey);
-		return new StringBinding() {
+		return new SynchronizedStringBinding() {
 			{
 				bind(root);
 			}
 
 			@Override
-			protected String computeValue() {
+			protected synchronized String computeValue() {
 				return root.getValue() + String.join(" ", args);
 			}
 		};

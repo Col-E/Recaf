@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
  * @author Matt Coley
  */
 public class StringUtil {
-	private static final char NULL_TERMINATOR = '\0';
 
 	/**
 	 * @param text
@@ -142,7 +141,7 @@ public class StringUtil {
 	 * @return Repeated text.
 	 */
 	public static String repeat(String text, int times) {
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder(text.length() * times);
 		for (int i = 0; i < times; i++)
 			sb.append(text);
 		return sb.toString();
@@ -214,8 +213,13 @@ public class StringUtil {
 			.onMalformedInput(CodingErrorAction.REPLACE)
 			.onUnmappableCharacter(CodingErrorAction.REPLACE);
 		ByteBuffer buffer = ByteBuffer.wrap(data);
-		int maxEntropy = (int) (data.length * 0.01D);
-		int bufferSize = Math.min(4096, maxEntropy);
+		int length = data.length;
+		int entropy = 0;
+		int bufferSize = (int) (length * 0.01D);
+		if (bufferSize > 4096)
+			bufferSize = 4096;
+		else if (bufferSize == 0)
+			bufferSize = length; // Small file, set to length
 		char[] charArray = new char[bufferSize];
 		CharBuffer charBuf = CharBuffer.wrap(charArray);
 		while (true) {
@@ -225,15 +229,15 @@ public class StringUtil {
 			CoderResult result = decoder.decode(buffer, charBuf, true);
 			if (result.isUnderflow())
 				decoder.flush(charBuf);
-			maxEntropy = calculateNonText(charArray, maxEntropy, charBuf.position());
-			if (maxEntropy <= 0) {
+			entropy = calculateNonText(charArray, entropy, length, charBuf.position());
+			if (entropy == -1) {
 				return false;
 			}
 			charBuf.rewind();
 		}
 	}
 
-	private static int calculateNonText(char[] charBuf, int allowedEntropy, int length) {
+	private static int calculateNonText(char[] charBuf, int entropy, int max, int length) {
 		int index = 0;
 		while (length-- != 0) {
 			char c = charBuf[index++];
@@ -260,21 +264,20 @@ public class StringUtil {
 					case 13:
 						continue;
 					default:
-						allowedEntropy--;
+						entropy++;
 				}
 			} else if (codePoint >= 57344 && codePoint <= 63743) {
-					allowedEntropy--;
+					entropy++;
 			} else if (codePoint >= 65520 && codePoint <= 65535) {
-				allowedEntropy--;
+				entropy++;
 			} else if (codePoint >= 983040 && codePoint <= 1048573) {
-				allowedEntropy--;
+				entropy++;
 			} else if (codePoint >= 1048576 && codePoint <= 1114109) {
-				allowedEntropy--;
-			}
-			if (allowedEntropy <= 0) {
-				return 0;
+				entropy++;
 			}
 		}
-		return allowedEntropy;
+		if (entropy / (double) max > 0.01D)
+			return -1;
+		return entropy;
 	}
 }

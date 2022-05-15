@@ -4,6 +4,8 @@ import javafx.application.Platform;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * JavaFX utilities.
  *
@@ -13,17 +15,28 @@ import org.slf4j.Logger;
 public class JFXUtils {
 	private static final String BASE_PLATFORM = "javafx.application.Platform";
 	private static final Logger logger = Logging.get(JFXUtils.class);
-	private static boolean initialized;
+	private static final AtomicBoolean initialized = new AtomicBoolean();
 
 	/**
 	 * Initializes JavaFX platform.
+	 *
+	 * @param init
+	 *      Startup runnable.
+	 *
+	 * @throws IllegalStateException
+	 *      If platform is already initialized.
 	 */
-	public static void initializePlatform() {
-		// Skip if possible
-		if (initialized) {
-			return;
+	public static void initializePlatform(Runnable init) {
+		if (!initialized.compareAndSet(false, true)) {
+			throw new IllegalStateException("Already initialized!");
 		}
-		Platform.startup(JFXUtils::onInitializePlatform);
+		Platform.startup(() -> {
+			try {
+				init.run();
+			} finally {
+				onInitializePlatform();
+			}
+		});
 	}
 
 	/**
@@ -38,6 +51,5 @@ public class JFXUtils {
 	 */
 	private static void onInitializePlatform() {
 		logger.debug("JavaFX platform initialized from: {}", getPlatformClassName());
-		initialized = true;
 	}
 }

@@ -6,7 +6,9 @@ import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.io.ByteSourceConsumer;
 import me.coley.recaf.io.ByteSourceElement;
 import me.coley.recaf.io.ByteSources;
+import me.coley.recaf.util.Streams;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -31,58 +33,64 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 	@Override
 	protected void onRead(ContentCollection collection) throws IOException {
 		logger.info("Reading from file: {}", getPath());
-		stream().filter(x -> {
+		Stream<ByteSourceElement<E>> stream = stream().filter(x -> {
 			String name = getPathName(x.getElement());
 			// Skip if name contains zero-length directories
 			if (name.contains("//"))
 				return false;
 			// Skip path traversal attempts
 			return !name.contains("../");
-		}).forEach(ByteSources.consume((entry, content) -> {
-			// Handle content
-			String name = getPathName(entry);
-			byte[] bytes = content.readAll();
-			if (isClass(entry, bytes)) {
-				// Check if class can be parsed by ASM
-				try {
-					if (isParsableClass(bytes)) {
-						// Class can be parsed, record it as a class
-						ClassInfo clazz = ClassInfo.read(bytes);
-						int index = name.lastIndexOf(".class");
-						String nameFromPath = index == -1 ? name : name.substring(0, index);
-						String nameFromClass = clazz.getName();
-						// Check if the name in the container does not match the actual class name.
-						if (!nameFromClass.equals(nameFromPath)) {
-							// Some obfuscators add impossible to reference classes, with names ending in package
-							// separator characters (example: 'com/foo/).
-							// These are typically used to confuse editors and hold no useful data.
-							collection.addMismatchedNameClass(nameFromPath, clazz);
-							return;
+		});
+		//noinspection TryFinallyCanBeTryWithResources
+		try {
+			Streams.forEachOn(stream, ByteSources.consume((entry, content) -> {
+				// Handle content
+				String name = getPathName(entry);
+				byte[] bytes = content.readAll();
+				if (isClass(entry, bytes)) {
+					// Check if class can be parsed by ASM
+					try {
+						if (isParsableClass(bytes)) {
+							// Class can be parsed, record it as a class
+							ClassInfo clazz = ClassInfo.read(bytes);
+							int index = name.lastIndexOf(".class");
+							String nameFromPath = index == -1 ? name : name.substring(0, index);
+							String nameFromClass = clazz.getName();
+							// Check if the name in the container does not match the actual class name.
+							if (!nameFromClass.equals(nameFromPath)) {
+								// Some obfuscators add impossible to reference classes, with names ending in package
+								// separator characters (example: 'com/foo/).
+								// These are typically used to confuse editors and hold no useful data.
+								collection.addMismatchedNameClass(nameFromPath, clazz);
+								return;
+							}
+							// Class is normal enough.
+							collection.addClass(clazz);
+						} else {
+							// Class cannot be parsed, record it as a file
+							String className = name;
+							int classExtIndex = className.lastIndexOf(".class");
+							if (classExtIndex != -1)
+								className = className.substring(0, classExtIndex);
+							collection.addInvalidClass(className, bytes);
 						}
-						// Class is normal enough.
-						collection.addClass(clazz);
-					} else {
-						// Class cannot be parsed, record it as a file
-						String className = name;
-						int classExtIndex = className.lastIndexOf(".class");
-						if (classExtIndex != -1)
-							className = className.substring(0, classExtIndex);
-						collection.addInvalidClass(className, bytes);
+					} catch (Exception ex) {
+						logger.warn("Uncaught exception parsing class '{}' from input", name, ex);
 					}
-				} catch (Exception ex) {
-					logger.warn("Uncaught exception parsing class '{}' from input", name, ex);
+				} else if (!name.endsWith("/")) {
+					// We can skip fake directory entries of non-classes.
+					// Now we just read for file contents.
+					if (name.endsWith(".class")) {
+						collection.addNonClassClass(name, bytes);
+					} else {
+						FileInfo file = new FileInfo(name, bytes);
+						collection.addFile(file);
+					}
 				}
-			} else if (!name.endsWith("/")) {
-				// We can skip fake directory entries of non-classes.
-				// Now we just read for file contents.
-				if (name.endsWith(".class")) {
-					collection.addNonClassClass(name, bytes);
-				} else {
-					FileInfo file = new FileInfo(name, bytes);
-					collection.addFile(file);
-				}
-			}
-		}));
+			}), ThreadUtil::run);
+		} finally {
+			stream.close();
+		}
 	}
 
 	/**

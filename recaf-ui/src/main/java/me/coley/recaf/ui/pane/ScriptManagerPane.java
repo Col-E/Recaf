@@ -23,6 +23,7 @@ import me.coley.recaf.ui.window.MainMenu;
 import me.coley.recaf.util.DesktopUtil;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadPoolFactory;
 import org.slf4j.Logger;
 
@@ -56,15 +57,18 @@ public class ScriptManagerPane extends BorderPane {
 		THREAD_POOL.submit(() -> {
 			try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
 				Directories.getScriptsDirectory().register(watchService, ENTRY_MODIFY, ENTRY_DELETE);
-				while (!Thread.interrupted()) {
+				while (true) {
 					WatchKey wk = watchService.take();
-					if (!wk.pollEvents().isEmpty())
-						Platform.runLater(instance::populateScripts);
-					if (!wk.reset())
-						break;
+					try {
+						if (!wk.pollEvents().isEmpty())
+							FxThreadUtil.run(instance::populateScripts);
+					} finally {
+						wk.reset();
+					}
 				}
-			} catch (IOException | InterruptedException ex) {
+			} catch (IOException ex) {
 				logger.error("Filesystem watch error", ex);
+			} catch (InterruptedException ignored) {
 			}
 		});
 	}
