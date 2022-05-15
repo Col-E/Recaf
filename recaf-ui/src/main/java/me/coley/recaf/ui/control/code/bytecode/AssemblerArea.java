@@ -24,13 +24,9 @@ import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadUtil;
-import me.coley.recaf.util.visitor.FieldReplacingVisitor;
-import me.coley.recaf.util.visitor.MethodReplacingVisitor;
-import me.coley.recaf.util.visitor.SingleMemberVisitor;
-import me.coley.recaf.util.visitor.WorkspaceClassWriter;
+import me.coley.recaf.util.visitor.*;
 import me.coley.recaf.workspace.resource.Resource;
 import me.darknet.assembler.parser.AssemblerException;
-import org.antlr.v4.runtime.*;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -59,8 +55,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 	private static final Logger logger = Logging.get(AssemblerArea.class);
 	private static final int INITIAL_DELAY_MS = 500;
 	private static final int AST_LOOP_MS = 100;
-	private static final ANTLRErrorStrategy ERR_RECOVER = new DefaultErrorStrategy();
-	private static final ANTLRErrorStrategy ERR_JUST_FAIL = new ParserBailStrategy();
 	private final ProblemTracking problemTracking;
 	private final AssemblerPipeline pipeline;
 	private ClassInfo classInfo;
@@ -247,8 +241,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		// Generate
 		if (targetMember.isMethod())
 			return generateMethod(true);
-		else
+		else if(targetMember.isField())
 			return generateField(true);
+		else
+			return generateClass(true);
 	}
 
 	/**
@@ -293,6 +289,20 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		return SaveResult.SUCCESS;
 	}
 
+	private SaveResult generateClass(boolean apply) {
+
+		if(pipeline.isUnitOutdated() && !pipeline.generateClass())
+			return SaveResult.FAILURE;
+
+		ClassNode classAssembled = pipeline.getLastClass();
+
+		if(problemTracking.hasProblems(ProblemLevel.ERROR))
+			return SaveResult.FAILURE;
+
+		if(apply) updateClass(classAssembled);
+		return SaveResult.SUCCESS;
+	}
+
 	/**
 	 * Called to update the {@link #getTargetMember() target field}.
 	 *
@@ -311,6 +321,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 	 */
 	private void updateClass(MethodNode updatedMethod) {
 		updateClass(cw -> new MethodReplacingVisitor(cw, targetMember, updatedMethod));
+	}
+
+	private void updateClass(ClassNode updatedClass) {
+		updateClass(cw -> new ClassReplacingVisitor(cw, targetMember, updatedClass));
 	}
 
 	/**

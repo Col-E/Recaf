@@ -1,12 +1,8 @@
 package me.coley.recaf.assemble.pipeline;
 
 import me.coley.recaf.assemble.AstException;
-import me.coley.recaf.assemble.ParserException;
-import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.darknet.assembler.parser.AssemblerException;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
  * Listener for responding to various failures at different steps in AST parsing.
@@ -15,20 +11,10 @@ import org.antlr.v4.runtime.tree.ParseTree;
  * @see AssemblerPipeline
  */
 public interface ParserFailureListener {
-	/**
-	 * Called when {@link BytecodeParser.UnitContext#unit()} fails.
-	 *
-	 * @param ex
-	 * 		Exception wrapper detailing the failure.
-	 */
+
 	void onParseFail(AssemblerException ex);
 
-	/**
-	 * Called when {@link AntlrToAstTransformer#visit(ParseTree)} fails.
-	 *
-	 * @param ex
-	 * 		Exception wrapper detailing the failure.
-	 */
+
 	void onParserTransformFail(AssemblerException ex);
 
 	/**
