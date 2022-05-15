@@ -67,7 +67,7 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		if (analysis == null)
 			return;
 		Unit unit = pipeline.getUnit();
-		if(unit == null)
+		if(unit == null || unit.isField())
 			return;
 		Code code = unit.getMethod().getCode();
 		Element element = code.getChildOnLine(paragraphIndex + 1);

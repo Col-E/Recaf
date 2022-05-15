@@ -64,6 +64,10 @@ public class MethodDefinition extends AbstractMemberDefinition {
 		return true;
 	}
 
+	public boolean isClass() {
+		return false;
+	}
+
 	public List<ThrownException> getThrownExceptions() {
 		return thrownExceptions;
 	}

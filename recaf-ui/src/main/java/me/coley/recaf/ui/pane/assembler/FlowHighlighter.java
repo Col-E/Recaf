@@ -62,7 +62,7 @@ public class FlowHighlighter implements IndicatorApplier {
 			// The selected paragraph is 0-based, lines are 1-based
 			Element elementOnLine = pipeline.getElementOnLine(newValue + 1);
 			Unit unit = pipeline.getUnit();
-			if(unit == null)
+			if(unit == null || unit.isField())
 				return;
 			Code code = pipeline.getUnit().getMethod().getCode();
 			if (elementOnLine instanceof FlowControl) {

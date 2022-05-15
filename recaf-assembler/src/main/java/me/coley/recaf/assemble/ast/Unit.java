@@ -1,9 +1,6 @@
 package me.coley.recaf.assemble.ast;
 
-import me.coley.recaf.assemble.ast.arch.AbstractMemberDefinition;
-import me.coley.recaf.assemble.ast.arch.FieldDefinition;
-import me.coley.recaf.assemble.ast.arch.MemberDefinition;
-import me.coley.recaf.assemble.ast.arch.MethodDefinition;
+import me.coley.recaf.assemble.ast.arch.*;
 
 /**
  * The complete unit of a field or method.
@@ -41,6 +38,10 @@ public class Unit extends BaseElement {
 		return definition.isField();
 	}
 
+	public boolean isClass() {
+		return definition.isClass();
+	}
+
 	/**
 	 * @return Field or method definition.
 	 */
@@ -58,6 +59,19 @@ public class Unit extends BaseElement {
 		if(!isMethod())
 			throw new IllegalStateException("Not a method");
 		return (MethodDefinition) definition;
+	}
+
+	/**
+	 * @return Class definition.
+	 * @throws IllegalStateException if the definition is not a class
+	 * @see #isMethod()
+	 * @see #isField()
+	 * @see #isClass()
+	 */
+	public ClassDefinition getClassDefinition() {
+		if(!isClass())
+			throw new IllegalStateException("Not a class");
+		return (ClassDefinition) definition;
 	}
 
 	/**

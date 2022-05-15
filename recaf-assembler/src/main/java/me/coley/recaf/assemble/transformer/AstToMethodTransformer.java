@@ -35,7 +35,6 @@ public class AstToMethodTransformer {
 	private ExpressionToAstTransformer exprToAst;
 	private ClassSupplier classSupplier;
 	private String selfType;
-	private Unit unit;
 	private MethodDefinition definition;
 	private Code code;
 	// Configurable
@@ -74,8 +73,8 @@ public class AstToMethodTransformer {
 	 */
 	public void visit() throws MethodCompileException {
 		// Validation
-		if (unit == null)
-			throw new IllegalArgumentException("No unit provided!");
+		if (definition == null)
+			throw new IllegalArgumentException("No definition provided!");
 		// Clear any old values if the transformer instance is being re-used
 		reset();
 		// Generate new label instances to map to label names.
@@ -95,7 +94,7 @@ public class AstToMethodTransformer {
 	 */
 	public MethodNode buildMethod() throws MethodCompileException {
 		if (instructions == null) {
-			throw new MethodCompileException(unit, "The instructions have not been successfully generated!" +
+			throw new MethodCompileException(definition, "The instructions have not been successfully generated!" +
 					"Cannot build method instance.");
 		}
 		int access = definition.getModifiers().value();
@@ -496,15 +495,14 @@ public class AstToMethodTransformer {
 	}
 
 	/**
-	 * @param unit
-	 * 		New unit.
+	 * @param definition
+	 * 		New definition to use.
 	 */
-	public void setUnit(Unit unit) {
+	public void setDefinition(MethodDefinition definition) {
 		// Only trigger changes if the incoming unit is different
-		if (!Objects.equals(getUnit(), unit)) {
-			this.unit = unit;
+		if (!Objects.equals(getDefinition(), definition)) {
+			this.definition = definition;
 			// Convenience
-			this.definition = (MethodDefinition) unit.getDefinition();
 			this.code = this.definition.getCode();
 			// Initialize transformers
 			this.exprToAsm = new ExpressionToAsmTransformer(classSupplier, definition, variables, selfType);
@@ -513,10 +511,10 @@ public class AstToMethodTransformer {
 	}
 
 	/**
-	 * @return Current unit.
+	 * @return Current definition.
 	 */
-	public Unit getUnit() {
-		return unit;
+	public MethodDefinition getDefinition() {
+		return definition;
 	}
 
 	/**

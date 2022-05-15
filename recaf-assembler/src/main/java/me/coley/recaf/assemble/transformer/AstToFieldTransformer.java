@@ -21,23 +21,14 @@ import java.util.Objects;
  * @author Matt Coley
  */
 public class AstToFieldTransformer {
-	private final Unit unit;
-	// For quick reference
-	private final FieldDefinition definition;
-
-	/**
-	 * @param unit
-	 * 		The unit to pull data from.
-	 */
-	public AstToFieldTransformer(Unit unit) {
-		this.unit = Objects.requireNonNull(unit);
-		this.definition = (FieldDefinition) unit.getDefinition();
-	}
+	private FieldDefinition definition;
 
 	/**
 	 * @return Generated field.
 	 */
 	public FieldNode buildField() {
+		if(definition == null)
+			throw new IllegalStateException("No definition set!");
 		int access = definition.getModifiers().value();
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
@@ -78,5 +69,9 @@ public class AstToFieldTransformer {
 		else
 			field.invisibleAnnotations = null;
 		return field;
+	}
+
+	public void setDefinition(FieldDefinition definition) {
+		this.definition = Objects.requireNonNull(definition);
 	}
 }

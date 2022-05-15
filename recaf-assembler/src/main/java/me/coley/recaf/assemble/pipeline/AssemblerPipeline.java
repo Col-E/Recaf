@@ -3,11 +3,9 @@ package me.coley.recaf.assemble.pipeline;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
 import me.coley.recaf.assemble.MethodCompileException;
-import me.coley.recaf.assemble.ParserException;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.parser.BytecodeParser;
 import me.coley.recaf.assemble.transformer.*;
 import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.util.InheritanceChecker;
@@ -18,6 +16,7 @@ import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.assemble.validation.bytecode.BytecodeValidator;
 import me.coley.recaf.util.logging.Logging;
 import me.darknet.assembler.parser.*;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
@@ -53,6 +52,7 @@ public class AssemblerPipeline {
 	private Variables lastVariables;
 	private FieldNode lastField;
 	private MethodNode lastMethod;
+	private ClassNode lastClass;
 	private Analysis lastAnalysis;
 
 
@@ -281,6 +281,10 @@ public class AssemblerPipeline {
 		return unit != null && unit.isMethod();
 	}
 
+	public boolean isClass() {
+		return unit != null && unit.isClass();
+	}
+
 	/**
 	 * @return Last collection of generated variables from {@link #generateMethod()}.
 	 */
@@ -309,6 +313,10 @@ public class AssemblerPipeline {
 	 */
 	public MethodNode getLastMethod() {
 		return lastMethod;
+	}
+
+	public ClassNode getLastClass() {
+		return lastClass;
 	}
 
 	/**
@@ -345,7 +353,6 @@ public class AssemblerPipeline {
 		logger.trace("Assembler AST updating: [JASM parse]");
 		ParserContext ctx = new ParserContext(new LinkedList<>(tokens), parser); // convert to linked list to get a queue
 		Collection<Group> parsed;
-		BytecodeParser.UnitContext unitCtx;
 		try {
 			parsed = new ArrayList<>(ctx.parse());
 		} catch (AssemblerException ex) {
@@ -426,10 +433,12 @@ public class AssemblerPipeline {
 		// Reset & sanity check
 		lastField = null;
 		lastMethod = null;
+		lastClass = null;
 		if (!isField())
 			return false;
 		// Build field
-		AstToFieldTransformer transformer = new AstToFieldTransformer(unit);
+		AstToFieldTransformer transformer = new AstToFieldTransformer();
+		transformer.setDefinition(unit.getField());
 		FieldNode fieldAssembled = transformer.buildField();
 		if (bytecodeValidationListeners.size() > 0) {
 			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, fieldAssembled);
@@ -465,13 +474,14 @@ public class AssemblerPipeline {
 		// Reset & sanity check
 		lastField = null;
 		lastMethod = null;
+		lastClass = null;
 		if (!isMethod())
 			return false;
 		// Build method
 		try {
 			AstToMethodTransformer transformer = new AstToMethodTransformer(classSupplier, type);
 			transformer.setInheritanceChecker(inheritanceChecker);
-			transformer.setUnit(unit);
+			transformer.setDefinition(unit.getMethod());
 			transformer.visit();
 			MethodNode methodAssembled = transformer.buildMethod();
 			if (bytecodeValidationListeners.size() > 0) {
@@ -499,4 +509,71 @@ public class AssemblerPipeline {
 		}
 		return false;
 	}
+
+	public boolean validateNode(FieldNode field) {
+		if (bytecodeValidationListeners.size() > 0) {
+			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, field);
+			try {
+				bytecodeValidator.visit();
+			} catch (BytecodeException ex) {
+				// Fatal bytecode validation exception
+				bytecodeFailureListeners.forEach(l -> l.onValidationFailure(field, ex));
+				return false;
+			}
+			// Check for bytecode validation problems
+			bytecodeValidationListeners.forEach(l -> l.onBytecodeValidationComplete(field, bytecodeValidator));
+		}
+		// Done
+		return true;
+	}
+
+	public boolean validateNode(MethodNode method) {
+		if (bytecodeValidationListeners.size() > 0) {
+			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, method);
+			try {
+				bytecodeValidator.visit();
+			} catch (BytecodeException ex) {
+				// Fatal bytecode validation exception
+				bytecodeFailureListeners.forEach(l -> l.onValidationFailure(method, ex));
+				return false;
+			}
+			// Check for bytecode validation problems
+			bytecodeValidationListeners.forEach(l -> l.onBytecodeValidationComplete(method, bytecodeValidator));
+		}
+		// Done
+		return true;
+	}
+
+	public boolean generateClass() {
+		if(!outputOutdated && lastClass != null)
+			return true;
+			// Reset & sanity check
+		lastField = null;
+		lastMethod = null;
+		lastClass = null;
+		if (!isClass())
+			return false;
+		// Build class
+		try {
+			AstToClassTransformer transformer = new AstToClassTransformer(unit.getClassDefinition());
+			ClassNode assembledNode = transformer.buildClass();
+			for(FieldNode field : assembledNode.fields) {
+				if(!validateNode(field))
+					return false;
+			}
+			for(MethodNode method : assembledNode.methods) {
+				if(!validateNode(method))
+					return false;
+			}
+			lastClass = assembledNode;
+			outputOutdated = false;
+			pipelineCompletionListeners.forEach(l -> l.onCompletedOutput(lastClass));
+			return true;
+		}catch (MethodCompileException ex) {
+			// Compile problems are fatal. These should be rare since most things should be caught in the prior step.
+			bytecodeFailureListeners.forEach(l -> l.onCompileFailure(unit, ex));
+		}
+		return false;
+	}
+
 }

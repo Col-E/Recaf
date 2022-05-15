@@ -42,6 +42,10 @@ public class FieldDefinition extends AbstractMemberDefinition {
 		return false;
 	}
 
+	public boolean isClass() {
+		return false;
+	}
+
 	@Override
 	public Modifiers getModifiers() {
 		return modifiers;

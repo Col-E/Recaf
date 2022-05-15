@@ -17,7 +17,7 @@ public interface MemberDefinition extends Element, Descriptor, Named {
 	 * @return {@code true} if the current instance is a field.
 	 */
 	default boolean isField() {
-		return !isMethod();
+		return !isMethod() && !isClass();
 	}
 
 	/**
@@ -26,12 +26,23 @@ public interface MemberDefinition extends Element, Descriptor, Named {
 	boolean isMethod();
 
 	/**
+	 * @return {@code true} if the current instance is a class or interface.
+	 */
+	boolean isClass();
+
+	/**
 	 * @return Member's modifiers.
 	 */
 	Modifiers getModifiers();
 
+	/**
+	 * @return Member's annotations.
+	 */
 	List<Annotation> getAnnotations();
 
+	/**
+	 * @return Member's signature.
+	 */
 	Signature getSignature();
 
 }
