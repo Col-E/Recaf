@@ -20,7 +20,7 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
 
     public GroupTreeView treeView;
     public TokenList listView;
-    static AssemblerArea assemblerPane;
+    public AssemblerArea assemblerPane;
 
     public DebugPane(AssemblerArea pane, AssemblerPipeline pipeline) {
         super();
