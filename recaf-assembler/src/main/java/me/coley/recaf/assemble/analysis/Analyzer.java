@@ -4,7 +4,6 @@ import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.IllegalAstException;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.*;
-import me.coley.recaf.assemble.ast.arch.AbstractMemberDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.*;
@@ -50,8 +49,8 @@ public class Analyzer {
 	 */
 	public Analyzer(String selfType, MethodDefinition method) {
 		this.selfType = selfType;
-		code = method.getCode();
 		this.method = method;
+		code = method.getCode();
 	}
 
 	/**
@@ -88,14 +87,14 @@ public class Analyzer {
 		List<AbstractInstruction> instructions = code.getChildrenOfType(AbstractInstruction.class);
 		Analysis analysis = new Analysis(instructions.size());
 		try {
-			if(!instructions.isEmpty()) {
+			if (!instructions.isEmpty()) {
 				fillBlocks(analysis, instructions);
 				fillFrames(analysis, instructions);
 			}
 		} catch (AstException e) {
 			throw e;
 		} catch (Exception t) {
-			t.printStackTrace();
+			logger.error("Uncaught exception during analysis", t);
 			throw new MethodCompileException(code, t, "Uncaught exception during analysis!");
 		}
 		return analysis;
@@ -148,7 +147,6 @@ public class Analyzer {
 
 	private boolean execute(Analysis analysis, List<AbstractInstruction> instructions,
 							int ctxPc, int pc, AbstractInstruction instruction) throws AstException {
-
 		Frame frame = analysis.frame(pc);
 		Frame oldFrameState = frame.copy();
 
