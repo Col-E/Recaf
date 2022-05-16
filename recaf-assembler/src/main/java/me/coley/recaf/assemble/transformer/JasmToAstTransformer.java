@@ -17,9 +17,6 @@ import me.darknet.assembler.parser.groups.*;
 import me.darknet.assembler.transform.MethodVisitor;
 import me.darknet.assembler.transform.Transformer;
 import me.darknet.assembler.transform.Visitor;
-import me.darknet.assembler.util.Handles;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -28,12 +25,13 @@ import java.util.*;
 /**
  * JASM visitor to generate AST instances.
  *
+ * @author Nowilltolife
  */
 public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
     Collection<Group> groups;
     Unit unit;
-    AbstractMemberDefinition activeMember;
+    AbstractDefinition activeMember;
     Code code = new Code();
     Attributes currentAttributes = new Attributes();
 

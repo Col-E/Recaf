@@ -18,7 +18,7 @@ public class DefinitionArchTests extends TestUtil {
 	@Test
 	public void testSimpleDefinition() {
 		handle("method simple()V\nend", unit -> {
-			MemberDefinition def = unit.getDefinition();
+			Definition def = unit.getDefinition();
 			assertEquals("simple", def.getName());
 			assertEquals("()V", def.getDesc());
 			assertEquals(0, def.getModifiers().value());

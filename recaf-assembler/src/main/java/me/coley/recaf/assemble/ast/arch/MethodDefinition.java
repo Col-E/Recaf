@@ -1,7 +1,6 @@
 package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.meta.Signature;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,14 +10,12 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class MethodDefinition extends AbstractMemberDefinition {
+public class MethodDefinition extends AbstractDefinition {
+	private final List<ThrownException> thrownExceptions = new ArrayList<>();
 	private final String name;
 	private final MethodParameters params;
 	private final String returnType;
-
 	private final Code code;
-
-	private final List<ThrownException> thrownExceptions = new ArrayList<>();
 
 	/**
 	 * @param modifiers
@@ -31,23 +28,23 @@ public class MethodDefinition extends AbstractMemberDefinition {
 	 * 		Method return descriptor.
 	 */
 	public MethodDefinition(Modifiers modifiers, String name, MethodParameters params, String returnType, Code code) {
-		this.modifiers = modifiers;
 		this.name = name;
 		this.params = params;
 		this.returnType = returnType;
 		this.code = code;
+		setModifiers(modifiers);
 	}
 
 	@Override
 	public String print() {
 		StringBuilder sb = new StringBuilder();
-		for(ThrownException thrownException : thrownExceptions)
+		for (ThrownException thrownException : thrownExceptions)
 			sb.append(thrownException.print()).append("\n");
-		for(Annotation annotation : annotations)
+		for (Annotation annotation : getAnnotations())
 			sb.append(annotation.print());
 		sb.append("method ");
-		if (modifiers.value() > 0) {
-			sb.append(modifiers.print().toLowerCase()).append(' ');
+		if (getModifiers().value() > 0) {
+			sb.append(getModifiers().print().toLowerCase()).append(' ');
 		}
 		sb.append(name);
 		sb.append('(').append(params.print()).append(')');
@@ -60,20 +57,18 @@ public class MethodDefinition extends AbstractMemberDefinition {
 	}
 
 	@Override
-	public boolean isMethod() {
-		return true;
-	}
-
 	public boolean isClass() {
 		return false;
 	}
 
-	public List<ThrownException> getThrownExceptions() {
-		return thrownExceptions;
+	@Override
+	public boolean isField() {
+		return false;
 	}
 
-	public void addThrownException(ThrownException thrownException) {
-		thrownExceptions.add(thrownException);
+	@Override
+	public boolean isMethod() {
+		return true;
 	}
 
 	@Override
@@ -84,6 +79,23 @@ public class MethodDefinition extends AbstractMemberDefinition {
 	@Override
 	public String getDesc() {
 		return params.getDesc() + returnType;
+	}
+
+	/**
+	 * @return Exceptions thrown by the method.
+	 */
+	public List<ThrownException> getThrownExceptions() {
+		return thrownExceptions;
+	}
+
+	/**
+	 * @param thrownException
+	 * 		Exception to add.
+	 *
+	 * @see #getThrownExceptions()
+	 */
+	public void addThrownException(ThrownException thrownException) {
+		thrownExceptions.add(thrownException);
 	}
 
 	/**
@@ -100,8 +112,10 @@ public class MethodDefinition extends AbstractMemberDefinition {
 		return returnType;
 	}
 
+	/**
+	 * @return Code body of the method.
+	 */
 	public Code getCode() {
 		return code;
 	}
-
 }

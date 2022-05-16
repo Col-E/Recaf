@@ -7,48 +7,50 @@ import me.coley.recaf.util.EscapeUtil;
  *
  * @author Matt Coley
  */
-public class FieldDefinition extends AbstractMemberDefinition {
+public class FieldDefinition extends AbstractDefinition {
 	private final String name;
 	private final String type;
 	private ConstVal val;
 
 	/**
-	 * @param modifiers Field modifiers.
-	 * @param name Field name.
-	 * @param type Field descriptor.
+	 * @param modifiers
+	 * 		Field modifiers.
+	 * @param name
+	 * 		Field name.
+	 * @param type
+	 * 		Field descriptor.
 	 */
 	public FieldDefinition(Modifiers modifiers, String name, String type) {
-		this.modifiers = modifiers;
 		this.name = name;
 		this.type = type;
+		setModifiers(modifiers);
 	}
 
 	@Override
 	public String print() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("field ");
-		if (modifiers.value() > 0) {
-			sb.append(modifiers.print().toLowerCase()).append(' ');
+		if (getModifiers().value() > 0) {
+			sb.append(getModifiers().print().toLowerCase()).append(' ');
 		}
-
 		// make sure to escape the name
-
 		sb.append(EscapeUtil.escapeSpace(name)).append(' ').append(EscapeUtil.escape(type));
 		return sb.toString();
 	}
 
 	@Override
-	public boolean isMethod() {
-		return false;
-	}
-
 	public boolean isClass() {
 		return false;
 	}
 
 	@Override
-	public Modifiers getModifiers() {
-		return modifiers;
+	public boolean isField() {
+		return true;
+	}
+
+	@Override
+	public boolean isMethod() {
+		return false;
 	}
 
 	@Override
@@ -61,6 +63,13 @@ public class FieldDefinition extends AbstractMemberDefinition {
 		return type;
 	}
 
+	/**
+	 * Per <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7.2">4.7.2.
+	 * The ConstantValue Attribute</a>, this value should only be applied when {@link #getModifiers()}
+	 * contains {@code static}.
+	 *
+	 * @return Constant value of the field.
+	 */
 	public ConstVal getConstVal() {
 		return val;
 	}

@@ -1,7 +1,7 @@
 package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.ast.arch.Annotation;
-import me.coley.recaf.assemble.ast.arch.ConstVal;
+import me.coley.recaf.assemble.ast.arch.Definition;
 import me.coley.recaf.assemble.ast.arch.ThrownException;
 import me.coley.recaf.assemble.ast.meta.Signature;
 
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class to hold attributes about {@link me.coley.recaf.assemble.ast.arch.MemberDefinition}s that appear before
+ * Class to hold attributes about {@link Definition}s that appear before
  * the actual definition.
  */
 public class Attributes {

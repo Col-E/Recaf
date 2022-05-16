@@ -2,16 +2,11 @@ package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseArg;
-import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.arch.AbstractMemberDefinition;
+import me.coley.recaf.assemble.ast.arch.AbstractDefinition;
 import me.coley.recaf.assemble.ast.arch.Annotation;
-import me.coley.recaf.assemble.ast.arch.MemberDefinition;
-import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -35,7 +30,7 @@ public class AnnotationHelper {
 	 * @param annotations
 	 * 		The annotations to add.
 	 */
-	public static void visitAnnos(AbstractMemberDefinition code, boolean visible, List<AnnotationNode> annotations) {
+	public static void visitAnnos(AbstractDefinition code, boolean visible, List<AnnotationNode> annotations) {
 		if (annotations == null)
 			return;
 		for (AnnotationNode annotation : annotations) {
@@ -97,7 +92,7 @@ public class AnnotationHelper {
 			for (int i = 0; i < annotation.values.size(); i += 2) {
 				String name = String.valueOf(annotation.values.get(i));
 				Object value = annotation.values.get(i + 1);
-				if(value instanceof AnnotationNode) {
+				if (value instanceof AnnotationNode) {
 					Map<String, Annotation.AnnoArg> subArgs = mapArgs((AnnotationNode) value);
 					args.put(name,
 							new Annotation.AnnoArg(

@@ -32,12 +32,12 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
     }
 
     @Override
-    public void onCompleteTokenize(Collection<Token> tokens) {
+    public void onCompleteTokenize(List<Token> tokens) {
         listView.update(tokens);
     }
 
     @Override
-    public void onCompleteParse(Collection<Group> groups) {
+    public void onCompleteParse(List<Group> groups) {
         treeView.update(groups);
     }
 

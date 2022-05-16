@@ -1,14 +1,10 @@
 package me.coley.recaf.assemble.ast;
 
-import me.coley.recaf.assemble.ast.arch.Annotation;
-import me.coley.recaf.assemble.ast.arch.ConstVal;
-import me.coley.recaf.assemble.ast.arch.ThrownException;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.ast.meta.Comment;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
-import me.coley.recaf.assemble.ast.meta.Signature;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -218,18 +214,17 @@ public class Code extends BaseElement {
 
 	@Override
 	public String print() {
-		if(entries.isEmpty())
+		if (entries.isEmpty())
 			return "";
 		return entries.stream()
 				.map(e -> {
-					if(e instanceof Label)
+					if (e instanceof Label)
 						return e.print();
 					return "\t" + e.print();
-				})
-				.collect(Collectors.joining("\n"));
+				}).collect(Collectors.joining("\n"));
 	}
 
-    public boolean isEmpty() {
+	public boolean isEmpty() {
 		return entries.isEmpty();
 	}
 }
