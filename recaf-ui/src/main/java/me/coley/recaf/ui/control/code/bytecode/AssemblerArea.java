@@ -408,7 +408,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 	@Override
 	public void onParseFail(AssemblerException ex) {
 		int line = ex.getLocation().getLine();
-		String msg = ex.getMessage();
+		String msg = ex.describe();
 		ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
 		problemTracking.addProblem(line, problem);
 	}
@@ -416,7 +416,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 	@Override
 	public void onParserTransformFail(AssemblerException ex) {
 		int line = ex.getLocation().getLine();
-		String msg = ex.getMessage();
+		String msg = ex.describe();
 		ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.ERROR, line, msg);
 		problemTracking.addProblem(line, problem);
 	}

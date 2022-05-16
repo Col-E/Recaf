@@ -9,6 +9,7 @@ public class ProblemInfo implements Comparable<ProblemInfo> {
 	private final ProblemOrigin origin;
 	private final ProblemLevel level;
 	private final int line;
+	private final int column;
 	private final String message;
 
 	/**
@@ -25,6 +26,15 @@ public class ProblemInfo implements Comparable<ProblemInfo> {
 		this.origin = origin;
 		this.level = level;
 		this.line = line;
+		this.column = -1;
+		this.message = message;
+	}
+
+	public ProblemInfo(ProblemOrigin origin, ProblemLevel level, int line, int column, String message) {
+		this.origin = origin;
+		this.level = level;
+		this.line = line;
+		this.column = column;
 		this.message = message;
 	}
 
@@ -47,6 +57,10 @@ public class ProblemInfo implements Comparable<ProblemInfo> {
 	 */
 	public int getLine() {
 		return line;
+	}
+
+	public int getColumn() {
+		return column;
 	}
 
 	/**
