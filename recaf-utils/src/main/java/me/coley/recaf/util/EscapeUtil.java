@@ -138,8 +138,19 @@ public final class EscapeUtil {
 		String current = String.valueOf(input.charAt(cursor));
 		String escaped = WHITESPACE_TO_ESCAPE.get(current);
 		// Check if next character is a space
-		if(current.equals(" ")) {
-			escaped = "\\u0020";
+		switch (current) {
+			case " ":
+				escaped = "\\u0020";
+				break;
+			case "\t":
+				escaped = "\\u0009";
+				break;
+			case "\n":
+				escaped = "\\u000A";
+				break;
+			case "\r":
+				escaped = "\\u000D";
+				break;
 		}
 		if (escaped != null) {
 			builder.append(escaped);
