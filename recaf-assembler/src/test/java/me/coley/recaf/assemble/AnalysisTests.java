@@ -5,13 +5,18 @@ import me.coley.recaf.assemble.analysis.Analyzer;
 import me.coley.recaf.assemble.analysis.Frame;
 import me.coley.recaf.assemble.analysis.Value;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
+import me.coley.recaf.assemble.ast.arch.MethodDefinition;
+import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
+import me.darknet.assembler.parser.AssemblerException;
+import me.darknet.assembler.parser.Group;
+import me.darknet.assembler.parser.ParserContext;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,12 +28,12 @@ public class AnalysisTests extends TestUtil {
 		public void testLinear() {
 			// This isn't a complete method, but the analyzer is meant to work even in
 			// incomplete situations. This will show that there is a single block.
-			String code = "static linear()V\n" +
+			String code = "method .static linear()V\n" +
 					"a:\n" +
 					"getstatic java/lang/System.out Ljava/io/PrintStream;\n" +
 					"ldc \"Hello\"\n" +
 					"invokevirtual java/io/PrintStream.println(Ljava/lang/String;)V\n" +
-					"b:";
+					"b:" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				try {
@@ -49,7 +54,7 @@ public class AnalysisTests extends TestUtil {
 			// - before
 			// - inside
 			// - after
-			String code = "static ifCond(Z skip)V\n" +
+			String code = "method .static ifCond(Z:skip)V\n" +
 					"a:\n" +
 					"iload skip\n" +
 					"ifne end\n" +
@@ -57,7 +62,7 @@ public class AnalysisTests extends TestUtil {
 					"ldc \"Flag is true\"\n" +
 					"invokevirtual java/io/PrintStream.println(Ljava/lang/String;)V\n" +
 					"end:\n" +
-					"nop";
+					"nop" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				try {
@@ -79,15 +84,15 @@ public class AnalysisTests extends TestUtil {
 		public void testSwitch() {
 			// Each switch case will just be the label and return.
 			// The end will have padding no-op instructions for us to differentiate it.
-			String code = "static switchMethod(I value)V\n" +
+			String code = "method .static switchMethod(I:value)V\n" +
 					"start:\n" +
 					"  iload value\n" +
-					"  tableswitch range(0:2) offsets(a, b, c) default(d)\n" +
+					"  tableswitch 0 2 a b c default d \n" +
 					"a: return\n" +
 					"b: return\n" +
 					"c: return\n" +
 					"d: return\n" +
-					"end: nop nop nop";
+					"end: nop nop nop" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				try {
@@ -107,12 +112,12 @@ public class AnalysisTests extends TestUtil {
 
 		@Test
 		public void testTryCatch() {
-			String code = "static tryCatch()V\n" +
-					"TRY a b CATCH(*) c\n" +
+			String code = "method .static tryCatch()V\n" +
+					"catch * a b c\n" +
 					"a: nop nop nop\n" +
 					"b: goto end\n" +
 					"c: astore ex\n" +
-					"end: return\n";
+					"end: return\n" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				try {
@@ -133,8 +138,8 @@ public class AnalysisTests extends TestUtil {
 
 		@Test
 		public void testTryCatchWithInsideBlocks() {
-			String code = "static tryCatch(Z flag)V\n" +
-					"TRY tryStart tryEnd CATCH(*) tryHandler\n" +
+			String code = "method .static tryCatch(Z:flag)V\n" +
+					"catch * tryStart tryEnd tryHandler\n" +
 					"tryStart: \n" +
 					"  ifne skip\n" +
 					"    nop\n" +
@@ -144,7 +149,7 @@ public class AnalysisTests extends TestUtil {
 					"tryHandler: \n" +
 					"  astore ex\n" +
 					"end: \n" +
-					"  return\n";
+					"  return\n" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				try {
@@ -167,7 +172,7 @@ public class AnalysisTests extends TestUtil {
 		@Test
 		public void testMath() {
 			// This isn't a complete method, but the analyzer is meant to work even in incomplete situations.
-			String code = "static math()V\n" +
+			String code = "method .static math()V\n" +
 					"a:\n" +
 					"iconst_1\n" +
 					"ldc 2\n" +
@@ -183,7 +188,7 @@ public class AnalysisTests extends TestUtil {
 					"f2i\n" +
 					"iconst_1\n" +
 					"swap\n" +
-					"ishl";  // 5 << 1 = 5 * 2 = 10
+					"ishl" + "\nend";  // 5 << 1 = 5 * 2 = 10
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				try {
@@ -199,11 +204,11 @@ public class AnalysisTests extends TestUtil {
 
 		@Test
 		public void testArrayHello() {
-			String code = "static hello()V\n" +
+			String code = "method .static hello()V\n" +
 					"a:\n" +
 					// new array[5]
 					"iconst_5\n" +
-					"newarray B\n" +
+					"newarray byte\n" +
 					"astore array\n" +
 					// array[0] = 0x48
 					"aload array\n" +
@@ -234,7 +239,7 @@ public class AnalysisTests extends TestUtil {
 					"new java/lang/String\n" +
 					"dup\n" +
 					"invokespecial java/lang/String.<init>([B)V\n" +
-					"astore text\n";
+					"astore text\n" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				try {
@@ -255,17 +260,17 @@ public class AnalysisTests extends TestUtil {
 		@Test
 		public void testTypeMerge() {
 			// This isn't a complete method, but the analyzer is meant to work even in incomplete situations.
-			String code = "static merge(I type)V\n" +
+			String code = "method .static merge(I:type)V\n" +
 					"start:\n" +
 					"  iload type\n" +
-					"  tableswitch range(0:2) offsets(a, b, c) default(d)\n" +
+					"  tableswitch 0 2 a b c default d\n" +
 					"a: new java/util/List \n goto merge\n" +
 					"b: new java/util/Set \n goto merge\n" +
 					"c: new java/util/HashSet \n goto merge\n" +
 					"d: new java/util/ArrayList \n goto merge\n" +
 					"merge:\n" +
 					"  astore collection\n" +
-					"  nop\n";
+					"  nop\n" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				analyzer.setInheritanceChecker(ReflectiveInheritanceChecker.getInstance());
@@ -298,16 +303,16 @@ public class AnalysisTests extends TestUtil {
 		@Test
 		public void testNoInfiniteLoop() {
 			// If our branch follow conditions are too loose this will infinite loop
-			String code = "static merge(I type)V\n" +
+			String code = "method .static merge(I:type)V\n" +
 					"start:\n" +
 					"  iload type\n" +
-					"  tableswitch range(0:2) offsets(a, b, c) default(d)\n" +
+					"  tableswitch 0 2 a b c default d\n" +
 					"a: \n goto start\n" +
 					"b: \n goto start\n" +
 					"c: \n goto start\n" +
 					"d: \n goto merge\n" +
 					"merge:\n" +
-					"  nop\n";
+					"  nop\n" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				analyzer.setInheritanceChecker(ReflectiveInheritanceChecker.getInstance());
@@ -321,17 +326,21 @@ public class AnalysisTests extends TestUtil {
 		}
 	}
 
-	private static void handle(String original, Consumer<Unit> handler) {
+	private static void handle(String original, Consumer<MethodDefinition> handler) {
 		// ANTLR parse
-		BytecodeParser parser = parser(original);
-		BytecodeParser.UnitContext unitCtx = parser.unit();
-		assertNotNull(unitCtx, "Parser did not find unit context with input: " + original);
+		ParserContext parser = parser(original);
+		try {
+			Collection<Group> groups = parser.parse();
+			assertNotEquals(groups.isEmpty(), true, "Parser did not find unit context with input: " + original);
 
-		// Transform to our AST
-		AntlrToAstTransformer visitor = new AntlrToAstTransformer();
-		Unit unit = visitor.visitUnit(unitCtx);
+			// Transform to our AST
+			JasmToAstTransformer transformer = new JasmToAstTransformer(groups);
+			Unit unit = transformer.generateUnit();
 
-		// Handle
-		handler.accept(unit);
+			// Handle
+			handler.accept(unit.getMethod());
+		} catch (AssemblerException e) {
+			throw new RuntimeException(e.describe(), e);
+		}
 	}
 }

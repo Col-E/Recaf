@@ -1,8 +1,6 @@
 package me.coley.recaf.assemble;
 
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import org.junit.jupiter.api.Nested;
@@ -28,15 +26,15 @@ public class AstValidationTests extends TestUtil {
 		@Test
 		public void testCorrect() {
 			for (int i = Byte.MIN_VALUE; i < Byte.MAX_VALUE; i++)
-				assertCorrect("method()V\n" + "BIPUSH " + i);
+				assertCorrect("method method()V\n" + "bipush " + i + "\nend");
 		}
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method()V\n" + "BIPUSH " + (Byte.MIN_VALUE - 1),
-				"method()V\n" + "BIPUSH " + (Byte.MAX_VALUE + 1),
-				"method()V\n" + "SIPUSH " + (Short.MIN_VALUE - 1),
-				"method()V\n" + "SIPUSH " + (Short.MAX_VALUE + 1),
+				"method method()V\n" + "bipush " + (Byte.MIN_VALUE - 1) + "\nend",
+				"method method()V\n" + "bipush " + (Byte.MAX_VALUE + 1) + "\nend",
+				"method method()V\n" + "sipush " + (Short.MIN_VALUE - 1) + "\nend",
+				"method method()V\n" + "sipush " + (Short.MAX_VALUE + 1) + "\nend",
 		})
 		public void testMissingTryCatchLabels(String original) {
 			assertMatch(original, ValidationMessage.INT_VAL_TOO_BIG);
@@ -44,28 +42,14 @@ public class AstValidationTests extends TestUtil {
 	}
 
 	@Nested
-	class LabelRefs {
-		@Test
-		public void testCorrect() {
-			assertCorrect("method()V\n" + "TRY a b CATCH(*) c\na:\nb:\nc:");
-		}
-
-		@Test
-		public void testMissingTryCatchLabels() {
-			assertMatch("method()V\n" + "TRY a b CATCH(*) c",
-					ValidationMessage.LBL_UNDEFINED);
-		}
-	}
-
-	@Nested
 	class VariableUsage {
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method()V\n" + "ASTORE newVariable",
-				"method()V\n" + "ISTORE newVariable",
-				"method()V\n" + "FSTORE newVariable",
-				"method(I param)V\n" + "ILOAD param",
-				"method(Ljava/lang/Object; param)V\n" + "ALOAD param"
+				"method method()V\n" + "astore newVariable" + "\nend",
+				"method method()V\n" + "istore newVariable" + "\nend",
+				"method method()V\n" + "fstore newVariable" + "\nend",
+				"method method(I:param)V\n" + "iload param" + "\nend",
+				"method method(Ljava/lang/Object;:param)V\n" + "aload param" + "\nend"
 		})
 		public void testCorrect(String original) {
 			assertCorrect(original);
@@ -73,21 +57,12 @@ public class AstValidationTests extends TestUtil {
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method(Ljava/lang/String param)V\n",
-				"method(java/lang/String param)V\n"
-		})
-		public void testIllegalParamDesc(String original) {
-			assertMatch(original, ValidationMessage.ILLEGAL_DESC);
-		}
-
-		@ParameterizedTest
-		@ValueSource(strings = {
-				"method()V\n" + "ALOAD doesnotexist",
-				"method()V\n" + "ILOAD doesnotexist",
-				"method()V\n" + "FLOAD doesnotexist",
-				"method()V\n" + "DLOAD doesnotexist",
-				"method()V\n" + "LLOAD doesnotexist",
-				"method()V\n" + "IINC doesnotexist 1"
+				"method method()V\n" + "aload doesnotexist" + "\nend",
+				"method method()V\n" + "iload doesnotexist" + "\nend",
+				"method method()V\n" + "fload doesnotexist" + "\nend",
+				"method method()V\n" + "dload doesnotexist" + "\nend",
+				"method method()V\n" + "lload doesnotexist" + "\nend",
+				"method method()V\n" + "iinc doesnotexist 1" + "\nend"
 		})
 		public void testUsedBeforeDefined(String original) {
 			assertMatch(original, ValidationMessage.VAR_USE_BEFORE_DEF);
@@ -95,11 +70,11 @@ public class AstValidationTests extends TestUtil {
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method(Ljava/lang/String; param)V\nILOAD param",
-				"method(I param)V\nALOAD param",
-				"method(I param)V\nFLOAD param",
-				"method(I param)V\nDLOAD param",
-				"method(I param)V\nLLOAD param",
+				"method method(Ljava/lang/String;:param)V\niload param" + "\nend",
+				"method method(I:param)V\naload param" + "\nend",
+				"method method(I:param)V\nfload param" + "\nend",
+				"method method(I:param)V\ndload param" + "\nend",
+				"method method(I:param)V\nlload param" + "\nend",
 		})
 		public void testUsageOfVarOfDifferentTypeFromParameters(String orginal) {
 			assertMatch(orginal, ValidationMessage.VAR_USE_OF_DIFF_TYPE);
@@ -107,14 +82,14 @@ public class AstValidationTests extends TestUtil {
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method()V\n" + "ASTORE param\n" + "ILOAD param",
-				"method()V\n" + "ASTORE param\n" + "FLOAD param",
-				"method()V\n" + "ASTORE param\n" + "DLOAD param",
-				"method()V\n" + "ASTORE param\n" + "LLOAD param",
-				"method()V\n" + "ISTORE param\n" + "ALOAD param",
-				"method()V\n" + "ISTORE param\n" + "FLOAD param",
-				"method()V\n" + "ISTORE param\n" + "DLOAD param",
-				"method()V\n" + "ISTORE param\n" + "LLOAD param",
+				"method method()V\n" + "astore param\n" + "iload param" + "\nend",
+				"method method()V\n" + "astore param\n" + "fload param" + "\nend",
+				"method method()V\n" + "astore param\n" + "dload param" + "\nend",
+				"method method()V\n" + "astore param\n" + "lload param" + "\nend",
+				"method method()V\n" + "istore param\n" + "aload param" + "\nend",
+				"method method()V\n" + "istore param\n" + "fload param" + "\nend",
+				"method method()V\n" + "istore param\n" + "dload param" + "\nend",
+				"method method()V\n" + "istore param\n" + "lload param" + "\nend",
 		})
 		public void testUsageOfVarOfDifferentTypeFromCode(String original) {
 			assertMatch(original, ValidationMessage.VAR_USE_OF_DIFF_TYPE);
@@ -125,26 +100,20 @@ public class AstValidationTests extends TestUtil {
 	class ConstValues {
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"STATIC FINAL field I\n" + "VALUE 0",
-				"STATIC       field J\n" + "VALUE 9000000000L",
-				"STATIC       field F\n" + "VALUE 10.5F",
-				"STATIC       field D\n" + "VALUE 10.5",
-				"STATIC       field Ljava/lang/String;\n" + "VALUE \"text\""
+				"field .static .final field I\n" + " 0",
+				"field .static       field J\n" + " 9000000000L",
+				"field .static       field F\n" + " 10.5F",
+				"field .static       field D\n" + " 10.5",
+				"field .static       field Ljava/lang/String;\n" + " \"text\""
 		})
 		public void testCorrect(String original) {
 			assertCorrect(original);
 		}
 
-		@Test
-		public void testConstOnMethod() {
-			assertMatch("STATIC FINAL method()V\n" + "VALUE 0",
-					ValidationMessage.CV_VAL_ON_METHOD);
-		}
-
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"FINAL field I\n" + "VALUE 0",
-				"field I\n" + "VALUE 0",
+				"field .final field I " + " 0",
+				"field field I" + " 0",
 		})
 		public void testConstOnNonStatic(String original) {
 			assertMatch(original, ValidationMessage.CV_VAL_ON_NON_STATIC);
@@ -152,13 +121,13 @@ public class AstValidationTests extends TestUtil {
 
 		@Test
 		public void testIntStoredOnByte() {
-			assertMatch("STATIC FINAL field B\n" + "VALUE 90000000",
+			assertMatch("field .static .final field B " + "90000000",
 					ValidationMessage.CV_VAL_TOO_BIG);
 		}
 
 		@Test
 		public void testIntStoredOnChar() {
-			assertMatch("STATIC FINAL field C\n" + "VALUE 90000000",
+			assertMatch("field .static .final field C " + "90000000",
 					ValidationMessage.CV_VAL_TOO_BIG);
 		}
 	}
@@ -176,13 +145,8 @@ public class AstValidationTests extends TestUtil {
 	}
 
 	private static void handle(String original, boolean expectMessages, DelegatedMessageConsumer handler) {
-		BytecodeParser parser = parser(original);
-
-		BytecodeParser.UnitContext unitCtx = parser.unit();
-		assertNotNull(unitCtx, "Parser did not find unit context with input: " + original);
-
-		AntlrToAstTransformer visitor = new AntlrToAstTransformer();
-		Unit unit = visitor.visitUnit(unitCtx);
+		Unit unit = generate(original);
+		assertNotNull(unit, "Parser did not find unit context with input: " + original);
 
 		AstValidator validator = new AstValidator(unit);
 		try {

@@ -1,4 +1,4 @@
-static printAdd(D a, D b)V
+method .static printAdd(D:a,D:b)V
 a:
  dload a
  dload b
@@ -6,7 +6,8 @@ a:
  dstore c
 b:
  // Javassist does not 'new Object[] { ... }'
- expr System.out.println(String.format("%f + %f = %f", new Object[] { a, b, c }));
+ expr System.out.println(String.format("%f + %f = %f", new Object[] { a, b, c })); end
 c:
  return
 end:
+end

@@ -1,17 +1,18 @@
-static deleteFile(Ljava/lang/String; fileName)Z
+method .static deleteFile(Ljava/lang/String;:fileName)Z
 a:
  // deleted = false
  iconst_0
  istore deleted
  // delete and update flag
- expr {
+ expr
     try {
         deleted = new java.io.File(fileName).delete();
     } catch(Throwable t) {
         System.out.println("Error!");
     }
- }
+ end
 b:
  iload deleted
  ireturn
 end:
+end
