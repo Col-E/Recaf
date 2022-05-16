@@ -74,12 +74,25 @@ public class IndyInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
+		StringBuilder sb = new StringBuilder();
 		String handle = bsmHandle.print();
-		String args = bsmArguments.stream()
-				.map(BsmArg::print)
-				.collect(Collectors.joining(" "));
-		return String.format("%s %s %s .handle %s args %s end",
-				getOpcode(), EscapeUtil.escapeSpace(getName()), EscapeUtil.escapeSpace(getDesc()), handle, args);
+		StringBuilder args = new StringBuilder();
+		for (BsmArg bsmArgument : bsmArguments) {
+			args.append(bsmArgument.print());
+			args.append(" ");
+		}
+		String name = this.name;
+		if(name.isEmpty()) {
+			name = ".empty";
+		}else {
+			name = EscapeUtil.escapeSpace(name);
+		}
+		sb.append(getOpcode()).append(' ');
+		sb.append(name).append(' ');
+		sb.append(EscapeUtil.escapeSpace(desc)).append(' ');
+		sb.append(".handle ").append(handle).append(' ');
+		sb.append("args ").append(args).append(" end");
+		return sb.toString();
 	}
 
 	/**

@@ -158,14 +158,23 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
         add(new MultiArrayInstruction(Opcodes.MULTIANEWARRAY, desc, dims));
     }
 
+    public HandleInfo from(HandleGroup handle) throws AssemblerException {
+        if(handle.isField()) {
+            FieldDescriptor fs = new FieldDescriptor(content(handle.getDescriptor()));
+            return new HandleInfo(handle.getHandleType().content(), fs.owner, fs.name, content(handle.getFieldDescriptor()));
+        }else {
+            MethodDescriptor mdh = new MethodDescriptor(handle.getDescriptor().content(), false);
+            return new HandleInfo(
+                    handle.getHandleType().content(),
+                    mdh.owner,
+                    mdh.name,
+                    mdh.getDescriptor());
+        }
+    }
+
     @Override
     public void visitInvokeDyanmicInsn(String identifier, IdentifierGroup descriptor, HandleGroup handle, ArgsGroup args) throws AssemblerException {
-        MethodDescriptor mdh = new MethodDescriptor(handle.getDescriptor().content(), false);
-        HandleInfo handleInfo = new HandleInfo(
-                handle.getHandleType().content(),
-                mdh.owner,
-                mdh.name,
-                mdh.getDescriptor());
+        HandleInfo handleInfo = from(handle);
         List<IndyInstruction.BsmArg> bsmArgs = new ArrayList<>();
         for (Group arg : args.getBody().getChildren()) {
             bsmArgs.add(new IndyInstruction.BsmArg(from(arg), convert(arg)));
@@ -319,7 +328,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
             ArgsGroup args = (ArgsGroup) annotationParam.value;
             Map<String, Annotation.AnnoArg> map2 = new HashMap<>();
             for (Group group : args.getBody().children) {
-                paramValue(annotationParam.name.content(), group, map2);
+                paramValue(group.content(), group, map2);
             }
             map.put(annotationParam.name.content(),
                     new Annotation.AnnoArg(
@@ -339,7 +348,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
             annotationParam(param, args);
         }
 
-        Annotation anno = new Annotation(!annotation.isInvisible(), annotation.getClassGroup().content(), args);
+        Annotation anno = new Annotation(annotation.isInvisible(), annotation.getClassGroup().content(), args);
         currentAttributes.addAnnotation(anno);
     }
 
@@ -387,18 +396,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
             }
         } else if(group.type == Group.GroupType.HANDLE) {
             HandleGroup handle = (HandleGroup) group;
-            String typeString = handle.getHandleType().content();
-            if(!Handles.isValid(typeString)) {
-                throw new AssemblerException("Unknown handle type " + typeString, handle.location());
-            }
-            int type = Handles.getType(typeString);
-            MethodDescriptor md = new MethodDescriptor(handle.getDescriptor().content(), false);
-            return new Handle(
-                    type,
-                    md.owner == null ? "" : md.owner,
-                    md.name,
-                    md.getDescriptor(),
-                    type == Opcodes.H_INVOKEINTERFACE);
+            HandleInfo info = from(handle);
+            return info.toHandle();
         }else {
             return group.content();
         }

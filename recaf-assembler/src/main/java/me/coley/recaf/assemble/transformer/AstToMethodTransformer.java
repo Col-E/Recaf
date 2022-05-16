@@ -40,7 +40,7 @@ public class AstToMethodTransformer {
 	// Configurable
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 	private boolean doLimitVarRange = true;
-	private boolean useAnalysis = true;
+	private boolean useAnalysis = false;
 	// Method building and other outputs
 	private InsnList instructions;
 	private Analysis analysis;

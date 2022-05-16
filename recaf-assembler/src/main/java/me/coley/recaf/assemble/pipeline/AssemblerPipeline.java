@@ -47,6 +47,7 @@ public class AssemblerPipeline {
 	private boolean textDirty = true;
 	private boolean unitOutdated = true;
 	private boolean outputOutdated = true;
+	private boolean doUseAnalysis = true;
 	// Outputs
 	private Unit unit;
 	private Variables lastVariables;
@@ -211,6 +212,10 @@ public class AssemblerPipeline {
 	 */
 	public void setType(String type) {
 		this.type = type;
+	}
+
+	public void setDoUseAnalysis(boolean doUseAnalysis) {
+		this.doUseAnalysis = doUseAnalysis;
 	}
 
 	/**
@@ -480,6 +485,7 @@ public class AssemblerPipeline {
 		// Build method
 		try {
 			AstToMethodTransformer transformer = new AstToMethodTransformer(classSupplier, type);
+			transformer.setUseAnalysis(doUseAnalysis);
 			transformer.setInheritanceChecker(inheritanceChecker);
 			transformer.setDefinition(unit.getMethod());
 			transformer.visit();

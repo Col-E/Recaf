@@ -23,7 +23,7 @@ public class AstArrayValidator implements AstValidationVisitor {
 		for (AbstractInstruction instruction : code.getInstructions()) {
 			if (instruction instanceof NewArrayInstruction) {
 				NewArrayInstruction newArrayInstruction = (NewArrayInstruction) instruction;
-				char t = newArrayInstruction.getArrayType();
+				String t = newArrayInstruction.getArrayType();
 				try {
 					newArrayInstruction.getArrayTypeInt();
 				} catch (Exception ex) {

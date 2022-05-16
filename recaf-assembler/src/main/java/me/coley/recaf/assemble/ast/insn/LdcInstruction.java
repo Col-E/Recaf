@@ -159,19 +159,18 @@ public class LdcInstruction extends AbstractInstruction {
 			case TYPE:
 				Type type = (Type) getValue();
 				if (type.getSort() == Type.OBJECT)
-					return getOpcode() + " " + type.getInternalName();
+					return getOpcode() + " .type " + type.getInternalName();
 				else
-					return getOpcode() + " " + type;
+					return getOpcode() + " .type " + type;
 			case INTEGER:
+			case DOUBLE:
 				return getOpcode() + " " + getValue();
 			case LONG:
 				return getOpcode() + " " + getValue() + 'L';
 			case FLOAT:
-				return getOpcode() + " " + getValue() + 'F';
-			case DOUBLE:
-				return getOpcode() + " " + getValue() + 'D';
+				return getOpcode() + " " + getValue() + 'f';
 			case HANDLE:
-				return getOpcode() + ' ' + "handle[" + ((HandleInfo) getValue()).print() + ']';
+				return getOpcode() + ' ' + ".handle " + ((HandleInfo) getValue()).print();
 			default:
 				throw new IllegalStateException("Unhandled constant value type: " + getValueType());
 		}

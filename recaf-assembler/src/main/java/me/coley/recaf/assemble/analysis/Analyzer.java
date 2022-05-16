@@ -39,7 +39,6 @@ public class Analyzer {
 	private final Map<Label, String> catchHandlerTypes = new HashMap<>();
 	private final String selfType;
 	private final Code code;
-
 	private final MethodDefinition method;
 	private ExpressionToAstTransformer expressionToAstTransformer;
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
@@ -149,6 +148,7 @@ public class Analyzer {
 
 	private boolean execute(Analysis analysis, List<AbstractInstruction> instructions,
 							int ctxPc, int pc, AbstractInstruction instruction) throws AstException {
+
 		Frame frame = analysis.frame(pc);
 		Frame oldFrameState = frame.copy();
 
@@ -378,7 +378,7 @@ public class Analyzer {
 				case NEWARRAY: {
 					// Get array type
 					NewArrayInstruction newArrayInstruction = (NewArrayInstruction) instruction;
-					Type type = Type.getType(String.valueOf(newArrayInstruction.getArrayType()));
+					Type type = Type.getType(String.valueOf(newArrayInstruction.getArrayTypeChar()));
 					// Get array size, if possible
 					Value.ArrayValue arrayValue;
 					Value stackTop = frame.pop();

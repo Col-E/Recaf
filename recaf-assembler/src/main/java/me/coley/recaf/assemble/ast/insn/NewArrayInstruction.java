@@ -27,6 +27,7 @@ public class NewArrayInstruction extends AbstractInstruction {
 
 	public static final Map<String, Integer> newArrayTypes = new HashMap<>();
 	public static final Map<Integer, String> newArrayNames = new HashMap<>();
+	public static final Map<String, Character> newArrayChars = new HashMap<>();
 
 	static {
 		newArrayTypes.put("byte", T_BYTE);
@@ -45,9 +46,17 @@ public class NewArrayInstruction extends AbstractInstruction {
 		newArrayNames.put(T_DOUBLE, "double");
 		newArrayNames.put(T_CHAR, "char");
 		newArrayNames.put(T_BOOLEAN, "boolean");
+		newArrayChars.put("byte", 'B');
+		newArrayChars.put("short", 'S');
+		newArrayChars.put("int", 'I');
+		newArrayChars.put("long", 'J');
+		newArrayChars.put("float", 'F');
+		newArrayChars.put("double", 'D');
+		newArrayChars.put("char", 'C');
+		newArrayChars.put("boolean", 'Z');
 	}
 
-	private final char arrayType;
+	private final String arrayType;
 
 	/**
 	 * @param opcode
@@ -55,7 +64,7 @@ public class NewArrayInstruction extends AbstractInstruction {
 	 * @param arrayType
 	 * 		Char representing the array type.
 	 */
-	public NewArrayInstruction(int opcode, char arrayType) {
+	public NewArrayInstruction(int opcode, String arrayType) {
 		super(opcode);
 		this.arrayType = arrayType;
 	}
@@ -63,7 +72,7 @@ public class NewArrayInstruction extends AbstractInstruction {
 	/**
 	 * @return Char representing the array type.
 	 */
-	public char getArrayType() {
+	public String getArrayType() {
 		return arrayType;
 	}
 
@@ -72,26 +81,11 @@ public class NewArrayInstruction extends AbstractInstruction {
 	 */
 	public int getArrayTypeInt() {
 		// From 'jvms-6.5.newarray' in the specification
-		switch (arrayType) {
-			case 'Z':
-				return 4;
-			case 'C':
-				return 5;
-			case 'F':
-				return 6;
-			case 'D':
-				return 7;
-			case 'B':
-				return 8;
-			case 'S':
-				return 9;
-			case 'I':
-				return 10;
-			case 'J':
-				return 11;
-			default:
-				throw new IllegalStateException("An invalid internal value was set: " + arrayType);
-		}
+		return newArrayTypes.get(getArrayType());
+	}
+
+	public char getArrayTypeChar() {
+		return newArrayChars.get(getArrayType());
 	}
 
 	/**
@@ -100,27 +94,8 @@ public class NewArrayInstruction extends AbstractInstruction {
 	 *
 	 * @return Character representing primitive type of array to generate.
 	 */
-	public static char fromInt(int value) {
-		switch (value) {
-			case 4:
-				return 'Z';
-			case 5:
-				return 'C';
-			case 6:
-				return 'F';
-			case 7:
-				return 'D';
-			case 8:
-				return 'B';
-			case 9:
-				return 'S';
-			case 10:
-				return 'I';
-			case 11:
-				return 'J';
-			default:
-				throw new IllegalStateException("Cannot convert to NEWARRAY type: " + value);
-		}
+	public static String fromInt(int value) {
+		return newArrayNames.get(value);
 	}
 
 	@Override
