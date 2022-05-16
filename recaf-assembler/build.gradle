@@ -9,12 +9,12 @@ repositories {
 dependencies {
     api project(':recaf-utils')
 
-    def jasmVersion = '1.1.1'
+    def jasmVersion = '1.2.1'
 
     api asm
     api asm_tree
 
-    api "me.darknet:Jasm:$jasmVersion"
+    api "com.github.Nowilltolife:Jasm:$jasmVersion"
 
     // Testing
     testImplementation asm_util
