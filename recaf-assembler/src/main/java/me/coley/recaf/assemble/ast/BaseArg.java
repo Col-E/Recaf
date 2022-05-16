@@ -58,7 +58,7 @@ public abstract class BaseArg extends BaseElement implements Printable {
 			return argMapper.apply(ArgType.LONG, value);
 		else if (value instanceof Type)
 			return argMapper.apply(ArgType.TYPE, value);
-		else if (value instanceof Annotation || value instanceof AnnotationNode)
+		else if (value instanceof Annotation)
 			return argMapper.apply(ArgType.ANNO, value);
 		else if (value instanceof List)
 			return argMapper.apply(ArgType.ANNO_LIST, value);
