@@ -357,7 +357,7 @@ public class AssemblerPipeline {
 		// ANTLR parse
 		logger.trace("Assembler AST updating: [JASM parse]");
 		ParserContext ctx = new ParserContext(new LinkedList<>(tokens), parser); // convert to linked list to get a queue
-		Collection<Group> parsed;
+		List<Group> parsed;
 		try {
 			parsed = new ArrayList<>(ctx.parse());
 		} catch (AssemblerException ex) {

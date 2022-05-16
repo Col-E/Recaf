@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Lookup switch instruction.
@@ -73,16 +72,16 @@ public class LookupSwitchInstruction extends AbstractInstruction implements Flow
 	public String print() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getOpcode()).append("\n");
-		for(Entry entry : getEntries()) {
+		for (Entry entry : getEntries()) {
 			sb
-					.append("        ")
+					.append("\t\t")
 					.append("case ")
 					.append(entry.key)
 					.append(" ")
 					.append(entry.identifier)
 					.append("\n");
 		}
-		sb.append("        ").append("default ").append(getDefaultIdentifier());
+		sb.append("\t\t").append("default ").append(getDefaultIdentifier());
 		return sb.toString();
 	}
 

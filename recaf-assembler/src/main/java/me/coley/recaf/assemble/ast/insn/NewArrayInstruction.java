@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.objectweb.asm.Opcodes.*;
-import static org.objectweb.asm.Opcodes.T_BOOLEAN;
 
 /**
  * Instruction for allocating a new array of a primitive type.
@@ -24,10 +23,67 @@ public class NewArrayInstruction extends AbstractInstruction {
 	// short    S
 	// int      I
 	// long     J
+	private static final Map<String, Integer> newArrayTypes = new HashMap<>();
+	private static final Map<Integer, String> newArrayNames = new HashMap<>();
+	private static final Map<String, Character> newArrayChars = new HashMap<>();
+	private final String arrayType;
 
-	public static final Map<String, Integer> newArrayTypes = new HashMap<>();
-	public static final Map<Integer, String> newArrayNames = new HashMap<>();
-	public static final Map<String, Character> newArrayChars = new HashMap<>();
+	/**
+	 * @param opcode
+	 * 		Opcode name.
+	 * @param arrayType
+	 * 		Char representing the array type.
+	 */
+	public NewArrayInstruction(int opcode, String arrayType) {
+		super(opcode);
+		this.arrayType = arrayType;
+	}
+
+	/**
+	 * @return Char representing the array type.
+	 */
+	public String getArrayType() {
+		return arrayType;
+	}
+
+	/**
+	 * The int value is defined in the table listed in
+	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.newarray">
+	 * 6.5. Instructions, newarray</a>.
+	 *
+	 * @return Int value used by the class file format representing the array type.
+	 */
+	public int getArrayTypeInt() {
+		// From 'jvms-6.5.newarray' in the specification
+		return newArrayTypes.get(getArrayType());
+	}
+
+	/**
+	 * @return Char representing the primitive type of the array type.
+	 */
+	public char getArrayTypeChar() {
+		return newArrayChars.get(getArrayType());
+	}
+
+	/**
+	 * @param value
+	 * 		Int value used by the class file format representing the array type.
+	 *
+	 * @return Character representing primitive type of array to generate.
+	 */
+	public static String fromInt(int value) {
+		return newArrayNames.get(value);
+	}
+
+	@Override
+	public InstructionType getInsnType() {
+		return InstructionType.NEWARRAY;
+	}
+
+	@Override
+	public String print() {
+		return getOpcode() + " " + newArrayNames.get(getArrayTypeInt());
+	}
 
 	static {
 		newArrayTypes.put("byte", T_BYTE);
@@ -54,57 +110,5 @@ public class NewArrayInstruction extends AbstractInstruction {
 		newArrayChars.put("double", 'D');
 		newArrayChars.put("char", 'C');
 		newArrayChars.put("boolean", 'Z');
-	}
-
-	private final String arrayType;
-
-	/**
-	 * @param opcode
-	 * 		Opcode name.
-	 * @param arrayType
-	 * 		Char representing the array type.
-	 */
-	public NewArrayInstruction(int opcode, String arrayType) {
-		super(opcode);
-		this.arrayType = arrayType;
-	}
-
-	/**
-	 * @return Char representing the array type.
-	 */
-	public String getArrayType() {
-		return arrayType;
-	}
-
-	/**
-	 * @return Int value used by the class file format representing the array type.
-	 */
-	public int getArrayTypeInt() {
-		// From 'jvms-6.5.newarray' in the specification
-		return newArrayTypes.get(getArrayType());
-	}
-
-	public char getArrayTypeChar() {
-		return newArrayChars.get(getArrayType());
-	}
-
-	/**
-	 * @param value
-	 * 		Int value used by the class file format representing the array type.
-	 *
-	 * @return Character representing primitive type of array to generate.
-	 */
-	public static String fromInt(int value) {
-		return newArrayNames.get(value);
-	}
-
-	@Override
-	public InstructionType getInsnType() {
-		return InstructionType.NEWARRAY;
-	}
-
-	@Override
-	public String print() {
-		return getOpcode() + " " + newArrayNames.get(getArrayTypeInt());
 	}
 }

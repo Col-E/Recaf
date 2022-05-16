@@ -2,14 +2,46 @@ package me.coley.recaf.assemble.ast.arch;
 
 import java.util.List;
 
+/**
+ * Definition of a class.
+ *
+ * @author Nowilltolife
+ */
 public class ClassDefinition extends AbstractDefinition implements Definition {
-
-	List<MethodDefinition> definedMethods;
-	List<FieldDefinition> definedFields;
-
+	// TODO: Finish implementing the class
 	String name;
 	String superClass;
 	List<String> interfaces;
+	List<FieldDefinition> definedFields;
+	List<MethodDefinition> definedMethods;
+
+	/**
+	 * @return Fields defined in the class.
+	 */
+	public List<FieldDefinition> getDefinedFields() {
+		return definedFields;
+	}
+
+	/**
+	 * @return Methods defined in the class.
+	 */
+	public List<MethodDefinition> getDefinedMethods() {
+		return definedMethods;
+	}
+
+	/**
+	 * @return Super type of the class.
+	 */
+	public String getSuperClass() {
+		return superClass;
+	}
+
+	/**
+	 * @return Interface types the class implements.
+	 */
+	public List<String> getInterfaces() {
+		return interfaces;
+	}
 
 	@Override
 	public boolean isClass() {
@@ -35,22 +67,6 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	@Override
 	public String getName() {
 		return name;
-	}
-
-	public List<MethodDefinition> getDefinedMethods() {
-		return definedMethods;
-	}
-
-	public List<FieldDefinition> getDefinedFields() {
-		return definedFields;
-	}
-
-	public String getSuperClass() {
-		return superClass;
-	}
-
-	public List<String> getInterfaces() {
-		return interfaces;
 	}
 
 	@Override

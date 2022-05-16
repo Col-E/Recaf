@@ -90,8 +90,8 @@ public class TableSwitchInstruction extends AbstractInstruction implements FlowC
 
 	@Override
 	public String print() {
-		String offsets = String.join("\n        ", labels);
-		return String.format("%s %d %d\n        %s\n        default %s",
+		String offsets = String.join("\n\t\t", labels);
+		return String.format("%s %d %d\n\t\t%s\n\t\tdefault %s",
 				getOpcode(), getMin(), getMax(), offsets, getDefaultIdentifier());
 	}
 

@@ -6,7 +6,6 @@ import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.util.EscapeUtil;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Invoke dynamic instruction.
@@ -82,9 +81,9 @@ public class IndyInstruction extends AbstractInstruction {
 			args.append(" ");
 		}
 		String name = this.name;
-		if(name.isEmpty()) {
+		if (name.isEmpty()) {
 			name = ".empty";
-		}else {
+		} else {
 			name = EscapeUtil.escapeSpace(name);
 		}
 		sb.append(getOpcode()).append(' ');
