@@ -46,7 +46,7 @@ public class ExpressionParseTests extends TestUtil {
 	}
 
 	private static void handle(String original, Consumer<MethodDefinition> handler) {
-		Unit unit = generate(original);
+		Unit unit = generateSilent(original);
 
 		assertNotNull(unit, "Parser did not find unit context with input: " + original);
 

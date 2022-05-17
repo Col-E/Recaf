@@ -69,7 +69,7 @@ public class MethodParseTests extends TestUtil {
 
 	private static void handle(String original, Consumer<MethodNode> handler) {
 		// JASM parse
-		Unit unit = generate(original);
+		Unit unit = generateSilent(original);
 
 		assertNotNull(unit, "Unit must not be null!");
 

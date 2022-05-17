@@ -6,7 +6,6 @@ import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
-import me.darknet.assembler.parser.ParserContext;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -46,9 +45,15 @@ public class AssembleEntireClasspathTests extends TestUtil {
 				debug += "\n" + code;
 				assertNotNull(code, "Failed to disassemble: " + location);
 				// JASM parse
-				Unit unitCtx = generate(code);
+				Unit unitCtx;
+				try {
+					unitCtx = generate(code);
+				} catch (Throwable t) {
+					System.err.println(code);
+					fail("Error generating unit", t);
+					return;
+				}
 				assertNotNull(unitCtx, "Parser did not find unit context! Input: " + location);
-
 				// Validate
 				AstValidator validator = new AstValidator(unitCtx);
 				validator.visit();

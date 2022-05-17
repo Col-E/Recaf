@@ -573,7 +573,7 @@ public class InstructionParseTests extends TestUtil {
 
 	private static CodeEntry staticHandle(String code) {
 		String wrapped = "method somethind()V\n" + code + "\nend";
-		Unit unit = generate(wrapped);
+		Unit unit = generateSilent(wrapped);
 		assertNotNull(unit);
 		MethodDefinition method = unit.getMethod();
 		assertEquals(1, method.getCode().getEntries().size());

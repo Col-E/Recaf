@@ -205,7 +205,7 @@ public class DefinitionArchTests extends TestUtil {
 	}
 
 	private static void handle(String original, Consumer<Unit> handler) {
-		Unit unit = generate(original);
+		Unit unit = generateSilent(original);
 		assertNotNull(unit, "Parser did not find unit context with input: " + original);
 
 		handler.accept(unit);

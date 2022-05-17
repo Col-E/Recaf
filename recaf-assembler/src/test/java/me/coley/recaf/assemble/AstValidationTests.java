@@ -142,7 +142,7 @@ public class AstValidationTests extends TestUtil {
 	}
 
 	private static void handle(String original, boolean expectMessages, DelegatedMessageConsumer handler) {
-		Unit unit = generate(original);
+		Unit unit = generateSilent(original);
 		assertNotNull(unit, "Parser did not find unit context with input: " + original);
 
 		AstValidator validator = new AstValidator(unit);
