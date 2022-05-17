@@ -368,12 +368,12 @@ public class AssemblerPipeline {
 		String code = getText();
 		if (code == null)
 			return false;
-		// ANTLR tokenize
+		// JASM tokenize
 		logger.trace("Assembler AST updating: [JASM tokenize]");
 		Parser parser = new Parser();
 		List<Token> tokens = parser.tokenize("<assembler>", code);
 		parserCompletionListeners.forEach(l -> l.onCompleteTokenize(tokens));
-		// ANTLR parse
+		// JASM parse
 		logger.trace("Assembler AST updating: [JASM parse]");
 		ParserContext ctx = new ParserContext(new LinkedList<>(tokens), parser); // convert to linked list to get a queue
 		List<Group> parsed;

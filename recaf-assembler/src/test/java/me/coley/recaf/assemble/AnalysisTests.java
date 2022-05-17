@@ -326,7 +326,7 @@ public class AnalysisTests extends TestUtil {
 	}
 
 	private static void handle(String original, Consumer<MethodDefinition> handler) {
-		// ANTLR parse
+		// JASM parse
 		ParserContext parser = parser(original);
 		try {
 			Collection<Group> groups = parser.parse();

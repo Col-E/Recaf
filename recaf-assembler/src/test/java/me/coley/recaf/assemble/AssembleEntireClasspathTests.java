@@ -45,7 +45,7 @@ public class AssembleEntireClasspathTests extends TestUtil {
 				String code = unit.print();
 				debug += "\n" + code;
 				assertNotNull(code, "Failed to disassemble: " + location);
-				// ANTLR parse
+				// JASM parse
 				Unit unitCtx = generate(code);
 				assertNotNull(unitCtx, "Parser did not find unit context! Input: " + location);
 
