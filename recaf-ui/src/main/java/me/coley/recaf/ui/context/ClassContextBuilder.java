@@ -6,7 +6,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.mapping.RemappingVisitor;
@@ -78,7 +77,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
-			menu.getItems().add(action("menu.edit.assemble.field", Icons.ACTION_EDIT, this::assemble));
+			// TODO: Re-enable when ready
+			// menu.getItems().add(action("menu.edit.assemble.class", Icons.ACTION_EDIT, this::assemble));
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
@@ -92,23 +92,6 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		view.getItems().add(action("menu.view.hierarchy", Icons.T_TREE, this::openHierarchy));
 		menu.getItems().add(view);
 		return menu;
-	}
-
-	private void assemble() {
-		String name = info.getName();
-		Resource resource = getContainingResource();
-		if (resource != null) {
-			if (info != null) {
-				// Open assembler
-				AssemblerPane assembler = new AssemblerPane();
-				assembler.onUpdate(info);
-				new GenericWindow(assembler, 800, 300).show();
-			} else {
-				logger.error("No class info for {}", name);
-			}
-		} else {
-			logger.error("Failed to resolve containing resource for class '{}'", name);
-		}
 	}
 
 	@Override
@@ -130,6 +113,24 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 	@Override
 	public void openDefinition() {
 		CommonUX.openClass(info);
+	}
+
+	@Override
+	public void assemble() {
+		String name = info.getName();
+		Resource resource = getContainingResource();
+		if (resource != null) {
+			if (info != null) {
+				// Open assembler
+				AssemblerPane assembler = new AssemblerPane();
+				assembler.onUpdate(info);
+				new GenericWindow(assembler, 800, 300).show();
+			} else {
+				logger.error("No class info for {}", name);
+			}
+		} else {
+			logger.error("Failed to resolve containing resource for class '{}'", name);
+		}
 	}
 
 	@Override

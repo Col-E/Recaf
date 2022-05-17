@@ -93,12 +93,11 @@ public class AnnotationHelper {
 				String name = String.valueOf(annotation.values.get(i));
 				Object value = annotation.values.get(i + 1);
 				if (value instanceof AnnotationNode) {
-					Map<String, Annotation.AnnoArg> subArgs = mapArgs((AnnotationNode) value);
-					args.put(name,
-							new Annotation.AnnoArg(
-									ArgType.ANNO,
-									new Annotation(true, Type.getType(((AnnotationNode) value).desc).getInternalName(), subArgs
-									)));
+					AnnotationNode annoValue = (AnnotationNode) value;
+					Map<String, Annotation.AnnoArg> subArgs = mapArgs(annoValue);
+					args.put(name, new Annotation.AnnoArg(
+							ArgType.ANNO,
+							new Annotation(true, Type.getType(annoValue.desc).getInternalName(), subArgs)));
 					continue;
 				}
 				if (value instanceof List) {

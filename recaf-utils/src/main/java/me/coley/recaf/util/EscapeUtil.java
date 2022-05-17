@@ -42,7 +42,10 @@ public final class EscapeUtil {
 
 	/**
 	 * Replaces any escapeable squence with the an escaped sequence, inclduing spaces.
-	 * @param input Input text.
+	 *
+	 * @param input
+	 * 		Input text.
+	 *
 	 * @return String without escaped characters.
 	 */
 	public static String escapeSpace(String input) {
@@ -131,7 +134,7 @@ public final class EscapeUtil {
 
 	private static int computeUnescapeUnicodeSpace(String input, int cursor, StringBuilder builder) {
 		// Bounds check
-		if(cursor >= input.length()) {
+		if (cursor >= input.length()) {
 			return 0;
 		}
 		// Check if next character finishes an unescaped value, 1 if so, 0 if not.

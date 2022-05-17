@@ -107,7 +107,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		CommonUX.openMember(ownerInfo, methodInfo);
 	}
 
-	private void assemble() {
+	@Override
+	public void assemble() {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {

@@ -4,7 +4,9 @@ import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.assemble.*;
+import me.coley.recaf.assemble.AstException;
+import me.coley.recaf.assemble.BytecodeException;
+import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.pipeline.*;
@@ -24,7 +26,10 @@ import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadUtil;
-import me.coley.recaf.util.visitor.*;
+import me.coley.recaf.util.visitor.FieldReplacingVisitor;
+import me.coley.recaf.util.visitor.MethodReplacingVisitor;
+import me.coley.recaf.util.visitor.SingleMemberVisitor;
+import me.coley.recaf.util.visitor.WorkspaceClassWriter;
 import me.coley.recaf.workspace.resource.Resource;
 import me.darknet.assembler.parser.AssemblerException;
 import org.fxmisc.richtext.CharacterHit;
@@ -90,15 +95,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		pipeline.addParserFailureListener(this);
 		pipeline.addBytecodeFailureListener(this);
 		pipeline.addBytecodeValidationListener(this);
-		/*pipeline.addAntlrErrorListener(new BaseErrorListener() {
-			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
-									int line, int charPositionInLine, String msg, RecognitionException e) {
-				ProblemInfo problem = new ProblemInfo(BYTECODE_PARSING, ProblemLevel.WARNING, line, msg);
-				problemTracking.addProblem(line, problem);
-			}
-		});*/
-		boolean recover = Configs.assembler().attemptRecover;
 		boolean validate = Configs.assembler().astValidation;
 		if (validate) {
 			pipeline.addAstValidationListener(this);
@@ -241,7 +237,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		// Generate
 		if (targetMember.isMethod())
 			return generateMethod(true);
-		else if(targetMember.isField())
+		else if (targetMember.isField())
 			return generateField(true);
 		else
 			return generateClass(true);
@@ -289,17 +285,24 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		return SaveResult.SUCCESS;
 	}
 
+	/**
+	 * Generates and updates the {@link #getCurrentClassInfo() target class} if generation succeeded.
+	 *
+	 * @param apply
+	 *        {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
+	 *
+	 * @return Generation result status.
+	 */
 	private SaveResult generateClass(boolean apply) {
-
-		if(pipeline.isUnitOutdated() && !pipeline.generateClass())
+		// Generate method if not up-to-date
+		if (pipeline.isUnitOutdated() && !pipeline.generateClass())
 			return SaveResult.FAILURE;
-
 		ClassNode classAssembled = pipeline.getLastClass();
-
-		if(problemTracking.hasProblems(ProblemLevel.ERROR))
+		// Check if there were reported errors
+		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
-
-		if(apply) updateClass(classAssembled);
+		// Update class
+		if (apply) updateClass(classAssembled);
 		return SaveResult.SUCCESS;
 	}
 
@@ -323,8 +326,14 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		updateClass(cw -> new MethodReplacingVisitor(cw, targetMember, updatedMethod));
 	}
 
+	/**
+	 * Called to update the an entire class <i>(Class level assembly)</i>.
+	 *
+	 * @param updatedClass
+	 * 		Class that was compiled.
+	 */
 	private void updateClass(ClassNode updatedClass) {
-		updateClass(cw -> new ClassReplacingVisitor(cw, targetMember, updatedClass));
+		updateClass(cw -> updatedClass);
 	}
 
 	/**

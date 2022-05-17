@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;

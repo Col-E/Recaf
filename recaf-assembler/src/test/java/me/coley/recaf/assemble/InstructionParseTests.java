@@ -20,21 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Tests strictly for parsing into the AST nodes.
  */
 public class InstructionParseTests extends TestUtil {
-
-	public CodeEntry staticHandle(String code) {
-		String wrapped = "method somethind()V\n" + code + "\nend";
-
-		Unit unit = generate(wrapped);
-
-		assertNotNull(unit);
-
-		MethodDefinition method = unit.getMethod();
-
-		assertEquals(1, method.getCode().getEntries().size());
-
-		return method.getCode().getEntries().get(0);
-	}
-
 	@Nested
 	public class Field {
 
@@ -179,7 +164,7 @@ public class InstructionParseTests extends TestUtil {
 	}
 
 	@Nested
-	public class invokedynamic {
+	public class InvokeDynamic {
 		@Test
 		public void testNormal() {
 			handle("invokedynamic getText ()Ljava/lang/String; " +
@@ -248,7 +233,7 @@ public class InstructionParseTests extends TestUtil {
 	}
 
 	@Nested
-	public class ldc {
+	public class LDC {
 		@Test
 		public void testInt() {
 			handle("ldc 100", ldc -> assertEquals(100, ldc.getValue()));
@@ -325,7 +310,7 @@ public class InstructionParseTests extends TestUtil {
 	}
 
 	@Nested
-	public class iinc {
+	public class IINC {
 		@Test
 		public void testValues() {
 			handle("iinc v 100", iinc -> assertEquals(100, iinc.getIncrement()));
@@ -584,5 +569,14 @@ public class InstructionParseTests extends TestUtil {
 
 			handler.accept(swtch);
 		}
+	}
+
+	private static CodeEntry staticHandle(String code) {
+		String wrapped = "method somethind()V\n" + code + "\nend";
+		Unit unit = generate(wrapped);
+		assertNotNull(unit);
+		MethodDefinition method = unit.getMethod();
+		assertEquals(1, method.getCode().getEntries().size());
+		return method.getCode().getEntries().get(0);
 	}
 }

@@ -9,44 +9,66 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class to hold attributes about {@link Definition}s that appear before
- * the actual definition.
+ * Class to hold attributes about {@link Definition}s that appear before the actual definition.
+ *
+ * @author Nowilltolife
  */
 public class Attributes {
+	private final List<ThrownException> thrownExceptions = new ArrayList<>();
+	private final List<Annotation> annotations = new ArrayList<>();
+	private Signature signature;
 
-    private Signature signature;
-    private final List<ThrownException> thrownExceptions = new ArrayList<>();
-    private final List<Annotation> annotations = new ArrayList<>();
+	/**
+	 * @return Generic signature.
+	 */
+	public Signature getSignature() {
+		return signature;
+	}
 
+	/**
+	 * @param signature
+	 * 		Generic signature.
+	 */
+	public void setSignature(Signature signature) {
+		this.signature = signature;
+	}
 
-    public Signature getSignature() {
-        return signature;
-    }
+	/**
+	 * @return Current thrown exceptions.
+	 */
+	public List<ThrownException> getThrownExceptions() {
+		return thrownExceptions;
+	}
 
-    public void setSignature(Signature signature) {
-        this.signature = signature;
-    }
+	/**
+	 * @param exception
+	 * 		Thrown exception to add.
+	 */
+	public void addThrownException(ThrownException exception) {
+		thrownExceptions.add(exception);
+	}
 
-    public List<ThrownException> getThrownExceptions() {
-        return thrownExceptions;
-    }
+	/**
+	 * @return Current annotations.
+	 */
+	public List<Annotation> getAnnotations() {
+		return annotations;
+	}
 
-    public void addThrownException(ThrownException exception) {
-        thrownExceptions.add(exception);
-    }
+	/**
+	 * @param annotation
+	 * 		Annotation to add.
+	 */
+	public void addAnnotation(Annotation annotation) {
+		annotations.add(annotation);
+	}
 
-    public List<Annotation> getAnnotations() {
-        return annotations;
-    }
-
-    public void addAnnotation(Annotation annotation) {
-        annotations.add(annotation);
-    }
-
-    public void clear() {
-        signature = null;
-        thrownExceptions.clear();
-        annotations.clear();
-    }
-
+	/**
+	 * Reset all attributes.
+	 */
+	public void clear() {
+		signature = null;
+		thrownExceptions.clear();
+		annotations.clear();
+	}
 }

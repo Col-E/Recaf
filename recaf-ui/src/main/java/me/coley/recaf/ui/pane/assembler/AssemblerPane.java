@@ -4,7 +4,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Side;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -41,6 +40,7 @@ import java.util.List;
  * @see AssemblerArea Assembler text editor
  */
 public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable, WindowCloseListener {
+	private static final boolean DEBUG_AST = false;
 	private final AssemblerPipeline pipeline = new AssemblerPipeline();
 	private final List<MemberEditor> components = new ArrayList<>();
 	private final CollapsibleTabPane bottomTabs = new CollapsibleTabPane();
@@ -196,9 +196,10 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 				bottomTabs.getTabs().addAll(
 						createVariableTable(),
 						createStackAnalysis(),
-						createPlayground(),
-						createDebug()
+						createPlayground()
 				);
+				if (DEBUG_AST)
+					bottomTabs.getTabs().add(createDebug());
 				bottomTabs.setup();
 				split.getItems().add(bottomTabs);
 			}
@@ -207,9 +208,8 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 			if (bottomTabs.getTabs().isEmpty()) {
 				bottomTabs.setSide(Side.BOTTOM);
 				bottomTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-				bottomTabs.getTabs().addAll(
-						createDebug()
-				);
+				if (DEBUG_AST)
+					bottomTabs.getTabs().add(createDebug());
 				bottomTabs.setup();
 				split.getItems().add(bottomTabs);
 			}

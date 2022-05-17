@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.analysis.Analysis;
+import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.transformer.*;
@@ -21,7 +22,10 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * All in one utility for using the assembler from start to finish.
@@ -55,7 +59,6 @@ public class AssemblerPipeline {
 	private MethodNode lastMethod;
 	private ClassNode lastClass;
 	private Analysis lastAnalysis;
-
 
 	/**
 	 * @param listener
@@ -214,6 +217,10 @@ public class AssemblerPipeline {
 		this.type = type;
 	}
 
+	/**
+	 * @param doUseAnalysis
+	 * 		Flag to enable analysis, allowing better variable typing and access to stack-frame info.
+	 */
 	public void setDoUseAnalysis(boolean doUseAnalysis) {
 		this.doUseAnalysis = doUseAnalysis;
 	}
@@ -273,6 +280,13 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * @return {@code true} when the {@link #getUnit() unit} represents a class.
+	 */
+	public boolean isClass() {
+		return unit != null && unit.isClass();
+	}
+
+	/**
 	 * @return {@code true} when the {@link #getUnit() unit} represents a field.
 	 */
 	public boolean isField() {
@@ -284,10 +298,6 @@ public class AssemblerPipeline {
 	 */
 	public boolean isMethod() {
 		return unit != null && unit.isMethod();
-	}
-
-	public boolean isClass() {
-		return unit != null && unit.isClass();
 	}
 
 	/**
@@ -307,6 +317,13 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * @return Last generated class from {@link #generateClass()}.
+	 */
+	public ClassNode getLastClass() {
+		return lastClass;
+	}
+
+	/**
 	 * @return Last generated field from {@link #generateField()}.
 	 */
 	public FieldNode getLastField() {
@@ -320,10 +337,6 @@ public class AssemblerPipeline {
 		return lastMethod;
 	}
 
-	public ClassNode getLastClass() {
-		return lastClass;
-	}
-
 	/**
 	 * @param lineNo
 	 * 		Line number.
@@ -332,9 +345,15 @@ public class AssemblerPipeline {
 	 * {@code null} if no AST is available.
 	 */
 	public Element getElementOnLine(int lineNo) {
+		// TODO: Use unit.getChildOnLine(lineNo)?
+		//  - may need to tweak how it works so that we get relevant data types
+		//    if the child-most types are too generic.
 		if (unit == null || !unit.isMethod())
 			return null;
-		return unit.getMethod().getCode().getChildOnLine(lineNo);
+		Code code = unit.getMethod().getCode();
+		if (code == null)
+			return null;
+		return code.getChildOnLine(lineNo);
 	}
 
 	/**
@@ -353,7 +372,7 @@ public class AssemblerPipeline {
 		logger.trace("Assembler AST updating: [JASM tokenize]");
 		Parser parser = new Parser();
 		List<Token> tokens = parser.tokenize("<assembler>", code);
-		parserCompletionListeners.forEach(listener -> listener.onCompleteTokenize(tokens));
+		parserCompletionListeners.forEach(l -> l.onCompleteTokenize(tokens));
 		// ANTLR parse
 		logger.trace("Assembler AST updating: [JASM parse]");
 		ParserContext ctx = new ParserContext(new LinkedList<>(tokens), parser); // convert to linked list to get a queue
@@ -379,15 +398,14 @@ public class AssemblerPipeline {
 			unit = transformer.generateUnit();
 			// Done creating the AST
 			this.unit = unit;
-			for(ParserCompletionListener l : parserCompletionListeners)
-				l.onCompleteTransform(unit);
+			for (ParserCompletionListener listener : parserCompletionListeners)
+				listener.onCompleteTransform(unit);
 			unitOutdated = false;
 			outputOutdated = true;
 		} catch (AssemblerException ex) {
 			// Parser problems are fatal
 			parserFailureListeners.forEach(l -> l.onParserTransformFail(ex));
-			// this is being set to null to invalidate the unit so that the validator will fail
-			// until the unit is valid
+			// The unit is reset so that the validator will fail until the unit is valid once again.
 			this.unit = null;
 			return true;
 		}
@@ -426,9 +444,50 @@ public class AssemblerPipeline {
 	/**
 	 * Requires a valid {@link #getUnit() unit} to have been generated.
 	 *
+	 * @return {@code true} when the class is generated.
+	 * {@code false} when the class is not generated due to the {@link #getUnit() unit}
+	 * not being a class, or a validation error occurring.
+	 *
+	 * @see #getLastClass() Output upon success.
+	 */
+	public boolean generateClass() {
+		if (!outputOutdated && lastClass != null)
+			return true;
+		// Reset & sanity check
+		lastField = null;
+		lastMethod = null;
+		lastClass = null;
+		if (!isClass())
+			return false;
+		// Build class
+		try {
+			AstToClassTransformer transformer = new AstToClassTransformer(unit.getClassDefinition());
+			ClassNode assembledNode = transformer.buildClass();
+			for (FieldNode field : assembledNode.fields) {
+				if (!validateNode(field))
+					return false;
+			}
+			for (MethodNode method : assembledNode.methods) {
+				if (!validateNode(method))
+					return false;
+			}
+			lastClass = assembledNode;
+			outputOutdated = false;
+			pipelineCompletionListeners.forEach(l -> l.onCompletedOutput(lastClass));
+			return true;
+		} catch (MethodCompileException ex) {
+			// Compile problems are fatal. These should be rare since most things should be caught in the prior step.
+			bytecodeFailureListeners.forEach(l -> l.onCompileFailure(unit, ex));
+		}
+		return false;
+	}
+
+	/**
+	 * Requires a valid {@link #getUnit() unit} to have been generated.
+	 *
 	 * @return {@code true} when the field is generated.
-	 * {@code false} when the field is not due to the {@link #getUnit() unit} not being a field,
-	 * or a validation error occurring.
+	 * {@code false} when the field is not generated due to the {@link #getUnit() unit}
+	 * not being a field, or a validation error occurring.
 	 *
 	 * @see #getLastField() Output upun success.
 	 */
@@ -468,8 +527,8 @@ public class AssemblerPipeline {
 	 * Requires a valid {@link #getUnit() unit} to have been generated.
 	 *
 	 * @return {@code true} when the method is generated.
-	 * {@code false} when the method is not due to the {@link #getUnit() unit} not being a method,
-	 * or a validation error occurring.
+	 * {@code false} when the method is not generated due to the {@link #getUnit() unit}
+	 * not being a method, or a validation error occurring.
 	 *
 	 * @see #getLastMethod() Output upon success.
 	 */
@@ -516,6 +575,12 @@ public class AssemblerPipeline {
 		return false;
 	}
 
+	/**
+	 * @param field
+	 * 		Field node to validate.
+	 *
+	 * @return {@code true} for a valid field.
+	 */
 	public boolean validateNode(FieldNode field) {
 		if (bytecodeValidationListeners.size() > 0) {
 			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, field);
@@ -533,6 +598,12 @@ public class AssemblerPipeline {
 		return true;
 	}
 
+	/**
+	 * @param method
+	 * 		Method node to validate.
+	 *
+	 * @return {@code true} for a valid method.
+	 */
 	public boolean validateNode(MethodNode method) {
 		if (bytecodeValidationListeners.size() > 0) {
 			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, method);
@@ -549,37 +620,4 @@ public class AssemblerPipeline {
 		// Done
 		return true;
 	}
-
-	public boolean generateClass() {
-		if(!outputOutdated && lastClass != null)
-			return true;
-			// Reset & sanity check
-		lastField = null;
-		lastMethod = null;
-		lastClass = null;
-		if (!isClass())
-			return false;
-		// Build class
-		try {
-			AstToClassTransformer transformer = new AstToClassTransformer(unit.getClassDefinition());
-			ClassNode assembledNode = transformer.buildClass();
-			for(FieldNode field : assembledNode.fields) {
-				if(!validateNode(field))
-					return false;
-			}
-			for(MethodNode method : assembledNode.methods) {
-				if(!validateNode(method))
-					return false;
-			}
-			lastClass = assembledNode;
-			outputOutdated = false;
-			pipelineCompletionListeners.forEach(l -> l.onCompletedOutput(lastClass));
-			return true;
-		}catch (MethodCompileException ex) {
-			// Compile problems are fatal. These should be rare since most things should be caught in the prior step.
-			bytecodeFailureListeners.forEach(l -> l.onCompileFailure(unit, ex));
-		}
-		return false;
-	}
-
 }

@@ -40,7 +40,7 @@ public class AstToMethodTransformer {
 	// Configurable
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 	private boolean doLimitVarRange = true;
-	private boolean useAnalysis = false;
+	private boolean useAnalysis;
 	// Method building and other outputs
 	private InsnList instructions;
 	private Analysis analysis;
@@ -496,7 +496,7 @@ public class AstToMethodTransformer {
 
 	/**
 	 * @param definition
-	 * 		New definition to use.
+	 * 		Definition to transform.
 	 */
 	public void setDefinition(MethodDefinition definition) {
 		// Only trigger changes if the incoming unit is different

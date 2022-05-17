@@ -1,7 +1,6 @@
 package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.ast.ArgType;
-import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.Annotation;
@@ -27,7 +26,7 @@ public class AstToFieldTransformer {
 	 * @return Generated field.
 	 */
 	public FieldNode buildField() {
-		if(definition == null)
+		if (definition == null)
 			throw new IllegalStateException("No definition set!");
 		int access = definition.getModifiers().value();
 		String name = definition.getName();
@@ -71,6 +70,10 @@ public class AstToFieldTransformer {
 		return field;
 	}
 
+	/**
+	 * @param definition
+	 * 		Definition to transform.
+	 */
 	public void setDefinition(FieldDefinition definition) {
 		this.definition = Objects.requireNonNull(definition);
 	}

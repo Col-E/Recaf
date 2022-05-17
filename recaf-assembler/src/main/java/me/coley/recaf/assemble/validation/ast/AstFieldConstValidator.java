@@ -23,7 +23,7 @@ public class AstFieldConstValidator implements AstValidationVisitor {
 		if (unit.isField()) {
 			FieldDefinition def = (FieldDefinition) unit.getDefinition();
 			ConstVal value = def.getConstVal();
-			if(value == null)
+			if (value == null)
 				return;
 			if (!AccessFlag.isStatic(def.getModifiers().value())) {
 				validator.addMessage(warn(CV_VAL_ON_NON_STATIC, value, "Constant value will be ignored, " +
