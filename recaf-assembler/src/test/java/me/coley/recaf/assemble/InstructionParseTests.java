@@ -289,6 +289,7 @@ public class InstructionParseTests extends TestUtil {
 				"下雨了",
 				"\\n",
 				"\\u0000",
+				"\\\"",
 				"",
 				"C:\\example\\recaf.jar",
 				"C:\\\\example\\\\recaf.jar",

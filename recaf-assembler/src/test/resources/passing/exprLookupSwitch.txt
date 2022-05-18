@@ -1,6 +1,6 @@
 method .static handleCode(I:code)V
 a:
- expr
+ .expr
     int range = code - (code % 100);
     switch(range) {
      case 100: System.out.println("INFO"); break;

@@ -25,7 +25,7 @@ public class ExpressionParseTests extends TestUtil {
 			"if (foo || bar) System.out.println(\"Hello\");"
 	})
 	public void testSingleLine(String expression) {
-		handle("method name(Z:boolArg)V\n" + "expr " + expression + " end\nend", unit -> {
+		handle("method name(Z:boolArg)V\n" + ".expr " + expression + " end\nend", unit -> {
 			List<Expression> x = unit.getCode().getExpressions();
 			assertEquals(1, x.size());
 			assertEquals(expression, x.get(0).getCode().trim());
@@ -38,7 +38,7 @@ public class ExpressionParseTests extends TestUtil {
 			"if (boolArg) { \n         System.out.println(\"arg-true\");\n    }",
 	})
 	public void testMultiLine(String expression) {
-		handle("method name(Z:boolArg)V\n" + "expr " + expression + " end\nend", unit -> {
+		handle("method name(Z:boolArg)V\n" + ".expr " + expression + " end\nend", unit -> {
 			List<Expression> x = unit.getCode().getExpressions();
 			assertEquals(1, x.size());
 			assertEquals(expression, x.get(0).getCode().trim());
