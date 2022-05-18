@@ -158,10 +158,14 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		} else if (item instanceof Value.HandleValue) {
 			// Handle reference
 			cell.setGraphic(createHandleGraphic((Value.HandleValue) item));
-		} else {
+		} else if (item != null) {
 			cell.setGraphic(null);
+			cell.setText(item.toString());
+		} else {
+			// TODO: This should not happen
+			cell.setGraphic(null);
+			cell.setText(null);
 		}
-		cell.setText(item.toString());
 	}
 
 	private static Node createObjectGraphic(Value.ObjectValue item) {
