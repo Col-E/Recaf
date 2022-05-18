@@ -183,6 +183,9 @@ public final class EscapeUtil {
 			case '\\':
 				builder.append("\\\\");
 				return 1;
+			case '"':
+				builder.append("\\\"");
+				return 1;
 			default:
 				return 0;
 		}

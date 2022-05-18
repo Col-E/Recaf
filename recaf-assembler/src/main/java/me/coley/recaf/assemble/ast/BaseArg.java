@@ -4,7 +4,6 @@ import me.coley.recaf.assemble.ast.arch.Annotation;
 import me.coley.recaf.util.OpcodeUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AnnotationNode;
 
 import java.util.List;
 import java.util.function.BiFunction;
@@ -104,7 +103,10 @@ public abstract class BaseArg extends BaseElement implements Printable {
 				else
 					return ".type " + type.getDescriptor();
 			case STRING:
-				return "\"" + value + "\"";
+				String string = (String) value;
+				// escape quotes
+				string = string.replace("\"", "\\\"");
+				return "\"" + string + "\"";
 			case HANDLE:
 				HandleInfo info = (HandleInfo) value;
 				return ".handle " + info.print() + "";
