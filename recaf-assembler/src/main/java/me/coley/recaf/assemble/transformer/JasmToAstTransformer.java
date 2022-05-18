@@ -309,6 +309,22 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			return ArgType.TYPE;
 		} else if (group instanceof HandleGroup) {
 			return ArgType.HANDLE;
+		} else if(group instanceof IdentifierGroup) {
+			String content = group.content();
+			switch (content) {
+				case "true":
+				case "false":
+					return ArgType.BOOLEAN;
+				case "NaN":
+				case "Infinity":
+				case "-Infinity":
+						return ArgType.DOUBLE;
+				case "Infinityf":
+				case "-Infinityf":
+							return ArgType.FLOAT;
+				default:
+					throw new IllegalArgumentException("Cannot convert to constant '" + group.content() + "'");
+			}
 		}
 		throw new IllegalArgumentException("Cannot convert to constant '" + group.content() + "'");
 	}
@@ -396,7 +412,16 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			HandleInfo info = from(handle);
 			return info.toHandle();
 		} else {
-			return group.content();
+			String content = group.content();
+			if (content.equals("true")) return true;
+			if (content.equals("false")) return false;
+			if (content.equals("null")) return null;
+			if (content.equals("NaN")) return Double.NaN;
+			if (content.equals("Infinity")) return Double.POSITIVE_INFINITY;
+			if (content.equals("-Infinity")) return Double.NEGATIVE_INFINITY;
+			if (content.equals("Infinityf")) return Float.POSITIVE_INFINITY;
+			if (content.equals("-Infinityf")) return Float.NEGATIVE_INFINITY;
+			return content;
 		}
 	}
 
