@@ -59,7 +59,7 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Lo
 					if (closed.compareAndSet(null, location)) {
 						ReflectUtil.quietInvoke(Object.class, data, "finalize", new Class[0], new Object[0]);
 					} else {
-						logger.warn("Stream#onClose(...) is called multiple times: ", new RuntimeException("Stack trace"));
+						logger.warn("Stream#onClose(...) is called multiple times: ", location);
 						logger.warn("First close occurred at: ", closed.get());
 					}
 				});
