@@ -27,6 +27,7 @@ public class BytecodeToAstTransformer {
 	private static final int PARAM = -2;
 	private final Map<Integer, TreeMap<Integer, Integer>> variableSorts = new HashMap<>();
 	private final Map<Key, String> variableNames = new HashMap<>();
+	private final Map<Integer, MethodParameter> parameterMap = new HashMap<>();
 	private final MethodNode method;
 	private final FieldNode field;
 	private String labelPrefix = "";
@@ -143,7 +144,9 @@ public class BytecodeToAstTransformer {
 		int argVarIndex = AccessFlag.isStatic(method.access) ? 0 : 1;
 		for (Type argType : methodType.getArgumentTypes()) {
 			String name = getVariableName(PARAM, argType, argVarIndex);
-			params.add(new MethodParameter(argType.getDescriptor(), name));
+			MethodParameter param = new MethodParameter(argType.getDescriptor(), name);
+			params.add(param);
+			parameterMap.put(argVarIndex, param);
 			argVarIndex += argType.getSize();
 		}
 		String retType = methodType.getReturnType().getDescriptor();
@@ -342,7 +345,12 @@ public class BytecodeToAstTransformer {
 		// We will call this in cases where we have both extra type insight, and lessened insight.
 		// So we will normalize the type so that the only options are "object" or "int-primitive".
 		int normalizedSort = Types.getNormalizedSort(type.getSort());
-		// Check for cached name first.
+		// Check for parameter index first
+		if (parameterMap.containsKey(index)) {
+			MethodParameter parameter = parameterMap.get(index);
+			return parameter.getName();
+		}
+		// Check for cached name next.
 		// There may be a better fitting variable, so we will still check other options.
 		Key key = new Key(index, normalizedSort);
 		String name = variableNames.get(key);
