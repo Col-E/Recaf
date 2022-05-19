@@ -2,4 +2,14 @@ dependencies {
     compileOnly asm
     compileOnly logback_classic
     compileOnly project(':recaf-core')
+
+    // Testing
+    testImplementation project(':recaf-core')
+    testImplementation junit_api
+    testImplementation junit_params
+    testRuntimeOnly junit_engine
+}
+
+test {
+    useJUnitPlatform()
 }

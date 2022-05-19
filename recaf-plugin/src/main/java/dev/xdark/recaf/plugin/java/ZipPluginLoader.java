@@ -53,6 +53,7 @@ public final class ZipPluginLoader implements PluginLoader {
 		this.primaryClassLoader = primaryClassLoader;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Plugin> PluginContainer<T> load(ByteSource source) throws IOException, PluginLoadException, UnsupportedSourceException {
 		// Read whole zip archive into memory.
@@ -75,10 +76,11 @@ public final class ZipPluginLoader implements PluginLoader {
 		}
 		// Create in-memory implementation of URL
 		// so it can be used for PluginClassLoader
-		URL url = new URL("recaf", "", -1, "", new URLStreamHandler() {
+		URL url = new URL("recaf", "", -1, "/", new URLStreamHandler() {
 			@Override
 			protected URLConnection openConnection(URL u) throws IOException {
 				String file = u.getFile();
+				file = file.startsWith("/") ? file.substring(1) : file;
 				byte[] bytes = content.get(file);
 				if (bytes == null) {
 					throw new NoSuchFileException(file);
@@ -113,7 +115,7 @@ public final class ZipPluginLoader implements PluginLoader {
 			} catch(ClassNotFoundException ex) {
 				throw new PluginLoadException("Plugin entrypoint was not found: " + pluginClass, ex);
 			}
-			if (!entrypoint.isAssignableFrom(Plugin.class)) {
+			if (!Plugin.class.isAssignableFrom(entrypoint)) {
 				throw new PluginLoadException("Plugin entrypoint is not assignable to base Plugin interface");
 			}
 			// Read plugin information.
@@ -126,8 +128,8 @@ public final class ZipPluginLoader implements PluginLoader {
 			// Actually create plugin instance.
 			T plugin;
 			try {
-				plugin = (T) entrypoint.newInstance();
-			} catch(InstantiationException | IllegalAccessException ex) {
+				plugin = (T) entrypoint.getConstructor().newInstance();
+			} catch(ReflectiveOperationException ex) {
 				throw new PluginLoadException("Could not create plugin instance", ex);
 			}
 			// Don't forget to register a loader.

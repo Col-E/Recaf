@@ -85,7 +85,7 @@ public final class PluginClassLoader extends URLClassLoader {
 	 * 		or if the loader is closed.
 	 */
 	public Class<?> lookupClass(String name) throws ClassNotFoundException {
-		return super.findClass(name);
+		return findClass(name);
 	}
 
 	static {
