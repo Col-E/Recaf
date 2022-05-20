@@ -20,6 +20,8 @@ import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.ssvm.SsvmIntegration;
@@ -77,6 +79,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		this.ssvm = ssvm;
 		this.owner = owner;
 		this.info = info;
+		initModality(Modality.NONE);
 		initVm();
 		setup();
 	}
