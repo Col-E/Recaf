@@ -355,9 +355,14 @@ public class BytecodeToAstTransformer {
 		Key key = new Key(index, normalizedSort);
 		String name = variableNames.get(key);
 		// Check for existing variable name
-		if (method.localVariables != null) {
+		if (name == null && method.localVariables != null) {
 			for (LocalVariableNode local : method.localVariables) {
 				if (isMatching(local, pos, type, index)) {
+					// Check if variable name is in use by another variable of a different sort
+					if (variableNames.containsValue(local.name) && !variableNames.containsKey(key)) {
+						continue;
+					}
+					// No collision, can use this name.
 					name = local.name;
 					break;
 				}
