@@ -67,7 +67,7 @@ subprojects {
         common_io = 'commons-io:commons-io:2.11.0'
         dexlib = "org.smali:dexlib2:$dexVersion"
         directories = 'dev.dirs:directories:26'
-        docking = 'com.github.Col-E:tiwulfx-dock:1.2.1'
+        docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'
         gson = 'com.google.code.gson:gson:2.9.0'
         guava = 'com.google.guava:guava:31.0.1-jre'
         hppc = 'com.carrotsearch:hppc:0.9.1'
