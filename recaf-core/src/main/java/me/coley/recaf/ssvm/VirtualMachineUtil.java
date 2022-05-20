@@ -34,7 +34,7 @@ public class VirtualMachineUtil {
 	 * @return version of JDK the VM runs on.
 	 */
 	public static int getVersion(VirtualMachine vm) {
-		return vm.getSymbols().java_lang_Object.getNode().version - 44;
+		return vm.getSymbols().java_lang_Object().getNode().version - 44;
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class VirtualMachineUtil {
 	 * @return System class loader.
 	 */
 	public static InstanceValue getSystemClassLoader(VirtualMachine vm) {
-		return (InstanceValue) vm.getHelper().invokeStatic(vm.getSymbols().java_lang_ClassLoader, "getSystemClassLoader", "()Ljava/lang/ClassLoader;", new Value[0], new Value[0]).getResult();
+		return (InstanceValue) vm.getHelper().invokeStatic(vm.getSymbols().java_lang_ClassLoader(), "getSystemClassLoader", "()Ljava/lang/ClassLoader;", new Value[0], new Value[0]).getResult();
 	}
 
 	/**
