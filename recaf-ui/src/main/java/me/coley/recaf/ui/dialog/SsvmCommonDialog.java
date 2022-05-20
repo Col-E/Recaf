@@ -5,9 +5,9 @@ import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.memory.MemoryManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
+import dev.xdark.ssvm.symbol.VMPrimitives;
+import dev.xdark.ssvm.symbol.VMSymbols;
 import dev.xdark.ssvm.util.VMHelper;
-import dev.xdark.ssvm.util.VMPrimitives;
-import dev.xdark.ssvm.util.VMSymbols;
 import dev.xdark.ssvm.value.ArrayValue;
 import dev.xdark.ssvm.value.InstanceValue;
 import dev.xdark.ssvm.value.NullValue;
@@ -135,7 +135,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		));
 		values = new Value[argSlot];
 		if (!isStatic) {
-			JavaClass type = helper.tryFindClass(symbols.java_lang_Object.getClassLoader(), owner.getName(), true);
+			JavaClass type = helper.tryFindClass(symbols.java_lang_Object().getClassLoader(), owner.getName(), true);
 			InstanceValue instance = memory.newInstance((InstanceJavaClass) type);
 			helper.initializeDefaultValues(instance);
 			values[0] = instance;
@@ -226,42 +226,42 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 					if (text.isBlank())
 						switch (element.getSort()) {
 							case Type.BOOLEAN:
-								return helper.emptyArray(primitives.booleanPrimitive);
+								return helper.emptyArray(primitives.booleanPrimitive());
 							case Type.CHAR:
-								return helper.emptyArray(primitives.charPrimitive);
+								return helper.emptyArray(primitives.charPrimitive());
 							case Type.BYTE:
-								return helper.emptyArray(primitives.bytePrimitive);
+								return helper.emptyArray(primitives.bytePrimitive());
 							case Type.SHORT:
-								return helper.emptyArray(primitives.shortPrimitive);
+								return helper.emptyArray(primitives.shortPrimitive());
 							case Type.INT:
-								return helper.emptyArray(primitives.intPrimitive);
+								return helper.emptyArray(primitives.intPrimitive());
 						}
 					String[] args = text.split("\\s*,\\s*");
 					int count = args.length;
 					ArrayValue array;
 					switch (element.getSort()) {
 						case Type.BOOLEAN:
-							array = helper.newArray(primitives.booleanPrimitive, count);
+							array = helper.newArray(primitives.booleanPrimitive(), count);
 							for (int i = 0; i < count; i++)
 								array.setBoolean(i, Integer.parseInt(args[i]) != 0);
 							break;
 						case Type.CHAR:
-							array = helper.newArray(primitives.charPrimitive, count);
+							array = helper.newArray(primitives.charPrimitive(), count);
 							for (int i = 0; i < count; i++)
 								array.setChar(i, (char) Integer.parseInt(args[i]));
 							break;
 						case Type.BYTE:
-							array = helper.newArray(primitives.bytePrimitive, count);
+							array = helper.newArray(primitives.bytePrimitive(), count);
 							for (int i = 0; i < count; i++)
 								array.setByte(i, (byte) Integer.parseInt(args[i]));
 							break;
 						case Type.SHORT:
-							array = helper.newArray(primitives.shortPrimitive, count);
+							array = helper.newArray(primitives.shortPrimitive(), count);
 							for (int i = 0; i < count; i++)
 								array.setShort(i, (short) Integer.parseInt(args[i]));
 							break;
 						case Type.INT:
-							array = helper.newArray(primitives.intPrimitive, count);
+							array = helper.newArray(primitives.intPrimitive(), count);
 							for (int i = 0; i < count; i++)
 								array.setInt(i, Integer.parseInt(args[i]));
 							break;
@@ -278,10 +278,10 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 						Float.parseFloat(part);
 				}), field, text -> {
 					if (text.isBlank())
-						return helper.emptyArray(primitives.floatPrimitive);
+						return helper.emptyArray(primitives.floatPrimitive());
 					String[] args = text.split("\\s*,\\s*");
 					int count = args.length;
-					ArrayValue array = helper.newArray(primitives.floatPrimitive, count);
+					ArrayValue array = helper.newArray(primitives.floatPrimitive(), count);
 					for (int i = 0; i < count; i++)
 						array.setFloat(i, Float.parseFloat(args[i]));
 					return array;
@@ -294,10 +294,10 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 						Long.parseLong(part);
 				}), field, text -> {
 					if (text.isBlank())
-						return helper.emptyArray(primitives.longPrimitive);
+						return helper.emptyArray(primitives.longPrimitive());
 					String[] args = text.split("\\s*,\\s*");
 					int count = args.length;
-					ArrayValue array = helper.newArray(primitives.longPrimitive, count);
+					ArrayValue array = helper.newArray(primitives.longPrimitive(), count);
 					for (int i = 0; i < count; i++)
 						array.setLong(i, Long.parseLong(args[i]));
 					return array;
@@ -310,10 +310,10 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 						Double.parseDouble(part);
 				}), field, text -> {
 					if (text.isBlank())
-						return helper.emptyArray(primitives.doublePrimitive);
+						return helper.emptyArray(primitives.doublePrimitive());
 					String[] args = text.split("\\s*,\\s*");
 					int count = args.length;
-					ArrayValue array = helper.newArray(primitives.doublePrimitive, count);
+					ArrayValue array = helper.newArray(primitives.doublePrimitive(), count);
 					for (int i = 0; i < count; i++)
 						array.setDouble(i, Double.parseDouble(args[i]));
 					return array;
@@ -324,10 +324,10 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 					TextField field = new TextField("\"one\", \"two\", \"three\"");
 					return new InputWrapper(field, text -> {
 						if (text.isBlank())
-							return helper.emptyArray(symbols.java_lang_String);
+							return helper.emptyArray(symbols.java_lang_String());
 						String[] args = text.split("^\"|\"\\s*,\\s*\"|\"$");
 						int count = args.length;
-						ArrayValue array = helper.newArray(symbols.java_lang_String, count);
+						ArrayValue array = helper.newArray(symbols.java_lang_String(), count);
 						for (int i = 0; i < count; i++)
 							array.setValue(i, helper.newUtf8(args[i]));
 						return array;

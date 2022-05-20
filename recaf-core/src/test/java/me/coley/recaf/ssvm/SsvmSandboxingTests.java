@@ -9,8 +9,8 @@ import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.fs.FileDescriptorManager;
 import dev.xdark.ssvm.fs.SimpleFileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
+import dev.xdark.ssvm.symbol.VMSymbols;
 import dev.xdark.ssvm.util.VMHelper;
-import dev.xdark.ssvm.util.VMSymbols;
 import dev.xdark.ssvm.value.IntValue;
 import dev.xdark.ssvm.value.Value;
 import me.coley.recaf.TestUtils;
@@ -165,7 +165,7 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 			VMSymbols symbols = vm.getSymbols();
 			helper.invokeStatic(target, "main", "([Ljava/lang/String;)V",
 					new Value[0],
-					new Value[]{helper.emptyArray(symbols.java_lang_String)});
+					new Value[]{helper.emptyArray(symbols.java_lang_String())});
 		} catch (VMException ex) {
 			fail(ex);
 		}

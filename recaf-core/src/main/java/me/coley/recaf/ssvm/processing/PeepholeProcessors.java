@@ -403,7 +403,7 @@ public class PeepholeProcessors implements Opcodes {
 					} else if (invokeReturn instanceof InstanceValue) {
 						// Return value must be a string
 						InstanceJavaClass valueType = ((InstanceValue) invokeReturn).getJavaClass();
-						if (vm.getSymbols().java_lang_String.equals(valueType))
+						if (vm.getSymbols().java_lang_String().equals(valueType))
 							returnValue = helper.readUtf8(invokeReturn);
 					}
 					// Value found, replace it
@@ -626,7 +626,7 @@ public class PeepholeProcessors implements Opcodes {
 	 */
 	public static void installStringFolding(VirtualMachine vm) {
 		VMInterface vmi = vm.getInterface();
-		InstanceJavaClass jc = vm.getSymbols().java_lang_String;
+		InstanceJavaClass jc = vm.getSymbols().java_lang_String();
 		InstructionProcessor<TypeInsnNode> newProcessor = vmi.getProcessor(NEW);
 		vmi.setProcessor(NEW, (TypeInsnNode insn, ExecutionContext ctx) -> {
 			Result result = newProcessor.execute(insn, ctx);
