@@ -143,6 +143,7 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 	 * 		Cell value.
 	 */
 	private static void populate(IndexedCell<Value> cell, Value item) {
+		String text = item == null ? null : item.toString();
 		if (item instanceof Value.EmptyPoppedValue || item instanceof Value.WideReservedValue) {
 			// Internal
 			cell.setGraphic(Icons.getIconView(Icons.INTERNAL));
@@ -160,12 +161,11 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 			cell.setGraphic(createHandleGraphic((Value.HandleValue) item));
 		} else if (item != null) {
 			cell.setGraphic(null);
-			cell.setText(item.toString());
 		} else {
 			// TODO: This should not happen
 			cell.setGraphic(null);
-			cell.setText(null);
 		}
+		cell.setText(text);
 	}
 
 	private static Node createObjectGraphic(Value.ObjectValue item) {
