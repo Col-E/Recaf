@@ -45,6 +45,7 @@ public class NodeEvents {
 	 * @param <T>
 	 * 		Value type.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T> void dispatchAndRemoveIf(ObservableValue<T> value, RemovalChangeListener<? super T> listener) {
 		ChangeListener<? super T>[] handle = new ChangeListener[1];
 		handle[0] = (observable, oldValue, newValue) -> {

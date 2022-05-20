@@ -1,5 +1,6 @@
 package me.coley.recaf.presentation;
 
+import dev.xdark.recaf.plugin.RecafPlugin;
 import javafx.application.Platform;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafConstants;
@@ -14,6 +15,8 @@ import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * JavaFX based GUI presentation.
@@ -49,6 +52,14 @@ public class GuiPresentation implements Presentation {
 		// Setup listener to ensure we update classpath dependency directories
 		CompileDependencyUpdater.install(controller);
 		DecompileInterception.install(controller);
+        // Turn on the plugin that needs to be enabled
+		RecafPlugin.getInstance().enablePlugins(Configs.plugin().descriptor
+                .entrySet().stream()
+				.filter(Map.Entry::getValue)
+				.map(Map.Entry::getKey)
+				.collect(Collectors.toSet())
+        );
+		// PluginLoader.install(controller);
 		// Open UI
 		JFXUtils.initializePlatform(() -> {
 			try {

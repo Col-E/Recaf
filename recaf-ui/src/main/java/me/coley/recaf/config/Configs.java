@@ -21,6 +21,7 @@ public class Configs {
 	private static final ExportConfig export = new ExportConfig();
 	private static final RecentWorkspacesConfig recentWorkspaces = new RecentWorkspacesConfig();
 	private static final SsvmConfig ssvmConfig = new SsvmConfig();
+	private static final PluginConfig plugin = new PluginConfig();
 
 	/**
 	 * @return Collection of all config container instances.
@@ -36,7 +37,8 @@ public class Configs {
 				decompiler,
 				export,
 				recentWorkspaces,
-				ssvmConfig
+				ssvmConfig,
+				plugin
 		);
 	}
 
@@ -109,4 +111,12 @@ public class Configs {
 	public static SsvmConfig ssvmConfig() {
 		return ssvmConfig;
 	}
+
+	/**
+	 * @return Plugin config instance.
+	 */
+	public static PluginConfig plugin() {
+		return plugin;
+	}
+
 }

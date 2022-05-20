@@ -123,6 +123,7 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 * @param item
 	 * 		Child item to add.
 	 */
+	@SuppressWarnings("unchecked")
 	public void addAndSortChild(TreeItem<T> item) {
 		synchronized (sourceChildren) {
 			int index = Collections.binarySearch((List) getChildren(), item);

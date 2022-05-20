@@ -1,5 +1,6 @@
 package me.coley.recaf;
 
+import dev.xdark.recaf.plugin.RecafPlugin;
 import me.coley.recaf.launch.InitializerParameters;
 import me.coley.recaf.scripting.ScriptEngine;
 import me.coley.recaf.scripting.ScriptResult;
@@ -28,6 +29,8 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		setupLogging();
+		// Initialization plugin
+		RecafPlugin.initialize();
 		InitializerParameters parameters = InitializerParameters.fromArgs(args);
 		new Recaf().initialize(parameters);
 		// run script from parameters if found

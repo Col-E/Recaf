@@ -39,7 +39,7 @@ public final class SimplePluginManager implements PluginManager {
 	}
 
 	@Override
-	public Collection<? super Plugin> getPlugins() {
+	public <T extends Plugin> Collection<? super PluginContainer<T>> getPlugins() {
 		return Collections.unmodifiableCollection(nameMap.values());
 	}
 

@@ -38,7 +38,7 @@ public interface PluginManager {
 	/**
 	 * @return collection of plugins.
 	 */
-	Collection<? super Plugin> getPlugins();
+	<T extends Plugin> Collection<? super PluginContainer<T>> getPlugins();
 
 	/**
 	 * Registers new loader.

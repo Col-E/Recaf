@@ -8,10 +8,17 @@ mainClassName = "me.coley.recaf.Main"
 configurations {
     common
     implementation.extendsFrom common
+    // javafx
+    testImplementation.extendsFrom compileOnly
+}
+
+test {
+    useJUnitPlatform()
 }
 
 dependencies {
     implementation project(':recaf-core')
+    implementation project(':recaf-plugin')
     implementation docking
     implementation richtextfx
 
@@ -26,6 +33,11 @@ dependencies {
     compileOnly group: 'org.openjfx', name: 'javafx-base', version: javafxVersion, classifier: javafxPlatform
     compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: javafxVersion, classifier: javafxPlatform
     compileOnly group: 'org.openjfx', name: 'javafx-controls', version: javafxVersion, classifier: javafxPlatform
+
+    // Testing
+    testImplementation junit_api
+    testImplementation junit_params
+    testRuntimeOnly junit_engine
 }
 
 shadowJar {

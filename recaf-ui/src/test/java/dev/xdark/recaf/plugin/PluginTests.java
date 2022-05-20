@@ -1,15 +1,14 @@
 package dev.xdark.recaf.plugin;
 
-import dev.xdark.recaf.TestUtils;
 import dev.xdark.recaf.plugin.java.ZipPluginLoader;
+import dev.xdark.recaf.TestUtils;
 import me.coley.recaf.io.ByteSources;
+import me.coley.recaf.util.Directories;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.zip.ZipEntry;
@@ -18,10 +17,20 @@ import java.util.zip.ZipOutputStream;
 /**
  * @author xtherk
  */
-public class SimplePluginTests extends TestUtils {
+public class PluginTests extends TestUtils {
 
     private final Path samplePluginDir = sourcesDir.resolve("sample-plugin");
 
+    /**
+     * This method will generate a plugin example in Recaf Plugins Folder
+     */
+    @Test
+    @Disabled
+    public void testCreateSamplePluginFile() throws IOException {
+        Path target = Directories.getPluginDirectory().resolve("SamplePlugin.jar");
+        FileOutputStream fos = new FileOutputStream(target.toFile());
+        compressTestSamplePlugin(fos);
+    }
 
     @Test
     public void testLoadPlugin() throws PluginLoadException {
