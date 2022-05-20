@@ -156,6 +156,9 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		} else if (item instanceof Value.ObjectValue) {
 			// Object
 			cell.setGraphic(createObjectGraphic((Value.ObjectValue) item));
+		} else if (item instanceof Value.ArrayValue) {
+			// Array
+			cell.setGraphic(Icons.getIconView(Icons.ARRAY));
 		} else if (item instanceof Value.HandleValue) {
 			// Handle reference
 			cell.setGraphic(createHandleGraphic((Value.HandleValue) item));
