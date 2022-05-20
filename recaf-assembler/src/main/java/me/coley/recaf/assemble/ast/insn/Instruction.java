@@ -10,7 +10,7 @@ public class Instruction extends AbstractInstruction {
 	 * @param opcode
 	 * 		Opcode name.
 	 */
-	public Instruction(String opcode) {
+	public Instruction(int opcode) {
 		super(opcode);
 	}
 

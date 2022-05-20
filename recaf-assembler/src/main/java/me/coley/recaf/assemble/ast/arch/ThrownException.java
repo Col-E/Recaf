@@ -28,12 +28,12 @@ public class ThrownException extends BaseElement implements CodeEntry {
 	}
 
 	@Override
-	public void insertInto(Code code) {
-		code.addThrownException(this);
+	public String print() {
+		return String.format("throws %s", exceptionType);
 	}
 
 	@Override
-	public String print() {
-		return String.format("THROWS %s", exceptionType);
+	public void insertInto(Code code) {
+		code.add(this);
 	}
 }

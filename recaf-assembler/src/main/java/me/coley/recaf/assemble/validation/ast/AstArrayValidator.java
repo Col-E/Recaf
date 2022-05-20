@@ -17,13 +17,13 @@ public class AstArrayValidator implements AstValidationVisitor {
 	public void visit(AstValidator validator) {
 		if (validator.getUnit().isField())
 			return;
-		Code code = validator.getUnit().getCode();
+		Code code = validator.getUnit().getMethod().getCode();
 		if (code == null)
 			return;
 		for (AbstractInstruction instruction : code.getInstructions()) {
 			if (instruction instanceof NewArrayInstruction) {
 				NewArrayInstruction newArrayInstruction = (NewArrayInstruction) instruction;
-				char t = newArrayInstruction.getArrayType();
+				String t = newArrayInstruction.getArrayType();
 				try {
 					newArrayInstruction.getArrayTypeInt();
 				} catch (Exception ex) {

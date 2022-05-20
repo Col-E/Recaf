@@ -43,16 +43,25 @@ public class MethodParameters extends BaseElement implements Element, Descriptor
 
 	@Override
 	public String print() {
-		return parameters.stream()
-				.map(MethodParameter::print)
-				.collect(Collectors.joining(", "));
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < parameters.size(); i++) {
+			MethodParameter param = parameters.get(i);
+			sb.append(param.print());
+			if (i < parameters.size() - 1)
+				sb.append(", ");
+		}
+		return sb.toString();
 	}
 
 	@Override
 	public String getDesc() {
-		return "(" + parameters.stream()
-				.map(MethodParameter::getDesc)
-				.collect(Collectors.joining()) + ")";
+		StringBuilder sb = new StringBuilder();
+		sb.append('(');
+		for (MethodParameter param : parameters) {
+			sb.append(param.getDesc());
+		}
+		sb.append(')');
+		return sb.toString();
 	}
 
 	@Override

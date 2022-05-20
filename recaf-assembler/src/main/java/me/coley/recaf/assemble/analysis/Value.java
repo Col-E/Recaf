@@ -148,6 +148,8 @@ public class Value {
 
 		@Override
 		public String toString() {
+			if (array == null)
+				return "null";
 			return "[" + Arrays.stream(getArray())
 					.map(Object::toString)
 					.collect(Collectors.joining(", ")) +

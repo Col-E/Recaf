@@ -1,13 +1,14 @@
-static getStringAtIndex(I intParam, Ljava/util/List; listParam)Ljava/lang/String;
 // metadata
 signature (ILjava/util/List<Ljava/lang/String;>;)Ljava/lang/String;
+method .static getStringAtIndex (I intParam, Ljava/util/List; listParam)Ljava/lang/String;
 
 // code
 a:
  aload listParam
  iload intParam
 b:
- invokevirtual java/util/list.get(I)Ljava/lang/Object;
+ invokevirtual java/util/list.get (I)Ljava/lang/Object;
  checkcast java/lang/String
  areturn
 end:
+end

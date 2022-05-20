@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.analysis;
 
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.IllegalAstException;
+import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
@@ -14,6 +15,7 @@ import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.util.NumberUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.logging.Logging;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
@@ -35,8 +37,8 @@ public class Analyzer {
 	private static final boolean MANUAL_DEBUG = false;
 	private final Map<Label, String> catchHandlerTypes = new HashMap<>();
 	private final String selfType;
-	private final Unit unit;
 	private final Code code;
+	private final MethodDefinition method;
 	private ExpressionToAstTransformer expressionToAstTransformer;
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 	private Element currentlyVisiting;
@@ -44,13 +46,11 @@ public class Analyzer {
 	/**
 	 * @param selfType
 	 * 		Internal name of class defining the method.
-	 * @param unit
-	 * 		The unit containing the method code.
 	 */
-	public Analyzer(String selfType, Unit unit) {
+	public Analyzer(String selfType, MethodDefinition method) {
 		this.selfType = selfType;
-		this.unit = unit;
-		code = Objects.requireNonNull(unit.getCode(), "AST Unit must define a code region!");
+		this.method = method;
+		code = method.getCode();
 	}
 
 	/**
@@ -86,15 +86,24 @@ public class Analyzer {
 	public Analysis analyze() throws AstException {
 		List<AbstractInstruction> instructions = code.getChildrenOfType(AbstractInstruction.class);
 		Analysis analysis = new Analysis(instructions.size());
-		fillBlocks(analysis, instructions);
-		fillFrames(analysis, instructions);
+		try {
+			if (!instructions.isEmpty()) {
+				fillBlocks(analysis, instructions);
+				fillFrames(analysis, instructions);
+			}
+		} catch (AstException e) {
+			throw e;
+		} catch (Exception t) {
+			logger.error("Uncaught exception during analysis", t);
+			throw new MethodCompileException(code, t, "Uncaught exception during analysis!");
+		}
 		return analysis;
 	}
 
 	private void fillFrames(Analysis analysis, List<AbstractInstruction> instructions) throws AstException {
 		// Initialize with method definition parameters
 		Frame entryFrame = analysis.frame(0);
-		entryFrame.initialize(selfType, (MethodDefinition) unit.getDefinition());
+		entryFrame.initialize(selfType, method);
 		// Populate handler labels
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			Label handlerLabel = code.getLabel(tryCatch.getHandlerLabel());
@@ -295,7 +304,7 @@ public class Analyzer {
 							frame.push(new Value.WideReservedValue());
 							break;
 						case HANDLE:
-							frame.push(new Value.HandleValue((HandleInfo) ldcInstruction.getValue()));
+							frame.push(new Value.HandleValue(new HandleInfo((Handle) ldcInstruction.getValue())));
 							break;
 						case ANNO:
 						case ANNO_LIST:
@@ -367,7 +376,7 @@ public class Analyzer {
 				case NEWARRAY: {
 					// Get array type
 					NewArrayInstruction newArrayInstruction = (NewArrayInstruction) instruction;
-					Type type = Type.getType(String.valueOf(newArrayInstruction.getArrayType()));
+					Type type = Type.getType(String.valueOf(newArrayInstruction.getArrayTypeChar()));
 					// Get array size, if possible
 					Value.ArrayValue arrayValue;
 					Value stackTop = frame.pop();

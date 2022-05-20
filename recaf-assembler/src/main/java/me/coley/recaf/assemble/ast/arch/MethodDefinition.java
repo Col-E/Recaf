@@ -1,17 +1,21 @@
 package me.coley.recaf.assemble.ast.arch;
 
-import me.coley.recaf.assemble.ast.BaseElement;
+import me.coley.recaf.assemble.ast.Code;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Definition of a method.
  *
  * @author Matt Coley
  */
-public class MethodDefinition extends BaseElement implements MemberDefinition {
-	private final Modifiers modifiers;
+public class MethodDefinition extends AbstractDefinition {
+	private final List<ThrownException> thrownExceptions = new ArrayList<>();
 	private final String name;
 	private final MethodParameters params;
 	private final String returnType;
+	private final Code code;
 
 	/**
 	 * @param modifiers
@@ -23,33 +27,48 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 	 * @param returnType
 	 * 		Method return descriptor.
 	 */
-	public MethodDefinition(Modifiers modifiers, String name, MethodParameters params, String returnType) {
-		this.modifiers = modifiers;
+	public MethodDefinition(Modifiers modifiers, String name, MethodParameters params, String returnType, Code code) {
 		this.name = name;
 		this.params = params;
 		this.returnType = returnType;
+		this.code = code;
+		setModifiers(modifiers);
 	}
 
 	@Override
 	public String print() {
 		StringBuilder sb = new StringBuilder();
-		if (modifiers.value() > 0) {
-			sb.append(modifiers.print()).append(' ');
+		for (ThrownException thrownException : thrownExceptions)
+			sb.append(thrownException.print()).append("\n");
+		for (Annotation annotation : getAnnotations())
+			sb.append(annotation.print());
+		sb.append("method ");
+		if (getModifiers().value() > 0) {
+			sb.append(getModifiers().print().toLowerCase()).append(' ');
 		}
-		sb.append(name);
+		sb.append(name).append(' ');
 		sb.append('(').append(params.print()).append(')');
 		sb.append(returnType);
+		sb.append('\n');
+		sb.append(code.print());
+		sb.append('\n');
+		sb.append("end");
 		return sb.toString();
+	}
+
+	@Override
+	public boolean isClass() {
+		return false;
+	}
+
+	@Override
+	public boolean isField() {
+		return false;
 	}
 
 	@Override
 	public boolean isMethod() {
 		return true;
-	}
-
-	@Override
-	public Modifiers getModifiers() {
-		return modifiers;
 	}
 
 	@Override
@@ -60,6 +79,23 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 	@Override
 	public String getDesc() {
 		return params.getDesc() + returnType;
+	}
+
+	/**
+	 * @return Exceptions thrown by the method.
+	 */
+	public List<ThrownException> getThrownExceptions() {
+		return thrownExceptions;
+	}
+
+	/**
+	 * @param thrownException
+	 * 		Exception to add.
+	 *
+	 * @see #getThrownExceptions()
+	 */
+	public void addThrownException(ThrownException thrownException) {
+		thrownExceptions.add(thrownException);
 	}
 
 	/**
@@ -74,5 +110,12 @@ public class MethodDefinition extends BaseElement implements MemberDefinition {
 	 */
 	public String getReturnType() {
 		return returnType;
+	}
+
+	/**
+	 * @return Code body of the method.
+	 */
+	public Code getCode() {
+		return code;
 	}
 }

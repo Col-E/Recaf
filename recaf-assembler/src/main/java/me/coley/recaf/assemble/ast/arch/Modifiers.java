@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Element;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class Modifiers extends BaseElement implements Element {
+public class Modifiers extends BaseElement implements Element, Iterable<Modifier> {
 	private final List<Modifier> modifiers = new ArrayList<>();
 
 	/**
@@ -36,7 +37,12 @@ public class Modifiers extends BaseElement implements Element {
 	@Override
 	public String print() {
 		return modifiers.stream()
-				.map(Modifier::getName)
+				.map(m -> '.' + m.getName())
 				.collect(Collectors.joining(" "));
+	}
+
+	@Override
+	public Iterator<Modifier> iterator() {
+		return modifiers.listIterator();
 	}
 }

@@ -18,8 +18,8 @@ public abstract class AbstractInstruction extends BaseElement implements CodeEnt
 	 * @param opcode
 	 * 		Opcode name.
 	 */
-	public AbstractInstruction(String opcode) {
-		this(opcode, OpcodeUtil.nameToOpcode(opcode));
+	public AbstractInstruction(int opcode) {
+		this(OpcodeUtil.opcodeToName(opcode), opcode);
 	}
 
 	/**
@@ -42,7 +42,7 @@ public abstract class AbstractInstruction extends BaseElement implements CodeEnt
 	 * @return Opcode name.
 	 */
 	public String getOpcode() {
-		return opcode;
+		return opcode.toLowerCase();
 	}
 
 	/**

@@ -10,6 +10,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.analysis.Frame;
 import me.coley.recaf.assemble.analysis.Value;
+import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
@@ -66,9 +67,12 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		if (analysis == null)
 			return;
 		Unit unit = pipeline.getUnit();
-		Element element = unit.getCode().getChildOnLine(paragraphIndex + 1);
+		if (unit == null || unit.isField())
+			return;
+		Code code = unit.getMethod().getCode();
+		Element element = code.getChildOnLine(paragraphIndex + 1);
 		if (element instanceof AbstractInstruction) {
-			int insnIndex = unit.getCode().getInstructions().indexOf(element);
+			int insnIndex = code.getInstructions().indexOf(element);
 			if (insnIndex < analysis.getFrames().size()) {
 				Frame frame = analysis.frame(insnIndex);
 				variableView.update(frame);
@@ -139,6 +143,7 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 	 * 		Cell value.
 	 */
 	private static void populate(IndexedCell<Value> cell, Value item) {
+		String text = item == null ? null : item.toString();
 		if (item instanceof Value.EmptyPoppedValue || item instanceof Value.WideReservedValue) {
 			// Internal
 			cell.setGraphic(Icons.getIconView(Icons.INTERNAL));
@@ -154,10 +159,13 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		} else if (item instanceof Value.HandleValue) {
 			// Handle reference
 			cell.setGraphic(createHandleGraphic((Value.HandleValue) item));
+		} else if (item != null) {
+			cell.setGraphic(null);
 		} else {
+			// TODO: This should not happen
 			cell.setGraphic(null);
 		}
-		cell.setText(item.toString());
+		cell.setText(text);
 	}
 
 	private static Node createObjectGraphic(Value.ObjectValue item) {

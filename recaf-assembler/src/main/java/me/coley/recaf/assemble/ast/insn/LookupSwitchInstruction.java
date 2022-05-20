@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Lookup switch instruction.
@@ -28,7 +27,7 @@ public class LookupSwitchInstruction extends AbstractInstruction implements Flow
 	 * @param defaultIdentifier
 	 * 		Default label identifier.
 	 */
-	public LookupSwitchInstruction(String opcode, List<Entry> entries, String defaultIdentifier) {
+	public LookupSwitchInstruction(int opcode, List<Entry> entries, String defaultIdentifier) {
 		super(opcode);
 		this.entries = entries;
 		this.defaultIdentifier = defaultIdentifier;
@@ -71,10 +70,19 @@ public class LookupSwitchInstruction extends AbstractInstruction implements Flow
 
 	@Override
 	public String print() {
-		String mapping = getEntries().stream()
-				.map(Entry::print)
-				.collect(Collectors.joining(", "));
-		return getOpcode() + " mapping(" + mapping + ") default(" + getDefaultIdentifier() + ')';
+		StringBuilder sb = new StringBuilder();
+		sb.append(getOpcode()).append("\n");
+		for (Entry entry : getEntries()) {
+			sb
+					.append("\t\t")
+					.append("case ")
+					.append(entry.key)
+					.append(" ")
+					.append(entry.identifier)
+					.append("\n");
+		}
+		sb.append("\t\t").append("default ").append(getDefaultIdentifier());
+		return sb.toString();
 	}
 
 	@Override
@@ -117,7 +125,7 @@ public class LookupSwitchInstruction extends AbstractInstruction implements Flow
 
 		@Override
 		public String print() {
-			return identifier + "=" + key;
+			return "case " + key + " " + identifier;
 		}
 
 		@Override
