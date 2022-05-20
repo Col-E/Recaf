@@ -6,6 +6,7 @@ import dev.xdark.ssvm.classloading.CompositeBootClassLoader;
 import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.fs.FileDescriptorManager;
+import dev.xdark.ssvm.fs.Handle;
 import dev.xdark.ssvm.fs.HostFileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
@@ -106,7 +107,7 @@ public class SsvmIntegration {
 									in = new FileInputStream(path);
 								else
 									in = new ByteArrayInputStream(new byte[0]);
-								inputs.put(fd, in);
+								inputs.put(Handle.of(fd), in);
 								return fd;
 							}
 							case WRITE:
@@ -116,7 +117,7 @@ public class SsvmIntegration {
 									out = new FileOutputStream(path, mode == APPEND);
 								else
 									out = new ByteArrayOutputStream();
-								outputs.put(fd, out);
+								outputs.put(Handle.of(fd), out);
 								return fd;
 							}
 							default:
