@@ -1,4 +1,4 @@
-method .static numToString(I:num)V
+method .static numToString (I num)V
 a:
  // default for unhandled num
  ldc "?"
@@ -17,7 +17,7 @@ c:
  // print the name
  getstatic java/lang/System.out Ljava/io/PrintStream;
  aload name
- invokevirtual java/io/PrintStream.println(Ljava/lang/String;)V
+ invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
  return
 end:
 end

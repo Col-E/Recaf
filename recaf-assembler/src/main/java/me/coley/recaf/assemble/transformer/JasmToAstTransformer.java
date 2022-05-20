@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.ast.*;
+import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.ast.arch.MethodParameters;
 import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.insn.*;
@@ -10,7 +11,6 @@ import me.coley.recaf.assemble.ast.meta.Signature;
 import me.coley.recaf.util.EscapeUtil;
 import me.darknet.assembler.compiler.FieldDescriptor;
 import me.darknet.assembler.compiler.MethodDescriptor;
-import me.darknet.assembler.parser.MethodParameter;
 import me.darknet.assembler.parser.*;
 import me.darknet.assembler.parser.groups.*;
 import me.darknet.assembler.transform.MethodVisitor;
@@ -106,14 +106,14 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	}
 
 	@Override
-	public void visitMethodInsn(int opcode, IdentifierGroup desc, boolean itf) throws AssemblerException {
-		MethodDescriptor md = new MethodDescriptor(desc.content(), false);
+	public void visitMethodInsn(int opcode, IdentifierGroup name, IdentifierGroup desc, boolean itf) throws AssemblerException {
+		MethodDescriptor md = new MethodDescriptor(name.content(), desc.content());
 		add(new MethodInstruction(opcode, md.owner, md.name, md.getDescriptor()));
 	}
 
 	@Override
 	public void visitFieldInsn(int opcode, IdentifierGroup name, IdentifierGroup desc) throws AssemblerException {
-		FieldDescriptor fs = new FieldDescriptor(name.content());
+		FieldDescriptor fs = new FieldDescriptor(name.content(), desc.content());
 		add(new FieldInstruction(opcode, fs.owner, fs.name, desc.content()));
 	}
 
@@ -156,7 +156,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	}
 
 	@Override
-	public void visitInvokeDyanmicInsn(String identifier, IdentifierGroup descriptor, HandleGroup handle, ArgsGroup args) throws AssemblerException {
+	public void visitInvokeDynamicInstruction(String identifier, IdentifierGroup descriptor, HandleGroup handle, ArgsGroup args) throws AssemblerException {
 		HandleInfo handleInfo = from(handle);
 		List<IndyInstruction.BsmArg> bsmArgs = new ArrayList<>();
 		for (Group arg : args.getBody().getChildren()) {
@@ -214,18 +214,17 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	}
 
 	@Override
-	public MethodVisitor visitMethod(AccessModsGroup accessMods, IdentifierGroup descriptor, BodyGroup body) throws AssemblerException {
-		MethodDescriptor md = new MethodDescriptor(descriptor.content(), true);
+	public MethodVisitor visitMethod(MethodDeclarationGroup dcl) throws AssemblerException {
 		MethodParameters parameters = new MethodParameters();
-		for (MethodParameter mp : md.parameters) {
-			parameters.add(new me.coley.recaf.assemble.ast.arch.MethodParameter(mp.getDescriptor(), mp.getName()));
+		for (MethodParameterGroup param : dcl.params.methodParameters) {
+			parameters.add(new MethodParameter(param.getDescriptorValue(), param.getNameValue()));
 		}
 		this.code = new Code();
 		MethodDefinition method = new MethodDefinition(
-				fromAccessMods(accessMods),
-				md.name,
+				fromAccessMods(dcl.accessMods),
+				dcl.name.content(),
 				parameters,
-				md.returnType,
+				dcl.returnType,
 				this.code);
 		for (ThrownException thrown : currentAttributes.getThrownExceptions()) {
 			method.addThrownException(thrown);
@@ -282,17 +281,12 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	}
 
 	private static HandleInfo from(HandleGroup handle) {
-		if (handle.isField()) {
-			FieldDescriptor fs = new FieldDescriptor(content(handle.getDescriptor()));
-			return new HandleInfo(handle.getHandleType().content(), fs.owner, fs.name, content(handle.getFieldDescriptor()));
-		} else {
-			MethodDescriptor mdh = new MethodDescriptor(handle.getDescriptor().content(), false);
+			MethodDescriptor mdh = new MethodDescriptor(handle.getName().content(), handle.getDescriptor().content());
 			return new HandleInfo(
 					handle.getHandleType().content(),
 					mdh.owner,
 					mdh.name,
-					mdh.getDescriptor());
-		}
+					mdh.descriptor);
 	}
 
 	private static ArgType from(Group group) {

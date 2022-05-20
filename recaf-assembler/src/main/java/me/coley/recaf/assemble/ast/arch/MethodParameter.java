@@ -52,6 +52,6 @@ public class MethodParameter extends BaseElement implements Named, Descriptor, V
 
 	@Override
 	public String print() {
-		return desc + ":" + name;
+		return desc + " " + name;
 	}
 }

@@ -1,7 +1,9 @@
 package me.coley.recaf.assemble.ast;
 
 import me.coley.recaf.assemble.ast.arch.Annotation;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.OpcodeUtil;
+import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 
@@ -103,10 +105,7 @@ public abstract class BaseArg extends BaseElement implements Printable {
 				else
 					return ".type " + type.getDescriptor();
 			case STRING:
-				String string = (String) value;
-				// escape quotes
-				string = string.replace("\"", "\\\"");
-				return "\"" + string + "\"";
+				return " \"" + EscapeUtil.escape((String) getValue()) + '\"';
 			case HANDLE:
 				HandleInfo info = (HandleInfo) value;
 				return ".handle " + info.print() + "";

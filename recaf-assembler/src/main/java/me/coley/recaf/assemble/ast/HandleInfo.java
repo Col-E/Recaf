@@ -89,10 +89,6 @@ public class HandleInfo extends BaseElement {
 
 	@Override
 	public String print() {
-		if (isMethod) {
-			return tag + " " + EscapeUtil.escapeSpace(owner + '.' + name) + desc;
-		} else {
-			return tag + " " + EscapeUtil.escapeSpace(owner + '.' + name) + ' ' + desc;
-		}
+			return tag + " " + EscapeUtil.escapeSpace(owner + '.' + name) + ' ' + EscapeUtil.escapeSpace(desc);
 	}
 }

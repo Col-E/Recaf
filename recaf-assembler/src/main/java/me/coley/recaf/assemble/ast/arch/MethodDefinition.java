@@ -46,7 +46,7 @@ public class MethodDefinition extends AbstractDefinition {
 		if (getModifiers().value() > 0) {
 			sb.append(getModifiers().print().toLowerCase()).append(' ');
 		}
-		sb.append(name);
+		sb.append(name).append(' ');
 		sb.append('(').append(params.print()).append(')');
 		sb.append(returnType);
 		sb.append('\n');

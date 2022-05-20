@@ -30,7 +30,7 @@ public class ExpressionTransformTests {
 			assertEquals("A:\n" +
 					"	getstatic java/lang/System.out Ljava/io/PrintStream;\n" +
 					"	aload text\n" +
-					"	invokevirtual java/io/PrintStream.println(Ljava/lang/String;)V\n" +
+					"	invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V\n" +
 					"B:", formatted);
 		} catch (Exception ex) {
 			fail(ex);

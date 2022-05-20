@@ -1,4 +1,4 @@
-method .static printAdd(D:a,D:b)V
+method .static printAdd (D a, D b)V
 a:
  dload a
  dload b

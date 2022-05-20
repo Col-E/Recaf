@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DefinitionArchTests extends TestUtil {
 	@Test
 	public void testSimpleDefinition() {
-		handle("method simple()V\nend", unit -> {
+		handle("method simple ()V\nend", unit -> {
 			Definition def = unit.getDefinition();
 			assertEquals("simple", def.getName());
 			assertEquals("()V", def.getDesc());
@@ -29,7 +29,7 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testDefinitionWithParams() {
-		handle("method simple(Ljava/lang/String;:param1,I:param2)V\nend", unit -> {
+		handle("method simple (Ljava/lang/String; param1,  I param2)V\nend", unit -> {
 			MethodDefinition def = (MethodDefinition) unit.getDefinition();
 			assertEquals(2, def.getParams().getParameters().size());
 			MethodParameter parameter1 = def.getParams().getParameters().get(0);
@@ -52,7 +52,7 @@ public class DefinitionArchTests extends TestUtil {
 			"Ljava/util/Map<TT;TV;>;",
 	})
 	public void testSignature(String sig) {
-		handle("signature " + sig + "\nmethod simple()V\nend", unit -> {
+		handle("signature " + sig + "\nmethod simple ()V\nend", unit -> {
 			MethodDefinition method = unit.getMethod();
 			assertEquals(sig, method.getSignature().getSignature());
 		});
@@ -126,7 +126,7 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testThrownException() {
-		handle("throws java/lang/Exception" + "\nmethod simple()V\nend" , unit -> {
+		handle("throws java/lang/Exception" + "\nmethod simple ()V\nend" , unit -> {
 			MethodDefinition method = unit.getMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getThrownExceptions().size());
@@ -136,7 +136,7 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testThrownExceptionShadowsPrimitive() {
-		handle("throws I" + "\nmethod simple()V\nend", unit -> {
+		handle("throws I" + "\nmethod simple ()V\nend", unit -> {
 			MethodDefinition method = unit.getMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getThrownExceptions().size());
@@ -146,7 +146,7 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testThrownExceptionShadowsKeyword() {
-		handle("throws throws" + "\nmethod simple()V\nend", unit -> {
+		handle("throws throws" + "\nmethod simple ()V\nend", unit -> {
 			MethodDefinition method = unit.getMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getThrownExceptions().size());
@@ -156,7 +156,7 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testAnno() {
-		handle("annotation com/example/MyAnno numArg 500 strArg \"hello\" end" + "\nmethod simple()V\nend", unit -> {
+		handle("annotation com/example/MyAnno numArg 500 strArg \"hello\" end" + "\nmethod simple ()V\nend", unit -> {
 			MethodDefinition method = unit.getMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getAnnotations().size());
@@ -171,7 +171,7 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testAnnoWithEnum() {
-		handle("annotation com/example/MyAnno v enum com/example/Example NAME end" + "\nmethod simple()V\nend", unit -> {
+		handle("annotation com/example/MyAnno v enum com/example/Example NAME end" + "\nmethod simple ()V\nend", unit -> {
 			MethodDefinition method = unit.getMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getAnnotations().size());
@@ -188,7 +188,7 @@ public class DefinitionArchTests extends TestUtil {
 	@Test
 	@SuppressWarnings("unchecked")
 	public void testAnnoWithList() {
-		handle("annotation com/example/MyAnno list args 1 2 3 end end" + "\nmethod simple()V\nend", unit -> {
+		handle("annotation com/example/MyAnno list args 1 2 3 end end" + "\nmethod simple ()V\nend", unit -> {
 			MethodDefinition method = unit.getMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getAnnotations().size());

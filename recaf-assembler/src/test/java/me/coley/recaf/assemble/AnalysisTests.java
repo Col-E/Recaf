@@ -27,11 +27,11 @@ public class AnalysisTests extends TestUtil {
 		public void testLinear() {
 			// This isn't a complete method, but the analyzer is meant to work even in
 			// incomplete situations. This will show that there is a single block.
-			String code = "method .static linear()V\n" +
+			String code = "method .static linear ()V\n" +
 					"a:\n" +
 					"getstatic java/lang/System.out Ljava/io/PrintStream;\n" +
 					"ldc \"Hello\"\n" +
-					"invokevirtual java/io/PrintStream.println(Ljava/lang/String;)V\n" +
+					"invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V\n" +
 					"b:" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
@@ -53,13 +53,13 @@ public class AnalysisTests extends TestUtil {
 			// - before
 			// - inside
 			// - after
-			String code = "method .static ifCond(Z:skip)V\n" +
+			String code = "method .static ifCond (Z skip)V\n" +
 					"a:\n" +
 					"iload skip\n" +
 					"ifne end\n" +
 					"getstatic java/lang/System.out Ljava/io/PrintStream;\n" +
 					"ldc \"Flag is true\"\n" +
-					"invokevirtual java/io/PrintStream.println(Ljava/lang/String;)V\n" +
+					"invokevirtual java/io/PrintStream.printlnc (Ljava/lang/String;)V\n" +
 					"end:\n" +
 					"nop" + "\nend";
 			handle(code, unit -> {
@@ -83,7 +83,7 @@ public class AnalysisTests extends TestUtil {
 		public void testSwitch() {
 			// Each switch case will just be the label and return.
 			// The end will have padding no-op instructions for us to differentiate it.
-			String code = "method .static switchMethod(I:value)V\n" +
+			String code = "method .static switchMethod (I value)V\n" +
 					"start:\n" +
 					"  iload value\n" +
 					"  tableswitch 0 2 a b c default d \n" +
@@ -111,7 +111,7 @@ public class AnalysisTests extends TestUtil {
 
 		@Test
 		public void testTryCatch() {
-			String code = "method .static tryCatch()V\n" +
+			String code = "method .static tryCatch ()V\n" +
 					"catch * a b c\n" +
 					"a: nop nop nop\n" +
 					"b: goto end\n" +
@@ -137,7 +137,7 @@ public class AnalysisTests extends TestUtil {
 
 		@Test
 		public void testTryCatchWithInsideBlocks() {
-			String code = "method .static tryCatch(Z:flag)V\n" +
+			String code = "method .static tryCatch (Z flag)V\n" +
 					"catch * tryStart tryEnd tryHandler\n" +
 					"tryStart: \n" +
 					"  ifne skip\n" +
@@ -171,7 +171,7 @@ public class AnalysisTests extends TestUtil {
 		@Test
 		public void testMath() {
 			// This isn't a complete method, but the analyzer is meant to work even in incomplete situations.
-			String code = "method .static math()V\n" +
+			String code = "method .static math ()V\n" +
 					"a:\n" +
 					"iconst_1\n" +
 					"ldc 2\n" +
@@ -203,7 +203,7 @@ public class AnalysisTests extends TestUtil {
 
 		@Test
 		public void testArrayHello() {
-			String code = "method .static hello()V\n" +
+			String code = "method .static hello ()V\n" +
 					"a:\n" +
 					// new array[5]
 					"iconst_5\n" +
@@ -237,7 +237,7 @@ public class AnalysisTests extends TestUtil {
 					// text = new String(array)
 					"new java/lang/String\n" +
 					"dup\n" +
-					"invokespecial java/lang/String.<init>([B)V\n" +
+					"invokespecial java/lang/String.<init> ([B)V\n" +
 					"astore text\n" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
@@ -259,7 +259,7 @@ public class AnalysisTests extends TestUtil {
 		@Test
 		public void testTypeMerge() {
 			// This isn't a complete method, but the analyzer is meant to work even in incomplete situations.
-			String code = "method .static merge(I:type)V\n" +
+			String code = "method .static merge (I type)V\n" +
 					"start:\n" +
 					"  iload type\n" +
 					"  tableswitch 0 2 a b c default d\n" +
@@ -302,7 +302,7 @@ public class AnalysisTests extends TestUtil {
 		@Test
 		public void testNoInfiniteLoop() {
 			// If our branch follow conditions are too loose this will infinite loop
-			String code = "method .static merge(I:type)V\n" +
+			String code = "method .static merge (I type)V\n" +
 					"start:\n" +
 					"  iload type\n" +
 					"  tableswitch 0 2 a b c default d\n" +

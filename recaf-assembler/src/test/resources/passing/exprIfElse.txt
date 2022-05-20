@@ -1,4 +1,4 @@
-method .static interceptData(Ljava/lang/String;:data)V
+method .static interceptData (Ljava/lang/String; data)V
 a:
  .expr
     if (data != null && !data.isEmpty()) {

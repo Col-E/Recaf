@@ -58,10 +58,11 @@ public class Annotation extends BaseElement implements CodeEntry {
 	@Override
 	public String print() {
 		String op = isVisible ? "annotation" : "invisible-annotation";
+		if(args.isEmpty()) return op + " " + type + " end\n";
 		String argsString = args.entrySet().stream()
 				.map(e -> e.getKey() + " " + e.getValue().print())
 				.collect(Collectors.joining("\n"));
-		return String.format("%s %s\n %s\nend ", op,
+		return String.format("%s %s\n %s\nend\n ", op,
 				type, argsString);
 	}
 

@@ -1,4 +1,4 @@
-method .static deleteFile(Ljava/lang/String;:fileName)Z
+method .static deleteFile (Ljava/lang/String; fileName)Z
 a:
  // deleted = false
  iconst_0

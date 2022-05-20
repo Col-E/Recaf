@@ -23,15 +23,15 @@ public class AstValidationTests extends TestUtil {
 		@Test
 		public void testCorrect() {
 			for (int i = Byte.MIN_VALUE; i < Byte.MAX_VALUE; i++)
-				assertCorrect("method dummy()V\n" + "bipush " + i + "\nend");
+				assertCorrect("method dummy ()V\n" + "bipush " + i + "\nend");
 		}
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method dummy()V\n" + "bipush " + (Byte.MIN_VALUE - 1) + "\nend",
-				"method dummy()V\n" + "bipush " + (Byte.MAX_VALUE + 1) + "\nend",
-				"method dummy()V\n" + "sipush " + (Short.MIN_VALUE - 1) + "\nend",
-				"method dummy()V\n" + "sipush " + (Short.MAX_VALUE + 1) + "\nend",
+				"method dummy ()V\n" + "bipush " + (Byte.MIN_VALUE - 1) + "\nend",
+				"method dummy ()V\n" + "bipush " + (Byte.MAX_VALUE + 1) + "\nend",
+				"method dummy ()V\n" + "sipush " + (Short.MIN_VALUE - 1) + "\nend",
+				"method dummy ()V\n" + "sipush " + (Short.MAX_VALUE + 1) + "\nend",
 		})
 		public void testMissingTryCatchLabels(String original) {
 			assertMatch(original, ValidationMessage.INT_VAL_TOO_BIG);
@@ -42,11 +42,11 @@ public class AstValidationTests extends TestUtil {
 	class VariableUsage {
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method dummy()V\n" + "astore newVariable" + "\nend",
-				"method dummy()V\n" + "istore newVariable" + "\nend",
-				"method dummy()V\n" + "fstore newVariable" + "\nend",
-				"method dummy(I:param)V\n" + "iload param" + "\nend",
-				"method dummy(Ljava/lang/Object;:param)V\n" + "aload param" + "\nend"
+				"method dummy ()V\n" + "astore newVariable" + "\nend",
+				"method dummy ()V\n" + "istore newVariable" + "\nend",
+				"method dummy ()V\n" + "fstore newVariable" + "\nend",
+				"method dummy (I param)V\n" + "iload param" + "\nend",
+				"method dummy (Ljava/lang/Object; param)V\n" + "aload param" + "\nend"
 		})
 		public void testCorrect(String original) {
 			assertCorrect(original);
@@ -54,12 +54,12 @@ public class AstValidationTests extends TestUtil {
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method dummy()V\n" + "aload doesnotexist" + "\nend",
-				"method dummy()V\n" + "iload doesnotexist" + "\nend",
-				"method dummy()V\n" + "fload doesnotexist" + "\nend",
-				"method dummy()V\n" + "dload doesnotexist" + "\nend",
-				"method dummy()V\n" + "lload doesnotexist" + "\nend",
-				"method dummy()V\n" + "iinc doesnotexist 1" + "\nend"
+				"method dummy ()V\n" + "aload doesnotexist" + "\nend",
+				"method dummy ()V\n" + "iload doesnotexist" + "\nend",
+				"method dummy ()V\n" + "fload doesnotexist" + "\nend",
+				"method dummy ()V\n" + "dload doesnotexist" + "\nend",
+				"method dummy ()V\n" + "lload doesnotexist" + "\nend",
+				"method dummy ()V\n" + "iinc doesnotexist 1" + "\nend"
 		})
 		public void testUsedBeforeDefined(String original) {
 			assertMatch(original, ValidationMessage.VAR_USE_BEFORE_DEF);
@@ -67,11 +67,11 @@ public class AstValidationTests extends TestUtil {
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method dummy(Ljava/lang/String;:param)V\niload param" + "\nend",
-				"method dummy(I:param)V\naload param" + "\nend",
-				"method dummy(I:param)V\nfload param" + "\nend",
-				"method dummy(I:param)V\ndload param" + "\nend",
-				"method dummy(I:param)V\nlload param" + "\nend",
+				"method dummy (Ljava/lang/String; param)V\niload param" + "\nend",
+				"method dummy (I param)V\naload param" + "\nend",
+				"method dummy (I param)V\nfload param" + "\nend",
+				"method dummy (I param)V\ndload param" + "\nend",
+				"method dummy (I param)V\nlload param" + "\nend",
 		})
 		public void testUsageOfVarOfDifferentTypeFromParameters(String orginal) {
 			assertMatch(orginal, ValidationMessage.VAR_USE_OF_DIFF_TYPE);
@@ -79,14 +79,14 @@ public class AstValidationTests extends TestUtil {
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"method dummy()V\n" + "astore param\n" + "iload param" + "\nend",
-				"method dummy()V\n" + "astore param\n" + "fload param" + "\nend",
-				"method dummy()V\n" + "astore param\n" + "dload param" + "\nend",
-				"method dummy()V\n" + "astore param\n" + "lload param" + "\nend",
-				"method dummy()V\n" + "istore param\n" + "aload param" + "\nend",
-				"method dummy()V\n" + "istore param\n" + "fload param" + "\nend",
-				"method dummy()V\n" + "istore param\n" + "dload param" + "\nend",
-				"method dummy()V\n" + "istore param\n" + "lload param" + "\nend",
+				"method dummy ()V\n" + "astore param\n" + "iload param" + "\nend",
+				"method dummy ()V\n" + "astore param\n" + "fload param" + "\nend",
+				"method dummy ()V\n" + "astore param\n" + "dload param" + "\nend",
+				"method dummy ()V\n" + "astore param\n" + "lload param" + "\nend",
+				"method dummy ()V\n" + "istore param\n" + "aload param" + "\nend",
+				"method dummy ()V\n" + "istore param\n" + "fload param" + "\nend",
+				"method dummy ()V\n" + "istore param\n" + "dload param" + "\nend",
+				"method dummy ()V\n" + "istore param\n" + "lload param" + "\nend",
 		})
 		public void testUsageOfVarOfDifferentTypeFromCode(String original) {
 			assertMatch(original, ValidationMessage.VAR_USE_OF_DIFF_TYPE);

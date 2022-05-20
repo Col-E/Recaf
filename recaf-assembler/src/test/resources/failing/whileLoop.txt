@@ -1,6 +1,6 @@
 // this SHOULD work, but Javassist is generating the while loop conditional jump target address incorrectly
 // once fixed, move this to the 'passing' directory
-method .static inputLoop()V
+method .static inputLoop ()V
 a:
  expr
    String input;

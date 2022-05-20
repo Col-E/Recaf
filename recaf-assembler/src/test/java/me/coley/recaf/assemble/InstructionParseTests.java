@@ -78,7 +78,7 @@ public class InstructionParseTests extends TestUtil {
 	public class Method {
 		@Test
 		public void testNormal() {
-			handle("invokestatic java/lang/System.getProperties()Ljava/lang/Properties;", method -> {
+			handle("invokestatic java/lang/System.getProperties ()Ljava/lang/Properties;", method -> {
 				assertEquals("java/lang/System", method.getOwner());
 				assertEquals("getProperties", method.getName());
 				assertEquals("()Ljava/lang/Properties;", method.getDesc());
@@ -87,7 +87,7 @@ public class InstructionParseTests extends TestUtil {
 
 		@Test
 		public void testNormalPrimAndObjParams() {
-			handle("invokestatic com/example/FooBar.foo(ILjava/lang/String;)I", method -> {
+			handle("invokestatic com/example/FooBar.foo (ILjava/lang/String;)I", method -> {
 				assertEquals("com/example/FooBar", method.getOwner());
 				assertEquals("foo", method.getName());
 				assertEquals("(ILjava/lang/String;)I", method.getDesc());
@@ -96,7 +96,7 @@ public class InstructionParseTests extends TestUtil {
 
 		@Test
 		public void testNormalObjAndPrimParams() {
-			handle("invokestatic com/example/FooBar.foo(Ljava/lang/String;I)I", method -> {
+			handle("invokestatic com/example/FooBar.foo (Ljava/lang/String;I)I", method -> {
 				assertEquals("com/example/FooBar", method.getOwner());
 				assertEquals("foo", method.getName());
 				assertEquals("(Ljava/lang/String;I)I", method.getDesc());
@@ -105,7 +105,7 @@ public class InstructionParseTests extends TestUtil {
 
 		@Test
 		public void testDefaultPackage() {
-			handle("invokestatic DefaultPackage.getInt()I", method -> {
+			handle("invokestatic DefaultPackage.getInt ()I", method -> {
 				assertEquals("DefaultPackage", method.getOwner());
 				assertEquals("getInt", method.getName());
 				assertEquals("()I", method.getDesc());
@@ -114,12 +114,12 @@ public class InstructionParseTests extends TestUtil {
 
 		@Test
 		public void testNameShadowsPrimitiveClass() {
-			handle("invokestatic I.Z()F", method -> {
+			handle("invokestatic I.Z ()F", method -> {
 				assertEquals("I", method.getOwner());
 				assertEquals("Z", method.getName());
 				assertEquals("()F", method.getDesc());
 			});
-			handle("invokestatic C.B([I)[Z", method -> {
+			handle("invokestatic C.B ([I)[Z", method -> {
 				assertEquals("C", method.getOwner());
 				assertEquals("B", method.getName());
 				assertEquals("([I)[Z", method.getDesc());
@@ -128,7 +128,7 @@ public class InstructionParseTests extends TestUtil {
 
 		@Test
 		public void testNameShadowsKeyword() {
-			handle("invokestatic public.STATIC(LSTORE;)F", method -> {
+			handle("invokestatic public.STATIC (LSTORE;)F", method -> {
 				assertEquals("public", method.getOwner());
 				assertEquals("STATIC", method.getName());
 				assertEquals("(LSTORE;)F", method.getDesc());
@@ -137,7 +137,7 @@ public class InstructionParseTests extends TestUtil {
 
 		@Test
 		public void testUnicodeMatch() {
-			handle("invokestatic 下.雨(L下;)L了;", method -> {
+			handle("invokestatic 下.雨 (L下;)L了;", method -> {
 				assertEquals("下", method.getOwner());
 				assertEquals("雨", method.getName());
 				assertEquals("(L下;)L了;", method.getDesc());
@@ -146,7 +146,7 @@ public class InstructionParseTests extends TestUtil {
 
 		@Test
 		public void testUnicodeEscapedMatch() {
-			handle("invokestatic \\u4E0B.\\u96E8(L\\u4E0B;)L\\u4E86;", method -> {
+			handle("invokestatic \\u4E0B.\\u96E8 (L\\u4E0B;)L\\u4E86;", method -> {
 				assertEquals("\\u4E0B", method.getOwner());
 				assertEquals("\\u96E8", method.getName());
 				assertEquals("(L\\u4E0B;)L\\u4E86;", method.getDesc());
@@ -573,7 +573,7 @@ public class InstructionParseTests extends TestUtil {
 	}
 
 	private static CodeEntry staticHandle(String code) {
-		String wrapped = "method somethind()V\n" + code + "\nend";
+		String wrapped = "method somethind ()V\n" + code + "\nend";
 		Unit unit = generateSilent(wrapped);
 		assertNotNull(unit);
 		MethodDefinition method = unit.getMethod();

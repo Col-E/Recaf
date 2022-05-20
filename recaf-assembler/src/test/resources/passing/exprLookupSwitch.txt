@@ -1,4 +1,4 @@
-method .static handleCode(I:code)V
+method .static handleCode (I code)V
 a:
  .expr
     int range = code - (code % 100);
