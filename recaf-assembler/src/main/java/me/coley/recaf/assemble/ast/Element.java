@@ -2,7 +2,6 @@ package me.coley.recaf.assemble.ast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Base AST element which exposes position information of the element within the document text
@@ -15,6 +14,16 @@ public interface Element extends Printable {
 	 * @return Line number the element appears on.
 	 */
 	int getLine();
+
+	/**
+	 * @return Start column of the element.
+	 */
+	int getColumnStart();
+
+	/**
+	 * @return End column of the element.
+	 */
+	int getColumnEnd();
 
 	/**
 	 * @return Position in the text the element appears at.
@@ -55,7 +64,17 @@ public interface Element extends Printable {
 	 * @param line
 	 * 		Line to check.
 	 *
-	 * @return First child element on the given line.
+	 * @return List of children on the line.
 	 */
-	Element getChildOnLine(int line);
+	List<Element> getChildrenAt(int line);
+
+	/**
+	 * @param line
+	 * 		Line to check.
+	 * @param column
+	 * 		Column to check
+	 *
+	 * @return First child element on the given line/column.
+	 */
+	Element getChildAt(int line, int column);
 }

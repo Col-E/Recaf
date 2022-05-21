@@ -22,10 +22,7 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * All in one utility for using the assembler from start to finish.
@@ -340,20 +337,34 @@ public class AssemblerPipeline {
 	/**
 	 * @param lineNo
 	 * 		Line number.
+	 * @param colPos
+	 * 		Column position.
 	 *
 	 * @return {@link Element} of latest AST at the given line.
 	 * {@code null} if no AST is available.
 	 */
-	public Element getElementOnLine(int lineNo) {
-		// TODO: Use unit.getChildOnLine(lineNo)?
-		//  - may need to tweak how it works so that we get relevant data types
-		//    if the child-most types are too generic.
+	public Element getCodeElementAt(int lineNo, int colPos) {
 		if (unit == null || !unit.isMethod())
 			return null;
 		Code code = unit.getMethod().getCode();
 		if (code == null)
 			return null;
-		return code.getChildOnLine(lineNo);
+		return code.getChildAt(lineNo, colPos);
+	}
+
+	/**
+	 * @param lineNo
+	 * 		Line number.
+	 *
+	 * @return List of {@link Element}s of latest AST on the given line.
+	 */
+	public List<Element> getCodeElementsAt(int lineNo) {
+		if (unit == null || !unit.isMethod())
+			return Collections.emptyList();
+		Code code = unit.getMethod().getCode();
+		if (code == null)
+			return Collections.emptyList();
+		return code.getChildrenAt(lineNo);
 	}
 
 	/**

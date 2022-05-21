@@ -216,7 +216,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 						hbox.getChildren().add(bracketFold);
 					}
 				}
-				hbox.getChildren().add(indicatorFactory.apply(paragraph));
+				hbox.getChildren().add(indicatorFactory.createGraphic(paragraph));
 				hbox.setAlignment(Pos.CENTER_LEFT);
 				paragraphGraphicReady.add(paragraph);
 				return hbox;

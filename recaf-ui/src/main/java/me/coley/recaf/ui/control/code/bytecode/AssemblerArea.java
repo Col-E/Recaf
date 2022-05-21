@@ -82,11 +82,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		// Setup variable highlighting
 		VariableHighlighter variableHighlighter = new VariableHighlighter(pipeline, this);
 		variableHighlighter.addIndicator(getIndicatorFactory());
-		variableHighlighter.addSelectedLineListener(currentParagraphProperty());
+		variableHighlighter.addCaretPositionListener(caretPositionProperty());
 		// Setup flow highlighting
 		FlowHighlighter flowHighlighter = new FlowHighlighter(pipeline, this);
 		flowHighlighter.addIndicator(getIndicatorFactory());
-		flowHighlighter.addSelectedLineListener(currentParagraphProperty());
+		flowHighlighter.addCaretPositionListener(caretPositionProperty());
 		// AST parsing loop
 		setupAstParseThread();
 		// Context menu support
@@ -206,7 +206,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		CharacterHit hit = hit(e.getX(), e.getY());
 		Position hitPos = offsetToPosition(hit.getInsertionIndex(),
 				TwoDimensional.Bias.Backward);
-		int line = hitPos.getMajor() + 1; // Position is 0 indexed
+		int line = hitPos.getMajor() + 1; // Major is line, position is 0 indexed
+		int col = hitPos.getMinor(); // Minor is col
 		// Sync caret
 		moveTo(hit.getInsertionIndex());
 		// Create menu if needed
@@ -214,7 +215,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 			menu = new ContextMenu();
 			menu.setAutoHide(true);
 			menu.setHideOnEscape(true);
-			Element element = pipeline.getElementOnLine(line);
+			Element element = pipeline.getCodeElementAt(line, col);
 			if (element != null) {
 				// TODO: Context menu based on AST
 				// TODO: Sub-menu for more accurate selections (class/member names in part of AST selected)

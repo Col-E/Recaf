@@ -50,17 +50,18 @@ public class FlowHighlighter implements IndicatorApplier {
 	}
 
 	/**
-	 * Add selected line listener so that we can be notified of when new selections contain variable refs.
+	 * Add selected line listener so that we can be notified of when new selections contain flow refs.
 	 *
-	 * @param selectedParagraph
-	 * 		Observable paragraph index.
+	 * @param selectedCaretPosition
+	 * 		Observable caret position.
 	 */
-	public void addSelectedLineListener(ObservableValue<Integer> selectedParagraph) {
-		selectedParagraph.addListener((observable, oldValue, newValue) -> {
+	public void addCaretPositionListener(ObservableValue<Integer> selectedCaretPosition) {
+		selectedCaretPosition.addListener((observable, oldValue, newValue) -> {
 			sources.clear();
 			destinations.clear();
-			// The selected paragraph is 0-based, lines are 1-based
-			Element elementOnLine = pipeline.getElementOnLine(newValue + 1);
+			int line = assemblerArea.getCaretLine();
+			int col = assemblerArea.getCaretColumn();
+			Element elementOnLine = pipeline.getCodeElementAt(line, col);
 			Unit unit = pipeline.getUnit();
 			if (unit == null || unit.isField())
 				return;
@@ -123,18 +124,20 @@ public class FlowHighlighter implements IndicatorApplier {
 	}
 
 	@Override
-	public boolean apply(int lineNo, Polygon poly) {
-		Element elementOnLine = pipeline.getElementOnLine(lineNo);
-		if (elementOnLine instanceof Label) {
-			String labelId = ((Label) elementOnLine).getName();
-			if (destinations.contains(labelId)) {
-				poly.setFill(Color.GREEN);
-				return true;
-			}
-		} else if (elementOnLine instanceof FlowControl) {
-			if (sources.contains(elementOnLine)) {
-				poly.setFill(Color.LIMEGREEN);
-				return true;
+	public boolean checkModified(int lineNo, Polygon poly) {
+		List<Element> elementsOnLine = pipeline.getCodeElementsAt(lineNo);
+		for (Element elementOnLine : elementsOnLine) {
+			if (elementOnLine instanceof Label) {
+				String labelId = ((Label) elementOnLine).getName();
+				if (destinations.contains(labelId)) {
+					poly.setFill(Color.GREEN);
+					return true;
+				}
+			} else if (elementOnLine instanceof FlowControl) {
+				if (sources.contains(elementOnLine)) {
+					poly.setFill(Color.LIMEGREEN);
+					return true;
+				}
 			}
 		}
 		return false;

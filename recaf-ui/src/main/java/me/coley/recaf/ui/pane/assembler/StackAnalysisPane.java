@@ -55,12 +55,12 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		stackTitle.setAlignment(Pos.CENTER);
 		stackWrapper.setTop(stackTitle);
 		setCenter(new SplitPane(variableView, stackWrapper));
-		assemblerArea.currentParagraphProperty().addListener((observable, oldIndex, currentIndex) -> {
-			onIndexChange(currentIndex);
+		assemblerArea.caretPositionProperty().addListener((observable, oldIndex, currentIndex) -> {
+			onCaretPosUpdate(assemblerArea.getCurrentParagraph(), assemblerArea.getCaretColumn());
 		});
 	}
 
-	private void onIndexChange(int paragraphIndex) {
+	private void onCaretPosUpdate(int paragraphIndex, int columnIndex) {
 		if (pipeline == null || pipeline.getUnit() == null)
 			return;
 		Analysis analysis = pipeline.getLastAnalysis();
@@ -70,7 +70,7 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		if (unit == null || unit.isField())
 			return;
 		Code code = unit.getMethod().getCode();
-		Element element = code.getChildOnLine(paragraphIndex + 1);
+		Element element = code.getChildAt(paragraphIndex + 1, columnIndex);
 		if (element instanceof AbstractInstruction) {
 			int insnIndex = code.getInstructions().indexOf(element);
 			if (insnIndex < analysis.getFrames().size()) {

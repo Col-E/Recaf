@@ -281,12 +281,12 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	}
 
 	private static HandleInfo from(HandleGroup handle) {
-			MethodDescriptor mdh = new MethodDescriptor(handle.getName().content(), handle.getDescriptor().content());
-			return new HandleInfo(
-					handle.getHandleType().content(),
-					mdh.owner,
-					mdh.name,
-					mdh.descriptor);
+		MethodDescriptor mdh = new MethodDescriptor(handle.getName().content(), handle.getDescriptor().content());
+		return new HandleInfo(
+				handle.getHandleType().content(),
+				mdh.owner,
+				mdh.name,
+				mdh.descriptor);
 	}
 
 	private static ArgType from(Group group) {
@@ -303,7 +303,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			return ArgType.TYPE;
 		} else if (group instanceof HandleGroup) {
 			return ArgType.HANDLE;
-		} else if(group instanceof IdentifierGroup) {
+		} else if (group instanceof IdentifierGroup) {
 			String content = group.content();
 			switch (content) {
 				case "true":
@@ -312,10 +312,10 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 				case "NaN":
 				case "Infinity":
 				case "-Infinity":
-						return ArgType.DOUBLE;
+					return ArgType.DOUBLE;
 				case "Infinityf":
 				case "-Infinityf":
-							return ArgType.FLOAT;
+					return ArgType.FLOAT;
 				default:
 					throw new IllegalArgumentException("Cannot convert to constant '" + group.content() + "'");
 			}
@@ -424,9 +424,14 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 		Token end = group.end();
 		if (end == null)
 			end = start;
-		return element.setLine(start.getLocation().getLine()).setRange(
-				start.getLocation().getStartPosition(),
-				end.getLocation().getEndPosition());
+		Location startLocation = start.getLocation();
+		Location endLocation = end.getLocation();
+		int startPos = startLocation.getStartPosition();
+		int endPos = endLocation.getStartPosition() + end.getContent().length();
+		int column = startLocation.getColumn();
+		return element.setLine(startLocation.getLine())
+				.setColumnRange(column, column + (endPos - startPos))
+				.setRange(startPos, endPos);
 	}
 
 	private static String content(Group group) {

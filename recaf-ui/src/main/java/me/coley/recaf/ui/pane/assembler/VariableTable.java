@@ -70,7 +70,8 @@ public class VariableTable extends BorderPane implements MemberEditor {
 				return;
 			// Current line / selected element
 			int line = assemblerArea.getCurrentParagraph() + 1;
-			Element selected = pipeline.getElementOnLine(line);
+			int col = assemblerArea.getCaretColumn();
+			Element selected = pipeline.getCodeElementAt(line, col);
 			int currentIndex = sources.indexOf(selected);
 			// Get target (next element)
 			int targetIndex = (currentIndex + 1) % sources.size();
