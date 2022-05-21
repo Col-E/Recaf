@@ -135,7 +135,7 @@ final class ByteDataSource implements ByteSource, AutoCloseable {
 					if (closed)
 						return;
 					closed = true;
-					//data.close();
+					data.close();
 				}
 			}
 		}
