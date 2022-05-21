@@ -2,28 +2,34 @@ package me.coley.recaf.ui.control.code.bytecode;
 
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.Element;
+import me.coley.recaf.assemble.ast.FlowControl;
 import me.coley.recaf.assemble.ast.Unit;
+import me.coley.recaf.assemble.ast.insn.*;
+import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.pipeline.*;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.validation.MessageLevel;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.Validator;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.MemberInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.AssemblerConfig;
+import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.context.DeclarableContextBuilder;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.util.visitor.FieldReplacingVisitor;
@@ -49,6 +55,7 @@ import java.util.function.Function;
 
 import static me.coley.recaf.ui.control.code.ProblemOrigin.BYTECODE_PARSING;
 import static me.coley.recaf.ui.control.code.ProblemOrigin.BYTECODE_VALIDATION;
+import static me.coley.recaf.ui.util.Menus.action;
 
 /**
  * Text editing portion of the assembler UI.
@@ -211,20 +218,86 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		// Sync caret
 		moveTo(hit.getInsertionIndex());
 		// Create menu if needed
-		if (menu == null) {
-			menu = new ContextMenu();
+		Element element = pipeline.getCodeElementAt(line, col);
+		ContextBuilder menuBuilder = menuFor(element);
+		if (menuBuilder != null) {
+			// Show if present
+			menu = menuBuilder.build();
 			menu.setAutoHide(true);
 			menu.setHideOnEscape(true);
-			Element element = pipeline.getCodeElementAt(line, col);
-			if (element != null) {
-				// TODO: Context menu based on AST
-				// TODO: Sub-menu for more accurate selections (class/member names in part of AST selected)
-				logger.info("TODO: CTX @ {} = {}", element.getLine(), element.print());
-			}
+			menu.show(getScene().getWindow(), e.getScreenX(), e.getScreenY());
+			menu.requestFocus();
+		} else {
+			logger.warn("No recognized element at selected position [line {}, column {}]", line, col);
 		}
-		// Show at new position
-		menu.show(getScene().getWindow(), e.getScreenX(), e.getScreenY());
-		menu.requestFocus();
+	}
+
+	public ContextBuilder menuFor(Element element) {
+		if(element instanceof FieldInstruction) {
+			FieldInstruction fieldInsn = (FieldInstruction) element;
+			CommonClassInfo owner = RecafUI.getController().getWorkspace()
+					.getResources().getClass(fieldInsn.getOwner());
+			if(owner == null) {
+				logger.warn("Cannot find owner for field '{}'", fieldInsn.getName());
+				return null;
+			}
+			FieldInfo field = owner.findField(fieldInsn.getName(), fieldInsn.getDesc());
+			if(field == null) {
+				logger.warn("Cannot find field '{}'", fieldInsn.getName());
+				return null;
+			}
+			return ContextBuilder.forField(owner, field);
+		} else if(element instanceof MethodInstruction) {
+			MethodInstruction methodInsn = (MethodInstruction) element;
+			CommonClassInfo owner = RecafUI.getController().getWorkspace()
+					.getResources().getClass(methodInsn.getOwner());
+			if(owner == null) {
+				logger.warn("Cannot find owner for method '{}'", methodInsn.getName());
+				return null;
+			}
+			MethodInfo method = owner.findMethod(methodInsn.getName(), methodInsn.getDesc());
+			if(method == null) {
+				logger.warn("Cannot find method '{}'", methodInsn.getName());
+			}
+			return ContextBuilder.forMethod(owner, method);
+		} else if(element instanceof TypeInstruction) {
+			TypeInstruction typeInsn = (TypeInstruction) element;
+			ClassInfo cls = RecafUI.getController().getWorkspace()
+					.getResources().getClass(typeInsn.getType());
+			if(cls == null) {
+				logger.warn("Cannot find class '{}'", typeInsn.getType());
+				return null;
+			}
+			return ContextBuilder.forClass(cls);
+		} else if(element instanceof JumpInstruction) {
+			JumpInstruction jumpInsn = (JumpInstruction) element;
+			String label = jumpInsn.getLabel();
+			Unit unit = pipeline.getUnit();
+			if(unit == null || !unit.isMethod())
+				return null;
+			Label lab = unit.getMethod().getCode().getLabel(label);
+			if(lab == null) {
+				logger.warn("Cannot find label '{}'", label);
+				return null;
+			}
+			return new ContextBuilder() {
+				@Override
+				public ContextMenu build() {
+					ContextMenu menu = new ContextMenu();
+					menu.getItems().add(action("menu.goto.label", Icons.OPEN, () -> {
+						// -1 because positions are 0 indexed
+						moveTo(lab.getLine() - 1, lab.getColumnStart() - 1);
+					}));
+					return menu;
+				}
+
+				@Override
+				protected Resource findContainerResource() {
+					return null;
+				}
+			};
+		}
+		return null;
 	}
 
 	@Override

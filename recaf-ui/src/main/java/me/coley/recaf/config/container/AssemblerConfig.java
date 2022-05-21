@@ -17,6 +17,9 @@ public class AssemblerConfig implements ConfigContainer {
 	@Group("validation")
 	@ConfigID("bytecode")
 	public boolean bytecodeValidation = true;
+	@Group("debug")
+	@ConfigID("ast-debug")
+	public boolean astDebug = false;
 
 	@Override
 	public String iconPath() {
