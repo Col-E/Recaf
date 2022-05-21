@@ -21,10 +21,10 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Modality;
-import javafx.stage.Stage;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.ssvm.SsvmIntegration;
+import me.coley.recaf.ssvm.VirtualMachineUtil;
 import me.coley.recaf.ssvm.value.ConstNumericValue;
 import me.coley.recaf.ssvm.value.ConstStringValue;
 import me.coley.recaf.ui.util.Icons;
@@ -394,13 +394,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 
 	protected Object encodeThrowable(Throwable t) {
 		if (t instanceof VMException) {
-			VMHelper helper = this.helper;
-			InstanceValue oop = ((VMException) t).getOop();
-			InstanceValue stringWriter = helper.newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/StringWriter"), "()V");
-			InstanceValue printWriter = helper.newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/PrintWriter"), "(Ljava/io/Writer;)V", stringWriter);
-			helper.invokeVirtual("printStackTrace", "(Ljava/io/PrintWriter;)V", new Value[0], new Value[]{oop, printWriter});
-			Value throwableAsString = helper.invokeVirtual("toString", "()Ljava/lang/String;", new Value[0], new Value[]{stringWriter}).getResult();
-			return helper.readUtf8(throwableAsString);
+			return VirtualMachineUtil.throwableToString(((VMException) t).getOop());
 		}
 		return StringUtil.traceToString(t);
 	}

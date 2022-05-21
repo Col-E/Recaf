@@ -77,6 +77,17 @@ public class SsvmIntegration {
 		if (initialized) {
 			logger.debug("SSVM initialized successfully");
 		} else {
+			Exception initializeError = this.initializeError;
+			Throwable cause = initializeError.getCause();
+			if (cause instanceof VMException) {
+				VirtualMachine vm = this.vm;
+				if (vm != null) {
+					InstanceValue oop = ((VMException) cause).getOop();
+					logger.error("SSVM failed to initialize: {}", oop);
+					logger.error(VirtualMachineUtil.throwableToString(oop));
+					return;
+				}
+			}
 			logger.error("SSVM failed to initialize", initializeError);
 		}
 	}
