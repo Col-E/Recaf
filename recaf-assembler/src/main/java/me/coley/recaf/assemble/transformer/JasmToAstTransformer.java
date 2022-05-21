@@ -61,7 +61,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitLabel(LabelGroup label) throws AssemblerException {
-		code.addLabel(new Label(label.getLabel()));
+		code.addLabel(wrap(label, new Label(label.getLabel())));
 	}
 
 	@Override
