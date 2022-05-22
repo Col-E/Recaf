@@ -149,6 +149,15 @@ public abstract class BaseElement implements Element {
 
 	}
 
+	public Element getChildAt(int position) {
+		for (Element child : getChildren()) {
+			if (child.getStart() <= position && child.getStop() >= position) {
+				return child;
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public String toString() {
 		return print();
