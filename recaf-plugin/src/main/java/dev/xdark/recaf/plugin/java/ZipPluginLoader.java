@@ -148,7 +148,7 @@ public final class ZipPluginLoader implements PluginLoader {
 	@Override
 	public boolean isSupported(ByteSource source) throws IOException {
 		byte[] header = source.peek(4);
-		return header.length == 4 || ByteHeaderUtil.match(header, ByteHeaderUtil.ZIP);
+		return header.length == 4 && ByteHeaderUtil.match(header, ByteHeaderUtil.ZIP);
 	}
 
 	@Override

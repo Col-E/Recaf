@@ -1,6 +1,7 @@
 package me.coley.recaf.io;
 
 import me.coley.recaf.util.ReflectUtil;
+import software.coley.llzip.util.ByteData;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -77,5 +78,17 @@ public class ByteSources {
 	 */
 	public static ByteSource forPath(Path path) {
 		return new PathByteSource(path);
+	}
+
+	/**
+	 * Creates new byte source from lljzip byte data.
+	 *
+	 * @param data
+	 * 		Data to create source for.
+	 *
+	 * @return New byte source.
+	 */
+	public static ByteSource forZip(ByteData data) {
+		return new ByteDataSource(data);
 	}
 }
