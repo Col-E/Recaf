@@ -280,7 +280,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 		code.add(wrap(latestGroup, (BaseElement & CodeEntry) element));
 	}
 
-	private static HandleInfo from(HandleGroup handle) {
+	public static HandleInfo from(HandleGroup handle) {
 		MethodDescriptor mdh = new MethodDescriptor(handle.getName().content(), handle.getDescriptor().content());
 		return new HandleInfo(
 				handle.getHandleType().content(),
@@ -425,9 +425,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 		if (end == null)
 			end = start;
 		Location startLocation = start.getLocation();
-		Location endLocation = end.getLocation();
-		int startPos = startLocation.getStartPosition();
-		int endPos = endLocation.getStartPosition() + end.getContent().length();
+		int startPos = start.getStart();
+		int endPos = end.getEnd();
 		int column = startLocation.getColumn();
 		return element.setLine(startLocation.getLine())
 				.setColumnRange(column, column + (endPos - startPos))
