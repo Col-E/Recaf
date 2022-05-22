@@ -219,6 +219,10 @@ public class JavaParserRecovery {
 						msg.lastIndexOf(afterPattern) + afterPattern.length(),
 						msg.length() - 1);
 				int startOfProblem = line.text.indexOf(afterOffendingText);
+				if (startOfProblem < 0) {
+					// Can't do anything if a valid start index isn't provided.
+					return RecoveryType.NONE;
+				}
 				// Rebuild the line
 				String originalText = line.text;
 				// Estimate where the quote should be, probably before a ')' or ';'
