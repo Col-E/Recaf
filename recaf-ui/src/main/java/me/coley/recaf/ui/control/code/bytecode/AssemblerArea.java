@@ -103,7 +103,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		pipeline.addParserFailureListener(this);
 		pipeline.addBytecodeFailureListener(this);
 		pipeline.addBytecodeValidationListener(this);
-		boolean validate = Configs.assembler().astValidation;
+		boolean validate = config().astValidation;
 		if (validate) {
 			pipeline.addAstValidationListener(this);
 		}
@@ -393,30 +393,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		return null;
 	}
 
-	public class LabelContextBuilder extends ContextBuilder {
-
-		Label label;
-
-		public LabelContextBuilder(Label label) {
-			this.label = label;
-		}
-
-		@Override
-		public ContextMenu build() {
-			ContextMenu menu = new ContextMenu();
-			menu.getItems().add(action("menu.goto.label", Icons.OPEN, () -> {
-				// -1 because positions are 0 indexed
-				moveTo(label.getLine() - 1, label.getColumnStart() - 1);
-			}));
-			return menu;
-		}
-
-		@Override
-		protected Resource findContainerResource() {
-			return null;
-		}
-	}
-
 	@Override
 	public SaveResult save() {
 		// The unit must be updated in order to save.
@@ -695,5 +671,28 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 
 	private static AssemblerConfig config() {
 		return Configs.assembler();
+	}
+
+	public class LabelContextBuilder extends ContextBuilder {
+		private final Label label;
+
+		public LabelContextBuilder(Label label) {
+			this.label = label;
+		}
+
+		@Override
+		public ContextMenu build() {
+			ContextMenu menu = new ContextMenu();
+			menu.getItems().add(action("menu.goto.label", Icons.OPEN, () -> {
+				// -1 because positions are 0 indexed
+				moveTo(label.getLine() - 1, label.getColumnStart() - 1);
+			}));
+			return menu;
+		}
+
+		@Override
+		protected Resource findContainerResource() {
+			return null;
+		}
 	}
 }
