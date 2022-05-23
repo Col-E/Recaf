@@ -64,6 +64,12 @@ menu.mode.class.decompile=反编译
 menu.mode.file.auto=自动
 menu.mode.file.text=文本
 menu.mode.file.hex=十六进制
+menu.vm=虚拟化
+menu.vm.optimize=优化
+menu.vm.run=运行
+menu.plugin=插件
+menu.plugin.installed=已安装
+menu.plugin.marketplace=免费市场
 
 ##### Dialog texts
 dialog.cancel=取消
@@ -304,3 +310,13 @@ conf.export.general.compress=在档案中使用压缩
 conf.recent=最近
 conf.recent.max=最大跟踪项目
 conf.recent.workspaces=最近工作空间
+
+conf.ssvm=SSVM
+conf.ssvm.access=文件IO访问
+conf.ssvm.access.read=允许读
+conf.ssvm.access.write=允许写
+conf.ssvm.access.read.warn=启用此选项将允许SSVM操作读取您系统上的文件。\n启用此选项时要小心。
+conf.ssvm.access.write.warn=启用此选项将允许SSVM操作将文件写入您的系统。\n启用此选项时要非常小心。
+
+## Not translate
+conf.undefined=Undefined

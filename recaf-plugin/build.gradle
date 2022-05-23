@@ -5,6 +5,7 @@ dependencies {
 
     // Testing
     testImplementation project(':recaf-core')
+    testImplementation project(path: ':recaf-core', configuration: 'testSourceOutput')
     testImplementation junit_api
     testImplementation junit_params
     testRuntimeOnly junit_engine

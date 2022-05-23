@@ -23,11 +23,8 @@ public class RecafPlugin {
     private static boolean initialized = false;
     private static final String[] SUFFIX = {".jar"};
 
-    {
-        pluginManager.registerLoader(new ZipPluginLoader(RecafPlugin.class.getClassLoader()));
-    }
-
     private RecafPlugin() {
+        pluginManager.registerLoader(new ZipPluginLoader(RecafPlugin.class.getClassLoader()));
     }
 
     public static RecafPlugin getInstance() {

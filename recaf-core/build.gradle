@@ -4,6 +4,10 @@ plugins {
 
 apply plugin: 'java-library'
 
+configurations {
+    testSourceOutput
+}
+
 dependencies {
     api project(':recaf-assembler')
     api project(':recaf-jdk-tools')
@@ -34,6 +38,8 @@ dependencies {
     api aapt
 
     // Testing
+    // Export test class, has been accessed by other modules
+    testSourceOutput sourceSets.test.output
     testImplementation junit_api
     testImplementation junit_params
     testRuntimeOnly junit_engine
