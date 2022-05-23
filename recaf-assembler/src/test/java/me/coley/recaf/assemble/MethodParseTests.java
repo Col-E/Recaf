@@ -2,8 +2,6 @@ package me.coley.recaf.assemble;
 
 import javassist.ClassPool;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.util.ClassSupplier;
@@ -70,14 +68,10 @@ public class MethodParseTests extends TestUtil {
 	}
 
 	private static void handle(String original, Consumer<MethodNode> handler) {
-		// ANTLR parse
-		BytecodeParser parser = parser(original);
-		BytecodeParser.UnitContext unitCtx = parser.unit();
-		assertNotNull(unitCtx, "Parser did not find unit context with input: " + original);
+		// JASM parse
+		Unit unit = generateSilent(original);
 
-		// Transform to our AST
-		AntlrToAstTransformer visitor = new AntlrToAstTransformer();
-		Unit unit = visitor.visitUnit(unitCtx);
+		assertNotNull(unit, "Unit must not be null!");
 
 		// Validate
 		AstValidator validator = new AstValidator(unit);
@@ -92,7 +86,7 @@ public class MethodParseTests extends TestUtil {
 
 		// Generate
 		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS);
-		generator.setUnit(unit);
+		generator.setDefinition(unit.getMethod());
 		try {
 			generator.visit();
 			handler.accept(generator.buildMethod());

@@ -6,6 +6,7 @@ import dev.xdark.ssvm.classloading.CompositeBootClassLoader;
 import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.fs.FileDescriptorManager;
+import dev.xdark.ssvm.fs.Handle;
 import dev.xdark.ssvm.fs.HostFileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
@@ -76,6 +77,17 @@ public class SsvmIntegration {
 		if (initialized) {
 			logger.debug("SSVM initialized successfully");
 		} else {
+			Exception initializeError = this.initializeError;
+			Throwable cause = initializeError.getCause();
+			if (cause instanceof VMException) {
+				VirtualMachine vm = this.vm;
+				if (vm != null) {
+					InstanceValue oop = ((VMException) cause).getOop();
+					logger.error("SSVM failed to initialize: {}", oop);
+					logger.error(VirtualMachineUtil.throwableToString(oop));
+					return;
+				}
+			}
 			logger.error("SSVM failed to initialize", initializeError);
 		}
 	}
@@ -106,7 +118,7 @@ public class SsvmIntegration {
 									in = new FileInputStream(path);
 								else
 									in = new ByteArrayInputStream(new byte[0]);
-								inputs.put(fd, in);
+								inputs.put(Handle.of(fd), in);
 								return fd;
 							}
 							case WRITE:
@@ -116,7 +128,7 @@ public class SsvmIntegration {
 									out = new FileOutputStream(path, mode == APPEND);
 								else
 									out = new ByteArrayOutputStream();
-								outputs.put(fd, out);
+								outputs.put(Handle.of(fd), out);
 								return fd;
 							}
 							default:

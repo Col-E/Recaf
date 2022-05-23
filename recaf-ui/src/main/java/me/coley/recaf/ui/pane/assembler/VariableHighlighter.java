@@ -49,13 +49,14 @@ public class VariableHighlighter implements IndicatorApplier {
 	/**
 	 * Add selected line listener so that we can be notified of when new selections contain variable refs.
 	 *
-	 * @param selectedParagraph
-	 * 		Observable paragraph index.
+	 * @param selectedCaretPosition
+	 * 		Observable caret position.
 	 */
-	public void addSelectedLineListener(ObservableValue<Integer> selectedParagraph) {
-		selectedParagraph.addListener((observable, oldValue, newValue) -> {
-			// The selected paragraph is 0-based, lines are 1-based
-			Element elementOnLine = pipeline.getElementOnLine(newValue + 1);
+	public void addCaretPositionListener(ObservableValue<Integer> selectedCaretPosition) {
+		selectedCaretPosition.addListener((observable, oldValue, newValue) -> {
+			int line = assemblerArea.getCaretLine();
+			int col = assemblerArea.getCaretColumn();
+			Element elementOnLine = pipeline.getCodeElementAt(line, col);
 			if (elementOnLine instanceof VariableReference) {
 				targetId = ((VariableReference) elementOnLine).getVariableIdentifier();
 			} else {
@@ -76,9 +77,9 @@ public class VariableHighlighter implements IndicatorApplier {
 		}
 		// Redraw new matched lines
 		Unit unit = pipeline.getUnit();
-		if (unit == null)
+		if (unit == null || unit.isField())
 			return;
-		for (AbstractInstruction instruction : unit.getCode().getInstructions()) {
+		for (AbstractInstruction instruction : unit.getMethod().getCode().getInstructions()) {
 			if (instruction instanceof VariableReference) {
 				int line = instruction.getLine();
 				if (line > 0)
@@ -89,13 +90,15 @@ public class VariableHighlighter implements IndicatorApplier {
 	}
 
 	@Override
-	public boolean apply(int lineNo, Polygon poly) {
-		Element elementOnLine = pipeline.getElementOnLine(lineNo);
-		if (elementOnLine instanceof VariableReference) {
-			String lineVarId = ((VariableReference) elementOnLine).getVariableIdentifier();
-			if (lineVarId.equals(targetId)) {
-				poly.setFill(Color.CORNFLOWERBLUE);
-				return true;
+	public boolean checkModified(int lineNo, Polygon poly) {
+		List<Element> elementsOnLine = pipeline.getCodeElementsAt(lineNo);
+		for (Element elementOnLine : elementsOnLine) {
+			if (elementOnLine instanceof VariableReference) {
+				String lineVarId = ((VariableReference) elementOnLine).getVariableIdentifier();
+				if (lineVarId.equals(targetId)) {
+					poly.setFill(Color.CORNFLOWERBLUE);
+					return true;
+				}
 			}
 		}
 		return false;

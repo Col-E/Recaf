@@ -29,7 +29,7 @@ dependencies {
     implementation beanshell
     // We compile against JFX but do not bundle. The launcher will download the platform specific implementation for end users.
     def javafxPlatform = getJavaFxPlatform()
-    def javafxVersion = '18'
+    def javafxVersion = '19-ea+6'
     compileOnly group: 'org.openjfx', name: 'javafx-base', version: javafxVersion, classifier: javafxPlatform
     compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: javafxVersion, classifier: javafxPlatform
     compileOnly group: 'org.openjfx', name: 'javafx-controls', version: javafxVersion, classifier: javafxPlatform

@@ -97,9 +97,9 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 			return variables;
 		MethodDefinition definition = (MethodDefinition) unit.getDefinition();
 		// Skip if no code-items
-		if (unit.getCode() == null)
+		if (definition.getCode().isEmpty())
 			return variables;
-		Code code = unit.getCode();
+		Code code = definition.getCode();
 		// Pull from parameters
 		for (MethodParameter parameter : definition.getParams().getParameters()) {
 			String desc = parameter.getDesc();

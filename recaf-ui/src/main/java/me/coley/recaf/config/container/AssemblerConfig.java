@@ -11,9 +11,6 @@ import me.coley.recaf.ui.util.Icons;
  * @author Matt Coley
  */
 public class AssemblerConfig implements ConfigContainer {
-	@Group("parse")
-	@ConfigID("recover")
-	public boolean attemptRecover = true;
 	@Group("validation")
 	@ConfigID("ast")
 	public boolean astValidation = true;

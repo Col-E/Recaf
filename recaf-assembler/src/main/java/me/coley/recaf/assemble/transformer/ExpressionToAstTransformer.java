@@ -70,7 +70,7 @@ public class ExpressionToAstTransformer {
 		toAstTransformer.prepopulateVariableNames(variables);
 		toAstTransformer.setLabelPrefix(prefix.apply(expression));
 		toAstTransformer.visit();
-		return toAstTransformer.getUnit().getCode();
+		return toAstTransformer.getUnit().getMethod().getCode();
 	}
 
 	/**

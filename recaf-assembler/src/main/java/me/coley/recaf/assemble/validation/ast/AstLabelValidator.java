@@ -22,7 +22,7 @@ public class AstLabelValidator implements AstValidationVisitor {
 	public void visit(AstValidator validator) {
 		if (validator.getUnit().isField())
 			return;
-		Code code = validator.getUnit().getCode();
+		Code code = validator.getUnit().getMethod().getCode();
 		if (code == null)
 			return;
 		Predicate<String> existence = name -> code.getLabels().containsKey(name);

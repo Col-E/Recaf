@@ -1,8 +1,10 @@
 package me.coley.recaf.ssvm;
 
+import dev.xdark.ssvm.InitializationState;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.asm.DelegatingInsnNode;
 import dev.xdark.ssvm.asm.Modifier;
+import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.fs.FileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.util.VMHelper;
@@ -13,7 +15,10 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ListIterator;
+import java.util.Objects;
 
 /**
  * Utils for SSVM.
@@ -34,7 +39,7 @@ public class VirtualMachineUtil {
 	 * @return version of JDK the VM runs on.
 	 */
 	public static int getVersion(VirtualMachine vm) {
-		return vm.getSymbols().java_lang_Object.getNode().version - 44;
+		return vm.getSymbols().java_lang_Object().getNode().version - 44;
 	}
 
 	/**
@@ -90,7 +95,7 @@ public class VirtualMachineUtil {
 	 * @return System class loader.
 	 */
 	public static InstanceValue getSystemClassLoader(VirtualMachine vm) {
-		return (InstanceValue) vm.getHelper().invokeStatic(vm.getSymbols().java_lang_ClassLoader, "getSystemClassLoader", "()Ljava/lang/ClassLoader;", new Value[0], new Value[0]).getResult();
+		return (InstanceValue) vm.getHelper().invokeStatic(vm.getSymbols().java_lang_ClassLoader(), "getSystemClassLoader", "()Ljava/lang/ClassLoader;", new Value[0], new Value[0]).getResult();
 	}
 
 	/**
@@ -136,5 +141,31 @@ public class VirtualMachineUtil {
 			default:
 				return "?";
 		}
+	}
+
+	/**
+	 * Converts throwable to a string value
+	 *
+	 * @param throwable
+	 * 		Throwable to convert.
+	 *
+	 * @return Throwable as string.
+	 */
+	public static String throwableToString(InstanceValue throwable) {
+		Objects.requireNonNull(throwable, "throwable");
+		InstanceJavaClass javaClass = throwable.getJavaClass();
+		VirtualMachine vm = javaClass.getVM();
+		VMHelper helper = vm.getHelper();
+		try {
+			InstanceValue stringWriter = helper.newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/StringWriter"), "()V");
+			InstanceValue printWriter = helper.newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/PrintWriter"), "(Ljava/io/Writer;)V", stringWriter);
+			helper.invokeVirtual("printStackTrace", "(Ljava/io/PrintWriter;)V", new Value[0], new Value[]{throwable, printWriter});
+			Value throwableAsString = helper.invokeVirtual("toString", "()Ljava/lang/String;", new Value[0], new Value[]{stringWriter}).getResult();
+			return helper.readUtf8(throwableAsString);
+		} catch(VMException ignored) {
+		}
+		StringWriter writer = new StringWriter();
+		helper.toJavaException(throwable).printStackTrace(new PrintWriter(writer));
+		return writer.toString();
 	}
 }

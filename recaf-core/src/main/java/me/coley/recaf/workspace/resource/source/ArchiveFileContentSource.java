@@ -3,9 +3,8 @@ package me.coley.recaf.workspace.resource.source;
 import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.io.ByteSourceConsumer;
 import me.coley.recaf.io.ByteSourceElement;
+import me.coley.recaf.io.ByteSources;
 import me.coley.recaf.util.ReflectUtil;
-import me.coley.recaf.util.logging.Logging;
-import org.slf4j.Logger;
 import software.coley.llzip.ZipArchive;
 import software.coley.llzip.ZipCompressions;
 import software.coley.llzip.ZipIO;
@@ -15,11 +14,9 @@ import software.coley.llzip.util.ByteData;
 import software.coley.llzip.util.ByteDataUtil;
 import software.coley.llzip.util.FileMapUtil;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 /**
@@ -28,39 +25,37 @@ import java.util.stream.Stream;
  * @author Matt Coley
  */
 public abstract class ArchiveFileContentSource extends ContainerContentSource<LocalFileHeader> {
-	private static final Logger logger = Logging.get(ArchiveFileContentSource.class);
-
 	protected ArchiveFileContentSource(SourceType type, Path path) {
 		super(type, path);
 	}
 
 	@Override
 	protected void consumeEach(ByteSourceConsumer<LocalFileHeader> entryHandler) throws IOException {
-		ByteData data = FileMapUtil.map(getPath());
-		try {
+		try (ByteData data = FileMapUtil.map(getPath())) {
 			ZipArchive archive = ZipIO.read(data, new JvmZipReaderStrategy());
 			for (LocalFileHeader fileHeader : archive.getLocalFiles()) {
 				entryHandler.accept(fileHeader, new LocalFileHeaderSource(fileHeader));
 			}
-		} finally {
-			ReflectUtil.quietInvoke(Object.class, data, "finalize", new Class[0], new Object[0]);
 		}
 	}
 
 	@Override
 	protected Stream<ByteSourceElement<LocalFileHeader>> stream() throws IOException {
 		ByteData data = FileMapUtil.map(getPath());
-		ZipArchive archive = ZipIO.read(data, new JvmZipReaderStrategy());
-		AtomicReference<Throwable> closed = new AtomicReference<>();
+		ZipArchive archive;
+		try {
+			archive = ZipIO.read(data, new JvmZipReaderStrategy());
+		} catch (Exception ex) {
+			data.close();
+			throw ex;
+		}
 		return archive.getLocalFiles().stream()
 				.map(x -> new ByteSourceElement<>(x, new LocalFileHeaderSource(x)))
 				.onClose(() -> {
-					RuntimeException location = new RuntimeException("Stack trace");
-					if (closed.compareAndSet(null, location)) {
-						ReflectUtil.quietInvoke(Object.class, data, "finalize", new Class[0], new Object[0]);
-					} else {
-						logger.warn("Stream#onClose(...) is called multiple times: ", location);
-						logger.warn("First close occurred at: ", closed.get());
+					try {
+						data.close();
+					} catch(IOException ex) {
+						ReflectUtil.propagate(ex);
 					}
 				});
 	}
@@ -108,8 +103,8 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Lo
 
 		@Override
 		public InputStream openStream() throws IOException {
-			ByteData data = decompress();
-			return new ByteArrayInputStream(ByteDataUtil.toByteArray(data));
+			// Delegate to byte source
+			return ByteSources.forZip(decompress()).openStream();
 		}
 
 		private ByteData decompress() throws IOException {

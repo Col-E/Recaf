@@ -28,9 +28,9 @@ public class ExpressionTransformTests {
 			Code code = transformer.transform(new Expression("System.out.println(text);"));
 			String formatted = code.print();
 			assertEquals("A:\n" +
-					"GETSTATIC java/lang/System.out Ljava/io/PrintStream;\n" +
-					"ALOAD text\n" +
-					"INVOKEVIRTUAL java/io/PrintStream.println(Ljava/lang/String;)V\n" +
+					"	getstatic java/lang/System.out Ljava/io/PrintStream;\n" +
+					"	aload text\n" +
+					"	invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V\n" +
 					"B:", formatted);
 		} catch (Exception ex) {
 			fail(ex);
@@ -49,8 +49,8 @@ public class ExpressionTransformTests {
 			assertEquals(1, code.getTryCatches().size());
 			assertEquals("java/io/IOException", code.getTryCatches().get(0).getExceptionType());
 			// 'ex' should not be stored in local slot 0 and should retain its defined name of 'ex'
-			assertFalse(formatted.contains("ASTORE this"));
-			assertTrue(formatted.contains("ASTORE ex"));
+			assertFalse(formatted.contains("astore this"));
+			assertTrue(formatted.contains("astore ex"));
 		} catch (Exception ex) {
 			fail(ex);
 		}
@@ -76,8 +76,8 @@ public class ExpressionTransformTests {
 							"}"));
 			String formatted = code.print();
 			// The argument 'args' should be read
-			assertTrue(formatted.contains("ALOAD xargs"));
-			assertTrue(formatted.contains("ISTORE length"));
+			assertTrue(formatted.contains("aload xargs"));
+			assertTrue(formatted.contains("istore length"));
 		} catch (Exception ex) {
 			fail(ex);
 		}
@@ -100,7 +100,7 @@ public class ExpressionTransformTests {
 		MethodParameters params = new MethodParameters();
 		for (MethodParameter parameter : parameters)
 			params.add(parameter);
-		MethodDefinition definition = new MethodDefinition(modifiers, "exampleMethod", params, "V");
+		MethodDefinition definition = new MethodDefinition(modifiers, "exampleMethod", params, "V", new Code());
 		Variables variables = new Variables();
 		try {
 			variables.visitDefinition(selfType, definition);

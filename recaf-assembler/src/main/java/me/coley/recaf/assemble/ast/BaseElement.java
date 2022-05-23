@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Base AST element implementation.
@@ -12,6 +13,8 @@ public abstract class BaseElement implements Element {
 	private final List<Element> children = new ArrayList<>();
 	private Element parent;
 	private int line = -1;
+	private int columnStart = -1;
+	private int columnEnd = -1;
 	private int start = -1;
 	private int stop = -1;
 
@@ -43,6 +46,23 @@ public abstract class BaseElement implements Element {
 	}
 
 	/**
+	 * @param columnStart
+	 * 		Start column of the element.
+	 * @param columnEnd
+	 * 		End column of the element.
+	 * @param <E>
+	 * 		Current element type.
+	 *
+	 * @return Self.
+	 */
+	@SuppressWarnings("unchecked")
+	public <E extends BaseElement> E setColumnRange(int columnStart, int columnEnd) {
+		this.columnStart = columnStart;
+		this.columnEnd = columnEnd;
+		return (E) this;
+	}
+
+	/**
 	 * @param start
 	 * 		Element start position.
 	 * @param stop
@@ -62,6 +82,16 @@ public abstract class BaseElement implements Element {
 	@Override
 	public int getLine() {
 		return line;
+	}
+
+	@Override
+	public int getColumnStart() {
+		return columnStart;
+	}
+
+	@Override
+	public int getColumnEnd() {
+		return columnEnd;
 	}
 
 	@Override
@@ -85,15 +115,43 @@ public abstract class BaseElement implements Element {
 	}
 
 	@Override
-	public Element getChildOnLine(int line) {
-		for (Element element : getChildren())
-			if (element.getLine() == line)
+	public List<Element> getChildrenAt(int line) {
+		return getChildren().stream()
+				.filter(e -> e.getLine() == line)
+				.collect(Collectors.toList());
+	}
+
+	@Override
+	public Element getChildAt(int line, int column) {
+		List<Element> elementsOnLine = getChildrenAt(line);
+		if (elementsOnLine.isEmpty()) {
+			return null;
+		} else if (elementsOnLine.size() == 1) {
+			return elementsOnLine.get(0);
+		}
+		// Get the element closest to the column
+		int minElementDist = Integer.MAX_VALUE;
+		Element closestElement = null;
+		for (Element element : elementsOnLine) {
+			int start = element.getColumnStart();
+			int end = element.getColumnEnd();
+			if (column >= start && column <= end)
 				return element;
-		return null;
+			int distToStart = Math.abs(column - start);
+			int distToEnd = Math.abs(column - end);
+			int min = Math.min(distToStart, distToEnd);
+			if (min < minElementDist) {
+				closestElement = element;
+				minElementDist = min;
+			}
+		}
+		return closestElement;
+
 	}
 
 	@Override
 	public String toString() {
 		return print();
 	}
+
 }

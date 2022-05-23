@@ -35,13 +35,12 @@ public class AstToMethodTransformer {
 	private ExpressionToAstTransformer exprToAst;
 	private ClassSupplier classSupplier;
 	private String selfType;
-	private Unit unit;
 	private MethodDefinition definition;
 	private Code code;
 	// Configurable
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 	private boolean doLimitVarRange = true;
-	private boolean useAnalysis = true;
+	private boolean useAnalysis;
 	// Method building and other outputs
 	private InsnList instructions;
 	private Analysis analysis;
@@ -74,8 +73,8 @@ public class AstToMethodTransformer {
 	 */
 	public void visit() throws MethodCompileException {
 		// Validation
-		if (unit == null)
-			throw new IllegalArgumentException("No unit provided!");
+		if (definition == null)
+			throw new IllegalArgumentException("No definition provided!");
 		// Clear any old values if the transformer instance is being re-used
 		reset();
 		// Generate new label instances to map to label names.
@@ -95,13 +94,13 @@ public class AstToMethodTransformer {
 	 */
 	public MethodNode buildMethod() throws MethodCompileException {
 		if (instructions == null) {
-			throw new MethodCompileException(unit, "The instructions have not been successfully generated!" +
+			throw new MethodCompileException(definition, "The instructions have not been successfully generated!" +
 					"Cannot build method instance.");
 		}
 		int access = definition.getModifiers().value();
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
-		String signature = code.getSignature() != null ? code.getSignature().getSignature() : null;
+		String signature = definition.getSignature() != null ? definition.getSignature().getSignature() : null;
 		int stack = 0xFF;
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			LabelNode start = labelMap.get(tryCatch.getStartLabel());
@@ -175,7 +174,7 @@ public class AstToMethodTransformer {
 		MethodNode method = new MethodNode(access, name, descriptor, signature, null);
 		List<AnnotationNode> visibleAnnotations = new ArrayList<>();
 		List<AnnotationNode> invisibleAnnotations = new ArrayList<>();
-		for (Annotation annotation : code.getAnnotations()) {
+		for (Annotation annotation : definition.getAnnotations()) {
 			AnnotationNode node = new AnnotationNode("L" + annotation.getType() + ";");
 			node.values = new ArrayList<>();
 			annotation.getArgs().forEach((argName, argVal) -> {
@@ -198,7 +197,7 @@ public class AstToMethodTransformer {
 			method.invisibleAnnotations = null;
 		method.instructions = instructions;
 		method.localVariables = variableList;
-		method.exceptions.addAll(code.getThrownExceptions().stream()
+		method.exceptions.addAll(definition.getThrownExceptions().stream()
 				.map(ThrownException::getExceptionType)
 				.collect(Collectors.toList()));
 		method.tryCatchBlocks.addAll(tryBlocks);
@@ -244,7 +243,7 @@ public class AstToMethodTransformer {
 	 * Populate the label name to instance map.
 	 */
 	private void createLabels() {
-		for (String labelName : unit.getCode().getLabels().keySet()) {
+		for (String labelName : definition.getCode().getLabels().keySet()) {
 			labelMap.put(labelName, new LabelNode());
 		}
 	}
@@ -266,7 +265,7 @@ public class AstToMethodTransformer {
 			// basic level of variable types for the analyzer to work with.
 			analysis = null; // reset first
 			if (doUseAnalysis()) {
-				Analyzer analyzer = new Analyzer(selfType, unit);
+				Analyzer analyzer = new Analyzer(selfType, definition);
 				analyzer.setInheritanceChecker(inheritanceChecker);
 				analyzer.setExpressionToAstTransformer(exprToAst);
 				try {
@@ -496,16 +495,15 @@ public class AstToMethodTransformer {
 	}
 
 	/**
-	 * @param unit
-	 * 		New unit.
+	 * @param definition
+	 * 		Definition to transform.
 	 */
-	public void setUnit(Unit unit) {
+	public void setDefinition(MethodDefinition definition) {
 		// Only trigger changes if the incoming unit is different
-		if (!Objects.equals(getUnit(), unit)) {
-			this.unit = unit;
+		if (!Objects.equals(getDefinition(), definition)) {
+			this.definition = definition;
 			// Convenience
-			this.definition = (MethodDefinition) unit.getDefinition();
-			this.code = unit.getCode();
+			this.code = this.definition.getCode();
 			// Initialize transformers
 			this.exprToAsm = new ExpressionToAsmTransformer(classSupplier, definition, variables, selfType);
 			this.exprToAst = new ExpressionToAstTransformer(definition, variables, exprToAsm);
@@ -513,10 +511,10 @@ public class AstToMethodTransformer {
 	}
 
 	/**
-	 * @return Current unit.
+	 * @return Current definition.
 	 */
-	public Unit getUnit() {
-		return unit;
+	public MethodDefinition getDefinition() {
+		return definition;
 	}
 
 	/**
