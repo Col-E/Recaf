@@ -19,6 +19,7 @@ menu.goto.field=Go to field
 menu.goto.method=Go to method
 menu.goto.instruction=Go to instruction
 menu.goto.file=Go to file
+menu.edit.assemble.class=Edit class
 menu.edit.assemble.field=Edit field
 menu.edit.assemble.method=Edit method
 menu.edit.remove=Remove

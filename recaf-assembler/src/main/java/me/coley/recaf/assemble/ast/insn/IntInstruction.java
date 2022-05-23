@@ -14,7 +14,7 @@ public class IntInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		Integer instruction parameter.
 	 */
-	public IntInstruction(String opcode, int value) {
+	public IntInstruction(int opcode, int value) {
 		super(opcode);
 		this.value = value;
 	}

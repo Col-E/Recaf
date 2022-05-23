@@ -1,7 +1,9 @@
 package me.coley.recaf.assemble.ast;
 
 import me.coley.recaf.assemble.ast.arch.Annotation;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.OpcodeUtil;
+import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 
@@ -99,22 +101,22 @@ public abstract class BaseArg extends BaseElement implements Printable {
 			case TYPE:
 				Type type = (Type) value;
 				if (type.getSort() == Type.OBJECT)
-					return type.getInternalName();
+					return ".type " + type.getInternalName();
 				else
-					return type.getDescriptor();
+					return ".type " + type.getDescriptor();
 			case STRING:
-				return "\"" + value + "\"";
+				return " \"" + EscapeUtil.escape((String) getValue()) + '\"';
 			case HANDLE:
 				HandleInfo info = (HandleInfo) value;
-				return "handle(" + info.print() + ")";
+				return ".handle " + info.print() + "";
 			case ANNO:
 				Annotation anno = (Annotation) value;
 				return anno.print();
 			case ANNO_LIST:
 				List<?> list = (List<?>) value;
-				return "[" + list.stream()
+				return "args " + list.stream()
 						.map(String::valueOf)
-						.collect(Collectors.joining(", ")) + "]";
+						.collect(Collectors.joining(" ")) + " end";
 			case ANNO_ENUM:
 				return (String) value;
 			case BOOLEAN:

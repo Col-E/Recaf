@@ -17,8 +17,8 @@ public class LineInstruction extends AbstractInstruction {
 	 * @param lineNo
 	 * 		Line number value.
 	 */
-	public LineInstruction(String opcode, String label, int lineNo) {
-		super(opcode, -1);
+	public LineInstruction(int opcode, String label, int lineNo) {
+		super("line", opcode);
 		this.label = label;
 		this.lineNo = lineNo;
 	}

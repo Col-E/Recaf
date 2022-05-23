@@ -82,6 +82,11 @@ public class DexClassContextBuilder extends DeclarableContextBuilder {
 	}
 
 	@Override
+	public void assemble() {
+		// no-op
+	}
+
+	@Override
 	public void openDefinition() {
 		CommonUX.openClass(info);
 	}

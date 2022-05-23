@@ -18,6 +18,7 @@ import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.pane.ClassHierarchyPane;
 import me.coley.recaf.ui.pane.SearchPane;
+import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
@@ -76,6 +77,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
+			// TODO: Re-enable when ready
+			// menu.getItems().add(action("menu.edit.assemble.class", Icons.ACTION_EDIT, this::assemble));
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
@@ -110,6 +113,24 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 	@Override
 	public void openDefinition() {
 		CommonUX.openClass(info);
+	}
+
+	@Override
+	public void assemble() {
+		String name = info.getName();
+		Resource resource = getContainingResource();
+		if (resource != null) {
+			if (info != null) {
+				// Open assembler
+				AssemblerPane assembler = new AssemblerPane();
+				assembler.onUpdate(info);
+				new GenericWindow(assembler, 800, 300).show();
+			} else {
+				logger.error("No class info for {}", name);
+			}
+		} else {
+			logger.error("Failed to resolve containing resource for class '{}'", name);
+		}
 	}
 
 	@Override

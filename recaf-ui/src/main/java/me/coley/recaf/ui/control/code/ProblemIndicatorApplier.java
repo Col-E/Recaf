@@ -20,7 +20,7 @@ public class ProblemIndicatorApplier implements IndicatorApplier {
 	}
 
 	@Override
-	public boolean apply(int lineNo, Polygon poly) {
+	public boolean checkModified(int lineNo, Polygon poly) {
 		// Populate or hide it.
 		if (editor.getProblemTracking() == null)
 			throw new IllegalStateException("Should not have generated problem indicator," +

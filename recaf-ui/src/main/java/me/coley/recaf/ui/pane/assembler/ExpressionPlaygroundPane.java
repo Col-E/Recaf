@@ -7,6 +7,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javassist.CannotCompileException;
 import me.coley.recaf.assemble.ast.Code;
+import me.coley.recaf.assemble.ast.arch.Definition;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
@@ -89,13 +90,17 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 		if (selfType == null) {
 			selfType = "java/lang/Object";
 		}
-		MethodDefinition definition = (MethodDefinition) pipeline.getUnit().getDefinition();
+		Definition definition = pipeline.getUnit().getDefinition();
+		if (!definition.isMethod()) {
+			return;
+		}
+		MethodDefinition methodDefinition = (MethodDefinition) definition;
 		Variables variables = pipeline.getLastVariables();
 		// Setup expression transformer
 		ExpressionToAsmTransformer toAsmTransformer
-				= new ExpressionToAsmTransformer(classSupplier, definition, variables, selfType);
+				= new ExpressionToAsmTransformer(classSupplier, methodDefinition, variables, selfType);
 		ExpressionToAstTransformer toAstTransformer
-				= new ExpressionToAstTransformer(definition, variables, toAsmTransformer);
+				= new ExpressionToAstTransformer(methodDefinition, variables, toAsmTransformer);
 		toAstTransformer.setLabelPrefixFunction(e -> "demo_");
 		// Transform our expression
 		try {

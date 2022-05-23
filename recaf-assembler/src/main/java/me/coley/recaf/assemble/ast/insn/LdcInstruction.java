@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.util.EscapeUtil;
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 /**
@@ -21,7 +22,7 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		String value.
 	 */
-	public LdcInstruction(String opcode, String value) {
+	public LdcInstruction(int opcode, String value) {
 		this(opcode, value, ArgType.STRING);
 	}
 
@@ -31,7 +32,7 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		Type value.
 	 */
-	public LdcInstruction(String opcode, Type value) {
+	public LdcInstruction(int opcode, Type value) {
 		this(opcode, value, ArgType.TYPE);
 	}
 
@@ -41,7 +42,7 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		Handle value.
 	 */
-	public LdcInstruction(String opcode, HandleInfo value) {
+	public LdcInstruction(int opcode, HandleInfo value) {
 		this(opcode, value, ArgType.HANDLE);
 	}
 
@@ -51,8 +52,8 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		Handle value.
 	 */
-	public LdcInstruction(String opcode, Handle value) {
-		this(opcode, new HandleInfo(value), ArgType.HANDLE);
+	public LdcInstruction(int opcode, Handle value) {
+		this(opcode, value, ArgType.HANDLE);
 	}
 
 	/**
@@ -61,7 +62,7 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		Int value.
 	 */
-	public LdcInstruction(String opcode, int value) {
+	public LdcInstruction(int opcode, int value) {
 		this(opcode, value, ArgType.INTEGER);
 	}
 
@@ -71,7 +72,7 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		Float value.
 	 */
-	public LdcInstruction(String opcode, float value) {
+	public LdcInstruction(int opcode, float value) {
 		this(opcode, value, ArgType.FLOAT);
 	}
 
@@ -81,7 +82,7 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		Double value.
 	 */
-	public LdcInstruction(String opcode, double value) {
+	public LdcInstruction(int opcode, double value) {
 		this(opcode, value, ArgType.DOUBLE);
 	}
 
@@ -91,11 +92,11 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		Long value.
 	 */
-	public LdcInstruction(String opcode, long value) {
+	public LdcInstruction(int opcode, long value) {
 		this(opcode, value, ArgType.LONG);
 	}
 
-	private LdcInstruction(String opcode, Object value, ArgType type) {
+	public LdcInstruction(int opcode, Object value, ArgType type) {
 		super(opcode);
 		this.value = value;
 		this.type = type;
@@ -109,19 +110,19 @@ public class LdcInstruction extends AbstractInstruction {
 	 */
 	public static LdcInstruction of(Object value) {
 		if (value instanceof String)
-			return new LdcInstruction("LDC", (String) value);
+			return new LdcInstruction(Opcodes.LDC, (String) value);
 		else if (value instanceof Integer)
-			return new LdcInstruction("LDC", (int) value);
+			return new LdcInstruction(Opcodes.LDC, (int) value);
 		else if (value instanceof Float)
-			return new LdcInstruction("LDC", (float) value);
+			return new LdcInstruction(Opcodes.LDC, (float) value);
 		else if (value instanceof Double)
-			return new LdcInstruction("LDC", (double) value);
+			return new LdcInstruction(Opcodes.LDC, (double) value);
 		else if (value instanceof Long)
-			return new LdcInstruction("LDC", (long) value);
+			return new LdcInstruction(Opcodes.LDC, (long) value);
 		else if (value instanceof Type)
-			return new LdcInstruction("LDC", (Type) value);
+			return new LdcInstruction(Opcodes.LDC, (Type) value);
 		else if (value instanceof Handle)
-			return new LdcInstruction("LDC", (Handle) value);
+			return new LdcInstruction(Opcodes.LDC, (Handle) value);
 		else if (value == null)
 			throw new IllegalStateException("LDC content must not be null!");
 		throw new IllegalStateException("Unsupported LDC content type: " + value.getClass().getName());
@@ -158,19 +159,18 @@ public class LdcInstruction extends AbstractInstruction {
 			case TYPE:
 				Type type = (Type) getValue();
 				if (type.getSort() == Type.OBJECT)
-					return getOpcode() + " " + type.getInternalName();
+					return getOpcode() + " .type " + type.getInternalName();
 				else
-					return getOpcode() + " " + type;
+					return getOpcode() + " .type " + type;
 			case INTEGER:
+			case DOUBLE:
 				return getOpcode() + " " + getValue();
 			case LONG:
 				return getOpcode() + " " + getValue() + 'L';
 			case FLOAT:
-				return getOpcode() + " " + getValue() + 'F';
-			case DOUBLE:
-				return getOpcode() + " " + getValue() + 'D';
+				return getOpcode() + " " + getValue() + 'f';
 			case HANDLE:
-				return getOpcode() + ' ' + "handle[" + ((HandleInfo) getValue()).print() + ']';
+				return getOpcode() + ' ' + ".handle " + ((HandleInfo) getValue()).print();
 			default:
 				throw new IllegalStateException("Unhandled constant value type: " + getValueType());
 		}

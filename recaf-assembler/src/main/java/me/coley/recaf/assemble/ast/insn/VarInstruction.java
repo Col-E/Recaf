@@ -21,7 +21,7 @@ public class VarInstruction extends AbstractInstruction implements Opcodes, Name
 	 * @param identifier
 	 * 		Variable identifier.
 	 */
-	public VarInstruction(String opcode, String identifier) {
+	public VarInstruction(int opcode, String identifier) {
 		super(opcode);
 		this.identifier = identifier;
 	}

@@ -51,7 +51,7 @@ subprojects {
         def jadxVersion = '1.3.3'
         def jpVersion = '3.24.2'
         def junitVersion = '5.8.2'
-        def lljzipVersion = '1.1.4'
+        def lljzipVersion = '1.1.5'
         def ssvmVersion = '1.7.1'
         def quiltflowerVersion = '1.8.1'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
@@ -67,7 +67,7 @@ subprojects {
         common_io = 'commons-io:commons-io:2.11.0'
         dexlib = "org.smali:dexlib2:$dexVersion"
         directories = 'dev.dirs:directories:26'
-        docking = 'com.github.Col-E:tiwulfx-dock:1.2.1'
+        docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'
         gson = 'com.google.code.gson:gson:2.9.0'
         guava = 'com.google.guava:guava:31.0.1-jre'
         hppc = 'com.carrotsearch:hppc:0.9.1'

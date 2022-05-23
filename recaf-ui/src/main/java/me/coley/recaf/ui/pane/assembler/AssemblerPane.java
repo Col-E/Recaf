@@ -4,7 +4,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Side;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -41,6 +40,7 @@ import java.util.List;
  * @see AssemblerArea Assembler text editor
  */
 public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable, WindowCloseListener {
+	private static final boolean DEBUG_AST = false;
 	private final AssemblerPipeline pipeline = new AssemblerPipeline();
 	private final List<MemberEditor> components = new ArrayList<>();
 	private final CollapsibleTabPane bottomTabs = new CollapsibleTabPane();
@@ -106,6 +106,14 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		tab.textProperty().bind(Lang.getBinding("assembler.analysis.title"));
 		tab.setGraphic(Icons.getIconView(Icons.SMART));
 		tab.setContent(new StackAnalysisPane(assemblerArea, pipeline));
+		return tab;
+	}
+
+	private Tab createDebug() {
+		Tab tab = new Tab();
+		tab.textProperty().bind(Lang.getBinding("Debug"));
+		tab.setGraphic(Icons.getIconView(Icons.EYE));
+		tab.setContent(new DebugPane(assemblerArea, pipeline));
 		return tab;
 	}
 
@@ -190,11 +198,21 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 						createStackAnalysis(),
 						createPlayground()
 				);
+				if (DEBUG_AST)
+					bottomTabs.getTabs().add(createDebug());
 				bottomTabs.setup();
 				split.getItems().add(bottomTabs);
 			}
 			tab.setGraphic(Icons.getMethodIcon((MethodInfo) targetMember));
 		} else if (targetMember.isField()) {
+			if (bottomTabs.getTabs().isEmpty()) {
+				bottomTabs.setSide(Side.BOTTOM);
+				bottomTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+				if (DEBUG_AST)
+					bottomTabs.getTabs().add(createDebug());
+				bottomTabs.setup();
+				split.getItems().add(bottomTabs);
+			}
 			tab.setGraphic(Icons.getFieldIcon((FieldInfo) targetMember));
 		}
 	}

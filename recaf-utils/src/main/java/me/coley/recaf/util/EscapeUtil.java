@@ -41,6 +41,18 @@ public final class EscapeUtil {
 	}
 
 	/**
+	 * Replaces any escapeable squence with the an escaped sequence, inclduing spaces.
+	 *
+	 * @param input
+	 * 		Input text.
+	 *
+	 * @return String without escaped characters.
+	 */
+	public static String escapeSpace(String input) {
+		return visit(input, EscapeUtil::computeUnescapeUnicodeSpace);
+	}
+
+	/**
 	 * Replaces any escape code with its literal value.
 	 *
 	 * @param input
@@ -109,9 +121,40 @@ public final class EscapeUtil {
 		if (cursor >= input.length()) {
 			return 0;
 		}
-		// Check if next character finishes an unescape value, 1 if so, 0 if not.
+		// Check if next character finishes an unescaped value, 1 if so, 0 if not.
 		String current = String.valueOf(input.charAt(cursor));
 		String escaped = WHITESPACE_TO_ESCAPE.get(current);
+		if (escaped != null) {
+			builder.append(escaped);
+			return 1;
+		}
+		// No replacement
+		return 0;
+	}
+
+	private static int computeUnescapeUnicodeSpace(String input, int cursor, StringBuilder builder) {
+		// Bounds check
+		if (cursor >= input.length()) {
+			return 0;
+		}
+		// Check if next character finishes an unescaped value, 1 if so, 0 if not.
+		String current = String.valueOf(input.charAt(cursor));
+		String escaped = WHITESPACE_TO_ESCAPE.get(current);
+		// Check if next character is a space
+		switch (current) {
+			case " ":
+				escaped = "\\u0020";
+				break;
+			case "\t":
+				escaped = "\\u0009";
+				break;
+			case "\n":
+				escaped = "\\u000A";
+				break;
+			case "\r":
+				escaped = "\\u000D";
+				break;
+		}
 		if (escaped != null) {
 			builder.append(escaped);
 			return 1;
@@ -139,6 +182,9 @@ public final class EscapeUtil {
 				return 1;
 			case '\\':
 				builder.append("\\\\");
+				return 1;
+			case '"':
+				builder.append("\\\"");
 				return 1;
 			default:
 				return 0;

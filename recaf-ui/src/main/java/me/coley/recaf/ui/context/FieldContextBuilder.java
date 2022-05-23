@@ -92,7 +92,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 		CommonUX.openMember(ownerInfo, fieldInfo);
 	}
 
-	private void assemble() {
+	@Override
+	public void assemble() {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {

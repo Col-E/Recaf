@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class JFXInjection {
 	private static final String JFX_CLASSIFIER = createClassifier();
-	private static final String JFX_VERSION = "18-ea+8";
+	private static final String JFX_VERSION = "19-ea+6";
 	private static final List<String> JFX_DEPENDENCY_URLS = Arrays.asList(
 			jfxUrlPattern("media"),
 			jfxUrlPattern("controls"),

@@ -2,12 +2,13 @@ package me.coley.recaf.assemble;
 
 import com.google.common.reflect.ClassPath;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
 import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
+import me.coley.recaf.util.StringUtil;
+import me.darknet.assembler.parser.AssemblerException;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -28,6 +29,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @Disabled
 public class AssembleEntireClasspathTests extends TestUtil {
+	private static int count;
+	private static int line;
+
 	@ParameterizedTest
 	@MethodSource("lookup")
 	public void test(String name) {
@@ -42,21 +46,28 @@ public class AssembleEntireClasspathTests extends TestUtil {
 				BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(method);
 				transformer.visit();
 				Unit unit = transformer.getUnit();
+				count++;
 				assertNotNull(unit, "Failed to create unit from: " + location);
 				String code = unit.print();
+				line += 1 + StringUtil.count("\n", code);
 				debug += "\n" + code;
 				assertNotNull(code, "Failed to disassemble: " + location);
-				// ANTLR parse
-				BytecodeParser parser = parser(code);
-				BytecodeParser.UnitContext unitCtx = parser.unit();
+				// JASM parse
+				Unit unitCtx;
+				try {
+					unitCtx = generate(code);
+				} catch (AssemblerException ex) {
+					System.err.println(code);
+					fail("Error generating unit: " + ex.describe(), ex);
+					return;
+				} catch (Throwable t) {
+					System.err.println(code);
+					fail("Error generating unit", t);
+					return;
+				}
 				assertNotNull(unitCtx, "Parser did not find unit context! Input: " + location);
-
-				// Transform to our AST
-				AntlrToAstTransformer antlrToAstTransformer = new AntlrToAstTransformer();
-				Unit unitAssembled = antlrToAstTransformer.visitUnit(unitCtx);
-
 				// Validate
-				AstValidator validator = new AstValidator(unitAssembled);
+				AstValidator validator = new AstValidator(unitCtx);
 				validator.visit();
 				for (ValidationMessage message : validator.getMessages()) {
 					int line = message.getSource().getLine();
@@ -70,7 +81,7 @@ public class AssembleEntireClasspathTests extends TestUtil {
 
 				// Generate
 				AstToMethodTransformer generator = new AstToMethodTransformer(node.name);
-				generator.setUnit(unit);
+				generator.setDefinition(unitCtx.getMethod());
 				try {
 					generator.visit();
 					MethodNode methodAssembled = generator.buildMethod();
@@ -92,13 +103,18 @@ public class AssembleEntireClasspathTests extends TestUtil {
 		}
 	}
 
+	@AfterAll
+	public static void onComplete() {
+		System.out.println("Methods:    " + count);
+		System.out.println("# of lines: " + line);
+	}
+
 	@SuppressWarnings("UnstableApiUsage")
 	public static List<String> lookup() throws IOException {
 		return ClassPath.from(AssembleEntireClasspathTests.class.getClassLoader())
 				.getAllClasses()
 				.stream()
 				.map(ClassPath.ClassInfo::getName)
-				.filter(name -> name.indexOf('$') == -1)
 				.collect(Collectors.toList());
 	}
 }

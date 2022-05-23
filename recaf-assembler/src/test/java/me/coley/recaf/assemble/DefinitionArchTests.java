@@ -1,12 +1,7 @@
 package me.coley.recaf.assemble;
 
-import me.coley.recaf.assemble.ast.arch.Annotation;
-import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
+import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.ast.arch.MemberDefinition;
-import me.coley.recaf.assemble.ast.arch.MethodDefinition;
-import me.coley.recaf.assemble.ast.arch.MethodParameter;
-import me.coley.recaf.assemble.parser.BytecodeParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -22,8 +17,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DefinitionArchTests extends TestUtil {
 	@Test
 	public void testSimpleDefinition() {
-		handle("simple()V\n", unit -> {
-			MemberDefinition def = unit.getDefinition();
+		handle("method simple ()V\nend", unit -> {
+			Definition def = unit.getDefinition();
 			assertEquals("simple", def.getName());
 			assertEquals("()V", def.getDesc());
 			assertEquals(0, def.getModifiers().value());
@@ -34,7 +29,7 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testDefinitionWithParams() {
-		handle("simple(Ljava/lang/String; param1, I param2)V\n", unit -> {
+		handle("method simple (Ljava/lang/String; param1,  I param2)V\nend", unit -> {
 			MethodDefinition def = (MethodDefinition) unit.getDefinition();
 			assertEquals(2, def.getParams().getParameters().size());
 			MethodParameter parameter1 = def.getParams().getParameters().get(0);
@@ -57,110 +52,115 @@ public class DefinitionArchTests extends TestUtil {
 			"Ljava/util/Map<TT;TV;>;",
 	})
 	public void testSignature(String sig) {
-		handle("simple()V\n" + "SIGNATURE " + sig, unit -> {
-			assertEquals(sig, unit.getCode().getSignature().getSignature());
+		handle("signature " + sig + "\nmethod simple ()V\nend", unit -> {
+			MethodDefinition method = unit.getMethod();
+			assertEquals(sig, method.getSignature().getSignature());
 		});
 	}
 
 	@Test
 	public void testConstValInt() {
-		handle("simple I\n" + "VALUE 0", unit -> {
-			assertNotNull(unit.getCode());
-			assertNotNull(unit.getCode().getConstVal());
-			assertEquals(0, unit.getCode().getConstVal().getValue());
+		handle("field simple I\n" + "0", unit -> {
+			FieldDefinition field = unit.getField();
+			assertNotNull(field.getConstVal());
+			assertEquals(0, field.getConstVal().getValue());
 		});
-		handle("simple I\n" + "VALUE -5000", unit -> {
-			assertNotNull(unit.getCode());
-			assertNotNull(unit.getCode().getConstVal());
-			assertEquals(-5000, unit.getCode().getConstVal().getValue());
+		handle("field simple I\n" + "-5000", unit -> {
+			FieldDefinition field = unit.getField();
+			assertNotNull(field.getConstVal());
+			assertEquals(-5000, field.getConstVal().getValue());
 		});
 	}
 
 
 	@Test
 	public void testConstValLong() {
-		handle("simple J\n" + "VALUE 0L", unit -> {
-			assertNotNull(unit.getCode());
-			assertNotNull(unit.getCode().getConstVal());
-			assertEquals(0L, unit.getCode().getConstVal().getValue());
+		handle("field simple J\n" + "0L", unit -> {
+			FieldDefinition field = unit.getField();
+			assertNotNull(field.getConstVal());
+			assertEquals(0L, field.getConstVal().getValue());
 		});
-		handle("simple J\n" + "VALUE -5000000000L", unit -> {
-			assertNotNull(unit.getCode());
-			assertNotNull(unit.getCode().getConstVal());
-			assertEquals(-5000000000L, unit.getCode().getConstVal().getValue());
+		handle("field simple J\n" + "-5000000000L", unit -> {
+			FieldDefinition field = unit.getField();
+			assertNotNull(field.getConstVal());
+			assertEquals(-5000000000L, field.getConstVal().getValue());
 		});
 	}
 
 	@Test
 	public void testConstValFloat() {
-		handle("simple F\n" + "VALUE 0.5F", unit -> {
-			assertNotNull(unit.getCode());
-			assertNotNull(unit.getCode().getConstVal());
-			assertEquals(0.5F, unit.getCode().getConstVal().getValue());
+		handle("field simple F\n" + "0.5F", unit -> {
+			FieldDefinition field = unit.getField();
+			assertNotNull(field.getConstVal());
+			assertEquals(0.5F, field.getConstVal().getValue());
 		});
-		handle("simple F\n" + "VALUE -50.7F", unit -> {
-			assertNotNull(unit.getCode());
-			assertNotNull(unit.getCode().getConstVal());
-			assertEquals(-50.7F, unit.getCode().getConstVal().getValue());
+		handle("field simple F\n" + "-50.7F", unit -> {
+			FieldDefinition field = unit.getField();
+			assertNotNull(field.getConstVal());
+			assertEquals(-50.7F, field.getConstVal().getValue());
 		});
 	}
 
 	@Test
 	public void testConstValDouble() {
-		handle("simple D\n" + "VALUE 0.54321", unit -> {
-			assertNotNull(unit.getCode());
-			assertNotNull(unit.getCode().getConstVal());
-			assertEquals(0.54321, unit.getCode().getConstVal().getValue());
+		handle("field simple D\n" + "0.54321", unit -> {
+			FieldDefinition field = unit.getField();
+			assertNotNull(field.getConstVal());
+			assertEquals(0.54321, field.getConstVal().getValue());
 		});
-		handle("simple D\n" + "VALUE -5000000000000000000000000000000000000000.5", unit -> {
-			assertNotNull(unit.getCode());
-			assertNotNull(unit.getCode().getConstVal());
-			assertEquals(-5000000000000000000000000000000000000000.5, unit.getCode().getConstVal().getValue());
+		handle("field simple D\n" + " -5000000000000000000000000000000000000000.5", unit -> {
+			FieldDefinition field = unit.getField();
+			assertNotNull(field.getConstVal());
+			assertEquals(-5000000000000000000000000000000000000000.5, field.getConstVal().getValue());
 		});
 	}
 
 	@Test
 	public void testConstValString() {
-		handle("simple Ljava/lang/String;\n" + "`VALUE \"hello\"", unit -> {
-			assertNotNull(unit.getCode());
-			assertNotNull(unit.getCode().getConstVal());
-			assertEquals("hello", unit.getCode().getConstVal().getValue());
+		handle("field simple Ljava/lang/String;\n" + "\"hello\"", unit -> {
+			FieldDefinition field = unit.getField();
+			assertNotNull(field.getConstVal());
+			assertEquals("hello", field.getConstVal().getValue());
 		});
 	}
 
 	@Test
 	public void testThrownException() {
-		handle("simple()V\n" + "THROWS java/lang/Exception", unit -> {
-			assertNotNull(unit.getCode());
-			assertEquals(1, unit.getCode().getThrownExceptions().size());
-			assertEquals("java/lang/Exception", unit.getCode().getThrownExceptions().get(0).getExceptionType());
+		handle("throws java/lang/Exception" + "\nmethod simple ()V\nend" , unit -> {
+			MethodDefinition method = unit.getMethod();
+			assertNotNull(method.getCode());
+			assertEquals(1, method.getThrownExceptions().size());
+			assertEquals("java/lang/Exception", method.getThrownExceptions().get(0).getExceptionType());
 		});
 	}
 
 	@Test
 	public void testThrownExceptionShadowsPrimitive() {
-		handle("simple()V\n" + "THROWS I", unit -> {
-			assertNotNull(unit.getCode());
-			assertEquals(1, unit.getCode().getThrownExceptions().size());
-			assertEquals("I", unit.getCode().getThrownExceptions().get(0).getExceptionType());
+		handle("throws I" + "\nmethod simple ()V\nend", unit -> {
+			MethodDefinition method = unit.getMethod();
+			assertNotNull(method.getCode());
+			assertEquals(1, method.getThrownExceptions().size());
+			assertEquals("I", method.getThrownExceptions().get(0).getExceptionType());
 		});
 	}
 
 	@Test
 	public void testThrownExceptionShadowsKeyword() {
-		handle("simple()V\n" + "THROWS THROWS", unit -> {
-			assertNotNull(unit.getCode());
-			assertEquals(1, unit.getCode().getThrownExceptions().size());
-			assertEquals("THROWS", unit.getCode().getThrownExceptions().get(0).getExceptionType());
+		handle("throws throws" + "\nmethod simple ()V\nend", unit -> {
+			MethodDefinition method = unit.getMethod();
+			assertNotNull(method.getCode());
+			assertEquals(1, method.getThrownExceptions().size());
+			assertEquals("throws", method.getThrownExceptions().get(0).getExceptionType());
 		});
 	}
 
 	@Test
 	public void testAnno() {
-		handle("simple()V\n" + "VISIBLE_ANNOTATION com/example/MyAnno(numArg=500, strArg=\"hello\")", unit -> {
-			assertNotNull(unit.getCode());
-			assertEquals(1, unit.getCode().getAnnotations().size());
-			Annotation annotation = unit.getCode().getAnnotations().get(0);
+		handle("annotation com/example/MyAnno numArg 500 strArg \"hello\" end" + "\nmethod simple ()V\nend", unit -> {
+			MethodDefinition method = unit.getMethod();
+			assertNotNull(method.getCode());
+			assertEquals(1, method.getAnnotations().size());
+			Annotation annotation = method.getAnnotations().get(0);
 			assertTrue(annotation.isVisible());
 			assertEquals("com/example/MyAnno", annotation.getType());
 			assertEquals(2, annotation.getArgs().size());
@@ -171,10 +171,11 @@ public class DefinitionArchTests extends TestUtil {
 
 	@Test
 	public void testAnnoWithEnum() {
-		handle("simple()V\n" + "VISIBLE_ANNOTATION com/example/MyAnno(v=com/example/Example.NAME)", unit -> {
-			assertNotNull(unit.getCode());
-			assertEquals(1, unit.getCode().getAnnotations().size());
-			Annotation annotation = unit.getCode().getAnnotations().get(0);
+		handle("annotation com/example/MyAnno v enum com/example/Example NAME end" + "\nmethod simple ()V\nend", unit -> {
+			MethodDefinition method = unit.getMethod();
+			assertNotNull(method.getCode());
+			assertEquals(1, method.getAnnotations().size());
+			Annotation annotation = method.getAnnotations().get(0);
 			assertTrue(annotation.isVisible());
 			assertEquals("com/example/MyAnno", annotation.getType());
 			assertEquals(1, annotation.getArgs().size());
@@ -187,10 +188,11 @@ public class DefinitionArchTests extends TestUtil {
 	@Test
 	@SuppressWarnings("unchecked")
 	public void testAnnoWithList() {
-		handle("simple()V\n" + "VISIBLE_ANNOTATION com/example/MyAnno(list=[1,2,3])", unit -> {
-			assertNotNull(unit.getCode());
-			assertEquals(1, unit.getCode().getAnnotations().size());
-			Annotation annotation = unit.getCode().getAnnotations().get(0);
+		handle("annotation com/example/MyAnno list args 1 2 3 end end" + "\nmethod simple ()V\nend", unit -> {
+			MethodDefinition method = unit.getMethod();
+			assertNotNull(method.getCode());
+			assertEquals(1, method.getAnnotations().size());
+			Annotation annotation = method.getAnnotations().get(0);
 			assertTrue(annotation.isVisible());
 			assertEquals("com/example/MyAnno", annotation.getType());
 			assertEquals(1, annotation.getArgs().size());
@@ -203,13 +205,8 @@ public class DefinitionArchTests extends TestUtil {
 	}
 
 	private static void handle(String original, Consumer<Unit> handler) {
-		BytecodeParser parser = parser(original);
-
-		BytecodeParser.UnitContext unitCtx = parser.unit();
-		assertNotNull(unitCtx, "Parser did not find unit context with input: " + original);
-
-		AntlrToAstTransformer visitor = new AntlrToAstTransformer();
-		Unit unit = visitor.visitUnit(unitCtx);
+		Unit unit = generateSilent(original);
+		assertNotNull(unit, "Parser did not find unit context with input: " + original);
 
 		handler.accept(unit);
 	}

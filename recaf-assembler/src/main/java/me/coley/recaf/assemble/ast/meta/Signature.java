@@ -9,7 +9,7 @@ import me.coley.recaf.assemble.ast.CodeEntry;
  *
  * @author Matt Coley
  */
-public class Signature extends BaseElement implements CodeEntry {
+public class Signature extends BaseElement {
 	private final String signature;
 
 	/**
@@ -18,11 +18,6 @@ public class Signature extends BaseElement implements CodeEntry {
 	 */
 	public Signature(String signature) {
 		this.signature = signature;
-	}
-
-	@Override
-	public void insertInto(Code code) {
-		code.setSignature(this);
 	}
 
 	@Override
