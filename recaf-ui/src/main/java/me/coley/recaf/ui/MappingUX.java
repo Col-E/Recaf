@@ -11,8 +11,10 @@ import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class MappingUX {
+	private static final Logger logger = Logging.get(MappingUX.class);
+
 	/**
 	 * @param openedClassTabs
 	 * 		Snapshot of prior open class tabs.
@@ -44,7 +48,21 @@ public class MappingUX {
 		// Re-open the mapped classes as their new name, attempt to reset scroll position and such.
 		Map<String, DockTab> classToOpenedTab = openedClassTabs.stream()
 				.collect(Collectors.toMap(
-						tab -> ((ClassView) tab.getContent()).getCurrentClassInfo().getName(),
+						tab -> {
+							// TODO: Sometimes the content/info is null
+							//  - I think its a thread fighting issue
+							ClassView view = (ClassView) tab.getContent();
+							if (view == null) {
+								logger.error("Cannot restore tab[{}], view was null", tab.getText());
+								return null;
+							}
+							CommonClassInfo info = view.getCurrentClassInfo();
+							if (info == null) {
+								logger.error("Cannot restore tab[{}], view was null", tab.getText());
+								return null;
+							}
+							return info.getName();
+						},
 						Function.identity())
 				);
 		mappedClasses.forEach((oldName, classMapping) -> {
