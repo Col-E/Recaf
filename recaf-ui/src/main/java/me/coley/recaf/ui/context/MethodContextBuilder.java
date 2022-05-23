@@ -59,7 +59,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		menu.getItems().add(createHeader(methodInfo.getName(), Icons.getMethodIcon(methodInfo)));
 		if (!declaration)
 			menu.getItems().add(action("menu.goto.method", Icons.OPEN, this::openDefinition));
-		if (isPrimary()) {
+		if (isPrimary() && isOwnerJvmClass()) {
+			// TODO: When android cases are supported, remove 'isOwnerJvmClass()' check
 			Menu refactor = menu("menu.refactor");
 			if (declaration) {
 				menu.getItems().add(action("menu.edit.assemble.method", Icons.ACTION_EDIT, this::assemble));
@@ -239,6 +240,9 @@ public class MethodContextBuilder extends MemberContextBuilder {
 	}
 
 	private boolean canUseVm() {
+		// Can only be run on JVM classes
+		if (!isOwnerJvmClass())
+			return false;
 		// SSVM must have been initialized
 		SsvmIntegration ssvm = RecafUI.getController().getServices().getSsvmIntegration();
 		if (!ssvm.isInitialized())

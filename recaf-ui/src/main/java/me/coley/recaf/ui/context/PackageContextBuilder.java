@@ -93,6 +93,14 @@ public class PackageContextBuilder extends ContextBuilder {
 					}
 				}
 			}
+			for (String className : new TreeSet<>(resource.getDexClasses().keySet())) {
+				if (className.startsWith(name + "/")) {
+					boolean removed = resource.getDexClasses().remove(className) != null;
+					if (!removed) {
+						logger.warn("Tried to delete dex class '{}' but failed", name);
+					}
+				}
+			}
 
 		} else {
 			logger.error("Failed to resolve containing resource for package '{}'", name);

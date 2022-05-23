@@ -1,7 +1,9 @@
 package me.coley.recaf.ui.context;
 
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -23,6 +25,20 @@ public abstract class MemberContextBuilder extends DeclarableContextBuilder {
 	 * @return Builder.
 	 */
 	public abstract MemberContextBuilder setOwnerInfo(CommonClassInfo info);
+
+	/**
+	 * @return {@code true} when the containing class is a {@link DexClassInfo}.
+	 */
+	protected boolean isOwnerDexClass() {
+		return getOwnerInfo() instanceof DexClassInfo;
+	}
+
+	/**
+	 * @return {@code true} when the containing class is a {@link ClassInfo}.
+	 */
+	protected boolean isOwnerJvmClass() {
+		return getOwnerInfo() instanceof ClassInfo;
+	}
 
 	@Override
 	public Resource findContainerResource() {
