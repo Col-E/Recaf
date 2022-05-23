@@ -108,7 +108,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	@Override
 	public void visitMethodInsn(int opcode, IdentifierGroup name, IdentifierGroup desc, boolean itf) throws AssemblerException {
 		MethodDescriptor md = new MethodDescriptor(name.content(), desc.content());
-		add(new MethodInstruction(opcode, md.owner, md.name, md.getDescriptor()));
+		add(new MethodInstruction(opcode, md.owner, md.name, md.getDescriptor(), itf));
 	}
 
 	@Override
