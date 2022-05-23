@@ -148,6 +148,8 @@ public abstract class BaseElement implements Element {
 		return closestElement;
 
 	}
+
+	@Override
 	public Element getChildAt(int position) {
 		Element[] elements = getChildren().toArray(new Element[0]);
 		if (elements.length == 0) { // base case
@@ -165,11 +167,9 @@ public abstract class BaseElement implements Element {
 			int mid = (start + end) / 2;
 			if (position < elements[mid].getStart()) {
 				end = mid - 1;
-			}
-			else if (position > elements[mid].getStop()) {
+			} else if (position > elements[mid].getStop()) {
 				start = mid + 1;
-			}
-			else {
+			} else {
 				return elements[mid];
 			}
 		}

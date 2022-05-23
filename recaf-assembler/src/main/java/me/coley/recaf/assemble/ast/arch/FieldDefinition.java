@@ -28,7 +28,7 @@ public class FieldDefinition extends AbstractDefinition {
 
 	@Override
 	public String print() {
-		return super.print("field") +
+		return super.buildDefString("field") +
 				// make sure to escape the name
 				EscapeUtil.escapeSpace(name) + ' ' + EscapeUtil.escape(type);
 	}

@@ -51,7 +51,7 @@ public class AssemblerPipeline {
 	private boolean doUseAnalysis = true;
 	// Outputs
 	private Unit unit;
-	private List<Group> latestAst;
+	private List<Group> latestJasmGroups;
 	private Variables lastVariables;
 	private FieldNode lastField;
 	private MethodNode lastMethod;
@@ -260,8 +260,11 @@ public class AssemblerPipeline {
 		return unit;
 	}
 
-	public List<Group> getLatestAst() {
-		return latestAst;
+	/**
+	 * @return Last jasm parse groups.
+	 */
+	public List<Group> getLatestJasmGroups() {
+		return latestJasmGroups;
 	}
 
 	/**
@@ -339,6 +342,13 @@ public class AssemblerPipeline {
 		return lastMethod;
 	}
 
+	/**
+	 * @param position
+	 * 		Position in input text.
+	 *
+	 * @return {@link Element} of latest AST at the given position.
+	 * {@code null} if no AST is available.
+	 */
 	public Element getCodeElementAt(int position) {
 		if (unit == null || !unit.isMethod())
 			return null;
@@ -388,18 +398,16 @@ public class AssemblerPipeline {
 	 * 		Line number.
 	 * @param colPos
 	 * 		Column position.
+	 *
 	 * @return {@link Group} of latest AST at the given line and column.
 	 */
 	public Group getASTElementAt(int lineNo, int colPos) {
-
-		for(Group group : latestAst) {
+		for (Group group : latestJasmGroups) {
 			Group grp = getASTElementAt(lineNo, colPos, group);
-			if(grp != null)
+			if (grp != null)
 				return grp;
 		}
-
 		return null;
-
 	}
 
 	/**
@@ -411,15 +419,16 @@ public class AssemblerPipeline {
 	 * 		Column position.
 	 * @param root
 	 * 		Root {@link Group} to start the search.
+	 *
 	 * @return {@link Group} that is either the {@code root} or a child at the given line and column.
 	 */
 	public Group getASTElementAt(int lineNo, int colPos, Group root) {
 		Token token = root.value; // the root token value
-		if(token == null) {
+		if (token == null) {
 			// group may still have children
 			for (Group child : root.children) {
 				Group grp = getASTElementAt(lineNo, colPos, child);
-				if(grp != null)
+				if (grp != null)
 					return grp;
 			}
 			return null;
@@ -428,11 +437,11 @@ public class AssemblerPipeline {
 		int line = location.getLine(); // get the line number
 		int startCol = location.getColumn(); // get the start column
 		int endCol = startCol + token.content.length(); // get the end column
-		if(line == lineNo && startCol <= colPos && colPos <= endCol) // if the line and column are correct
+		if (line == lineNo && startCol <= colPos && colPos <= endCol) // if the line and column are correct
 			return root;
-		for(Group child : root.children) { // check all the children
+		for (Group child : root.children) { // check all the children
 			Group grp = getASTElementAt(lineNo, colPos, child); // get the child (or null)
-			if(grp != null) // if there is a child at the given line and column
+			if (grp != null) // if there is a child at the given line and column
 				return grp; // return the child
 		}
 		return null; // else just return null
@@ -441,17 +450,17 @@ public class AssemblerPipeline {
 	/**
 	 * Deep traverse the current parser AST and find the {@link Group} at the location
 	 *
-	 * @param position the position of the cursor
+	 * @param position
+	 * 		the position of the cursor
+	 *
 	 * @return {@link Group} of latest AST at the given line and column.
 	 */
 	public Group getASTElementAt(int position) {
-
-		for(Group group : latestAst) {
+		for (Group group : latestJasmGroups) {
 			Group grp = getASTElementAt(position, group);
-			if(grp != null)
+			if (grp != null)
 				return grp;
 		}
-
 		return null;
 
 	}
@@ -459,29 +468,31 @@ public class AssemblerPipeline {
 	/**
 	 * Deep traverse the given {@link Group} and find the {@link Group} at the location
 	 *
-	 * @param position the position of the cursor
+	 * @param position
+	 * 		the position of the cursor
 	 * @param root
 	 * 		Root {@link Group} to start the search.
+	 *
 	 * @return {@link Group} that is either the {@code root} or a child at the given line and column.
 	 */
 	public Group getASTElementAt(int position, Group root) {
 		Token token = root.value; // the root token value
-		if(token == null) {
+		if (token == null) {
 			// group may still have children
 			for (Group child : root.children) {
 				Group grp = getASTElementAt(position, child);
-				if(grp != null)
+				if (grp != null)
 					return grp;
 			}
 			return null;
 		}
 		int start = token.getStart();
 		int end = token.getEnd();
-		if(start <= position && position <= end) // if the position is between the start and end
+		if (start <= position && position <= end) // if the position is between the start and end
 			return root;
-		for(Group child : root.children) { // check all the children
+		for (Group child : root.children) { // check all the children
 			Group grp = getASTElementAt(position, child); // get the child (or null)
-			if(grp != null) // if there is a child at the given line and column
+			if (grp != null) // if there is a child at the given line and column
 				return grp; // return the child
 		}
 		return null; // else just return null
@@ -520,7 +531,7 @@ public class AssemblerPipeline {
 		}
 		if (Thread.interrupted())
 			return false;
-		latestAst = parsed;
+		latestJasmGroups = parsed;
 		parserCompletionListeners.forEach(l -> l.onCompleteParse(parsed));
 		// Transform to our AST
 		logger.trace("Assembler AST updating: [JASM --> AST transform]");
