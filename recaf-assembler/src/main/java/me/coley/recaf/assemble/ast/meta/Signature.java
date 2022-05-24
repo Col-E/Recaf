@@ -22,7 +22,7 @@ public class Signature extends BaseElement {
 
 	@Override
 	public String print() {
-		return "SIGNATURE " + getSignature();
+		return "signature " + getSignature() + "\n";
 	}
 
 	/**

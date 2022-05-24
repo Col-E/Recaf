@@ -77,4 +77,12 @@ public interface Element extends Printable {
 	 * @return First child element on the given line/column.
 	 */
 	Element getChildAt(int line, int column);
+
+	/**
+	 * @param position
+	 * 		Position in input text.
+	 *
+	 * @return First child element on the given position.
+	 */
+	Element getChildAt(int position);
 }
