@@ -124,6 +124,8 @@ public class Frame {
 				return new Value.ObjectValue(commonType);
 			} else if (otherValue instanceof Value.ArrayValue) {
 				return new Value.ObjectValue(Types.OBJECT_TYPE);
+			} else if (otherValue instanceof Value.NullValue) {
+				return new Value.ObjectValue(Types.OBJECT_TYPE);
 			} else {
 				throw new FrameMergeException("Values not objects/arrays in both frames!");
 			}
@@ -160,6 +162,8 @@ public class Frame {
 					return new Value.ArrayValue(array.getDimensions(), commonType);
 				}
 			} else if (otherValue instanceof Value.ObjectValue) {
+				return new Value.ObjectValue(Types.OBJECT_TYPE);
+			} else if (otherValue instanceof Value.NullValue) {
 				return new Value.ObjectValue(Types.OBJECT_TYPE);
 			} else {
 				throw new FrameMergeException("Values not arrays/objects in both frames!");
