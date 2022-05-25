@@ -35,10 +35,7 @@ public class VmValueUtil implements Opcodes {
 		// If all values in the array are constant, then the array itself is constant
 		if (value instanceof TrackedArrayValue) {
 			TrackedArrayValue array = (TrackedArrayValue) value;
-			for (int i = 0; i < array.getLength(); i++)
-				if (!isConstant(array.getValue(i)))
-					return false;
-			return true;
+			return array.areAllValuesConstant();
 		}
 		// Anything else isn't something we can confirm to be constant.
 		return false;

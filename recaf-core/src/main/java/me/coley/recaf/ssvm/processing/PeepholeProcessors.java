@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static me.coley.recaf.ssvm.value.ConstNumericValue.*;
@@ -381,7 +382,7 @@ public class PeepholeProcessors implements Opcodes {
 				for (int i = argTypes.length - 1; i >= 0; i--) {
 					Type argType = argTypes[i];
 					Value value = stack.getAt(stackSize - 1 - argOffset);
-					paramsAreConst &= (value instanceof ConstValue);
+					paramsAreConst &= VmValueUtil.isConstant(value);
 					argumentValues.add(value);
 					argOffset += argType.getSize();
 				}
