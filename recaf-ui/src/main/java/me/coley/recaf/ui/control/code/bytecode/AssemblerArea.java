@@ -259,6 +259,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 			MethodInfo method = owner.findMethod(methodInsn.getName(), methodInsn.getDesc());
 			if (method == null) {
 				logger.warn("Cannot find method '{}'", methodInsn.getName());
+				return null;
 			}
 			return ContextBuilder.forMethod(owner, method);
 		} else if (element instanceof TypeInstruction) {
