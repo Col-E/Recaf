@@ -20,6 +20,34 @@ public class Value {
 	//    - varName.method(param)
 
 	/**
+	 * @return {@code true} if the type is {@link ObjectValue}.
+	 */
+	public boolean isObject() {
+		return this instanceof ObjectValue;
+	}
+
+	/**
+	 * @return {@code true} if the type is {@link ArrayValue}.
+	 */
+	public boolean isArray() {
+		return this instanceof ArrayValue;
+	}
+
+	/**
+	 * @return {@code true} if the type is {@link NullValue}.
+	 */
+	public boolean isNull() {
+		return this instanceof NullValue;
+	}
+
+	/**
+	 * @return {@code true} if the type is {@link NumericValue}.
+	 */
+	public boolean isNumeric() {
+		return this instanceof NumericValue;
+	}
+
+	/**
 	 * Special case for values popped off an empty stack.
 	 */
 	public static class EmptyPoppedValue extends Value {

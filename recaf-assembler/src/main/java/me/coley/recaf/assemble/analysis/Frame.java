@@ -21,6 +21,7 @@ public class Frame {
 	private final List<Value> stack = new ArrayList<>();
 	private boolean visited;
 	private boolean wonky;
+	private String wonkyReason;
 
 	/**
 	 * @param selfTypeName
@@ -294,10 +295,18 @@ public class Frame {
 	}
 
 	/**
+	 * @return Reason for the frame being marked as {@link #isWonky()}.
+	 */
+	public String getWonkyReason() {
+		return wonkyReason;
+	}
+
+	/**
 	 * See {@link #isWonky()}.
 	 */
-	public void markWonky() {
+	public void markWonky(String reason) {
 		wonky = true;
+		wonkyReason = reason;
 	}
 
 	@Override
