@@ -22,20 +22,20 @@ import java.util.List;
 public class DebugPane extends BorderPane implements ParserCompletionListener {
 	private final GroupTreeView treeView;
 	private final TokenList listView;
-	private final AssemblerArea assemblerPane;
+	private final AssemblerArea assemblerArea;
 
 	/**
-	 * @param pane
-	 * 		Parent assembler pane.
+	 * @param area
+	 * 		Parent assembler area.
 	 * @param pipeline
 	 * 		Pipeline associated with the assembler pane.
 	 */
-	public DebugPane(AssemblerArea pane, AssemblerPipeline pipeline) {
+	public DebugPane(AssemblerArea area, AssemblerPipeline pipeline) {
 		super();
 		treeView = new GroupTreeView();
 		listView = new TokenList();
 		setCenter(new SplitPane(treeView, listView));
-		assemblerPane = pane;
+		assemblerArea = area;
 		pipeline.addParserCompletionListener(this);
 	}
 
@@ -72,7 +72,7 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
 							Location loc = item.location;
 							setOnMouseClicked(event -> {
 								if (event.getClickCount() == 2) {
-									assemblerPane.selectPosition(loc.line, loc.column);
+									assemblerArea.selectPosition(loc.line, loc.column);
 								}
 							});
 						}
@@ -140,7 +140,7 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
 						content);
 				setOnMouseClicked(event -> {
 					if (event.getClickCount() == 2) {
-						assemblerPane.selectPosition(loc.line, loc.column);
+						assemblerArea.selectPosition(loc.line, loc.column);
 						listView.getSelectionModel().select(item.value);
 						listView.scrollTo(item.value);
 					}

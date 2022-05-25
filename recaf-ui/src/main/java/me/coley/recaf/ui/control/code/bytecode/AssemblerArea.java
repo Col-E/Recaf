@@ -7,6 +7,8 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
 import me.coley.recaf.assemble.MethodCompileException;
+import me.coley.recaf.assemble.analysis.Analysis;
+import me.coley.recaf.assemble.analysis.Frame;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
@@ -63,7 +65,7 @@ import static me.darknet.assembler.parser.Group.GroupType;
  *
  * @author Matt Coley
  */
-public class AssemblerArea extends SyntaxArea implements MemberEditor,
+public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineCompletionListener,
 		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener {
 	private static final Logger logger = Logging.get(AssemblerArea.class);
 	private static final int INITIAL_DELAY_MS = 500;
@@ -103,6 +105,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		pipeline.addParserFailureListener(this);
 		pipeline.addBytecodeFailureListener(this);
 		pipeline.addBytecodeValidationListener(this);
+		pipeline.addPipelineCompletionListener(this);
 		boolean validate = config().astValidation;
 		if (validate) {
 			pipeline.addAstValidationListener(this);
@@ -205,8 +208,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 		}
 		// Check if there is parsable AST info
 		if (pipeline.getUnit() == null) {
-			// TODO: More visually noticeable warning to user that the AST failed to be parsed
-			//  - Offer to switch class representation?
 			logger.warn("Could not request context menu since the code is not parsable!");
 			return;
 		}
@@ -580,6 +581,24 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor,
 	@Override
 	public void onBytecodeValidationComplete(Object object, Validator<?> validator) {
 		reportErrors(BYTECODE_VALIDATION, validator);
+	}
+
+	@Override
+	public void onCompletedOutput(Object object) {
+		if (!pipeline.isMethod())
+			return;
+		Analysis analysis = pipeline.getLastAnalysis();
+		if (analysis != null) {
+			for (int i = 0; i < analysis.getFrames().size(); i++) {
+				Frame frame = analysis.frame(i);
+				if (frame.isWonky()) {
+					AbstractInstruction instruction = pipeline.getUnit().getMethod().getCode().getInstructions().get(i);
+					int line = instruction.getLine();
+					ProblemInfo problem = new ProblemInfo(BYTECODE_VALIDATION, ProblemLevel.WARNING, line, frame.getWonkyReason());
+					problemTracking.addProblem(line, problem);
+				}
+			}
+		}
 	}
 
 	@Override
