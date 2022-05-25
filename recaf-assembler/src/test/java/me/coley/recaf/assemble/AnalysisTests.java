@@ -325,6 +325,154 @@ public class AnalysisTests extends TestUtil {
 		}
 	}
 
+	@Nested
+	public class Correctness {
+		@Test
+		public void stringAndNullMergeOk() {
+			handle("method dummy (Z bool)V\n" +
+					"a: \n" +
+					"  iload bool\n" +
+					"  ifeq c\n" +
+					"b: \n" +
+					"  ldc \"hello\"\n" +
+					"  goto d\n" +
+					"c: \n" +
+					"  aconst_null\n" +
+					"  goto d\n" +
+					"d: \n" +
+					"  putstatic Test.string_field Ljava/lang/String;\n" +
+					"end", AnalysisTests::correct);
+		}
+
+		@Test
+		public void arrayAndNullMergeOk() {
+			handle("method dummy (Z bool)V\n" +
+					"a: \n" +
+					"  iload bool\n" +
+					"  ifeq c\n" +
+					"b: \n" +
+					"  getstatic Test.array_field [B\n" +
+					"  goto d\n" +
+					"c: \n" +
+					"  aconst_null\n" +
+					"  goto d\n" +
+					"d: \n" +
+					"  putstatic Test.array_field [B\n" +
+					"end", AnalysisTests::correct);
+		}
+
+		@Test
+		public void nullAndNullMergeOk() {
+			handle("method dummy (Z bool)V\n" +
+					"a: \n" +
+					"  iload bool\n" +
+					"  ifeq c\n" +
+					"b: \n" +
+					"  aconst_null\n" +
+					"  goto d\n" +
+					"c: \n" +
+					"  aconst_null\n" +
+					"  goto d\n" +
+					"d: \n" +
+					"  putstatic Test.object_field Ljava/lang/Object;\n" +
+					"end", AnalysisTests::correct);
+		}
+
+		@Test
+		public void storeNullInArrayField() {
+			handle("method dummy ()V\n" +
+					"a: \n" +
+					"  aconst_null\n" +
+					"  putstatic Test.array_field [I\n" +
+					"  return\n" +
+					"end", AnalysisTests::correct);
+		}
+
+		@Test
+		public void storeNullInObjectField() {
+			handle("method dummy ()V\n" +
+					"a: \n" +
+					"  aconst_null\n" +
+					"  putstatic Test.obj_field Ljava/lang/Object;\n" +
+					"  return\n" +
+					"end", AnalysisTests::correct);
+		}
+	}
+
+	@Nested
+	public class Failure {
+		@Test
+		public void storeIntInLongField() {
+			handle("method dummy (Z bool)V\n" +
+					"a: \n" +
+					"  iload bool\n" +
+					"  putstatic Test.long_field J\n" +
+					"  return\n" +
+					"end", AnalysisTests::failure);
+		}
+
+		@Test
+		public void storeNullInIntField() {
+			handle("method dummy (Z bool)V\n" +
+					"a: \n" +
+					"  aconst_null\n" +
+					"  putstatic Test.int_field I\n" +
+					"  return\n" +
+					"end", AnalysisTests::failure);
+		}
+
+		@Test
+		public void getfieldOnPrimitive() {
+			handle("method dummy (Z bool)V\n" +
+					"a: \n" +
+					"  iload bool\n" +
+					"  getfield Test.int_field I\n" +
+					"  pop\n" +
+					"  return\n" +
+					"end", AnalysisTests::failure);
+		}
+
+		@Test
+		public void getfieldOnNull() {
+			handle("method dummy ()V\n" +
+					"a: \n" +
+					"  aconst_null\n" +
+					"  getfield Test.int_field I\n" +
+					"  pop\n" +
+					"  return\n" +
+					"end", AnalysisTests::failure);
+		}
+	}
+
+	private static void correct(MethodDefinition unit) {
+		Analyzer analyzer = new Analyzer("Test", unit);
+		try {
+			Analysis results = analyzer.analyze();
+			for (Frame frame : results.getFrames()) {
+				assertFalse(frame.isWonky());
+			}
+		} catch (AstException ex) {
+			fail(ex);
+		}
+	}
+
+	private static void failure(MethodDefinition unit) {
+		Analyzer analyzer = new Analyzer("Test", unit);
+		try {
+			Analysis results = analyzer.analyze();
+			for (Frame frame : results.getFrames()) {
+				if (frame.isWonky()) {
+					// intended to occur
+					System.err.println(frame.getWonkyReason());
+					return;
+				}
+			}
+			fail("No non-wonky frames!");
+		} catch (AstException ignored) {
+			// intended to occur
+		}
+	}
+
 	private static void handle(String original, Consumer<MethodDefinition> handler) {
 		// JASM parse
 		ParserContext parser = parser(original);

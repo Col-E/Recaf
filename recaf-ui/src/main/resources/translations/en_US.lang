@@ -19,6 +19,7 @@ menu.goto.field=Go to field
 menu.goto.method=Go to method
 menu.goto.instruction=Go to instruction
 menu.goto.file=Go to file
+menu.goto.label=Go to label
 menu.edit.assemble.class=Edit class
 menu.edit.assemble.field=Edit field
 menu.edit.assemble.method=Edit method
@@ -312,6 +313,8 @@ conf.assembler.parse.recover=Attempt error recovery
 conf.assembler.validation=Validation
 conf.assembler.validation.ast=Enable AST validation
 conf.assembler.validation.bytecode=Enable bytecode validation
+conf.assembler.debug=Debugging
+conf.assembler.debug.ast-debug=Show AST debug info
 
 conf.compiler=Compiler
 conf.compiler.general=General

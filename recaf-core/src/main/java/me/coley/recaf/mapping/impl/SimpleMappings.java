@@ -88,11 +88,13 @@ public class SimpleMappings extends MappingsAdapter {
 	public String exportText() {
 		StringBuilder sb = new StringBuilder();
 		IntermediateMappings intermediate = exportIntermediate();
-		for (Map.Entry<String, ClassMapping> classEntry : intermediate.getClasses().entrySet()) {
-			String oldClassName = classEntry.getKey();
-			String newClassName = classEntry.getValue().getNewName();
-			// BaseClass TargetClass
-			sb.append(oldClassName).append(' ').append(newClassName).append("\n");
+		for (String oldClassName : intermediate.getClassesWithMappings()) {
+			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
+			if (classMapping != null) {
+				String newClassName = classMapping.getNewName();
+				// BaseClass TargetClass
+				sb.append(oldClassName).append(' ').append(newClassName).append("\n");
+			}
 			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
 				String oldFieldName = fieldMapping.getOldName();
 				String newFieldName = fieldMapping.getNewName();

@@ -157,26 +157,37 @@ public class MappingsAdapter implements Mappings {
 
 	@Override
 	public void importIntermediate(IntermediateMappings mappings) {
-		for (ClassMapping classMapping : mappings.getClasses().values()) {
-			String oldClassName = classMapping.getOldName();
-			addClass(oldClassName, classMapping.getNewName());
-			for (FieldMapping fieldMapping : mappings.getClassFieldMappings(oldClassName)) {
-				if (doesSupportFieldTypeDifferentiation()) {
-					addField(fieldMapping.getOwnerName(), fieldMapping.getOldName(),
-							fieldMapping.getDesc(), fieldMapping.getNewName());
-				} else {
-					addField(fieldMapping.getOwnerName(), fieldMapping.getOldName(),
-							fieldMapping.getNewName());
+		for (String className : mappings.getClassesWithMappings()) {
+			ClassMapping classMapping = mappings.getClassMapping(className);
+			if (classMapping != null) {
+				String oldClassName = classMapping.getOldName();
+				String newClassName = classMapping.getNewName();
+				if (!oldClassName.equals(newClassName))
+					addClass(oldClassName, newClassName);
+			}
+			for (FieldMapping fieldMapping : mappings.getClassFieldMappings(className)) {
+				String oldName = fieldMapping.getOldName();
+				String newName = fieldMapping.getNewName();
+				if (!oldName.equals(newName)) {
+					if (doesSupportFieldTypeDifferentiation()) {
+						addField(fieldMapping.getOwnerName(), oldName,
+								fieldMapping.getDesc(), newName);
+					} else {
+						addField(fieldMapping.getOwnerName(), oldName,
+								newName);
+					}
 				}
 			}
-			for (MethodMapping methodMapping : mappings.getClassMethodMappings(oldClassName)) {
+			for (MethodMapping methodMapping : mappings.getClassMethodMappings(className)) {
 				String oldMethodName = methodMapping.getOldName();
 				String oldMethodDesc = methodMapping.getDesc();
-				addMethod(methodMapping.getOwnerName(), oldMethodName,
-						oldMethodDesc, methodMapping.getNewName());
+				String newMethodName = methodMapping.getNewName();
+				if (!oldMethodName.equals(newMethodName))
+					addMethod(methodMapping.getOwnerName(), oldMethodName,
+							oldMethodDesc, newMethodName);
 				for (VariableMapping variableMapping :
-						mappings.getMethodVariableMappings(oldClassName, oldMethodName, oldMethodDesc)) {
-					addVariable(oldClassName, oldMethodName, oldMethodDesc,
+						mappings.getMethodVariableMappings(className, oldMethodName, oldMethodDesc)) {
+					addVariable(className, oldMethodName, oldMethodDesc,
 							variableMapping.getOldName(), variableMapping.getDesc(), variableMapping.getIndex(),
 							variableMapping.getNewName());
 				}

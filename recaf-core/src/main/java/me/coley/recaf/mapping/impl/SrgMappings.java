@@ -9,8 +9,6 @@ import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 
-import java.util.Map;
-
 /**
  * @author Matt Coley
  */
@@ -82,11 +80,14 @@ public class SrgMappings extends MappingsAdapter {
 		StringBuilder sb = new StringBuilder();
 		Remapper remapper = new RemapperImpl(this);
 		IntermediateMappings intermediate = exportIntermediate();
-		for (Map.Entry<String, ClassMapping> classEntry : intermediate.getClasses().entrySet()) {
-			String oldClassName = classEntry.getKey();
-			String newClassName = classEntry.getValue().getNewName();
-			// CL: BaseClass TargetClass
-			sb.append("CL: ").append(oldClassName).append(' ').append(newClassName).append("\n");
+		for (String oldClassName : intermediate.getClassesWithMappings()) {
+			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
+			if (classMapping != null) {
+				String newClassName = classMapping.getNewName();
+				// CL: BaseClass TargetClass
+				sb.append("CL: ").append(oldClassName).append(' ').append(newClassName).append("\n");
+			}
+			String newClassName = classMapping == null ? oldClassName : classMapping.getNewName();
 			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
 				String oldFieldName = fieldMapping.getOldName();
 				String newFieldName = fieldMapping.getNewName();

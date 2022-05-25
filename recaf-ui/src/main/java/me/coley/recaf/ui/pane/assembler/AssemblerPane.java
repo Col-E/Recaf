@@ -7,6 +7,7 @@ import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.WindowEvent;
@@ -14,6 +15,7 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.config.container.AssemblerConfig;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
@@ -29,6 +31,7 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.WorkspaceClassSupplier;
 import me.coley.recaf.util.WorkspaceInheritanceChecker;
 import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.fxmisc.richtext.CharacterHit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -198,7 +201,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 						createStackAnalysis(),
 						createPlayground()
 				);
-				if (DEBUG_AST)
+				if (DEBUG_AST || Configs.assembler().astDebug)
 					bottomTabs.getTabs().add(createDebug());
 				bottomTabs.setup();
 				split.getItems().add(bottomTabs);

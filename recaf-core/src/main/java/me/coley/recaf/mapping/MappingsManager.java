@@ -35,9 +35,8 @@ public class MappingsManager extends ToolManager<MappingsTool> {
 	 * 		The additional mappings that were added.
 	 */
 	public void updateAggregateMappings(Mappings newMappings) {
-		if (aggregatedMappings.update(newMappings)) {
-			aggregateListeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
-		}
+		aggregatedMappings.update(newMappings);
+		aggregateListeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
 	}
 
 	/**

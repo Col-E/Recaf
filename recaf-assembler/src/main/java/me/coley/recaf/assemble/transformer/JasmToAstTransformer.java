@@ -61,7 +61,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitLabel(LabelGroup label) throws AssemblerException {
-		code.addLabel(new Label(label.getLabel()));
+		code.addLabel(wrap(label, new Label(label.getLabel())));
 	}
 
 	@Override
@@ -108,7 +108,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	@Override
 	public void visitMethodInsn(int opcode, IdentifierGroup name, IdentifierGroup desc, boolean itf) throws AssemblerException {
 		MethodDescriptor md = new MethodDescriptor(name.content(), desc.content());
-		add(new MethodInstruction(opcode, md.owner, md.name, md.getDescriptor()));
+		add(new MethodInstruction(opcode, md.owner, md.name, md.getDescriptor(), itf));
 	}
 
 	@Override
@@ -196,8 +196,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	}
 
 	@Override
-	public void visitField(AccessModsGroup accessMods, IdentifierGroup name, IdentifierGroup descriptor, Group constantValue) throws AssemblerException {
-		FieldDefinition field = new FieldDefinition(fromAccessMods(accessMods), name.content(), descriptor.content());
+	public void visitField(FieldDeclarationGroup dcl) throws AssemblerException {
+		FieldDefinition field = new FieldDefinition(fromAccessMods(dcl.accessMods), dcl.name.content(), dcl.descriptor.content());
 
 		if (currentAttributes.getSignature() != null) {
 			field.setSignature(currentAttributes.getSignature());
@@ -207,8 +207,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 		}
 
 		activeMember = field;
-		if (constantValue != null)
-			field.setConstVal(new ConstVal(convert(constantValue), from(constantValue)));
+		if (dcl.constantValue != null)
+			field.setConstVal(new ConstVal(convert(dcl.constantValue), from(dcl.constantValue)));
 
 		currentAttributes.clear();
 	}
@@ -280,7 +280,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 		code.add(wrap(latestGroup, (BaseElement & CodeEntry) element));
 	}
 
-	private static HandleInfo from(HandleGroup handle) {
+	public static HandleInfo from(HandleGroup handle) {
 		MethodDescriptor mdh = new MethodDescriptor(handle.getName().content(), handle.getDescriptor().content());
 		return new HandleInfo(
 				handle.getHandleType().content(),
@@ -425,9 +425,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 		if (end == null)
 			end = start;
 		Location startLocation = start.getLocation();
-		Location endLocation = end.getLocation();
-		int startPos = startLocation.getStartPosition();
-		int endPos = endLocation.getStartPosition() + end.getContent().length();
+		int startPos = start.getStart();
+		int endPos = end.getEnd();
 		int column = startLocation.getColumn();
 		return element.setLine(startLocation.getLine())
 				.setColumnRange(column, column + (endPos - startPos))

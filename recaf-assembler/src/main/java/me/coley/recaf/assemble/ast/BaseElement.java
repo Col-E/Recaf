@@ -150,6 +150,33 @@ public abstract class BaseElement implements Element {
 	}
 
 	@Override
+	public Element getChildAt(int position) {
+		Element[] elements = getChildren().toArray(new Element[0]);
+		if (elements.length == 0) { // base case
+			return null;
+		}
+		if (elements.length == 1) { // base case
+			return elements[0];
+		}
+
+		// perform binary search
+		int start = 0;
+		int end = elements.length - 1;
+
+		while (start <= end) {
+			int mid = (start + end) / 2;
+			if (position < elements[mid].getStart()) {
+				end = mid - 1;
+			} else if (position > elements[mid].getStop()) {
+				start = mid + 1;
+			} else {
+				return elements[mid];
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public String toString() {
 		return print();
 	}

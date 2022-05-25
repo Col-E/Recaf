@@ -33,6 +33,7 @@ public class BasicFieldPrintStrategy implements FieldPrintStrategy {
 
 	protected void appendFlags(StringBuilder sb, FieldModel model) {
 		Collection<AccessFlag> flags = AccessFlag.getApplicableFlags(AccessFlag.Type.FIELD, model.getAccess());
+		flags.remove(AccessFlag.ACC_ENUM); // we don't want to print 'enum' as a flag
 		flags = AccessFlag.sort(AccessFlag.Type.FIELD, flags);
 		if (!flags.isEmpty())
 			sb.append(AccessFlag.toString(flags)).append(' ');

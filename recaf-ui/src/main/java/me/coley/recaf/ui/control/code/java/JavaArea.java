@@ -313,8 +313,6 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		}
 		// Check if there is parsable AST info
 		if (!parseFuture.isDone()) {
-			// TODO: More visually noticeable warning to user that the AST failed to be parsed
-			//  - Offer to switch class representation?
 			logger.warn("Could not request context menu since the code is not parsable!");
 			return;
 		}

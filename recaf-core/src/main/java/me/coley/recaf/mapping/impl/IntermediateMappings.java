@@ -85,6 +85,17 @@ public class IntermediateMappings implements Mappings {
 	}
 
 	/**
+	 * @return Names of classes with mappings.
+	 */
+	public Set<String> getClassesWithMappings() {
+		Set<String> set = new TreeSet<>();
+		set.addAll(classes.keySet());
+		set.addAll(fields.keySet());
+		set.addAll(methods.keySet());
+		return set;
+	}
+
+	/**
 	 * @return Class mappings.
 	 */
 	public Map<String, ClassMapping> getClasses() {

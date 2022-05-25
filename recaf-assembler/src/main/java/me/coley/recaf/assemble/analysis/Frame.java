@@ -21,6 +21,7 @@ public class Frame {
 	private final List<Value> stack = new ArrayList<>();
 	private boolean visited;
 	private boolean wonky;
+	private String wonkyReason;
 
 	/**
 	 * @param selfTypeName
@@ -124,6 +125,8 @@ public class Frame {
 				return new Value.ObjectValue(commonType);
 			} else if (otherValue instanceof Value.ArrayValue) {
 				return new Value.ObjectValue(Types.OBJECT_TYPE);
+			} else if (otherValue instanceof Value.NullValue) {
+				return new Value.ObjectValue(Types.OBJECT_TYPE);
 			} else {
 				throw new FrameMergeException("Values not objects/arrays in both frames!");
 			}
@@ -160,6 +163,8 @@ public class Frame {
 					return new Value.ArrayValue(array.getDimensions(), commonType);
 				}
 			} else if (otherValue instanceof Value.ObjectValue) {
+				return new Value.ObjectValue(Types.OBJECT_TYPE);
+			} else if (otherValue instanceof Value.NullValue) {
 				return new Value.ObjectValue(Types.OBJECT_TYPE);
 			} else {
 				throw new FrameMergeException("Values not arrays/objects in both frames!");
@@ -290,10 +295,18 @@ public class Frame {
 	}
 
 	/**
+	 * @return Reason for the frame being marked as {@link #isWonky()}.
+	 */
+	public String getWonkyReason() {
+		return wonkyReason;
+	}
+
+	/**
 	 * See {@link #isWonky()}.
 	 */
-	public void markWonky() {
+	public void markWonky(String reason) {
 		wonky = true;
+		wonkyReason = reason;
 	}
 
 	@Override

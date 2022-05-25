@@ -8,14 +8,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-final class ByteDataSource implements ByteSource, AutoCloseable {
+/**
+ * {@link ByteSource} implemented via {@link ByteData} from LLJ-zip.
+ *
+ * @author xDark
+ */
+public final class ByteDataSource implements ByteSource, AutoCloseable {
 	private final ByteData data;
 
 	/**
 	 * @param data
 	 * 		Data to read bytes from.
 	 */
-	ByteDataSource(ByteData data) {
+	public ByteDataSource(ByteData data) {
 		this.data = data;
 	}
 
@@ -131,7 +136,7 @@ final class ByteDataSource implements ByteSource, AutoCloseable {
 		@Override
 		public void close() throws IOException {
 			if (!closed) {
-				synchronized(this) {
+				synchronized (this) {
 					if (closed)
 						return;
 					closed = true;

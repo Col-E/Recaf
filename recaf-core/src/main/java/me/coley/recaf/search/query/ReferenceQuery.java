@@ -130,7 +130,7 @@ public class ReferenceQuery implements Query {
 				super.visitMethodInsn(opcode, owner, name, desc, isInterface);
 				whenMatched(owner, name, desc,
 						builder -> addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(),
-								new MethodInstruction(opcode, owner, name, desc)));
+								new MethodInstruction(opcode, owner, name, desc, isInterface)));
 			}
 
 			@Override

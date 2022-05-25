@@ -42,7 +42,8 @@ public class AstIntInsnValidator implements AstValidationVisitor, Opcodes {
 						break;
 				}
 			}
-			// Most things are validated in the parse step since we have to parse the actual value then.
+			// TODO: Because of recent assembler changes, we need to re-address these.
+			//       Can be done in the Analyzer via 'markWonky(reason)'
 			// - TableSwitchInstruction range is validated in the parse step
 			// - LookupSwitchInstruction keys are validated in the parse step
 			// - MultiArrayInstruction value is validated in the parse step

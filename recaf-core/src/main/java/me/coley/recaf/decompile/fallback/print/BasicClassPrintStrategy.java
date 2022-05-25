@@ -87,7 +87,7 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPool
 			if (tag == CLASS) {
 				int classNameIndex = ((CpClass) cpEntry).getIndex();
 				String name = pool.getUtf(classNameIndex);
-				if (name.charAt(0) != '[')
+				if (name.length() > 0 && name.charAt(0) != '[' && name.charAt(name.length() - 1) != ';')
 					referencedClasses.add(name);
 			} else if (tag == NAME_TYPE) {
 				int typeIndex = ((CpNameType) cpEntry).getTypeIndex();

@@ -390,7 +390,7 @@ public class Analyzer {
 					} else {
 						// Unknown size due to non-numeric value
 						arrayValue = new Value.ArrayValue(1, type);
-						frame.markWonky();
+						frame.markWonky("cannot compute array dimensions, stack top value is non-numeric");
 					}
 					frame.push(arrayValue);
 					break;
@@ -412,7 +412,7 @@ public class Analyzer {
 					} else {
 						// Unknown size due to non-numeric value
 						arrayValue = new Value.ArrayValue(1, type);
-						frame.markWonky();
+						frame.markWonky("cannot compute array dimensions, stack top value is non-numeric");
 					}
 					frame.push(arrayValue);
 					break;
@@ -437,7 +437,7 @@ public class Analyzer {
 						} else {
 							// Unknown size due to non-numeric value
 							backingArray[i] = new Value.ArrayValue(numDimensions, type);
-							frame.markWonky();
+							frame.markWonky("cannot compute array dimensions, stack top value[" + i + "] is non-numeric");
 						}
 					}
 					frame.push(arrayValue);
@@ -457,7 +457,7 @@ public class Analyzer {
 					} else {
 						// Unknown length due to non-array value
 						length = new Value.NumericValue(INT_TYPE);
-						frame.markWonky();
+						frame.markWonky("arraylength usage on non-array value");
 					}
 					frame.push(length);
 					break;
@@ -488,12 +488,16 @@ public class Analyzer {
 									backingArray[idx] = value;
 								else
 									// Should not occur
-									frame.markWonky();
+									frame.markWonky("cannot store index in array '" + idx + "' because it is out of bounds");
 							}
 						}
 					} else {
 						// Wrong stack value types
-						frame.markWonky();
+						if (array instanceof Value.ArrayValue) {
+							frame.markWonky("cannot use index for array operation, index on stack is a non-numeric value");
+						} else {
+							frame.markWonky("cannot use array for array operation, array on stack is a non-array value");
+						}
 					}
 					break;
 				}
@@ -534,7 +538,11 @@ public class Analyzer {
 						}
 					} else {
 						// Wrong stack value types
-						frame.markWonky();
+						if (array instanceof Value.ArrayValue) {
+							frame.markWonky("cannot use index for array operation, index on stack is a non-numeric value");
+						} else {
+							frame.markWonky("cannot use array for array operation, array on stack is a non-array value");
+						}
 					}
 					// If the fallback hasn't been unset, push it to the stack
 					if (fallback != null) {
@@ -793,24 +801,51 @@ public class Analyzer {
 				case IFLT:
 				case IFGE:
 				case IFGT:
-				case IFLE:
-				case IFNULL:
-				case IFNONNULL:
-					// TODO: Mark jump as always (not)-taken if top value meets expectation
-					frame.pop();
+				case IFLE: {
+					Value value = frame.pop();
+					if (!value.isNumeric()) {
+						frame.markWonky("unary conditional jump has non-numeric value on the stack");
+					}
 					break;
+				}
+				case IFNULL:
+				case IFNONNULL: {
+					// TODO: Mark jump as always (not)-taken if top value meets expectation
+					Value value = frame.pop();
+					if (!(value.isObject() || value.isArray() || value.isNull())) {
+						frame.markWonky("null-check conditional jump has non-object value on the stack");
+					}
+					break;
+				}
 				case IF_ICMPEQ:
 				case IF_ICMPNE:
 				case IF_ICMPLT:
 				case IF_ICMPGE:
 				case IF_ICMPGT:
-				case IF_ICMPLE:
-				case IF_ACMPEQ:
-				case IF_ACMPNE:
-					// TODO: Mark jump as always (not)-taken if top value meets expectation
-					frame.pop();
-					frame.pop();
+				case IF_ICMPLE: {
+					Value value1 = frame.pop();
+					if (!value1.isNumeric()) {
+						frame.markWonky("binary conditional jump has non-numeric value on the stack");
+					}
+					Value value2 = frame.pop();
+					if (!value2.isNumeric()) {
+						frame.markWonky("binary conditional jump has non-numeric value on the stack");
+					}
 					break;
+				}
+				case IF_ACMPEQ:
+				case IF_ACMPNE: {
+					// TODO: Mark jump as always (not)-taken if top value meets expectation
+					Value value1 = frame.pop();
+					if (!(value1.isObject() || value1.isArray() || value1.isNull())) {
+						frame.markWonky("null-check conditional jump has non-object value on the stack");
+					}
+					Value value2 = frame.pop();
+					if (!(value2.isObject() || value2.isArray() || value2.isNull())) {
+						frame.markWonky("null-check conditional jump has non-object value on the stack");
+					}
+					break;
+				}
 				case TABLESWITCH:
 				case LOOKUPSWITCH:
 				case IRETURN:
@@ -854,15 +889,19 @@ public class Analyzer {
 						frame.push(new Value.NumericValue(INT_TYPE));
 					} else {
 						// Shouldn't be instance checking any non object ref
-						frame.markWonky();
+						frame.markWonky("instanceof used on non-object value");
 						frame.push(new Value.NumericValue(INT_TYPE));
 					}
 					break;
 				}
-				case GETFIELD:
+				case GETFIELD: {
 					// Pop field owner ctx
-					frame.pop();
+					Value owner = frame.pop();
+					if (!owner.isObject()) {
+						frame.markWonky("getfield 'owner' on stack not an object type!");
+					}
 					// Fall through
+				}
 				case GETSTATIC: {
 					// Push field value
 					FieldInstruction fieldInstruction = (FieldInstruction) instruction;
@@ -883,22 +922,29 @@ public class Analyzer {
 					// Pop value
 					FieldInstruction fieldInstruction = (FieldInstruction) instruction;
 					Type type = Type.getType(fieldInstruction.getDesc());
-					if (Types.isWide(type))
-						frame.popWide();
-					else
-						frame.pop();
+					Value value = Types.isWide(type) ? frame.popWide() : frame.pop();
+					if (type.getSort() >= ARRAY && !(value.isNull() || value.isObject() || value.isArray())) {
+						frame.markWonky("putstatic field is object/array, but value on stack is non-object");
+					} else if (type.getSort() <= Type.DOUBLE && !value.isNumeric()) {
+						frame.markWonky("putstatic field is numeric, but value on stack is non-numeric");
+					}
 					break;
 				}
 				case PUTFIELD: {
 					// Pop value
 					FieldInstruction fieldInstruction = (FieldInstruction) instruction;
 					Type type = Type.getType(fieldInstruction.getDesc());
-					if (Types.isWide(type))
-						frame.popWide();
-					else
-						frame.pop();
+					Value value = Types.isWide(type) ? frame.popWide() : frame.pop();
+					if (type.getSort() >= ARRAY && !(value.isNull() || value.isObject() || value.isArray())) {
+						frame.markWonky("putfield field is object/array, but value on stack is non-object");
+					} else if (type.getSort() <= Type.DOUBLE && !value.isNumeric()) {
+						frame.markWonky("putfield field is numeric, but value on stack is non-numeric");
+					}
 					// Pop field owner context
-					frame.pop();
+					Value owner = frame.pop();
+					if (!owner.isObject()) {
+						frame.markWonky("putfield 'owner' on stack not an object type");
+					}
 					break;
 				}
 				case INVOKEVIRTUAL:
@@ -1093,7 +1139,7 @@ public class Analyzer {
 		if (value1 instanceof Value.NumericValue && value2 instanceof Value.NumericValue)
 			evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
 		else {
-			frame.markWonky();
+			frame.markWonky("One or both math operands on stack are non-numeric");
 			frame.push(new Value.NumericValue(type));
 		}
 	}
@@ -1104,7 +1150,7 @@ public class Analyzer {
 		if (value1 instanceof Value.NumericValue && value2 instanceof Value.NumericValue)
 			evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
 		else {
-			frame.markWonky();
+			frame.markWonky("One or both math operands on stack are non-numeric");
 			pushValue(frame, type, new Value.NumericValue(type));
 		}
 	}
@@ -1125,7 +1171,7 @@ public class Analyzer {
 		} catch (Exception ex) {
 			logger.debug("Binary operation Error", ex);
 			result = new Value.NumericValue(type);
-			frame.markWonky();
+			frame.markWonky("One or both math operands on stack are non-numeric");
 		}
 		pushValue(frame, type, result);
 	}
@@ -1135,7 +1181,7 @@ public class Analyzer {
 		if (value instanceof Value.NumericValue)
 			evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
 		else {
-			frame.markWonky();
+			frame.markWonky("Math operand on stack is non-numeric");
 			pushValue(frame, type, new Value.NumericValue(type));
 		}
 	}
@@ -1145,7 +1191,7 @@ public class Analyzer {
 		if (value instanceof Value.NumericValue)
 			evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
 		else {
-			frame.markWonky();
+			frame.markWonky("Math operand on stack is non-numeric");
 			pushValue(frame, type, new Value.NumericValue(type));
 		}
 	}
@@ -1161,7 +1207,7 @@ public class Analyzer {
 		} catch (Exception ex) {
 			logger.debug("Unnary operation Error", ex);
 			result = new Value.NumericValue(type);
-			frame.markWonky();
+			frame.markWonky("Math operand on stack is non-numeric");
 		}
 		pushValue(frame, type, result);
 	}

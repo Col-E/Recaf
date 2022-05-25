@@ -9,6 +9,7 @@ public class MethodInstruction extends AbstractInstruction {
 	private final String owner;
 	private final String name;
 	private final String desc;
+	private final boolean itf;
 
 	/**
 	 * @param opcode
@@ -19,12 +20,15 @@ public class MethodInstruction extends AbstractInstruction {
 	 * 		Name of the method.
 	 * @param desc
 	 * 		Type descriptor of the method.
+	 * @param itf
+	 * 		Interface method target flag.
 	 */
-	public MethodInstruction(int opcode, String owner, String name, String desc) {
+	public MethodInstruction(int opcode, String owner, String name, String desc, boolean itf) {
 		super(opcode);
 		this.owner = owner;
 		this.name = name;
 		this.desc = desc;
+		this.itf = itf;
 	}
 
 	/**
@@ -48,6 +52,13 @@ public class MethodInstruction extends AbstractInstruction {
 		return desc;
 	}
 
+	/**
+	 * @return Interface method target flag.
+	 */
+	public boolean isItf() {
+		return itf;
+	}
+
 	@Override
 	public InstructionType getInsnType() {
 		return InstructionType.METHOD;
@@ -55,6 +66,7 @@ public class MethodInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
-		return String.format("%s %s.%s %s", getOpcode(), getOwner(), getName(), getDesc());
+		// TODO: Handle edge case where 'itf=true' when opcode is not 'invokeinterface'
+		return getOpcode() + " " + getOwner() + "." + getName() + " " + getDesc();
 	}
 }

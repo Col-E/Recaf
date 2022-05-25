@@ -28,14 +28,9 @@ public class FieldDefinition extends AbstractDefinition {
 
 	@Override
 	public String print() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("field ");
-		if (getModifiers().value() > 0) {
-			sb.append(getModifiers().print().toLowerCase()).append(' ');
-		}
-		// make sure to escape the name
-		sb.append(EscapeUtil.escapeSpace(name)).append(' ').append(EscapeUtil.escape(type));
-		return sb.toString();
+		return super.buildDefString("field") +
+				// make sure to escape the name
+				EscapeUtil.escapeSpace(name) + ' ' + EscapeUtil.escape(type);
 	}
 
 	@Override

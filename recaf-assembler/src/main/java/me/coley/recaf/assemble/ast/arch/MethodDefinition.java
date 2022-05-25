@@ -40,12 +40,7 @@ public class MethodDefinition extends AbstractDefinition {
 		StringBuilder sb = new StringBuilder();
 		for (ThrownException thrownException : thrownExceptions)
 			sb.append(thrownException.print()).append("\n");
-		for (Annotation annotation : getAnnotations())
-			sb.append(annotation.print());
-		sb.append("method ");
-		if (getModifiers().value() > 0) {
-			sb.append(getModifiers().print().toLowerCase()).append(' ');
-		}
+		sb.append(super.buildDefString("method"));
 		sb.append(name).append(' ');
 		sb.append('(').append(params.print()).append(')');
 		sb.append(returnType);

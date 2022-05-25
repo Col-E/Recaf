@@ -21,6 +21,12 @@ public class StaticInitMethodPrintStrategy extends BasicMethodPrintStrategy {
 	}
 
 	@Override
+	protected void buildDeclarationFlags(StringBuilder sb, MethodModel model) {
+		// force only printing the modifier 'static' even if other flags are present
+		sb.append("static ");
+	}
+
+	@Override
 	protected void buildDeclarationName(StringBuilder sb, MethodModel model) {
 		// no-op
 	}

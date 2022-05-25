@@ -45,6 +45,19 @@ public abstract class AbstractDefinition extends BaseElement implements Definiti
 		this.annotations.addAll(annotations);
 	}
 
+	protected String buildDefString(String type) {
+		StringBuilder sb = new StringBuilder();
+		if(signature != null)
+			sb.append(signature.print());
+		for (Annotation annotation : getAnnotations())
+			sb.append(annotation.print());
+		sb.append(type).append(" ");
+		if (getModifiers().value() > 0) {
+			sb.append(getModifiers().print().toLowerCase()).append(' ');
+		}
+		return sb.toString();
+	}
+
 	public void setSignature(Signature signature) {
 		this.signature = signature;
 	}
