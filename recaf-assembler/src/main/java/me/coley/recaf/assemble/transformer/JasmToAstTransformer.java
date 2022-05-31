@@ -405,6 +405,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			HandleGroup handle = (HandleGroup) group;
 			HandleInfo info = from(handle);
 			return info.toHandle();
+		} else if (group.type == Group.GroupType.STRING){
+			return group.content();
 		} else {
 			String content = group.content();
 			if (content.equals("true")) return true;
