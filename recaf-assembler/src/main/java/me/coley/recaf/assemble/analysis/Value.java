@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class Value {
+public abstract class Value {
 
 	// TODO: Track context (Ast) so users know what contributed?
 	//  - But format it to look like a consecutive statement if possible
@@ -45,6 +45,13 @@ public class Value {
 	 */
 	public boolean isNumeric() {
 		return this instanceof NumericValue;
+	}
+
+	/**
+	 * @return Copy of the value.
+	 */
+	public Value copy() {
+		return this;
 	}
 
 	/**
@@ -179,6 +186,16 @@ public class Value {
 		 */
 		public int getDimensions() {
 			return dimensions;
+		}
+
+		@Override
+		public Value copy() {
+			int size = (array != null) ? array.length : -1;
+			ArrayValue copy = new ArrayValue(dimensions, size, elementType);
+			if (array != null) {
+				System.arraycopy(array, 0, copy.array, 0, array.length);
+			}
+			return copy;
 		}
 
 		@Override
