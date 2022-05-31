@@ -139,15 +139,22 @@ public class Value {
 		public ArrayValue(int dimensions, int size, Type elementType) {
 			this.dimensions = dimensions;
 			this.elementType = elementType;
-			if (size >= 0) {
+			if (dimensions == 1 && size >= 0) {
+				// Single dimensional array
 				this.array = new Value[size];
+				// We can fill in the default values
 				if (elementType.getSort() <= Type.DOUBLE)
 					for (int i = 0; i < size; i++)
 						array[i] = new NumericValue(elementType, 0);
 				else
 					for (int i = 0; i < size; i++)
 						array[i] = new NullValue();
+			} else if (dimensions > 1) {
+				// If there are more than 1 dimensions, the size should == the num of dimensions
+				// The size of each sub-array is declared on the stack
+				this.array = new Value[dimensions];
 			} else {
+				// Unhandled
 				this.array = null;
 			}
 		}
