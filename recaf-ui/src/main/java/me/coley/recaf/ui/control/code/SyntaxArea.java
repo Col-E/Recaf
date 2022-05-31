@@ -27,6 +27,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 import static org.fxmisc.richtext.LineNumberFactory.get;
 
@@ -456,6 +457,18 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	/**
+	 * @param line
+	 * 		Paragraph index, 0-based.
+	 *
+	 * @return {@code true} when the paragraph is visible.
+	 */
+	public boolean isParagraphVisible(int line) {
+		if (isParagraphFolded(line))
+			return false;
+		return line >= firstVisibleParToAllParIndex() && line <= lastVisibleParToAllParIndex();
+	}
+
+	/**
 	 * @param ps
 	 * 		Collection of paragraph styles.
 	 *
@@ -473,9 +486,10 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Line to update.
 	 */
 	public void regenerateLineGraphic(int line) {
-		FxThreadUtil.run(() -> {
-			internalRegenLineGraphic(line);
-		});
+		int paragraph = line - 1;
+		if (isParagraphVisible(paragraph)) {
+			FxThreadUtil.run(() -> internalRegenLineGraphic(line));
+		}
 	}
 
 	/**
@@ -487,21 +501,26 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Do note these are <i>lines</i> and not the internal 0-indexed <i>paragraphs</i>.
 	 */
 	public void regenerateLineGraphics(Collection<Integer> lines) {
-		FxThreadUtil.run(() -> {
-			for (int line : lines)
-				internalRegenLineGraphic(line);
-		});
+		Collection<Integer> filtered = lines.stream().filter(line -> {
+			int paragraph = line - 1;
+			return isParagraphVisible(paragraph);
+		}).collect(Collectors.toList());
+		if (!filtered.isEmpty()) {
+			FxThreadUtil.run(() -> {
+				for (int line : filtered)
+					internalRegenLineGraphic(line);
+			});
+		}
 	}
 
 	private void internalRegenLineGraphic(int line) {
-		if (line <= getParagraphs().size()) {
-			// The parameter line is 1-indexed, but the code-area internals are 0-indexed
-			int paragraph = line - 1;
-			// Don't recreate an item that hasn't been initialized yet.
-			// There is wonky logic about "duplicate children" that this prevents in a multi-threaded context.
-			if (paragraphGraphicReady.contains(paragraph))
-				recreateParagraphGraphic(paragraph);
-		}
+		// The parameter line is 1-indexed, but the code-area internals are 0-indexed
+		int paragraph = line - 1;
+		// Don't recreate an item that hasn't been initialized yet.
+		// There is wonky logic about "duplicate children" that this prevents in a multi-threaded context.
+		if (paragraphGraphicReady.contains(paragraph))
+			// It is assumed 'paragraph' has already been validated by a calling method
+			recreateParagraphGraphic(paragraph);
 	}
 
 	/**
