@@ -81,6 +81,7 @@ public class AssembleEntireClasspathTests extends TestUtil {
 
 				// Generate
 				AstToMethodTransformer generator = new AstToMethodTransformer(node.name);
+				generator.setUseAnalysis(true);
 				generator.setDefinition(unitCtx.getMethod());
 				try {
 					generator.visit();
