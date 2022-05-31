@@ -397,6 +397,17 @@ public class AnalysisTests extends TestUtil {
 					"  return\n" +
 					"end", AnalysisTests::correct);
 		}
+
+		@Test
+		public void testObjectToArrayCheckcast() {
+			handle("method dummy ()I\n" +
+					"a: \n" +
+					"  getstatic Test.object_field Ljava/lang/Object;\n" +
+					"  checkcast [B\n" +
+					"  arraylength\n" +
+					"  ireturn\n" +
+					"end", AnalysisTests::correct);
+		}
 	}
 
 	@Nested

@@ -878,8 +878,15 @@ public class Analyzer {
 				case CHECKCAST: {
 					// Replace top stack value with cast type. Otherwise, it's a ClassCastException.
 					TypeInstruction typeInstruction = (TypeInstruction) instruction;
+					// Type will either be internal name, or an array descriptor
+					String typeStr = typeInstruction.getType();
+					Type type = typeStr.charAt(0) == '[' ? Type.getType(typeStr) : Type.getObjectType(typeStr);
 					frame.pop();
-					frame.push(new Value.ObjectValue(Type.getObjectType(typeInstruction.getType())));
+					if (type.getSort() == ARRAY) {
+						frame.push(new Value.ArrayValue(type.getDimensions(), type));
+					} else {
+						frame.push(new Value.ObjectValue(type));
+					}
 					break;
 				}
 				case INSTANCEOF: {
