@@ -487,9 +487,11 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	public void regenerateLineGraphic(int line) {
 		int paragraph = line - 1;
-		if (isParagraphVisible(paragraph)) {
-			FxThreadUtil.run(() -> internalRegenLineGraphic(line));
-		}
+		FxThreadUtil.run(() -> {
+			if (isParagraphVisible(paragraph)) {
+				internalRegenLineGraphic(line);
+			}
+		});
 	}
 
 	/**
@@ -501,16 +503,14 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 * 		Do note these are <i>lines</i> and not the internal 0-indexed <i>paragraphs</i>.
 	 */
 	public void regenerateLineGraphics(Collection<Integer> lines) {
-		Collection<Integer> filtered = lines.stream().filter(line -> {
-			int paragraph = line - 1;
-			return isParagraphVisible(paragraph);
-		}).collect(Collectors.toList());
-		if (!filtered.isEmpty()) {
-			FxThreadUtil.run(() -> {
-				for (int line : filtered)
-					internalRegenLineGraphic(line);
-			});
-		}
+		FxThreadUtil.run(() -> {
+			Collection<Integer> filtered = lines.stream().filter(line -> {
+				int paragraph = line - 1;
+				return isParagraphVisible(paragraph);
+			}).collect(Collectors.toList());
+			for (int line : filtered)
+				internalRegenLineGraphic(line);
+		});
 	}
 
 	private void internalRegenLineGraphic(int line) {
