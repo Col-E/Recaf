@@ -52,7 +52,7 @@ subprojects {
         def jpVersion = '3.24.2'
         def junitVersion = '5.8.2'
         def lljzipVersion = '1.1.5'
-        def ssvmVersion = '1.7.1'
+        def ssvmVersion = '1.8.0'
         def quiltflowerVersion = '1.8.1'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
         asm = "org.ow2.asm:asm:$asmVersion"
