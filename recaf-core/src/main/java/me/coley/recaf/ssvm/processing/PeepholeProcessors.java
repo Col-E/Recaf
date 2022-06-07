@@ -4,11 +4,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.VMInterface;
-import dev.xdark.ssvm.execution.ExecutionContext;
-import dev.xdark.ssvm.execution.InstructionProcessor;
-import dev.xdark.ssvm.execution.Locals;
-import dev.xdark.ssvm.execution.Result;
-import dev.xdark.ssvm.execution.Stack;
+import dev.xdark.ssvm.execution.*;
 import dev.xdark.ssvm.jit.JitHelper;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.thread.Backtrace;
@@ -18,7 +14,6 @@ import dev.xdark.ssvm.value.*;
 import me.coley.recaf.ssvm.util.VmValueUtil;
 import me.coley.recaf.ssvm.value.*;
 import me.coley.recaf.util.InstructionUtil;
-import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Opcodes;
@@ -31,7 +26,6 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static me.coley.recaf.ssvm.value.ConstNumericValue.*;
@@ -414,6 +408,15 @@ public class PeepholeProcessors implements Opcodes {
 						for (Value value : argumentValues) {
 							TrackedValue trackedValue = (TrackedValue) value;
 							List<AbstractInsnNode> contributingInstructions = trackedValue.getContributingInstructions();
+							/* TODO: Create test cases and handle array inlining into strings when possible
+							         There are a lot of funky edge cases to detect, so the below code isn't a 'stable' solution AFAIK
+							if (trackedValue instanceof TrackedArrayValue) {
+								TrackedArrayValue array = (TrackedArrayValue) trackedValue;
+								contributingInstructions.addAll(array.getAssociatedPops());
+								contributingInstructions.addAll(array.getParentValues().stream().flatMap(t -> t.getContributingInstructions().stream()).collect(Collectors.toList()));
+								contributingInstructions.addAll(array.getClonedValues().stream().flatMap(t -> t.getContributingInstructions().stream()).collect(Collectors.toList()));
+							}
+							 */
 							for (AbstractInsnNode contributingInsn : contributingInstructions)
 								if (instructions.contains(contributingInsn))
 									nop(instructions, contributingInsn);
