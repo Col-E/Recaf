@@ -11,7 +11,6 @@ import java.util.*;
  * @author xDark
  */
 public final class SimplePluginManager implements PluginManager {
-
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final Map<String, PluginContainer<?>> nameMap = new HashMap<>();
 	private final Map<? super Plugin, PluginContainer<?>> instanceMap = new IdentityHashMap<>();

@@ -80,7 +80,6 @@ public class NodeEvents {
 	 * @author xDark
 	 */
 	public interface RemovalChangeListener<T> {
-
 		/**
 		 * Called when the value of an {@link ObservableValue} changes.
 		 *

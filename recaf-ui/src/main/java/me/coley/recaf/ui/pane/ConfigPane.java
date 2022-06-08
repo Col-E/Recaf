@@ -187,7 +187,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 						a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.read.warn"));
 						a.show();
 					}
-					Configs.ssvmConfig().updateAccess();
+					Configs.ssvm().updateAccess();
 				}));
 		ID_OVERRIDES.put("conf.ssvm.access.write", (c, f) ->
 				new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.access.write"), value -> {
@@ -199,7 +199,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 						a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.write.warn"));
 						a.show();
 					}
-					Configs.ssvmConfig().updateAccess();
+					Configs.ssvm().updateAccess();
 				}));
 	}
 }

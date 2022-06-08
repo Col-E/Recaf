@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static me.coley.recaf.ui.util.Icons.*;
-import static org.reactfx.util.Tuples.*;
+import static org.reactfx.util.Tuples.t;
 
 /**
  * Utility to populate cell properties based on their content.
@@ -242,7 +242,6 @@ public class CellFactory {
 
 
 	/**
-	 *
 	 * @param listener
 	 * 		Context menu event listener to add.
 	 */
@@ -251,7 +250,6 @@ public class CellFactory {
 	}
 
 	/**
-	 *
 	 * @param listener
 	 * 		Context menu event listener to remove.
 	 */

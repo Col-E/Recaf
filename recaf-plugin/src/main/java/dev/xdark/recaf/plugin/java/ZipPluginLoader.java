@@ -155,6 +155,11 @@ public final class ZipPluginLoader implements PluginLoader {
 
 	@Override
 	public void enablePlugin(PluginContainer<?> container) {
+		Plugin plugin = container.getPlugin();
+		ClassLoader classLoader = plugin.getClass().getClassLoader();
+		if (!(classLoader instanceof PluginClassLoader)) {
+			throw new IllegalStateException("Plugin does not belong to ZipPluginLoader");
+		}
 		logger.info("Enabling plugin {}", container.getInformation().getName());
 		container.getPlugin().onEnable();
 	}

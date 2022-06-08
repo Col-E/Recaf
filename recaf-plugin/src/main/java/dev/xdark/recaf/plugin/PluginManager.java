@@ -7,13 +7,11 @@ import java.io.InputStream;
 import java.util.Collection;
 
 public interface PluginManager {
-
 	/**
 	 * @param source
 	 * 		source to pick from.
 	 *
-	 * @return loader that is capable of loading a plugin from this source,
-	 * or {@code null}, if none was found.o
+	 * @return loader that is capable of loading a plugin from this source, or {@code null}, if none was found.
 	 *
 	 * @throws IOException
 	 * 		if any I/O error occurs.

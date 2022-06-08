@@ -12,9 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author xDark
  */
 public final class PluginClassLoader extends URLClassLoader {
-
 	private static final Set<PluginClassLoader> ALL_LOADERS = ConcurrentHashMap.newKeySet();
-
 	private final ClassLoader parent;
 
 	/**
@@ -33,20 +31,20 @@ public final class PluginClassLoader extends URLClassLoader {
 		try {
 			// We prioritize our classes over others.
 			return super.findClass(name);
-		} catch(ClassNotFoundException ignored) {
+		} catch (ClassNotFoundException ignored) {
 		}
 
 		// Try parent class loader first.
 		try {
 			return parent.loadClass(name);
-		} catch(ClassNotFoundException ignored) {
+		} catch (ClassNotFoundException ignored) {
 		}
 
 		// Now, try all other loaders.
 		for (PluginClassLoader loader : ALL_LOADERS) {
 			try {
 				return loader.lookupClass(name);
-			} catch(ClassNotFoundException ignored) {
+			} catch (ClassNotFoundException ignored) {
 			}
 		}
 
