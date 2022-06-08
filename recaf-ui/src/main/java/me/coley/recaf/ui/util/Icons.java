@@ -4,6 +4,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.CommonClassInfo;
@@ -29,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Coley
  */
 public class Icons {
+	private static final Image EMPTY_IMAGE = new WritableImage(1, 1);
 	// Class definitions
 	public static final String CLASS = "icons/class/class.png";
 	public static final String CLASS_ANONYMOUS = "icons/class/class_anonymous.png";
@@ -41,6 +43,7 @@ public class Icons {
 	public static final String NULL = "icons/class/null.png";
 	public static final String PRIMITIVE = "icons/class/prim.png";
 	public static final String INTERNAL = "icons/class/internal.png";
+	public static final String ARRAY = "icons/class/array.png";
 	// Member definitions
 	public static final String FIELD = "icons/member/field.png";
 	public static final String METHOD = "icons/member/method.png";
@@ -195,7 +198,7 @@ public class Icons {
 	 * @return Cached image.
 	 */
 	public static Image getImage(String path) {
-		return IMAGE_CACHE.computeIfAbsent(path, k -> new Image(ResourceUtil.resource(path)));
+		return IMAGE_CACHE.computeIfAbsent(path, k -> safeCreateImage(path));
 	}
 
 	/**
@@ -460,6 +463,20 @@ public class Icons {
 			return getIconView(ACCESS_PUBLIC);
 		}
 		return getIconView(ACCESS_PACKAGE);
+	}
+
+	/**
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link Icons}.
+	 *
+	 * @return Graphic of image, or an empty image if the path could not be resolved.
+	 */
+	private static Image safeCreateImage(String path) {
+		try {
+			return new Image(ResourceUtil.resource(path));
+		} catch (NullPointerException ex) {
+			return EMPTY_IMAGE;
+		}
 	}
 
 	/**

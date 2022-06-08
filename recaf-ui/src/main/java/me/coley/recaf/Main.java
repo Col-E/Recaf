@@ -2,10 +2,12 @@ package me.coley.recaf;
 
 import dev.xdark.recaf.plugin.RecafPlugin;
 import me.coley.recaf.launch.InitializerParameters;
+import me.coley.recaf.presentation.PresentationType;
 import me.coley.recaf.scripting.ScriptEngine;
 import me.coley.recaf.scripting.ScriptResult;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
 import java.nio.file.Files;
@@ -37,11 +39,20 @@ public class Main {
 		if (parameters.getScriptPath() != null) {
 			Path scriptPath = parameters.getScriptPath().toPath();
 			if (Files.isRegularFile(scriptPath)) {
-				ScriptResult result = ScriptEngine.execute(scriptPath);
-				if (result.wasSuccess()) {
-					logger.info("Script execute result: {}", result.getResult());
+				Runnable r = () -> {
+					ScriptResult result = ScriptEngine.execute(scriptPath);
+					if (result.wasSuccess()) {
+						logger.info("Script execute result: {}", result.getResult());
+					} else {
+						logger.error("Script encountered error: ", result.getException());
+					}
+				};
+				if (parameters.getPresentationType() == PresentationType.GUI) {
+					// Run the script on a delay, giving time to for the GUI to populate
+					ThreadUtil.runDelayed(500, r);
 				} else {
-					logger.error("Script encountered error: ", result.getException());
+					// Run the script on the main thread
+					r.run();
 				}
 			} else {
 				logger.error("No script found: {}", scriptPath);

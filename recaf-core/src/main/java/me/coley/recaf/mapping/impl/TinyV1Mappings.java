@@ -7,8 +7,6 @@ import me.coley.recaf.mapping.data.MethodMapping;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
-import java.util.Map;
-
 /**
  * Tiny-V1 mappings file implementation.
  *
@@ -81,11 +79,13 @@ public class TinyV1Mappings extends MappingsAdapter {
 	public String exportText() {
 		StringBuilder sb = new StringBuilder("v1\tintermediary\tnamed\n");
 		IntermediateMappings intermediate = exportIntermediate();
-		for (Map.Entry<String, ClassMapping> classEntry : intermediate.getClasses().entrySet()) {
-			String oldClassName = classEntry.getKey();
-			String newClassName = classEntry.getValue().getNewName();
-			// CLASS BaseClass TargetClass
-			sb.append("CLASS\t").append(oldClassName).append('\t').append(newClassName).append("\n");
+		for (String oldClassName : intermediate.getClassesWithMappings()) {
+			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
+			if (classMapping != null) {
+				String newClassName = classMapping.getNewName();
+				// CLASS BaseClass TargetClass
+				sb.append("CLASS\t").append(oldClassName).append('\t').append(newClassName).append("\n");
+			}
 			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
 				String oldFieldName = fieldMapping.getOldName();
 				String newFieldName = fieldMapping.getNewName();

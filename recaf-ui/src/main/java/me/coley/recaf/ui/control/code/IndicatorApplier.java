@@ -16,5 +16,5 @@ public interface IndicatorApplier {
 	 *
 	 * @return {@code true} when the polygon has been modified and should be drawn.
 	 */
-	boolean apply(int lineNo, Polygon poly);
+	boolean checkModified(int lineNo, Polygon poly);
 }

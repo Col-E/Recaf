@@ -3,16 +3,11 @@ package me.coley.recaf.assemble.pipeline;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
 import me.coley.recaf.assemble.MethodCompileException;
-import me.coley.recaf.assemble.ParserException;
 import me.coley.recaf.assemble.analysis.Analysis;
+import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.parser.BytecodeLexer;
-import me.coley.recaf.assemble.parser.BytecodeParser;
-import me.coley.recaf.assemble.transformer.AntlrToAstTransformer;
-import me.coley.recaf.assemble.transformer.AstToFieldTransformer;
-import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
-import me.coley.recaf.assemble.transformer.Variables;
+import me.coley.recaf.assemble.transformer.*;
 import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.util.ReflectiveClassSupplier;
@@ -21,14 +16,13 @@ import me.coley.recaf.assemble.validation.MessageLevel;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.assemble.validation.bytecode.BytecodeValidator;
 import me.coley.recaf.util.logging.Logging;
-import org.antlr.v4.runtime.*;
+import me.darknet.assembler.parser.*;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * All in one utility for using the assembler from start to finish.
@@ -38,16 +32,15 @@ import java.util.Objects;
 public class AssemblerPipeline {
 	private static final Logger logger = Logging.get(AssemblerPipeline.class);
 	// Input config
-	private ANTLRErrorStrategy antlrErrorStrategy = new DefaultErrorStrategy();
 	private ClassSupplier classSupplier = ReflectiveClassSupplier.getInstance();
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 	// Listeners
-	private final List<BaseErrorListener> antlrErrorListeners = new ArrayList<>();
 	private final List<ParserFailureListener> parserFailureListeners = new ArrayList<>();
 	private final List<AstValidationListener> astValidationListeners = new ArrayList<>();
 	private final List<BytecodeFailureListener> bytecodeFailureListeners = new ArrayList<>();
 	private final List<BytecodeValidationListener> bytecodeValidationListeners = new ArrayList<>();
 	private final List<PipelineCompletionListener> pipelineCompletionListeners = new ArrayList<>();
+	private final List<ParserCompletionListener> parserCompletionListeners = new ArrayList<>();
 	// Inputs
 	private String type;
 	private String text;
@@ -55,44 +48,15 @@ public class AssemblerPipeline {
 	private boolean textDirty = true;
 	private boolean unitOutdated = true;
 	private boolean outputOutdated = true;
+	private boolean doUseAnalysis = true;
 	// Outputs
 	private Unit unit;
+	private List<Group> latestJasmGroups;
 	private Variables lastVariables;
 	private FieldNode lastField;
 	private MethodNode lastMethod;
+	private ClassNode lastClass;
 	private Analysis lastAnalysis;
-
-	/**
-	 * @return Error handling strategy for the ANTLR parse step.
-	 */
-	public ANTLRErrorStrategy getAntlrErrorStrategy() {
-		return antlrErrorStrategy;
-	}
-
-	/**
-	 * @param antlrErrorStrategy
-	 * 		New error handling strategy for the ANTLR parse step.
-	 */
-	public void setAntlrErrorStrategy(ANTLRErrorStrategy antlrErrorStrategy) {
-		this.antlrErrorStrategy = antlrErrorStrategy;
-	}
-
-	/**
-	 * @param listener
-	 * 		ANTLR parser error listener to add.
-	 */
-	public void addAntlrErrorListener(BaseErrorListener listener) {
-		if (!antlrErrorListeners.contains(listener))
-			antlrErrorListeners.add(listener);
-	}
-
-	/**
-	 * @param listener
-	 * 		ANTLR parser error listener to remove.
-	 */
-	public void removeAntlrErrorListener(BaseErrorListener listener) {
-		antlrErrorListeners.remove(listener);
-	}
 
 	/**
 	 * @param listener
@@ -180,6 +144,23 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * @param listener
+	 * 		Parser completion listener to add.
+	 */
+	public void addParserCompletionListener(ParserCompletionListener listener) {
+		if (!parserCompletionListeners.contains(listener))
+			parserCompletionListeners.add(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Parser completion listener to remove.
+	 */
+	public void removeParserCompletionListener(ParserCompletionListener listener) {
+		parserCompletionListeners.remove(listener);
+	}
+
+	/**
 	 * @return Supplies class bytecode to systems.
 	 *
 	 * @see ReflectiveClassSupplier Default implementation.
@@ -235,6 +216,14 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * @param doUseAnalysis
+	 * 		Flag to enable analysis, allowing better variable typing and access to stack-frame info.
+	 */
+	public void setDoUseAnalysis(boolean doUseAnalysis) {
+		this.doUseAnalysis = doUseAnalysis;
+	}
+
+	/**
 	 * Updates input text. Changes the state so that
 	 *
 	 * @param newText
@@ -272,6 +261,13 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * @return Last jasm parse groups.
+	 */
+	public List<Group> getLatestJasmGroups() {
+		return latestJasmGroups;
+	}
+
+	/**
 	 * @return {@code true} when the {@link #getUnit() unit} has not been re-parsed since
 	 * the most recent change to the assembly text.
 	 * {@code false} when up-to-date.
@@ -286,6 +282,13 @@ public class AssemblerPipeline {
 	 */
 	public boolean isOutputOutdated() {
 		return outputOutdated || (isMethod() ? lastMethod != null : lastField != null);
+	}
+
+	/**
+	 * @return {@code true} when the {@link #getUnit() unit} represents a class.
+	 */
+	public boolean isClass() {
+		return unit != null && unit.isClass();
 	}
 
 	/**
@@ -319,6 +322,13 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * @return Last generated class from {@link #generateClass()}.
+	 */
+	public ClassNode getLastClass() {
+		return lastClass;
+	}
+
+	/**
 	 * @return Last generated field from {@link #generateField()}.
 	 */
 	public FieldNode getLastField() {
@@ -333,16 +343,159 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * @param position
+	 * 		Position in input text.
+	 *
+	 * @return {@link Element} of latest AST at the given position.
+	 * {@code null} if no AST is available.
+	 */
+	public Element getCodeElementAt(int position) {
+		if (unit == null || !unit.isMethod())
+			return null;
+		Code code = unit.getMethod().getCode();
+		if (code == null)
+			return null;
+		return code.getChildAt(position);
+	}
+
+	/**
 	 * @param lineNo
 	 * 		Line number.
+	 * @param colPos
+	 * 		Column position.
 	 *
 	 * @return {@link Element} of latest AST at the given line.
 	 * {@code null} if no AST is available.
 	 */
-	public Element getElementOnLine(int lineNo) {
-		if (unit == null || unit.getCode() == null)
+	public Element getCodeElementAt(int lineNo, int colPos) {
+		if (unit == null || !unit.isMethod())
 			return null;
-		return unit.getCode().getChildOnLine(lineNo);
+		Code code = unit.getMethod().getCode();
+		if (code == null)
+			return null;
+		return code.getChildAt(lineNo, colPos);
+	}
+
+	/**
+	 * @param lineNo
+	 * 		Line number.
+	 *
+	 * @return List of {@link Element}s of latest AST on the given line.
+	 */
+	public List<Element> getCodeElementsAt(int lineNo) {
+		if (unit == null || !unit.isMethod())
+			return Collections.emptyList();
+		Code code = unit.getMethod().getCode();
+		if (code == null)
+			return Collections.emptyList();
+		return code.getChildrenAt(lineNo);
+	}
+
+	/**
+	 * Deep traverse the current parser AST and find the {@link Group} at the location
+	 *
+	 * @param lineNo
+	 * 		Line number.
+	 * @param colPos
+	 * 		Column position.
+	 *
+	 * @return {@link Group} of latest AST at the given line and column.
+	 */
+	public Group getASTElementAt(int lineNo, int colPos) {
+		for (Group group : latestJasmGroups) {
+			Group grp = getASTElementAt(lineNo, colPos, group);
+			if (grp != null)
+				return grp;
+		}
+		return null;
+	}
+
+	/**
+	 * Deep traverse the given {@link Group} and find the {@link Group} at the location
+	 *
+	 * @param lineNo
+	 * 		Line number.
+	 * @param colPos
+	 * 		Column position.
+	 * @param root
+	 * 		Root {@link Group} to start the search.
+	 *
+	 * @return {@link Group} that is either the {@code root} or a child at the given line and column.
+	 */
+	public Group getASTElementAt(int lineNo, int colPos, Group root) {
+		Token token = root.value; // the root token value
+		if (token == null) {
+			// group may still have children
+			for (Group child : root.children) {
+				Group grp = getASTElementAt(lineNo, colPos, child);
+				if (grp != null)
+					return grp;
+			}
+			return null;
+		}
+		Location location = token.getLocation(); // get the actual location
+		int line = location.getLine(); // get the line number
+		int startCol = location.getColumn(); // get the start column
+		int endCol = startCol + token.content.length(); // get the end column
+		if (line == lineNo && startCol <= colPos && colPos <= endCol) // if the line and column are correct
+			return root;
+		for (Group child : root.children) { // check all the children
+			Group grp = getASTElementAt(lineNo, colPos, child); // get the child (or null)
+			if (grp != null) // if there is a child at the given line and column
+				return grp; // return the child
+		}
+		return null; // else just return null
+	}
+
+	/**
+	 * Deep traverse the current parser AST and find the {@link Group} at the location
+	 *
+	 * @param position
+	 * 		the position of the cursor
+	 *
+	 * @return {@link Group} of latest AST at the given line and column.
+	 */
+	public Group getASTElementAt(int position) {
+		for (Group group : latestJasmGroups) {
+			Group grp = getASTElementAt(position, group);
+			if (grp != null)
+				return grp;
+		}
+		return null;
+
+	}
+
+	/**
+	 * Deep traverse the given {@link Group} and find the {@link Group} at the location
+	 *
+	 * @param position
+	 * 		the position of the cursor
+	 * @param root
+	 * 		Root {@link Group} to start the search.
+	 *
+	 * @return {@link Group} that is either the {@code root} or a child at the given line and column.
+	 */
+	public Group getASTElementAt(int position, Group root) {
+		Token token = root.value; // the root token value
+		if (token == null) {
+			// group may still have children
+			for (Group child : root.children) {
+				Group grp = getASTElementAt(position, child);
+				if (grp != null)
+					return grp;
+			}
+			return null;
+		}
+		int start = token.getStart();
+		int end = token.getEnd();
+		if (start <= position && position <= end) // if the position is between the start and end
+			return root;
+		for (Group child : root.children) { // check all the children
+			Group grp = getASTElementAt(position, child); // get the child (or null)
+			if (grp != null) // if there is a child at the given line and column
+				return grp; // return the child
+		}
+		return null; // else just return null
 	}
 
 	/**
@@ -357,40 +510,46 @@ public class AssemblerPipeline {
 		String code = getText();
 		if (code == null)
 			return false;
-		// ANTLR tokenize
-		logger.trace("Assembler AST updating: [ANTLR tokenize]");
-		CharStream is = CharStreams.fromString(code);
-		BytecodeLexer lexer = new BytecodeLexer(is);
-		CommonTokenStream stream = new CommonTokenStream(lexer);
-		// ANTLR parse
-		logger.trace("Assembler AST updating: [ANTLR parse]");
-		BytecodeParser parser = new BytecodeParser(stream);
-		parser.setErrorHandler(antlrErrorStrategy);
-		parser.getErrorListeners().clear();
-		antlrErrorListeners.forEach(parser::addErrorListener);
-		BytecodeParser.UnitContext unitCtx;
+		// JASM tokenize
+		logger.trace("Assembler AST updating: [JASM tokenize]");
+		Parser parser = new Parser();
+		List<Token> tokens = parser.tokenize("<assembler>", code);
+		parserCompletionListeners.forEach(l -> l.onCompleteTokenize(tokens));
+		// JASM parse
+		logger.trace("Assembler AST updating: [JASM parse]");
+		ParserContext ctx = new ParserContext(new LinkedList<>(tokens), parser); // convert to linked list to get a queue
+		List<Group> parsed;
 		try {
-			unitCtx = parser.unit();
-		} catch (ParserException ex) {
+			parsed = new ArrayList<>(ctx.parse());
+		} catch (AssemblerException ex) {
 			// Parser problems are fatal
-			parserFailureListeners.forEach(l -> l.onAntlrParseFail(ex));
+			parserFailureListeners.forEach(l -> l.onParseFail(ex));
+			// this is being set to null to invalidate the unit so that the validator will fail
+			// until the unit is valid again
+			this.unit = null;
 			return true;
 		}
 		if (Thread.interrupted())
 			return false;
+		latestJasmGroups = parsed;
+		parserCompletionListeners.forEach(l -> l.onCompleteParse(parsed));
 		// Transform to our AST
-		logger.trace("Assembler AST updating: [ANTLR --> AST transform]");
-		AntlrToAstTransformer antlrToAstTransformer = new AntlrToAstTransformer();
+		logger.trace("Assembler AST updating: [JASM --> AST transform]");
+		JasmToAstTransformer transformer = new JasmToAstTransformer(parsed);
 		Unit unit;
 		try {
-			unit = antlrToAstTransformer.visitUnit(unitCtx);
+			unit = transformer.generateUnit();
 			// Done creating the AST
 			this.unit = unit;
+			for (ParserCompletionListener listener : parserCompletionListeners)
+				listener.onCompleteTransform(unit);
 			unitOutdated = false;
 			outputOutdated = true;
-		} catch (ParserException ex) {
+		} catch (AssemblerException ex) {
 			// Parser problems are fatal
-			parserFailureListeners.forEach(l -> l.onAntlrTransformFail(ex));
+			parserFailureListeners.forEach(l -> l.onParserTransformFail(ex));
+			// The unit is reset so that the validator will fail until the unit is valid once again.
+			this.unit = null;
 			return true;
 		}
 		logger.trace("Assembler AST up-to-date!");
@@ -428,9 +587,50 @@ public class AssemblerPipeline {
 	/**
 	 * Requires a valid {@link #getUnit() unit} to have been generated.
 	 *
+	 * @return {@code true} when the class is generated.
+	 * {@code false} when the class is not generated due to the {@link #getUnit() unit}
+	 * not being a class, or a validation error occurring.
+	 *
+	 * @see #getLastClass() Output upon success.
+	 */
+	public boolean generateClass() {
+		if (!outputOutdated && lastClass != null)
+			return true;
+		// Reset & sanity check
+		lastField = null;
+		lastMethod = null;
+		lastClass = null;
+		if (!isClass())
+			return false;
+		// Build class
+		try {
+			AstToClassTransformer transformer = new AstToClassTransformer(unit.getClassDefinition());
+			ClassNode assembledNode = transformer.buildClass();
+			for (FieldNode field : assembledNode.fields) {
+				if (!validateNode(field))
+					return false;
+			}
+			for (MethodNode method : assembledNode.methods) {
+				if (!validateNode(method))
+					return false;
+			}
+			lastClass = assembledNode;
+			outputOutdated = false;
+			pipelineCompletionListeners.forEach(l -> l.onCompletedOutput(lastClass));
+			return true;
+		} catch (MethodCompileException ex) {
+			// Compile problems are fatal. These should be rare since most things should be caught in the prior step.
+			bytecodeFailureListeners.forEach(l -> l.onCompileFailure(unit, ex));
+		}
+		return false;
+	}
+
+	/**
+	 * Requires a valid {@link #getUnit() unit} to have been generated.
+	 *
 	 * @return {@code true} when the field is generated.
-	 * {@code false} when the field is not due to the {@link #getUnit() unit} not being a field,
-	 * or a validation error occurring.
+	 * {@code false} when the field is not generated due to the {@link #getUnit() unit}
+	 * not being a field, or a validation error occurring.
 	 *
 	 * @see #getLastField() Output upun success.
 	 */
@@ -440,10 +640,12 @@ public class AssemblerPipeline {
 		// Reset & sanity check
 		lastField = null;
 		lastMethod = null;
+		lastClass = null;
 		if (!isField())
 			return false;
 		// Build field
-		AstToFieldTransformer transformer = new AstToFieldTransformer(unit);
+		AstToFieldTransformer transformer = new AstToFieldTransformer();
+		transformer.setDefinition(unit.getField());
 		FieldNode fieldAssembled = transformer.buildField();
 		if (bytecodeValidationListeners.size() > 0) {
 			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, fieldAssembled);
@@ -468,8 +670,8 @@ public class AssemblerPipeline {
 	 * Requires a valid {@link #getUnit() unit} to have been generated.
 	 *
 	 * @return {@code true} when the method is generated.
-	 * {@code false} when the method is not due to the {@link #getUnit() unit} not being a method,
-	 * or a validation error occurring.
+	 * {@code false} when the method is not generated due to the {@link #getUnit() unit}
+	 * not being a method, or a validation error occurring.
 	 *
 	 * @see #getLastMethod() Output upon success.
 	 */
@@ -479,13 +681,15 @@ public class AssemblerPipeline {
 		// Reset & sanity check
 		lastField = null;
 		lastMethod = null;
+		lastClass = null;
 		if (!isMethod())
 			return false;
 		// Build method
 		try {
 			AstToMethodTransformer transformer = new AstToMethodTransformer(classSupplier, type);
+			transformer.setUseAnalysis(doUseAnalysis);
 			transformer.setInheritanceChecker(inheritanceChecker);
-			transformer.setUnit(unit);
+			transformer.setDefinition(unit.getMethod());
 			transformer.visit();
 			MethodNode methodAssembled = transformer.buildMethod();
 			if (bytecodeValidationListeners.size() > 0) {
@@ -512,5 +716,51 @@ public class AssemblerPipeline {
 			bytecodeFailureListeners.forEach(l -> l.onCompileFailure(unit, ex));
 		}
 		return false;
+	}
+
+	/**
+	 * @param field
+	 * 		Field node to validate.
+	 *
+	 * @return {@code true} for a valid field.
+	 */
+	public boolean validateNode(FieldNode field) {
+		if (bytecodeValidationListeners.size() > 0) {
+			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, field);
+			try {
+				bytecodeValidator.visit();
+			} catch (BytecodeException ex) {
+				// Fatal bytecode validation exception
+				bytecodeFailureListeners.forEach(l -> l.onValidationFailure(field, ex));
+				return false;
+			}
+			// Check for bytecode validation problems
+			bytecodeValidationListeners.forEach(l -> l.onBytecodeValidationComplete(field, bytecodeValidator));
+		}
+		// Done
+		return true;
+	}
+
+	/**
+	 * @param method
+	 * 		Method node to validate.
+	 *
+	 * @return {@code true} for a valid method.
+	 */
+	public boolean validateNode(MethodNode method) {
+		if (bytecodeValidationListeners.size() > 0) {
+			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, method);
+			try {
+				bytecodeValidator.visit();
+			} catch (BytecodeException ex) {
+				// Fatal bytecode validation exception
+				bytecodeFailureListeners.forEach(l -> l.onValidationFailure(method, ex));
+				return false;
+			}
+			// Check for bytecode validation problems
+			bytecodeValidationListeners.forEach(l -> l.onBytecodeValidationComplete(method, bytecodeValidator));
+		}
+		// Done
+		return true;
 	}
 }

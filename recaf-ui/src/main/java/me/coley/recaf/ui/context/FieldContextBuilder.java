@@ -54,7 +54,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 		menu.getItems().add(createHeader(fieldInfo.getName(), Icons.getFieldIcon(fieldInfo)));
 		if (!declaration)
 			menu.getItems().add(action("menu.goto.field", Icons.OPEN, this::openDefinition));
-		if (isPrimary()) {
+		if (isPrimary() && isOwnerJvmClass()) {
+			// TODO: When android cases are supported, remove 'isOwnerJvmClass()' check
 			Menu refactor = menu("menu.refactor");
 			if (declaration) {
 				menu.getItems().add(action("menu.edit.assemble.field", Icons.ACTION_EDIT, this::assemble));
@@ -92,7 +93,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 		CommonUX.openMember(ownerInfo, fieldInfo);
 	}
 
-	private void assemble() {
+	@Override
+	public void assemble() {
 		String name = ownerInfo.getName();
 		Resource resource = getContainingResource();
 		if (resource != null) {

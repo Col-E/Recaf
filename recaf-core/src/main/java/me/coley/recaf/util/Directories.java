@@ -97,7 +97,7 @@ public class Directories {
 			if (PlatformType.get() == PlatformType.WINDOWS) {
 				return Paths.get(System.getenv("APPDATA"), "Recaf");
 			} else {
-				throw new IllegalStateException("Failed to initialize Recaf directory");
+				throw new IllegalStateException("Failed to initialize Recaf directory", t);
 			}
 		}
 	}

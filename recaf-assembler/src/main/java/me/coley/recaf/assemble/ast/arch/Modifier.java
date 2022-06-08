@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Represents a {@link java.lang.reflect.Modifier} of a {@link MemberDefinition}.
+ * Represents a {@link java.lang.reflect.Modifier} of a {@link Definition}.
  *
  * @author Matt Coley
  */

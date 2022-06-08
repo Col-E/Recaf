@@ -3,9 +3,9 @@ package me.coley.recaf.assemble.ast.insn;
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseArg;
 import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.util.EscapeUtil;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Invoke dynamic instruction.
@@ -30,7 +30,7 @@ public class IndyInstruction extends AbstractInstruction {
 	 * @param bsmArguments
 	 * 		Bootstrap method arguments.
 	 */
-	public IndyInstruction(String opcode, String name, String desc, HandleInfo bsmHandle, List<BsmArg> bsmArguments) {
+	public IndyInstruction(int opcode, String name, String desc, HandleInfo bsmHandle, List<BsmArg> bsmArguments) {
 		super(opcode);
 		this.name = name;
 		this.desc = desc;
@@ -73,12 +73,25 @@ public class IndyInstruction extends AbstractInstruction {
 
 	@Override
 	public String print() {
+		StringBuilder sb = new StringBuilder();
 		String handle = bsmHandle.print();
-		String args = bsmArguments.stream()
-				.map(BsmArg::print)
-				.collect(Collectors.joining(", "));
-		return String.format("%s %s %s handle(%s) args(%s)",
-				getOpcode(), getName(), getDesc(), handle, args);
+		StringBuilder args = new StringBuilder();
+		for (BsmArg bsmArgument : bsmArguments) {
+			args.append(bsmArgument.print());
+			args.append(" ");
+		}
+		String name = this.name;
+		if (name.isEmpty()) {
+			name = ".empty";
+		} else {
+			name = EscapeUtil.escapeSpace(name);
+		}
+		sb.append(getOpcode()).append(' ');
+		sb.append(name).append(' ');
+		sb.append(EscapeUtil.escapeSpace(desc)).append(' ');
+		sb.append(".handle ").append(handle).append(' ');
+		sb.append("args ").append(args).append(" end");
+		return sb.toString();
 	}
 
 	/**

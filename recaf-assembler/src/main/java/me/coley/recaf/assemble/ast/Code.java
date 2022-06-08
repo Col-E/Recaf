@@ -1,14 +1,10 @@
 package me.coley.recaf.assemble.ast;
 
-import me.coley.recaf.assemble.ast.arch.Annotation;
-import me.coley.recaf.assemble.ast.arch.ConstVal;
-import me.coley.recaf.assemble.ast.arch.ThrownException;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.ast.meta.Comment;
 import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
-import me.coley.recaf.assemble.ast.meta.Signature;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -31,12 +27,7 @@ public class Code extends BaseElement {
 	private final List<AbstractInstruction> instructions = new ArrayList<>();
 	private final List<Comment> comments = new ArrayList<>();
 	private final List<TryCatch> tryCatches = new ArrayList<>();
-	private final List<ThrownException> thrownExceptions = new ArrayList<>();
-	private final List<Annotation> annotations = new ArrayList<>();
 	private final List<Expression> expressions = new ArrayList<>();
-	private final List<Unmatched> unmatched = new ArrayList<>();
-	private ConstVal constVal;
-	private Signature signature;
 
 	/**
 	 * @param entry
@@ -84,24 +75,6 @@ public class Code extends BaseElement {
 	}
 
 	/**
-	 * @param thrownException
-	 * 		Thrown exception of a single type.
-	 */
-	public void addThrownException(ThrownException thrownException) {
-		thrownExceptions.add(thrownException);
-		addInternal(thrownException);
-	}
-
-	/**
-	 * @param annotation
-	 * 		Annotation to add.
-	 */
-	public void addAnnotation(Annotation annotation) {
-		annotations.add(annotation);
-		addInternal(annotation);
-	}
-
-	/**
 	 * @param expression
 	 * 		Expression to add.
 	 */
@@ -109,34 +82,6 @@ public class Code extends BaseElement {
 		expressions.add(expression);
 		addInstruction(expression);
 	}
-
-	/**
-	 * @param unmatchedText
-	 * 		Unmatched text.
-	 */
-	public void addUnmatched(Unmatched unmatchedText) {
-		unmatched.add(unmatchedText);
-		addInternal(unmatchedText);
-	}
-
-	/**
-	 * @param constVal
-	 * 		New constant value.
-	 */
-	public void setConstVal(ConstVal constVal) {
-		this.constVal = constVal;
-		addInternal(constVal);
-	}
-
-	/**
-	 * @param signature
-	 * 		New generic signature.
-	 */
-	public void setSignature(Signature signature) {
-		this.signature = signature;
-		addInternal(signature);
-	}
-
 
 	/**
 	 * Called by any of the public facing methods for adding entries.
@@ -247,13 +192,6 @@ public class Code extends BaseElement {
 	}
 
 	/**
-	 * @return All thrown exceptions of the method body.
-	 */
-	public List<ThrownException> getThrownExceptions() {
-		return thrownExceptions;
-	}
-
-	/**
 	 * @return All try-catch ranges of the method body.
 	 */
 	public List<TryCatch> getTryCatches() {
@@ -261,38 +199,10 @@ public class Code extends BaseElement {
 	}
 
 	/**
-	 * @return All annotations.
-	 */
-	public List<Annotation> getAnnotations() {
-		return annotations;
-	}
-
-	/**
 	 * @return All in-line expressions.
 	 */
 	public List<Expression> getExpressions() {
 		return expressions;
-	}
-
-	/**
-	 * @return All unmatched raw items.
-	 */
-	public List<Unmatched> getUnmatched() {
-		return unmatched;
-	}
-
-	/**
-	 * @return The constant value of the field. May be {@code null}.
-	 */
-	public ConstVal getConstVal() {
-		return constVal;
-	}
-
-	/**
-	 * @return Generic signature.
-	 */
-	public Signature getSignature() {
-		return signature;
 	}
 
 	/**
@@ -304,8 +214,17 @@ public class Code extends BaseElement {
 
 	@Override
 	public String print() {
+		if (entries.isEmpty())
+			return "";
 		return entries.stream()
-				.map(Element::print)
-				.collect(Collectors.joining("\n"));
+				.map(e -> {
+					if (e instanceof Label)
+						return e.print();
+					return "\t" + e.print();
+				}).collect(Collectors.joining("\n"));
+	}
+
+	public boolean isEmpty() {
+		return entries.isEmpty();
 	}
 }

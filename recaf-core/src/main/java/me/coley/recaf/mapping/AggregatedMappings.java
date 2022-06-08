@@ -66,7 +66,7 @@ public class AggregatedMappings extends IntermediateMappings {
 	 * 		The additional mappings that were added. They will be in the form of {@code b -> c}.
 	 * 		We need to make sure we map the key type {@code b} to {@code a}.
 	 *
-	 * @return {@code true} if changes were made.
+	 * @return {@code true} when the mapping operation required bridging a current class name to its original name.
 	 */
 	public boolean update(Mappings newMappings) {
 		// ORIGINAL:
@@ -78,28 +78,31 @@ public class AggregatedMappings extends IntermediateMappings {
 		// AGGREGATED:
 		//  a -> c
 		//  a.f1 -> f3
-		boolean updated;
+		boolean bridged;
 		IntermediateMappings intermediate = newMappings.exportIntermediate();
-		updated = updateClasses(intermediate.getClasses());
-		updated |= updateMembers(intermediate.getFields().values());
-		updated |= updateMembers(intermediate.getMethods().values());
-		return updated;
+		bridged = updateClasses(intermediate.getClasses());
+		bridged |= updateMembers(intermediate.getFields().values());
+		bridged |= updateMembers(intermediate.getMethods().values());
+		return bridged;
 	}
 
 	private boolean updateClasses(Map<String, ClassMapping> classes) {
-		boolean updated = false;
+		boolean bridged = false;
 		for (ClassMapping newMapping : classes.values()) {
 			String cName = newMapping.getNewName();
 			String bName = newMapping.getOldName();
 			String aName = reverseOrderClassMapping.get(bName);
 			if (aName != null) {
-				updated = true;
+				// There is a prior entry of the class, 'aName' thus we use it as the key
+				// and not 'bName' since that was the prior value the mapping for 'aName.
+				bridged = true;
 				addClass(aName, cName);
 			} else {
+				// No prior entry of the class.
 				addClass(bName, cName);
 			}
 		}
-		return updated;
+		return bridged;
 	}
 
 
@@ -108,7 +111,7 @@ public class AggregatedMappings extends IntermediateMappings {
 		// 1. a --> b
 		// 2. b.x --> b.y
 		// Now we need to ensure the mapping "a.x --> y" exists.
-		boolean updated = false;
+		boolean bridged = false;
 		for (List<M> members : x) {
 			for (MemberMapping newMemberMapping : members) {
 				String bName = newMemberMapping.getOwnerName();
@@ -118,13 +121,15 @@ public class AggregatedMappings extends IntermediateMappings {
 				String desc = newMemberMapping.getDesc();
 				String owner = bName;
 				if (aName != null) {
-					updated = true;
+					// We need to map the member current mapped owner name to the
+					// original owner's name.
+					bridged = true;
 					owner = aName;
 					oldMemberName = findPriorMemberName(aName, newMemberMapping);
 				}
 				// Desc must always be checked for updates
 				desc = updateDesc(desc);
-				// Add updated entry
+				// Add bridged entry
 				if (newMemberMapping.isField()) {
 					addField(owner, desc, oldMemberName, newMemberName);
 				} else {
@@ -132,7 +137,7 @@ public class AggregatedMappings extends IntermediateMappings {
 				}
 			}
 		}
-		return updated;
+		return bridged;
 	}
 
 	private String updateDesc(String desc) {

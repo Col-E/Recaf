@@ -5,14 +5,13 @@ import javafx.scene.shape.Polygon;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.IntFunction;
 
 /**
  * Decorator factory for building various indicators.
  *
  * @author Matt Coley
  */
-public class IndicatorFactory implements IntFunction<Node> {
+public class IndicatorFactory {
 	private static final double SIZE = 10;
 	private static final double[] SHAPE = new double[]{
 			0, 0,
@@ -54,8 +53,13 @@ public class IndicatorFactory implements IntFunction<Node> {
 		indicatorAppliers.clear();
 	}
 
-	@Override
-	public Node apply(int paragraph) {
+	/**
+	 * @param paragraph
+	 * 		Current paragraph position.
+	 *
+	 * @return Node for paragraph.
+	 */
+	public Node createGraphic(int paragraph) {
 		if (editor.isParagraphFolded(paragraph)) {
 			return null;
 		}
@@ -67,7 +71,7 @@ public class IndicatorFactory implements IntFunction<Node> {
 		boolean applied = false;
 		for (IndicatorApplier applier : indicatorAppliers) {
 			// Only one applier can act on a polygon at a time
-			if (applier.apply(lineNo, poly)) {
+			if (applier.checkModified(lineNo, poly)) {
 				applied = true;
 				break;
 			}

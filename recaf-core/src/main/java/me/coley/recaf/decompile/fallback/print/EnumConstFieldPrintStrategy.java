@@ -3,6 +3,8 @@ package me.coley.recaf.decompile.fallback.print;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.FieldModel;
 
+import java.util.List;
+
 /**
  * Field printing strategy for enum constants.
  *
@@ -11,9 +13,10 @@ import me.coley.recaf.decompile.fallback.model.FieldModel;
 public class EnumConstFieldPrintStrategy implements FieldPrintStrategy {
 	@Override
 	public String print(ClassModel parent, FieldModel model) {
-		int fieldIndex = parent.getFields().indexOf(model);
-		boolean isNextEnumConst = parent.getFields().size() >= fieldIndex &&
-				parent.getFields().get(fieldIndex + 1).isEnumConst();
+		List<FieldModel> fields = parent.getFields();
+		int fieldIndex = fields.indexOf(model);
+		boolean isNextEnumConst = fieldIndex < fields.size() - 1 &&
+				fields.get(fieldIndex + 1).isEnumConst();
 		String name = model.getName();
 
 		if (isNextEnumConst) {

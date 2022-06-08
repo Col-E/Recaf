@@ -1,6 +1,9 @@
 package me.coley.recaf.scripting.impl;
 
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -16,6 +19,7 @@ import java.nio.file.Path;
  * Utility functions for working with workspaces.
  *
  * @author Wolfie / win32kbase
+ * @author Matt Coley
  */
 public class WorkspaceAPI {
 	private static final Logger logger = Logging.get(WorkspaceAPI.class);
@@ -106,7 +110,6 @@ public class WorkspaceAPI {
 		}
 	}
 
-
 	/**
 	 * Adds a resource to the {@link #getWorkspace() current workspace}.
 	 *
@@ -170,5 +173,167 @@ public class WorkspaceAPI {
 	 */
 	public static Resource getPrimaryResource() {
 		return getPrimaryResource(getWorkspace());
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal class name.
+	 *
+	 * @return Info wrapper of the class, or {@code null} if no class by the name exists in the primary resource.
+	 */
+	public static ClassInfo getPrimaryClassInfo(String internalName) {
+		return getClassInfo(getPrimaryResource(), internalName);
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal dex class name.
+	 *
+	 * @return Info wrapper of the class, or {@code null} if no dex class by the name exists in the primary resource.
+	 */
+	public static DexClassInfo getPrimaryDexClassInfo(String internalName) {
+		return getDexClassInfo(getPrimaryResource(), internalName);
+	}
+
+	/**
+	 * @param path
+	 * 		File path.
+	 *
+	 * @return Info wrapper of the file, or {@code null} if no file by the path exists in the primary resource.
+	 */
+	public static FileInfo getPrimaryFileInfo(String path) {
+		return getFileInfo(getPrimaryResource(), path);
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to pull from.
+	 * @param internalName
+	 * 		Internal class name.
+	 *
+	 * @return Info wrapper of the class, or {@code null} if no class by the name exists in the resource.
+	 */
+	public static ClassInfo getClassInfo(Resource resource, String internalName) {
+		return resource.getClasses().get(internalName);
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to pull from.
+	 * @param internalName
+	 * 		Internal dex class name.
+	 *
+	 * @return Info wrapper of the dex class, or {@code null} if no dex class by the name exists in the resource.
+	 */
+	public static DexClassInfo getDexClassInfo(Resource resource, String internalName) {
+		return resource.getDexClasses().get(internalName);
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to pull from.
+	 * @param path
+	 * 		File path.
+	 *
+	 * @return Info wrapper of the file, or {@code null} if no file by the path exists in the resource.
+	 */
+	public static FileInfo getFileInfo(Resource resource, String path) {
+		return resource.getFiles().get(path);
+	}
+
+	/**
+	 * @param content
+	 * 		Class bytecode to place into primary resource.
+	 */
+	public static void putPrimaryClassInfo(byte[] content) {
+		putClassInfo(getPrimaryResource(), content);
+	}
+
+	/**
+	 * @param info
+	 * 		Class to place into primary resource.
+	 */
+	public static void putPrimaryClassInfo(ClassInfo info) {
+		putClassInfo(getPrimaryResource(), info);
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to put the class into.
+	 * @param content
+	 * 		Class bytecode to place into resource.
+	 */
+	public static void putClassInfo(Resource resource, byte[] content) {
+		resource.getClasses().put(ClassInfo.read(content));
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to put the class into.
+	 * @param info
+	 * 		Class to place into resource.
+	 */
+	public static void putClassInfo(Resource resource, ClassInfo info) {
+		resource.getClasses().put(info);
+	}
+
+	/**
+	 * @param info
+	 * 		Dex class to place into primary resource.
+	 */
+	public static void putPrimaryDexClassInfo(DexClassInfo info) {
+		putDexClassInfo(getPrimaryResource(), info);
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to put the class into.
+	 * @param info
+	 * 		Dex class to place into resource.
+	 */
+	public static void putDexClassInfo(Resource resource, DexClassInfo info) {
+		String dexName = info.getDexPath();
+		String className = info.getName();
+		resource.getDexClasses().put(dexName, className, info);
+	}
+
+	/**
+	 * @param path
+	 * 		File path.
+	 * @param content
+	 * 		File to place into primary resource.
+	 */
+	public static void putPrimaryFileInfo(String path, byte[] content) {
+		putPrimaryFileInfo(new FileInfo(path, content));
+	}
+
+	/**
+	 * @param info
+	 * 		File to place into primary resource.
+	 */
+	public static void putPrimaryFileInfo(FileInfo info) {
+		putFileInfo(getPrimaryResource(), info);
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to put the file into.
+	 * @param path
+	 * 		File path.
+	 * @param content
+	 * 		File to place into resource.
+	 */
+	public static void putFileInfo(Resource resource, String path, byte[] content) {
+		putFileInfo(resource, new FileInfo(path, content));
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to put the file into.
+	 * @param info
+	 * 		File to place into resource.
+	 */
+	public static void putFileInfo(Resource resource, FileInfo info) {
+		resource.getFiles().put(info);
 	}
 }

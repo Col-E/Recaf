@@ -4,11 +4,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.VMInterface;
-import dev.xdark.ssvm.execution.ExecutionContext;
-import dev.xdark.ssvm.execution.InstructionProcessor;
-import dev.xdark.ssvm.execution.Locals;
-import dev.xdark.ssvm.execution.Result;
-import dev.xdark.ssvm.execution.Stack;
+import dev.xdark.ssvm.execution.*;
 import dev.xdark.ssvm.jit.JitHelper;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.thread.Backtrace;
@@ -263,7 +259,7 @@ public class PeepholeProcessors implements Opcodes {
 				List<AbstractInsnNode> contributingInstructions = operationValue.getContributingInstructions();
 				for (AbstractInsnNode contributingInsn : contributingInstructions)
 					if (instructions.contains(contributingInsn))
-						instructions.set(contributingInsn, new InsnNode(NOP));
+						nop(instructions, contributingInsn);
 				// Not all operations should be replaced, like I2B
 				if (replace) {
 					// Replace the operation with the constant value
@@ -331,7 +327,7 @@ public class PeepholeProcessors implements Opcodes {
 				List<AbstractInsnNode> contributingInstructions = operationValue.getContributingInstructions();
 				for (AbstractInsnNode contributingInsn : contributingInstructions)
 					if (instructions.contains(contributingInsn))
-						instructions.set(contributingInsn, new InsnNode(NOP));
+						nop(instructions, contributingInsn);
 				// Replace the operation with the constant value
 				instructions.set(insn, operationValuePushInsn);
 				// Record the updated instruction (so if this value needs to be folded later it can be)
@@ -380,7 +376,7 @@ public class PeepholeProcessors implements Opcodes {
 				for (int i = argTypes.length - 1; i >= 0; i--) {
 					Type argType = argTypes[i];
 					Value value = stack.getAt(stackSize - 1 - argOffset);
-					paramsAreConst &= (value instanceof ConstValue);
+					paramsAreConst &= VmValueUtil.isConstant(value);
 					argumentValues.add(value);
 					argOffset += argType.getSize();
 				}
@@ -412,9 +408,18 @@ public class PeepholeProcessors implements Opcodes {
 						for (Value value : argumentValues) {
 							TrackedValue trackedValue = (TrackedValue) value;
 							List<AbstractInsnNode> contributingInstructions = trackedValue.getContributingInstructions();
+							/* TODO: Create test cases and handle array inlining into strings when possible
+							         There are a lot of funky edge cases to detect, so the below code isn't a 'stable' solution AFAIK
+							if (trackedValue instanceof TrackedArrayValue) {
+								TrackedArrayValue array = (TrackedArrayValue) trackedValue;
+								contributingInstructions.addAll(array.getAssociatedPops());
+								contributingInstructions.addAll(array.getParentValues().stream().flatMap(t -> t.getContributingInstructions().stream()).collect(Collectors.toList()));
+								contributingInstructions.addAll(array.getClonedValues().stream().flatMap(t -> t.getContributingInstructions().stream()).collect(Collectors.toList()));
+							}
+							 */
 							for (AbstractInsnNode contributingInsn : contributingInstructions)
 								if (instructions.contains(contributingInsn))
-									instructions.set(contributingInsn, new InsnNode(NOP));
+									nop(instructions, contributingInsn);
 							contributingInstructioncount += contributingInstructions.size();
 						}
 						instructions.set(insn, InstructionUtil.createPush(returnValue));
@@ -611,7 +616,7 @@ public class PeepholeProcessors implements Opcodes {
 			InsnList instructions = ctx.getMethod().getNode().instructions;
 			for (TrackedValue value : valuesWithPops.removeAll(ctx)) {
 				if (value.getContributingInstructions().stream().noneMatch(instructions::contains)) {
-					value.getAssociatedPops().forEach(insn -> instructions.set(insn, new InsnNode(NOP)));
+					value.getAssociatedPops().forEach(insn -> nop(instructions, insn));
 				}
 			}
 		});
@@ -877,6 +882,15 @@ public class PeepholeProcessors implements Opcodes {
 			stack.pushGeneric(value);
 			return Result.CONTINUE;
 		};
+	}
+
+	private static void nop(InsnList instructions, AbstractInsnNode insn) {
+		try {
+			instructions.set(insn, new InsnNode(NOP));
+		} catch (IndexOutOfBoundsException ignored) {
+			// It's faster to fail/handle here than to call 'contains' or reflectively check if we can replace 'insn'.
+			// The failure occurs because 'AbstractInsnNode.index' is '-1' if the 'insn' is not in the 'InsnList'.
+		}
 	}
 
 	private static <T> Stream<T> recurse(T seed, Function<T, Stream<T>> fn) {

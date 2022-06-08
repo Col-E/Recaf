@@ -16,7 +16,12 @@ public abstract class DeclarableContextBuilder extends ContextBuilder {
 	public abstract DeclarableContextBuilder setDeclaration(boolean declaration);
 
 	/**
-	 * Action to run for open the definition of the declared class/member.
+	 * Action to run for opening an assembler of the declared class/member.
+	 */
+	public abstract void assemble();
+
+	/**
+	 * Action to run for opening the definition of the declared class/member.
 	 */
 	public abstract void openDefinition();
 

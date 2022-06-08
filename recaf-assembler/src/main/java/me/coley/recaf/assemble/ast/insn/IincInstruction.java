@@ -21,7 +21,7 @@ public class IincInstruction extends AbstractInstruction implements Named, Descr
 	 * @param increment
 	 * 		Increment value.
 	 */
-	public IincInstruction(String opcode, String identifier, int increment) {
+	public IincInstruction(int opcode, String identifier, int increment) {
 		super(opcode);
 		this.identifier = identifier;
 		this.increment = increment;

@@ -1,7 +1,6 @@
 package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.ast.ArgType;
-import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.Annotation;
@@ -21,34 +20,23 @@ import java.util.Objects;
  * @author Matt Coley
  */
 public class AstToFieldTransformer {
-	private final Unit unit;
-	// For quick reference
-	private final FieldDefinition definition;
-	private final Code code;
-
-	/**
-	 * @param unit
-	 * 		The unit to pull data from.
-	 */
-	public AstToFieldTransformer(Unit unit) {
-		this.unit = Objects.requireNonNull(unit);
-		this.definition = (FieldDefinition) unit.getDefinition();
-		this.code = unit.getCode();
-	}
+	private FieldDefinition definition;
 
 	/**
 	 * @return Generated field.
 	 */
 	public FieldNode buildField() {
+		if (definition == null)
+			throw new IllegalStateException("No definition set!");
 		int access = definition.getModifiers().value();
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
-		String signature = code.getSignature() != null ? code.getSignature().getSignature() : null;
+		String signature = definition.getSignature() != null ? definition.getSignature().getSignature() : null;
 		Object value = null;
-		if (code.getConstVal() != null) {
-			value = code.getConstVal().getValue();
+		if (definition.getConstVal() != null) {
+			value = definition.getConstVal().getValue();
 			// Handle is the only type that we need to map to the ASM implementation
-			if (code.getConstVal().getValueType() == ArgType.HANDLE) {
+			if (definition.getConstVal().getValueType() == ArgType.HANDLE) {
 				HandleInfo info = (HandleInfo) value;
 				int tag = info.getTagVal();
 				boolean itf = tag == Opcodes.H_INVOKEINTERFACE;
@@ -57,7 +45,7 @@ public class AstToFieldTransformer {
 		}
 		List<AnnotationNode> visibleAnnotations = new ArrayList<>();
 		List<AnnotationNode> invisibleAnnotations = new ArrayList<>();
-		for (Annotation annotation : code.getAnnotations()) {
+		for (Annotation annotation : definition.getAnnotations()) {
 			AnnotationNode node = new AnnotationNode("L" + annotation.getType() + ";");
 			node.values = new ArrayList<>();
 			annotation.getArgs().forEach((argName, argVal) -> {
@@ -80,5 +68,13 @@ public class AstToFieldTransformer {
 		else
 			field.invisibleAnnotations = null;
 		return field;
+	}
+
+	/**
+	 * @param definition
+	 * 		Definition to transform.
+	 */
+	public void setDefinition(FieldDefinition definition) {
+		this.definition = Objects.requireNonNull(definition);
 	}
 }

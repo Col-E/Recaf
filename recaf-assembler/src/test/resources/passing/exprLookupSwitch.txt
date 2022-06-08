@@ -1,6 +1,6 @@
-static handleCode(I code)V
+method .static handleCode (I code)V
 a:
- expr {
+ .expr
     int range = code - (code % 100);
     switch(range) {
      case 100: System.out.println("INFO"); break;
@@ -10,7 +10,8 @@ a:
      case 500: System.out.println("SERVER-ERROR"); break;
      default: break;
     }
- }
+ end
 b:
  return
 end:
+end

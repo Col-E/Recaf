@@ -181,6 +181,9 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 	private String disassemble() {
 		InstanceJavaClass target = getTargetClass();
 		MethodNode method = target.getStaticMethod("main", "([Ljava/lang/String;)V").getNode();
+		// Patch out SSVM modifications to the ASM instructions
+		VirtualMachineUtil.restoreMethod(method);
+		// Map to AST
 		BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(method);
 		transformer.visit();
 		Unit unit = transformer.getUnit();

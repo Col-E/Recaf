@@ -11,15 +11,15 @@ import me.coley.recaf.ui.util.Icons;
  * @author Matt Coley
  */
 public class AssemblerConfig implements ConfigContainer {
-	@Group("parse")
-	@ConfigID("recover")
-	public boolean attemptRecover = true;
 	@Group("validation")
 	@ConfigID("ast")
 	public boolean astValidation = true;
 	@Group("validation")
 	@ConfigID("bytecode")
 	public boolean bytecodeValidation = true;
+	@Group("debug")
+	@ConfigID("ast-debug")
+	public boolean astDebug = false;
 
 	@Override
 	public String iconPath() {

@@ -12,12 +12,47 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class Value {
+public abstract class Value {
 
 	// TODO: Track context (Ast) so users know what contributed?
 	//  - But format it to look like a consecutive statement if possible
 	//    - varName
 	//    - varName.method(param)
+
+	/**
+	 * @return {@code true} if the type is {@link ObjectValue}.
+	 */
+	public boolean isObject() {
+		return this instanceof ObjectValue;
+	}
+
+	/**
+	 * @return {@code true} if the type is {@link ArrayValue}.
+	 */
+	public boolean isArray() {
+		return this instanceof ArrayValue;
+	}
+
+	/**
+	 * @return {@code true} if the type is {@link NullValue}.
+	 */
+	public boolean isNull() {
+		return this instanceof NullValue;
+	}
+
+	/**
+	 * @return {@code true} if the type is {@link NumericValue}.
+	 */
+	public boolean isNumeric() {
+		return this instanceof NumericValue;
+	}
+
+	/**
+	 * @return Copy of the value.
+	 */
+	public Value copy() {
+		return this;
+	}
 
 	/**
 	 * Special case for values popped off an empty stack.
@@ -111,15 +146,22 @@ public class Value {
 		public ArrayValue(int dimensions, int size, Type elementType) {
 			this.dimensions = dimensions;
 			this.elementType = elementType;
-			if (size >= 0) {
+			if (dimensions == 1 && size >= 0) {
+				// Single dimensional array
 				this.array = new Value[size];
+				// We can fill in the default values
 				if (elementType.getSort() <= Type.DOUBLE)
 					for (int i = 0; i < size; i++)
 						array[i] = new NumericValue(elementType, 0);
 				else
 					for (int i = 0; i < size; i++)
 						array[i] = new NullValue();
+			} else if (dimensions > 1) {
+				// If there are more than 1 dimensions, the size should == the num of dimensions
+				// The size of each sub-array is declared on the stack
+				this.array = new Value[dimensions];
 			} else {
+				// Unhandled
 				this.array = null;
 			}
 		}
@@ -147,7 +189,19 @@ public class Value {
 		}
 
 		@Override
+		public Value copy() {
+			int size = (array != null) ? array.length : -1;
+			ArrayValue copy = new ArrayValue(dimensions, size, elementType);
+			if (array != null) {
+				System.arraycopy(array, 0, copy.array, 0, array.length);
+			}
+			return copy;
+		}
+
+		@Override
 		public String toString() {
+			if (array == null)
+				return "null";
 			return "[" + Arrays.stream(getArray())
 					.map(Object::toString)
 					.collect(Collectors.joining(", ")) +

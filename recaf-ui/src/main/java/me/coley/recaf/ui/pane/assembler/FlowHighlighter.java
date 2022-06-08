@@ -4,6 +4,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import me.coley.recaf.assemble.IllegalAstException;
+import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.FlowControl;
 import me.coley.recaf.assemble.ast.Unit;
@@ -49,20 +50,25 @@ public class FlowHighlighter implements IndicatorApplier {
 	}
 
 	/**
-	 * Add selected line listener so that we can be notified of when new selections contain variable refs.
+	 * Add selected line listener so that we can be notified of when new selections contain flow refs.
 	 *
-	 * @param selectedParagraph
-	 * 		Observable paragraph index.
+	 * @param selectedCaretPosition
+	 * 		Observable caret position.
 	 */
-	public void addSelectedLineListener(ObservableValue<Integer> selectedParagraph) {
-		selectedParagraph.addListener((observable, oldValue, newValue) -> {
+	public void addCaretPositionListener(ObservableValue<Integer> selectedCaretPosition) {
+		selectedCaretPosition.addListener((observable, oldValue, newValue) -> {
 			sources.clear();
 			destinations.clear();
-			// The selected paragraph is 0-based, lines are 1-based
-			Element elementOnLine = pipeline.getElementOnLine(newValue + 1);
+			int line = assemblerArea.getCaretLine();
+			int col = assemblerArea.getCaretColumn();
+			Element elementOnLine = pipeline.getCodeElementAt(line, col);
+			Unit unit = pipeline.getUnit();
+			if (unit == null || unit.isField())
+				return;
+			Code code = pipeline.getUnit().getMethod().getCode();
 			if (elementOnLine instanceof FlowControl) {
 				try {
-					Map<String, Label> labelMap = pipeline.getUnit().getCode().getLabels();
+					Map<String, Label> labelMap = code.getLabels();
 					List<String> labelNames = ((FlowControl) elementOnLine)
 							.getTargets(labelMap)
 							.stream()
@@ -73,8 +79,8 @@ public class FlowHighlighter implements IndicatorApplier {
 					// ignored
 				}
 			} else if (elementOnLine instanceof Label) {
-				Map<String, Label> labelMap = pipeline.getUnit().getCode().getLabels();
-				List<FlowControl> matched = pipeline.getUnit().getCode().getChildrenOfType(FlowControl.class).stream()
+				Map<String, Label> labelMap = code.getLabels();
+				List<FlowControl> matched = code.getChildrenOfType(FlowControl.class).stream()
 						.filter(flow -> {
 							try {
 								return flow.getTargets(labelMap).contains(elementOnLine);
@@ -101,14 +107,15 @@ public class FlowHighlighter implements IndicatorApplier {
 		Unit unit = pipeline.getUnit();
 		if (unit == null)
 			return;
+		Code code = unit.getMethod().getCode();
 		// Need to refresh flow control instructions
-		for (FlowControl flow : unit.getCode().getChildrenOfType(FlowControl.class)) {
+		for (FlowControl flow : code.getChildrenOfType(FlowControl.class)) {
 			int line = flow.getLine();
 			if (line > 0)
 				linesToRefresh.add(line);
 		}
 		// Also need to refresh labels themselves
-		for (Label label : unit.getCode().getLabels().values()) {
+		for (Label label : code.getLabels().values()) {
 			int line = label.getLine();
 			if (line > 0)
 				linesToRefresh.add(line);
@@ -117,18 +124,20 @@ public class FlowHighlighter implements IndicatorApplier {
 	}
 
 	@Override
-	public boolean apply(int lineNo, Polygon poly) {
-		Element elementOnLine = pipeline.getElementOnLine(lineNo);
-		if (elementOnLine instanceof Label) {
-			String labelId = ((Label) elementOnLine).getName();
-			if (destinations.contains(labelId)) {
-				poly.setFill(Color.GREEN);
-				return true;
-			}
-		} else if (elementOnLine instanceof FlowControl) {
-			if (sources.contains(elementOnLine)) {
-				poly.setFill(Color.LIMEGREEN);
-				return true;
+	public boolean checkModified(int lineNo, Polygon poly) {
+		List<Element> elementsOnLine = pipeline.getCodeElementsAt(lineNo);
+		for (Element elementOnLine : elementsOnLine) {
+			if (elementOnLine instanceof Label) {
+				String labelId = ((Label) elementOnLine).getName();
+				if (destinations.contains(labelId)) {
+					poly.setFill(Color.GREEN);
+					return true;
+				}
+			} else if (elementOnLine instanceof FlowControl) {
+				if (sources.contains(elementOnLine)) {
+					poly.setFill(Color.LIMEGREEN);
+					return true;
+				}
 			}
 		}
 		return false;

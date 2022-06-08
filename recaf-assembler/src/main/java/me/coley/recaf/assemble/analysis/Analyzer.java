@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.analysis;
 
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.IllegalAstException;
+import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.*;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
@@ -14,6 +15,7 @@ import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.util.NumberUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.logging.Logging;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
@@ -35,8 +37,8 @@ public class Analyzer {
 	private static final boolean MANUAL_DEBUG = false;
 	private final Map<Label, String> catchHandlerTypes = new HashMap<>();
 	private final String selfType;
-	private final Unit unit;
 	private final Code code;
+	private final MethodDefinition method;
 	private ExpressionToAstTransformer expressionToAstTransformer;
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
 	private Element currentlyVisiting;
@@ -44,13 +46,11 @@ public class Analyzer {
 	/**
 	 * @param selfType
 	 * 		Internal name of class defining the method.
-	 * @param unit
-	 * 		The unit containing the method code.
 	 */
-	public Analyzer(String selfType, Unit unit) {
+	public Analyzer(String selfType, MethodDefinition method) {
 		this.selfType = selfType;
-		this.unit = unit;
-		code = Objects.requireNonNull(unit.getCode(), "AST Unit must define a code region!");
+		this.method = method;
+		code = method.getCode();
 	}
 
 	/**
@@ -86,15 +86,24 @@ public class Analyzer {
 	public Analysis analyze() throws AstException {
 		List<AbstractInstruction> instructions = code.getChildrenOfType(AbstractInstruction.class);
 		Analysis analysis = new Analysis(instructions.size());
-		fillBlocks(analysis, instructions);
-		fillFrames(analysis, instructions);
+		try {
+			if (!instructions.isEmpty()) {
+				fillBlocks(analysis, instructions);
+				fillFrames(analysis, instructions);
+			}
+		} catch (AstException e) {
+			throw e;
+		} catch (Exception t) {
+			logger.error("Uncaught exception during analysis", t);
+			throw new MethodCompileException(code, t, "Uncaught exception during analysis!");
+		}
 		return analysis;
 	}
 
 	private void fillFrames(Analysis analysis, List<AbstractInstruction> instructions) throws AstException {
 		// Initialize with method definition parameters
 		Frame entryFrame = analysis.frame(0);
-		entryFrame.initialize(selfType, (MethodDefinition) unit.getDefinition());
+		entryFrame.initialize(selfType, method);
 		// Populate handler labels
 		for (TryCatch tryCatch : code.getTryCatches()) {
 			Label handlerLabel = code.getLabel(tryCatch.getHandlerLabel());
@@ -295,7 +304,7 @@ public class Analyzer {
 							frame.push(new Value.WideReservedValue());
 							break;
 						case HANDLE:
-							frame.push(new Value.HandleValue((HandleInfo) ldcInstruction.getValue()));
+							frame.push(new Value.HandleValue(new HandleInfo((Handle) ldcInstruction.getValue())));
 							break;
 						case ANNO:
 						case ANNO_LIST:
@@ -367,7 +376,7 @@ public class Analyzer {
 				case NEWARRAY: {
 					// Get array type
 					NewArrayInstruction newArrayInstruction = (NewArrayInstruction) instruction;
-					Type type = Type.getType(String.valueOf(newArrayInstruction.getArrayType()));
+					Type type = Type.getType(String.valueOf(newArrayInstruction.getArrayTypeChar()));
 					// Get array size, if possible
 					Value.ArrayValue arrayValue;
 					Value stackTop = frame.pop();
@@ -381,7 +390,7 @@ public class Analyzer {
 					} else {
 						// Unknown size due to non-numeric value
 						arrayValue = new Value.ArrayValue(1, type);
-						frame.markWonky();
+						frame.markWonky("cannot compute array dimensions, stack top value is non-numeric");
 					}
 					frame.push(arrayValue);
 					break;
@@ -403,7 +412,7 @@ public class Analyzer {
 					} else {
 						// Unknown size due to non-numeric value
 						arrayValue = new Value.ArrayValue(1, type);
-						frame.markWonky();
+						frame.markWonky("cannot compute array dimensions, stack top value is non-numeric");
 					}
 					frame.push(arrayValue);
 					break;
@@ -428,7 +437,7 @@ public class Analyzer {
 						} else {
 							// Unknown size due to non-numeric value
 							backingArray[i] = new Value.ArrayValue(numDimensions, type);
-							frame.markWonky();
+							frame.markWonky("cannot compute array dimensions, stack top value[" + i + "] is non-numeric");
 						}
 					}
 					frame.push(arrayValue);
@@ -448,7 +457,7 @@ public class Analyzer {
 					} else {
 						// Unknown length due to non-array value
 						length = new Value.NumericValue(INT_TYPE);
-						frame.markWonky();
+						frame.markWonky("arraylength usage on non-array value");
 					}
 					frame.push(length);
 					break;
@@ -479,12 +488,16 @@ public class Analyzer {
 									backingArray[idx] = value;
 								else
 									// Should not occur
-									frame.markWonky();
+									frame.markWonky("cannot store index in array '" + idx + "' because it is out of bounds");
 							}
 						}
 					} else {
 						// Wrong stack value types
-						frame.markWonky();
+						if (array instanceof Value.ArrayValue) {
+							frame.markWonky("cannot use index for array operation, index on stack is a non-numeric value");
+						} else {
+							frame.markWonky("cannot use array for array operation, array on stack is a non-array value");
+						}
 					}
 					break;
 				}
@@ -525,7 +538,11 @@ public class Analyzer {
 						}
 					} else {
 						// Wrong stack value types
-						frame.markWonky();
+						if (array instanceof Value.ArrayValue) {
+							frame.markWonky("cannot use index for array operation, index on stack is a non-numeric value");
+						} else {
+							frame.markWonky("cannot use array for array operation, array on stack is a non-array value");
+						}
 					}
 					// If the fallback hasn't been unset, push it to the stack
 					if (fallback != null) {
@@ -784,24 +801,51 @@ public class Analyzer {
 				case IFLT:
 				case IFGE:
 				case IFGT:
-				case IFLE:
-				case IFNULL:
-				case IFNONNULL:
-					// TODO: Mark jump as always (not)-taken if top value meets expectation
-					frame.pop();
+				case IFLE: {
+					Value value = frame.pop();
+					if (!value.isNumeric()) {
+						frame.markWonky("unary conditional jump has non-numeric value on the stack");
+					}
 					break;
+				}
+				case IFNULL:
+				case IFNONNULL: {
+					// TODO: Mark jump as always (not)-taken if top value meets expectation
+					Value value = frame.pop();
+					if (!(value.isObject() || value.isArray() || value.isNull())) {
+						frame.markWonky("null-check conditional jump has non-object value on the stack");
+					}
+					break;
+				}
 				case IF_ICMPEQ:
 				case IF_ICMPNE:
 				case IF_ICMPLT:
 				case IF_ICMPGE:
 				case IF_ICMPGT:
-				case IF_ICMPLE:
-				case IF_ACMPEQ:
-				case IF_ACMPNE:
-					// TODO: Mark jump as always (not)-taken if top value meets expectation
-					frame.pop();
-					frame.pop();
+				case IF_ICMPLE: {
+					Value value1 = frame.pop();
+					if (!value1.isNumeric()) {
+						frame.markWonky("binary conditional jump has non-numeric value on the stack");
+					}
+					Value value2 = frame.pop();
+					if (!value2.isNumeric()) {
+						frame.markWonky("binary conditional jump has non-numeric value on the stack");
+					}
 					break;
+				}
+				case IF_ACMPEQ:
+				case IF_ACMPNE: {
+					// TODO: Mark jump as always (not)-taken if top value meets expectation
+					Value value1 = frame.pop();
+					if (!(value1.isObject() || value1.isArray() || value1.isNull())) {
+						frame.markWonky("null-check conditional jump has non-object value on the stack");
+					}
+					Value value2 = frame.pop();
+					if (!(value2.isObject() || value2.isArray() || value2.isNull())) {
+						frame.markWonky("null-check conditional jump has non-object value on the stack");
+					}
+					break;
+				}
 				case TABLESWITCH:
 				case LOOKUPSWITCH:
 				case IRETURN:
@@ -834,8 +878,15 @@ public class Analyzer {
 				case CHECKCAST: {
 					// Replace top stack value with cast type. Otherwise, it's a ClassCastException.
 					TypeInstruction typeInstruction = (TypeInstruction) instruction;
+					// Type will either be internal name, or an array descriptor
+					String typeStr = typeInstruction.getType();
+					Type type = typeStr.charAt(0) == '[' ? Type.getType(typeStr) : Type.getObjectType(typeStr);
 					frame.pop();
-					frame.push(new Value.ObjectValue(Type.getObjectType(typeInstruction.getType())));
+					if (type.getSort() == ARRAY) {
+						frame.push(new Value.ArrayValue(type.getDimensions(), type));
+					} else {
+						frame.push(new Value.ObjectValue(type));
+					}
 					break;
 				}
 				case INSTANCEOF: {
@@ -845,15 +896,19 @@ public class Analyzer {
 						frame.push(new Value.NumericValue(INT_TYPE));
 					} else {
 						// Shouldn't be instance checking any non object ref
-						frame.markWonky();
+						frame.markWonky("instanceof used on non-object value");
 						frame.push(new Value.NumericValue(INT_TYPE));
 					}
 					break;
 				}
-				case GETFIELD:
+				case GETFIELD: {
 					// Pop field owner ctx
-					frame.pop();
+					Value owner = frame.pop();
+					if (!owner.isObject()) {
+						frame.markWonky("getfield 'owner' on stack not an object type!");
+					}
 					// Fall through
+				}
 				case GETSTATIC: {
 					// Push field value
 					FieldInstruction fieldInstruction = (FieldInstruction) instruction;
@@ -874,22 +929,29 @@ public class Analyzer {
 					// Pop value
 					FieldInstruction fieldInstruction = (FieldInstruction) instruction;
 					Type type = Type.getType(fieldInstruction.getDesc());
-					if (Types.isWide(type))
-						frame.popWide();
-					else
-						frame.pop();
+					Value value = Types.isWide(type) ? frame.popWide() : frame.pop();
+					if (type.getSort() >= ARRAY && !(value.isNull() || value.isObject() || value.isArray())) {
+						frame.markWonky("putstatic field is object/array, but value on stack is non-object");
+					} else if (type.getSort() <= Type.DOUBLE && !value.isNumeric()) {
+						frame.markWonky("putstatic field is numeric, but value on stack is non-numeric");
+					}
 					break;
 				}
 				case PUTFIELD: {
 					// Pop value
 					FieldInstruction fieldInstruction = (FieldInstruction) instruction;
 					Type type = Type.getType(fieldInstruction.getDesc());
-					if (Types.isWide(type))
-						frame.popWide();
-					else
-						frame.pop();
+					Value value = Types.isWide(type) ? frame.popWide() : frame.pop();
+					if (type.getSort() >= ARRAY && !(value.isNull() || value.isObject() || value.isArray())) {
+						frame.markWonky("putfield field is object/array, but value on stack is non-object");
+					} else if (type.getSort() <= Type.DOUBLE && !value.isNumeric()) {
+						frame.markWonky("putfield field is numeric, but value on stack is non-numeric");
+					}
 					// Pop field owner context
-					frame.pop();
+					Value owner = frame.pop();
+					if (!owner.isObject()) {
+						frame.markWonky("putfield 'owner' on stack not an object type");
+					}
 					break;
 				}
 				case INVOKEVIRTUAL:
@@ -1084,7 +1146,7 @@ public class Analyzer {
 		if (value1 instanceof Value.NumericValue && value2 instanceof Value.NumericValue)
 			evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
 		else {
-			frame.markWonky();
+			frame.markWonky("One or both math operands on stack are non-numeric");
 			frame.push(new Value.NumericValue(type));
 		}
 	}
@@ -1095,7 +1157,7 @@ public class Analyzer {
 		if (value1 instanceof Value.NumericValue && value2 instanceof Value.NumericValue)
 			evaluateMathOp(frame, type, function, (Value.NumericValue) value2, (Value.NumericValue) value1);
 		else {
-			frame.markWonky();
+			frame.markWonky("One or both math operands on stack are non-numeric");
 			pushValue(frame, type, new Value.NumericValue(type));
 		}
 	}
@@ -1116,7 +1178,7 @@ public class Analyzer {
 		} catch (Exception ex) {
 			logger.debug("Binary operation Error", ex);
 			result = new Value.NumericValue(type);
-			frame.markWonky();
+			frame.markWonky("One or both math operands on stack are non-numeric");
 		}
 		pushValue(frame, type, result);
 	}
@@ -1126,7 +1188,7 @@ public class Analyzer {
 		if (value instanceof Value.NumericValue)
 			evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
 		else {
-			frame.markWonky();
+			frame.markWonky("Math operand on stack is non-numeric");
 			pushValue(frame, type, new Value.NumericValue(type));
 		}
 	}
@@ -1136,7 +1198,7 @@ public class Analyzer {
 		if (value instanceof Value.NumericValue)
 			evaluateUnaryOp(frame, type, function, (Value.NumericValue) value);
 		else {
-			frame.markWonky();
+			frame.markWonky("Math operand on stack is non-numeric");
 			pushValue(frame, type, new Value.NumericValue(type));
 		}
 	}
@@ -1152,7 +1214,7 @@ public class Analyzer {
 		} catch (Exception ex) {
 			logger.debug("Unnary operation Error", ex);
 			result = new Value.NumericValue(type);
-			frame.markWonky();
+			frame.markWonky("Math operand on stack is non-numeric");
 		}
 		pushValue(frame, type, result);
 	}
