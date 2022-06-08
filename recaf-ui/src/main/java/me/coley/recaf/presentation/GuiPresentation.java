@@ -52,14 +52,8 @@ public class GuiPresentation implements Presentation {
 		// Setup listener to ensure we update classpath dependency directories
 		CompileDependencyUpdater.install(controller);
 		DecompileInterception.install(controller);
-        // Turn on the plugin that needs to be enabled
-		RecafPlugin.getInstance().enablePlugins(Configs.plugin().descriptor
-                .entrySet().stream()
-				.filter(Map.Entry::getValue)
-				.map(Map.Entry::getKey)
-				.collect(Collectors.toSet())
-        );
-		// PluginLoader.install(controller);
+        // For brevity, Move the logic to "PluginLoader"
+		PluginLoader.install();
 		// Open UI
 		JFXUtils.initializePlatform(() -> {
 			try {

@@ -7,6 +7,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -17,17 +18,14 @@ import java.util.*;
 public class RecafPlugin {
     private static final Logger logger = Logging.get(RecafPlugin.class);
     private final PluginManager pluginManager = new SimplePluginManager();
-    private final List<Path> pluginJarUrls = new ArrayList<>();
+    private final List<Path> pluginJarPaths = new ArrayList<>();
     private final Map<PluginContainer<? extends Plugin>, Path> pluginContainerPathMap = new HashMap<>();
     private static RecafPlugin INSTANCE;
     private static boolean initialized = false;
     private static final String[] SUFFIX = {".jar"};
 
-    {
-        pluginManager.registerLoader(new ZipPluginLoader(RecafPlugin.class.getClassLoader()));
-    }
-
     private RecafPlugin() {
+        pluginManager.registerLoader(new ZipPluginLoader(RecafPlugin.class.getClassLoader()));
     }
 
     public static RecafPlugin getInstance() {
@@ -42,7 +40,7 @@ public class RecafPlugin {
     public void unloadPlugin(String name) {
         getPlugin(name).ifPresent(pc -> {
             pluginManager.unloadPlugin(name);
-            pluginJarUrls.remove(pluginContainerPathMap.remove(pc));
+            pluginJarPaths.remove(pluginContainerPathMap.remove(pc));
         });
     }
 
@@ -90,8 +88,8 @@ public class RecafPlugin {
      * Load all plugins into memory.
      */
     private void loadPlugins() {
-        if (pluginJarUrls.isEmpty()) return;
-        Iterator<Path> entryIterator = pluginJarUrls.iterator();
+        if (pluginJarPaths.isEmpty()) return;
+        Iterator<Path> entryIterator = pluginJarPaths.iterator();
         while (entryIterator.hasNext()) {
             Path path = entryIterator.next();
             try {
@@ -115,11 +113,14 @@ public class RecafPlugin {
         if (!Files.isDirectory(pluginsDir))
             Files.createDirectories(pluginsDir);
 
-        for (Path filePath : Files.newDirectoryStream(pluginsDir)) {
-            // Maybe we should support ".zip"
-            for (String suffix : SUFFIX) {
-                if (filePath.getFileName().toString().endsWith(suffix)) {
-                    pluginJarUrls.add(filePath);
+        // Auto close the directory handle
+        try (DirectoryStream<Path> paths = Files.newDirectoryStream(pluginsDir)) {
+            for (Path pluginPath : paths) {
+                // Maybe we should support ".zip"
+                for (String suffix : SUFFIX) {
+                    if (pluginPath.getFileName().toString().endsWith(suffix)) {
+                        pluginJarPaths.add(pluginPath);
+                    }
                 }
             }
         }

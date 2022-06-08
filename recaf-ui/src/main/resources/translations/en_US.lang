@@ -78,6 +78,9 @@ menu.mode.file.hex=Hex
 menu.vm=Virtualize
 menu.vm.optimize=Optimize
 menu.vm.run=Run
+menu.plugin=Plugin
+menu.plugin.installed=Installed
+menu.plugin.marketplace=Marketplace Free
 
 ##### Dialog texts
 dialog.cancel=Cancel

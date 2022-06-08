@@ -1,7 +1,7 @@
 package dev.xdark.recaf.plugin;
 
-import dev.xdark.recaf.TestUtils;
 import dev.xdark.recaf.plugin.java.ZipPluginLoader;
+import me.coley.recaf.TestUtils;
 import me.coley.recaf.io.ByteSources;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;

@@ -35,6 +35,7 @@ dependencies {
     compileOnly group: 'org.openjfx', name: 'javafx-controls', version: javafxVersion, classifier: javafxPlatform
 
     // Testing
+    testImplementation project(path: ':recaf-core', configuration: 'testSourceOutput')
     testImplementation junit_api
     testImplementation junit_params
     testRuntimeOnly junit_engine
