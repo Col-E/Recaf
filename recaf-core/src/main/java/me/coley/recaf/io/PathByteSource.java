@@ -29,11 +29,11 @@ final class PathByteSource implements ByteSource {
 
 	@Override
 	public byte[] peek(int count) throws IOException {
-		try (InputStream in = Files.newInputStream(path)) {
+		try (InputStream in = openStream()) {
 			byte[] buf = new byte[count];
 			int offset = 0;
 			int r;
-			while ((r = in.read(buf, offset, count)) != -1) {
+			while ((r = in.read(buf, offset, count)) > 0) {
 				offset += r;
 				count -= r;
 			}
