@@ -100,7 +100,7 @@ public class PluginManagerPane extends BorderPane {
 			try {
 				DesktopUtil.showDocument(Directories.getPluginDirectory().toUri());
 			} catch (IOException ex) {
-				logger.error("Failed to show scripts directory", ex);
+				logger.error("Failed to show plugins directory", ex);
 			}
 		}
 

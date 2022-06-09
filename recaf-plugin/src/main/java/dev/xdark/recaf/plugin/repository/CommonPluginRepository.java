@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
  * @author xtherk
  */
 public class CommonPluginRepository implements PluginRepository {
-	private static final List<PluginRepository> repositories = new ArrayList<>();
+	private final List<PluginRepository> repositories = new ArrayList<>();
 
-	static {
+	public CommonPluginRepository() {
 		repositories.add(new OfficialPluginRepository());
 	}
 
