@@ -5,7 +5,6 @@ import dev.xdark.recaf.plugin.PluginContainer;
 import dev.xdark.recaf.plugin.PluginInformation;
 import dev.xdark.recaf.plugin.RecafPluginManager;
 import dev.xdark.recaf.plugin.repository.CommonPluginRepository;
-import dev.xdark.recaf.plugin.repository.PluginRepositoryItem;
 import dev.xdark.recaf.plugin.repository.PluginRepository;
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
@@ -19,6 +18,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.PluginConfig;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.plugin.item.InstalledPluginItem;
+import me.coley.recaf.ui.plugin.item.RemotePluginItem;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Labels;
 import me.coley.recaf.ui.util.Lang;
@@ -205,11 +205,13 @@ public class PluginManagerPane extends BorderPane {
 		}
 
 		// TODO: Access this on a background thread if 'shouldRequestRemote() == true'
-		private static List<PluginRepositoryItem> createPluginItems() {
+		private static List<RemotePluginItem> createPluginItems() {
 			if (shouldRequestRemote()) {
 				logger.info("Requesting remote plugins...");
 				CONFIG.cachedRemoteTime = System.currentTimeMillis();
-				CONFIG.cachedRemotePlugins = REPOSITORY.pluginItems();
+				CONFIG.cachedRemotePlugins = REPOSITORY.pluginItems().stream()
+						.map(item -> new RemotePluginItem(item))
+						.collect(Collectors.toList());
 				logger.info("Discovered {} remote plugin", CONFIG.cachedRemotePlugins.size());
 			}
 			return CONFIG.cachedRemotePlugins;

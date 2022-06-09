@@ -6,8 +6,8 @@ import dev.xdark.recaf.plugin.RecafPluginManager;
 import dev.xdark.recaf.plugin.repository.PluginRepositoryItem;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.plugin.DownloadFailedException;
-import me.coley.recaf.util.HttpUtil;
 import me.coley.recaf.util.Directories;
+import me.coley.recaf.util.HttpUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -30,8 +30,16 @@ public class RemotePluginItem extends PluginRepositoryItem {
 	private static final Logger logger = Logging.get(RemotePluginItem.class);
 
 	/**
+	 * @param item
+	 * 		Item to copy information from.
+	 */
+	public RemotePluginItem(PluginRepositoryItem item) {
+		this(item.getUri(), item.getName(), item.getVersion(), item.getAuthor(), item.getDescription());
+	}
+
+	/**
 	 * @param uri
-	 * 		The path where the plugin is located
+	 * 		The path where the plugin is located.
 	 * @param name
 	 * 		name of the plugin.
 	 * @param version

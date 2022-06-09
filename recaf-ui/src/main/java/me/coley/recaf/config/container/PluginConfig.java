@@ -1,10 +1,10 @@
 package me.coley.recaf.config.container;
 
 import dev.xdark.recaf.plugin.PluginInformation;
-import dev.xdark.recaf.plugin.repository.PluginRepositoryItem;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.ui.plugin.item.RemotePluginItem;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +28,7 @@ public class PluginConfig implements ConfigContainer {
 	 */
 	@Group("general")
 	@ConfigID("remote")
-	public List<PluginRepositoryItem> cachedRemotePlugins = new ArrayList<>();
+	public List<RemotePluginItem> cachedRemotePlugins = new ArrayList<>();
 	/**
 	 * Timestamp of data in {@link #cachedRemotePlugins}.
 	 */
