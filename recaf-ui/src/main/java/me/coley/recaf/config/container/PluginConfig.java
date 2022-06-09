@@ -1,11 +1,14 @@
 package me.coley.recaf.config.container;
 
 import dev.xdark.recaf.plugin.PluginInformation;
+import dev.xdark.recaf.plugin.repository.PluginRepositoryItem;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,11 +18,23 @@ import java.util.Map;
  */
 public class PluginConfig implements ConfigContainer {
 	/**
-	 * Describe the switch status of the plugin.
+	 * Status of each plugin.
 	 */
 	@Group("general")
 	@ConfigID("enabled")
 	public Map<String, Boolean> enabledState = new HashMap<>();
+	/**
+	 * Information about remote plugins. Used as a cache so the Github API isn't hit too often.
+	 */
+	@Group("general")
+	@ConfigID("remote")
+	public List<PluginRepositoryItem> cachedRemotePlugins = new ArrayList<>();
+	/**
+	 * Timestamp of data in {@link #cachedRemotePlugins}.
+	 */
+	@Group("general")
+	@ConfigID("remotetime")
+	public long cachedRemoteTime = -1;
 
 	/**
 	 * Record the current enabled state of a given plugin.
@@ -31,6 +46,16 @@ public class PluginConfig implements ConfigContainer {
 	 */
 	public void setEnabled(PluginInformation info, boolean isEnabled) {
 		enabledState.put(info.getName(), isEnabled);
+	}
+
+	/**
+	 * @param info
+	 * 		Plugin information to pull name from.
+	 *
+	 * @return Enabled state of the plugin.
+	 */
+	public boolean isEnabled(PluginInformation info) {
+		return enabledState.getOrDefault(info.getName(), false);
 	}
 
 	@Override

@@ -56,7 +56,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private final Menu menuRecent = menu("menu.file.recent", Icons.RECENT);
 	private final Menu menuSearch = menu("menu.search", Icons.ACTION_SEARCH);
 	private final Menu menuMappings = menu("menu.mappings", Icons.DOCUMENTATION);
-	private final Menu menuScripting =  menu("menu.scripting", Icons.CODE);
+	private final Menu menuScripting = menu("menu.scripting", Icons.CODE);
+	private final Menu menuPlugins = menu("menu.plugin", Icons.PLUGIN);
 	private final MenuItem itemAddToWorkspace;
 	private final MenuItem itemExportPrimary;
 	private final MenuItem itemClose;
@@ -99,6 +100,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		menuSearch.getItems().add(action("menu.search.declarations", Icons.T_STRUCTURE,
 				() -> showSearch("menu.search.declarations", SearchPane.createDeclarationSearch())));
 
+		menuPlugins.getItems().add(action("menu.plugin.manage", Icons.OPEN_FILE, this::openPluginManager));
+
 		menuHelp.getItems().add(action("menu.help.sysinfo", Icons.INFO, this::openInfo));
 		menuHelp.getItems().add(action("menu.help.docs", Icons.HELP, Help::openDocumentation));
 		menuHelp.getItems().add(action("menu.help.github", Icons.GITHUB, Help::openGithub));
@@ -118,12 +121,13 @@ public class MainMenu extends BorderPane implements ControllerListener {
 
 		updateScriptMenu(null);
 
-		menu.getMenus().add(menuFile);
-		menu.getMenus().add(menuConfig);
-		menu.getMenus().add(menuSearch);
-		menu.getMenus().add(menuMappings);
-		menu.getMenus().add(menuScripting);
-		menu.getMenus().add(menuHelp);
+		menu.getMenus().addAll(menuFile,
+				menuConfig,
+				menuSearch,
+				menuMappings,
+				menuScripting,
+				menuPlugins,
+				menuHelp);
 
 		NavigationBar nav = NavigationBar.getInstance();
 
@@ -217,7 +221,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	 */
 	public void updateScriptMenu(Collection<MenuItem> scriptItems) {
 		menuScripting.getItems().clear();
-		if(scriptItems != null && !scriptItems.isEmpty()) {
+		if (scriptItems != null && !scriptItems.isEmpty()) {
 			menuScripting.getItems().addAll(scriptItems);
 			menuScripting.getItems().add(separator());
 		}
@@ -242,11 +246,21 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		window.getStage().setWidth(1080);
 		window.getStage().setHeight(600);
 		window.show();
+		window.requestFocus();
 	}
 
 	private void openScripts() {
 		GenericWindow window = RecafUI.getWindows().getScriptsWindow();
 		window.titleProperty().bind(Lang.getBinding("menu.scripting.manage"));
+		window.getStage().setWidth(750);
+		window.getStage().setHeight(450);
+		window.show();
+		window.requestFocus();
+	}
+
+	private void openPluginManager() {
+		GenericWindow window = RecafUI.getWindows().getPluginsWindow();
+		window.titleProperty().bind(Lang.getBinding("menu.plugin.manage"));
 		window.getStage().setWidth(750);
 		window.getStage().setHeight(450);
 		window.show();

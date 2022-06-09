@@ -85,6 +85,7 @@ public class Icons {
 	public static final String VM = "icons/vm.png";
 	public static final String LOGO = "icons/logo.png";
 	public static final String ANDROID = "icons/android.png";
+	public static final String DOWNLOAD = "icons/download.png";
 	public static final String OPEN = "icons/open.png";
 	public static final String WARNING = "icons/warning.png";
 	public static final String ERROR = "icons/error.png";
@@ -114,6 +115,7 @@ public class Icons {
 	public static final String GITHUB = "icons/github.png";
 	public static final String DISCORD = "icons/discord.png";
 	public static final String SMART = "icons/brain.png";
+	public static final String PLUGIN = "icons/plugin.png";
 	public static final String CHILDREN = "icons/children.png";
 	public static final String PARENTS = "icons/parents.png";
 	public static final String WORD = "icons/word.png";

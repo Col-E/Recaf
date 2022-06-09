@@ -1,7 +1,7 @@
 package dev.xdark.recaf.plugin;
 
 import dev.xdark.recaf.plugin.repository.OfficialPluginRepository;
-import dev.xdark.recaf.plugin.repository.PluginRepoItem;
+import dev.xdark.recaf.plugin.repository.PluginRepositoryItem;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -19,8 +19,8 @@ public class OfficialPluginRepositoryTests {
     @Test
     public void test() {
         OfficialPluginRepository repository = new OfficialPluginRepository();
-        List<PluginRepoItem> list = repository.pluginItems();
-        for (PluginRepoItem item : list) {
+        List<PluginRepositoryItem> list = repository.pluginItems();
+        for (PluginRepositoryItem item : list) {
             System.out.printf("plugin: %s-%s, description: %s%n", item.getName(), item.getVersion(), item.getDescription());
         }
     }

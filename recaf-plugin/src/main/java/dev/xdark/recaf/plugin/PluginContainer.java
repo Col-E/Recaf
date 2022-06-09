@@ -6,7 +6,6 @@ package dev.xdark.recaf.plugin;
  * @author xDark
  */
 public final class PluginContainer<T extends Plugin> {
-
 	private final T plugin;
 	private final PluginInformation information;
 	private final PluginLoader loader;
@@ -29,21 +28,21 @@ public final class PluginContainer<T extends Plugin> {
 	}
 
 	/**
-	 * @return plugin instance.
+	 * @return Plugin instance.
 	 */
 	public T getPlugin() {
 		return plugin;
 	}
 
 	/**
-	 * @return information about plugin.
+	 * @return Information about plugin.
 	 */
 	public PluginInformation getInformation() {
 		return information;
 	}
 
 	/**
-	 * @return loader of the plugin.
+	 * @return Loader of the plugin.
 	 */
 	public PluginLoader getLoader() {
 		return loader;

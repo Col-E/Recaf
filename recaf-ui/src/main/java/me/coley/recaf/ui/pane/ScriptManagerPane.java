@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.pane;
 
-import javafx.application.Platform;
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -18,6 +17,7 @@ import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Labels;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.MainMenu;
 import me.coley.recaf.util.DesktopUtil;
@@ -35,13 +35,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 /**
- * Displays
+ * Displays local scripts.
  *
  * @author yapht
  */
@@ -76,7 +75,6 @@ public class ScriptManagerPane extends BorderPane {
 	// No public construction
 	private ScriptManagerPane() {
 		scrollPane.setFitToWidth(true);
-		scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
 		setCenter(scrollPane);
 
@@ -182,24 +180,6 @@ public class ScriptManagerPane extends BorderPane {
 		}
 	}
 
-	private Label makeAttribLabel(StringBinding langBinding, String text) {
-		Label label = new Label(text);
-		if (langBinding != null) {
-			label.textProperty().bind(new StringBinding() {
-				{
-					bind(langBinding);
-				}
-
-				@Override
-				protected String computeValue() {
-					return String.format("  • %s: %s", langBinding.get(), text);
-				}
-			});
-		}
-		label.setMinSize(350, 20);
-		return label;
-	}
-
 	private void addScript(Script script) {
 		BorderPane scriptRow = new BorderPane();
 		scriptRow.setPadding(new Insets(4, 4, 4, 4));
@@ -217,13 +197,13 @@ public class ScriptManagerPane extends BorderPane {
 		String url = script.getTag("url");
 
 		if (description != null)
-			info.getChildren().add(makeAttribLabel(null, description));
+			info.getChildren().add(Labels.makeAttribLabel(null, description));
 		if (author != null)
-			info.getChildren().add(makeAttribLabel(Lang.getBinding("menu.scripting.author"), author));
+			info.getChildren().add(Labels.makeAttribLabel(Lang.getBinding("menu.scripting.author"), author));
 		if (version != null)
-			info.getChildren().add(makeAttribLabel(Lang.getBinding("menu.scripting.version"), version));
+			info.getChildren().add(Labels.makeAttribLabel(Lang.getBinding("menu.scripting.version"), version));
 		if (url != null) {
-			info.getChildren().add(makeAttribLabel(new StringBinding() {
+			info.getChildren().add(Labels.makeAttribLabel(new StringBinding() {
 				@Override
 				protected String computeValue() {
 					return "URL";

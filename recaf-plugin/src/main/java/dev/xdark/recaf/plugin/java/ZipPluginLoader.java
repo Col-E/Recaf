@@ -112,7 +112,7 @@ public final class ZipPluginLoader implements PluginLoader {
 			Class<?> entrypoint;
 			try {
 				entrypoint = classLoader.lookupClass(pluginClass);
-			} catch(ClassNotFoundException ex) {
+			} catch(ClassNotFoundException | NoClassDefFoundError ex) {
 				throw new PluginLoadException("Plugin entrypoint was not found: " + pluginClass, ex);
 			}
 			if (!Plugin.class.isAssignableFrom(entrypoint)) {

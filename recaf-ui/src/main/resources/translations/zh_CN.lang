@@ -69,7 +69,7 @@ menu.vm.optimize=优化
 menu.vm.run=运行
 menu.plugin=插件
 menu.plugin.installed=已安装
-menu.plugin.marketplace=免费市场
+menu.plugin.remote=偏僻的
 
 ##### Dialog texts
 dialog.cancel=取消

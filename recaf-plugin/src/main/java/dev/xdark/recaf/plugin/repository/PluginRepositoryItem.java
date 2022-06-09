@@ -7,7 +7,7 @@ import java.net.URI;
  *
  * @author xtherk
  */
-public class PluginRepoItem {
+public class PluginRepositoryItem {
 	protected final URI uri;
 	protected final String name;
 	protected final String version;
@@ -16,17 +16,17 @@ public class PluginRepoItem {
 
 	/**
 	 * @param uri
-	 * 		The path where the plugin is located
+	 * 		The path where the plugin is located.
 	 * @param name
-	 * 		name of the plugin.
+	 * 		Name of the plugin.
 	 * @param version
-	 * 		plugin version.
+	 * 		Plugin version.
 	 * @param author
-	 * 		author of the plugin.
+	 * 		Author of the plugin.
 	 * @param description
-	 * 		plugin description.
+	 * 		Plugin description.
 	 */
-	public PluginRepoItem(URI uri, String name, String version, String author, String description) {
+	public PluginRepositoryItem(URI uri, String name, String version, String author, String description) {
 		this.uri = uri;
 		this.name = name;
 		this.version = version;
@@ -34,22 +34,37 @@ public class PluginRepoItem {
 		this.description = description;
 	}
 
+	/**
+	 * @return Path where the plugin is located.
+	 */
 	public URI getUri() {
 		return uri;
 	}
 
+	/**
+	 * @return Name of the plugin.
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * @return Plugin version.
+	 */
 	public String getVersion() {
 		return version;
 	}
 
+	/**
+	 * @return Author of the plugin.
+	 */
 	public String getAuthor() {
 		return author;
 	}
 
+	/**
+	 * @return Plugin description.
+	 */
 	public String getDescription() {
 		return description;
 	}

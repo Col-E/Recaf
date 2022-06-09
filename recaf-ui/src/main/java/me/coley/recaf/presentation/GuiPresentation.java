@@ -1,6 +1,6 @@
 package me.coley.recaf.presentation;
 
-import dev.xdark.recaf.plugin.RecafRootPlugin;
+import dev.xdark.recaf.plugin.RecafPluginManager;
 import javafx.application.Platform;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafConstants;
@@ -53,7 +53,7 @@ public class GuiPresentation implements Presentation {
 		CompileDependencyUpdater.install(controller);
 		DecompileInterception.install(controller);
 		// Enable plugins that are marked as active
-		RecafRootPlugin.getInstance().enablePlugins(Configs.plugin().enabledState
+		RecafPluginManager.getInstance().enablePlugins(Configs.plugin().enabledState
 				.entrySet().stream()
 				.filter(Map.Entry::getValue)
 				.map(Map.Entry::getKey)

@@ -29,8 +29,8 @@ public class OfficialPluginRepository implements PluginRepository {
 	 * @return Return to the plugin in the Recaf-Plugin repo
 	 */
 	@Override
-	public List<PluginRepoItem> pluginItems() {
-		List<PluginRepoItem> pluginItems = new ArrayList<>();
+	public List<PluginRepositoryItem> pluginItems() {
+		List<PluginRepositoryItem> pluginItems = new ArrayList<>();
 		try {
 			HttpResponse<String> httpResponse = HttpUtil.get(REPOS);
 			if (HTTP_OK == httpResponse.statusCode()) {
@@ -46,7 +46,7 @@ public class OfficialPluginRepository implements PluginRepository {
 					String author = getAuthor(releases);
 					// TODO: If the download link does not exist, is there still the need for display ?
 					URI uri = getDownloadUrl(releases).map(URI::create).orElse(null);
-					pluginItems.add(new PluginRepoItem(uri, name, version, author, description));
+					pluginItems.add(new PluginRepositoryItem(uri, name, version, author, description));
 				}
 			} else {
 				logger.error("Bad request with code {} and message for [{}]", httpResponse.statusCode(), httpResponse.body());

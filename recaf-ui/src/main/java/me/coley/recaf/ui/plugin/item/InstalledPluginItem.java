@@ -1,7 +1,8 @@
 package me.coley.recaf.ui.plugin.item;
 
-import dev.xdark.recaf.plugin.RecafRootPlugin;
-import dev.xdark.recaf.plugin.repository.PluginRepoItem;
+import dev.xdark.recaf.plugin.PluginInformation;
+import dev.xdark.recaf.plugin.RecafPluginManager;
+import dev.xdark.recaf.plugin.repository.PluginRepositoryItem;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
@@ -17,12 +18,22 @@ import java.nio.file.Paths;
  *
  * @author xtherk
  */
-public class InstalledPluginItem extends PluginRepoItem {
+public class InstalledPluginItem extends PluginRepositoryItem {
 	private static final Logger logger = Logging.get(InstalledPluginItem.class);
 
 	/**
 	 * @param uri
-	 * 		The path where the plugin is located
+	 * 		The path where the plugin is located.
+	 * @param info
+	 * 		Plugin information wrapper.
+	 */
+	public InstalledPluginItem(URI uri, PluginInformation info) {
+		this(uri, info.getName(), info.getVersion(), info.getAuthor(), info.getDescription());
+	}
+
+	/**
+	 * @param uri
+	 * 		The path where the plugin is located.
 	 * @param name
 	 * 		name of the plugin.
 	 * @param version
@@ -37,11 +48,21 @@ public class InstalledPluginItem extends PluginRepoItem {
 	}
 
 	/**
-	 * Disable the plugin
+	 * @return Plugin enabled status.
+	 */
+	public boolean isEnabled() {
+		return RecafPluginManager.getInstance()
+				.optionalGetPlugin(name)
+				.filter(pc -> Configs.plugin().isEnabled(pc.getInformation()))
+				.isPresent();
+	}
+
+	/**
+	 * Disable the plugin.
 	 */
 	public void disable() {
-		RecafRootPlugin.getInstance()
-				.getPlugin(name)
+		RecafPluginManager.getInstance()
+				.optionalGetPlugin(name)
 				.ifPresent(pc -> {
 					pc.getLoader().disablePlugin(pc);
 					Configs.plugin().setEnabled(pc.getInformation(), false);
@@ -52,8 +73,8 @@ public class InstalledPluginItem extends PluginRepoItem {
 	 * Enable the plugin.
 	 */
 	public void enable() {
-		RecafRootPlugin.getInstance()
-				.getPlugin(name)
+		RecafPluginManager.getInstance()
+				.optionalGetPlugin(name)
 				.ifPresent(pc -> {
 					pc.getLoader().enablePlugin(pc);
 					Configs.plugin().setEnabled(pc.getInformation(), true);
@@ -64,13 +85,14 @@ public class InstalledPluginItem extends PluginRepoItem {
 	 * Uninstall the plugin.
 	 */
 	public void uninstall() {
-		RecafRootPlugin.getInstance().unloadPlugin(name);
-		Path path = Paths.get(uri.getPath());
+		RecafPluginManager.getInstance().unloadPlugin(name);
+		Path path = Paths.get(uri);
 		try {
-			Files.deleteIfExists(path);
 			Configs.plugin().enabledState.remove(name);
+			Files.deleteIfExists(path);
+			logger.info("Uninstalled plugin '{}'", name);
 		} catch (IOException ex) {
-			logger.error("Delete plugin failed", ex);
+			logger.error("Failed to delete plugin '{}'", name, ex);
 		}
 	}
 }

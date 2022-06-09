@@ -11,5 +11,5 @@ public interface PluginRepository {
 	/**
 	 * @return Plugin information in the remote repo
 	 */
-	List<PluginRepoItem> pluginItems();
+	List<PluginRepositoryItem> pluginItems();
 }

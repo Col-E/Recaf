@@ -10,7 +10,7 @@ import java.util.*;
  *
  * @author xDark
  */
-public final class SimplePluginManager implements PluginManager {
+public class SimplePluginManager implements PluginManager {
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final Map<String, PluginContainer<?>> nameMap = new HashMap<>();
 	private final Map<? super Plugin, PluginContainer<?>> instanceMap = new IdentityHashMap<>();
@@ -56,6 +56,10 @@ public final class SimplePluginManager implements PluginManager {
 	public <T extends Plugin> PluginContainer<T> loadPlugin(ByteSource source) throws PluginLoadException {
 		for (PluginLoader loader : loaders) {
 			try {
+				// Skip unsupported sources
+				if (!loader.isSupported(source))
+					continue;
+				// Load and record plugin container
 				PluginContainer<T> container = loader.load(source);
 				String name = container.getInformation().getName();
 				if (nameMap.putIfAbsent(name.toLowerCase(Locale.ROOT), container) != null) {

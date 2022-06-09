@@ -17,7 +17,7 @@ public class CommonPluginRepository implements PluginRepository {
 	}
 
 	@Override
-	public List<PluginRepoItem> pluginItems() {
+	public List<PluginRepositoryItem> pluginItems() {
 		return repositories.stream()
 				.flatMap(it -> it.pluginItems().stream())
 				.collect(Collectors.toList());

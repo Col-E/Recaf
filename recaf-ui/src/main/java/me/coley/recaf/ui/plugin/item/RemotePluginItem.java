@@ -2,8 +2,8 @@ package me.coley.recaf.ui.plugin.item;
 
 import dev.xdark.recaf.plugin.Plugin;
 import dev.xdark.recaf.plugin.PluginContainer;
-import dev.xdark.recaf.plugin.RecafRootPlugin;
-import dev.xdark.recaf.plugin.repository.PluginRepoItem;
+import dev.xdark.recaf.plugin.RecafPluginManager;
+import dev.xdark.recaf.plugin.repository.PluginRepositoryItem;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.plugin.DownloadFailedException;
 import me.coley.recaf.util.HttpUtil;
@@ -26,7 +26,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
  *
  * @author xtherk
  */
-public class RemotePluginItem extends PluginRepoItem {
+public class RemotePluginItem extends PluginRepositoryItem {
 	private static final Logger logger = Logging.get(RemotePluginItem.class);
 
 	/**
@@ -51,7 +51,7 @@ public class RemotePluginItem extends PluginRepoItem {
 	 * @return Whether the plugin has been installed
 	 */
 	public boolean isInstalled() {
-		return RecafRootPlugin.getInstance().getPlugin(name).isPresent();
+		return RecafPluginManager.getInstance().optionalGetPlugin(name).isPresent();
 	}
 
 	/**
@@ -60,7 +60,7 @@ public class RemotePluginItem extends PluginRepoItem {
 	public void install() {
 		download().ifPresent(path -> {
 			// load plugin
-			Optional<PluginContainer<Plugin>> container = RecafRootPlugin.getInstance().loadPlugin(path);
+			Optional<PluginContainer<Plugin>> container = RecafPluginManager.getInstance().loadPlugin(path);
 			container.ifPresent(pc -> {
 				// Enable after the default installation
 				pc.getLoader().enablePlugin(pc);

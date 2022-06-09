@@ -6,7 +6,6 @@ package dev.xdark.recaf.plugin;
  * @author xDark
  */
 public final class PluginInformation {
-
 	private final String name;
 	private final String version;
 	private final String author;

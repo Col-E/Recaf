@@ -78,9 +78,14 @@ menu.mode.file.hex=Hex
 menu.vm=Virtualize
 menu.vm.optimize=Optimize
 menu.vm.run=Run
-menu.plugin=Plugin
+menu.plugin=Plugins
+menu.plugin.manage=Manage plugins
 menu.plugin.installed=Installed
-menu.plugin.marketplace=Marketplace Free
+menu.plugin.remote=Remote
+menu.plugin.browse=Browse plugins
+menu.plugin.enabled=Enabled
+menu.plugin.uninstall=Uninstall
+menu.plugin.uninstall.warning=Are you sure you want to delete this plugin?
 
 ##### Dialog texts
 dialog.cancel=Cancel
