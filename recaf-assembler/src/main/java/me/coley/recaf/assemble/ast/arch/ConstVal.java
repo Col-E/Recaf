@@ -2,8 +2,6 @@ package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseElement;
-import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.CodeEntry;
 import me.coley.recaf.util.EscapeUtil;
 
 /**
@@ -81,20 +79,19 @@ public class ConstVal extends BaseElement {
 
 	@Override
 	public String print() {
-		String op = "VALUE";
 		switch (getValueType()) {
 			case STRING:
 				// We escape whatever string value is here because it makes parsing much simpler.
 				// However, if the user wishes to insert unescaped text that's on them.
-				return String.format("%s \"%s\"", op, EscapeUtil.escape((String) getValue()));
+				return "\"" + EscapeUtil.escape((String) getValue()) + "\"";
 			case INTEGER:
-				return String.format("%s %d", op, getValue());
+				return getValue().toString();
 			case LONG:
-				return String.format("%s %dL", op, getValue());
+				return getValue().toString() + "L";
 			case FLOAT:
-				return String.format("%s %fF", op, getValue());
+				return getValue().toString() + "F";
 			case DOUBLE:
-				return String.format("%s %fD", op, getValue());
+				return getValue().toString() + "D";
 			case TYPE:
 				throw new IllegalStateException("Constant values do not allow type values!");
 			default:
