@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.cfr;
 
+import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.workspace.Workspace;
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
@@ -15,6 +16,7 @@ import java.util.Collections;
 public class ClassSource implements ClassFileSource {
 	private final Workspace workspace;
 	private final CfrDecompiler decompiler;
+	private ClassInfo override;
 
 	/**
 	 * Constructs a CFR class source.
@@ -27,6 +29,14 @@ public class ClassSource implements ClassFileSource {
 	public ClassSource(Workspace workspace, CfrDecompiler decompiler) {
 		this.workspace = workspace;
 		this.decompiler = decompiler;
+	}
+
+	/**
+	 * @param override
+	 * 		Class info to use for a targeted class, rather than pulling from the latest entry in the workspace.
+	 */
+	public void setOverrideClass(ClassInfo override) {
+		this.override = override;
 	}
 
 	@Override
@@ -46,7 +56,12 @@ public class ClassSource implements ClassFileSource {
 	@Override
 	public Pair<byte[], String> getClassFileContent(String inputPath) {
 		String className = inputPath.substring(0, inputPath.indexOf(".class"));
-		byte[] code = workspace.getResources().getClass(className).getValue();
+		byte[] code;
+		if (override != null && override.getName().equals(className)) {
+			code = override.getValue();
+		} else {
+			code = workspace.getResources().getClass(className).getValue();
+		}
 		code = decompiler.applyInterceptors(code);
 		return new Pair<>(code, inputPath);
 	}

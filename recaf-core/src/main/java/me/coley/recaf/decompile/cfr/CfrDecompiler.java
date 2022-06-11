@@ -42,6 +42,7 @@ public class CfrDecompiler extends Decompiler {
 		if (source == null || source.getWorkspace() != workspace) {
 			source = new ClassSource(workspace, this);
 		}
+		source.setOverrideClass(classInfo);
 		String name = classInfo.getName();
 		SinkFactoryImpl sink = new SinkFactoryImpl();
 		CfrDriver driver = new CfrDriver.Builder()
