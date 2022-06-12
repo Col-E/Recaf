@@ -22,6 +22,16 @@ subprojects {
         }
     }
 
+    test {
+        systemProperty 'junit.jupiter.execution.parallel.enabled', true
+        systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+    }
+
+    tasks.withType(Test).configureEach {
+        reports.html.required = false
+        reports.junitXml.required = false
+    }
+
     checkstyleMain.exclude '**/generated-src/**'
 
     tasks.withType(JavaCompile) {

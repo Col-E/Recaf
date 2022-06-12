@@ -23,6 +23,8 @@ import me.coley.recaf.workspace.Workspace;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
@@ -37,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Matt Coley
  */
+@Execution(ExecutionMode.SAME_THREAD)
 public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 	private static Workspace workspace;
 	private static VirtualMachine vm;

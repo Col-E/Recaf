@@ -18,6 +18,8 @@ import me.coley.recaf.ssvm.loader.RuntimeBootClassLoader;
 import me.coley.recaf.ssvm.loader.WorkspaceBootClassLoader;
 import me.coley.recaf.workspace.Workspace;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.objectweb.asm.Opcodes;
 
 import java.io.File;
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Matt Coley
  */
+@Execution(ExecutionMode.SAME_THREAD)
 public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 	private final static List<String> filesRead = new ArrayList<>();
 	private final static List<String> filesWritten = new ArrayList<>();
