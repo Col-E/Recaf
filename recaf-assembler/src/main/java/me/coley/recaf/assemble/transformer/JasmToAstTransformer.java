@@ -222,7 +222,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 		this.code = new Code();
 		MethodDefinition method = new MethodDefinition(
 				fromAccessMods(dcl.accessMods),
-				dcl.name.content(),
+				content(dcl.name),
 				parameters,
 				dcl.returnType,
 				this.code);
@@ -436,6 +436,6 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	}
 
 	private static String content(Group group) {
-		return EscapeUtil.unescapeUnicode(group.content());
+		return EscapeUtil.unescape(group.content());
 	}
 }
