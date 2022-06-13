@@ -173,6 +173,7 @@ public class CellFactory {
 		});
 		ITEM_MAP.put(ResultsRootItem.class, (type, cell, resource, item) -> {
 			ResultsRootItem i = (ResultsRootItem) item;
+			cell.setGraphic(null);
 			cell.setText(String.format("%s - %d results", i.getSearch().toString(), i.getResults().size()));
 		});
 		ITEM_MAP.put(DummyItem.class, (type, cell, resource, item) -> {
