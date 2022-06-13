@@ -408,7 +408,7 @@ public class InstructionParseTests extends TestUtil {
 			handle("aload 1", v -> assertEquals("1", v.getVariableIdentifier()));
 			handle("aload A", v -> assertEquals("A", v.getVariableIdentifier()));
 			handle("aload 雨", v -> assertEquals("雨", v.getVariableIdentifier()));
-			handle("aload \\\\u96E8", v -> assertEquals("\\\\u96E8", v.getVariableIdentifier()));
+			handle("aload \\\\u96E8", v -> assertEquals("\\u96E8", v.getVariableIdentifier()));
 		}
 
 		private void handle(String original, Consumer<VarInstruction> handler) {
@@ -427,7 +427,7 @@ public class InstructionParseTests extends TestUtil {
 		public void testNames() {
 			handle("new A", type -> assertEquals("A", type.getType()));
 			handle("new 雨", type -> assertEquals("雨", type.getType()));
-			handle("new \\\\u96E8", type -> assertEquals("\\\\u96E8", type.getType()));
+			handle("new \\\\u96E8", type -> assertEquals("\\u96E8", type.getType()));
 		}
 
 		private void handle(String original, Consumer<TypeInstruction> handler) {

@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.Code;
+import me.coley.recaf.util.EscapeUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class MethodDefinition extends AbstractDefinition {
 		for (ThrownException thrownException : thrownExceptions)
 			sb.append(thrownException.print()).append("\n");
 		sb.append(super.buildDefString("method"));
-		sb.append(name).append(' ');
+		sb.append(EscapeUtil.escape(name)).append(' ');
 		sb.append('(').append(params.print()).append(')');
 		sb.append(returnType);
 		sb.append('\n');

@@ -10,9 +10,9 @@ import org.slf4j.event.Level;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -22,7 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author Matt Coley
  */
 public class Logging {
-	private static final Map<String, Logger> loggers = new HashMap<>();
+	private static final Map<String, Logger> loggers = new ConcurrentHashMap<>();
 	private static final List<LogConsumer<String>> logConsumers = new ArrayList<>();
 	private static Level interceptLevel = Level.INFO;
 
@@ -33,7 +33,7 @@ public class Logging {
 	 * @return Logger associated with name.
 	 */
 	public static Logger get(String name) {
-		return loggers.computeIfAbsent(name, k -> intercept(name, getLogger(name)));
+		return loggers.computeIfAbsent(name, k -> intercept(k, getLogger(k)));
 	}
 
 	/**
@@ -43,7 +43,7 @@ public class Logging {
 	 * @return Logger associated with class.
 	 */
 	public static Logger get(Class<?> cls) {
-		return loggers.computeIfAbsent(cls.getName(), k -> intercept(cls.getName(), getLogger(cls)));
+		return loggers.computeIfAbsent(cls.getName(), k -> intercept(k, getLogger(k)));
 	}
 
 	/**
