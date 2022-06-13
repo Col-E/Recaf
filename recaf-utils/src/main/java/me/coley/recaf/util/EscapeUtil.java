@@ -89,6 +89,8 @@ public final class EscapeUtil {
 	}
 
 	private static String visit(String input, TriFunction<String, Integer, StringBuilder, Integer> consumer) {
+		if (input == null)
+			return null;
 		int len = input.length();
 		int cursor = 0;
 		StringBuilder builder = new StringBuilder(len);
