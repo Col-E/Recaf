@@ -60,6 +60,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private final Menu menuPlugins = menu("menu.plugin", Icons.PLUGIN);
 	private final MenuItem itemAddToWorkspace;
 	private final MenuItem itemExportPrimary;
+	private final MenuItem itemViewChanges;
 	private final MenuItem itemClose;
 
 	private MainMenu() {
@@ -71,10 +72,12 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		MenuBar menu = new MenuBar();
 		itemAddToWorkspace = action("menu.file.addtoworkspace", Icons.PLUS, this::addToWorkspace);
 		itemExportPrimary = action("menu.file.exportapp", Icons.EXPORT, this::exportPrimary);
+		itemViewChanges = action("menu.file.modifications", Icons.SWAP, this::openChangeViewer);
 		itemClose = action("menu.file.close", Icons.ACTION_DELETE, this::closeWorkspace);
 
 		itemAddToWorkspace.disableProperty().bind(noWorkspace);
 		itemExportPrimary.disableProperty().bind(noWorkspace);
+		itemViewChanges.disableProperty().bind(noWorkspace);
 		itemClose.disableProperty().bind(noWorkspace);
 		menuSearch.disableProperty().bind(noWorkspace);
 		menuMappings.disableProperty().bind(noWorkspace);
@@ -87,6 +90,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		menuFile.getItems().add(menuRecent);
 		menuFile.getItems().add(separator());
 		menuFile.getItems().add(itemExportPrimary);
+		menuFile.getItems().add(itemViewChanges);
 		menuFile.getItems().add(separator());
 		menuFile.getItems().add(itemClose);
 		menuFile.getItems().add(itemQuit);
@@ -261,6 +265,15 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private void openPluginManager() {
 		GenericWindow window = RecafUI.getWindows().getPluginsWindow();
 		window.titleProperty().bind(Lang.getBinding("menu.plugin.manage"));
+		window.getStage().setWidth(750);
+		window.getStage().setHeight(450);
+		window.show();
+		window.requestFocus();
+	}
+
+	private void openChangeViewer() {
+		GenericWindow window = RecafUI.getWindows().getModificationsWindow();
+		window.titleProperty().bind(Lang.getBinding("modifications.title"));
 		window.getStage().setWidth(750);
 		window.getStage().setHeight(450);
 		window.show();

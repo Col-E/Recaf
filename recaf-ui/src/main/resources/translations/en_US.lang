@@ -11,6 +11,7 @@ menu.file.addtoworkspace=Add to workspace
 menu.file.openworkspace=Open workspace
 menu.file.exportapp=Export application
 menu.file.exportworkspace=Export workspace config
+menu.file.modifications=View modifications
 menu.file.recent=Recent
 menu.file.close=Close
 menu.file.quit=Quit
@@ -204,6 +205,10 @@ welcome.github.description=Check out the project page on GitHub: Source code, op
 
 ## Workspace
 workspace.title=Workspace
+
+## Changes view
+modifications.none=No modification history for item
+modifications.title=Modifications
 
 ## Java area
 java.decompiling=Decompiling class...

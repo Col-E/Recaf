@@ -21,6 +21,7 @@ dependencies {
     api cfr
     api common_io
     api dexlib
+    api diff
     api directories
     api gson
     api (jadx) { exclude group: 'com.android.tools.build' }

@@ -50,6 +50,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	private final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "Decompile");
 	private final VBox overlay = new VBox();
 	private final JavaArea javaArea;
+	private final VirtualizedScrollPane<JavaArea> scroll;
 	private Decompiler decompiler;
 	private CommonClassInfo lastClass;
 	private boolean ignoreNextDecompile;
@@ -62,7 +63,8 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		this.javaArea = new JavaArea(tracking);
 		// Wrap content, create error display
-		StackPane node = new StackPane(new VirtualizedScrollPane<>(javaArea));
+		this.scroll = new VirtualizedScrollPane<>(javaArea);
+		StackPane node = new StackPane(scroll);
 		Node errorDisplay = new ErrorDisplay(javaArea, tracking);
 		// Overlay for 'pls wait for decompile' message
 		overlay.setAlignment(Pos.CENTER);
@@ -132,6 +134,30 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		ft.setFromValue(overlay.getOpacity());
 		ft.setToValue(0.0);
 		ft.play();
+	}
+
+	/**
+	 * Called when decompile completes via {@link #onUpdate(CommonClassInfo)}.
+	 *
+	 * @param code
+	 * 		New decompiled code.
+	 */
+	protected void onDecompileCompletion(String code) {
+		// no-op by default
+	}
+
+	/**
+	 * @return Wrapped code display.
+	 */
+	protected JavaArea getJavaArea() {
+		return javaArea;
+	}
+
+	/**
+	 * @return Scroll wrapper around {@link #getJavaArea()}.
+	 */
+	protected VirtualizedScrollPane<JavaArea> getScroll() {
+		return scroll;
 	}
 
 	@Override
@@ -208,6 +234,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 					javaArea.setText(code, false);
 					if (scrollSnapshot != null)
 						FxThreadUtil.delayedRun(100, scrollSnapshot::restore);
+					onDecompileCompletion(code);
 				}
 			};
 			decompileFuture.whenCompleteAsync(onComplete, FxThreadUtil.executor());
