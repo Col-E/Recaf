@@ -11,6 +11,7 @@ import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -60,7 +61,15 @@ public class Variables implements Iterable<VariableInfo> {
 	 */
 	public void visitParams(MethodDefinition definition) throws MethodCompileException {
 		for (MethodParameter parameter : definition.getParams()) {
-			addVariableUsage(nextAvailableSlot, parameter.getName(), Type.getType(parameter.getDesc()), parameter);
+			String desc = parameter.getDesc();
+			if (Types.isValidDesc(desc)) {
+				addVariableUsage(nextAvailableSlot, parameter.getName(), Type.getType(desc), parameter);
+			} else {
+				// Using name escapes in case this is a junk method made by an obfuscator.
+				// In these cases the names are probably obnoxious garbage that would look better escaped.
+				throw new MethodCompileException(definition, "Illegal parameter descriptor for '" +
+						EscapeUtil.escape(parameter.getName()) + "': " + EscapeUtil.escape(desc));
+			}
 		}
 	}
 
