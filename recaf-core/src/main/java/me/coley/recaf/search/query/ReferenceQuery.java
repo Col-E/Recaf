@@ -134,9 +134,9 @@ public class ReferenceQuery implements Query {
 			}
 
 			@Override
-			public void visitInvokeDynamicInsn(String name, String descriptor, Handle bsmHandle,
+			public void visitInvokeDynamicInsn(String name, String desc, Handle bsmHandle,
 											   Object... bootstrapMethodArguments) {
-				super.visitInvokeDynamicInsn(name, descriptor, bsmHandle, bootstrapMethodArguments);
+				super.visitInvokeDynamicInsn(name, desc, bsmHandle, bootstrapMethodArguments);
 				Supplier<IndyInstruction> indySupplier = Suppliers.memoize(() ->
 						new IndyInstruction(Opcodes.INVOKEDYNAMIC, name, desc,
 								new HandleInfo(bsmHandle),
