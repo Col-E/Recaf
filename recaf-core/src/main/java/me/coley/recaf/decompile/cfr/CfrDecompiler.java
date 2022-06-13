@@ -10,7 +10,6 @@ import me.coley.recaf.workspace.Workspace;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.DecompilerComment;
-import org.benf.cfr.reader.util.DecompilerComments;
 import org.benf.cfr.reader.util.getopt.OptionDecoderParam;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.getopt.PermittedOptionProvider;
@@ -28,7 +27,6 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class CfrDecompiler extends Decompiler {
-	private ClassSource source;
 
 	/**
 	 * New CFR decompiler instance.
@@ -39,9 +37,7 @@ public class CfrDecompiler extends Decompiler {
 
 	@Override
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
-		if (source == null || source.getWorkspace() != workspace) {
-			source = new ClassSource(workspace, this);
-		}
+		ClassSource source = new ClassSource(workspace, this);
 		source.setOverrideClass(classInfo);
 		String name = classInfo.getName();
 		SinkFactoryImpl sink = new SinkFactoryImpl();
