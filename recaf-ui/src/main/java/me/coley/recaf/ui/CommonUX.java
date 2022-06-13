@@ -1,5 +1,7 @@
 package me.coley.recaf.ui;
 
+import javafx.scene.Scene;
+import javafx.scene.control.Tab;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MemberInfo;
@@ -45,6 +47,7 @@ public class CommonUX {
 							() -> new ClassTab(title, new ClassView(info)));
 		}
 		tab.select();
+		bringToFront(tab);
 		return tab;
 	}
 
@@ -67,6 +70,7 @@ public class CommonUX {
 				logger.warn("The current view for class '{}' does not support member selection!", owner.getName());
 			}
 		}
+		bringToFront(tab);
 		return tab;
 	}
 
@@ -93,6 +97,7 @@ public class CommonUX {
 							() -> new FileTab(title, new FileView(info)));
 		}
 		tab.select();
+		bringToFront(tab);
 		return tab;
 	}
 
@@ -138,5 +143,13 @@ public class CommonUX {
 		return -Long.compare(
 				r1.getDockTabs().stream().filter(t -> t instanceof FileTab).count(),
 				r2.getDockTabs().stream().filter(t -> t instanceof FileTab).count());
+	}
+
+	private static void bringToFront(Tab tab) {
+		if (tab.getTabPane() == null) return;
+		Scene scene = tab.getTabPane().getScene();
+		if (scene == null) return;
+		scene.getWindow().requestFocus();
+		tab.getContent().requestFocus();
 	}
 }
