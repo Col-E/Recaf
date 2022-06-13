@@ -14,6 +14,7 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.threading.FxThreadUtil;
@@ -240,7 +241,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 						else type = "<INVALID>";
 						text = type + " " + text;
 					}
-					setText(text);
+					setText(EscapeUtil.escape(text));
 					setGraphic(Icons.getFieldIcon((FieldInfo) item));
 					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item)
 							.setDeclaration(true)
@@ -254,7 +255,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 								.collect(Collectors.joining(", ")) +
 								")" + StringUtil.shortenPath(Type.getReturnType(desc).getInternalName());
 					}
-					setText(text);
+					setText(EscapeUtil.escape(text));
 					setGraphic(Icons.getMethodIcon(methodInfo));
 					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) item)
 							.setDeclaration(true)

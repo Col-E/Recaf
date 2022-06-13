@@ -7,6 +7,7 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.context.ContextSource;
 import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.control.tree.item.*;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
@@ -88,7 +89,7 @@ public class CellFactory {
 		INFO_MAP.put(ClassInfo.class, (type, cell, resource, info) -> {
 			ClassInfo classInfo = (ClassInfo) info;
 			String className = info.getName();
-			cell.setText(StringUtil.shortenPath(className));
+			cell.setText(EscapeUtil.escape(StringUtil.shortenPath(className)));
 			ThreadUtil.run(() -> getClassIconProvider(classInfo))
 				.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
 				.thenApply(icons -> t(icons.get1(), ContextBuilder.forClass(classInfo)
@@ -121,7 +122,7 @@ public class CellFactory {
 		INFO_MAP.put(FileInfo.class, (type, cell, resource, info) -> {
 			FileInfo fileInfo = (FileInfo) info;
 			String fileName = info.getName();
-			cell.setText(StringUtil.shortenPath(fileName));
+			cell.setText(EscapeUtil.escape(StringUtil.shortenPath(fileName)));
 			ThreadUtil.run(() -> getFileIconProvider(fileInfo))
 				.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
 				.thenApply(icons -> t(icons.get1(), ContextBuilder.forFile(fileInfo)
@@ -143,7 +144,7 @@ public class CellFactory {
 				owner = resources.getClass(fieldInfo.getOwner());
 			}
 			String name = info.getName();
-			cell.setText(name);
+			cell.setText(EscapeUtil.escape(name));
 			cell.setGraphic(getFieldIcon(fieldInfo));
 			cell.setContextMenu(ContextBuilder.forField(owner, fieldInfo)
 					.withResource(resource)
@@ -159,7 +160,7 @@ public class CellFactory {
 				owner = resources.getClass(methodInfo.getOwner());
 			}
 			String name = info.getName();
-			cell.setText(name);
+			cell.setText(EscapeUtil.escape(name));
 			cell.setGraphic(getMethodIcon(methodInfo));
 			cell.setContextMenu(ContextBuilder.forMethod(owner, methodInfo)
 					.withResource(resource)

@@ -2,6 +2,7 @@ package me.coley.recaf.ui.docking.impl;
 
 import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.docking.DockTab;
+import me.coley.recaf.util.EscapeUtil;
 
 /**
  * Wrapper around content representing a {@link me.coley.recaf.code.FileInfo}.
@@ -19,7 +20,7 @@ public class FileTab extends DockTab {
 	 * 		Representation of the file.
 	 */
 	public FileTab(String title, FileRepresentation fileRepresentation) {
-		super(title, fileRepresentation.getNodeRepresentation());
+		super(EscapeUtil.escape(title), fileRepresentation.getNodeRepresentation());
 		this.fileRepresentation = fileRepresentation;
 	}
 

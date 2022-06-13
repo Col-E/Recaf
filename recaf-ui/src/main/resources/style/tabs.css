@@ -1,5 +1,6 @@
 .tab-pane {
 	-fx-tab-min-width: 100px;
+	-fx-tab-max-width: 350px;
 	-fx-border-width: 0;
 }
 .collapsible-tab-pane {
