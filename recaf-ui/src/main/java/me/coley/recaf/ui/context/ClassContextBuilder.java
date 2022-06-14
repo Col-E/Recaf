@@ -22,6 +22,7 @@ import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -161,7 +162,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 
 	@Override
 	public void delete() {
-		String name = info.getName();
+		String name = EscapeUtil.escape(info.getName());
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
@@ -173,7 +174,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 					return;
 				}
 			}
-			boolean removed = resource.getClasses().remove(name) != null;
+			boolean removed = resource.getClasses().remove(info.getName()) != null;
 			if (!removed) {
 				logger.warn("Tried to delete class '{}' but failed", name);
 			}

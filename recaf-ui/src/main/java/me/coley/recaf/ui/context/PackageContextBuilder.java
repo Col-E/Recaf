@@ -13,6 +13,7 @@ import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -73,7 +74,7 @@ public class PackageContextBuilder extends ContextBuilder {
 	}
 
 	private void delete() {
-		String name = packageName;
+		String name = EscapeUtil.escape(packageName);
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
@@ -86,7 +87,7 @@ public class PackageContextBuilder extends ContextBuilder {
 				}
 			}
 			for (String className : new TreeSet<>(resource.getClasses().keySet())) {
-				if (className.startsWith(name + "/")) {
+				if (className.startsWith(packageName + "/")) {
 					boolean removed = resource.getClasses().remove(className) != null;
 					if (!removed) {
 						logger.warn("Tried to delete class '{}' but failed", name);
@@ -94,7 +95,7 @@ public class PackageContextBuilder extends ContextBuilder {
 				}
 			}
 			for (String className : new TreeSet<>(resource.getDexClasses().keySet())) {
-				if (className.startsWith(name + "/")) {
+				if (className.startsWith(packageName + "/")) {
 					boolean removed = resource.getDexClasses().remove(className) != null;
 					if (!removed) {
 						logger.warn("Tried to delete dex class '{}' but failed", name);

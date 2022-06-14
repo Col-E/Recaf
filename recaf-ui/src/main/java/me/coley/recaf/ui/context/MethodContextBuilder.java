@@ -22,6 +22,7 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.visitor.MemberCopyingVisitor;
 import me.coley.recaf.util.visitor.MemberRemovingVisitor;
 import me.coley.recaf.workspace.resource.Resource;
@@ -160,12 +161,13 @@ public class MethodContextBuilder extends MemberContextBuilder {
 
 	@Override
 	public void delete() {
-		String name = ownerInfo.getName();
+		String ownerName = EscapeUtil.escape(ownerInfo.getName());
+		String methodName = EscapeUtil.escape(methodInfo.getName());
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
 				StringBinding title = Lang.getBinding("dialog.title.delete-method");
-				StringBinding header = Lang.format("dialog.header.delete-method", "\n" + name);
+				StringBinding header = Lang.format("dialog.header.delete-method", "\n" + methodName);
 				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
 				boolean canRemove = deleteDialog.showAndWait().orElse(false);
 				if (!canRemove) {
@@ -186,10 +188,10 @@ public class MethodContextBuilder extends MemberContextBuilder {
 				logger.warn("Android currently unsupported");
 			}
 			if (!removed) {
-				logger.warn("Tried to delete method '{}' but failed", name);
+				logger.warn("Tried to delete method '{}' but failed", methodName);
 			}
 		} else {
-			logger.error("Failed to resolve containing resource for class '{}'", name);
+			logger.error("Failed to resolve containing resource for class '{}'", ownerName);
 		}
 	}
 

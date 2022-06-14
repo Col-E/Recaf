@@ -220,7 +220,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 			} else if (item == null) {
 				// Null is the edge case for the root
 				setGraphic(Icons.getClassIcon(classInfo));
-				setText(StringUtil.shortenPath(classInfo.getName()));
+				setText(EscapeUtil.escape(StringUtil.shortenPath(classInfo.getName())));
 				setOnMouseClicked(null);
 				if (classInfo instanceof ClassInfo) {
 					setContextMenu(ContextBuilder.forClass((ClassInfo) classInfo)

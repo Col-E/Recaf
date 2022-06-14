@@ -25,6 +25,7 @@ import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadPoolFactory;
 import me.coley.recaf.workspace.Workspace;
@@ -78,7 +79,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 				} else {
 					CellFactory.update(CellOriginType.SEARCH_RESULTS, this, workspace.getResources().getPrimary(), item);
 					// Override with full name
-					setText(item.getName());
+					setText(EscapeUtil.escape(item.getName()));
 					setOnMousePressed(e -> content.setCenter(createDiffDisplay(item)));
 				}
 			}
