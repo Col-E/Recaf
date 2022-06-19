@@ -400,7 +400,7 @@ public class ClassInfoFormatter implements ConstantPoolConstants {
 	}
 
 	private static Node dim(Object value) {
-		Label label = new Label(EscapeUtil.escapeCommon(Objects.toString(value)));
+		Label label = new Label(EscapeUtil.escapeSpace(Objects.toString(value)));
 		label.getStyleClass().add("monospace");
 		label.getStyleClass().add("faint");
 		return label;
