@@ -127,35 +127,42 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 						return;
 					}
 					FxThreadUtil.delayedRun(100, () -> {
-						int deleteOffset = 0;
-						int insertOffset = 0;
+						int deletions = 0;
+						int insertions = 0;
+						int currentOffset = 0;
+						int initialOffset = 0;
 						for (Delta<String> delta : diff.getDeltas()) {
 							Chunk<String> original = delta.getOriginal();
 							Chunk<String> revised = delta.getRevised();
 							switch (delta.getType()) {
 								case CHANGE:
-									initialDecompile.markDiffChunk(original, "change", insertOffset);
-									currentDecompile.markDiffChunk(revised, "change", deleteOffset);
+									initialDecompile.markDiffChunk(original, "change", insertions);
+									currentDecompile.markDiffChunk(revised, "change", deletions);
 									break;
 								case DELETE:
-									initialDecompile.markDiffChunk(original, "deletion", insertOffset);
-									int deleteStartLine = original.getPosition() + insertOffset;
+									initialDecompile.markDiffChunk(original, "deletion", insertions);
+									int deleteStartLine = revised.getPosition() + currentOffset;
 									int deletedCount = original.size();
+									int chunkDiffRO = revised.getPosition() - original.getPosition();
 									currentDecompile.getJavaArea().insertText(deleteStartLine, 0, "\n".repeat(deletedCount));
-									currentDecompile.markDiffChunk(original, "deletion", insertOffset);
-									deleteOffset += deletedCount;
+									currentDecompile.markDiffChunk(original, "deletion", chunkDiffRO + currentOffset);
+									deletions += deletedCount;
+									currentOffset += deletedCount;
 									break;
 								case INSERT:
-									currentDecompile.markDiffChunk(revised, "insertion", deleteOffset);
-									int insertStartLine = revised.getPosition() + deleteOffset;
+									currentDecompile.markDiffChunk(revised, "insertion", deletions);
+									int insertStartLine = original.getPosition() + initialOffset;
 									int insertedCount = revised.size();
+									int chunkDiffOR = original.getPosition() - revised.getPosition();
 									initialDecompile.getJavaArea().insertText(insertStartLine, 0, "\n".repeat(insertedCount));
-									initialDecompile.markDiffChunk(revised, "insertion", deleteOffset);
-									insertOffset -= insertedCount;
+									initialDecompile.markDiffChunk(revised, "insertion", chunkDiffOR + initialOffset);
+									insertions += insertedCount;
+									initialOffset += insertedCount;
 									break;
 							}
 						}
 					});
+					initialDecompile.getJavaArea().showParagraphAtCenter(0);
 				} catch (InterruptedException e) {
 					// TODO: error handling
 					e.printStackTrace();
