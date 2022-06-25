@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
  */
 public class TextView extends BorderPane implements FileRepresentation, Cleanable, LanguageAssociationListener {
 	private final SyntaxArea area;
+	private final VirtualizedScrollPane<SyntaxArea> scroll;
 	private boolean ignoreNextUpdate;
 	private FileInfo info;
 
@@ -59,8 +60,8 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 			if (language == Languages.NONE)
 				addUnknownExtensionWarning();
 		}
-
-		setCenter(new VirtualizedScrollPane<>(area));
+		scroll = new VirtualizedScrollPane<>(area);
+		setCenter(scroll);
 		SearchBar.install(this, area);
 		// When the user changes what language is associated with this type of file
 		Languages.addAssociationListener(this);
@@ -115,6 +116,13 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 	 */
 	public SyntaxArea getTextArea() {
 		return area;
+	}
+
+	/**
+	 * @return Scroll wrapper around {@link #getTextArea()}.
+	 */
+	public VirtualizedScrollPane<SyntaxArea> getScroll() {
+		return scroll;
 	}
 
 	@Override

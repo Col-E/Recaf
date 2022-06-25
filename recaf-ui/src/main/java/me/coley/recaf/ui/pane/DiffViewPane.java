@@ -25,6 +25,8 @@ import me.coley.recaf.ui.control.PannableImageView;
 import me.coley.recaf.ui.control.TextView;
 import me.coley.recaf.ui.control.code.Language;
 import me.coley.recaf.ui.control.code.Languages;
+import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.ui.control.hex.HexView;
 import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.util.CellFactory;
@@ -40,6 +42,8 @@ import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
 import me.coley.recaf.workspace.resource.ResourceDexClassListener;
 import me.coley.recaf.workspace.resource.ResourceFileListener;
+import org.fxmisc.flowless.Virtualized;
+import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
 
@@ -115,7 +119,6 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 			CountDownLatch latch = new CountDownLatch(2);
 			DiffableDecompilePane currentDecompile = new DiffableDecompilePane(latch);
 			DiffableDecompilePane initialDecompile = new DiffableDecompilePane(latch);
-			currentDecompile.bindScrollTo(initialDecompile);
 			currentDecompile.onUpdate(current);
 			initialDecompile.onUpdate(initial);
 			// Add to the UI
@@ -128,6 +131,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 						return;
 					}
 					highlightDiff(initialDecompile, currentDecompile);
+					// Bind scrolling after
+					currentDecompile.bindScrollTo(initialDecompile);
 				} catch (InterruptedException e) {
 					logger.error("Decompilation task interrupted");
 				}
@@ -160,6 +165,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 				currentText.getTextArea().setEditable(false);
 				split.getItems().addAll(initialText, currentText);
 				highlightDiff(initialText, currentText);
+				currentText.bindScrollTo(initialText);
 			} else {
 				// TODO: How do we want to go around highlighting hex diffs?
 				//  - Representing 'inserted' and 'removed' can't use padding like text-view can
@@ -186,7 +192,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		if (diff.getDeltas().isEmpty()) {
 			return;
 		}
-		FxThreadUtil.delayedRun(100, () -> {
+		FxThreadUtil.run(() -> {
 			int deletions = 0;
 			int insertions = 0;
 			int currentOffset = 0;
@@ -300,9 +306,15 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 				area.setParagraphStyle(pos + i, styles);
 		}
 
+		default void bindScrollTo(Diffable other) {
+			getScroll().estimatedScrollYProperty().bindBidirectional(other.getScroll().estimatedScrollYProperty());
+		}
+
 		default String getText() {
 			return getCodeArea().getText();
 		}
+
+		Virtualized getScroll();
 
 		CodeArea getCodeArea();
 	}
@@ -322,6 +334,11 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		@Override
 		public CodeArea getCodeArea() {
 			return getTextArea();
+		}
+
+		@Override
+		public VirtualizedScrollPane<SyntaxArea> getScroll() {
+			return super.getScroll();
 		}
 
 		@Override
@@ -357,13 +374,14 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 			return code;
 		}
 
-		public void bindScrollTo(DiffableDecompilePane other) {
-			getScroll().estimatedScrollYProperty().bindBidirectional(other.getScroll().estimatedScrollYProperty());
-		}
-
 		@Override
 		public CodeArea getCodeArea() {
 			return getJavaArea();
+		}
+
+		@Override
+		public VirtualizedScrollPane<JavaArea> getScroll() {
+			return super.getScroll();
 		}
 
 		@Override
