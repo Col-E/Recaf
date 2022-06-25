@@ -171,7 +171,7 @@ public class DefinitionArchTests extends JasmUtils {
 
 	@Test
 	public void testAnnoWithEnum() {
-		handle("annotation com/example/MyAnno v enum com/example/Example NAME end" + "\nmethod simple ()V\nend", unit -> {
+		handle("annotation com/example/MyAnno v annotation-enum com/example/Example NAME end" + "\nmethod simple ()V\nend", unit -> {
 			MethodDefinition method = unit.getMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getAnnotations().size());
