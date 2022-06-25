@@ -77,6 +77,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		BorderPane content = new BorderPane();
 		// List of modified items (classes/files/etc)
 		ListView<ItemInfo> listView = new ListView<>();
+		listView.setMinWidth(220);
 		listView.setItems(items);
 		listView.setCellFactory(c -> new ListCell<>() {
 			@Override
@@ -97,10 +98,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		// Layout
 		SplitPane split = new SplitPane();
 		split.getItems().addAll(listView, content);
-		split.setDividerPositions(0.5);
 		setCenter(split);
-		// TODO: Why does the divider position not get acknowledged with this? Its too small.
-		//  - Can probably fix with setPreferredWidth on list
 		SplitPane.setResizableWithParent(listView, false);
 	}
 
