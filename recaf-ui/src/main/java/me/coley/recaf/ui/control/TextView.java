@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  */
 public class TextView extends BorderPane implements FileRepresentation, Cleanable, LanguageAssociationListener {
 	private final SyntaxArea area;
-	private boolean ignoreNextDecompile;
+	private boolean ignoreNextUpdate;
 	private FileInfo info;
 
 	/**
@@ -110,6 +110,13 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 		selection.show(anchor, Side.BOTTOM, 0, 4);
 	}
 
+	/**
+	 * @return Wrapped code display.
+	 */
+	public SyntaxArea getTextArea() {
+		return area;
+	}
+
 	@Override
 	public void onAssociationChanged(String extension, Language newLanguage) {
 		// This new association doesn't apply to us.
@@ -127,8 +134,8 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 	@Override
 	public void onUpdate(FileInfo info) {
 		this.info = info;
-		if (ignoreNextDecompile) {
-			ignoreNextDecompile = false;
+		if (ignoreNextUpdate) {
+			ignoreNextUpdate = false;
 			return;
 		}
 		area.setText(new String(info.getValue(), StandardCharsets.UTF_8));
@@ -144,7 +151,7 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 		Workspace workspace = RecafUI.getController().getWorkspace();
 		Resource primary = workspace.getResources().getPrimary();
 		// Update in primary resource
-		ignoreNextDecompile = true;
+		ignoreNextUpdate = true;
 		FileInfo newInfo = new FileInfo(info.getName(), area.getText().getBytes(StandardCharsets.UTF_8));
 		primary.getFiles().put(newInfo);
 		return SaveResult.SUCCESS;

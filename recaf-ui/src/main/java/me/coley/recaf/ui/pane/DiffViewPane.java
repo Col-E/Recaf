@@ -21,11 +21,18 @@ import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.behavior.ScrollSnapshot;
 import me.coley.recaf.ui.control.BoundLabel;
-import me.coley.recaf.ui.control.code.java.JavaArea;
+import me.coley.recaf.ui.control.PannableImageView;
+import me.coley.recaf.ui.control.TextView;
+import me.coley.recaf.ui.control.code.Language;
+import me.coley.recaf.ui.control.code.Languages;
+import me.coley.recaf.ui.control.hex.HexView;
 import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadPoolFactory;
 import me.coley.recaf.workspace.Workspace;
@@ -33,6 +40,8 @@ import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
 import me.coley.recaf.workspace.resource.ResourceDexClassListener;
 import me.coley.recaf.workspace.resource.ResourceFileListener;
+import org.fxmisc.richtext.CodeArea;
+import org.slf4j.Logger;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,6 +58,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DiffViewPane extends BorderPane implements ControllerListener,
 		ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
+	private static final Logger logger = Logging.get(DiffViewPane.class);
 	private static final long TIMEOUT_MS = 10_000;
 	private final ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("DiffView");
 	private final ObservableList<ItemInfo> items = FXCollections.observableArrayList();
@@ -105,8 +115,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 			ClassInfo initial = history.firstElement();
 			// Create a countdown for the two classes to decompile
 			CountDownLatch latch = new CountDownLatch(2);
-			DiffDecompilePane currentDecompile = new DiffDecompilePane(latch);
-			DiffDecompilePane initialDecompile = new DiffDecompilePane(latch);
+			DiffableDecompilePane currentDecompile = new DiffableDecompilePane(latch);
+			DiffableDecompilePane initialDecompile = new DiffableDecompilePane(latch);
 			currentDecompile.bindScrollTo(initialDecompile);
 			currentDecompile.onUpdate(current);
 			initialDecompile.onUpdate(initial);
@@ -116,69 +126,105 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 			service.execute(() -> {
 				try {
 					if (!latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-						// TODO: timed out, add logging or something to notify user
+						logger.error("Timed out waiting for decompilation");
 						return;
 					}
-					Patch<String> diff = DiffUtils.diff(
-							Arrays.asList(initialDecompile.getCode().split("\n")),
-							Arrays.asList(currentDecompile.getCode().split("\n"))
-					);
-					if (diff.getDeltas().isEmpty()) {
-						return;
-					}
-					FxThreadUtil.delayedRun(100, () -> {
-						int deletions = 0;
-						int insertions = 0;
-						int currentOffset = 0;
-						int initialOffset = 0;
-						for (Delta<String> delta : diff.getDeltas()) {
-							Chunk<String> original = delta.getOriginal();
-							Chunk<String> revised = delta.getRevised();
-							switch (delta.getType()) {
-								case CHANGE:
-									initialDecompile.markDiffChunk(original, "change", insertions);
-									currentDecompile.markDiffChunk(revised, "change", deletions);
-									break;
-								case DELETE:
-									initialDecompile.markDiffChunk(original, "deletion", insertions);
-									int deleteStartLine = revised.getPosition() + currentOffset;
-									int deletedCount = original.size();
-									int chunkDiffRO = revised.getPosition() - original.getPosition();
-									currentDecompile.getJavaArea().insertText(deleteStartLine, 0, "\n".repeat(deletedCount));
-									currentDecompile.markDiffChunk(original, "deletion", chunkDiffRO + currentOffset);
-									deletions += deletedCount;
-									currentOffset += deletedCount;
-									break;
-								case INSERT:
-									currentDecompile.markDiffChunk(revised, "insertion", deletions);
-									int insertStartLine = original.getPosition() + initialOffset;
-									int insertedCount = revised.size();
-									int chunkDiffOR = original.getPosition() - revised.getPosition();
-									initialDecompile.getJavaArea().insertText(insertStartLine, 0, "\n".repeat(insertedCount));
-									initialDecompile.markDiffChunk(revised, "insertion", chunkDiffOR + initialOffset);
-									insertions += insertedCount;
-									initialOffset += insertedCount;
-									break;
-							}
-						}
-					});
-					initialDecompile.getJavaArea().showParagraphAtCenter(0);
+					highlightDiff(initialDecompile, currentDecompile);
 				} catch (InterruptedException e) {
-					// TODO: error handling
-					e.printStackTrace();
+					logger.error("Decompilation task interrupted");
 				}
 			});
 			return split;
 		} else if (item instanceof DexClassInfo) {
 			// TODO: Android diff
+			//  - Probably just go with 'SmaliAssemblerPane' similar to how the java logic above is done
+			//    and do the same standard text-diff highlighting.
 			return new Label("TODO: Android diff");
 		} else if (item instanceof FileInfo) {
-			// TODO: Same as the java diff, but for plain text.
-			//  - will have to do something custom for hex diffs
-			return new Label("TODO: File diff");
+			Stack<FileInfo> history = primary.getFiles().getHistory(item.getName());
+			FileInfo current = (FileInfo) item;
+			FileInfo initial = history.firstElement();
+			byte[] currentRaw = current.getValue();
+			byte[] initialRaw = initial.getValue();
+			if (ByteHeaderUtil.matchAny(currentRaw, ByteHeaderUtil.IMAGE_HEADERS)) {
+				PannableImageView initialImage = new PannableImageView();
+				PannableImageView currentImage = new PannableImageView();
+				initialImage.setImage(initialRaw);
+				currentImage.setImage(currentRaw);
+				split.getItems().addAll(initialImage, currentImage);
+			} else if (StringUtil.isText(currentRaw)) {
+				Language language = Languages.get(current.getExtension());
+				DiffableTextView initialText = new DiffableTextView(language);
+				DiffableTextView currentText = new DiffableTextView(language);
+				initialText.onUpdate(initial);
+				currentText.onUpdate(current);
+				initialText.getTextArea().setEditable(false);
+				currentText.getTextArea().setEditable(false);
+				split.getItems().addAll(initialText, currentText);
+				highlightDiff(initialText, currentText);
+			} else {
+				// TODO: How do we want to go around highlighting hex diffs?
+				//  - Representing 'inserted' and 'removed' can't use padding like text-view can
+				//  - Can just do simple direct highlights without padding probably
+				//     - Need access to each cell/offset to do this
+				HexView initialHex = new HexView();
+				HexView currentHex = new HexView();
+				initialHex.onUpdate(initialRaw);
+				currentHex.onUpdate(currentRaw);
+				// TODO: Should update HexView to support 'setEditable(boolean)' which disables HexRow editable cells.
+				split.getItems().addAll(initialHex, currentHex);
+			}
+			return split;
 		} else {
 			throw new IllegalStateException("Unknown info type: " + ((item == null) ? "null" : item.getClass()));
 		}
+	}
+
+	private void highlightDiff(Diffable initial, Diffable current) {
+		Patch<String> diff = DiffUtils.diff(
+				Arrays.asList(initial.getText().split("\n")),
+				Arrays.asList(current.getText().split("\n"))
+		);
+		if (diff.getDeltas().isEmpty()) {
+			return;
+		}
+		FxThreadUtil.delayedRun(100, () -> {
+			int deletions = 0;
+			int insertions = 0;
+			int currentOffset = 0;
+			int initialOffset = 0;
+			for (Delta<String> delta : diff.getDeltas()) {
+				Chunk<String> original = delta.getOriginal();
+				Chunk<String> revised = delta.getRevised();
+				switch (delta.getType()) {
+					case CHANGE:
+						initial.markDiffChunk(original, "change", insertions);
+						current.markDiffChunk(revised, "change", deletions);
+						break;
+					case DELETE:
+						initial.markDiffChunk(original, "deletion", insertions);
+						int deleteStartLine = revised.getPosition() + currentOffset;
+						int deletedCount = original.size();
+						int chunkDiffRO = revised.getPosition() - original.getPosition();
+						current.getCodeArea().insertText(deleteStartLine, 0, "\n".repeat(deletedCount));
+						current.markDiffChunk(original, "deletion", chunkDiffRO + currentOffset);
+						deletions += deletedCount;
+						currentOffset += deletedCount;
+						break;
+					case INSERT:
+						current.markDiffChunk(revised, "insertion", deletions);
+						int insertStartLine = original.getPosition() + initialOffset;
+						int insertedCount = revised.size();
+						int chunkDiffOR = original.getPosition() - revised.getPosition();
+						initial.getCodeArea().insertText(insertStartLine, 0, "\n".repeat(insertedCount));
+						initial.markDiffChunk(revised, "insertion", chunkDiffOR + initialOffset);
+						insertions += insertedCount;
+						initialOffset += insertedCount;
+						break;
+				}
+			}
+		});
+		initial.getCodeArea().showParagraphAtCenter(0);
 	}
 
 	@Override
@@ -244,13 +290,61 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	}
 
 	/**
+	 * Simple interface to make text-diff logic backed by {@link CodeArea} easy to implement.
+	 */
+	private interface Diffable {
+		default void markDiffChunk(Chunk<String> chunk, String style, int offset) {
+			CodeArea area = getCodeArea();
+			int pos = chunk.getPosition() + offset;
+			int len = chunk.size();
+			Collection<String> styles = Collections.singleton(style);
+			for (int i = 0; i < len; i++)
+				area.setParagraphStyle(pos + i, styles);
+		}
+
+		default String getText() {
+			return getCodeArea().getText();
+		}
+
+		CodeArea getCodeArea();
+	}
+
+	/**
+	 * An extension of the text-view for line difference highlighting.
+	 */
+	private static class DiffableTextView extends TextView implements Diffable {
+		/**
+		 * @param language
+		 * 		Language to use for syntax highlighting.
+		 */
+		public DiffableTextView(Language language) {
+			super(language, null);
+		}
+
+		@Override
+		public CodeArea getCodeArea() {
+			return getTextArea();
+		}
+
+		@Override
+		public SaveResult save() {
+			return SaveResult.IGNORED;
+		}
+
+		@Override
+		public boolean supportsEditing() {
+			return false;
+		}
+	}
+
+	/**
 	 * An extension of the Java decompile pane for line difference highlighting.
 	 */
-	private static class DiffDecompilePane extends DecompilePane {
+	private static class DiffableDecompilePane extends DecompilePane implements Diffable {
 		private final CountDownLatch latch;
 		private String code;
 
-		public DiffDecompilePane(CountDownLatch latch) {
+		public DiffableDecompilePane(CountDownLatch latch) {
 			this.latch = latch;
 			getJavaArea().setEditable(false);
 			// This is a lazy fix.
@@ -265,8 +359,13 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 			return code;
 		}
 
-		public void bindScrollTo(DiffDecompilePane other) {
+		public void bindScrollTo(DiffableDecompilePane other) {
 			getScroll().estimatedScrollYProperty().bindBidirectional(other.getScroll().estimatedScrollYProperty());
+		}
+
+		@Override
+		public CodeArea getCodeArea() {
+			return getJavaArea();
 		}
 
 		@Override
@@ -290,15 +389,6 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		protected void onDecompileCompletion(String code) {
 			this.code = code;
 			latch.countDown();
-		}
-
-		public void markDiffChunk(Chunk<String> chunk, String style, int offset) {
-			JavaArea area = getJavaArea();
-			int pos = chunk.getPosition() + offset;
-			int len = chunk.size();
-			Collection<String> styles = Collections.singleton(style);
-			for (int i = 0; i < len; i++)
-				area.setParagraphStyle(pos + i, styles);
 		}
 	}
 }
