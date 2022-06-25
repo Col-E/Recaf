@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble;
 
 import javassist.ClassPool;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
@@ -32,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Basic setup to validate all bytecode assembly files in the test resources directory complete the entire
  * assembly process, generating verifiable methods.
  */
-public class MethodParseTests extends TestUtil {
+public class MethodParseTests extends JasmUtils {
 	private static final boolean DEBUG_WRITE = true;
 	private static final String SELF_CLASS = "com/example/FooBar";
 	private static final ClassSupplier CLASS_SUPPLIER = runtimeSupplier();
@@ -61,7 +62,7 @@ public class MethodParseTests extends TestUtil {
 			} catch (Throwable t) {
 				BytecodeToAstTransformer dumper = new BytecodeToAstTransformer(method);
 				dumper.visit();
-				System.err.println(dumper.getUnit().print());
+				System.err.println(dumper.getUnit().print(PrintContext.DEFAULT_CTX));
 				fail("Method failed verification: " + method.name, t);
 			}
 		};
@@ -69,7 +70,12 @@ public class MethodParseTests extends TestUtil {
 
 	private static void handle(String original, Consumer<MethodNode> handler) {
 		// JASM parse
-		Unit unit = generateSilent(original);
+		Unit unit = null;
+		try {
+			unit = createUnit(DEFAULT_KEYWORDS, original);
+		} catch (Throwable ex) {
+			fail(ex);
+		}
 
 		assertNotNull(unit, "Unit must not be null!");
 

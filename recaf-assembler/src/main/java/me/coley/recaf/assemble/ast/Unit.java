@@ -22,8 +22,8 @@ public class Unit extends BaseElement {
 	}
 
 	@Override
-	public String print() {
-		return definition.print();
+	public String print(PrintContext context) {
+		return definition.print(context);
 	}
 
 	/**

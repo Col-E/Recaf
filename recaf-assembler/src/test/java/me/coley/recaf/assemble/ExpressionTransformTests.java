@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble;
 
 import me.coley.recaf.assemble.ast.Code;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.assemble.ast.arch.MethodParameters;
@@ -26,7 +27,7 @@ public class ExpressionTransformTests {
 		transformer.setLabelPrefixFunction(e -> "");
 		try {
 			Code code = transformer.transform(new Expression("System.out.println(text);"));
-			String formatted = code.print();
+			String formatted = code.print(PrintContext.DEFAULT_CTX);
 			assertEquals("A:\n" +
 					"	getstatic java/lang/System.out Ljava/io/PrintStream;\n" +
 					"	aload text\n" +
@@ -45,7 +46,7 @@ public class ExpressionTransformTests {
 			Code code = transformer.transform(new Expression(
 					"try { new java.io.File(path).createNewFile(); } " +
 							"catch(java.io.IOException ex){}"));
-			String formatted = code.print();
+			String formatted = code.print(PrintContext.DEFAULT_CTX);
 			assertEquals(1, code.getTryCatches().size());
 			assertEquals("java/io/IOException", code.getTryCatches().get(0).getExceptionType());
 			// 'ex' should not be stored in local slot 0 and should retain its defined name of 'ex'
@@ -74,7 +75,7 @@ public class ExpressionTransformTests {
 							"} else {\n" +
 							"  System.out.println(\"Null args\");\n" +
 							"}"));
-			String formatted = code.print();
+			String formatted = code.print(PrintContext.DEFAULT_CTX);
 			// The argument 'args' should be read
 			assertTrue(formatted.contains("aload xargs"));
 			assertTrue(formatted.contains("istore length"));

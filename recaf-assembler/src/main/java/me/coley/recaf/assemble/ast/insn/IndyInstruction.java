@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.ast.insn;
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseArg;
 import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.util.EscapeUtil;
 
 import java.util.List;
@@ -72,25 +73,25 @@ public class IndyInstruction extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		StringBuilder sb = new StringBuilder();
-		String handle = bsmHandle.print();
+		String handle = bsmHandle.print(context);
 		StringBuilder args = new StringBuilder();
 		for (BsmArg bsmArgument : bsmArguments) {
-			args.append(bsmArgument.print());
+			args.append(bsmArgument.print(context));
 			args.append(" ");
 		}
 		String name = this.name;
 		if (name.isEmpty()) {
-			name = ".empty";
+			name = "empty"; // TODO: Is this how we should handle empty BSM name?
 		} else {
 			name = EscapeUtil.escapeSpace(name);
 		}
 		sb.append(getOpcode()).append(' ');
 		sb.append(name).append(' ');
 		sb.append(EscapeUtil.escapeSpace(desc)).append(' ');
-		sb.append(".handle ").append(handle).append(' ');
-		sb.append("args ").append(args).append(" end");
+		sb.append(context.fmtKeyword("handle ")).append(handle).append(' ');
+		sb.append(context.fmtKeyword("args ")).append(args).append(" ").append(context.fmtKeyword("end"));
 		return sb.toString();
 	}
 

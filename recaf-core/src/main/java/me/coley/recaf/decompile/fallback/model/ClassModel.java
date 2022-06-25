@@ -7,6 +7,7 @@ import me.coley.cafedude.classfile.Method;
 import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.cafedude.classfile.attribute.AnnotationsAttribute;
 import me.coley.cafedude.classfile.constant.CpClass;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Printable;
 import me.coley.recaf.decompile.fallback.print.*;
 import me.coley.recaf.util.AccessFlag;
@@ -149,7 +150,7 @@ public class ClassModel implements Printable {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return printStrategy.print(this);
 	}
 }

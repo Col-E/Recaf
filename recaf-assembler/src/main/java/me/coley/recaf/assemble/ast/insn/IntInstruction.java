@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.ast.PrintContext;
+
 /**
  * Integer instruction.
  *
@@ -32,7 +34,7 @@ public class IntInstruction extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return getOpcode() + " " + getValue();
 	}
 }

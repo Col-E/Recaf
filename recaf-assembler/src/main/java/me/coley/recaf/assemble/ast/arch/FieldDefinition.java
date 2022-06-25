@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.ast.arch;
 
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.util.EscapeUtil;
 
 /**
@@ -27,14 +28,14 @@ public class FieldDefinition extends AbstractDefinition {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(super.buildDefString("field"));
+		sb.append(super.buildDefString(context, context.fmtKeyword("field")));
 		// Make sure to escape the name
 		sb.append(EscapeUtil.escapeSpace(name)).append(' ').append(EscapeUtil.escape(type));
 		// Print value if exists
 		if (getConstVal() != null) {
-			sb.append(" ").append(getConstVal().print());
+			sb.append(" ").append(getConstVal().print(context));
 		}
 		return sb.toString();
 	}

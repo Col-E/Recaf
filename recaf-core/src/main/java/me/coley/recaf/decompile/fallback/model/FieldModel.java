@@ -7,6 +7,7 @@ import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.cafedude.classfile.attribute.AnnotationsAttribute;
 import me.coley.cafedude.classfile.attribute.ConstantValueAttribute;
 import me.coley.cafedude.classfile.constant.*;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Printable;
 import me.coley.recaf.decompile.fallback.print.BasicFieldPrintStrategy;
 import me.coley.recaf.decompile.fallback.print.EnumConstFieldPrintStrategy;
@@ -155,7 +156,7 @@ public class FieldModel implements Printable, ConstantPoolConstants {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return printStrategy.print(owner, this);
 	}
 }

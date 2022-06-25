@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.meta;
 
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Named;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.ast.insn.InstructionType;
 
@@ -34,7 +35,7 @@ public class Label extends AbstractInstruction implements Named {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return name + ":";
 	}
 

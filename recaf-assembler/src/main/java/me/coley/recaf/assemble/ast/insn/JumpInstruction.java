@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.IllegalAstException;
 import me.coley.recaf.assemble.ast.FlowControl;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.meta.Label;
 import org.objectweb.asm.Opcodes;
 
@@ -41,7 +42,7 @@ public class JumpInstruction extends AbstractInstruction implements FlowControl 
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return getOpcode() + ' ' + getLabel();
 	}
 

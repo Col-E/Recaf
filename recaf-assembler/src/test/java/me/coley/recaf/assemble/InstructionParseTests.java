@@ -2,6 +2,7 @@ package me.coley.recaf.assemble;
 
 import me.coley.recaf.assemble.ast.CodeEntry;
 import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.insn.*;
@@ -19,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 /**
  * Tests strictly for parsing into the AST nodes.
  */
-public class InstructionParseTests extends TestUtil {
+public class InstructionParseTests extends JasmUtils {
 	@Nested
 	public class Field {
 
@@ -64,11 +65,29 @@ public class InstructionParseTests extends TestUtil {
 			});
 		}
 
+		@Test
+		public void testNumericIntMatch() {
+			handle("getstatic 1.5 I", field -> {
+				assertEquals("1", field.getOwner());
+				assertEquals("5", field.getName());
+				assertEquals("I", field.getDesc());
+			});
+		}
+
+		@Test
+		public void testNumericFloatMatch() {
+			handle("getstatic 1.5f I", field -> {
+				assertEquals("1", field.getOwner());
+				assertEquals("5f", field.getName());
+				assertEquals("I", field.getDesc());
+			});
+		}
+
 		private void handle(String original, Consumer<FieldInstruction> handler) {
 			FieldInstruction instruction = (FieldInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + instruction.print());
+			System.out.println("Printed:  " + instruction.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(instruction);
 		}
@@ -157,7 +176,7 @@ public class InstructionParseTests extends TestUtil {
 			MethodInstruction method = (MethodInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + method.print());
+			System.out.println("Printed:  " + method.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(method);
 		}
@@ -168,8 +187,8 @@ public class InstructionParseTests extends TestUtil {
 		@Test
 		public void testNormal() {
 			handle("invokedynamic getText ()Ljava/lang/String; " +
-					".handle H_GETFIELD java/lang/Example.foo Ljava/lang/String; " +
-					"args 1 \"Hello\" .type java/lang/String end", indy -> {
+					"handle H_GETFIELD java/lang/Example.foo Ljava/lang/String; " +
+					"args 1 \"Hello\" type java/lang/String end", indy -> {
 				assertEquals("getText", indy.getName());
 				assertEquals("()Ljava/lang/String;", indy.getDesc());
 
@@ -188,7 +207,7 @@ public class InstructionParseTests extends TestUtil {
 		@Test
 		public void testNoArgs() {
 			handle("invokedynamic getText ()Ljava/lang/String; " +
-					".handle H_GETFIELD java/lang/Example.foo Ljava/lang/String; args end", indy -> {
+					"handle H_GETFIELD java/lang/Example.foo Ljava/lang/String; args end", indy -> {
 				assertEquals("getText", indy.getName());
 				assertEquals("()Ljava/lang/String;", indy.getDesc());
 
@@ -205,8 +224,8 @@ public class InstructionParseTests extends TestUtil {
 		@Test
 		public void testUnicodeMatch() {
 			handle("invokedynamic 今 ()L天; " +
-					".handle H_GETFIELD 下.大 L天; " +
-					"args 1 \"今天下大雨\" .type 雨 end", indy -> {
+					"handle H_GETFIELD 下.大 L天; " +
+					"args 1 \"今天下大雨\" type 雨 end", indy -> {
 				assertEquals("今", indy.getName());
 				assertEquals("()L天;", indy.getDesc());
 
@@ -226,7 +245,7 @@ public class InstructionParseTests extends TestUtil {
 			IndyInstruction indy = (IndyInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + indy.print());
+			System.out.println("Printed:  " + indy.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(indy);
 		}
@@ -275,11 +294,11 @@ public class InstructionParseTests extends TestUtil {
 
 		@Test
 		public void testType() {
-			handle("ldc .type java/lang/Object", ldc -> assertEquals(Type.getObjectType("java/lang/Object"), ldc.getValue()));
-			handle("ldc .type DefaultPackage", ldc -> assertEquals(Type.getObjectType("DefaultPackage"), ldc.getValue()));
-			handle("ldc .type I", ldc -> assertEquals(Type.getObjectType("I"), ldc.getValue()));
-			handle("ldc .type 下雨了", ldc -> assertEquals(Type.getObjectType("下雨了"), ldc.getValue()));
-			handle("ldc .type \\u4E0B\\u96E8\\u4E86", ldc -> assertEquals(Type.getObjectType("\\u4E0B\\u96E8\\u4E86"), ldc.getValue()));
+			handle("ldc type java/lang/Object", ldc -> assertEquals(Type.getObjectType("java/lang/Object"), ldc.getValue()));
+			handle("ldc type DefaultPackage", ldc -> assertEquals(Type.getObjectType("DefaultPackage"), ldc.getValue()));
+			handle("ldc type I", ldc -> assertEquals(Type.getObjectType("I"), ldc.getValue()));
+			handle("ldc type 下雨了", ldc -> assertEquals(Type.getObjectType("下雨了"), ldc.getValue()));
+			handle("ldc type \\u4E0B\\u96E8\\u4E86", ldc -> assertEquals(Type.getObjectType("\\u4E0B\\u96E8\\u4E86"), ldc.getValue()));
 		}
 
 		@ParameterizedTest
@@ -304,7 +323,7 @@ public class InstructionParseTests extends TestUtil {
 
 			System.out.println("ldc Value type: " + ldc.getValueType().name());
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + ldc.print());
+			System.out.println("Printed:  " + ldc.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(ldc);
 		}
@@ -331,7 +350,7 @@ public class InstructionParseTests extends TestUtil {
 			IincInstruction insn = (IincInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + insn.print());
+			System.out.println("Printed:  " + insn.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(insn);
 		}
@@ -350,7 +369,7 @@ public class InstructionParseTests extends TestUtil {
 			IntInstruction insn = (IntInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + insn.print());
+			System.out.println("Printed:  " + insn.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(insn);
 		}
@@ -369,7 +388,7 @@ public class InstructionParseTests extends TestUtil {
 			JumpInstruction jump = (JumpInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + jump.print());
+			System.out.println("Printed:  " + jump.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(jump);
 		}
@@ -395,7 +414,7 @@ public class InstructionParseTests extends TestUtil {
 			LineInstruction line = (LineInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + line.print());
+			System.out.println("Printed:  " + line.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(line);
 		}
@@ -415,7 +434,7 @@ public class InstructionParseTests extends TestUtil {
 			VarInstruction v = (VarInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + v.print());
+			System.out.println("Printed:  " + v.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(v);
 		}
@@ -434,7 +453,7 @@ public class InstructionParseTests extends TestUtil {
 			TypeInstruction type = (TypeInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + type.print());
+			System.out.println("Printed:  " + type.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(type);
 		}
@@ -459,7 +478,7 @@ public class InstructionParseTests extends TestUtil {
 			MultiArrayInstruction array = (MultiArrayInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + array.print());
+			System.out.println("Printed:  " + array.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(array);
 		}
@@ -477,7 +496,7 @@ public class InstructionParseTests extends TestUtil {
 			NewArrayInstruction array = (NewArrayInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + array.print());
+			System.out.println("Printed:  " + array.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(array);
 		}
@@ -541,7 +560,7 @@ public class InstructionParseTests extends TestUtil {
 			LookupSwitchInstruction swtch = (LookupSwitchInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + swtch.print());
+			System.out.println("Printed:  " + swtch.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(swtch);
 		}
@@ -566,7 +585,7 @@ public class InstructionParseTests extends TestUtil {
 			TableSwitchInstruction swtch = (TableSwitchInstruction) staticHandle(original);
 
 			System.out.println("Original: " + original);
-			System.out.println("Printed:  " + swtch.print());
+			System.out.println("Printed:  " + swtch.print(PrintContext.DEFAULT_CTX));
 
 			handler.accept(swtch);
 		}
@@ -574,7 +593,7 @@ public class InstructionParseTests extends TestUtil {
 
 	private static CodeEntry staticHandle(String code) {
 		String wrapped = "method somethind ()V\n" + code + "\nend";
-		Unit unit = generateSilent(wrapped);
+		Unit unit = createSilentUnit(DEFAULT_KEYWORDS, wrapped);
 		assertNotNull(unit);
 		MethodDefinition method = unit.getMethod();
 		assertEquals(1, method.getCode().getEntries().size());

@@ -178,7 +178,6 @@ public abstract class BaseElement implements Element {
 
 	@Override
 	public String toString() {
-		return print();
+		return print(PrintContext.DEFAULT_CTX);
 	}
-
 }

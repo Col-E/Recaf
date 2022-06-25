@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.IllegalAstException;
 import me.coley.recaf.assemble.ast.FlowControl;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.meta.Label;
 
 import java.util.ArrayList;
@@ -89,10 +90,11 @@ public class TableSwitchInstruction extends AbstractInstruction implements FlowC
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		String offsets = String.join("\n\t\t", labels);
-		return String.format("%s %d %d\n\t\t%s\n\t\tdefault %s",
-				getOpcode(), getMin(), getMax(), offsets, getDefaultIdentifier());
+		return String.format("%s %d %d\n\t\t%s\n\t\t%s %s",
+				context.fmtKeyword(getOpcode()), getMin(), getMax(), offsets,
+				context.fmtKeyword("default"), getDefaultIdentifier());
 	}
 
 	@Override

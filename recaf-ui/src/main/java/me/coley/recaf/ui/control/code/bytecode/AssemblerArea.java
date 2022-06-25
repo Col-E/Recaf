@@ -132,7 +132,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	private void setupAstParseThread() {
 		astParseThread = ThreadUtil.scheduleAtFixedRate(() -> {
 			try {
-				if (pipeline.updateAst() && pipeline.validateAst()) {
+				if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
 					logger.trace("AST updated and validated");
 					if (pipeline.isMethod() &&
 							pipeline.isOutputOutdated() &&
@@ -183,13 +183,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		}
 		transformer.visit();
 		Unit unit = transformer.getUnit();
-		String code = unit.print();
+		String code = unit.print(config().createContext());
 		// Update text
 		setText(code);
 		// Also attempt to recompile once the code is set.
 		// We do not want to update the class, this is to initialize the pipeline state without the user needing
 		// to manually trigger a save first.
-		pipeline.updateAst();
+		pipeline.updateAst(config().usePrefix);
 		if (pipeline.isMethod())
 			pipeline.generateMethod();
 		else

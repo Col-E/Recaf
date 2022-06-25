@@ -1,5 +1,6 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.util.EscapeUtil;
 
 /**
@@ -34,7 +35,7 @@ public class TypeInstruction extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return String.format("%s %s", getOpcode(), EscapeUtil.escapeSpace(getType()));
 	}
 }

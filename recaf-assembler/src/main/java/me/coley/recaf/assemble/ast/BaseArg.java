@@ -96,29 +96,29 @@ public abstract class BaseArg extends BaseElement implements Printable {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		switch (type) {
 			case TYPE:
 				Type type = (Type) value;
 				if (type.getSort() == Type.OBJECT)
-					return ".type " + type.getInternalName();
+					return context.fmtKeyword("type ") + type.getInternalName();
 				else
-					return ".type " + type.getDescriptor();
+					return context.fmtKeyword("type ") + type.getDescriptor();
 			case STRING:
 				return " \"" + EscapeUtil.escape((String) getValue()) + '\"';
 			case HANDLE:
 				HandleInfo info = (HandleInfo) value;
-				return ".handle " + info.print() + "";
+				return context.fmtKeyword("handle ") + info.print(context) + "";
 			case ANNO:
 				Annotation anno = (Annotation) value;
-				return anno.print();
+				return anno.print(context);
 			case ANNO_LIST:
 				List<?> list = (List<?>) value;
-				return "args " + list.stream()
+				return context.fmtKeyword("args ") + list.stream()
 						.map(String::valueOf)
-						.collect(Collectors.joining(" ")) + " end";
+						.collect(Collectors.joining(" ")) + " " + context.fmtKeyword("end");
 			case ANNO_ENUM:
-				return (String) value;
+				return context.fmtKeyword("annotation-enum " ) + value;
 			case BOOLEAN:
 				return (Boolean) value ? "true" : "false";
 			case SHORT:

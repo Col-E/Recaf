@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for definitions and other arch nodes.
  */
-public class DefinitionArchTests extends TestUtil {
+public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testSimpleDefinition() {
 		handle("method simple ()V\nend", unit -> {
@@ -205,7 +205,7 @@ public class DefinitionArchTests extends TestUtil {
 	}
 
 	private static void handle(String original, Consumer<Unit> handler) {
-		Unit unit = generateSilent(original);
+		Unit unit = createSilentUnit(DEFAULT_KEYWORDS, original);
 		assertNotNull(unit, "Parser did not find unit context with input: " + original);
 
 		handler.accept(unit);

@@ -1,9 +1,6 @@
 package me.coley.recaf.assemble.ast.arch;
 
-import me.coley.recaf.assemble.ast.Named;
-import me.coley.recaf.assemble.ast.BaseElement;
-import me.coley.recaf.assemble.ast.Descriptor;
-import me.coley.recaf.assemble.ast.VariableReference;
+import me.coley.recaf.assemble.ast.*;
 
 /**
  * Part of a {@link MethodParameters}.
@@ -51,7 +48,7 @@ public class MethodParameter extends BaseElement implements Named, Descriptor, V
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return desc + " " + name;
 	}
 }

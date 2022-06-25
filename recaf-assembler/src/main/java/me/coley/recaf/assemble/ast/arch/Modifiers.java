@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Element;
+import me.coley.recaf.assemble.ast.PrintContext;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,9 +36,9 @@ public class Modifiers extends BaseElement implements Element, Iterable<Modifier
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return modifiers.stream()
-				.map(m -> '.' + m.getName())
+				.map(m -> m.print(context))
 				.collect(Collectors.joining(" "));
 	}
 

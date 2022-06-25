@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble;
 
 import com.google.common.reflect.ClassPath;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
@@ -28,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Only run this manually if you think you broke something and want over 8000 test cases to look at.
  */
 @Disabled
-public class AssembleEntireClasspathTests extends TestUtil {
+public class AssembleEntireClasspathTests extends JasmUtils {
 	private static int count;
 	private static int line;
 
@@ -48,14 +49,14 @@ public class AssembleEntireClasspathTests extends TestUtil {
 				Unit unit = transformer.getUnit();
 				count++;
 				assertNotNull(unit, "Failed to create unit from: " + location);
-				String code = unit.print();
+				String code = unit.print(new PrintContext("."));
 				line += 1 + StringUtil.count("\n", code);
 				debug += "\n" + code;
 				assertNotNull(code, "Failed to disassemble: " + location);
 				// JASM parse
 				Unit unitCtx;
 				try {
-					unitCtx = generate(code);
+					unitCtx = createUnit(DOT_KEYWORDS, code);
 				} catch (AssemblerException ex) {
 					System.err.println(code);
 					fail("Error generating unit: " + ex.describe(), ex);

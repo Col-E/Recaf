@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.IllegalAstException;
 import me.coley.recaf.assemble.ast.FlowControl;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Printable;
 import me.coley.recaf.assemble.ast.meta.Label;
 
@@ -69,19 +70,19 @@ public class LookupSwitchInstruction extends AbstractInstruction implements Flow
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getOpcode()).append("\n");
 		for (Entry entry : getEntries()) {
 			sb
 					.append("\t\t")
-					.append("case ")
+					.append(context.fmtKeyword("case "))
 					.append(entry.key)
 					.append(" ")
 					.append(entry.identifier)
 					.append("\n");
 		}
-		sb.append("\t\t").append("default ").append(getDefaultIdentifier());
+		sb.append("\t\t").append(context.fmtKeyword("default ")).append(getDefaultIdentifier());
 		return sb.toString();
 	}
 
@@ -124,13 +125,13 @@ public class LookupSwitchInstruction extends AbstractInstruction implements Flow
 		}
 
 		@Override
-		public String print() {
-			return "case " + key + " " + identifier;
+		public String print(PrintContext context) {
+			return context.fmtKeyword("case ") + key + " " + identifier;
 		}
 
 		@Override
 		public String toString() {
-			return print();
+			return print(PrintContext.DEFAULT_CTX);
 		}
 
 		@Override

@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * here because we are not testing the runtime correctness steps here. These only validate that we <i>can</i> generate
  * code from the AST, not if that code will be correct.
  */
-public class AstValidationTests extends TestUtil {
+public class AstValidationTests extends JasmUtils {
 	@Nested
 	class Int {
 		@Test
@@ -97,11 +97,11 @@ public class AstValidationTests extends TestUtil {
 	class ConstValues {
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"field .static .final dummy I\n" + " 0",
-				"field .static        dummy J\n" + " 9000000000L",
-				"field .static        dummy F\n" + " 10.5F",
-				"field .static        dummy D\n" + " 10.5",
-				"field .static        dummy Ljava/lang/String;\n" + " \"text\""
+				"field static final dummy I\n" + " 0",
+				"field static       dummy J\n" + " 9000000000L",
+				"field static       dummy F\n" + " 10.5F",
+				"field static       dummy D\n" + " 10.5",
+				"field static       dummy Ljava/lang/String;\n" + " \"text\""
 		})
 		public void testCorrect(String original) {
 			assertCorrect(original);
@@ -109,7 +109,7 @@ public class AstValidationTests extends TestUtil {
 
 		@ParameterizedTest
 		@ValueSource(strings = {
-				"field .final dummy I " + " 0",
+				"field final dummy I " + " 0",
 				"field dummy I" + " 0",
 		})
 		public void testConstOnNonStatic(String original) {
@@ -118,13 +118,13 @@ public class AstValidationTests extends TestUtil {
 
 		@Test
 		public void testIntStoredOnByte() {
-			assertMatch("field .static .final dummy B " + "90000000",
+			assertMatch("field static final dummy B " + "90000000",
 					ValidationMessage.CV_VAL_TOO_BIG);
 		}
 
 		@Test
 		public void testIntStoredOnChar() {
-			assertMatch("field .static .final dummy C " + "90000000",
+			assertMatch("field static final dummy C " + "90000000",
 					ValidationMessage.CV_VAL_TOO_BIG);
 		}
 	}
@@ -142,7 +142,7 @@ public class AstValidationTests extends TestUtil {
 	}
 
 	private static void handle(String original, boolean expectMessages, DelegatedMessageConsumer handler) {
-		Unit unit = generateSilent(original);
+		Unit unit = createSilentUnit(DEFAULT_KEYWORDS, original);
 		assertNotNull(unit, "Parser did not find unit context with input: " + original);
 
 		AstValidator validator = new AstValidator(unit);

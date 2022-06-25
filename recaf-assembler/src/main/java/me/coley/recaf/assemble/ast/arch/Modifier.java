@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.Named;
 import me.coley.recaf.assemble.ast.BaseElement;
+import me.coley.recaf.assemble.ast.PrintContext;
 import org.objectweb.asm.Opcodes;
 
 import java.util.HashMap;
@@ -29,8 +30,8 @@ public class Modifier extends BaseElement implements Named {
 	}
 
 	@Override
-	public String print() {
-		return name;
+	public String print(PrintContext context) {
+		return context.fmtKeyword(name);
 	}
 
 	@Override

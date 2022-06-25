@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.ast.PrintContext;
+
 /**
  * Instruction with no arguments.
  *
@@ -20,7 +22,7 @@ public class Instruction extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return getOpcode();
 	}
 }

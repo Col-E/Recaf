@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.ast.meta;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.CodeEntry;
+import me.coley.recaf.assemble.ast.PrintContext;
 
 /**
  * User documentation that exists within a body of some kind.
@@ -26,7 +27,7 @@ public class Comment extends BaseElement implements CodeEntry {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		if (isMultiLine()) {
 			return "/*\n" + comment + "\n*/";
 		} else {

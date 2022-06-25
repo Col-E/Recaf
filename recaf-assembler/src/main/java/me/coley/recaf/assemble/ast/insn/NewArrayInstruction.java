@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.ast.PrintContext;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -81,7 +83,7 @@ public class NewArrayInstruction extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return getOpcode() + " " + newArrayNames.get(getArrayTypeInt());
 	}
 

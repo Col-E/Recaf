@@ -502,7 +502,7 @@ public class AssemblerPipeline {
 	 * @return {@code true} if the {@link #getUnit() unit} has been updated.
 	 * {@code false} indicates the unit has not changed.
 	 */
-	public boolean updateAst() {
+	public boolean updateAst(boolean usePrefix) {
 		// Skip if no changes in the text have been made
 		if (!textDirty)
 			return false;
@@ -512,7 +512,7 @@ public class AssemblerPipeline {
 			return false;
 		// JASM tokenize
 		logger.trace("Assembler AST updating: [JASM tokenize]");
-		Parser parser = new Parser();
+		Parser parser = new Parser(new Keywords(usePrefix ? "." : null));
 		List<Token> tokens = parser.tokenize("<assembler>", code);
 		parserCompletionListeners.forEach(l -> l.onCompleteTokenize(tokens));
 		// JASM parse

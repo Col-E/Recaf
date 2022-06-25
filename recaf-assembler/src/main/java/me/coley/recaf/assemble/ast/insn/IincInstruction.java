@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.Descriptor;
 import me.coley.recaf.assemble.ast.Named;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.VariableReference;
 
 /**
@@ -65,7 +66,7 @@ public class IincInstruction extends AbstractInstruction implements Named, Descr
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return getOpcode() + " " + getVariableIdentifier() + " " + getIncrement();
 	}
 }

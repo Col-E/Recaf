@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.ast.PrintContext;
+
 /**
  * Line number instruction.
  *
@@ -43,7 +45,7 @@ public class LineInstruction extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return getOpcode() + ' ' + getLabel() + " " + getLineNo();
 	}
 }

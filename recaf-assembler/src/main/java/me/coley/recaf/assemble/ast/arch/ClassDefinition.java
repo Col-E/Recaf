@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.ast.arch;
 
+import me.coley.recaf.assemble.ast.PrintContext;
+
 import java.util.List;
 
 /**
@@ -70,15 +72,15 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("class ").append(name);
+		sb.append(context.fmtKeyword("class ")).append(name);
 		if (superClass != null) {
-			sb.append("\nextends ").append(superClass);
+			sb.append("\n").append(context.fmtKeyword("extends ")).append(superClass);
 		}
 		if (interfaces != null && !interfaces.isEmpty()) {
 			for (int i = 0; i < interfaces.size(); i++) {
-				sb.append("implements ");
+				sb.append(context.fmtKeyword("implements "));
 				sb.append(interfaces.get(i));
 				if (i < interfaces.size() - 1) {
 					sb.append("\n");
@@ -87,10 +89,10 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		}
 		sb.append("\n");
 		for (FieldDefinition field : definedFields) {
-			sb.append(field.print());
+			sb.append(field.print(context));
 		}
 		for (MethodDefinition method : definedMethods) {
-			sb.append(method.print());
+			sb.append(method.print(context));
 		}
 		return sb.toString();
 	}

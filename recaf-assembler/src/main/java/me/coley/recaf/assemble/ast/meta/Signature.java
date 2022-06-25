@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.ast.meta;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.CodeEntry;
+import me.coley.recaf.assemble.ast.PrintContext;
 
 /**
  * Generic signature for members.
@@ -21,8 +22,8 @@ public class Signature extends BaseElement {
 	}
 
 	@Override
-	public String print() {
-		return "signature " + getSignature() + "\n";
+	public String print(PrintContext context) {
+		return context.fmtKeyword("signature ") + getSignature() + "\n";
 	}
 
 	/**

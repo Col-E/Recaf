@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.ast.arch;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Descriptor;
 import me.coley.recaf.assemble.ast.Element;
+import me.coley.recaf.assemble.ast.PrintContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,11 +43,11 @@ public class MethodParameters extends BaseElement implements Element, Descriptor
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < parameters.size(); i++) {
 			MethodParameter param = parameters.get(i);
-			sb.append(param.print());
+			sb.append(param.print(context));
 			if (i < parameters.size() - 1)
 				sb.append(", ");
 		}

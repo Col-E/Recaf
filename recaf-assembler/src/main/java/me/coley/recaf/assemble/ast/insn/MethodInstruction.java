@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.ast.PrintContext;
+
 /**
  * Method reference instruction.
  *
@@ -65,8 +67,9 @@ public class MethodInstruction extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		// TODO: Handle edge case where 'itf=true' when opcode is not 'invokeinterface'
+		//  - Jasm now has a custom instruction for it. Make sure we emit it in the disassembler properly.
 		return getOpcode() + " " + getOwner() + "." + getName() + " " + getDesc();
 	}
 }

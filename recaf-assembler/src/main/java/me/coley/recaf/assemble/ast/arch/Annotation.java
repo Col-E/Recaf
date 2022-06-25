@@ -56,14 +56,14 @@ public class Annotation extends BaseElement implements CodeEntry {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		String op = isVisible ? "annotation" : "invisible-annotation";
-		if(args.isEmpty()) return op + " " + type + " end\n";
+		if(args.isEmpty()) return context.fmtKeyword(op) + " " + type + " " + context.fmtKeyword("end\n");
 		String argsString = args.entrySet().stream()
-				.map(e -> e.getKey() + " " + e.getValue().print())
+				.map(e -> e.getKey() + " " + e.getValue().print(context))
 				.collect(Collectors.joining("\n"));
-		return String.format("%s %s\n %s\nend\n ", op,
-				type, argsString);
+		return String.format("%s %s\n %s\n%s\n ", context.fmtKeyword(op),
+				type, argsString, context.fmtKeyword("end"));
 	}
 
 	/**
@@ -80,7 +80,7 @@ public class Annotation extends BaseElement implements CodeEntry {
 		 * 		Enum value name.
 		 */
 		public AnnoEnum(String type, String name) {
-			super(ArgType.ANNO_ENUM, "enum " + type + " " + name);
+			super(ArgType.ANNO_ENUM, type + " " + name);
 			this.type = type;
 			this.name = name;
 		}

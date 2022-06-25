@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.analysis;
 
 import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.assemble.ast.PrintContext;
 import org.objectweb.asm.Type;
 
 import java.util.Arrays;
@@ -467,7 +468,7 @@ public abstract class Value {
 
 		@Override
 		public String toString() {
-			return info.print();
+			return info.print(PrintContext.DEFAULT_CTX);
 		}
 
 		@Override

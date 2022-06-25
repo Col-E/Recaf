@@ -158,7 +158,7 @@ public class Analyzer {
 			frame.copy(priorFrame);
 		}
 		if (MANUAL_DEBUG) {
-			logger.info("Executing {} : {}", pc, instruction.print());
+			logger.info("Executing {} : {}", pc, instruction.print(PrintContext.DEFAULT_CTX));
 			logger.info(" - Stack PRE: {}", frame.getStack());
 		}
 		currentlyVisiting = instruction;

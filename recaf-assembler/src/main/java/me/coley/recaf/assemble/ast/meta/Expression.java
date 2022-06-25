@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.meta;
 
 import me.coley.recaf.assemble.ast.Code;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.assemble.ast.insn.InstructionType;
 
@@ -39,11 +40,10 @@ public class Expression extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
-		if (code.contains("\n")) {
-			return String.format("EXPR {\n%s\n}", code);
-		} else {
-			return "EXPR " + code;
-		}
+	public String print(PrintContext context) {
+		// .expr
+		//     bla
+		// .end
+		return context.fmtKeyword("expr") + "\n\t\t" + code +"\n\t" + context.fmtKeyword("end");
 	}
 }

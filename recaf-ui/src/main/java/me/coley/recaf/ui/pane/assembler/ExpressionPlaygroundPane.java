@@ -106,7 +106,7 @@ public class ExpressionPlaygroundPane extends BorderPane implements MemberEditor
 		try {
 			Code code = toAstTransformer.transform(new Expression(source));
 			if (code != null) {
-				String bytecode = code.print();
+				String bytecode = code.print(Configs.assembler().createContext());
 				preview.setText(bytecode);
 			} else {
 				preview.setText("// No code emitted");

@@ -6,6 +6,7 @@ import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.cafedude.classfile.annotation.ElementValue;
 import me.coley.cafedude.classfile.attribute.*;
 import me.coley.cafedude.classfile.constant.CpClass;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Printable;
 import me.coley.recaf.decompile.fallback.print.*;
 
@@ -163,7 +164,7 @@ public class MethodModel implements Printable {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return printStrategy.print(owner, this);
 	}
 }

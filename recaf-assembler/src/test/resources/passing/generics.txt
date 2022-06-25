@@ -1,6 +1,6 @@
 // metadata
 signature (ILjava/util/List<Ljava/lang/String;>;)Ljava/lang/String;
-method .static getStringAtIndex (I intParam, Ljava/util/List; listParam)Ljava/lang/String;
+method static getStringAtIndex (I intParam, Ljava/util/List; listParam)Ljava/lang/String;
 
 // code
 a:

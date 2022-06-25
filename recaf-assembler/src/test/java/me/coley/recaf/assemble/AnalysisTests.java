@@ -20,14 +20,14 @@ import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AnalysisTests extends TestUtil {
+public class AnalysisTests extends JasmUtils {
 	@Nested
 	public class Blocks {
 		@Test
 		public void testLinear() {
 			// This isn't a complete method, but the analyzer is meant to work even in
 			// incomplete situations. This will show that there is a single block.
-			String code = "method .static linear ()V\n" +
+			String code = "method static linear ()V\n" +
 					"a:\n" +
 					"getstatic java/lang/System.out Ljava/io/PrintStream;\n" +
 					"ldc \"Hello\"\n" +
@@ -53,7 +53,7 @@ public class AnalysisTests extends TestUtil {
 			// - before
 			// - inside
 			// - after
-			String code = "method .static ifCond (Z skip)V\n" +
+			String code = "method static ifCond (Z skip)V\n" +
 					"a:\n" +
 					"iload skip\n" +
 					"ifne end\n" +
@@ -83,7 +83,7 @@ public class AnalysisTests extends TestUtil {
 		public void testSwitch() {
 			// Each switch case will just be the label and return.
 			// The end will have padding no-op instructions for us to differentiate it.
-			String code = "method .static switchMethod (I value)V\n" +
+			String code = "method static switchMethod (I value)V\n" +
 					"start:\n" +
 					"  iload value\n" +
 					"  tableswitch 0 2 a b c default d \n" +
@@ -111,7 +111,7 @@ public class AnalysisTests extends TestUtil {
 
 		@Test
 		public void testTryCatch() {
-			String code = "method .static tryCatch ()V\n" +
+			String code = "method static tryCatch ()V\n" +
 					"catch * a b c\n" +
 					"a: nop nop nop\n" +
 					"b: goto end\n" +
@@ -137,7 +137,7 @@ public class AnalysisTests extends TestUtil {
 
 		@Test
 		public void testTryCatchWithInsideBlocks() {
-			String code = "method .static tryCatch (Z flag)V\n" +
+			String code = "method static tryCatch (Z flag)V\n" +
 					"catch * tryStart tryEnd tryHandler\n" +
 					"tryStart: \n" +
 					"  ifne skip\n" +
@@ -171,7 +171,7 @@ public class AnalysisTests extends TestUtil {
 		@Test
 		public void testMath() {
 			// This isn't a complete method, but the analyzer is meant to work even in incomplete situations.
-			String code = "method .static math ()V\n" +
+			String code = "method static math ()V\n" +
 					"a:\n" +
 					"iconst_1\n" +
 					"ldc 2\n" +
@@ -203,7 +203,7 @@ public class AnalysisTests extends TestUtil {
 
 		@Test
 		public void testArrayHello() {
-			String code = "method .static hello ()V\n" +
+			String code = "method static hello ()V\n" +
 					"a:\n" +
 					// new array[5]
 					"iconst_5\n" +
@@ -259,9 +259,9 @@ public class AnalysisTests extends TestUtil {
 		@Test
 		public void testTypeMerge() {
 			// This isn't a complete method, but the analyzer is meant to work even in incomplete situations.
-			String code = "method .static merge (I type)V\n" +
+			String code = "method static merge (I kind)V\n" +
 					"start:\n" +
-					"  iload type\n" +
+					"  iload kind\n" +
 					"  tableswitch 0 2 a b c default d\n" +
 					"a: new java/util/List \n goto merge\n" +
 					"b: new java/util/Set \n goto merge\n" +
@@ -302,9 +302,9 @@ public class AnalysisTests extends TestUtil {
 		@Test
 		public void testNoInfiniteLoop() {
 			// If our branch follow conditions are too loose this will infinite loop
-			String code = "method .static merge (I type)V\n" +
+			String code = "method static merge (I kind)V\n" +
 					"start:\n" +
-					"  iload type\n" +
+					"  iload kind\n" +
 					"  tableswitch 0 2 a b c default d\n" +
 					"a: \n goto start\n" +
 					"b: \n goto start\n" +
@@ -486,7 +486,7 @@ public class AnalysisTests extends TestUtil {
 
 	private static void handle(String original, Consumer<MethodDefinition> handler) {
 		// JASM parse
-		ParserContext parser = parser(original);
+		ParserContext parser = createParser(DEFAULT_KEYWORDS, original);
 		try {
 			Collection<Group> groups = parser.parse();
 			assertNotEquals(groups.isEmpty(), true, "Parser did not find unit context with input: " + original);

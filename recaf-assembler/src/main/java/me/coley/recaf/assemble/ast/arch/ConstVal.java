@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseElement;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.util.EscapeUtil;
 
 /**
@@ -78,7 +79,7 @@ public class ConstVal extends BaseElement {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		switch (getValueType()) {
 			case STRING:
 				// We escape whatever string value is here because it makes parsing much simpler.

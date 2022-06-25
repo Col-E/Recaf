@@ -7,7 +7,10 @@ package me.coley.recaf.assemble.ast;
  */
 public interface Printable {
 	/**
+	 * @param context
+	 * 		Print context.
+	 *
 	 * @return Disassembled representation.
 	 */
-	String print();
+	String print(PrintContext context);
 }

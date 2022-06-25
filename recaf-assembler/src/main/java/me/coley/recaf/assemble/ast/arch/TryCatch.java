@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.ast.arch;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.CodeEntry;
+import me.coley.recaf.assemble.ast.PrintContext;
 
 /**
  * An abstraction of a try-catch range of a given type using named labels.
@@ -69,10 +70,10 @@ public class TryCatch extends BaseElement implements CodeEntry {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		String type = exceptionType;
 		if (type == null)
 			type = ANY_TYPE;
-		return String.format("catch %s %s %s %s", type, startLabel, endLabel, handlerLabel);
+		return String.format("%s %s %s %s %s", context.fmtKeyword("catch"), type, startLabel, endLabel, handlerLabel);
 	}
 }

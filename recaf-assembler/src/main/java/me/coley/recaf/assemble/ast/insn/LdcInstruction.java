@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.HandleInfo;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.util.EscapeUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -150,7 +151,7 @@ public class LdcInstruction extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		switch (getValueType()) {
 			case STRING:
 				// We escape whatever string value is here because it makes parsing much simpler.
@@ -159,9 +160,9 @@ public class LdcInstruction extends AbstractInstruction {
 			case TYPE:
 				Type type = (Type) getValue();
 				if (type.getSort() == Type.OBJECT)
-					return getOpcode() + " .type " + type.getInternalName();
+					return getOpcode() + " " + context.fmtKeyword("type ") + type.getInternalName();
 				else
-					return getOpcode() + " .type " + type;
+					return getOpcode() + " " + context.fmtKeyword("type ") + type;
 			case INTEGER:
 			case DOUBLE:
 				return getOpcode() + " " + getValue();
@@ -170,7 +171,7 @@ public class LdcInstruction extends AbstractInstruction {
 			case FLOAT:
 				return getOpcode() + " " + getValue() + 'f';
 			case HANDLE:
-				return getOpcode() + ' ' + ".handle " + ((HandleInfo) getValue()).print();
+				return getOpcode() + ' ' + context.fmtKeyword("handle ") + ((HandleInfo) getValue()).print(context);
 			default:
 				throw new IllegalStateException("Unhandled constant value type: " + getValueType());
 		}

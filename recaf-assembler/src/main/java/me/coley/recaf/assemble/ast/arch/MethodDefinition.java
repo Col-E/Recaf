@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.Code;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.util.EscapeUtil;
 
 import java.util.ArrayList;
@@ -37,18 +38,18 @@ public class MethodDefinition extends AbstractDefinition {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		StringBuilder sb = new StringBuilder();
 		for (ThrownException thrownException : thrownExceptions)
-			sb.append(thrownException.print()).append("\n");
-		sb.append(super.buildDefString("method"));
+			sb.append(thrownException.print(context)).append("\n");
+		sb.append(super.buildDefString(context, context.fmtKeyword("method")));
 		sb.append(EscapeUtil.escape(name)).append(' ');
-		sb.append('(').append(params.print()).append(')');
+		sb.append('(').append(params.print(context)).append(')');
 		sb.append(returnType);
 		sb.append('\n');
-		sb.append(code.print());
+		sb.append(code.print(context));
 		sb.append('\n');
-		sb.append("end");
+		sb.append(context.fmtKeyword("end"));
 		return sb.toString();
 	}
 

@@ -318,6 +318,8 @@ conf.binding.code.rename=Rename selected
 conf.binding.code.searchref=Search references
 
 conf.assembler=Assembler
+conf.assembler.format=Format
+conf.assembler.format.prefix=Use dot prefix for keywords
 conf.assembler.parse=Parsing
 conf.assembler.parse.recover=Attempt error recovery
 conf.assembler.validation=Validation

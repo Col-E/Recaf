@@ -1,10 +1,10 @@
-method .static numToString (I num)V
+method static numToString (I num)V
 a:
  // default for unhandled num
  ldc "?"
  astore name
 b:
- .expr
+ expr
     switch(num) {
      case 1: name = "one"; break;
      case 2: name = "two"; break;

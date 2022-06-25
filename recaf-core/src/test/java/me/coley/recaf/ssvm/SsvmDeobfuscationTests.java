@@ -9,6 +9,7 @@ import dev.xdark.ssvm.symbol.VMSymbols;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.Value;
 import me.coley.recaf.TestUtils;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.code.ClassInfo;
@@ -190,6 +191,6 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 		BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(method);
 		transformer.visit();
 		Unit unit = transformer.getUnit();
-		return unit.print();
+		return unit.print(PrintContext.DEFAULT_CTX);
 	}
 }

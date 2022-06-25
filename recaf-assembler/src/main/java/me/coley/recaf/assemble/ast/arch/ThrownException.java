@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.ast.arch;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.CodeEntry;
+import me.coley.recaf.assemble.ast.PrintContext;
 
 /**
  * Details a single type thrown by a {@link MethodDefinition}.
@@ -28,8 +29,8 @@ public class ThrownException extends BaseElement implements CodeEntry {
 	}
 
 	@Override
-	public String print() {
-		return String.format("throws %s", exceptionType);
+	public String print(PrintContext context) {
+		return context.fmtKeyword("throws ") + exceptionType;
 	}
 
 	@Override

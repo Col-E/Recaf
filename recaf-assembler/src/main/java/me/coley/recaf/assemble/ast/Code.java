@@ -213,14 +213,14 @@ public class Code extends BaseElement {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		if (entries.isEmpty())
 			return "";
 		return entries.stream()
 				.map(e -> {
 					if (e instanceof Label)
-						return e.print();
-					return "\t" + e.print();
+						return e.print(context);
+					return "\t" + e.print(context);
 				}).collect(Collectors.joining("\n"));
 	}
 

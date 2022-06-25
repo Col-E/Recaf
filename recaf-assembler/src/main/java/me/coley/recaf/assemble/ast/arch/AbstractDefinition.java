@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.BaseElement;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.meta.Signature;
 
 import java.util.ArrayList;
@@ -45,15 +46,15 @@ public abstract class AbstractDefinition extends BaseElement implements Definiti
 		this.annotations.addAll(annotations);
 	}
 
-	protected String buildDefString(String type) {
+	protected String buildDefString(PrintContext context, String type) {
 		StringBuilder sb = new StringBuilder();
 		if(signature != null)
-			sb.append(signature.print());
+			sb.append(signature.print(context));
 		for (Annotation annotation : getAnnotations())
-			sb.append(annotation.print());
+			sb.append(annotation.print(context));
 		sb.append(type).append(" ");
 		if (getModifiers().value() > 0) {
-			sb.append(getModifiers().print().toLowerCase()).append(' ');
+			sb.append(getModifiers().print(context).toLowerCase()).append(' ');
 		}
 		return sb.toString();
 	}

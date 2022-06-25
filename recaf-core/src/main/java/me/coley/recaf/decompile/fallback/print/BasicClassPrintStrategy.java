@@ -7,6 +7,7 @@ import me.coley.cafedude.classfile.constant.ConstPoolEntry;
 import me.coley.cafedude.classfile.constant.CpClass;
 import me.coley.cafedude.classfile.constant.CpMethodType;
 import me.coley.cafedude.classfile.constant.CpNameType;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.FieldModel;
 import me.coley.recaf.decompile.fallback.model.MethodModel;
@@ -37,7 +38,7 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPool
 			Printer fieldPrinter = new Printer();
 			fieldPrinter.setIndent("    ");
 			for (FieldModel fieldModel : model.getFields())
-				fieldPrinter.appendMultiLine(fieldModel.print());
+				fieldPrinter.appendMultiLine(fieldModel.print(PrintContext.DEFAULT_CTX));
 			out.appendMultiLine(fieldPrinter.toString());
 		}
 		out.newLine();
@@ -45,7 +46,7 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPool
 			Printer methodPrinter = new Printer();
 			methodPrinter.setIndent("    ");
 			for (MethodModel methodModel : model.getMethods()) {
-				methodPrinter.appendMultiLine(methodModel.print());
+				methodPrinter.appendMultiLine(methodModel.print(PrintContext.DEFAULT_CTX));
 				methodPrinter.newLine();
 			}
 			out.appendMultiLine(methodPrinter.toString());

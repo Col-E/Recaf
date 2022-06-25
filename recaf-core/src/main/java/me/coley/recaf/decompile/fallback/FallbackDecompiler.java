@@ -3,6 +3,7 @@ package me.coley.recaf.decompile.fallback;
 import me.coley.cafedude.classfile.ClassFile;
 import me.coley.cafedude.io.ClassFileReader;
 import me.coley.recaf.BuildConfig;
+import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.decompile.DecompileOption;
 import me.coley.recaf.decompile.Decompiler;
@@ -37,7 +38,7 @@ public class FallbackDecompiler extends Decompiler {
 			// TODO: Resilience measures Handle funky unicode escapes
 			ClassFile classFile = new ClassFileReader().read(applyInterceptors(info.getValue()));
 			ClassModel model = new ClassModel(classFile);
-			return model.print();
+			return model.print(PrintContext.DEFAULT_CTX);
 		} catch (Throwable t) {
 			String message = StringUtil.traceToString(t);
 			return "// Could not parse class: " + info.getName() + "\n// " +

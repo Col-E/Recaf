@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
+import me.coley.recaf.assemble.ast.PrintContext;
+
 /**
  * Multi array instruction.
  *
@@ -43,7 +45,7 @@ public class MultiArrayInstruction extends AbstractInstruction {
 	}
 
 	@Override
-	public String print() {
+	public String print(PrintContext context) {
 		return getOpcode() + " " + getDesc() + " " + getDimensions();
 	}
 }
