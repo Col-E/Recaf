@@ -3,6 +3,7 @@ package me.coley.recaf.graph;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.util.Recurse;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -22,8 +23,8 @@ public class InheritanceVertex {
 	private final Function<String, Collection<String>> childrenLookup;
 	private final CommonClassInfo value;
 	private final boolean isPrimary;
-	private Set<InheritanceVertex> parents;
-	private Set<InheritanceVertex> children;
+	private volatile Set<InheritanceVertex> parents;
+	private volatile Set<InheritanceVertex> children;
 
 	/**
 	 * @param value
@@ -99,12 +100,10 @@ public class InheritanceVertex {
 	 * @return The entire class hierarchy.
 	 */
 	public Set<InheritanceVertex> getFamily() {
-		Set<InheritanceVertex> family = new HashSet<>();
-		getAllParents().forEach(p -> {
-			if (!p.getName().equals("java/lang/Object"))
-				family.addAll(p.getAllChildren());
-		});
-		return family;
+		return parents()
+				.filter(x -> !"java/lang/Object".equals(x.getName()))
+				.flatMap(InheritanceVertex::children)
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -118,28 +117,33 @@ public class InheritanceVertex {
 	 * @return All classes this extends or implements.
 	 */
 	public Stream<InheritanceVertex> parents() {
-		return Stream.concat(
-				Stream.of(this),
-				getParents().stream().flatMap(InheritanceVertex::parents));
+		return Recurse.recurse(this, x -> x.getParents().stream());
 	}
 
 	/**
 	 * @return Classes this directly extends or implements.
 	 */
 	public Set<InheritanceVertex> getParents() {
-		String name = getName();
+		Set<InheritanceVertex> parents = this.parents;
 		if (parents == null) {
-			parents = new HashSet<>();
-			String superName = value.getSuperName();
-			if (superName != null && !name.equals(superName)) {
-				InheritanceVertex parentVertex = lookup.apply(superName);
-				if (parentVertex != null)
-					parents.add(parentVertex);
-			}
-			for (String itf : value.getInterfaces()) {
-				InheritanceVertex itfVertex = lookup.apply(itf);
-				if (itfVertex != null && !name.equals(itf))
-					parents.add(itfVertex);
+			synchronized (this) {
+				parents = this.parents;
+				if (parents == null) {
+					String name = getName();
+					parents = new HashSet<>();
+					String superName = value.getSuperName();
+					if (superName != null && !name.equals(superName)) {
+						InheritanceVertex parentVertex = lookup.apply(superName);
+						if (parentVertex != null)
+							parents.add(parentVertex);
+					}
+					for (String itf : value.getInterfaces()) {
+						InheritanceVertex itfVertex = lookup.apply(itf);
+						if (itfVertex != null && !name.equals(itf))
+							parents.add(itfVertex);
+					}
+					this.parents = parents;
+				}
 			}
 		}
 		return parents;
@@ -153,22 +157,27 @@ public class InheritanceVertex {
 	}
 
 	private Stream<InheritanceVertex> children() {
-		return Stream.concat(
-				Stream.of(this),
-				getChildren().stream().flatMap(InheritanceVertex::children));
+		return Recurse.recurse(this, x -> x.getChildren().stream());
 	}
 
 	/**
 	 * @return Classes that extend or implement this class.
 	 */
 	public Set<InheritanceVertex> getChildren() {
+		Set<InheritanceVertex> children = this.children;
 		if (children == null) {
-			String name = getName();
-			children = new HashSet<>();
-			childrenLookup.apply(value.getName())
-					.stream()
-					.filter(childName -> !name.equals(childName))
-					.forEach(childName -> children.add(lookup.apply(childName)));
+			synchronized (this) {
+				children = this.children;
+				if (children == null) {
+					String name = getName();
+					children = childrenLookup.apply(value.getName())
+							.stream()
+							.filter(childName -> !name.equals(childName))
+							.map(lookup)
+							.collect(Collectors.toSet());
+					this.children = children;
+				}
+			}
 		}
 		return children;
 	}

@@ -8,10 +8,7 @@ import me.coley.recaf.mapping.data.MethodMapping;
 import me.coley.recaf.mapping.data.VariableMapping;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -72,8 +69,7 @@ public class MappingsAdapter implements Mappings {
 		MappingKey key = getFieldKey(ownerName, fieldName, fieldDesc);
 		String mapped = mappings.get(key);
 		if (mapped == null && graph != null) {
-			key = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
-			if (key != null) mapped = mappings.get(key);
+			mapped = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
 		}
 		return mapped;
 	}
@@ -83,8 +79,7 @@ public class MappingsAdapter implements Mappings {
 		MappingKey key = getMethodKey(ownerName, methodName, methodDesc);
 		String mapped = mappings.get(key);
 		if (mapped == null && graph != null) {
-			key = findInParent(ownerName, parent -> getMethodKey(parent, methodName, methodDesc));
-			if (key != null) mapped = mappings.get(key);
+			mapped = findInParent(ownerName, parent -> getMethodKey(parent, methodName, methodDesc));
 		}
 		return mapped;
 	}
@@ -188,15 +183,20 @@ public class MappingsAdapter implements Mappings {
 	 *
 	 * @return The first mapping match in a parent class found by the lookup function.
 	 */
-	private MappingKey findInParent(String owner, Function<String, ? extends MappingKey> lookup) {
+	private String findInParent(String owner, Function<String, ? extends MappingKey> lookup) {
 		InheritanceVertex vertex = graph.getVertex(owner);
 		if (vertex == null)
 			return null;
-		return vertex.parents()
-				.map(InheritanceVertex::getName)
-				.map(lookup)
-				.filter(Objects::nonNull)
-				.findFirst().orElse(null);
+		Iterator<InheritanceVertex> iterator = vertex.parents().iterator();
+		while (iterator.hasNext()) {
+			vertex = iterator.next();
+			MappingKey key = lookup.apply(vertex.getName());
+			String result = mappings.get(key);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
 	}
 
 	/**

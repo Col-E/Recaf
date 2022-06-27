@@ -131,7 +131,7 @@ public class FieldContextBuilder extends MemberContextBuilder {
 					// Create the new class bytecode filtered through the renamer
 					ClassInfo javaOwner = (ClassInfo) ownerInfo;
 					ClassWriter cw = new ClassWriter(WRITE_FLAGS);
-					ClassReader cr = new ClassReader(javaOwner.getValue());
+					ClassReader cr = javaOwner.getClassReader();
 					cr.accept(new MemberCopyingVisitor(cw, fieldInfo, newName), READ_FLAGS);
 					resource.getClasses().put(ClassInfo.read(cw.toByteArray()));
 				} else if (ownerInfo instanceof DexClassInfo) {
@@ -163,7 +163,7 @@ public class FieldContextBuilder extends MemberContextBuilder {
 			if (ownerInfo instanceof ClassInfo) {
 				ClassInfo javaOwner = (ClassInfo) ownerInfo;
 				ClassWriter cw = new ClassWriter(WRITE_FLAGS);
-				ClassReader cr = new ClassReader(javaOwner.getValue());
+				ClassReader cr = javaOwner.getClassReader();
 				MemberRemovingVisitor remover = new MemberRemovingVisitor(cw, fieldInfo);
 				cr.accept(remover, READ_FLAGS);
 				resource.getClasses().put(ClassInfo.read(cw.toByteArray()));

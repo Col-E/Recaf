@@ -52,6 +52,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private static final Logger logger = Logging.get(MainMenu.class);
 	private static MainMenu menu;
 	private final BooleanProperty noWorkspace = new SimpleBooleanProperty(true);
+	private final BooleanProperty remapping = new SimpleBooleanProperty(false);
 	private final MenuLabel status = new MenuLabel("Status: IDLE");
 	private final Menu menuRecent = menu("menu.file.recent", Icons.RECENT);
 	private final Menu menuSearch = menu("menu.search", Icons.ACTION_SEARCH);
@@ -80,7 +81,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		itemViewChanges.disableProperty().bind(noWorkspace);
 		itemClose.disableProperty().bind(noWorkspace);
 		menuSearch.disableProperty().bind(noWorkspace);
-		menuMappings.disableProperty().bind(noWorkspace);
+		menuMappings.disableProperty().bind(noWorkspace.or(remapping));
 		SimpleListProperty<MenuItem> recentItemsProperty = new SimpleListProperty<>(menuRecent.getItems());
 		menuRecent.disableProperty().bind(recentItemsProperty.emptyProperty());
 
@@ -200,10 +201,15 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		if (mappingsText == null) {
 			return;
 		}
-		Mappings mappings = mappingsTool.create();
-		mappings.parse(mappingsText);
-		Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
-		MappingUtils.applyMappings(ClassReader.EXPAND_FRAMES, 0, RecafUI.getController(), resource, mappings);
+		remapping.set(true);
+		try {
+			Mappings mappings = mappingsTool.create();
+			mappings.parse(mappingsText);
+			Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
+			MappingUtils.applyMappings(ClassReader.EXPAND_FRAMES, 0, RecafUI.getController(), resource, mappings);
+		} finally {
+			remapping.set(false);
+		}
 	}
 
 	private void exportMappings(MappingsTool mappingsTool) {
