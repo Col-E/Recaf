@@ -36,6 +36,7 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
@@ -210,6 +211,12 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 			}, threadPool).orTimeout(timeout, TimeUnit.MILLISECONDS);
 			long finalTimeout = timeout;
 			BiConsumer<String, Throwable> onComplete = (code, t) -> {
+				if (t instanceof CompletionException) {
+					t = t.getCause();
+				}
+				if (t instanceof ThreadDeath) {
+					return;
+				}
 				hideOverlay();
 				log.debug("Finished decompilation of {}", newValue.getName(), t);
 				if (t != null) {

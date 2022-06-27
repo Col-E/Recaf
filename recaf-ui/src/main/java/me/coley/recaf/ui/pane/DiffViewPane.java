@@ -36,7 +36,7 @@ import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
@@ -51,8 +51,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Stack;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,8 +63,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
 	private static final Logger logger = Logging.get(DiffViewPane.class);
 	private static final long TIMEOUT_MS = 10_000;
-	private final ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("DiffView");
-	private final ObservableList<ItemInfo> items = FXCollections.observableArrayList();
+	private final ObservableList<ItemInfo> items = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
 	private Workspace workspace;
 
 	/**
@@ -116,27 +114,26 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 			ClassInfo current = (ClassInfo) item;
 			ClassInfo initial = history.firstElement();
 			// Create a countdown for the two classes to decompile
-			CountDownLatch latch = new CountDownLatch(2);
-			DiffableDecompilePane currentDecompile = new DiffableDecompilePane(latch);
-			DiffableDecompilePane initialDecompile = new DiffableDecompilePane(latch);
+			CompletableFuture<Void> currentFuture = new CompletableFuture<>();
+			CompletableFuture<Void> initialFuture = new CompletableFuture<>();
+			DiffableDecompilePane currentDecompile = new DiffableDecompilePane(currentFuture);
+			DiffableDecompilePane initialDecompile = new DiffableDecompilePane(initialFuture);
 			currentDecompile.onUpdate(current);
 			initialDecompile.onUpdate(initial);
 			// Add to the UI
 			split.getItems().addAll(initialDecompile, currentDecompile);
 			// When the class versions both get decompiled, run a basic text diff and highlight modified lines.
-			service.execute(() -> {
-				try {
-					if (!latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-						logger.error("Timed out waiting for decompilation");
-						return;
-					}
-					highlightDiff(initialDecompile, currentDecompile);
-					// Bind scrolling after
-					currentDecompile.bindScrollTo(initialDecompile);
-				} catch (InterruptedException e) {
-					logger.error("Decompilation task interrupted");
-				}
-			});
+			CompletableFuture.allOf(currentFuture, initialFuture)
+							.orTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+							.whenCompleteAsync((__, t) -> {
+								if (t != null) {
+									logger.error("Failed to make diff view", t);
+								} else {
+									highlightDiff(initialDecompile, currentDecompile);
+									// Bind scrolling after
+									currentDecompile.bindScrollTo(initialDecompile);
+								}
+							}, ThreadUtil.executor());
 			return split;
 		} else if (item instanceof DexClassInfo) {
 			// TODO: Android diff
@@ -257,8 +254,10 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 
 	@Override
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
-		items.remove(oldValue);
-		items.add(newValue);
+		synchronized (items) {
+			items.remove(oldValue);
+			items.add(newValue);
+		}
 	}
 
 	@Override
@@ -273,8 +272,10 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 
 	@Override
 	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
-		items.remove(oldValue);
-		items.add(newValue);
+		synchronized (items) {
+			items.remove(oldValue);
+			items.add(newValue);
+		}
 	}
 
 	@Override
@@ -289,8 +290,10 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 
 	@Override
 	public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
-		items.remove(oldValue);
-		items.add(newValue);
+		synchronized (items) {
+			items.remove(oldValue);
+			items.add(newValue);
+		}
 	}
 
 	/**
@@ -356,11 +359,11 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	 * An extension of the Java decompile pane for line difference highlighting.
 	 */
 	private static class DiffableDecompilePane extends DecompilePane implements Diffable {
-		private final CountDownLatch latch;
+		private final CompletableFuture<Void> future;
 		private String code;
 
-		public DiffableDecompilePane(CountDownLatch latch) {
-			this.latch = latch;
+		public DiffableDecompilePane(CompletableFuture<Void> future) {
+			this.future = future;
 			getJavaArea().setEditable(false);
 			// This is a lazy fix.
 			// Prevent users from switching decompiler and thus invalidating the text.
@@ -404,7 +407,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		@Override
 		protected void onDecompileCompletion(String code) {
 			this.code = code;
-			latch.countDown();
+			this.future.complete(null);
 		}
 	}
 }
