@@ -61,7 +61,7 @@ subprojects {
         def jadxVersion = '1.3.3'
         def jpVersion = '3.24.2'
         def junitVersion = '5.8.2'
-        def lljzipVersion = '1.1.5'
+        def lljzipVersion = '1.1.6'
         def ssvmVersion = '1.8.0'
         def quiltflowerVersion = '1.8.1'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
