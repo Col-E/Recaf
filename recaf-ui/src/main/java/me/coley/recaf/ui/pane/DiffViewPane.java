@@ -254,10 +254,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 
 	@Override
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
-		synchronized (items) {
-			items.remove(oldValue);
-			items.add(newValue);
-		}
+		items.remove(oldValue);
+		items.add(newValue);
 	}
 
 	@Override
@@ -272,10 +270,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 
 	@Override
 	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
-		synchronized (items) {
-			items.remove(oldValue);
-			items.add(newValue);
-		}
+		items.remove(oldValue);
+		items.add(newValue);
 	}
 
 	@Override
@@ -290,10 +286,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 
 	@Override
 	public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
-		synchronized (items) {
-			items.remove(oldValue);
-			items.add(newValue);
-		}
+		items.remove(oldValue);
+		items.add(newValue);
 	}
 
 	/**

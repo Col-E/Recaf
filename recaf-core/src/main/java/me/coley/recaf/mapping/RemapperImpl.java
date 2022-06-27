@@ -97,7 +97,9 @@ public class RemapperImpl extends Remapper {
 		while (dimensions-- != 0) {
 			builder.append('[');
 		}
+		builder.append('L');
 		builder.append(map(descriptor.substring(bookkeep + 1, descriptor.length() - 1)));
+		builder.append(';');
 		return builder.toString();
 	}
 
