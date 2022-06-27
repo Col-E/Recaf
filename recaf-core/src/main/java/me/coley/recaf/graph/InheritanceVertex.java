@@ -114,7 +114,10 @@ public class InheritanceVertex {
 		return parents().collect(Collectors.toSet());
 	}
 
-	private Stream<InheritanceVertex> parents() {
+	/**
+	 * @return All classes this extends or implements.
+	 */
+	public Stream<InheritanceVertex> parents() {
 		return Stream.concat(
 				Stream.of(this),
 				getParents().stream().flatMap(InheritanceVertex::parents));

@@ -18,6 +18,7 @@ import java.util.Map;
  * @author Matt Coley
  */
 public class RuntimeResource extends Resource {
+	private static final Object STUB = new Object();
 	private static final Logger logger = Logging.get(RuntimeResource.class);
 	private static final RuntimeResource instance = new RuntimeResource();
 	private final ClassMap runtimeMap = createRuntimeMap();
@@ -40,7 +41,7 @@ public class RuntimeResource extends Resource {
 
 	private ClassMap createRuntimeMap() {
 		Map<String, ClassInfo> map = new HashMap<String, ClassInfo>() {
-			private final Map<String, ClassInfo> cache = new HashMap<>();
+			private final Map<String, Object> cache = new HashMap<>();
 
 			@Override
 			public ClassInfo get(Object name) {
@@ -49,8 +50,11 @@ public class RuntimeResource extends Resource {
 				String key = name.toString();
 				if (key.contains("."))
 					key = key.replace('.', '/');
-				if (cache.containsKey(key))
-					return cache.get(key);
+				Object present = cache.get(key);
+				if (present == STUB)
+					return null;
+				if (present instanceof ClassInfo)
+					return (ClassInfo) present;
 				// Can't do "computeIfAbsent" since we also want to store null values.
 				byte[] value = null;
 				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
@@ -60,7 +64,11 @@ public class RuntimeResource extends Resource {
 				} catch (IOException ex) {
 					logger.error("Failed to fetch runtime bytecode of class: " + key, ex);
 				}
-				ClassInfo info = value == null ? null : ClassInfo.read(value);
+				if (value == null) {
+					cache.put(key, STUB);
+					return null;
+				}
+				ClassInfo info = ClassInfo.read(value);
 				cache.put(key, info);
 				return info;
 			}
@@ -68,6 +76,11 @@ public class RuntimeResource extends Resource {
 			@Override
 			public boolean containsKey(Object key) {
 				return get(key) != null;
+			}
+
+			@Override
+			public void clear() {
+				// Prevent clearing
 			}
 		};
 		return new ClassMap(this, map);
