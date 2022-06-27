@@ -27,6 +27,17 @@ public class SimplePluginManager implements PluginManager {
 	}
 
 	@Override
+	public boolean isSupported(ByteSource source) throws IOException {
+		List<PluginLoader> loaders = this.loaders;
+		for (PluginLoader loader : loaders) {
+			if (loader.isSupported(source)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends Plugin> PluginContainer<T> getPlugin(String name) {
 		return (PluginContainer<T>) nameMap.get(name.toLowerCase(Locale.ROOT));
@@ -38,7 +49,7 @@ public class SimplePluginManager implements PluginManager {
 	}
 
 	@Override
-	public <T extends Plugin> Collection<? super PluginContainer<T>> getPlugins() {
+	public Collection<? super PluginContainer<? extends Plugin>> getPlugins() {
 		return Collections.unmodifiableCollection(nameMap.values());
 	}
 

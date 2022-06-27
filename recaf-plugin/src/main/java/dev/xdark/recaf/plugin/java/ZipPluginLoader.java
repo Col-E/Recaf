@@ -10,8 +10,8 @@ import me.coley.recaf.RecafConstants;
 import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.CancelSignal;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
-import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -65,7 +65,7 @@ public final class ZipPluginLoader implements PluginLoader {
 				if (entry.isDirectory()) {
 					continue;
 				}
-				byte[] bytes = IOUtils.toByteArray(zis);
+				byte[] bytes = IOUtil.toByteArray(zis);
 				content.put(entry.getName(), bytes);
 			}
 		}
@@ -142,7 +142,7 @@ public final class ZipPluginLoader implements PluginLoader {
 			if (classLoader != null) {
 				// Something went wrong during plugin loading,
 				// so don't leak a loader.
-				IOUtils.closeQuietly(classLoader);
+				IOUtil.closeQuietly(classLoader);
 			}
 		}
 	}
