@@ -9,11 +9,7 @@ import me.coley.cafedude.classfile.annotation.ElementValue;
 import me.coley.cafedude.classfile.annotation.EnumElementValue;
 import me.coley.cafedude.classfile.annotation.PrimitiveElementValue;
 import me.coley.cafedude.classfile.annotation.Utf8ElementValue;
-import me.coley.cafedude.classfile.constant.CpClass;
-import me.coley.cafedude.classfile.constant.CpDouble;
-import me.coley.cafedude.classfile.constant.CpFloat;
-import me.coley.cafedude.classfile.constant.CpInt;
-import me.coley.cafedude.classfile.constant.CpLong;
+import me.coley.cafedude.classfile.constant.*;
 import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.Type;
@@ -71,15 +67,13 @@ public class PrintUtils {
 			case 'c': // Class
 			{
 				ClassElementValue classElementValue = (ClassElementValue) elementValue;
-				CpClass cpClass = (CpClass) pool.get(classElementValue.getClassIndex());
-				String className = pool.getUtf(cpClass.getIndex());
+				String className = pool.getUtf(classElementValue.getClassIndex());
 				return StringUtil.shortenPath(className) + ".class";
 			}
 			case 'e': // Enum
 			{
 				EnumElementValue enumElementValue = (EnumElementValue) elementValue;
-				CpClass cpClass = (CpClass) pool.get(enumElementValue.getTypeIndex());
-				String enumName = pool.getUtf(cpClass.getIndex());
+				String enumName = pool.getUtf(enumElementValue.getTypeIndex());
 				String enumEntryName = pool.getUtf(enumElementValue.getNameIndex());
 				return StringUtil.shortenPath(enumName) + "." + enumEntryName;
 			}
