@@ -5,7 +5,6 @@ import me.coley.recaf.util.ByteHeaderUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
-import java.io.DataInputStream;
 import java.nio.file.Path;
 
 /**
@@ -64,7 +63,7 @@ public abstract class FileContentSource extends ContentSource {
 		// 'dylib' files can also have CAFEBABE as a magic header... Gee, thanks Apple :/
 		// Because of this we'll employ some more sanity checks.
 		// Version number must be non-zero
-		int version = (content[6] << 8) + content[7];
+		int version = ((content[6] & 0xFF) << 8) + (content[7] & 0xFF);
 		if (version < VersionConstants.JAVA1)
 			return false;
 		// Must include some constant pool entries.
@@ -72,8 +71,8 @@ public abstract class FileContentSource extends ContentSource {
 		//  - utf8  - name of current class
 		//  - class - wrapper of prior
 		//  - utf8  - name of object class
-		//  - class - wrapper of prior
-		int cpSize = (content[8] << 8) + content[9];
+		//  - class - wrapper of prior`
+		int cpSize = ((content[8] & 0xFF) << 8) + (content[9] & 0xFF);
 		return cpSize >= 4;
 	}
 
