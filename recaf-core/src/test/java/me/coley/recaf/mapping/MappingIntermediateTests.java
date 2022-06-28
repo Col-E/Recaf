@@ -2,8 +2,7 @@ package me.coley.recaf.mapping;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for intermediate mapping interoperability.
@@ -37,6 +36,8 @@ public class MappingIntermediateTests {
 			assertEquals(newMethodName, mappings.getMappedMethodName(oldClassName, oldMethodName, methodDesc));
 			if (mappings.supportsExportText())
 				System.out.println(mappings.exportText());
+			else
+				System.out.println("Mappings does not support text export: " + mappings.implementationName() + "\n");
 		}
 	}
 }
