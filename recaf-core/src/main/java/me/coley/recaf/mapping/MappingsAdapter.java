@@ -8,9 +8,7 @@ import me.coley.recaf.mapping.data.MethodMapping;
 import me.coley.recaf.mapping.data.VariableMapping;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -27,13 +25,7 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 public class MappingsAdapter implements Mappings {
-	private static final String SPLIT_PATTERN = "\t";
-	private static final String FIELD_KEY_FMT = "%s\t%s";
-	private static final String FIELD_KEY_TYPED_FMT = "%s\t%s\t%s";
-	private static final String METHOD_KEY_FMT = "%s\t%s\t%s";
-	private static final String VAR_KEY_FMT = "%s\t%s\t%s\t%s";
-	private static final String VAR_KEY_TYPED_FMT = "%s\t%s\t%s\t%s\t%s";
-	private final Map<String, String> mappings = new TreeMap<>();
+	private final Map<MappingKey, String> mappings = new HashMap<>();
 	private final String implementationName;
 	private final boolean supportFieldTypeDifferentiation;
 	private final boolean supportVariableTypeDifferentiation;
@@ -56,7 +48,7 @@ public class MappingsAdapter implements Mappings {
 
 	@Override
 	public String getMappedClassName(String internalName) {
-		String mapped = mappings.getOrDefault(internalName, null);
+		String mapped = mappings.get(getClassKey(internalName));
 		if (mapped == null && isInner(internalName)) {
 			// TODO: Similar to providing the 'graph' we can provide a workspace that will let us access the class's
 			//  actual attributes. We can check for inner classes that way in case an obfuscated sample disregards
@@ -74,22 +66,20 @@ public class MappingsAdapter implements Mappings {
 
 	@Override
 	public String getMappedFieldName(String ownerName, String fieldName, String fieldDesc) {
-		String key = getFieldKey(ownerName, fieldName, fieldDesc);
-		String mapped = mappings.getOrDefault(key, null);
+		MappingKey key = getFieldKey(ownerName, fieldName, fieldDesc);
+		String mapped = mappings.get(key);
 		if (mapped == null && graph != null) {
-			key = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
-			if (key != null) mapped = mappings.getOrDefault(key, null);
+			mapped = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
 		}
 		return mapped;
 	}
 
 	@Override
 	public String getMappedMethodName(String ownerName, String methodName, String methodDesc) {
-		String key = getMethodKey(ownerName, methodName, methodDesc);
-		String mapped = mappings.getOrDefault(key, null);
+		MappingKey key = getMethodKey(ownerName, methodName, methodDesc);
+		String mapped = mappings.get(key);
 		if (mapped == null && graph != null) {
-			key = findInParent(ownerName, parent -> getMethodKey(parent, methodName, methodDesc));
-			if (key != null) mapped = mappings.getOrDefault(key, null);
+			mapped = findInParent(ownerName, parent -> getMethodKey(parent, methodName, methodDesc));
 		}
 		return mapped;
 	}
@@ -97,8 +87,8 @@ public class MappingsAdapter implements Mappings {
 	@Override
 	public String getMappedVariableName(String className, String methodName, String methodDesc,
 										String name, String desc, int index) {
-		String key = getVariableKey(className, methodName, methodDesc, name, desc, index);
-		return mappings.getOrDefault(key, null);
+		MappingKey key = getVariableKey(className, methodName, methodDesc, name, desc, index);
+		return mappings.get(key);
 	}
 
 	@Override
@@ -119,37 +109,24 @@ public class MappingsAdapter implements Mappings {
 	@Override
 	public IntermediateMappings exportIntermediate() {
 		IntermediateMappings intermediate = new IntermediateMappings();
-		for (Map.Entry<String, String> entry : mappings.entrySet()) {
-			String key = entry.getKey();
+		for (Map.Entry<MappingKey, String> entry : new TreeMap<>(mappings).entrySet()) {
+			MappingKey key = entry.getKey();
 			String newName = entry.getValue();
-			if (!key.contains(SPLIT_PATTERN)) {
-				// Must be a class
-				intermediate.addClass(key, newName);
-			} else if (key.contains("(")) {
-				String[] split = key.split(SPLIT_PATTERN);
-				// Must be a method or variable
-				String oldOwner = split[0];
-				String oldName = split[1];
-				String oldDesc = split[2];
-				if (split.length >= 4) {
-					// variable
-				} else {
-					// method
-					intermediate.addMethod(oldOwner, oldDesc, oldName, newName);
-				}
-			} else {
-				// Must be a field
-				String[] split = key.split(SPLIT_PATTERN);
-				String oldOwner = split[0];
-				String oldName = split[1];
-				if (split.length >= 3) {
-					// Field with type
-					String oldDesc = split[2];
-					intermediate.addField(oldOwner, oldDesc, oldName, newName);
-				} else {
-					// Field
-					intermediate.addField(oldOwner, null, oldName, newName);
-				}
+			if (key instanceof ClassMappingKey) {
+				intermediate.addClass(((ClassMappingKey) key).getName(), newName);
+				continue;
+			}
+			if (key instanceof MethodMappingKey) {
+				MethodMappingKey mk = (MethodMappingKey) key;
+				intermediate.addMethod(mk.getOwner(), mk.getDesc(), mk.getName(), newName);
+				continue;
+			}
+			if (key instanceof FieldMappingKey) {
+				FieldMappingKey fk = (FieldMappingKey) key;
+				String oldOwner = fk.getOwner();
+				String oldName = fk.getName();
+				String oldDesc = fk.getDesc();
+				intermediate.addField(oldOwner, oldDesc, oldName, newName);
 			}
 		}
 		return intermediate;
@@ -206,15 +183,20 @@ public class MappingsAdapter implements Mappings {
 	 *
 	 * @return The first mapping match in a parent class found by the lookup function.
 	 */
-	private String findInParent(String owner, Function<String, String> lookup) {
+	private String findInParent(String owner, Function<String, ? extends MappingKey> lookup) {
 		InheritanceVertex vertex = graph.getVertex(owner);
 		if (vertex == null)
 			return null;
-		return vertex.getParents().stream()
-				.map(InheritanceVertex::getName)
-				.map(lookup)
-				.filter(Objects::nonNull)
-				.findFirst().orElse(null);
+		Iterator<InheritanceVertex> iterator = vertex.parents().iterator();
+		while (iterator.hasNext()) {
+			vertex = iterator.next();
+			MappingKey key = lookup.apply(vertex.getName());
+			String result = mappings.get(key);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -274,7 +256,7 @@ public class MappingsAdapter implements Mappings {
 	 * 		New name.
 	 */
 	public void addClass(String originalName, String renamedName) {
-		mappings.put(originalName, renamedName);
+		mappings.put(getClassKey(originalName), renamedName);
 	}
 
 	/**
@@ -355,8 +337,18 @@ public class MappingsAdapter implements Mappings {
 	 */
 	public void addVariable(String className, String methodName, String methodDesc,
 							String originalName, String desc, int index, String renamedName) {
-		String key = getVariableKey(className, methodName, methodDesc, originalName, desc, index);
+		MappingKey key = getVariableKey(className, methodName, methodDesc, originalName, desc, index);
 		mappings.put(key, renamedName);
+	}
+
+	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Key format for class.
+	 */
+	protected MappingKey getClassKey(String name) {
+		return new ClassMappingKey(name);
 	}
 
 	/**
@@ -369,12 +361,8 @@ public class MappingsAdapter implements Mappings {
 	 *
 	 * @return Key format for field.
 	 */
-	protected String getFieldKey(String ownerName, String fieldName, String fieldDesc) {
-		if (supportFieldTypeDifferentiation) {
-			return String.format(FIELD_KEY_TYPED_FMT, ownerName, fieldName, fieldDesc);
-		} else {
-			return String.format(FIELD_KEY_FMT, ownerName, fieldName);
-		}
+	protected MappingKey getFieldKey(String ownerName, String fieldName, String fieldDesc) {
+		return new FieldMappingKey(ownerName, fieldName, supportFieldTypeDifferentiation ? fieldDesc : null);
 	}
 
 	/**
@@ -387,8 +375,8 @@ public class MappingsAdapter implements Mappings {
 	 *
 	 * @return Key format for method.
 	 */
-	protected String getMethodKey(String ownerName, String methodName, String methodDesc) {
-		return String.format(METHOD_KEY_FMT, ownerName, methodName, methodDesc);
+	protected MappingKey getMethodKey(String ownerName, String methodName, String methodDesc) {
+		return new MethodMappingKey(ownerName, methodName, methodDesc);
 	}
 
 	/**
@@ -407,12 +395,8 @@ public class MappingsAdapter implements Mappings {
 	 *
 	 * @return Key format for variable.
 	 */
-	protected String getVariableKey(String className, String methodName, String methodDesc,
+	protected MappingKey getVariableKey(String className, String methodName, String methodDesc,
 									String name, String desc, int index) {
-		if (supportVariableTypeDifferentiation) {
-			return String.format(VAR_KEY_TYPED_FMT, className, methodName, methodDesc, name, desc);
-		} else {
-			return String.format(VAR_KEY_FMT, className, methodName, methodDesc, name);
-		}
+		return new VariableMappingKey(className, methodName, methodDesc, name, desc);
 	}
 }

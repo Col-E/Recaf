@@ -204,6 +204,13 @@ public class ThreadUtil {
 	}
 
 	/**
+	 * @return Backing executor.
+	 */
+	public static ScheduledExecutorService executor() {
+		return scheduledService;
+	}
+
+	/**
 	 * Shutdowns executors.
 	 */
 	public static void shutdown() {

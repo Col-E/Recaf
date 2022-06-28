@@ -4,8 +4,11 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.workspace.resource.Resources;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -14,8 +17,12 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class InheritanceGraph {
+	private static final InheritanceVertex STUB = new InheritanceVertex(null, null, null, false);
 	private static final String OBJECT = "java/lang/Object";
 	private final Multimap<String, String> parentToChild = MultimapBuilder.hashKeys().hashSetValues().build();
+	private final Map<String, InheritanceVertex> vertices = new ConcurrentHashMap<>();
+	private final Function<String, InheritanceVertex> vertexProvider = createVertexProvider();
+
 	private final Workspace workspace;
 
 	/**
@@ -105,13 +112,8 @@ public class InheritanceGraph {
 	 * @return Vertex in graph of class. {@code null} if no such class was found in the inputs.
 	 */
 	public InheritanceVertex getVertex(String name) {
-		CommonClassInfo info = workspace.getResources().getClass(name);
-		if (info == null)
-			info = workspace.getResources().getDexClass(name);
-		if (info == null)
-			return null;
-		boolean isPrimary = workspace.getResources().getPrimary().getClasses().containsKey(info.getName());
-		return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, isPrimary);
+		InheritanceVertex vertex = vertices.computeIfAbsent(name, vertexProvider);
+		return vertex == STUB ? null : vertex;
 	}
 
 	/**
@@ -127,7 +129,7 @@ public class InheritanceGraph {
 		InheritanceVertex vertex = getVertex(first);
 		if (vertex == null || OBJECT.equals(first) || OBJECT.equals(second))
 			return OBJECT;
-		Set<String> firstParents = getVertex(first).getAllParents().stream()
+		Set<String> firstParents = getVertex(first).parents()
 				.map(InheritanceVertex::getName).collect(Collectors.toSet());
 		firstParents.add(first);
 		// Base case
@@ -156,5 +158,18 @@ public class InheritanceGraph {
 		} while(!queue.isEmpty());
 		// Fallback option
 		return OBJECT;
+	}
+
+	private Function<String, InheritanceVertex> createVertexProvider() {
+		return name -> {
+			Resources resources = workspace.getResources();
+			CommonClassInfo info = resources.getClass(name);
+			if (info == null)
+				info = resources.getDexClass(name);
+			if (info == null)
+				return STUB;
+			boolean isPrimary = resources.getPrimary().getClasses().containsKey(info.getName());
+			return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, isPrimary);
+		};
 	}
 }

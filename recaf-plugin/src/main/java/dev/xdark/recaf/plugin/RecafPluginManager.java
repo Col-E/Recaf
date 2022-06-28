@@ -1,6 +1,7 @@
 package dev.xdark.recaf.plugin;
 
 import dev.xdark.recaf.plugin.java.ZipPluginLoader;
+import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.io.ByteSources;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.logging.Logging;
@@ -23,7 +24,6 @@ public class RecafPluginManager extends SimplePluginManager {
 	private final Map<PluginContainer<? extends Plugin>, Path> pluginContainerPathMap = new HashMap<>();
 	private static RecafPluginManager INSTANCE;
 	private static boolean initialized = false;
-	private static final String[] SUFFIX = {".jar"};
 
 	private RecafPluginManager() {
 		registerLoader(new ZipPluginLoader(RecafPluginManager.class.getClassLoader()));
@@ -122,11 +122,9 @@ public class RecafPluginManager extends SimplePluginManager {
 		// Auto close the directory handle
 		try (DirectoryStream<Path> paths = Files.newDirectoryStream(pluginsDir)) {
 			for (Path pluginPath : paths) {
-				// Maybe we should support ".zip"
-				for (String suffix : SUFFIX) {
-					if (pluginPath.getFileName().toString().endsWith(suffix)) {
-						pluginJarPaths.add(pluginPath);
-					}
+				ByteSource source = ByteSources.forPath(pluginPath);
+				if (isSupported(source)) {
+					pluginJarPaths.add(pluginPath);
 				}
 			}
 		}

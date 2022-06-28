@@ -88,26 +88,24 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		if (o == null || getClass() != o.getClass()) return false;
 		ClassInfo info = (ClassInfo) o;
 		return access == info.access &&
-				Objects.equals(name, info.name) &&
+				name.equals(info.name) &&
 				Objects.equals(superName, info.superName) &&
-				Objects.equals(interfaces, info.interfaces) &&
-				Objects.equals(fields, info.fields) &&
-				Objects.equals(methods, info.methods);
+				interfaces.equals(info.interfaces) &&
+				fields.equals(info.fields) &&
+				methods.equals(info.methods);
 	}
 
 	@Override
 	public int hashCode() {
 		int hashCode = this.hashCode;
 		if (hashCode == 0) {
-			hashCode = Objects.hashCode(name);
+			hashCode = name.hashCode();
 			hashCode = 31 * hashCode + Objects.hashCode(superName);
-			hashCode = 31 * hashCode + Objects.hashCode(interfaces);
+			hashCode = 31 * hashCode + interfaces.hashCode();
 			hashCode = 31 * hashCode + access;
-			hashCode = 31 * hashCode + Objects.hashCode(fields);
-			hashCode = 31 * hashCode + Objects.hashCode(methods);
-			if (hashCode == 0)
-				hashCode = 1;
-			this.hashCode = hashCode;
+			hashCode = 31 * hashCode + fields.hashCode();
+			hashCode = 31 * hashCode + methods.hashCode();
+			this.hashCode = hashCode + 1;
 		}
 		return hashCode;
 	}
@@ -135,7 +133,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		ClassReader reader = new ClassReader(value);
 		String className = reader.getClassName();
 		String superName = reader.getSuperName();
-		List<String> interfaces = Arrays.asList(reader.getInterfaces());
+		List<String>[] interfacesWrapper = new List[1];
 		int access = reader.getAccess();
 		int[] versionWrapper = new int[1];
 		List<FieldInfo> fields = new ArrayList<>();
@@ -145,6 +143,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 			public void visit(int version, int access, String name, String signature,
 							  String superName, String[] interfaces) {
 				versionWrapper[0] = version;
+				interfacesWrapper[0] = Arrays.asList(interfaces);
 			}
 
 			@Override
@@ -162,7 +161,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		return new ClassInfo(
 				className,
 				superName,
-				interfaces,
+				interfacesWrapper[0],
 				versionWrapper[0],
 				access,
 				fields,

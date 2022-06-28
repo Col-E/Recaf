@@ -30,6 +30,11 @@ public class RemapperImpl extends Remapper {
 	}
 
 	@Override
+	public String mapType(String internalName) {
+		return map(internalName);
+	}
+
+	@Override
 	public String mapFieldName(String owner, String name, String descriptor) {
 		String mapped = mappings.getMappedFieldName(owner, name, descriptor);
 		if (mapped != null) {
@@ -47,6 +52,55 @@ public class RemapperImpl extends Remapper {
 			return mapped;
 		}
 		return super.mapMethodName(owner, name, descriptor);
+	}
+
+	@Override
+	public String mapMethodDesc(String methodDescriptor) {
+		int lastTypeEndOffset = methodDescriptor.indexOf(';');
+		if (lastTypeEndOffset == -1) {
+			return methodDescriptor;
+		}
+		int lastTypeStartOffset = 0;
+		StringBuilder builder = new StringBuilder(methodDescriptor.length());
+		int tail;
+		do {
+			int bookkeep = lastTypeStartOffset;
+			lastTypeStartOffset = methodDescriptor.indexOf('L', lastTypeStartOffset);
+			// Append leftover parts on the left side
+			builder.append(methodDescriptor, bookkeep, lastTypeStartOffset);
+			String type = methodDescriptor.substring(lastTypeStartOffset + 1, lastTypeEndOffset);
+			String mapped = mapType(type);
+			builder.append('L').append(mapped).append(';');
+			// Skip L_TYPE_;
+			lastTypeStartOffset += type.length() + 2;
+			tail = lastTypeStartOffset;
+		} while ((lastTypeEndOffset = methodDescriptor.indexOf(';', lastTypeEndOffset + 1)) != -1);
+		// Append tail
+		builder.append(methodDescriptor, tail, methodDescriptor.length());
+		return builder.toString();
+	}
+
+	@Override
+	public String mapDesc(String descriptor) {
+		if (descriptor.charAt(0) == '(') {
+			return mapMethodDesc(descriptor);
+		}
+		if (descriptor.charAt(descriptor.length() - 1) != ';') {
+			return descriptor;
+		}
+		int dimensions = 0;
+		while (descriptor.charAt(dimensions) == '[') {
+			dimensions++;
+		}
+		StringBuilder builder = new StringBuilder(descriptor.length());
+		int bookkeep = dimensions;
+		while (dimensions-- != 0) {
+			builder.append('[');
+		}
+		builder.append('L');
+		builder.append(map(descriptor.substring(bookkeep + 1, descriptor.length() - 1)));
+		builder.append(';');
+		return builder.toString();
 	}
 
 	@Override
@@ -90,7 +144,7 @@ public class RemapperImpl extends Remapper {
 								  String name, String desc, int index) {
 		String mapped = mappings.getMappedVariableName(className, methodName, methodDesc, name, desc, index);
 		if (mapped != null) {
-			modified = true;
+			markModified();
 			return mapped;
 		}
 		// Use existing variable name.

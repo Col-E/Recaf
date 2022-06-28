@@ -3,7 +3,6 @@ package dev.xdark.recaf.plugin;
 import me.coley.recaf.io.ByteSource;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 
 public interface PluginManager {
@@ -21,6 +20,20 @@ public interface PluginManager {
 	PluginLoader getLoader(ByteSource source) throws IOException;
 
 	/**
+	 * @param source
+	 * 		source to pick from.
+	 *
+	 * @return {@code true} if any loader supports loading plugin
+	 * from the provided byte source.
+	 *
+	 * @throws IOException
+	 * 		if any I/O error occurs.
+	 *
+	 * @see PluginLoader#isSupported(ByteSource)
+	 */
+	boolean isSupported(ByteSource source) throws IOException;
+
+	/**
 	 * @param name
 	 * 		Name of the plugin.
 	 *
@@ -36,7 +49,7 @@ public interface PluginManager {
 	/**
 	 * @return collection of plugins.
 	 */
-	<T extends Plugin> Collection<? super PluginContainer<T>> getPlugins();
+	Collection<? super PluginContainer<? extends Plugin>> getPlugins();
 
 	/**
 	 * Registers new loader.
