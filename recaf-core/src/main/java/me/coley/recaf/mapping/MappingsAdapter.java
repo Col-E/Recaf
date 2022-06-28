@@ -8,7 +8,10 @@ import me.coley.recaf.mapping.data.MethodMapping;
 import me.coley.recaf.mapping.data.VariableMapping;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
 
 /**
@@ -114,14 +117,10 @@ public class MappingsAdapter implements Mappings {
 			String newName = entry.getValue();
 			if (key instanceof ClassMappingKey) {
 				intermediate.addClass(((ClassMappingKey) key).getName(), newName);
-				continue;
-			}
-			if (key instanceof MethodMappingKey) {
+			} else if (key instanceof MethodMappingKey) {
 				MethodMappingKey mk = (MethodMappingKey) key;
 				intermediate.addMethod(mk.getOwner(), mk.getDesc(), mk.getName(), newName);
-				continue;
-			}
-			if (key instanceof FieldMappingKey) {
+			} else if (key instanceof FieldMappingKey) {
 				FieldMappingKey fk = (FieldMappingKey) key;
 				String oldOwner = fk.getOwner();
 				String oldName = fk.getName();

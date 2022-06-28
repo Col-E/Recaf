@@ -10,6 +10,8 @@ import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 
 /**
+ * The MCP SRG format.
+ *
  * @author Matt Coley
  */
 public class SrgMappings extends MappingsAdapter {

@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class AggregatedMappings extends IntermediateMappings {
 	private final Map<String, String> reverseOrderClassMapping = new HashMap<>();
-	private final RemapperImpl remapper = new RemapperImpl(this) {
+	private final RemapperImpl reverseMapper = new RemapperImpl(this) {
 		@Override
 		public String map(String internalName) {
 			String reverseName = reverseOrderClassMapping.get(internalName);
@@ -36,7 +36,6 @@ public class AggregatedMappings extends IntermediateMappings {
 			return internalName;
 		}
 	};
-
 
 	@Override
 	public void addClass(String oldName, String newName) {
@@ -106,13 +105,13 @@ public class AggregatedMappings extends IntermediateMappings {
 	}
 
 
-	private <M extends MemberMapping> boolean updateMembers(Collection<List<M>> x) {
+	private <M extends MemberMapping> boolean updateMembers(Collection<List<M>> newMappings) {
 		// With members, we need to take special care, for example:
 		// 1. a --> b
 		// 2. b.x --> b.y
 		// Now we need to ensure the mapping "a.x --> y" exists.
 		boolean bridged = false;
-		for (List<M> members : x) {
+		for (List<M> members : newMappings) {
 			for (MemberMapping newMemberMapping : members) {
 				String bName = newMemberMapping.getOwnerName();
 				String aName = reverseOrderClassMapping.get(bName);
@@ -128,7 +127,7 @@ public class AggregatedMappings extends IntermediateMappings {
 					oldMemberName = findPriorMemberName(aName, newMemberMapping);
 				}
 				// Desc must always be checked for updates
-				desc = updateDesc(desc);
+				desc = applyReverseMappings(desc);
 				// Add bridged entry
 				if (newMemberMapping.isField()) {
 					addField(owner, desc, oldMemberName, newMemberName);
@@ -140,20 +139,20 @@ public class AggregatedMappings extends IntermediateMappings {
 		return bridged;
 	}
 
-	private String updateDesc(String desc) {
+	private String applyReverseMappings(String desc) {
 		if (desc == null)
 			return null;
 		else if (desc.charAt(0) == '(')
-			return remapper.mapMethodDesc(desc);
+			return reverseMapper.mapMethodDesc(desc);
 		else
-			return remapper.mapDesc(desc);
+			return reverseMapper.mapDesc(desc);
 	}
 
-	private String findPriorMemberName(String oldClassName, MemberMapping newFieldMapping) {
-		if (newFieldMapping.isField()) {
-			return findPriorName(newFieldMapping, getClassFieldMappings(oldClassName));
+	private String findPriorMemberName(String oldClassName, MemberMapping memberMapping) {
+		if (memberMapping.isField()) {
+			return findPriorName(memberMapping, getClassFieldMappings(oldClassName));
 		} else {
-			return findPriorName(newFieldMapping, getClassFieldMappings(oldClassName));
+			return findPriorName(memberMapping, getClassMethodMappings(oldClassName));
 		}
 	}
 
@@ -161,11 +160,12 @@ public class AggregatedMappings extends IntermediateMappings {
 		// If the old name not previously mapped, then it's the same as what the new mapping has given.
 		// So the passed new mapping is a safe default.
 		MemberMapping target = newMethodMapping;
+		String unmappedDesc = applyReverseMappings(newMethodMapping.getDesc());
 		for (MemberMapping oldMethodMapping : members) {
 			// The old name must be the new mapping's base name.
 			// The descriptor types must also match.
 			if (oldMethodMapping.getNewName().equals(newMethodMapping.getOldName()) &&
-					oldMethodMapping.getDesc().equals(newMethodMapping.getDesc())) {
+					oldMethodMapping.getDesc().equals(unmappedDesc)) {
 				target = oldMethodMapping;
 				break;
 			}

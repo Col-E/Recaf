@@ -58,6 +58,7 @@ public class RemapperImpl extends Remapper {
 	public String mapMethodDesc(String methodDescriptor) {
 		int lastTypeEndOffset = methodDescriptor.indexOf(';');
 		if (lastTypeEndOffset == -1) {
+			// No object typees to map
 			return methodDescriptor;
 		}
 		int lastTypeStartOffset = 0;
@@ -75,7 +76,7 @@ public class RemapperImpl extends Remapper {
 			lastTypeStartOffset += type.length() + 2;
 			tail = lastTypeStartOffset;
 		} while ((lastTypeEndOffset = methodDescriptor.indexOf(';', lastTypeEndOffset + 1)) != -1);
-		// Append tail
+		// Append remaining characters (tail onwards)
 		builder.append(methodDescriptor, tail, methodDescriptor.length());
 		return builder.toString();
 	}
