@@ -10,14 +10,13 @@ import java.util.*;
  * @author xDark
  */
 public class ProguardMappings extends MappingsAdapter {
-
     private static final String SPLITTER = " -> ";
 
     /**
      * New proguard instance.
      */
     public ProguardMappings() {
-        super("Progurd", true, false);
+        super("Proguard", true, false);
     }
 
     @Override
@@ -167,12 +166,11 @@ public class ProguardMappings extends MappingsAdapter {
     }
 
     private static final class ProguardClassInfo {
-        List<String> toProcess = List.of();
-        final String mappedName;
+        private List<String> toProcess = List.of();
+        private final String mappedName;
 
         ProguardClassInfo(String mappedName) {
             this.mappedName = mappedName;
         }
     }
-
 }
