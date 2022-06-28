@@ -2,6 +2,7 @@ package me.coley.recaf.mapping;
 
 import me.coley.recaf.TestUtils;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.mapping.impl.ProguardMappings;
 import me.coley.recaf.mapping.impl.SimpleMappings;
 import me.coley.recaf.mapping.impl.TinyV1Mappings;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,7 @@ public class MappingImplementationTests extends TestUtils {
 			String mappingsText = new String(Files.readAllBytes(mapsDir.resolve("inherit-method-map-tiny-1.txt")));
 			Mappings mappings = new TinyV1Mappings();
 			mappings.parse(mappingsText);
-			assertInhertMap(mappings);
+			assertInheritMap(mappings);
 		} catch (IOException e) {
 			fail(e);
 		}
@@ -53,7 +54,19 @@ public class MappingImplementationTests extends TestUtils {
 			String mappingsText = new String(Files.readAllBytes(mapsDir.resolve("inherit-method-map-simple.txt")));
 			Mappings mappings = new SimpleMappings();
 			mappings.parse(mappingsText);
-			assertInhertMap(mappings);
+			assertInheritMap(mappings);
+		} catch (IOException e) {
+			fail(e);
+		}
+	}
+
+	@Test
+	void testProguard() {
+		try {
+			String mappingsText = new String(Files.readAllBytes(mapsDir.resolve("inherit-method-map-proguard.txt")));
+			Mappings mappings = new ProguardMappings();
+			mappings.parse(mappingsText);
+			assertInheritMap(mappings);
 		} catch (IOException e) {
 			fail(e);
 		}
@@ -62,11 +75,14 @@ public class MappingImplementationTests extends TestUtils {
 	// TODO: Test cases for other formats once supported
 	//  - TinyV2
 	//  - TSRG
-	//  - Proguard
 	//  - JadX
 	//  - Enigma
 
-	private void assertInhertMap(Mappings mappings) {
+	/**
+	 *
+	 * @param mappings Mappings to check.
+	 */
+	private void assertInheritMap(Mappings mappings) {
 		assertEquals("rename/Hello", mappings.getMappedClassName("test/Greetings"));
 		assertEquals("newField", mappings.getMappedFieldName("test/Greetings", "oldField", "Ljava/lang/String;"));
 		assertEquals("speak", mappings.getMappedMethodName("test/Greetings", "say", "()V"));

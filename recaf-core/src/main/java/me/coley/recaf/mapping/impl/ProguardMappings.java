@@ -2,7 +2,10 @@ package me.coley.recaf.mapping.impl;
 
 import me.coley.recaf.mapping.MappingsAdapter;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Proguard mappings file implementation.
@@ -26,21 +29,25 @@ public class ProguardMappings extends MappingsAdapter {
         StringBuilder firstCache = new StringBuilder();
         StringBuilder secondCache = new StringBuilder();
         {
+            // Collect class mappings
             ProguardClassInfo classInfo = null;
             int definitionStart = -1;
             for (int i = 0, j = lines.size(); i < j; i++) {
                 String line = lines.get(i);
-                if (line.isEmpty() || line.charAt(0) == '#') {
+                if (line.isEmpty() || line.trim().charAt(0) == '#') {
                     continue;
                 }
                 int index = line.indexOf(SPLITTER);
                 String left = line.substring(0, index);
                 String right = line.substring(index + SPLITTER.length());
+                // Class mapping lines end with ':'
                 if (right.charAt(right.length() - 1) == ':') {
                     String originalClassName = left.replace('.', '/');
                     String obfuscatedName = right.substring(0, right.length() - 1).replace('.', '/');
                     addClass(obfuscatedName, originalClassName);
                     if (classInfo != null) {
+                        // Record the lines that need to be processed for the prior classInfo entry
+                        //  - These lines should include field/method mappings
                         classInfo.toProcess = lines.subList(definitionStart + 1, i);
                     }
                     classInfo = new ProguardClassInfo(obfuscatedName);
@@ -48,10 +55,17 @@ public class ProguardMappings extends MappingsAdapter {
                     definitionStart = i;
                 }
             }
+            // Handle case for recording lines for the last class in the mappings file
+            if (classInfo != null)
+                classInfo.toProcess = lines.subList(definitionStart + 1, lines.size());
         }
+        // Second pass for recording fields and methods
         for (ProguardClassInfo info : classMap.values()) {
             List<String> toProcess = info.toProcess;
             for (String line : toProcess) {
+                if (line.isEmpty() || line.trim().charAt(0) == '#') {
+                    continue;
+                }
                 int index = line.indexOf(SPLITTER);
                 String left = line.substring(0, index);
                 String right = line.substring(index + SPLITTER.length());
