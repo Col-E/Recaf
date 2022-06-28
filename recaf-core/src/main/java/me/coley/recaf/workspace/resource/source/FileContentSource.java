@@ -4,7 +4,6 @@ import me.coley.cafedude.classfile.VersionConstants;
 import me.coley.recaf.util.ByteHeaderUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
 
 import java.io.DataInputStream;
 import java.nio.file.Path;
@@ -57,7 +56,7 @@ public abstract class FileContentSource extends ContentSource {
 	protected static boolean matchesClass(byte[] content) {
 		// Null and size check
 		// The smallest valid class possible that is verifiable is 37 bytes AFAIK, but we'll be generous here.
-		if (content == null ||	content.length <= 16 )
+		if (content == null || content.length <= 16)
 			return false;
 		// We want to make sure the 'magic' is correct.
 		if (!ByteHeaderUtil.match(content, ByteHeaderUtil.CLASS))
@@ -65,7 +64,7 @@ public abstract class FileContentSource extends ContentSource {
 		// 'dylib' files can also have CAFEBABE as a magic header... Gee, thanks Apple :/
 		// Because of this we'll employ some more sanity checks.
 		// Version number must be non-zero
-		int version = (content[8] << 8) + content[9];
+		int version = (content[6] << 8) + content[7];
 		if (version < VersionConstants.JAVA1)
 			return false;
 		// Must include some constant pool entries.
@@ -74,7 +73,7 @@ public abstract class FileContentSource extends ContentSource {
 		//  - class - wrapper of prior
 		//  - utf8  - name of object class
 		//  - class - wrapper of prior
-		int cpSize = (content[10] << 8) + content[11];
+		int cpSize = (content[8] << 8) + content[9];
 		return cpSize >= 4;
 	}
 
