@@ -400,7 +400,9 @@ public class ClassInfoFormatter implements ConstantPoolConstants {
 	}
 
 	private static Node dim(Object value) {
-		Label label = new Label(EscapeUtil.escapeSpace(Objects.toString(value)));
+		// We want to prevent whitespace chars like '\n', but the standard space is something we want to keep.
+		String text = EscapeUtil.escapeSpace(Objects.toString(value)).replace("\\u0020", " ");
+		Label label = new Label(text);
 		label.getStyleClass().add("monospace");
 		label.getStyleClass().add("faint");
 		return label;
