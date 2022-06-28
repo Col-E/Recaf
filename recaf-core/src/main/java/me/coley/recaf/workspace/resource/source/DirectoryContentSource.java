@@ -50,13 +50,13 @@ public class DirectoryContentSource extends ContainerContentSource<Path> {
 	@Override
 	protected boolean isClass(Path entry, ByteSource content) throws IOException {
 		// If the entry does not have the "CAFEBABE" magic header, its not a class.
-		return matchesClassMagic(content.peek(17));
+		return matchesClass(content.peek(17));
 	}
 
 	@Override
 	protected boolean isClass(Path entry, byte[] content) throws IOException {
 		// If the entry does not have the "CAFEBABE" magic header, its not a class.
-		return matchesClassMagic(content);
+		return matchesClass(content);
 	}
 
 	@Override

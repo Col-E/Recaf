@@ -63,13 +63,13 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Lo
 	@Override
 	protected boolean isClass(LocalFileHeader fileHeader, ByteSource content) throws IOException {
 		// If the fileHeader name does not have the "CAFEBABE" magic header, its not a class.
-		return matchesClassMagic(content.peek(17));
+		return matchesClass(content.peek(17));
 	}
 
 	@Override
 	protected boolean isClass(LocalFileHeader entry, byte[] content) throws IOException {
 		// If the fileHeader name does not have the "CAFEBABE" magic header, its not a class.
-		return matchesClassMagic(content);
+		return matchesClass(content);
 	}
 
 	@Override
