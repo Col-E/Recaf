@@ -18,6 +18,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * JavaFX utility to insert the latest version into the classpath when
@@ -34,7 +35,7 @@ import java.util.List;
  */
 public class JFXInjection {
 	private static final String JFX_CLASSIFIER = createClassifier();
-	private static final String JFX_VERSION = "19-ea+6";
+	private static final String JFX_VERSION = "19-ea+8";
 	private static final List<String> JFX_DEPENDENCY_URLS = Arrays.asList(
 			jfxUrlPattern("media"),
 			jfxUrlPattern("controls"),
@@ -48,8 +49,10 @@ public class JFXInjection {
 	 */
 	public static void ensureJavafxSupport() {
 		// Skip if platform class already exists
-		if (ClasspathUtil.classExists(JFXUtils.getPlatformClassName()))
+		if (ClasspathUtil.classExists(JFXUtils.getPlatformClassName())) {
+			logger.info("JavaFX initialized: " + System.getProperty("javafx.version"));
 			return;
+		}
 		// Ensure dependencies are downloaded
 		List<Path> dependencyPaths = getLocalDependencies();
 		addToClasspath(dependencyPaths);
@@ -61,18 +64,29 @@ public class JFXInjection {
 	private static List<Path> getLocalDependencies() {
 		List<Path> dependencyPaths = new ArrayList<>();
 		try {
+			logger.info("Checking local cache for JavaFX dependencies...");
 			Path dependenciesDirectory = Directories.getDependenciesDirectory();
+			List<Path> oldDependencies = Files.list(dependenciesDirectory).collect(Collectors.toList());
 			for (String dependencyPattern : JFX_DEPENDENCY_URLS) {
-				// Get appropriate remote URL
+				// Get appropriate remote URL.
 				String dependencyUrlPath = String.format(dependencyPattern, JFX_CLASSIFIER);
 				Path dependencyFilePath = dependenciesDirectory.resolve(getUrlArtifactFileName(dependencyUrlPath));
-				// Add the file to the paths list we will use later to inject
+				// Prune up-to-date paths from the 'old' list/
+				oldDependencies.remove(dependencyFilePath);
+				// Add the file to the paths list we will use later to inject/
 				dependencyPaths.add(dependencyFilePath);
-				// Write to local directory if they are not already downloaded
+				// Write to local directory if they are not already downloaded.
 				if (!IOUtil.isRegularFile(dependencyFilePath)) {
+					logger.info("Downloading JFX artifact: {}", dependencyUrlPath);
 					URL depURL = new URL(dependencyUrlPath);
 					Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
 				}
+			}
+			// Remove any old dependencies that do not match the expected version/
+			if (!oldDependencies.isEmpty()) {
+				logger.info("Removing old dependency versions...");
+				for (Path existingDependency : oldDependencies)
+					Files.delete(existingDependency);
 			}
 		} catch (MalformedURLException ex) {
 			logger.error("Invalid dependency URL path", ex);
@@ -98,6 +112,7 @@ public class JFXInjection {
 				URL url = path.toAbsolutePath().toUri().toURL();
 				ClassLoaderInternals.appendToUcpPath(ucp, url);
 			}
+			logger.info("JavaFX classpath injection complete");
 		} catch (MalformedURLException ex) {
 			// This should never occur
 			logger.error("Failed to resolve local dependency jar to URL", ex);
