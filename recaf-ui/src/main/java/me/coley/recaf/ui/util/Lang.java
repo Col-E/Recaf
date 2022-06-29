@@ -275,17 +275,18 @@ public class Lang {
 	 * 		Language translations group to load from.
 	 * @param translationKey
 	 * 		Key name.
-	 * @return If the translation is present in the given translations.
+	 *
+	 * @return {@code true} when the translation is present in the given translations.
 	 */
 	public static boolean has(String translations, String translationKey) {
-		Map<String, String> map = Lang.translations.getOrDefault(translations, currentTranslationMap);
-		return map.containsKey(translationKey);
+		return Lang.translations.getOrDefault(translations, currentTranslationMap).containsKey(translationKey);
 	}
 
 	/**
 	 * @param translationKey
 	 * 		Key name.
-	 * @return If the translation is present in the current translations.
+	 *
+	 * @return {@code true} when the translation is present in the current translations.
 	 */
 	public static boolean has(String translationKey) {
 		return has(getCurrentTranslations(), translationKey);

@@ -10,7 +10,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import javafx.stage.PopupWindow;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
@@ -124,7 +123,8 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 				} else {
 					content.add(editor, 1, i, 2, 1);
 				}
-				if(Lang.has(idKey + ".description")) { // check if a description translation is available
+				// check if a description translation is available
+				if (Lang.has(idKey + ".description")) {
 					// if there is, create a tooltip for the element
 					Tooltip tooltip = new Tooltip(Lang.get(idKey + ".description"));
 					tooltip.setGraphic(Icons.getIconView(Icons.INFO));
