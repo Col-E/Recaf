@@ -8,17 +8,14 @@ import me.coley.recaf.assemble.ast.insn.FieldInstruction;
 import me.coley.recaf.assemble.ast.insn.IndyInstruction;
 import me.coley.recaf.assemble.ast.insn.LdcInstruction;
 import me.coley.recaf.assemble.ast.insn.MethodInstruction;
+import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.search.result.ResultBuilder;
-import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
-import org.objectweb.asm.ConstantDynamic;
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -86,6 +83,9 @@ public class ReferenceQuery implements Query {
 		return "References [" + String.join(", ", lines) + ']';
 	}
 
+	/**
+	 * Base class visitor.
+	 */
 	private class RefClassVisitor extends QueryVisitor {
 		public RefClassVisitor(Resource resource, QueryVisitor delegate) {
 			super(resource, delegate);
@@ -108,13 +108,107 @@ public class ReferenceQuery implements Query {
 			}
 		}
 
+		@Override
+		public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+			FieldVisitor fv = super.visitField(access, name, desc, signature, value);
+			FieldInfo fieldInfo = currentClass.findField(name, desc);
+			if (fieldInfo != null) {
+				return new RefFieldVisitor(fv, fieldInfo);
+			} else {
+				logger.error("Failed to lookup field for query: {}.{}{}", currentClass.getName(), name, desc);
+				return fv;
+			}
+		}
 
+		@Override
+		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+			AnnotationVisitor av = super.visitAnnotation(desc, visible);
+			return new RefClassAV(av, currentClass.getName());
+		}
+
+		@Override
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+			return new RefClassAV(av, currentClass.getName());
+		}
+
+		/**
+		 * Sub visitor for fields.
+		 * <br>
+		 * Its only real purpose is to delegate to searching in field annotations.
+		 */
+		private class RefFieldVisitor extends FieldVisitor {
+			private final FieldInfo fieldInfo;
+
+			protected RefFieldVisitor(FieldVisitor fv, FieldInfo fieldInfo) {
+				super(RecafConstants.ASM_VERSION, fv);
+				this.fieldInfo = fieldInfo;
+			}
+
+			@Override
+			public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+				AnnotationVisitor av = super.visitAnnotation(desc, visible);
+				String type = desc.substring(1, desc.length() - 1);
+				whenMatched(type, null, null,
+						builder -> addFieldAnno(builder, fieldInfo, type));
+				return new RefFieldAV(av, fieldInfo);
+			}
+
+			@Override
+			public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+				AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+				String type = desc.substring(1, desc.length() - 1);
+				whenMatched(type, null, null,
+						builder -> addFieldAnno(builder, fieldInfo, type));
+				return new RefFieldAV(av, fieldInfo);
+			}
+		}
+
+		/**
+		 * Sub visitor for methods.
+		 * <br>
+		 * Most reference results are instructions, so most of the stuff found will be done so in here.
+		 * Also delegates to searching in method annotations.
+		 */
 		private class RefMethodVisitor extends MethodVisitor {
 			private final MethodInfo methodInfo;
 
 			public RefMethodVisitor(MethodVisitor delegate, MethodInfo methodInfo) {
 				super(RecafConstants.ASM_VERSION, delegate);
 				this.methodInfo = methodInfo;
+			}
+
+			@Override
+			public AnnotationVisitor visitAnnotationDefault() {
+				AnnotationVisitor av = super.visitAnnotationDefault();
+				return new RefMethodAV(av, methodInfo);
+			}
+
+			@Override
+			public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+				AnnotationVisitor av = super.visitAnnotation(desc, visible);
+				String type = desc.substring(1, desc.length() - 1);
+				whenMatched(type, null, null,
+						builder -> addMethodAnno(builder, methodInfo, type));
+				return new RefMethodAV(av, methodInfo);
+			}
+
+			@Override
+			public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+				AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+				String type = desc.substring(1, desc.length() - 1);
+				whenMatched(type, null, null,
+						builder -> addMethodAnno(builder, methodInfo, type));
+				return new RefMethodAV(av, methodInfo);
+			}
+
+			@Override
+			public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
+				AnnotationVisitor av = super.visitParameterAnnotation(parameter, desc, visible);
+				String type = desc.substring(1, desc.length() - 1);
+				whenMatched(type, null, null,
+						builder -> addMethodAnno(builder, methodInfo, type));
+				return new RefMethodAV(av, methodInfo);
 			}
 
 			@Override
@@ -170,7 +264,125 @@ public class ReferenceQuery implements Query {
 					whenMatched(handle.getOwner(), handle.getName(), handle.getDesc(),
 							builder -> addMethodInsn(builder, methodInfo.getName(),
 									methodInfo.getDescriptor(), LdcInstruction.of(value)));
+				} else if (value instanceof Type) {
+					Type type = (Type) value;
+					handleLdcType(type, type);
 				}
+			}
+
+			private void handleLdcType(Type original, Type type) {
+				if (type.getSort() == Type.OBJECT)
+					whenMatched(type.getInternalName(), null, null,
+							builder -> addMethodInsn(builder, methodInfo.getName(),
+									methodInfo.getDescriptor(), LdcInstruction.of(original)));
+				else if (type.getSort() == Type.ARRAY)
+					handleLdcType(original, type.getElementType());
+				else if (type.getSort() == Type.METHOD) {
+					handleLdcType(original, type.getReturnType());
+					for (Type arg : type.getArgumentTypes()) {
+						handleLdcType(original, arg);
+					}
+				}
+			}
+		}
+
+		private abstract class RefAnnotationVisitor extends AnnotationVisitor {
+			protected RefAnnotationVisitor(AnnotationVisitor av) {
+				super(RecafConstants.ASM_VERSION, av);
+			}
+
+			protected abstract void matchAnnoRef(String internalName);
+
+			protected abstract RefAnnotationVisitor wrapThis(AnnotationVisitor av);
+
+			@Override
+			public void visit(String name, Object value) {
+				super.visit(name, value);
+				if (value instanceof Type) {
+					Type type = (Type) value;
+					if (type.getSort() == Type.ARRAY)
+						type = type.getElementType();
+					matchAnnoRef(type.getInternalName());
+				}
+			}
+
+			@Override
+			public void visitEnum(String name, String desc, String value) {
+				super.visitEnum(name, desc, value);
+				matchAnnoRef(desc.substring(1, desc.length() - 1));
+			}
+
+			@Override
+			public AnnotationVisitor visitAnnotation(String name, String desc) {
+				AnnotationVisitor av = super.visitAnnotation(name, desc);
+				matchAnnoRef(desc.substring(1, desc.length() - 1));
+				return wrapThis(av);
+			}
+
+			@Override
+			public AnnotationVisitor visitArray(String name) {
+				AnnotationVisitor av = super.visitArray(name);
+				return wrapThis(av);
+			}
+		}
+
+		private class RefClassAV extends RefAnnotationVisitor {
+			private final String className;
+
+			protected RefClassAV(AnnotationVisitor av, String className) {
+				super(av);
+				this.className = className;
+			}
+
+			@Override
+			protected void matchAnnoRef(String internalName) {
+				whenMatched(internalName, null, null,
+						builder -> addClassAnno(builder, internalName));
+			}
+
+			@Override
+			protected RefAnnotationVisitor wrapThis(AnnotationVisitor av) {
+				return new RefClassAV(av, className);
+			}
+		}
+
+		private class RefFieldAV extends RefAnnotationVisitor {
+			private final FieldInfo info;
+
+			protected RefFieldAV(AnnotationVisitor av, FieldInfo info) {
+				super(av);
+				this.info = info;
+			}
+
+			@Override
+			protected void matchAnnoRef(String internalName) {
+				whenMatched(internalName, null, null,
+						builder -> addFieldAnno(builder, info, internalName));
+			}
+
+			@Override
+			protected RefAnnotationVisitor wrapThis(AnnotationVisitor av) {
+				return new RefFieldAV(av, info);
+			}
+		}
+
+		private class RefMethodAV extends RefAnnotationVisitor {
+			private final MethodInfo info;
+
+			protected RefMethodAV(AnnotationVisitor av, MethodInfo info) {
+				super(av);
+				this.info = info;
+			}
+
+			@Override
+			protected void matchAnnoRef(String internalName) {
+				whenMatched(internalName, null, null,
+						builder -> addMethodAnno(builder, info, internalName));
+			}
+
+			@Override
+			protected RefAnnotationVisitor wrapThis(AnnotationVisitor av) {
+				return new RefMethodAV(av, info);
 			}
 		}
 	}

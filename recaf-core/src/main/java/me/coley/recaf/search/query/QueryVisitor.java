@@ -3,7 +3,9 @@ package me.coley.recaf.search.query;
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.result.Result;
 import me.coley.recaf.search.result.ResultBuilder;
 import me.coley.recaf.workspace.resource.Resource;
@@ -72,7 +74,7 @@ public abstract class QueryVisitor extends ClassVisitor {
 	 * Stores search results into a collection.
 	 *
 	 * @param collection
-	 *      Collection to store results into.
+	 * 		Collection to store results into.
 	 */
 	public void storeResults(Collection<? super Result> collection) {
 		collection.addAll(getResults());
@@ -121,11 +123,19 @@ public abstract class QueryVisitor extends ClassVisitor {
 				.then(results::add);
 	}
 
+	protected void addFieldAnno(ResultBuilder builder, FieldInfo info, String annotationType) {
+		addFieldAnno(builder, info.getName(), info.getDescriptor(), annotationType);
+	}
+
 	protected void addFieldAnno(ResultBuilder builder, String name, String descriptor, String annotationType) {
 		builder.inClass(currentClass)
 				.inField(currentClass.findField(name, descriptor))
 				.inAnnotation(annotationType)
 				.then(results::add);
+	}
+
+	protected void addMethodAnno(ResultBuilder builder, MethodInfo info, String annotationType) {
+		addMethodAnno(builder, info.getName(), info.getDescriptor(), annotationType);
 	}
 
 	protected void addMethodAnno(ResultBuilder builder, String name, String descriptor, String annotationType) {
