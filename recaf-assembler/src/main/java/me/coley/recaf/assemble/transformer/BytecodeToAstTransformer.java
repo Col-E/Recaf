@@ -30,6 +30,7 @@ public class BytecodeToAstTransformer {
 	private final Map<Integer, MethodParameter> parameterMap = new HashMap<>();
 	private final MethodNode method;
 	private final FieldNode field;
+	private final ClassNode classNode;
 	private String labelPrefix = "";
 	private Unit unit;
 
@@ -38,7 +39,7 @@ public class BytecodeToAstTransformer {
 	 * 		Field to disassemble.
 	 */
 	public BytecodeToAstTransformer(FieldNode field) {
-		this(field, null);
+		this(field, null, null);
 	}
 
 	/**
@@ -46,22 +47,33 @@ public class BytecodeToAstTransformer {
 	 * 		Method to disassemble.
 	 */
 	public BytecodeToAstTransformer(MethodNode method) {
-		this(null, method);
+		this(null, method, null);
 	}
 
-	private BytecodeToAstTransformer(FieldNode field, MethodNode method) {
+	/**
+	 * @param classNode
+	 * 		Class to disassemble.
+	 */
+	public BytecodeToAstTransformer(ClassNode classNode) {
+		this(null, null, classNode);
+	}
+
+	private BytecodeToAstTransformer(FieldNode field, MethodNode method, ClassNode node) {
 		this.method = method;
 		this.field = field;
+		this.classNode = node;
 	}
 
 	/**
 	 * Creates the {@link #getUnit() unit}.
 	 */
 	public void visit() {
-		if (field != null) {
-			visitField();
-		} else {
+		if (method != null) {
 			visitMethod();
+		} else if (field != null) {
+			visitField();
+		} else if (classNode != null) {
+			visitClass();
 		}
 	}
 
@@ -315,6 +327,39 @@ public class BytecodeToAstTransformer {
 				code.addLabel(new Label(labelNames.get(end)));
 			}
 		}
+		// Done
+		unit = new Unit(definition);
+	}
+
+	/**
+	 * Creates the {@link #getUnit() unit} as a class.
+	 */
+	private void visitClass() {
+		Modifiers modifiers = new Modifiers();
+		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.FIELD, classNode.access)) {
+			modifiers.add(Modifier.byName(flag.getName()));
+		}
+		// Setup other attributes
+		ClassDefinition definition = new ClassDefinition(modifiers, classNode.name, classNode.superName, classNode.interfaces);
+		if (classNode.signature != null)
+			definition.setSignature(new Signature(field.signature));
+
+		// create ast for all methods & fields
+
+		for (MethodNode methodNode : classNode.methods) {
+			BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(methodNode);
+			transformer.visit();
+			definition.addMethod(transformer.getUnit().getMethod());
+		}
+
+		for (FieldNode fieldNode : classNode.fields) {
+			BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(fieldNode);
+			transformer.visit();
+			definition.addField(transformer.getUnit().getField());
+		}
+
+		AnnotationHelper.visitAnnos(definition, true, classNode.visibleAnnotations);
+		AnnotationHelper.visitAnnos(definition, false, classNode.invisibleAnnotations);
 		// Done
 		unit = new Unit(definition);
 	}

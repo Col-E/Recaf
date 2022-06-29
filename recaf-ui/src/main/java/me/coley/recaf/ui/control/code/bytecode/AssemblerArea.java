@@ -693,6 +693,20 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		return Configs.assembler();
 	}
 
+	/**
+	 * Disable bytecode analysis.
+	 */
+	public void disableAnalysis() {
+		pipeline.setDoUseAnalysis(false);
+	}
+
+	/**
+	 * Enable bytecode analysis.
+	 */
+	public void enableAnalysis() {
+		pipeline.setDoUseAnalysis(true);
+	}
+
 	public class LabelContextBuilder extends ContextBuilder {
 		private final Label label;
 

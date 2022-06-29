@@ -2,6 +2,8 @@ package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.PrintContext;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -11,11 +13,23 @@ import java.util.List;
  */
 public class ClassDefinition extends AbstractDefinition implements Definition {
 	// TODO: Finish implementing the class
-	String name;
-	String superClass;
-	List<String> interfaces;
-	List<FieldDefinition> definedFields;
-	List<MethodDefinition> definedMethods;
+
+	private final String name;
+	private final String superClass;
+	private final List<String> interfaces;
+	private final List<FieldDefinition> definedFields = new ArrayList<>();
+	private final List<MethodDefinition> definedMethods = new ArrayList<>();
+
+	public ClassDefinition(Modifiers modifiers, String name, String superClass, List<String> interfaces) {
+		this.name = name;
+		this.superClass = superClass;
+		this.interfaces = interfaces;
+		setModifiers(modifiers);
+	}
+
+	public ClassDefinition(Modifiers modifiers, String name, String superClass, String... interfaces) {
+		this(modifiers, name, superClass, Arrays.asList(interfaces));
+	}
 
 	/**
 	 * @return Fields defined in the class.
@@ -87,13 +101,32 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 				}
 			}
 		}
-		sb.append("\n");
+		sb.append("\n\n");
 		for (FieldDefinition field : definedFields) {
-			sb.append(field.print(context));
+			sb.append(field.print(context)).append("\n");
 		}
+		sb.append("\n");
 		for (MethodDefinition method : definedMethods) {
-			sb.append(method.print(context));
+			sb.append(method.print(context)).append("\n\n");
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Adds a new method to the class.
+	 * @param method
+	 * 		Method to add.
+	 */
+	public void addMethod(MethodDefinition method) {
+		definedMethods.add(method);
+	}
+
+	/**
+	 * Adds a new field to the class.
+	 * @param field
+	 * 		Field to add.
+	 */
+	public void addField(FieldDefinition field) {
+		definedFields.add(field);
 	}
 }

@@ -33,6 +33,7 @@ import me.coley.recaf.util.WorkspaceClassSupplier;
 import me.coley.recaf.util.WorkspaceInheritanceChecker;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CharacterHit;
+import org.fxmisc.richtext.CodeArea;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +51,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	private final CollapsibleTabPane bottomTabs = new CollapsibleTabPane();
 	private final SplitPane split = new SplitPane();
 	private final AssemblerArea assemblerArea;
+	private final VirtualizedScrollPane<AssemblerArea> virtualScroll;
 	private final DockTab tab;
 	private boolean ignoreNextDisassemble;
 	private MemberInfo targetMember;
@@ -65,7 +67,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		assemblerArea = new AssemblerArea(tracking, pipeline);
 		components.add(assemblerArea);
-		Node virtualScroll = new VirtualizedScrollPane<>(assemblerArea);
+		this.virtualScroll = new VirtualizedScrollPane<>(assemblerArea);
 		Node errorDisplay = new ErrorDisplay(assemblerArea, tracking);
 		BorderPane layoutWrapper = new ClassBorderPane(this);
 		layoutWrapper.setCenter(virtualScroll);
@@ -137,6 +139,10 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		// even if we cannot be sure if it will succeed.
 		ignoreNextDisassemble = true;
 		return assemblerArea.save();
+	}
+
+	public DockTab getDockTab() {
+		return tab;
 	}
 
 	@Override
@@ -254,5 +260,13 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	@Override
 	public void onClose(WindowEvent e) {
 		cleanup();
+	}
+
+	protected VirtualizedScrollPane<AssemblerArea> getScroll() {
+		return virtualScroll;
+	}
+
+	protected AssemblerArea getAssemblerArea() {
+		return assemblerArea;
 	}
 }

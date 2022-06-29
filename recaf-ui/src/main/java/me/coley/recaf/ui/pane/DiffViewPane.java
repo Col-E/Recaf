@@ -18,6 +18,8 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.ItemInfo;
+import me.coley.recaf.config.Configs;
+import me.coley.recaf.ui.DiffViewMode;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.behavior.ScrollSnapshot;
 import me.coley.recaf.ui.control.BoundLabel;
@@ -26,9 +28,12 @@ import me.coley.recaf.ui.control.TextView;
 import me.coley.recaf.ui.control.code.Language;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.ui.control.hex.HexView;
 import me.coley.recaf.ui.control.tree.CellOriginType;
+import me.coley.recaf.ui.pane.assembler.AssemblerPane;
+import me.coley.recaf.ui.pane.assembler.DiffAssemblerPane;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ByteHeaderUtil;
@@ -116,24 +121,47 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 			// Create a countdown for the two classes to decompile
 			CompletableFuture<Void> currentFuture = new CompletableFuture<>();
 			CompletableFuture<Void> initialFuture = new CompletableFuture<>();
-			DiffableDecompilePane currentDecompile = new DiffableDecompilePane(currentFuture);
-			DiffableDecompilePane initialDecompile = new DiffableDecompilePane(initialFuture);
-			currentDecompile.onUpdate(current);
-			initialDecompile.onUpdate(initial);
-			// Add to the UI
-			split.getItems().addAll(initialDecompile, currentDecompile);
-			// When the class versions both get decompiled, run a basic text diff and highlight modified lines.
-			CompletableFuture.allOf(currentFuture, initialFuture)
-							.orTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-							.whenCompleteAsync((__, t) -> {
-								if (t != null) {
-									logger.error("Failed to make diff view", t);
-								} else {
-									highlightDiff(initialDecompile, currentDecompile);
-									// Bind scrolling after
-									currentDecompile.bindScrollTo(initialDecompile);
-								}
-							}, ThreadUtil.executor());
+			DiffViewMode mode = Configs.decompiler().diffViewMode;
+			if(mode == DiffViewMode.CLASS) {
+				DiffableDecompilePane currentDecompile = new DiffableDecompilePane(currentFuture);
+				DiffableDecompilePane initialDecompile = new DiffableDecompilePane(initialFuture);
+				currentDecompile.onUpdate(current);
+				initialDecompile.onUpdate(initial);
+				// Add to the UI
+				split.getItems().addAll(initialDecompile, currentDecompile);
+
+				// When the class versions both get decompiled, run a basic text diff and highlight modified lines.
+				CompletableFuture.allOf(currentFuture, initialFuture)
+						.orTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+						.whenCompleteAsync((__, t) -> {
+							if (t != null) {
+								logger.error("Failed to make diff view", t);
+							} else {
+								highlightDiff(initialDecompile, currentDecompile);
+								// Bind scrolling after
+								currentDecompile.bindScrollTo(initialDecompile);
+							}
+						}, ThreadUtil.executor());
+			} else {
+				DiffAssemblerPane currentAssembler = new DiffAssemblerPane(currentFuture);
+				DiffAssemblerPane initialAssembler = new DiffAssemblerPane(initialFuture);
+				currentAssembler.onUpdate(current);
+				initialAssembler.onUpdate(initial);
+
+				split.getItems().addAll(initialAssembler, currentAssembler);
+
+				CompletableFuture.allOf(currentFuture, initialFuture)
+						.orTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+						.whenCompleteAsync((__, t) -> {
+							if (t != null) {
+								logger.error("Failed to make diff view", t);
+							} else {
+								highlightDiff(initialAssembler, currentAssembler);
+								// Bind scrolling after
+								currentAssembler.bindScrollTo(initialAssembler);
+							}
+						}, ThreadUtil.executor());
+			}
 			return split;
 		} else if (item instanceof DexClassInfo) {
 			// TODO: Android diff
@@ -293,7 +321,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	/**
 	 * Simple interface to make text-diff logic backed by {@link CodeArea} easy to implement.
 	 */
-	private interface Diffable {
+	public interface Diffable {
 		default void markDiffChunk(Chunk<String> chunk, String style, int offset) {
 			CodeArea area = getCodeArea();
 			int pos = chunk.getPosition() + offset;
