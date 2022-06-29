@@ -12,6 +12,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Configs;
@@ -113,12 +114,24 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 				ConfigID id = field.getAnnotation(ConfigID.class);
 				String idKey = groupKey + '.' + id.value();
 				Node editor = getConfigComponent(container, field, idKey);
+				Node tooltipElement = editor;
 				if (editor instanceof Unlabeled) {
 					Label editorLabel = new BoundLabel(Lang.getBinding(idKey));
 					content.add(editorLabel, 1, i, 1, 1);
 					content.add(editor, 2, i, 1, 1);
+					tooltipElement = editorLabel;
 				} else {
 					content.add(editor, 1, i, 2, 1);
+				}
+				// check if a description translation is available
+				if (Lang.has(idKey + ".description")) {
+					// if there is, create a tooltip for the element
+					Tooltip tooltip = new Tooltip(Lang.get(idKey + ".description"));
+					tooltip.setGraphic(Icons.getIconView(Icons.INFO));
+					tooltip.setShowDelay(Duration.ZERO);
+					tooltip.setHideDelay(Duration.ZERO);
+					tooltip.setAutoHide(false);
+					Tooltip.install(tooltipElement, tooltip);
 				}
 				i++;
 			}

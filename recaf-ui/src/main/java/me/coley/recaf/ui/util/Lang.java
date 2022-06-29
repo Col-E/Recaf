@@ -271,6 +271,28 @@ public class Lang {
 	}
 
 	/**
+	 * @param translations
+	 * 		Language translations group to load from.
+	 * @param translationKey
+	 * 		Key name.
+	 *
+	 * @return {@code true} when the translation is present in the given translations.
+	 */
+	public static boolean has(String translations, String translationKey) {
+		return Lang.translations.getOrDefault(translations, currentTranslationMap).containsKey(translationKey);
+	}
+
+	/**
+	 * @param translationKey
+	 * 		Key name.
+	 *
+	 * @return {@code true} when the translation is present in the current translations.
+	 */
+	public static boolean has(String translationKey) {
+		return has(getCurrentTranslations(), translationKey);
+	}
+
+	/**
 	 * Load the translations and initialize the default one.
 	 */
 	public static void initialize() {
