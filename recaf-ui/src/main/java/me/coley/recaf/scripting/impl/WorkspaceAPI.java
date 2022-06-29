@@ -102,7 +102,10 @@ public class WorkspaceAPI {
 	public static Resource addResource(Workspace workspace, Path path) {
 		try {
 			Resource resource = ResourceIO.fromPath(path, true);
-			workspace.addLibrary(resource);
+			if (workspace != null)
+				workspace.addLibrary(resource);
+			else
+				logger.warn("Cannot add resource to non-existent workspace!");
 			return resource;
 		} catch (IOException e) {
 			logger.error("Script failed to add file to workspace: {}", path);
@@ -143,7 +146,8 @@ public class WorkspaceAPI {
 	 * 		Resource to remove.
 	 */
 	public static void removeResource(Workspace workspace, Resource resource) {
-		workspace.removeLibrary(resource);
+		if (workspace != null)
+			workspace.removeLibrary(resource);
 	}
 
 	/**
@@ -153,7 +157,9 @@ public class WorkspaceAPI {
 	 * 		Resource to remove.
 	 */
 	public static void removeResource(Resource resource) {
-		getWorkspace().removeLibrary(resource);
+		Workspace workspace = getWorkspace();
+		if (workspace != null)
+			workspace.removeLibrary(resource);
 	}
 
 	/**
@@ -164,6 +170,8 @@ public class WorkspaceAPI {
 	 * Contains the classes and files for modification in Recaf.
 	 */
 	public static Resource getPrimaryResource(Workspace workspace) {
+		if (workspace == null)
+			return null;
 		return workspace.getResources().getPrimary();
 	}
 
@@ -214,6 +222,8 @@ public class WorkspaceAPI {
 	 * @return Info wrapper of the class, or {@code null} if no class by the name exists in the resource.
 	 */
 	public static ClassInfo getClassInfo(Resource resource, String internalName) {
+		if (resource == null)
+			return null;
 		return resource.getClasses().get(internalName);
 	}
 
@@ -226,6 +236,8 @@ public class WorkspaceAPI {
 	 * @return Info wrapper of the dex class, or {@code null} if no dex class by the name exists in the resource.
 	 */
 	public static DexClassInfo getDexClassInfo(Resource resource, String internalName) {
+		if (resource == null)
+			return null;
 		return resource.getDexClasses().get(internalName);
 	}
 
@@ -238,6 +250,8 @@ public class WorkspaceAPI {
 	 * @return Info wrapper of the file, or {@code null} if no file by the path exists in the resource.
 	 */
 	public static FileInfo getFileInfo(Resource resource, String path) {
+		if (resource == null)
+			return null;
 		return resource.getFiles().get(path);
 	}
 
@@ -264,7 +278,8 @@ public class WorkspaceAPI {
 	 * 		Class bytecode to place into resource.
 	 */
 	public static void putClassInfo(Resource resource, byte[] content) {
-		resource.getClasses().put(ClassInfo.read(content));
+		if (resource != null)
+			resource.getClasses().put(ClassInfo.read(content));
 	}
 
 	/**
@@ -274,7 +289,8 @@ public class WorkspaceAPI {
 	 * 		Class to place into resource.
 	 */
 	public static void putClassInfo(Resource resource, ClassInfo info) {
-		resource.getClasses().put(info);
+		if (resource != null)
+			resource.getClasses().put(info);
 	}
 
 	/**
@@ -292,9 +308,11 @@ public class WorkspaceAPI {
 	 * 		Dex class to place into resource.
 	 */
 	public static void putDexClassInfo(Resource resource, DexClassInfo info) {
-		String dexName = info.getDexPath();
-		String className = info.getName();
-		resource.getDexClasses().put(dexName, className, info);
+		if (resource != null) {
+			String dexName = info.getDexPath();
+			String className = info.getName();
+			resource.getDexClasses().put(dexName, className, info);
+		}
 	}
 
 	/**
@@ -334,6 +352,7 @@ public class WorkspaceAPI {
 	 * 		File to place into resource.
 	 */
 	public static void putFileInfo(Resource resource, FileInfo info) {
-		resource.getFiles().put(info);
+		if (resource != null)
+			resource.getFiles().put(info);
 	}
 }
