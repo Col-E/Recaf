@@ -595,7 +595,7 @@ public class InstructionParseTests extends JasmUtils {
 		String wrapped = "method somethind ()V\n" + code + "\nend";
 		Unit unit = createSilentUnit(DEFAULT_KEYWORDS, wrapped);
 		assertNotNull(unit);
-		MethodDefinition method = unit.getMethod();
+		MethodDefinition method = unit.getDefinitionAsMethod();
 		assertEquals(1, method.getCode().getEntries().size());
 		return method.getCode().getEntries().get(0);
 	}

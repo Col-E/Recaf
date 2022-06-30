@@ -69,7 +69,7 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		Unit unit = pipeline.getUnit();
 		if (unit == null || unit.isField())
 			return;
-		Code code = unit.getMethod().getCode();
+		Code code = unit.getDefinitionAsMethod().getCode();
 		Element element = code.getChildAt(paragraphIndex + 1, columnIndex);
 		if (element instanceof AbstractInstruction) {
 			int insnIndex = code.getInstructions().indexOf(element);

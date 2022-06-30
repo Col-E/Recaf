@@ -13,7 +13,6 @@ import java.util.List;
  */
 public class ClassDefinition extends AbstractDefinition implements Definition {
 	// TODO: Finish implementing the class
-
 	private final String name;
 	private final String superClass;
 	private final List<String> interfaces;
@@ -76,8 +75,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 
 	@Override
 	public String getDesc() {
-		// Not relevant here
-		return "";
+		return "L" + getName() + ";";
 	}
 
 	@Override
@@ -93,6 +91,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 			sb.append("\n").append(context.fmtKeyword("extends ")).append(superClass);
 		}
 		if (interfaces != null && !interfaces.isEmpty()) {
+			sb.append("\n");
 			for (int i = 0; i < interfaces.size(); i++) {
 				sb.append(context.fmtKeyword("implements "));
 				sb.append(interfaces.get(i));
@@ -114,6 +113,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 
 	/**
 	 * Adds a new method to the class.
+	 *
 	 * @param method
 	 * 		Method to add.
 	 */
@@ -123,6 +123,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 
 	/**
 	 * Adds a new field to the class.
+	 *
 	 * @param field
 	 * 		Field to add.
 	 */

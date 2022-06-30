@@ -7,7 +7,6 @@ import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.WindowEvent;
@@ -15,7 +14,6 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.config.container.AssemblerConfig;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
@@ -32,8 +30,6 @@ import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.WorkspaceClassSupplier;
 import me.coley.recaf.util.WorkspaceInheritanceChecker;
 import org.fxmisc.flowless.VirtualizedScrollPane;
-import org.fxmisc.richtext.CharacterHit;
-import org.fxmisc.richtext.CodeArea;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,9 +61,9 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		pipeline.setClassSupplier(WorkspaceClassSupplier.getInstance());
 		ProblemTracking tracking = new ProblemTracking();
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
-		assemblerArea = new AssemblerArea(tracking, pipeline);
+		assemblerArea = createAssembler(tracking, pipeline);
 		components.add(assemblerArea);
-		this.virtualScroll = new VirtualizedScrollPane<>(assemblerArea);
+		virtualScroll = new VirtualizedScrollPane<>(assemblerArea);
 		Node errorDisplay = new ErrorDisplay(assemblerArea, tracking);
 		BorderPane layoutWrapper = new ClassBorderPane(this);
 		layoutWrapper.setCenter(virtualScroll);
@@ -133,16 +129,24 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		return tab;
 	}
 
+	protected AssemblerArea createAssembler(ProblemTracking tracking, AssemblerPipeline pipeline) {
+		return new AssemblerArea(tracking, pipeline);
+	}
+
+	protected VirtualizedScrollPane<AssemblerArea> getScroll() {
+		return virtualScroll;
+	}
+
+	protected AssemblerArea getAssemblerArea() {
+		return assemblerArea;
+	}
+
 	@Override
 	public SaveResult save() {
 		// Because the 'save' method updates the workspace we must pre-emptively set this flag,
 		// even if we cannot be sure if it will succeed.
 		ignoreNextDisassemble = true;
 		return assemblerArea.save();
-	}
-
-	public DockTab getDockTab() {
-		return tab;
 	}
 
 	@Override
@@ -260,13 +264,5 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	@Override
 	public void onClose(WindowEvent e) {
 		cleanup();
-	}
-
-	protected VirtualizedScrollPane<AssemblerArea> getScroll() {
-		return virtualScroll;
-	}
-
-	protected AssemblerArea getAssemblerArea() {
-		return assemblerArea;
 	}
 }

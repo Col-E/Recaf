@@ -2,7 +2,6 @@ package me.coley.recaf.assemble.validation.ast;
 
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.Code;
-import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Handle;
@@ -25,7 +24,7 @@ public class AstDescriptorValidator implements AstValidationVisitor {
 
 		if (validator.getUnit().isField())
 			return;
-		Code code = validator.getUnit().getMethod().getCode();
+		Code code = validator.getUnit().getDefinitionAsMethod().getCode();
 		if (code == null)
 			return;
 		for (AbstractInstruction instruction : code.getInstructions()) {

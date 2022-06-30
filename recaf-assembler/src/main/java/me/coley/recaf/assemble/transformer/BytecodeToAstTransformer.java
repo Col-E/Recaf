@@ -28,26 +28,26 @@ public class BytecodeToAstTransformer {
 	private final Map<Integer, TreeMap<Integer, Integer>> variableSorts = new HashMap<>();
 	private final Map<Key, String> variableNames = new HashMap<>();
 	private final Map<Integer, MethodParameter> parameterMap = new HashMap<>();
-	private final MethodNode method;
-	private final FieldNode field;
 	private final ClassNode classNode;
+	private final FieldNode fieldNode;
+	private final MethodNode methodNode;
 	private String labelPrefix = "";
 	private Unit unit;
 
 	/**
-	 * @param field
+	 * @param fieldNode
 	 * 		Field to disassemble.
 	 */
-	public BytecodeToAstTransformer(FieldNode field) {
-		this(field, null, null);
+	public BytecodeToAstTransformer(FieldNode fieldNode) {
+		this(null, fieldNode, null);
 	}
 
 	/**
-	 * @param method
+	 * @param methodNode
 	 * 		Method to disassemble.
 	 */
-	public BytecodeToAstTransformer(MethodNode method) {
-		this(null, method, null);
+	public BytecodeToAstTransformer(MethodNode methodNode) {
+		this(null, null, methodNode);
 	}
 
 	/**
@@ -55,22 +55,22 @@ public class BytecodeToAstTransformer {
 	 * 		Class to disassemble.
 	 */
 	public BytecodeToAstTransformer(ClassNode classNode) {
-		this(null, null, classNode);
+		this(classNode, null, null);
 	}
 
-	private BytecodeToAstTransformer(FieldNode field, MethodNode method, ClassNode node) {
-		this.method = method;
-		this.field = field;
-		this.classNode = node;
+	private BytecodeToAstTransformer(ClassNode classNode, FieldNode fieldNode, MethodNode methodNode) {
+		this.classNode = classNode;
+		this.fieldNode = fieldNode;
+		this.methodNode = methodNode;
 	}
 
 	/**
 	 * Creates the {@link #getUnit() unit}.
 	 */
 	public void visit() {
-		if (method != null) {
+		if (methodNode != null) {
 			visitMethod();
-		} else if (field != null) {
+		} else if (fieldNode != null) {
 			visitField();
 		} else if (classNode != null) {
 			visitClass();
@@ -91,15 +91,15 @@ public class BytecodeToAstTransformer {
 	private void visitField() {
 		// Setup modifiers
 		Modifiers modifiers = new Modifiers();
-		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.FIELD, field.access)) {
+		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.FIELD, fieldNode.access)) {
 			modifiers.add(Modifier.byName(flag.getName()));
 		}
 		// Setup other attributes
-		FieldDefinition definition = new FieldDefinition(modifiers, field.name, field.desc);
-		if (field.signature != null && !field.signature.equals(field.desc))
-			definition.setSignature(new Signature(field.signature));
-		if (field.value != null) {
-			Object v = field.value;
+		FieldDefinition definition = new FieldDefinition(modifiers, fieldNode.name, fieldNode.desc);
+		if (fieldNode.signature != null && !fieldNode.signature.equals(fieldNode.desc))
+			definition.setSignature(new Signature(fieldNode.signature));
+		if (fieldNode.value != null) {
+			Object v = fieldNode.value;
 			if (v instanceof String)
 				definition.setConstVal(new ConstVal((String) v));
 			else if (v instanceof Integer)
@@ -111,8 +111,8 @@ public class BytecodeToAstTransformer {
 			else if (v instanceof Long)
 				definition.setConstVal(new ConstVal((long) v));
 		}
-		AnnotationHelper.visitAnnos(definition, true, field.visibleAnnotations);
-		AnnotationHelper.visitAnnos(definition, false, field.invisibleAnnotations);
+		AnnotationHelper.visitAnnos(definition, true, fieldNode.visibleAnnotations);
+		AnnotationHelper.visitAnnos(definition, false, fieldNode.invisibleAnnotations);
 		// Done
 		unit = new Unit(definition);
 	}
@@ -124,7 +124,7 @@ public class BytecodeToAstTransformer {
 		LabelNode fallbackInitialLabel = null;
 		Map<LabelNode, String> labelNames = new LinkedHashMap<>();
 		// Collect labels
-		for (AbstractInsnNode insn : method.instructions) {
+		for (AbstractInsnNode insn : methodNode.instructions) {
 			LabelNode label;
 			if (insn.getType() == AbstractInsnNode.LABEL) {
 				label = (LabelNode) insn;
@@ -144,16 +144,16 @@ public class BytecodeToAstTransformer {
 		}
 		// Setup modifiers
 		Modifiers modifiers = new Modifiers();
-		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.METHOD, method.access)) {
+		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.METHOD, methodNode.access)) {
 			modifiers.add(Modifier.byName(flag.getName()));
 		}
 		// Setup parameters and return type
-		if (!Types.isValidDesc(method.desc)) {
-			throw new IllegalStateException("Invalid method descriptor: " + method.desc);
+		if (!Types.isValidDesc(methodNode.desc)) {
+			throw new IllegalStateException("Invalid method descriptor: " + methodNode.desc);
 		}
-		Type methodType = Type.getMethodType(method.desc);
+		Type methodType = Type.getMethodType(methodNode.desc);
 		MethodParameters params = new MethodParameters();
-		int argVarIndex = AccessFlag.isStatic(method.access) ? 0 : 1;
+		int argVarIndex = AccessFlag.isStatic(methodNode.access) ? 0 : 1;
 		for (Type argType : methodType.getArgumentTypes()) {
 			String name = getVariableName(PARAM, argType, argVarIndex);
 			MethodParameter param = new MethodParameter(argType.getDescriptor(), name);
@@ -163,16 +163,16 @@ public class BytecodeToAstTransformer {
 		}
 		String retType = methodType.getReturnType().getDescriptor();
 		Code code = new Code();
-		MethodDefinition definition = new MethodDefinition(modifiers, method.name, params, retType, code);
+		MethodDefinition definition = new MethodDefinition(modifiers, methodNode.name, params, retType, code);
 		// Setup other attributes
-		if (method.signature != null && !method.signature.equals(method.desc))
-			definition.setSignature(new Signature(method.signature));
-		if (method.exceptions != null) {
-			for (String ex : method.exceptions)
+		if (methodNode.signature != null && !methodNode.signature.equals(methodNode.desc))
+			definition.setSignature(new Signature(methodNode.signature));
+		if (methodNode.exceptions != null) {
+			for (String ex : methodNode.exceptions)
 				definition.addThrownException(new ThrownException(ex));
 		}
-		if (method.tryCatchBlocks != null) {
-			for (TryCatchBlockNode tryCatch : method.tryCatchBlocks) {
+		if (methodNode.tryCatchBlocks != null) {
+			for (TryCatchBlockNode tryCatch : methodNode.tryCatchBlocks) {
 				String start = labelNames.get(tryCatch.start);
 				String end = labelNames.get(tryCatch.end);
 				String handler = labelNames.get(tryCatch.handler);
@@ -180,16 +180,16 @@ public class BytecodeToAstTransformer {
 				code.addTryCatch(new TryCatch(start, end, handler, type));
 			}
 		}
-		AnnotationHelper.visitAnnos(definition, true, method.visibleAnnotations);
-		AnnotationHelper.visitAnnos(definition, false, method.invisibleAnnotations);
-		if (method.instructions != null) {
+		AnnotationHelper.visitAnnos(definition, true, methodNode.visibleAnnotations);
+		AnnotationHelper.visitAnnos(definition, false, methodNode.invisibleAnnotations);
+		if (methodNode.instructions != null) {
 			// Add fallback if needed so variables have a starting range label.
 			if (fallbackInitialLabel != null)
 				code.addLabel(new Label(labelNames.get(fallbackInitialLabel)));
 			// First pass to populate what type (prims vs obj) variables are at different offsets in the method.
 			// This information is used to sanity check our variable name selection choice.
-			for (int pos = 0; pos < method.instructions.size(); pos++) {
-				AbstractInsnNode insn = method.instructions.get(pos);
+			for (int pos = 0; pos < methodNode.instructions.size(); pos++) {
+				AbstractInsnNode insn = methodNode.instructions.get(pos);
 				if (insn.getType() == AbstractInsnNode.VAR_INSN) {
 					VarInsnNode varInsn = (VarInsnNode) insn;
 					Type varType = Types.fromVarOpcode(varInsn.getOpcode());
@@ -199,8 +199,8 @@ public class BytecodeToAstTransformer {
 			}
 			// Second pass to do everything else.
 			AbstractInsnNode lastInsn = null;
-			for (int pos = 0; pos < method.instructions.size(); pos++) {
-				AbstractInsnNode insn = method.instructions.get(pos);
+			for (int pos = 0; pos < methodNode.instructions.size(); pos++) {
+				AbstractInsnNode insn = methodNode.instructions.get(pos);
 				lastInsn = insn;
 				int op = insn.getOpcode();
 				switch (insn.getType()) {
@@ -216,7 +216,7 @@ public class BytecodeToAstTransformer {
 						code.addInstruction(new IntInstruction(op, intInsn.operand));
 						break;
 					case AbstractInsnNode.VAR_INSN:
-						pos = method.instructions.indexOf(insn);
+						pos = methodNode.instructions.indexOf(insn);
 						VarInsnNode varInsn = (VarInsnNode) insn;
 						String varName = getVariableName(pos, Types.fromVarOpcode(insn.getOpcode()), varInsn.var);
 						code.addInstruction(new VarInstruction(op, varName));
@@ -267,7 +267,7 @@ public class BytecodeToAstTransformer {
 						code.addInstruction(LdcInstruction.of(ldcInsn.cst));
 						break;
 					case AbstractInsnNode.IINC_INSN:
-						pos = method.instructions.indexOf(insn);
+						pos = methodNode.instructions.indexOf(insn);
 						IincInsnNode iincInsn = (IincInsnNode) insn;
 						String iincName = getVariableName(pos, Types.fromVarOpcode(insn.getOpcode()), iincInsn.var);
 						code.addInstruction(new IincInstruction(op, iincName, iincInsn.incr));
@@ -342,24 +342,20 @@ public class BytecodeToAstTransformer {
 		// Setup other attributes
 		ClassDefinition definition = new ClassDefinition(modifiers, classNode.name, classNode.superName, classNode.interfaces);
 		if (classNode.signature != null)
-			definition.setSignature(new Signature(field.signature));
-
-		// create ast for all methods & fields
-
+			definition.setSignature(new Signature(fieldNode.signature));
+		AnnotationHelper.visitAnnos(definition, true, classNode.visibleAnnotations);
+		AnnotationHelper.visitAnnos(definition, false, classNode.invisibleAnnotations);
+		// Create AST for all methods & fields
 		for (MethodNode methodNode : classNode.methods) {
 			BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(methodNode);
 			transformer.visit();
-			definition.addMethod(transformer.getUnit().getMethod());
+			definition.addMethod(transformer.getUnit().getDefinitionAsMethod());
 		}
-
 		for (FieldNode fieldNode : classNode.fields) {
 			BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(fieldNode);
 			transformer.visit();
-			definition.addField(transformer.getUnit().getField());
+			definition.addField(transformer.getUnit().getDefinitionAsField());
 		}
-
-		AnnotationHelper.visitAnnos(definition, true, classNode.visibleAnnotations);
-		AnnotationHelper.visitAnnos(definition, false, classNode.invisibleAnnotations);
 		// Done
 		unit = new Unit(definition);
 	}
@@ -385,7 +381,7 @@ public class BytecodeToAstTransformer {
 	 */
 	private String getVariableName(int pos, Type type, int index) {
 		// Always use "this" to refer to self.
-		if (index == 0 && !AccessFlag.isStatic(method.access)) {
+		if (index == 0 && !AccessFlag.isStatic(methodNode.access)) {
 			return "this";
 		}
 		// We will call this in cases where we have both extra type insight, and lessened insight.
@@ -401,8 +397,8 @@ public class BytecodeToAstTransformer {
 		Key key = new Key(index, normalizedSort);
 		String name = variableNames.get(key);
 		// Check for existing variable name
-		if (name == null && method.localVariables != null) {
-			for (LocalVariableNode local : method.localVariables) {
+		if (name == null && methodNode.localVariables != null) {
+			for (LocalVariableNode local : methodNode.localVariables) {
 				if (isMatching(local, pos, type, index)) {
 					// Check if variable name is in use by another variable of a different sort
 					if (variableNames.containsValue(local.name) && !variableNames.containsKey(key)) {
@@ -481,10 +477,10 @@ public class BytecodeToAstTransformer {
 			//  10: astore_1
 			//  11: aload_1  <--- Variable starts here
 			// Because of this we need to offset the start range by 1
-			int start = method.instructions.indexOf(local.start);
+			int start = methodNode.instructions.indexOf(local.start);
 			if (position < start - 1)
 				return false;
-			int end = method.instructions.indexOf(local.end);
+			int end = methodNode.instructions.indexOf(local.end);
 			if (position > end)
 				return false;
 			// Sanity check the sort of the variable at the position makes sense with this case.

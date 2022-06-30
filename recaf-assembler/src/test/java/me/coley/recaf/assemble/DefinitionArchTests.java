@@ -53,7 +53,7 @@ public class DefinitionArchTests extends JasmUtils {
 	})
 	public void testSignature(String sig) {
 		handle("signature " + sig + "\nmethod simple ()V\nend", unit -> {
-			MethodDefinition method = unit.getMethod();
+			MethodDefinition method = unit.getDefinitionAsMethod();
 			assertEquals(sig, method.getSignature().getSignature());
 		});
 	}
@@ -61,12 +61,12 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testConstValInt() {
 		handle("field simple I\n" + "0", unit -> {
-			FieldDefinition field = unit.getField();
+			FieldDefinition field = unit.getDefinitionAsField();
 			assertNotNull(field.getConstVal());
 			assertEquals(0, field.getConstVal().getValue());
 		});
 		handle("field simple I\n" + "-5000", unit -> {
-			FieldDefinition field = unit.getField();
+			FieldDefinition field = unit.getDefinitionAsField();
 			assertNotNull(field.getConstVal());
 			assertEquals(-5000, field.getConstVal().getValue());
 		});
@@ -76,12 +76,12 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testConstValLong() {
 		handle("field simple J\n" + "0L", unit -> {
-			FieldDefinition field = unit.getField();
+			FieldDefinition field = unit.getDefinitionAsField();
 			assertNotNull(field.getConstVal());
 			assertEquals(0L, field.getConstVal().getValue());
 		});
 		handle("field simple J\n" + "-5000000000L", unit -> {
-			FieldDefinition field = unit.getField();
+			FieldDefinition field = unit.getDefinitionAsField();
 			assertNotNull(field.getConstVal());
 			assertEquals(-5000000000L, field.getConstVal().getValue());
 		});
@@ -90,12 +90,12 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testConstValFloat() {
 		handle("field simple F\n" + "0.5F", unit -> {
-			FieldDefinition field = unit.getField();
+			FieldDefinition field = unit.getDefinitionAsField();
 			assertNotNull(field.getConstVal());
 			assertEquals(0.5F, field.getConstVal().getValue());
 		});
 		handle("field simple F\n" + "-50.7F", unit -> {
-			FieldDefinition field = unit.getField();
+			FieldDefinition field = unit.getDefinitionAsField();
 			assertNotNull(field.getConstVal());
 			assertEquals(-50.7F, field.getConstVal().getValue());
 		});
@@ -104,12 +104,12 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testConstValDouble() {
 		handle("field simple D\n" + "0.54321", unit -> {
-			FieldDefinition field = unit.getField();
+			FieldDefinition field = unit.getDefinitionAsField();
 			assertNotNull(field.getConstVal());
 			assertEquals(0.54321, field.getConstVal().getValue());
 		});
 		handle("field simple D\n" + " -5000000000000000000000000000000000000000.5", unit -> {
-			FieldDefinition field = unit.getField();
+			FieldDefinition field = unit.getDefinitionAsField();
 			assertNotNull(field.getConstVal());
 			assertEquals(-5000000000000000000000000000000000000000.5, field.getConstVal().getValue());
 		});
@@ -118,7 +118,7 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testConstValString() {
 		handle("field simple Ljava/lang/String;\n" + "\"hello\"", unit -> {
-			FieldDefinition field = unit.getField();
+			FieldDefinition field = unit.getDefinitionAsField();
 			assertNotNull(field.getConstVal());
 			assertEquals("hello", field.getConstVal().getValue());
 		});
@@ -127,7 +127,7 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testThrownException() {
 		handle("throws java/lang/Exception" + "\nmethod simple ()V\nend" , unit -> {
-			MethodDefinition method = unit.getMethod();
+			MethodDefinition method = unit.getDefinitionAsMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getThrownExceptions().size());
 			assertEquals("java/lang/Exception", method.getThrownExceptions().get(0).getExceptionType());
@@ -137,7 +137,7 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testThrownExceptionShadowsPrimitive() {
 		handle("throws I" + "\nmethod simple ()V\nend", unit -> {
-			MethodDefinition method = unit.getMethod();
+			MethodDefinition method = unit.getDefinitionAsMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getThrownExceptions().size());
 			assertEquals("I", method.getThrownExceptions().get(0).getExceptionType());
@@ -147,7 +147,7 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testThrownExceptionShadowsKeyword() {
 		handle("throws throws" + "\nmethod simple ()V\nend", unit -> {
-			MethodDefinition method = unit.getMethod();
+			MethodDefinition method = unit.getDefinitionAsMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getThrownExceptions().size());
 			assertEquals("throws", method.getThrownExceptions().get(0).getExceptionType());
@@ -157,7 +157,7 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testAnno() {
 		handle("annotation com/example/MyAnno numArg 500 strArg \"hello\" end" + "\nmethod simple ()V\nend", unit -> {
-			MethodDefinition method = unit.getMethod();
+			MethodDefinition method = unit.getDefinitionAsMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getAnnotations().size());
 			Annotation annotation = method.getAnnotations().get(0);
@@ -172,7 +172,7 @@ public class DefinitionArchTests extends JasmUtils {
 	@Test
 	public void testAnnoWithEnum() {
 		handle("annotation com/example/MyAnno v annotation-enum com/example/Example NAME end" + "\nmethod simple ()V\nend", unit -> {
-			MethodDefinition method = unit.getMethod();
+			MethodDefinition method = unit.getDefinitionAsMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getAnnotations().size());
 			Annotation annotation = method.getAnnotations().get(0);
@@ -189,7 +189,7 @@ public class DefinitionArchTests extends JasmUtils {
 	@SuppressWarnings("unchecked")
 	public void testAnnoWithList() {
 		handle("annotation com/example/MyAnno list args 1 2 3 end end" + "\nmethod simple ()V\nend", unit -> {
-			MethodDefinition method = unit.getMethod();
+			MethodDefinition method = unit.getDefinitionAsMethod();
 			assertNotNull(method.getCode());
 			assertEquals(1, method.getAnnotations().size());
 			Annotation annotation = method.getAnnotations().get(0);

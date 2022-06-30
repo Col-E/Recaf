@@ -352,7 +352,7 @@ public class AssemblerPipeline {
 	public Element getCodeElementAt(int position) {
 		if (unit == null || !unit.isMethod())
 			return null;
-		Code code = unit.getMethod().getCode();
+		Code code = unit.getDefinitionAsMethod().getCode();
 		if (code == null)
 			return null;
 		return code.getChildAt(position);
@@ -370,7 +370,7 @@ public class AssemblerPipeline {
 	public Element getCodeElementAt(int lineNo, int colPos) {
 		if (unit == null || !unit.isMethod())
 			return null;
-		Code code = unit.getMethod().getCode();
+		Code code = unit.getDefinitionAsMethod().getCode();
 		if (code == null)
 			return null;
 		return code.getChildAt(lineNo, colPos);
@@ -385,7 +385,7 @@ public class AssemblerPipeline {
 	public List<Element> getCodeElementsAt(int lineNo) {
 		if (unit == null || !unit.isMethod())
 			return Collections.emptyList();
-		Code code = unit.getMethod().getCode();
+		Code code = unit.getDefinitionAsMethod().getCode();
 		if (code == null)
 			return Collections.emptyList();
 		return code.getChildrenAt(lineNo);
@@ -604,7 +604,7 @@ public class AssemblerPipeline {
 			return false;
 		// Build class
 		try {
-			AstToClassTransformer transformer = new AstToClassTransformer(unit.getClassDefinition());
+			AstToClassTransformer transformer = new AstToClassTransformer(unit.getDefinitionAsClass());
 			ClassNode assembledNode = transformer.buildClass();
 			for (FieldNode field : assembledNode.fields) {
 				if (!validateNode(field))
@@ -645,7 +645,7 @@ public class AssemblerPipeline {
 			return false;
 		// Build field
 		AstToFieldTransformer transformer = new AstToFieldTransformer();
-		transformer.setDefinition(unit.getField());
+		transformer.setDefinition(unit.getDefinitionAsField());
 		FieldNode fieldAssembled = transformer.buildField();
 		if (bytecodeValidationListeners.size() > 0) {
 			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, fieldAssembled);
@@ -689,7 +689,7 @@ public class AssemblerPipeline {
 			AstToMethodTransformer transformer = new AstToMethodTransformer(classSupplier, type);
 			transformer.setUseAnalysis(doUseAnalysis);
 			transformer.setInheritanceChecker(inheritanceChecker);
-			transformer.setDefinition(unit.getMethod());
+			transformer.setDefinition(unit.getDefinitionAsMethod());
 			transformer.visit();
 			MethodNode methodAssembled = transformer.buildMethod();
 			if (bytecodeValidationListeners.size() > 0) {

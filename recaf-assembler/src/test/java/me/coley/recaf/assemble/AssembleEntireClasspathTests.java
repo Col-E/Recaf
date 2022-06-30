@@ -83,7 +83,7 @@ public class AssembleEntireClasspathTests extends JasmUtils {
 				// Generate
 				AstToMethodTransformer generator = new AstToMethodTransformer(node.name);
 				generator.setUseAnalysis(true);
-				generator.setDefinition(unitCtx.getMethod());
+				generator.setDefinition(unitCtx.getDefinitionAsMethod());
 				try {
 					generator.visit();
 					MethodNode methodAssembled = generator.buildMethod();

@@ -4,7 +4,6 @@ import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.config.IntBounds;
-import me.coley.recaf.ui.DiffViewMode;
 import me.coley.recaf.ui.util.Icons;
 
 /**
@@ -56,13 +55,6 @@ public class DecompilerConfig implements ConfigContainer {
 	@Group("filter")
 	@ConfigID("synthetics")
 	public boolean filterSynthetics;
-
-	/**
-	 * Diff-viewer class representation.
-	 */
-	@Group("diff")
-	@ConfigID("diff-view-mode")
-	public DiffViewMode diffViewMode = DiffViewMode.CLASS;
 
 	@Override
 	public String iconPath() {

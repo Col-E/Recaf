@@ -6,11 +6,11 @@ import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.config.IntBounds;
 import me.coley.recaf.ui.ClassViewMode;
+import me.coley.recaf.ui.DiffViewMode;
 import me.coley.recaf.ui.FileViewMode;
 import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -90,6 +90,13 @@ public class EditorConfig implements ConfigContainer {
 	@Group("hex")
 	@ConfigID("classhints")
 	public boolean showClassHints = true;
+
+	/**
+	 * Diff-viewer class representation.
+	 */
+	@Group("diff")
+	@ConfigID("diff-view-mode")
+	public DiffViewMode diffViewMode = DiffViewMode.DECOMPILE;
 
 	@Override
 	public String iconPath() {

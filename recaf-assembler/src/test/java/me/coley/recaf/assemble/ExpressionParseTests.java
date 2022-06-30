@@ -50,6 +50,6 @@ public class ExpressionParseTests extends JasmUtils {
 
 		assertNotNull(unit, "Parser did not find unit context with input: " + original);
 
-		handler.accept(unit.getMethod());
+		handler.accept(unit.getDefinitionAsMethod());
 	}
 }

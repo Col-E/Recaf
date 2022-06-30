@@ -55,34 +55,20 @@ public class Unit extends BaseElement {
 	}
 
 	/**
-	 * @return Field or method definition.
+	 * @return Class, field, or method definition.
 	 */
 	public AbstractDefinition getDefinition() {
 		return definition;
 	}
 
 	/**
-	 * @return Method definition.
-	 *
-	 * @throws IllegalStateException
-	 * 		if the definition is not a method.
-	 * @see #isMember()
-	 * @see #isMethod()
-	 */
-	public MethodDefinition getMethod() {
-		if (!isMethod())
-			throw new IllegalStateException("Not a method");
-		return (MethodDefinition) definition;
-	}
-
-	/**
 	 * @return Class definition.
 	 *
 	 * @throws IllegalStateException
-	 * 		if the definition is not a class
+	 * 		If the definition is not a class
 	 * @see #isClass()
 	 */
-	public ClassDefinition getClassDefinition() {
+	public ClassDefinition getDefinitionAsClass() {
 		if (!isClass())
 			throw new IllegalStateException("Not a class");
 		return (ClassDefinition) definition;
@@ -92,12 +78,27 @@ public class Unit extends BaseElement {
 	 * @return Field definition.
 	 *
 	 * @throws IllegalStateException
-	 * 		if the definition is not a field.
+	 * 		If the definition is not a class
+	 * @see #isMember()
 	 * @see #isField()
 	 */
-	public FieldDefinition getField() {
+	public FieldDefinition getDefinitionAsField() {
 		if (!isField())
 			throw new IllegalStateException("Not a field");
 		return (FieldDefinition) definition;
+	}
+
+	/**
+	 * @return Method definition.
+	 *
+	 * @throws IllegalStateException
+	 * 		If the definition is not a class
+	 * @see #isMember()
+	 * @see #isMethod()
+	 */
+	public MethodDefinition getDefinitionAsMethod() {
+		if (!isMethod())
+			throw new IllegalStateException("Not a method");
+		return (MethodDefinition) definition;
 	}
 }

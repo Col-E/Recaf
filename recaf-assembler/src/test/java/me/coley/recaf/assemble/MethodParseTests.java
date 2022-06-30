@@ -92,7 +92,7 @@ public class MethodParseTests extends JasmUtils {
 
 		// Generate
 		AstToMethodTransformer generator = new AstToMethodTransformer(CLASS_SUPPLIER, SELF_CLASS);
-		generator.setDefinition(unit.getMethod());
+		generator.setDefinition(unit.getDefinitionAsMethod());
 		try {
 			generator.visit();
 			handler.accept(generator.buildMethod());

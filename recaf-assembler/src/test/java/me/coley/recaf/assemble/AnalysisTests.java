@@ -496,7 +496,7 @@ public class AnalysisTests extends JasmUtils {
 			Unit unit = transformer.generateUnit();
 
 			// Handle
-			handler.accept(unit.getMethod());
+			handler.accept(unit.getDefinitionAsMethod());
 		} catch (AssemblerException e) {
 			throw new RuntimeException(e.describe(), e);
 		}

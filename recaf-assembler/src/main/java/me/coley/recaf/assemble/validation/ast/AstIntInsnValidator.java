@@ -20,7 +20,7 @@ public class AstIntInsnValidator implements AstValidationVisitor, Opcodes {
 	public void visit(AstValidator validator) {
 		if (validator.getUnit().isField())
 			return;
-		Code code = validator.getUnit().getMethod().getCode();
+		Code code = validator.getUnit().getDefinitionAsMethod().getCode();
 		if (code == null)
 			return;
 		for (AbstractInstruction instruction : code.getInstructions()) {

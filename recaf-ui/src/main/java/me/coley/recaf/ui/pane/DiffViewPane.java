@@ -14,10 +14,11 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.Controller;
 import me.coley.recaf.ControllerListener;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.code.ItemInfo;
+import me.coley.recaf.assemble.ast.PrintContext;
+import me.coley.recaf.assemble.ast.Unit;
+import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
+import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.DiffViewMode;
 import me.coley.recaf.ui.behavior.SaveResult;
@@ -27,13 +28,13 @@ import me.coley.recaf.ui.control.PannableImageView;
 import me.coley.recaf.ui.control.TextView;
 import me.coley.recaf.ui.control.code.Language;
 import me.coley.recaf.ui.control.code.Languages;
+import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.SyntaxArea;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.ui.control.hex.HexView;
 import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.pane.assembler.AssemblerPane;
-import me.coley.recaf.ui.pane.assembler.DiffAssemblerPane;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ByteHeaderUtil;
@@ -50,6 +51,8 @@ import me.coley.recaf.workspace.resource.ResourceFileListener;
 import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 
 import java.util.Arrays;
@@ -119,17 +122,16 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 			ClassInfo current = (ClassInfo) item;
 			ClassInfo initial = history.firstElement();
 			// Create a countdown for the two classes to decompile
-			CompletableFuture<Void> currentFuture = new CompletableFuture<>();
-			CompletableFuture<Void> initialFuture = new CompletableFuture<>();
-			DiffViewMode mode = Configs.decompiler().diffViewMode;
-			if(mode == DiffViewMode.CLASS) {
+			DiffViewMode mode = Configs.editor().diffViewMode;
+			if (mode == DiffViewMode.DECOMPILE) {
+				CompletableFuture<Void> currentFuture = new CompletableFuture<>();
+				CompletableFuture<Void> initialFuture = new CompletableFuture<>();
 				DiffableDecompilePane currentDecompile = new DiffableDecompilePane(currentFuture);
 				DiffableDecompilePane initialDecompile = new DiffableDecompilePane(initialFuture);
 				currentDecompile.onUpdate(current);
 				initialDecompile.onUpdate(initial);
 				// Add to the UI
 				split.getItems().addAll(initialDecompile, currentDecompile);
-
 				// When the class versions both get decompiled, run a basic text diff and highlight modified lines.
 				CompletableFuture.allOf(currentFuture, initialFuture)
 						.orTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
@@ -138,29 +140,18 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 								logger.error("Failed to make diff view", t);
 							} else {
 								highlightDiff(initialDecompile, currentDecompile);
-								// Bind scrolling after
-								currentDecompile.bindScrollTo(initialDecompile);
 							}
 						}, ThreadUtil.executor());
 			} else {
-				DiffAssemblerPane currentAssembler = new DiffAssemblerPane(currentFuture);
-				DiffAssemblerPane initialAssembler = new DiffAssemblerPane(initialFuture);
+				DiffAssemblerPane currentAssembler = new DiffAssemblerPane();
+				DiffAssemblerPane initialAssembler = new DiffAssemblerPane();
+				// Add to the UI
+				split.getItems().addAll(initialAssembler, currentAssembler);
+				// Create the disassembly by passing in the class states
 				currentAssembler.onUpdate(current);
 				initialAssembler.onUpdate(initial);
-
-				split.getItems().addAll(initialAssembler, currentAssembler);
-
-				CompletableFuture.allOf(currentFuture, initialFuture)
-						.orTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
-						.whenCompleteAsync((__, t) -> {
-							if (t != null) {
-								logger.error("Failed to make diff view", t);
-							} else {
-								highlightDiff(initialAssembler, currentAssembler);
-								// Bind scrolling after
-								currentAssembler.bindScrollTo(initialAssembler);
-							}
-						}, ThreadUtil.executor());
+				// The disassembly is on the same thread and is fast, so we can immediately highlight
+				highlightDiff(initialAssembler, currentAssembler);
 			}
 			return split;
 		} else if (item instanceof DexClassInfo) {
@@ -217,7 +208,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		if (diff.getDeltas().isEmpty()) {
 			return;
 		}
-		FxThreadUtil.run(() -> {
+		// Without the delay, the text insertions fight with text styling thread
+		FxThreadUtil.delayedRun(100, () -> {
 			int deletions = 0;
 			int insertions = 0;
 			int currentOffset = 0;
@@ -227,8 +219,32 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 				Chunk<String> revised = delta.getRevised();
 				switch (delta.getType()) {
 					case CHANGE:
-						initial.markDiffChunk(original, "change", insertions);
-						current.markDiffChunk(revised, "change", deletions);
+						// Changes can also insert/remove lines
+						if (revised.size() > original.size()) {
+							// Change has inserted text
+							current.markDiffChunk(revised, "insertion", deletions - 1);
+							int insertStartLine = original.getPosition() + initialOffset;
+							int insertedCount = revised.size() - 1;
+							int chunkDiffOR = original.getPosition() - revised.getPosition();
+							initial.getCodeArea().insertText(insertStartLine, 0, "\n".repeat(insertedCount));
+							initial.markDiffChunk(revised, "insertion", chunkDiffOR + initialOffset - 1);
+							insertions += insertedCount;
+							initialOffset += insertedCount;
+						} else if (revised.size() < original.size()) {
+							// Change has removed text
+							initial.markDiffChunk(original, "deletion", insertions - 1);
+							int deleteStartLine = revised.getPosition() + currentOffset;
+							int deletedCount = original.size() - 1;
+							int chunkDiffRO = revised.getPosition() - original.getPosition();
+							current.getCodeArea().insertText(deleteStartLine, 0, "\n".repeat(deletedCount));
+							current.markDiffChunk(original, "deletion", chunkDiffRO + currentOffset - 1);
+							deletions += deletedCount;
+							currentOffset += deletedCount;
+						} else {
+							// Change has modified an equal number of lines
+							current.markDiffChunk(revised, "change", deletions);
+							initial.markDiffChunk(original, "change", insertions);
+						}
 						break;
 					case DELETE:
 						initial.markDiffChunk(original, "deletion", insertions);
@@ -252,6 +268,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 						break;
 				}
 			}
+			// Now that text insertions are done, we can link the two diffable components scrolling
+			current.bindScrollTo(initial);
 		});
 		initial.getCodeArea().showParagraphAtCenter(0);
 	}
@@ -320,6 +338,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 
 	/**
 	 * Simple interface to make text-diff logic backed by {@link CodeArea} easy to implement.
+	 *
+	 * @author Matt Coley
 	 */
 	public interface Diffable {
 		default void markDiffChunk(Chunk<String> chunk, String style, int offset) {
@@ -346,6 +366,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 
 	/**
 	 * An extension of the text-view for line difference highlighting.
+	 *
+	 * @author Matt Coley
 	 */
 	private static class DiffableTextView extends TextView implements Diffable {
 		/**
@@ -379,6 +401,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 
 	/**
 	 * An extension of the Java decompile pane for line difference highlighting.
+	 *
+	 * @author Matt Coley
 	 */
 	private static class DiffableDecompilePane extends DecompilePane implements Diffable {
 		private final CompletableFuture<Void> future;
@@ -430,6 +454,67 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		protected void onDecompileCompletion(String code) {
 			this.code = code;
 			this.future.complete(null);
+		}
+	}
+
+	/**
+	 * An extension of the assembler pane for line difference highlighting.
+	 *
+	 * @author Nowilltolife
+	 */
+	private static class DiffAssemblerPane extends AssemblerPane implements Diffable {
+		public DiffAssemblerPane() {
+			getAssemblerArea().setEditable(false);
+		}
+
+		@Override
+		protected AssemblerArea createAssembler(ProblemTracking tracking, AssemblerPipeline pipeline) {
+			return new AssemblerArea(tracking, pipeline) {
+				@Override
+				protected void setupAstParseThread() {
+					// Do not create the parse thread, we only care about the text.
+					// It does not need to be parsed.
+				}
+			};
+		}
+
+		@Override
+		public VirtualizedScrollPane<AssemblerArea> getScroll() {
+			return super.getScroll();
+		}
+
+		@Override
+		public boolean supportsEditing() {
+			return false;
+		}
+
+		@Override
+		public SaveResult save() {
+			return SaveResult.IGNORED;
+		}
+
+		@Override
+		public CodeArea getCodeArea() {
+			return super.getAssemblerArea();
+		}
+
+		@Override
+		public void onUpdate(CommonClassInfo newValue) {
+			if (newValue instanceof ClassInfo) {
+				ClassInfo classInfo = (ClassInfo) newValue;
+				// Find class node
+				ClassReader reader = classInfo.getClassReader();
+				ClassNode node = new ClassNode();
+				reader.accept(node, ClassReader.SKIP_FRAMES);
+				// Transform the node to text representation
+				getAssemblerArea().onUpdate(newValue);
+				BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(node);
+				transformer.visit();
+				Unit unit = transformer.getUnit();
+				String result = unit.print(PrintContext.DEFAULT_CTX);
+				// Update code area
+				getAssemblerArea().setText(result);
+			}
 		}
 	}
 }

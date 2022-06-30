@@ -129,7 +129,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	/**
 	 * Creates the thread that updates the AST in the background.
 	 */
-	private void setupAstParseThread() {
+	protected void setupAstParseThread() {
 		astParseThread = ThreadUtil.scheduleAtFixedRate(() -> {
 			try {
 				if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
@@ -278,7 +278,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			Unit unit = pipeline.getUnit();
 			if (unit == null || !unit.isMethod())
 				return null;
-			Label lab = unit.getMethod().getCode().getLabel(label);
+			Label lab = unit.getDefinitionAsMethod().getCode().getLabel(label);
 			if (lab == null) {
 				logger.warn("Cannot find label '{}'", label);
 				return null;
@@ -307,7 +307,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			Unit unit = pipeline.getUnit();
 			if (unit == null || !unit.isMethod())
 				return null;
-			Label lab = unit.getMethod().getCode().getLabel(label);
+			Label lab = unit.getDefinitionAsMethod().getCode().getLabel(label);
 			if (lab == null) {
 				logger.warn("Cannot find label '{}'", label);
 				return null;
@@ -329,7 +329,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			Unit unit = pipeline.getUnit();
 			if (unit == null || !unit.isMethod())
 				return null;
-			Label lab = unit.getMethod().getCode().getLabel(label);
+			Label lab = unit.getDefinitionAsMethod().getCode().getLabel(label);
 			if (lab == null) {
 				logger.warn("Cannot find label '{}'", label);
 			}
@@ -592,7 +592,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			for (int i = 0; i < analysis.getFrames().size(); i++) {
 				Frame frame = analysis.frame(i);
 				if (frame.isWonky()) {
-					AbstractInstruction instruction = pipeline.getUnit().getMethod().getCode().getInstructions().get(i);
+					AbstractInstruction instruction = pipeline.getUnit().getDefinitionAsMethod().getCode().getInstructions().get(i);
 					int line = instruction.getLine();
 					ProblemInfo problem = new ProblemInfo(BYTECODE_VALIDATION, ProblemLevel.WARNING, line, frame.getWonkyReason());
 					problemTracking.addProblem(line, problem);
@@ -691,20 +691,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 
 	private static AssemblerConfig config() {
 		return Configs.assembler();
-	}
-
-	/**
-	 * Disable bytecode analysis.
-	 */
-	public void disableAnalysis() {
-		pipeline.setDoUseAnalysis(false);
-	}
-
-	/**
-	 * Enable bytecode analysis.
-	 */
-	public void enableAnalysis() {
-		pipeline.setDoUseAnalysis(true);
 	}
 
 	public class LabelContextBuilder extends ContextBuilder {
