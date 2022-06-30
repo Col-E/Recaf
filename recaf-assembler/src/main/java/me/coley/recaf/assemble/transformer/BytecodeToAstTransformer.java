@@ -342,7 +342,7 @@ public class BytecodeToAstTransformer {
 		// Setup other attributes
 		ClassDefinition definition = new ClassDefinition(modifiers, classNode.name, classNode.superName, classNode.interfaces);
 		if (classNode.signature != null)
-			definition.setSignature(new Signature(fieldNode.signature));
+			definition.setSignature(new Signature(classNode.signature));
 		AnnotationHelper.visitAnnos(definition, true, classNode.visibleAnnotations);
 		AnnotationHelper.visitAnnos(definition, false, classNode.invisibleAnnotations);
 		// Create AST for all methods & fields
