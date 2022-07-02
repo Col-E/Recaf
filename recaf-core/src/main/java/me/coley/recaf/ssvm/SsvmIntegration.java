@@ -269,6 +269,8 @@ public class SsvmIntegration {
 							parameters);
 				}
 				return new VmRunResult(context.getResult());
+			} catch (VMException ex) {
+				return new VmRunResult(unwrap(ex));
 			} catch (Exception ex) {
 				return new VmRunResult(ex);
 			}

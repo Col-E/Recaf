@@ -138,10 +138,15 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		));
 		values = new Value[argSlot];
 		if (!isStatic) {
-			JavaClass type = helper.tryFindClass(symbols.java_lang_Object().getClassLoader(), owner.getName(), true);
-			InstanceValue instance = memory.newInstance((InstanceJavaClass) type);
-			helper.initializeDefaultValues(instance);
-			values[0] = instance;
+			try {
+				JavaClass type = helper.tryFindClass(symbols.java_lang_Object().getClassLoader(), owner.getName(), true);
+				InstanceValue instance = memory.newInstance((InstanceJavaClass) type);
+				helper.initializeDefaultValues(instance);
+				values[0] = instance;
+			} catch (VMException ex) {
+				String reason = VirtualMachineUtil.throwableToString(ex.getOop());
+				throw new RuntimeException(reason, vm.getHelper().toJavaException(ex.getOop()));
+			}
 		}
 	}
 
