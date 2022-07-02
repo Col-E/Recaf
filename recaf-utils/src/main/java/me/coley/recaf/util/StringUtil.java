@@ -1,5 +1,9 @@
 package me.coley.recaf.util;
 
+import com.carrotsearch.hppc.CharIntHashMap;
+import com.carrotsearch.hppc.CharIntMap;
+import com.carrotsearch.hppc.cursors.CharIntCursor;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
@@ -8,6 +12,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 /**
  * Various utilities for {@link String} manipulation.
@@ -148,6 +153,25 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param text
+	 * 		Input text.
+	 *
+	 * @return Entropy of the characters in the text.
+	 */
+	public static double getEntropy(String text) {
+		CharIntMap charCountMap = new CharIntHashMap(64);
+		for (char c : text.toCharArray())
+			charCountMap.addTo(c, 1);
+		int length = text.length();
+		final double[] entropy = {0.0};
+		charCountMap.forEach((Consumer<CharIntCursor>) cursor -> {
+			double freq = ((double) cursor.value) / length;
+			entropy[0] -= freq * (Math.log(freq) / Math.log(2));
+		});
+		return entropy[0];
+	}
+
+	/**
 	 * @param t
 	 * 		Throwable error.
 	 *
@@ -210,8 +234,8 @@ public class StringUtil {
 			return false;
 		}
 		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
-			.onMalformedInput(CodingErrorAction.REPLACE)
-			.onUnmappableCharacter(CodingErrorAction.REPLACE);
+				.onMalformedInput(CodingErrorAction.REPLACE)
+				.onUnmappableCharacter(CodingErrorAction.REPLACE);
 		ByteBuffer buffer = ByteBuffer.wrap(data);
 		int length = data.length;
 		int entropy = 0;
@@ -267,7 +291,7 @@ public class StringUtil {
 						entropy++;
 				}
 			} else if (codePoint >= 57344 && codePoint <= 63743) {
-					entropy++;
+				entropy++;
 			} else if (codePoint >= 65520 && codePoint <= 65535) {
 				entropy++;
 			} else if (codePoint >= 983040 && codePoint <= 1048573) {
