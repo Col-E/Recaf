@@ -52,6 +52,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	private final VBox overlay = new VBox();
 	private final JavaArea javaArea;
 	private final VirtualizedScrollPane<JavaArea> scroll;
+	private final ProgressBar bar = new ProgressBar(0);
 	private Decompiler decompiler;
 	private CommonClassInfo lastClass;
 	private boolean ignoreNextDecompile;
@@ -69,7 +70,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		Node errorDisplay = new ErrorDisplay(javaArea, tracking);
 		// Overlay for 'pls wait for decompile' message
 		overlay.setAlignment(Pos.CENTER);
-		overlay.getChildren().addAll(new ProgressBar(-1.0), new BoundLabel(Lang.getBinding("java.decompiling")));
+		overlay.getChildren().addAll(bar, new BoundLabel(Lang.getBinding("java.decompiling")));
 		overlay.getChildren().forEach(n -> n.opacityProperty().bind(overlay.opacityProperty()));
 		overlay.getStyleClass().add("progress-overlay");
 		// Layout
@@ -123,6 +124,11 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		ft.setFromValue(overlay.getOpacity());
 		ft.setToValue(0.9);
 		ft.play();
+		// Negative one sets it to an animation of 'indeterminate' duration.
+		// Note: While this is active this causes scene re-draws.
+		//  - JDK-8200239
+		//  - JDK-8102571 (marked as resolved, but it isn't as of JFX-19)
+		bar.setProgress(-1);
 	}
 
 	/**
@@ -135,6 +141,8 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		ft.setFromValue(overlay.getOpacity());
 		ft.setToValue(0.0);
 		ft.play();
+		// Set the progress-bar to full so it does not animate and cause scene re-draws.
+		bar.setProgress(1);
 	}
 
 	/**
