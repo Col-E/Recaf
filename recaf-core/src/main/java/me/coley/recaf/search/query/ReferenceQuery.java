@@ -13,6 +13,7 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.search.result.ResultBuilder;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.*;
@@ -62,9 +63,9 @@ public class ReferenceQuery implements Query {
 	}
 
 	private void whenMatched(String owner, String name, String desc, Consumer<ResultBuilder> builderConsumer) {
-		if (Strings.isNullOrEmpty(this.owner) || mode.match(this.owner, owner)) {
-			if (Strings.isNullOrEmpty(this.name) || mode.match(this.name, name)) {
-				if ((Strings.isNullOrEmpty(this.desc) || mode.match(this.desc, desc))) {
+		if (StringUtil.isAnyNullOrEmpty(this.owner, owner) || mode.match(this.owner, owner)) {
+			if (StringUtil.isAnyNullOrEmpty(this.name, name) || mode.match(this.name, name)) {
+				if (StringUtil.isAnyNullOrEmpty(this.desc, desc) || mode.match(this.desc, desc)) {
 					builderConsumer.accept(ResultBuilder.reference(owner, name, desc));
 				}
 			}
