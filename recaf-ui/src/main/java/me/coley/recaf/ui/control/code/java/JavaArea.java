@@ -233,8 +233,10 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			compiler.setTarget(options, version);
 			// Add classpath
 			Resources resources = workspace.getResources();
-			compiler.addClassPath(resources.getInternalLibraries());
-			compiler.addClassPath(resources.getLibraries());
+			compiler.clearVirtualClassPath();
+			compiler.addVirtualClassPath(resources.getPrimary());
+			compiler.addVirtualClassPath(resources.getInternalLibraries());
+			compiler.addVirtualClassPath(resources.getLibraries());
 			// Invoke and handle result
 			CompilerResult result = compiler.compile(className, classSource, options);
 			if (result.wasSuccess()) {

@@ -3,8 +3,6 @@ package me.coley.recaf.compile;
 import me.coley.recaf.plugin.tools.Tool;
 import me.coley.recaf.workspace.resource.Resource;
 
-import java.io.File;
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -51,26 +49,6 @@ public abstract class Compiler extends Tool<CompileOption<?>> {
 	}
 
 	/**
-	 * Convenience call for {@link #setClasspath(Map, String)}.
-	 *
-	 * @param options
-	 * 		Options map to update.
-	 * @param classpath
-	 * 		Multiple file paths to include.
-	 */
-	public void setClasspath(Map<String, CompileOption<?>> options, Collection<String> classpath) {
-		setClasspath(options, String.join(File.pathSeparator, classpath));
-	}
-
-	/**
-	 * @param options
-	 * 		Options map to update.
-	 * @param classpath
-	 * 		Path with one or more file paths split by {@link File#separatorChar}.
-	 */
-	public abstract void setClasspath(Map<String, CompileOption<?>> options, String classpath);
-
-	/**
 	 * @param options
 	 * 		Options map to update.
 	 * @param version
@@ -88,14 +66,21 @@ public abstract class Compiler extends Tool<CompileOption<?>> {
 	public abstract void setDebug(Map<String, CompileOption<?>> options, String debug);
 
 	/**
-	 * @param resource
-	 * 		Resource to add.
-	 */
-	public abstract void addClassPath(Resource resource);
-
-	/**
 	 * @param resources
 	 * 		Resources to add.
 	 */
-	public abstract void addClassPath(Iterable<? extends Resource> resources);
+	public void addVirtualClassPath(Iterable<? extends Resource> resources) {
+		resources.forEach(this::addVirtualClassPath);
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to add.
+	 */
+	public abstract void addVirtualClassPath(Resource resource);
+
+	/**
+	 * Clears the virtual classpath of {@link Resource}s.
+	 */
+	public abstract void clearVirtualClassPath();
 }

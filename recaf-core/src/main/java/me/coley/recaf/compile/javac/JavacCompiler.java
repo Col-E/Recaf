@@ -110,13 +110,6 @@ public class JavacCompiler extends Compiler {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void setClasspath(Map<String, CompileOption<?>> options, String classpath) {
-		CompileOption<String> opt = (CompileOption<String>) options.get(KEY_CLASSPATH);
-		opt.setValue(classpath);
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
 	public void setTarget(Map<String, CompileOption<?>> options, int version) {
 		CompileOption<Integer> opt = (CompileOption<Integer>) options.get(KEY_TARGET);
 		opt.setValue(version);
@@ -184,13 +177,14 @@ public class JavacCompiler extends Compiler {
 	}
 
 	@Override
-	public void addClassPath(Resource resource) {
-		classpath.add(resource);
+	public void addVirtualClassPath(Resource resource) {
+		if (!classpath.contains(resource))
+			classpath.add(resource);
 	}
 
 	@Override
-	public void addClassPath(Iterable<? extends Resource> resources) {
-		resources.forEach(classpath::add);
+	public void clearVirtualClassPath() {
+		classpath.clear();
 	}
 
 	/**
