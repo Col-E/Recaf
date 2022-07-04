@@ -4,13 +4,16 @@ import javafx.animation.FadeTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
@@ -26,11 +29,13 @@ import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.java.JavaArea;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
@@ -52,7 +57,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	private final VBox overlay = new VBox();
 	private final JavaArea javaArea;
 	private final VirtualizedScrollPane<JavaArea> scroll;
-	private final ProgressBar bar = new ProgressBar(0);
+	private final Canvas loadingCanvas = new Canvas(96, 96);
 	private Decompiler decompiler;
 	private CommonClassInfo lastClass;
 	private boolean ignoreNextDecompile;
@@ -69,8 +74,9 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		StackPane node = new StackPane(scroll);
 		Node errorDisplay = new ErrorDisplay(javaArea, tracking);
 		// Overlay for 'pls wait for decompile' message
+		overlay.setMouseTransparent(true);
 		overlay.setAlignment(Pos.CENTER);
-		overlay.getChildren().addAll(bar, new BoundLabel(Lang.getBinding("java.decompiling")));
+		overlay.getChildren().addAll(loadingCanvas, new BoundLabel(Lang.getBinding("java.decompiling")));
 		overlay.getChildren().forEach(n -> n.opacityProperty().bind(overlay.opacityProperty()));
 		overlay.getStyleClass().add("progress-overlay");
 		// Layout
@@ -118,31 +124,64 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	 * Fades in the <i>"decompile is in progress bla bla bla"</i> overlay.
 	 */
 	private void showOverlay() {
+		if (isOverlayShowing())
+			return;
 		// Make the element click-opaque
 		overlay.setMouseTransparent(false);
 		FadeTransition ft = new FadeTransition(Duration.millis(1000), overlay);
 		ft.setFromValue(overlay.getOpacity());
 		ft.setToValue(0.9);
 		ft.play();
-		// Negative one sets it to an animation of 'indeterminate' duration.
-		// Note: While this is active this causes scene re-draws.
-		//  - JDK-8200239
-		//  - JDK-8102571 (marked as resolved, but it isn't as of JFX-19)
-		bar.setProgress(-1);
+		// Make the canvas visible and begin an animation that will continue until the overlay is gone
+		loadingCanvas.setVisible(true);
+		ThreadUtil.run(() -> {
+			try {
+				GraphicsContext gc = loadingCanvas.getGraphicsContext2D();
+				int fps = 35;
+				double rotateSpeed = 4;
+				double angle = 0;
+				double w = loadingCanvas.getWidth();
+				double h = loadingCanvas.getHeight();
+				double px = w / 2;
+				double py = h / 2;
+				Rotate r = new Rotate(0, px, py);
+				Image image = Icons.getImage(Icons.LOAD);
+				// Loop drawing until the canvas is no longer visible
+				while (loadingCanvas.isVisible()) {
+					gc.clearRect(0, 0, w, h);
+					gc.setTransform(r.getMxx(), r.getMyx(), r.getMxy(), r.getMyy(), r.getTx(), r.getTy());
+					gc.drawImage(image, 0, 0);
+					Thread.sleep(1000 / fps);
+					angle += rotateSpeed;
+					r.setAngle(angle);
+				}
+			} catch (Exception ignored) {
+				// no-op
+			}
+		});
 	}
 
 	/**
 	 * Fades out the <i>"decompile is in progress bla bla bla"</i> overlay.
 	 */
 	private void hideOverlay() {
+		if (!isOverlayShowing())
+			return;
 		// Make the element click-through
 		overlay.setMouseTransparent(true);
+		// Make the overlay fade out, and disable the canvas rendering when complete
 		FadeTransition ft = new FadeTransition(Duration.millis(1000), overlay);
 		ft.setFromValue(overlay.getOpacity());
 		ft.setToValue(0.0);
 		ft.play();
-		// Set the progress-bar to full so it does not animate and cause scene re-draws.
-		bar.setProgress(1);
+		ft.setOnFinished(e -> loadingCanvas.setVisible(false));
+	}
+
+	/**
+	 * @return {@code true} when {@link #overlay} is showing.
+	 */
+	private boolean isOverlayShowing() {
+		return !overlay.isMouseTransparent();
 	}
 
 	/**
