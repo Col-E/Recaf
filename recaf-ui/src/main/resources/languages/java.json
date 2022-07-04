@@ -31,8 +31,8 @@
 		},
 		{
 			"name": "keyword",
-			"pattern": "\\b(?:i(?:n(?:t(?:erface)?|stanceof)|mp(?:lements|ort)|f)|s(?:t(?:rictfp|atic)|ynchronized|witch|hort|uper)|c(?:on(?:tinue|st)|a(?:tch|se)|lass|har)|p(?:r(?:otected|ivate)|ackage|ublic)|t(?:r(?:ansient|y)|h(?:rows?|is))|f(?:inal(?:ly)?|loat|or)|d(?:o(?:uble)?|efault)|v(?:o(?:latile|id)|ar)|b(?:oolean|reak|yte)|e(?:xtends|xports|lse|num)|a(?:bstrac|sser)t|n(?:ative|ull|ew)|re(?:turn|quires)|while|yield|goto|long|module)\\b",
-			"pattern-unoptimized": "\\b(?:abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|exports|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|module|native|new|package|private|protected|public|requires|return|short|static|strictfp|super|switch|synchronized|this|null|throw|throws|transient|try|var|void|volatile|while|yield)\\b"
+			"pattern": "\\b(?:i(?:n(?:t(?:erface)?|stanceof)|mp(?:lements|ort)|f)|s(?:t(?:rictfp|atic)|ynchronized|witch|hort|uper)|c(?:on(?:tinue|st)|a(?:tch|se)|lass|har)|p(?:r(?:otected|ivate)|ackage|ublic)|t(?:r(?:ansient|y)|h(?:rows?|is))|f(?:inal(?:ly)?|loat|or)|d(?:o(?:uble)?|efault)|v(?:o(?:latile|id)|ar)|b(?:oolean|reak|yte)|e(?:xtends|xports|lse|num)|a(?:bstrac|sser)t|n(?:ative|ull|ew)|re(?:turn|quires|cord)|while|yield|goto|long|module)\\b",
+			"pattern-unoptimized": "\\b(?:abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|exports|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|module|native|new|package|private|protected|public|record|requires|return|short|static|strictfp|super|switch|synchronized|this|null|throw|throws|transient|try|var|void|volatile|while|yield)\\b"
 		}
 	]
 }
