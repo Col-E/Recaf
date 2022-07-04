@@ -6,7 +6,10 @@ import me.coley.recaf.util.logging.Logging;
 import org.clyze.jphantom.ClassMembers;
 import org.clyze.jphantom.JPhantom;
 import org.clyze.jphantom.Options;
+import org.clyze.jphantom.Phantoms;
 import org.clyze.jphantom.access.ClassAccessStateMachine;
+import org.clyze.jphantom.access.FieldAccessStateMachine;
+import org.clyze.jphantom.access.MethodAccessStateMachine;
 import org.clyze.jphantom.adapters.ClassPhantomExtractor;
 import org.clyze.jphantom.hier.ClassHierarchy;
 import org.clyze.jphantom.hier.IncrementalClassHierarchy;
@@ -66,13 +69,21 @@ public class JPhantomUtil {
 		});
 		// Remove duplicate constraints for faster analysis
 		Set<String> existingConstraints = new HashSet<>();
-		ClassAccessStateMachine.v().getConstraints().removeIf(c -> {
-			return !existingConstraints.add(c.toString());
-		});
+		ClassAccessStateMachine.v().getConstraints().removeIf(c -> !existingConstraints.add(c.toString()));
 		// Execute and populate the current resource with generated classes
-		JPhantom phantom = new JPhantom(nodes, hierarchy, members);
-		phantom.run();
-		phantom.getGenerated().forEach((k, v) -> out.put(k.getInternalName(), decorate(v)));
+		try {
+			JPhantom phantom = new JPhantom(nodes, hierarchy, members);
+			phantom.run();
+			phantom.getGenerated().forEach((k, v) -> out.put(k.getInternalName(), decorate(v)));
+			logger.debug("Phantom analysis complete, generated {} classes", out.size());
+		} finally {
+			// Cleanup
+			Phantoms.refresh();
+			Phantoms.V().getLookupTable().clear();
+			ClassAccessStateMachine.refresh();
+			FieldAccessStateMachine.refresh();
+			MethodAccessStateMachine.refresh();
+		}
 		return out;
 	}
 
