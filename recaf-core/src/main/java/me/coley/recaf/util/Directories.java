@@ -20,6 +20,7 @@ public class Directories {
 	private static final Path classpathDirectory = resolveDirectory("classpath");
 	private static final Path configDirectory = resolveDirectory("config");
 	private static final Path dependenciesDirectory = resolveDirectory("dependencies");
+	private static final Path logsDirectory = resolveDirectory("logs");
 	private static final Path pluginDirectory = resolveDirectory("plugins");
 	private static final Path styleDirectory = resolveDirectory("style");
 	private static final Path scriptsDirectory = resolveDirectory("scripts");
@@ -50,6 +51,13 @@ public class Directories {
 	 */
 	public static Path getDependenciesDirectory() {
 		return dependenciesDirectory;
+	}
+
+	/**
+	 * @return Directory where old logs are stored.
+	 */
+	public static Path getLogsDirectory() {
+		return logsDirectory;
 	}
 
 	/**

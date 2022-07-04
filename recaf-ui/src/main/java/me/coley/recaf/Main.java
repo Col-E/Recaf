@@ -10,10 +10,16 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Entry point.
@@ -62,10 +68,37 @@ public class Main {
 	}
 
 	/**
-	 * Setup file logging appender.
+	 * Setup file logging appender and compress old logs.
 	 */
 	private static void setupLogging() {
+		// Setup appender
 		String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-		Logging.addFileAppender(Directories.getBaseDirectory().resolve("log-" + date + ".txt"));
+		Path logFile = Directories.getBaseDirectory().resolve("log-" + date + ".txt");
+		Logging.addFileAppender(logFile);
+		// Archive old logs
+		try {
+			Files.createDirectories(Directories.getLogsDirectory());
+			List<Path> oldLogs = Files.list(Directories.getBaseDirectory())
+					.filter(p -> p.getFileName().toString().matches("log-\\d+-\\d+-\\d+\\.txt"))
+					.collect(Collectors.toList());
+			// Do not treat the current log file as an old log file
+			oldLogs.remove(logFile);
+			logger.trace("Compressing {} old log files", oldLogs.size());
+			for (Path oldLog : oldLogs) {
+				String originalFileName = oldLog.getFileName().toString();
+				String archiveFileName = originalFileName.replace(".txt", ".zip");
+				Path archivedLog = Directories.getLogsDirectory().resolve(archiveFileName);
+				// Compress the log into a zip
+				try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(archivedLog.toFile()))) {
+					zos.putNextEntry(new ZipEntry(originalFileName));
+					Files.copy(oldLog, zos);
+					zos.closeEntry();
+				}
+				// Remove the old file
+				Files.delete(oldLog);
+			}
+		} catch (IOException ex) {
+			logger.warn("Failed to compress old logs", ex);
+		}
 	}
 }
