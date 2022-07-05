@@ -41,10 +41,10 @@ public class BasicFieldPrintStrategy implements FieldPrintStrategy {
 
 	protected void appendTypeAndName(StringBuilder sb, FieldModel model) {
 		Type type = Type.getType(model.getDesc());
-		String typeName = type.getClassName();
+		String typeName = EscapeUtil.escapeSpace(type.getClassName());
 		if (typeName.contains("."))
 			typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
-		sb.append(typeName).append(' ').append(model.getName());
+		sb.append(typeName).append(' ').append(PrintBase.filterName(model.getName()));
 	}
 
 	protected void appendConstValue(StringBuilder sb, FieldModel model) {

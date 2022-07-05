@@ -8,7 +8,7 @@ import me.coley.recaf.decompile.fallback.model.MethodModel;
  *
  * @author Matt Coley
  */
-public interface MethodPrintStrategy {
+public interface MethodPrintStrategy extends PrintBase {
 	/**
 	 * @param parent
 	 * 		Class model containing the method.

@@ -8,7 +8,7 @@ import me.coley.recaf.decompile.fallback.model.FieldModel;
  *
  * @author Matt Coley
  */
-public interface FieldPrintStrategy {
+public interface FieldPrintStrategy extends PrintBase {
 	/**
 	 * @param parent
 	 * 		Class model containing the field.

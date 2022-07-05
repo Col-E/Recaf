@@ -56,8 +56,6 @@ public abstract class Decompiler extends Tool<DecompileOption<?>> {
 									 ClassInfo classInfo) {
 		try {
 			String text = decompileImpl(options, workspace, classInfo);
-			if (text != null)
-				text = EscapeUtil.unescapeUnicode(text);
 			return new DecompileResult(this, classInfo, text);
 		} catch (Exception ex) {
 			return new DecompileResult(this, classInfo, ex);

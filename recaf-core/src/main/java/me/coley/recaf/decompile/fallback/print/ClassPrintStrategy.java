@@ -7,7 +7,7 @@ import me.coley.recaf.decompile.fallback.model.ClassModel;
  *
  * @author Matt Coley
  */
-public interface ClassPrintStrategy {
+public interface ClassPrintStrategy extends PrintBase {
 	/**
 	 * @param model
 	 * 		Class model to print.

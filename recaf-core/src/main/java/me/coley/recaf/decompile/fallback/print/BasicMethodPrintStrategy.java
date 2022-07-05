@@ -210,7 +210,7 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 	 */
 	protected void buildDeclarationReturnType(StringBuilder sb, MethodModel model) {
 		Type methodType = Type.getMethodType(model.getDesc());
-		String returnTypeName = methodType.getReturnType().getClassName();
+		String returnTypeName = EscapeUtil.escapeSpace(methodType.getReturnType().getClassName());
 		if (returnTypeName.contains("."))
 			returnTypeName = returnTypeName.substring(returnTypeName.lastIndexOf(".") + 1);
 		sb.append(returnTypeName).append(' ');
@@ -230,7 +230,7 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 	 * @see #appendDeclaration(Printer, MethodModel) parent caller
 	 */
 	protected void buildDeclarationName(StringBuilder sb, MethodModel model) {
-		sb.append(model.getName());
+		sb.append(PrintBase.filterName(model.getName()));
 	}
 
 	/**
@@ -256,7 +256,7 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 		for (int param = 0; param < argTypes.length; param++) {
 			// Get arg type text
 			Type argType = argTypes[param];
-			String argTypeName = argType.getClassName();
+			String argTypeName = EscapeUtil.escapeSpace(argType.getClassName());
 			if (argTypeName.contains("."))
 				argTypeName = argTypeName.substring(argTypeName.lastIndexOf(".") + 1);
 			boolean isLast = param == argTypes.length - 1;
@@ -299,7 +299,7 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 		if (thrownTypes.isEmpty())
 			return;
 		String shortNames = thrownTypes.stream()
-				.map(StringUtil::shortenPath)
+				.map(PrintBase::filterShortenName)
 				.collect(Collectors.joining(", "));
 		sb.append(" throws ").append(shortNames);
 	}

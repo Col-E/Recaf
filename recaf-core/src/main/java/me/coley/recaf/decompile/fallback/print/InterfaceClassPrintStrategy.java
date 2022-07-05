@@ -3,6 +3,7 @@ package me.coley.recaf.decompile.fallback.print;
 import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 
 import java.util.Set;
@@ -32,12 +33,12 @@ public class InterfaceClassPrintStrategy extends BasicClassPrintStrategy {
 			sb.append(decFlagsString)
 					.append(" interface ");
 		}
-		sb.append(StringUtil.shortenPath(model.getName()));
+		sb.append(PrintBase.filterShortenName(model.getName()));
 		if (model.getInterfaces().size() > 0) {
 			// Interfaces use 'extends' rather than 'implements'.
 			sb.append(" extends ");
 			String interfaces = model.getInterfaces().stream()
-					.map(StringUtil::shortenPath)
+					.map(PrintBase::filterShortenName)
 					.collect(Collectors.joining(", "));
 			sb.append(interfaces);
 		}

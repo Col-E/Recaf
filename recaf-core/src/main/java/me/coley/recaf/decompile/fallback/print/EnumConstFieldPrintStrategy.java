@@ -18,7 +18,6 @@ public class EnumConstFieldPrintStrategy implements FieldPrintStrategy {
 		boolean isNextEnumConst = fieldIndex < fields.size() - 1 &&
 				fields.get(fieldIndex + 1).isEnumConst();
 		String name = model.getName();
-
 		if (isNextEnumConst) {
 			return name + ", ";
 		} else {

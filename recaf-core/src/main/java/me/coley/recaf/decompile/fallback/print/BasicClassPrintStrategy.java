@@ -12,6 +12,7 @@ import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.decompile.fallback.model.FieldModel;
 import me.coley.recaf.decompile.fallback.model.MethodModel;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.Type;
 
@@ -66,7 +67,7 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPool
 	private void appendPackage(Printer out, ClassModel model) {
 		String className = model.getName();
 		if (className.contains("/")) {
-			String packageName = className.substring(0, className.lastIndexOf('/'));
+			String packageName = EscapeUtil.escapeSpace(className.substring(0, className.lastIndexOf('/')));
 			out.appendLine("package " + packageName.replace('/', '.') + ";");
 			out.newLine();
 		}
@@ -121,7 +122,7 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPool
 					lastRootPackage = rootPackage;
 				}
 				// Add import
-				out.appendLine("import " + ref.replace('/', '.') + ";");
+				out.appendLine("import " + PrintBase.filterShortenName(ref.replace('/', '.')) + ";");
 			}
 			out.newLine();
 		}
@@ -181,15 +182,15 @@ public class BasicClassPrintStrategy implements ClassPrintStrategy, ConstantPool
 			sb.append(decFlagsString)
 					.append(" class ");
 		}
-		sb.append(StringUtil.shortenPath(model.getName()));
+		sb.append(PrintBase.filterShortenName(model.getName()));
 		String superName = model.getSuperName();
 		if (superName != null && !superName.equals("java/lang/Object")) {
-			sb.append(" extends ").append(StringUtil.shortenPath(superName));
+			sb.append(" extends ").append(PrintBase.filterShortenName(superName));
 		}
 		if (model.getInterfaces().size() > 0) {
 			sb.append(" implements ");
 			String interfaces = model.getInterfaces().stream()
-					.map(StringUtil::shortenPath)
+					.map(PrintBase::filterShortenName)
 					.collect(Collectors.joining(", "));
 			sb.append(interfaces);
 		}

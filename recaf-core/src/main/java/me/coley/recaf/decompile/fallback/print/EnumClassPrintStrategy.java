@@ -3,6 +3,7 @@ package me.coley.recaf.decompile.fallback.print;
 import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 
 import java.util.Set;
@@ -32,17 +33,17 @@ public class EnumClassPrintStrategy extends BasicClassPrintStrategy{
 			sb.append(decFlagsString)
 					.append(" enum ");
 		}
-		sb.append(StringUtil.shortenPath(model.getName()));
+		sb.append(PrintBase.filterShortenName(model.getName()));
 		String superName = model.getSuperName();
 		// Should normally extend enum. Technically bytecode allows for other types if those at runtime then
 		// inherit from Enum.
 		if (superName != null && !superName.equals("java/lang/Enum")) {
-			sb.append(" extends ").append(StringUtil.shortenPath(superName));
+			sb.append(" extends ").append(PrintBase.filterShortenName(superName));
 		}
 		if (model.getInterfaces().size() > 0)  {
 			sb.append(" implements ");
 			String interfaces = model.getInterfaces().stream()
-					.map(StringUtil::shortenPath)
+					.map(PrintBase::filterShortenName)
 					.collect(Collectors.joining(", "));
 			sb.append(interfaces);
 		}

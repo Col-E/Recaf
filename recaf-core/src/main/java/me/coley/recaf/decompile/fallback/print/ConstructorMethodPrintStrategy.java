@@ -26,6 +26,6 @@ public class ConstructorMethodPrintStrategy extends BasicMethodPrintStrategy {
 	@Override
 	protected void buildDeclarationName(StringBuilder sb, MethodModel model) {
 		// The name is always the class name
-		sb.append(StringUtil.shortenPath(lastParentModel.getName()));
+		sb.append(PrintBase.filterShortenName(lastParentModel.getName()));
 	}
 }

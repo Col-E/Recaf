@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class PrintUtils {
+public class PrintUtils implements PrintBase {
 	/**
 	 * @param pool
 	 * 		Pool to pull data from.
@@ -36,7 +36,7 @@ public class PrintUtils {
 				.map(e -> pool.getUtf(e.getKey()) + " = " + elementToString(pool, e.getValue()))
 				.collect(Collectors.joining(", "));
 		String annotationName = Type.getType(annotationDesc).getInternalName();
-		return "@" + StringUtil.shortenPath(annotationName) + "(" + args + ")";
+		return "@" + PrintBase.filterShortenName(annotationName) + "(" + args + ")";
 	}
 
 	/**
@@ -68,14 +68,14 @@ public class PrintUtils {
 			{
 				ClassElementValue classElementValue = (ClassElementValue) elementValue;
 				String className = pool.getUtf(classElementValue.getClassIndex());
-				return StringUtil.shortenPath(className) + ".class";
+				return PrintBase.filterShortenName(className) + ".class";
 			}
 			case 'e': // Enum
 			{
 				EnumElementValue enumElementValue = (EnumElementValue) elementValue;
 				String enumName = pool.getUtf(enumElementValue.getTypeIndex());
 				String enumEntryName = pool.getUtf(enumElementValue.getNameIndex());
-				return StringUtil.shortenPath(enumName) + "." + enumEntryName;
+				return PrintBase.filterShortenName(enumName) + "." + enumEntryName;
 			}
 			case 's': // String
 			{

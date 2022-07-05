@@ -3,6 +3,7 @@ package me.coley.recaf.decompile.fallback.print;
 import me.coley.cafedude.classfile.annotation.Annotation;
 import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
 
 import java.util.Set;
@@ -32,7 +33,7 @@ public class AnnotationClassPrintStrategy extends InterfaceClassPrintStrategy {
 			sb.append(decFlagsString)
 					.append(" @interface ");
 		}
-		sb.append(StringUtil.shortenPath(model.getName()));
+		sb.append(PrintBase.filterShortenName(model.getName()));
 		out.appendLine(sb.toString());
 	}
 }
