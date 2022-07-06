@@ -114,9 +114,11 @@ public class ClassInfoFormatter implements ConstantPoolConstants {
 			case NEST_HOST_CLASS:
 			case INNER_CLASS_INNER_INFO:  {
 				int classIndex = (int) value;
-				CpClass cpClass = (CpClass) cp.get(classIndex);
-				CpUtf8 cpClassName = (CpUtf8) cp.get(cpClass.getIndex());
-				content.addRow(row, dim(classIndex + ": " + cpClassName.getText()));
+				if (classIndex > 0) {
+					CpClass cpClass = (CpClass) cp.get(classIndex);
+					CpUtf8 cpClassName = (CpUtf8) cp.get(cpClass.getIndex());
+					content.addRow(row, dim(classIndex + ": " + cpClassName.getText()));
+				}
 				break;
 			}
 			case FIELD_NAME_INDEX:
