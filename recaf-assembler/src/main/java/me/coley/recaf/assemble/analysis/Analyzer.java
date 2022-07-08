@@ -1122,7 +1122,7 @@ public class Analyzer {
 			int handlerIndex = instructions.indexOf(handlerLabel);
 			Block handlerBlock = analysis.block(handlerIndex);
 			for (int i = startIndex; i < endIndex; i++) {
-				Block block = analysis.blockFloot(i);
+				Block block = analysis.blockFloor(i);
 				block.addHandlerEdge(handlerBlock);
 			}
 		}

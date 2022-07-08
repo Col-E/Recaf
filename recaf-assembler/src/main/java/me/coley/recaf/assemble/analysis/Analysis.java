@@ -48,7 +48,7 @@ public class Analysis {
 	 *
 	 * @return The first block that defined at or before the index.
 	 */
-	public Block blockFloot(int index) {
+	public Block blockFloor(int index) {
 		return blocks.floorEntry(index).getValue();
 	}
 
