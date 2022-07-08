@@ -4,11 +4,9 @@ import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.util.threading.FxThreadUtil;
-import org.fxmisc.richtext.model.StyleSpans;
-import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -17,42 +15,52 @@ import java.util.List;
  * Utility for applying a given theme to some text based on the given language rule-set.
  *
  * @author Matt Coley
+ * @see Styleable Component to style text of.
  */
 public class LanguageStyler {
 	private static final Logger logger = Logging.get(LanguageStyler.class);
 	private static final Pattern EMPTY_PATTERN = RegexUtil.pattern("({EMPTY}EMPTY)");
 	private static final int MAX_MATCH_LOG_SIZE = 20;
 	private static final String DEFAULT_CLASS = "text";
-	private final SyntaxArea editor;
+	private final Styleable handler;
 	private Language language;
 
 	/**
-	 * @param editor
-	 * 		The editor context.
 	 * @param language
-	 * 		Language with rules to apply to text.
+	 * 		Language to be used for stylization.
 	 */
-	public LanguageStyler(SyntaxArea editor, Language language) {
-		if (editor == null)
-			throw new IllegalStateException("SyntaxArea must not be null");
-		if (language == null)
-			throw new IllegalStateException("Language must not be null");
-		this.editor = editor;
+	public LanguageStyler(Language language, Styleable handler) {
 		this.language = language;
+		this.handler = handler;
 	}
 
 	/**
-	 * Sets a new language to be used for stylization.
-	 *
+	 * @return Target language.
+	 */
+	public Language getLanguage() {
+		return language;
+	}
+
+	/**
 	 * @param language
-	 * 		The new language to use for stylization.
+	 * 		Target language.
 	 */
 	public void setLanguage(Language language) {
 		this.language = language;
 	}
 
 	/**
-	 * Compute and apply all language pattern matches in the {@link #editor}'s document text for the given range.
+	 * Compute and apply all language pattern matches in the document text.
+	 *
+	 * @param text
+	 * 		Complete document text.
+	 */
+	public void styleCompleteDocument(String text) {
+		styleRange(text, 0, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * Compute and apply all language pattern matches in the document text for the given range.
 	 * In some cases for validity purposes style ranges may stretch past the start/end positions.
 	 * <br>
 	 * For example, if a user inserts {@code '//'} before a line,
@@ -61,21 +69,24 @@ public class LanguageStyler {
 	 * And for the start range changing, a user could delete a {@code "} from a string,
 	 * which would require restyling the entire length of the string, and not just the character modified.
 	 *
+	 * @param styleable
+	 * 		Style lookup for the given text.
+	 * @param text
+	 * 		The text to style.
 	 * @param start
 	 * 		Start position in document where edits occurred.
 	 * @param end
 	 * 		End position in the document where edits occurred.
 	 */
-	public void styleRange(int start, int end) {
-		String text = editor.getText();
+	public void styleFlexibleRange(Styleable styleable, String text, int start, int end) {
 		// Fit range based on rule matching needs
-		end = expandEndForwards(text, end);
-		start = expandStartBackwards(text, start, end);
+		end = expandEndForwards(styleable, text, end);
+		start = expandStartBackwards(styleable, text, start, end);
 		// Update style in updated range
-		styleAtWithRange(start, end - start);
+		styleRange(text, start, end - start);
 	}
 
-	private int expandStartBackwards(String text, int start, int end) {
+	private int expandStartBackwards(Styleable styleable, String text, int start, int end) {
 		// Validate inputs
 		if (start <= 0) {
 			return 0;
@@ -90,7 +101,7 @@ public class LanguageStyler {
 			start--;
 		}
 		while (start > 0) {
-			Collection<String> styles = editor.getStyleAtPosition(start);
+			Collection<String> styles = styleable.getStyleAtPosition(start);
 			if (styles.isEmpty() || (styles.size() == 1 && styles.iterator().next().equals(DEFAULT_CLASS))) {
 				break;
 			}
@@ -99,7 +110,7 @@ public class LanguageStyler {
 		// Handle update for backtracking
 		// - Moves the start position to what a point where the beginning of the rule should match.
 		String textRange = text.substring(start, end);
-		for (LanguageRule rule : editor.getLanguage().getRules()) {
+		for (LanguageRule rule : language.getRules()) {
 			// Only move if the text contains backtrack trigger
 			if (rule.requireBacktracking() && textRange.contains(rule.getBacktrackTrigger())) {
 				String stopText = rule.getBacktrackStop();
@@ -120,7 +131,7 @@ public class LanguageStyler {
 		return start;
 	}
 
-	private int expandEndForwards(String text, int end) {
+	private int expandEndForwards(Styleable styleable, String text, int end) {
 		// Sanitize into document text range
 		end = Math.min(end, text.length());
 		// Ensure the end position begins in a non-styled area, preferably at the end of a line.
@@ -131,7 +142,7 @@ public class LanguageStyler {
 			end++;
 		}
 		while (end < text.length()) {
-			Collection<String> styles = editor.getStyleAtPosition(end);
+			Collection<String> styles = styleable.getStyleAtPosition(end);
 			if (styles.isEmpty() || (styles.size() == 1 && styles.iterator().next().equals(DEFAULT_CLASS))) {
 				break;
 			}
@@ -141,35 +152,34 @@ public class LanguageStyler {
 	}
 
 	/**
-	 * Compute and apply all language pattern matches in the {@link #editor}'s document text.
+	 * @param text
+	 * 		Complete document text.
+	 * @param start
+	 * 		Start range.
+	 * @param matcherRange
+	 * 		Range size.
 	 */
-	public void styleCompleteDocument() {
-		styleAtWithRange(0, Integer.MAX_VALUE);
-	}
-
-	private void styleAtWithRange(int start, int matcherRange) {
-		String text = editor.getText();
+	public void styleRange(String text, int start, int matcherRange) {
 		if (start > 0) {
 			// Only use the text from the start position onwards
 			text = text.substring(start);
 		}
 		Pattern pattern = getPattern();
 		if (pattern == null || pattern == EMPTY_PATTERN) {
-			String finalText = text;
-			FxThreadUtil.run(() -> editor.clearStyle(0, finalText.length()));
+			handler.onClearStyle();
 			return;
 		}
 		Matcher matcher = pattern.matcher(text);
 		int lastKwEnd = 0;
-		StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+		List<Section> sections = new ArrayList<>();
 		boolean modified = false;
 		try {
 			while (matcher.find()) {
 				if (Thread.interrupted())
 					return;
 				String styleClass = getClassFromGroup(matcher);
+				String target = matcher.target();
 				if (styleClass == null) {
-					String target = matcher.target();
 					if (target.length() > MAX_MATCH_LOG_SIZE) {
 						target = target.substring(0, MAX_MATCH_LOG_SIZE) + "...";
 					}
@@ -178,9 +188,10 @@ public class LanguageStyler {
 					styleClass = DEFAULT_CLASS;
 				}
 				// Create a span for the unmatched range from the prior match
-				spansBuilder.add(Collections.singleton(DEFAULT_CLASS), matcher.start() - lastKwEnd);
+				String unmatched = text.substring(lastKwEnd, matcher.start());
+				sections.add(new Section(Collections.singleton(DEFAULT_CLASS), matcher.start() - lastKwEnd, unmatched));
 				// Create a span for the matched range
-				spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
+				sections.add(new Section(Collections.singleton(styleClass), matcher.end() - matcher.start(), target));
 				lastKwEnd = matcher.end();
 				modified = true;
 				// Stop searching after the end range
@@ -192,7 +203,7 @@ public class LanguageStyler {
 			int end = Math.min(matcherRange - lastKwEnd, text.length() - lastKwEnd);
 			if (end > 0) {
 				modified = true;
-				spansBuilder.add(Collections.singleton(DEFAULT_CLASS), end);
+				sections.add(new Section(Collections.singleton(DEFAULT_CLASS), end, text.substring(lastKwEnd)));
 			}
 		} catch (NullPointerException npe) {
 			// There was once some odd behavior in 'matcher.find()' which caused NPE...
@@ -200,20 +211,15 @@ public class LanguageStyler {
 			logger.error("Error occurred when computing styles:", npe);
 		}
 		if (modified) {
-			StyleSpans<Collection<String>> spans = spansBuilder.create();
-			// Update editor at position
-			FxThreadUtil.run(() -> {
-				if (!Thread.interrupted()) {
-					editor.setStyleSpans(start, spans);
-				}
-			});
+			handler.onApplyStyle(start, sections);
 		}
 	}
+
 
 	/**
 	 * @return Compiled regex pattern from {@link #getRules() all existing rules}.
 	 */
-	public Pattern getPattern() {
+	private Pattern getPattern() {
 		if (getRules().isEmpty())
 			return EMPTY_PATTERN;
 		StringBuilder sb = new StringBuilder();
@@ -242,5 +248,29 @@ public class LanguageStyler {
 			if (matcher.group(rule.getPatternGroupName()) != null)
 				return rule.getName();
 		return null;
+	}
+
+	/**
+	 * Describes a section of styled text.
+	 */
+	public static class Section {
+		/**
+		 * Style rules for the section.
+		 */
+		public final Collection<String> classes;
+		/**
+		 * Length of region, short for  {@link #text}'s length.
+		 */
+		public final int length;
+		/**
+		 * Text of the section.
+		 */
+		public final String text;
+
+		private Section(Collection<String> classes, int length, String text) {
+			this.classes = classes;
+			this.length = length;
+			this.text = text;
+		}
 	}
 }

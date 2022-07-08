@@ -61,6 +61,38 @@ public class InheritanceVertex {
 
 	/**
 	 * @param name
+	 * 		Field name.
+	 * @param desc
+	 * 		Field descriptor.
+	 *
+	 * @return If the field exists in the current vertex or in any parent vertex.
+	 */
+	public boolean hasFieldInSelfOrParents(String name, String desc) {
+		if (hasField(name, desc))
+			return true;
+		return parents()
+				.filter(v -> v != this)
+				.anyMatch(parent -> parent.hasFieldInSelfOrParents(name, desc));
+	}
+
+	/**
+	 * @param name
+	 * 		Field name.
+	 * @param desc
+	 * 		Field descriptor.
+	 *
+	 * @return If the field exists in the current vertex or in any child vertex.
+	 */
+	public boolean hasFieldInSelfOrChildren(String name, String desc) {
+		if (hasField(name, desc))
+			return true;
+		return children()
+				.filter(v -> v != this)
+				.anyMatch(parent -> parent.hasFieldInSelfOrChildren(name, desc));
+	}
+
+	/**
+	 * @param name
 	 * 		Method name.
 	 * @param desc
 	 * 		Method descriptor.
@@ -72,6 +104,47 @@ public class InheritanceVertex {
 			if (mn.getName().equals(name) && mn.getDescriptor().equals(desc))
 				return true;
 		return false;
+	}
+
+	/**
+	 * @param name
+	 * 		Method name.
+	 * @param desc
+	 * 		Method descriptor.
+	 *
+	 * @return If the method exists in the current vertex or in any parent vertex.
+	 */
+	public boolean hasMethodInSelfOrParents(String name, String desc) {
+		if (hasMethod(name, desc))
+			return true;
+		return parents()
+				.filter(v -> v != this)
+				.anyMatch(parent -> parent.hasMethodInSelfOrParents(name, desc));
+	}
+
+	/**
+	 * @param name
+	 * 		Method name.
+	 * @param desc
+	 * 		Method descriptor.
+	 *
+	 * @return If the method exists in the current vertex or in any child vertex.
+	 */
+	public boolean hasMethodInSelfOrChildren(String name, String desc) {
+		if (hasMethod(name, desc))
+			return true;
+		return children()
+				.filter(v -> v != this)
+				.anyMatch(parent -> parent.hasMethodInSelfOrChildren(name, desc));
+	}
+
+	/**
+	 * @return {@code true} if the class represented by this vertex is a library class.
+	 * This means a class that does not belong to the primary {@link me.coley.recaf.workspace.resource.Resource}
+	 * of a {@link me.coley.recaf.workspace.Workspace}.
+	 */
+	public boolean isLibraryVertex() {
+		return !isPrimary;
 	}
 
 	/**
@@ -97,13 +170,66 @@ public class InheritanceVertex {
 	}
 
 	/**
+	 * @param vertex
+	 * 		Supposed child vertex.
+	 *
+	 * @return {@code true} if the vertex is of a child type to this vertex's {@link #getName() type}.
+	 */
+	public boolean isParentOf(InheritanceVertex vertex) {
+		return vertex.getAllParents().contains(this);
+	}
+
+	/**
+	 * @param vertex
+	 * 		Supposed parent vertex.
+	 *
+	 * @return {@code true} if the vertex is of a parent type to this vertex's {@link #getName() type}.
+	 */
+	public boolean isChildOf(InheritanceVertex vertex) {
+		return getAllParents().contains(vertex);
+	}
+
+	/**
+	 * @param vertex
+	 * 		Supposed vertex that belongs in the family.
+	 *
+	 * @return {@code true} if the vertex is a family member, but is not a child or parent of the current vertex.
+	 */
+	public boolean isIndirectFamilyMember(InheritanceVertex vertex) {
+		return isIndirectFamilyMember(getFamily(), vertex);
+	}
+
+	/**
+	 * @param family
+	 * 		Family to check in.
+	 * @param vertex
+	 * 		Supposed vertex that belongs in the family.
+	 *
+	 * @return {@code true} if the vertex is a family member, but is not a child or parent of the current vertex.
+	 */
+	public boolean isIndirectFamilyMember(Set<InheritanceVertex> family, InheritanceVertex vertex) {
+		return this != vertex &&
+				family.contains(vertex) &&
+				!isChildOf(vertex) &&
+				!isParentOf(vertex);
+	}
+
+	/**
 	 * @return The entire class hierarchy.
 	 */
 	public Set<InheritanceVertex> getFamily() {
-		return parents()
-				.filter(x -> !"java/lang/Object".equals(x.getName()))
-				.flatMap(InheritanceVertex::children)
-				.collect(Collectors.toSet());
+		Set<InheritanceVertex> vertices = new HashSet<>();
+		visitFamily(vertices);
+		return vertices;
+	}
+
+	private void visitFamily(Set<InheritanceVertex> vertices) {
+		if ("java/lang/Object".equals(getName()))
+			return;
+		vertices.add(this);
+		Stream.concat(parents(), children())
+				.filter(v -> !vertices.contains(v))
+				.forEach(v -> v.visitFamily(vertices));
 	}
 
 	/**

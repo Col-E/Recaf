@@ -51,6 +51,7 @@ public class CompileDependencyUpdater {
 		}
 		Resource primary = workspace.getResources().getPrimary();
 		try {
+			logger.info("Attempting to generate phantoms, analyzing {} classes...", primary.getClasses().size());
 			Map<String, byte[]> map = JPhantomUtil.generate(primary.getClasses());
 			if (map.isEmpty()) {
 				logger.info("No phantom classes were generated, no errors reported");

@@ -14,10 +14,7 @@ import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import org.fxmisc.richtext.CaretSelectionBind;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.model.PlainTextChange;
-import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
-import org.fxmisc.richtext.model.RichTextChange;
-import org.fxmisc.richtext.model.StyledDocument;
+import org.fxmisc.richtext.model.*;
 import org.slf4j.Logger;
 
 import java.text.BreakIterator;
@@ -37,7 +34,7 @@ import static org.fxmisc.richtext.LineNumberFactory.get;
  * @author Matt Coley
  */
 public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener,
-		InteractiveText, Searchable, Cleanable, Scrollable {
+		InteractiveText, Styleable, Searchable, Cleanable, Scrollable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
@@ -72,9 +69,9 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			bracketTracking = new BracketTracking.NoOp(this);
 		}
 		if (language.getRules().isEmpty()) {
-			styler = new LanguageStyler(this, Languages.NONE);
+			styler = new LanguageStyler(Languages.NONE, this);
 		} else {
-			styler = new LanguageStyler(this, language);
+			styler = new LanguageStyler(language, this);
 		}
 		setupParagraphFactory();
 		setupSyntaxUpdating();
@@ -401,7 +398,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			logger.trace("Style update for initial document text");
 			// Update style
 			if (styler != null) {
-				styler.styleCompleteDocument();
+				styler.styleCompleteDocument(getText());
 			}
 		} else {
 			// Allow for insertion and removal style recalculations
@@ -414,7 +411,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			}
 			// Update style
 			if (styler != null) {
-				styler.styleRange(start, end);
+				styler.styleFlexibleRange(this, getText(), start, end);
 			}
 		}
 		onPostStyle(change);
@@ -667,7 +664,26 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	 */
 	public void applyLanguage(Language language) {
 		styler.setLanguage(language);
-		styler.styleCompleteDocument();
+		styler.styleCompleteDocument(getText());
+	}
+
+	@Override
+	public void onClearStyle() {
+		FxThreadUtil.run(() -> clearStyle(0, getText().length()));
+	}
+
+	@Override
+	public void onApplyStyle(int start, List<LanguageStyler.Section> sections) {
+		StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+		for (LanguageStyler.Section section : sections)
+			spansBuilder.add(section.classes, section.length);
+		StyleSpans<Collection<String>> spans = spansBuilder.create();
+		// Update editor at position
+		FxThreadUtil.run(() -> {
+			if (!Thread.interrupted()) {
+				setStyleSpans(start, spans);
+			}
+		});
 	}
 
 	/**

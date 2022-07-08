@@ -1,4 +1,4 @@
-package me.coley.recaf.mapping;
+package me.coley.recaf.mapping.data;
 
 /**
  * Base mapping key.
