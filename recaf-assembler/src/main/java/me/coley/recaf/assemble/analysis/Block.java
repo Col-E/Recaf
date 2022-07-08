@@ -59,6 +59,8 @@ public class Block {
 		}
 	}
 
+
+
 	/**
 	 * @return All edges to and from this block.
 	 */
@@ -96,5 +98,11 @@ public class Block {
 		// We want to use the default hashing for this block class so that the hashcode
 		// for edges work correctly.
 		return super.hashCode();
+	}
+
+	public void addJumpEdge(Block blockTarget) {
+		Edge edge = new Edge(this, blockTarget, EdgeType.JUMP);
+		edges.add(edge);
+		blockTarget.edges.add(edge);
 	}
 }

@@ -100,6 +100,22 @@ public class Analyzer {
 		return analysis;
 	}
 
+	public Analysis analyzeBlocks() throws AstException {
+		List<AbstractInstruction> instructions = code.getChildrenOfType(AbstractInstruction.class);
+		Analysis analysis = new Analysis(instructions.size());
+		try {
+			if (!instructions.isEmpty()) {
+				fillBlocks(analysis, instructions);
+			}
+		} catch (AstException e) {
+			throw e;
+		} catch (Exception t) {
+			logger.error("Uncaught exception during analysis", t);
+			throw new MethodCompileException(code, t, "Uncaught exception during analysis!");
+		}
+		return analysis;
+	}
+
 	private void fillFrames(Analysis analysis, List<AbstractInstruction> instructions) throws AstException {
 		// Initialize with method definition parameters
 		Frame entryFrame = analysis.frame(0);
@@ -1042,7 +1058,7 @@ public class Analyzer {
 		return continueNextExec;
 	}
 
-	private void fillBlocks(Analysis analysis, List<AbstractInstruction> instructions) throws IllegalAstException {
+	public void fillBlocks(Analysis analysis, List<AbstractInstruction> instructions) throws IllegalAstException {
 		// Create the first block
 		Frame entryFrame = analysis.frame(0);
 		Block entryBlock = new Block();
@@ -1135,6 +1151,39 @@ public class Analyzer {
 				AbstractInstruction instruction = instructions.get(insnIndex);
 				Frame frame = analysis.frame(insnIndex);
 				block.add(instruction, frame);
+			}
+		}
+		for (int insnIndex = 0; insnIndex <= maxInsnIndex; insnIndex++) {
+			AbstractInstruction instruction = instructions.get(insnIndex);
+			Block blockCurrent = analysis.blockFloot(insnIndex);
+			// The branch-taken/branch-not-taken elements begin new blocks
+			//  - conditionals/switches/etc
+			if (instruction instanceof FlowControl) {
+				FlowControl flow = (FlowControl) instruction;
+				List<Label> targets = flow.getTargets(code.getLabels());
+				// Branch taken
+				for (Label target : targets) {
+					int targetIndex = instructions.indexOf(target);
+					Block blockTarget = analysis.blockFloot(targetIndex);
+					blockCurrent.addJumpEdge(blockTarget);
+				}
+				// Branch not taken
+				if (!flow.isForced() && insnIndex < maxInsnIndex) {
+					int nextIndex = insnIndex + 1;
+					Block blockTarget = analysis.blockFloot(nextIndex);
+					blockCurrent.addJumpEdge(blockTarget);
+				}
+			} else {
+				// Instructions after return statements are the last sources of new blocks
+				int op = instruction.getOpcodeVal();
+				if (op >= Opcodes.IRETURN && op <= Opcodes.RETURN) {
+					int nextIndex = insnIndex + 1;
+					if (nextIndex >= instructions.size())
+						continue;
+					Block blockTarget = analysis.blockFloot(nextIndex);
+					if(blockCurrent != blockTarget)
+						blockCurrent.addJumpEdge(blockTarget);
+				}
 			}
 		}
 	}

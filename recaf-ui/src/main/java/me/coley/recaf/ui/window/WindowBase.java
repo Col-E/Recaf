@@ -133,6 +133,7 @@ public abstract class WindowBase extends Stage implements TabStageAccessor {
 				"style/diff.css",
 				"style/hex.css",
 				"style/hierarchy.css",
+				"style/graph.css",
 				"style/hyperlink.css",
 				"style/list.css",
 				"style/log.css",

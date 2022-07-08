@@ -16,13 +16,19 @@ import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.SsvmInvokeCallDialog;
 import me.coley.recaf.ui.dialog.SsvmOptimizeDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
+import me.coley.recaf.ui.docking.DockTab;
+import me.coley.recaf.ui.docking.RecafDockingManager;
+import me.coley.recaf.ui.docking.impl.ClassTab;
+import me.coley.recaf.ui.pane.ClassHierarchyPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.pane.assembler.AssemblerPane;
+import me.coley.recaf.ui.pane.graph.MethodGraphPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.visitor.MemberCopyingVisitor;
 import me.coley.recaf.util.visitor.MemberRemovingVisitor;
 import me.coley.recaf.workspace.resource.Resource;
@@ -67,6 +73,7 @@ public class MethodContextBuilder extends MemberContextBuilder {
 				menu.getItems().add(action("menu.edit.assemble.method", Icons.ACTION_EDIT, this::assemble));
 				menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
 				menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+				menu.getItems().add(action("menu.edit.graph.method", Icons.CHILDREN, this::graph));
 			}
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 			menu.getItems().add(refactor);
@@ -227,6 +234,25 @@ public class MethodContextBuilder extends MemberContextBuilder {
 	public void search() {
 		new GenericWindow(SearchPane.createReferenceSearch(
 				ownerInfo.getName(), methodInfo.getName(), methodInfo.getDescriptor())).show();
+	}
+
+	private void graph() {
+		String name = ownerInfo.getName();
+		Resource resource = getContainingResource();
+		if (resource != null) {
+			if (ownerInfo instanceof ClassInfo) {
+				// Open assembler
+				String title = "Graph View: " + methodInfo.getName();
+				DockTab tab = RecafDockingManager.getInstance()
+						.createTab(() -> new ClassTab(title, new MethodGraphPane(methodInfo, (ClassInfo) ownerInfo)));
+				tab.select();
+			} else if (ownerInfo instanceof DexClassInfo) {
+				// TODO: Copy dex member
+				logger.warn("Android currently unsupported");
+			}
+		} else {
+			logger.error("Failed to resolve containing resource for class '{}'", name);
+		}
 	}
 
 	private void vmRun() {

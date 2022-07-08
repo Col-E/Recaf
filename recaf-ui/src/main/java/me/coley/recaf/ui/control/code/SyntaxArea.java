@@ -195,7 +195,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	/**
 	 * Setup the display on the left side of the text area displaying line numbers and other visual indicators.
 	 */
-	private void setupParagraphFactory() {
+	protected void setupParagraphFactory() {
 		IntFunction<Node> lineNumbers = get(this, this::formatLine, line -> false, this::removeFoldStyle);
 		IntFunction<Node> bracketFoldIndicators = new BracketFoldIndicatorFactory(this);
 		if (problemTracking != null) {
