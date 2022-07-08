@@ -32,7 +32,7 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Lo
 	@Override
 	protected void consumeEach(ByteSourceConsumer<LocalFileHeader> entryHandler) throws IOException {
 		try (ByteData data = FileMapUtil.map(getPath())) {
-			ZipArchive archive = ZipIO.read(data, new JvmZipReaderStrategy());
+			ZipArchive archive = ZipIO.readJvm(data);
 			for (LocalFileHeader fileHeader : archive.getLocalFiles()) {
 				entryHandler.accept(fileHeader, new LocalFileHeaderSource(fileHeader));
 			}
@@ -44,7 +44,7 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Lo
 		ByteData data = FileMapUtil.map(getPath());
 		ZipArchive archive;
 		try {
-			archive = ZipIO.read(data, new JvmZipReaderStrategy());
+			archive = ZipIO.readJvm(data);
 		} catch (Exception ex) {
 			data.close();
 			throw ex;
