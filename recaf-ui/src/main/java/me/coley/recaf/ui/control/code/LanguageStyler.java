@@ -178,7 +178,7 @@ public class LanguageStyler {
 				if (Thread.interrupted())
 					return;
 				String styleClass = getClassFromGroup(matcher);
-				String target = matcher.target();
+				String target = matcher.group(0);
 				if (styleClass == null) {
 					if (target.length() > MAX_MATCH_LOG_SIZE) {
 						target = target.substring(0, MAX_MATCH_LOG_SIZE) + "...";
@@ -189,7 +189,8 @@ public class LanguageStyler {
 				}
 				// Create a span for the unmatched range from the prior match
 				String unmatched = text.substring(lastKwEnd, matcher.start());
-				sections.add(new Section(Collections.singleton(DEFAULT_CLASS), matcher.start() - lastKwEnd, unmatched));
+				if (!unmatched.isEmpty())
+					sections.add(new Section(Collections.singleton(DEFAULT_CLASS), matcher.start() - lastKwEnd, unmatched));
 				// Create a span for the matched range
 				sections.add(new Section(Collections.singleton(styleClass), matcher.end() - matcher.start(), target));
 				lastKwEnd = matcher.end();
@@ -271,6 +272,14 @@ public class LanguageStyler {
 			this.classes = classes;
 			this.length = length;
 			this.text = text;
+		}
+
+		@Override
+		public String toString() {
+			return "Section{" +
+					"classes=" + classes +
+					", text='" + text + '\'' +
+					'}';
 		}
 	}
 }
