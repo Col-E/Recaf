@@ -90,7 +90,7 @@ public class StringUtil {
 	 * @param name
 	 * 		Text to lowercase the first letter of.
 	 *
-	 * @return Text with first letter lowered.
+	 * @return Text with first letter lower-cased.
 	 */
 	public static String lowercaseFirstChar(String name) {
 		int len = name.length();
@@ -98,6 +98,22 @@ public class StringUtil {
 			return name.toLowerCase();
 		else if (len > 1)
 			return name.substring(0, 1).toLowerCase() + name.substring(1);
+		else
+			return name;
+	}
+
+	/**
+	 * @param name
+	 * 		Text to uppercase the first letter of.
+	 *
+	 * @return Text with first letter upper-cased.
+	 */
+	public static String uppercaseFirstChar(String name) {
+		int len = name.length();
+		if (len == 1)
+			return name.toUpperCase();
+		else if (len > 1)
+			return name.substring(0, 1).toUpperCase() + name.substring(1);
 		else
 			return name;
 	}

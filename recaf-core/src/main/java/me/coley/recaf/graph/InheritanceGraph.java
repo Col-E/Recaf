@@ -2,8 +2,8 @@ package me.coley.recaf.graph;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
-import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
 
 import java.util.*;
@@ -22,7 +22,6 @@ public class InheritanceGraph {
 	private final Multimap<String, String> parentToChild = MultimapBuilder.hashKeys().hashSetValues().build();
 	private final Map<String, InheritanceVertex> vertices = new ConcurrentHashMap<>();
 	private final Function<String, InheritanceVertex> vertexProvider = createVertexProvider();
-
 	private final Workspace workspace;
 
 	/**
@@ -117,6 +116,19 @@ public class InheritanceGraph {
 	}
 
 	/**
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Complete inheritance family of the class.
+	 */
+	public Set<InheritanceVertex> getVertexFamily(String name) {
+		InheritanceVertex vertex = getVertex(name);
+		if (vertex == null)
+			return Collections.emptySet();
+		return vertex.getFamily();
+	}
+
+	/**
 	 * @param first
 	 * 		First class name.
 	 * @param second
@@ -149,13 +161,13 @@ public class InheritanceGraph {
 			for (String parent : nextVertex.getParents().stream()
 					.map(InheritanceVertex::getName).collect(Collectors.toSet())) {
 				// Parent in the set of visited classes? Then its valid.
-				if(firstParents.contains(parent))
+				if (firstParents.contains(parent))
 					return parent;
 				// Queue up the parent
 				if (!parent.equals(OBJECT))
 					queue.add(parent);
 			}
-		} while(!queue.isEmpty());
+		} while (!queue.isEmpty());
 		// Fallback option
 		return OBJECT;
 	}
@@ -168,7 +180,8 @@ public class InheritanceGraph {
 				info = resources.getDexClass(name);
 			if (info == null)
 				return STUB;
-			boolean isPrimary = resources.getPrimary().getClasses().containsKey(info.getName());
+			boolean isPrimary = resources.getPrimary().getClasses().containsKey(name) ||
+					resources.getPrimary().getDexClasses().containsKey(name);
 			return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, isPrimary);
 		};
 	}

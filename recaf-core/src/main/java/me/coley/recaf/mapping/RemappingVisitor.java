@@ -31,7 +31,7 @@ public class RemappingVisitor extends ClassRemapper {
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		// The super implementation of this should yield a "MethodRemapper",
-		// so we will create a adapter visitor that delegates to it, but also handles variables.
+		// so we will create an adapter visitor that delegates to it, but also handles variables.
 		MethodVisitor methodRemapper = super.visitMethod(access, name, desc, signature, exceptions);
 		return methodRemapper == null ? null :
 				new VariableRenamingMethodVisitor(className, name, desc, methodRemapper);
@@ -63,8 +63,7 @@ public class RemappingVisitor extends ClassRemapper {
 
 		@Override
 		public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-			String mappedName = ((RemapperImpl) remapper)
-					.mapVariableName(className, methodName, methodDesc, name, desc, index);
+			String mappedName = remapper.mapVariableName(className, methodName, methodDesc, name, desc, index);
 			super.visitLocalVariable(mappedName, desc, signature, start, end, index);
 		}
 	}

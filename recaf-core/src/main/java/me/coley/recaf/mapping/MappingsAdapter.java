@@ -2,10 +2,7 @@ package me.coley.recaf.mapping;
 
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.graph.InheritanceVertex;
-import me.coley.recaf.mapping.data.ClassMapping;
-import me.coley.recaf.mapping.data.FieldMapping;
-import me.coley.recaf.mapping.data.MethodMapping;
-import me.coley.recaf.mapping.data.VariableMapping;
+import me.coley.recaf.mapping.data.*;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
 
 import java.util.HashMap;

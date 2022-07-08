@@ -1,4 +1,4 @@
-package me.coley.recaf.mapping;
+package me.coley.recaf.mapping.data;
 
 /**
  * Mapping key, may be a class, method,
@@ -7,6 +7,5 @@ package me.coley.recaf.mapping;
  * @author xDark
  */
 public interface MappingKey extends Comparable<MappingKey> {
-
 	String getAsText();
 }
