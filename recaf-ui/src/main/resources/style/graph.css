@@ -6,6 +6,7 @@
     -fx-border-width: 1;
 }
 .graph-node-text {
+    -fx-font-family: monospace;
     -fx-border: none;
     -fx-padding: 8;
 	-fx-background-color: rgb(45, 45, 46);
