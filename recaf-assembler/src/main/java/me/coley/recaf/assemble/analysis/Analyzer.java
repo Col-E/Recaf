@@ -1176,9 +1176,7 @@ public class Analyzer {
 			} else {
 				// Instructions after return statements are the last sources of new blocks
 				int op = instruction.getOpcodeVal();
-				if (op >= Opcodes.IRETURN && op <= Opcodes.RETURN) {
-
-				}else {
+				if (op < Opcodes.IRETURN || op > Opcodes.RETURN) {
 					Block blockTarget = analysis.blockFloor(insnIndex + 1);
 					if(blockCurrent != blockTarget)
 						blockCurrent.addJumpEdge(blockTarget);

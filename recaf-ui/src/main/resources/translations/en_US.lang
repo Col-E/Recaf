@@ -24,6 +24,7 @@ menu.goto.label=Go to label
 menu.edit.assemble.class=Edit class
 menu.edit.assemble.field=Edit field
 menu.edit.assemble.method=Edit method
+menu.edit.graph.method=Method graph
 menu.edit.remove=Remove
 menu.edit.copy=Copy
 menu.edit.delete=Delete

@@ -59,8 +59,6 @@ public class Block {
 		}
 	}
 
-
-
 	/**
 	 * @return All edges to and from this block.
 	 */

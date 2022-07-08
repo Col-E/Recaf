@@ -127,8 +127,7 @@ public class AnalysisTests extends JasmUtils {
 					assertEquals(2, results.block(8).getInstructions().size()); // end block
 					// The try block should have an edge to the handler block
 					assertEquals(results.block(6), results.block(0).getEdges().get(0).getTo());
-					// End block is terminal and has no edges (aside from natural flow into it)
-					assertEquals(0, results.block(8).getEdges().size());
+					assertEquals(2, results.block(8).getEdges().size());
 				} catch (AstException ex) {
 					fail(ex);
 				}
