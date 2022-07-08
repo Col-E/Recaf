@@ -56,6 +56,9 @@ public class LanguageStyler {
 	 *
 	 * @param text
 	 * 		Complete document text.
+	 *
+	 * @return Future for tracking completion of style computations. Delegated to {@link Styleable#onClearStyle()}
+	 * or {@link Styleable#onApplyStyle(int, List)}.
 	 */
 	public CompletableFuture<Void> styleCompleteDocument(String text) {
 		return styleRange(text, 0, Integer.MAX_VALUE);
@@ -79,6 +82,9 @@ public class LanguageStyler {
 	 * 		Start position in document where edits occurred.
 	 * @param end
 	 * 		End position in the document where edits occurred.
+	 *
+	 * @return Future for tracking completion of style computations. Delegated to {@link Styleable#onClearStyle()}
+	 * or {@link Styleable#onApplyStyle(int, List)}.
 	 */
 	public CompletableFuture<Void> styleFlexibleRange(Styleable styleable, String text, int start, int end) {
 		// Fit range based on rule matching needs
@@ -160,6 +166,9 @@ public class LanguageStyler {
 	 * 		Start range.
 	 * @param matcherRange
 	 * 		Range size.
+	 *
+	 * @return Future for tracking completion of style computations. Delegated to {@link Styleable#onClearStyle()}
+	 * or {@link Styleable#onApplyStyle(int, List)}.
 	 */
 	public CompletableFuture<Void> styleRange(String text, int start, int matcherRange) {
 		if (start > 0) {

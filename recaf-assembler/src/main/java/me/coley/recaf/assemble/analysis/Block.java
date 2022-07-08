@@ -46,6 +46,20 @@ public class Block {
 	}
 
 	/**
+	 * Adds an edge between the current block and the given target block.
+	 *
+	 * @param targetBlock
+	 * 		Targeted block to flow into.
+	 */
+	public void addJumpEdge(Block targetBlock) {
+		Edge edge = new Edge(this, targetBlock, EdgeType.JUMP);
+		if (!edges.contains(edge))
+			edges.add(edge);
+		if (!targetBlock.edges.contains(edge))
+			targetBlock.edges.add(edge);
+	}
+
+	/**
 	 * Adds an edge between the current block to a given handler block.
 	 *
 	 * @param handlerBlock
@@ -96,11 +110,5 @@ public class Block {
 		// We want to use the default hashing for this block class so that the hashcode
 		// for edges work correctly.
 		return super.hashCode();
-	}
-
-	public void addJumpEdge(Block blockTarget) {
-		Edge edge = new Edge(this, blockTarget, EdgeType.JUMP);
-		edges.add(edge);
-		blockTarget.edges.add(edge);
 	}
 }

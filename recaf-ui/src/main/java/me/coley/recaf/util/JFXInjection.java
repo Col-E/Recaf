@@ -40,7 +40,6 @@ public class JFXInjection {
 			jfxUrlPattern("media"),
 			jfxUrlPattern("controls"),
 			jfxUrlPattern("graphics"),
-			jfxUrlPattern("swing"),
 			jfxUrlPattern("base")
 	);
 	private static final Logger logger = Logging.get(JFXInjection.class);

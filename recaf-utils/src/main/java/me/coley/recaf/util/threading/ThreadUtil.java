@@ -52,7 +52,7 @@ public class ThreadUtil {
 			try {
 				action.run();
 				future.complete(null);
-			} catch(Throwable t) {
+			} catch (Throwable t) {
 				future.completeExceptionally(t);
 			}
 		}, delayMs, TimeUnit.MILLISECONDS);
@@ -197,6 +197,7 @@ public class ThreadUtil {
 	 * passed into it.
 	 *
 	 * @return phasing executor service.
+	 *
 	 * @see PhasingExecutorService
 	 */
 	public static ExecutorService phasingService() {
@@ -210,6 +211,14 @@ public class ThreadUtil {
 		return scheduledService;
 	}
 
+	/**
+	 * @param t
+	 * 		Exception thrown.
+	 * @param <V>
+	 * 		Future type.
+	 *
+	 * @return Future of a failed execution due to a thrown error.
+	 */
 	public static <V> CompletableFuture<V> failedFuture(Throwable t) {
 		CompletableFuture<V> future = new CompletableFuture<>();
 		future.completeExceptionally(t);

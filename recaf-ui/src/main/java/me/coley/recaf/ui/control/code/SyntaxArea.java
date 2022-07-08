@@ -680,10 +680,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			spansBuilder.add(section.classes, section.length);
 		StyleSpans<Collection<String>> spans = spansBuilder.create();
 		// Update editor at position
-		Thread t = Thread.currentThread();
-		if (t.isInterrupted()) {
+		if (Thread.currentThread().isInterrupted())
 			return ThreadUtil.failedFuture(new InterruptedException());
-		}
 		return CompletableFuture.runAsync(() -> setStyleSpans(start, spans), FxThreadUtil.executor());
 	}
 

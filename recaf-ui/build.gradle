@@ -33,7 +33,6 @@ dependencies {
     compileOnly group: 'org.openjfx', name: 'javafx-base', version: javafxVersion, classifier: javafxPlatform
     compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: javafxVersion, classifier: javafxPlatform
     compileOnly group: 'org.openjfx', name: 'javafx-controls', version: javafxVersion, classifier: javafxPlatform
-    compileOnly group: 'org.openjfx', name: 'javafx-swing', version: javafxVersion, classifier: javafxPlatform
 
     // Testing
     testImplementation project(path: ':recaf-core', configuration: 'testSourceOutput')

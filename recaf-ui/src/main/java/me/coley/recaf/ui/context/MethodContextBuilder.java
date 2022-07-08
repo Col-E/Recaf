@@ -73,10 +73,12 @@ public class MethodContextBuilder extends MemberContextBuilder {
 				menu.getItems().add(action("menu.edit.assemble.method", Icons.ACTION_EDIT, this::assemble));
 				menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
 				menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
-				menu.getItems().add(action("menu.edit.graph.method", Icons.CHILDREN, this::graph));
 			}
 			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
 			menu.getItems().add(refactor);
+			Menu view = menu("menu.view", Icons.EYE);
+			view.getItems().add(action("menu.view.methodcfg", Icons.CHILDREN, this::graph));
+			menu.getItems().add(view);
 		}
 		if (canUseVm()) {
 			Menu vm = menu("menu.vm", Icons.VM);
@@ -242,9 +244,10 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		if (resource != null) {
 			if (ownerInfo instanceof ClassInfo) {
 				// Open assembler
-				String title = "Graph View: " + methodInfo.getName();
+				String title = "CFG: " + methodInfo.getName();
 				DockTab tab = RecafDockingManager.getInstance()
-						.createTab(() -> new ClassTab(title, new MethodGraphPane(methodInfo, (ClassInfo) ownerInfo)));
+						.createTab(() -> new ClassTab(title, new MethodGraphPane((ClassInfo) ownerInfo, methodInfo)));
+				tab.setGraphic(Icons.getMethodIcon(methodInfo));
 				tab.select();
 			} else if (ownerInfo instanceof DexClassInfo) {
 				// TODO: Copy dex member

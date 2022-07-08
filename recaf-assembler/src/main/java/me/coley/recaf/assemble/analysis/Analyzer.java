@@ -84,28 +84,29 @@ public class Analyzer {
 	 * 		When the AST cannot resolve all required references <i>(missing label, etc)</i>.
 	 */
 	public Analysis analyze() throws AstException {
-		List<AbstractInstruction> instructions = code.getChildrenOfType(AbstractInstruction.class);
-		Analysis analysis = new Analysis(instructions.size());
-		try {
-			if (!instructions.isEmpty()) {
-				fillBlocks(analysis, instructions);
-				fillFrames(analysis, instructions);
-			}
-		} catch (AstException e) {
-			throw e;
-		} catch (Exception t) {
-			logger.error("Uncaught exception during analysis", t);
-			throw new MethodCompileException(code, t, "Uncaught exception during analysis!");
-		}
-		return analysis;
+		return analyze(true, true);
 	}
 
-	public Analysis analyzeBlocks() throws AstException {
+	/**
+	 * @param block
+	 *        {@code true} to generate {@link Analysis#getBlocks()}.
+	 * @param frames
+	 *        {@code true} to generate {@link Analysis#getFrames()}.
+	 *
+	 * @return Wrapper of analysis information.
+	 *
+	 * @throws AstException
+	 * 		When the AST cannot resolve all required references <i>(missing label, etc)</i>.
+	 */
+	public Analysis analyze(boolean block, boolean frames) throws AstException {
 		List<AbstractInstruction> instructions = code.getChildrenOfType(AbstractInstruction.class);
 		Analysis analysis = new Analysis(instructions.size());
 		try {
 			if (!instructions.isEmpty()) {
-				fillBlocks(analysis, instructions);
+				if (block)
+					fillBlocks(analysis, instructions);
+				if (frames)
+					fillFrames(analysis, instructions);
 			}
 		} catch (AstException e) {
 			throw e;
@@ -1058,7 +1059,7 @@ public class Analyzer {
 		return continueNextExec;
 	}
 
-	public void fillBlocks(Analysis analysis, List<AbstractInstruction> instructions) throws IllegalAstException {
+	private void fillBlocks(Analysis analysis, List<AbstractInstruction> instructions) throws IllegalAstException {
 		// Create the first block
 		Frame entryFrame = analysis.frame(0);
 		Block entryBlock = new Block();
@@ -1153,11 +1154,10 @@ public class Analyzer {
 				block.add(instruction, frame);
 			}
 		}
+		// Populate edges between blocks
 		for (int insnIndex = 0; insnIndex <= maxInsnIndex; insnIndex++) {
 			AbstractInstruction instruction = instructions.get(insnIndex);
 			Block blockCurrent = analysis.blockFloor(insnIndex);
-			// The branch-taken/branch-not-taken elements begin new blocks
-			//  - conditionals/switches/etc
 			if (instruction instanceof FlowControl) {
 				FlowControl flow = (FlowControl) instruction;
 				List<Label> targets = flow.getTargets(code.getLabels());
@@ -1174,11 +1174,11 @@ public class Analyzer {
 					blockCurrent.addJumpEdge(blockTarget);
 				}
 			} else {
-				// Instructions after return statements are the last sources of new blocks
+				// Any non-return instruction should flow to the next block.
 				int op = instruction.getOpcodeVal();
 				if (op < Opcodes.IRETURN || op > Opcodes.RETURN) {
 					Block blockTarget = analysis.blockFloor(insnIndex + 1);
-					if(blockCurrent != blockTarget)
+					if (blockCurrent != blockTarget)
 						blockCurrent.addJumpEdge(blockTarget);
 				}
 

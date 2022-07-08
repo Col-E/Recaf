@@ -33,6 +33,9 @@ public class SyntaxFlow extends TextFlow implements Styleable {
 	/**
 	 * @param code
 	 * 		Code to generate styled syntax flow of.
+	 *
+	 * @return Future for tracking completion of style computations.
+	 * Delegated to {@link #onClearStyle()} or {@link #onApplyStyle(int, List)}.
 	 */
 	public CompletableFuture<Void> setCode(String code) {
 		return styler.styleCompleteDocument(code);
@@ -66,10 +69,8 @@ public class SyntaxFlow extends TextFlow implements Styleable {
 			text.getStyleClass().addAll(section.classes);
 			nodes.add(text);
 		}
-		Thread t = Thread.currentThread();
-		if (t.isInterrupted()) {
+		if (Thread.currentThread().isInterrupted())
 			return ThreadUtil.failedFuture(new InterruptedException());
-		}
 		return CompletableFuture.runAsync(() -> getChildren().addAll(nodes), FxThreadUtil.executor());
 	}
 }

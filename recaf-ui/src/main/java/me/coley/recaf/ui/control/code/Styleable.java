@@ -22,6 +22,8 @@ public interface Styleable {
 
 	/**
 	 * Called to reset the style.
+	 *
+	 * @return Future for tracking completion of style computations.
 	 */
 	CompletableFuture<Void> onClearStyle();
 
@@ -30,6 +32,8 @@ public interface Styleable {
 	 * 		Start offset in the text to apply the given style.
 	 * @param sections
 	 * 		List of style sections.
+	 *
+	 * 	@return Future for tracking completion of style computations.
 	 */
 	CompletableFuture<Void> onApplyStyle(int start, List<LanguageStyler.Section> sections);
 }
