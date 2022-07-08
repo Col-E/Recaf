@@ -1155,7 +1155,7 @@ public class Analyzer {
 		}
 		for (int insnIndex = 0; insnIndex <= maxInsnIndex; insnIndex++) {
 			AbstractInstruction instruction = instructions.get(insnIndex);
-			Block blockCurrent = analysis.blockFloot(insnIndex);
+			Block blockCurrent = analysis.blockFloor(insnIndex);
 			// The branch-taken/branch-not-taken elements begin new blocks
 			//  - conditionals/switches/etc
 			if (instruction instanceof FlowControl) {
@@ -1164,13 +1164,13 @@ public class Analyzer {
 				// Branch taken
 				for (Label target : targets) {
 					int targetIndex = instructions.indexOf(target);
-					Block blockTarget = analysis.blockFloot(targetIndex);
+					Block blockTarget = analysis.blockFloor(targetIndex);
 					blockCurrent.addJumpEdge(blockTarget);
 				}
 				// Branch not taken
 				if (!flow.isForced() && insnIndex < maxInsnIndex) {
 					int nextIndex = insnIndex + 1;
-					Block blockTarget = analysis.blockFloot(nextIndex);
+					Block blockTarget = analysis.blockFloor(nextIndex);
 					blockCurrent.addJumpEdge(blockTarget);
 				}
 			} else {
@@ -1179,7 +1179,7 @@ public class Analyzer {
 				if (op >= Opcodes.IRETURN && op <= Opcodes.RETURN) {
 
 				}else {
-					Block blockTarget = analysis.blockFloot(insnIndex + 1);
+					Block blockTarget = analysis.blockFloor(insnIndex + 1);
 					if(blockCurrent != blockTarget)
 						blockCurrent.addJumpEdge(blockTarget);
 				}
