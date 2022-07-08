@@ -210,6 +210,12 @@ public class ThreadUtil {
 		return scheduledService;
 	}
 
+	public static <V> CompletableFuture<V> failedFuture(Throwable t) {
+		CompletableFuture<V> future = new CompletableFuture<>();
+		future.completeExceptionally(t);
+		return future;
+	}
+
 	/**
 	 * Shutdowns executors.
 	 */
