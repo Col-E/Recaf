@@ -1177,13 +1177,13 @@ public class Analyzer {
 				// Instructions after return statements are the last sources of new blocks
 				int op = instruction.getOpcodeVal();
 				if (op >= Opcodes.IRETURN && op <= Opcodes.RETURN) {
-					int nextIndex = insnIndex + 1;
-					if (nextIndex >= instructions.size())
-						continue;
-					Block blockTarget = analysis.blockFloot(nextIndex);
+
+				}else {
+					Block blockTarget = analysis.blockFloot(insnIndex + 1);
 					if(blockCurrent != blockTarget)
 						blockCurrent.addJumpEdge(blockTarget);
 				}
+
 			}
 		}
 	}

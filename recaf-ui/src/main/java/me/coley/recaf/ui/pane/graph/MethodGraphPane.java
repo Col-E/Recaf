@@ -6,8 +6,14 @@ import com.fxgraph.graph.ICell;
 import com.fxgraph.graph.Model;
 import com.fxgraph.layout.AbegoTreeLayout;
 import javafx.collections.ObservableList;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.WritableImage;
+import javafx.scene.image.WritablePixelFormat;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.assemble.AstException;
@@ -22,9 +28,13 @@ import org.abego.treelayout.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import javax.imageio.ImageIO;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 public class MethodGraphPane extends BorderPane implements MemberEditor {
 
@@ -37,6 +47,7 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 	public MethodGraphPane(MemberInfo targetMember, ClassInfo classInfo) {
 		graph.getNodeGestures().setDragButton(MouseButton.NONE);
 		graph.getViewportGestures().setPanButton(MouseButton.PRIMARY);
+		graph.getViewportGestures().setZoomBounds(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 		setCenter(graph.getCanvas());
 		this.targetMember = targetMember;
 		this.classInfo = classInfo;
@@ -73,7 +84,10 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 		this.targetMember = targetMember;
 	}
 
-	public void visitEdge(Map<Block, BlockCell> cellMap, Block block) {
+	public void visitEdge(Map<Block, BlockCell> cellMap, Set<Block> visited, Block block) {
+
+		if(!visited.add(block))
+			return;
 
 		BlockCell cell = cellMap.get(block);
 		Model model = graph.getModel();
@@ -85,8 +99,7 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 			DoubleCorneredEdge edge = new DoubleCorneredEdge(cell, targetCell, Orientation.VERTICAL);
 			model.addEdge(edge);
 
-			if(targetBlock != block)
-				visitEdge(cellMap, targetBlock);
+			visitEdge(cellMap, visited, targetBlock);
 		}
 
 	}
@@ -127,7 +140,7 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 		Block root = blocks.get(0);
 
 		// Create edges
-		visitEdge(blockCells, root);
+		visitEdge(blockCells, new HashSet<>(), root);
 
 
 		graph.endUpdate();
@@ -140,6 +153,18 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 					rootCell.getGraphic(graph).getLayoutX(),
 					rootCell.getGraphic(graph).getLayoutY()
 			);
+
+			graph.getCanvas().setOnMousePressed((event -> {
+				if(event.isMiddleButtonDown()) {
+					WritableImage image = new WritableImage(10000, 60000);
+					WritableImage img = graph.getCanvas().snapshot(new SnapshotParameters(), image);
+					try {
+						ImageIO.write(SwingFXUtils.fromFXImage(img, null), "png", new File("graph.png"));
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			}));
 		});
 
 	}
