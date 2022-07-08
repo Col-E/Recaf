@@ -218,6 +218,7 @@ public class RecafDockingManager extends DockingManager {
 						DockTab tab = (DockTab) tabPane.getTabs().get(selectedIndex);
 						if (tab.isClosable())
 							tab.close();
+						tabPane.requestFocus();
 					}
 				}
 			});
