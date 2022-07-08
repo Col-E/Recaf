@@ -2,6 +2,7 @@ package me.coley.recaf.ui.control.code;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Provides lookup for existing CSS rules in a text component.
@@ -22,7 +23,7 @@ public interface Styleable {
 	/**
 	 * Called to reset the style.
 	 */
-	void onClearStyle();
+	CompletableFuture<Void> onClearStyle();
 
 	/**
 	 * @param start
@@ -30,5 +31,5 @@ public interface Styleable {
 	 * @param sections
 	 * 		List of style sections.
 	 */
-	void onApplyStyle(int start, List<LanguageStyler.Section> sections);
+	CompletableFuture<Void> onApplyStyle(int start, List<LanguageStyler.Section> sections);
 }

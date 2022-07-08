@@ -4,12 +4,14 @@ import jregex.Matcher;
 import jregex.Pattern;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Utility for applying a given theme to some text based on the given language rule-set.
@@ -55,8 +57,8 @@ public class LanguageStyler {
 	 * @param text
 	 * 		Complete document text.
 	 */
-	public void styleCompleteDocument(String text) {
-		styleRange(text, 0, Integer.MAX_VALUE);
+	public CompletableFuture<Void> styleCompleteDocument(String text) {
+		return styleRange(text, 0, Integer.MAX_VALUE);
 	}
 
 	/**
@@ -78,12 +80,12 @@ public class LanguageStyler {
 	 * @param end
 	 * 		End position in the document where edits occurred.
 	 */
-	public void styleFlexibleRange(Styleable styleable, String text, int start, int end) {
+	public CompletableFuture<Void> styleFlexibleRange(Styleable styleable, String text, int start, int end) {
 		// Fit range based on rule matching needs
 		end = expandEndForwards(styleable, text, end);
 		start = expandStartBackwards(styleable, text, start, end);
 		// Update style in updated range
-		styleRange(text, start, end - start);
+		return styleRange(text, start, end - start);
 	}
 
 	private int expandStartBackwards(Styleable styleable, String text, int start, int end) {
@@ -159,15 +161,14 @@ public class LanguageStyler {
 	 * @param matcherRange
 	 * 		Range size.
 	 */
-	public void styleRange(String text, int start, int matcherRange) {
+	public CompletableFuture<Void> styleRange(String text, int start, int matcherRange) {
 		if (start > 0) {
 			// Only use the text from the start position onwards
 			text = text.substring(start);
 		}
 		Pattern pattern = getPattern();
 		if (pattern == null || pattern == EMPTY_PATTERN) {
-			handler.onClearStyle();
-			return;
+			return handler.onClearStyle();
 		}
 		Matcher matcher = pattern.matcher(text);
 		int lastKwEnd = 0;
@@ -176,7 +177,7 @@ public class LanguageStyler {
 		try {
 			while (matcher.find()) {
 				if (Thread.interrupted())
-					return;
+					return ThreadUtil.failedFuture(new InterruptedException());
 				String styleClass = getClassFromGroup(matcher);
 				String target = matcher.group(0);
 				if (styleClass == null) {
@@ -212,8 +213,9 @@ public class LanguageStyler {
 			logger.error("Error occurred when computing styles:", npe);
 		}
 		if (modified) {
-			handler.onApplyStyle(start, sections);
+			return handler.onApplyStyle(start, sections);
 		}
+		return CompletableFuture.completedFuture(null);
 	}
 
 

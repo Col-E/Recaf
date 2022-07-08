@@ -4,11 +4,13 @@ import javafx.scene.Node;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import me.coley.recaf.util.threading.FxThreadUtil;
+import me.coley.recaf.util.threading.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Text flow for syntax highlighted code.
@@ -50,12 +52,12 @@ public class SyntaxFlow extends TextFlow implements Styleable {
 	}
 
 	@Override
-	public void onClearStyle() {
-		FxThreadUtil.run(() -> getChildren().clear());
+	public CompletableFuture<Void> onClearStyle() {
+		return CompletableFuture.runAsync(() -> getChildren().clear(), FxThreadUtil.executor());
 	}
 
 	@Override
-	public void onApplyStyle(int start, List<LanguageStyler.Section> sections) {
+	public CompletableFuture<Void> onApplyStyle(int start, List<LanguageStyler.Section> sections) {
 		this.sections = sections;
 		List<Node> nodes = new ArrayList<>();
 		for (LanguageStyler.Section section : sections) {
@@ -63,6 +65,10 @@ public class SyntaxFlow extends TextFlow implements Styleable {
 			text.getStyleClass().addAll(section.classes);
 			nodes.add(text);
 		}
-		FxThreadUtil.run(() -> getChildren().addAll(nodes));
+		Thread t = Thread.currentThread();
+		if (t.isInterrupted()) {
+			return ThreadUtil.failedFuture(new InterruptedException());
+		}
+		return CompletableFuture.runAsync(() -> getChildren().addAll(nodes), FxThreadUtil.executor());
 	}
 }

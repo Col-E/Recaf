@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -668,22 +669,22 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	}
 
 	@Override
-	public void onClearStyle() {
-		FxThreadUtil.run(() -> clearStyle(0, getText().length()));
+	public CompletableFuture<Void> onClearStyle() {
+		return CompletableFuture.runAsync(() -> clearStyle(0, getText().length()), FxThreadUtil.executor());
 	}
 
 	@Override
-	public void onApplyStyle(int start, List<LanguageStyler.Section> sections) {
+	public CompletableFuture<Void> onApplyStyle(int start, List<LanguageStyler.Section> sections) {
 		StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
 		for (LanguageStyler.Section section : sections)
 			spansBuilder.add(section.classes, section.length);
 		StyleSpans<Collection<String>> spans = spansBuilder.create();
 		// Update editor at position
-		FxThreadUtil.run(() -> {
-			if (!Thread.interrupted()) {
-				setStyleSpans(start, spans);
-			}
-		});
+		Thread t = Thread.currentThread();
+		if (t.isInterrupted()) {
+			return ThreadUtil.failedFuture(new InterruptedException());
+		}
+		return CompletableFuture.runAsync(() -> setStyleSpans(start, spans), FxThreadUtil.executor());
 	}
 
 	/**
