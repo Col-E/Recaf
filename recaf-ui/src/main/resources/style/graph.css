@@ -1,13 +1,16 @@
 .graph-node {
     -fx-color: white;
     -fx-background-color: rgb(25, 55, 80);
-    -fx-padding: 10;
+    -fx-padding: 5;
     -fx-border-color: black;
     -fx-border-width: 1;
 }
 .graph-node-text {
     -fx-border: none;
-    -fx-background-color: rgb(25, 55, 80);
+    -fx-padding: 8;
+	-fx-background-color: rgb(45, 45, 46);
+	-fx-accent: rgb(255, 97, 117);
+	-fx-fill: rgb(224, 226, 228);
 }
 .graph-node-text-virt {
     -fx-font-family: monospace;

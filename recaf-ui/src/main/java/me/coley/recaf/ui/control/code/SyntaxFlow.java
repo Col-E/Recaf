@@ -27,14 +27,15 @@ public class SyntaxFlow extends TextFlow implements Styleable {
 	 */
 	public SyntaxFlow(Language language) {
 		styler = new LanguageStyler(language, this);
+		getStyleClass().add("code-area");
 	}
 
 	/**
 	 * @param code
 	 * 		Code to generate styled syntax flow of.
 	 */
-	public void setCode(String code) {
-		styler.styleCompleteDocument(code);
+	public CompletableFuture<Void> setCode(String code) {
+		return styler.styleCompleteDocument(code);
 	}
 
 	@Override

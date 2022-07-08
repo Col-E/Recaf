@@ -13,8 +13,11 @@ import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.ui.control.code.SyntaxFlow;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import org.fxmisc.richtext.CodeArea;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * {@link AbstractCell} for a block of bytecode, usually a flow block.
@@ -28,23 +31,30 @@ public class BlockCell extends AbstractCell {
 	private final Block block;
 	private final int blockIndex;
 	private Region graphic;
-	final SyntaxArea area;
+	final SyntaxFlow area;
 
 	public BlockCell(Block block, int blockIndex) {
 		this.code = getCode(block);
 		this.block = block;
 		this.blockIndex = blockIndex;
-		this.area = new BlockSyntaxArea();
-		this.area.setText(code);
-		this.area.setEditable(false);
+		this.area = new SyntaxFlow(Languages.JAVA_BYTECODE);
 	}
 
 	public String getCode(Block block) {
 		StringBuilder sb = new StringBuilder();
+		int i = 0;
+		int size = block.getInstructions().size() - 1;
 		for (AbstractInstruction instruction : block.getInstructions()) {
-			sb.append(instruction.toString()).append("\n");
+			sb.append(instruction.toString());
+			if (i < size)
+				sb.append("\n");
+			i++;
 		}
 		return sb.toString();
+	}
+
+	public CompletableFuture<Void> setCode() {
+		return area.setCode(code);
 	}
 
 	@Override
@@ -57,20 +67,11 @@ public class BlockCell extends AbstractCell {
 			grid.setVgap(5);
 			grid.getStyleClass().add("graph-node");
 
-			Text text = new Text(code);
-			text.getStyleClass().add("graph-node-text-virt");
+			BorderPane wrapper = new BorderPane();
+			wrapper.setCenter(area);
+			wrapper.getStyleClass().add("graph-node-text");
 
-			System.out.println("Text layout:" + text.getLayoutBounds().getHeight());
-
-			area.setEditable(false);
-			area.getStyleClass().add("graph-node-text");
-
-			area.setWrapText(true);
-			area.setPrefHeight(text.getLayoutBounds().getHeight() + 40);
-
-			area.setPrefWidth(text.getLayoutBounds().getWidth() + 40);
-
-			grid.addRow(0, area);
+			grid.addRow(0, wrapper);
 
 			graphic = grid;
 		}
@@ -93,7 +94,7 @@ public class BlockCell extends AbstractCell {
 		return blockIndex;
 	}
 
-	public SyntaxArea getArea() {
+	public SyntaxFlow getArea() {
 		return area;
 	}
 }

@@ -5,15 +5,13 @@ import com.fxgraph.graph.Graph;
 import com.fxgraph.graph.ICell;
 import com.fxgraph.graph.Model;
 import com.fxgraph.layout.AbegoTreeLayout;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.image.PixelFormat;
-import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
-import javafx.scene.image.WritablePixelFormat;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.assemble.AstException;
@@ -29,12 +27,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class MethodGraphPane extends BorderPane implements MemberEditor {
 
@@ -113,7 +109,7 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 
 		MethodGraph methodGraph = new MethodGraph((MethodInfo) targetMember, classInfo);
 
-		TreeMap<Integer, Block> blocks = null;
+		TreeMap<Integer, Block> blocks;
 		try {
 			blocks = methodGraph.generate();
 		} catch(AstException e) {
@@ -127,44 +123,37 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 		model.clear();
 		graph.beginUpdate();
 
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
+
 		// Create cells
 		for (var block : blocks.entrySet()) {
 			BlockCell cell = new BlockCell(block.getValue(), block.getKey());
+			futures.add(cell.setCode());
 			blockCells.put(block.getValue(), cell);
 			model.addCell(cell);
 		}
 
-		ObservableList<ICell> cells = model.getAddedCells();
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
 
+			Block root = blocks.get(0);
 
-		Block root = blocks.get(0);
+			// Create edges
+			visitEdge(blockCells, new HashSet<>(), root);
 
-		// Create edges
-		visitEdge(blockCells, new HashSet<>(), root);
+			graph.endUpdate();
 
+			BlockCell rootCell = (BlockCell) model.getAllCells().get(0);
 
-		graph.endUpdate();
+			FxThreadUtil.run(() -> {
 
-		BlockCell rootCell = (BlockCell) model.getAllCells().get(0);
+				graph.layout(new AbegoTreeLayout(100, 100, Configuration.Location.Bottom));
 
-		FxThreadUtil.delayedRun(25L, () -> {
-			graph.layout(new AbegoTreeLayout(100, 100, Configuration.Location.Bottom));
-			graph.getCanvas().setPivot(
-					rootCell.getGraphic(graph).getLayoutX(),
-					rootCell.getGraphic(graph).getLayoutY()
-			);
+				FxThreadUtil.run(() -> graph.getCanvas().setPivot(
+						rootCell.getGraphic(graph).getLayoutX() - graph.getCanvas().getWidth() / 2,
+						rootCell.getGraphic(graph).getLayoutY() - graph.getCanvas().getHeight() / 2
+				));
 
-			graph.getCanvas().setOnMousePressed((event -> {
-				if(event.isMiddleButtonDown()) {
-					WritableImage image = new WritableImage(10000, 60000);
-					WritableImage img = graph.getCanvas().snapshot(new SnapshotParameters(), image);
-					try {
-						ImageIO.write(SwingFXUtils.fromFXImage(img, null), "png", new File("graph.png"));
-					} catch (IOException e) {
-						throw new RuntimeException(e);
-					}
-				}
-			}));
+			});
 		});
 
 	}
