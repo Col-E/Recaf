@@ -63,6 +63,15 @@ public class ReferenceQuery implements Query {
 	}
 
 	private void whenMatched(String owner, String name, String desc, Consumer<ResultBuilder> builderConsumer) {
+		// The parameters are null if we only are searching against a type.
+		// In these cases since we're comparing to a type, then any name/desc comparison should be ignored.
+		if (name == null && this.name != null)
+			return;
+		if (desc == null && this.desc != null)
+			return;
+		// Check if match modes succeed.
+		// If our query arguments are null, that field can skip comparison, and we move on to the next.
+		// If all of our non-null query arguments match the given parameters, we have a match.
 		if (StringUtil.isAnyNullOrEmpty(this.owner, owner) || mode.match(this.owner, owner)) {
 			if (StringUtil.isAnyNullOrEmpty(this.name, name) || mode.match(this.name, name)) {
 				if (StringUtil.isAnyNullOrEmpty(this.desc, desc) || mode.match(this.desc, desc)) {

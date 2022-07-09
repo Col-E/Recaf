@@ -184,6 +184,16 @@ public class StringUtil {
 
 	/**
 	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return {@code true} when the text is either {@code null} or an empty string.
+	 */
+	public static boolean isNullOrEmpty(String text) {
+		return Strings.isNullOrEmpty(text);
+	}
+
+	/**
+	 * @param text
 	 * 		Input text.
 	 *
 	 * @return Entropy of the characters in the text.
