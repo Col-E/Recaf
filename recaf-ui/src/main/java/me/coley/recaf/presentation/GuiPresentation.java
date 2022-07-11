@@ -51,7 +51,8 @@ public class GuiPresentation implements Presentation {
 		Lang.setCurrentTranslations(Configs.display().lang);
 		// Setup listener to ensure we update classpath dependency directories
 		CompileDependencyUpdater.install(controller);
-		DecompileInterception.install(controller);
+		DecompileBytecodePatcher.install(controller);
+		DecompileTextPatcher.install(controller);
 		// Enable plugins that are marked as active
 		RecafPluginManager.getInstance().enablePlugins(Configs.plugin().enabledState
 				.entrySet().stream()

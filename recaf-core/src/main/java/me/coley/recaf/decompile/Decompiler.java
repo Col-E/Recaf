@@ -2,7 +2,6 @@ package me.coley.recaf.decompile;
 
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.plugin.tools.Tool;
-import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.ArrayList;
@@ -16,7 +15,8 @@ import java.util.Map;
  * @author Matt Coley
  */
 public abstract class Decompiler extends Tool<DecompileOption<?>> {
-	private final List<DecompileInterceptor> decompileInterceptors = new ArrayList<>();
+	private final List<PreDecompileInterceptor> preDecompileInterceptors = new ArrayList<>();
+	private final List<PostDecompileInterceptor> postDecompileInterceptors = new ArrayList<>();
 
 	protected Decompiler(String name, String version) {
 		super(name, version);
@@ -56,6 +56,7 @@ public abstract class Decompiler extends Tool<DecompileOption<?>> {
 									 ClassInfo classInfo) {
 		try {
 			String text = decompileImpl(options, workspace, classInfo);
+			text = applyPostInterceptors(text);
 			return new DecompileResult(this, classInfo, text);
 		} catch (Exception ex) {
 			return new DecompileResult(this, classInfo, ex);
@@ -82,34 +83,69 @@ public abstract class Decompiler extends Tool<DecompileOption<?>> {
 	 * @param code
 	 * 		Input bytecode.
 	 *
-	 * @return Output bytecode with all {@link #getDecompileInterceptors() interceptors} applied.
+	 * @return Output bytecode with all {@link #getPreDecompileInterceptors() interceptors} applied.
 	 */
-	public byte[] applyInterceptors(byte[] code) {
-		for (DecompileInterceptor interceptor : getDecompileInterceptors())
+	public byte[] applyPreInterceptors(byte[] code) {
+		for (PreDecompileInterceptor interceptor : getPreDecompileInterceptors())
 			code = interceptor.apply(code);
 		return code;
 	}
 
 	/**
-	 * @return List of current interceptors.
+	 * @param code
+	 * 		Input decompiled code.
+	 *
+	 * @return Output decompiled code with all {@link #getPreDecompileInterceptors() interceptors} applied.
 	 */
-	public List<DecompileInterceptor> getDecompileInterceptors() {
-		return Collections.unmodifiableList(decompileInterceptors);
+	public String applyPostInterceptors(String code) {
+		for (PostDecompileInterceptor interceptor : getPostDecompileInterceptors())
+			code = interceptor.apply(code);
+		return code;
+	}
+
+	/**
+	 * @return List of current interceptors for bytecode filtering.
+	 */
+	public List<PreDecompileInterceptor> getPreDecompileInterceptors() {
+		return Collections.unmodifiableList(preDecompileInterceptors);
+	}
+
+	/**
+	 * @return List of current interceptors for decompiled code filtering.
+	 */
+	public List<PostDecompileInterceptor> getPostDecompileInterceptors() {
+		return Collections.unmodifiableList(postDecompileInterceptors);
 	}
 
 	/**
 	 * @param interceptor
 	 * 		Interceptor to add.
 	 */
-	public void addDecompileInterceptor(DecompileInterceptor interceptor) {
-		decompileInterceptors.add(interceptor);
+	public void addPreDecompileInterceptor(PreDecompileInterceptor interceptor) {
+		preDecompileInterceptors.add(interceptor);
 	}
 
 	/**
 	 * @param interceptor
 	 * 		Interceptor to remove.
 	 */
-	public void removeDecompileInterceptor(DecompileInterceptor interceptor) {
-		decompileInterceptors.add(interceptor);
+	public void removePreDecompileInterceptor(PreDecompileInterceptor interceptor) {
+		preDecompileInterceptors.add(interceptor);
+	}
+
+	/**
+	 * @param interceptor
+	 * 		Interceptor to add.
+	 */
+	public void addPostDecompileInterceptor(PostDecompileInterceptor interceptor) {
+		postDecompileInterceptors.add(interceptor);
+	}
+
+	/**
+	 * @param interceptor
+	 * 		Interceptor to remove.
+	 */
+	public void removePostDecompileInterceptor(PostDecompileInterceptor interceptor) {
+		postDecompileInterceptors.add(interceptor);
 	}
 }

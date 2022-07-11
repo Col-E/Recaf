@@ -56,6 +56,13 @@ public class DecompilerConfig implements ConfigContainer {
 	@ConfigID("synthetics")
 	public boolean filterSynthetics;
 
+	/**
+	 * Flag to escape unicode in decompilation resulkts.
+	 */
+	@Group("filter")
+	@ConfigID("escapeunicode")
+	public boolean escapeUnicode = true;
+
 	@Override
 	public String iconPath() {
 		return Icons.DECOMPILE;

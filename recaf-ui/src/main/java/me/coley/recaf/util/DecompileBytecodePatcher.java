@@ -3,7 +3,7 @@ package me.coley.recaf.util;
 import me.coley.recaf.Controller;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.DecompilerConfig;
-import me.coley.recaf.decompile.DecompileInterceptor;
+import me.coley.recaf.decompile.PreDecompileInterceptor;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.visitor.SignatureRemovingVisitor;
 import me.coley.recaf.util.visitor.SyntheticRemovingVisitor;
@@ -17,11 +17,11 @@ import org.objectweb.asm.ClassWriter;
  *
  * @author Matt Coley
  */
-public class DecompileInterception {
-	private static final DecompileInterceptor interceptor = DecompileInterception::filter;
+public class DecompileBytecodePatcher {
+	private static final PreDecompileInterceptor interceptor = DecompileBytecodePatcher::filter;
 
 	/**
-	 * Registers a {@link DecompileInterceptor} that modifies bytecode
+	 * Registers a {@link PreDecompileInterceptor} that modifies bytecode
 	 * according to config in {@link DecompilerConfig}.
 	 *
 	 * @param controller
@@ -29,7 +29,7 @@ public class DecompileInterception {
 	 */
 	public static void install(Controller controller) {
 		for (Decompiler decompiler : controller.getServices().getDecompileManager().getRegisteredImpls()) {
-			decompiler.addDecompileInterceptor(interceptor);
+			decompiler.addPreDecompileInterceptor(interceptor);
 		}
 	}
 

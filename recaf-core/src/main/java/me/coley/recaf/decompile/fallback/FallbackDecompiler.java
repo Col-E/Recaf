@@ -11,8 +11,6 @@ import me.coley.recaf.decompile.fallback.model.ClassModel;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Map;
 
@@ -36,7 +34,7 @@ public class FallbackDecompiler extends Decompiler {
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo info) {
 		try {
 			// TODO: Resilience measures Handle funky unicode escapes
-			ClassFile classFile = new ClassFileReader().read(applyInterceptors(info.getValue()));
+			ClassFile classFile = new ClassFileReader().read(applyPreInterceptors(info.getValue()));
 			ClassModel model = new ClassModel(classFile);
 			return model.print(PrintContext.DEFAULT_CTX);
 		} catch (Throwable t) {

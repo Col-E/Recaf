@@ -73,7 +73,7 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 			// FF wants some odd naming convention where '.class' suffix always exists
 			String qualified = (name + ".class");
 			// Load in the data
-			byte[] code = applyInterceptors(classInfo.getValue());
+			byte[] code = applyPreInterceptors(classInfo.getValue());
 			structContext.addData(name, qualified, code, true);
 			classesProcessor.loadClasses(null);
 			// Decompile

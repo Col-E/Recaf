@@ -105,7 +105,7 @@ public class JadxDecompiler extends Decompiler {
 
 	private void addTargetClass(List<JavaClassReader> readers, ClassInfo classInfo) {
 		int id = classInfo.getName().hashCode();
-		byte[] code = applyInterceptors(classInfo.getValue());
+		byte[] code = applyPreInterceptors(classInfo.getValue());
 		readers.add(new JavaClassReader(id, classInfo.getName(), code));
 	}
 
@@ -126,7 +126,7 @@ public class JadxDecompiler extends Decompiler {
 						ClassInfo refClass = workspace.getResources().getClass(referencedName);
 						if (refClass != null) {
 							int id = referencedName.hashCode();
-							byte[] code = applyInterceptors(refClass.getValue());
+							byte[] code = applyPreInterceptors(refClass.getValue());
 							readers.add(new JavaClassReader(id, referencedName, code));
 						}
 					});

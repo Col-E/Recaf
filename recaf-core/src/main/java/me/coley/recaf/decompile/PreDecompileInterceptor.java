@@ -5,7 +5,7 @@ package me.coley.recaf.decompile;
  *
  * @author Matt Coley
  */
-public interface DecompileInterceptor {
+public interface PreDecompileInterceptor {
 	/**
 	 * @param code
 	 * 		Original bytecode.

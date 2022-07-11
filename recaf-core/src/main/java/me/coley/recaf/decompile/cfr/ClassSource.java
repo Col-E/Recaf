@@ -62,7 +62,7 @@ public class ClassSource implements ClassFileSource {
 		} else {
 			code = workspace.getResources().getClass(className).getValue();
 		}
-		code = decompiler.applyInterceptors(code);
+		code = decompiler.applyPreInterceptors(code);
 		return new Pair<>(code, inputPath);
 	}
 
