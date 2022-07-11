@@ -7,10 +7,13 @@ import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import jregex.Matcher;
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.util.RegexUtil;
+import me.coley.recaf.util.StringUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -72,6 +75,7 @@ public class JavaParserHelper {
 	 * @return {@link ParseResult} wrapper around a {@link CompilationUnit} result.
 	 */
 	public ParseResult<CompilationUnit> parseClass(String code, boolean tryRecover) {
+		code = filterGenerics(code);
 		ParseResult<CompilationUnit> result = parser.parse(code);
 		List<Problem> problems = result.getProblems();
 		if (result.getResult().isPresent()) {
@@ -87,7 +91,7 @@ public class JavaParserHelper {
 					return new JavaParserRecovery(this).parseClassWithRecovery(code, problems);
 				}
 				// Update unit and roll with whatever we got.
-				updateUnit(unit);
+				updateUnitMetaData(unit);
 			}
 		} else if (tryRecover) {
 			// No unit in result, attempt to recover
@@ -97,12 +101,43 @@ public class JavaParserHelper {
 	}
 
 	/**
+	 * JavaParser {@link com.github.javaparser.resolution.types.ResolvedReferenceType} will fail if there
+	 * is a mismatch in generic type arguments. If we're resolving from workspace references, those do not get
+	 * their type arguments generated, so it expects {@code 0} but our decompiled source may specify {@code 1} or
+	 * more. This regular expression matches an equal number of items between two {@code <>} pairs.
+	 * <br>
+	 * Examples of valid matches:
+	 * <pre>
+	 *     <T>
+	 *     <List<Set<String>>>
+	 *     <T extends EntityLivingBase<X> | Foo>
+	 * </pre>
+	 * We then replace the matched content with an equal number of spaces so that none of the text positions
+	 * become offset.
+	 *
+	 * @param code
+	 * 		Removed generics from the code by removing contents between &lt; and &gt;.
+	 *
+	 * @return Code with generics content replaced with spaces.
+	 */
+	private String filterGenerics(String code) {
+		// This isn't perfect, but should replace most basic generic type usage
+		Matcher matcher = RegexUtil.getMatcher("(?:<)((?:(?!\\1).)*>)", code);
+		while (matcher.find()) {
+			String temp = code.substring(0, matcher.start());
+			String filler = StringUtil.repeat(" ", matcher.length());
+			code = temp + filler + code.substring(matcher.end());
+		}
+		return code;
+	}
+
+	/**
 	 * Adds some missing meta-data to compilation units.
 	 *
 	 * @param unit
 	 * 		Unit to update metadata of.
 	 */
-	private void updateUnit(CompilationUnit unit) {
+	private void updateUnitMetaData(CompilationUnit unit) {
 		// For some reason calling "resolve()" on some AST nodes fails becuase the symbol resolver isn't set.
 		// Well, it clearly is in the config, which the parser should pass to the created unit, but doesn't.
 		unit.setData(Node.SYMBOL_RESOLVER_KEY, symbolSolver);
@@ -196,7 +231,7 @@ public class JavaParserHelper {
 			while (node != null) {
 				// Ensure node is a declaration of some kind (class/field/method)
 				boolean isDec = (node instanceof FieldDeclaration ||
-						node instanceof EnumConstantDeclaration || 
+						node instanceof EnumConstantDeclaration ||
 						node instanceof MethodDeclaration ||
 						node instanceof ConstructorDeclaration ||
 						node instanceof ClassOrInterfaceDeclaration);
