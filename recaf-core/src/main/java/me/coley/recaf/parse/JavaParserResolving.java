@@ -5,14 +5,11 @@ import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.InitializerDeclaration;
+import com.github.javaparser.resolution.Resolvable;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
-import com.github.javaparser.symbolsolver.javassistmodel.JavassistAnnotationDeclaration;
-import com.github.javaparser.symbolsolver.javassistmodel.JavassistClassDeclaration;
-import com.github.javaparser.symbolsolver.javassistmodel.JavassistEnumDeclaration;
-import com.github.javaparser.symbolsolver.javassistmodel.JavassistInterfaceDeclaration;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionAnnotationDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
@@ -25,10 +22,10 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import org.slf4j.Logger;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Utility for resolving context behind {@link Node} values.
@@ -37,6 +34,9 @@ import java.util.Optional;
  */
 public class JavaParserResolving {
 	private static final Logger logger = Logging.get(JavaParserResolving.class);
+	private static final Map<Class<?>, MethodHandle> resolveLookupCache = new IdentityHashMap<>();
+	private static final Map<Class<?>, MethodHandle> solveLookupCache = new IdentityHashMap<>();
+	private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
 	/**
 	 * @param node
@@ -45,16 +45,10 @@ public class JavaParserResolving {
 	 * @return {@code true} if the node has some means of being resolvable.
 	 */
 	public static boolean isNodeResolvable(Node node) {
-		Class<? extends Node> nodeClass = node.getClass();
-		// Check if node is resolvable.
-		try {
-			if (AccessFlag.isPublic(nodeClass.getMethod("resolve").getModifiers())) {
-				return true;
-			}
-		} catch (Throwable t) {
-			// ignored
-		}
+		if (node instanceof Resolvable)
+			return true;
 		// Check if a fallback facade is available
+		Class<? extends Node> nodeClass = node.getClass();
 		for (Method method : JavaParserFacade.class.getDeclaredMethods()) {
 			if (method.getName().equals("solve")) {
 				Class<?> param = method.getParameterTypes()[0];
@@ -66,16 +60,14 @@ public class JavaParserResolving {
 		// Edge case for <clinit>
 		if (node instanceof InitializerDeclaration) {
 			InitializerDeclaration init = (InitializerDeclaration) node;
-			if (init.isStatic()) {
-				return true;
-			}
+			return init.isStatic();
 		}
 		return false;
 	}
 
 	/**
-	 * @param typeSolver
-	 * 		Type solver tied in with a {@link Workspace}.
+	 * @param symbolSolver
+	 * 		Symbol solver tied in with a {@link Workspace}.
 	 * @param node
 	 * 		Some AST node.
 	 *
@@ -85,18 +77,32 @@ public class JavaParserResolving {
 	 * <li>{@link me.coley.recaf.code.MethodInfo}</li>
 	 * </ul>
 	 */
-	public static ItemInfo of(WorkspaceTypeSolver typeSolver, Node node) {
+	public static ItemInfo of(WorkspaceSymbolSolver symbolSolver, Node node) {
 		Object value = null;
 		Class<? extends Node> nodeClass = node.getClass();
 		// Use node's resolving
 		try {
-			Method resolve = nodeClass.getMethod("resolve");
-			resolve.setAccessible(true);
-			value = resolve.invoke(node);
-		} catch (ReflectiveOperationException ex) {
-			// ignore items such as "NoSuchMethodException"
+			MethodHandle handle;
+			if (resolveLookupCache.containsKey(nodeClass)) {
+				handle = resolveLookupCache.get(nodeClass);
+			} else {
+				Method resolve = nodeClass.getMethod("resolve");
+				resolve.setAccessible(true);
+				handle = lookup.unreflect(resolve);
+				resolveLookupCache.put(nodeClass, handle);
+			}
+			if (handle != null)
+				value = handle.invoke(node);
+		} catch (NoSuchMethodException ex) {
+			// The node doesn't have a 'resolve' implementation.
+			resolveLookupCache.put(nodeClass, null);
+		} catch (UnsolvedSymbolException ex) {
+			//logger.error("Resolve failure", ex);
+		} catch (Throwable ex) {
+			logger.error("Handle invoke exception on 'resolve'", ex);
 		}
 		// If value was found, map to info
+		WorkspaceTypeSolver typeSolver = symbolSolver.getTypeSolver();
 		if (value != null) {
 			ItemInfo info = objectToInfo(typeSolver, value);
 			if (info != null) {
@@ -104,29 +110,39 @@ public class JavaParserResolving {
 			}
 		}
 		// Use facade resolving
-		Method solve = null;
-		for (Method method : JavaParserFacade.class.getDeclaredMethods()) {
-			if (method.getName().equals("solve")) {
-				Class<?> param = method.getParameterTypes()[0];
-				if (param.isAssignableFrom(nodeClass)) {
-					solve = method;
-					break;
+		MethodHandle solve = solveLookupCache.get(nodeClass);
+		if (solveLookupCache.containsKey(nodeClass)) {
+			solve = solveLookupCache.get(nodeClass);
+		} else {
+			solveLookupCache.put(nodeClass, null);
+			for (Method method : JavaParserFacade.class.getDeclaredMethods()) {
+				if (method.getName().equals("solve")) {
+					Class<?> param = method.getParameterTypes()[0];
+					if (param.isAssignableFrom(nodeClass)) {
+						try {
+							solve = lookup.unreflect(method);
+							solveLookupCache.put(nodeClass, solve);
+							break;
+						} catch (IllegalAccessException e) {
+							// Thrown when access check fails, but all the 'solve' methods are public,
+							// so this should never occur.
+						}
+					}
 				}
 			}
 		}
 		if (solve != null) {
-			JavaParserFacade facade = JavaParserFacade.get(typeSolver);
 			try {
-				value = solve.invoke(facade, node);
-			} catch (Exception ex) {
-				// Some of the facade implementations just throw exceptions when they don't resolve values.
+				value = solve.invoke(symbolSolver.getFacade(), node);
+			} catch (Throwable ex) {
+				// Some facade implementations just throw exceptions when they don't resolve values.
 				// We can ignore them and assume they failed to get anything useful.
 			}
 		}
 		if (node instanceof InitializerDeclaration) {
 			InitializerDeclaration init = (InitializerDeclaration) node;
 			if (init.isStatic()) {
-				ItemInfo unitInfo = of(typeSolver, node.getParentNode().get());
+				ItemInfo unitInfo = of(symbolSolver, node.getParentNode().get());
 				if (unitInfo instanceof CommonClassInfo) {
 					Optional<MethodInfo> initializerInfo = ((CommonClassInfo) unitInfo).getMethods()
 							.stream()
@@ -330,19 +346,7 @@ public class JavaParserResolving {
 	private static ClassInfo toClassInfo(WorkspaceTypeSolver typeSolver, ResolvedTypeDeclaration type) {
 		Workspace workspace = typeSolver.getWorkspace();
 		// I hate JavaParser for not making a common way to get the internal name instead of this mess.
-		if (type instanceof JavassistClassDeclaration) {
-			String name = JavaParserPrinting.getType((JavassistClassDeclaration) type);
-			return workspace.getResources().getClass(name);
-		} else if (type instanceof JavassistInterfaceDeclaration) {
-			String name = JavaParserPrinting.getType((JavassistInterfaceDeclaration) type);
-			return workspace.getResources().getClass(name);
-		} else if (type instanceof JavassistEnumDeclaration) {
-			String name = JavaParserPrinting.getType((JavassistEnumDeclaration) type);
-			return workspace.getResources().getClass(name);
-		} else if (type instanceof JavassistAnnotationDeclaration) {
-			String name = JavaParserPrinting.getType((JavassistAnnotationDeclaration) type);
-			return workspace.getResources().getClass(name);
-		} else if (type instanceof ReflectionClassDeclaration) {
+		if (type instanceof ReflectionClassDeclaration) {
 			String name = JavaParserPrinting.getType((ReflectionClassDeclaration) type);
 			return workspace.getResources().getClass(name);
 		} else if (type instanceof ReflectionInterfaceDeclaration) {

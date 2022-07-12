@@ -146,7 +146,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	}
 
 	private void doSelectMember(CompilationUnit ast, MemberInfo memberInfo) {
-		WorkspaceTypeSolver solver = RecafUI.getController().getServices().getTypeSolver();
+		WorkspaceTypeSolver solver = RecafUI.getController().getServices().getSymbolSolver().getTypeSolver();
 		if (memberInfo.isField()) {
 			ast.findFirst(FieldDeclaration.class, dec -> {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());

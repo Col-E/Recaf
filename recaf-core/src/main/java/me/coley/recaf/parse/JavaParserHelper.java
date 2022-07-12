@@ -6,7 +6,6 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.expr.SimpleName;
-import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import jregex.Matcher;
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.FieldInfo;
@@ -24,16 +23,14 @@ import java.util.Optional;
  * @author Matt Coley
  */
 public class JavaParserHelper {
-	private final WorkspaceTypeSolver typeSolver;
-	private final JavaSymbolSolver symbolSolver;
+	private final WorkspaceSymbolSolver symbolSolver;
 	private final JavaParser parser;
 
-	private JavaParserHelper(WorkspaceTypeSolver typeSolver) {
-		this.typeSolver = typeSolver;
-		symbolSolver = new JavaSymbolSolver(typeSolver);
+	private JavaParserHelper(WorkspaceSymbolSolver symbolSolver) {
+		this.symbolSolver = symbolSolver;
 		parser = new JavaParser(new ParserConfiguration()
 				.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_16)
-				.setSymbolResolver(symbolSolver));
+				.setSymbolResolver(this.symbolSolver));
 	}
 
 	/**
@@ -43,17 +40,17 @@ public class JavaParserHelper {
 	 * @return Instance of JavaParser helper utility.
 	 */
 	public static JavaParserHelper create(Controller controller) {
-		return create(controller.getServices().getTypeSolver());
+		return create(controller.getServices().getSymbolSolver());
 	}
 
 	/**
-	 * @param typeSolver
+	 * @param symbolSolver
 	 * 		Type solver for JavaParser integration with types recognized by Recaf.
 	 *
 	 * @return Instance of JavaParser helper utility.
 	 */
-	public static JavaParserHelper create(WorkspaceTypeSolver typeSolver) {
-		return new JavaParserHelper(typeSolver);
+	public static JavaParserHelper create(WorkspaceSymbolSolver symbolSolver) {
+		return new JavaParserHelper(symbolSolver);
 	}
 
 	/**
@@ -169,10 +166,11 @@ public class JavaParserHelper {
 	 * </ul>
 	 */
 	public Optional<ParseHitResult> at(CompilationUnit unit, int line, int column) {
+		WorkspaceTypeSolver typeSolver = symbolSolver.getTypeSolver();
 		if (unit != null) {
 			Node node = getNodeAtLocation(line, column, unit);
 			while (node != null && JavaParserResolving.isNodeResolvable(node)) {
-				ItemInfo value = JavaParserResolving.of(typeSolver, node);
+				ItemInfo value = JavaParserResolving.of(symbolSolver, node);
 				if (value == null) {
 					Optional<Node> parent = node.getParentNode();
 					if (parent.isPresent()) {
@@ -190,7 +188,7 @@ public class JavaParserHelper {
 					// yield the method info, not a field by the same name.
 					FieldInfo fieldInfo = (FieldInfo) value;
 					if (node.hasParentNode()) {
-						ItemInfo info = JavaParserResolving.of(typeSolver, node.getParentNode().get());
+						ItemInfo info = JavaParserResolving.of(symbolSolver, node.getParentNode().get());
 						if (info instanceof MethodInfo) {
 							MethodInfo methodInfo = (MethodInfo) info;
 							if (methodInfo.getName().equals(fieldInfo.getName())) {
@@ -256,7 +254,7 @@ public class JavaParserHelper {
 			}
 			// Handle edge cases like package import names.
 			if (node != null) {
-				ItemInfo value = JavaParserResolving.of(typeSolver, node);
+				ItemInfo value = JavaParserResolving.of(symbolSolver, node);
 				if (value != null) {
 					return Optional.of(new ParseHitResult(value, node));
 				}

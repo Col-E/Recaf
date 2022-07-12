@@ -110,6 +110,11 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		return hashCode;
 	}
 
+	@Override
+	public String toString() {
+		return "ClassInfo{'" +  name + "'}";
+	}
+
 	/**
 	 * @return ASM class reader.
 	 */

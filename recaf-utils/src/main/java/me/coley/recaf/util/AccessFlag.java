@@ -159,6 +159,21 @@ public enum AccessFlag {
 	}
 
 	/**
+	 * @param acc
+	 * 		Access flag mask.
+	 * @param flags
+	 * 		Array of flags to check exist in the mask.
+	 *
+	 * @return {@code true} if none of the specified flags exist in the mask.
+	 */
+	public static boolean hasNone(int acc, AccessFlag... flags) {
+		for (AccessFlag flag : flags) {
+			if (flag.has(acc)) return false;
+		}
+		return true;
+	}
+
+	/**
 	 * Flag mask value.
 	 */
 	private final int mask;
