@@ -1,15 +1,16 @@
 package me.coley.recaf.parse;
 
-import com.github.javaparser.symbolsolver.javassistmodel.JavassistClassDeclaration;
-import com.github.javaparser.symbolsolver.javassistmodel.JavassistFieldDeclaration;
-import com.github.javaparser.symbolsolver.javassistmodel.JavassistMethodDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionFieldDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionMethodDeclaration;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.CtMethod;
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.parse.jpimpl.RecafResolvedClassDeclaration;
+import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.Resources;
+import me.coley.recaf.workspace.resource.source.EmptyContentSource;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -22,17 +23,20 @@ import static org.junit.jupiter.api.Assertions.fail;
  * Tests for {@link JavaParserPrinting}
  */
 public class JavaParserPrintingTests {
-	private static ClassPool pool = ClassPool.getDefault();
 
 	@Test
-	void testJavassist() {
+	void testRecafBacked() {
 		try {
-			CtClass ctClass = pool.getCtClass("java.lang.String");
-			CtField ctField = ctClass.getField("hash");
-			CtMethod ctMethod = ctClass.getMethod("intern", "()Ljava/lang/String;");
-			JavassistClassDeclaration classDeclaration = new JavassistClassDeclaration(ctClass, null);
-			JavassistFieldDeclaration fieldDeclaration = new JavassistFieldDeclaration(ctField, null);
-			JavassistMethodDeclaration methodDeclaration = new JavassistMethodDeclaration(ctMethod, null);
+			Workspace workspace = new Workspace(new Resources(new Resource(new EmptyContentSource())));
+			WorkspaceTypeSolver solver = new WorkspaceTypeSolver(workspace);
+			ClassInfo classInfo = workspace.getResources().getClass("java/lang/String");
+			RecafResolvedClassDeclaration classDeclaration = new RecafResolvedClassDeclaration(solver, classInfo);
+			ResolvedFieldDeclaration fieldDeclaration = classDeclaration.getField("hash");
+			ResolvedMethodDeclaration methodDeclaration = classDeclaration.getDeclaredMethods().stream()
+					.filter(m -> m.getName().equals("intern"))
+					.findFirst().get();
+
+
 			assertEquals("java/lang/String", JavaParserPrinting.getType(classDeclaration));
 			assertEquals("I", JavaParserPrinting.getFieldDesc(fieldDeclaration));
 			assertEquals("()Ljava/lang/String;", JavaParserPrinting.getMethodDesc(methodDeclaration));
