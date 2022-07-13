@@ -87,8 +87,6 @@ public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
 
 	@Override
 	public String toString() {
-		return "RecafResolvedFieldDeclaration{" +
-				getFieldInfo().getOwner().replace('/', '.') + "." + getName() +
-				'}';
+		return getName();
 	}
 }

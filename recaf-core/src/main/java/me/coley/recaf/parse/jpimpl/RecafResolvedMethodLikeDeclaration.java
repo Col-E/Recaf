@@ -6,15 +6,21 @@ import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaratio
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.javassistmodel.JavassistTypeParameter;
+import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
+import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
+import javassist.bytecode.SignatureAttribute;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.Type;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDeclaration {
 	protected final WorkspaceTypeSolver typeSolver;
@@ -55,13 +61,26 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 
 	@Override
 	public int getNumberOfSpecifiedExceptions() {
-		// Is it worth refactoring MethodInfo to include this info?
-		return 0;
+		return methodInfo.getExceptions().size();
 	}
 
 	@Override
 	public ResolvedType getSpecifiedException(int index) {
-		return null;
+		if (index < getNumberOfSpecifiedExceptions()) {
+			String exceptionType = methodInfo.getExceptions().get(index);
+			SymbolReference<ResolvedReferenceTypeDeclaration> reference =
+					typeSolver.tryToSolveType(exceptionType);
+			if (reference.isSolved()) {
+				ResolvedReferenceTypeDeclaration declaration = reference.getCorrespondingDeclaration();
+				if (declaration instanceof RecafResolvedTypeDeclaration)
+					return new RecafResolvedReferenceType((RecafResolvedTypeDeclaration) declaration);
+				else
+					return new ReferenceTypeImpl(declaration, typeSolver);
+			}
+			throw new ResolveLookupException("Failed to resolve: " + exceptionType);
+		} else {
+			throw new IllegalArgumentException("Invalid exception index: " + index);
+		}
 	}
 
 	@Override
@@ -83,7 +102,21 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 
 	@Override
 	public List<ResolvedTypeParameterDeclaration> getTypeParameters() {
-		return Collections.emptyList();
+		String signature = methodInfo.getSignature();
+		if (signature == null)
+			return Collections.emptyList();
+		else {
+			// TODO: Cache and/or switch to ASM
+			try {
+				SignatureAttribute.MethodSignature methodSignature =
+						SignatureAttribute.toMethodSignature(signature);
+				return Arrays.stream(methodSignature.getTypeParameters())
+						.map(tp -> new JavassistTypeParameter(tp, this, typeSolver))
+						.collect(Collectors.toList());
+			} catch (Exception ex) {
+				return Collections.emptyList();
+			}
+		}
 	}
 
 	@Override
@@ -106,8 +139,6 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 
 	@Override
 	public String toString() {
-		return "RecafResolvedMethodLikeDeclaration{" +
-				getQualifiedName() +
-				'}';
+		return getName();
 	}
 }

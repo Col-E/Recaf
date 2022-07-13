@@ -117,8 +117,11 @@ public class JavaParserResolving {
 			solveLookupCache.put(nodeClass, null);
 			for (Method method : JavaParserFacade.class.getDeclaredMethods()) {
 				if (method.getName().equals("solve")) {
-					Class<?> param = method.getParameterTypes()[0];
-					if (param.isAssignableFrom(nodeClass)) {
+					Class<?>[] parameterTypes = method.getParameterTypes();
+					if (parameterTypes.length != 1)
+						continue;
+					Class<?> param = parameterTypes[0];
+					if (param == (nodeClass)) {
 						try {
 							solve = lookup.unreflect(method);
 							solveLookupCache.put(nodeClass, solve);
@@ -137,6 +140,7 @@ public class JavaParserResolving {
 			} catch (Throwable ex) {
 				// Some facade implementations just throw exceptions when they don't resolve values.
 				// We can ignore them and assume they failed to get anything useful.
+				ex.printStackTrace();
 			}
 		}
 		if (node instanceof InitializerDeclaration) {

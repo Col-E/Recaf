@@ -40,7 +40,7 @@ public class ResolvedTypeUtil {
 		Workspace workspace = typeSolver.getWorkspace();
 		ClassInfo result = workspace.getResources().getClass(internal);
 		if (result != null)
-			return new ReferenceTypeImpl(RecafResolvedTypeDeclaration.from(typeSolver, result), typeSolver);
+			return new RecafResolvedReferenceType(RecafResolvedTypeDeclaration.from(typeSolver, result));
 		throw new ResolveLookupException("Cannot resolve '" + internal + "' to workspace class");
 	}
 }

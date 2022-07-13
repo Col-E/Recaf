@@ -8,6 +8,7 @@ import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.resolution.types.ResolvedTypeTransformer;
 import com.github.javaparser.resolution.types.parametrization.ResolvedTypeParametersMap;
+import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 public class RecafResolvedReferenceType extends ResolvedReferenceType {
 	private final RecafResolvedTypeDeclaration declaration;
 
-	private RecafResolvedReferenceType(RecafResolvedTypeDeclaration declaration) {
+	public RecafResolvedReferenceType(RecafResolvedTypeDeclaration declaration) {
 		super(declaration);
 		this.declaration = declaration;
 	}
@@ -77,12 +78,20 @@ public class RecafResolvedReferenceType extends ResolvedReferenceType {
 
 	@Override
 	protected ResolvedReferenceType create(ResolvedReferenceTypeDeclaration typeDeclaration, List<ResolvedType> typeParameters) {
-		throw new UnsupportedOperationException();
+		if (typeDeclaration.equals(getDeclaration()))
+			return this;
+		if (typeDeclaration instanceof RecafResolvedTypeDeclaration)
+			return new RecafResolvedReferenceType((RecafResolvedTypeDeclaration) typeDeclaration);
+		return new ReferenceTypeImpl(typeDeclaration, typeParameters, declaration.typeSolver);
 	}
 
 	@Override
 	protected ResolvedReferenceType create(ResolvedReferenceTypeDeclaration typeDeclaration) {
-		throw new UnsupportedOperationException();
+		if (typeDeclaration.equals(getDeclaration()))
+			return this;
+		if (typeDeclaration instanceof RecafResolvedTypeDeclaration)
+			return new RecafResolvedReferenceType((RecafResolvedTypeDeclaration) typeDeclaration);
+		return new ReferenceTypeImpl(typeDeclaration, declaration.typeSolver);
 	}
 
 	@Override
