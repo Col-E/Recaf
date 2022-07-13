@@ -66,6 +66,7 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 	protected void updateItem(BaseTreeValue value, boolean empty) {
 		super.updateItem(value, empty);
 		// Initial reset (prevents recycled cells from propagating mouse actions)
+		setGraphic(null);
 		setContextMenu(null);
 		setOnMouseClicked(null);
 		// Populate based on active state
