@@ -19,6 +19,11 @@ public interface CommonClassInfo extends ItemInfo {
 	String getSuperName();
 
 	/**
+	 * @return Class's generic signature. May be {@code null}.
+	 */
+	String getSignature();
+
+	/**
 	 * @return Class's implemented interfaces.
 	 */
 	List<String> getInterfaces();
