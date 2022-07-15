@@ -134,7 +134,7 @@ public class ClasspathUtil {
 	 *
 	 * @author Matt Coley
 	 */
-	public static class Tree {
+	public static class Tree implements Comparable<Tree> {
 		private final Tree parent;
 		private final String value;
 		private Map<String, Tree> children;
@@ -295,6 +295,11 @@ public class ClasspathUtil {
 				return getValue();
 			else
 				return parent.getFullValue() + "/" + getValue();
+		}
+
+		@Override
+		public int compareTo(Tree o) {
+			return getFullValue().compareTo(o.getFullValue());
 		}
 
 		@Override
