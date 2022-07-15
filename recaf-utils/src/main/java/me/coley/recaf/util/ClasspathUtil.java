@@ -124,6 +124,7 @@ public class ClasspathUtil {
 					.collect(Collectors.toList());
 			for (String className : classes)
 				tree.visitPath(className);
+			tree.freeze();
 		}
 		return tree;
 	}
@@ -137,6 +138,7 @@ public class ClasspathUtil {
 		private final Tree parent;
 		private final String value;
 		private Map<String, Tree> children;
+		private boolean frozen;
 
 		/**
 		 * @param parent
@@ -150,6 +152,15 @@ public class ClasspathUtil {
 		}
 
 		/**
+		 * Freeze tree from changes.
+		 */
+		private void freeze() {
+			frozen = true;
+			if (children != null)
+				children.values().forEach(Tree::freeze);
+		}
+
+		/**
 		 * @param child
 		 * 		Child path item.
 		 *
@@ -158,6 +169,8 @@ public class ClasspathUtil {
 		public Tree visit(String child) {
 			if (children == null)
 				children = new HashMap<>();
+			if (frozen)
+				return children.get(child);
 			return children.computeIfAbsent(child, c -> new Tree(this, c));
 		}
 
@@ -176,12 +189,18 @@ public class ClasspathUtil {
 		 * @param path
 		 * 		Child path items.
 		 *
-		 * @return Child tree.
+		 * @return Child tree, or {@code null} if no such sub-path exists.
 		 */
 		public Tree visitPath(String... path) {
 			Tree node = this;
-			for (String part : path)
-				node = node.visit(part);
+			for (String part : path) {
+				// If this is an unknown path (not belonging to children map) and the tree is frozen
+				// then 'subtree' will be null. Frozen trees are now allowed to create new nodes.
+				Tree subtree = node.visit(part);
+				if (subtree == null)
+					return null;
+				node = subtree;
+			}
 			return node;
 		}
 
