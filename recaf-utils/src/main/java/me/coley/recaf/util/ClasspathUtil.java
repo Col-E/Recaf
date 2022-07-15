@@ -3,6 +3,7 @@ package me.coley.recaf.util;
 import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -112,15 +113,10 @@ public class ClasspathUtil {
 		if (tree == null) {
 			tree = new Tree(null, "");
 			List<String> classes = ModuleFinder.ofSystem().findAll().stream()
-					.map(ModuleReference::location)
-					.filter(Optional::isPresent)
-					.map(l -> Paths.get(l.get()).getFileSystem())
-					.filter(fs -> fs.getRootDirectories().iterator().hasNext())
-					.flatMap(fs -> Errorables.silent(() -> Files.walk(fs.getRootDirectories().iterator().next())))
-					.filter(p -> p.getNameCount() > 2)
-					.map(p -> p.subpath(2, p.getNameCount()).toString())
-					.filter(p -> p.endsWith(".class") && p.indexOf('-') < 0)
-					.map(p -> p.substring(0, p.length() - 6))
+					.map(modRef -> Errorables.silent(modRef::open))
+					.flatMap(modReader -> Errorables.silent(modReader::list))
+					.filter(s -> s.endsWith(".class") && s.indexOf('-') == -1)
+					.map(s -> s.substring(0, s.length() - 6))
 					.collect(Collectors.toList());
 			for (String className : classes)
 				tree.visitPath(className);
