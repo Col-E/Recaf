@@ -60,6 +60,8 @@ public class GuiPresentation implements Presentation {
 				.map(Map.Entry::getKey)
 				.collect(Collectors.toSet())
 		);
+		// Call 'getSystemClasses' in a background thread so that later usage can use the cached value
+		ThreadUtil.run(ClasspathUtil::getSystemClasses);
 		// Open UI
 		JFXUtils.initializePlatform(() -> {
 			try {

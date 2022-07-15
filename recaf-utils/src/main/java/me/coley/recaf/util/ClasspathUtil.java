@@ -3,7 +3,10 @@ package me.coley.recaf.util;
 import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
-import java.util.List;
+import java.lang.module.ModuleReference;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.Class.forName;
@@ -20,6 +23,10 @@ public class ClasspathUtil {
 	 * The system classloader, provided by {@link ClassLoader#getSystemClassLoader()}.
 	 */
 	public static final ClassLoader scl = ClassLoader.getSystemClassLoader();
+	/**
+	 * Cache of all system classes represented as a tree.
+	 */
+	private static Tree tree;
 
 	/**
 	 * Returns the class associated with the specified name, using
@@ -96,5 +103,197 @@ public class ClasspathUtil {
 				.distinct()
 				.sorted()
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * @return Tree representation of all system classes.
+	 */
+	public static Tree getSystemClasses() {
+		if (tree == null) {
+			tree = new Tree(null, "");
+			List<String> classes = ModuleFinder.ofSystem().findAll().stream()
+					.map(ModuleReference::location)
+					.filter(Optional::isPresent)
+					.map(l -> Paths.get(l.get()).getFileSystem())
+					.filter(fs -> fs.getRootDirectories().iterator().hasNext())
+					.flatMap(fs -> Errorables.silent(() -> Files.walk(fs.getRootDirectories().iterator().next())))
+					.filter(p -> p.getNameCount() > 2)
+					.map(p -> p.subpath(2, p.getNameCount()).toString())
+					.filter(p -> p.endsWith(".class") && p.indexOf('-') < 0)
+					.map(p -> p.substring(0, p.length() - 6))
+					.collect(Collectors.toList());
+			for (String className : classes)
+				tree.visitPath(className);
+		}
+		return tree;
+	}
+
+	/**
+	 * Tree node.
+	 *
+	 * @author Matt Coley
+	 */
+	public static class Tree {
+		private final Tree parent;
+		private final String value;
+		private Map<String, Tree> children;
+
+		/**
+		 * @param parent
+		 * 		Parent tree node.
+		 * @param value
+		 * 		Local path item.
+		 */
+		public Tree(Tree parent, String value) {
+			this.parent = parent;
+			this.value = value;
+		}
+
+		/**
+		 * @param child
+		 * 		Child path item.
+		 *
+		 * @return Child tree.
+		 */
+		public Tree visit(String child) {
+			if (children == null)
+				children = new HashMap<>();
+			return children.computeIfAbsent(child, c -> new Tree(this, c));
+		}
+
+		/**
+		 * @param path
+		 * 		Child path. Multiple path items are separated by the {@code /} character.
+		 *
+		 * @return Child tree.
+		 */
+		public Tree visitPath(String path) {
+			String[] parts = path.split("/");
+			return visitPath(parts);
+		}
+
+		/**
+		 * @param path
+		 * 		Child path items.
+		 *
+		 * @return Child tree.
+		 */
+		public Tree visitPath(String... path) {
+			Tree node = this;
+			for (String part : path)
+				node = node.visit(part);
+			return node;
+		}
+
+		/**
+		 * @return Direct leaves of this node.
+		 */
+		public List<Tree> getBranches() {
+			if (children == null)
+				return Collections.singletonList(this);
+			List<Tree> values = new ArrayList<>();
+			children.values().stream()
+					.filter(Tree::isBranch)
+					.forEach(values::add);
+			return values;
+		}
+
+		/**
+		 * @return Direct leaves of this node.
+		 */
+		public List<Tree> getLeaves() {
+			if (children == null)
+				return Collections.singletonList(this);
+			List<Tree> values = new ArrayList<>();
+			children.values().stream()
+					.filter(Tree::isLeaf)
+					.forEach(values::add);
+			return values;
+		}
+
+		/**
+		 * @return All leaves accessible from this node.
+		 */
+		public List<Tree> getAllLeaves() {
+			if (children == null)
+				return Collections.singletonList(this);
+			List<Tree> values = new ArrayList<>();
+			children.values().forEach(t -> values.addAll(t.getAllLeaves()));
+			return values;
+		}
+
+		/**
+		 * @return Direct tree nodes accessible from this node.
+		 */
+		public Map<String, Tree> getChildren() {
+			if (children == null)
+				return Collections.emptyMap();
+			return children;
+		}
+
+		/**
+		 * @return {@code true} for the root node.
+		 */
+		public boolean isRoot() {
+			return parent == null;
+		}
+
+		/**
+		 * @return {@code true} when there are no children in this node.
+		 */
+		public boolean isLeaf() {
+			return children == null;
+		}
+
+		/**
+		 * @return {@code true} when there are children in this node.
+		 */
+		public boolean isBranch() {
+			return !isLeaf();
+		}
+
+		/**
+		 * @return Parent tree node.
+		 */
+		public Tree getParent() {
+			return parent;
+		}
+
+		/**
+		 * @return Local path item.
+		 */
+		public String getValue() {
+			return value;
+		}
+
+		/**
+		 * @return Full path.
+		 */
+		public String getFullValue() {
+			if (parent == null)
+				return getValue();
+			else if (parent.isRoot())
+				return getValue();
+			else
+				return parent.getFullValue() + "/" + getValue();
+		}
+
+		@Override
+		public String toString() {
+			return getFullValue();
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Tree tree = (Tree) o;
+			return Objects.equals(parent, tree.parent) && value.equals(tree.value);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(parent, value);
+		}
 	}
 }
