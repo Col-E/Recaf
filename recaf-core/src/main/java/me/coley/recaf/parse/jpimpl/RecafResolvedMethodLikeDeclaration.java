@@ -15,15 +15,15 @@ import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.Type;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDeclaration {
+	protected final Map<Integer, ResolvedParameterDeclaration> parameterMap = new HashMap<>();
 	protected final RecafResolvedTypeDeclaration declaringType;
 	protected final MethodInfo methodInfo;
 	protected final Type methodType;
+	protected List<ResolvedTypeParameterDeclaration> typeParameters;
 
 	public RecafResolvedMethodLikeDeclaration(RecafResolvedTypeDeclaration declaringType, MethodInfo methodInfo) {
 		this.declaringType = declaringType;
@@ -46,24 +46,25 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 	}
 
 	@Override
-	public ResolvedParameterDeclaration getParam(int i) {
-		WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
-		String genericSignature = methodInfo.getSignature();
-		if (genericSignature != null) {
-			// TODO: Cache and/or switch to ASM
-			try {
-				SignatureAttribute.MethodSignature methodSignature =
-						SignatureAttribute.toMethodSignature(genericSignature);
-				SignatureAttribute.Type parameterType = methodSignature.getParameterTypes()[i];
-				ResolvedType resolvedParameterType = ResolvedTypeUtil.fromGenericType(typeSolver, parameterType, this);
-				return new RecafResolvedParameterDeclaration(this, typeSolver, i, resolvedParameterType);
-			} catch (Throwable ignored) {
-				// fall-through to raw-type parse
+	public ResolvedParameterDeclaration getParam(int p) {
+		return parameterMap.computeIfAbsent(p, i -> {
+			WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
+			String genericSignature = methodInfo.getSignature();
+			if (genericSignature != null) {
+				try {
+					SignatureAttribute.MethodSignature methodSignature =
+							SignatureAttribute.toMethodSignature(genericSignature);
+					SignatureAttribute.Type parameterType = methodSignature.getParameterTypes()[i];
+					ResolvedType resolvedParameterType = ResolvedTypeUtil.fromGenericType(typeSolver, parameterType, this);
+					return new RecafResolvedParameterDeclaration(this, typeSolver, i, resolvedParameterType);
+				} catch (Throwable ignored) {
+					// fall-through to raw-type parse
+				}
 			}
-		}
-		Type argumentType = methodType.getArgumentTypes()[i];
-		ResolvedType parameterType = ResolvedTypeUtil.fromDescriptor(typeSolver, argumentType.getDescriptor());
-		return new RecafResolvedParameterDeclaration(this, typeSolver, i, parameterType);
+			Type argumentType = methodType.getArgumentTypes()[i];
+			ResolvedType parameterType = ResolvedTypeUtil.fromDescriptor(typeSolver, argumentType.getDescriptor());
+			return new RecafResolvedParameterDeclaration(this, typeSolver, i, parameterType);
+		});
 	}
 
 	@Override
@@ -110,22 +111,24 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 
 	@Override
 	public List<ResolvedTypeParameterDeclaration> getTypeParameters() {
-		String signature = methodInfo.getSignature();
-		if (signature == null)
-			return Collections.emptyList();
-		else {
-			// TODO: Cache and/or switch to ASM
-			try {
-				WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
-				SignatureAttribute.MethodSignature methodSignature =
-						SignatureAttribute.toMethodSignature(signature);
-				return Arrays.stream(methodSignature.getTypeParameters())
-						.map(tp -> new JavassistTypeParameter(tp, this, typeSolver))
-						.collect(Collectors.toList());
-			} catch (Exception ex) {
-				return Collections.emptyList();
+		if (typeParameters == null) {
+			String signature = methodInfo.getSignature();
+			if (signature == null)
+				typeParameters = Collections.emptyList();
+			else {
+				try {
+					WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
+					SignatureAttribute.MethodSignature methodSignature =
+							SignatureAttribute.toMethodSignature(signature);
+					typeParameters = Arrays.stream(methodSignature.getTypeParameters())
+							.map(tp -> new JavassistTypeParameter(tp, this, typeSolver))
+							.collect(Collectors.toList());
+				} catch (Exception ex) {
+					typeParameters = Collections.emptyList();
+				}
 			}
 		}
+		return typeParameters;
 	}
 
 	@Override

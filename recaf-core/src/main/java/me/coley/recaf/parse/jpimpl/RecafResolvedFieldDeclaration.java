@@ -12,6 +12,7 @@ import me.coley.recaf.util.AccessFlag;
 public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
 	private final RecafResolvedTypeDeclaration declaringType;
 	private final FieldInfo fieldInfo;
+	private ResolvedType resolvedType;
 
 	public RecafResolvedFieldDeclaration(RecafResolvedTypeDeclaration declaringType, FieldInfo fieldInfo) {
 		this.declaringType = declaringType;
@@ -51,18 +52,22 @@ public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
 
 	@Override
 	public ResolvedType getType() {
-		WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
-		String methodSignature = fieldInfo.getSignature();
-		if (methodSignature != null) {
-			try {
-				SignatureAttribute.Type returnType =
-						SignatureAttribute.toFieldSignature(methodSignature);
-				return ResolvedTypeUtil.fromGenericType(typeSolver, returnType, declaringType);
-			} catch (Throwable ignored) {
-				// fall-through to raw-type parse
+		if (resolvedType == null) {
+			WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
+			String methodSignature = fieldInfo.getSignature();
+			if (methodSignature != null) {
+				try {
+					SignatureAttribute.Type returnType =
+							SignatureAttribute.toFieldSignature(methodSignature);
+					resolvedType = ResolvedTypeUtil.fromGenericType(typeSolver, returnType, declaringType);
+					return resolvedType;
+				} catch (Throwable ignored) {
+					// fall-through to raw-type parse
+				}
 			}
+			resolvedType = ResolvedTypeUtil.fromDescriptor(typeSolver, fieldInfo.getDescriptor());
 		}
-		return ResolvedTypeUtil.fromDescriptor(typeSolver, fieldInfo.getDescriptor());
+		return resolvedType;
 	}
 
 	@Override

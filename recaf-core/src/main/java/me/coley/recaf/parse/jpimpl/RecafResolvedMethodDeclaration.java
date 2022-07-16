@@ -14,29 +14,36 @@ import java.util.List;
 
 public class RecafResolvedMethodDeclaration extends RecafResolvedMethodLikeDeclaration
 		implements ResolvedMethodDeclaration, TypeVariableResolutionCapability {
+	private ResolvedType resolvedReturnType;
+
 	public RecafResolvedMethodDeclaration(RecafResolvedTypeDeclaration declaringType, MethodInfo methodInfo) {
 		super(declaringType, methodInfo);
 	}
 
 	@Override
 	public MethodUsage resolveTypeVariables(Context context, List<ResolvedType> parameterTypes) {
+		// Seems to be valid in tested cases with parameterized types and lambdas.
 		return new MethodUsage(this);
 	}
 
 	@Override
 	public ResolvedType getReturnType() {
-		WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
-		String methodSignature = methodInfo.getSignature();
-		if (methodSignature != null) {
-			try {
-				SignatureAttribute.Type returnType =
-						SignatureAttribute.toMethodSignature(methodSignature).getReturnType();
-				return ResolvedTypeUtil.fromGenericType(typeSolver, returnType, this);
-			} catch (Throwable ignored) {
-				// fall-through to raw-type parse
+		if (resolvedReturnType == null) {
+			WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
+			String methodSignature = methodInfo.getSignature();
+			if (methodSignature != null) {
+				try {
+					SignatureAttribute.Type returnType =
+							SignatureAttribute.toMethodSignature(methodSignature).getReturnType();
+					resolvedReturnType = ResolvedTypeUtil.fromGenericType(typeSolver, returnType, this);
+					return resolvedReturnType;
+				} catch (Throwable ignored) {
+					// fall-through to raw-type parse
+				}
 			}
+			resolvedReturnType = ResolvedTypeUtil.fromDescriptor(typeSolver, methodType.getReturnType().getDescriptor());
 		}
-		return ResolvedTypeUtil.fromDescriptor(typeSolver, methodType.getReturnType().getDescriptor());
+		return resolvedReturnType;
 	}
 
 	@Override

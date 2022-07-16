@@ -26,10 +26,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclaration, ResolvedValueDeclaration,
+public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclaration, ResolvedValueDeclaration,
 		MethodResolutionCapability, MethodUsageResolutionCapability {
 	protected final WorkspaceTypeSolver typeSolver;
 	protected final CommonClassInfo classInfo;
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+	private Optional<ResolvedReferenceType> superType;
+	private List<RecafResolvedTypeDeclaration> interfaces;
+	private List<ResolvedFieldDeclaration> declaredFields;
+	private Set<ResolvedMethodDeclaration> declaredMethods;
 
 	public RecafResolvedTypeDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo classInfo) {
 		this.typeSolver = typeSolver;
@@ -74,22 +79,34 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 
 	@Override
 	public ResolvedClassDeclaration asClass() {
-		return new RecafResolvedClassDeclaration(typeSolver, classInfo);
+		Class<?> type = getClass();
+		if (type == RecafResolvedClassDeclaration.class)
+			return (ResolvedClassDeclaration) this;
+		throw new IllegalStateException(type + " cannot be treated as a class declaration");
 	}
 
 	@Override
 	public ResolvedInterfaceDeclaration asInterface() {
-		return new RecafResolvedInterfaceDeclaration(typeSolver, classInfo);
+		Class<?> type = getClass();
+		if (type == RecafResolvedInterfaceDeclaration.class)
+			return (RecafResolvedInterfaceDeclaration) this;
+		throw new IllegalStateException(type + " cannot be treated as an interface declaration");
 	}
 
 	@Override
 	public ResolvedEnumDeclaration asEnum() {
-		return new RecafResolvedEnumDeclaration(typeSolver, classInfo);
+		Class<?> type = getClass();
+		if (type == RecafResolvedEnumDeclaration.class)
+			return (RecafResolvedEnumDeclaration) this;
+		throw new IllegalStateException(type + " cannot be treated as an enum declaration");
 	}
 
 	@Override
 	public ResolvedAnnotationDeclaration asAnnotation() {
-		return new RecafResolvedAnnotationDeclaration(typeSolver, classInfo);
+		Class<?> type = getClass();
+		if (type == RecafResolvedAnnotationDeclaration.class)
+			return (RecafResolvedAnnotationDeclaration) this;
+		throw new IllegalStateException(type + " cannot be treated as an annotation declaration");
 	}
 
 	@Override
@@ -98,15 +115,21 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 		return Collections.emptySet();
 	}
 
+	@SuppressWarnings("all")
 	protected Optional<ResolvedReferenceType> getSuperClass() {
-		Workspace workspace = typeSolver.getWorkspace();
-		CommonClassInfo parentInfo = workspace.getResources().getClass(classInfo.getSuperName());
-		if (parentInfo != null) {
-			RecafResolvedTypeDeclaration superDec = RecafResolvedTypeDeclaration.from(typeSolver, parentInfo);
-			if (!superDec.isJavaLangObject())
-				return Optional.of(new RecafResolvedReferenceType(superDec));
+		// Suppression because otherwise intellij falsely warns about 'optional compared to null'.
+		// That is INTENTIONAL and its suggested fix will actively trigger a NPE.
+		if (superType == null) {
+			superType = Optional.empty();
+			Workspace workspace = typeSolver.getWorkspace();
+			CommonClassInfo parentInfo = workspace.getResources().getClass(classInfo.getSuperName());
+			if (parentInfo != null) {
+				RecafResolvedTypeDeclaration superDec = RecafResolvedTypeDeclaration.from(typeSolver, parentInfo);
+				if (!superDec.isJavaLangObject())
+					superType = Optional.of(new RecafResolvedReferenceType(superDec));
+			}
 		}
-		return Optional.empty();
+		return superType;
 	}
 
 	protected List<ResolvedReferenceType> getInterfaces() {
@@ -116,16 +139,18 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 	}
 
 	private List<RecafResolvedTypeDeclaration> getInterfacesImpl() {
-		Workspace workspace = typeSolver.getWorkspace();
-		List<RecafResolvedTypeDeclaration> list = new ArrayList<>();
-		for (String interfaceName : classInfo.getInterfaces()) {
-			CommonClassInfo interfaceInfo = workspace.getResources().getClass(interfaceName);
-			if (interfaceInfo != null)
-				list.add(new RecafResolvedInterfaceDeclaration(typeSolver, interfaceInfo));
-			else
-				throw new ResolveLookupException("Cannot resolve interface '" + interfaceName + "' to workspace class");
+		if (interfaces == null) {
+			interfaces = new ArrayList<>();
+			Workspace workspace = typeSolver.getWorkspace();
+			for (String interfaceName : classInfo.getInterfaces()) {
+				CommonClassInfo interfaceInfo = workspace.getResources().getClass(interfaceName);
+				if (interfaceInfo != null)
+					interfaces.add(new RecafResolvedInterfaceDeclaration(typeSolver, interfaceInfo));
+				else
+					throw new ResolveLookupException("Cannot resolve interface '" + interfaceName + "' to workspace class");
+			}
 		}
-		return list;
+		return interfaces;
 	}
 
 	protected List<ResolvedReferenceType> getAllSuperClasses() {
@@ -183,19 +208,25 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 
 	@Override
 	public List<ResolvedFieldDeclaration> getAllFields() {
-		return Stream.concat(getDeclaredFields().stream(),
-						getAllAncestors()
-								.stream()
-								.flatMap(t -> t.getDeclaredFields().stream()))
-				.collect(Collectors.toList());
+		if (declaredFields == null) {
+			declaredFields = Stream.concat(getDeclaredFields().stream(),
+							getAllAncestors()
+									.stream()
+									.flatMap(t -> t.getDeclaredFields().stream()))
+					.collect(Collectors.toList());
+		}
+		return declaredFields;
 	}
 
 	@Override
 	public Set<ResolvedMethodDeclaration> getDeclaredMethods() {
-		return classInfo.getMethods().stream()
-				.filter(m -> m.getName().charAt(0) != '<')
-				.map(m -> new RecafResolvedMethodDeclaration(this, m))
-				.collect(Collectors.toSet());
+		if (declaredMethods == null) {
+			declaredMethods = classInfo.getMethods().stream()
+					.filter(m -> m.getName().charAt(0) != '<')
+					.map(m -> new RecafResolvedMethodDeclaration(this, m))
+					.collect(Collectors.toSet());
+		}
+		return declaredMethods;
 	}
 
 	@Override
@@ -239,7 +270,6 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 		String qualifiedName = type.asReferenceType().getQualifiedName();
 		return isAssignableBy(qualifiedName);
 	}
-
 
 	@Override
 	public boolean isAssignableBy(ResolvedReferenceTypeDeclaration other) {
