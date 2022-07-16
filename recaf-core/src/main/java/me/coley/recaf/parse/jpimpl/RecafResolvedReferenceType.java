@@ -10,10 +10,7 @@ import com.github.javaparser.resolution.types.ResolvedTypeTransformer;
 import com.github.javaparser.resolution.types.parametrization.ResolvedTypeParametersMap;
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RecafResolvedReferenceType extends ResolvedReferenceType {
@@ -30,7 +27,19 @@ public class RecafResolvedReferenceType extends ResolvedReferenceType {
 
 	@Override
 	public ResolvedType transformTypeParameters(ResolvedTypeTransformer transformer) {
-		return this;
+		ResolvedType result = this;
+		int i = 0;
+		for (ResolvedType tp : typeParametersValues()) {
+			ResolvedType transformedTp = transformer.transform(tp);
+			// Identity comparison on purpose
+			if (transformedTp != tp) {
+				List<ResolvedType> typeParametersCorrected = result.asReferenceType().typeParametersValues();
+				typeParametersCorrected.set(i, transformedTp);
+				result = create(typeDeclaration, typeParametersCorrected);
+			}
+			i++;
+		}
+		return result;
 	}
 
 	@Override
@@ -77,6 +86,23 @@ public class RecafResolvedReferenceType extends ResolvedReferenceType {
 	}
 
 	@Override
+	public boolean isRawType() {
+		if (typeDeclaration.getTypeParameters().isEmpty())
+			return true;
+		if (typeParametersMap().isEmpty())
+			return true;
+		for (String name : typeParametersMap().getNames()) {
+			Optional<ResolvedType> value = typeParametersMap().getValueBySignature(name);
+			if (value.isPresent()) {
+				ResolvedType resolvedType = value.get();
+				if (resolvedType.isTypeVariable() && resolvedType.asTypeVariable().qualifiedName().equals(name))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
 	protected ResolvedReferenceType create(ResolvedReferenceTypeDeclaration typeDeclaration, List<ResolvedType> typeParameters) {
 		if (typeDeclaration.equals(getDeclaration()))
 			return this;
@@ -119,8 +145,14 @@ public class RecafResolvedReferenceType extends ResolvedReferenceType {
 
 	@Override
 	public String toString() {
-		return "RecafResolvedReferenceType{" +
-				declaration +
-				'}';
+		if (isRawType()) {
+			return "RecafResolvedReferenceType{" +
+					declaration +
+					'}';
+		} else {
+			return "RecafResolvedReferenceType{" +
+					declaration + "<" + typeParametersMap.getTypes().stream().map(ResolvedType::describe).collect(Collectors.joining(", ")) + ">" +
+					'}';
+		}
 	}
 }

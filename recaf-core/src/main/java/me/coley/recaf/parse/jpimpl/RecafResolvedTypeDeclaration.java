@@ -13,7 +13,7 @@ import com.github.javaparser.symbolsolver.logic.FunctionalInterfaceLogic;
 import com.github.javaparser.symbolsolver.logic.MethodResolutionCapability;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
-import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
+import com.github.javaparser.symbolsolver.resolution.MethodResolutionLogic;
 import com.github.javaparser.utils.Pair;
 import javassist.bytecode.SignatureAttribute;
 import me.coley.recaf.code.CommonClassInfo;
@@ -176,7 +176,7 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 	@Override
 	public List<ResolvedFieldDeclaration> getDeclaredFields() {
 		return classInfo.getFields().stream()
-				.map(f -> new RecafResolvedFieldDeclaration(typeSolver, classInfo, f))
+				.map(f -> new RecafResolvedFieldDeclaration(this, f))
 				.collect(Collectors.toList());
 	}
 
@@ -193,18 +193,17 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 	public Set<ResolvedMethodDeclaration> getDeclaredMethods() {
 		return classInfo.getMethods().stream()
 				.filter(m -> m.getName().charAt(0) != '<')
-				.map(m -> new RecafResolvedMethodDeclaration(typeSolver, classInfo, m))
+				.map(m -> new RecafResolvedMethodDeclaration(this, m))
 				.collect(Collectors.toSet());
 	}
 
 	@Override
 	public Set<MethodUsage> getAllMethods() {
 		Set<MethodUsage> methods = new HashSet<>();
-
 		Set<String> methodsSignatures = new HashSet<>();
 
 		for (ResolvedMethodDeclaration methodDeclaration : getDeclaredMethods()) {
-			MethodUsage methodUsage = createMethodUsage(methodDeclaration);
+			MethodUsage methodUsage = new MethodUsage(methodDeclaration);
 			methods.add(methodUsage);
 			methodsSignatures.add(methodUsage.getSignature());
 		}
@@ -284,7 +283,7 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 	public List<ResolvedConstructorDeclaration> getConstructors() {
 		return classInfo.getMethods().stream()
 				.filter(m -> m.getName().charAt(0) != '<' && m.getName().charAt(1) == 'i')
-				.map(m -> new RecafResolvedConstructorDeclaration(typeSolver, classInfo, m))
+				.map(m -> new RecafResolvedConstructorDeclaration(this, m))
 				.collect(Collectors.toList());
 	}
 
@@ -348,7 +347,7 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 	@Override
 	public SymbolReference<ResolvedMethodDeclaration> solveMethod(String name, List<ResolvedType> argumentsTypes, boolean staticOnly) {
 		// TODO: Iteratively look backwards instead of requesting all methods of all ancestors immediately
-		Set<ResolvedMethodDeclaration> methodSet =
+		List<ResolvedMethodDeclaration> methodSet =
 				Stream.concat(getAllAncestors().stream()
 										.filter(a -> a.getTypeDeclaration().isPresent())
 										.map(a -> a.getTypeDeclaration().get()).flatMap(t -> t.getDeclaredMethods().stream()),
@@ -356,47 +355,12 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 						.filter(m -> m.getName().equals(name) && (!staticOnly || m.isStatic()))
 						.filter(m -> m.declaringType().equals(this) || m.accessSpecifier() != AccessSpecifier.PRIVATE)
 						.filter(m -> m.getNumberOfParams() == argumentsTypes.size())
-						.collect(Collectors.toSet());
+						.collect(Collectors.toList());
 		// Only one result, that should be it
 		if (methodSet.size() == 1)
 			return SymbolReference.solved(methodSet.iterator().next());
 		// Multiple results, need to compare arguments
-		for (ResolvedMethodDeclaration methodDeclaration : methodSet) {
-			int params = methodDeclaration.getNumberOfParams();
-			boolean argMatch = true;
-			for (int p = 0; p < params; p++) {
-				// Get the argument type (and strip if of type arguments so that JavaParser doesn't complain)
-				ResolvedType argumentType = argumentsTypes.get(p);
-				/*
-				if (argumentType instanceof ResolvedReferenceType) {
-					ResolvedReferenceTypeDeclaration typeDeclaration =
-							((ResolvedReferenceType) argumentType).getTypeDeclaration().get();
-					argumentType = new ReferenceTypeImpl(typeDeclaration, Collections.emptyList(), typeSolver);
-				}*/
-				// Compare our method's parameter against the given argument type
-				ResolvedParameterDeclaration param = methodDeclaration.getParam(p);
-				ResolvedType paramType = param.getType();
-				// TODO: Need to resolve lambda placeholders
-				if (argumentType instanceof LambdaArgumentTypePlaceholder)
-					continue;
-				if (paramType instanceof ResolvedReferenceType) {
-					ResolvedReferenceTypeDeclaration typeDeclaration =
-							((ResolvedReferenceType) paramType).getTypeDeclaration().get();
-					if (!typeDeclaration.isAssignableBy(argumentType)) {
-						argMatch = false;
-						break;
-					}
-				} else if (!param.getType().isAssignableBy(argumentType)) {
-					argMatch = false;
-					break;
-				}
-			}
-			// This method's arguments matched
-			if (argMatch)
-				return SymbolReference.solved(methodDeclaration);
-		}
-		// No match
-		return SymbolReference.unsolved(ResolvedMethodDeclaration.class);
+		return MethodResolutionLogic.findMostApplicable(methodSet, name, argumentsTypes, typeSolver);
 	}
 
 	@Override
@@ -404,27 +368,10 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 		SymbolReference<ResolvedMethodDeclaration> solved = solveMethod(name, argumentTypes, false);
 		if (solved.isSolved()) {
 			ResolvedMethodDeclaration methodDeclaration = solved.getCorrespondingDeclaration();
-			MethodUsage methodUsage = createMethodUsage(methodDeclaration);
+			MethodUsage methodUsage = new MethodUsage(methodDeclaration);
 			return Optional.of(methodUsage);
 		} else
 			return Optional.empty();
-	}
-
-	private MethodUsage createMethodUsage(ResolvedMethodDeclaration methodDeclaration) {
-		// TODO: This seems like the wrong way to populate type parameters.
-		//  Other impls don't have to do this. Where are they doing that?
-		MethodUsage methodUsage = new MethodUsage(methodDeclaration);
-		for (int i = 0; i < methodDeclaration.getTypeParameters().size(); i++) {
-			ResolvedTypeParameterDeclaration parameterDeclaration = methodDeclaration.getTypeParameters().get(i);
-			ResolvedReferenceTypeDeclaration t;
-			if (parameterDeclaration.isClass() || parameterDeclaration.isInterface() || parameterDeclaration.isAnnotation())
-				t = parameterDeclaration.asReferenceType();
-			else
-				t = parameterDeclaration.getLowerBound().asReferenceType().getTypeDeclaration().get();
-			ResolvedType tpToReplace = new ReferenceTypeImpl(t, typeSolver);
-			methodUsage = methodUsage.replaceTypeParameter(parameterDeclaration, tpToReplace);
-		}
-		return methodUsage;
 	}
 
 	// TODO: Implement 'SymbolResolutionCapability' when PR is merged

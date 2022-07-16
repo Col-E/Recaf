@@ -5,6 +5,7 @@ import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.resolution.declarations.ResolvedAnnotationDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedAnnotationMemberDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
+import javassist.bytecode.SignatureAttribute;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
@@ -26,7 +27,7 @@ public class RecafResolvedAnnotationDeclaration extends RecafResolvedTypeDeclara
 	public List<ResolvedAnnotationMemberDeclaration> getAnnotationMembers() {
 		return classInfo.getMethods().stream()
 				.filter(m -> m.getName().charAt(0) != '<')
-				.map(m -> new RecafResolvedAnnotationMemberDeclaration(typeSolver, classInfo, m))
+				.map(m -> new RecafResolvedAnnotationMemberDeclaration(this, m))
 				.collect(Collectors.toList());
 	}
 
@@ -37,8 +38,8 @@ public class RecafResolvedAnnotationDeclaration extends RecafResolvedTypeDeclara
 	}
 
 	private static class RecafResolvedAnnotationMemberDeclaration extends RecafResolvedMethodLikeDeclaration implements ResolvedAnnotationMemberDeclaration {
-		public RecafResolvedAnnotationMemberDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo declaring, MethodInfo methodInfo) {
-			super(typeSolver, declaring, methodInfo);
+		public RecafResolvedAnnotationMemberDeclaration(RecafResolvedTypeDeclaration declaringType, MethodInfo methodInfo) {
+			super(declaringType, methodInfo);
 		}
 
 		@Override
@@ -49,7 +50,18 @@ public class RecafResolvedAnnotationDeclaration extends RecafResolvedTypeDeclara
 
 		@Override
 		public ResolvedType getType() {
-			return ResolvedTypeUtil.fromInternal(typeSolver, methodType.getReturnType().getInternalName());
+			WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
+			String methodSignature = methodInfo.getSignature();
+			if (methodSignature != null) {
+				try {
+					SignatureAttribute.Type returnType =
+							SignatureAttribute.toMethodSignature(methodSignature).getReturnType();
+					return ResolvedTypeUtil.fromGenericType(typeSolver, returnType, this);
+				} catch (Throwable ignored) {
+					// fall-through to raw-type parse
+				}
+			}
+			return ResolvedTypeUtil.fromDescriptor(typeSolver, methodType.getReturnType().getDescriptor());
 		}
 	}
 }

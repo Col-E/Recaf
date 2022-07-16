@@ -21,7 +21,7 @@ public class RecafResolvedEnumDeclaration extends RecafResolvedTypeDeclaration i
 		return classInfo.getFields().stream()
 				.filter(f -> AccessFlag.hasAll(f.getAccess(), AccessFlag.ACC_PUBLIC, AccessFlag.ACC_STATIC) &&
 						isDescriptorOfInternalType(f.getDescriptor(), classInfo.getName()))
-				.map(f -> new RecafResolvedEnumConstantDeclaration(typeSolver, classInfo, f))
+				.map(f -> new RecafResolvedEnumConstantDeclaration(this, f))
 				.collect(Collectors.toList());
 	}
 
@@ -35,8 +35,8 @@ public class RecafResolvedEnumDeclaration extends RecafResolvedTypeDeclaration i
 	}
 
 	private static class RecafResolvedEnumConstantDeclaration extends RecafResolvedFieldDeclaration implements ResolvedEnumConstantDeclaration {
-		public RecafResolvedEnumConstantDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo declaring, FieldInfo fieldInfo) {
-			super(typeSolver, declaring, fieldInfo);
+		public RecafResolvedEnumConstantDeclaration(RecafResolvedTypeDeclaration declaringType, FieldInfo fieldInfo) {
+			super(declaringType, fieldInfo);
 		}
 	}
 }

@@ -10,7 +10,6 @@ import com.github.javaparser.symbolsolver.javassistmodel.JavassistTypeParameter;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 import javassist.bytecode.SignatureAttribute;
-import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.util.AccessFlag;
@@ -19,24 +18,17 @@ import org.objectweb.asm.Type;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDeclaration {
-	protected final WorkspaceTypeSolver typeSolver;
-	protected final CommonClassInfo declaring;
+	protected final RecafResolvedTypeDeclaration declaringType;
 	protected final MethodInfo methodInfo;
 	protected final Type methodType;
 
-	public RecafResolvedMethodLikeDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo declaring, MethodInfo methodInfo) {
-		this.typeSolver = typeSolver;
-		this.declaring = declaring;
+	public RecafResolvedMethodLikeDeclaration(RecafResolvedTypeDeclaration declaringType, MethodInfo methodInfo) {
+		this.declaringType = declaringType;
 		this.methodInfo = methodInfo;
 		methodType = Type.getMethodType(methodInfo.getDescriptor());
-	}
-
-	public CommonClassInfo getDeclaringClassInfo() {
-		return declaring;
 	}
 
 	public MethodInfo getMethodInfo() {
@@ -45,7 +37,7 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 
 	@Override
 	public ResolvedReferenceTypeDeclaration declaringType() {
-		return RecafResolvedTypeDeclaration.from(typeSolver, declaring);
+		return declaringType;
 	}
 
 	@Override
@@ -55,8 +47,23 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 
 	@Override
 	public ResolvedParameterDeclaration getParam(int i) {
+		WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
+		String genericSignature = methodInfo.getSignature();
+		if (genericSignature != null) {
+			// TODO: Cache and/or switch to ASM
+			try {
+				SignatureAttribute.MethodSignature methodSignature =
+						SignatureAttribute.toMethodSignature(genericSignature);
+				SignatureAttribute.Type parameterType = methodSignature.getParameterTypes()[i];
+				ResolvedType resolvedParameterType = ResolvedTypeUtil.fromGenericType(typeSolver, parameterType, this);
+				return new RecafResolvedParameterDeclaration(this, typeSolver, i, resolvedParameterType);
+			} catch (Throwable ignored) {
+				// fall-through to raw-type parse
+			}
+		}
 		Type argumentType = methodType.getArgumentTypes()[i];
-		return new RecafResolvedParameterDeclaration(this, typeSolver, i, argumentType);
+		ResolvedType parameterType = ResolvedTypeUtil.fromDescriptor(typeSolver, argumentType.getDescriptor());
+		return new RecafResolvedParameterDeclaration(this, typeSolver, i, parameterType);
 	}
 
 	@Override
@@ -67,6 +74,7 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 	@Override
 	public ResolvedType getSpecifiedException(int index) {
 		if (index < getNumberOfSpecifiedExceptions()) {
+			WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
 			String exceptionType = methodInfo.getExceptions().get(index);
 			SymbolReference<ResolvedReferenceTypeDeclaration> reference =
 					typeSolver.tryToSolveType(exceptionType);
@@ -108,6 +116,7 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 		else {
 			// TODO: Cache and/or switch to ASM
 			try {
+				WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
 				SignatureAttribute.MethodSignature methodSignature =
 						SignatureAttribute.toMethodSignature(signature);
 				return Arrays.stream(methodSignature.getTypeParameters())
@@ -125,7 +134,7 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 		if (o == null) return false;
 		if (o instanceof RecafResolvedMethodLikeDeclaration) {
 			RecafResolvedMethodLikeDeclaration that = (RecafResolvedMethodLikeDeclaration) o;
-			return declaring.equals(that.declaring) && methodInfo.equals(that.methodInfo);
+			return methodInfo.equals(that.methodInfo);
 		} else if (o instanceof ResolvedMethodLikeDeclaration) {
 			return super.equals(o);
 		}
@@ -134,7 +143,7 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(declaring, methodInfo);
+		return methodInfo.hashCode();
 	}
 
 	@Override

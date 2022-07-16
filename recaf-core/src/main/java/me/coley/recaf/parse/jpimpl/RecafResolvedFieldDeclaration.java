@@ -4,26 +4,18 @@ import com.github.javaparser.ast.AccessSpecifier;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedTypeDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
-import me.coley.recaf.code.CommonClassInfo;
+import javassist.bytecode.SignatureAttribute;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.util.AccessFlag;
 
-import java.util.Objects;
-
 public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
-	private final WorkspaceTypeSolver typeSolver;
-	private final CommonClassInfo declaring;
+	private final RecafResolvedTypeDeclaration declaringType;
 	private final FieldInfo fieldInfo;
 
-	public RecafResolvedFieldDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo declaring, FieldInfo fieldInfo) {
-		this.typeSolver = typeSolver;
-		this.declaring = declaring;
+	public RecafResolvedFieldDeclaration(RecafResolvedTypeDeclaration declaringType, FieldInfo fieldInfo) {
+		this.declaringType = declaringType;
 		this.fieldInfo = fieldInfo;
-	}
-
-	public CommonClassInfo getDeclaringClassInfo() {
-		return declaring;
 	}
 
 	public FieldInfo getFieldInfo() {
@@ -42,7 +34,7 @@ public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
 
 	@Override
 	public ResolvedTypeDeclaration declaringType() {
-		return RecafResolvedTypeDeclaration.from(typeSolver, declaring);
+		return declaringType;
 	}
 
 	@Override
@@ -59,6 +51,17 @@ public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
 
 	@Override
 	public ResolvedType getType() {
+		WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
+		String methodSignature = fieldInfo.getSignature();
+		if (methodSignature != null) {
+			try {
+				SignatureAttribute.Type returnType =
+						SignatureAttribute.toFieldSignature(methodSignature);
+				return ResolvedTypeUtil.fromGenericType(typeSolver, returnType, declaringType);
+			} catch (Throwable ignored) {
+				// fall-through to raw-type parse
+			}
+		}
 		return ResolvedTypeUtil.fromDescriptor(typeSolver, fieldInfo.getDescriptor());
 	}
 
@@ -73,7 +76,7 @@ public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
 		if (o == null) return false;
 		if (o.getClass() == RecafResolvedFieldDeclaration.class) {
 			RecafResolvedFieldDeclaration that = (RecafResolvedFieldDeclaration) o;
-			return declaring.equals(that.declaring) && fieldInfo.equals(that.fieldInfo);
+			return fieldInfo.equals(that.fieldInfo);
 		} else if (o instanceof ResolvedFieldDeclaration) {
 			return super.equals(o);
 		}
@@ -82,7 +85,7 @@ public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(declaring, fieldInfo);
+		return fieldInfo.hashCode();
 	}
 
 	@Override

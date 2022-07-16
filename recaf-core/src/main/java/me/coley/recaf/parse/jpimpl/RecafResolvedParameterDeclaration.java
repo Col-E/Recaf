@@ -4,15 +4,15 @@ import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaratio
 import com.github.javaparser.resolution.types.ResolvedType;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.util.AccessFlag;
-import org.objectweb.asm.Type;
 
 public class RecafResolvedParameterDeclaration implements ResolvedParameterDeclaration {
 	private final RecafResolvedMethodLikeDeclaration methodDeclaration;
 	private final WorkspaceTypeSolver typeSolver;
-	private final Type argumentType;
+	private final ResolvedType argumentType;
 	private final int argumentIndex;
 
-	public RecafResolvedParameterDeclaration(RecafResolvedMethodLikeDeclaration methodDeclaration, WorkspaceTypeSolver typeSolver, int argumentIndex, Type argumentType) {
+	public RecafResolvedParameterDeclaration(RecafResolvedMethodLikeDeclaration methodDeclaration,
+											 WorkspaceTypeSolver typeSolver, int argumentIndex, ResolvedType argumentType) {
 		this.methodDeclaration = methodDeclaration;
 		this.typeSolver = typeSolver;
 		this.argumentIndex = argumentIndex;
@@ -23,12 +23,12 @@ public class RecafResolvedParameterDeclaration implements ResolvedParameterDecla
 	public boolean isVariadic() {
 		return argumentIndex == methodDeclaration.getNumberOfParams() - 1 &&
 				AccessFlag.isVarargs(methodDeclaration.getMethodInfo().getAccess()) &&
-				argumentType.getSort() == Type.ARRAY;
+				argumentType.isArray();
 	}
 
 	@Override
 	public ResolvedType getType() {
-		return ResolvedTypeUtil.fromDescriptor(typeSolver, argumentType.getDescriptor());
+		return argumentType;
 	}
 
 	@Override
