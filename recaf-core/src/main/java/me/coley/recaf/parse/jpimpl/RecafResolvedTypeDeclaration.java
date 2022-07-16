@@ -1,6 +1,7 @@
 package me.coley.recaf.parse.jpimpl;
 
 import com.github.javaparser.ast.AccessSpecifier;
+import com.github.javaparser.resolution.MethodAmbiguityException;
 import com.github.javaparser.resolution.MethodUsage;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
@@ -360,7 +361,45 @@ public class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclar
 		if (methodSet.size() == 1)
 			return SymbolReference.solved(methodSet.iterator().next());
 		// Multiple results, need to compare arguments
-		return MethodResolutionLogic.findMostApplicable(methodSet, name, argumentsTypes, typeSolver);
+		try {
+			return MethodResolutionLogic.findMostApplicable(methodSet, name, argumentsTypes, typeSolver);
+		} catch (MethodAmbiguityException ambiguity) {
+			return solveFallback(methodSet, argumentsTypes);
+		}
+	}
+
+	private SymbolReference<ResolvedMethodDeclaration> solveFallback(List<ResolvedMethodDeclaration> methodSet,
+																	 List<ResolvedType> argumentsTypes) {
+		for (ResolvedMethodDeclaration methodDeclaration : methodSet) {
+			int params = methodDeclaration.getNumberOfParams();
+			boolean argMatch = true;
+			for (int p = 0; p < params; p++) {
+				// Get the argument type (and strip if of type arguments so that JavaParser doesn't complain)
+				ResolvedType argumentType = argumentsTypes.get(p);
+				// Compare our method's parameter against the given argument type
+				ResolvedParameterDeclaration param = methodDeclaration.getParam(p);
+				ResolvedType paramType = param.getType();
+				// TODO: Validate this does not occur
+				if (argumentType instanceof LambdaArgumentTypePlaceholder)
+					continue;
+				if (paramType instanceof ResolvedReferenceType) {
+					ResolvedReferenceTypeDeclaration typeDeclaration =
+							((ResolvedReferenceType) paramType).getTypeDeclaration().get();
+					if (!typeDeclaration.isAssignableBy(argumentType)) {
+						argMatch = false;
+						break;
+					}
+				} else if (!param.getType().isAssignableBy(argumentType)) {
+					argMatch = false;
+					break;
+				}
+			}
+			// This method's arguments matched
+			if (argMatch)
+				return SymbolReference.solved(methodDeclaration);
+		}
+		// No match
+		return SymbolReference.unsolved(ResolvedMethodDeclaration.class);
 	}
 
 	@Override
