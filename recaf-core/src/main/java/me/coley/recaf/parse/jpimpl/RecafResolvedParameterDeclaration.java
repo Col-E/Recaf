@@ -2,19 +2,29 @@ package me.coley.recaf.parse.jpimpl;
 
 import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
-import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.util.AccessFlag;
 
+/**
+ * Resolved parameter declaration implementation for methods.
+ *
+ * @author Matt Coley
+ */
 public class RecafResolvedParameterDeclaration implements ResolvedParameterDeclaration {
 	private final RecafResolvedMethodLikeDeclaration methodDeclaration;
-	private final WorkspaceTypeSolver typeSolver;
 	private final ResolvedType argumentType;
 	private final int argumentIndex;
 
+	/**
+	 * @param methodDeclaration
+	 * 		The method declaration containing the parameter.
+	 * @param argumentIndex
+	 * 		Parameter index.
+	 * @param argumentType
+	 * 		Parameter type.
+	 */
 	public RecafResolvedParameterDeclaration(RecafResolvedMethodLikeDeclaration methodDeclaration,
-											 WorkspaceTypeSolver typeSolver, int argumentIndex, ResolvedType argumentType) {
+											 int argumentIndex, ResolvedType argumentType) {
 		this.methodDeclaration = methodDeclaration;
-		this.typeSolver = typeSolver;
 		this.argumentIndex = argumentIndex;
 		this.argumentType = argumentType;
 	}
@@ -33,11 +43,14 @@ public class RecafResolvedParameterDeclaration implements ResolvedParameterDecla
 
 	@Override
 	public boolean hasName() {
+		// JavaParser's resolving logic does not rely on this type supplying a name.
+		// So we do not need to implement this feature.
 		return false;
 	}
 
 	@Override
 	public String getName() {
+		// Dummy name.
 		return "p" + argumentIndex;
 	}
 }

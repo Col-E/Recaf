@@ -9,6 +9,11 @@ import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
 import me.coley.recaf.util.AccessFlag;
 
+/**
+ * Resolved member declaration implementation for fields.
+ *
+ * @author Matt Coley
+ */
 public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
 	private final RecafResolvedTypeDeclaration declaringType;
 	private final FieldInfo fieldInfo;

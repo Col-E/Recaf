@@ -8,7 +8,18 @@ import me.coley.recaf.parse.WorkspaceTypeSolver;
 
 import java.util.List;
 
+/**
+ * Resolved type declaration implementation for interfaces.
+ *
+ * @author Matt Coley
+ */
 public class RecafResolvedInterfaceDeclaration extends RecafResolvedTypeDeclaration implements ResolvedInterfaceDeclaration {
+	/**
+	 * @param typeSolver
+	 * 		Recaf workspace solver.
+	 * @param classInfo
+	 * 		Recaf class info for the interface type.
+	 */
 	public RecafResolvedInterfaceDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo classInfo) {
 		super(typeSolver, classInfo);
 	}

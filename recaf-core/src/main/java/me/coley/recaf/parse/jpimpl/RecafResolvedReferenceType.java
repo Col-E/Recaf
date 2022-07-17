@@ -13,14 +13,27 @@ import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Wrapper for {@link RecafResolvedTypeDeclaration} for reference types.
+ * Used mostly for resolving purposes by JavaParser.
+ *
+ * @author Matt Coley
+ */
 public class RecafResolvedReferenceType extends ResolvedReferenceType {
 	private final RecafResolvedTypeDeclaration declaration;
 
+	/**
+	 * @param declaration
+	 * 		Wrapped declaration.
+	 */
 	public RecafResolvedReferenceType(RecafResolvedTypeDeclaration declaration) {
 		super(declaration);
 		this.declaration = declaration;
 	}
 
+	/**
+	 * @return Wrapped declaration.
+	 */
 	public RecafResolvedTypeDeclaration getDeclaration() {
 		return declaration;
 	}
@@ -82,11 +95,13 @@ public class RecafResolvedReferenceType extends ResolvedReferenceType {
 
 	@Override
 	public ResolvedType toRawType() {
+		// Don't need to really implement this.
 		return this;
 	}
 
 	@Override
 	public boolean isRawType() {
+		// Modified from the base impl slightly to be more legible for debugging sanity.
 		if (typeDeclaration.getTypeParameters().isEmpty())
 			return true;
 		if (typeParametersMap().isEmpty())

@@ -13,7 +13,18 @@ import me.coley.recaf.parse.WorkspaceTypeSolver;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Resolved type declaration implementation for annotations.
+ *
+ * @author Matt Coley
+ */
 public class RecafResolvedAnnotationDeclaration extends RecafResolvedTypeDeclaration implements ResolvedAnnotationDeclaration {
+	/**
+	 * @param typeSolver
+	 * 		Recaf workspace solver.
+	 * @param classInfo
+	 * 		Recaf class info for the annotation type.
+	 */
 	public RecafResolvedAnnotationDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo classInfo) {
 		super(typeSolver, classInfo);
 	}
@@ -26,7 +37,7 @@ public class RecafResolvedAnnotationDeclaration extends RecafResolvedTypeDeclara
 	@Override
 	public List<ResolvedAnnotationMemberDeclaration> getAnnotationMembers() {
 		return classInfo.getMethods().stream()
-				.filter(m -> m.getName().charAt(0) != '<')
+				.filter(m -> m.getName().charAt(0) != '<') // shouldn't occur but no harm in checking
 				.map(m -> new RecafResolvedAnnotationMemberDeclaration(this, m))
 				.collect(Collectors.toList());
 	}
@@ -37,6 +48,9 @@ public class RecafResolvedAnnotationDeclaration extends RecafResolvedTypeDeclara
 		return false;
 	}
 
+	/**
+	 * Annotation 'fields' are actually methods.
+	 */
 	private static class RecafResolvedAnnotationMemberDeclaration extends RecafResolvedMethodLikeDeclaration implements ResolvedAnnotationMemberDeclaration {
 		public RecafResolvedAnnotationMemberDeclaration(RecafResolvedTypeDeclaration declaringType, MethodInfo methodInfo) {
 			super(declaringType, methodInfo);

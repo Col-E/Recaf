@@ -9,13 +9,26 @@ import me.coley.recaf.parse.WorkspaceTypeSolver;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Resolved type declaration implementation for classes.
+ *
+ * @author Matt Coley
+ */
 public class RecafResolvedClassDeclaration extends RecafResolvedTypeDeclaration implements ResolvedClassDeclaration {
+	/**
+	 * @param typeSolver
+	 * 		Recaf workspace solver.
+	 * @param classInfo
+	 * 		Recaf class info for the class type.
+	 */
 	public RecafResolvedClassDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo classInfo) {
 		super(typeSolver, classInfo);
 	}
 
 	@Override
 	public Optional<ResolvedReferenceType> getSuperClass() {
+		// Everything is implemented in the super-type, but under a less strict generic type.
+		// So these methods with super calls actually are required to satisfy the more strict types.
 		return super.getSuperClass();
 	}
 

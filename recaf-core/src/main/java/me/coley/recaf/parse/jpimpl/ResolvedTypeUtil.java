@@ -18,10 +18,23 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 
+/**
+ * Utilities for creating {@link ResolvedType}.
+ *
+ * @author Matt Coley
+ */
 public class ResolvedTypeUtil {
 	private static final Logger logger = Logging.get(ResolvedTypeUtil.class);
 	private static MethodHandle genericResolve;
 
+	/**
+	 * @param typeSolver
+	 * 		Recaf workspace solver.
+	 * @param desc
+	 * 		Descriptor to create a resolved type from.
+	 *
+	 * @return Resolved type of the descriptor.
+	 */
 	public static ResolvedType fromDescriptor(WorkspaceTypeSolver typeSolver, String desc) {
 		Type type = Type.getType(desc);
 		switch (type.getSort()) {
@@ -43,6 +56,14 @@ public class ResolvedTypeUtil {
 		}
 	}
 
+	/**
+	 * @param typeSolver
+	 * 		Recaf workspace solver.
+	 * @param internal
+	 * 		Internal name to create a resolved type from.
+	 *
+	 * @return Resolved type of the class or primitive.
+	 */
 	public static ResolvedType fromInternal(WorkspaceTypeSolver typeSolver, String internal) {
 		// Handle primitives
 		if (internal.length() == 1)
@@ -55,6 +76,19 @@ public class ResolvedTypeUtil {
 		throw new ResolveLookupException("Cannot resolve '" + internal + "' to workspace class");
 	}
 
+	/**
+	 * @param typeSolver
+	 * 		Recaf workspace solver.
+	 * @param parameterType
+	 * 		Signature.
+	 * @param parametrizable
+	 * 		Parameterizable context.
+	 *
+	 * @return Resolved type of the signature.
+	 *
+	 * @throws Throwable
+	 * 		If the type could not be resolved.
+	 */
 	public static ResolvedType fromGenericType(TypeSolver typeSolver, SignatureAttribute.Type parameterType,
 											   ResolvedTypeParametrizable parametrizable) throws Throwable {
 		// I cannot be fucked to create our own type-parsing necessary to compute this information.

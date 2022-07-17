@@ -18,19 +18,37 @@ import org.objectweb.asm.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDeclaration {
+/**
+ * Outline for resolved member declarations that are methods.
+ * JavaParser treats different "kinds" of methods differently, hence
+ * we have this common type which satisfied basically everything off the bat.
+ *
+ * @author Matt Coley
+ */
+public abstract class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDeclaration {
 	protected final Map<Integer, ResolvedParameterDeclaration> parameterMap = new HashMap<>();
 	protected final RecafResolvedTypeDeclaration declaringType;
 	protected final MethodInfo methodInfo;
 	protected final Type methodType;
 	protected List<ResolvedTypeParameterDeclaration> typeParameters;
 
+	/**
+	 * @param declaringType
+	 * 		Declaring type of this method.
+	 * @param methodInfo
+	 * 		Information about the method.
+	 */
 	public RecafResolvedMethodLikeDeclaration(RecafResolvedTypeDeclaration declaringType, MethodInfo methodInfo) {
 		this.declaringType = declaringType;
 		this.methodInfo = methodInfo;
 		methodType = Type.getMethodType(methodInfo.getDescriptor());
 	}
 
+	/**
+	 * Source to pull information from.
+	 *
+	 * @return Information about the method.
+	 */
 	public MethodInfo getMethodInfo() {
 		return methodInfo;
 	}
@@ -48,6 +66,12 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 	@Override
 	public ResolvedParameterDeclaration getParam(int p) {
 		return parameterMap.computeIfAbsent(p, i -> {
+			// Parameters need to have insight to type-arguments for proper resolving of generic
+			// method usage. Consider streams and lambda types. Resolving an item in a chain of those
+			// requires determining the type of the scope prior to the item.
+			// A stream of strings with a forEach at the end would allow the element of the forEach
+			// to call string methods, despite the actual forEach consuming an object raw type if you look
+			// solely at the descriptor.
 			WorkspaceTypeSolver typeSolver = declaringType.typeSolver;
 			String genericSignature = methodInfo.getSignature();
 			if (genericSignature != null) {
@@ -56,14 +80,14 @@ public class RecafResolvedMethodLikeDeclaration implements ResolvedMethodLikeDec
 							SignatureAttribute.toMethodSignature(genericSignature);
 					SignatureAttribute.Type parameterType = methodSignature.getParameterTypes()[i];
 					ResolvedType resolvedParameterType = ResolvedTypeUtil.fromGenericType(typeSolver, parameterType, this);
-					return new RecafResolvedParameterDeclaration(this, typeSolver, i, resolvedParameterType);
+					return new RecafResolvedParameterDeclaration(this, i, resolvedParameterType);
 				} catch (Throwable ignored) {
 					// fall-through to raw-type parse
 				}
 			}
 			Type argumentType = methodType.getArgumentTypes()[i];
 			ResolvedType parameterType = ResolvedTypeUtil.fromDescriptor(typeSolver, argumentType.getDescriptor());
-			return new RecafResolvedParameterDeclaration(this, typeSolver, i, parameterType);
+			return new RecafResolvedParameterDeclaration(this, i, parameterType);
 		});
 	}
 

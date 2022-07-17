@@ -26,6 +26,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Outline for resolved type declarations.
+ * JavaParser treats different "kinds" of classes differently, hence
+ * we have this common type which satisfied basically everything off the bat.
+ *
+ * @author Matt Coley
+ */
 public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclaration, ResolvedValueDeclaration,
 		MethodResolutionCapability, MethodUsageResolutionCapability {
 	protected final WorkspaceTypeSolver typeSolver;
@@ -33,14 +40,29 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	private Optional<ResolvedReferenceType> superType;
 	private List<RecafResolvedTypeDeclaration> interfaces;
+	private List<ResolvedTypeParameterDeclaration> typeParameters;
 	private List<ResolvedFieldDeclaration> declaredFields;
 	private Set<ResolvedMethodDeclaration> declaredMethods;
 
-	public RecafResolvedTypeDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo classInfo) {
+	/**
+	 * @param typeSolver
+	 * 		Recaf workspace solver.
+	 * @param classInfo
+	 * 		Information about the class.
+	 */
+	protected RecafResolvedTypeDeclaration(WorkspaceTypeSolver typeSolver, CommonClassInfo classInfo) {
 		this.typeSolver = typeSolver;
 		this.classInfo = classInfo;
 	}
 
+	/**
+	 * @param typeSolver
+	 * 		Recaf workspace solver.
+	 * @param info
+	 * 		Information about the class.
+	 *
+	 * @return Implementation of {@link RecafResolvedTypeDeclaration} based on the class information.
+	 */
 	public static RecafResolvedTypeDeclaration from(WorkspaceTypeSolver typeSolver, CommonClassInfo info) {
 		RecafResolvedTypeDeclaration dec;
 		int acc = info.getAccess();
@@ -53,6 +75,11 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 		return dec;
 	}
 
+	/**
+	 * Source to pull information from.
+	 *
+	 * @return Information about the class.
+	 */
 	public CommonClassInfo getClassInfo() {
 		return classInfo;
 	}
@@ -112,6 +139,7 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 	@Override
 	public Set<ResolvedReferenceTypeDeclaration> internalTypes() {
 		// TODO: support for inner classes
+		//  - Can disregard if resolving stuff with inner classes works without this.
 		return Collections.emptySet();
 	}
 
@@ -358,26 +386,29 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 
 	@Override
 	public List<ResolvedTypeParameterDeclaration> getTypeParameters() {
-		String signature = classInfo.getSignature();
-		if (signature == null)
-			return Collections.emptyList();
-		else {
-			// TODO: Cache and/or switch to ASM
-			try {
-				SignatureAttribute.ClassSignature classSignature =
-						SignatureAttribute.toClassSignature(signature);
-				return Arrays.stream(classSignature.getParameters())
-						.map((tp) -> new JavassistTypeParameter(tp, this, typeSolver))
-						.collect(Collectors.toList());
-			} catch (Exception ex) {
-				return Collections.emptyList();
+		if (typeParameters == null) {
+			String signature = classInfo.getSignature();
+			if (signature == null)
+				typeParameters = Collections.emptyList();
+			else {
+				try {
+					SignatureAttribute.ClassSignature classSignature =
+							SignatureAttribute.toClassSignature(signature);
+					typeParameters = Arrays.stream(classSignature.getParameters())
+							.map((tp) -> new JavassistTypeParameter(tp, this, typeSolver))
+							.collect(Collectors.toList());
+				} catch (Exception ex) {
+					typeParameters = Collections.emptyList();
+				}
 			}
 		}
+		return typeParameters;
 	}
 
 	@Override
 	public SymbolReference<ResolvedMethodDeclaration> solveMethod(String name, List<ResolvedType> argumentsTypes, boolean staticOnly) {
 		// TODO: Iteratively look backwards instead of requesting all methods of all ancestors immediately
+		//  - Will reduce the amount of content we need to parse/look at
 		List<ResolvedMethodDeclaration> methodSet =
 				Stream.concat(getAllAncestors().stream()
 										.filter(a -> a.getTypeDeclaration().isPresent())
@@ -461,11 +492,9 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null) return false;
-		if (o.getClass() == RecafResolvedTypeDeclaration.class) {
+		if (o instanceof RecafResolvedTypeDeclaration) {
 			RecafResolvedTypeDeclaration that = (RecafResolvedTypeDeclaration) o;
 			return classInfo.equals(that.classInfo);
-		} else if (o instanceof ResolvedClassDeclaration) {
-			return super.equals(o);
 		}
 		return false;
 	}

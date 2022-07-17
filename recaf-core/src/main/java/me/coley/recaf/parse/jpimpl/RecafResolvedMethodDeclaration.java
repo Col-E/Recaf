@@ -12,6 +12,11 @@ import me.coley.recaf.util.AccessFlag;
 
 import java.util.List;
 
+/**
+ * Resolved member declaration implementation for methods.
+ *
+ * @author Matt Coley
+ */
 public class RecafResolvedMethodDeclaration extends RecafResolvedMethodLikeDeclaration
 		implements ResolvedMethodDeclaration, TypeVariableResolutionCapability {
 	private ResolvedType resolvedReturnType;
