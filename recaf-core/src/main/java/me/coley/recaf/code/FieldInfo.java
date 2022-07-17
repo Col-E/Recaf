@@ -6,6 +6,8 @@ package me.coley.recaf.code;
  * @author Matt Coley
  */
 public class FieldInfo extends MemberInfo {
+	private final Object value;
+
 	/**
 	 * @param owner
 	 * 		Name of type defining the member.
@@ -13,11 +15,23 @@ public class FieldInfo extends MemberInfo {
 	 * 		Field name.
 	 * @param descriptor
 	 * 		Field descriptor.
+	 * @param signature
+	 * 		Field generic signature.  May be {@code null}.
 	 * @param access
 	 * 		Field access modifiers.
+	 * @param value
+	 * 		Default value. May be {@code null}.
 	 */
-	public FieldInfo(String owner, String name, String descriptor, int access) {
-		super(owner, name, descriptor, access);
+	public FieldInfo(String owner, String name, String descriptor, String signature, int access, Object value) {
+		super(owner, name, descriptor, signature, access);
+		this.value = value;
+	}
+
+	/**
+	 * @return Default value. May be {@code null}.
+	 */
+	public Object getValue() {
+		return value;
 	}
 
 	@Override

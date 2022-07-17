@@ -5,7 +5,7 @@ import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.parse.JavaParserHelper;
-import me.coley.recaf.parse.WorkspaceTypeSolver;
+import me.coley.recaf.parse.WorkspaceSymbolSolver;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.workspace.Workspace;
 
@@ -21,7 +21,7 @@ public class Services {
 	private final MappingsManager mappingsManager;
 	private SsvmIntegration ssvmIntegration;
 	private InheritanceGraph inheritanceGraph;
-	private WorkspaceTypeSolver typeSolver;
+	private WorkspaceSymbolSolver symbolSolver;
 	private JavaParserHelper javaParserHelper;
 
 	/**
@@ -66,11 +66,11 @@ public class Services {
 	}
 
 	/**
-	 * @return A JavaParser type solver that pulls from the {@link Controller#getWorkspace() current workspace}.
+	 * @return A JavaParser symbol solver that pulls from the {@link Controller#getWorkspace() current workspace}.
 	 * If no workspace is set, then this will be {@code null}.
 	 */
-	public WorkspaceTypeSolver getTypeSolver() {
-		return typeSolver;
+	public WorkspaceSymbolSolver getSymbolSolver() {
+		return symbolSolver;
 	}
 
 	/**
@@ -98,13 +98,13 @@ public class Services {
 		mappingsManager.clearAggregated();
 		if (workspace == null) {
 			inheritanceGraph = null;
-			typeSolver = null;
+			symbolSolver = null;
 			javaParserHelper = null;
 			ssvmIntegration = null;
 		} else {
 			inheritanceGraph = new InheritanceGraph(workspace);
-			typeSolver = new WorkspaceTypeSolver(workspace);
-			javaParserHelper = JavaParserHelper.create(typeSolver);
+			symbolSolver = WorkspaceSymbolSolver.create(workspace);
+			javaParserHelper = JavaParserHelper.create(symbolSolver);
 			ssvmIntegration = new SsvmIntegration(workspace);
 		}
 	}

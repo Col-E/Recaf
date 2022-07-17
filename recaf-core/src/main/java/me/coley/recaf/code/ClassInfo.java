@@ -6,10 +6,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Class info for resource. Provides some basic information about the class.
@@ -20,6 +17,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private final byte[] value;
 	private final String name;
 	private final String superName;
+	private final String signature;
 	private final List<String> interfaces;
 	private final int version;
 	private final int access;
@@ -28,10 +26,11 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private ClassReader classReader;
 	private int hashCode;
 
-	private ClassInfo(String name, String superName, List<String> interfaces, int version, int access,
+	private ClassInfo(String name, String superName, String signature, List<String> interfaces, int version, int access,
 					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value) {
 		this.value = value;
 		this.name = name;
+		this.signature = signature;
 		this.superName = superName;
 		this.interfaces = interfaces;
 		this.version = version;
@@ -53,6 +52,11 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	@Override
 	public String getSuperName() {
 		return superName;
+	}
+
+	@Override
+	public String getSignature() {
+		return signature;
 	}
 
 	@Override
@@ -90,6 +94,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		return access == info.access &&
 				name.equals(info.name) &&
 				Objects.equals(superName, info.superName) &&
+				Objects.equals(signature, info.signature) &&
 				interfaces.equals(info.interfaces) &&
 				fields.equals(info.fields) &&
 				methods.equals(info.methods);
@@ -101,6 +106,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		if (hashCode == 0) {
 			hashCode = name.hashCode();
 			hashCode = 31 * hashCode + Objects.hashCode(superName);
+			hashCode = 31 * hashCode + Objects.hashCode(signature);
 			hashCode = 31 * hashCode + interfaces.hashCode();
 			hashCode = 31 * hashCode + access;
 			hashCode = 31 * hashCode + fields.hashCode();
@@ -108,6 +114,11 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 			this.hashCode = hashCode + 1;
 		}
 		return hashCode;
+	}
+
+	@Override
+	public String toString() {
+		return "ClassInfo{'" + name + "'}";
 	}
 
 	/**
@@ -129,10 +140,12 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	 *
 	 * @return Parsed class information unit.
 	 */
+	@SuppressWarnings("unchecked")
 	public static ClassInfo read(byte[] value) {
 		ClassReader reader = new ClassReader(value);
 		String className = reader.getClassName();
 		String superName = reader.getSuperName();
+		String[] signatureWrapper = new String[1];
 		List<String>[] interfacesWrapper = new List[1];
 		int access = reader.getAccess();
 		int[] versionWrapper = new int[1];
@@ -144,23 +157,26 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 							  String superName, String[] interfaces) {
 				versionWrapper[0] = version;
 				interfacesWrapper[0] = Arrays.asList(interfaces);
+				signatureWrapper[0] = signature;
 			}
 
 			@Override
 			public FieldVisitor visitField(int access, String name, String descriptor, String sig, Object value) {
-				fields.add(new FieldInfo(className, name, descriptor, access));
+				fields.add(new FieldInfo(className, name, descriptor, sig, access, value));
 				return null;
 			}
 
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor, String sig, String[] ex) {
-				methods.add(new MethodInfo(className, name, descriptor, access));
+				List<String> exceptions = ex == null ? Collections.emptyList() : Arrays.asList(ex);
+				methods.add(new MethodInfo(className, name, descriptor, sig, access, exceptions));
 				return null;
 			}
-		}, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+		}, ClassReader.SKIP_CODE);
 		return new ClassInfo(
 				className,
 				superName,
+				signatureWrapper[0],
 				interfacesWrapper[0],
 				versionWrapper[0],
 				access,

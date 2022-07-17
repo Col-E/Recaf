@@ -7,6 +7,7 @@ import org.jf.dexlib2.iface.Method;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -22,18 +23,21 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 	private final MutableClassDef def;
 	private final String name;
 	private final String superName;
+	private final String signature;
 	private final List<String> interfaces;
 	private final int access;
 	private final List<FieldInfo> fields;
 	private final List<MethodInfo> methods;
 
 	private DexClassInfo(String dexPath, Opcodes opcodes, MutableClassDef def, String name, String superName,
-						 List<String> interfaces, int access, List<FieldInfo> fields, List<MethodInfo> methods) {
+						 String signature, List<String> interfaces, int access,
+						 List<FieldInfo> fields, List<MethodInfo> methods) {
 		this.dexPath = dexPath;
 		this.opcodes = opcodes;
 		this.def = def;
 		this.name = name;
 		this.superName = superName;
+		this.signature = signature;
 		this.interfaces = interfaces;
 		this.access = access;
 		this.fields = fields;
@@ -72,6 +76,11 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 	@Override
 	public String getSuperName() {
 		return superName;
+	}
+
+	@Override
+	public String getSignature() {
+		return signature;
 	}
 
 	@Override
@@ -131,17 +140,29 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 		// Supertype can be null, map it to object
 		String superName = Type.getType(classDef.getSuperclass() == null ?
 				"java/lang/Object" : classDef.getSuperclass()).getInternalName();
+		// TODO: Extract signature from annotations
+		String signature = null;
 		List<String> interfaces = classDef.getInterfaces().stream()
 				.map(itf -> Type.getType(itf).getInternalName())
 				.collect(Collectors.toList());
 		int access = classDef.getAccessFlags();
 		List<FieldInfo> fields = new ArrayList<>();
 		classDef.getFields().forEach(field -> {
-			fields.add(new FieldInfo(className, field.getName(), field.getType(), field.getAccessFlags()));
+			// TODO: Extract signature from annotations
+			String fieldSignature = null;
+			// TODO: Extract value from encoded-value
+			Object value = null;
+			fields.add(new FieldInfo(className, field.getName(), field.getType(),
+					fieldSignature, field.getAccessFlags(), value));
 		});
 		List<MethodInfo> methods = new ArrayList<>();
 		classDef.getMethods().forEach(method -> {
-			methods.add(new MethodInfo(className, method.getName(), buildMethodType(method), method.getAccessFlags()));
+			// TODO: Extract signature from annotations
+			String methodSignature = null;
+			// TODO: Extract exceptions from annotations
+			List<String> exceptions = Collections.emptyList();
+			methods.add(new MethodInfo(className, method.getName(), buildMethodType(method),
+					methodSignature, method.getAccessFlags(), exceptions));
 		});
 		return new DexClassInfo(
 				dexPath,
@@ -149,6 +170,7 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 				new MutableClassDef(classDef),
 				className,
 				superName,
+				signature,
 				interfaces,
 				access,
 				fields,

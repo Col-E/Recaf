@@ -11,6 +11,7 @@ public abstract class MemberInfo implements ItemInfo {
 	private final String owner;
 	private final String name;
 	private final String descriptor;
+	private final String signature;
 	private final int access;
 
 	/**
@@ -23,10 +24,11 @@ public abstract class MemberInfo implements ItemInfo {
 	 * @param access
 	 * 		Member access modifiers.
 	 */
-	public MemberInfo(String owner, String name, String descriptor, int access) {
+	public MemberInfo(String owner, String name, String descriptor, String signature, int access) {
 		this.name = name;
 		this.owner = owner;
 		this.descriptor = descriptor;
+		this.signature = signature;
 		this.access = access;
 	}
 
@@ -62,6 +64,13 @@ public abstract class MemberInfo implements ItemInfo {
 	}
 
 	/**
+	 * @return Member's generic signature. May be {@code null}.
+	 */
+	public String getSignature() {
+		return signature;
+	}
+
+	/**
 	 * @return Member access modifiers.
 	 */
 	public int getAccess() {
@@ -76,7 +85,8 @@ public abstract class MemberInfo implements ItemInfo {
 		return access == that.access &&
 				Objects.equals(owner, that.owner) &&
 				Objects.equals(getName(), that.getName()) &&
-				Objects.equals(descriptor, that.descriptor);
+				Objects.equals(descriptor, that.descriptor) &&
+				Objects.equals(signature, that.signature);
 	}
 
 	@Override
@@ -84,6 +94,7 @@ public abstract class MemberInfo implements ItemInfo {
 		int result = Objects.hashCode(owner);
 		result = 31 * result + Objects.hashCode(name);
 		result = 31 * result + Objects.hashCode(descriptor);
+		result = 31 * result + Objects.hashCode(signature);
 		result = 31 * result + access;
 		return result;
 	}

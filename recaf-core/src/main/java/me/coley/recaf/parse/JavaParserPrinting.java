@@ -13,17 +13,14 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserInterfaceDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
-import com.github.javaparser.symbolsolver.javassistmodel.*;
 import com.github.javaparser.symbolsolver.logic.AbstractClassDeclaration;
 import com.github.javaparser.symbolsolver.logic.AbstractTypeDeclaration;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.reflectionmodel.*;
-import javassist.CtClass;
-import javassist.CtConstructor;
-import javassist.CtField;
-import javassist.CtMethod;
-import me.coley.recaf.util.JavassistUtil;
+import me.coley.recaf.parse.jpimpl.RecafResolvedTypeDeclaration;
+import me.coley.recaf.parse.jpimpl.RecafResolvedFieldDeclaration;
+import me.coley.recaf.parse.jpimpl.RecafResolvedMethodLikeDeclaration;
 import me.coley.recaf.util.ReflectUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
@@ -46,15 +43,6 @@ import static me.coley.recaf.util.ReflectUtil.getDeclaredField;
 public class JavaParserPrinting {
 	private static final Logger logger = Logging.get(JavaParserPrinting.class);
 	// JavaParser accessors
-	private static Field javassistCtClass;
-	private static Field javassistCtClassInterface;
-	private static Field javassistCtClassAnnotation;
-	private static Field javassistCtClassEnum;
-	private static Field javassistCtField;
-	private static Field javassistCtFieldEnum;
-	private static Field javassistCtMethod;
-	private static Field javassistCtMethodAnno;
-	private static Field javassistCtMethodCtor;
 	private static Field reflectionClass;
 	private static Field reflectionClassInterface;
 	private static Field reflectionClassAnnotation;
@@ -67,15 +55,6 @@ public class JavaParserPrinting {
 
 	static {
 		try {
-			javassistCtClass = getDeclaredField(JavassistClassDeclaration.class, "ctClass");
-			javassistCtClassInterface = getDeclaredField(JavassistInterfaceDeclaration.class, "ctClass");
-			javassistCtClassAnnotation = getDeclaredField(JavassistAnnotationDeclaration.class, "ctClass");
-			javassistCtClassEnum = getDeclaredField(JavassistEnumDeclaration.class, "ctClass");
-			javassistCtField = getDeclaredField(JavassistFieldDeclaration.class, "ctField");
-			javassistCtFieldEnum = getDeclaredField(JavassistEnumConstantDeclaration.class, "ctField");
-			javassistCtMethod = getDeclaredField(JavassistMethodDeclaration.class, "ctMethod");
-			javassistCtMethodAnno = getDeclaredField(JavassistAnnotationMemberDeclaration.class, "annotationMember");
-			javassistCtMethodCtor = getDeclaredField(JavassistConstructorDeclaration.class, "ctConstructor");
 			reflectionClass = getDeclaredField(ReflectionClassDeclaration.class, "clazz");
 			reflectionClassInterface = getDeclaredField(ReflectionInterfaceDeclaration.class, "clazz");
 			reflectionClassAnnotation = getDeclaredField(ReflectionAnnotationDeclaration.class, "clazz");
@@ -193,14 +172,8 @@ public class JavaParserPrinting {
 	 * @return Internal type.
 	 */
 	public static String getType(ResolvedDeclaration type) {
-		if (type instanceof JavassistClassDeclaration) {
-			return getType((JavassistClassDeclaration) type);
-		} else if (type instanceof JavassistInterfaceDeclaration) {
-			return getType((JavassistInterfaceDeclaration) type);
-		} else if (type instanceof JavassistAnnotationDeclaration) {
-			return getType((JavassistAnnotationDeclaration) type);
-		} else if (type instanceof JavassistEnumDeclaration) {
-			return getType((JavassistEnumDeclaration) type);
+		if (type instanceof RecafResolvedTypeDeclaration) {
+			return ((RecafResolvedTypeDeclaration) type).getClassInfo().getName();
 		} else if (type instanceof ReflectionClassDeclaration) {
 			return getType((ReflectionClassDeclaration) type);
 		} else if (type instanceof ReflectionInterfaceDeclaration) {
@@ -218,66 +191,6 @@ public class JavaParserPrinting {
 		} else {
 			throw new UnsupportedOperationException("Unsupported declaration type: " +
 					type.getClass() + " - \"" + type.getName() + "\"");
-		}
-	}
-
-	/**
-	 * @param clazz
-	 * 		Type declaration.
-	 *
-	 * @return Internal type.
-	 */
-	public static String getType(JavassistClassDeclaration clazz) {
-		try {
-			CtClass ctClass = (CtClass) javassistCtClass.get(clazz);
-			return JavassistUtil.getInternalName(ctClass);
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException("Failed to get internal type", ex);
-		}
-	}
-
-	/**
-	 * @param clazz
-	 * 		Type declaration.
-	 *
-	 * @return Internal type.
-	 */
-	public static String getType(JavassistInterfaceDeclaration clazz) {
-		try {
-			CtClass ctClass = (CtClass) javassistCtClassInterface.get(clazz);
-			return JavassistUtil.getInternalName(ctClass);
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException("Failed to get internal type", ex);
-		}
-	}
-
-	/**
-	 * @param clazz
-	 * 		Type declaration.
-	 *
-	 * @return Internal type.
-	 */
-	public static String getType(JavassistAnnotationDeclaration clazz) {
-		try {
-			CtClass ctClass = (CtClass) javassistCtClassAnnotation.get(clazz);
-			return JavassistUtil.getInternalName(ctClass);
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException("Failed to get internal type", ex);
-		}
-	}
-
-	/**
-	 * @param clazz
-	 * 		Type declaration.
-	 *
-	 * @return Internal type.
-	 */
-	public static String getType(JavassistEnumDeclaration clazz) {
-		try {
-			CtClass ctClass = (CtClass) javassistCtClassEnum.get(clazz);
-			return JavassistUtil.getInternalName(ctClass);
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException("Failed to get internal type", ex);
 		}
 	}
 
@@ -374,8 +287,8 @@ public class JavaParserPrinting {
 	 * @return Internal type.
 	 */
 	public static String getFieldDesc(ResolvedFieldDeclaration type) {
-		if (type instanceof JavassistFieldDeclaration) {
-			return getFieldDesc((JavassistFieldDeclaration) type);
+		if (type instanceof RecafResolvedFieldDeclaration) {
+			return ((RecafResolvedFieldDeclaration) type).getFieldInfo().getDescriptor();
 		} else if (type instanceof ReflectionFieldDeclaration) {
 			return getFieldDesc((ReflectionFieldDeclaration) type);
 		} else {
@@ -390,40 +303,10 @@ public class JavaParserPrinting {
 	 * @return Internal type.
 	 */
 	public static String getFieldDesc(ResolvedEnumConstantDeclaration type) {
-		if (type instanceof JavassistEnumConstantDeclaration) {
-			return getFieldDesc((JavassistEnumConstantDeclaration) type);
-		} else if (type instanceof ReflectionEnumConstantDeclaration) {
+		if (type instanceof ReflectionEnumConstantDeclaration) {
 			return getFieldDesc((ReflectionEnumConstantDeclaration) type);
 		} else {
 			return getType(type.getType());
-		}
-	}
-
-	/**
-	 * @param field
-	 * 		Field declaration.
-	 *
-	 * @return Field descriptor.
-	 */
-	public static String getFieldDesc(JavassistFieldDeclaration field) {
-		try {
-			return ((CtField) javassistCtField.get(field)).getSignature();
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException("Failed to get field descriptor", ex);
-		}
-	}
-
-	/**
-	 * @param field
-	 * 		Field declaration.
-	 *
-	 * @return Field descriptor.
-	 */
-	public static String getFieldDesc(JavassistEnumConstantDeclaration field) {
-		try {
-			return ((CtField) javassistCtFieldEnum.get(field)).getSignature();
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException("Failed to get field descriptor", ex);
 		}
 	}
 
@@ -462,10 +345,8 @@ public class JavaParserPrinting {
 	 * @return Internal type.
 	 */
 	public static String getMethodDesc(ResolvedMethodDeclaration type) {
-		if (type instanceof JavassistMethodDeclaration) {
-			return getMethodDesc((JavassistMethodDeclaration) type);
-		} else if (type instanceof JavassistAnnotationMemberDeclaration) {
-			return getMethodDesc((JavassistAnnotationMemberDeclaration) type);
+		if (type instanceof RecafResolvedMethodLikeDeclaration) {
+			return ((RecafResolvedMethodLikeDeclaration) type).getMethodInfo().getDescriptor();
 		} else if (type instanceof ReflectionMethodDeclaration) {
 			return getMethodDesc((ReflectionMethodDeclaration) type);
 		} else if (type instanceof ReflectionAnnotationMemberDeclaration) {
@@ -482,34 +363,6 @@ public class JavaParserPrinting {
 			desc.append(")");
 			desc.append(returnTypeDesc);
 			return desc.toString();
-		}
-	}
-
-	/**
-	 * @param method
-	 * 		Method declaration.
-	 *
-	 * @return Method descriptor.
-	 */
-	public static String getMethodDesc(JavassistMethodDeclaration method) {
-		try {
-			return ((CtMethod) javassistCtMethod.get(method)).getSignature();
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException("Failed to get method descriptor", ex);
-		}
-	}
-
-	/**
-	 * @param method
-	 * 		Method declaration.
-	 *
-	 * @return Method descriptor.
-	 */
-	public static String getMethodDesc(JavassistAnnotationMemberDeclaration method) {
-		try {
-			return Type.getMethodDescriptor((Method) javassistCtMethodAnno.get(method));
-		} catch (Exception ex) {
-			throw new RuntimeException("Failed to get method descriptor", ex);
 		}
 	}
 
@@ -548,8 +401,8 @@ public class JavaParserPrinting {
 	 * @return Internal type.
 	 */
 	public static String getConstructorDesc(ResolvedConstructorDeclaration type) {
-		if (type instanceof JavassistConstructorDeclaration) {
-			return getConstructorDesc((JavassistConstructorDeclaration) type);
+		if (type instanceof RecafResolvedMethodLikeDeclaration) {
+			return ((RecafResolvedMethodLikeDeclaration) type).getMethodInfo().getDescriptor();
 		} else if (type instanceof ReflectionConstructorDeclaration) {
 			return getConstructorDesc((ReflectionConstructorDeclaration) type);
 		} else {
@@ -561,20 +414,6 @@ public class JavaParserPrinting {
 			}
 			desc.append(")V");
 			return desc.toString();
-		}
-	}
-
-	/**
-	 * @param ctor
-	 * 		Constructor declaration.
-	 *
-	 * @return Constructor descriptor.
-	 */
-	public static String getConstructorDesc(JavassistConstructorDeclaration ctor) {
-		try {
-			return ((CtConstructor) javassistCtMethodCtor.get(ctor)).getSignature();
-		} catch (ReflectiveOperationException ex) {
-			throw new RuntimeException("Failed to get constructor descriptor", ex);
 		}
 	}
 
