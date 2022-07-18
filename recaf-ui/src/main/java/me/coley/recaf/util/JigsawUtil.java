@@ -21,9 +21,17 @@ public class JigsawUtil {
 	private static final MethodHandle CLASS_MODULE;
 	private static final MethodHandle CLASS_LOADER_MODULE;
 	private static final MethodHandle METHOD_MODIFIERS;
+	private static final Lookup lookup;
 
 	// Deny all constructions.
 	private JigsawUtil() {
+	}
+
+	/**
+	 * @return {@code IMPL_LOOKUP} from {@link MethodHandles.Lookup}.
+	 */
+	public static Lookup getLookup() {
+		return lookup;
 	}
 
 	/**
@@ -85,7 +93,7 @@ public class JigsawUtil {
 					new Class[]{Field.class}, new Object[]{field});
 			long offset = ReflectUtil.quietInvoke(unsafeClass, unsafe, "staticFieldOffset",
 					new Class[]{Field.class}, new Object[]{field});
-			Lookup lookup = ReflectUtil.quietInvoke(unsafeClass, unsafe, "getObject",
+			lookup = ReflectUtil.quietInvoke(unsafeClass, unsafe, "getObject",
 					new Class[]{Object.class, Long.TYPE},
 					new Object[]{base, offset});
 			MethodType type = MethodType.methodType(Module.class);

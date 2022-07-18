@@ -13,6 +13,11 @@ import me.coley.recaf.workspace.Workspace;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * {@link JavaSymbolSolver} with the ability to hook a few things to provide fallback lookups.
+ *
+ * @author Matt Coley
+ */
 public class WorkspaceSymbolSolver extends JavaSymbolSolver {
 	private final WorkspaceTypeSolver typeSolver;
 	private final JavaParserFacade facade;
@@ -23,14 +28,26 @@ public class WorkspaceSymbolSolver extends JavaSymbolSolver {
 		facade = JavaParserFacade.get(typeSolver);
 	}
 
+	/**
+	 * @param workspace
+	 * 		Workspace to create solver for.
+	 *
+	 * @return Solver for workspace.
+	 */
 	public static WorkspaceSymbolSolver create(Workspace workspace) {
 		return new WorkspaceSymbolSolver(new WorkspaceTypeSolver(workspace));
 	}
 
+	/**
+	 * @return Backing type solver.
+	 */
 	public WorkspaceTypeSolver getTypeSolver() {
 		return typeSolver;
 	}
 
+	/**
+	 * @return Associated facade instance.
+	 */
 	public JavaParserFacade getFacade() {
 		return facade;
 	}

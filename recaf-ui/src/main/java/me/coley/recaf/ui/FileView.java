@@ -14,6 +14,7 @@ import me.coley.recaf.ui.control.PannableImageView;
 import me.coley.recaf.ui.control.TextView;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.hex.HexFileView;
+import me.coley.recaf.ui.control.media.AudioPane;
 import me.coley.recaf.ui.pane.BinaryXmlPane;
 import me.coley.recaf.ui.pane.elf.ElfExplorerPane;
 import me.coley.recaf.ui.pane.pe.PEExplorerPane;
@@ -170,6 +171,8 @@ public class FileView extends BorderPane implements FileRepresentation, ToolSide
 				return new BasicFileRepresentation(elfExplorerPane, elfExplorerPane::onUpdate);
 			} else if (ByteHeaderUtil.match(content, ByteHeaderUtil.BINARY_XML)) {
 				return new BinaryXmlPane();
+			} else if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.AUDIO_HEADERS)) {
+				return new AudioPane();
 			} else if (StringUtil.isText(info.getValue())) {
 				return new TextView(Languages.get(info.getExtension()), null);
 			} else {

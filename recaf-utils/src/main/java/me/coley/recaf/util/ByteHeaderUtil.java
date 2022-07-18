@@ -66,10 +66,14 @@ public class ByteHeaderUtil {
 	public static final int[] MP3_NO_ID1 = {0xFF, 0xFB};
 	public static final int[] MP3_NO_ID2 = {0xFF, 0xF2};
 	public static final int[] MP3_NO_ID3 = {0xFF, 0xF3};
+	public static final int[] M4A = {0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41};
+	public static final int[] M4ADash = {0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x64, 0x61, 0x73};
 	public static final List<int[]> AUDIO_HEADERS = Lists.newArrayList(
 			OGG,
 			WAV,
-			MP3_ID3, MP3_NO_ID1, MP3_NO_ID2, MP3_NO_ID3);
+			MP3_ID3, MP3_NO_ID1, MP3_NO_ID2, MP3_NO_ID3,
+			M4A,
+			M4ADash);
 	// Misc
 	public static final int[] BINARY_XML = {0x03, 0x00, 0x08, 0x00};
 	public static final int[] PDF = {0x25, 0x50, 0x44, 0x46, 0x2D};
