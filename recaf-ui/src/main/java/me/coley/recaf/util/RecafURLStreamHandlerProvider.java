@@ -84,6 +84,8 @@ public class RecafURLStreamHandlerProvider extends URLStreamHandlerProvider {
 	 * Connection impl to actually pull from the current workspace.
 	 */
 	private static class ConnectionImpl extends URLConnection {
+		private byte[] content;
+
 		public ConnectionImpl(URL url) {
 			super(url);
 		}
@@ -95,6 +97,34 @@ public class RecafURLStreamHandlerProvider extends URLStreamHandlerProvider {
 
 		@Override
 		public InputStream getInputStream() throws IOException {
+			if (content == null)
+				loadContent();
+			return new ByteArrayInputStream(content);
+		}
+
+
+		@Override
+		public String getContentType() {
+			return guessContentTypeFromName(url.getFile());
+		}
+
+		@Override
+		public long getContentLengthLong() {
+			return getContentLength();
+		}
+
+		@Override
+		public int getContentLength() {
+			if (content == null)
+				try {
+					loadContent();
+				} catch (IOException ex) {
+					return -1;
+				}
+			return content.length;
+		}
+
+		private void loadContent() throws IOException {
 			// Validate state
 			Workspace workspace = WorkspaceAPI.getWorkspace();
 			if (workspace == null)
@@ -111,20 +141,17 @@ public class RecafURLStreamHandlerProvider extends URLStreamHandlerProvider {
 					ClassInfo classInfo = workspace.getResources().getClass(path);
 					if (classInfo == null)
 						throw new IOException("No class in current workspace: " + path);
-					return new ByteArrayInputStream(classInfo.getValue());
+					content = classInfo.getValue();
+					break;
 				case recafFile:
 					FileInfo fileInfo = workspace.getResources().getFile(path);
 					if (fileInfo == null)
 						throw new IOException("No file in current workspace: " + path);
-					return new ByteArrayInputStream(fileInfo.getValue());
+					content = fileInfo.getValue();
+					break;
 				default:
 					throw new IOException("Unknown protocol: " + protocol);
 			}
-		}
-
-		@Override
-		public String getContentType() {
-			return guessContentTypeFromName(url.getFile());
 		}
 	}
 }

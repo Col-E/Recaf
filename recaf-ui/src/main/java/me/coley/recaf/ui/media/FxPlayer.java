@@ -2,14 +2,12 @@ package me.coley.recaf.ui.media;
 
 import com.sun.media.jfxmedia.MediaManager;
 import com.sun.media.jfxmedia.MediaPlayer;
+import com.sun.media.jfxmedia.effects.AudioSpectrum;
 import com.sun.media.jfxmedia.events.AudioSpectrumEvent;
 import com.sun.media.jfxmedia.events.AudioSpectrumListener;
 import com.sun.media.jfxmedia.locator.Locator;
 import com.sun.media.jfxmediaimpl.MediaUtils;
 import com.sun.media.jfxmediaimpl.NativeMediaManager;
-import com.sun.media.jfxmediaimpl.NativeMediaPlayer;
-import javafx.beans.property.Property;
-import javafx.beans.property.SimpleObjectProperty;
 import me.coley.recaf.util.JigsawUtil;
 import me.coley.recaf.util.RecafURLStreamHandlerProvider;
 import me.coley.recaf.util.ReflectUtil;
@@ -28,14 +26,13 @@ import java.util.concurrent.CountDownLatch;
  *
  * @author Matt Coley
  */
-public class MemoryPlayer implements AudioSpectrumListener {
-	private final SimpleObjectProperty<AudioSpectrumEvent> lastSpectrum = new SimpleObjectProperty<>();
+public class FxPlayer extends AudioPlayer implements AudioSpectrumListener {
+	private static final float[] EMPTY_ARRAY = new float[0];
+	private SpectrumEvent eventInstance;
 	private Locator locator;
 	private MediaPlayer player;
 
-	/**
-	 * Play the track.
-	 */
+	@Override
 	public void play() {
 		if (player != null) {
 			player.play();
@@ -43,9 +40,7 @@ public class MemoryPlayer implements AudioSpectrumListener {
 		}
 	}
 
-	/**
-	 * Pause the track.
-	 */
+	@Override
 	public void pause() {
 		if (player != null) {
 			player.pause();
@@ -53,9 +48,7 @@ public class MemoryPlayer implements AudioSpectrumListener {
 		}
 	}
 
-	/**
-	 * Stop the track.
-	 */
+	@Override
 	public void stop() {
 		if (player != null) {
 			player.stop();
@@ -63,24 +56,14 @@ public class MemoryPlayer implements AudioSpectrumListener {
 		}
 	}
 
-	/**
-	 * Stop the track and clear references to the player.
-	 */
+	@Override
 	public void reset() {
 		stop();
 		locator = null;
 		player = null;
 	}
 
-	/**
-	 * Initialize a new track.
-	 *
-	 * @param path
-	 * 		File path name in the current {@link me.coley.recaf.workspace.Workspace}.
-	 *
-	 * @throws IOException
-	 * 		When the file cannot be loaded for playback.
-	 */
+	@Override
 	public void load(String path) throws IOException {
 		String uriPath = RecafURLStreamHandlerProvider.fileUri(path);
 		try {
@@ -95,11 +78,18 @@ public class MemoryPlayer implements AudioSpectrumListener {
 		}
 	}
 
-	/**
-	 * @return Property wrapper of the last spectrum event.
-	 */
-	public Property<AudioSpectrumEvent> lastSpectrumProperty() {
-		return lastSpectrum;
+	@Override
+	public void onAudioSpectrumEvent(AudioSpectrumEvent evt) {
+		SpectrumListener listener = getSpectrumListener();
+		if (listener != null) {
+			AudioSpectrum source = evt.getSource();
+			float[] magnitudes = source.getMagnitudes(EMPTY_ARRAY);
+			if (eventInstance == null || eventInstance.getMagnitudes().length != magnitudes.length)
+				eventInstance = new SpectrumEvent(magnitudes);
+			else
+				System.arraycopy(magnitudes, 0, eventInstance.getMagnitudes(), 0, magnitudes.length);
+			listener.onSpectrum(eventInstance);
+		}
 	}
 
 	/**
@@ -114,22 +104,6 @@ public class MemoryPlayer implements AudioSpectrumListener {
 	 */
 	public String getContentType() {
 		return locator.getContentType();
-	}
-
-	/**
-	 * Used to prevent removal of the weak reference to {@link AudioSpectrumListener} in {@link NativeMediaPlayer}.
-	 */
-	public void iAmStillBeingUsedPleaseDoNotPurgeMyWeakReference() {
-		// This is a really stupid hack to ensure the weak-reference of the spectrum-listeners
-		// isn't invalidated, and we suddenly lose all of our spectrum update event notifications.
-	}
-
-	@Override
-	public void onAudioSpectrumEvent(AudioSpectrumEvent evt) {
-		// TODO: Inline this, and create a listener interface
-		//  - prevent user of this class from having to call the cringe method
-		//  - maybe abstract away JFX usage so we can also use javax.sound/javazoom support?
-		lastSpectrum.set(evt);
 	}
 
 	/**

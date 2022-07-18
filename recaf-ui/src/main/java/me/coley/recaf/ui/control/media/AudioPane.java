@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.control.media;
 
-import com.sun.media.jfxmedia.effects.AudioSpectrum;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -12,12 +11,15 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
-import me.coley.recaf.ui.media.MemoryPlayer;
+import me.coley.recaf.ui.media.AudioPlayer;
+import me.coley.recaf.ui.media.CombinedPlayer;
+import me.coley.recaf.ui.media.FxPlayer;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * A pane for displaying and playing audio files.
@@ -26,7 +28,7 @@ import java.io.IOException;
  */
 public class AudioPane extends BorderPane implements FileRepresentation, Cleanable {
 	private static final Logger logger = Logging.get(AudioPane.class);
-	private final MemoryPlayer player = new MemoryPlayer();
+	private final AudioPlayer player = new CombinedPlayer(List.of(new FxPlayer()));
 	private final Canvas canvas = new Canvas();
 	private FileInfo fileInfo;
 
@@ -40,14 +42,9 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 		// TODO: Play/pause/stop
 		//  - volume
 		//  - equalizer?
-		// Single value to fetch mags
-		float[] dummyArray = new float[0];
 		// Faint bloom effect
 		Bloom bloom = new Bloom(0.6);
-		player.lastSpectrumProperty().addListener((observable, oldValue, newValue) -> {
-			// The JFX internal listener list holds weak-refs and without this our listener ref can go "bye bye"
-			// at any random time. Fun!
-			player.iAmStillBeingUsedPleaseDoNotPurgeMyWeakReference();
+		player.setSpectrumListener(event -> {
 			// Clear the screen
 			GraphicsContext g = canvas.getGraphicsContext2D();
 			double width = canvas.getWidth();
@@ -57,8 +54,7 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 			// Prepare for coloring spikes
 			g.setFill(LinearGradient.valueOf("linear-gradient(to bottom, blue, white)"));
 			// Draw each magnitude as a spike shape
-			AudioSpectrum source = newValue.getSource();
-			float[] magnitudes = source.getMagnitudes(dummyArray);
+			float[] magnitudes = event.getMagnitudes();
 			int max = magnitudes.length;
 			for (int i = 1; i < max - 1; i++) {
 				double percent = (double) i / max;
