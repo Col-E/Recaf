@@ -63,7 +63,7 @@ public class FxPlayer extends AudioPlayer implements AudioSpectrumListener {
 			player.removeAudioSpectrumListener(this);
 			// Reset spectrum data
 			SpectrumListener listener = getSpectrumListener();
-			if (listener != null) {
+			if (listener != null && eventInstance != null) {
 				Arrays.fill(eventInstance.getMagnitudes(), -100);
 				listener.onSpectrum(eventInstance);
 			}
@@ -105,6 +105,19 @@ public class FxPlayer extends AudioPlayer implements AudioSpectrumListener {
 			listener.onSpectrum(eventInstance);
 		}
 	}
+
+	@Override
+	public double getMaxSeconds() {
+		if (player != null)
+			return player.getDuration();
+		return -1;
+	}
+
+	@Override
+	public double getCurrentSeconds() {
+		if (player != null)
+			return player.getPresentationTime();
+		return -1;	}
 
 	/**
 	 * @return {@code true} when there is content loaded in the player.

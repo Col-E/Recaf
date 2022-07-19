@@ -39,6 +39,20 @@ public class CombinedPlayer extends AudioPlayer {
 	}
 
 	@Override
+	public double getMaxSeconds() {
+		if (currentPlayer != null)
+			return currentPlayer.getMaxSeconds();
+		return super.getMaxSeconds();
+	}
+
+	@Override
+	public double getCurrentSeconds() {
+		if (currentPlayer != null)
+			return currentPlayer.getCurrentSeconds();
+		return super.getCurrentSeconds();
+	}
+
+	@Override
 	public void setSpectrumListener(SpectrumListener listener) {
 		super.setSpectrumListener(listener);
 		// Also set listener for delegated players

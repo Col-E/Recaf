@@ -1,13 +1,11 @@
 package me.coley.recaf.ui.control.media;
 
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.effect.Bloom;
-import javafx.scene.effect.Effect;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -89,6 +87,7 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 				g.fill();
 			}
 			g.applyEffect(blur);
+			drawTimeText(g);
 		});
 	}
 
@@ -140,6 +139,38 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 		});
 	}
 
+	private void initialDraw() {
+		FxThreadUtil.delayedRun(100, () -> {
+			GraphicsContext g = canvas.getGraphicsContext2D();
+			double w = canvas.getWidth();
+			double h = canvas.getHeight();
+			g.setFill(Color.BLACK);
+			g.fillRect(0, 0, w, h);
+			drawTimeText(g);
+		});
+	}
+
+	private void drawTimeText(GraphicsContext g) {
+		double w = canvas.getWidth();
+		int max = (int) player.getMaxSeconds();
+		int cur = (int) player.getCurrentSeconds();
+		g.setFill(Color.WHITE);
+		g.fillText(formatTime(cur) + " / " + formatTime(max), w - 80, 24);
+	}
+
+	private static String formatTime(int time) {
+		int minutes = time / 60;
+		int seconds = time - minutes * 60;
+		String formattedTime = "";
+		if (minutes < 10)
+			formattedTime += "0";
+		formattedTime += minutes + ":";
+		if (seconds < 10)
+			formattedTime += "0";
+		formattedTime += seconds;
+		return formattedTime;
+	}
+
 	@Override
 	public FileInfo getCurrentFileInfo() {
 		return fileInfo;
@@ -166,6 +197,7 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 		try {
 			player.stop();
 			player.load(newValue.getName());
+			initialDraw();
 		} catch (IOException ex) {
 			onLoadFailure(ex);
 		}

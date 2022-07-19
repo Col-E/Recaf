@@ -59,4 +59,20 @@ public abstract class AudioPlayer {
 	 * 		When the file cannot be loaded for playback.
 	 */
 	public abstract void load(String path) throws IOException;
+
+	/**
+	 * @return Length of the currently loaded audio in seconds,
+	 * or a negative value if the duration could not be determined.
+	 */
+	public double getMaxSeconds() {
+		return -1;
+	}
+
+	/**
+	 * @return Current offset in the currently loaded audio in seconds,
+	 * or a negative value if the current time could not be determined.
+	 */
+	public double getCurrentSeconds() {
+		return -1;
+	}
 }
