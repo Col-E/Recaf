@@ -8,6 +8,14 @@
 	-fx-border-width: 1;
 	-fx-border-color: rgb(85, 85, 85);
 }
+.rounded-button-left {
+    -fx-background-radius: 100 0 0 100;
+    -fx-border-radius: 100 0 0 100;
+}
+.rounded-button-right {
+    -fx-background-radius: 0 100 100 0;
+    -fx-border-radius: 0 100 100 0;
+}
 .check-box:hover .box,
 .button:hover,
 .combo-box:hover,

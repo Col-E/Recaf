@@ -1,19 +1,28 @@
 package me.coley.recaf.ui.control.media;
 
+import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.effect.Bloom;
+import javafx.scene.effect.Effect;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.LinearGradient;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.control.ResizableCanvas;
 import me.coley.recaf.ui.media.AudioPlayer;
 import me.coley.recaf.ui.media.CombinedPlayer;
 import me.coley.recaf.ui.media.FxPlayer;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import org.slf4j.Logger;
@@ -29,26 +38,28 @@ import java.util.List;
 public class AudioPane extends BorderPane implements FileRepresentation, Cleanable {
 	private static final Logger logger = Logging.get(AudioPane.class);
 	private final AudioPlayer player = new CombinedPlayer(List.of(new FxPlayer()));
-	private final Canvas canvas = new Canvas();
+	private final Canvas canvas = new ResizableCanvas();
 	private FileInfo fileInfo;
 
 	/**
 	 * Setup the pane.
 	 */
 	public AudioPane() {
-		canvas.widthProperty().bind(widthProperty().subtract(10));
-		canvas.heightProperty().bind(heightProperty().subtract(10));
 		setCenter(canvas);
-		// TODO: Play/pause/stop
-		//  - volume
-		//  - equalizer?
-		// Faint bloom effect
-		Bloom bloom = new Bloom(0.6);
+		setBottom(interactionBar());
+		setStyle("-fx-background-color: black");
+		// Makes the spike slightly softer looking
+		// The combination of the faint blur and bloom prevent the 'creeping glow' that occurs with just the bloom
+		// when used on lower resolutions.
+		GaussianBlur blur = new GaussianBlur(1);
+		Bloom bloom = new Bloom();
+		bloom.setThreshold(0.6);
+		blur.setInput(bloom);
 		player.setSpectrumListener(event -> {
 			// Clear the screen
 			GraphicsContext g = canvas.getGraphicsContext2D();
-			double width = canvas.getWidth();
-			double height = canvas.getHeight();
+			double width = canvas.getWidth() + 2;
+			double height = canvas.getHeight() + 2;
 			g.setFill(Color.BLACK);
 			g.fillRect(0, 0, width, height);
 			// Prepare for coloring spikes
@@ -77,9 +88,43 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 				g.closePath();
 				g.fill();
 			}
-			// Makes the spike slightly softer looking
-			g.applyEffect(bloom);
+			g.applyEffect(blur);
 		});
+	}
+
+	private Region interactionBar() {
+		HBox box = new HBox();
+		Button btnPlay = new Button();
+		Button btnPause = new Button();
+		Button btnStop = new Button();
+		btnPause.setDisable(true);
+		btnStop.setDisable(true);
+		btnPlay.setGraphic(Icons.getIconView(Icons.PLAY));
+		btnPause.setGraphic(Icons.getIconView(Icons.PAUSE));
+		btnStop.setGraphic(Icons.getIconView(Icons.STOP));
+		btnPlay.getStyleClass().add("rounded-button-left");
+		btnStop.getStyleClass().add("rounded-button-right");
+		btnPlay.setOnAction(e -> {
+			player.play();
+			btnPlay.setDisable(true);
+			btnPause.setDisable(false);
+			btnStop.setDisable(false);
+		});
+		btnPause.setOnAction(e -> {
+			player.pause();
+			btnPlay.setDisable(false);
+			btnPause.setDisable(true);
+			btnStop.setDisable(false);
+		});
+		btnStop.setOnAction(e -> {
+			player.stop();
+			btnPlay.setDisable(false);
+			btnPause.setDisable(true);
+			btnStop.setDisable(true);
+		});
+		box.getChildren().addAll(btnPlay, btnPause, btnStop);
+		box.setAlignment(Pos.CENTER);
+		return box;
 	}
 
 	private void onLoadFailure(IOException ex) {
@@ -121,7 +166,6 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 		try {
 			player.stop();
 			player.load(newValue.getName());
-			player.play();
 		} catch (IOException ex) {
 			onLoadFailure(ex);
 		}

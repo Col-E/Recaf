@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -42,6 +43,10 @@ public class FxPlayer extends AudioPlayer implements AudioSpectrumListener {
 
 	@Override
 	public void pause() {
+		// TODO: Pausing and then unpausing sometimes causes the spectrum listener to feel 'laggy'
+		//  - but the spectrum interval is still the same so its not like that is getting reset
+		//  - happens more consistently with mp3 files, m4a is seemingly unaffected
+		//  - and pausing/unpausing can sometimes also fix the 'laggy' feeling.
 		if (player != null) {
 			player.pause();
 			player.removeAudioSpectrumListener(this);
@@ -51,8 +56,17 @@ public class FxPlayer extends AudioPlayer implements AudioSpectrumListener {
 	@Override
 	public void stop() {
 		if (player != null) {
+			// Stop is supposed to call 'seek(0)' in implementation but for some reason it is not consistent.
+			// Especially if the current state is 'paused'. If we request the seek ourselves it *seems* more reliable.
+			player.seek(0);
 			player.stop();
 			player.removeAudioSpectrumListener(this);
+			// Reset spectrum data
+			SpectrumListener listener = getSpectrumListener();
+			if (listener != null) {
+				Arrays.fill(eventInstance.getMagnitudes(), -100);
+				listener.onSpectrum(eventInstance);
+			}
 		}
 	}
 
@@ -133,6 +147,11 @@ public class FxPlayer extends AudioPlayer implements AudioSpectrumListener {
 				InputStream stream = uri.toURL().openStream();
 				if (stream.read(section) > 0)
 					contentType = MediaUtils.fileSignatureToContentType(section, MediaUtils.MAX_FILE_SIGNATURE_LENGTH);
+				// Cache so that the 'ConnectionHolder' uses the memory implementation, which supports seeking.
+				// Without seek support 'stop' does not work.
+				cacheMedia();
+				// Odd note on m4a support, they rarely work if you request the player to start immediately.
+				// But if you wait and then request playback it works most of the time.
 			} catch (Exception ex) {
 				throw new IllegalStateException(ex);
 			}
@@ -147,7 +166,6 @@ public class FxPlayer extends AudioPlayer implements AudioSpectrumListener {
 			Field fProtocols = ReflectUtil.getDeclaredField(NativeMediaManager.class, "supportedProtocols");
 			fProtocols.setAccessible(true);
 			List<String> protocols = ReflectUtil.quietGet(manager, fProtocols);
-			protocols.add(RecafURLStreamHandlerProvider.recafClass);
 			protocols.add(RecafURLStreamHandlerProvider.recafFile);
 			// Inject protocol name into platform impl
 			Class<?> platformImpl = Class.forName("com.sun.media.jfxmediaimpl.platform.gstreamer.GSTPlatform");
