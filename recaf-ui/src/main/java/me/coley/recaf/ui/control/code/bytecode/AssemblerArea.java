@@ -2,12 +2,8 @@ package me.coley.recaf.ui.control.code.bytecode;
 
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.Region;
-import javafx.scene.text.Text;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
@@ -20,6 +16,7 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.pipeline.*;
+import me.coley.recaf.assemble.suggestions.SuggestionResult;
 import me.coley.recaf.assemble.suggestions.Suggestions;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
@@ -61,12 +58,13 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static me.coley.recaf.ui.control.code.ProblemOrigin.BYTECODE_PARSING;
 import static me.coley.recaf.ui.control.code.ProblemOrigin.BYTECODE_VALIDATION;
@@ -138,7 +136,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				onSuggestionRequested();
 			}
 		});
-
 	}
 
 	@Override
@@ -231,8 +228,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			logger.trace("Initial build of disassemble failed!");
 	}
 
-	public void onSuggestionRequested() {
-
+	private void onSuggestionRequested() {
 		// get current cursor position
 		int caretPosition = getCaretPosition();
 		Position position = offsetToPosition(caretPosition, Bias.Backward);
@@ -247,19 +243,34 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 
 		if(suggestionsMenu != null) suggestionsMenu.hide();
 
-		suggestionsMenu = getSuggestionMenu(group);
+		CtxMenu<String> suggestionsMenu = getSuggestionMenu(caretPosition, group);
 		suggestionsMenu.setAutoHide(true);
 		suggestionsMenu.setHideOnEscape(true);
 		suggestionsMenu.show(this, getCaretBounds().get().getMinX(), getCaretBounds().get().getMaxY());
 		suggestionsMenu.requestFocus();
+		this.suggestionsMenu = suggestionsMenu;
 	}
 
-	public CtxMenu<String> getSuggestionMenu(Group suggestionGroup) {
+	private CtxMenu<String> getSuggestionMenu(int position, Group suggestionGroup) {
 		// set the menu to hold 10 entries before it starts to scroll
-		Set<String> suggestions = this.suggestions.getSuggestion(suggestionGroup);
-		if(suggestions.isEmpty())
-			suggestions.add("No suggestions");
-		return new CtxMenu<>(s -> new javafx.scene.control.Label(s.substring(suggestionGroup.content().length())), suggestions);
+		SuggestionResult suggestions = this.suggestions.getSuggestion(suggestionGroup);
+		String input = suggestions.getInput();
+		Set<String> set = suggestions.getResult().collect(Collectors.toCollection(TreeSet::new));
+		if (set.isEmpty()) {
+			return new CtxMenu<>(javafx.scene.control.Label::new, List.of("No suggestions"));
+		}
+		CtxMenu<String> menu = new CtxMenu<>(set);
+		menu.mapperProperty().set(s -> {
+			String insert = s.substring(input.length());
+			var label = new javafx.scene.control.Label(insert);
+			label.setOnMouseClicked(evt -> {
+				menu.hide();
+				insertText(position, insert);
+				moveTo(position + insert.length());
+			});
+			return label;
+		});
+		return menu;
 	}
 
 	private void onMenuRequested(ContextMenuEvent e) {
