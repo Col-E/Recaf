@@ -88,7 +88,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	private ClassInfo classInfo;
 	private MemberInfo targetMember;
 	private ContextMenu menu;
-	private Suggestions suggestions;
+	private final Suggestions suggestions;
 	private CtxMenu<String> suggestionsMenu;
 	private ScheduledFuture<?> astParseThread;
 

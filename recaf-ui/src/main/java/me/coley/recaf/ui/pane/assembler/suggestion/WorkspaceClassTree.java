@@ -1,49 +1,52 @@
 package me.coley.recaf.ui.pane.assembler.suggestion;
 
 import me.coley.recaf.ControllerListener;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.Streams;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceListener;
 import me.coley.recaf.workspace.resource.Resource;
 
-public class WorkspaceClassTree implements ControllerListener, WorkspaceListener {
+import java.util.concurrent.CompletableFuture;
 
-	private static ClasspathUtil.Tree classTree = new ClasspathUtil.Tree(null ,"");
+public class WorkspaceClassTree implements ControllerListener, WorkspaceListener {
+	private static CompletableFuture<ClasspathUtil.Tree> future; // TODO bad static
 
 	@Override
 	public void onNewWorkspace(Workspace oldWorkspace, Workspace newWorkspace) {
-		rebuildClassTree();
+		rebuildClassTree(newWorkspace);
 		newWorkspace.addListener(this);
 	}
 
 	@Override
 	public void onAddLibrary(Workspace workspace, Resource library) {
-		rebuildClassTree();
+		rebuildClassTree(workspace);
 	}
 
 	@Override
 	public void onRemoveLibrary(Workspace workspace, Resource library) {
-		rebuildClassTree();
+		rebuildClassTree(workspace);
 	}
 
-	public void rebuildClassTree() {
-		ThreadUtil.run(this::buildClassTree); // start tree build on new thread to avoid locking ui thread
-	}
-
-	public void buildClassTree() {
-		for (ClassInfo aClass : RecafUI.getController().getWorkspace().getResources().getClasses()) {
-			classTree.visitPath(aClass.getName());
+	private void rebuildClassTree(Workspace workspace) {
+		if (future != null) {
+			future.cancel(true);
 		}
-		classTree.freeze();
+		future = ThreadUtil.run(() -> buildClassTree(workspace)); // start tree build on new thread to avoid locking ui thread
 	}
 
-	public static ClasspathUtil.Tree getCurrentClassTree() {
+	private ClasspathUtil.Tree buildClassTree(Workspace workspace) {
+		ClasspathUtil.Tree classTree = new ClasspathUtil.Tree(null, "");
+		Streams.interruptable(workspace.getResources().getClasses())
+				.map(ClassInfo::getName)
+				.forEach(classTree::visitPath);
+		classTree.freeze();
 		return classTree;
 	}
 
-
-
+	public static ClasspathUtil.Tree getCurrentClassTree() {
+		return future.join();
+	}
 }
