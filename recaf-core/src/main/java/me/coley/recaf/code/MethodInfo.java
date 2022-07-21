@@ -1,13 +1,14 @@
 package me.coley.recaf.code;
 
 import java.util.List;
+import me.coley.recaf.assemble.util.ProgramMethod;
 
 /**
  * Method information.
  *
  * @author Matt Coley
  */
-public class MethodInfo extends MemberInfo {
+public class MethodInfo extends MemberInfo implements ProgramMethod {
 	private final List<String> exceptions;
 
 	/**

@@ -1,6 +1,7 @@
 package me.coley.recaf.code;
 
 import me.coley.recaf.RecafConstants;
+import me.coley.recaf.assemble.util.ProgramClass;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -13,7 +14,7 @@ import java.util.*;
  *
  * @author Matt Coley
  */
-public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
+public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo, ProgramClass {
 	private final byte[] value;
 	private final String name;
 	private final String superName;

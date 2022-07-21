@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource;
 
+import com.google.common.reflect.ClassPath;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.threading.ThreadLocals;
@@ -19,6 +20,7 @@ import java.util.Map;
  */
 public class RuntimeResource extends Resource {
 	private static final Object STUB = new Object();
+	private static boolean cached = false;
 	private static final Logger logger = Logging.get(RuntimeResource.class);
 	private static final RuntimeResource instance = new RuntimeResource();
 	private final ClassMap runtimeMap = createRuntimeMap();

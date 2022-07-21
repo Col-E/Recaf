@@ -148,7 +148,7 @@ public class ClasspathUtil {
 		/**
 		 * Freeze tree from changes.
 		 */
-		private void freeze() {
+		public void freeze() {
 			frozen = true;
 			if (children != null)
 				children.values().forEach(Tree::freeze);

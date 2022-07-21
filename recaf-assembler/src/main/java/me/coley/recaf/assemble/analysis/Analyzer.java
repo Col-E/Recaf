@@ -1176,7 +1176,7 @@ public class Analyzer {
 			} else {
 				// Any non-return instruction should flow to the next block.
 				int op = instruction.getOpcodeVal();
-				if (op < Opcodes.IRETURN || op > Opcodes.RETURN) {
+				if ((op < Opcodes.IRETURN || op > Opcodes.RETURN)) {
 					Block blockTarget = analysis.blockFloor(insnIndex + 1);
 					if (blockCurrent != blockTarget)
 						blockCurrent.addJumpEdge(blockTarget);

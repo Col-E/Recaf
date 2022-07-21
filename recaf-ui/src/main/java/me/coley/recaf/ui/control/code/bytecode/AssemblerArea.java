@@ -2,7 +2,12 @@ package me.coley.recaf.ui.control.code.bytecode;
 
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.Region;
+import javafx.scene.text.Text;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
@@ -15,6 +20,7 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.pipeline.*;
+import me.coley.recaf.assemble.suggestions.Suggestions;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
 import me.coley.recaf.assemble.validation.MessageLevel;
@@ -26,9 +32,11 @@ import me.coley.recaf.config.container.AssemblerConfig;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.control.CtxMenu;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
+import me.coley.recaf.ui.pane.assembler.suggestion.WorkspaceClassTree;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.DelayedExecutor;
@@ -53,6 +61,9 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -79,6 +90,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	private ClassInfo classInfo;
 	private MemberInfo targetMember;
 	private ContextMenu menu;
+	private Suggestions suggestions;
+	private CtxMenu<String> suggestionsMenu;
 	private ScheduledFuture<?> astParseThread;
 
 	/**
@@ -111,10 +124,21 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		pipeline.addBytecodeFailureListener(this);
 		pipeline.addBytecodeValidationListener(this);
 		pipeline.addPipelineCompletionListener(this);
+		pipeline.setDoUseAnalysis(false);
 		boolean validate = config().astValidation;
 		if (validate) {
 			pipeline.addAstValidationListener(this);
 		}
+
+		suggestions = new Suggestions(WorkspaceClassTree.getCurrentClassTree(),
+				RecafUI.getController().getWorkspace().getResources()::getClass);
+
+		setOnKeyPressed(event -> {
+			if (event.isControlDown() && event.getCode() == KeyCode.SPACE) {
+				onSuggestionRequested();
+			}
+		});
+
 	}
 
 	@Override
@@ -205,6 +229,37 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			logger.trace("Initial build of disassemble successful!");
 		else
 			logger.trace("Initial build of disassemble failed!");
+	}
+
+	public void onSuggestionRequested() {
+
+		// get current cursor position
+		int caretPosition = getCaretPosition();
+		Position position = offsetToPosition(caretPosition, Bias.Backward);
+
+		Group group = pipeline.getASTElementAt(position.getMajor() + 1, position.getMinor());
+		if(group != null) {
+			while (group.type != GroupType.INSTRUCTION) {
+				group = group.parent;
+				if (group == null) return;
+			}
+		}
+
+		if(suggestionsMenu != null) suggestionsMenu.hide();
+
+		suggestionsMenu = getSuggestionMenu(group);
+		suggestionsMenu.setAutoHide(true);
+		suggestionsMenu.setHideOnEscape(true);
+		suggestionsMenu.show(this, getCaretBounds().get().getMinX(), getCaretBounds().get().getMaxY());
+		suggestionsMenu.requestFocus();
+	}
+
+	public CtxMenu<String> getSuggestionMenu(Group suggestionGroup) {
+		// set the menu to hold 10 entries before it starts to scroll
+		Set<String> suggestions = this.suggestions.getSuggestion(suggestionGroup);
+		if(suggestions.isEmpty())
+			suggestions.add("No suggestions");
+		return new CtxMenu<>(s -> new javafx.scene.control.Label(s.substring(suggestionGroup.content().length())), suggestions);
 	}
 
 	private void onMenuRequested(ContextMenuEvent e) {

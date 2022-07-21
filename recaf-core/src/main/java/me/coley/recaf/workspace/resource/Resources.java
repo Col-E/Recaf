@@ -75,6 +75,16 @@ public class Resources implements Iterable<Resource> {
 	}
 
 	/**
+	 * @return All classes among all resources.
+	 */
+	public Collection<ClassInfo> getAllClasses() {
+		List<ClassInfo> list = new ArrayList<>(getPrimary().getClasses().values());
+		getLibraries().forEach(library -> list.addAll(library.getClasses().values()));
+		getInternalLibraries().forEach(library -> list.addAll(library.getClasses().values()));
+		return list;
+	}
+
+	/**
 	 * @return All dex classes among all resources.
 	 */
 	public Stream<DexClassInfo> getDexClasses() {
