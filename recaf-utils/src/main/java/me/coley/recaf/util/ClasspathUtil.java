@@ -6,7 +6,10 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.lang.Class.forName;
 
@@ -100,7 +103,6 @@ public class ClasspathUtil {
 				.flatMap(moduleReference -> moduleReference.descriptor().exports().stream())
 				.map(ModuleDescriptor.Exports::source)
 				.distinct()
-				.sorted()
 				.collect(Collectors.toList());
 	}
 
@@ -110,14 +112,12 @@ public class ClasspathUtil {
 	public static Tree getSystemClasses() {
 		if (tree == null) {
 			tree = new Tree(null, "");
-			List<String> classes = ModuleFinder.ofSystem().findAll().stream()
+			ModuleFinder.ofSystem().findAll().stream()
 					.map(Unchecked.function(ModuleReference::open))
 					.flatMap(Unchecked.function(ModuleReader::list))
 					.filter(s -> s.endsWith(".class") && s.indexOf('-') == -1)
 					.map(s -> s.substring(0, s.length() - 6))
-					.collect(Collectors.toList());
-			for (String className : classes)
-				tree.visitPath(className);
+					.forEach(tree::visitPath);
 			tree.freeze();
 		}
 		return tree;
@@ -133,6 +133,7 @@ public class ClasspathUtil {
 		private final String value;
 		private Map<String, Tree> children;
 		private boolean frozen;
+		private String fullValue;
 
 		/**
 		 * @param parent
@@ -201,38 +202,41 @@ public class ClasspathUtil {
 		/**
 		 * @return Direct leaves of this node.
 		 */
-		public List<Tree> getBranches() {
+		public Stream<Tree> getBranches() {
 			if (children == null)
-				return Collections.singletonList(this);
-			List<Tree> values = new ArrayList<>();
-			children.values().stream()
-					.filter(Tree::isBranch)
-					.forEach(values::add);
-			return values;
+				return Stream.of(this);
+			return children.values().stream().filter(Tree::isBranch);
 		}
 
 		/**
 		 * @return Direct leaves of this node.
 		 */
-		public List<Tree> getLeaves() {
+		public Stream<Tree> getLeaves() {
 			if (children == null)
-				return Collections.singletonList(this);
-			List<Tree> values = new ArrayList<>();
-			children.values().stream()
-					.filter(Tree::isLeaf)
-					.forEach(values::add);
-			return values;
+				return Stream.of(this);
+			return children.values().stream().filter(Tree::isLeaf);
 		}
 
 		/**
 		 * @return All leaves accessible from this node.
 		 */
-		public List<Tree> getAllLeaves() {
-			if (children == null)
-				return Collections.singletonList(this);
-			List<Tree> values = new ArrayList<>();
-			children.values().forEach(t -> values.addAll(t.getAllLeaves()));
-			return values;
+		public Stream<Tree> getAllLeaves() {
+			Deque<Tree> trees = new ArrayDeque<>();
+			trees.push(this);
+			return StreamSupport.stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, Spliterator.NONNULL) {
+				@Override
+				public boolean tryAdvance(Consumer<? super Tree> action) {
+					Tree tree = trees.poll();
+					if (tree == null)
+						return false;
+					if (tree.children == null) {
+						action.accept(tree);
+						return true;
+					}
+					trees.addAll(tree.children.values());
+					return !trees.isEmpty();
+				};
+			}, false);
 		}
 
 		/**
@@ -283,12 +287,14 @@ public class ClasspathUtil {
 		 * @return Full path.
 		 */
 		public String getFullValue() {
-			if (parent == null)
-				return getValue();
-			else if (parent.isRoot())
-				return getValue();
-			else
-				return parent.getFullValue() + "/" + getValue();
+			String fullValue = this.fullValue;
+			if (fullValue == null) {
+				if (parent == null || parent.isRoot())
+					return this.fullValue = getValue();
+				else
+					return this.fullValue = parent.getFullValue() + "/" + getValue();
+			}
+			return fullValue;
 		}
 
 		@Override
