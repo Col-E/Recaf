@@ -129,7 +129,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		}
 
 		suggestions = new Suggestions(WorkspaceClassTree.getCurrentClassTree(),
-				RecafUI.getController().getWorkspace().getResources()::getClass);
+				RecafUI.getController().getWorkspace().getResources()::getClass, null);
 
 		setOnKeyPressed(event -> {
 			if (event.isControlDown() && event.getCode() == KeyCode.SPACE) {
@@ -160,6 +160,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		astParseThread = ThreadUtil.scheduleAtFixedRate(() -> {
 			try {
 				if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
+					if(pipeline.getUnit() != null)
+						suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
 					logger.trace("AST updated and validated");
 					if (pipeline.isMethod() &&
 							pipeline.isOutputOutdated() &&
@@ -210,6 +212,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		}
 		transformer.visit();
 		Unit unit = transformer.getUnit();
+
+		if(unit.isMethod()) suggestions.setMethod(unit.getDefinitionAsMethod());
+
 		String code = unit.print(config().createContext());
 		// Update text
 		setText(code);
@@ -235,11 +240,12 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 
 		Group group = pipeline.getASTElementAt(position.getMajor() + 1, position.getMinor());
 		if(group != null) {
-			while (group.type != GroupType.INSTRUCTION) {
-				group = group.parent;
-				if (group == null) return;
+			if(group.parent != null) {
+				if(group.parent.type != GroupType.BODY) {
+					group = group.parent;
+				}
 			}
-		}
+ 		}
 
 		if(suggestionsMenu != null) suggestionsMenu.hide();
 
