@@ -121,7 +121,7 @@ public class Search {
 			return Collections.emptyList();
 		// Visit all classes and files in the resource and consolidate results
 		for (ClassInfo classInfo : resource.getClasses().values())
-			classInfo.getClassReader().accept(visitor, 0);
+			classInfo.getClassReader().accept(visitor, ClassReader.SKIP_FRAMES);
 		for (FileInfo fileInfo : resource.getFiles().values())
 			visitor.visitFile(fileInfo);
 		// Wrap results in tree-set to sort, then list for index access
@@ -145,7 +145,7 @@ public class Search {
 			service.execute(() -> {
 				QueryVisitor visitor = createQueryVisitor(resource);
 				if (visitor != null) {
-					classInfo.getClassReader().accept(visitor, 0);
+					classInfo.getClassReader().accept(visitor, ClassReader.SKIP_FRAMES);
 					results.addAll(visitor.getAllResults());
 				}
 			});

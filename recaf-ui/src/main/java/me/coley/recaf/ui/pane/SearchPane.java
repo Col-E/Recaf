@@ -28,6 +28,7 @@ import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
+import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 import java.awt.*;
@@ -224,7 +225,7 @@ public class SearchPane extends BorderPane {
 			ThreadUtil.run(() -> {
 				QueryVisitor visitor = search.createQueryVisitor(resource);
 				if (visitor != null) {
-					info.getClassReader().accept(visitor, 0);
+					info.getClassReader().accept(visitor, ClassReader.SKIP_FRAMES);
 					visitor.storeResults(results);
 				}
 				if (latch.decrementAndGet() == 0) {
@@ -252,7 +253,7 @@ public class SearchPane extends BorderPane {
 		ResultsPane resultsPane = new ResultsPane(search, sorted);
 		FxThreadUtil.run(() -> {
 			DockTab tab = RecafDockingManager.getInstance().createTabIn(targetDockingRegion,
-				() -> new DockTab(Lang.getBinding("search.results"), resultsPane));
+					() -> new DockTab(Lang.getBinding("search.results"), resultsPane));
 			targetDockingRegion.getSelectionModel().select(tab);
 		});
 	}
