@@ -95,8 +95,26 @@ public class StringUtil {
 	 * @return Text cut off to max length.
 	 */
 	public static String limit(String text, int max) {
-		if (text.length() > max)
-			return text.substring(0, max);
+		return limit(text, null, max);
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param cutoffPattern
+	 * 		Text to append to text that gets limited.
+	 * @param max
+	 * 		Max length of text.
+	 *
+	 * @return Text cut off to max length.
+	 */
+	public static String limit(String text, String cutoffPattern, int max) {
+		if (text.length() > max) {
+			String s = text.substring(0, max);
+			if (cutoffPattern != null)
+				s += cutoffPattern;
+			return s;
+		}
 		return text;
 	}
 
