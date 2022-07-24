@@ -301,6 +301,21 @@ public final class EscapeUtil {
 		for (int i = 0x205F; i < 0x206F; i++) {
 			addWhitespace(String.valueOf(Character.toChars(i)), "\\u" + String.format("%04X", i));
 		}
+		for (int i = 0x2400; i < 0x243F; i++) {
+			addWhitespace(String.valueOf(Character.toChars(i)), "\\u" + String.format("%04X", i));
+		}
+		for (int i = 0xE000; i < 0xF8FF; i++) {
+			addWhitespace(String.valueOf(Character.toChars(i)), "\\u" + String.format("%04X", i));
+		}
+		for (int i = 0xFE00; i < 0xFE0F; i++) {
+			addWhitespace(String.valueOf(Character.toChars(i)), "\\u" + String.format("%04X", i));
+		}
+		for (int i = 0xFE1A; i < 0xFE20; i++) {
+			addWhitespace(String.valueOf(Character.toChars(i)), "\\u" + String.format("%04X", i));
+		}
+		for (int i = 0xFFF0; i <= 0xFFFF; i++) {
+			addWhitespace(String.valueOf(Character.toChars(i)), "\\u" + String.format("%04X", i));
+		}
 		addWhitespace(String.valueOf(Character.toChars('\u3164')), "\\u" + String.format("%04X", (int) '\u3164'));
 		addWhitespace(String.valueOf(Character.toChars('\u318F')), "\\u" + String.format("%04X", (int) '\u318F'));
 	}

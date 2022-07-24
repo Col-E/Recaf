@@ -87,6 +87,20 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param text
+	 * 		Input text.
+	 * @param max
+	 * 		Max length of text.
+	 *
+	 * @return Text cut off to max length.
+	 */
+	public static String limit(String text, int max) {
+		if (text.length() > max)
+			return text.substring(0, max);
+		return text;
+	}
+
+	/**
 	 * @param name
 	 * 		Text to lowercase the first letter of.
 	 *
