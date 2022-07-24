@@ -31,7 +31,6 @@ import static me.coley.recaf.ui.util.Icons.getIconView;
  * @author Matt Coley
  */
 public class OutlinePane extends BorderPane implements ClassRepresentation {
-	private static final int MAX_TREE_TEXT_LEN = 128;
 	private static final SimpleBooleanProperty showTypes = new SimpleBooleanProperty();
 	private static final SimpleBooleanProperty showSynthetics = new SimpleBooleanProperty(true);
 	private final OutlineTree tree = new OutlineTree();
@@ -242,7 +241,8 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 						else type = "<INVALID>";
 						text = type + " " + text;
 					}
-					setText(StringUtil.limit(EscapeUtil.escape(text), "...", MAX_TREE_TEXT_LEN));
+					int maxLen = Configs.display().maxTreeTextLength;
+					setText(StringUtil.limit(EscapeUtil.escape(text), "...", maxLen));
 					setGraphic(Icons.getFieldIcon((FieldInfo) item));
 					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item)
 							.setDeclaration(true)
@@ -256,7 +256,8 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 								.collect(Collectors.joining(", ")) +
 								")" + StringUtil.shortenPath(Type.getReturnType(desc).getInternalName());
 					}
-					setText(StringUtil.limit(EscapeUtil.escape(text), "...", MAX_TREE_TEXT_LEN));
+					int maxLen = Configs.display().maxTreeTextLength;
+					setText(StringUtil.limit(EscapeUtil.escape(text), "...", maxLen));
 					setGraphic(Icons.getMethodIcon(methodInfo));
 					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) item)
 							.setDeclaration(true)
