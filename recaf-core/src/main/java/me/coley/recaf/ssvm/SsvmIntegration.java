@@ -41,7 +41,7 @@ import java.util.function.Consumer;
 public class SsvmIntegration {
 	private static final Value[] EMPTY_STACK = new Value[0];
 	private static final Logger logger = Logging.get(SsvmIntegration.class);
-	private static final ExecutorService vmThreadPool = ThreadPoolFactory.newFixedThreadPool("Recaf SSVM");
+	private static final ExecutorService vmThreadPool = ThreadPoolFactory.newFixedThreadPool("Recaf SSVM", 1, true);
 	private final Workspace workspace;
 	private VirtualMachine vm;
 	private boolean initialized;
