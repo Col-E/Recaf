@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.dialog;
 
-import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.memory.MemoryManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
@@ -25,6 +24,7 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ssvm.VirtualMachineUtil;
+import me.coley.recaf.ssvm.IntegratedVirtualMachine;
 import me.coley.recaf.ssvm.value.ConstNumericValue;
 import me.coley.recaf.ssvm.value.ConstStringValue;
 import me.coley.recaf.ui.util.Icons;
@@ -50,7 +50,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 	protected final SsvmIntegration ssvm;
 	protected final CommonClassInfo owner;
 	protected final MethodInfo info;
-	protected VirtualMachine vm;
+	protected IntegratedVirtualMachine vm;
 	protected Value[] values;
 	protected VMHelper helper;
 	protected VMSymbols symbols;

@@ -11,7 +11,6 @@ import dev.xdark.ssvm.thread.ThreadStorage;
 import dev.xdark.ssvm.value.*;
 import me.coley.recaf.ssvm.util.VmValueUtil;
 import me.coley.recaf.ssvm.value.ConstNumericValue;
-import me.coley.recaf.ssvm.value.ConstValue;
 import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Opcodes;
@@ -33,8 +32,8 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
  *
  * @author Matt Coley
  */
-public class FlowRevisitingProcessors implements Opcodes {
-	private static final Logger logger = Logging.get(FlowRevisitingProcessors.class);
+public class FlowRevisiting implements Opcodes {
+	private static final Logger logger = Logging.get(FlowRevisiting.class);
 
 	/**
 	 * Installs processors that ensures all code branches are visited.
@@ -44,7 +43,7 @@ public class FlowRevisitingProcessors implements Opcodes {
 	 * @param whitelist
 	 * 		Filter on which contexts to apply to.
 	 */
-	public static void installBranchingProcessor(VirtualMachine vm, Predicate<ExecutionContext> whitelist) {
+	public static void install(VirtualMachine vm, Predicate<ExecutionContext> whitelist) {
 		VMInterface vmi = vm.getInterface();
 		Map<ExecutionContext, Value> initialReturnValueMap = new IdentityHashMap<>();
 		Map<ExecutionContext, InstructionStateCache> stateCacheMap = new IdentityHashMap<>();

@@ -4,6 +4,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -12,7 +13,6 @@ import java.util.stream.Stream;
  * @author xDark
  */
 public final class Streams {
-
 	private Streams() {
 	}
 
@@ -29,7 +29,7 @@ public final class Streams {
 					if (throwable.get() == null) {
 						try {
 							c.accept(x);
-						} catch(Throwable t) {
+						} catch (Throwable t) {
 							throwable.compareAndSet(null, t);
 						}
 					}
@@ -43,5 +43,33 @@ public final class Streams {
 		if (thrown != null) {
 			ReflectUtil.propagate(thrown);
 		}
+	}
+
+	/**
+	 * Recursively traversed {@literal seed}.
+	 *
+	 * @param seed
+	 * 		Initial seed.
+	 * @param fn
+	 * 		Transforming function.
+	 *
+	 * @return Stream containing all traversed elements.
+	 */
+	public static <T> Stream<T> recurse(T seed, Function<? super T, Stream<? extends T>> fn) {
+		return Stream.concat(Stream.of(seed), Stream.of(seed).flatMap(fn).flatMap(x -> recurse(x, fn)));
+	}
+
+	/**
+	 * Recursively traversed {@literal seed}.
+	 *
+	 * @param seed
+	 * 		Initial stream.
+	 * @param fn
+	 * 		Transforming function.
+	 *
+	 * @return Stream containing all traversed elements.
+	 */
+	public static <T> Stream<T> recurse(Stream<? extends T> seed, Function<? super T, Stream<? extends T>> fn) {
+		return seed.flatMap(x -> recurse(x, fn));
 	}
 }

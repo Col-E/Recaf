@@ -18,8 +18,10 @@ import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.decompile.cfr.CfrDecompiler;
 import me.coley.recaf.ssvm.loader.RuntimeBootClassLoader;
 import me.coley.recaf.ssvm.loader.WorkspaceBootClassLoader;
-import me.coley.recaf.ssvm.processing.FlowRevisitingProcessors;
-import me.coley.recaf.ssvm.processing.PeepholeProcessors;
+import me.coley.recaf.ssvm.processing.DataTracking;
+import me.coley.recaf.ssvm.processing.FlowRevisiting;
+import me.coley.recaf.ssvm.processing.peephole.MathOperationFolder;
+import me.coley.recaf.ssvm.processing.peephole.MethodInvokeFolder;
 import me.coley.recaf.workspace.Workspace;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,12 +73,12 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 	}
 
 	@Test
-	public void foldVisitedMathOperations() throws Exception {
+	public void foldVisitedMathOperations() {
 		try {
 			// Register peephole processors
-			PeepholeProcessors.installValuePushing(vm);
-			PeepholeProcessors.installStackManipulationInstructionTracking(vm);
-			PeepholeProcessors.installOperationFolding(vm, c -> true);
+			DataTracking.installValuePushing(vm);
+			DataTracking.installStackManipulationInstructionTracking(vm);
+			MathOperationFolder.install(vm, c -> true);
 			// Invoke the main method
 			invokeMain();
 			// Decompile
@@ -93,13 +95,13 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 	}
 
 	@Test
-	public void foldStringDecryptCall() throws Exception {
+	public void foldStringDecryptCall() {
 		try {
 			// Register peephole processors
-			PeepholeProcessors.installValuePushing(vm);
-			PeepholeProcessors.installStackManipulationInstructionTracking(vm);
-			PeepholeProcessors.installOperationFolding(vm, c -> true);
-			PeepholeProcessors.installReturnValueFolding(vm, c -> true);
+			DataTracking.installValuePushing(vm);
+			DataTracking.installStackManipulationInstructionTracking(vm);
+			MathOperationFolder.install(vm, c -> true);
+			MethodInvokeFolder.install(vm, c -> true);
 			// Invoke the main method
 			invokeMain();
 			// Decompile
@@ -115,14 +117,14 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 	}
 
 	@Test
-	public void visitAllPaths() throws Exception {
+	public void visitAllPaths() {
 		try {
 			// Register peephole processors
-			PeepholeProcessors.installValuePushing(vm);
-			PeepholeProcessors.installStackManipulationInstructionTracking(vm);
-			PeepholeProcessors.installOperationFolding(vm, c -> true);
-			PeepholeProcessors.installReturnValueFolding(vm, c -> true);
-			FlowRevisitingProcessors.installBranchingProcessor(vm, ctx -> ctx.getMethod().getName().equals("main"));
+			DataTracking.installValuePushing(vm);
+			DataTracking.installStackManipulationInstructionTracking(vm);
+			MathOperationFolder.install(vm, c -> true);
+			MethodInvokeFolder.install(vm, c -> true);
+			FlowRevisiting.install(vm, ctx -> ctx.getMethod().getName().equals("main"));
 			// Invoke the main method
 			invokeMain();
 			// Decompile

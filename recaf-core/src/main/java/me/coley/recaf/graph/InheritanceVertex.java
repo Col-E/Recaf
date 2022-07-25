@@ -3,7 +3,7 @@ package me.coley.recaf.graph;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
-import me.coley.recaf.util.Recurse;
+import me.coley.recaf.util.Streams;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -243,7 +243,7 @@ public class InheritanceVertex {
 	 * @return All classes this extends or implements.
 	 */
 	public Stream<InheritanceVertex> parents() {
-		return Recurse.recurse(this, x -> x.getParents().stream());
+		return Streams.recurse(this, x -> x.getParents().stream());
 	}
 
 	/**
@@ -283,7 +283,7 @@ public class InheritanceVertex {
 	}
 
 	private Stream<InheritanceVertex> children() {
-		return Recurse.recurse(this, x -> x.getChildren().stream());
+		return Streams.recurse(this, x -> x.getChildren().stream());
 	}
 
 	/**

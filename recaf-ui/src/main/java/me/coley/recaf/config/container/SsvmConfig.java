@@ -6,8 +6,8 @@ import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
 import me.coley.recaf.ssvm.SsvmIntegration;
+import me.coley.recaf.ssvm.IntegratedVirtualMachine;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.threading.ThreadUtil;
 
 /**
  * Config container for {@link me.coley.recaf.ssvm.SsvmIntegration}.

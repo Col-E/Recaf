@@ -5,9 +5,6 @@ import dev.xdark.ssvm.classloading.BootClassLoader;
 import dev.xdark.ssvm.classloading.CompositeBootClassLoader;
 import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.VMException;
-import dev.xdark.ssvm.fs.FileDescriptorManager;
-import dev.xdark.ssvm.fs.Handle;
-import dev.xdark.ssvm.fs.HostFileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
 import dev.xdark.ssvm.util.VMHelper;
@@ -25,7 +22,6 @@ import me.coley.recaf.workspace.Workspace;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,11 +39,11 @@ public class SsvmIntegration {
 	private static final Logger logger = Logging.get(SsvmIntegration.class);
 	private static final ExecutorService vmThreadPool = ThreadPoolFactory.newFixedThreadPool("Recaf SSVM", 1, true);
 	private final Workspace workspace;
-	private VirtualMachine vm;
+	private IntegratedVirtualMachine vm;
 	private boolean initialized;
-	private Exception initializeError;
 	private boolean allowRead;
 	private boolean allowWrite;
+	private Exception initializeError;
 
 	/**
 	 * @param workspace
@@ -100,46 +96,17 @@ public class SsvmIntegration {
 	 *
 	 * @return New VM.
 	 */
-	public VirtualMachine createVM(boolean initialize, Consumer<VirtualMachine> postInit) {
-		VirtualMachine vm = new VirtualMachine() {
+	public IntegratedVirtualMachine createVM(boolean initialize, Consumer<IntegratedVirtualMachine> postInit) {
+		SsvmIntegration integration = this;
+		IntegratedVirtualMachine vm = new IntegratedVirtualMachine() {
 			@Override
-			protected FileDescriptorManager createFileDescriptorManager() {
-				return new HostFileDescriptorManager() {
-					@Override
-					public long open(String path, int mode) throws IOException {
-						long fd = newFD();
-						if ((allowRead && mode == READ) || (allowWrite && (mode == WRITE || mode == APPEND)))
-							logger.trace("VM file handle[{}:{}]: {}",
-									VirtualMachineUtil.describeFileMode(mode), fd, path);
-						switch (mode) {
-							case READ: {
-								InputStream in;
-								if (allowRead)
-									in = new FileInputStream(path);
-								else
-									in = new ByteArrayInputStream(new byte[0]);
-								inputs.put(Handle.of(fd), in);
-								return fd;
-							}
-							case WRITE:
-							case APPEND: {
-								OutputStream out;
-								if (allowWrite)
-									out = new FileOutputStream(path, mode == APPEND);
-								else
-									out = new ByteArrayOutputStream();
-								outputs.put(Handle.of(fd), out);
-								return fd;
-							}
-							default:
-								throw new IOException("Unknown mode: " + mode);
-						}
-					}
-				};
+			protected SsvmIntegration integration() {
+				return integration;
 			}
 
 			@Override
 			protected BootClassLoader createBootClassLoader() {
+				// TODO: Once workspace zip is integrated, delete this
 				return new CompositeBootClassLoader(Arrays.asList(
 						new WorkspaceBootClassLoader(workspace),
 						new RuntimeBootClassLoader()
@@ -149,6 +116,7 @@ public class SsvmIntegration {
 		if (initialize)
 			try {
 				vm.bootstrap();
+				vm.findBootstrapClass("jdk/internal/ref/CleanerFactory", true);
 				if (postInit != null)
 					postInit.accept(vm);
 			} catch (Exception ex) {
@@ -160,8 +128,15 @@ public class SsvmIntegration {
 	/**
 	 * @return Current VM instance.
 	 */
-	public VirtualMachine getVm() {
+	public IntegratedVirtualMachine getVm() {
 		return vm;
+	}
+
+	/**
+	 * @return Associated workspace.
+	 */
+	public Workspace getWorkspace() {
+		return workspace;
 	}
 
 	/**
@@ -169,16 +144,6 @@ public class SsvmIntegration {
 	 */
 	public boolean isInitialized() {
 		return initialized;
-	}
-
-	/**
-	 * {@code false} by default.
-	 *
-	 * @return {@code true} when the VM should have access to host user's file system for reading.
-	 * {@code false} provides the VM an empty file instead.
-	 */
-	public boolean doAllowRead() {
-		return allowRead;
 	}
 
 	/**
@@ -195,11 +160,11 @@ public class SsvmIntegration {
 	/**
 	 * {@code false} by default.
 	 *
-	 * @return {@code true} when the VM should have access to host user's file system for writing.
-	 * {@code false} provides a no-op write behavior.
+	 * @return {@code true} when the VM should have access to host user's file system for reading.
+	 * {@code false} provides the VM an empty file instead.
 	 */
-	public boolean doAllowWrite() {
-		return allowWrite;
+	public boolean doAllowRead() {
+		return allowRead;
 	}
 
 	/**
@@ -211,6 +176,16 @@ public class SsvmIntegration {
 	 */
 	public void setAllowWrite(boolean allowWrite) {
 		this.allowWrite = allowWrite;
+	}
+
+	/**
+	 * {@code false} by default.
+	 *
+	 * @return {@code true} when the VM should have access to host user's file system for writing.
+	 * {@code false} provides a no-op write behavior.
+	 */
+	public boolean doAllowWrite() {
+		return allowWrite;
 	}
 
 	/**
@@ -244,10 +219,19 @@ public class SsvmIntegration {
 	 * @return Result of invoke.
 	 */
 	public CompletableFuture<VmRunResult> runMethod(VirtualMachine vm, CommonClassInfo owner, MethodInfo method, Value[] parameters) {
-		InstanceJavaClass vmClass = (InstanceJavaClass) vm.findBootstrapClass(owner.getName());
-		if (vmClass == null) {
+		InstanceJavaClass vmClass;
+		try {
+			// vmClass = (InstanceJavaClass) vm.findClass(VirtualMachineUtil.getSystemClassLoader(vm), owner.getName(), true);
+			vmClass = (InstanceJavaClass) vm.findBootstrapClass(owner.getName(), true);
+			if (vmClass == null) {
+				return CompletableFuture.completedFuture(
+						new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName())));
+			}
+		} catch (Exception ex) {
+			// If the class isn't found we get 'null'.
+			// If the class is found but cannot be loaded we probably get some error that we need to handle here.
 			return CompletableFuture.completedFuture(
-					new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName())));
+					new VmRunResult(new IllegalStateException("Failed to initialize class: " + owner.getName(), unwrap(ex))));
 		}
 		// Invoke with parameters and return value
 		return CompletableFuture.supplyAsync(() -> {

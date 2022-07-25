@@ -4,10 +4,7 @@ import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.value.TopValue;
 import dev.xdark.ssvm.value.Value;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
@@ -16,8 +13,6 @@ import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.scripting.impl.WorkspaceAPI;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ssvm.VirtualMachineUtil;
-import me.coley.recaf.ssvm.processing.FlowRevisitingProcessors;
-import me.coley.recaf.ssvm.processing.PeepholeProcessors;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
@@ -106,11 +101,13 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 	protected void initVm() {
 		// Create new VM so we can attach processors to it.
 		vm = ssvm.createVM(true, vm -> {
-			Predicate<ExecutionContext> filter = ctx ->
+			Predicate<ExecutionContext> whitelist = ctx ->
 					ctx.getOwner().getInternalName().equals(owner.getName()) &&
 							ctx.getMethod().getName().equals(info.getName());
-			PeepholeProcessors.installAll(vm, filter);
-			FlowRevisitingProcessors.installBranchingProcessor(vm, filter);
+			vm.installFlowRevisiting(whitelist);
+			vm.installMathFolding(whitelist);
+			vm.installMethodFolding(whitelist);
+			vm.installStringFolding(whitelist);
 		});
 	}
 }

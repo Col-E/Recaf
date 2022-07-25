@@ -746,4 +746,22 @@ public class InstructionUtil {
 				throw new IllegalArgumentException("Unhandled instruction: " + op);
 		}
 	}
+
+	/**
+	 * Replaces the given insn with a {@code NOP}.
+	 * Silently ignores errors when the instruction is not contained in the list.
+	 *
+	 * @param instructions
+	 * 		Containing instruction list.
+	 * @param insn
+	 * 		Instruction to replace with nop.
+	 */
+	public static void nop(InsnList instructions, AbstractInsnNode insn) {
+		try {
+			instructions.set(insn, new InsnNode(NOP));
+		} catch (IndexOutOfBoundsException ignored) {
+			// It's faster to fail/handle here than to call 'contains' or reflectively check if we can replace 'insn'.
+			// The failure occurs because 'AbstractInsnNode.index' is '-1' if the 'insn' is not in the 'InsnList'.
+		}
+	}
 }
