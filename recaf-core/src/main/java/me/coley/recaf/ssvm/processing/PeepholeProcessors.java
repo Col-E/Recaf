@@ -4,6 +4,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.VMInterface;
+import dev.xdark.ssvm.asm.NewInsnNode;
+import dev.xdark.ssvm.asm.VMOpcodes;
 import dev.xdark.ssvm.execution.*;
 import dev.xdark.ssvm.jit.JitHelper;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
@@ -100,7 +102,8 @@ public class PeepholeProcessors implements Opcodes {
 				value = ConstStringValue.ofString(helper, (String) cst);
 			} else {
 				// We don't support the type of LDC constant used.
-				return ldc.execute(insn, ctx);
+				ctx.getStack().pushGeneric(helper.valueFromLdc(insn.cst));
+				return Result.CONTINUE;
 			}
 			return push(ctx, insn, value);
 		});
@@ -632,8 +635,8 @@ public class PeepholeProcessors implements Opcodes {
 	public static void installStringFolding(VirtualMachine vm) {
 		VMInterface vmi = vm.getInterface();
 		InstanceJavaClass jc = vm.getSymbols().java_lang_String();
-		InstructionProcessor<TypeInsnNode> newProcessor = vmi.getProcessor(NEW);
-		vmi.setProcessor(NEW, (TypeInsnNode insn, ExecutionContext ctx) -> {
+		InstructionProcessor<NewInsnNode> newProcessor = vmi.getProcessor(VMOpcodes.NEW);
+		vmi.setProcessor(VMOpcodes.NEW, (NewInsnNode insn, ExecutionContext ctx) -> {
 			Result result = newProcessor.execute(insn, ctx);
 			Stack stack = ctx.getStack();
 			InstanceValue value = stack.peek();
