@@ -106,6 +106,7 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 	}
 
 	@Nested
+	@Disabled("Enable once SSVM is updated")
 	class IO {
 		@Test
 		public void testInterceptFileRead() {

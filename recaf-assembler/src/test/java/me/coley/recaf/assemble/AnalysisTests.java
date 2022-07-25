@@ -410,7 +410,7 @@ public class AnalysisTests extends JasmUtils {
 	}
 
 	@Nested
-	public class Failure {
+	public class Incorrectness {
 		@Test
 		public void storeIntInLongField() {
 			handle("method dummy (Z bool)V\n" +
