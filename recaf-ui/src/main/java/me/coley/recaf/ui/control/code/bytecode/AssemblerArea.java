@@ -31,6 +31,8 @@ import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.DelayedExecutor;
+import me.coley.recaf.util.threading.DelayedRunnable;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.util.visitor.FieldReplacingVisitor;
 import me.coley.recaf.util.visitor.MethodReplacingVisitor;
@@ -70,6 +72,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	private static final Logger logger = Logging.get(AssemblerArea.class);
 	private static final int INITIAL_DELAY_MS = 500;
 	private static final int AST_LOOP_MS = 100;
+	private static final int PIPELINE_UPDATE_DELAY_MS = 300;
+	private final DelayedExecutor updatePipelineInput;
 	private final ProblemTracking problemTracking;
 	private final AssemblerPipeline pipeline;
 	private ClassInfo classInfo;
@@ -89,6 +93,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		super(Languages.JAVA_BYTECODE, problemTracking);
 		this.problemTracking = problemTracking;
 		this.pipeline = pipeline;
+		this.updatePipelineInput = new DelayedRunnable(PIPELINE_UPDATE_DELAY_MS, () -> pipeline.setText(getText()));
 		// Setup variable highlighting
 		VariableHighlighter variableHighlighter = new VariableHighlighter(pipeline, this);
 		variableHighlighter.addIndicator(getIndicatorFactory());
@@ -115,8 +120,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	@Override
 	protected void onTextChanged(PlainTextChange change) {
 		super.onTextChanged(change);
-		// Update unit
-		pipeline.setText(getText());
+		// Push back the pipeline update.
+		// It'll run when the user stops updating the text.
+		updatePipelineInput.delay();
 	}
 
 	@Override
