@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static me.coley.recaf.evaluation.ExpressionEvaluator.evaluate;
-
+//@formatter:off
 /**
  * Utility for working with JavaParser and pulling contextual information from Java source code.
  *
@@ -169,14 +169,19 @@ public class JavaParserHelper {
 	 *     <li>{@link me.coley.recaf.code.MethodInfo}</li>
 	 * </ul>
 	 */
+	//@formatter:on
 	public Optional<ParseHitResult> at(CompilationUnit unit, int line, int column) {
 		WorkspaceTypeSolver typeSolver = symbolSolver.getTypeSolver();
 		if (unit == null) return Optional.empty();
 		Node node = getNodeAtLocation(line, column, unit);
 		if (node instanceof Expression) {
-			Optional<Number> nbOpt = evaluate((Expression) node);
-			if (nbOpt.isPresent()) {
-				return Optional.of(new ParseHitResult(new LiteralExpressionInfo(nbOpt.get(), (Expression) node), node));
+			Expression expression = (Expression) node;
+			// Double does not have any conversions yet
+			if (!expression.isDoubleLiteralExpr()) {
+				Optional<Number> nbOpt = evaluate(expression);
+				if (nbOpt.isPresent()) {
+					return Optional.of(new ParseHitResult(new LiteralExpressionInfo(nbOpt.get(), expression), node));
+				}
 			}
 		}
 		while (node != null && JavaParserResolving.isNodeResolvable(node)) {
@@ -194,8 +199,8 @@ public class JavaParserHelper {
 				if (parent.isPresent()) {
 					ItemInfo info = JavaParserResolving.of(symbolSolver, parent.get());
 					// If the parent of the node is a method of the same name, we probably meant to
+					// yield the method info, not a field by the same name.
 					if (info instanceof MethodInfo && info.getName().equals(value.getName())) {
-						// yield the method info, not a field by the same name.
 						value = info;
 					}
 				}
@@ -208,7 +213,7 @@ public class JavaParserHelper {
 
 		return Optional.of(new ParseHitResult(value, node));
 	}
-
+	//@formatter:off
 	/**
 	 * @param unit
 	 * 		A parsed source tree.
