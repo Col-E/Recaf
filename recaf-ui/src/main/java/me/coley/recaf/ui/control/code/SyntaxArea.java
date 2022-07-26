@@ -9,14 +9,18 @@ import javafx.scene.layout.HBox;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.util.SearchHelper;
+import me.coley.recaf.util.ReflectUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
+import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.richtext.CaretSelectionBind;
 import org.fxmisc.richtext.CodeArea;
+import org.fxmisc.richtext.GenericStyledArea;
 import org.fxmisc.richtext.model.*;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Field;
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,6 +49,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	private final BracketTracking bracketTracking;
 	private final Language language;
 	private final LanguageStyler styler;
+	private final VirtualFlow<?, ?> internalVirtualFlow;
 	private ReadOnlyStyledDocument<?, ?, ?> lastContent;
 	private Future<?> bracketUpdate;
 	private Future<?> syntaxUpdate;
@@ -60,6 +65,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		language = language == null ? Languages.NONE : language;
 		this.language = language;
 		this.problemTracking = problemTracking;
+		this.internalVirtualFlow = getInternalVirtualFlow();
 		if (problemTracking != null) {
 			problemTracking.addProblemListener(this);
 		}
@@ -463,7 +469,13 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	public boolean isParagraphVisible(int line) {
 		if (isParagraphFolded(line))
 			return false;
-		return line >= firstVisibleParToAllParIndex() && line <= lastVisibleParToAllParIndex();
+		// We use the internal virtual flow because the provided methods call 'layout()' unnecessarily
+		//  - firstVisibleParToAllParIndex()
+		//  - lastVisibleParToAllParIndex()
+		// It is very likely by the time of calling this that our text is already populated and laid out.
+		// This gets called rather frequently so the constant layout requests contribute a massive waste of time.
+		// If we use these methods from the internal 'VirtualFlow' we skip all that and the result is almost instant.
+		return line >= internalVirtualFlow.getFirstVisibleIndex() && line <= internalVirtualFlow.getLastVisibleIndex();
 	}
 
 	/**
@@ -683,6 +695,24 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		if (Thread.currentThread().isInterrupted())
 			return ThreadUtil.failedFuture(new InterruptedException());
 		return CompletableFuture.runAsync(() -> setStyleSpans(start, spans), FxThreadUtil.executor());
+	}
+
+	/**
+	 * See {@link #isParagraphVisible(int)} for why we need this.
+	 *
+	 * @return Internal virtual flow of the code area.
+	 */
+	private VirtualFlow<?, ?> getInternalVirtualFlow() {
+		String fieldName = "virtualFlow";
+		try {
+			Field field = ReflectUtil.getDeclaredField(GenericStyledArea.class, fieldName);
+			field.setAccessible(true);
+			return ReflectUtil.quietGet(this, field);
+		} catch (ReflectiveOperationException ex) {
+			// Make it obvious what went wrong so that if the internals do change we notice quickly and can update this.
+			logger.error("RichTextFX internals changed, cannot locate '{}'", fieldName);
+			throw new IllegalStateException("RichTextFX internals changed!", ex);
+		}
 	}
 
 	/**
