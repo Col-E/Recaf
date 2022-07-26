@@ -1,146 +1,155 @@
 package me.coley.recaf.ssvm;
 
-import dev.xdark.ssvm.InitializationState;
 import dev.xdark.ssvm.VirtualMachine;
-import dev.xdark.ssvm.asm.DelegatingInsnNode;
-import dev.xdark.ssvm.asm.Modifier;
+import dev.xdark.ssvm.execution.ExecutionContext;
+import dev.xdark.ssvm.execution.Locals;
 import dev.xdark.ssvm.execution.VMException;
-import dev.xdark.ssvm.fs.FileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
+import dev.xdark.ssvm.mirror.JavaMethod;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.InstanceValue;
+import dev.xdark.ssvm.value.ObjectValue;
 import dev.xdark.ssvm.value.Value;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ListIterator;
 import java.util.Objects;
 
 /**
- * Utils for SSVM.
+ * Recaf VM helper.
  *
  * @author xDark
  */
-public class VirtualMachineUtil {
-	/**
-	 * Deny all constructions.
-	 */
-	private VirtualMachineUtil() {
-	}
+public final class VirtualMachineUtil {
+	private final VirtualMachine vm;
 
 	/**
 	 * @param vm
 	 * 		VM instance.
-	 *
-	 * @return version of JDK the VM runs on.
 	 */
-	public static int getVersion(VirtualMachine vm) {
-		return vm.getSymbols().java_lang_Object().getNode().version - 44;
+	private VirtualMachineUtil(VirtualMachine vm) {
+		this.vm = vm;
 	}
 
 	/**
-	 * SSVM will patch some classes for better performance or due to its internals.
-	 * This method may be used to undo all changes.
+	 * Adds url to classpath of a system class loader.
 	 *
-	 * @param node
-	 * 		Class node to patch.
+	 * @param urlPath
+	 * 		Path to a file.
 	 */
-	public static void restoreClass(ClassNode node) {
-		node.access = Modifier.eraseClass(node.access);
-		for (FieldNode field : node.fields) {
-			restoreField(field);
+	public void addUrl(String urlPath) {
+		VirtualMachine vm = this.vm;
+		InstanceValue file = newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/File"), "(Ljava/lang/String;)V", vm.getHelper().newUtf8(urlPath));
+		InstanceValue asUri = (InstanceValue) invokeVirtual("toURI", "()Ljava/net/URI;", file).getResult();
+		InstanceValue asUrl = (InstanceValue) invokeVirtual("toURL", "()Ljava/net/URL;", asUri).getResult();
+		InstanceJavaClass urlClassPath = (InstanceJavaClass) vm.findBootstrapClass("jdk/internal/loader/URLClassPath");
+		if (urlClassPath == null) {
+			urlClassPath = (InstanceJavaClass) vm.findBootstrapClass("sun/misc/URLClassPath");
 		}
-		for (MethodNode mn : node.methods) {
-			restoreMethod(mn);
-		}
+		InstanceValue classLoader = (InstanceValue) getSystemClassLoader();
+		InstanceJavaClass klass = classLoader.getJavaClass();
+		ObjectValue ucp = vm.getOperations().getField(classLoader, klass, "ucp", urlClassPath.getDescriptor());
+		invokeVirtual("addURL", "(Ljava/net/URL;)V", ucp, asUrl);
 	}
 
 	/**
-	 * SSVM will patch some fields for better performance or due to its internals.
-	 * This method may be used to undo all changes.
-	 *
-	 * @param node
-	 * 		Field node to patch.
-	 */
-	public static void restoreField(FieldNode node) {
-		node.access = Modifier.eraseField(node.access);
-	}
-
-	/**
-	 * SSVM will patch some methods for better performance or due to its internals.
-	 * This method may be used to undo all changes.
-	 *
-	 * @param node
-	 * 		Method node to patch.
-	 */
-	public static void restoreMethod(MethodNode node) {
-		node.access = Modifier.eraseMethod(node.access);
-		ListIterator<AbstractInsnNode> iterator = node.instructions.iterator();
-		while (iterator.hasNext()) {
-			AbstractInsnNode insn = iterator.next();
-			if (insn instanceof DelegatingInsnNode) {
-				iterator.set(((DelegatingInsnNode<?>) insn).getDelegate());
-			}
-		}
-	}
-
-	/**
-	 * @param vm
-	 * 		VM instance.
-	 *
 	 * @return System class loader.
 	 */
-	public static InstanceValue getSystemClassLoader(VirtualMachine vm) {
-		return (InstanceValue) vm.getHelper().invokeStatic(vm.getSymbols().java_lang_ClassLoader(), "getSystemClassLoader", "()Ljava/lang/ClassLoader;", new Value[0], new Value[0]).getResult();
+	public ObjectValue getSystemClassLoader() {
+		VirtualMachine vm = this.vm;
+		JavaMethod getSystemClassLoader = vm.getLinkResolver().resolveStaticMethod(vm.getSymbols().java_lang_ClassLoader(), "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
+		return (ObjectValue) vm.getHelper().invoke(getSystemClassLoader, vm.getThreadStorage().newLocals(getSystemClassLoader)).getResult();
 	}
 
 	/**
-	 * Adds url to system classpath.
+	 * Makes exact call.
 	 *
-	 * @param vm
-	 * 		VM instance.
-	 * @param path
-	 * 		Path to add.
+	 * @param klass
+	 * 		Method owner.
+	 * @param name
+	 * 		Method name.
+	 * @param desc
+	 * 		Method desc.
+	 * @param args
+	 * 		Method arguments.
+	 *
+	 * @return Invocation context.
 	 */
-	public static void addUrl(VirtualMachine vm, String path) {
+	public ExecutionContext invokeExact(InstanceJavaClass klass, String name, String desc, Value... args) {
+		VirtualMachine vm = this.vm;
 		VMHelper helper = vm.getHelper();
-		InstanceJavaClass fileClass = (InstanceJavaClass) vm.findBootstrapClass("java/io/File", true);
-		Value file = vm.getMemoryManager().newInstance(fileClass);
-		helper.invokeExact(fileClass, "<init>", "(Ljava/lang/String;)V", new Value[0], new Value[]{file, helper.newUtf8(path)});
-		Value uri = helper.invokeVirtual("toURI", "()Ljava/net/URI;", new Value[0], new Value[]{file}).getResult();
-		Value url = helper.invokeVirtual("toURL", "()Ljava/net/URL;", new Value[0], new Value[]{uri}).getResult();
-		InstanceValue scl = getSystemClassLoader(vm);
-		int version = getVersion(vm);
-		Value addUrlTo;
-		if (version < 9) {
-			addUrlTo = scl;
-		} else {
-			addUrlTo = scl.getValue("ucp", "Ljdk/internal/loader/URLClassPath;");
-		}
-		helper.invokeVirtual("addURL", "(Ljava/net/URL;)V", new Value[0], new Value[]{addUrlTo, url});
+		JavaMethod target = vm.getLinkResolver().resolveSpecialMethod(klass, name, desc);
+		Locals locals = vm.getThreadStorage().newLocals(target);
+		locals.copyFrom(args, 0, 0, args.length);
+		return helper.invoke(target, locals);
 	}
 
 	/**
-	 * @param mode
-	 * 		Access mode for {@link FileDescriptorManager}.
+	 * Makes virtual call.
 	 *
-	 * @return Name representation of mode.
+	 * @param name
+	 * 		Method name.
+	 * @param desc
+	 * 		Method desc.
+	 * @param args
+	 * 		Method arguments.
+	 *
+	 * @return Invocation context.
 	 */
-	public static String describeFileMode(int mode) {
-		switch (mode) {
-			case FileDescriptorManager.READ:
-				return "READ";
-			case FileDescriptorManager.WRITE:
-				return "WRITE";
-			case FileDescriptorManager.APPEND:
-				return "APPEND";
-			default:
-				return "?";
-		}
+	public ExecutionContext invokeVirtual(String name, String desc, Value... args) {
+		VirtualMachine vm = this.vm;
+		VMHelper helper = vm.getHelper();
+		ObjectValue value = helper.checkNotNull(args[0]);
+		JavaMethod target = vm.getLinkResolver().resolveVirtualMethod(value, name, desc);
+		Locals locals = vm.getThreadStorage().newLocals(target);
+		locals.copyFrom(args, 0, 0, args.length);
+		return helper.invoke(target, locals);
+	}
+
+	/**
+	 * Makes static call.
+	 *
+	 * @param klass
+	 * 		Method owner.
+	 * @param name
+	 * 		Method name.
+	 * @param desc
+	 * 		Method desc.
+	 * @param args
+	 * 		Method arguments.
+	 *
+	 * @return Invocation context.
+	 */
+	public ExecutionContext invokeStatic(InstanceJavaClass klass, String name, String desc, Value... args) {
+		VirtualMachine vm = this.vm;
+		JavaMethod target = vm.getLinkResolver().resolveStaticMethod(klass, name, desc);
+		Locals locals = vm.getThreadStorage().newLocals(target);
+		locals.copyFrom(args, 0, 0, args.length);
+		return vm.getHelper().invoke(target, locals);
+	}
+
+	/**
+	 * Allocates new instance.
+	 *
+	 * @param klass
+	 * 		Class of the instance.
+	 * @param desc
+	 * 		Init descriptor.
+	 * @param args
+	 * 		Method arguments.
+	 *
+	 * @return Allocated instance.
+	 */
+	public InstanceValue newInstance(InstanceJavaClass klass, String desc, Value... args) {
+		klass.initialize();
+		VirtualMachine vm = this.vm;
+		JavaMethod init = vm.getLinkResolver().resolveSpecialMethod(klass, "<init>", desc);
+		InstanceValue value = vm.getOperations().allocateInstance(klass);
+		Locals locals = vm.getThreadStorage().newLocals(init);
+		locals.set(0, value);
+		locals.copyFrom(args, 0, 1, args.length);
+		vm.getHelper().invoke(init, locals);
+		return value;
 	}
 
 	/**
@@ -151,21 +160,29 @@ public class VirtualMachineUtil {
 	 *
 	 * @return Throwable as string.
 	 */
-	public static String throwableToString(InstanceValue throwable) {
+	public String throwableToString(InstanceValue throwable) {
 		Objects.requireNonNull(throwable, "throwable");
-		InstanceJavaClass javaClass = throwable.getJavaClass();
-		VirtualMachine vm = javaClass.getVM();
 		VMHelper helper = vm.getHelper();
 		try {
-			InstanceValue stringWriter = helper.newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/StringWriter"), "()V");
-			InstanceValue printWriter = helper.newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/PrintWriter"), "(Ljava/io/Writer;)V", stringWriter);
-			helper.invokeVirtual("printStackTrace", "(Ljava/io/PrintWriter;)V", new Value[0], new Value[]{throwable, printWriter});
-			Value throwableAsString = helper.invokeVirtual("toString", "()Ljava/lang/String;", new Value[0], new Value[]{stringWriter}).getResult();
+			InstanceValue stringWriter = newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/StringWriter"), "()V");
+			InstanceValue printWriter = newInstance((InstanceJavaClass) vm.findBootstrapClass("java/io/PrintWriter"), "(Ljava/io/Writer;)V", stringWriter);
+			invokeVirtual("printStackTrace", "(Ljava/io/PrintWriter;)V", throwable, printWriter);
+			Value throwableAsString = invokeVirtual("toString", "()Ljava/lang/String;", stringWriter).getResult();
 			return helper.readUtf8(throwableAsString);
-		} catch(VMException ignored) {
+		} catch (VMException ignored) {
 		}
 		StringWriter writer = new StringWriter();
 		helper.toJavaException(throwable).printStackTrace(new PrintWriter(writer));
 		return writer.toString();
+	}
+
+	/**
+	 * @param vm
+	 * 		VM instance.
+	 *
+	 * @return VM helper.
+	 */
+	public static VirtualMachineUtil create(VirtualMachine vm) {
+		return new VirtualMachineUtil(vm);
 	}
 }

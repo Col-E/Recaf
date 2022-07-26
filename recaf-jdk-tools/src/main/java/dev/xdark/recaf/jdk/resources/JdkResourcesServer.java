@@ -1,9 +1,14 @@
 package dev.xdark.recaf.jdk.resources;
 
+import dev.xdark.recaf.jdk.BootClassLoaderDelegate;
+import dev.xdark.recaf.jdk.ToolHelper;
+
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 /**
@@ -12,13 +17,17 @@ import java.util.Arrays;
  * @author xDark
  */
 public class JdkResourcesServer {
+	private static Path classpathJar;
+
 	private final ServerSocket server;
 	private final Socket client;
 	private final StreamPair streamPair;
+	private final Process process;
 
-	private JdkResourcesServer(ServerSocket server, Socket client) throws IOException {
+	private JdkResourcesServer(ServerSocket server, Socket client, Process process) throws IOException {
 		this.server = server;
 		this.client = client;
+		this.process = process;
 		streamPair = new StreamPair(client.getInputStream(), client.getOutputStream());
 	}
 
@@ -102,6 +111,11 @@ public class JdkResourcesServer {
 			close(streamPair.in);
 			close(client);
 			close(server);
+			// No point in keeping process alive
+			Process process = this.process;
+			if (process != null) {
+				process.destroy();
+			}
 		}
 	}
 
@@ -118,7 +132,39 @@ public class JdkResourcesServer {
 		ServerSocket socket = new ServerSocket();
 		socket.bind(new InetSocketAddress(port));
 		socket.setSoTimeout(100000);
-		return new JdkResourcesServer(socket, socket.accept());
+		Socket client1 = socket.accept();
+		socket.setSoTimeout(0);
+		return new JdkResourcesServer(socket, client1, null);
+	}
+
+	public static JdkResourcesServer start(Path jdkExecutable) throws IOException {
+		if (!Files.isRegularFile(jdkExecutable)) {
+			throw new IllegalStateException("JDK executable does not exist");
+		}
+		if (!Files.isRegularFile(jdkExecutable)) {
+			throw new IllegalStateException("JDK executable does not exist");
+		}
+		// Prepare jar
+		Path classpathJar = JdkResourcesServer.classpathJar;
+		if (classpathJar == null) {
+			classpathJar = Files.createTempFile("recaf-jdk-resources", ".jar");
+			classpathJar.toFile().deleteOnExit();
+			JdkResourcesServer.classpathJar = classpathJar;
+			ToolHelper.prepareJar(classpathJar, Arrays.asList(JdkResources.class, BootClassLoaderDelegate.class));
+		}
+		// Find open port
+		ServerSocket socket = new ServerSocket(0);
+		socket.setSoTimeout(100000);
+		// Prepare process
+		ProcessBuilder builder = new ProcessBuilder();
+		builder.directory(jdkExecutable.getParent().toFile());
+		builder.command(jdkExecutable.toString(),
+				"-cp", classpathJar.toString(),
+				JdkResources.class.getName(), Integer.toString(socket.getLocalPort()));
+		Process process = builder.start();
+		Socket client = socket.accept();
+		socket.setSoTimeout(0);
+		return new JdkResourcesServer(socket, client, process);
 	}
 
 	private static void close(Closeable closeable) {

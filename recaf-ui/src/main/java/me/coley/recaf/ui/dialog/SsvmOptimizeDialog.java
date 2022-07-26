@@ -12,7 +12,7 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.scripting.impl.WorkspaceAPI;
 import me.coley.recaf.ssvm.SsvmIntegration;
-import me.coley.recaf.ssvm.VirtualMachineUtil;
+import me.coley.recaf.ssvm.SSVMUtil;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
@@ -58,7 +58,7 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 				}
 			}
 			// Run and get result
-			CompletableFuture<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(vm, owner, info, getValues());
+			CompletableFuture<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(owner, info, getValues());
 			resultFuture.exceptionally(SsvmIntegration.VmRunResult::new).orTimeout(10, TimeUnit.SECONDS).thenAccept((result) -> {
 				// Check for error handling the task
 				Throwable ex = result.getException();
@@ -78,7 +78,7 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 				InstanceJavaClass target = (InstanceJavaClass) vm.findBootstrapClass(owner.getName());
 				ClassWriter writer = new WorkspaceClassWriter(RecafUI.getController(), ClassWriter.COMPUTE_FRAMES);
 				ClassNode node = target.getNode();
-				VirtualMachineUtil.restoreClass(node);
+				SSVMUtil.restoreClass(node);
 				try {
 					node.accept(writer);
 				} catch (Throwable t) {

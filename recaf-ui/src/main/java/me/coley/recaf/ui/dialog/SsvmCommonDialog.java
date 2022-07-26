@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.dialog;
 
 import dev.xdark.ssvm.execution.VMException;
-import dev.xdark.ssvm.memory.MemoryManager;
+import dev.xdark.ssvm.memory.management.MemoryManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
 import dev.xdark.ssvm.symbol.VMPrimitives;
@@ -9,7 +9,6 @@ import dev.xdark.ssvm.symbol.VMSymbols;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.ArrayValue;
 import dev.xdark.ssvm.value.InstanceValue;
-import dev.xdark.ssvm.value.NullValue;
 import dev.xdark.ssvm.value.Value;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
@@ -23,8 +22,8 @@ import javafx.stage.Modality;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.ssvm.SsvmIntegration;
-import me.coley.recaf.ssvm.VirtualMachineUtil;
 import me.coley.recaf.ssvm.IntegratedVirtualMachine;
+import me.coley.recaf.ssvm.VirtualMachineUtil;
 import me.coley.recaf.ssvm.value.ConstNumericValue;
 import me.coley.recaf.ssvm.value.ConstStringValue;
 import me.coley.recaf.ui.util.Icons;
@@ -56,6 +55,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 	protected VMSymbols symbols;
 	protected VMPrimitives primitives;
 	protected MemoryManager memory;
+	protected VirtualMachineUtil vmUtil;
 
 	/**
 	 * @param title
@@ -91,6 +91,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		symbols = vm.getSymbols();
 		primitives = vm.getPrimitives();
 		memory = vm.getMemoryManager();
+		vmUtil = VirtualMachineUtil.create(vm);
 		grid.addRow(0, new Label("Parameter"), new Label("Type"), new Label("Editor"));
 		Type methodType = Type.getMethodType(info.getDescriptor());
 		Type[] methodArgs = methodType.getArgumentTypes();
@@ -141,10 +142,9 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			try {
 				JavaClass type = helper.tryFindClass(symbols.java_lang_Object().getClassLoader(), owner.getName(), true);
 				InstanceValue instance = memory.newInstance((InstanceJavaClass) type);
-				helper.initializeDefaultValues(instance);
 				values[0] = instance;
 			} catch (VMException ex) {
-				String reason = VirtualMachineUtil.throwableToString(ex.getOop());
+				String reason = vmUtil.throwableToString(ex.getOop());
 				throw new RuntimeException(reason, vm.getHelper().toJavaException(ex.getOop()));
 			}
 		}
@@ -344,7 +344,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 			}
 			default:
 				Label field = new Label("null");
-				return new InputWrapper(field, unused -> NullValue.INSTANCE);
+				return new InputWrapper(field, unused -> memory.nullValue());
 		}
 	}
 
@@ -374,7 +374,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 				if (cls != null)
 					return memory.newInstance(cls);
 			}
-			return NullValue.INSTANCE;
+			return memory.nullValue();
 		});
 	}
 
@@ -399,7 +399,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 
 	protected Object encodeThrowable(Throwable t) {
 		if (t instanceof VMException) {
-			return VirtualMachineUtil.throwableToString(((VMException) t).getOop());
+			return vmUtil.throwableToString(((VMException) t).getOop());
 		}
 		return StringUtil.traceToString(t);
 	}

@@ -1,20 +1,14 @@
 package me.coley.recaf.ssvm;
 
-import dev.xdark.ssvm.VirtualMachine;
-import dev.xdark.ssvm.classloading.BootClassLoader;
-import dev.xdark.ssvm.classloading.CompositeBootClassLoader;
 import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.mirror.JavaClass;
-import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.ArrayValue;
 import dev.xdark.ssvm.value.InstanceValue;
 import dev.xdark.ssvm.value.Value;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
-import me.coley.recaf.ssvm.loader.RuntimeBootClassLoader;
-import me.coley.recaf.ssvm.loader.WorkspaceBootClassLoader;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadPoolFactory;
@@ -23,7 +17,6 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -35,7 +28,6 @@ import java.util.function.Consumer;
  * @author Matt Coley
  */
 public class SsvmIntegration {
-	private static final Value[] EMPTY_STACK = new Value[0];
 	private static final Logger logger = Logging.get(SsvmIntegration.class);
 	private static final ExecutorService vmThreadPool = ThreadPoolFactory.newFixedThreadPool("Recaf SSVM", 1, true);
 	private final Workspace workspace;
@@ -56,6 +48,7 @@ public class SsvmIntegration {
 				vm = createVM(false, null);
 				try {
 					vm.bootstrap();
+					vm.getVmUtil().addUrl(WorkspaceZipFile.RECAF_LIVE_ZIP);
 					initialized = true;
 				} catch (Exception ex) {
 					initializeError = ex;
@@ -76,11 +69,11 @@ public class SsvmIntegration {
 			Exception initializeError = this.initializeError;
 			Throwable cause = initializeError.getCause();
 			if (cause instanceof VMException) {
-				VirtualMachine vm = this.vm;
+				IntegratedVirtualMachine vm = this.vm;
 				if (vm != null) {
 					InstanceValue oop = ((VMException) cause).getOop();
 					logger.error("SSVM failed to initialize: {}", oop);
-					logger.error(VirtualMachineUtil.throwableToString(oop));
+					logger.error(vm.getVmUtil().throwableToString(oop));
 					return;
 				}
 			}
@@ -102,15 +95,6 @@ public class SsvmIntegration {
 			@Override
 			protected SsvmIntegration integration() {
 				return integration;
-			}
-
-			@Override
-			protected BootClassLoader createBootClassLoader() {
-				// TODO: Once workspace zip is integrated, delete this
-				return new CompositeBootClassLoader(Arrays.asList(
-						new WorkspaceBootClassLoader(workspace),
-						new RuntimeBootClassLoader()
-				));
 			}
 		};
 		if (initialize)
@@ -189,7 +173,7 @@ public class SsvmIntegration {
 	}
 
 	/**
-	 * Run the method in the {@link #getVm() current VM}.
+	 * Run the method in the given VM.
 	 *
 	 * @param owner
 	 * 		Class declaring the method.
@@ -201,32 +185,9 @@ public class SsvmIntegration {
 	 * @return Result of invoke.
 	 */
 	public CompletableFuture<VmRunResult> runMethod(CommonClassInfo owner, MethodInfo method, Value[] parameters) {
-		return runMethod(getVm(), owner, method, parameters);
-	}
-
-	/**
-	 * Run the method in the given VM.
-	 *
-	 * @param vm
-	 * 		Target VM to run in.
-	 * @param owner
-	 * 		Class declaring the method.
-	 * @param method
-	 * 		Method to invoke in the VM.
-	 * @param parameters
-	 * 		Parameter values to pass.
-	 *
-	 * @return Result of invoke.
-	 */
-	public CompletableFuture<VmRunResult> runMethod(VirtualMachine vm, CommonClassInfo owner, MethodInfo method, Value[] parameters) {
 		InstanceJavaClass vmClass;
 		try {
-			// vmClass = (InstanceJavaClass) vm.findClass(VirtualMachineUtil.getSystemClassLoader(vm), owner.getName(), true);
-			vmClass = (InstanceJavaClass) vm.findBootstrapClass(owner.getName(), true);
-			if (vmClass == null) {
-				return CompletableFuture.completedFuture(
-						new VmRunResult(new IllegalStateException("Class not found in VM: " + owner.getName())));
-			}
+			vmClass = (InstanceJavaClass) vm.findClass(vm.getVmUtil().getSystemClassLoader(), owner.getName(), true);
 		} catch (Exception ex) {
 			// If the class isn't found we get 'null'.
 			// If the class is found but cannot be loaded we probably get some error that we need to handle here.
@@ -235,7 +196,6 @@ public class SsvmIntegration {
 		}
 		// Invoke with parameters and return value
 		return CompletableFuture.supplyAsync(() -> {
-			VMHelper helper = vm.getHelper();
 			int access = method.getAccess();
 			String methodName = method.getName();
 			String methodDesc = method.getDescriptor();
@@ -244,13 +204,9 @@ public class SsvmIntegration {
 					vmClass.initialize();
 				ExecutionContext context;
 				if (AccessFlag.isStatic(access)) {
-					context = helper.invokeStatic(vmClass, methodName, methodDesc,
-							EMPTY_STACK,
-							parameters);
+					context = vm.getVmUtil().invokeStatic(vmClass, methodName, methodDesc, parameters);
 				} else {
-					context = helper.invokeExact(vmClass, methodName, methodDesc,
-							EMPTY_STACK,
-							parameters);
+					context = vm.getVmUtil().invokeExact(vmClass, methodName, methodDesc, parameters);
 				}
 				return new VmRunResult(context.getResult());
 			} catch (VMException ex) {

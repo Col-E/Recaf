@@ -405,7 +405,7 @@ public class FlowRevisiting implements Opcodes {
 						Value v = ctx.getHelper().newUtf8("dummy");
 						if (result) {
 							stack.push(v);
-							stack.push(NullValue.INSTANCE);
+							stack.push(ctx.getMemoryManager().nullValue());
 						} else {
 							stack.push(v);
 							stack.push(v);
@@ -422,7 +422,7 @@ public class FlowRevisiting implements Opcodes {
 							stack.push(v);
 						} else {
 							stack.push(v);
-							stack.push(NullValue.INSTANCE);
+							stack.push(ctx.getMemoryManager().nullValue());
 						}
 					});
 					break;
@@ -430,7 +430,7 @@ public class FlowRevisiting implements Opcodes {
 					registerUnaryInstance(v -> !v.isNull(), result -> {
 						stack.pop();
 						if (result) {
-							stack.push(NullValue.INSTANCE);
+							stack.push(ctx.getMemoryManager().nullValue());
 						} else {
 							stack.push(ctx.getHelper().newUtf8("dummy"));
 						}
@@ -442,7 +442,7 @@ public class FlowRevisiting implements Opcodes {
 						if (result) {
 							stack.push(ctx.getHelper().newUtf8("dummy"));
 						} else {
-							stack.push(NullValue.INSTANCE);
+							stack.push(ctx.getMemoryManager().nullValue());
 						}
 					});
 					break;

@@ -1,11 +1,20 @@
 package me.coley.recaf.ssvm;
 
+import dev.xdark.ssvm.fs.BasicZipFile;
 import dev.xdark.ssvm.fs.ZipFile;
+import me.coley.recaf.code.LiteralInfo;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resources;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.util.stream.Stream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 
 /**
  * Dummy {@link ZipFile} to use in {@link SsvmIntegration}.
@@ -13,70 +22,73 @@ import java.util.zip.ZipEntry;
  *
  * @author Matt Coley
  */
-public class WorkspaceZipFile implements ZipFile {
+public class WorkspaceZipFile extends BasicZipFile {
+	public static final String RECAF_LIVE_ZIP =
+			new File(System.getProperty("java.io.tmpdir"), "recaf-workspace.jar").getAbsolutePath();
+
 	private final Workspace workspace;
+	private List<ZipEntry> entries;
 
 	/**
+	 * @param rawHandle
+	 * 		Zip file handle.
 	 * @param workspace
 	 * 		Workspace to pull data from.
 	 */
-	public WorkspaceZipFile(Workspace workspace) {
+	public WorkspaceZipFile(int rawHandle, Workspace workspace) {
+		super(rawHandle);
 		this.workspace = workspace;
 	}
 
 	@Override
-	public ZipEntry getEntry(String name) {
-		return new ZipEntry(name);
-	}
-
-	@Override
-	public byte[] readEntry(ZipEntry entry) throws IOException {
-		if (entry == null)
-			throw new IOException();
-		String name = entry.getName();
-		if (name.endsWith(".class"))
-			name = name.substring(0, name.length() - ".class".length());
-		// TODO: Allow access to workspace files too?
-		return workspace.getResources().getClass(name).getValue();
-	}
-
-	@Override
-	public Stream<ZipEntry> stream() {
-		return Stream.empty();
-	}
-
-	@Override
 	public int getTotal() {
-		return 1;
-	}
-
-	@Override
-	public boolean startsWithLOC() {
-		return true;
-	}
-
-	@Override
-	public ZipEntry getEntry(int index) {
-		return null;
-	}
-
-	@Override
-	public long makeHandle(ZipEntry entry) {
 		return 0;
 	}
 
 	@Override
-	public ZipEntry getEntry(long handle) {
-		return null;
+	protected List<ZipEntry> getEntries() {
+		List<ZipEntry> entries = this.entries;
+		if (entries == null) {
+			Resources resources = workspace.getResources();
+			List<ZipEntry> zipEntries = new ArrayList<>();
+			resources.getClasses()
+					.stream().map(x -> {
+						ZipEntry entry = new ZipEntry(x.getName() + ".class");
+						int size = x.getValue().length;
+						entry.setMethod(ZipEntry.STORED);
+						entry.setSize(size);
+						entry.setCompressedSize(size);
+						return entry;
+					})
+					.collect(Collectors.toCollection(() -> zipEntries));
+			resources.getFiles()
+					.stream().map(x -> {
+						ZipEntry entry = new ZipEntry(x.getName());
+						int size = x.getValue().length;
+						entry.setMethod(ZipEntry.STORED);
+						entry.setSize(size);
+						entry.setCompressedSize(size);
+						return entry;
+					})
+					.collect(Collectors.toCollection(() -> zipEntries));
+			return this.entries = zipEntries;
+		}
+		return entries;
 	}
 
 	@Override
-	public boolean freeHandle(long handle) {
-		return true;
-	}
-
-	@Override
-	public void close() throws IOException {
-		// no-op
+	protected InputStream openStream(ZipEntry entry) throws IOException {
+		String name = entry.getName();
+		Resources resources = workspace.getResources();
+		LiteralInfo info;
+		if (name.endsWith(".class")) {
+			info = resources.getClass(name.substring(0, name.length() - 6));
+		} else {
+			info = resources.getFile(name);
+		}
+		if (info == null) {
+			throw new ZipException(name);
+		}
+		return new ByteArrayInputStream(info.getValue());
 	}
 }

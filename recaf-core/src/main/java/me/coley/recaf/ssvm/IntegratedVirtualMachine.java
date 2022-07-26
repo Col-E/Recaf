@@ -5,7 +5,6 @@ import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.fs.FileDescriptorManager;
 import dev.xdark.ssvm.fs.Handle;
 import dev.xdark.ssvm.fs.HostFileDescriptorManager;
-import dev.xdark.ssvm.fs.ZipFile;
 import me.coley.recaf.ssvm.processing.DataTracking;
 import me.coley.recaf.ssvm.processing.FlowRevisiting;
 import me.coley.recaf.ssvm.processing.peephole.MathOperationFolder;
@@ -29,11 +28,9 @@ import java.util.zip.ZipEntry;
  * @author Matt Coley
  */
 public abstract class IntegratedVirtualMachine extends VirtualMachine {
-	private static final String RECAF_LIVE_ZIP =
-			new File(System.getProperty("java.io.tmpdir"), "recaf-workspace.jar").getAbsolutePath();
-	private static final long RECAF_LIVE_ZIP_HANDLE = new Random().nextLong();
+	private static final int RECAF_LIVE_ZIP_HANDLE = new Random().nextInt();
 	private static final Logger logger = Logging.get(IntegratedVirtualMachine.class);
-	private final WorkspaceZipFile workspaceZip;
+	private final VirtualMachineUtil vmUtil;
 	// applied processors
 	private boolean dataTracking;
 	private boolean flowRevisit;
@@ -42,7 +39,7 @@ public abstract class IntegratedVirtualMachine extends VirtualMachine {
 	private boolean peepholeMethodInvokeFolding;
 
 	public IntegratedVirtualMachine() {
-		this.workspaceZip = new WorkspaceZipFile(getWorkspace());
+		vmUtil = VirtualMachineUtil.create(this);
 	}
 
 	/**
@@ -58,6 +55,13 @@ public abstract class IntegratedVirtualMachine extends VirtualMachine {
 	 */
 	protected Workspace getWorkspace() {
 		return integration().getWorkspace();
+	}
+
+	/**
+	 * @return VM utils.
+	 */
+	public final VirtualMachineUtil getVmUtil() {
+		return vmUtil;
 	}
 
 	@Override
@@ -84,7 +88,7 @@ public abstract class IntegratedVirtualMachine extends VirtualMachine {
 
 			@Override
 			public <A extends BasicFileAttributes> A getAttributes(String path, Class<A> attrType, LinkOption... options) throws IOException {
-				if (RECAF_LIVE_ZIP.equals(path)) {
+				if (WorkspaceZipFile.RECAF_LIVE_ZIP.equals(path)) {
 					return (A) new DummyAttributes(path);
 				}
 				return super.getAttributes(path, attrType, options);
@@ -92,29 +96,22 @@ public abstract class IntegratedVirtualMachine extends VirtualMachine {
 
 			@Override
 			public synchronized long openZipFile(String path, int mode) throws IOException {
-				if (RECAF_LIVE_ZIP.equals(path)) {
+				if (WorkspaceZipFile.RECAF_LIVE_ZIP.equals(path)) {
+					zipFiles.put(Handle.of(RECAF_LIVE_ZIP_HANDLE), new WorkspaceZipFile(RECAF_LIVE_ZIP_HANDLE, getWorkspace()));
 					return RECAF_LIVE_ZIP_HANDLE;
 				}
 				return super.openZipFile(path, mode);
 			}
 
 			@Override
-			public synchronized ZipFile getZipFile(long handle) {
-				if (RECAF_LIVE_ZIP_HANDLE == handle) {
-					return workspaceZip;
-				}
-				return super.getZipFile(handle);
-			}
-
-			@Override
 			public long open(String path, int mode) throws IOException {
-				if (RECAF_LIVE_ZIP.equals(path)) {
+				if (WorkspaceZipFile.RECAF_LIVE_ZIP.equals(path)) {
 					return RECAF_LIVE_ZIP_HANDLE;
 				}
 				long fd = newFD();
 				if ((integration().doAllowRead() && mode == READ) || (integration().doAllowWrite() && (mode == WRITE || mode == APPEND)))
 					logger.trace("VM file handle[{}:{}]: {}",
-							VirtualMachineUtil.describeFileMode(mode), fd, path);
+							SSVMUtil.describeFileMode(mode), fd, path);
 				switch (mode) {
 					case READ: {
 						InputStream in;

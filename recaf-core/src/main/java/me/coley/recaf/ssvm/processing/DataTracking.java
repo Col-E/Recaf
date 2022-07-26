@@ -4,13 +4,13 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.VMInterface;
-import dev.xdark.ssvm.asm.NewInsnNode;
+import dev.xdark.ssvm.asm.DelegatingInsnNode;
 import dev.xdark.ssvm.asm.VMOpcodes;
+import dev.xdark.ssvm.asm.VMTypeInsnNode;
 import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.InstructionProcessor;
 import dev.xdark.ssvm.execution.Result;
 import dev.xdark.ssvm.execution.Stack;
-import dev.xdark.ssvm.jit.JitHelper;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.*;
@@ -88,8 +88,8 @@ public class DataTracking implements Opcodes {
 		});
 		// We'll want to track string values
 		InstanceJavaClass jcString = vm.getSymbols().java_lang_String();
-		InstructionProcessor<NewInsnNode> newProcessor = vmi.getProcessor(VMOpcodes.NEW);
-		vmi.setProcessor(VMOpcodes.NEW, (NewInsnNode insn, ExecutionContext ctx) -> {
+		InstructionProcessor<VMTypeInsnNode> newProcessor = vmi.getProcessor(VMOpcodes.VM_NEW);
+		vmi.setProcessor(VMOpcodes.VM_NEW, (VMTypeInsnNode insn, ExecutionContext ctx) -> {
 			Result result = newProcessor.execute(insn, ctx);
 			Stack stack = ctx.getStack();
 			InstanceValue value = stack.peek();
@@ -113,19 +113,23 @@ public class DataTracking implements Opcodes {
 	 */
 	public static void installArrays(VirtualMachine vm) {
 		VMInterface vmi = vm.getInterface();
-		vmi.setProcessor(NEWARRAY, (IntInsnNode insn, ExecutionContext ctx) -> {
-			Stack stack = ctx.getStack();
-			Value lengthValue = stack.pop();
-			ArrayValue value = (ArrayValue) JitHelper.allocatePrimitiveArray(lengthValue.asInt(), insn.operand, ctx);
-			TrackedArrayValue tracked = new TrackedArrayValue(value);
-			if (lengthValue instanceof TrackedValue) {
-				tracked.addContributing((TrackedValue) lengthValue);
-				tracked.setConstantLength(true);
-			}
-			tracked.addContributing(insn);
-			ctx.getStack().push(tracked);
-			return Result.CONTINUE;
-		});
+		for (int opcode = VMOpcodes.VM_BOOLEAN_NEW_ARRAY; opcode <= VMOpcodes.VM_LONG_NEW_ARRAY; opcode++) {
+			InstructionProcessor<DelegatingInsnNode<IntInsnNode>> delegate = vmi.getProcessor(opcode);
+			vmi.setProcessor(opcode, (DelegatingInsnNode<IntInsnNode> insn, ExecutionContext ctx) -> {
+				Stack stack = ctx.getStack();
+				Value lengthValue = stack.peek();
+				Result result = delegate.execute(insn, ctx);
+				ArrayValue value = stack.pop();
+				TrackedArrayValue tracked = new TrackedArrayValue(value);
+				if (lengthValue instanceof TrackedValue) {
+					tracked.addContributing((TrackedValue) lengthValue);
+					tracked.setConstantLength(true);
+				}
+				tracked.addContributing(insn);
+				stack.push(tracked);
+				return result;
+			});
+		}
 		vmi.setProcessor(IASTORE, arraySet((array, index, value) -> array.setInt(index, value.asInt())));
 		vmi.setProcessor(LASTORE, arraySet((array, index, value) -> array.setLong(index, value.asLong())));
 		vmi.setProcessor(FASTORE, arraySet((array, index, value) -> array.setFloat(index, value.asFloat())));
@@ -345,8 +349,7 @@ public class DataTracking implements Opcodes {
 			Value indexValue = stack.pop();
 			int index = indexValue.asInt();
 			Value top = stack.pop();
-			ArrayValue array = (top instanceof ObjectValue) ?
-					helper.checkNotNullArray((ObjectValue) top) : helper.checkArray(top);
+			ArrayValue array = helper.checkNotNull(top);
 			helper.rangeCheck(array, index);
 			setter.set(array, index, value);
 			if (array instanceof TrackedArrayValue) {

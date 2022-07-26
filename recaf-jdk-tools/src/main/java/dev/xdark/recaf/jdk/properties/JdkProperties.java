@@ -1,5 +1,7 @@
 package dev.xdark.recaf.jdk.properties;
 
+import dev.xdark.recaf.jdk.ToolHelper;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -62,7 +64,7 @@ public final class JdkProperties {
 	 * Detects properties of the JDK.
 	 *
 	 * @param jdkExecutable
-	 * 		Path to JDk executable.
+	 * 		Path to JDK executable.
 	 *
 	 * @return JDK properties.
 	 *
@@ -73,23 +75,13 @@ public final class JdkProperties {
 		if (!Files.isRegularFile(jdkExecutable)) {
 			throw new IllegalStateException("JDK executable does not exist");
 		}
+		// Prepare jar
 		Path classpathJar = JdkProperties.classpathJar;
-		if (classpathJar == null || !Files.isRegularFile(classpathJar)) {
-			// Create temp jar
-			classpathJar = Files.createTempFile("recaf-jdk", ".jar");
-			try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(classpathJar))) {
-				String className = JdkPropertiesDump.class.getName().replace('.', '/') + ".class";
-				zos.putNextEntry(new ZipEntry(className));
-				try (InputStream in = JdkProperties.class.getClassLoader().getResourceAsStream(className)) {
-					byte[] buf = new byte[1024];
-					int r;
-					while ((r = in.read(buf)) >= 0) {
-						zos.write(buf, 0, r);
-					}
-				}
-			}
-			JdkProperties.classpathJar = classpathJar;
+		if (classpathJar == null) {
+			classpathJar = Files.createTempFile("recaf-jdk-properties", ".jar");
 			classpathJar.toFile().deleteOnExit();
+			JdkProperties.classpathJar = classpathJar;
+			ToolHelper.prepareJar(classpathJar, JdkPropertiesDump.class);
 		}
 		// Prepare process
 		Path pipe = Files.createTempFile("recaf-jdk-pipe", ".bin");

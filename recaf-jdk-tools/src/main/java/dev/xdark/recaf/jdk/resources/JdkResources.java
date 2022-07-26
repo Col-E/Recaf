@@ -1,5 +1,7 @@
 package dev.xdark.recaf.jdk.resources;
 
+import dev.xdark.recaf.jdk.BootClassLoaderDelegate;
+
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -16,6 +18,7 @@ public class JdkResources {
 		try {
 			socket.setSoTimeout(10000);
 			socket.connect(new InetSocketAddress(Integer.parseInt(args[0])));
+			socket.setSoTimeout(0);
 			byte[] buf = new byte[ToolConstant.TRANSFER_BUFFER];
 			BootClassLoaderDelegate delegate = new BootClassLoaderDelegate();
 			try (DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -100,12 +103,6 @@ public class JdkResources {
 				closeable.close();
 			} catch (IOException ignored) {
 			}
-		}
-	}
-
-	private static final class BootClassLoaderDelegate extends ClassLoader {
-		BootClassLoaderDelegate() {
-			super(null);
 		}
 	}
 }
