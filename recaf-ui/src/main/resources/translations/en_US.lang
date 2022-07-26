@@ -187,6 +187,10 @@ dialog.vm.create-null=Use null
 dialog.hex.title.insertcount=Insert
 dialog.hex.header.insertcount=How many bytes to insert?
 
+# Base Converter dialog
+dialog.conv.title.literal=Number literal
+dialog.conv.title.expression=Number expression
+
 ## Quick nav
 dialog.quicknav=Quick navigation
 

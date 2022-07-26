@@ -8,7 +8,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.resource.Resource;
 import org.fxmisc.richtext.model.TwoDimensional;
 
@@ -31,7 +31,7 @@ public class NumberLiteralContextBuilder extends ContextBuilder {
 	@Override
 	public ContextMenu build() {
 		ContextMenu menu = new ContextMenu();
-		MenuItem header = new MenuItem(EscapeUtil.escape(isLiteral(expression) ? "Number Literal" : "Number Expression"));
+		MenuItem header = new MenuItem(isLiteral(expression) ? Lang.get("dialog.conv.title.literal") : Lang.get("dialog.conv.title.expression"));
 		header.getStyleClass().add("context-menu-header");
 		header.setDisable(true);
 		menu.getItems().add(header);
