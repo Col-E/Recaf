@@ -6,6 +6,7 @@ import me.coley.recaf.code.*;
 import me.coley.recaf.mapping.MappingUtils;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.ui.MappingUX;
+import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
@@ -127,7 +128,11 @@ public abstract class ContextBuilder {
 	public static ResourceContextBuilder forResource(Resource resource) {
 		return new ResourceContextBuilder().setResource(resource);
 	}
-
+	
+	public static NumberLiteralContextBuilder forLiteralExpression(LiteralExpressionInfo info, JavaArea area, int position) {
+		return new NumberLiteralContextBuilder(info.getValue(),info.getExpression(), area, position);
+	}
+	
 	/**
 	 * @param resource
 	 * 		Resource of the item the context menu is being built for.

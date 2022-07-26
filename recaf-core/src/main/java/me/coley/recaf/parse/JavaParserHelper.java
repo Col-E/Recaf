@@ -4,18 +4,22 @@ import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.expr.SimpleName;
 import jregex.Matcher;
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
+import me.coley.recaf.code.LiteralExpressionInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.StringUtil;
 
 import java.util.List;
 import java.util.Optional;
+
+import static me.coley.recaf.evaluation.ExpressionEvaluator.evaluate;
 
 /**
  * Utility for working with JavaParser and pulling contextual information from Java source code.
@@ -167,45 +171,42 @@ public class JavaParserHelper {
 	 */
 	public Optional<ParseHitResult> at(CompilationUnit unit, int line, int column) {
 		WorkspaceTypeSolver typeSolver = symbolSolver.getTypeSolver();
-		if (unit != null) {
-			Node node = getNodeAtLocation(line, column, unit);
-			while (node != null && JavaParserResolving.isNodeResolvable(node)) {
-				ItemInfo value = JavaParserResolving.of(symbolSolver, node);
-				if (value == null) {
-					Optional<Node> parent = node.getParentNode();
-					if (parent.isPresent()) {
-						// Check if the parent item can be resolved
-						node = parent.get();
-						continue;
-					} else {
-						// No parent, end the loop
-						break;
-					}
-				} else if (node instanceof SimpleName && value instanceof FieldInfo) {
-					// In some obfuscated cases, a method name may be selected as an AST 'SimpleName'.
-					// These typically resolve to fields of matching names.
-					// If the parent of the node is a method of the same name, we probably meant to
-					// yield the method info, not a field by the same name.
-					FieldInfo fieldInfo = (FieldInfo) value;
-					if (node.hasParentNode()) {
-						ItemInfo info = JavaParserResolving.of(symbolSolver, node.getParentNode().get());
-						if (info instanceof MethodInfo) {
-							MethodInfo methodInfo = (MethodInfo) info;
-							if (methodInfo.getName().equals(fieldInfo.getName())) {
-								value = info;
-							}
-						}
-					}
-				}
-				return Optional.of(new ParseHitResult(value, node));
-			}
-			// Handle edge cases like package import names.
-			ItemInfo value = JavaParserResolving.ofEdgeCases(typeSolver, node);
-			if (value != null) {
-				return Optional.of(new ParseHitResult(value, node));
+		if (unit == null) return Optional.empty();
+		Node node = getNodeAtLocation(line, column, unit);
+		if (node instanceof Expression) {
+			Optional<Number> nbOpt = evaluate((Expression) node);
+			if (nbOpt.isPresent()) {
+				return Optional.of(new ParseHitResult(new LiteralExpressionInfo(nbOpt.get(), (Expression) node), node));
 			}
 		}
-		return Optional.empty();
+		while (node != null && JavaParserResolving.isNodeResolvable(node)) {
+			ItemInfo value = JavaParserResolving.of(symbolSolver, node);
+			if (value == null) {
+				Optional<Node> parent = node.getParentNode();
+				// Check if the parent item can be resolved
+				if (parent.isEmpty()) break; // No parent, end the loop
+				node = parent.get();
+				continue;
+			} else if (node instanceof SimpleName && value instanceof FieldInfo) {
+				// In some obfuscated cases, a method name may be selected as an AST 'SimpleName'.
+				// These typically resolve to fields of matching names.
+				Optional<Node> parent = node.getParentNode();
+				if (parent.isPresent()) {
+					ItemInfo info = JavaParserResolving.of(symbolSolver, parent.get());
+					// If the parent of the node is a method of the same name, we probably meant to
+					if (info instanceof MethodInfo && info.getName().equals(value.getName())) {
+						// yield the method info, not a field by the same name.
+						value = info;
+					}
+				}
+			}
+			return Optional.of(new ParseHitResult(value, node));
+		}
+		// Handle edge cases like package import names.
+		ItemInfo value = JavaParserResolving.ofEdgeCases(typeSolver, node);
+		if (value == null) return Optional.empty();
+
+		return Optional.of(new ParseHitResult(value, node));
 	}
 
 	/**
