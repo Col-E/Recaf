@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -179,25 +180,30 @@ public class NumberQuery implements Query {
 			@Override
 			public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
 				super.visitLookupSwitchInsn(dflt, keys, labels);
+				LookupSwitchInstruction insn = new LookupSwitchInstruction(LOOKUPSWITCH, IntStream.of(keys)
+						.mapToObj(i -> new LookupSwitchInstruction.Entry(i, "?")).collect(Collectors.toList()),
+						"?");
 				for (int key : keys)
-					whenMatched(key, builder -> addMethodInsn(builder, methodInfo.getName(),
-							methodInfo.getDescriptor(),
-							new LookupSwitchInstruction(LOOKUPSWITCH, Lists.newArrayList(key).stream()
-									.map(i -> new LookupSwitchInstruction.Entry(i, "?")).collect(Collectors.toList()),
-									"?")));
+					whenMatched(key, builder ->
+						addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(), insn)
+					);
 			}
 
 			@Override
 			public void visitInvokeDynamicInsn(String name, String desc, Handle bootstrapMethodHandle,
 											   Object... bootstrapMethodArguments) {
 				super.visitInvokeDynamicInsn(name, desc, bootstrapMethodHandle, bootstrapMethodArguments);
-				for (Object bsmArg : bootstrapMethodArguments) {
-					whenMatched(bsmArg, builder -> addMethodInsn(builder, methodInfo.getName(),
-							methodInfo.getDescriptor(), new IndyInstruction(INVOKEDYNAMIC, name, desc,
-									new HandleInfo(bootstrapMethodHandle),
-									Arrays.stream(bootstrapMethodArguments)
-											.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
-											.collect(Collectors.toList()))));
+				if (bootstrapMethodArguments.length != 0) {
+					IndyInstruction insn = new IndyInstruction(INVOKEDYNAMIC, name, desc,
+							new HandleInfo(bootstrapMethodHandle),
+							Arrays.stream(bootstrapMethodArguments)
+									.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
+									.collect(Collectors.toList()));
+					for (Object bsmArg : bootstrapMethodArguments) {
+						whenMatched(bsmArg, builder ->
+							addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(), insn)
+						);
+					}
 				}
 			}
 

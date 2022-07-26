@@ -36,6 +36,9 @@ public abstract class Result implements Comparable<Result> {
 
 	@Override
 	public int compareTo(Result o) {
+		if (o == this) {
+			return 0;
+		}
 		return location.compareTo(o.location);
 	}
 

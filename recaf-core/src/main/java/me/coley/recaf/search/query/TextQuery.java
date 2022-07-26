@@ -155,13 +155,17 @@ public class TextQuery implements Query {
 			public void visitInvokeDynamicInsn(String name, String desc, Handle bsmHandle,
 											   Object... bootstrapMethodArguments) {
 				super.visitInvokeDynamicInsn(name, desc, bsmHandle, bootstrapMethodArguments);
-				for (Object bsmArg : bootstrapMethodArguments) {
-					whenMatched(bsmArg, builder -> addMethodInsn(builder, methodInfo.getName(),
-							methodInfo.getDescriptor(), new IndyInstruction(Opcodes.INVOKEDYNAMIC, name, desc,
-									new HandleInfo(bsmHandle),
-									Arrays.stream(bootstrapMethodArguments)
-											.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
-											.collect(Collectors.toList()))));
+				if (bootstrapMethodArguments.length != 0) {
+					IndyInstruction insn = new IndyInstruction(Opcodes.INVOKEDYNAMIC, name, desc,
+							new HandleInfo(bsmHandle),
+							Arrays.stream(bootstrapMethodArguments)
+									.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
+									.collect(Collectors.toList()));
+					for (Object bsmArg : bootstrapMethodArguments) {
+						whenMatched(bsmArg, builder ->
+							addMethodInsn(builder, methodInfo.getName(), methodInfo.getDescriptor(), insn)
+						);
+					}
 				}
 			}
 
