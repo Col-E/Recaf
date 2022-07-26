@@ -57,6 +57,10 @@ public class FlowHighlighter implements IndicatorApplier {
 	 */
 	public void addCaretPositionListener(ObservableValue<Integer> selectedCaretPosition) {
 		selectedCaretPosition.addListener((observable, oldValue, newValue) -> {
+			// Skip if a drag selection is being made
+			if (assemblerArea.getSelection().getLength() > 1)
+				return;
+			// Compute the flow initial point at the caret position, and collect destinations
 			sources.clear();
 			destinations.clear();
 			int line = assemblerArea.getCaretLine();

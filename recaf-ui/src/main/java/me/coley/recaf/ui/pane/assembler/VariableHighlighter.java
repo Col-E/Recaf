@@ -54,6 +54,10 @@ public class VariableHighlighter implements IndicatorApplier {
 	 */
 	public void addCaretPositionListener(ObservableValue<Integer> selectedCaretPosition) {
 		selectedCaretPosition.addListener((observable, oldValue, newValue) -> {
+			// Skip if a drag selection is being made
+			if (assemblerArea.getSelection().getLength() > 1)
+				return;
+			// Compute target variable identifier at caret position
 			int line = assemblerArea.getCaretLine();
 			int col = assemblerArea.getCaretColumn();
 			Element elementOnLine = pipeline.getCodeElementAt(line, col);
