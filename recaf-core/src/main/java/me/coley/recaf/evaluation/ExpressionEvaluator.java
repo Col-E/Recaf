@@ -30,11 +30,12 @@ public class ExpressionEvaluator {
 
 	public static Optional<Number> evaluate(Expression expr) {
 		//un-enclosing parenthesis
-		if (expr instanceof EnclosedExpr) return evaluate(((EnclosedExpr) expr).getInner());
+		if (expr instanceof EnclosedExpr) expr = ((EnclosedExpr) expr).getInner();
+		final Expression unwrappedExpr = expr;
 		// only evaluating
 		return expr.toLiteralExpr().flatMap(ExpressionEvaluator::evaluate) // the literals themselves
-			.or(() -> expr.toBinaryExpr().flatMap(ExpressionEvaluator::evaluate)) // binary operations
-			.or(() -> expr.toUnaryExpr().flatMap(ExpressionEvaluator::evaluate)); // and unary operations
+			.or(() -> unwrappedExpr.toBinaryExpr().flatMap(ExpressionEvaluator::evaluate)) // binary operations
+			.or(() -> unwrappedExpr.toUnaryExpr().flatMap(ExpressionEvaluator::evaluate)); // and unary operations
 		// are supported
 	}
 }
