@@ -47,7 +47,12 @@ public class Frame {
 			} else if (Types.isBoxedPrimitive(desc)) {
 				v = new Value.NumericValue(paramType, null, false);
 			} else {
-				v = new Value.ObjectValue(Type.getType(parameter.getDesc()));
+				Type type = Type.getType(parameter.getDesc());
+				if (type.getSort() == Type.ARRAY) {
+					v = new Value.ArrayValue(type.getDimensions(), type);
+				} else {
+					v = new Value.ObjectValue(type);
+				}
 			}
 			setLocal(parameter.getName(), v);
 		}
