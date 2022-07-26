@@ -7,7 +7,6 @@ import dev.xdark.ssvm.fs.FileDescriptorManager;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.symbol.VMSymbols;
 import dev.xdark.ssvm.util.VMHelper;
-import dev.xdark.ssvm.value.Value;
 import me.coley.recaf.TestUtils;
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
@@ -155,9 +154,8 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 			fail("Could not find target class");
 		VMHelper helper = vm.getHelper();
 		VMSymbols symbols = vm.getSymbols();
-		helper.invokeStatic(target, "main", "([Ljava/lang/String;)V",
-				new Value[0],
-				new Value[]{helper.emptyArray(symbols.java_lang_String())});
+		VirtualMachineUtil util = VirtualMachineUtil.create(vm);
+		util.invokeStatic(target, "main", "([Ljava/lang/String;)V", helper.emptyArray(symbols.java_lang_String()));
 	}
 
 	/**

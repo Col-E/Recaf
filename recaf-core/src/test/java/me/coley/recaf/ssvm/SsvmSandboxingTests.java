@@ -12,7 +12,6 @@ import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.symbol.VMSymbols;
 import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.IntValue;
-import dev.xdark.ssvm.value.Value;
 import me.coley.recaf.TestUtils;
 import me.coley.recaf.ssvm.loader.RuntimeBootClassLoader;
 import me.coley.recaf.ssvm.loader.WorkspaceBootClassLoader;
@@ -63,7 +62,7 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 		VMInterface vmi = vm.getInterface();
 		InstanceJavaClass unsafe = (InstanceJavaClass) vm.findBootstrapClass("jdk/internal/misc/Unsafe");
 		vmi.setInvoker(unsafe, "pageSize", "()I", ctx -> {
-			ctx.setResult(IntValue.of(vm.getMemoryManager().pageSize()));
+			ctx.setResult(IntValue.of(vm.getMemoryAllocator().pageSize()));
 			return Result.ABORT;
 		});
 	}
@@ -167,9 +166,8 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 				fail("Could not find class: " + main);
 			VMHelper helper = vm.getHelper();
 			VMSymbols symbols = vm.getSymbols();
-			helper.invokeStatic(target, "main", "([Ljava/lang/String;)V",
-					new Value[0],
-					new Value[]{helper.emptyArray(symbols.java_lang_String())});
+			VirtualMachineUtil util = VirtualMachineUtil.create(vm);
+			util.invokeStatic(target, "main", "([Ljava/lang/String;)V", helper.emptyArray(symbols.java_lang_String()));
 		} catch (VMException ex) {
 			fail(ex);
 		}
