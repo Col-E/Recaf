@@ -35,13 +35,13 @@ public class NumberLiteralContextBuilder extends ContextBuilder {
 		header.getStyleClass().add("context-menu-header");
 		header.setDisable(true);
 		menu.getItems().add(header);
-		editAction(menu, value.toString());
+		editAction(menu, value.toString() + (value instanceof Long ? "L" : ""));
 		if (value instanceof Integer || value instanceof Long) {
-			editAction(menu, String.format("0x%x", value));
+			editAction(menu, String.format("0x%x" + (value instanceof Long ? "L" : ""), value));
 			if (value instanceof Integer) {
 				editAction(menu, "0b" + Integer.toBinaryString((Integer) value));
 			} else {
-				editAction(menu, "0b" + Long.toBinaryString((Long) value));
+				editAction(menu, "0b" + Long.toBinaryString((Long) value) + "L");
 			}
 		}
 		return menu;
