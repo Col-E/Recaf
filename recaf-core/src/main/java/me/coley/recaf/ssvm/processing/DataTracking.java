@@ -65,7 +65,6 @@ public class DataTracking implements Opcodes {
 		vmi.setProcessor(DCONST_0, (insn, ctx) -> pushDouble(ctx, insn, 0));
 		vmi.setProcessor(DCONST_1, (insn, ctx) -> pushDouble(ctx, insn, 1));
 		// LDC can hold a variety of types, some of which we support
-		InstructionProcessor<AbstractInsnNode> ldc = vmi.getProcessor(LDC);
 		vmi.setProcessor(LDC, (InstructionProcessor<LdcInsnNode>) (insn, ctx) -> {
 			Object cst = insn.cst;
 			ConstValue value;

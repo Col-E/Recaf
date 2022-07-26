@@ -2,6 +2,8 @@ package me.coley.recaf.ssvm.processing.peephole;
 
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.VMInterface;
+import dev.xdark.ssvm.asm.VMCallInsnNode;
+import dev.xdark.ssvm.asm.VMOpcodes;
 import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.InstructionProcessor;
 import dev.xdark.ssvm.execution.Result;
@@ -14,11 +16,9 @@ import me.coley.recaf.ssvm.value.TrackedValue;
 import me.coley.recaf.util.InstructionUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.logging.Logging;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.MethodInsnNode;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -54,9 +54,9 @@ public class MethodInvokeFolder {
 	public static void install(VirtualMachine vm, Predicate<ExecutionContext> whitelist) {
 		VMInterface vmi = vm.getInterface();
 		VMHelper helper = vm.getHelper();
-		InstructionProcessor<AbstractInsnNode> invokestatic = vmi.getProcessor(Opcodes.INVOKESTATIC);
-		vmi.setProcessor(Opcodes.INVOKESTATIC, (InstructionProcessor<MethodInsnNode>) (insn, ctx) -> {
-			Type methodType = Type.getMethodType(insn.desc);
+		InstructionProcessor<AbstractInsnNode> invokestatic = vmi.getProcessor(VMOpcodes.VM_INVOKESTATIC);
+		vmi.setProcessor(VMOpcodes.VM_INVOKESTATIC, (InstructionProcessor<VMCallInsnNode>) (insn, ctx) -> {
+			Type methodType = Type.getMethodType(insn.getDelegate().desc);
 			// Cannot fold types that are not supported (primitives and String only)
 			if (whitelist.test(ctx)) {
 				// Ensure parameter values are constant
