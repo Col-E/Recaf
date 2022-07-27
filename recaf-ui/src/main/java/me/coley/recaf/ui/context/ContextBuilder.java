@@ -129,8 +129,8 @@ public abstract class ContextBuilder {
 		return new ResourceContextBuilder().setResource(resource);
 	}
 	
-	public static NumberLiteralContextBuilder forLiteralExpression(LiteralExpressionInfo info, JavaArea area, int position) {
-		return new NumberLiteralContextBuilder(info.getValue(),info.getExpression(), area, position);
+	public static NumberLiteralContextBuilder forLiteralExpression(LiteralExpressionInfo info, JavaArea area) {
+		return new NumberLiteralContextBuilder(info.getValue(),info.getExpression(), area);
 	}
 	
 	/**

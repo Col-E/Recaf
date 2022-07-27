@@ -364,7 +364,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 				if (owner != null)
 					return ContextBuilder.forMethod(owner, info).setDeclaration(dec);
 			} else if(itemInfo instanceof LiteralExpressionInfo) {
-				return ContextBuilder.forLiteralExpression((LiteralExpressionInfo) itemInfo, this, position);
+				return ContextBuilder.forLiteralExpression((LiteralExpressionInfo) itemInfo, this);
 			}
 		}
 		return null;

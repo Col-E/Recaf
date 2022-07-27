@@ -19,13 +19,11 @@ public class NumberLiteralContextBuilder extends ContextBuilder {
 	private final Number value;
 	private final Expression expression;
 	private final JavaArea area;
-	private final int position;
 
-	public NumberLiteralContextBuilder(Number value, Expression expression, JavaArea area, int position) {
+	public NumberLiteralContextBuilder(Number value, Expression expression, JavaArea area) {
 		this.value = value;
 		this.expression = expression;
 		this.area = area;
-		this.position = position;
 	}
 
 	@Override
