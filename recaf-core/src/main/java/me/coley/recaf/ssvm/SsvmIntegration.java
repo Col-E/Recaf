@@ -26,6 +26,7 @@ public class SsvmIntegration {
 	private static final Logger logger = Logging.get(SsvmIntegration.class);
 	private static final ExecutorService vmThreadPool = ThreadPoolFactory.newFixedThreadPool("Recaf SSVM", 1, true);
 	private final Workspace workspace;
+	private VmFactory factory;
 	private IntegratedVirtualMachine vm;
 	private boolean initialized;
 	private boolean allowRead;
@@ -38,23 +39,35 @@ public class SsvmIntegration {
 	 */
 	public SsvmIntegration(Workspace workspace) {
 		this.workspace = workspace;
-		vmThreadPool.submit(() -> {
-			try {
-				vm = createVM(false, null);
+		this.factory = new LocalVmFactory(workspace);
+	}
+
+	/**
+	 * Update the {@link #getVm() primary VM} on a background thread.
+	 */
+	public void asyncUpdatePrimaryVm() {
+		vmThreadPool.submit(this::updatePrimaryVm);
+	}
+
+	/**
+	 * Update the {@link #getVm() primary VM}.
+	 */
+	public void updatePrimaryVm() {
+		try {
+			vm = createVM(false, vmm -> {
 				try {
-					vm.bootstrap();
-					vm.getVmUtil().addUrl(WorkspaceZipFile.RECAF_LIVE_ZIP);
+					vmm.bootstrap();
 					initialized = true;
 				} catch (Exception ex) {
 					initializeError = ex;
 				}
-				onPostInit();
-			} catch (Exception ex) {
-				vm = null;
-				initializeError = ex;
-				onPostInit();
-			}
-		});
+			});
+			onPostInit();
+		} catch (Exception ex) {
+			vm = null;
+			initializeError = ex;
+			onPostInit();
+		}
 	}
 
 	private void onPostInit() {
@@ -85,14 +98,8 @@ public class SsvmIntegration {
 	 * @return New VM.
 	 */
 	public IntegratedVirtualMachine createVM(boolean initialize, Consumer<IntegratedVirtualMachine> postInit) {
-		SsvmIntegration integration = this;
-		IntegratedVirtualMachine vm = new IntegratedVirtualMachine() {
-			@Override
-			protected SsvmIntegration integration() {
-				return integration;
-			}
-		};
-		if (initialize)
+		IntegratedVirtualMachine vm = factory.create(this);
+		if (initialize) {
 			try {
 				vm.bootstrap();
 				vm.findBootstrapClass("jdk/internal/ref/CleanerFactory", true);
@@ -101,6 +108,10 @@ public class SsvmIntegration {
 			} catch (Exception ex) {
 				logger.error("Failed to initialize VM", ex);
 			}
+		} else {
+			if (postInit != null)
+				postInit.accept(vm);
+		}
 		return vm;
 	}
 
@@ -156,6 +167,8 @@ public class SsvmIntegration {
 	 * @return Current VM instance.
 	 */
 	public IntegratedVirtualMachine getVm() {
+		if (vm == null)
+			updatePrimaryVm();
 		return vm;
 	}
 
@@ -171,6 +184,30 @@ public class SsvmIntegration {
 	 */
 	public boolean isInitialized() {
 		return initialized;
+	}
+
+	/**
+	 * @return Current VM instance factory.
+	 */
+	public VmFactory getFactory() {
+		return factory;
+	}
+
+	/**
+	 * @param factory
+	 * 		New VM instance factory.
+	 *
+	 * @return {@code true} when the VM factory was changed.
+	 * {@code false} indicates the same factory implementation as the current was passed.
+	 */
+	public boolean setFactory(VmFactory factory) {
+		// Only change if the implementation is different
+		if (this.factory.getClass() != factory.getClass()) {
+			this.factory = factory;
+			asyncUpdatePrimaryVm();
+			return true;
+		}
+		return false;
 	}
 
 	/**

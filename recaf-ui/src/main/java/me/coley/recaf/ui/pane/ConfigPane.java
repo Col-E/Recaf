@@ -190,6 +190,10 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 		ID_OVERRIDES.put("conf.decompiler.general.impl", ConfigDecompiler::new);
 		ID_OVERRIDES.put("conf.display.general.language", ConfigLanguage::new);
 		ID_OVERRIDES.put("conf.editor.assoc.fileextassociations", ConfigLanguageAssociation::new);
+		ID_OVERRIDES.put("conf.ssvm.remote.active", (c, f) ->
+				new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.remote.active"),
+						value -> Configs.ssvm().updateIntegration()));
+		ID_OVERRIDES.put("conf.ssvm.remote.path", ConfigPath::new);
 		ID_OVERRIDES.put("conf.ssvm.access.read", (c, f) ->
 				new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.access.read"), value -> {
 					if (value) {
@@ -200,7 +204,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 						a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.read.warn"));
 						a.show();
 					}
-					Configs.ssvm().updateAccess();
+					Configs.ssvm().updateIntegration();
 				}));
 		ID_OVERRIDES.put("conf.ssvm.access.write", (c, f) ->
 				new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.access.write"), value -> {
@@ -212,7 +216,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 						a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.write.warn"));
 						a.show();
 					}
-					Configs.ssvm().updateAccess();
+					Configs.ssvm().updateIntegration();
 				}));
 	}
 }

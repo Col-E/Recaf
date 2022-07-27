@@ -141,9 +141,6 @@ public class JdkResourcesServer {
 		if (!Files.isRegularFile(jdkExecutable)) {
 			throw new IllegalStateException("JDK executable does not exist");
 		}
-		if (!Files.isRegularFile(jdkExecutable)) {
-			throw new IllegalStateException("JDK executable does not exist");
-		}
 		// Prepare jar
 		Path classpathJar = JdkResourcesServer.classpathJar;
 		if (classpathJar == null) {
@@ -154,7 +151,7 @@ public class JdkResourcesServer {
 		}
 		// Find open port
 		ServerSocket socket = new ServerSocket(0);
-		socket.setSoTimeout(100000);
+		socket.setSoTimeout(100_000);
 		// Prepare process
 		ProcessBuilder builder = new ProcessBuilder();
 		builder.directory(jdkExecutable.getParent().toFile());

@@ -21,11 +21,11 @@ import java.util.zip.ZipException;
  * Essentially this "jar" file contains dynamically resolvable references to files in the workspace.
  *
  * @author Matt Coley
+ * @author xDark
  */
 public class WorkspaceZipFile extends BasicZipFile {
 	public static final String RECAF_LIVE_ZIP =
 			new File(System.getProperty("java.io.tmpdir"), "recaf-workspace.jar").getAbsolutePath();
-
 	private final Workspace workspace;
 	private List<ZipEntry> entries;
 
