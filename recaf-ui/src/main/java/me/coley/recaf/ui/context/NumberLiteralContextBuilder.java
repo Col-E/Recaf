@@ -7,12 +7,13 @@ import com.github.javaparser.ast.expr.LiteralExpr;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import me.coley.recaf.ui.control.code.java.JavaArea;
+import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.resource.Resource;
 import org.fxmisc.richtext.model.TwoDimensional;
 
-import static me.coley.recaf.ui.util.Menus.action;
+import static me.coley.recaf.ui.util.Menus.actionLiteral;
 
 public class NumberLiteralContextBuilder extends ContextBuilder {
 
@@ -29,17 +30,23 @@ public class NumberLiteralContextBuilder extends ContextBuilder {
 	@Override
 	public ContextMenu build() {
 		ContextMenu menu = new ContextMenu();
-		MenuItem header = new MenuItem(isLiteral(expression) ? Lang.get("dialog.conv.title.literal") : Lang.get("dialog.conv.title.expression"));
+		MenuItem header = new MenuItem(Lang.get(isLiteral(expression) ? "dialog.conv.title.literal" : "dialog.conv.title.expression"));
 		header.getStyleClass().add("context-menu-header");
 		header.setDisable(true);
 		menu.getItems().add(header);
-		editAction(menu, value.toString() + (value instanceof Long ? "L" : ""));
+		String literal = expression instanceof LiteralExpr ? expression.toString().toLowerCase() : null;
+		editAction(menu,
+			value.toString() + (value instanceof Long ? "L" : ""),
+			literal == null || literal.startsWith("0x") || literal.startsWith("0b"));
 		if (value instanceof Integer || value instanceof Long) {
-			editAction(menu, String.format("0x%x" + (value instanceof Long ? "L" : ""), value));
+			editAction(menu,
+				String.format(value instanceof Long ? "0x%xL" : "0x%x", value),
+				literal == null || !literal.startsWith("0x") || literal.startsWith("0b"));
+			final boolean notBin = literal == null || literal.startsWith("0x") || !literal.startsWith("0b");
 			if (value instanceof Integer) {
-				editAction(menu, "0b" + Integer.toBinaryString((Integer) value));
+				editAction(menu, "0b" + Integer.toBinaryString((Integer) value), notBin);
 			} else {
-				editAction(menu, "0b" + Long.toBinaryString((Long) value) + "L");
+				editAction(menu, "0b" + Long.toBinaryString((Long) value) + "L", notBin);
 			}
 		}
 		return menu;
@@ -60,8 +67,11 @@ public class NumberLiteralContextBuilder extends ContextBuilder {
 		});
 	}
 
-	private void editAction(ContextMenu menu, String name) {
-		menu.getItems().add(action(name, Icons.ACTION_EDIT, () -> replace(name)));
+	private void editAction(ContextMenu menu, String textKey, boolean active) {
+		ActionMenuItem item = actionLiteral(textKey, Icons.ACTION_EDIT, () -> replace(textKey));
+		item.setDisable(!active);
+		menu.getItems().add(item);
+
 	}
 
 	@Override
