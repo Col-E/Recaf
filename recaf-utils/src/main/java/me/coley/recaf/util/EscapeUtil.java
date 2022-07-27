@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Escape code replacement utility.
  *
- * @author xxDark
+ * @author xDark
  */
 public final class EscapeUtil {
 	private static final Map<String, String> WHITESPACE_TO_ESCAPE = new HashMap<>();

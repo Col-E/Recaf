@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  *     <li>Agent mode will not need to inject the entire app into the target jvm.</li>
  * </ul>
  *
- * @author xxDark
+ * @author xDark
  * @author Matt Coley
  */
 public class JFXInjection {

@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
 /**
  * Package-private util to deal with modules.
  *
- * @author xxDark
+ * @author xDark
  */
 @SuppressWarnings("sunapi")
 public class JigsawUtil {

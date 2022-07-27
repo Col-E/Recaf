@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * JavaFX utilities.
  *
- * @author xxDark
+ * @author xDark
  * @author Matt Coley
  */
 public class JFXUtils {

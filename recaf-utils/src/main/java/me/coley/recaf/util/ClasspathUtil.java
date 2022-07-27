@@ -17,7 +17,7 @@ import static java.lang.Class.forName;
  *
  * @author Matt Coley
  * @author Andy Li
- * @author xxDark
+ * @author xDark
  */
 public class ClasspathUtil {
 	/**

@@ -15,7 +15,7 @@ import static me.coley.recaf.util.JigsawUtil.*;
 /**
  * Utility to patch away access restrictions.
  *
- * @author xxDark
+ * @author xDark
  */
 public class AccessPatcher {
 	private static final Logger logger = Logging.get(AccessPatcher.class);
