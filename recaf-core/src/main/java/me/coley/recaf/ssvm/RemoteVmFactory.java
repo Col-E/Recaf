@@ -1,8 +1,11 @@
 package me.coley.recaf.ssvm;
 
+import dev.xdark.recaf.jdk.properties.JdkProperties;
 import dev.xdark.recaf.jdk.resources.JdkResourcesServer;
 import dev.xdark.ssvm.classloading.BootClassLoader;
 import me.coley.recaf.ssvm.loader.RemoteBootClassLoader;
+import me.coley.recaf.util.logging.Logging;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -15,6 +18,7 @@ import java.nio.file.Path;
  * @see LocalVmFactory
  */
 public class RemoteVmFactory implements VmFactory {
+	private static final Logger logger = Logging.get(RemoteVmFactory.class);
 	private final Path remoteJavaExecutable;
 
 	/**
@@ -27,7 +31,7 @@ public class RemoteVmFactory implements VmFactory {
 
 	@Override
 	public IntegratedVirtualMachine create(SsvmIntegration integration) {
-		return new IntegratedVirtualMachine() {
+		IntegratedVirtualMachine vm = new IntegratedVirtualMachine() {
 			@Override
 			public void bootstrap() {
 				super.bootstrap();
@@ -49,5 +53,16 @@ public class RemoteVmFactory implements VmFactory {
 				}
 			}
 		};
+		// Copy remote properties
+		try {
+			JdkProperties properties = JdkProperties.getProperties(remoteJavaExecutable);
+			vm.getenv().clear();
+			vm.getenv().putAll(properties.getEnvironment());
+			vm.getProperties().clear();
+			vm.getProperties().putAll(properties.getSystemProperties());
+		} catch (IOException ex) {
+			logger.warn("Failed to dump JDK properties", ex);
+		}
+		return vm;
 	}
 }
