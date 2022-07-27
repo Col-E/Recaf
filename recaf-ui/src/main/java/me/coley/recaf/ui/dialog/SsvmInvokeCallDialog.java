@@ -8,7 +8,6 @@ import javafx.scene.layout.GridPane;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.ssvm.SsvmIntegration;
-import me.coley.recaf.ssvm.VirtualMachineUtil;
 import me.coley.recaf.ssvm.VmRunResult;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;

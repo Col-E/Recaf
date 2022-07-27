@@ -154,7 +154,7 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 			fail("Could not find target class");
 		VMHelper helper = vm.getHelper();
 		VMSymbols symbols = vm.getSymbols();
-		VirtualMachineUtil util = VirtualMachineUtil.create(vm);
+		VmUtil util = VmUtil.create(vm);
 		util.invokeStatic(target, "main", "([Ljava/lang/String;)V", helper.emptyArray(symbols.java_lang_String()));
 	}
 
@@ -186,7 +186,7 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 		InstanceJavaClass target = getTargetClass();
 		MethodNode method = target.getStaticMethod("main", "([Ljava/lang/String;)V").getNode();
 		// Patch out SSVM modifications to the ASM instructions
-		SSVMUtil.restoreMethod(method);
+		SsvmUtil.restoreMethod(method);
 		// Map to AST
 		BytecodeToAstTransformer transformer = new BytecodeToAstTransformer(method);
 		transformer.visit();

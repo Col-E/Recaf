@@ -25,14 +25,14 @@ import java.util.Objects;
  *
  * @author xDark
  */
-public final class VirtualMachineUtil {
+public final class VmUtil {
 	private final VirtualMachine vm;
 
 	/**
 	 * @param vm
 	 * 		VM instance.
 	 */
-	private VirtualMachineUtil(VirtualMachine vm) {
+	private VmUtil(VirtualMachine vm) {
 		this.vm = vm;
 	}
 
@@ -42,8 +42,8 @@ public final class VirtualMachineUtil {
 	 *
 	 * @return VM helper.
 	 */
-	public static VirtualMachineUtil create(VirtualMachine vm) {
-		return new VirtualMachineUtil(vm);
+	public static VmUtil create(VirtualMachine vm) {
+		return new VmUtil(vm);
 	}
 
 	/**

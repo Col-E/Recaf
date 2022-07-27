@@ -30,7 +30,7 @@ import java.util.zip.ZipEntry;
 public abstract class IntegratedVirtualMachine extends VirtualMachine {
 	private static final int RECAF_LIVE_ZIP_HANDLE = new Random().nextInt();
 	private static final Logger logger = Logging.get(IntegratedVirtualMachine.class);
-	private final VirtualMachineUtil vmUtil;
+	private final VmUtil vmUtil;
 	// applied processors
 	private boolean dataTracking;
 	private boolean flowRevisit;
@@ -39,7 +39,7 @@ public abstract class IntegratedVirtualMachine extends VirtualMachine {
 	private boolean peepholeMethodInvokeFolding;
 
 	public IntegratedVirtualMachine() {
-		vmUtil = VirtualMachineUtil.create(this);
+		vmUtil = VmUtil.create(this);
 	}
 
 	/**
@@ -60,7 +60,7 @@ public abstract class IntegratedVirtualMachine extends VirtualMachine {
 	/**
 	 * @return VM utils.
 	 */
-	public final VirtualMachineUtil getVmUtil() {
+	public final VmUtil getVmUtil() {
 		return vmUtil;
 	}
 
@@ -111,7 +111,7 @@ public abstract class IntegratedVirtualMachine extends VirtualMachine {
 				long fd = newFD();
 				if ((integration().doAllowRead() && mode == READ) || (integration().doAllowWrite() && (mode == WRITE || mode == APPEND)))
 					logger.trace("VM file handle[{}:{}]: {}",
-							SSVMUtil.describeFileMode(mode), fd, path);
+							SsvmUtil.describeFileMode(mode), fd, path);
 				switch (mode) {
 					case READ: {
 						InputStream in;

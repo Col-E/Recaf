@@ -23,7 +23,7 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ssvm.IntegratedVirtualMachine;
-import me.coley.recaf.ssvm.VirtualMachineUtil;
+import me.coley.recaf.ssvm.VmUtil;
 import me.coley.recaf.ssvm.value.ConstNumericValue;
 import me.coley.recaf.ssvm.value.ConstStringValue;
 import me.coley.recaf.ui.util.Icons;
@@ -55,7 +55,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 	protected VMSymbols symbols;
 	protected VMPrimitives primitives;
 	protected MemoryManager memory;
-	protected VirtualMachineUtil vmUtil;
+	protected VmUtil vmUtil;
 
 	/**
 	 * @param title
@@ -91,7 +91,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		symbols = vm.getSymbols();
 		primitives = vm.getPrimitives();
 		memory = vm.getMemoryManager();
-		vmUtil = VirtualMachineUtil.create(vm);
+		vmUtil = VmUtil.create(vm);
 		grid.addRow(0, new Label("Parameter"), new Label("Type"), new Label("Editor"));
 		Type methodType = Type.getMethodType(info.getDescriptor());
 		Type[] methodArgs = methodType.getArgumentTypes();

@@ -166,7 +166,7 @@ public class SsvmSandboxingTests extends TestUtils implements Opcodes {
 				fail("Could not find class: " + main);
 			VMHelper helper = vm.getHelper();
 			VMSymbols symbols = vm.getSymbols();
-			VirtualMachineUtil util = VirtualMachineUtil.create(vm);
+			VmUtil util = VmUtil.create(vm);
 			util.invokeStatic(target, "main", "([Ljava/lang/String;)V", helper.emptyArray(symbols.java_lang_String()));
 		} catch (VMException ex) {
 			fail(ex);

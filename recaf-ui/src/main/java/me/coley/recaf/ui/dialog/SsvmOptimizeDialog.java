@@ -11,7 +11,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.scripting.impl.WorkspaceAPI;
-import me.coley.recaf.ssvm.SSVMUtil;
+import me.coley.recaf.ssvm.SsvmUtil;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ssvm.VmRunResult;
 import me.coley.recaf.ui.util.Icons;
@@ -79,7 +79,7 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 				InstanceJavaClass target = (InstanceJavaClass) vm.findBootstrapClass(owner.getName());
 				ClassWriter writer = new WorkspaceClassWriter(RecafUI.getController(), ClassWriter.COMPUTE_FRAMES);
 				ClassNode node = target.getNode();
-				SSVMUtil.restoreClass(node);
+				SsvmUtil.restoreClass(node);
 				try {
 					node.accept(writer);
 				} catch (Throwable t) {

@@ -15,12 +15,12 @@ import java.util.ListIterator;
  *
  * @author xDark
  */
-public class SSVMUtil {
+public class SsvmUtil {
 
 	/**
 	 * Deny all constructions.
 	 */
-	private SSVMUtil() {
+	private SsvmUtil() {
 	}
 
 	/**
