@@ -140,13 +140,29 @@ public class SearchPane extends BorderPane {
 	 * @return Reference search panel.
 	 */
 	public static SearchPane createReferenceSearch(String owner, String name, String desc) {
+		return createReferenceSearch(owner, name, desc, TextMatchMode.CONTAINS);
+	}
+
+	/**
+	 * @param owner
+	 * 		Internal name of owner.
+	 * @param name
+	 * 		Reference name.
+	 * @param desc
+	 * 		Reference descriptor.
+	 * @param mode
+	 * 		Text match mode for member input.
+	 *
+	 * @return Reference search panel.
+	 */
+	public static SearchPane createReferenceSearch(String owner, String name, String desc, TextMatchMode mode) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
 				Lang.getBinding("menu.search.references"));
 		// Inputs
 		TextField txtOwner = new TextField(owner);
 		TextField txtName = new TextField(name);
 		TextField txtDesc = new TextField(desc);
-		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
+		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, mode);
 		// Layout
 		ColumnPane columns = new ColumnPane();
 		SearchPane searchPane = new SearchPane(title, columns);

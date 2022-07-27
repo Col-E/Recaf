@@ -9,6 +9,7 @@ import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
+import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.TextInputDialog;
@@ -211,6 +212,6 @@ public class FieldContextBuilder extends MemberContextBuilder {
 	@Override
 	public void search() {
 		new GenericWindow(SearchPane.createReferenceSearch(
-				ownerInfo.getName(), fieldInfo.getName(), fieldInfo.getDescriptor())).show();
+				ownerInfo.getName(), fieldInfo.getName(), fieldInfo.getDescriptor(), TextMatchMode.EQUALS)).show();
 	}
 }

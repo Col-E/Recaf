@@ -10,6 +10,7 @@ import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
+import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
@@ -235,7 +236,7 @@ public class MethodContextBuilder extends MemberContextBuilder {
 	@Override
 	public void search() {
 		new GenericWindow(SearchPane.createReferenceSearch(
-				ownerInfo.getName(), methodInfo.getName(), methodInfo.getDescriptor())).show();
+				ownerInfo.getName(), methodInfo.getName(), methodInfo.getDescriptor(), TextMatchMode.EQUALS)).show();
 	}
 
 	private void graph() {

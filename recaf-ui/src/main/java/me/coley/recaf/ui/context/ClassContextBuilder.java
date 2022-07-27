@@ -9,6 +9,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.mapping.RemappingVisitor;
+import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.dialog.ConfirmDialog;
 import me.coley.recaf.ui.dialog.PackageSelectDialog;
@@ -245,7 +246,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 
 	@Override
 	public void search() {
-		new GenericWindow(SearchPane.createReferenceSearch(info.getName(), null, null)).show();
+		new GenericWindow(SearchPane.createReferenceSearch(info.getName(), null, null, TextMatchMode.EQUALS)).show();
 	}
 
 	private void openHierarchy() {
