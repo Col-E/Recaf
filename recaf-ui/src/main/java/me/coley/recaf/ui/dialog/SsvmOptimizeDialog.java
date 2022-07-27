@@ -11,8 +11,9 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.scripting.impl.WorkspaceAPI;
-import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ssvm.SSVMUtil;
+import me.coley.recaf.ssvm.SsvmIntegration;
+import me.coley.recaf.ssvm.VmRunResult;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
@@ -58,8 +59,8 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 				}
 			}
 			// Run and get result
-			CompletableFuture<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(owner, info, getValues());
-			resultFuture.exceptionally(SsvmIntegration.VmRunResult::new).orTimeout(10, TimeUnit.SECONDS).thenAccept((result) -> {
+			CompletableFuture<VmRunResult> resultFuture = SsvmIntegration.runMethod(vm, owner, info, getValues());
+			resultFuture.exceptionally(VmRunResult::new).orTimeout(10, TimeUnit.SECONDS).thenAccept((result) -> {
 				// Check for error handling the task
 				Throwable ex = result.getException();
 				if (ex != null) {

@@ -2,15 +2,14 @@ package me.coley.recaf.ui.dialog;
 
 import dev.xdark.ssvm.value.TopValue;
 import dev.xdark.ssvm.value.Value;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.ssvm.SsvmIntegration;
+import me.coley.recaf.ssvm.VirtualMachineUtil;
+import me.coley.recaf.ssvm.VmRunResult;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.StringUtil;
@@ -54,7 +53,7 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 				}
 			}
 			// Run and get result
-			CompletableFuture<SsvmIntegration.VmRunResult> resultFuture = ssvm.runMethod(owner, info, getValues());
+			CompletableFuture<VmRunResult> resultFuture = SsvmIntegration.runMethod(vm, owner, info, getValues());
 			resultFuture.orTimeout(1L, TimeUnit.MINUTES)
 					.whenComplete((result, throwable) -> {
 						if (throwable != null) {
@@ -67,13 +66,13 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 						}
 						throwable = result.getException();
 						if (throwable != null) {
-							Throwable ssvmThrowable = ssvm.unwrap(throwable);
+							Throwable ssvmThrowable = vm.getVmUtil().unwrap(throwable);
 							FxThreadUtil.run(() -> {
 								output.setText(StringUtil.traceToString(ssvmThrowable));
 								output.setStyle("-fx-text-fill: red;");
 							});
 						} else {
-							String resultText = ssvm.toString(result.getValue());
+							String resultText = vm.getVmUtil().toString(result.getValue());
 							FxThreadUtil.run(() -> {
 								output.setStyle(null);
 								output.setText(resultText);

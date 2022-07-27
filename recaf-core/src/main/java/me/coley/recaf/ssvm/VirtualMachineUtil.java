@@ -5,14 +5,19 @@ import dev.xdark.ssvm.execution.ExecutionContext;
 import dev.xdark.ssvm.execution.Locals;
 import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
+import dev.xdark.ssvm.mirror.JavaClass;
 import dev.xdark.ssvm.mirror.JavaMethod;
 import dev.xdark.ssvm.util.VMHelper;
+import dev.xdark.ssvm.value.ArrayValue;
 import dev.xdark.ssvm.value.InstanceValue;
 import dev.xdark.ssvm.value.ObjectValue;
 import dev.xdark.ssvm.value.Value;
+import org.objectweb.asm.Type;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -29,6 +34,16 @@ public final class VirtualMachineUtil {
 	 */
 	private VirtualMachineUtil(VirtualMachine vm) {
 		this.vm = vm;
+	}
+
+	/**
+	 * @param vm
+	 * 		VM instance.
+	 *
+	 * @return VM helper.
+	 */
+	public static VirtualMachineUtil create(VirtualMachine vm) {
+		return new VirtualMachineUtil(vm);
 	}
 
 	/**
@@ -177,12 +192,83 @@ public final class VirtualMachineUtil {
 	}
 
 	/**
-	 * @param vm
-	 * 		VM instance.
+	 * @param ex
+	 * 		Exception to print that may be virtualized <i>({@link VMException})</i>
 	 *
-	 * @return VM helper.
+	 * @return Unwrapped exception.
 	 */
-	public static VirtualMachineUtil create(VirtualMachine vm) {
-		return new VirtualMachineUtil(vm);
+	public Throwable unwrap(Throwable ex) {
+		if (ex instanceof VMException)
+			ex = vm.getHelper().toJavaException(((VMException) ex).getOop());
+		return ex;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to convert.
+	 *
+	 * @return String representation.
+	 */
+	public String toString(Value value) {
+		String valueString = null;
+		if (value.isNull()) {
+			return "null";
+		} else if (value instanceof InstanceValue) {
+			InstanceValue instance = (InstanceValue) value;
+			if (instance.getJavaClass().getInternalName().equals("java/lang/String")) {
+				valueString = vm.getHelper().readUtf8(value);
+			}
+		} else if (value instanceof ArrayValue) {
+			ArrayValue array = (ArrayValue) value;
+			JavaClass cls = array.getJavaClass();
+			Type arrayType = Type.getType(cls.getDescriptor());
+			int length = array.getLength();
+			List<String> parts = new ArrayList<>();
+			Type element = arrayType.getElementType();
+			switch (element.getSort()) {
+				case Type.BOOLEAN:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getBoolean(i)));
+					break;
+				case Type.CHAR:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getChar(i)));
+					break;
+				case Type.BYTE:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getByte(i)));
+					break;
+				case Type.SHORT:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getShort(i)));
+					break;
+				case Type.INT:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getInt(i)));
+					break;
+				case Type.FLOAT:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getFloat(i)));
+					break;
+				case Type.LONG:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getLong(i)));
+					break;
+				case Type.DOUBLE:
+					for (int i = 0; i < length; i++)
+						parts.add(String.valueOf(array.getDouble(i)));
+					break;
+				case Type.OBJECT:
+					for (int i = 0; i < length; i++)
+						parts.add(toString(array.getValue(i)));
+					break;
+				default:
+					throw new IllegalStateException("Unsupported element type: " + element);
+			}
+			valueString = "[" + String.join(", ", parts) + "]";
+		}
+		if (valueString == null)
+			valueString = value.toString();
+		return valueString;
 	}
 }
