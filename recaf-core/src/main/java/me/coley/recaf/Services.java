@@ -96,6 +96,9 @@ public class Services {
 	 */
 	void updateWorkspace(Workspace workspace) {
 		mappingsManager.clearAggregated();
+		if (ssvmIntegration != null) {
+			ssvmIntegration.cleanup();
+		}
 		if (workspace == null) {
 			inheritanceGraph = null;
 			symbolSolver = null;

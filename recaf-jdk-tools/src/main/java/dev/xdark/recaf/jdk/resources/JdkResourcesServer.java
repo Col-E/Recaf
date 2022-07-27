@@ -131,7 +131,7 @@ public class JdkResourcesServer {
 	public static JdkResourcesServer open(int port) throws IOException {
 		ServerSocket socket = new ServerSocket();
 		socket.bind(new InetSocketAddress(port));
-		socket.setSoTimeout(100000);
+		socket.setSoTimeout(10_000);
 		Socket client1 = socket.accept();
 		socket.setSoTimeout(0);
 		return new JdkResourcesServer(socket, client1, null);
@@ -151,7 +151,7 @@ public class JdkResourcesServer {
 		}
 		// Find open port
 		ServerSocket socket = new ServerSocket(0);
-		socket.setSoTimeout(100_000);
+		socket.setSoTimeout(10_000);
 		// Prepare process
 		ProcessBuilder builder = new ProcessBuilder();
 		builder.directory(jdkExecutable.getParent().toFile());

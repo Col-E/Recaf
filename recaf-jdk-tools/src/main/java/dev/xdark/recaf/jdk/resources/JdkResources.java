@@ -16,7 +16,7 @@ public class JdkResources {
 	public static void main(String[] args) {
 		Socket socket = new Socket();
 		try {
-			socket.setSoTimeout(10000);
+			socket.setSoTimeout(10_000);
 			socket.connect(new InetSocketAddress(Integer.parseInt(args[0])));
 			socket.setSoTimeout(0);
 			byte[] buf = new byte[ToolConstant.TRANSFER_BUFFER];
