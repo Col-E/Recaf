@@ -22,10 +22,16 @@ public class ExpressionEvaluator {
 	}
 
 	public static Optional<Number> evaluate(LiteralExpr literalExpr) {
-		return literalExpr.toIntegerLiteralExpr().map(IntegerLiteralExpr::asNumber)
-			// No byte, short, float
-			.or(() -> literalExpr.toDoubleLiteralExpr().map(DoubleLiteralExpr::asDouble))
-			.or(() -> literalExpr.toLongLiteralExpr().map(LongLiteralExpr::asNumber));
+		try {
+			return literalExpr.toIntegerLiteralExpr().map(IntegerLiteralExpr::asNumber)
+				// No byte, short, float
+				.or(() -> literalExpr.toDoubleLiteralExpr().map(DoubleLiteralExpr::asDouble))
+				.or(() -> literalExpr.toLongLiteralExpr().map(LongLiteralExpr::asNumber));
+		} catch (NumberFormatException e) {
+			// If the value range an int or long literal is exceeded, it will throw a NumberFormatException,
+			// therefore this is caught and stop evaluation.
+			return Optional.empty();
+		}
 	}
 
 	public static Optional<Number> evaluate(CastExpr castExpr) {
