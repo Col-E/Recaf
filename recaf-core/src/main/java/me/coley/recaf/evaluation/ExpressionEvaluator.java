@@ -28,6 +28,10 @@ public class ExpressionEvaluator {
 			.or(() -> literalExpr.toLongLiteralExpr().map(LongLiteralExpr::asNumber));
 	}
 
+	public static Optional<Number> evaluate(CastExpr castExpr) {
+		return evaluate(castExpr.getExpression()).flatMap(n -> castExpr.getType().toPrimitiveType().flatMap(t -> NumberEvaluator.cast(n, t)));
+	}
+
 	public static Optional<Number> evaluate(Expression expr) {
 		//un-enclosing parenthesis
 		if (expr instanceof EnclosedExpr) expr = ((EnclosedExpr) expr).getInner();
@@ -35,7 +39,8 @@ public class ExpressionEvaluator {
 		// only evaluating
 		return expr.toLiteralExpr().flatMap(ExpressionEvaluator::evaluate) // the literals themselves
 			.or(() -> unwrappedExpr.toBinaryExpr().flatMap(ExpressionEvaluator::evaluate)) // binary operations
-			.or(() -> unwrappedExpr.toUnaryExpr().flatMap(ExpressionEvaluator::evaluate)); // and unary operations
+			.or(() -> unwrappedExpr.toUnaryExpr().flatMap(ExpressionEvaluator::evaluate)) // unary operations
+			.or(() -> unwrappedExpr.toCastExpr().flatMap(ExpressionEvaluator::evaluate)); // cast operations
 		// are supported
 	}
 }

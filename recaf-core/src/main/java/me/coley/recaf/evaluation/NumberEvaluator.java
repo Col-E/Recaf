@@ -2,6 +2,8 @@ package me.coley.recaf.evaluation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
+import com.github.javaparser.ast.type.PrimitiveType;
+import com.github.javaparser.ast.type.Type;
 
 import java.util.Optional;
 
@@ -175,5 +177,23 @@ public class NumberEvaluator {
       default:
         return Optional.empty();
     }
+  }
+
+  public static Optional<Number> cast(Number n, PrimitiveType type) {
+    return type.toPrimitiveType().flatMap(t -> {
+      switch (t.getType()) {
+        case BYTE: return Optional.of(n.byteValue());
+        case SHORT: return Optional.of(n.shortValue());
+        case INT: return Optional.of(n.intValue());
+        case LONG: return Optional.of(n.longValue());
+        case FLOAT: return Optional.of(n.floatValue());
+        case DOUBLE: return Optional.of(n.doubleValue());
+      }
+      return Optional.empty();
+    });
+  }
+
+  public static Optional<Number> cast(Number n, Type type) {
+    return type.toPrimitiveType().flatMap(t -> cast(n, t));
   }
 }
