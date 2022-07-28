@@ -401,22 +401,12 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		// Special case check for the initial text of the document.
 		// Do a full style calculation for this case.
 		if (start == 0 && insert && getText().equals(change.getInserted())) {
-			// Initial state
-			logger.trace("Style update for initial document text");
-			// Update style
+			// Update initial style
 			if (styler != null) {
 				styler.styleCompleteDocument(getText());
 			}
 		} else {
-			// Allow for insertion and removal style recalculations
-			if (insert) {
-				logger.trace("Style update for inserted text, range=[{}, {}]", start, end);
-			} else if (removal) {
-				logger.trace("Style update for removed text, range=[{}, {}]", start, end);
-			} else {
-				logger.trace("Style update for replaced text, range=[{}, {}]", start, end);
-			}
-			// Update style
+			// Allow for insertion and removal style recalculations limited in scope to the affected text.
 			if (styler != null) {
 				styler.styleFlexibleRange(this, getText(), start, end);
 			}
