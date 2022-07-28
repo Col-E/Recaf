@@ -13,13 +13,12 @@ import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.code.LiteralExpressionInfo;
 import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.parse.evaluation.ExpressionEvaluator;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.StringUtil;
 
 import java.util.List;
 import java.util.Optional;
-
-import static me.coley.recaf.evaluation.ExpressionEvaluator.evaluate;
 
 /**
  * Utility for working with JavaParser and pulling contextual information from Java source code.
@@ -176,9 +175,10 @@ public class JavaParserHelper {
 		Node node = getNodeAtLocation(line, column, unit);
 		if (node instanceof Expression) {
 			Expression expression = (Expression) node;
-			// Double does not have any conversions yet
+			// Double does not have any conversions to apply, so we ignore it.
+			// We're targeting integers primarily so that we can convert bases.
 			if (!expression.isDoubleLiteralExpr()) {
-				Optional<Number> nbOpt = evaluate(expression);
+				Optional<Number> nbOpt = ExpressionEvaluator.evaluate(expression);
 				if (nbOpt.isPresent()) {
 					return Optional.of(new ParseHitResult(new LiteralExpressionInfo(nbOpt.get(), expression), node));
 				}
@@ -209,8 +209,8 @@ public class JavaParserHelper {
 		}
 		// Handle edge cases like package import names.
 		ItemInfo value = JavaParserResolving.ofEdgeCases(typeSolver, node);
-		if (value == null) return Optional.empty();
-
+		if (value == null)
+			return Optional.empty();
 		return Optional.of(new ParseHitResult(value, node));
 	}
 
