@@ -9,6 +9,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
@@ -78,18 +80,42 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		if (!(view instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) view;
 		fsc.setFontSize(Configs.display().fontSize.get());
-		fsc.applyEventsForFontSizeChange(node -> node.addEventFilter(ScrollEvent.SCROLL, e -> {
-			if (!e.isControlDown()) return;
-			e.consume();
-			int oldSize = Configs.display().fontSize.get();
-			int newSize = Utils.clamp(DisplayConfig.fontSizeBounds.getKey(),
-				oldSize + (e.getDeltaY() > 0 ? 1 : -1),
-				DisplayConfig.fontSizeBounds.getValue());
-			if (oldSize != newSize) {
-				Configs.display().fontSize.set(newSize);
-				fsc.setFontSize(newSize);
-			}
-		}));
+		fsc.applyEventsForFontSizeChange(node -> {
+			node.addEventFilter(ScrollEvent.SCROLL, e -> {
+				if (!e.isControlDown()) return;
+				e.consume();
+				int oldSize = Configs.display().fontSize.get();
+				int newSize = Utils.clamp(DisplayConfig.fontSizeBounds.getKey(),
+					oldSize + (e.getDeltaY() > 0 ? 1 : -1),
+					DisplayConfig.fontSizeBounds.getValue());
+				if (oldSize != newSize) {
+					Configs.display().fontSize.set(newSize);
+					fsc.setFontSize(newSize);
+				}
+			});
+			node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+				if (!e.isControlDown()) return;
+				if (e.getCode() == KeyCode.ADD) {
+					int oldSize = Configs.display().fontSize.get();
+					int newSize = Utils.clamp(DisplayConfig.fontSizeBounds.getKey(),
+						oldSize + 1,
+						DisplayConfig.fontSizeBounds.getValue());
+					if (oldSize != newSize) {
+						Configs.display().fontSize.set(newSize);
+						fsc.setFontSize(newSize);
+					}
+				} else if (e.getCode() == KeyCode.SUBTRACT) {
+					int oldSize = Configs.display().fontSize.get();
+					int newSize = Utils.clamp(DisplayConfig.fontSizeBounds.getKey(),
+						oldSize - 1,
+						DisplayConfig.fontSizeBounds.getValue());
+					if (oldSize != newSize) {
+						Configs.display().fontSize.set(newSize);
+						fsc.setFontSize(newSize);
+					}
+				}
+			});
+		});
 		fontSizeChangeListener = new FontSizeChangeListener(fsc);
 		Configs.display().fontSize.addListener(fontSizeChangeListener);
 	}
