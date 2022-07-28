@@ -31,6 +31,10 @@ public class RemapperImpl extends Remapper {
 
 	@Override
 	public String mapType(String internalName) {
+		// Check for array type
+		if (internalName.charAt(0) == '[')
+			return mapDesc(internalName);
+		// Standard internal name
 		return map(internalName);
 	}
 
