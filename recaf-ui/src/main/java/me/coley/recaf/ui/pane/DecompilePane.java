@@ -45,13 +45,14 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Decompiler wrapper of {@link JavaArea}.
  *
  * @author Matt Coley
  */
-public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable, Scrollable {
+public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable, Scrollable, FontSizeChangeable {
 	private static final Logger log = Logging.get(DecompilePane.class);
 	private final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "Decompile");
 	private final VBox overlay = new VBox();
@@ -90,6 +91,16 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		// Bottom controls for quick config changes
 		Node buttonBar = createButtonBar();
 		setBottom(buttonBar);
+	}
+
+	@Override
+	public void applyScrollEvent(Consumer<Node> consumer) {
+		consumer.accept(scroll);
+	}
+
+	@Override
+	public void setFontSize(int fontSize) {
+		javaArea.setStyle("-fx-font-size: " + fontSize + "px;");
 	}
 
 	private Node createButtonBar() {
