@@ -3,7 +3,6 @@ package me.coley.recaf.evaluation;
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
 import com.github.javaparser.ast.type.PrimitiveType;
-import com.github.javaparser.ast.type.Type;
 
 import java.util.Optional;
 
@@ -12,6 +11,8 @@ public class NumberEvaluator {
 	private NumberEvaluator() {}
 
 	public static Optional<Number> evaluate(Number a, BinaryExpr.Operator op, Number b) {
+		// it does not change anything if the type is shorter than a long
+		// therefore, we can use longs for the right hand side
 		if(op == BinaryExpr.Operator.LEFT_SHIFT
 			|| op == BinaryExpr.Operator.SIGNED_RIGHT_SHIFT
 			|| op == BinaryExpr.Operator.UNSIGNED_RIGHT_SHIFT) {
@@ -30,12 +31,6 @@ public class NumberEvaluator {
 		} else {
 			return Optional.empty();
 		}
-	}
-
-	public static Optional<Number> higher(Number n) {
-		if (n instanceof Integer) return Optional.of(n.longValue());
-		if (n instanceof Float) return Optional.of(n.doubleValue());
-		return Optional.ofNullable(n);
 	}
 
 	public static Optional<Number> evaluate(long a, BinaryExpr.Operator op, long b) {
@@ -126,18 +121,6 @@ public class NumberEvaluator {
 		return Optional.empty();
 	}
 
-	public static Optional<Number> evaluateShift(Number n, BinaryExpr.Operator op, int b) {
-		return evaluateShift(n, op, (long) b);
-	}
-
-	public static Optional<Number> evaluateShift(Number n, BinaryExpr.Operator op, short b) {
-		return evaluateShift(n, op, (long) b);
-	}
-
-	public static Optional<Number> evaluateShift(Number n, BinaryExpr.Operator op, byte b) {
-		return evaluateShift(n, op, (long) b);
-	}
-
 	public static Optional<Number> cast(Number n, PrimitiveType type) {
 		return type.toPrimitiveType().flatMap(t -> {
 			switch (t.getType()) {
@@ -150,9 +133,5 @@ public class NumberEvaluator {
 			}
 			return Optional.empty();
 		});
-	}
-
-	public static Optional<Number> cast(Number n, Type type) {
-		return type.toPrimitiveType().flatMap(t -> cast(n, t));
 	}
 }
