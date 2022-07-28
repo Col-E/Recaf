@@ -1,5 +1,8 @@
 package me.coley.recaf.config.container;
 
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.util.Pair;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
@@ -79,6 +82,13 @@ public class DisplayConfig implements ConfigContainer {
 	@ConfigID("promptdeleteitem")
 	public boolean promptDeleteItem = true;
 
+	/**
+	 * Font size for the decompiler view.
+	 */
+	@IntBounds(min = 8, max = 20)
+	@Group("decompiler")
+	@ConfigID("fontsize")
+	public IntegerProperty fontSize = new SimpleIntegerProperty(12);
 
 	@Override
 	public String iconPath() {
@@ -88,6 +98,17 @@ public class DisplayConfig implements ConfigContainer {
 	@Override
 	public String internalName() {
 		return "conf.display";
+	}
+
+	public static final Pair<Integer, Integer> fontSizeBounds;
+
+	static {
+		try {
+			IntBounds bounds = DisplayConfig.class.getDeclaredField("fontSize").getAnnotation(IntBounds.class);
+			fontSizeBounds = new Pair<>(bounds.min(), bounds.max());
+		} catch (NoSuchFieldException e) {
+			throw new RuntimeException("Failed to get font size bounds", e);
+		}
 	}
 
 	/**
