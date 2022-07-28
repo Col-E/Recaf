@@ -1,7 +1,10 @@
 package me.coley.recaf.ssvm;
 
+import dev.xdark.ssvm.api.MethodInvoker;
+import dev.xdark.ssvm.api.VMInterface;
 import dev.xdark.ssvm.classloading.BootClassLoader;
 import dev.xdark.ssvm.classloading.CompositeBootClassLoader;
+import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import me.coley.recaf.ssvm.loader.RuntimeBootClassLoader;
 import me.coley.recaf.ssvm.loader.WorkspaceBootClassLoader;
 import me.coley.recaf.workspace.Workspace;
@@ -27,7 +30,7 @@ public class LocalVmFactory implements VmFactory {
 
 	@Override
 	public IntegratedVirtualMachine create(SsvmIntegration integration) {
-		return new IntegratedVirtualMachine() {
+		IntegratedVirtualMachine vm = new IntegratedVirtualMachine() {
 			@Override
 			protected SsvmIntegration integration() {
 				return integration;
@@ -41,5 +44,11 @@ public class LocalVmFactory implements VmFactory {
 				));
 			}
 		};
+		vm.initialize();
+		VMInterface vmi = vm.getInterface();
+		InstanceJavaClass cl = (InstanceJavaClass) vm.findBootstrapClass("java/lang/Shutdown");
+		vmi.setInvoker(cl, "beforeHalt", "()V", MethodInvoker.noop());
+		vmi.setInvoker(cl, "halt0", "(I)V", MethodInvoker.noop());
+		return vm;
 	}
 }

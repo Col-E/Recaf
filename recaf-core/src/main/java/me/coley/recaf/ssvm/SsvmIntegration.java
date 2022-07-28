@@ -54,6 +54,9 @@ public class SsvmIntegration {
 	 */
 	public void updatePrimaryVm() {
 		try {
+			if (vm != null) {
+				SsvmUtil.shutdown(vm, 0);
+			}
 			vm = createVM(false, vmm -> {
 				try {
 					vmm.bootstrap();
@@ -250,5 +253,15 @@ public class SsvmIntegration {
 	 */
 	public boolean doAllowWrite() {
 		return allowWrite;
+	}
+
+	/**
+	 * Shutdowns VM.
+	 */
+	public void cleanup() {
+		IntegratedVirtualMachine vm = this.vm;
+		if (vm != null) {
+			SsvmUtil.shutdown(vm, 0);
+		}
 	}
 }

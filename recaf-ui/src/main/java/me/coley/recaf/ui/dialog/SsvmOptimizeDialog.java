@@ -100,6 +100,9 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 
 	@Override
 	protected void initVm() {
+		if (vm != null) {
+			SsvmUtil.shutdown(vm, 0);
+		}
 		// Create new VM so we can attach processors to it.
 		vm = ssvm.createVM(true, vm -> {
 			Predicate<ExecutionContext> whitelist = ctx ->

@@ -2,7 +2,11 @@ package me.coley.recaf.ssvm;
 
 import dev.xdark.recaf.jdk.properties.JdkProperties;
 import dev.xdark.recaf.jdk.resources.JdkResourcesServer;
+import dev.xdark.ssvm.api.MethodInvoker;
+import dev.xdark.ssvm.api.VMInterface;
 import dev.xdark.ssvm.classloading.BootClassLoader;
+import dev.xdark.ssvm.execution.Result;
+import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import me.coley.recaf.ssvm.loader.RemoteBootClassLoader;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
@@ -31,6 +35,12 @@ public class RemoteVmFactory implements VmFactory {
 
 	@Override
 	public IntegratedVirtualMachine create(SsvmIntegration integration) {
+		JdkResourcesServer peer;
+		try {
+			peer = JdkResourcesServer.start(remoteJavaExecutable);
+		} catch (IOException ex) {
+			throw new IllegalStateException("Failed to start remote server", ex);
+		}
 		IntegratedVirtualMachine vm = new IntegratedVirtualMachine() {
 			@Override
 			public void bootstrap() {
@@ -46,11 +56,7 @@ public class RemoteVmFactory implements VmFactory {
 
 			@Override
 			protected BootClassLoader createBootClassLoader() {
-				try {
-					return new RemoteBootClassLoader(JdkResourcesServer.start(remoteJavaExecutable));
-				} catch (IOException ex) {
-					throw new IllegalStateException("Failed to create remote boot class loader", ex);
-				}
+				return new RemoteBootClassLoader(peer);
 			}
 		};
 		// Copy remote properties
@@ -63,6 +69,18 @@ public class RemoteVmFactory implements VmFactory {
 		} catch (IOException ex) {
 			logger.warn("Failed to dump JDK properties", ex);
 		}
+		vm.initialize();
+		VMInterface vmi = vm.getInterface();
+		InstanceJavaClass cl = (InstanceJavaClass) vm.findBootstrapClass("java/lang/Shutdown");
+		vmi.setInvoker(cl, "beforeHalt", "()V", ctx -> {
+			try {
+				peer.shutdown();
+			} catch (IOException ex) {
+				logger.error("Could not shutdown remote server", ex);
+			}
+			return Result.ABORT;
+		});
+		vmi.setInvoker(cl, "halt0", "(I)V", MethodInvoker.noop());
 		return vm;
 	}
 }

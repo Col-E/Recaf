@@ -162,7 +162,9 @@ public final class VmUtil {
 		InstanceValue value = vm.getOperations().allocateInstance(klass);
 		Locals locals = vm.getThreadStorage().newLocals(init);
 		locals.set(0, value);
-		locals.copyFrom(args, 0, 1, args.length);
+		if (args.length != 0) {
+			locals.copyFrom(args, 0, 1, args.length);
+		}
 		vm.getHelper().invoke(init, locals);
 		return value;
 	}

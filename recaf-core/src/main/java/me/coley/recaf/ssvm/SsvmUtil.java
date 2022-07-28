@@ -1,12 +1,18 @@
 package me.coley.recaf.ssvm;
 
+import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.asm.DelegatingInsnNode;
 import dev.xdark.ssvm.asm.Modifier;
+import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.fs.FileDescriptorManager;
+import dev.xdark.ssvm.mirror.InstanceJavaClass;
+import dev.xdark.ssvm.value.IntValue;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ListIterator;
 
@@ -16,6 +22,7 @@ import java.util.ListIterator;
  * @author xDark
  */
 public class SsvmUtil {
+	private final static Logger logger = LoggerFactory.getLogger(SsvmUtil.class);
 
 	/**
 	 * Deny all constructions.
@@ -85,6 +92,26 @@ public class SsvmUtil {
 				return "APPEND";
 			default:
 				return "?";
+		}
+	}
+
+	/**
+	 * Shutdowns VM.
+	 *
+	 * @param vm
+	 * 		VM instance.
+	 * @param code
+	 * 		Exit code.
+	 */
+	public static void shutdown(VirtualMachine vm, int code) {
+		InstanceJavaClass cl = (InstanceJavaClass) vm.findBootstrapClass("java/lang/Shutdown", true);
+		VmUtil util = VmUtil.create(vm);
+		try {
+			util.invokeStatic(cl, "shutdown", "()V");
+			util.invokeStatic(cl, "beforeHalt", "()V");
+			util.invokeStatic(cl, "halt", "(I)V", IntValue.of(code));
+		} catch (VMException ex) {
+			logger.error("Could not shutdown virtual machine\n{}", util.throwableToString(ex.getOop()));
 		}
 	}
 }
