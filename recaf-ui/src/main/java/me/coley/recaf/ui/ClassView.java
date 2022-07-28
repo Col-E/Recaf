@@ -84,40 +84,28 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 			node.addEventFilter(ScrollEvent.SCROLL, e -> {
 				if (!e.isControlDown()) return;
 				e.consume();
-				int oldSize = Configs.display().fontSize.get();
-				int newSize = Utils.clamp(DisplayConfig.fontSizeBounds.getKey(),
-					oldSize + (e.getDeltaY() > 0 ? 1 : -1),
-					DisplayConfig.fontSizeBounds.getValue());
-				if (oldSize != newSize) {
-					Configs.display().fontSize.set(newSize);
-					fsc.setFontSize(newSize);
-				}
+				advanceFontSize(fsc, e.getDeltaY() > 0);
 			});
 			node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-				if (!e.isControlDown()) return;
-				if (e.getCode() == KeyCode.ADD) {
-					int oldSize = Configs.display().fontSize.get();
-					int newSize = Utils.clamp(DisplayConfig.fontSizeBounds.getKey(),
-						oldSize + 1,
-						DisplayConfig.fontSizeBounds.getValue());
-					if (oldSize != newSize) {
-						Configs.display().fontSize.set(newSize);
-						fsc.setFontSize(newSize);
-					}
-				} else if (e.getCode() == KeyCode.SUBTRACT) {
-					int oldSize = Configs.display().fontSize.get();
-					int newSize = Utils.clamp(DisplayConfig.fontSizeBounds.getKey(),
-						oldSize - 1,
-						DisplayConfig.fontSizeBounds.getValue());
-					if (oldSize != newSize) {
-						Configs.display().fontSize.set(newSize);
-						fsc.setFontSize(newSize);
-					}
-				}
+				if (!e.isControlDown() || !(e.getCode() == KeyCode.ADD || e.getCode() == KeyCode.SUBTRACT)) return;
+				e.consume();
+				advanceFontSize(fsc, e.getCode() == KeyCode.ADD);
 			});
 		});
 		fontSizeChangeListener = new FontSizeChangeListener(fsc);
 		Configs.display().fontSize.addListener(fontSizeChangeListener);
+	}
+
+	private void advanceFontSize(FontSizeChangeable fsc, boolean up) {
+		int oldSize = Configs.display().fontSize.get();
+		int newSize = Utils.clamp(
+			DisplayConfig.fontSizeBounds.getKey(),
+			oldSize + (up ? 1 : -1),
+			DisplayConfig.fontSizeBounds.getValue());
+		if (oldSize != newSize) {
+			Configs.display().fontSize.set(newSize);
+			fsc.setFontSize(newSize);
+		}
 	}
 
 	@Override
@@ -171,8 +159,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 			} else if (info instanceof DexClassInfo) {
 				return new SmaliAssemblerPane();
 			} else {
-				return new BasicClassRepresentation(new Label("Unknown class info type!"), i -> {
-				});
+				return new BasicClassRepresentation(new Label("Unknown class info type!"), i -> {});
 			}
 		} else {
 			return new HexClassView();
