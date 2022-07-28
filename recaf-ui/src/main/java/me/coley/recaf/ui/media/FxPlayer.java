@@ -8,9 +8,10 @@ import com.sun.media.jfxmedia.events.AudioSpectrumListener;
 import com.sun.media.jfxmedia.locator.Locator;
 import com.sun.media.jfxmediaimpl.MediaUtils;
 import com.sun.media.jfxmediaimpl.NativeMediaManager;
-import me.coley.recaf.util.JigsawUtil;
+import dev.xdark.ssvm.util.UnsafeUtil;
 import me.coley.recaf.util.RecafURLStreamHandlerProvider;
 import me.coley.recaf.util.ReflectUtil;
+import sun.misc.Unsafe;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -117,7 +118,8 @@ public class FxPlayer extends AudioPlayer implements AudioSpectrumListener {
 	public double getCurrentSeconds() {
 		if (player != null)
 			return player.getPresentationTime();
-		return -1;	}
+		return -1;
+	}
 
 	/**
 	 * @return {@code true} when there is content loaded in the player.
@@ -188,8 +190,11 @@ public class FxPlayer extends AudioPlayer implements AudioSpectrumListener {
 			String[] protocolArrayPlus = new String[protocolArray.length + 1];
 			System.arraycopy(protocolArray, 0, protocolArrayPlus, 0, protocolArray.length);
 			protocolArrayPlus[protocolArray.length] = RecafURLStreamHandlerProvider.recafFile;
-			JigsawUtil.getLookup().unreflectSetter(fProtocols)
-					.invoke((Object) protocolArrayPlus);
+			// Required for newer versions of Java
+			Unsafe unsafe = UnsafeUtil.get();
+			Object fieldBase = unsafe.staticFieldBase(fProtocols);
+			long fieldOffset = unsafe.staticFieldOffset(fProtocols);
+			unsafe.putObject(fieldBase, fieldOffset, protocolArrayPlus);
 		} catch (Throwable t) {
 			throw new IllegalStateException("Could not hijack platforms to support recaf URI protocol", t);
 		}
