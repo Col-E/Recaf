@@ -1,4 +1,4 @@
-package me.coley.recaf.evaluation;
+package me.coley.recaf.parse.evaluation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
@@ -6,16 +6,31 @@ import com.github.javaparser.ast.type.PrimitiveType;
 
 import java.util.Optional;
 
+/**
+ * Utilities to evaluate {@link com.github.javaparser.ast.expr.BinaryExpr.Operator} and
+ * {@link com.github.javaparser.ast.expr.UnaryExpr.Operator} values.
+ *
+ * @author Amejonah
+ */
 public class NumberEvaluator {
-
 	private NumberEvaluator() {}
 
+	/**
+	 * @param op
+	 * 		Math operation.
+	 * @param a
+	 * 		Left number to operate with.
+	 * @param b
+	 * 		Right number to operate with.
+	 *
+	 * @return Number value of the operation.
+	 */
 	public static Optional<Number> evaluate(Number a, BinaryExpr.Operator op, Number b) {
 		// it does not change anything if the type is shorter than a long
 		// therefore, we can use longs for the right hand side
-		if(op == BinaryExpr.Operator.LEFT_SHIFT
-			|| op == BinaryExpr.Operator.SIGNED_RIGHT_SHIFT
-			|| op == BinaryExpr.Operator.UNSIGNED_RIGHT_SHIFT) {
+		if (op == BinaryExpr.Operator.LEFT_SHIFT ||
+				op == BinaryExpr.Operator.SIGNED_RIGHT_SHIFT ||
+				op == BinaryExpr.Operator.UNSIGNED_RIGHT_SHIFT) {
 			return evaluateShift(a, op, b.longValue());
 		}
 		if (a instanceof Double || b instanceof Double) {
@@ -33,6 +48,16 @@ public class NumberEvaluator {
 		}
 	}
 
+	/**
+	 * @param op
+	 * 		Math operation.
+	 * @param a
+	 * 		Left number to operate with.
+	 * @param b
+	 * 		Right number to operate with.
+	 *
+	 * @return Number value of the operation.
+	 */
 	public static Optional<Number> evaluate(long a, BinaryExpr.Operator op, long b) {
 		switch (op) {
 			case BINARY_OR: return Optional.of(a | b);
@@ -48,6 +73,16 @@ public class NumberEvaluator {
 		return Optional.empty();
 	}
 
+	/**
+	 * @param op
+	 * 		Math operation.
+	 * @param a
+	 * 		Left number to operate with.
+	 * @param b
+	 * 		Right number to operate with.
+	 *
+	 * @return Number value of the operation.
+	 */
 	public static Optional<Number> evaluate(int a, BinaryExpr.Operator op, int b) {
 		switch (op) {
 			case BINARY_OR: return Optional.of(a | b);
@@ -63,6 +98,16 @@ public class NumberEvaluator {
 		return Optional.empty();
 	}
 
+	/**
+	 * @param op
+	 * 		Math operation.
+	 * @param a
+	 * 		Left number to operate with.
+	 * @param b
+	 * 		Right number to operate with.
+	 *
+	 * @return Number value of the operation.
+	 */
 	public static Optional<Number> evaluate(double a, BinaryExpr.Operator op, double b) {
 		switch (op) {
 			case PLUS: return Optional.of(a + b);
@@ -75,6 +120,16 @@ public class NumberEvaluator {
 		return Optional.empty();
 	}
 
+	/**
+	 * @param op
+	 * 		Math operation.
+	 * @param a
+	 * 		Left number to operate with.
+	 * @param b
+	 * 		Right number to operate with.
+	 *
+	 * @return Number value of the operation.
+	 */
 	public static Optional<Number> evaluate(float a, BinaryExpr.Operator op, float b) {
 		switch (op) {
 			case PLUS: return Optional.of(a + b);
@@ -87,8 +142,16 @@ public class NumberEvaluator {
 		return Optional.empty();
 	}
 
-	public static Optional<Number> evaluate(UnaryExpr.Operator operator, Number n) {
-		switch (operator) {
+	/**
+	 * @param op
+	 * 		Math operation.
+	 * @param n
+	 * 		Number to operate on.
+	 *
+	 * @return Number value with the operation applied.
+	 */
+	public static Optional<Number> evaluate(UnaryExpr.Operator op, Number n) {
+		switch (op) {
 			case PLUS: return Optional.of(n);
 			case BITWISE_COMPLEMENT:
 				if(n instanceof Byte || n instanceof Short || n instanceof Integer) return Optional.of(~n.intValue());
@@ -103,6 +166,16 @@ public class NumberEvaluator {
 		}
 	}
 
+	/**
+	 * @param n
+	 * 		Number to shift.
+	 * @param op
+	 * 		Shift operation.
+	 * @param b
+	 * 		Value to shift by.
+	 *
+	 * @return Number value shifted.
+	 */
 	public static Optional<Number> evaluateShift(Number n, BinaryExpr.Operator op, long b) {
 		switch (op) {
 			case LEFT_SHIFT:
@@ -121,6 +194,14 @@ public class NumberEvaluator {
 		return Optional.empty();
 	}
 
+	/**
+	 * @param n
+	 * 		Number to cast.
+	 * @param type
+	 * 		Target type.
+	 *
+	 * @return Number value when cast to the given type.
+	 */
 	public static Optional<Number> cast(Number n, PrimitiveType type) {
 		return type.toPrimitiveType().flatMap(t -> {
 			switch (t.getType()) {

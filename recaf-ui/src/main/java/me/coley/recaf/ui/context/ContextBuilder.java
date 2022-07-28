@@ -6,13 +6,13 @@ import me.coley.recaf.code.*;
 import me.coley.recaf.mapping.MappingUtils;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.ui.MappingUX;
-import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
+import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -110,6 +110,18 @@ public abstract class ContextBuilder {
 	}
 
 	/**
+	 * @param info
+	 * 		Expression info to operate on.
+	 * @param area
+	 * 		The code area where the expression is defined within.
+	 *
+	 * @return Builder.
+	 */
+	public static NumberLiteralContextBuilder forLiteralExpression(LiteralExpressionInfo info, CodeArea area) {
+		return new NumberLiteralContextBuilder(info.getValue(), info.getExpression(), area);
+	}
+
+	/**
 	 * @param directoryName
 	 * 		Name of directory to operate on.
 	 *
@@ -128,11 +140,7 @@ public abstract class ContextBuilder {
 	public static ResourceContextBuilder forResource(Resource resource) {
 		return new ResourceContextBuilder().setResource(resource);
 	}
-	
-	public static NumberLiteralContextBuilder forLiteralExpression(LiteralExpressionInfo info, JavaArea area) {
-		return new NumberLiteralContextBuilder(info.getValue(),info.getExpression(), area);
-	}
-	
+
 	/**
 	 * @param resource
 	 * 		Resource of the item the context menu is being built for.
