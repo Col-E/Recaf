@@ -15,4 +15,6 @@ public interface FontSizeChangeable {
 
 	void applyScrollEvent(Consumer<Node> consumer);
 
+	void removeFontSizeChangeListener();
+
 }

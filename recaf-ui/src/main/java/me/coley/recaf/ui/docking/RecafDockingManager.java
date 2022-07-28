@@ -14,6 +14,7 @@ import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.FileView;
 import me.coley.recaf.ui.FileViewMode;
 import me.coley.recaf.ui.behavior.Cleanable;
+import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.docking.impl.FileTab;
@@ -62,6 +63,8 @@ public class RecafDockingManager extends DockingManager {
 		});
 		addTabClosureListener(tab -> {
 			Node content = tab.getContent();
+			if (content instanceof FontSizeChangeable)
+				((FontSizeChangeable) content).removeFontSizeChangeListener();
 			if (content instanceof ClassView) {
 				String path = ((ClassTab) tab).getClassRepresentation().getCurrentClassInfo().getName();
 				classTabs.remove(path);

@@ -31,13 +31,14 @@ import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Display for a {@link CommonClassInfo}.
  *
  * @author Matt Coley
  */
-public class ClassView extends BorderPane implements ClassRepresentation, ToolSideTabbed, Cleanable, Undoable {
+public class ClassView extends BorderPane implements ClassRepresentation, ToolSideTabbed, Cleanable, Undoable, FontSizeChangeable {
 	private final OutlinePane outline;
 	private final HierarchyPane hierarchy;
 	private final BorderPane mainViewWrapper = new BorderPane();
@@ -93,7 +94,19 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		Configs.display().fontSize.addListener(fontSizeChangeListener);
 	}
 
-	private void removeFontSizeChangeListener() {
+	@Override
+	public void setFontSize(int fontSize) {
+		if (!(mainView instanceof FontSizeChangeable)) return;
+		FontSizeChangeable fsc = (FontSizeChangeable) mainView;
+		fsc.setFontSize(fontSize);
+	}
+
+	@Override
+	public void applyScrollEvent(Consumer<Node> consumer) {
+		// does upon creation
+	}
+	@Override
+	public void removeFontSizeChangeListener() {
 		if (fontSizeChangeListener == null) return;
 		Configs.display().fontSize.removeListener(fontSizeChangeListener);
 		fontSizeChangeListener = null;

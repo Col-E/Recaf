@@ -103,6 +103,12 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		javaArea.setStyle("-fx-font-size: " + fontSize + "px;");
 	}
 
+
+	@Override
+	public void removeFontSizeChangeListener() {
+		throw new UnsupportedOperationException("Delegated to ClassView");
+	}
+
 	private Node createButtonBar() {
 		HBox box = new HBox();
 		box.setSpacing(10);
