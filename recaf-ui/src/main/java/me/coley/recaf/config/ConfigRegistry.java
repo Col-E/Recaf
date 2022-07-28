@@ -3,6 +3,13 @@ package me.coley.recaf.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
+import com.google.gson.TypeAdapter;
+import com.google.gson.internal.bind.TypeAdapters;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.WritableIntegerValue;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.ReflectUtil;
@@ -29,7 +36,24 @@ import java.util.function.Supplier;
  */
 public class ConfigRegistry {
 	private static final Logger logger = Logging.get(ConfigRegistry.class);
-	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	private static final Gson gson;
+
+	static {
+		GsonBuilder builder = new GsonBuilder();
+		builder.registerTypeAdapterFactory(TypeAdapters.newFactoryForMultipleTypes(WritableIntegerValue.class, IntegerProperty.class, new TypeAdapter<WritableIntegerValue>() {
+
+			@Override
+			public void write(JsonWriter out, WritableIntegerValue value) throws IOException {
+				out.value(value.get());
+			}
+
+			@Override
+			public WritableIntegerValue read(JsonReader in) throws IOException {
+				return new SimpleIntegerProperty(in.nextInt());
+			}
+		}));
+		gson = builder.setPrettyPrinting().create();
+	}
 	private static final Map<String, String> idToDisplay = new TreeMap<>();
 	private static final Map<String, Supplier<?>> idToGetter = new TreeMap<>();
 	private static final Map<String, Consumer<?>> idToSetter = new TreeMap<>();
