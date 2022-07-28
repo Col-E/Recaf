@@ -81,13 +81,13 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			if (config.gotoDef.match(e))
 				handleNavigation(pos);
 			else if (config.rename.match(e)) {
-				DeclarableContextBuilder contextBuilder = menuBuilderFor(pos);
-				if (contextBuilder != null)
-					contextBuilder.rename();
+				ContextBuilder contextBuilder = menuBuilderFor(pos);
+				if (contextBuilder instanceof DeclarableContextBuilder)
+					((DeclarableContextBuilder) contextBuilder).rename();
 			} else if (config.searchReferences.match(e)) {
-				DeclarableContextBuilder contextBuilder = menuBuilderFor(pos);
-				if (contextBuilder != null)
-					contextBuilder.search();
+				ContextBuilder contextBuilder = menuBuilderFor(pos);
+				if (contextBuilder instanceof DeclarableContextBuilder)
+					((DeclarableContextBuilder) contextBuilder).search();
 			}
 		});
 		textProperty().addListener((observable, oldValue, newValue) -> {
@@ -327,7 +327,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		// Sync caret
 		moveTo(hit.getInsertionIndex());
 		// Check if we resolved the content at the index, and were able to make a menu.
-		DeclarableContextBuilder menuBuilder = menuBuilderFor(hit.getInsertionIndex());
+		ContextBuilder menuBuilder = menuBuilderFor(hit.getInsertionIndex());
 		if (menuBuilder != null) {
 			// Show if present
 			menu = menuBuilder.build();
@@ -340,7 +340,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		}
 	}
 
-	private DeclarableContextBuilder menuBuilderFor(int position) {
+	private ContextBuilder menuBuilderFor(int position) {
 		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(position);
 		if (infoAtPosition.isPresent()) {
 			ItemInfo itemInfo = infoAtPosition.get().getInfo();
@@ -363,6 +363,8 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 						.getResources().getClass(info.getOwner());
 				if (owner != null)
 					return ContextBuilder.forMethod(owner, info).setDeclaration(dec);
+			} else if (itemInfo instanceof LiteralExpressionInfo) {
+				return ContextBuilder.forLiteralExpression((LiteralExpressionInfo) itemInfo, this);
 			}
 		}
 		return null;

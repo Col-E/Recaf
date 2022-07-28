@@ -12,6 +12,7 @@ import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
+import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -106,6 +107,18 @@ public abstract class ContextBuilder {
 	 */
 	public static FileContextBuilder forFile(FileInfo info) {
 		return new FileContextBuilder().setFileInfo(info);
+	}
+
+	/**
+	 * @param info
+	 * 		Expression info to operate on.
+	 * @param area
+	 * 		The code area where the expression is defined within.
+	 *
+	 * @return Builder.
+	 */
+	public static NumberLiteralContextBuilder forLiteralExpression(LiteralExpressionInfo info, CodeArea area) {
+		return new NumberLiteralContextBuilder(info.getValue(), info.getExpression(), area);
 	}
 
 	/**
