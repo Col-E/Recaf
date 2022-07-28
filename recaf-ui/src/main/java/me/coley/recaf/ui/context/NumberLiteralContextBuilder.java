@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.context;
 
 import com.github.javaparser.Position;
-import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LiteralExpr;
 import javafx.scene.control.ContextMenu;
@@ -30,18 +29,26 @@ public class NumberLiteralContextBuilder extends ContextBuilder {
 	@Override
 	public ContextMenu build() {
 		ContextMenu menu = new ContextMenu();
-		MenuItem header = new MenuItem(Lang.get(isLiteral(expression) ? "dialog.conv.title.literal" : "dialog.conv.title.expression"));
+		// header
+		MenuItem header = new MenuItem(
+			Lang.get(expression instanceof LiteralExpr ? "dialog.conv.title.literal" : "dialog.conv.title.expression")
+		);
 		header.getStyleClass().add("context-menu-header");
 		header.setDisable(true);
 		menu.getItems().add(header);
+		// it is basically what's in the source code, null is returned if it's not a literal
 		String literal = expression instanceof LiteralExpr ? expression.toString().toLowerCase() : null;
+		// literal
 		editAction(menu,
 			value.toString() + (value instanceof Long ? "L" : ""),
 			literal == null || literal.startsWith("0x") || literal.startsWith("0b"));
+		// only int and long literals can be converted to hex and binary
 		if (value instanceof Integer || value instanceof Long) {
+			// hex
 			editAction(menu,
 				String.format(value instanceof Long ? "0x%xL" : "0x%x", value),
 				literal == null || !literal.startsWith("0x") || literal.startsWith("0b"));
+			// binary
 			final boolean notBin = literal == null || literal.startsWith("0x") || !literal.startsWith("0b");
 			if (value instanceof Integer) {
 				editAction(menu, "0b" + Integer.toBinaryString((Integer) value), notBin);
@@ -49,21 +56,20 @@ public class NumberLiteralContextBuilder extends ContextBuilder {
 				editAction(menu, "0b" + Long.toBinaryString((Long) value) + "L", notBin);
 			}
 		}
+		// scientific notation for floating point literals is not supported
 		return menu;
-	}
-
-	private boolean isLiteral(Expression expression) {
-		while (expression instanceof EnclosedExpr) expression = ((EnclosedExpr) expression).getInner();
-		return expression instanceof LiteralExpr;
 	}
 
 	private void replace(String valueAsString) {
 		expression.getBegin().ifPresent(begin -> {
 			Position end = expression.getEnd().orElse(begin);
+			// translating line/column to position
 			TwoDimensional.Position beingPos = area.position(begin.line, begin.column);
 			TwoDimensional.Position endPos = area.position(end.line, end.column);
-			area.replaceText(area.getAbsolutePosition(beingPos.getMajor() - 1, beingPos.getMinor()) - 1,
-				area.getAbsolutePosition(endPos.getMajor() - 1, endPos.getMinor()), valueAsString);
+			area.replaceText(
+				area.getAbsolutePosition(beingPos.getMajor() - 1, beingPos.getMinor()) - 1,
+				area.getAbsolutePosition(endPos.getMajor() - 1, endPos.getMinor()),
+				valueAsString);
 		});
 	}
 
@@ -71,7 +77,6 @@ public class NumberLiteralContextBuilder extends ContextBuilder {
 		ActionMenuItem item = actionLiteral(textKey, Icons.ACTION_EDIT, () -> replace(textKey));
 		item.setDisable(!active);
 		menu.getItems().add(item);
-
 	}
 
 	@Override
