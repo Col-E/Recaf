@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Tests for mapping generation.
@@ -41,10 +41,7 @@ public class MappingGeneratorTests extends TestUtils {
 
 			@Override
 			public String mapMethod(CommonClassInfo owner, MethodInfo info) {
-				String name = info.getName();
-				if (name.charAt(0) == '<')
-					return name;
-				return "mapped" + StringUtil.uppercaseFirstChar(name);
+				return "mapped" + StringUtil.uppercaseFirstChar(info.getName());
 			}
 		};
 		workspace = createWorkspace(jarsDir.resolve("DemoGame.jar"));
@@ -61,16 +58,15 @@ public class MappingGeneratorTests extends TestUtils {
 		generator.setNameGenerator(nameGenerator);
 		// Apply and assert no unexpected values exist
 		Mappings mappings = generator.generate();
-		if (mappings.getMappedClassName("java/lang/Object") != null ||
-				mappings.getMappedClassName("java/lang/enum") != null)
-			fail("Should not map core JVM class");
-	}
-
-	@Test
-	@Disabled
-	void testSkipsLibraryMembers() {
-		// TODO: Use a sample that has a library dependency (not JavaFX)
-		//  - assert that no 'inheritable' member has mapping from library classes
+		// Should not generate names for internal classes
+		assertNull(mappings.getMappedClassName("java/lang/Object"));
+		assertNull(mappings.getMappedClassName("java/lang/enum"));
+		// Should not generate names for constructors/override/library methods
+		//  - but still generate names for members
+		assertNull(mappings.getMappedMethodName("game/Food", "hashCode", "()I"));
+		assertNull(mappings.getMappedMethodName("game/Food", "<init>>", "(III)V"));
+		assertNotNull(mappings.getMappedFieldName("game/Food", "x", "I"));
+		assertNotNull(mappings.getMappedFieldName("game/Food", "y", "I"));
 	}
 
 	@Test
