@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static me.coley.recaf.evaluation.ExpressionEvaluator.evaluate;
-//@formatter:off
+
 /**
  * Utility for working with JavaParser and pulling contextual information from Java source code.
  *
@@ -169,7 +169,7 @@ public class JavaParserHelper {
 	 *     <li>{@link me.coley.recaf.code.MethodInfo}</li>
 	 * </ul>
 	 */
-	//@formatter:on
+
 	public Optional<ParseHitResult> at(CompilationUnit unit, int line, int column) {
 		WorkspaceTypeSolver typeSolver = symbolSolver.getTypeSolver();
 		if (unit == null) return Optional.empty();
@@ -213,7 +213,7 @@ public class JavaParserHelper {
 
 		return Optional.of(new ParseHitResult(value, node));
 	}
-	//@formatter:off
+
 	/**
 	 * @param unit
 	 * 		A parsed source tree.
