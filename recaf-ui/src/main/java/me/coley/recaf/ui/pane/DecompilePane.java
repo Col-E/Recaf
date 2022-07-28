@@ -94,7 +94,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	}
 
 	@Override
-	public void applyScrollEvent(Consumer<Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		consumer.accept(scroll);
 	}
 

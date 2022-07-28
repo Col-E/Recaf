@@ -43,10 +43,10 @@ public class ClassTab extends DockTab implements FontSizeChangeable {
 	}
 
 	@Override
-	public void applyScrollEvent(Consumer<Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		if (!(classRepresentation instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) classRepresentation;
-		fsc.applyScrollEvent(consumer);
+		fsc.applyEventsForFontSizeChange(consumer);
 	}
 
 	@Override

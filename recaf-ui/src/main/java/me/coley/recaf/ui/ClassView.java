@@ -78,7 +78,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		if (!(view instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) view;
 		fsc.setFontSize(Configs.display().fontSize.get());
-		fsc.applyScrollEvent(node -> node.addEventFilter(ScrollEvent.SCROLL, e -> {
+		fsc.applyEventsForFontSizeChange(node -> node.addEventFilter(ScrollEvent.SCROLL, e -> {
 			if (!e.isControlDown()) return;
 			e.consume();
 			int oldSize = Configs.display().fontSize.get();
@@ -102,7 +102,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	}
 
 	@Override
-	public void applyScrollEvent(Consumer<Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		// does upon creation
 	}
 	@Override
