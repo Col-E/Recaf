@@ -22,6 +22,12 @@ import java.nio.file.Paths;
  */
 public class SsvmConfig implements ConfigContainer {
 	/**
+	 * Flag to enable SSVM operations.
+	 */
+	@Group("general")
+	@ConfigID("active")
+	public boolean active = true;
+	/**
 	 * @see SsvmIntegration#doAllowRead()
 	 */
 	@Group("access")
@@ -77,6 +83,8 @@ public class SsvmConfig implements ConfigContainer {
 	 * Update {@link SsvmIntegration} with current access flags.
 	 */
 	public void updateIntegration() {
+		if (!active)
+			return;
 		Controller controller = RecafUI.getController();
 		SsvmIntegration ssvm = controller.getServices().getSsvmIntegration();
 		if (ssvm != null) {
