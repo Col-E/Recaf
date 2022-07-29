@@ -2,6 +2,7 @@ package me.coley.recaf.parse;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedMethodLikeDeclaration;
@@ -58,8 +59,13 @@ public class WorkspaceSymbolSolver extends JavaSymbolSolver {
 			return super.resolveDeclaration(node, resultClass);
 		} catch (Throwable ex) {
 			// JavaParserFacade.solveMethodAsUsage() throws 'RuntimeException' instead of 'UnsolvedSymbolException'
-			return fallback(node, resultClass);
+			try {
+				return fallback(node, resultClass);
+			} catch (RuntimeException ignored) {
+				// The fallback will delegate to 'solveMethodAsUsage()' in some cases, so we need to catch again.
+			}
 		}
+		throw new UnsolvedSymbolException("Cannot solve for " + resultClass.getSimpleName() + " on " + node.toString());
 	}
 
 	@SuppressWarnings("unchecked")
