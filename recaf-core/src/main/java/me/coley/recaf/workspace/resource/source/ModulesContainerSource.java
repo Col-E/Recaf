@@ -4,9 +4,11 @@ import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.io.ByteSourceConsumer;
 import me.coley.recaf.io.ByteSourceElement;
 import me.coley.recaf.io.ByteSources;
+import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.LookupUtil;
 import me.coley.recaf.util.Unchecked;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Method;
@@ -22,7 +24,9 @@ public class ModulesContainerSource extends ContainerContentSource<String> {
 
 	@Override
 	protected void consumeEach(ByteSourceConsumer<String> entryHandler) throws IOException {
-		stream().forEach(ByteSources.consume(entryHandler));
+		try (Stream<ByteSourceElement<String>> x = stream()) {
+			x.forEach(ByteSources.consume(entryHandler));
+		}
 	}
 
 	@Override
@@ -44,7 +48,7 @@ public class ModulesContainerSource extends ContainerContentSource<String> {
 					.map(x -> {
 						return new ByteSourceElement<>(x.substring(x.indexOf('/', 1) + 1), Unchecked.bmap((t, u) ->
 								ByteSources.wrap((byte[]) t.invoke(u)), getResource, x));
-					});
+					}).onClose(() -> IOUtil.closeQuietly((AutoCloseable) reader));
 		}, getPath());
 	}
 

@@ -9,7 +9,6 @@ import software.coley.llzip.ZipArchive;
 import software.coley.llzip.ZipCompressions;
 import software.coley.llzip.ZipIO;
 import software.coley.llzip.part.LocalFileHeader;
-import software.coley.llzip.strategy.JvmZipReaderStrategy;
 import software.coley.llzip.util.ByteData;
 import software.coley.llzip.util.ByteDataUtil;
 import software.coley.llzip.util.FileMapUtil;
@@ -31,11 +30,8 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Lo
 
 	@Override
 	protected void consumeEach(ByteSourceConsumer<LocalFileHeader> entryHandler) throws IOException {
-		try (ByteData data = FileMapUtil.map(getPath())) {
-			ZipArchive archive = ZipIO.readJvm(data);
-			for (LocalFileHeader fileHeader : archive.getLocalFiles()) {
-				entryHandler.accept(fileHeader, new LocalFileHeaderSource(fileHeader));
-			}
+		try (Stream<ByteSourceElement<LocalFileHeader>> s = stream()) {
+			s.forEach(ByteSources.consume(entryHandler));
 		}
 	}
 
