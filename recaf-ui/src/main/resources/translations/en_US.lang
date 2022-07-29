@@ -47,6 +47,7 @@ menu.log.export=Export
 menu.mappings=Mappings
 menu.mappings.apply=Apply
 menu.mappings.export=Export
+menu.mappings.generate=Generate
 menu.scripting=Scripting
 menu.scripting.none-found=No scripts found
 menu.scripting.manage=Manage scripts
@@ -265,6 +266,27 @@ help.recaf=Recaf
 help.recaf.sub=Information about Recaf
 help.copy=Copy information to clipboard
 help.opendir=Open Recaf directory
+
+## Mapping generator
+mapgen.genimpl=Naming convention
+mapgen.filters=Filters
+mapgen.filters.add=Add filter
+mapgen.filters.delete=Delete selected
+mapgen.newfilter.excludealreadymapped=Exclude already mapped
+mapgen.newfilter.modifierexclude=Exclude modifiers
+mapgen.newfilter.modifierexcludeclass=Exclude modifiers on classes
+mapgen.newfilter.modifierexcludefield=Exclude modifiers on fields
+mapgen.newfilter.modifierexcludemethod=Exclude modifiers on methods
+mapgen.newfilter.modifierinclude=Include modifiers
+mapgen.newfilter.modifierincludeclass=Include modifiers on classes
+mapgen.newfilter.modifierincludefield=Include modifiers on fields
+mapgen.newfilter.modifierincludemethod=Include modifiers on methods
+mapgen.newfilter.pathexclude=Path blacklist
+mapgen.newfilter.pathinclude=Path whitelist
+mapgen.title.newfilter=New filter
+mapgen.header.newfilter=Input filter content
+mapgen.copy=Copy to clipboard
+mapgen.apply=Apply
 
 ##### Tree
 tree.classes=Classes

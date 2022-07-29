@@ -132,6 +132,23 @@ public enum AccessFlag {
 	}
 
 	/**
+	 * @param text
+	 * 		Text containing one or more flags, separated by spaces.
+	 *
+	 * @return Flags from text.
+	 */
+	public static List<AccessFlag> getFlags(String text) {
+		String[] parts = text.split("\\s+");
+		List<AccessFlag> flags = new ArrayList<>();
+		for (String part : parts) {
+			AccessFlag flag = getFlag(part);
+			if (flag != null)
+				flags.add(flag);
+		}
+		return flags;
+	}
+
+	/**
 	 * @param flags
 	 * 		Array of access flags.
 	 *
@@ -162,6 +179,21 @@ public enum AccessFlag {
 	 * @param acc
 	 * 		Access flag mask.
 	 * @param flags
+	 * 		Collection of flags to check exist in the mask.
+	 *
+	 * @return {@code true} if all specified flags exist in the mask.
+	 */
+	public static boolean hasAll(int acc, Collection<AccessFlag> flags) {
+		for (AccessFlag flag : flags) {
+			if (!flag.has(acc)) return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @param acc
+	 * 		Access flag mask.
+	 * @param flags
 	 * 		Array of flags to check exist in the mask.
 	 *
 	 * @return {@code true} if none of the specified flags exist in the mask.
@@ -171,6 +203,51 @@ public enum AccessFlag {
 			if (flag.has(acc)) return false;
 		}
 		return true;
+	}
+
+	/**
+	 * @param acc
+	 * 		Access flag mask.
+	 * @param flags
+	 * 		Collection of flags to check exist in the mask.
+	 *
+	 * @return {@code true} if none of the specified flags exist in the mask.
+	 */
+	public static boolean hasNone(int acc, Collection<AccessFlag> flags) {
+		for (AccessFlag flag : flags) {
+			if (flag.has(acc)) return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @param acc
+	 * 		Access flag mask.
+	 * @param flags
+	 * 		Array of flags to check exist in the mask.
+	 *
+	 * @return {@code true} if any of the specified flags exist in the mask.
+	 */
+	public static boolean hasAny(int acc, AccessFlag... flags) {
+		for (AccessFlag flag : flags) {
+			if (flag.has(acc)) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @param acc
+	 * 		Access flag mask.
+	 * @param flags
+	 * 		Collection of flags to check exist in the mask.
+	 *
+	 * @return {@code true} if any of the specified flags exist in the mask.
+	 */
+	public static boolean hasAny(int acc, Collection<AccessFlag> flags) {
+		for (AccessFlag flag : flags) {
+			if (flag.has(acc)) return true;
+		}
+		return false;
 	}
 
 	/**
