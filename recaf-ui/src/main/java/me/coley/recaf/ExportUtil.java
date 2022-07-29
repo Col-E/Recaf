@@ -2,7 +2,7 @@ package me.coley.recaf;
 
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.ExportConfig;
-import me.coley.recaf.util.Errorable;
+import me.coley.recaf.util.UncheckedRunnable;
 import me.coley.recaf.util.Exporter;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
@@ -55,7 +55,7 @@ public class ExportUtil {
 		exporter.shadeLibs = config.shadeLibs;
 		exporter.compress = config.compress;
 		Resource resource = workspace.getResources().getPrimary();
-		Errorable exportProcess;
+		UncheckedRunnable exportProcess;
 		if (resource.getContentSource() instanceof ClassContentSource && !exporter.shadeLibs) {
 			exportProcess = exporter::writeAsSingleFile;
 		} else if (resource.getContentSource() instanceof DirectoryContentSource) {

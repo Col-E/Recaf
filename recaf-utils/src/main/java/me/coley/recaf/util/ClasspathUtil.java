@@ -5,8 +5,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -113,8 +111,8 @@ public class ClasspathUtil {
 		if (tree == null) {
 			tree = new Tree(null, "");
 			List<String> classes = ModuleFinder.ofSystem().findAll().stream()
-					.map(modRef -> Errorables.silent(modRef::open))
-					.flatMap(modReader -> Errorables.silent(modReader::list))
+					.map(Unchecked.function(ModuleReference::open))
+					.flatMap(Unchecked.function(ModuleReader::list))
 					.filter(s -> s.endsWith(".class") && s.indexOf('-') == -1)
 					.map(s -> s.substring(0, s.length() - 6))
 					.collect(Collectors.toList());

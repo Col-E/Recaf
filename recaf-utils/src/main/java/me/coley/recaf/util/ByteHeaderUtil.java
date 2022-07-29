@@ -23,6 +23,7 @@ public class ByteHeaderUtil {
 	public static final int[] ZIP_SPANNED = {0x50, 0x4B, 0x07, 0x08};
 	public static final int[] RAR = {0x52, 0x61, 0x72, 0x21, 0x1A, 0x07};
 	public static final int[] SEVEN_Z = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};
+	public static final int[] JMOD = {0x4A, 0x4D};
 	public static final List<int[]> ARCHIVE_HEADERS = Lists.newArrayList(
 			TAR_LZW,
 			TAR_LZH,
@@ -34,7 +35,8 @@ public class ByteHeaderUtil {
 			ZIP_EMPTY,
 			ZIP_SPANNED,
 			RAR,
-			SEVEN_Z);
+			SEVEN_Z,
+			JMOD);
 	// Programs
 	public static final int[] CLASS = {0xCA, 0xFE, 0xBA, 0xBE};
 	public static final int[] DEX = {0x64, 0x65, 0x78, 0x0A, 0x30, 0x33, 0x35, 0x00};

@@ -65,6 +65,8 @@ public class ResourceIO {
 				source = new ClassContentSource(path);
 			else if (pathStr.endsWith(".apk"))
 				source = new ApkContentSource(path);
+			else if (pathStr.endsWith(".jmod"))
+				source = new JModContainerSource(path);
 			else
 				source = fromHeader(path);
 		}
@@ -102,6 +104,8 @@ public class ResourceIO {
 		if (ByteHeaderUtil.match(data, ByteHeaderUtil.ZIP)) {
 			// Handle most archives (including jars)
 			return new ZipContentSource(path);
+		} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.JMOD)) {
+			return new JModContainerSource(path);
 		} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.CLASS)) {
 			return new ClassContentSource(path);
 		}

@@ -29,7 +29,7 @@ import me.coley.recaf.ssvm.value.ConstStringValue;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.ErrorableConsumer;
+import me.coley.recaf.util.UncheckedConsumer;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
@@ -164,7 +164,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		return values;
 	}
 
-	protected BooleanProperty newProperty(TextField field, ErrorableConsumer<String> consumer) {
+	protected BooleanProperty newProperty(TextField field, UncheckedConsumer<String> consumer) {
 		BooleanProperty property = new SimpleBooleanProperty(true);
 		property.bind(Bindings.createBooleanBinding(
 				() -> {
@@ -388,7 +388,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 	 * @param action
 	 * 		Action to run, throwing an exception if invalid.
 	 */
-	protected void handle(BooleanProperty valid, String input, ErrorableConsumer<String> action) {
+	protected void handle(BooleanProperty valid, String input, UncheckedConsumer<String> action) {
 		try {
 			action.accept(input);
 			valid.set(true);

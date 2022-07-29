@@ -19,6 +19,10 @@ public enum SourceType {
 	 */
 	WAR,
 	/**
+	 * Java modules archive.
+	 */
+	JMOD,
+	/**
 	 * Multiple files in an archive. For Android. Classes packed into single file.
 	 */
 	APK,

@@ -1,7 +1,8 @@
 package me.coley.recaf.util;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Phaser;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,13 +18,15 @@ public final class Streams {
 	}
 
 	public static <T> void forEachOn(Stream<T> stream, Consumer<? super T> c, Executor executor) {
-		Phaser phaser = new Phaser(1);
+		AtomicLong count = new AtomicLong(1L);
 		AtomicReference<Throwable> throwable = new AtomicReference<>();
+		CountDownLatch latch = new CountDownLatch(1);
 		stream.forEach(x -> {
-			if (throwable.get() != null) {
-				return;
+			Throwable thrown = throwable.get();
+			if (thrown != null) {
+				ReflectUtil.propagate(thrown);
 			}
-			phaser.register();
+			count.incrementAndGet();
 			executor.execute(() -> {
 				try {
 					if (throwable.get() == null) {
@@ -34,11 +37,18 @@ public final class Streams {
 						}
 					}
 				} finally {
-					phaser.arriveAndDeregister();
+					if (count.decrementAndGet() == 0L) {
+						latch.countDown();
+					}
 				}
 			});
 		});
-		phaser.arriveAndAwaitAdvance();
+		if (count.decrementAndGet() != 0L) {
+			try {
+				latch.await();
+			} catch (InterruptedException ignored) {
+			}
+		}
 		Throwable thrown = throwable.get();
 		if (thrown != null) {
 			ReflectUtil.propagate(thrown);
