@@ -23,6 +23,10 @@ public enum SourceType {
 	 */
 	JMOD,
 	/**
+	 * Java packed modules file.
+	 */
+	MODULES,
+	/**
 	 * Multiple files in an archive. For Android. Classes packed into single file.
 	 */
 	APK,

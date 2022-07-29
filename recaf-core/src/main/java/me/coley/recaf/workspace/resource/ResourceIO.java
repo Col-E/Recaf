@@ -106,6 +106,8 @@ public class ResourceIO {
 			return new ZipContentSource(path);
 		} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.JMOD)) {
 			return new JModContainerSource(path);
+		} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.MODULES)) {
+			return new ModulesContainerSource(path);
 		} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.CLASS)) {
 			return new ClassContentSource(path);
 		}

@@ -24,6 +24,7 @@ public class ByteHeaderUtil {
 	public static final int[] RAR = {0x52, 0x61, 0x72, 0x21, 0x1A, 0x07};
 	public static final int[] SEVEN_Z = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};
 	public static final int[] JMOD = {0x4A, 0x4D};
+	public static final int[] MODULES = {0xDA, 0xDA, 0xFE, 0xCA};
 	public static final List<int[]> ARCHIVE_HEADERS = Lists.newArrayList(
 			TAR_LZW,
 			TAR_LZH,

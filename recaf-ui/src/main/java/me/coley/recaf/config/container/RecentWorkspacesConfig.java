@@ -249,6 +249,7 @@ public class RecentWorkspacesConfig implements ConfigContainer {
 				case APK:
 				case ZIP:
 				case JMOD:
+				case MODULES:
 				case DIRECTORY:
 					FileContentSource fileSource = (FileContentSource) source;
 					return new ResourceModel(fileSource.getPath().toAbsolutePath().toString());
