@@ -1,17 +1,11 @@
 package me.coley.recaf.ui;
 
-import com.sun.javafx.util.Utils;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
@@ -19,7 +13,6 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.config.container.DisplayConfig;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
 import me.coley.recaf.ui.control.hex.HexClassView;
@@ -32,8 +25,7 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
-import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * Display for a {@link CommonClassInfo}.
@@ -60,7 +52,6 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		hierarchy = new HierarchyPane();
 		// Setup main view
 		mainView = createViewForClass(info);
-		applyFontSizeChangeable(mainView);
 		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
 		contentSplit.getItems().add(mainViewWrapper);
 		contentSplit.getStyleClass().add("view-split-pane");
@@ -74,38 +65,11 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		Configs.keybinds().installEditorKeys(this);
 	}
 
-	private FontSizeChangeListener fontSizeChangeListener;
-
-	private void applyFontSizeChangeable(ClassRepresentation view) {
+	private void applyEventsForFontSizeChange(ClassRepresentation view) {
 		if (!(view instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) view;
 		fsc.setFontSize(Configs.display().fontSize.get());
-		fsc.applyEventsForFontSizeChange(node -> {
-			node.addEventFilter(ScrollEvent.SCROLL, e -> {
-				if (!e.isControlDown()) return;
-				e.consume();
-				advanceFontSize(fsc, e.getDeltaY() > 0);
-			});
-			node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-				if (!e.isControlDown() || !(e.getCode() == KeyCode.ADD || e.getCode() == KeyCode.SUBTRACT)) return;
-				e.consume();
-				advanceFontSize(fsc, e.getCode() == KeyCode.ADD);
-			});
-		});
-		fontSizeChangeListener = new FontSizeChangeListener(fsc);
-		Configs.display().fontSize.addListener(fontSizeChangeListener);
-	}
-
-	private void advanceFontSize(FontSizeChangeable fsc, boolean up) {
-		int oldSize = Configs.display().fontSize.get();
-		int newSize = Utils.clamp(
-			DisplayConfig.fontSizeBounds.getKey(),
-			oldSize + (up ? 1 : -1),
-			DisplayConfig.fontSizeBounds.getValue());
-		if (oldSize != newSize) {
-			Configs.display().fontSize.set(newSize);
-			fsc.setFontSize(newSize);
-		}
+		fsc.applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
 	}
 
 	@Override
@@ -116,40 +80,11 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	}
 
 	@Override
-	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
-		// does upon creation
-	}
-	@Override
-	public void removeFontSizeChangeListener() {
-		if (fontSizeChangeListener == null) return;
-		Configs.display().fontSize.removeListener(fontSizeChangeListener);
-		fontSizeChangeListener = null;
-	}
-
-	private static class FontSizeChangeListener implements ChangeListener<Number> {
-		public final FontSizeChangeable fsc;
-
-		public FontSizeChangeListener(FontSizeChangeable fsc) {
-			this.fsc = fsc;
-		}
-
-		@Override
-		public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-			fsc.setFontSize(newValue.intValue());
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			FontSizeChangeListener that = (FontSizeChangeListener) o;
-			return Objects.equals(fsc, that.fsc);
-		}
-
-		@Override
-		public int hashCode() {
-			return fsc != null ? fsc.hashCode() : 0;
-		}
+	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+		if (!(mainView instanceof FontSizeChangeable)) return;
+		FontSizeChangeable fsc = (FontSizeChangeable) mainView;
+		fsc.setFontSize(Configs.display().fontSize.get());
+		fsc.applyEventsForFontSizeChange(consumer);
 	}
 
 	private ClassRepresentation createViewForClass(CommonClassInfo info) {
@@ -309,9 +244,8 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	 * Regenerates the main view component from the {@link #getCurrentClassInfo() current class info}.
 	 */
 	public void refreshView() {
-		removeFontSizeChangeListener();
 		mainView = createViewForClass(info);
-		applyFontSizeChangeable(mainView);
+		applyEventsForFontSizeChange(mainView);
 		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
 		sideTabs.getTabs().clear();
 		populateSideTabs(sideTabs);

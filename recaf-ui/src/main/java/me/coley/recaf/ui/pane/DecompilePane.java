@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.pane;
 
 import javafx.animation.FadeTransition;
+import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -45,7 +46,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * Decompiler wrapper of {@link JavaArea}.
@@ -93,20 +93,16 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		setBottom(buttonBar);
 	}
 
+	private final FontSizeChangeListener fontSizeChangeListener = new FontSizeChangeListener(this);
 	@Override
-	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
-		consumer.accept(scroll);
+	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+		consumer.accept(this, scroll);
+		Configs.display().fontSize.addListener(new WeakChangeListener<>(fontSizeChangeListener));
 	}
 
 	@Override
 	public void setFontSize(int fontSize) {
-		javaArea.setStyle("-fx-font-size: " + fontSize + "px;");
-	}
-
-
-	@Override
-	public void removeFontSizeChangeListener() {
-		throw new UnsupportedOperationException("Delegated to ClassView");
+		javaArea.setFontSize(fontSize);
 	}
 
 	private Node createButtonBar() {

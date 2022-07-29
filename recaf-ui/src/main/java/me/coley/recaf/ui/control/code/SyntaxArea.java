@@ -28,6 +28,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,7 @@ import static org.fxmisc.richtext.LineNumberFactory.get;
  * @author Matt Coley
  */
 public class SyntaxArea extends CodeArea implements BracketUpdateListener, ProblemUpdateListener,
-		InteractiveText, Styleable, Searchable, Cleanable, Scrollable {
+		InteractiveText, Styleable, Searchable, Cleanable, Scrollable, FontSizeChangeable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
@@ -703,6 +704,17 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 			logger.error("RichTextFX internals changed, cannot locate '{}'", fieldName);
 			throw new IllegalStateException("RichTextFX internals changed!", ex);
 		}
+	}
+
+	@Override
+	public void setFontSize(int fontSize) {
+		String style = getStyle();
+		setStyle((style == null ? "" : style + " ") + "-fx-font-size: " + fontSize + "px;");
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+
 	}
 
 	/**

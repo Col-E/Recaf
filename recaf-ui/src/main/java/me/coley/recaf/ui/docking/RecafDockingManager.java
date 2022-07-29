@@ -63,8 +63,6 @@ public class RecafDockingManager extends DockingManager {
 		});
 		addTabClosureListener(tab -> {
 			Node content = tab.getContent();
-			if (content instanceof FontSizeChangeable)
-				((FontSizeChangeable) content).removeFontSizeChangeListener();
 			if (content instanceof ClassView) {
 				String path = ((ClassTab) tab).getClassRepresentation().getCurrentClassInfo().getName();
 				classTabs.remove(path);
@@ -194,6 +192,11 @@ public class RecafDockingManager extends DockingManager {
 		}
 		if (!menu.getItems().isEmpty())
 			tab.setContextMenu(menu);
+		// Apply adding all events necessary for the tab to have font size changeable.
+		if(tab instanceof FontSizeChangeable) {
+			((FontSizeChangeable) tab).applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
+			((FontSizeChangeable) tab).setFontSize(Configs.display().fontSize.get());
+		}
 		return () -> tab;
 	}
 
