@@ -104,7 +104,8 @@ public class MappingGenPane extends VBox {
 			ObservableList<FilterIntermediate> items = filterList.getItems();
 			NewFilterMode filterMode = newFilterModeComboBox.getSelectionModel().getSelectedItem();
 			FilterIntermediate filterIntermediate = filterMode.build(items);
-			items.add(filterIntermediate);
+			if (filterIntermediate != null)
+				items.add(filterIntermediate);
 		});
 		Button btnRemoveRemove = new ActionButton(Lang.getBinding("mapgen.filters.delete"), () -> {
 			filterList.getItems().remove(filterList.getSelectionModel().getSelectedItem());
