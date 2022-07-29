@@ -1,6 +1,8 @@
 package me.coley.recaf.ui.control.code;
 
 import com.carrotsearch.hppc.IntHashSet;
+import com.google.common.base.Strings;
+import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -712,9 +714,12 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		setStyle((style == null ? "" : style + " ") + "-fx-font-size: " + fontSize + "px;");
 	}
 
+	private final FontSizeChangeListener fontSizeChangeListener = new FontSizeChangeListener(this);
+
 	@Override
 	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
-
+		consumer.accept(this, this);
+		Configs.display().fontSize.addListener(new WeakChangeListener<>(fontSizeChangeListener));
 	}
 
 	/**

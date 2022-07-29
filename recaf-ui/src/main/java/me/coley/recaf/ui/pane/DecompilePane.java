@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.pane;
 
 import javafx.animation.FadeTransition;
-import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -96,8 +95,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	private final FontSizeChangeListener fontSizeChangeListener = new FontSizeChangeListener(this);
 	@Override
 	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
-		consumer.accept(this, scroll);
-		Configs.display().fontSize.addListener(new WeakChangeListener<>(fontSizeChangeListener));
+		javaArea.applyEventsForFontSizeChange(consumer);
 	}
 
 	@Override
