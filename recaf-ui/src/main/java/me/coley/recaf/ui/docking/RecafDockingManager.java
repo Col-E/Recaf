@@ -60,6 +60,11 @@ public class RecafDockingManager extends DockingManager {
 			} else {
 				miscTabs.add(tab);
 			}
+			// Apply adding all events necessary for the tab to have font size changeable.
+			if(tab instanceof FontSizeChangeable) {
+				((FontSizeChangeable) tab).applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
+				((FontSizeChangeable) tab).setFontSize(Configs.display().fontSize.get());
+			}
 		});
 		addTabClosureListener(tab -> {
 			Node content = tab.getContent();
@@ -192,11 +197,6 @@ public class RecafDockingManager extends DockingManager {
 		}
 		if (!menu.getItems().isEmpty())
 			tab.setContextMenu(menu);
-		// Apply adding all events necessary for the tab to have font size changeable.
-		if(tab instanceof FontSizeChangeable) {
-			((FontSizeChangeable) tab).applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
-			((FontSizeChangeable) tab).setFontSize(Configs.display().fontSize.get());
-		}
 		return () -> tab;
 	}
 
