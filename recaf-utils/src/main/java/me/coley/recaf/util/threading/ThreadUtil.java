@@ -192,6 +192,25 @@ public class ThreadUtil {
 	}
 
 	/**
+	 * Wrap action to handle error logging.
+	 *
+	 * @param action
+	 * 		Action to run.
+	 *
+	 * @return Wrapper callable.
+	 */
+	public static <T> Callable<T> wrap(Callable<T> action) {
+		return () -> {
+			try {
+				return action.call();
+			} catch (Throwable t) {
+				logger.error("Unhandled exception on thread: " + Thread.currentThread().getName(), t);
+				throw t;
+			}
+		};
+	}
+
+	/**
 	 * Wraps our executor service into phasing executor
 	 * that allows to wait for completion of all tasks
 	 * passed into it.

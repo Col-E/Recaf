@@ -106,7 +106,7 @@ public final class PhasingExecutorService implements ExecutorService {
 	private Runnable wrap(Runnable r) {
 		return () -> {
 			try {
-				r.run();
+				ThreadUtil.wrap(r).run();
 			} finally {
 				phaser.arriveAndDeregister();
 			}
@@ -116,7 +116,7 @@ public final class PhasingExecutorService implements ExecutorService {
 	private <T> Callable<T> wrap(Callable<T> c) {
 		return () -> {
 			try {
-				return c.call();
+				return ThreadUtil.wrap(c).call();
 			} finally {
 				phaser.arriveAndDeregister();
 			}
