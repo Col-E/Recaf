@@ -105,6 +105,8 @@ public class ClassModel implements Printable {
 	 * @return Parent class name.
 	 */
 	public String getSuperName() {
+		if (classFile.getSuperIndex() == 0)
+			return null;
 		return classFile.getSuperName();
 	}
 
