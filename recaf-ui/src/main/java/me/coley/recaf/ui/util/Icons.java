@@ -253,17 +253,19 @@ public class Icons {
 		if (dotIndex > 0) {
 			String ext = name.substring(dotIndex + 1).toLowerCase();
 			switch (ext) {
-				default:
 				case "dex":
 				case "apk":
 					return getIconView(ANDROID);
-				case "jar":
-				case "war":
-					return getIconView(FILE_JAR);
 				case "class":
 					return getIconView(FILE_CLASS);
 				case "zip":
 					return getIconView(FILE_ZIP);
+				case "jmod":
+				case "modules":
+				case "jar":
+				case "war":
+				default:
+					return getIconView(FILE_JAR);
 			}
 		}
 		// Unknown

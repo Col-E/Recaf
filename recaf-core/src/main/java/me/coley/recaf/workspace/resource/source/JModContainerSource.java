@@ -15,7 +15,10 @@ import java.util.stream.Stream;
  * @author xDark
  */
 public class JModContainerSource extends ArchiveFileContentSource {
-
+	/**
+	 * @param path
+	 * 		Path to the JMod file.
+	 */
 	public JModContainerSource(Path path) {
 		super(SourceType.JMOD, path);
 	}

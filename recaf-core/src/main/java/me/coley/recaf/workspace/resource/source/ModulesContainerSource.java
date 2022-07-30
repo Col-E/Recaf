@@ -24,19 +24,23 @@ import java.util.stream.Stream;
  * @author xDark
  */
 public class ModulesContainerSource extends ContainerContentSource<String> {
-
+	/**
+	 * @param path
+	 * 		Path to modules file.
+	 */
 	public ModulesContainerSource(Path path) {
 		super(SourceType.MODULES, path);
 	}
 
 	@Override
 	protected void consumeEach(ByteSourceConsumer<String> entryHandler) throws IOException {
-		try (Stream<ByteSourceElement<String>> x = stream()) {
-			x.forEach(ByteSources.consume(entryHandler));
+		try (Stream<ByteSourceElement<String>> stream = stream()) {
+			stream.forEach(ByteSources.consume(entryHandler));
 		}
 	}
 
 	@Override
+	@SuppressWarnings("Convert2MethodRef") // javac doesn't like reference on 'bmap(...)'
 	protected Stream<ByteSourceElement<String>> stream() throws IOException {
 		return Unchecked.map(path -> {
 			Class<?> imageReaderClass = Class.forName("jdk.internal.jimage.ImageReader", true, null);
@@ -64,13 +68,13 @@ public class ModulesContainerSource extends ContainerContentSource<String> {
 
 	@Override
 	protected boolean isClass(String entry, ByteSource content) throws IOException {
-		// If the entry does not have the "CAFEBABE" magic header, its not a class.
+		// If the entry does not have the "CAFEBABE" magic header, it's not a class.
 		return matchesClass(content.peek(17));
 	}
 
 	@Override
 	protected boolean isClass(String entry, byte[] content) throws IOException {
-		// If the entry does not have the "CAFEBABE" magic header, its not a class.
+		// If the entry does not have the "CAFEBABE" magic header, it's not a class.
 		return matchesClass(content);
 	}
 

@@ -30,8 +30,8 @@ public abstract class ArchiveFileContentSource extends ContainerContentSource<Lo
 
 	@Override
 	protected void consumeEach(ByteSourceConsumer<LocalFileHeader> entryHandler) throws IOException {
-		try (Stream<ByteSourceElement<LocalFileHeader>> s = stream()) {
-			s.forEach(ByteSources.consume(entryHandler));
+		try (Stream<ByteSourceElement<LocalFileHeader>> stream = stream()) {
+			stream.forEach(ByteSources.consume(entryHandler));
 		}
 	}
 
