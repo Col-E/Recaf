@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource;
 
+import com.google.common.collect.Iterators;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
@@ -12,7 +13,7 @@ import java.util.function.Predicate;
  *
  * @author Matt Coley
  */
-public class Resources {
+public class Resources implements Iterable<Resource> {
 	private final Resource primary;
 	private final List<Resource> libraries;
 	private final List<Resource> internalLibraries = new ArrayList<>();
@@ -232,5 +233,12 @@ public class Resources {
 				return library;
 		}
 		return null;
+	}
+
+	@Override
+	public Iterator<Resource> iterator() {
+		return Iterators.concat(
+				Iterators.concat(Iterators.singletonIterator(primary), libraries.iterator()),
+				internalLibraries.iterator());
 	}
 }

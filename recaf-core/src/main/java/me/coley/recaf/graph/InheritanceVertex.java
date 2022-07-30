@@ -21,10 +21,10 @@ import java.util.stream.Stream;
 public class InheritanceVertex {
 	private final Function<String, InheritanceVertex> lookup;
 	private final Function<String, Collection<String>> childrenLookup;
-	private final CommonClassInfo value;
 	private final boolean isPrimary;
 	private volatile Set<InheritanceVertex> parents;
 	private volatile Set<InheritanceVertex> children;
+	private CommonClassInfo value;
 
 	/**
 	 * @param value
@@ -320,6 +320,14 @@ public class InheritanceVertex {
 	 */
 	public CommonClassInfo getValue() {
 		return value;
+	}
+
+	/**
+	 * @param value
+	 * 		New wrapped class info.
+	 */
+	public void setValue(CommonClassInfo value) {
+		this.value = value;
 	}
 
 	@Override

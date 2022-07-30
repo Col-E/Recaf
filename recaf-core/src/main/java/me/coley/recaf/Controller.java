@@ -3,10 +3,12 @@ package me.coley.recaf;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.presentation.Presentation;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.*;
+import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.ResourceClassListener;
+import me.coley.recaf.workspace.resource.ResourceDexClassListener;
+import me.coley.recaf.workspace.resource.ResourceFileListener;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -95,7 +97,6 @@ public class Controller {
 		this.services.updateWorkspace(workspace);
 		if (workspace != null) {
 			addPresentationLayerListeners(workspace);
-			addServiceListeners(workspace);
 		}
 		listeners.forEach(listener -> listener.onNewWorkspace(oldWorkspace, workspace));
 		// Open new workspace, if non-null
@@ -167,84 +168,6 @@ public class Controller {
 			resource.addClassListener(classListener);
 			resource.addDexListener(dexListener);
 			resource.addFileListener(fileListener);
-		});
-	}
-
-	/**
-	 * Adds listeners to the workspace that update the relevant services when changes occur.
-	 *
-	 * @param workspace
-	 * 		Workspace to add listeners to.
-	 */
-	private void addServiceListeners(Workspace workspace) {
-		InheritanceGraph graph = getServices().getInheritanceGraph();
-		ResourceClassListener classListener = new ResourceClassListener() {
-			@Override
-			public void onNewClass(Resource resource, ClassInfo newValue) {
-				graph.populateParentToChildLookup(newValue);
-			}
-
-			@Override
-			public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
-				if (!oldValue.getSuperName().equals(newValue.getSuperName())) {
-					graph.removeParentToChildLookup(oldValue.getName(), oldValue.getSuperName());
-					graph.populateParentToChildLookup(newValue.getName(), newValue.getSuperName());
-				}
-				Set<String> interfaces = new HashSet<>(oldValue.getInterfaces());
-				interfaces.addAll(newValue.getInterfaces());
-				for (String itf : interfaces) {
-					boolean oldHas = oldValue.getInterfaces().contains(itf);
-					boolean newHas = newValue.getInterfaces().contains(itf);
-					if (oldHas && !newHas) {
-						graph.removeParentToChildLookup(oldValue.getName(), itf);
-					} else if (!oldHas && newHas) {
-						graph.populateParentToChildLookup(newValue.getName(), itf);
-					}
-				}
-			}
-
-			@Override
-			public void onRemoveClass(Resource resource, ClassInfo oldValue) {
-				graph.removeParentToChildLookup(oldValue);
-			}
-		};
-		ResourceDexClassListener dexListener = new ResourceDexClassListener() {
-			@Override
-			public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
-				graph.populateParentToChildLookup(newValue);
-			}
-
-			@Override
-			public void onUpdateDexClass(Resource resource, String dexName,
-										 DexClassInfo oldValue, DexClassInfo newValue) {
-				if (!oldValue.getSuperName().equals(newValue.getSuperName())) {
-					graph.removeParentToChildLookup(oldValue.getName(), oldValue.getSuperName());
-					graph.populateParentToChildLookup(newValue.getName(), newValue.getSuperName());
-				}
-				Set<String> interfaces = new HashSet<>(oldValue.getInterfaces());
-				interfaces.addAll(newValue.getInterfaces());
-				for (String itf : interfaces) {
-					boolean oldHas = oldValue.getInterfaces().contains(itf);
-					boolean newHas = newValue.getInterfaces().contains(itf);
-					if (oldHas && !newHas) {
-						graph.removeParentToChildLookup(oldValue.getName(), itf);
-					} else if (!oldHas && newHas) {
-						graph.populateParentToChildLookup(newValue.getName(), itf);
-					}
-				}
-			}
-
-			@Override
-			public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
-				graph.removeParentToChildLookup(oldValue);
-			}
-		};
-		// Add
-		List<Resource> resources = new ArrayList<>(workspace.getResources().getLibraries());
-		resources.add(workspace.getResources().getPrimary());
-		resources.forEach(resource -> {
-			resource.addClassListener(classListener);
-			resource.addDexListener(dexListener);
 		});
 	}
 }

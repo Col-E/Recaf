@@ -2,8 +2,13 @@ package me.coley.recaf.graph;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.ResourceClassListener;
+import me.coley.recaf.workspace.resource.ResourceDexClassListener;
 import me.coley.recaf.workspace.resource.Resources;
 
 import java.util.*;
@@ -16,7 +21,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class InheritanceGraph {
+public class InheritanceGraph implements ResourceClassListener, ResourceDexClassListener {
 	private static final InheritanceVertex STUB = new InheritanceVertex(null, null, null, false);
 	private static final String OBJECT = "java/lang/Object";
 	private final Multimap<String, String> parentToChild = MultimapBuilder.hashKeys().hashSetValues().build();
@@ -32,6 +37,10 @@ public class InheritanceGraph {
 	 */
 	public InheritanceGraph(Workspace workspace) {
 		this.workspace = workspace;
+		for (Resource resource : workspace.getResources()) {
+			resource.addClassListener(this);
+			resource.addDexListener(this);
+		}
 		refreshChildLookup();
 	}
 
@@ -184,5 +193,62 @@ public class InheritanceGraph {
 					resources.getPrimary().getDexClasses().containsKey(name);
 			return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, isPrimary);
 		};
+	}
+
+	@Override
+	public void onNewClass(Resource resource, ClassInfo newValue) {
+		populateParentToChildLookup(newValue);
+	}
+
+	@Override
+	public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
+		populateParentToChildLookup(newValue);
+	}
+
+	@Override
+	public void onRemoveClass(Resource resource, ClassInfo oldValue) {
+		removeParentToChildLookup(oldValue);
+	}
+
+	@Override
+	public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
+		removeParentToChildLookup(oldValue);
+	}
+
+	@Override
+	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
+		onUpdateClassImpl(oldValue, newValue);
+	}
+
+	@Override
+	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
+		onUpdateClassImpl(oldValue, newValue);
+	}
+
+	private void onUpdateClassImpl(CommonClassInfo oldValue, CommonClassInfo newValue) {
+		String name = oldValue.getName();
+		if (!newValue.getName().equals(name))
+			throw new IllegalStateException("onUpdateClass should not permit a class name change");
+		// Update hierarchy now that super-name changed
+		if (!oldValue.getSuperName().equals(newValue.getSuperName())) {
+			removeParentToChildLookup(name, oldValue.getSuperName());
+			populateParentToChildLookup(name, newValue.getSuperName());
+		}
+		// Same deal, but for interfaces
+		Set<String> interfaces = new HashSet<>(oldValue.getInterfaces());
+		interfaces.addAll(newValue.getInterfaces());
+		for (String itf : interfaces) {
+			boolean oldHas = oldValue.getInterfaces().contains(itf);
+			boolean newHas = newValue.getInterfaces().contains(itf);
+			if (oldHas && !newHas) {
+				removeParentToChildLookup(name, itf);
+			} else if (!oldHas && newHas) {
+				populateParentToChildLookup(name, itf);
+			}
+		}
+		// Update vertex wrapped class-info
+		InheritanceVertex vertex = getVertex(name);
+		if (vertex != null)
+			vertex.setValue(newValue);
 	}
 }
