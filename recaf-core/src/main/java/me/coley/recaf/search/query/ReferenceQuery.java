@@ -1,7 +1,5 @@
 package me.coley.recaf.search.query;
 
-import com.google.common.base.Strings;
-import com.google.common.base.Suppliers;
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.insn.FieldInstruction;
@@ -23,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -241,27 +238,26 @@ public class ReferenceQuery implements Query {
 			public void visitInvokeDynamicInsn(String name, String desc, Handle bsmHandle,
 											   Object... bootstrapMethodArguments) {
 				super.visitInvokeDynamicInsn(name, desc, bsmHandle, bootstrapMethodArguments);
-				Supplier<IndyInstruction> indySupplier = Suppliers.memoize(() ->
-						new IndyInstruction(Opcodes.INVOKEDYNAMIC, name, desc,
-								new HandleInfo(bsmHandle),
-								Arrays.stream(bootstrapMethodArguments)
-										.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
-										.collect(Collectors.toList())));
+				IndyInstruction indy = new IndyInstruction(Opcodes.INVOKEDYNAMIC, name, desc,
+						new HandleInfo(bsmHandle),
+						Arrays.stream(bootstrapMethodArguments)
+								.map(arg -> IndyInstruction.BsmArg.of(IndyInstruction.BsmArg::new, arg))
+								.collect(Collectors.toList()));
 				whenMatched(bsmHandle.getOwner(), bsmHandle.getName(), bsmHandle.getDesc(),
 						builder -> addMethodInsn(builder, methodInfo.getName(),
-								methodInfo.getDescriptor(), indySupplier.get()));
+								methodInfo.getDescriptor(), indy));
 				for (Object bsmArg : bootstrapMethodArguments) {
 					if (bsmArg instanceof Handle) {
 						Handle handle = (Handle) bsmArg;
 						whenMatched(handle.getOwner(), handle.getName(), handle.getDesc(),
 								builder -> addMethodInsn(builder, methodInfo.getName(),
-										methodInfo.getDescriptor(), indySupplier.get()));
+										methodInfo.getDescriptor(), indy));
 					} else if (bsmArg instanceof ConstantDynamic) {
 						ConstantDynamic dynamic = (ConstantDynamic) bsmArg;
 						Handle handle = dynamic.getBootstrapMethod();
 						whenMatched(handle.getOwner(), handle.getName(), handle.getDesc(),
 								builder -> addMethodInsn(builder, methodInfo.getName(),
-										methodInfo.getDescriptor(), indySupplier.get()));
+										methodInfo.getDescriptor(), indy));
 					}
 				}
 			}

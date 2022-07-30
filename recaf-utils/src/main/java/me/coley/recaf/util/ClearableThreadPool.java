@@ -1,14 +1,14 @@
 package me.coley.recaf.util;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Do not use this for anything that isn't purely <i>"background work"</i>.
@@ -29,10 +29,17 @@ public class ClearableThreadPool extends ThreadPoolExecutor {
 	 */
 	public ClearableThreadPool(int size, boolean daemon, String name) {
 		super(size, size, 5000L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(),
-				new ThreadFactoryBuilder()
-						.setDaemon(daemon)
-						.setNameFormat(name + " #%d")
-						.build());
+				new ThreadFactory() {
+					final AtomicInteger count = new AtomicInteger();
+					final String format = name + " #%d";
+
+					@Override
+					public Thread newThread(Runnable r) {
+						Thread thread = new Thread(r, String.format(format, count.getAndIncrement()));
+						thread.setDaemon(daemon);
+						return thread;
+					}
+				});
 	}
 
 	@Override

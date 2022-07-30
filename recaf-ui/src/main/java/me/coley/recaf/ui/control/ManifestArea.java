@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.control;
 
-import com.google.common.base.Strings;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.config.Configs;
@@ -8,6 +7,7 @@ import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -40,12 +40,12 @@ public class ManifestArea extends SyntaxArea {
 		super(Languages.MANIFEST, problemTracking);
 		// Register keybind / mouse action to open the main class when interacted with
 		setOnKeyPressed(e -> {
-			if (!Strings.isNullOrEmpty(mainClass) && Configs.keybinds().gotoDef.match(e)) {
+			if (!StringUtil.isNullOrEmpty(mainClass) && Configs.keybinds().gotoDef.match(e)) {
 				rangeCheck(getCaretPosition());
 			}
 		});
 		setOnMousePressed((e) -> {
-			if (!Strings.isNullOrEmpty(mainClass) && e.isPrimaryButtonDown()) {
+			if (!StringUtil.isNullOrEmpty(mainClass) && e.isPrimaryButtonDown()) {
 				CharacterHit hit = hit(e.getX(), e.getY());
 				int pos = hit.getInsertionIndex();
 				rangeCheck(pos);

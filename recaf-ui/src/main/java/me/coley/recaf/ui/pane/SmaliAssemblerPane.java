@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.pane;
 
-import com.google.common.collect.Iterables;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
@@ -44,6 +43,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * An editor for Android Dalvik bytecode.
@@ -150,9 +150,10 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 			MemoryDataStore dataStore = new MemoryDataStore();
 			dexBuilder.writeTo(dataStore);
 			DexBackedDexFile dexFile = new DexBackedDexFile(opcodes, dataStore.getBuffer());
-			DexBackedClassDef value = Iterables.getFirst(dexFile.getClasses(), null);
+			Set<? extends DexBackedClassDef> classes = dexFile.getClasses();
 			// Validate we can get the result, and update the workspace
-			if (value != null) {
+			if (!classes.isEmpty()) {
+				DexBackedClassDef value = classes.iterator().next();
 				ignoreNextDecompile = true;
 				String dexPath = dexClass.getDexPath();
 				Controller controller = RecafUI.getController();

@@ -21,22 +21,21 @@ public class UrlContentSource extends ContentSource {
 	private static final int CONNECTION_TIMEOUT = 2000;
 	private static final int READ_TIMEOUT = 3000;
 	private final SourceType backingType;
-	private final String urlText;
+	private final URL url;
 
 	/**
 	 * @param url
 	 * 		Url to the content.
 	 */
-	public UrlContentSource(String url) {
+	public UrlContentSource(URL url) {
 		super(SourceType.URL);
-		this.urlText = url;
-		backingType = parseType(urlText);
+		this.url = url;
+		backingType = parseType(url);
 	}
 
 	@Override
 	protected void onRead(ContentCollection collection) throws IOException {
-		boolean isLocal = urlText.startsWith("file:");
-		URL url = new URL(urlText);
+		boolean isLocal = "file".equals(url.getProtocol());
 		Path path;
 		if (isLocal) {
 			// Fetch path from URI
@@ -49,7 +48,7 @@ public class UrlContentSource extends ContentSource {
 			// Download to temp file
 			String extension = backingType.name().toLowerCase();
 			path = Paths.get(File.createTempFile("recaf", "temp." + extension).getAbsolutePath());
-			logger.info("Downloading remote file \"{}\" to temporary local file: {}", urlText, path);
+			logger.info("Downloading remote file \"{}\" to temporary local file: {}", url, path);
 			IOUtil.copy(url, path, CONNECTION_TIMEOUT, READ_TIMEOUT);
 		}
 		// Load from local file
@@ -77,7 +76,8 @@ public class UrlContentSource extends ContentSource {
 		}
 	}
 
-	private static SourceType parseType(String urlText) {
+	private static SourceType parseType(URL url) {
+		String urlText = url.getFile();
 		if (urlText.endsWith(".jar")) {
 			return SourceType.JAR;
 		} else if (urlText.endsWith(".zip")) {
@@ -95,11 +95,11 @@ public class UrlContentSource extends ContentSource {
 	 * @return URL text / original value.
 	 */
 	public String getUrl() {
-		return urlText;
+		return url.toString();
 	}
 
 	@Override
 	public String toString() {
-		return urlText.substring(urlText.lastIndexOf('/') + 1);
+		return url.getFile();
 	}
 }

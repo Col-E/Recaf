@@ -1,6 +1,5 @@
 package me.coley.recaf.compile.javac;
 
-import com.google.common.collect.Sets;
 import me.coley.recaf.workspace.resource.Resource;
 
 import javax.tools.FileObject;
@@ -8,6 +7,7 @@ import javax.tools.ForwardingJavaFileManager;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -42,7 +42,6 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 		Iterable<JavaFileObject> list = super.list(location, packageName, kinds, recurse);
 		if ("CLASS_PATH".equals(location.getName()) && kinds.contains(JavaFileObject.Kind.CLASS)) {
 			String formatted = packageName.isEmpty() ? "" : packageName.replace('.', '/') + '/';
-			Set<JavaFileObject> result = Sets.newHashSet(list);
 			Predicate<String> check;
 			if (recurse) {
 				check = s -> s.startsWith(formatted);
@@ -50,12 +49,12 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 				check = s -> s.startsWith(formatted)
 						&& s.indexOf('/', formatted.length()) == -1;
 			}
-			classpath.stream()
+			return () -> new ClassPathIterator(list.iterator(), classpath.stream()
 					.flatMap(x -> x.getClasses().entrySet().stream())
 					.filter(e -> check.test(e.getKey()))
-					.forEach(x -> result.add(new ResourceVirtualJavaFileObject(x.getKey(),
-							x.getValue().getValue(), JavaFileObject.Kind.CLASS)));
-			return result;
+					.<JavaFileObject>map(x -> new ResourceVirtualJavaFileObject(x.getKey(),
+							x.getValue().getValue(), JavaFileObject.Kind.CLASS))
+					.iterator());
 		}
 		return list;
 	}
@@ -81,5 +80,27 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 			unitMap.addFile(internal, obj);
 		}
 		return obj;
+	}
+
+	private static final class ClassPathIterator implements Iterator<JavaFileObject> {
+		private final Iterator<JavaFileObject> first, second;
+
+		ClassPathIterator(Iterator<JavaFileObject> first, Iterator<JavaFileObject> second) {
+			this.first = first;
+			this.second = second;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return first.hasNext() || second.hasNext();
+		}
+
+		@Override
+		public JavaFileObject next() {
+			if (first.hasNext()) {
+				return first.next();
+			}
+			return second.next();
+		}
 	}
 }

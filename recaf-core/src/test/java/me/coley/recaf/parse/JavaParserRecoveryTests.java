@@ -3,13 +3,14 @@ package me.coley.recaf.parse;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import me.coley.recaf.Controller;
-import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.presentation.EmptyPresentation;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
 import me.coley.recaf.workspace.resource.RuntimeResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for {@link JavaParserHelper}
  */
+@Execution(ExecutionMode.SAME_THREAD)
 public class JavaParserRecoveryTests {
 	private static final String helloWorld = "class HelloWorld {\n" +
 			"    public static void main(String[] args){\n" +

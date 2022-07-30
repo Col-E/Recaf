@@ -10,7 +10,6 @@ dependencies {
     api asm
     api asm_tree
     api cafedude
-    api guava
     api hppc
     api javassist
     api llzip

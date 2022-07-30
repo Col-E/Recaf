@@ -1,7 +1,5 @@
 package me.coley.recaf.ssvm.processing;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.VMInterface;
 import dev.xdark.ssvm.asm.DelegatingInsnNode;
@@ -16,8 +14,12 @@ import dev.xdark.ssvm.util.VMHelper;
 import dev.xdark.ssvm.value.*;
 import me.coley.recaf.ssvm.value.*;
 import me.coley.recaf.util.InstructionUtil;
+import me.coley.recaf.util.Multimap;
+import me.coley.recaf.util.MultimapBuilder;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
+
+import java.util.List;
 
 /**
  * Utility to install tracking logic into a {@link VirtualMachine}.
@@ -305,8 +307,10 @@ public class DataTracking implements Opcodes {
 		});
 		// We need to track the values affected by POP/POP2 so that later if we remove instructions that
 		// contribute to the values being popped off the stack, that the pop instructions themselves also get removed.
-		Multimap<ExecutionContext, TrackedValue> valuesWithPops =
-				MultimapBuilder.ListMultimapBuilder.hashKeys().arrayListValues().build();
+		var valuesWithPops = MultimapBuilder
+				.<ExecutionContext, TrackedValue>hashKeys()
+				.arrayValues()
+				.build();
 		vmi.setProcessor(POP, (insn, ctx) -> {
 			Stack stack = ctx.getStack();
 			Value v1 = stack.pop();
@@ -324,7 +328,7 @@ public class DataTracking implements Opcodes {
 		// When the method ends, clear any POP/POP2 instructions that have their contributing instructions removed.
 		vmi.registerMethodExit(ctx -> {
 			InsnList instructions = ctx.getMethod().getNode().instructions;
-			for (TrackedValue value : valuesWithPops.removeAll(ctx)) {
+			for (TrackedValue value : valuesWithPops.remove(ctx)) {
 				if (value.getContributingInstructions().stream().noneMatch(instructions::contains)) {
 					value.getAssociatedPops().forEach(insn -> InstructionUtil.nop(instructions, insn));
 				}
@@ -440,7 +444,7 @@ public class DataTracking implements Opcodes {
 	 *
 	 * @see #installStackManipulationInstructionTracking(VirtualMachine) Usage for tracking {@code POP}/{@code POP2}.
 	 */
-	private static void trackPop(Multimap<ExecutionContext, TrackedValue> map,
+	private static void trackPop(Multimap<ExecutionContext, TrackedValue, List<TrackedValue>> map,
 								 AbstractInsnNode insn, ExecutionContext ctx, Value value) {
 		if (value instanceof TrackedValue) {
 			((TrackedValue) value).addAssociatedPop(insn);

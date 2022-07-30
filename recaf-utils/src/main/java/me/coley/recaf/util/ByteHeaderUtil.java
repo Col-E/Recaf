@@ -1,7 +1,5 @@
 package me.coley.recaf.util;
 
-import com.google.common.collect.Lists;
-
 import java.util.List;
 
 /**
@@ -25,7 +23,7 @@ public class ByteHeaderUtil {
 	public static final int[] SEVEN_Z = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};
 	public static final int[] JMOD = {0x4A, 0x4D};
 	public static final int[] MODULES = {0xDA, 0xDA, 0xFE, 0xCA};
-	public static final List<int[]> ARCHIVE_HEADERS = Lists.newArrayList(
+	public static final List<int[]> ARCHIVE_HEADERS = List.of(
 			TAR_LZW,
 			TAR_LZH,
 			BZ2,
@@ -45,7 +43,7 @@ public class ByteHeaderUtil {
 	public static final int[] ELF = {0x7F, 0x45, 0x4C, 0x46};
 	public static final int[] DYLIB_32 = {0xCE, 0xFA, 0xED, 0xFE};
 	public static final int[] DYLIB_64 = {0xCF, 0xFA, 0xED, 0xFE};
-	public static final List<int[]> PROGRAM_HEADERS = Lists.newArrayList(
+	public static final List<int[]> PROGRAM_HEADERS = List.of(
 			CLASS,
 			DEX,
 			PE,
@@ -57,7 +55,7 @@ public class ByteHeaderUtil {
 	public static final int[] JPG = {0xFF, 0xD8, 0xFF};
 	public static final int[] GIF = {0x47, 0x49, 0x46, 0x38};
 	public static final int[] BMP = {0x42, 0x4D};
-	public static final List<int[]> IMAGE_HEADERS = Lists.newArrayList(
+	public static final List<int[]> IMAGE_HEADERS = List.of(
 			PNG,
 			JPG,
 			GIF,
@@ -71,7 +69,7 @@ public class ByteHeaderUtil {
 	public static final int[] MP3_NO_ID3 = {0xFF, 0xF3};
 	public static final int[] M4A = {0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41};
 	public static final int[] M4ADash = {0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x64, 0x61, 0x73};
-	public static final List<int[]> AUDIO_HEADERS = Lists.newArrayList(
+	public static final List<int[]> AUDIO_HEADERS = List.of(
 			OGG,
 			WAV,
 			MP3_ID3, MP3_NO_ID1, MP3_NO_ID2, MP3_NO_ID3,

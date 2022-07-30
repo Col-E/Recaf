@@ -1,11 +1,10 @@
 package me.coley.recaf.util.threading;
 
-import com.google.common.collect.Collections2;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Executor service that uses {@link Phaser} to track
@@ -78,13 +77,13 @@ public final class PhasingExecutorService implements ExecutorService {
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
 		phaser.bulkRegister(tasks.size());
-		return delegate.invokeAll(Collections2.transform(tasks, this::wrap));
+		return delegate.invokeAll(tasks.stream().map(this::wrap).collect(Collectors.toList()));
 	}
 
 	@Override
 	public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
 		phaser.bulkRegister(tasks.size());
-		return delegate.invokeAll(Collections2.transform(tasks, this::wrap), timeout, unit);
+		return delegate.invokeAll(tasks.stream().map(this::wrap).collect(Collectors.toList()), timeout, unit);
 	}
 
 	@Override

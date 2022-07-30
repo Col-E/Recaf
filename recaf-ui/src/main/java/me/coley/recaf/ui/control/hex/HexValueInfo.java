@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.control.hex;
 
-import com.google.common.primitives.*;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -101,8 +100,7 @@ public class HexValueInfo {
 		long int64 = bb.getLong(0);
 		short uint8 = int8 < 0 ? (short) (int8 & 0xFF) : (short) int8;
 		char uint16 = bb.getChar(0);
-		long uint32 = UnsignedInteger.fromIntBits(int32).longValue();
-		UnsignedLong uint64 = UnsignedLong.fromLongBits(int64);
+		long uint32 = int32 & 0xffffffffL;
 		float tFloat = bb.getFloat(0);
 		double tDouble = bb.getDouble(0);
 
@@ -119,7 +117,7 @@ public class HexValueInfo {
 		lblUInt64.setText(String.valueOf(uint32));
 
 		lblInt64.setText(String.valueOf(int64));
-		lblUInt64.setText(String.valueOf(uint64));
+		lblUInt64.setText(Long.toUnsignedString(int64));
 
 		lblFloat.setText(String.valueOf(tFloat));
 		lblDouble.setText(String.valueOf(tDouble));

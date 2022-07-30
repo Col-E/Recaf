@@ -3,7 +3,6 @@ package me.coley.recaf.util;
 import com.carrotsearch.hppc.CharIntHashMap;
 import com.carrotsearch.hppc.CharIntMap;
 import com.carrotsearch.hppc.cursors.CharIntCursor;
-import com.google.common.base.Strings;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -209,7 +208,7 @@ public class StringUtil {
 	 */
 	public static boolean isAnyNullOrEmpty(String... args) {
 		for (String arg : args)
-			if (Strings.isNullOrEmpty(arg))
+			if (StringUtil.isNullOrEmpty(arg))
 				return true;
 		return false;
 	}
@@ -221,7 +220,7 @@ public class StringUtil {
 	 * @return {@code true} when the text is either {@code null} or an empty string.
 	 */
 	public static boolean isNullOrEmpty(String text) {
-		return Strings.isNullOrEmpty(text);
+		return text == null || text.isEmpty();
 	}
 
 	/**

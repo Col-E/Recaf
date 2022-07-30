@@ -1,6 +1,5 @@
 package me.coley.recaf.util.threading;
 
-import javax.annotation.Nonnull;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -127,7 +126,7 @@ public class ThreadPoolFactory {
 		}
 
 		@Override
-		public Thread newThread(@Nonnull Runnable r) {
+		public Thread newThread(Runnable r) {
 			Thread thread = new Thread(r);
 			thread.setDaemon(daemon);
 			thread.setName(name + "-" + tid++);

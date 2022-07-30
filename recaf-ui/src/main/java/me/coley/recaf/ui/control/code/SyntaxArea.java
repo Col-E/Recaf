@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.control.code;
 
 import com.carrotsearch.hppc.IntHashSet;
-import com.google.common.base.Strings;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -10,6 +9,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.util.SearchHelper;
 import me.coley.recaf.util.ReflectUtil;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
@@ -149,14 +149,14 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 	@Override
 	public int getSelectionStart() {
-		if (Strings.isNullOrEmpty(getSelectionText()))
+		if (StringUtil.isNullOrEmpty(getSelectionText()))
 			return -1;
 		return getSelection().getStart();
 	}
 
 	@Override
 	public int getSelectionStop() {
-		if (Strings.isNullOrEmpty(getSelectionText()))
+		if (StringUtil.isNullOrEmpty(getSelectionText()))
 			return -1;
 		return getSelection().getEnd();
 	}
@@ -334,8 +334,8 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		}
 
 		// Handle any removal/insertion for bracket completion
-		boolean hasRemovedText = !Strings.isNullOrEmpty(removedText);
-		boolean hasInsertedText = !Strings.isNullOrEmpty(insertedText);
+		boolean hasRemovedText = !StringUtil.isNullOrEmpty(removedText);
+		boolean hasInsertedText = !StringUtil.isNullOrEmpty(insertedText);
 		if (hasRemovedText || hasInsertedText) {
 			bracketUpdate = ThreadUtil.run(() -> {
 				if (hasRemovedText)

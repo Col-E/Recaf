@@ -1,7 +1,5 @@
 package me.coley.recaf.ssvm.processing;
 
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.MultimapBuilder;
 import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.VMInterface;
 import dev.xdark.ssvm.execution.Stack;
@@ -11,6 +9,8 @@ import dev.xdark.ssvm.thread.ThreadStorage;
 import dev.xdark.ssvm.value.*;
 import me.coley.recaf.ssvm.util.VmValueUtil;
 import me.coley.recaf.ssvm.value.ConstNumericValue;
+import me.coley.recaf.util.Multimap;
+import me.coley.recaf.util.MultimapBuilder;
 import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Opcodes;
@@ -47,8 +47,10 @@ public class FlowRevisiting implements Opcodes {
 		VMInterface vmi = vm.getInterface();
 		Map<ExecutionContext, Value> initialReturnValueMap = new IdentityHashMap<>();
 		Map<ExecutionContext, InstructionStateCache> stateCacheMap = new IdentityHashMap<>();
-		ListMultimap<ExecutionContext, FlowPoint> flowPoints =
-				MultimapBuilder.ListMultimapBuilder.hashKeys().arrayListValues().build();
+		var flowPoints = MultimapBuilder
+				.<ExecutionContext, FlowPoint>hashKeys()
+				.arrayValues()
+				.build();
 		vmi.registerInstructionInterceptor((ctx, insn) -> {
 			// Skip if not whitelisted
 			if (!whitelist.test(ctx))
@@ -87,7 +89,7 @@ public class FlowRevisiting implements Opcodes {
 							ctx.getInsnPosition(),
 							OpcodeUtil.opcodeToName(insn.getOpcode())
 					);
-					flowPoints.get(ctx).add(new FlowPoint(ctx, insn));
+					flowPoints.put(ctx, new FlowPoint(ctx, insn));
 				}
 			}
 			return Result.CONTINUE;

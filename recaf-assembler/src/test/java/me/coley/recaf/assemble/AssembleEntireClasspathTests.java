@@ -1,6 +1,5 @@
 package me.coley.recaf.assemble;
 
-import com.google.common.reflect.ClassPath;
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
@@ -8,6 +7,7 @@ import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.Unchecked;
 import me.darknet.assembler.parser.AssemblerException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Disabled;
@@ -18,7 +18,9 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 
-import java.io.IOException;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
+import java.lang.module.ModuleReference;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -111,12 +113,14 @@ public class AssembleEntireClasspathTests extends JasmUtils {
 		System.out.println("# of lines: " + line);
 	}
 
-	@SuppressWarnings("UnstableApiUsage")
-	public static List<String> lookup() throws IOException {
-		return ClassPath.from(AssembleEntireClasspathTests.class.getClassLoader())
-				.getAllClasses()
+	public static List<String> lookup() {
+		return ModuleFinder.ofSystem()
+				.findAll()
 				.stream()
-				.map(ClassPath.ClassInfo::getName)
+				.map(Unchecked.function(ModuleReference::open))
+				.flatMap(Unchecked.function(ModuleReader::list))
+				.filter(x -> x.endsWith(".class"))
+				.map(x -> x.substring(0, x.length() - 6))
 				.collect(Collectors.toList());
 	}
 }
