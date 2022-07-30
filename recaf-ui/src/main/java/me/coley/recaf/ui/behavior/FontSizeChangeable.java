@@ -55,7 +55,6 @@ public interface FontSizeChangeable {
 			DisplayConfig.fontSizeBounds.getValue());
 		if (oldSize != newSize) {
 			Configs.display().fontSize.set(newSize);
-			fsc.setFontSize(newSize);
 		}
 	}
 }
