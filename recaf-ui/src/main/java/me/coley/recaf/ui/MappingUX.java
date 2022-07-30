@@ -71,7 +71,8 @@ public class MappingUX {
 				return;
 			// Check if the class got renamed. If the name is the same, the tabs should automatically get refreshed.
 			// But if the name is different, we'll need to re-open the content.
-			if (!classMapping.getOldName().equals(classMapping.getNewName())) {
+			String newName = classMapping.getNewName();
+			if (!oldName.equals(newName)) {
 				// Get old content of tab
 				ClassView oldView = (ClassView) tab.getContent();
 				ScrollSnapshot scrollSnapshot = null;
@@ -82,15 +83,19 @@ public class MappingUX {
 				tab.close();
 				// Open it in a new tab and update it
 				Workspace workspace = RecafUI.getController().getWorkspace();
-				CommonClassInfo newClassInfo = workspace.getResources().getClass(classMapping.getNewName());
+				CommonClassInfo newClassInfo = workspace.getResources().getClass(newName);
 				RecafDockingManager docking = RecafDockingManager.getInstance();
-				String title = StringUtil.shortenPath(classMapping.getNewName());
-				DockTab newTab = docking.createTab(() -> new ClassTab(title, oldView));
+				String title = StringUtil.shortenPath(newName);
+				ClassTab newTab = (ClassTab) docking.createTab(() -> new ClassTab(title, oldView));
 				newTab.select();
 				oldView.refreshView();
 				oldView.onUpdate(newClassInfo);
 				if (scrollSnapshot != null)
 					FxThreadUtil.delayedRun(100, scrollSnapshot::restore);
+				// Update tab cache to point to updated tab instance
+				Map<String, ClassTab> classTabs = RecafDockingManager.getInstance().getClassTabs();
+				classTabs.remove(oldName);
+				classTabs.put(newName, newTab);
 			}
 		});
 	}
