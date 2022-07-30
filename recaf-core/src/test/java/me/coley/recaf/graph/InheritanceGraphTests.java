@@ -37,6 +37,8 @@ public class InheritanceGraphTests extends TestUtils {
 				"java/lang/Object"
 		);
 		for (String member : expectedFamily) {
+			if (member.equals("java/lang/Object"))
+				continue;
 			Set<String> snakeModelFamily = graph.getVertex(member).getFamily().stream()
 					.map(InheritanceVertex::getName)
 					.collect(Collectors.toSet());
