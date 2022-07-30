@@ -4,6 +4,7 @@ import me.coley.recaf.util.ReflectUtil;
 import software.coley.llzip.util.ByteData;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
@@ -66,6 +67,18 @@ public class ByteSources {
 	 */
 	public static ByteSource wrap(byte[] bytes) {
 		return new ByteArraySource(bytes, 0, bytes.length);
+	}
+
+	/**
+	 * Creates new byte source from byte buffer.
+	 *
+	 * @param buffer
+	 * 		Buffer to wrap.
+	 *
+	 * @return New byte source.
+	 */
+	public static ByteSource forBuffer(ByteBuffer buffer) {
+		return new ByteBufferSource(buffer);
 	}
 
 	/**

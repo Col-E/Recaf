@@ -8,14 +8,21 @@ import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.LookupUtil;
 import me.coley.recaf.util.Unchecked;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+/**
+ * Java modules source.
+ *
+ * @author xDark
+ */
 public class ModulesContainerSource extends ContainerContentSource<String> {
 
 	public ModulesContainerSource(Path path) {
@@ -39,15 +46,18 @@ public class ModulesContainerSource extends ContainerContentSource<String> {
 			m = imageReaderClass.getDeclaredMethod("getEntryNames");
 			m.setAccessible(true);
 			String[] entries = (String[]) m.invoke(reader);
-			m = imageReaderClass.getDeclaredMethod("getResource", String.class);
-			m.setAccessible(true);
-			MethodHandle getResource = LookupUtil.lookup()
-					.unreflect(m)
+			MethodHandles.Lookup lookup = LookupUtil.lookup();
+			Class<?> imageLocationClass = Class.forName("jdk.internal.jimage.ImageLocation", true, null);
+			MethodHandle getResourceBuffer = lookup.findVirtual(imageReaderClass, "getResourceBuffer", MethodType.methodType(ByteBuffer.class, imageLocationClass))
+					.bindTo(reader);
+			MethodHandle findLocation = lookup.findVirtual(imageReaderClass, "findLocation", MethodType.methodType(imageLocationClass, String.class))
 					.bindTo(reader);
 			return Arrays.stream(entries)
 					.map(x -> {
-						return new ByteSourceElement<>(x.substring(x.indexOf('/', 1) + 1), Unchecked.bmap((t, u) ->
-								ByteSources.wrap((byte[]) t.invoke(u)), getResource, x));
+						String normalizedName = x.substring(x.indexOf('/', 1) + 1);
+						Object imageLocation = Unchecked.bmap((t, u) -> t.invoke(u), findLocation, x);
+						ByteBuffer buffer = Unchecked.bmap((t, u) -> (ByteBuffer) t.invoke(u), getResourceBuffer, imageLocation);
+						return new ByteSourceElement<>(normalizedName, ByteSources.forBuffer(buffer));
 					}).onClose(() -> IOUtil.closeQuietly((AutoCloseable) reader));
 		}, getPath());
 	}
