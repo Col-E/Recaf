@@ -1,8 +1,8 @@
 package me.coley.recaf.util;
 
-import java.util.concurrent.CountDownLatch;
+import me.coley.recaf.util.threading.CountDown;
+
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -30,15 +30,14 @@ public final class Streams {
 	 * 		Element type.
 	 */
 	public static <T> void forEachOn(Stream<T> stream, Consumer<? super T> consumer, Executor executor) {
-		AtomicLong count = new AtomicLong(1L);
 		AtomicReference<Throwable> throwable = new AtomicReference<>();
-		CountDownLatch latch = new CountDownLatch(1);
+		CountDown countDown = new CountDown();
 		stream.forEach(x -> {
 			Throwable thrown = throwable.get();
 			if (thrown != null) {
 				ReflectUtil.propagate(thrown);
 			}
-			count.incrementAndGet();
+			countDown.register();
 			executor.execute(() -> {
 				try {
 					if (throwable.get() == null) {
@@ -49,17 +48,13 @@ public final class Streams {
 						}
 					}
 				} finally {
-					if (count.decrementAndGet() == 0L) {
-						latch.countDown();
-					}
+					countDown.release();
 				}
 			});
 		});
-		if (count.decrementAndGet() != 0L) {
-			try {
-				latch.await();
-			} catch (InterruptedException ignored) {
-			}
+		try {
+			countDown.await();
+		} catch (InterruptedException ignored) {
 		}
 		Throwable thrown = throwable.get();
 		if (thrown != null) {
