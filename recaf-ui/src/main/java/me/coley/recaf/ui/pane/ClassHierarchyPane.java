@@ -175,7 +175,7 @@ public class ClassHierarchyPane extends BorderPane implements ClassRepresentatio
 		 */
 		public Region getGraphic() {
 			if (graphic == null) {
-				ClassInfo info = RecafUI.getController().getWorkspace().getResources().getClass(vertex.getName());
+				CommonClassInfo info = vertex.getValue();
 				int row = 0;
 				int fieldRows = 0;
 				int methodRows = 0;
@@ -197,16 +197,19 @@ public class ClassHierarchyPane extends BorderPane implements ClassRepresentatio
 					methodsGrid.addRow(methodRows++, createMethod(method));
 				}
 				grid.addRow(row++, methodsGrid);
-				if (AccessFlag.isInterface(vertex.getValue().getAccess())) {
+				if (AccessFlag.isInterface(info.getAccess())) {
 					grid.getStyleClass().add("hierarchy-interface");
-				} else if (AccessFlag.isEnum(vertex.getValue().getAccess())) {
+				} else if (AccessFlag.isEnum(info.getAccess())) {
 					grid.getStyleClass().add("hierarchy-enum");
 				} else {
 					grid.getStyleClass().add("hierarchy-class");
 				}
 				grid.setOnContextMenuRequested(e -> {
 					if (menu == null)
-						menu = ContextBuilder.forClass(info).build();
+						if (info instanceof DexClassInfo)
+							menu = ContextBuilder.forDexClass((DexClassInfo) info).build();
+						else
+							menu = ContextBuilder.forClass((ClassInfo) info).build();
 					else
 						menu.hide();
 					menu.show(grid, e.getScreenX(), e.getScreenY());
