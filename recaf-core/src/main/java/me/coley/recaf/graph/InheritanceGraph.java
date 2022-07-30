@@ -1,10 +1,10 @@
 package me.coley.recaf.graph;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
+import me.coley.recaf.util.Multimap;
+import me.coley.recaf.util.MultimapBuilder;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
@@ -24,7 +24,10 @@ import java.util.stream.Collectors;
 public class InheritanceGraph implements ResourceClassListener, ResourceDexClassListener {
 	private static final InheritanceVertex STUB = new InheritanceVertex(null, null, null, false);
 	private static final String OBJECT = "java/lang/Object";
-	private final Multimap<String, String> parentToChild = MultimapBuilder.hashKeys().hashSetValues().build();
+	private final Multimap<String, String, Set<String>> parentToChild = MultimapBuilder
+			.<String, String>hashKeys()
+			.hashValues()
+			.build();
 	private final Map<String, InheritanceVertex> vertices = new ConcurrentHashMap<>();
 	private final Function<String, InheritanceVertex> vertexProvider = createVertexProvider();
 	private final Workspace workspace;
@@ -110,7 +113,7 @@ public class InheritanceGraph implements ResourceClassListener, ResourceDexClass
 	 * @return Direct extensions/implementations of the given parent.
 	 */
 	private Collection<String> getDirectChildren(String parent) {
-		return parentToChild.get(parent);
+		return parentToChild.getIfPresent(parent);
 	}
 
 	/**

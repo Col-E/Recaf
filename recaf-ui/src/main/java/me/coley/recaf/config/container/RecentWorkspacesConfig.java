@@ -15,6 +15,7 @@ import me.coley.recaf.workspace.resource.source.*;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -189,7 +190,7 @@ public class RecentWorkspacesConfig implements ConfigContainer {
 		private static Resource parse(String pathStr) throws IOException {
 			// URL check
 			if (pathStr.contains("://")) {
-				return new Resource(new UrlContentSource(pathStr));
+				return new Resource(new UrlContentSource(new URL(pathStr)));
 			}
 			// Maven check
 			String[] sections = pathStr.split(":");

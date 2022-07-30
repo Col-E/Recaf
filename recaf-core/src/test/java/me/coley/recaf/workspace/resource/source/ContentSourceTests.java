@@ -5,6 +5,7 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.URL;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,7 +46,7 @@ public class ContentSourceTests extends TestUtils {
 	void testReadUrl() {
 		String url = "https://repo1.maven.org/maven2/org/codejargon/feather/feather/1.0/feather-1.0.jar";
 		assumeUrlExists(url);
-		assertDoesNotThrow(() -> testRead(new UrlContentSource(url)));
+		assertDoesNotThrow(() -> testRead(new UrlContentSource(new URL(url))));
 	}
 
 	@Test

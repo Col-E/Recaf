@@ -1,14 +1,10 @@
 package me.coley.recaf.util;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.MultimapBuilder;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.SetMultimap;
 import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Utility for handling access flags/modifiers.
@@ -39,30 +35,29 @@ public enum AccessFlag {
 	ACC_MODULE(Opcodes.ACC_MODULE, "module", false, Type.CLASS),
 	ACC_MANDATED(Opcodes.ACC_MANDATED, "mandated", false, Type.PARAM);
 
-	private static final Joiner JOINER = Joiner.on(' ').skipNulls();
-	private static final SetMultimap<Integer, AccessFlag> maskToFlagsMap;
+	private static final Multimap<Integer, AccessFlag, Set<AccessFlag>> maskToFlagsMap;
 	private static final Map<String, AccessFlag> nameToFlagMap;
-	private static final SetMultimap<Type, AccessFlag> typeToFlagsMap;
+	private static final Multimap<Type, AccessFlag, Set<AccessFlag>> typeToFlagsMap;
 
 	static {
 		AccessFlag[] flags = values();
-		SetMultimap<Integer, AccessFlag> maskMap = MultimapBuilder.SetMultimapBuilder
-				.linkedHashKeys(flags.length)
-				.enumSetValues(AccessFlag.class)
+		var maskMap = MultimapBuilder
+				.<Integer, AccessFlag>hashKeys()
+				.enumValues()
 				.build();
 		Map<String, AccessFlag> nameMap = new LinkedHashMap<>(flags.length);
-		SetMultimap<Type, AccessFlag> typeMap = MultimapBuilder.SetMultimapBuilder
-				.enumKeys(Type.class)
-				.enumSetValues(AccessFlag.class)
+		var typeMap = MultimapBuilder
+				.<Type, AccessFlag>enumKeys()
+				.enumValues()
 				.build();
 		for (AccessFlag flag : flags) {
 			maskMap.put(flag.mask, flag);
 			nameMap.put(flag.name, flag);
 			flag.types.forEach(type -> typeMap.put(type, flag));
 		}
-		maskToFlagsMap = Multimaps.unmodifiableSetMultimap(maskMap);
-		nameToFlagMap = Collections.unmodifiableMap(nameMap);
-		typeToFlagsMap = Multimaps.unmodifiableSetMultimap(typeMap);
+		maskToFlagsMap = maskMap;
+		nameToFlagMap = nameMap;
+		typeToFlagsMap = typeMap;
 		Type.populateOrder();  // lazy load
 	}
 
@@ -346,7 +341,11 @@ public enum AccessFlag {
 	 */
 	public static String toString(Iterable<AccessFlag> flags) {
 		// Don't include ACC_SUPER, is meaningless
-		return JOINER.join(Iterables.filter(flags, flag -> flag != ACC_SUPER));
+		return StreamSupport.stream(flags.spliterator(), false)
+				.filter(Objects::nonNull)
+				.filter(v -> v != ACC_SUPER)
+				.map(AccessFlag::toString)
+				.collect(Collectors.joining(" "));
 	}
 
 	/**

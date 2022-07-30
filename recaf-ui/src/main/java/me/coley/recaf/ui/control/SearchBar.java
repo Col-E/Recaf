@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.control;
 
-import com.google.common.base.Strings;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -15,6 +14,7 @@ import me.coley.recaf.ui.behavior.InteractiveText;
 import me.coley.recaf.ui.behavior.Searchable;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.StringUtil;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -141,7 +141,7 @@ public class SearchBar extends GridPane {
 			// Initialize new search with selected text if it is non-empty
 			InteractiveText interactiveText = (InteractiveText) searchable;
 			String selected = interactiveText.getSelectionText();
-			if (!Strings.isNullOrEmpty(selected)) {
+			if (!StringUtil.isNullOrEmpty(selected)) {
 				txtSearch.setText(selected);
 				// Run new search
 				runSearch();

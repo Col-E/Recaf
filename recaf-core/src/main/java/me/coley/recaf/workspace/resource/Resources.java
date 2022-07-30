@@ -1,12 +1,12 @@
 package me.coley.recaf.workspace.resource;
 
-import com.google.common.collect.Iterators;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Wrapper for multiple resources.
@@ -237,8 +237,12 @@ public class Resources implements Iterable<Resource> {
 
 	@Override
 	public Iterator<Resource> iterator() {
-		return Iterators.concat(
-				Iterators.concat(Iterators.singletonIterator(primary), libraries.iterator()),
-				internalLibraries.iterator());
+		return Stream.concat(
+				Stream.of(primary),
+				Stream.concat(
+						libraries.stream(),
+						internalLibraries.stream()
+				)
+		).iterator();
 	}
 }

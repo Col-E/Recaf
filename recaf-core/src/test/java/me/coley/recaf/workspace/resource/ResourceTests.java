@@ -76,7 +76,7 @@ public class ResourceTests extends TestUtils {
 		assertEquals(ApkContentSource.class,
 				ResourceIO.fromPath(sourcesDir.resolve("Sample.apk"), false).getContentSource().getClass());
 		assertEquals(UrlContentSource.class,
-				ResourceIO.fromUrl(sourcesDir.resolve("Sample.jar").toUri().toURL().toString(), false).getContentSource().getClass());
+				ResourceIO.fromUrl(sourcesDir.resolve("Sample.jar").toUri().toURL(), false).getContentSource().getClass());
 	}
 
 	@Test

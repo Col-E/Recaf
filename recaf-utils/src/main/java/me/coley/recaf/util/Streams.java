@@ -17,7 +17,19 @@ public final class Streams {
 	private Streams() {
 	}
 
-	public static <T> void forEachOn(Stream<T> stream, Consumer<? super T> c, Executor executor) {
+	/**
+	 * Accepts all elements in the stream in the given executor.
+	 *
+	 * @param stream
+	 * 		Stream to accept.
+	 * @param consumer
+	 * 		Element consumer.
+	 * @param executor
+	 * 		Executor to use.
+	 * @param <T>
+	 * 		Element type.
+	 */
+	public static <T> void forEachOn(Stream<T> stream, Consumer<? super T> consumer, Executor executor) {
 		AtomicLong count = new AtomicLong(1L);
 		AtomicReference<Throwable> throwable = new AtomicReference<>();
 		CountDownLatch latch = new CountDownLatch(1);
@@ -31,7 +43,7 @@ public final class Streams {
 				try {
 					if (throwable.get() == null) {
 						try {
-							c.accept(x);
+							consumer.accept(x);
 						} catch (Throwable t) {
 							throwable.compareAndSet(null, t);
 						}

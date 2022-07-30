@@ -4,12 +4,10 @@ import com.github.javaparser.ParseResult;
 import com.github.javaparser.Problem;
 import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.MultimapBuilder;
 import jregex.Matcher;
 import jregex.Pattern;
+import me.coley.recaf.util.Multimap;
+import me.coley.recaf.util.MultimapBuilder;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
@@ -21,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Utility for basic code patches to make JavaParser parse more of the code.
@@ -78,9 +77,10 @@ public class JavaParserRecovery {
 	 */
 	private static String filterCode(String code, Collection<Problem> problems) {
 		// Map the problems that prevent the lexer from doing a full parse.
-		ListMultimap<Integer, LexicalError> lexerErrorMap = MultimapBuilder.ListMultimapBuilder
-				.treeKeys()
-				.arrayListValues().build();
+		var lexerErrorMap = MultimapBuilder
+				.<Integer, LexicalError>hashKeys()
+				.arrayValues()
+				.build();
 		for (Problem problem : problems) {
 			String message = problem.getMessage();
 			if (problem.getLocation().isEmpty() && message.contains("at line ")) {
@@ -94,13 +94,12 @@ public class JavaParserRecovery {
 		}
 		// Map the problems collection that were found after the lexer completed.
 		// These should have more specific locations reported by JavaParser that are associated with AST nodes.
-		ListMultimap<Integer, Problem> problemMap = MultimapBuilder.ListMultimapBuilder
-				.treeKeys()
-				.arrayListValues()
-				.build(problems.stream()
-						.filter(p -> p.getLocation().flatMap(TokenRange::toRange).isPresent())
-						.collect(ImmutableListMultimap.toImmutableListMultimap(p ->
-								p.getLocation().flatMap(TokenRange::toRange).get().begin.line, Function.identity())));
+		var problemMap = Multimap.from(problems.stream()
+				.filter(p -> p.getLocation().flatMap(TokenRange::toRange).isPresent())
+				.collect(Collectors.groupingBy(
+						p -> p.getLocation().flatMap(TokenRange::toRange).get().begin.line,
+						Collectors.mapping(Function.identity(), Collectors.toList())
+				)), ArrayList::new);
 		// Rebuild the source with attempted fixes applied
 		StringBuilder builder = new StringBuilder(code.length());
 		try (LineNumberReader reader = new LineNumberReader(new StringReader(code))) {
@@ -159,8 +158,8 @@ public class JavaParserRecovery {
 	}
 
 	private static RecoveryType recoverCFR(LineInfo line,
-										   ListMultimap<Integer, Problem> problemMap,
-										   ListMultimap<Integer, LexicalError> lexerErrorMap) {
+										   Multimap<Integer, Problem, List<Problem>> problemMap,
+										   Multimap<Integer, LexicalError, List<LexicalError>> lexerErrorMap) {
 		String trim = line.text.trim();
 		// CFR is known to sometimes generate pseudocode that starts with **
 		// Usually "** GOTO label", but can be other operations like "** continue;"
@@ -185,14 +184,15 @@ public class JavaParserRecovery {
 	}
 
 	private static RecoveryType recoverMissingSemicolon(LineInfo line,
-														ListMultimap<Integer, Problem> problemMap,
-														ListMultimap<Integer, LexicalError> lexerErrorMap) {
-		List<Problem> lineProblems = problemMap.get(line.number);
+														Multimap<Integer, Problem, List<Problem>> problemMap,
+														Multimap<Integer, LexicalError, List<LexicalError>> lexerErrorMap) {
+		List<Problem> lineProblems = problemMap.getOrDefault(line.number, List.of());
 		// Check for the an unfinished expression. The lexer doesn't say something like "oh I want a ';' here".
 		// Instead it says "Oh expression, did you mean to assign that?"
-		if (lineProblems.size() == 1 && lineProblems.stream().map(Problem::getMessage)
-				.anyMatch(m -> m.contains("Parse error. Found \"")
-						&& m.contains("expected one of") && m.contains(">>>="))) {
+		String m;
+		if (lineProblems.size() == 1
+				&& (m = lineProblems.get(0).getMessage()).contains("Parse error. Found \"")
+				&& m.contains("expected one of") && m.contains(">>>=")) {
 			// Check if there is no ';'
 			String trim = line.text.trim();
 			if (trim.charAt(trim.length() - 1) != ';') {
@@ -204,10 +204,10 @@ public class JavaParserRecovery {
 	}
 
 	private static RecoveryType recoverMissingQuote(LineInfo line,
-													ListMultimap<Integer, Problem> problemMap,
-													ListMultimap<Integer, LexicalError> lexerErrorMap) {
+													Multimap<Integer, Problem, List<Problem>> problemMap,
+													Multimap<Integer, LexicalError, List<LexicalError>> lexerErrorMap) {
 		// Missing quotes come up as lexer problems
-		List<LexicalError> lineProblems = lexerErrorMap.get(line.number);
+		List<LexicalError> lineProblems = lexerErrorMap.getOrDefault(line.number, List.of());
 		if (lineProblems.size() == 1) {
 			// Check for 'encountered newline after ...' where '...' starts with an opening quote.
 			LexicalError error = lineProblems.get(0);
@@ -237,7 +237,7 @@ public class JavaParserRecovery {
 				// To prevent offsetting things in the AST positions, make the quote size big enough
 				// so the line length matches the old line length.
 				int quoteContentLen = originalText.length() - startOfProblem - suffix.length() - 2;
-				String quoteContent = Strings.repeat("?", Math.max(1, quoteContentLen));
+				String quoteContent = "?".repeat(Math.max(1, quoteContentLen));
 				line.text = originalText.substring(0, startOfProblem) + "\"" + quoteContent + "\"" + suffix;
 				return RecoveryType.TEXT_EDIT;
 			}
@@ -246,24 +246,24 @@ public class JavaParserRecovery {
 	}
 
 	private static RecoveryType recoverCurlyBraces(LineInfo line,
-												   ListMultimap<Integer, Problem> problemMap,
-												   ListMultimap<Integer, LexicalError> lexerErrorMap) {
+												   Multimap<Integer, Problem, List<Problem>> problemMap,
+												   Multimap<Integer, LexicalError, List<LexicalError>> lexerErrorMap) {
 		// Check the current line
-		List<Problem> lineProblems = problemMap.get(line.number);
+		List<Problem> lineProblems = problemMap.getOrDefault(line.number, List.of());
 		if (!lineProblems.isEmpty() && lineProblems.stream().map(Problem::getMessage)
 				.noneMatch(m -> m.contains("expected \"}\"") || m.contains("expected \"{\""))) {
 			return RecoveryType.LINE_COMMENT;
 		}
 
 		// Check the previous line
-		List<Problem> priorLineProblems = problemMap.get(line.number - 1);
+		List<Problem> priorLineProblems = problemMap.getOrDefault(line.number - 1, List.of());
 		if (!priorLineProblems.isEmpty() && priorLineProblems.stream().map(Problem::getMessage)
 				.anyMatch(m -> m.contains("expected \"}\""))) {
 			return RecoveryType.LINE_COMMENT;
 		}
 
 		// Check the next line
-		List<Problem> nextLineProblems = problemMap.get(line.number + 1);
+		List<Problem> nextLineProblems = problemMap.getOrDefault(line.number + 1, List.of());
 		if (!nextLineProblems.isEmpty() && nextLineProblems.stream().map(Problem::getMessage)
 				.anyMatch(m -> m.contains("expected \"{\""))) {
 			return RecoveryType.LINE_COMMENT;
@@ -278,8 +278,8 @@ public class JavaParserRecovery {
 	 */
 	interface RecoveryStrategy {
 		RecoveryType tryRecover(LineInfo lineInfo,
-								ListMultimap<Integer, Problem> problemMap,
-								ListMultimap<Integer, LexicalError> lexerErrorMap);
+								Multimap<Integer, Problem, List<Problem>> problemMap,
+								Multimap<Integer, LexicalError, List<LexicalError>> lexerErrorMap);
 	}
 
 	/**

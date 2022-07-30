@@ -1,11 +1,11 @@
 package me.coley.recaf.decompile.cfr;
 
-import com.google.common.base.Strings;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.decompile.DecompileOption;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.ReflectUtil;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.util.CfrVersionInfo;
@@ -116,7 +116,7 @@ public class CfrDecompiler extends Decompiler {
 			Field fn = PermittedOptionProvider.ArgumentParam.class.getDeclaredField("help");
 			fn.setAccessible(true);
 			String value = (String) fn.get(param);
-			if (Strings.isNullOrEmpty(value))
+			if (StringUtil.isNullOrEmpty(value))
 				value = "";
 			return value;
 		} catch (ReflectiveOperationException ex) {

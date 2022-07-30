@@ -5,9 +5,7 @@ import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -154,9 +152,11 @@ public class VariableInfo implements Comparable<VariableInfo> {
 	}
 
 	@Override
-	public int compareTo(@Nonnull VariableInfo other) {
-		return Comparator.comparingInt(VariableInfo::getIndex)
-				.thenComparing(VariableInfo::getName)
-				.compare(this, other);
+	public int compareTo(VariableInfo other) {
+		int cmp = Integer.compare(index, other.index);
+		if (cmp == 0) {
+			cmp = name.compareTo(other.name);
+		}
+		return cmp;
 	}
 }

@@ -1,6 +1,5 @@
 package me.coley.recaf.search.query;
 
-import com.google.common.collect.Lists;
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.insn.*;
@@ -9,7 +8,6 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.search.NumberMatchMode;
 import me.coley.recaf.search.result.ResultBuilder;
-import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.*;

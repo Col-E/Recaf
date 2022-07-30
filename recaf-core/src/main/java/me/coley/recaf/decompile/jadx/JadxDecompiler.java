@@ -1,6 +1,5 @@
 package me.coley.recaf.decompile.jadx;
 
-import com.google.common.base.Strings;
 import jadx.api.JadxArgs;
 import jadx.api.impl.NoOpCodeCache;
 import jadx.core.Jadx;
@@ -16,6 +15,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.decompile.DecompileOption;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.ReflectUtil;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -85,7 +85,7 @@ public class JadxDecompiler extends Decompiler {
 		ClassNode clazz = root.resolveClass(name.replace('/', '.'));
 		if (clazz != null) {
 			String decompiled = clazz.decompile().getCodeStr();
-			if (Strings.isNullOrEmpty(decompiled))
+			if (StringUtil.isNullOrEmpty(decompiled))
 				return "// Jadx failed to decompile: " + name + "\n/*\n" +
 						clazz.getDisassembledCode() +
 						"\n*/";

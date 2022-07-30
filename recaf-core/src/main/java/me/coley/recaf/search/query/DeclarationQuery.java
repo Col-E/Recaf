@@ -1,6 +1,5 @@
 package me.coley.recaf.search.query;
 
-import com.google.common.base.Strings;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MethodInfo;

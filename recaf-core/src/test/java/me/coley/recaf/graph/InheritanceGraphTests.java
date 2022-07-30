@@ -1,6 +1,5 @@
 package me.coley.recaf.graph;
 
-import com.google.common.collect.Sets;
 import me.coley.recaf.TestUtils;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -30,7 +29,7 @@ public class InheritanceGraphTests extends TestUtils {
 	@Test
 	void testFamily() throws IOException {
 		InheritanceGraph graph = createGraph("Sample.jar");
-		Set<String> expectedFamily = Sets.newHashSet(
+		Set<String> expectedFamily = Set.of(
 				"game/AbstractModel",
 				"game/SnakeModel",
 				"game/WorldModel",
