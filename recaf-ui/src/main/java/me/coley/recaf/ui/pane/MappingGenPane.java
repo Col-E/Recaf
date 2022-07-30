@@ -390,27 +390,26 @@ public class MappingGenPane extends VBox {
 
 		@Override
 		protected NameGeneratorFilter export() {
-			// TODO: Validate if the 'getMappedX(...)' handling is correct here
 			MappingsManager mappingsManager = RecafUI.getController().getServices().getMappingsManager();
 			AggregatedMappings aggregate = mappingsManager.getAggregatedMappings();
 			return new NameGeneratorFilter(getPriorFilter()) {
 				@Override
 				public boolean shouldMapClass(CommonClassInfo info) {
-					if (aggregate.getMappedClassName(info.getName()) != null)
+					if (aggregate.getReverseClassMapping(info.getName()) != null)
 						return false;
 					return super.shouldMapClass(info);
 				}
 
 				@Override
 				public boolean shouldMapField(CommonClassInfo owner, FieldInfo info) {
-					if (aggregate.getMappedFieldName(owner.getName(), info.getName(), info.getDescriptor()) != null)
+					if (aggregate.getReverseFieldMapping(owner.getName(), info.getName(), info.getDescriptor()) != null)
 						return false;
 					return super.shouldMapField(owner, info);
 				}
 
 				@Override
 				public boolean shouldMapMethod(CommonClassInfo owner, MethodInfo info) {
-					if (aggregate.getMappedMethodName(owner.getName(), info.getName(), info.getDescriptor()) != null)
+					if (aggregate.getReverseMethodMapping(owner.getName(), info.getName(), info.getDescriptor()) != null)
 						return false;
 					return super.shouldMapMethod(owner, info);
 				}

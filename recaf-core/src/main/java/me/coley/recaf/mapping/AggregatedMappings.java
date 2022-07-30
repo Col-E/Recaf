@@ -1,7 +1,9 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.mapping.data.ClassMapping;
+import me.coley.recaf.mapping.data.FieldMapping;
 import me.coley.recaf.mapping.data.MemberMapping;
+import me.coley.recaf.mapping.data.MethodMapping;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
 
 import java.util.Collection;
@@ -36,6 +38,75 @@ public class AggregatedMappings extends IntermediateMappings {
 			return internalName;
 		}
 	};
+
+	/**
+	 * Lookup the original name of a mapped class.
+	 *
+	 * @param name
+	 * 		Current class name.
+	 *
+	 * @return Original class name.
+	 * {@code null} if the class has not been mapped.
+	 */
+	public String getReverseClassMapping(String name) {
+		return reverseOrderClassMapping.get(name);
+	}
+
+	/**
+	 * @param owner
+	 * 		Current class name.
+	 * @param fieldName
+	 * 		Current field name.
+	 * @param fieldDesc
+	 * 		Current field descriptor.
+	 *
+	 * @return Original name of the field if any mappings exist.
+	 * {@code null} if the field has not been mapped.
+	 */
+	public String getReverseFieldMapping(String owner, String fieldName, String fieldDesc) {
+		String originalOwnerName = getReverseClassMapping(owner);
+		if (originalOwnerName == null)
+			originalOwnerName = owner;
+		List<FieldMapping> fieldMappings = fields.get(originalOwnerName);
+		if (fieldMappings == null)
+			return null;
+		for (FieldMapping fieldMapping : fieldMappings) {
+			if (!fieldName.equals(fieldMapping.getNewName()))
+				continue;
+			String originalDesc = reverseMapper.mapDesc(fieldDesc);
+			if (originalDesc.equals(fieldMapping.getDesc()))
+				return fieldMapping.getOldName();
+		}
+		return null;
+	}
+
+	/**
+	 * @param owner
+	 * 		Current class name.
+	 * @param methodName
+	 * 		Current method name.
+	 * @param methodDesc
+	 * 		Current method descriptor.
+	 *
+	 * @return Original name of the method if any mappings exist.
+	 * {@code null} if the method has not been mapped.
+	 */
+	public String getReverseMethodMapping(String owner, String methodName, String methodDesc) {
+		String originalOwnerName = getReverseClassMapping(owner);
+		if (originalOwnerName == null)
+			originalOwnerName = owner;
+		List<MethodMapping> methodMappings = methods.get(originalOwnerName);
+		if (methodMappings == null)
+			return null;
+		for (MethodMapping methodMapping : methodMappings) {
+			if (!methodName.equals(methodMapping.getNewName()))
+				continue;
+			String originalDesc = reverseMapper.mapDesc(methodDesc);
+			if (originalDesc.equals(methodMapping.getDesc()))
+				return methodMapping.getOldName();
+		}
+		return null;
+	}
 
 	@Override
 	public void addClass(String oldName, String newName) {
