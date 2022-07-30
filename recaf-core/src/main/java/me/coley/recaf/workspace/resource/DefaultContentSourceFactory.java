@@ -96,7 +96,6 @@ final class DefaultContentSourceFactory implements ContentSourceFactory {
 		String extension = path.getFileName().toString();
 		if (extension.indexOf('.') > 0)
 			extension = extension.substring(extension.lastIndexOf('.') + 1);
-		logger.warn("Unhandled file type (header={}/{}): {}", headerText, headerBytes, extension);
-		return null;
+		throw new IOException(String.format("Unhandled file type (header=%s/%s): %s", headerText, headerBytes, extension));
 	}
 }
