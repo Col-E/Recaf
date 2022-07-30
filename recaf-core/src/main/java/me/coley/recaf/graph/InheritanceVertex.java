@@ -224,10 +224,8 @@ public class InheritanceVertex {
 	}
 
 	private void visitFamily(Set<InheritanceVertex> vertices) {
-		if ("java/lang/Object".equals(getName()))
-			return;
 		vertices.add(this);
-		Stream.concat(parents(), children())
+		Stream.concat(parents(), "java/lang/Object".equals(getName()) ? Stream.empty() : children())
 				.filter(v -> !vertices.contains(v))
 				.forEach(v -> v.visitFamily(vertices));
 	}

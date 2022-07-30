@@ -33,7 +33,8 @@ public class InheritanceGraphTests extends TestUtils {
 		Set<String> expectedFamily = Sets.newHashSet(
 				"game/AbstractModel",
 				"game/SnakeModel",
-				"game/WorldModel"
+				"game/WorldModel",
+				"java/lang/Object"
 		);
 		for (String member : expectedFamily) {
 			Set<String> snakeModelFamily = graph.getVertex(member).getFamily().stream()
