@@ -76,6 +76,7 @@ public final class MultimapBuilder<K, V, C extends Collection<V>> {
 	 * @return New builder.
 	 */
 	@SafeVarargs
+	@SuppressWarnings("unchecked")
 	public static <K extends Enum<K>, V> MultimapBuilder<K, V, Collection<V>> enumKeys(K... typeHint) {
 		return enumKeys((Class<K>) typeHint.getClass().getComponentType());
 	}
@@ -122,6 +123,7 @@ public final class MultimapBuilder<K, V, C extends Collection<V>> {
 	 * @return This builder.
 	 */
 	@SafeVarargs
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	public final MultimapBuilder<K, V, Set<V>> enumValues(V... typeHint) {
 		Class<Enum> type = (Class<Enum>) typeHint.getClass().getComponentType();
 		if (!type.isEnum()) {
@@ -139,6 +141,7 @@ public final class MultimapBuilder<K, V, C extends Collection<V>> {
 	 *
 	 * @return This builder.
 	 */
+	@SuppressWarnings("unchecked")
 	public <C1 extends Collection<V>> MultimapBuilder<K, V, C1> values(Supplier<C1> collectionSupplier) {
 		this.collectionSupplier = (Supplier<Collection<V>>) collectionSupplier;
 		return upgrade();
@@ -152,6 +155,7 @@ public final class MultimapBuilder<K, V, C extends Collection<V>> {
 		return Multimap.from((Map<K, C>) mapSupplier.get(), (Supplier<C>) collectionSupplier);
 	}
 
+	@SuppressWarnings("unchecked")
 	private <C1 extends Collection<V>> MultimapBuilder<K, V, C1> upgrade() {
 		return (MultimapBuilder<K, V, C1>) this;
 	}
