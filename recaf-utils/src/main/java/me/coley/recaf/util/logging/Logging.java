@@ -3,6 +3,8 @@ package me.coley.recaf.util.logging;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.core.FileAppender;
+import me.coley.recaf.util.Blackhole;
+import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,5 +151,6 @@ public class Logging {
 
 	static {
 		addTestPhaseLogging();
+		Blackhole.consume(LoggingFilter.class);
 	}
 }
