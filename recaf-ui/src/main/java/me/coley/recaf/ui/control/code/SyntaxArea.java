@@ -1,7 +1,6 @@
 package me.coley.recaf.ui.control.code;
 
 import com.carrotsearch.hppc.IntHashSet;
-import com.google.common.base.Strings;
 import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -32,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.IntFunction;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.fxmisc.richtext.LineNumberFactory.get;
@@ -708,18 +708,22 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		}
 	}
 
-	@Override
-	public void setFontSize(int fontSize) {
-		String style = getStyle();
-		setStyle((style == null ? "" : style + " ") + "-fx-font-size: " + fontSize + "px;");
-	}
-
 	private final FontSizeChangeListener fontSizeChangeListener = new FontSizeChangeListener(this);
 
 	@Override
 	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
 		consumer.accept(this, this);
 		Configs.display().fontSize.addListener(new WeakChangeListener<>(fontSizeChangeListener));
+	}
+
+	@Override
+	public void setFontSize(int fontSize) {
+		String style = getStyle();
+		if (style.isEmpty()) setStyle("-fx-font-size: " + fontSize + "px;");
+		else {
+			setStyle(Pattern.compile("-fx-font-size: \\d+px;")
+				.matcher(style).replaceAll("-fx-font-size: " + fontSize + "px;"));
+		}
 	}
 
 	/**
