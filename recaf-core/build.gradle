@@ -36,7 +36,7 @@ dependencies {
 
     // Android
     api smali
-    api aapt
+    api aaptrk
 
     // Testing
     // Export test class, has been accessed by other modules
