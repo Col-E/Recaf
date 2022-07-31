@@ -29,7 +29,7 @@ public class ProcyonDecompiler extends Decompiler {
 	@Override
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
 		ITypeLoader loader = new CompositeTypeLoader(
-				new TargetedTypeLoader(classInfo),
+				new TargetedTypeLoader(classInfo.getName(), applyPreInterceptors(classInfo.getValue())),
 				new WorkspaceTypeLoader(workspace),
 				new ResourceTypeLoader(RuntimeResource.get())
 		);
@@ -56,17 +56,18 @@ public class ProcyonDecompiler extends Decompiler {
 	 * following type loader that could also procure the same class info.
 	 */
 	private static final class TargetedTypeLoader implements ITypeLoader {
-		private final ClassInfo info;
+		private final String name;
+		private final byte[] data;
 
-		TargetedTypeLoader(ClassInfo info) {
-			this.info = info;
+		private TargetedTypeLoader(String name, byte[] data) {
+			this.name = name;
+			this.data = data;
 		}
 
 		@Override
 		public boolean tryLoadType(String internalName, Buffer buffer) {
-			ClassInfo info = this.info;
-			if (internalName.equals(info.getName())) {
-				byte[] data = info.getValue();
+			if (internalName.equals(name)) {
+				byte[] data = this.data;
 				buffer.position(0);
 				buffer.putByteArray(data, 0, data.length);
 				buffer.position(0);

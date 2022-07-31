@@ -14,7 +14,6 @@ import org.slf4j.Logger;
  */
 public final class Recaf {
 	private static final Logger logger = Logging.get(Recaf.class);
-	private Controller controller;
 
 	/**
 	 * Start Recaf.
@@ -22,7 +21,7 @@ public final class Recaf {
 	 * @param parameters
 	 * 		Initialization parameters.
 	 */
-	public void initialize(InitializerParameters parameters) {
+	public static void initialize(InitializerParameters parameters) {
 		logger.debug("Initialize: Recaf-{} ({})", BuildConfig.VERSION, BuildConfig.GIT_SHA);
 		RuntimeProperties.dump(logger);
 		// Create presentation layer
@@ -34,15 +33,8 @@ public final class Recaf {
 			throw new IllegalStateException("Failed to initialize presentation layer: " + presentationType.name());
 		}
 		// Setup controller with presentation implementation.
-		controller = new Controller(presentation);
+		Controller controller = new Controller(presentation);
 		// Initialize the presentation layer
 		presentation.initialize(controller);
-	}
-
-	/**
-	 * @return Controller instance;
-	 */
-	public Controller getController() {
-		return controller;
 	}
 }

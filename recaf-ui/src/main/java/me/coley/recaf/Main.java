@@ -41,7 +41,7 @@ public class Main {
 		RecafPluginManager.initialize();
 		// Read application parameters
 		InitializerParameters parameters = InitializerParameters.fromArgs(args);
-		new Recaf().initialize(parameters);
+		Recaf.initialize(parameters);
 		// run script from parameters if found
 		if (parameters.getScriptPath() != null) {
 			Path scriptPath = parameters.getScriptPath().toPath();
