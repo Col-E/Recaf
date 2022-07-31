@@ -93,7 +93,7 @@ public class DisplayConfig implements ConfigContainer {
 	 * Font size for the decompiler view.
 	 */
 	@IntBounds(min = fontSizeLeftBound, max = fontSizeRightBound)
-	@Group("decompiler")
+	@Group("text")
 	@ConfigID("fontsize")
 	public IntegerProperty fontSize = new SimpleIntegerProperty(12);
 
