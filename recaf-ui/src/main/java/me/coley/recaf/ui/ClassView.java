@@ -84,7 +84,6 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
 		if (!(mainView instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) mainView;
-		fsc.bindFontSize(Configs.display().fontSize);
 		fsc.applyEventsForFontSizeChange(consumer);
 	}
 
