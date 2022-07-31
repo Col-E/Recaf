@@ -5,6 +5,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Forwarding map base for implementing children.
@@ -200,6 +201,13 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 	 */
 	public I put(I itemInfo) {
 		return put(itemInfo.getName(), itemInfo);
+	}
+
+	/**
+	 * @return Stream of items.
+	 */
+	public Stream<I> stream() {
+		return values().stream();
 	}
 
 	@Override

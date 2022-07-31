@@ -52,7 +52,7 @@ public class WorkspaceZipFile extends BasicZipFile {
 			Resources resources = workspace.getResources();
 			List<ZipEntry> zipEntries = new ArrayList<>();
 			resources.getClasses()
-					.stream().map(x -> {
+					.map(x -> {
 						ZipEntry entry = new ZipEntry(x.getName() + ".class");
 						int size = x.getValue().length;
 						entry.setMethod(ZipEntry.STORED);
@@ -62,7 +62,7 @@ public class WorkspaceZipFile extends BasicZipFile {
 					})
 					.collect(Collectors.toCollection(() -> zipEntries));
 			resources.getFiles()
-					.stream().map(x -> {
+					.map(x -> {
 						ZipEntry entry = new ZipEntry(x.getName());
 						int size = x.getValue().length;
 						entry.setMethod(ZipEntry.STORED);

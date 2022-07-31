@@ -1,10 +1,10 @@
 package me.coley.recaf.workspace.resource;
 
 import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.ItemInfo;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Map of Android dex classes in the resource.
@@ -184,6 +184,15 @@ public class MultiDexClassMap implements Map<String, DexClassInfo> {
 		return null;
 	}
 
+	/**
+	 * @return Stream of class files.
+	 */
+	public Stream<DexClassInfo> stream() {
+		return backingMaps.values()
+				.stream()
+				.flatMap(ResourceItemMap::stream);
+	}
+
 	@Override
 	public DexClassInfo remove(Object key) {
 		for (DexClassMap map : backingMaps.values()) {
@@ -206,23 +215,26 @@ public class MultiDexClassMap implements Map<String, DexClassInfo> {
 
 	@Override
 	public Set<String> keySet() {
-		Set<String> keys = new TreeSet<>();
-		backingMaps.values().forEach(map -> keys.addAll(map.keySet()));
-		return keys;
+		return backingMaps.values()
+				.stream()
+				.map(ResourceItemMap::keySet)
+				.flatMap(Collection::stream)
+				.collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	@Override
 	public Collection<DexClassInfo> values() {
-		Set<DexClassInfo> keys = new HashSet<>();
-		backingMaps.values().forEach(map -> keys.addAll(map.values()));
-		return keys;
+		return backingMaps.values()
+				.stream()
+				.flatMap(ResourceItemMap::stream)
+				.collect(Collectors.toSet());
 	}
 
 	@Override
 	public Set<Entry<String, DexClassInfo>> entrySet() {
 		return backingMaps.values().stream()
 				.flatMap(map -> map.values().stream())
-				.collect(Collectors.toMap(ItemInfo::getName, v -> v))
-				.entrySet();
+				.map(x -> Map.entry(x.getName(), x))
+				.collect(Collectors.toSet());
 	}
 }
