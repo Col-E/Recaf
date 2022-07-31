@@ -5,11 +5,13 @@ import jadx.api.JadxArgs;
 import jadx.core.dex.nodes.RootNode;
 import jadx.core.xmlgen.BinaryXMLParser;
 import jadx.core.xmlgen.ResTableParser;
+import javafx.beans.property.IntegerProperty;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.behavior.FileRepresentation;
+import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.Languages;
@@ -22,13 +24,14 @@ import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.function.BiConsumer;
 
 /**
  * Displays content of binary XML files found in APK files.
  *
  * @author Matt Coley
  */
-public class BinaryXmlPane extends BorderPane implements FileRepresentation {
+public class BinaryXmlPane extends BorderPane implements FileRepresentation, FontSizeChangeable {
 	private static final Logger logger = Logging.get(BinaryXmlPane.class);
 	/**
 	 * We're keeping a static instance since when we load new resource data into it, the old data is wiped.
@@ -99,5 +102,15 @@ public class BinaryXmlPane extends BorderPane implements FileRepresentation {
 		} catch (IOException ex) {
 			logger.error("Failed to decode XML resource: {}", fileInfo.getName(), ex);
 		}
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		xmlArea.bindFontSize(property);
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+		xmlArea.applyEventsForFontSizeChange(consumer);
 	}
 }
