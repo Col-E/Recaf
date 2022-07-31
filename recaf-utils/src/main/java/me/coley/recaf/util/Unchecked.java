@@ -1,9 +1,6 @@
 package me.coley.recaf.util;
 
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 /**
  * Convenience calls for the error-able lambda types.
@@ -76,6 +73,22 @@ public class Unchecked {
 	}
 
 	/**
+	 * @param consumer
+	 * 		Consumer.
+	 * @param t
+	 * 		First value.
+	 * @param u
+	 * 		Second value.
+	 * @param <T>
+	 * 		First type.
+	 * @param <U>
+	 * 		Second type.
+	 */
+	public static <T, U> void baccept(UncheckedBiConsumer<T, U> consumer, T t, U u) {
+		consumer.accept(t, u);
+	}
+
+	/**
 	 * Helper method to created unchecked runnable.
 	 *
 	 * @param runnable
@@ -95,7 +108,7 @@ public class Unchecked {
 	 *
 	 * @return Unchecked supplier.
 	 */
-	public static <T>Supplier<T> supply(UncheckedSupplier<T> supplier) {
+	public static <T> Supplier<T> supply(UncheckedSupplier<T> supplier) {
 		return supplier;
 	}
 
@@ -133,5 +146,17 @@ public class Unchecked {
 	 */
 	public static <T, U, R> BiFunction<T, U, R> bfunction(UncheckedBiFunction<T, U, R> fn) {
 		return fn;
+	}
+
+	/**
+	 * Helper method to created unchecked consumer.
+	 *
+	 * @param consumer
+	 * 		Unchecked consumer.
+	 *
+	 * @return Unchecked consumer.
+	 */
+	public static <T, U> BiConsumer<T, U> bconsumer(UncheckedBiConsumer<T, U> consumer) {
+		return consumer;
 	}
 }
