@@ -2,7 +2,6 @@ package me.coley.recaf.config.container;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.util.Pair;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
@@ -83,9 +82,17 @@ public class DisplayConfig implements ConfigContainer {
 	public boolean promptDeleteItem = true;
 
 	/**
+	 * Left bound (minimum) for font size.
+	 */
+	public static final int fontSizeLeftBound = 8;
+	/**
+	 * Right bound (maximum) for font size.
+	 */
+	public static final int fontSizeRightBound = 20;
+	/**
 	 * Font size for the decompiler view.
 	 */
-	@IntBounds(min = 8, max = 20)
+	@IntBounds(min = fontSizeLeftBound, max = fontSizeRightBound)
 	@Group("decompiler")
 	@ConfigID("fontsize")
 	public IntegerProperty fontSize = new SimpleIntegerProperty(12);
@@ -98,17 +105,6 @@ public class DisplayConfig implements ConfigContainer {
 	@Override
 	public String internalName() {
 		return "conf.display";
-	}
-
-	public static final Pair<Integer, Integer> fontSizeBounds;
-
-	static {
-		try {
-			IntBounds bounds = DisplayConfig.class.getDeclaredField("fontSize").getAnnotation(IntBounds.class);
-			fontSizeBounds = new Pair<>(bounds.min(), bounds.max());
-		} catch (NoSuchFieldException e) {
-			throw new RuntimeException("Failed to get font size bounds", e);
-		}
 	}
 
 	/**
