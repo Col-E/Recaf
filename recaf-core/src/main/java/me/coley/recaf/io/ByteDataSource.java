@@ -1,6 +1,6 @@
 package me.coley.recaf.io;
 
-import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.threading.ThreadLocals;
 import software.coley.llzip.util.ByteData;
 import software.coley.llzip.util.ByteDataUtil;
 
@@ -155,7 +155,7 @@ public final class ByteDataSource implements ByteSource, AutoCloseable {
 				return 0L;
 			}
 			long remaining = length - read;
-			data.transferTo(out, IOUtil.newByteBuffer());
+			data.transferTo(out, ThreadLocals.getByteBuffer());
 			this.read = length;
 			return remaining;
 		}

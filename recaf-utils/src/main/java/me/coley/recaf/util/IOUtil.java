@@ -1,6 +1,9 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.util.threading.ThreadLocals;
+
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
@@ -117,7 +120,7 @@ public final class IOUtil {
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static byte[] toByteArray(InputStream in) throws IOException {
-		return toByteArray(in, newByteBuffer());
+		return toByteArray(in, ThreadLocals.getByteBuffer());
 	}
 
 	/**
@@ -421,7 +424,7 @@ public final class IOUtil {
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static void copy(InputStream in, OutputStream out) throws IOException {
-		copy(in, out, newByteBuffer());
+		copy(in, out, ThreadLocals.getByteBuffer());
 	}
 
 	/**
@@ -563,6 +566,10 @@ public final class IOUtil {
 		connection.setReadTimeout(readTimeoutMillis);
 		try (InputStream in = connection.getInputStream()) {
 			copy(in, out, buf);
+		} finally {
+			if (connection instanceof HttpURLConnection) {
+				((HttpURLConnection) connection).disconnect();
+			}
 		}
 	}
 
@@ -588,7 +595,7 @@ public final class IOUtil {
 							int connectionTimeoutMillis,
 							int readTimeoutMillis)
 			throws IOException {
-		copy(url, out, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
+		copy(url, out, ThreadLocals.getByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
 	}
 
 	/**
@@ -641,7 +648,7 @@ public final class IOUtil {
 							int connectionTimeoutMillis,
 							int readTimeoutMillis)
 			throws IOException {
-		copy(url, path, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
+		copy(url, path, ThreadLocals.getByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
 	}
 
 	/**

@@ -3,6 +3,7 @@ package me.coley.recaf.util;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Convenience calls for the error-able lambda types.
@@ -84,6 +85,18 @@ public class Unchecked {
 	 */
 	public static Runnable runnable(UncheckedRunnable runnable) {
 		return runnable;
+	}
+
+	/**
+	 * Helper method to created unchecked supplier.
+	 *
+	 * @param supplier
+	 * 		Unchecked supplier.
+	 *
+	 * @return Unchecked supplier.
+	 */
+	public static <T>Supplier<T> supply(UncheckedSupplier<T> supplier) {
+		return supplier;
 	}
 
 	/**

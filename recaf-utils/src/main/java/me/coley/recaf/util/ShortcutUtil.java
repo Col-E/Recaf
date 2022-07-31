@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
+import java.util.Arrays;
 
 /**
  * Represents a Windows shortcut (typically visible to Java only as a '.lnk' file).
@@ -66,8 +67,21 @@ public class ShortcutUtil {
 			return false;
 		final int minimumLength = 0x64;
 		try (InputStream fis = Files.newInputStream(path)) {
-			byte[] buf = new byte[32];
-			return fis.available() >= minimumLength && isMagicPresent(IOUtil.toByteArray(fis, buf));
+			if (fis.available() < minimumLength) {
+				return false;
+			}
+			int bufSize = 64;
+			byte[] buf = new byte[bufSize];
+			int offset = 0;
+			while (bufSize != 0) {
+				int read = fis.read(buf, offset, bufSize);
+				if (read == -1) {
+					break;
+				}
+				bufSize -= read;
+				offset += read;
+			}
+			return fis.available() >= minimumLength && isMagicPresent(IOUtil.toByteArray(fis, Arrays.copyOf(buf, offset)));
 		} catch (Exception ex) {
 			return false;
 		}
