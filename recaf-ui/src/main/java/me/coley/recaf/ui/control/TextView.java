@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.scene.Node;
@@ -14,6 +15,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.FileRepresentation;
+import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.code.Language;
 import me.coley.recaf.ui.control.code.Languages;
@@ -30,6 +32,7 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -38,7 +41,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class TextView extends BorderPane implements FileRepresentation, Cleanable, LanguageAssociationListener {
+public class TextView extends BorderPane implements FileRepresentation, Cleanable, LanguageAssociationListener, FontSizeChangeable {
 	private final SyntaxArea area;
 	private final VirtualizedScrollPane<SyntaxArea> scroll;
 	private boolean ignoreNextUpdate;
@@ -179,5 +182,15 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 	public void cleanup() {
 		Languages.removeAssociationListener(this);
 		area.cleanup();
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		area.bindFontSize(property);
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+		area.applyEventsForFontSizeChange(consumer);
 	}
 }
