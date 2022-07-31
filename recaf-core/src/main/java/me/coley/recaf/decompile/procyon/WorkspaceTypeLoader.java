@@ -6,7 +6,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.workspace.Workspace;
 
 /**
- * Workspace type loader.
+ * Type loader that pulls classes from a {@link Workspace}.
  *
  * @author xDark
  */

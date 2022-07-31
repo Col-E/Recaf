@@ -1,5 +1,6 @@
 package me.coley.recaf.decompile.procyon;
 
+import com.strobel.Procyon;
 import com.strobel.assembler.metadata.*;
 import com.strobel.decompiler.DecompilationOptions;
 import com.strobel.decompiler.DecompilerSettings;
@@ -23,7 +24,7 @@ import java.util.Map;
 public class ProcyonDecompiler extends Decompiler {
 
 	public ProcyonDecompiler() {
-		super("Procyon", "0.6.0");
+		super("Procyon", Procyon.version());
 	}
 
 	@Override
@@ -48,9 +49,15 @@ public class ProcyonDecompiler extends Decompiler {
 
 	@Override
 	protected Map<String, DecompileOption<?>> createDefaultOptions() {
+		// TODO: Populate procyon options from 'DecompilerSettings'
 		return new HashMap<>();
 	}
 
+	/**
+	 * Type loader to load a single class file.
+	 * Used as the first loader within a {@link CompositeTypeLoader} such that it overrides any
+	 * following type loader that could also procure the same class info.
+	 */
 	private static final class TargetedTypeLoader implements ITypeLoader {
 		private final ClassInfo info;
 
