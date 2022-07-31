@@ -11,7 +11,7 @@ import java.util.concurrent.ThreadFactory;
  * @author Matt Coley
  */
 public class ThreadPoolFactory {
-	private static final int MAX = Math.max(1, Runtime.getRuntime().availableProcessors() - 2);
+	private static final int MAX = Runtime.getRuntime().availableProcessors();
 
 	/**
 	 * @param name
