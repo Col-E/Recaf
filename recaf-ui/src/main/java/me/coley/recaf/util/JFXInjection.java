@@ -10,6 +10,7 @@ import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -50,7 +51,13 @@ public class JFXInjection {
 	public static void ensureJavafxSupport() {
 		// Skip if platform class already exists
 		if (ClasspathUtil.classExists(JFXUtils.getPlatformClassName())) {
-			logger.info("JavaFX initialized: " + System.getProperty("javafx.version"));
+			Unchecked.run(() -> {
+				Class<?> versionClass = Class.forName("com.sun.javafx.runtime.VersionInfo");
+				Method setupSystemProperties = versionClass.getDeclaredMethod("setupSystemProperties");
+				setupSystemProperties.setAccessible(true);
+				setupSystemProperties.invoke(null);
+			});
+			logger.info("JavaFX initialized: {}", System.getProperty("javafx.version"));
 			return;
 		}
 		// Ensure dependencies are downloaded

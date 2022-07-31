@@ -5,7 +5,6 @@ import com.strobel.assembler.metadata.*;
 import com.strobel.decompiler.DecompilationOptions;
 import com.strobel.decompiler.DecompilerSettings;
 import com.strobel.decompiler.PlainTextOutput;
-import com.strobel.decompiler.languages.java.JavaFormattingOptions;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.decompile.DecompileOption;
 import me.coley.recaf.decompile.Decompiler;
@@ -34,14 +33,12 @@ public class ProcyonDecompiler extends Decompiler {
 				new WorkspaceTypeLoader(workspace),
 				new ResourceTypeLoader(RuntimeResource.get())
 		);
-		DecompilerSettings settings = new DecompilerSettings();
+		DecompilerSettings settings = DecompilerSettings.javaDefaults();
 		settings.setTypeLoader(loader);
-		settings.setJavaFormattingOptions(JavaFormattingOptions.createDefault());
 		MetadataSystem system = new MetadataSystem(loader);
 		TypeReference ref = system.lookupType(classInfo.getName());
 		DecompilationOptions decompilationOptions = new DecompilationOptions();
 		decompilationOptions.setSettings(settings);
-		decompilationOptions.setFullDecompilation(true);
 		StringWriter writer = new StringWriter();
 		settings.getLanguage().decompileType(ref.resolve(), new PlainTextOutput(writer), decompilationOptions);
 		return writer.toString();

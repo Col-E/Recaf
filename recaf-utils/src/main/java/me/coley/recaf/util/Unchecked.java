@@ -14,7 +14,7 @@ public class Unchecked {
 	 * @param runnable
 	 * 		Runnable.
 	 */
-	public static void run(Runnable runnable) {
+	public static void run(UncheckedRunnable runnable) {
 		runnable.run();
 	}
 
