@@ -64,6 +64,7 @@ subprojects {
         def lljzipVersion = '1.1.8'
         def ssvmVersion = '1.9.0.3'
         def quiltflowerVersion = '1.8.1'
+        def procyonVersion = '0.6.0'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
         asm = "org.ow2.asm:asm:$asmVersion"
         asm_analysis = "org.ow2.asm:asm-analysis:$asmVersion"
@@ -100,5 +101,7 @@ subprojects {
         richtextfx = 'org.fxmisc.richtext:richtextfx:0.10.9'
         smali = "org.smali:smali:$dexVersion"
         ssvm = "com.github.xxdark:ssvm:$ssvmVersion"
+        procyon_core = "org.bitbucket.mstrobel:procyon-core:$procyonVersion"
+        procyon_compiler_tools = "org.bitbucket.mstrobel:procyon-compilertools:$procyonVersion"
     }
 }
