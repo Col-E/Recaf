@@ -32,10 +32,20 @@ public class EnumComboBox<E extends Enum<?>> extends ComboBox<E> {
 				}
 
 				@Override
+				protected void onInvalidating() {
+					super.onInvalidating();
+
+					setItems(FXCollections.observableArrayList(type.getEnumConstants()));
+				}
+
+				@Override
 				protected StringConverter<E> computeValue() {
 					return new StringConverter<>() {
 						@Override
 						public String toString(E object) {
+							if (object == null)
+								return "";
+
 							return Lang.get(((Translatable) object).getTranslationKey());
 						}
 
