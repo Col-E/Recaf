@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.docking.impl;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.scene.Node;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.FontSizeChangeable;
@@ -36,10 +37,10 @@ public class ClassTab extends DockTab implements FontSizeChangeable {
 	}
 
 	@Override
-	public void setFontSize(int fontSize) {
+	public void bindFontSize(IntegerProperty property) {
 		if (!(classRepresentation instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) classRepresentation;
-		fsc.setFontSize(fontSize);
+		fsc.bindFontSize(property);
 	}
 
 	@Override

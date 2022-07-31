@@ -1,7 +1,9 @@
 package me.coley.recaf.ui.control.code;
 
 import com.carrotsearch.hppc.IntHashSet;
-import javafx.beans.value.WeakChangeListener;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
+import javafx.beans.property.*;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -31,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.function.IntFunction;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.fxmisc.richtext.LineNumberFactory.get;
@@ -45,6 +46,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		InteractiveText, Styleable, Searchable, Cleanable, Scrollable, FontSizeChangeable {
 	private static final Logger logger = Logging.get(SyntaxArea.class);
 	private static final String BRACKET_FOLD_STYLE = "collapse";
+	private final List<StringBinding> styles = new ArrayList<>();
 	private final IntHashSet paragraphGraphicReady = new IntHashSet(200);
 	private final IndicatorFactory indicatorFactory = new IndicatorFactory(this);
 	private final SearchHelper searchHelper = new SearchHelper(this::newSearchResult);
@@ -690,6 +692,22 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		return CompletableFuture.runAsync(() -> setStyleSpans(start, spans), FxThreadUtil.executor());
 	}
 
+	public void addStyle(StringBinding style) {
+		styles.add(style);
+		style.addListener(__ -> reapplyStyles());
+		reapplyStyles();
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+		consumer.accept(this, this);
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		addStyle(Bindings.createStringBinding(() -> "-fx-font-size: " + property.intValue() + "px;", property));
+	}
+
 	/**
 	 * See {@link #isParagraphVisible(int)} for why we need this.
 	 *
@@ -708,22 +726,9 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		}
 	}
 
-	private final FontSizeChangeListener fontSizeChangeListener = new FontSizeChangeListener(this);
-
-	@Override
-	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
-		consumer.accept(this, this);
-		Configs.display().fontSize.addListener(new WeakChangeListener<>(fontSizeChangeListener));
-	}
-
-	@Override
-	public void setFontSize(int fontSize) {
-		String style = getStyle();
-		if (style.isEmpty()) setStyle("-fx-font-size: " + fontSize + "px;");
-		else {
-			setStyle(Pattern.compile("-fx-font-size: \\d+px;")
-				.matcher(style).replaceAll("-fx-font-size: " + fontSize + "px;"));
-		}
+	private void reapplyStyles() {
+		styleProperty().set(styles.stream().map(StringBinding::getValue)
+				.collect(Collectors.joining("\n")));
 	}
 
 	/**

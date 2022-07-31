@@ -63,7 +63,7 @@ public class RecafDockingManager extends DockingManager {
 			// Apply adding all events necessary for the tab to have font size changeable.
 			if(tab instanceof FontSizeChangeable) {
 				((FontSizeChangeable) tab).applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
-				((FontSizeChangeable) tab).setFontSize(Configs.display().fontSize.get());
+				((FontSizeChangeable) tab).bindFontSize(Configs.display().fontSize);
 			}
 		});
 		addTabClosureListener(tab -> {

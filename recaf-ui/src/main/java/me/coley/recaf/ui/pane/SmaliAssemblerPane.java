@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.pane;
 
 import com.google.common.collect.Iterables;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -86,8 +87,8 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 	}
 
 	@Override
-	public void setFontSize(int fontSize) {
-		smaliArea.setFontSize(fontSize);
+	public void bindFontSize(IntegerProperty property) {
+		smaliArea.bindFontSize(property);
 	}
 
 	@Override

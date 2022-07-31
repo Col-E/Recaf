@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -68,22 +69,22 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	private void applyEventsForFontSizeChange(ClassRepresentation view) {
 		if (!(view instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) view;
-		fsc.setFontSize(Configs.display().fontSize.get());
+		fsc.bindFontSize(Configs.display().fontSize);
 		fsc.applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
 	}
 
 	@Override
-	public void setFontSize(int fontSize) {
+	public void bindFontSize(IntegerProperty property) {
 		if (!(mainView instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) mainView;
-		fsc.setFontSize(fontSize);
+		fsc.bindFontSize(property);
 	}
 
 	@Override
 	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
 		if (!(mainView instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) mainView;
-		fsc.setFontSize(Configs.display().fontSize.get());
+		fsc.bindFontSize(Configs.display().fontSize);
 		fsc.applyEventsForFontSizeChange(consumer);
 	}
 
