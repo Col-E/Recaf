@@ -12,7 +12,9 @@ import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.groups.InstructionGroup;
 import org.objectweb.asm.Opcodes;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -53,16 +55,17 @@ public class Suggestions {
 	 * @return Suggestions for the given group.
 	 */
 	public SuggestionResult getSuggestion(Group group) {
-		if(group == null) {
+		if (group == null) {
 			return new SuggestionResult("", instructions.stream());
 		}
 		switch (group.type) {
 			case INSTRUCTION:
 				return getInstructionSuggestion(group);
 			case IDENTIFIER: {
+				String content = group.content();
 				return new SuggestionResult(
 						group.content(),
-						instructions.stream().filter(s -> s.startsWith(group.content()))
+						instructions.stream().filter(s -> !s.equals(content) && s.startsWith(content))
 				);
 			}
 
@@ -87,10 +90,10 @@ public class Suggestions {
 			case "invokevirtual": {
 				// first child is class.name so we have to suggest class name until the first .
 				String className = children[0] == null ? "" : children[0].content();
-				if(!className.contains(".")) return startsWith(className);
+				if (!className.contains(".")) return startsWith(className);
 				String[] parts = className.split("\\.");
 				ProgramClass clazz = mapper.apply(parts[0]);
-				if(clazz == null) return EMPTY;
+				if (clazz == null) return EMPTY;
 				String methodName = parts.length == 1 ? "" : parts[1];
 				return getMethodSuggestion(clazz, instruction.content().equals("invokestatic"), methodName);
 			}
@@ -107,7 +110,7 @@ public class Suggestions {
 				String localName = children[0] == null ? "" : children[0].content();
 
 				Set<String> locals = new HashSet<>();
-				if(!AccessFlag.isStatic(method.getModifiers().value()))
+				if (!AccessFlag.isStatic(method.getModifiers().value()))
 					locals.add("this");
 				for (MethodParameter parameter : method.getParams().getParameters()) {
 					locals.add(parameter.getName());
@@ -120,10 +123,10 @@ public class Suggestions {
 			case "getfield":
 			case "putfield": {
 				String className = children[0] == null ? "" : children[0].content();
-				if(!className.contains(".")) return startsWith(className);
+				if (!className.contains(".")) return startsWith(className);
 				String[] parts = className.split("\\.");
 				ProgramClass clazz = mapper.apply(parts[0]);
-				if(clazz == null) return EMPTY;
+				if (clazz == null) return EMPTY;
 				String fieldName = parts.length == 1 ? "" : parts[1];
 				return getFieldSuggestion(clazz, inst.contains("static"), fieldName);
 			}
@@ -138,18 +141,18 @@ public class Suggestions {
 		return new SuggestionResult(
 				fieldName,
 				fields.map(m -> m.getName() + " " + m.getDescriptor())
-						.filter(name -> name.startsWith(fieldName))
+						.filter(name -> !name.equals(fieldName) && name.startsWith(fieldName))
 		);
 	}
 
 	private SuggestionResult getMethodSuggestion(ProgramClass clazz, boolean isStatic, String methodName) {
 		Stream<ProgramMethod> methods = isStatic ?
-			clazz.getMethods().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) != 0)
+				clazz.getMethods().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) != 0)
 				: clazz.getMethods().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) == 0);
 		return new SuggestionResult(
 				methodName,
 				methods.map(m -> m.getName() + " " + m.getDescriptor())
-						.filter(name -> name.startsWith(methodName))
+						.filter(name -> !name.equals(methodName) && name.startsWith(methodName))
 		);
 	}
 
@@ -166,6 +169,6 @@ public class Suggestions {
 	private Stream<String> searchIn(Tree root, String partial) {
 		return root.getAllLeaves()
 				.map(Tree::getFullValue)
-				.filter(x -> x.startsWith(partial));
+				.filter(x -> !x.equals(partial) && x.startsWith(partial));
 	}
 }
