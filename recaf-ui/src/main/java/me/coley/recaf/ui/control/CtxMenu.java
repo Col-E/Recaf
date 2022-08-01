@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.function.Function;
 
 public class CtxMenu<T> extends PopupControl {
+	// TODO: Allow user to also manipulate (add) class of cells
+	//  - override default 'menu-item' properties like padding/size
 	private static final String DEFAULT_STYLE_CLASS = "context-menu";
 	private final ObjectProperty<Function<T, ? extends Node>> mapperProperty = new SimpleObjectProperty<>(t -> {
 		throw new UnsupportedOperationException();

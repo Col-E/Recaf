@@ -265,6 +265,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		if (set.isEmpty()) {
 			return new CtxMenu<>(javafx.scene.control.Label::new, List.of("No suggestions"));
 		}
+		// TODO: Is it worthwhile to not collect as 'String' but rather as 'ItemInfo'?
+		//  - Classes can have the mapper populate an icon graphic
+		//  - Same for fields/methods
 		CtxMenu<String> menu = new CtxMenu<>(set);
 		menu.setPrefSize(300, Math.min(set.size() * 35, 420));
 		menu.setOnAction(e -> {
