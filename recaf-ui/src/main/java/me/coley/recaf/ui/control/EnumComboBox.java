@@ -33,8 +33,8 @@ public class EnumComboBox<E extends Enum<?>> extends ComboBox<E> {
 
 				@Override
 				protected void onInvalidating() {
-					super.onInvalidating();
-
+					// Hack to force refresh the translation bindings.
+					// Needs to be a new list, cannot be the same instance as before.
 					setItems(FXCollections.observableArrayList(type.getEnumConstants()));
 				}
 
@@ -45,7 +45,6 @@ public class EnumComboBox<E extends Enum<?>> extends ComboBox<E> {
 						public String toString(E object) {
 							if (object == null)
 								return "";
-
 							return Lang.get(((Translatable) object).getTranslationKey());
 						}
 
