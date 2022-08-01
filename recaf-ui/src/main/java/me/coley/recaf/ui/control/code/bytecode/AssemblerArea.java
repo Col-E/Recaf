@@ -259,22 +259,23 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 
 	private CtxMenu<String> getSuggestionMenu(int position, Group suggestionGroup) {
 		// set the menu to hold 10 entries before it starts to scroll
-		SuggestionResult suggestions = this.suggestions.getSuggestion(suggestionGroup);
-		String input = suggestions.getInput();
-		Set<String> set = suggestions.getResult().collect(Collectors.toCollection(TreeSet::new));
+		SuggestionResult result = suggestions.getSuggestion(suggestionGroup);
+		String input = result.getInput();
+		Set<String> set = result.getResult().collect(Collectors.toCollection(TreeSet::new));
 		if (set.isEmpty()) {
 			return new CtxMenu<>(javafx.scene.control.Label::new, List.of("No suggestions"));
 		}
 		CtxMenu<String> menu = new CtxMenu<>(set);
-		menu.mapperProperty().set(s -> {
-			String insert = s.substring(input.length());
-			var label = new javafx.scene.control.Label(insert);
-			label.setOnMouseClicked(evt -> {
-				menu.hide();
-				insertText(position, insert);
-				moveTo(position + insert.length());
-			});
-			return label;
+		menu.setPrefSize(300, Math.min(set.size() * 35, 420));
+		menu.setOnAction(e -> {
+			String selected = menu.selectedItemProperty().get();
+			String insert = selected.substring(input.length());
+			insertText(position, insert);
+			moveTo(position + insert.length());
+		});
+		menu.mapperProperty().set(suggestion -> {
+			String insert = suggestion.substring(input.length());
+			return new javafx.scene.control.Label(insert);
 		});
 		return menu;
 	}
