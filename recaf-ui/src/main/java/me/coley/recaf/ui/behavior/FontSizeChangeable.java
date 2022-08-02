@@ -2,11 +2,11 @@ package me.coley.recaf.ui.behavior;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.scene.Node;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.ScrollEvent;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.DisplayConfig;
+import me.coley.recaf.config.container.KeybindConfig;
 
 import java.util.function.Consumer;
 
@@ -23,9 +23,10 @@ public interface FontSizeChangeable {
 			advanceFontSize(e.getDeltaY() > 0);
 		});
 		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (!e.isControlDown() || !(e.getCode() == KeyCode.ADD || e.getCode() == KeyCode.SUBTRACT)) return;
+			KeybindConfig keybinds = Configs.keybinds();
+			if (!keybinds.fontSizeUp.match(e) && !keybinds.fontSizeDown.match(e)) return;
 			e.consume();
-			advanceFontSize(e.getCode() == KeyCode.ADD);
+			advanceFontSize(keybinds.fontSizeUp.match(e));
 		});
 	};
 
