@@ -7,7 +7,7 @@ import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.util.EscapeUtil;
 
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Wrapper around content representing a {@link me.coley.recaf.code.CommonClassInfo}.
@@ -44,7 +44,7 @@ public class ClassTab extends DockTab implements FontSizeChangeable {
 	}
 
 	@Override
-	public void  applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+	public void  applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		if (!(classRepresentation instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) classRepresentation;
 		fsc.applyEventsForFontSizeChange(consumer);

@@ -32,7 +32,6 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -190,7 +189,7 @@ public class TextView extends BorderPane implements FileRepresentation, Cleanabl
 	}
 
 	@Override
-	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		area.applyEventsForFontSizeChange(consumer);
 	}
 }

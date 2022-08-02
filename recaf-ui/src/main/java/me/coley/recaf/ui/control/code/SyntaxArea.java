@@ -3,7 +3,7 @@ package me.coley.recaf.ui.control.code;
 import com.carrotsearch.hppc.IntHashSet;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.*;
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -31,7 +31,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -694,13 +694,13 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 
 	public void addStyle(StringBinding style) {
 		styles.add(style);
-		style.addListener(__ -> reapplyStyles());
+		style.addListener(observable -> reapplyStyles());
 		reapplyStyles();
 	}
 
 	@Override
-	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
-		consumer.accept(this, this);
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
+		consumer.accept(this);
 	}
 
 	@Override

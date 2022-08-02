@@ -1,8 +1,6 @@
 package me.coley.recaf.ui.pane;
 
-import com.google.common.collect.Iterables;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
@@ -48,7 +46,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * An editor for Android Dalvik bytecode.
@@ -82,7 +80,7 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 		SearchBar.install(this, smaliArea);
 	}
 	@Override
-	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		smaliArea.applyEventsForFontSizeChange(consumer);
 	}
 

@@ -8,40 +8,37 @@ import javafx.scene.input.ScrollEvent;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.config.container.DisplayConfig;
 
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public interface FontSizeChangeable {
 
 	void bindFontSize(IntegerProperty property);
 
-	void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer);
+	void applyEventsForFontSizeChange(Consumer<Node> consumer);
 
-	BiConsumer<FontSizeChangeable, Node> DEFAULT_APPLIER = (fsc, node) -> {
+	Consumer<Node> DEFAULT_APPLIER = (node) -> {
 		node.addEventFilter(ScrollEvent.SCROLL, e -> {
 			if (!e.isControlDown()) return;
 			e.consume();
-			advanceFontSize(fsc, e.getDeltaY() > 0);
+			advanceFontSize(e.getDeltaY() > 0);
 		});
 		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
 			if (!e.isControlDown() || !(e.getCode() == KeyCode.ADD || e.getCode() == KeyCode.SUBTRACT)) return;
 			e.consume();
-			advanceFontSize(fsc, e.getCode() == KeyCode.ADD);
+			advanceFontSize(e.getCode() == KeyCode.ADD);
 		});
 	};
 
-	static void advanceFontSize(FontSizeChangeable fsc, boolean up) {
+	static void advanceFontSize(boolean up) {
 		int oldSize = Configs.display().fontSize.get();
-		int newSize = clamp(
-			DisplayConfig.FONT_SIZE_BOUND_LEFT,
-			oldSize + (up ? 1 : -1),
-			DisplayConfig.FONT_SIZE_BOUND_RIGHT);
+		int newSize = clamp(oldSize + (up ? 1 : -1));
 		if (oldSize != newSize) {
 			Configs.display().fontSize.set(newSize);
 		}
 	}
 
-	private static int clamp(int min, int value, int max) {
-		if (value < min) return min;
-		return Math.min(value, max);
+	private static int clamp(int value) {
+		if (value < DisplayConfig.FONT_SIZE_BOUND_LEFT) return DisplayConfig.FONT_SIZE_BOUND_LEFT;
+		return Math.min(value, DisplayConfig.FONT_SIZE_BOUND_RIGHT);
 	}
 }

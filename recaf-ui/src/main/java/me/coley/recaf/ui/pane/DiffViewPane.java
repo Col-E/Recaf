@@ -63,7 +63,7 @@ import java.util.Collections;
 import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * A simple diff viewer to show a comparison of the changes made to classes/files.
@@ -354,7 +354,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	}
 
 	@Override
-	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		// will be done upon opening the view
 	}
 

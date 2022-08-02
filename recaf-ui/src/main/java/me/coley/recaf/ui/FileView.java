@@ -24,7 +24,7 @@ import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Display for a {@link FileView}.
@@ -203,7 +203,7 @@ public class FileView extends BorderPane implements FileRepresentation, ToolSide
 	}
 
 	@Override
-	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		if (mainView instanceof FontSizeChangeable) {
 			((FontSizeChangeable) mainView).applyEventsForFontSizeChange(consumer);
 		}

@@ -46,6 +46,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Decompiler wrapper of {@link JavaArea}.
@@ -94,7 +95,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 	}
 
 	@Override
-	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		javaArea.applyEventsForFontSizeChange(consumer);
 	}
 

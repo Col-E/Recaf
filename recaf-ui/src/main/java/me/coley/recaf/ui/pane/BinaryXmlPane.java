@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Displays content of binary XML files found in APK files.
@@ -110,7 +110,7 @@ public class BinaryXmlPane extends BorderPane implements FileRepresentation, Fon
 	}
 
 	@Override
-	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		xmlArea.applyEventsForFontSizeChange(consumer);
 	}
 }

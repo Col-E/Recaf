@@ -26,7 +26,7 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Display for a {@link CommonClassInfo}.
@@ -81,7 +81,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	}
 
 	@Override
-	public void applyEventsForFontSizeChange(BiConsumer<FontSizeChangeable, Node> consumer) {
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		if (!(mainView instanceof FontSizeChangeable)) return;
 		FontSizeChangeable fsc = (FontSizeChangeable) mainView;
 		fsc.applyEventsForFontSizeChange(consumer);
