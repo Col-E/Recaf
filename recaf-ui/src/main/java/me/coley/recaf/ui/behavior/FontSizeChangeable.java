@@ -32,9 +32,9 @@ public interface FontSizeChangeable {
 	static void advanceFontSize(FontSizeChangeable fsc, boolean up) {
 		int oldSize = Configs.display().fontSize.get();
 		int newSize = clamp(
-			DisplayConfig.fontSizeLeftBound,
+			DisplayConfig.FONT_SIZE_BOUND_LEFT,
 			oldSize + (up ? 1 : -1),
-			DisplayConfig.fontSizeRightBound);
+			DisplayConfig.FONT_SIZE_BOUND_RIGHT);
 		if (oldSize != newSize) {
 			Configs.display().fontSize.set(newSize);
 		}

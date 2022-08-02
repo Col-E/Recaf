@@ -16,6 +16,17 @@ import me.coley.recaf.util.Translatable;
  * @author Matt Coley
  */
 public class DisplayConfig implements ConfigContainer {
+
+	/**
+	 * Left bound (minimum) for font size.
+	 */
+	public static final int FONT_SIZE_BOUND_LEFT = 8;
+
+	/**
+	 * Right bound (maximum) for font size.
+	 */
+	public static final int FONT_SIZE_BOUND_RIGHT = 20;
+
 	/**
 	 * Maximum depth of a directory structure to display before it gets truncated.
 	 */
@@ -82,17 +93,9 @@ public class DisplayConfig implements ConfigContainer {
 	public boolean promptDeleteItem = true;
 
 	/**
-	 * Left bound (minimum) for font size.
-	 */
-	public static final int fontSizeLeftBound = 8;
-	/**
-	 * Right bound (maximum) for font size.
-	 */
-	public static final int fontSizeRightBound = 20;
-	/**
 	 * Font size for the decompiler view.
 	 */
-	@IntBounds(min = fontSizeLeftBound, max = fontSizeRightBound)
+	@IntBounds(min = FONT_SIZE_BOUND_LEFT, max = FONT_SIZE_BOUND_RIGHT)
 	@Group("text")
 	@ConfigID("fontsize")
 	public IntegerProperty fontSize = new SimpleIntegerProperty(12);
