@@ -750,11 +750,24 @@ public final class IOUtil {
 	 * 		When the file cannot be read from.
 	 */
 	public static byte[] readHeader(Path path) throws IOException {
-		byte[] data = new byte[16];
+		return readFirstNBytes(path, 16);
+	}
+
+	/**
+	 * @param path
+	 * 		Path to some file.
+	 * @param n
+	 * 		Number of bytes to read.
+	 *
+	 * @return First n bytes of the file.
+	 *
+	 * @throws IOException
+	 * 		When the file cannot be read from.
+	 */
+	public static byte[] readFirstNBytes(Path path, int n) throws IOException {
+		byte[] data = new byte[n];
 		try (InputStream fis = Files.newInputStream(path)) {
 			fis.read(data);
-		} catch (IOException ex) {
-			throw ex;
 		}
 		return data;
 	}

@@ -18,9 +18,11 @@ import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -249,6 +251,27 @@ public class Icons {
 	 * @return Node to represent the file.
 	 */
 	public static Node getPathIcon(String name) {
+		Path path = Paths.get(name);
+		if (Files.isDirectory(path)) {
+			return getIconView(FOLDER);
+		} else if (Files.exists(path)) {
+			try {
+				// 'getFileIcon' only uses headers, so a temporary file-info with just the header will suffice
+				return getFileIcon(new FileInfo(name, IOUtil.readHeader(path)));
+			} catch (IOException ex) {
+				// If we cannot read the file, we'll just go off of the path name
+			}
+		}
+		return getPathNameIcon(name);
+	}
+
+	/**
+	 * @param name
+	 * 		Path/name of file to represent.
+	 *
+	 * @return Node to represent the file.
+	 */
+	public static Node getPathNameIcon(String name) {
 		int dotIndex = name.lastIndexOf('.');
 		if (dotIndex > 0) {
 			String ext = name.substring(dotIndex + 1).toLowerCase();
@@ -264,8 +287,9 @@ public class Icons {
 				case "modules":
 				case "jar":
 				case "war":
-				default:
 					return getIconView(FILE_JAR);
+				default:
+					break;
 			}
 		}
 		// Unknown
