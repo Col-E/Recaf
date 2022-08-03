@@ -244,7 +244,6 @@ public class RecentWorkspacesConfig implements ConfigContainer {
 			ContentSource source = resource.getContentSource();
 			SourceType type = source.getType();
 			switch (type) {
-				case CLASS:
 				case JAR:
 				case WAR:
 				case APK:
@@ -252,6 +251,7 @@ public class RecentWorkspacesConfig implements ConfigContainer {
 				case JMOD:
 				case MODULES:
 				case DIRECTORY:
+				case SINGLE_FILE:
 					FileContentSource fileSource = (FileContentSource) source;
 					return new ResourceModel(fileSource.getPath().toAbsolutePath().toString());
 				case MAVEN:

@@ -740,6 +740,25 @@ public final class IOUtil {
 		return isOnDefaultFileSystem(path) ? path.toFile().isFile() : Files.isRegularFile(path);
 	}
 
+	/**
+	 * @param path
+	 * 		Path to some file.
+	 *
+	 * @return First 16 bytes of the file.
+	 *
+	 * @throws IOException
+	 * 		When the file cannot be read from.
+	 */
+	public static byte[] readHeader(Path path) throws IOException {
+		byte[] data = new byte[16];
+		try (InputStream fis = Files.newInputStream(path)) {
+			fis.read(data);
+		} catch (IOException ex) {
+			throw ex;
+		}
+		return data;
+	}
+
 	private static final class OptimizedByteArrayOutputStream extends ByteArrayOutputStream {
 		/**
 		 * @param size

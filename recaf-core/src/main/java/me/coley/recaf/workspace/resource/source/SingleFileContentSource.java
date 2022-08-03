@@ -1,6 +1,7 @@
 package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.logging.Logging;
@@ -12,19 +13,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Origin location information for classes.
+ * Origin location information of a single file/class.
  *
  * @author Matt Coley
  */
-public class ClassContentSource extends FileContentSource {
-	private static final Logger logger = Logging.get(ClassContentSource.class);
+public class SingleFileContentSource extends FileContentSource {
+	private static final Logger logger = Logging.get(SingleFileContentSource.class);
 
 	/**
 	 * @param path
-	 * 		Path to class file.
+	 * 		Some path to a file.
 	 */
-	public ClassContentSource(Path path) {
-		super(SourceType.CLASS, path);
+	public SingleFileContentSource(Path path) {
+		super(SourceType.SINGLE_FILE, path);
 	}
 
 	@Override
@@ -33,7 +34,7 @@ public class ClassContentSource extends FileContentSource {
 		try (InputStream stream = Files.newInputStream(getPath())) {
 			content = IOUtil.toByteArray(stream);
 		} catch (Exception ex) {
-			throw new IOException("Failed to load class '" + getPath().getFileName() + "'", ex);
+			throw new IOException("Failed to load file '" + getPath().getFileName() + "'", ex);
 		}
 		if (ByteHeaderUtil.match(content, ByteHeaderUtil.CLASS)) {
 			try {
@@ -48,7 +49,7 @@ public class ClassContentSource extends FileContentSource {
 				logger.warn("Uncaught exception parsing class '{}' from input", getPath(), ex);
 			}
 		} else {
-			logger.warn("The file '{}' does not begin with 0xCAFEBABE", getPath());
+			collection.addFile(new FileInfo(getPath().getFileName().toString(), content));
 		}
 	}
 }

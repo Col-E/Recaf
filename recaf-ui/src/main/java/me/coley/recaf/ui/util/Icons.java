@@ -291,13 +291,14 @@ public class Icons {
 			return getIconView(FOLDER);
 		} else if (src instanceof ZipContentSource) {
 			return getIconView(FILE_ZIP);
-		} else if (src instanceof ClassContentSource) {
-			if (resource.getClasses().isEmpty()) {
-				// Fallback, this should not occur since the class content should contain exactly one item
-				return getIconView(FILE_CLASS);
-			} else {
+		} else if (src instanceof SingleFileContentSource) {
+			// Should contain a single class or file.
+			if (!resource.getClasses().isEmpty()) {
 				CommonClassInfo cls = resource.getClasses().values().iterator().next();
 				return getClassIcon(cls);
+			} else {
+				FileInfo file = resource.getFiles().values().iterator().next();
+				return getFileIcon(file);
 			}
 		}
 		// Default to jar
