@@ -445,14 +445,14 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		ParseResult<CompilationUnit> result = helper.parseClass(getText());
 		CompilationUnit unit = result.getResult().orElse(null);
 		// Display warning to users that code was unparsable so that they stop asking us why right-click doesn't work.
-		if (unit == null || unit.getParsed() == UNPARSABLE) {
-			if (getProblemTracking() != null) {
+		if (getProblemTracking() != null) {
+			if (unit == null || unit.getParsed() == UNPARSABLE) {
 				getProblemTracking().addProblem(-2, new ProblemInfo(
 						ProblemOrigin.JAVA_SYNTAX, ProblemLevel.WARNING, -2,
 						Lang.getBinding("java.unparsable").get()));
+			} else {
+				getProblemTracking().removeProblem(-2);
 			}
-		} else {
-			getProblemTracking().removeProblem(-2);
 		}
 		return unit;
 	}
