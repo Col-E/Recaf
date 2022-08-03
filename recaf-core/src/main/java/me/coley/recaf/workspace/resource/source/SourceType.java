@@ -83,8 +83,18 @@ public enum SourceType {
 		// Use file header to determine content
 		byte[] header = IOUtil.readHeader(path);
 		SourceType type = fromHeader(header);
-		if (type != null)
+		if (type != null) {
+			// Check if ZIP can be made more specific
+			if (type == ZIP) {
+				String fileName = path.getFileName().toString();
+				SourceType extensionType = fromExtension(fileName);
+				if (extensionType == JAR || extensionType == APK || extensionType == WAR) {
+					return extensionType;
+				}
+			}
+			// Use source type from header
 			return type;
+		}
 		// Unknown file type
 		StringBuilder headerText = new StringBuilder();
 		StringBuilder headerBytes = new StringBuilder();

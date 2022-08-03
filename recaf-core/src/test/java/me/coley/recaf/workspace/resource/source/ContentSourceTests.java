@@ -40,7 +40,7 @@ public class ContentSourceTests extends TestUtils {
 
 	@Test
 	void testReadClass() {
-		assertDoesNotThrow(() -> testRead(new ClassContentSource(sourcesDir.resolve("Sample.class"))));	}
+		assertDoesNotThrow(() -> testRead(new SingleFileContentSource(sourcesDir.resolve("Sample.class"))));	}
 
 	@Test
 	void testReadUrl() {

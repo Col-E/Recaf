@@ -3,8 +3,8 @@ package me.coley.recaf.search;
 import me.coley.recaf.TestUtils;
 import me.coley.recaf.search.result.Result;
 import me.coley.recaf.workspace.resource.Resource;
-import me.coley.recaf.workspace.resource.source.ClassContentSource;
 import me.coley.recaf.workspace.resource.source.JarContentSource;
+import me.coley.recaf.workspace.resource.source.SingleFileContentSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,7 +22,7 @@ public class TextSearchTests extends TestUtils {
 
 	@BeforeAll
 	static void setup() throws IOException {
-		sample = new Resource(new ClassContentSource(sourcesDir.resolve("Sample.class")));
+		sample = new Resource(new SingleFileContentSource(sourcesDir.resolve("Sample.class")));
 		sample.read();
 		annotations = new Resource(new JarContentSource(jarsDir.resolve("DemoAnnotations.jar")));
 		annotations.read();
