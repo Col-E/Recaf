@@ -322,7 +322,8 @@ public class Icons {
 		// Normal class, consider other edge cases
 		boolean isAbstract = AccessFlag.isAbstract(access);
 		String name = info.getName();
-		if (!getGraph().getCommon(name, "java/lang/Throwable").equals("java/lang/Object")) {
+		InheritanceGraph graph = getGraph();
+		if (graph != null && !graph.getCommon(name, "java/lang/Throwable").equals("java/lang/Object")) {
 			if (isAbstract) {
 				return () -> getIconView(CLASS_ABSTRACT_EXCEPTION);
 			} else {
