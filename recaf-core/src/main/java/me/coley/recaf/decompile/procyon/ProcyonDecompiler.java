@@ -34,6 +34,7 @@ public class ProcyonDecompiler extends Decompiler {
 				new ResourceTypeLoader(RuntimeResource.get())
 		);
 		DecompilerSettings settings = DecompilerSettings.javaDefaults();
+		settings.setForceExplicitImports(true);
 		settings.setTypeLoader(loader);
 		MetadataSystem system = new MetadataSystem(loader);
 		TypeReference ref = system.lookupType(classInfo.getName());
