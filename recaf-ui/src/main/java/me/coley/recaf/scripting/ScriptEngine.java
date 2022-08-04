@@ -101,6 +101,8 @@ public class ScriptEngine {
 		Matcher matcher = RegexUtil.getMatcher(PATTERN_PACKAGE, source);
 		if (matcher.find())
 			packageName = matcher.group(1);
+		else
+			source = "package " + packageName +"; " + source;
 		packageName = packageName.replace('.', '/');
 		// Extract class name
 		String className = null;
