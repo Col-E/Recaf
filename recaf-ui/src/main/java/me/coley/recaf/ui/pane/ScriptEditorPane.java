@@ -1,8 +1,5 @@
 package me.coley.recaf.ui.pane;
 
-import bsh.EvalError;
-import bsh.ParseException;
-import bsh.TargetError;
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -36,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 
 /**
  * Editor for scripts to be run via {@link ScriptEngine}.
@@ -89,7 +87,7 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 				Animations.animateSuccess(getNodeRepresentation(), 1000);
 			} else {
 				Animations.animateFailure(getNodeRepresentation(), 1000);
-				handleBshError(result);
+				handleScriptErrors(result);
 			}
 		});
 		saveButton.setOnMouseClicked(e -> {
@@ -133,40 +131,22 @@ public class ScriptEditorPane extends BorderPane implements Representation, Clea
 		bshArea.setText(text);
 	}
 
-	private void handleBshError(ScriptResult result) {
-		int line;
-		String message = result.getException().getMessage();
-		if (result.wasScriptParseFailure()) {
-			ParseException error = result.getExceptionAsParse();
-			if (error.currentToken != null) {
-				line = error.currentToken.beginLine;
-			} else if (message.contains("at line ")) {
-				String lineText = message.substring(message.indexOf("line ") + 5, message.indexOf(","));
-				if (lineText.matches("\\d+"))
-					line = Integer.parseInt(lineText);
-				else
-					line = -1;
-			} else {
-				line = -1;
-			}
-		} else if (result.wasScriptTargetFailure()) {
-			TargetError target = result.getExceptionAsTarget();
-			if (target.getTarget() instanceof NullPointerException) {
-				message = "Could not resolve reference \"" + target.getErrorText() + "\"";
-			}
-			line = target.getErrorLineNumber();
-		} else if (result.wasScriptFailure()) {
-			EvalError error = result.getExceptionAsEval();
-			if (message.contains("not found")) {
-				message = message.substring(message.lastIndexOf(" : ") + 3);
-			}
-			line = error.getErrorLineNumber();
-		} else {
-			// Non BSH error
-			line = -1;
+	private void handleScriptErrors(ScriptResult result) {
+		if (result.wasCompileFailure()) {
+			logger.error("Script has compile errors: {}", result.getCompileDiagnostics().stream()
+					.map(Object::toString)
+					.collect(Collectors.joining(", ")));
+			result.getCompileDiagnostics()
+					.forEach(d -> tracking.addProblem(d.getLine(),
+							new ProblemInfo(ProblemOrigin.JAVA_COMPILE, ProblemLevel.ERROR,
+									d.getLine(), d.getMessage())));
+
+		} else if (result.wasRuntimeError()) {
+			logger.error("Script encountered error while running", result.getRuntimeThrowable());
+			tracking.addProblem(-1,
+					new ProblemInfo(ProblemOrigin.JAVA_COMPILE, ProblemLevel.ERROR,
+							-1, result.getRuntimeThrowable().getMessage()));
 		}
-		tracking.addProblem(line,
-				new ProblemInfo(ProblemOrigin.JAVA_COMPILE, ProblemLevel.ERROR, line, message));
 	}
 
 	@Override

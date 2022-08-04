@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Represents an executable Beanshell script.
+ * Represents an executable script.
  *
  * @author yapht
  */

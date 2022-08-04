@@ -72,7 +72,6 @@ subprojects {
         asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
         asm_util = "org.ow2.asm:asm-util:$asmVersion"
         baksmali = "org.smali:baksmali:$dexVersion"
-        beanshell = 'com.github.Col-E:beanshell:3.0.0-1'
         cafedude = "com.github.Col-E:CAFED00D:$dudeVersion"
         cfr = 'org.benf:cfr:0.152'
         common_io = 'commons-io:commons-io:2.11.0'

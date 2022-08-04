@@ -30,6 +30,7 @@ public class JavacCompiler extends Compiler {
 	private static final Logger logger = Logging.get(JavacCompiler.class);
 	private static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 	private final List<Resource> classpath = new ArrayList<>();
+	private boolean logging = true;
 	private JavacListener listener;
 
 	/**
@@ -60,7 +61,7 @@ public class JavacCompiler extends Compiler {
 			String cp = options.get(KEY_CLASSPATH).getValue().toString();
 			args.add("-classpath");
 			args.add(cp);
-			logger.trace("Compiler classpath: {}", cp);
+			if (logging) logger.trace("Compiler classpath: {}", cp);
 		}
 		if (options.containsKey(KEY_TARGET)) {
 			int value = (int) options.get(KEY_TARGET).getValue();
@@ -74,31 +75,31 @@ public class JavacCompiler extends Compiler {
 				args.add("-target");
 				args.add(target);
 			}
-			logger.debug("Compiler target: {}", target);
+			if (logging) logger.debug("Compiler target: {}", target);
 		}
 		if (options.containsKey(KEY_DEBUG)) {
 			String value = options.get(KEY_DEBUG).getValue().toString();
 			if (value.isEmpty())
 				value = "none";
 			args.add("-g:" + value);
-			logger.debug("Compiler debug: {}", value);
+			if (logging) logger.debug("Compiler debug: {}", value);
 		} else {
 			args.add("-g:none");
-			logger.debug("Compiler debug: none");
+			if (logging) logger.debug("Compiler debug: none");
 		}
 		// Invoke compiler
 		try {
 			JavaCompiler.CompilationTask task =
 					compiler.getTask(null, fm, listenerWrapper, args, null, unitMap.getFiles());
 			if (task.call()) {
-				logger.info("Compilation of '{}' finished", className);
+				if (logging) logger.info("Compilation of '{}' finished", className);
 				return new CompilerResult(this, unitMap.getCompilations());
 			} else {
-				logger.error("Compilation of '{}' failed", className);
+				if (logging) logger.error("Compilation of '{}' failed", className);
 				return new CompilerResult(this, errors);
 			}
 		} catch (RuntimeException ex) {
-			logger.error("Compilation of '{}' crashed: {}", className, ex);
+			if (logging) logger.error("Compilation of '{}' crashed: {}", className, ex);
 			return new CompilerResult(this, ex);
 		}
 	}
@@ -219,5 +220,13 @@ public class JavacCompiler extends Compiler {
 			value = s.substring(0, value.length() - 1);
 		}
 		return value;
+	}
+
+	/**
+	 * @param logging
+	 * 		Flag to enable/disable logging.
+	 */
+	public void setLogging(boolean logging) {
+		this.logging = logging;
 	}
 }

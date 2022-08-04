@@ -47,11 +47,19 @@ public class Main {
 			Path scriptPath = parameters.getScriptPath().toPath();
 			if (Files.isRegularFile(scriptPath)) {
 				Runnable r = () -> {
-					ScriptResult result = ScriptEngine.execute(scriptPath);
-					if (result.wasSuccess()) {
-						logger.info("Script execute result: {}", result.getResult());
-					} else {
-						logger.error("Script encountered error: ", result.getException());
+					try {
+						ScriptResult result = ScriptEngine.execute(scriptPath);
+						if (result.wasSuccess()) {
+							logger.info("Script execute complete");
+						} else if (result.wasCompileFailure()) {
+							logger.error("Script has compile errors: {}", result.getCompileDiagnostics().stream()
+									.map(Object::toString)
+									.collect(Collectors.joining(", ")));
+						} else if (result.wasRuntimeError()) {
+							logger.error("Script encountered error while running", result.getRuntimeThrowable());
+						}
+					} catch (IOException ex) {
+						logger.error("Failed to read script: {}", scriptPath);
 					}
 				};
 				if (parameters.getPresentationType() == PresentationType.GUI) {
