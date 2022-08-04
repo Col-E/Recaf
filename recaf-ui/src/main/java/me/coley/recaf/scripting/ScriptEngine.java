@@ -64,6 +64,7 @@ public class ScriptEngine {
 	 * @return Script execution result.
 	 */
 	public static ScriptResult execute(String script) {
+		// TODO: Should make this async so calls from the UI don't freeze the UI
 		return handleExecute(script);
 	}
 
