@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -25,12 +26,14 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
+import java.util.function.Consumer;
+
 /**
  * Display for a {@link CommonClassInfo}.
  *
  * @author Matt Coley
  */
-public class ClassView extends BorderPane implements ClassRepresentation, ToolSideTabbed, Cleanable, Undoable {
+public class ClassView extends BorderPane implements ClassRepresentation, ToolSideTabbed, Cleanable, Undoable, FontSizeChangeable {
 	private final OutlinePane outline;
 	private final HierarchyPane hierarchy;
 	private final BorderPane mainViewWrapper = new BorderPane();
@@ -63,6 +66,27 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		Configs.keybinds().installEditorKeys(this);
 	}
 
+	private void applyEventsForFontSizeChange(ClassRepresentation view) {
+		if (!(view instanceof FontSizeChangeable)) return;
+		FontSizeChangeable fsc = (FontSizeChangeable) view;
+		fsc.bindFontSize(Configs.display().fontSize);
+		fsc.applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		if (!(mainView instanceof FontSizeChangeable)) return;
+		FontSizeChangeable fsc = (FontSizeChangeable) mainView;
+		fsc.bindFontSize(property);
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
+		if (!(mainView instanceof FontSizeChangeable)) return;
+		FontSizeChangeable fsc = (FontSizeChangeable) mainView;
+		fsc.applyEventsForFontSizeChange(consumer);
+	}
+
 	private ClassRepresentation createViewForClass(CommonClassInfo info) {
 		if (mode == ClassViewMode.DECOMPILE) {
 			if (info instanceof ClassInfo) {
@@ -70,8 +94,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 			} else if (info instanceof DexClassInfo) {
 				return new SmaliAssemblerPane();
 			} else {
-				return new BasicClassRepresentation(new Label("Unknown class info type!"), i -> {
-				});
+				return new BasicClassRepresentation(new Label("Unknown class info type!"), i -> {});
 			}
 		} else {
 			return new HexClassView();
@@ -222,6 +245,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	 */
 	public void refreshView() {
 		mainView = createViewForClass(info);
+		applyEventsForFontSizeChange(mainView);
 		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
 		sideTabs.getTabs().clear();
 		populateSideTabs(sideTabs);

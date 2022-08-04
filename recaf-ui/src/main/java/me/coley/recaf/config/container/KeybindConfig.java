@@ -80,6 +80,20 @@ public class KeybindConfig implements ConfigContainer {
 	).buildKeyBindingForCurrentOS();
 
 	/**
+	 * Increase font size by one.
+	 */
+	@Group("appearance")
+	@ConfigID("fontsize.up")
+	public Binding fontSizeUp = newBind(CONTROL, ADD);
+
+	/**
+	 * Decrease font size by one.
+	 */
+	@Group("appearance")
+	@ConfigID("fontsize.down")
+	public Binding fontSizeDown = newBind(CONTROL, SUBTRACT);
+
+	/**
 	 * Goto the definition of whatever the caret position is over.
 	 */
 	@Group("code")

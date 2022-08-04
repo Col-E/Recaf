@@ -312,6 +312,8 @@ conf.display.workspace.onfiledrop.addlibrary=Add as library
 conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
 conf.display.workspace.promptdeleteitem=Prompt when deleting items
 conf.display.workspace.showselectionnavbar=Show selection nav-bar
+conf.display.text=Text
+conf.display.text.fontsize=Font size
 
 conf.editor=Editor Components
 conf.editor.general=General
@@ -347,6 +349,9 @@ conf.binding.code=Code interactions
 conf.binding.code.gotodef=Goto definition
 conf.binding.code.rename=Rename selected
 conf.binding.code.searchref=Search references
+conf.binding.appearance=Appearance
+conf.binding.appearance.fontsize.up=Increase font size
+conf.binding.appearance.fontsize.down=Decrease font size
 
 conf.assembler=Assembler
 conf.assembler.format=Format

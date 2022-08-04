@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
@@ -23,12 +24,14 @@ import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
+import java.util.function.Consumer;
+
 /**
  * Display for a {@link FileView}.
  *
  * @author Matt Coley
  */
-public class FileView extends BorderPane implements FileRepresentation, ToolSideTabbed, Cleanable, Undoable {
+public class FileView extends BorderPane implements FileRepresentation, ToolSideTabbed, Cleanable, Undoable, FontSizeChangeable {
 	private final BorderPane mainViewWrapper = new BorderPane();
 	private final CollapsibleTabPane sideTabs = new CollapsibleTabPane();
 	private final SplitPane contentSplit = new SplitPane();
@@ -190,5 +193,19 @@ public class FileView extends BorderPane implements FileRepresentation, ToolSide
 		if (workspace != null)
 			return workspace.getResources().getPrimary();
 		return null;
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		if (mainView instanceof FontSizeChangeable) {
+			((FontSizeChangeable) mainView).bindFontSize(property);
+		}
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
+		if (mainView instanceof FontSizeChangeable) {
+			((FontSizeChangeable) mainView).applyEventsForFontSizeChange(consumer);
+		}
 	}
 }

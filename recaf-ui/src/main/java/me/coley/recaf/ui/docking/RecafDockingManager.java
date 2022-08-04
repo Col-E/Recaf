@@ -14,6 +14,7 @@ import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.FileView;
 import me.coley.recaf.ui.FileViewMode;
 import me.coley.recaf.ui.behavior.Cleanable;
+import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.docking.impl.FileTab;
@@ -58,6 +59,11 @@ public class RecafDockingManager extends DockingManager {
 				fileTabs.put(path, (FileTab) tab);
 			} else {
 				miscTabs.add(tab);
+			}
+			// Apply adding all events necessary for the tab to have font size changeable.
+			if(tab instanceof FontSizeChangeable) {
+				((FontSizeChangeable) tab).applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
+				((FontSizeChangeable) tab).bindFontSize(Configs.display().fontSize);
 			}
 		});
 		addTabClosureListener(tab -> {

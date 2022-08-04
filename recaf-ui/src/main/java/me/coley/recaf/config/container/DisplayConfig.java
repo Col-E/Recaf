@@ -1,5 +1,7 @@
 package me.coley.recaf.config.container;
 
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
@@ -14,6 +16,16 @@ import me.coley.recaf.util.Translatable;
  * @author Matt Coley
  */
 public class DisplayConfig implements ConfigContainer {
+	/**
+	 * Left bound (minimum) for {@link #fontSize font size}.
+	 */
+	public static final int FONT_SIZE_BOUND_LEFT = 8;
+
+	/**
+	 * Right bound (maximum) for {@link #fontSize font size}.
+	 */
+	public static final int FONT_SIZE_BOUND_RIGHT = 20;
+
 	/**
 	 * Maximum depth of a directory structure to display before it gets truncated.
 	 */
@@ -79,6 +91,13 @@ public class DisplayConfig implements ConfigContainer {
 	@ConfigID("promptdeleteitem")
 	public boolean promptDeleteItem = true;
 
+	/**
+	 * Font size for the decompiler view.
+	 */
+	@IntBounds(min = FONT_SIZE_BOUND_LEFT, max = FONT_SIZE_BOUND_RIGHT)
+	@Group("text")
+	@ConfigID("fontsize")
+	public IntegerProperty fontSize = new SimpleIntegerProperty(12);
 
 	@Override
 	public String iconPath() {

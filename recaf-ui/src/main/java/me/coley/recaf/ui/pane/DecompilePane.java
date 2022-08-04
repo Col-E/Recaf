@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.pane;
 
 import javafx.animation.FadeTransition;
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -45,13 +46,14 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Decompiler wrapper of {@link JavaArea}.
  *
  * @author Matt Coley
  */
-public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable, Scrollable {
+public class DecompilePane extends BorderPane implements ClassRepresentation, Cleanable, Scrollable, FontSizeChangeable {
 	private static final Logger log = Logging.get(DecompilePane.class);
 	private final ClearableThreadPool threadPool = new ClearableThreadPool(1, true, "Decompile");
 	private final VBox overlay = new VBox();
@@ -90,6 +92,16 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		// Bottom controls for quick config changes
 		Node buttonBar = createButtonBar();
 		setBottom(buttonBar);
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
+		javaArea.applyEventsForFontSizeChange(consumer);
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		javaArea.bindFontSize(property);
 	}
 
 	private Node createButtonBar() {

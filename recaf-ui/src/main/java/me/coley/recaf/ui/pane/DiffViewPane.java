@@ -4,6 +4,7 @@ import difflib.Chunk;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
+import javafx.beans.property.IntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -21,6 +22,7 @@ import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.DiffViewMode;
+import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.behavior.ScrollSnapshot;
 import me.coley.recaf.ui.control.BoundLabel;
@@ -61,6 +63,7 @@ import java.util.Collections;
 import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * A simple diff viewer to show a comparison of the changes made to classes/files.
@@ -68,7 +71,7 @@ import java.util.concurrent.TimeUnit;
  * @author Matt Coley
  */
 public class DiffViewPane extends BorderPane implements ControllerListener,
-		ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
+		ResourceClassListener, ResourceDexClassListener, ResourceFileListener, FontSizeChangeable {
 	private static final Logger logger = Logging.get(DiffViewPane.class);
 	private static final long TIMEOUT_MS = 10_000;
 	private final ObservableList<ItemInfo> items = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
@@ -101,7 +104,16 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 					CellFactory.update(CellOriginType.SEARCH_RESULTS, this, workspace.getResources().getPrimary(), item);
 					// Override with full name
 					setText(EscapeUtil.escape(item.getName()));
-					setOnMousePressed(e -> content.setCenter(createDiffDisplay(item)));
+					setOnMousePressed(e -> {
+						SplitPane pane = (SplitPane) createDiffDisplay(item);
+						pane.getItems().forEach(paneItem -> {
+							if (paneItem instanceof FontSizeChangeable) {
+								((FontSizeChangeable) paneItem).bindFontSize(Configs.display().fontSize);
+								((FontSizeChangeable) paneItem).applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
+							}
+						});
+						content.setCenter(pane);
+					});
 				}
 			}
 		});
@@ -334,6 +346,16 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
 		items.remove(oldValue);
 		items.add(newValue);
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		// will be done upon opening the view
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
+		// will be done upon opening the view
 	}
 
 	/**

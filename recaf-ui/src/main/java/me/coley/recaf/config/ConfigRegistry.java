@@ -3,9 +3,17 @@ package me.coley.recaf.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
+import com.google.gson.TypeAdapter;
+import com.google.gson.internal.bind.TypeAdapters;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import javafx.beans.property.*;
+import javafx.beans.value.*;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.ReflectUtil;
+import me.coley.recaf.util.UncheckedBiConsumer;
+import me.coley.recaf.util.UncheckedFunction;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -29,7 +37,19 @@ import java.util.function.Supplier;
  */
 public class ConfigRegistry {
 	private static final Logger logger = Logging.get(ConfigRegistry.class);
-	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	private static final Gson gson;
+
+	static {
+		GsonBuilder builder = new GsonBuilder();
+		registerTypeAdapter(builder, WritableDoubleValue.class, (w, v) -> w.value(v.get()), r -> new SimpleDoubleProperty(r.nextDouble()));
+		registerTypeAdapter(builder, WritableFloatValue.class, (w, v) -> w.value(v.get()), r -> new SimpleFloatProperty(((float) r.nextDouble())));
+		registerTypeAdapter(builder, WritableIntegerValue.class, (w, v) -> w.value(v.get()), r -> new SimpleIntegerProperty(r.nextInt()));
+		registerTypeAdapter(builder, WritableLongValue.class, (w, v) -> w.value(v.get()), r -> new SimpleLongProperty(r.nextLong()));
+		registerTypeAdapter(builder, WritableBooleanValue.class, (w, v) -> w.value(v.get()), r -> new SimpleBooleanProperty(r.nextBoolean()));
+		registerTypeAdapter(builder, WritableStringValue.class, (w, v) -> w.value(v.get()), r -> new SimpleStringProperty(r.nextString()));
+		gson = builder.setPrettyPrinting().create();
+	}
+
 	private static final Map<String, String> idToDisplay = new TreeMap<>();
 	private static final Map<String, Supplier<?>> idToGetter = new TreeMap<>();
 	private static final Map<String, Consumer<?>> idToSetter = new TreeMap<>();
@@ -197,5 +217,19 @@ public class ConfigRegistry {
 		// Add main group
 		key = container.internalName() + "." + key;
 		return key;
+	}
+
+	private static <T> void registerTypeAdapter(GsonBuilder builder, Class<T> base, UncheckedBiConsumer<JsonWriter, T> write, UncheckedFunction<JsonReader, T> read) {
+		builder.registerTypeAdapterFactory(TypeAdapters.newTypeHierarchyFactory(base, new TypeAdapter<T>() {
+			@Override
+			public void write(JsonWriter out, T value) throws IOException {
+				write.accept(out, value);
+			}
+
+			@Override
+			public T read(JsonReader in) throws IOException {
+				return read.apply(in);
+			}
+		}));
 	}
 }
