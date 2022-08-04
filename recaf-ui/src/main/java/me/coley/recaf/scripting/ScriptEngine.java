@@ -31,13 +31,16 @@ public class ScriptEngine {
 			"java.nio.file.*",
 			"java.util.*",
 			"me.coley.recaf.*",
+			"me.coley.recaf.code.*",
 			"me.coley.recaf.util.*",
 			"me.coley.recaf.util.threading.*",
 			"me.coley.recaf.search.*",
 			"me.coley.recaf.search.result.*",
 			"me.coley.recaf.workspace.*",
 			"me.coley.recaf.workspace.resource.*",
-			"me.coley.recaf.scripting.impl.*"
+			"me.coley.recaf.scripting.impl.*",
+			"org.objectweb.asm.*",
+			"org.objectweb.asm.tree.*"
 	);
 
 	/**
@@ -94,7 +97,7 @@ public class ScriptEngine {
 		}
 		// Create code (just a basic class with a static 'run' method)
 		StringBuilder code = new StringBuilder(
-				"public class " + className + " { public static void run() {\n" + script + "\n" + "}}");
+				"public class " + className + " implements Opcodes { public static void run() {\n" + script + "\n" + "}}");
 		for (String imp : imports)
 			code.insert(0, "import " + imp + "; ");
 		code.insert(0, "package " + SCRIPT_PACKAGE_NAME + "; ");
