@@ -19,10 +19,10 @@ import java.util.function.Consumer;
  * Firstly the interface should be implemented on all levels of the chain,
  * from the highest - which invokes {@link #applyEventsForFontSizeChange(Consumer)}
  * after creation of a lower level (note: {@link me.coley.recaf.ui.docking.RecafDockingManager} is hooked upon tab creation,
- * so teh tab needs to also implement it if a pane of it needs this behaviour) -
+ * so the tab needs to also implement it if a pane of it needs this behaviour) -
  * to the lowest which calls {@code consumer.accept(this) } in {@link #applyEventsForFontSizeChange(Consumer)}
  * for hooking the scroll and key events. <p>
- * Secondly, {@link #bindFontSize(IntegerProperty)} should be passed down until t reaches the lowest level
+ * Secondly, {@link #bindFontSize(IntegerProperty)} should be passed down until it reaches the lowest level
  * where the font size is either bound to the style or a {@link javafx.beans.value.ChangeListener} is used for changing the style.
  * <p>
  * Note: {@link javafx.beans.value.WeakChangeListener} should be used when dealing with panes which are being thrown away after use.
@@ -38,7 +38,7 @@ public interface FontSizeChangeable {
 	 * if it's the highest level: {@code Configs.display().fontSize} can be passed down<br>
 	 * if it's a middle level: the underlying level should be invoked with this method and pass property down<br>
 	 * if it's the lowest level: the property should be bound to the style<br>
-	 * @param property - the font size property to bind to the style.
+	 * @param property the font size property to bind to the style.
 	 */
 	void bindFontSize(IntegerProperty property);
 
