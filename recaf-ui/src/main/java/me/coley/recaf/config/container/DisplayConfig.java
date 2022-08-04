@@ -16,14 +16,13 @@ import me.coley.recaf.util.Translatable;
  * @author Matt Coley
  */
 public class DisplayConfig implements ConfigContainer {
-
 	/**
-	 * Left bound (minimum) for font size.
+	 * Left bound (minimum) for {@link #fontSize font size}.
 	 */
 	public static final int FONT_SIZE_BOUND_LEFT = 8;
 
 	/**
-	 * Right bound (maximum) for font size.
+	 * Right bound (maximum) for {@link #fontSize font size}.
 	 */
 	public static final int FONT_SIZE_BOUND_RIGHT = 20;
 

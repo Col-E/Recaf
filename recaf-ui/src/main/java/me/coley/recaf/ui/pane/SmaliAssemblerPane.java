@@ -79,6 +79,7 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 		// Search support
 		SearchBar.install(this, smaliArea);
 	}
+
 	@Override
 	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
 		smaliArea.applyEventsForFontSizeChange(consumer);

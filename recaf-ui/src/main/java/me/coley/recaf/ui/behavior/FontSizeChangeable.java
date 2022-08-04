@@ -29,16 +29,18 @@ import java.util.function.Consumer;
  * How? Add a field with the {@link javafx.beans.value.ChangeListener},
  * then pass it to {@link javafx.beans.value.ObservableValue#addListener(ChangeListener)}
  * with {@link javafx.beans.value.WeakChangeListener#WeakChangeListener(ChangeListener)}.
+ *
  * @author Amejonah
  */
 public interface FontSizeChangeable {
-
 	/**
 	 * Bind the font size to the style. In the chain,<br>
 	 * if it's the highest level: {@code Configs.display().fontSize} can be passed down<br>
 	 * if it's a middle level: the underlying level should be invoked with this method and pass property down<br>
 	 * if it's the lowest level: the property should be bound to the style<br>
-	 * @param property the font size property to bind to the style.
+	 *
+	 * @param property
+	 * 		the font size property to bind to the style.
 	 */
 	void bindFontSize(IntegerProperty property);
 
@@ -47,7 +49,9 @@ public interface FontSizeChangeable {
 	 * if it's the highest level: the underlying level should be invoked with this method and {@link #DEFAULT_APPLIER}<br>
 	 * if it's a middle level: the underlying level should be invoked with this method and pass consumer down<br>
 	 * if it's the lowest level: {@code consumer.accept(this) }<br>
-	 * @param consumer the consumer to invoke on the lowest level for hooking scroll and keybinding event.
+	 *
+	 * @param consumer
+	 * 		the consumer to invoke on the lowest level for hooking scroll and keybinding event.
 	 */
 	void applyEventsForFontSizeChange(Consumer<Node> consumer);
 
