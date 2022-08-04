@@ -5,13 +5,13 @@ import me.coley.recaf.compile.CompileOption;
 import me.coley.recaf.compile.CompilerDiagnostic;
 import me.coley.recaf.compile.CompilerResult;
 import me.coley.recaf.compile.javac.JavacCompiler;
+import me.coley.recaf.util.DefineUtil;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +25,7 @@ import java.util.*;
 public class ScriptEngine {
 	private static final Logger logger = Logging.get(ScriptEngine.class);
 	private static final Map<String, GenerateResult> SCRIPT_CLASS_CACHE = new HashMap<>();
-	private static final String SCRIPT_PACKAGE_NAME = "me.coley.recaf.scripting";
+	private static final String SCRIPT_PACKAGE_NAME = "me.coley.recaf.scripting.generated";
 	private static final List<String> DEFAULT_IMPORTS = Arrays.asList(
 			"java.io.*",
 			"java.nio.file.*",
@@ -115,9 +115,8 @@ public class ScriptEngine {
 		compiler.setDebug(options, JavacCompiler.createDebugValue(true, true, true));
 		CompilerResult result = compiler.compile(className, code.toString(), options);
 		if (result.wasSuccess()) {
-			byte[] bytes = result.getValue().get(className);
 			try {
-				Class<?> cls = MethodHandles.lookup().defineClass(bytes);
+				Class<?> cls = DefineUtil.create(result.getValue(), className);
 				return new GenerateResult(cls, diagnostics);
 			} catch (Exception ex) {
 				logger.error("Failed to define generated script class", ex);
