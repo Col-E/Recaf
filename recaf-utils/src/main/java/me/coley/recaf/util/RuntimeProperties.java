@@ -17,6 +17,7 @@ public class RuntimeProperties {
 	private static final String KEY_OS_ARCH = "os.arch";
 	private static final String KEY_OS_VERSION = "os.version";
 	private static final String KEY_OS_ARCH_BITS = "os.bitness";
+	private static final String KEY_OS_PROCESSORS = "os.processors";
 	private static final String KEY_JAVA_VERSION = "java.version";
 	private static final String KEY_JAVA_VM_NAME = "java.vm.version";
 	private static final String KEY_JAVA_VM_VENDOR = "java.vm.vendor";
@@ -29,11 +30,12 @@ public class RuntimeProperties {
 	public static final String JAVA_VM_NAME = System.getProperty(KEY_JAVA_VM_NAME);
 	public static final String JAVA_VM_VENDOR = System.getProperty(KEY_JAVA_VM_VENDOR);
 	public static final String JAVA_HOME = System.getProperty(KEY_JAVA_HOME);
-	private static final Map<String, String> ALL_PROPERTIES = new TreeMap<String, String>() {
+	private static final Map<String, String> ALL_PROPERTIES = new TreeMap<>() {
 		{
 			put(KEY_OS_NAME, OS_NAME);
 			put(KEY_OS_ARCH, OS_ARCH);
 			put(KEY_OS_ARCH_BITS, String.valueOf(OS_ARCH_BITS));
+			put(KEY_OS_PROCESSORS, String.valueOf(Runtime.getRuntime().availableProcessors()));
 			put(KEY_OS_VERSION, OS_VERSION);
 			put(KEY_JAVA_VERSION, JAVA_VERSION);
 			put(KEY_JAVA_VM_NAME, JAVA_VM_NAME);
