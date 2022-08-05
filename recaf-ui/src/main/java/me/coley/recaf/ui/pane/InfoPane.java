@@ -49,6 +49,7 @@ public class InfoPane extends GridPane {
 				Lang.getBinding("help.system.sub")));
 		addRow(r++, new Label("Name"), new Label(System.getProperty("os.name")));
 		addRow(r++, new Label("Architecture"), new Label(System.getProperty("os.arch")));
+		addRow(r++, new Label("Processors"), new Label(String.valueOf(Runtime.getRuntime().availableProcessors())));
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 		// Java
