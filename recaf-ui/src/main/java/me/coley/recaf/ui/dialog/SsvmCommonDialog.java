@@ -397,7 +397,7 @@ public abstract class SsvmCommonDialog extends ClosableDialog {
 		}
 	}
 
-	protected Object encodeThrowable(Throwable t) {
+	protected String encodeThrowable(Throwable t) {
 		if (t instanceof VMException) {
 			return vmUtil.throwableToString(((VMException) t).getOop());
 		}

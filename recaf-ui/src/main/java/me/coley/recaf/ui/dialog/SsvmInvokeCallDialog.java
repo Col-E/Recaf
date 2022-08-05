@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.dialog;
 
+import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.value.TopValue;
 import dev.xdark.ssvm.value.Value;
 import javafx.scene.control.Button;
@@ -65,9 +66,9 @@ public class SsvmInvokeCallDialog extends SsvmCommonDialog {
 						}
 						throwable = result.getException();
 						if (throwable != null) {
-							Throwable ssvmThrowable = vm.getVmUtil().unwrap(throwable);
+							String errorText = encodeThrowable(throwable);
 							FxThreadUtil.run(() -> {
-								output.setText(StringUtil.traceToString(ssvmThrowable));
+								output.setText(errorText);
 								output.setStyle("-fx-text-fill: red;");
 							});
 						} else {

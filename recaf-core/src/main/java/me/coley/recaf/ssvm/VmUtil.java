@@ -194,18 +194,6 @@ public final class VmUtil {
 	}
 
 	/**
-	 * @param ex
-	 * 		Exception to print that may be virtualized <i>({@link VMException})</i>
-	 *
-	 * @return Unwrapped exception.
-	 */
-	public Throwable unwrap(Throwable ex) {
-		if (ex instanceof VMException)
-			ex = vm.getHelper().toJavaException(((VMException) ex).getOop());
-		return ex;
-	}
-
-	/**
 	 * @param value
 	 * 		Value to convert.
 	 *

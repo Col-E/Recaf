@@ -139,9 +139,8 @@ public class SsvmIntegration {
 		} catch (Exception ex) {
 			// If the class isn't found we get 'null'.
 			// If the class is found but cannot be loaded we probably get some error that we need to handle here.
-			return CompletableFuture.completedFuture(
-					new VmRunResult(new IllegalStateException("Failed to initialize class: " + owner.getName(),
-							vm.getVmUtil().unwrap(ex))));
+			logger.warn("Failed to initialize class: {}", owner.getName());
+			return CompletableFuture.completedFuture(new VmRunResult(ex));
 		}
 		// Invoke with parameters and return value
 		return CompletableFuture.supplyAsync(() -> {
@@ -158,9 +157,8 @@ public class SsvmIntegration {
 					context = vm.getVmUtil().invokeExact(vmClass, methodName, methodDesc, parameters);
 				}
 				return new VmRunResult(context.getResult());
-			} catch (VMException ex) {
-				return new VmRunResult(vm.getVmUtil().unwrap(ex));
 			} catch (Exception ex) {
+				// Also handles 'VMException'
 				return new VmRunResult(ex);
 			}
 		}, vmThreadPool);
