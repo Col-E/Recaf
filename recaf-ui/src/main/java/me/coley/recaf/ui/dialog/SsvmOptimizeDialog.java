@@ -19,6 +19,7 @@ import me.coley.recaf.ssvm.VmRunResult;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.visitor.WorkspaceClassWriter;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
@@ -79,8 +80,10 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 							ex = ex.getCause();
 						errorText = "SSVM optimize thread encountered unhandled error\n" + encodeThrowable(ex);
 					}
-					output.setStyle("-fx-text-fill: red;");
-					output.setText(errorText);
+					FxThreadUtil.run(() -> {
+						output.setStyle("-fx-text-fill: red;");
+						output.setText(errorText);
+					});
 					return;
 				}
 				// Pull new bytecode from VM
@@ -91,12 +94,16 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 				try {
 					node.accept(writer);
 				} catch (Throwable t) {
-					output.setStyle("-fx-text-fill: red;");
-					output.setText("Failed to rewrite optimized bytecode\n" + encodeThrowable(t));
+					FxThreadUtil.run(() -> {
+						output.setStyle("-fx-text-fill: red;");
+						output.setText("Failed to rewrite optimized bytecode\n" + encodeThrowable(t));
+					});
 					return;
 				}
-				output.setStyle(null);
-				output.setText("SSVM optimization completed");
+				FxThreadUtil.run(() -> {
+					output.setStyle(null);
+					output.setText("SSVM optimization completed");
+				});
 				byte[] modified = writer.toByteArray();
 				// Replace in workspace
 				WorkspaceAPI.getPrimaryResource().getClasses().put(owner.getName(), ClassInfo.read(modified));
