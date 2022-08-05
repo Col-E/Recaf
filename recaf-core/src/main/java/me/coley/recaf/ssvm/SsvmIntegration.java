@@ -148,8 +148,7 @@ public class SsvmIntegration {
 			String methodName = method.getName();
 			String methodDesc = method.getDescriptor();
 			try {
-				if (vmClass.shouldBeInitialized())
-					vmClass.initialize();
+				vmClass.initialize();
 				ExecutionContext context;
 				if (AccessFlag.isStatic(access)) {
 					context = vm.getVmUtil().invokeStatic(vmClass, methodName, methodDesc, parameters);
