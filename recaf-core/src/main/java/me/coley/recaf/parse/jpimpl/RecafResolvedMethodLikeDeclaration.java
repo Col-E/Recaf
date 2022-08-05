@@ -125,7 +125,7 @@ public abstract class RecafResolvedMethodLikeDeclaration implements ResolvedMeth
 			return AccessSpecifier.PROTECTED;
 		else if (AccessFlag.isPrivate(acc))
 			return AccessSpecifier.PRIVATE;
-		return AccessSpecifier.PACKAGE_PRIVATE;
+		return AccessSpecifier.NONE;
 	}
 
 	@Override
