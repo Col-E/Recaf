@@ -31,6 +31,7 @@ import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import org.slf4j.Logger;
@@ -163,7 +164,7 @@ public class NavigationBar extends HBox {
 		getChildren().clear();
 		for (int i = 0; i < elements.length; i++) {
 			boolean isLast = i == elements.length - 1;
-			String elementText = elements[i];
+			String elementText = EscapeUtil.escapeSpace(elements[i]);
 
 			// Last element will always be a class.
 			if (isLast) {
