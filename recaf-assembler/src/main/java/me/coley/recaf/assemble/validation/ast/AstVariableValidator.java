@@ -121,12 +121,12 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 			if (instruction instanceof VarInstruction) {
 				VarInstruction varInsn = (VarInstruction) instruction;
 				int opcode = instruction.getOpcodeVal();
-				varId = varInsn.getVariableIdentifier();
+				varId = varInsn.getEscapedVariableIdentifier();
 				varType = Types.fromVarOpcode(opcode);
 				usage = varInsn.getVariableOperation();
 			} else if (instruction instanceof IincInstruction) {
 				IincInstruction iinc = (IincInstruction) instruction;
-				varId = iinc.getVariableIdentifier();
+				varId = iinc.getEscapedVariableIdentifier();
 				varType = Type.INT_TYPE;
 				usage = iinc.getVariableOperation();
 			}

@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.*;
+import me.coley.recaf.util.EscapeUtil;
 
 /**
  * Part of a {@link MethodParameters}.
@@ -49,6 +50,6 @@ public class MethodParameter extends BaseElement implements Named, Descriptor, V
 
 	@Override
 	public String print(PrintContext context) {
-		return desc + " " + name;
+		return getEscapedVariableDescriptor() + " " + getEscapedVariableIdentifier();
 	}
 }

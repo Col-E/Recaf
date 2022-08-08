@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.ast.Descriptor;
 import me.coley.recaf.assemble.ast.Named;
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.VariableReference;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -66,6 +67,6 @@ public class VarInstruction extends AbstractInstruction implements Opcodes, Name
 
 	@Override
 	public String print(PrintContext context) {
-		return getOpcode() + " " + getVariableIdentifier();
+		return getOpcode() + " " + getEscapedVariableIdentifier();
 	}
 }
