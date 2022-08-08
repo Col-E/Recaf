@@ -231,11 +231,8 @@ public abstract class BaseTreeItem extends FilterableTreeItem<BaseTreeValue> imp
 			parts.add(lastPart);
 		}
 		// Build directory structure
-		int maxLen = Configs.display().maxTreeTextLength;
 		while (!parts.isEmpty()) {
 			String part = parts.remove(0);
-			if (part.length() > maxLen)
-				part = part.substring(0, maxLen) + "...";
 			boolean isLeaf = parts.isEmpty();
 			BaseTreeItem child = isLeaf ?
 					item.getChildFile(part) :

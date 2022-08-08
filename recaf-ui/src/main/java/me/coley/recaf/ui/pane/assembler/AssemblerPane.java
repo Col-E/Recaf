@@ -26,7 +26,7 @@ import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.pane.DockingWrapperPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.WorkspaceClassSupplier;
 import me.coley.recaf.util.WorkspaceInheritanceChecker;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -201,7 +201,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		components.forEach(c -> c.setTargetMember(targetMember));
 		// Update tab display
 		tab.textProperty().unbind();
-		tab.setText(EscapeUtil.escape(targetMember.getName()));
+		tab.setText(TextDisplayUtil.escapeShortenPath(targetMember.getName()));
 		if (targetMember.isMethod()) {
 			// Setup bottom tabs with bytecode helper tools for methods.
 			if (bottomTabs.getTabs().isEmpty()) {

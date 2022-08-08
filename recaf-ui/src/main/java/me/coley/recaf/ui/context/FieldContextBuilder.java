@@ -18,7 +18,7 @@ import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
-import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.visitor.MemberCopyingVisitor;
 import me.coley.recaf.util.visitor.MemberRemovingVisitor;
 import me.coley.recaf.workspace.resource.Resource;
@@ -147,8 +147,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 
 	@Override
 	public void delete() {
-		String ownerName = EscapeUtil.escape(ownerInfo.getName());
-		String fieldName = EscapeUtil.escape(fieldInfo.getName());
+		String ownerName = TextDisplayUtil.escapeShortenPath(ownerInfo.getName());
+		String fieldName = TextDisplayUtil.escapeShortenPath(fieldInfo.getName());
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {

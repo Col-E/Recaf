@@ -34,6 +34,7 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ClearableThreadPool;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
@@ -261,7 +262,8 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 			if (Configs.decompiler().enableDecompilerTimeout) {
 				timeout = Configs.decompiler().decompileTimeout + 500;
 			}
-			log.debug("Queueing decompilation for {} with timeout {}ms", newValue.getName(), timeout);
+			String name = TextDisplayUtil.escapeShorten(newValue.getName());
+			log.debug("Queueing decompilation for {} with timeout {}ms", name, timeout);
 			// Create new threaded decompile
 			CompletableFuture<String> decompileFuture = CompletableFuture.supplyAsync(() -> {
 				Workspace workspace = RecafUI.getController().getWorkspace();
@@ -277,11 +279,10 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 					return;
 				}
 				hideOverlay();
-				log.debug("Finished decompilation of {}", newValue.getName(), t);
+				log.debug("Finished decompilation of {}", name, t);
 				if (t != null) {
 					if (t instanceof TimeoutException) {
 						threadPool.clear();
-						String name = newValue.getName();
 						String text = "// Decompile thread for '" + name + "' exceeded timeout of " + finalTimeout + "ms.\n" +
 								"// Some suggestions:\n" +
 								"//  - Increase the timeout in the config menu\n" +
@@ -290,7 +291,6 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 						javaArea.setText(text, false);
 					} else {
 						String message = StringUtil.traceToString(t);
-						String name = newValue.getName();
 						String text = "// Decompiler for " + name + " has crashed.\n" +
 								"// Cause:\n\n" + message;
 						javaArea.setText(text, false);

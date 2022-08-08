@@ -17,6 +17,7 @@ import me.coley.recaf.ui.control.hex.HexView;
 import me.coley.recaf.ui.util.NodeUtil;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -402,8 +403,7 @@ public class ClassInfoFormatter implements ConstantPoolConstants {
 	}
 
 	private static Node dim(Object value) {
-		// We want to prevent whitespace chars like '\n', but the standard space is something we want to keep.
-		String text = EscapeUtil.escapeSpace(Objects.toString(value)).replace("\\u0020", " ");
+		String text = TextDisplayUtil.escapeShortenPath(Objects.toString(value));
 		Label label = new Label(text);
 		label.getStyleClass().add("monospace");
 		label.getStyleClass().add("faint");

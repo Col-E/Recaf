@@ -10,7 +10,7 @@ import me.coley.recaf.ui.behavior.Scrollable;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -85,7 +85,7 @@ public class MappingUX {
 				Workspace workspace = RecafUI.getController().getWorkspace();
 				CommonClassInfo newClassInfo = workspace.getResources().getClass(newName);
 				RecafDockingManager docking = RecafDockingManager.getInstance();
-				String title = StringUtil.shortenPath(newName);
+				String title = TextDisplayUtil.escapeShortenPath(newName);
 				ClassTab newTab = (ClassTab) docking.createTab(() -> new ClassTab(title, oldView));
 				newTab.select();
 				oldView.refreshView();

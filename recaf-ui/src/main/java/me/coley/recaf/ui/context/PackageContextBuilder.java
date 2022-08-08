@@ -13,8 +13,7 @@ import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
-import me.coley.recaf.util.EscapeUtil;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -46,7 +45,7 @@ public class PackageContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = packageName;
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), Icons.getIconView(Icons.FOLDER_PACKAGE)));
+		menu.getItems().add(createHeader(TextDisplayUtil.escapeShortenPath(name), Icons.getIconView(Icons.FOLDER_PACKAGE)));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
@@ -74,7 +73,7 @@ public class PackageContextBuilder extends ContextBuilder {
 	}
 
 	private void delete() {
-		String name = EscapeUtil.escape(packageName);
+		String name = TextDisplayUtil.escapeShortenPath(packageName);
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {

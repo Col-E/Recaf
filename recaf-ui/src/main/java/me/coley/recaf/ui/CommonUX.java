@@ -12,7 +12,7 @@ import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.docking.impl.FileTab;
 import me.coley.recaf.ui.util.Animations;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -41,7 +41,7 @@ public class CommonUX {
 				Animations.animateNotice(tab.getContent(), 1000);
 		} else {
 			// Create the tab
-			String title = StringUtil.shortenPath(info.getName());
+			String title = TextDisplayUtil.escapeShortenPath(info.getName());
 			tab = (ClassTab) RecafDockingManager.getInstance()
 					.createTab(CommonUX::anyRegion, CommonUX::byPopulatedClasses,
 							() -> new ClassTab(title, new ClassView(info)));
@@ -91,7 +91,7 @@ public class CommonUX {
 				Animations.animateNotice(tab.getContent(), 1000);
 		} else {
 			// Create the tab
-			String title = StringUtil.shortenPath(info.getName());
+			String title = TextDisplayUtil.escapeShortenPath(info.getName());
 			tab = (FileTab) RecafDockingManager.getInstance()
 					.createTab(CommonUX::anyRegion, CommonUX::byPopulatedFiles,
 							() -> new FileTab(title, new FileView(info)));

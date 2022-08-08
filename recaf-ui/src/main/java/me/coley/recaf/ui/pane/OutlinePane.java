@@ -14,8 +14,8 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import org.objectweb.asm.Type;
@@ -220,7 +220,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 			} else if (item == null) {
 				// Null is the edge case for the root
 				setGraphic(Icons.getClassIcon(classInfo));
-				setText(EscapeUtil.escape(StringUtil.shortenPath(classInfo.getName())));
+				setText(TextDisplayUtil.escapeShortenPath(classInfo.getName()));
 				setOnMouseClicked(null);
 				if (classInfo instanceof ClassInfo) {
 					setContextMenu(ContextBuilder.forClass((ClassInfo) classInfo)
@@ -230,19 +230,19 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 					setContextMenu(null);
 				}
 			} else {
-				String name = item.getName();
+				int max = Configs.display().maxTreeTextLength;
+				String name = TextDisplayUtil.escapeShortenPath(item.getName());
 				String desc = item.getDescriptor();
 				if (item.isField()) {
 					String text = name;
 					if (showTypes.get()) {
 						String type;
 						if (Types.isValidDesc(desc))
-							type = StringUtil.shortenPath(Type.getType(desc).getInternalName());
+							type = TextDisplayUtil.escapeShortenPath(Type.getType(desc).getInternalName());
 						else type = "<INVALID>";
 						text = type + " " + text;
 					}
-					int maxLen = Configs.display().maxTreeTextLength;
-					setText(StringUtil.limit(EscapeUtil.escape(text), "...", maxLen));
+					setText(StringUtil.limit(text, "...", max));
 					setGraphic(Icons.getFieldIcon((FieldInfo) item));
 					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item)
 							.setDeclaration(true)
@@ -252,12 +252,11 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 					String text = name;
 					if (showTypes.get()) {
 						text += "(" + Arrays.stream(Type.getArgumentTypes(desc))
-								.map(argType -> StringUtil.shortenPath(argType.getInternalName()))
+								.map(argType -> TextDisplayUtil.escapeShortenPath(argType.getInternalName()))
 								.collect(Collectors.joining(", ")) +
-								")" + StringUtil.shortenPath(Type.getReturnType(desc).getInternalName());
+								")" + TextDisplayUtil.escapeShortenPath(Type.getReturnType(desc).getInternalName());
 					}
-					int maxLen = Configs.display().maxTreeTextLength;
-					setText(StringUtil.limit(EscapeUtil.escape(text), "...", maxLen));
+					setText(StringUtil.limit(text, "...", max));
 					setGraphic(Icons.getMethodIcon(methodInfo));
 					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) item)
 							.setDeclaration(true)

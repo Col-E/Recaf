@@ -12,7 +12,7 @@ import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -128,9 +128,10 @@ public class QuickNavPrompt extends GenericWindow {
 							MemberInfo member = (MemberInfo) item.info;
 							String def = member.isMethod() ?
 									member.getName() + member.getDescriptor() : member.getName();
-							setText(StringUtil.shortenPath(member.getOwner()) + " " + def);
+							setText(TextDisplayUtil.escapeShortenPath(member.getOwner()) + " " +
+									TextDisplayUtil.escapeShorten(def));
 						} else {
-							setText(item.info.getName());
+							setText(TextDisplayUtil.escapeShortenPath(item.info.getName()));
 						}
 
 					}

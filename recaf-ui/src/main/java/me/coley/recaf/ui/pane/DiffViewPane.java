@@ -40,8 +40,8 @@ import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ByteHeaderUtil;
-import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
@@ -103,7 +103,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 				} else {
 					CellFactory.update(CellOriginType.SEARCH_RESULTS, this, workspace.getResources().getPrimary(), item);
 					// Override with full name
-					setText(EscapeUtil.escape(item.getName()));
+					setText(TextDisplayUtil.escapeShortenPath(item.getName()));
 					setOnMousePressed(e -> {
 						SplitPane pane = (SplitPane) createDiffDisplay(item);
 						pane.getItems().forEach(paneItem -> {

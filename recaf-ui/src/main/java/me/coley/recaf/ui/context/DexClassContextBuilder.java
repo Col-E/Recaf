@@ -6,7 +6,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -52,7 +52,7 @@ public class DexClassContextBuilder extends DeclarableContextBuilder {
 		if (icon == null) {
 			icon = Icons.getClassIcon(info);
 		}
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), icon));
+		menu.getItems().add(createHeader(TextDisplayUtil.escapeShortenPath(name), icon));
 		menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 
 		// TODO: Android dex class context menu items

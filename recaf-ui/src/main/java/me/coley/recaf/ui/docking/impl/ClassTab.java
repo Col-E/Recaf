@@ -5,7 +5,7 @@ import javafx.scene.Node;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.docking.DockTab;
-import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 
 import java.util.function.Consumer;
 
@@ -25,7 +25,7 @@ public class ClassTab extends DockTab implements FontSizeChangeable {
 	 * 		Representation of the class.
 	 */
 	public ClassTab(String title, ClassRepresentation classRepresentation) {
-		super(EscapeUtil.escape(title), classRepresentation.getNodeRepresentation());
+		super(TextDisplayUtil.escapeShortenPath(title), classRepresentation.getNodeRepresentation());
 		this.classRepresentation = classRepresentation;
 	}
 

@@ -5,7 +5,7 @@ import javafx.scene.Node;
 import me.coley.recaf.ui.behavior.FileRepresentation;
 import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.docking.DockTab;
-import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 
 import java.util.function.Consumer;
 
@@ -25,7 +25,7 @@ public class FileTab extends DockTab implements FontSizeChangeable {
 	 * 		Representation of the file.
 	 */
 	public FileTab(String title, FileRepresentation fileRepresentation) {
-		super(EscapeUtil.escape(title), fileRepresentation.getNodeRepresentation());
+		super(TextDisplayUtil.escapeShortenPath(title), fileRepresentation.getNodeRepresentation());
 		this.fileRepresentation = fileRepresentation;
 	}
 

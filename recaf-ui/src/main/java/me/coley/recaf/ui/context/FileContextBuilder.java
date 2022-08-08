@@ -18,8 +18,7 @@ import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
-import me.coley.recaf.util.EscapeUtil;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -70,7 +69,7 @@ public class FileContextBuilder extends ContextBuilder {
 		if (icon == null) {
 			icon = Icons.getFileIcon(info);
 		}
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), icon));
+		menu.getItems().add(createHeader(TextDisplayUtil.escapeShortenPath(name), icon));
 		menu.getItems().add(action("menu.goto.file", Icons.OPEN, this::openFile));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
@@ -127,7 +126,7 @@ public class FileContextBuilder extends ContextBuilder {
 	}
 
 	private void delete() {
-		String name = EscapeUtil.escape(info.getName());
+		String name = TextDisplayUtil.escapeShortenPath(info.getName());
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
