@@ -87,8 +87,10 @@ public class Suggestions {
 			case "invokestatic":
 			case "invokeinterface":
 			case "invokespecial":
-			case "invokevirtual": {
-				// first child is class.name so we have to suggest class name until the first .
+			case "invokevirtual":
+			case "invokevirtualinterface":
+			case "invokedynamic": {
+				// first child is class.name, so we have to suggest class name until the first .
 				String className = children[0] == null ? "" : children[0].content();
 				if (!className.contains(".")) return startsWith(className);
 				String[] parts = className.split("\\.");
