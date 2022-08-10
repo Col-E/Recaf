@@ -15,10 +15,15 @@ import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.pane.WelcomePane;
 import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -106,5 +111,28 @@ public class MainWindow extends WindowBase {
 		BorderPane root = new BorderPane(verticalSplit);
 		root.setTop(MainMenu.getInstance());
 		return new Scene(root);
+	}
+
+	/**
+	 * Configures the doc icon to use the Recaf logo on MacOS platforms.
+	 */
+	private static void setupMacDockIcon() {
+		try {
+			// "com.apple.eawt.Application is platform-specific class
+			InputStream iconStream = MainWindow.class.getResourceAsStream("/" + Icons.LOGO);
+			if (iconStream != null) {
+				BufferedImage image = ImageIO.read(iconStream);
+				Class<?> applicationClass = Class.forName("com.apple.eawt.Application");
+				Object application = applicationClass.getMethod("getApplication").invoke(null);
+				Method dockIconSetter = applicationClass.getMethod("setDockIconImage", java.awt.Image.class);
+				dockIconSetter.invoke(application, image);
+			}
+		} catch (Exception ignored) {
+			// Expected for non mac platforms
+		}
+	}
+
+	static {
+		setupMacDockIcon();
 	}
 }
