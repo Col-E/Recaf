@@ -78,6 +78,8 @@ public class WorkspaceClassWriter extends ClassWriter {
 	 * 		<i>renamed-to-base</i> map.
 	 */
 	public void setMappings(Map<String, String> mappings, Map<String, String> reverseMappings) {
+		// TODO: This isn't called and should be.
+		//  - check how aggregate mappings reverse mappings to generate proper reverse mappings
 		this.mappings = mappings;
 		this.reverseMappings = reverseMappings;
 	}
