@@ -13,6 +13,7 @@ import me.coley.recaf.assemble.transformer.ExpressionToAstTransformer;
 import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.util.NumberUtil;
+import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Handle;
@@ -921,7 +922,9 @@ public class Analyzer {
 				case GETFIELD: {
 					// Pop field owner ctx
 					Value owner = frame.pop();
-					if (!owner.isObject()) {
+					if (owner.isEmptyStack()) {
+						frame.markWonky("getfield has no stack value to use as an 'owner'");
+					} else if (!owner.isObject()) {
 						frame.markWonky("getfield 'owner' on stack not an object type!");
 					}
 					// Fall through
@@ -988,8 +991,16 @@ public class Analyzer {
 							frame.pop();
 					}
 					// Pop method owner ctx
-					if (op != INVOKESTATIC)
-						frame.pop();
+					if (op != INVOKESTATIC) {
+						Value owner = frame.pop();
+						if (owner.isEmptyStack()) {
+							frame.markWonky(OpcodeUtil.opcodeToName(op).toLowerCase() +
+									" has no stack value to use as an 'owner'");
+						} else if (!owner.isObject()) {
+							frame.markWonky(OpcodeUtil.opcodeToName(op).toLowerCase() +
+									" 'owner' on stack not an object type!");
+						}
+					}
 					// Push return value
 					Type retType = type.getReturnType();
 					if (Types.isVoid(retType)) {

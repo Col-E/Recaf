@@ -49,6 +49,13 @@ public abstract class Value {
 	}
 
 	/**
+	 * @return {@code true} if the type is {@link EmptyPoppedValue}.
+	 */
+	public boolean isEmptyStack() {
+		return this instanceof EmptyPoppedValue;
+	}
+
+	/**
 	 * @return Copy of the value.
 	 */
 	public Value copy() {
