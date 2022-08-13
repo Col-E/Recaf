@@ -24,6 +24,8 @@ public class AggregateMappingPane extends BorderPane implements AggregatedMappin
 	private AggregatedMappings lastMappings;
 
 	private AggregateMappingPane() {
+		// TODO: More integrated display with class and member icons?
+		//  - Text export already a feature from the menu dropdown, which this is basically a live preview of atm
 		MappingsManager manager = RecafUI.getController().getServices().getMappingsManager();
 		manager.addAggregatedMappingsListener(this);
 		text.getStyleClass().add("monospaced");
