@@ -239,8 +239,10 @@ public class Frame {
 	 * @return Top value from the stack.
 	 */
 	public Value peek() {
-		if (stack.isEmpty())
+		if (stack.isEmpty()) {
+			markWonky("Cannot peek off empty stack!");
 			return new Value.EmptyPoppedValue();
+		}
 		return stack.get(stack.size() - 1);
 	}
 
@@ -248,8 +250,10 @@ public class Frame {
 	 * @return Top value from the stack.
 	 */
 	public Value pop() {
-		if (stack.isEmpty())
+		if (stack.isEmpty()) {
+			markWonky("Cannot pop off empty stack!");
 			return new Value.EmptyPoppedValue();
+		}
 		return stack.remove(stack.size() - 1);
 	}
 
