@@ -57,10 +57,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -303,6 +300,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	@Override
 	public void onNewClass(Resource resource, ClassInfo newValue) {
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
@@ -314,11 +312,13 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
 		items.remove(oldValue);
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
 	public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
@@ -330,11 +330,13 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
 		items.remove(oldValue);
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
 	public void onNewFile(Resource resource, FileInfo newValue) {
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
@@ -346,6 +348,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
 		items.remove(oldValue);
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
