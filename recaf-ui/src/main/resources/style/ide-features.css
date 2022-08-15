@@ -1,0 +1,22 @@
+.selection {
+    -fx-border-style: solid;
+    -fx-border-color: #555858;
+    -fx-border-width: 0.2em;
+    -fx-background-color: transparent;
+}
+
+.selection > .selection-button {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #9b9c9c;
+    -fx-border-style: none;
+}
+
+.selection > .selection-button.selected {
+    -fx-background-color: #4c5052;
+    -fx-border-color: #555858;
+}
+
+.selection > .selection-button:hover {
+    -fx-background-color: #666666;
+    -fx-fill: #666666;
+}

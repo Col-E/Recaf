@@ -1,9 +1,11 @@
 package me.coley.recaf.ui.control;
 
 import javafx.beans.binding.ObjectBinding;
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.scene.control.ComboBox;
 import javafx.util.StringConverter;
+import me.coley.recaf.ui.control.parameterinput.component.control.combobox.ComboBoxComponent;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Translatable;
 
@@ -15,7 +17,7 @@ import me.coley.recaf.util.Translatable;
  *
  * @author Matt Coley
  */
-public class EnumComboBox<E extends Enum<?>> extends ComboBox<E> {
+public class EnumComboBox<E extends Enum<?>> extends ComboBox<E> implements ComboBoxComponent<E, EnumComboBox<E>> {
 	/**
 	 * @param type
 	 * 		Enumeration type.
@@ -56,5 +58,16 @@ public class EnumComboBox<E extends Enum<?>> extends ComboBox<E> {
 				}
 			});
 		}
+	}
+
+	@Override
+	public ComboBox<E> node() {
+		return this;
+	}
+
+	@Override
+	public EnumComboBox<E> bind(ObjectProperty<E> property) {
+		property.bind(valueProperty());
+		return this;
 	}
 }
