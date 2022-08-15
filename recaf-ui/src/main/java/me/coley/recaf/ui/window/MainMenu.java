@@ -21,6 +21,7 @@ import me.coley.recaf.mapping.MappingsTool;
 import me.coley.recaf.ui.control.MenuLabel;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.menu.ClosableActionMenuItem;
+import me.coley.recaf.ui.pane.AggregateMappingPane;
 import me.coley.recaf.ui.pane.InfoPane;
 import me.coley.recaf.ui.pane.MappingGenPane;
 import me.coley.recaf.ui.pane.SearchPane;
@@ -124,6 +125,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 			if (mappingsTool.supportsTextExport())
 				menuExport.getItems().add(actionLiteral(name, null, () -> exportMappings(mappingsTool)));
 		}
+		menuMappings.getItems().add(action("menu.mappings.view", Icons.EYE, this::openMappingViewer));
 		menuMappings.getItems().add(action("menu.mappings.generate", Icons.CONFIG, this::openMappingGenerator));
 
 
@@ -298,6 +300,12 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private void openInfo() {
 		GenericWindow window = new GenericWindow(new InfoPane());
 		window.titleProperty().bind(Lang.getBinding("menu.help.sysinfo"));
+		window.show();
+	}
+
+	private void openMappingViewer() {
+		GenericWindow window =  RecafUI.getWindows().getMappingViewWindow();
+		window.titleProperty().bind(Lang.getBinding("menu.mappings.view"));
 		window.show();
 	}
 

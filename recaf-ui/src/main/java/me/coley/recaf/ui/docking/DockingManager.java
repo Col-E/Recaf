@@ -77,13 +77,13 @@ public class DockingManager {
 			regionResult = getDockingRegions().stream().filter(filter).min(preference);
 		// Check for no result
 		if (regionResult.isEmpty())
-			throw new IllegalStateException("Cannot spawn tab, no viable region to spawn in!");
+			throw new TabTargetException("Cannot spawn tab, no viable region to spawn in!");
 		DockingRegion region = regionResult.get();
 		return region.createTab(decorateFactory(region, factory));
 	}
 
 	/**
-	 * Called by {@link #createTab(RegionFilter, DockTabFactory)}.
+	 * Called by {@link #createTab(RegionFilter, RegionPreference, DockTabFactory)}.
 	 * Used by child types of {@link DockingManager} to modify properties of any created tabs.
 	 *
 	 * @param region
