@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.CodeEntry;
 import me.coley.recaf.assemble.ast.PrintContext;
+import me.coley.recaf.util.EscapeUtil;
 
 /**
  * An abstraction of a try-catch range of a given type using named labels.
@@ -74,6 +75,7 @@ public class TryCatch extends BaseElement implements CodeEntry {
 		String type = exceptionType;
 		if (type == null)
 			type = ANY_TYPE;
-		return String.format("%s %s %s %s %s", context.fmtKeyword("catch"), type, startLabel, endLabel, handlerLabel);
+		return String.format("%s %s %s %s %s", context.fmtKeyword("catch"),
+				EscapeUtil.escapeSpace(type), startLabel, endLabel, handlerLabel);
 	}
 }

@@ -92,7 +92,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 				catchGroup.getBegin().getLabel(),
 				catchGroup.getEnd().getLabel(),
 				catchGroup.getHandler().getLabel(),
-				catchGroup.getException().content()));
+				content(catchGroup.getException())));
 	}
 
 	@Override
@@ -102,7 +102,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitDirectVarInsn(int opcode, int var) throws AssemblerException {
-
+		// not supported
 	}
 
 	@Override
