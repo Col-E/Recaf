@@ -49,6 +49,7 @@ public class Icons {
 	// Member definitions
 	public static final String FIELD = "icons/member/field.png";
 	public static final String METHOD = "icons/member/method.png";
+	public static final String FIELD_N_METHOD = "icons/member/field_n_method.png";
 	public static final String METHOD_ABSTRACT = "icons/member/method_abstract.png";
 	// Access modifiers
 	public static final String ACCESS_PUBLIC = "icons/modifier/public.png";

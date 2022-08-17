@@ -8,6 +8,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Updatable;
 import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.EscapeUtil;
@@ -19,31 +20,37 @@ import org.objectweb.asm.Type;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import static me.coley.recaf.ui.pane.OutlinePane.showSynthetics;
-import static me.coley.recaf.ui.pane.OutlinePane.showTypes;
-
 /**
  * Tree that represents the {@link MemberInfo} of a {@link CommonClassInfo}.
+ *
+ * @author Matt Coley
  */
 public class OutlineTree extends TreeView<MemberInfo> implements Updatable<CommonClassInfo> {
 	private final ClassRepresentation parent;
-	public OutlineTree(ClassRepresentation parent) {
+	protected final OutlinePane outlinePane;
+
+	public OutlineTree(ClassRepresentation parent, OutlinePane outlinePane) {
 		this.parent = parent;
 		getStyleClass().add("transparent-tree");
+		this.outlinePane = outlinePane;
 	}
 
 	@Override
 	public void onUpdate(CommonClassInfo info) {
 		OutlineItem outlineRoot = new OutlineItem(null);
-		for (FieldInfo fieldInfo : info.getFields()) {
-			if (!showSynthetics.get() && AccessFlag.isSynthetic(fieldInfo.getAccess()))
-				continue;
-			outlineRoot.getChildren().add(new OutlineItem(fieldInfo));
+		if (outlinePane.memberType.get() != OutlinePane.MemberType.METHOD) {
+			for (FieldInfo fieldInfo : info.getFields()) {
+				if (!outlinePane.showSynthetics.get() && AccessFlag.isSynthetic(fieldInfo.getAccess()))
+					continue;
+				outlineRoot.getChildren().add(new OutlineItem(fieldInfo));
+			}
 		}
-		for (MethodInfo methodInfo : info.getMethods()) {
-			if (!showSynthetics.get() && AccessFlag.isSynthetic(methodInfo.getAccess()))
-				continue;
-			outlineRoot.getChildren().add(new OutlineItem(methodInfo));
+		if (outlinePane.memberType.get() != OutlinePane.MemberType.FIELD) {
+			for (MethodInfo methodInfo : info.getMethods()) {
+				if (!outlinePane.showSynthetics.get() && AccessFlag.isSynthetic(methodInfo.getAccess()))
+					continue;
+				outlineRoot.getChildren().add(new OutlineItem(methodInfo));
+			}
 		}
 		outlineRoot.setExpanded(true);
 		// Set factory to null while we update the root. This allows existing cells to be aware that they should
@@ -103,7 +110,7 @@ public class OutlineTree extends TreeView<MemberInfo> implements Updatable<Commo
 				String desc = item.getDescriptor();
 				if (item.isField()) {
 					String text = name;
-					if (showTypes.get()) {
+					if (outlinePane.showTypes.get()) {
 						String type;
 						if (Types.isValidDesc(desc))
 							type = StringUtil.shortenPath(Type.getType(desc).getInternalName());
@@ -119,7 +126,7 @@ public class OutlineTree extends TreeView<MemberInfo> implements Updatable<Commo
 				} else {
 					MethodInfo methodInfo = (MethodInfo) item;
 					String text = name;
-					if (showTypes.get()) {
+					if (outlinePane.showTypes.get()) {
 						text += "(" + Arrays.stream(Type.getArgumentTypes(desc))
 							.map(argType -> StringUtil.shortenPath(argType.getInternalName()))
 							.collect(Collectors.joining(", ")) +

@@ -69,6 +69,10 @@ public class EditorConfig implements ConfigContainer {
 	@ConfigID("showoutlinedsynths")
 	public boolean showOutlinedSynthetics;
 
+	@Group("outline")
+	@ConfigID("showoutlinedmembertype")
+	public OutlinePane.MemberType showOutlinedMemberType = OutlinePane.MemberType.ALL;
+
 	/**
 	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.
 	 */
