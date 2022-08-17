@@ -245,6 +245,7 @@ public class SearchPane extends BorderPane {
 
 			final ObjectProperty<Type> type = new SimpleObjectProperty<>();
 			final StringProperty returnType = new SimpleStringProperty();
+			final StringProperty parameters = new SimpleStringProperty();
 
 			enum Type {
 				FIELD, METHOD;
@@ -277,9 +278,9 @@ public class SearchPane extends BorderPane {
 		return advancedSearch.searchPane = new SearchPane(title, Containers
 			.gridAsRows(2)
 			.padding(5, 10, 5, 10)
-			.defaultColumnConstraint()
+			.columnConstraint(c -> c.percentWidth(30))
+			.columnConstraint(c -> c.fillWidth(true).h(HPos.LEFT, Priority.ALWAYS))
 			.vgap(5)
-			.columnConstraint(c -> c.fillWidth(false).h(HPos.RIGHT, Priority.ALWAYS))
 			.add(label("Target"), choice(AdvancedSearch.Target.values(), AdvancedSearch.Target::name, AdvancedSearch.Target.MEMBER, SelectionMode.SINGLE)
 				.bind(advancedSearch.target))
 			.add(label("Identifier"), textField().bindText(advancedSearch.identifier))
@@ -296,6 +297,7 @@ public class SearchPane extends BorderPane {
 				choice(AdvancedSearch.Type.TypeType.values(), AdvancedSearch.Type.TypeType::name, AdvancedSearch.Type.TypeType.CLASS, SelectionMode.MULTIPLE)
 					.bind(advancedSearch.type.type)
 			)
+			.addIf(whenTargetIsMethod, label("Parameters"), textField().bindText(advancedSearch.member.parameters))
 			.addIf(whenTargetIsMember, nodeSwitch(AdvancedSearch.Member.Type.values(), advancedSearch.member.type)
 					.forCase(AdvancedSearch.Member.Type.FIELD, label("Type"))
 					.forCase(AdvancedSearch.Member.Type.METHOD, label("Return type")),
