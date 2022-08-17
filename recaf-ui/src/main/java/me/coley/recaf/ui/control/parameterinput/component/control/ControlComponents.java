@@ -7,6 +7,7 @@ import me.coley.recaf.ui.control.parameterinput.component.control.button.ButtonC
 import me.coley.recaf.ui.control.parameterinput.component.control.checkbox.CheckBoxComponent;
 import me.coley.recaf.ui.control.parameterinput.component.control.checkbox.CheckBoxComponentImpl;
 import me.coley.recaf.ui.control.parameterinput.component.control.choice.MultipleChoiceSelector;
+import me.coley.recaf.ui.control.parameterinput.component.control.choice.MultipleChoiceSelector.SelectionMode;
 import me.coley.recaf.ui.control.parameterinput.component.control.field.TextFieldComponent;
 import me.coley.recaf.ui.control.parameterinput.component.control.label.LabelComponent;
 import me.coley.recaf.ui.control.parameterinput.component.control.nodeswitch.NodeSwitchComponent;
@@ -21,16 +22,16 @@ public class ControlComponents {
 		return node;
 	}
 
-	public static <C> MultipleChoiceSelector<C> choice(C[] choices, ToObservableString<C> transformer, C selected) {
-		return MultipleChoiceSelector.choice(choices, transformer, selected);
+	public static <C> MultipleChoiceSelector<C> choice(C[] choices, ToObservableString<C> transformer, C selected, SelectionMode mode) {
+		return MultipleChoiceSelector.choice(choices, transformer, selected, mode);
 	}
 
-	public static MultipleChoiceSelector<String> choice(String[] choices, String selected) {
-		return MultipleChoiceSelector.choice(choices, (ToString<String>) s->s, selected);
+	public static MultipleChoiceSelector<String> choice(String[] choices, String selected, SelectionMode mode) {
+		return MultipleChoiceSelector.choice(choices, (ToString<String>) s->s, selected, mode);
 	}
 
-	public static <C> MultipleChoiceSelector<C> choice(C[] choices, ToString<C> transformer, C selected) {
-		return MultipleChoiceSelector.choice(choices, transformer, selected);
+	public static <C> MultipleChoiceSelector<C> choice(C[] choices, ToString<C> transformer, C selected, SelectionMode mode) {
+		return MultipleChoiceSelector.choice(choices, transformer, selected, mode);
 	}
 
 	public static <Choice, R extends NodeSwitchComponent<Choice, R>> R nodeSwitch(Choice[] choices, ObservableValue<Choice> observable) {

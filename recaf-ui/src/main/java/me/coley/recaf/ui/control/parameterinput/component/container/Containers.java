@@ -2,8 +2,8 @@ package me.coley.recaf.ui.control.parameterinput.component.container;
 
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.ui.control.parameterinput.component.container.grid.GridComponent;
+import me.coley.recaf.ui.control.parameterinput.component.container.grid.GridComponentAddStage;
 import me.coley.recaf.ui.control.parameterinput.component.container.grid.GridPaneComponentCreationStage;
-import me.coley.recaf.ui.control.parameterinput.component.container.stage.AddStage;
 import me.coley.recaf.ui.control.parameterinput.component.container.stage.creation.AddingStrategy;
 import me.coley.recaf.ui.control.parameterinput.component.control.label.LabelComponent;
 
@@ -14,13 +14,13 @@ public class Containers {
 
 
 	public static
-	<NextAS extends AddStage<GridPane, NextAS>, R extends GridPaneComponentCreationStage<GridPane, NextAS, R>>
+	<NextAS extends GridComponentAddStage<GridPane, NextAS>, R extends GridPaneComponentCreationStage<GridPane, NextAS, R>>
 	R gridAsRows(int columns) {
 		return (R) GridComponent.gridAsRows(columns);
 	}
 
 	public static
-	<NextAS extends AddStage<GridPane, NextAS>, R extends GridPaneComponentCreationStage<GridPane, NextAS, R>>
+	<NextAS extends GridComponentAddStage<GridPane, NextAS>, R extends GridPaneComponentCreationStage<GridPane, NextAS, R>>
 	R gridAsColumns(int rows) {
 		return (R) GridComponent.gridAsColumns(rows);
 	}

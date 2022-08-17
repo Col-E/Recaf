@@ -106,6 +106,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 				() -> showSearch("menu.search.references", SearchPane.createReferenceSearch())));
 		menuSearch.getItems().add(action("menu.search.declarations", Icons.T_STRUCTURE,
 				() -> showSearch("menu.search.declarations", SearchPane.createDeclarationSearch())));
+		menuSearch.getItems().add(action("menu.search.advanced", Icons.T_STRUCTURE,
+			() -> showSearch("menu.search.advanced", SearchPane.creatAdvancedSearch())));
 
 		menuPlugins.getItems().add(action("menu.plugin.manage", Icons.OPEN_FILE, this::openPluginManager));
 

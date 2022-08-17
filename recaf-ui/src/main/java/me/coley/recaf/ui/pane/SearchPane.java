@@ -1,11 +1,14 @@
 package me.coley.recaf.ui.pane;
 
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.HPos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FileInfo;
@@ -18,6 +21,8 @@ import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.ColumnPane;
 import me.coley.recaf.ui.control.EnumComboBox;
+import me.coley.recaf.ui.control.parameterinput.component.container.Containers;
+import me.coley.recaf.ui.control.parameterinput.component.control.choice.MultipleChoiceSelector.SelectionMode;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.DockingRegion;
 import me.coley.recaf.ui.docking.RecafDockingManager;
@@ -38,6 +43,8 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static me.coley.recaf.ui.control.parameterinput.component.control.ControlComponents.*;
+
 /**
  * Panel for search operations.
  *
@@ -49,10 +56,10 @@ public class SearchPane extends BorderPane {
 
 	private SearchPane(ObservableValue<String> title, Node content) {
 		DockingWrapperPane wrapper = DockingWrapperPane.builder()
-				.title(title)
-				.content(content)
-				.size(600, 300)
-				.build();
+			.title(title)
+			.content(content)
+			.size(600, 300)
+			.build();
 		containingTab = wrapper.getTab();
 		setCenter(wrapper);
 	}
@@ -66,14 +73,12 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param text
-	 * 		Initial query.
-	 *
+	 * @param text Initial query.
 	 * @return Text search panel.
 	 */
 	public static SearchPane createTextSearch(String text) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
-				Lang.getBinding("menu.search.string"));
+			Lang.getBinding("menu.search.string"));
 		// Inputs
 		TextField txtText = new TextField(text);
 		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
@@ -98,14 +103,12 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param number
-	 * 		Initial query.
-	 *
+	 * @param number Initial query.
 	 * @return Number search panel.
 	 */
 	public static SearchPane createNumberSearch(String number) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
-				Lang.getBinding("menu.search.number"));
+			Lang.getBinding("menu.search.number"));
 		// Inputs
 		TextField txtNumber = new TextField(number);
 		EnumComboBox<NumberMatchMode> comboMode = new EnumComboBox<>(NumberMatchMode.class, NumberMatchMode.EQUALS);
@@ -130,13 +133,9 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param owner
-	 * 		Internal name of owner.
-	 * @param name
-	 * 		Reference name.
-	 * @param desc
-	 * 		Reference descriptor.
-	 *
+	 * @param owner Internal name of owner.
+	 * @param name  Reference name.
+	 * @param desc  Reference descriptor.
 	 * @return Reference search panel.
 	 */
 	public static SearchPane createReferenceSearch(String owner, String name, String desc) {
@@ -144,20 +143,15 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param owner
-	 * 		Internal name of owner.
-	 * @param name
-	 * 		Reference name.
-	 * @param desc
-	 * 		Reference descriptor.
-	 * @param mode
-	 * 		Text match mode for member input.
-	 *
+	 * @param owner Internal name of owner.
+	 * @param name  Reference name.
+	 * @param desc  Reference descriptor.
+	 * @param mode  Text match mode for member input.
 	 * @return Reference search panel.
 	 */
 	public static SearchPane createReferenceSearch(String owner, String name, String desc, TextMatchMode mode) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
-				Lang.getBinding("menu.search.references"));
+			Lang.getBinding("menu.search.references"));
 		// Inputs
 		TextField txtOwner = new TextField(owner);
 		TextField txtName = new TextField(name);
@@ -176,8 +170,8 @@ public class SearchPane extends BorderPane {
 		columns.add(modeLabel, comboMode);
 		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchReference(
-					txtOwner.getText(), txtName.getText(), txtDesc.getText(),
-					comboMode.getValue());
+				txtOwner.getText(), txtName.getText(), txtDesc.getText(),
+				comboMode.getValue());
 		}));
 		return searchPane;
 	}
@@ -190,18 +184,14 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param owner
-	 * 		Internal name of owner.
-	 * @param name
-	 * 		Declaration name.
-	 * @param desc
-	 * 		Declaration descriptor.
-	 *
+	 * @param owner Internal name of owner.
+	 * @param name  Declaration name.
+	 * @param desc  Declaration descriptor.
 	 * @return Declaration search panel.
 	 */
 	public static SearchPane createDeclarationSearch(String owner, String name, String desc) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
-				Lang.getBinding("menu.search.declarations"));
+			Lang.getBinding("menu.search.declarations"));
 		// Inputs
 		TextField txtOwner = new TextField(owner);
 		TextField txtName = new TextField(name);
@@ -220,10 +210,109 @@ public class SearchPane extends BorderPane {
 		columns.add(modeLabel, comboMode);
 		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchDeclaration(
-					txtOwner.getText(), txtName.getText(), txtDesc.getText(),
-					comboMode.getValue());
+				txtOwner.getText(), txtName.getText(), txtDesc.getText(),
+				comboMode.getValue());
 		}));
 		return searchPane;
+	}
+
+	static class AdvancedSearch {
+		final ObjectProperty<Target> target = new SimpleObjectProperty<>();
+		final StringProperty identifier = new SimpleStringProperty();
+		final BooleanProperty deprecated = new SimpleBooleanProperty();
+		final BooleanProperty publiclyAccessible = new SimpleBooleanProperty();
+		final Member member = new Member();
+		final Type type = new Type();
+		final ObjectProperty<TargetType> targetType = new SimpleObjectProperty<>();
+		final BooleanProperty isStatic = new SimpleBooleanProperty();
+		final SetProperty<Where> where = new SimpleSetProperty<>();
+		SearchPane searchPane;
+
+
+		enum Target {
+			MEMBER, TYPE;
+		}
+
+		enum TargetType {
+			REFERENCE, DECLARATION;
+		}
+
+		enum Where {
+			IN_CODE, AS_RETURN_TYPE, AS_PARAMETER, AS_SUPER_TYPE
+		}
+
+		static class Member {
+
+			final ObjectProperty<Type> type = new SimpleObjectProperty<>();
+			final StringProperty returnType = new SimpleStringProperty();
+
+			enum Type {
+				FIELD, METHOD;
+			}
+
+			final StringProperty owner = new SimpleStringProperty();
+		}
+
+		static class Type {
+			final SetProperty<TypeType> type = new SimpleSetProperty<>();
+
+			enum TypeType {
+				CLASS, RECORD, ENUM, INTERFACE
+			}
+
+		}
+	}
+
+	public static SearchPane creatAdvancedSearch() {
+		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
+			Lang.getBinding("menu.search.advanced"));
+		var advancedSearch = new AdvancedSearch();
+		var whenTargetIsMember = advancedSearch.target.isEqualTo(AdvancedSearch.Target.MEMBER);
+		var whenTargetIsMethod = whenTargetIsMember
+			.and(advancedSearch.member.type.isEqualTo(AdvancedSearch.Member.Type.METHOD));
+		var whenTargetTypeIsDeclaration = advancedSearch.targetType.isEqualTo(AdvancedSearch.TargetType.DECLARATION);
+		var whenTargetIsType = advancedSearch.target.isEqualTo(AdvancedSearch.Target.TYPE);
+
+
+		return advancedSearch.searchPane = new SearchPane(title, Containers
+			.gridAsRows(2)
+			.padding(5, 10, 5, 10)
+			.defaultColumnConstraint()
+			.vgap(5)
+			.columnConstraint(c -> c.fillWidth(false).h(HPos.RIGHT, Priority.ALWAYS))
+			.add(label("Target"), choice(AdvancedSearch.Target.values(), AdvancedSearch.Target::name, AdvancedSearch.Target.MEMBER, SelectionMode.SINGLE)
+				.bind(advancedSearch.target))
+			.add(label("Identifier"), textField().bindText(advancedSearch.identifier))
+			.add(label("Deprecated"), checkbox().bind(advancedSearch.deprecated))
+			.add(label("Public"), checkbox().bind(advancedSearch.publiclyAccessible))
+			.addIf(whenTargetIsMember, label("Owner"), textField().bindText(advancedSearch.member.owner))
+			.addIf(whenTargetIsMember,
+				label("Member type"),
+				choice(AdvancedSearch.Member.Type.values(), AdvancedSearch.Member.Type::name, AdvancedSearch.Member.Type.FIELD, SelectionMode.SINGLE)
+					.bind(advancedSearch.member.type)
+			)
+			.addIf(whenTargetIsType,
+				label("Type type"),
+				choice(AdvancedSearch.Type.TypeType.values(), AdvancedSearch.Type.TypeType::name, AdvancedSearch.Type.TypeType.CLASS, SelectionMode.MULTIPLE)
+					.bind(advancedSearch.type.type)
+			)
+			.addIf(whenTargetIsMember, nodeSwitch(AdvancedSearch.Member.Type.values(), advancedSearch.member.type)
+					.forCase(AdvancedSearch.Member.Type.FIELD, label("Type"))
+					.forCase(AdvancedSearch.Member.Type.METHOD, label("Return type")),
+				textField().bindText(advancedSearch.member.returnType)
+			)
+			.add(
+				label("Target Type"),
+				choice(AdvancedSearch.TargetType.values(), AdvancedSearch.TargetType::name, AdvancedSearch.TargetType.REFERENCE, SelectionMode.SINGLE)
+					.bind(advancedSearch.targetType)
+			)
+			.addIf(whenTargetTypeIsDeclaration, label("Static"), checkbox().bind(advancedSearch.isStatic))
+			.addIf(whenTargetTypeIsDeclaration.not().and(whenTargetIsType), label("Where"),
+				choice(AdvancedSearch.Where.values(), AdvancedSearch.Where::name, AdvancedSearch.Where.IN_CODE, SelectionMode.MULTIPLE)
+					.bind(advancedSearch.where)
+			)
+			.build().nodeWithData(advancedSearch)
+		);
 	}
 
 	private void runSearch(Search search) {
@@ -270,7 +359,7 @@ public class SearchPane extends BorderPane {
 		FxThreadUtil.run(() -> {
 			DockingRegion region = containingTab.getParent();
 			DockTab tab = RecafDockingManager.getInstance().createTabIn(region,
-					() -> new DockTab(Lang.getBinding("search.results"), resultsPane));
+				() -> new DockTab(Lang.getBinding("search.results"), resultsPane));
 			region.getSelectionModel().select(tab);
 		});
 	}

@@ -4,7 +4,7 @@ import javafx.geometry.HPos;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
 
-public class ColumnConstraintsBuilder extends ColumnConstraints {
+public class ColumnConstraintsBuilder {
 
 	private final ColumnConstraints constraints = new ColumnConstraints();
 

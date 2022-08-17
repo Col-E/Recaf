@@ -5,18 +5,21 @@
     -fx-background-color: transparent;
 }
 
-.selection > .selection-button {
+.selection .toggle-button {
     -fx-background-color: #3c3f41;
     -fx-text-fill: #9b9c9c;
-    -fx-border-style: none;
+    -fx-border-color: #3c3f41;
+    -fx-border-width: 0px;
+    -fx-border-radius: 0px;
+    -fx-background-radius: 0px;
 }
 
-.selection > .selection-button.selected {
+.selection .toggle-button:selected {
     -fx-background-color: #4c5052;
     -fx-border-color: #555858;
 }
 
-.selection > .selection-button:hover {
+.selection .toggle-button:hover {
     -fx-background-color: #666666;
     -fx-fill: #666666;
 }

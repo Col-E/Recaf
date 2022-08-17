@@ -4,11 +4,11 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
-import javafx.scene.Parent;
+import javafx.scene.layout.Pane;
 
 import java.util.Map;
 
-public class NodeSwitch<Choice> extends Parent {
+public class NodeSwitch<Choice> extends Pane {
 	private final ObjectProperty<Choice> choiceProperty = new SimpleObjectProperty<>();
 
 	private final Node defaultNode;
@@ -16,7 +16,8 @@ public class NodeSwitch<Choice> extends Parent {
 	public NodeSwitch(Map<Choice, Node> choices, Node defaultNode, ObservableValue<Choice> observable) {
 		this.defaultNode = defaultNode;
 		choiceProperty.bind(observable);
-		getChildren().setAll(choices.getOrDefault(observable.getValue(), defaultNode));
+		var nodeChoice = choices.getOrDefault(observable.getValue(), defaultNode);
+		if(nodeChoice != null) getChildren().setAll(nodeChoice);
 		choiceProperty.addListener((obs, oldV, newV) -> {
 			Node node = choices.get(newV);
 			if (node != null) getChildren().setAll(node);

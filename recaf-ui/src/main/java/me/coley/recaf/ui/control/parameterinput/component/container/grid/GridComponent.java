@@ -1,21 +1,22 @@
 package me.coley.recaf.ui.control.parameterinput.component.container.grid;
 
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import me.coley.recaf.ui.control.parameterinput.component.container.stage.AddStage;
+import javafx.scene.layout.*;
 import me.coley.recaf.ui.control.parameterinput.component.container.stage.BuildStage;
 import me.coley.recaf.ui.control.parameterinput.component.container.stage.creation.AddingStrategy;
-import me.coley.recaf.ui.control.parameterinput.util.ColumnConstraintsBuilder;
+import me.coley.recaf.ui.control.parameterinput.util.RowConstraintsBuilder;
 
+import java.util.Arrays;
 import java.util.function.Consumer;
 
+import static me.coley.recaf.ui.control.parameterinput.NodeToggle.nodeToggle;
+
 interface IGridComponent extends GridPaneComponentCreationStage<GridPane, IGridComponent, IGridComponent>,
-	BuildStage<GridPane, IGridComponent>, AddStage<GridPane, IGridComponent> {}
+	BuildStage<GridPane, IGridComponent>, GridComponentAddStage<GridPane, IGridComponent> {}
 
 public class GridComponent implements IGridComponent {
 
@@ -24,6 +25,8 @@ public class GridComponent implements IGridComponent {
 
 	private int row = 0;
 	private int column = 0;
+
+	private double vgap = 0;
 
 	private AddingStrategy strategy = AddingStrategy.ROW;
 	private final GridPane grid = new GridPane();
@@ -48,7 +51,7 @@ public class GridComponent implements IGridComponent {
 
 	@Override
 	public GridComponent vgap(double vgap) {
-		grid.setVgap(vgap);
+		this.vgap = vgap;
 		return this;
 	}
 
@@ -77,18 +80,11 @@ public class GridComponent implements IGridComponent {
 	}
 
 	@Override
-	public GridComponent addColumnConstraints(ColumnConstraintsBuilder... constraints) {
-		for (ColumnConstraintsBuilder builder : constraints) {
-			grid.getColumnConstraints().add(builder.build());
-		}
-		return this;
-	}
-
-	@Override
 	public GridComponent add(Node node) {
 		switch (strategy) {
 			case ROW:
 				grid.add(node, 0, row++, columns, 1);
+				grid.getRowConstraints().add(RowConstraintsBuilder.columnConstrains().v(VPos.CENTER, Priority.NEVER).build());
 				break;
 			case COLUMN:
 				grid.add(node, column++, 0, 1, rows);
@@ -117,7 +113,6 @@ public class GridComponent implements IGridComponent {
 				if (nodes.length != columns) {
 					HBox box = new HBox(nodes);
 					box.setAlignment(Pos.TOP_LEFT);
-					box.setStyle("-fx-fill: red");
 					add(box);
 				} else {
 					column = 0;
@@ -125,6 +120,7 @@ public class GridComponent implements IGridComponent {
 						if (node == null) column++;
 						else grid.add(node, column++, row, 1, 1);
 					}
+					grid.getRowConstraints().add(RowConstraintsBuilder.columnConstrains().v(VPos.CENTER, Priority.NEVER).build());
 					row++;
 				}
 				break;
@@ -226,5 +222,15 @@ public class GridComponent implements IGridComponent {
 	public GridComponent padding(double top, double right, double bottom, double left) {
 		grid.setPadding(new Insets(top, right, bottom, left));
 		return this;
+	}
+
+	@Override
+	public IGridComponent addIf(ObservableBooleanValue condition, Node node) {
+		return add((Node) nodeToggle(condition, node));
+	}
+
+	@Override
+	public IGridComponent addIf(ObservableBooleanValue condition, Node... nodes) {
+		return add(Arrays.stream(nodes).map(node -> node == null ? null : (Node) nodeToggle(condition, node)).toArray(Node[]::new));
 	}
 }
