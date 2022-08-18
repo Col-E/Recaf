@@ -26,9 +26,11 @@ import me.coley.recaf.ui.control.tree.OutlineTree;
 import me.coley.recaf.ui.control.tree.OutlineTreeWrapper;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.NodeEvents;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static me.coley.recaf.ui.util.Icons.getIconView;
 
@@ -58,14 +60,21 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	}
 
 	public enum Visibility {
-		ALL(Icons.ACCESS_ALL_VISIBILITY),
-		PUBLIC(Icons.ACCESS_PUBLIC),
-		PROTECTED(Icons.ACCESS_PROTECTED),
-		PACKAGE(Icons.ACCESS_PACKAGE),
-		PRIVATE(Icons.ACCESS_PRIVATE);
+		ALL(Icons.ACCESS_ALL_VISIBILITY, (flags) -> true),
+		PUBLIC(Icons.ACCESS_PUBLIC, (flags) -> AccessFlag.isPublic(flags)),
+		PROTECTED(Icons.ACCESS_PROTECTED, (flags) -> AccessFlag.isProtected(flags)),
+		PACKAGE(Icons.ACCESS_PACKAGE, (flags) -> AccessFlag.isPackage(flags)),
+		PRIVATE(Icons.ACCESS_PRIVATE, (flags) -> AccessFlag.isPrivate(flags));
 		final String icon;
-		Visibility(String icon) {
+		private final Function<Integer, Boolean> isAccess;
+
+		Visibility(String icon, Function<Integer, Boolean> isAccess) {
 			this.icon = icon;
+			this.isAccess = isAccess;
+		}
+
+		public boolean isAccess(int flags) {
+			return isAccess.apply(flags);
 		}
 	}
 
