@@ -5,10 +5,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
 import com.google.gson.TypeAdapter;
 import com.google.gson.internal.bind.TypeAdapters;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import javafx.beans.property.*;
 import javafx.beans.value.*;
+import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.ReflectUtil;
@@ -47,6 +49,8 @@ public class ConfigRegistry {
 		registerTypeAdapter(builder, WritableLongValue.class, (w, v) -> w.value(v.get()), r -> new SimpleLongProperty(r.nextLong()));
 		registerTypeAdapter(builder, WritableBooleanValue.class, (w, v) -> w.value(v.get()), r -> new SimpleBooleanProperty(r.nextBoolean()));
 		registerTypeAdapter(builder, WritableStringValue.class, (w, v) -> w.value(v.get()), r -> new SimpleStringProperty(r.nextString()));
+		registerEnumTypeAdapter(builder, OutlinePane.MemberType.class);
+		registerEnumTypeAdapter(builder, OutlinePane.Visibility.class);
 		gson = builder.setPrettyPrinting().create();
 	}
 
@@ -220,7 +224,7 @@ public class ConfigRegistry {
 	}
 
 	private static <T> void registerTypeAdapter(GsonBuilder builder, Class<T> base, UncheckedBiConsumer<JsonWriter, T> write, UncheckedFunction<JsonReader, T> read) {
-		builder.registerTypeAdapterFactory(TypeAdapters.newTypeHierarchyFactory(base, new TypeAdapter<T>() {
+		builder.registerTypeAdapterFactory(TypeAdapters.newTypeHierarchyFactory(base, new TypeAdapter<>() {
 			@Override
 			public void write(JsonWriter out, T value) throws IOException {
 				write.accept(out, value);
@@ -229,6 +233,20 @@ public class ConfigRegistry {
 			@Override
 			public T read(JsonReader in) throws IOException {
 				return read.apply(in);
+			}
+		}));
+	}
+
+	private static <E extends Enum<E>> void registerEnumTypeAdapter(GsonBuilder builder, Class<E> enumClazz) {
+		builder.registerTypeAdapterFactory(TypeAdapters.newFactory((TypeToken<ObjectProperty<E>>) TypeToken.getParameterized(ObjectProperty.class, enumClazz), new TypeAdapter<>() {
+			@Override
+			public void write(JsonWriter out, ObjectProperty<E> value) throws IOException {
+				out.value(value.get().name());
+			}
+
+			@Override
+			public ObjectProperty<E> read(JsonReader in) throws IOException {
+				return new SimpleObjectProperty<>(Enum.valueOf(enumClazz, in.nextString()));
 			}
 		}));
 	}

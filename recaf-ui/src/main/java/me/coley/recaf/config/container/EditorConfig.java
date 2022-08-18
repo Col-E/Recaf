@@ -1,10 +1,9 @@
 package me.coley.recaf.config.container;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
-import me.coley.recaf.config.ConfigContainer;
-import me.coley.recaf.config.ConfigID;
-import me.coley.recaf.config.Group;
-import me.coley.recaf.config.IntBounds;
+import me.coley.recaf.config.*;
 import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.DiffViewMode;
 import me.coley.recaf.ui.FileViewMode;
@@ -69,9 +68,22 @@ public class EditorConfig implements ConfigContainer {
 	@ConfigID("showoutlinedsynths")
 	public boolean showOutlinedSynthetics;
 
+	/**
+	 * Filter out members by type (method/field).
+	 */
 	@Group("outline")
 	@ConfigID("showoutlinedmembertype")
-	public OutlinePane.MemberType showOutlinedMemberType = OutlinePane.MemberType.ALL;
+	@UsingGenericTypes(OutlinePane.MemberType.class)
+	public ObjectProperty<OutlinePane.MemberType> showOutlinedMemberType = new SimpleObjectProperty<>(OutlinePane.MemberType.ALL);
+
+	/**
+	 * Filter out members by visibility (public/protected/package/private). Showing at which state something can be accessed
+	 * Ex.: with protected selected, only protected and public members are shown.
+	 */
+	@Group("outline")
+	@ConfigID("showoutlinedvisibility")
+	@UsingGenericTypes(OutlinePane.Visibility.class)
+	public ObjectProperty<OutlinePane.Visibility> showOutlinedVisibility = new SimpleObjectProperty<>(OutlinePane.Visibility.ALL);
 
 	/**
 	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.

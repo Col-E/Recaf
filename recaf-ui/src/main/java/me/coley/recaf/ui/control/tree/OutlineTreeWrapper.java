@@ -55,6 +55,24 @@ public class OutlineTreeWrapper extends OutlineTree {
 	}
 
 	private void filter(int access, boolean caseSensitive, String name, String filterStr, OutlineItem outlineRoot, MemberInfo memberInfo) {
+		switch (outlinePane.visibility.get()) {
+			case PROTECTED:
+				if (!AccessFlag.isProtected(access))
+					return;
+				break;
+			case PACKAGE:
+				if (AccessFlag.isPrivate(access) || AccessFlag.isProtected(access) || AccessFlag.isPublic(access))
+					return;
+				break;
+			case PRIVATE:
+				if (!AccessFlag.isPrivate(access))
+					return;
+				break;
+			case PUBLIC:
+				if (!AccessFlag.isPublic(access))
+					return;
+			default:
+		}
 		if (!outlinePane.showSynthetics.get() && AccessFlag.isSynthetic(access))
 			return;
 		if (caseSensitive) {

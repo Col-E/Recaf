@@ -52,6 +52,7 @@ public class Icons {
 	public static final String FIELD_N_METHOD = "icons/member/field_n_method.png";
 	public static final String METHOD_ABSTRACT = "icons/member/method_abstract.png";
 	// Access modifiers
+	public static final String ACCESS_ALL_VISIBILITY = "icons/modifier/all_visibility.png";
 	public static final String ACCESS_PUBLIC = "icons/modifier/public.png";
 	public static final String ACCESS_PROTECTED = "icons/modifier/protected.png";
 	public static final String ACCESS_PACKAGE = "icons/modifier/package.png";

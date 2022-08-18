@@ -2,10 +2,7 @@ package me.coley.recaf.config.container;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import me.coley.recaf.config.ConfigContainer;
-import me.coley.recaf.config.ConfigID;
-import me.coley.recaf.config.Group;
-import me.coley.recaf.config.IntBounds;
+import me.coley.recaf.config.*;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Translatable;
@@ -19,11 +16,13 @@ public class DisplayConfig implements ConfigContainer {
 	/**
 	 * Left bound (minimum) for {@link #fontSize font size}.
 	 */
+	@Ignore
 	public static final int FONT_SIZE_BOUND_LEFT = 8;
 
 	/**
 	 * Right bound (maximum) for {@link #fontSize font size}.
 	 */
+	@Ignore
 	public static final int FONT_SIZE_BOUND_RIGHT = 20;
 
 	/**
