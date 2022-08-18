@@ -27,6 +27,7 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.NodeEvents;
+import me.coley.recaf.util.Translatable;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -47,18 +48,23 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	private final OutlineTreeWrapper tree;
 	private CommonClassInfo classInfo;
 
-	public enum MemberType {
-		ALL(Icons.FIELD_N_METHOD),
-		FIELD(Icons.FIELD),
-		METHOD(Icons.METHOD);
+	public enum MemberType implements Translatable {
+		ALL(Icons.FIELD_N_METHOD, "misc.all"),
+		FIELD(Icons.FIELD, "misc.member.field"),
+		METHOD(Icons.METHOD, "misc.member.method");
 		final String icon;
+		final String key;
 
-		MemberType(String icon) {
+		MemberType(String icon, String key) {
 			this.icon = icon;
+			this.key = key;
 		}
+
+		@Override
+		public String getTranslationKey() {return key;}
 	}
 
-	public enum Visibility {
+	public enum Visibility implements Translatable {
 		ALL(Icons.ACCESS_ALL_VISIBILITY, (flags) -> true),
 		PUBLIC(Icons.ACCESS_PUBLIC, (flags) -> AccessFlag.isPublic(flags)),
 		PROTECTED(Icons.ACCESS_PROTECTED, (flags) -> AccessFlag.isProtected(flags)),
@@ -92,8 +98,16 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 			return ALL;
 		}
 
-		public enum IconPosition {
-			NONE, LEFT, RIGHT
+		@Override
+		public String getTranslationKey() {return this == ALL ? "misc.all" : "misc.accessflag.visibility." + name().toLowerCase();}
+
+		public enum IconPosition implements Translatable {
+			NONE, LEFT, RIGHT;
+
+			@Override
+			public String getTranslationKey() {
+				return this == NONE ? "misc.none" : "misc.position." + name().toLowerCase();
+			}
 		}
 	}
 
@@ -194,7 +208,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		return this;
 	}
 
-	private final	ChangeListener<?> listenerToUpdate = (observable, oldValue, newValue) -> onUpdate(classInfo);
+	private final ChangeListener<?> listenerToUpdate = (observable, oldValue, newValue) -> onUpdate(classInfo);
 
 	/**
 	 * @return Box containing tree display options.
