@@ -5,7 +5,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.WeakChangeListener;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -65,7 +64,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		PROTECTED(Icons.ACCESS_PROTECTED, (flags) -> AccessFlag.isProtected(flags)),
 		PACKAGE(Icons.ACCESS_PACKAGE, (flags) -> AccessFlag.isPackage(flags)),
 		PRIVATE(Icons.ACCESS_PRIVATE, (flags) -> AccessFlag.isPrivate(flags));
-		final String icon;
+		public final String icon;
 		private final Function<Integer, Boolean> isAccess;
 
 		Visibility(String icon, Function<Integer, Boolean> isAccess) {
@@ -75,6 +74,26 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 
 		public boolean isAccess(int flags) {
 			return isAccess.apply(flags);
+		}
+
+		public static Visibility ofMember(MemberInfo memberInfo) {
+			return ofAccess(memberInfo.getAccess());
+		}
+
+		private static Visibility ofAccess(int access) {
+			if (AccessFlag.isPublic(access))
+				return PUBLIC;
+			if (AccessFlag.isProtected(access))
+				return PROTECTED;
+			if (AccessFlag.isPackage(access))
+				return PACKAGE;
+			if (AccessFlag.isPrivate(access))
+				return PRIVATE;
+			return ALL;
+		}
+
+		public enum IconPosition {
+			NONE, LEFT, RIGHT
 		}
 	}
 
@@ -191,12 +210,13 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		tipShowTypes.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedtypes"));
 		addButton(box, tipShowTypes, Icons.CODE, showTypes, (newVal) -> Configs.editor().showOutlinedTypes = newVal);
 		// Member type
+		Class<? extends Enum<?>> enumChoice = MemberType.class;
 		Tooltip tipMemberType = new Tooltip();
 		tipMemberType.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedmembertype"));
 		Button memberTypeButton = new Button();
 		memberTypeButton.setTooltip(tipMemberType);
 		var memberType = Configs.editor().showOutlinedMemberType;
-		memberType.addListener(new WeakChangeListener(listenerToUpdate));
+		memberType.addListener((ChangeListener<? super MemberType>) listenerToUpdate);
 		memberTypeButton.graphicProperty().bind(Bindings.createObjectBinding(() -> getIconView(memberType.get().icon), memberType));
 		memberTypeButton.setOnAction(e -> {
 			MemberType newType = MemberType.values()[(memberType.get().ordinal() + 1) % MemberType.values().length];
@@ -209,7 +229,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		Button visibilityButton = new Button();
 		visibilityButton.setTooltip(tipVisibility);
 		var visibility = Configs.editor().showOutlinedVisibility;
-		visibility.addListener(new WeakChangeListener(listenerToUpdate));
+		visibility.addListener((ChangeListener<? super Visibility>) listenerToUpdate);
 		visibilityButton.graphicProperty().bind(Bindings.createObjectBinding(() -> getIconView(visibility.get().icon), visibility));
 		visibilityButton.setOnAction(e -> {
 			Visibility newVisibility = Visibility.values()[(visibility.get().ordinal() + 1) % Visibility.values().length];

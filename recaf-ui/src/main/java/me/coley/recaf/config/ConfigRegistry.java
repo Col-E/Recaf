@@ -49,8 +49,10 @@ public class ConfigRegistry {
 		registerTypeAdapter(builder, WritableLongValue.class, (w, v) -> w.value(v.get()), r -> new SimpleLongProperty(r.nextLong()));
 		registerTypeAdapter(builder, WritableBooleanValue.class, (w, v) -> w.value(v.get()), r -> new SimpleBooleanProperty(r.nextBoolean()));
 		registerTypeAdapter(builder, WritableStringValue.class, (w, v) -> w.value(v.get()), r -> new SimpleStringProperty(r.nextString()));
+		// TODO: make enum adapters dynamically
 		registerEnumTypeAdapter(builder, OutlinePane.MemberType.class);
 		registerEnumTypeAdapter(builder, OutlinePane.Visibility.class);
+		registerEnumTypeAdapter(builder, OutlinePane.Visibility.IconPosition.class);
 		gson = builder.setPrettyPrinting().create();
 	}
 

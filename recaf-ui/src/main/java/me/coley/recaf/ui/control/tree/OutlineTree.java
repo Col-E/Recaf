@@ -1,8 +1,12 @@
 package me.coley.recaf.ui.control.tree;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.WeakChangeListener;
+import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.layout.HBox;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
@@ -119,7 +123,7 @@ public class OutlineTree extends TreeView<MemberInfo> implements Updatable<Commo
 					}
 					int maxLen = Configs.display().maxTreeTextLength;
 					setText(StringUtil.limit(EscapeUtil.escape(text), "...", maxLen));
-					setGraphic(Icons.getFieldIcon((FieldInfo) item));
+					setGraphic(getMemberIcon(item));
 					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item)
 						.setDeclaration(true)
 						.build());
@@ -134,7 +138,7 @@ public class OutlineTree extends TreeView<MemberInfo> implements Updatable<Commo
 					}
 					int maxLen = Configs.display().maxTreeTextLength;
 					setText(StringUtil.limit(EscapeUtil.escape(text), "...", maxLen));
-					setGraphic(Icons.getMethodIcon(methodInfo));
+					setGraphic(getMemberIcon(item));
 					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) item)
 						.setDeclaration(true)
 						.build());
@@ -147,5 +151,34 @@ public class OutlineTree extends TreeView<MemberInfo> implements Updatable<Commo
 		private boolean isRootBeingUpdated() {
 			return getTreeView().getCellFactory() == null;
 		}
+	}
+
+	private static Node getMemberIcon(MemberInfo memberInfo) {
+		Node node = null;
+		if (memberInfo.isField()) {
+			node = Icons.getFieldIcon((FieldInfo) memberInfo);
+		} else if (memberInfo.isMethod()) {
+			node = Icons.getMethodIcon((MethodInfo) memberInfo);
+		}
+		if (node == null) {return null;}
+		var hbox = new HBox();
+
+		Node finalNode = node;
+		ChangeListener<OutlinePane.Visibility.IconPosition> listener = (observable, oldV, newV) -> {
+			if (newV != OutlinePane.Visibility.IconPosition.NONE) {
+				var visIcon = Icons.getIconView(OutlinePane.Visibility.ofMember(memberInfo).icon);
+				if (newV == OutlinePane.Visibility.IconPosition.LEFT) {
+					hbox.getChildren().setAll(visIcon, finalNode);
+				} else {
+					hbox.getChildren().setAll(finalNode, visIcon);
+				}
+			} else {
+				hbox.getChildren().setAll(finalNode);
+			}
+		};
+		listener.changed(null, null, Configs.editor().outlineVisibilityIconPosition.get());
+		Configs.editor().outlineVisibilityIconPosition.addListener(new WeakChangeListener<>(listener));
+		hbox.setUserData(listener);
+		return hbox;
 	}
 }

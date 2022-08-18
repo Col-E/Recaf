@@ -86,6 +86,14 @@ public class EditorConfig implements ConfigContainer {
 	public ObjectProperty<OutlinePane.Visibility> showOutlinedVisibility = new SimpleObjectProperty<>(OutlinePane.Visibility.ALL);
 
 	/**
+	 * Position of the icon for items in the outline.
+	 */
+	@Group("outline")
+	@ConfigID("outlinedvisibilityiconposition")
+	@UsingGenericTypes(OutlinePane.Visibility.IconPosition.class)
+	public ObjectProperty<OutlinePane.Visibility.IconPosition> outlineVisibilityIconPosition = new SimpleObjectProperty<>(OutlinePane.Visibility.IconPosition.RIGHT);
+
+	/**
 	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.
 	 */
 	@Group("hex")
