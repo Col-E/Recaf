@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.pane;
 
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -187,6 +188,8 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 					}
 				}
 			} else logger.trace("Skip field, missing generic type: {}#{} - Use @UsingGenericTypes to specify the generic type", container.getClass(), field.getName());
+		} else if (BooleanProperty.class.isAssignableFrom(type)) {
+			return new ConfigBoolean(container,field, Lang.getBinding(idKey));
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");

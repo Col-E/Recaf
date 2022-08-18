@@ -130,6 +130,8 @@ public class Icons {
 	public static final String STOP = "icons/stop.png";
 	public static final String FORWARD = "icons/forward.png";
 	public static final String BACKWARD = "icons/backward.png";
+	public static final String SORT_ALPHABETICAL = "icons/sort-alphabetical.png";
+	public static final String SORT_VISIBILITY = "icons/sort-visibility.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();

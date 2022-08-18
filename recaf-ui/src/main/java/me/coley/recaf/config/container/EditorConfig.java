@@ -1,6 +1,8 @@
 package me.coley.recaf.config.container;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
 import me.coley.recaf.config.*;
@@ -92,6 +94,14 @@ public class EditorConfig implements ConfigContainer {
 	@ConfigID("outlinedvisibilityiconposition")
 	@UsingGenericTypes(OutlinePane.Visibility.IconPosition.class)
 	public ObjectProperty<OutlinePane.Visibility.IconPosition> outlineVisibilityIconPosition = new SimpleObjectProperty<>(OutlinePane.Visibility.IconPosition.RIGHT);
+
+	@Group("outline")
+	@ConfigID("sortalphabetically")
+	public BooleanProperty sortOutlinedAlphabetically = new SimpleBooleanProperty();
+
+	@Group("outline")
+	@ConfigID("sortbyvisibility")
+	public BooleanProperty sortOutlinedByVisibility = new SimpleBooleanProperty();
 
 	/**
 	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.

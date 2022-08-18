@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.WeakChangeListener;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -45,8 +46,11 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	public final SimpleObjectProperty<MemberType> memberType = new SimpleObjectProperty<>(MemberType.ALL);
 	public final SimpleObjectProperty<Visibility> visibility = new SimpleObjectProperty<>(Visibility.ALL);
 
+	public final SimpleBooleanProperty sortAlphabetically = new SimpleBooleanProperty();
+	public final SimpleBooleanProperty sortByVisibility = new SimpleBooleanProperty();
 	private final OutlineTreeWrapper tree;
 	private CommonClassInfo classInfo;
+	private final ChangeListener<?> listenerToUpdate = (observable, oldValue, newValue) -> onUpdate(classInfo);
 
 	public enum MemberType implements Translatable {
 		ALL(Icons.FIELD_N_METHOD, "misc.all"),
@@ -125,9 +129,17 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		setBottom(new VBox(createButtonBar(), filter));
 
 		showTypes.set(Configs.editor().showOutlinedTypes);
+		showTypes.addListener(new WeakChangeListener(listenerToUpdate));
 		showSynthetics.set(Configs.editor().showOutlinedSynthetics);
-		memberType.bind(Configs.editor().showOutlinedMemberType);
-		visibility.bind(Configs.editor().showOutlinedVisibility);
+		showSynthetics.addListener(new WeakChangeListener(listenerToUpdate));
+		memberType.bindBidirectional(Configs.editor().showOutlinedMemberType);
+		memberType.addListener(new WeakChangeListener(listenerToUpdate));
+		visibility.bindBidirectional(Configs.editor().showOutlinedVisibility);
+		visibility.addListener(new WeakChangeListener(listenerToUpdate));
+		sortAlphabetically.bindBidirectional(Configs.editor().sortOutlinedAlphabetically);
+		sortAlphabetically.addListener(new WeakChangeListener(listenerToUpdate));
+		sortByVisibility.bindBidirectional(Configs.editor().sortOutlinedByVisibility);
+		sortByVisibility.addListener(new WeakChangeListener(listenerToUpdate));
 	}
 
 	private TextField createFilterBar() {
@@ -208,29 +220,29 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		return this;
 	}
 
-	private final ChangeListener<?> listenerToUpdate = (observable, oldValue, newValue) -> onUpdate(classInfo);
-
 	/**
 	 * @return Box containing tree display options.
 	 */
 	private Node createButtonBar() {
 		HBox box = new HBox();
 		// Show synthetics
-		Tooltip tipShowSynthetics = new Tooltip();
-		tipShowSynthetics.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedsynths"));
-		addButton(box, tipShowSynthetics, Icons.SYNTHETIC, showSynthetics, (newVal) -> Configs.editor().showOutlinedSynthetics = newVal);
+		addButton(box, "conf.editor.outline.showoutlinedsynths", Icons.SYNTHETIC, showSynthetics,
+			(newVal) -> Configs.editor().showOutlinedSynthetics = newVal);
 		// Show types
-		Tooltip tipShowTypes = new Tooltip();
-		tipShowTypes.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedtypes"));
-		addButton(box, tipShowTypes, Icons.CODE, showTypes, (newVal) -> Configs.editor().showOutlinedTypes = newVal);
+		addButton(box, "conf.editor.outline.showoutlinedtypes", Icons.CODE, showTypes,
+			(newVal) -> Configs.editor().showOutlinedTypes = newVal);
+		// Sort alphabetically
+		addButton(box, "conf.editor.outline.sortalphabetically", Icons.SORT_ALPHABETICAL, sortAlphabetically,
+			(newVal) -> Configs.editor().sortOutlinedAlphabetically.set(newVal));
+		// sort by visibility
+		addButton(box, "conf.editor.outline.sortbyvisibility", Icons.SORT_VISIBILITY, sortByVisibility,
+			(newVal) -> Configs.editor().sortOutlinedByVisibility.set(newVal));
 		// Member type
 		Class<? extends Enum<?>> enumChoice = MemberType.class;
 		Tooltip tipMemberType = new Tooltip();
 		tipMemberType.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedmembertype"));
 		Button memberTypeButton = new Button();
 		memberTypeButton.setTooltip(tipMemberType);
-		var memberType = Configs.editor().showOutlinedMemberType;
-		memberType.addListener((ChangeListener<? super MemberType>) listenerToUpdate);
 		memberTypeButton.graphicProperty().bind(Bindings.createObjectBinding(() -> getIconView(memberType.get().icon), memberType));
 		memberTypeButton.setOnAction(e -> {
 			MemberType newType = MemberType.values()[(memberType.get().ordinal() + 1) % MemberType.values().length];
@@ -242,8 +254,6 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		tipVisibility.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedvisibility"));
 		Button visibilityButton = new Button();
 		visibilityButton.setTooltip(tipVisibility);
-		var visibility = Configs.editor().showOutlinedVisibility;
-		visibility.addListener((ChangeListener<? super Visibility>) listenerToUpdate);
 		visibilityButton.graphicProperty().bind(Bindings.createObjectBinding(() -> getIconView(visibility.get().icon), visibility));
 		visibilityButton.setOnAction(e -> {
 			Visibility newVisibility = Visibility.values()[(visibility.get().ordinal() + 1) % Visibility.values().length];
@@ -253,8 +263,10 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		return box;
 	}
 
-	private void addButton(Pane parent, Tooltip tooltip, String graphic, SimpleBooleanProperty buttonOptionProperty, Consumer<Boolean> editOption) {
+	private void addButton(Pane parent, String tooltipKey, String graphic, SimpleBooleanProperty buttonOptionProperty, Consumer<Boolean> editOption) {
 		Button button = new Button();
+		var tooltip = new Tooltip();
+		tooltip.textProperty().bind(Lang.getBinding(tooltipKey));
 		button.setTooltip(tooltip);
 		button.setGraphic(getIconView(graphic));
 		button.setOnAction(e -> {

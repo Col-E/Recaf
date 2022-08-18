@@ -11,6 +11,11 @@ import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.threading.FxThreadUtil;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class OutlineTreeWrapper extends OutlineTree {
 
 	private final SimpleBooleanProperty caseSensitivity = new SimpleBooleanProperty();
@@ -32,16 +37,29 @@ public class OutlineTreeWrapper extends OutlineTree {
 		boolean caseSensitive = caseSensitivity.get();
 		String filterStr = caseSensitive ? filter.getValue() : filter.getValue().toLowerCase();
 		OutlineItem outlineRoot = new OutlineItem(null);
+		List<FieldInfo> fields = new ArrayList<>();
 		if (outlinePane.memberType.get() != OutlinePane.MemberType.METHOD) {
 			for (FieldInfo fieldInfo : info.getFields()) {
-				filter(fieldInfo.getAccess(), caseSensitive, fieldInfo.getName(), filterStr, outlineRoot, fieldInfo);
+				filter(fieldInfo.getAccess(), caseSensitive, fieldInfo.getName(), filterStr, fields, fieldInfo);
 			}
 		}
+		List<MethodInfo> methods = new ArrayList<>();
 		if (outlinePane.memberType.get() != OutlinePane.MemberType.FIELD) {
 			for (MethodInfo methodInfo : info.getMethods()) {
-				filter(methodInfo.getAccess(), caseSensitive, methodInfo.getName(), filterStr, outlineRoot, methodInfo);
+				filter(methodInfo.getAccess(), caseSensitive, methodInfo.getName(), filterStr, methods, methodInfo);
 			}
 		}
+		Comparator<MemberInfo> comparator = (a, b) -> {
+			int result = 0;
+			if (outlinePane.sortByVisibility.get())
+				result = OutlinePane.Visibility.ofMember(a).compareTo(OutlinePane.Visibility.ofMember(b));
+			if (result == 0 && outlinePane.sortAlphabetically.get())
+				result = a.getName().compareTo(b.getName());
+			return result;
+		};
+
+		outlineRoot.getChildren().addAll(fields.stream().sorted(comparator).map(OutlineItem::new).collect(Collectors.toList()));
+		outlineRoot.getChildren().addAll(methods.stream().sorted(comparator).map(OutlineItem::new).collect(Collectors.toList()));
 		outlineRoot.setExpanded(true);
 		// Set factory to null while we update the root. This allows existing cells to be aware that they should
 		// not attempt to put effort into redrawing since they are being replaced anyways.
@@ -54,15 +72,15 @@ public class OutlineTreeWrapper extends OutlineTree {
 		});
 	}
 
-	private void filter(int access, boolean caseSensitive, String name, String filterStr, OutlineItem outlineRoot, MemberInfo memberInfo) {
+	private <T extends MemberInfo> void filter(int access, boolean caseSensitive, String name, String filterStr, List<T> members, T memberInfo) {
 		if (!outlinePane.visibility.get().isAccess(access))
 			return;
 		if (!outlinePane.showSynthetics.get() && AccessFlag.isSynthetic(access))
 			return;
 		if (caseSensitive) {
 			if (name.contains(filterStr))
-				outlineRoot.getChildren().add(new OutlineItem(memberInfo));
+				members.add(memberInfo);
 		} else if (name.toLowerCase().contains(filterStr))
-			outlineRoot.getChildren().add(new OutlineItem(memberInfo));
+			members.add(memberInfo);
 	}
 }
