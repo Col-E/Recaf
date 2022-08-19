@@ -2,18 +2,15 @@ package me.coley.recaf.ui.control.tree;
 
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableStringValue;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.FieldInfo;
-import me.coley.recaf.code.MemberInfo;
-import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.pane.OutlinePane;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.threading.FxThreadUtil;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class OutlineTreeWrapper extends OutlineTree {
@@ -37,29 +34,27 @@ public class OutlineTreeWrapper extends OutlineTree {
 		boolean caseSensitive = caseSensitivity.get();
 		String filterStr = caseSensitive ? filter.getValue() : filter.getValue().toLowerCase();
 		OutlineItem outlineRoot = new OutlineItem(null);
-		List<FieldInfo> fields = new ArrayList<>();
-		if (outlinePane.memberType.get() != OutlinePane.MemberType.METHOD) {
-			for (FieldInfo fieldInfo : info.getFields()) {
-				filter(fieldInfo.getAccess(), caseSensitive, fieldInfo.getName(), filterStr, fields, fieldInfo);
-			}
-		}
-		List<MethodInfo> methods = new ArrayList<>();
-		if (outlinePane.memberType.get() != OutlinePane.MemberType.FIELD) {
-			for (MethodInfo methodInfo : info.getMethods()) {
-				filter(methodInfo.getAccess(), caseSensitive, methodInfo.getName(), filterStr, methods, methodInfo);
-			}
-		}
-		Comparator<MemberInfo> comparator = (a, b) -> {
+		Comparator<ItemInfo> comparator = (a, b) -> {
 			int result = 0;
-			if (outlinePane.sortByVisibility.get())
-				result = OutlinePane.Visibility.ofMember(a).compareTo(OutlinePane.Visibility.ofMember(b));
+			if (outlinePane.sortByVisibility.get()) {
+				if (a instanceof MemberInfo && b instanceof MemberInfo) {
+					result = OutlinePane.Visibility.ofMember((MemberInfo) a).compareTo(OutlinePane.Visibility.ofMember((MemberInfo) b));
+				} else if (a instanceof InnerClassInfo && b instanceof InnerClassInfo) {
+					result = OutlinePane.Visibility.ofClass((InnerClassInfo) a).compareTo(OutlinePane.Visibility.ofClass((InnerClassInfo) b));
+				} else if (a instanceof CommonClassInfo && b instanceof CommonClassInfo) {
+					result = OutlinePane.Visibility.ofClass((CommonClassInfo) a).compareTo(OutlinePane.Visibility.ofClass((CommonClassInfo) b));
+				}
+			}
 			if (result == 0 && outlinePane.sortAlphabetically.get())
 				result = a.getName().compareTo(b.getName());
 			return result;
 		};
-
-		outlineRoot.getChildren().addAll(fields.stream().sorted(comparator).map(OutlineItem::new).collect(Collectors.toList()));
-		outlineRoot.getChildren().addAll(methods.stream().sorted(comparator).map(OutlineItem::new).collect(Collectors.toList()));
+		outlineRoot.getChildren().addAll(getItems(OutlinePane.MemberType.INNER_CLASS,
+			info.getInnerClasses(), caseSensitive, filterStr, InnerClassInfo::getAccess, comparator));
+		outlineRoot.getChildren().addAll(getItems(OutlinePane.MemberType.FIELD,
+			info.getFields(), caseSensitive, filterStr, FieldInfo::getAccess, comparator));
+		outlineRoot.getChildren().addAll(getItems(OutlinePane.MemberType.METHOD,
+			info.getMethods(), caseSensitive, filterStr, MemberInfo::getAccess, comparator));
 		outlineRoot.setExpanded(true);
 		// Set factory to null while we update the root. This allows existing cells to be aware that they should
 		// not attempt to put effort into redrawing since they are being replaced anyways.
@@ -72,15 +67,18 @@ public class OutlineTreeWrapper extends OutlineTree {
 		});
 	}
 
-	private <T extends MemberInfo> void filter(int access, boolean caseSensitive, String name, String filterStr, List<T> members, T memberInfo) {
+	private <T extends ItemInfo> List<OutlineItem> getItems(OutlinePane.MemberType memberType, List<T> items, boolean caseSensitive, String filterStr, Function<T, Integer> accessGetter, Comparator<ItemInfo> comparator) {
+		return outlinePane.memberType.get().shouldDisplay(memberType) ? items.stream()
+			.filter(item -> filter(accessGetter.apply(item), caseSensitive, item.getName(), filterStr))
+			.sorted(comparator).map(OutlineItem::new)
+			.collect(Collectors.toList()) : List.of();
+	}
+
+	private boolean filter(int access, boolean caseSensitive, String name, String filterStr) {
 		if (!outlinePane.visibility.get().isAccess(access))
-			return;
+			return false;
 		if (!outlinePane.showSynthetics.get() && AccessFlag.isSynthetic(access))
-			return;
-		if (caseSensitive) {
-			if (name.contains(filterStr))
-				members.add(memberInfo);
-		} else if (name.toLowerCase().contains(filterStr))
-			members.add(memberInfo);
+			return false;
+		return caseSensitive ? name.contains(filterStr) : name.toLowerCase().contains(filterStr);
 	}
 }

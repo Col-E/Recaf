@@ -1,6 +1,6 @@
 package me.coley.recaf.code;
 
-public class InnerClassInfo {
+public class InnerClassInfo implements ItemInfo {
 	private final String className;
 	private final String name;
 	private final String outerName;

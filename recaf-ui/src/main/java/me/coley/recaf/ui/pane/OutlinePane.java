@@ -16,9 +16,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.MemberInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
@@ -53,9 +51,11 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	private final ChangeListener<?> listenerToUpdate = (observable, oldValue, newValue) -> onUpdate(classInfo);
 
 	public enum MemberType implements Translatable {
-		ALL(Icons.FIELD_N_METHOD, "misc.all"),
+		ALL(Icons.CLASS_N_FIELD_N_METHOD, "misc.all"),
 		FIELD(Icons.FIELD, "misc.member.field"),
-		METHOD(Icons.METHOD, "misc.member.method");
+		METHOD(Icons.METHOD, "misc.member.method"),
+		FIELD_AND_METHOD(Icons.FIELD_N_METHOD, "misc.member.field_n_method"),
+		INNER_CLASS(Icons.CLASS, "misc.member.innerClass");
 		final String icon;
 		final String key;
 
@@ -66,6 +66,10 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 
 		@Override
 		public String getTranslationKey() {return key;}
+
+		public boolean shouldDisplay(MemberType filter) {
+			return this == ALL || this == filter || (this == FIELD_AND_METHOD && (filter == FIELD || filter == METHOD));
+		}
 	}
 
 	public enum Visibility implements Translatable {
@@ -82,12 +86,32 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 			this.isAccess = isAccess;
 		}
 
+		public static Visibility ofItem(ItemInfo info) {
+			if (info instanceof MemberInfo) {
+				return ofMember((MemberInfo) info);
+			} else if (info instanceof CommonClassInfo) {
+				return ofClass((CommonClassInfo) info);
+			} else if (info instanceof InnerClassInfo) {
+				return ofClass((InnerClassInfo) info);
+			} else {
+				throw new IllegalArgumentException("Unknown item type: " + info.getClass().getSimpleName());
+			}
+		}
+
 		public boolean isAccess(int flags) {
 			return isAccess.apply(flags);
 		}
 
 		public static Visibility ofMember(MemberInfo memberInfo) {
 			return ofAccess(memberInfo.getAccess());
+		}
+
+		public static Visibility ofClass(CommonClassInfo info) {
+			return ofAccess(info.getAccess());
+		}
+
+		public static Visibility ofClass(InnerClassInfo info) {
+			return ofAccess(info.getAccess());
 		}
 
 		private static Visibility ofAccess(int access) {

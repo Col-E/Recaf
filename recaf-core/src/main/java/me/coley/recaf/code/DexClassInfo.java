@@ -110,13 +110,6 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 		return new ArrayList<>();
 	}
 
-	@Nullable
-	@Override
-	public OuterClassInfo getOuterClass() {
-		// TODO: Implement dex outer class info
-		return null;
-	}
-
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
