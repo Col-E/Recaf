@@ -6,6 +6,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -25,9 +26,11 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private final List<MethodInfo> methods;
 	private ClassReader classReader;
 	private int hashCode;
+	private final List<InnerClassInfo> innerClasses;
+	private final OuterClassInfo outerClassinfo;
 
 	private ClassInfo(String name, String superName, String signature, List<String> interfaces, int version, int access,
-					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value) {
+										List<FieldInfo> fields, List<MethodInfo> methods, byte[] value, List<InnerClassInfo> innerClasses, @Nullable OuterClassInfo outerClassinfo) {
 		this.value = value;
 		this.name = name;
 		this.signature = signature;
@@ -37,6 +40,8 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		this.access = access;
 		this.fields = fields;
 		this.methods = methods;
+		this.innerClasses = innerClasses;
+		this.outerClassinfo = outerClassinfo;
 	}
 
 	@Override
@@ -77,6 +82,17 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	@Override
 	public List<MethodInfo> getMethods() {
 		return methods;
+	}
+
+	@Override
+	public List<InnerClassInfo> getInnerClasses() {
+		return innerClasses;
+	}
+
+	@Nullable
+	@Override
+	public OuterClassInfo getOuterClass() {
+		return outerClassinfo;
 	}
 
 	/**
@@ -151,6 +167,9 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		int[] versionWrapper = new int[1];
 		List<FieldInfo> fields = new ArrayList<>();
 		List<MethodInfo> methods = new ArrayList<>();
+		OuterClassInfo[] outerClassinfo = { null };
+		List<InnerClassInfo> innerClasses = new ArrayList<>();
+
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
 			public void visit(int version, int access, String name, String signature,
@@ -172,6 +191,16 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				methods.add(new MethodInfo(className, name, descriptor, sig, access, exceptions));
 				return null;
 			}
+
+			@Override
+			public void visitInnerClass(String name, String outerName, String innerName, int access) {
+				innerClasses.add(new InnerClassInfo(className, name, outerName, innerName, access));
+			}
+
+			@Override
+			public void visitOuterClass(String owner, String name, String descriptor) {
+				outerClassinfo[0] = new OuterClassInfo(className, owner, name, descriptor);
+			}
 		}, ClassReader.SKIP_CODE);
 		return new ClassInfo(
 				className,
@@ -182,6 +211,8 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				access,
 				fields,
 				methods,
-				value);
+				value,
+				innerClasses,
+				outerClassinfo[0]);
 	}
 }

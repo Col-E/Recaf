@@ -128,7 +128,6 @@ public class OutlineTree extends TreeView<MemberInfo> implements Updatable<Commo
 						.setDeclaration(true)
 						.build());
 				} else {
-					MethodInfo methodInfo = (MethodInfo) item;
 					String text = name;
 					if (outlinePane.showTypes.get()) {
 						text += "(" + Arrays.stream(Type.getArgumentTypes(desc))
