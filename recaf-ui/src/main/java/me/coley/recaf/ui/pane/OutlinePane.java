@@ -7,6 +7,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
@@ -14,6 +15,7 @@ import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
+import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.tree.OutlineTree;
 import me.coley.recaf.ui.control.tree.OutlineTreeWrapper;
@@ -51,7 +53,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		FIELD(Icons.FIELD, "misc.member.field"),
 		METHOD(Icons.METHOD, "misc.member.method"),
 		FIELD_AND_METHOD(Icons.FIELD_N_METHOD, "misc.member.field_n_method"),
-		INNER_CLASS(Icons.CLASS, "misc.member.innerClass");
+		INNER_CLASS(Icons.CLASS, "misc.member.inner_class");
 		final String icon;
 		final String key;
 
@@ -146,10 +148,22 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		TextField filter = createFilterBar();
 		filterValue.bind(filter.textProperty());
 		List<String> outers = parent.getCurrentClassInfo().getOuterClassBreadcrumbs();
+		HBox breadcrumbs = new HBox();
+		breadcrumbs.setSpacing(5);
+		String previousOuterName = "";
+		String firstOuterName = !outers.isEmpty() ? outers.get(0) : parent.getCurrentClassInfo().getName();
+		int indexOfPathEnd = firstOuterName.lastIndexOf('/');
+		if (indexOfPathEnd != -1) {
+			previousOuterName = firstOuterName.substring(0, indexOfPathEnd + 1);
+			HBox outerNode = new HBox(
+				getIconView(Icons.FOLDER_PACKAGE),
+				new Label(firstOuterName.substring(0, indexOfPathEnd))
+			);
+			outerNode.setSpacing(5);
+			breadcrumbs.getChildren().addAll(outerNode);
+			if (!outers.isEmpty())  breadcrumbs.getChildren().add(new NavigationBar.NavigationSeparator());
+		}
 		if (!outers.isEmpty()) {
-			HBox breadcrumbs = new HBox();
-			breadcrumbs.setSpacing(5);
-			String previousOuterName = "";
 			for (int i = 0; i < outers.size(); i++) {
 				String outer = outers.get(i);
 				ClassInfo classInfo = RecafUI.getController().getWorkspace().getResources().getClass(outer);
@@ -162,14 +176,23 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				);
 				previousOuterName = outer + "$";
 				outerNode.setSpacing(5);
-				if (classInfo != null) outerNode.setOnMouseClicked(e -> CommonUX.openClass(classInfo));
+				if (classInfo != null) {
+					outerNode.setOnMouseClicked(e -> {
+						if (e.getButton() == MouseButton.PRIMARY) CommonUX.openClass(classInfo);
+					});
+					ContextMenu menu = ContextBuilder.forClass(classInfo).setDeclaration(false).build();
+					outerNode.setOnContextMenuRequested(e -> {
+						menu.hide();
+						menu.show(outerNode, e.getScreenX(), e.getScreenY());
+					});
+				}
 				breadcrumbs.getChildren().add(outerNode);
 				if (i < outers.size() - 1) {
 					breadcrumbs.getChildren().add(new NavigationBar.NavigationSeparator());
 				}
 			}
-			setTop(breadcrumbs);
 		}
+		if (!breadcrumbs.getChildren().isEmpty()) setTop(breadcrumbs);
 		setCenter(tree);
 		setBottom(new VBox(createButtonBar(), filter));
 

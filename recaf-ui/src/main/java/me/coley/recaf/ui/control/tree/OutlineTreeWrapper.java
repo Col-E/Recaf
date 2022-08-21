@@ -69,7 +69,7 @@ public class OutlineTreeWrapper extends OutlineTree {
 
 	private <T extends ItemInfo> List<OutlineItem> getItems(OutlinePane.MemberType memberType, List<T> items, boolean caseSensitive, String filterStr, Function<T, Integer> accessGetter, Comparator<ItemInfo> comparator) {
 		return outlinePane.memberType.get().shouldDisplay(memberType) ? items.stream()
-			.filter(item -> filter(accessGetter.apply(item), caseSensitive, item.getName(), filterStr))
+			.filter(item -> filter(accessGetter.apply(item), caseSensitive, item instanceof InnerClassInfo ? ((InnerClassInfo) item).getInnerName() : item.getName(), filterStr))
 			.sorted(comparator).map(OutlineItem::new)
 			.collect(Collectors.toList()) : List.of();
 	}

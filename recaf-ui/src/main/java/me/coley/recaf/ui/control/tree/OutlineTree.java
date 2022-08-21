@@ -6,6 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
@@ -102,7 +103,13 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 			} else if (item == null) {
 				// Null is the edge case for the root
 				setGraphic(Icons.getClassIcon(classInfo));
-				setText(EscapeUtil.escape(StringUtil.shortenPath(classInfo.getName())));
+				String name = classInfo.getName();
+				int separatorIndex = classInfo.getName().lastIndexOf('$');
+				if (separatorIndex == -1)
+					separatorIndex = classInfo.getName().lastIndexOf('/');
+				if (separatorIndex > 0)
+					name = name.substring(separatorIndex + 1);
+				setText(EscapeUtil.escape(name));
 				setOnMouseClicked(null);
 				if (classInfo instanceof ClassInfo) {
 					setContextMenu(ContextBuilder.forClass((ClassInfo) classInfo)
@@ -149,12 +156,10 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 				setOnMouseClicked(e -> parent.selectMember(member));
 			} else if (item instanceof InnerClassInfo) {
 				InnerClassInfo innerClass = (InnerClassInfo) item;
-				String text = innerClass.getName();
-				if (outlinePane.showTypes.get()) {
-					text += "(" + StringUtil.shortenPath(innerClass.getInnerName()) + ")";
-				}
-				int maxLen = Configs.display().maxTreeTextLength;
-				setText(StringUtil.limit(EscapeUtil.escape(text), "...", maxLen));
+				setText(StringUtil.limit(
+					EscapeUtil.escape(innerClass.getInnerName()),
+					"...",
+					Configs.display().maxTreeTextLength));
 				ClassInfo classInfo = RecafUI.getController().getWorkspace().getResources().getClass(innerClass.getName());
 				if (classInfo == null) {
 					setGraphic(getMemberIcon(innerClass));
@@ -162,7 +167,7 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 				}
 				setGraphic(getMemberIcon(classInfo));
 				setContextMenu(ContextBuilder.forClass(classInfo).setDeclaration(false).build());
-				setOnMouseClicked(e -> CommonUX.openClass(classInfo));
+				setOnMouseClicked(e -> {if (e.getButton() == MouseButton.PRIMARY) CommonUX.openClass(classInfo);});
 			} else {
 				throw new IllegalArgumentException("Unknown item type: " + item.getClass().getName());
 			}
@@ -184,7 +189,7 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 			}
 		} else if (info instanceof InnerClassInfo) {
 			node = Icons.getClassIcon((InnerClassInfo) info);
-		} else if(info instanceof CommonClassInfo) {
+		} else if (info instanceof CommonClassInfo) {
 			node = Icons.getClassIcon((CommonClassInfo) info);
 		}
 		if (node == null) {return null;}
