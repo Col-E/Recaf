@@ -6,7 +6,6 @@ import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.iface.Method;
 import org.objectweb.asm.Type;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -107,6 +106,12 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 	@Override
 	public List<InnerClassInfo> getInnerClasses() {
 		// TODO: Implement dex inner classes
+		return new ArrayList<>();
+	}
+
+	@Override
+	public List<String> getOuterClassBreadcrumbs() {
+		//TODO: Implement dex outer class breadcrumbs
 		return new ArrayList<>();
 	}
 

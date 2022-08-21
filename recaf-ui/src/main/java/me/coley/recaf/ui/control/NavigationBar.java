@@ -261,7 +261,7 @@ public class NavigationBar extends HBox {
 	 *
 	 * @author yapht
 	 */
-	private static class NavigationSeparator extends Canvas {
+	public static class NavigationSeparator extends Canvas {
 		public NavigationSeparator() {
 			setWidth(5);
 			setHeight(15);
