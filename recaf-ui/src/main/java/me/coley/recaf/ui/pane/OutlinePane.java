@@ -4,20 +4,15 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.WeakChangeListener;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
-import javafx.scene.control.TreeItem;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.scripting.impl.WorkspaceAPI;
+import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.tree.OutlineTree;
@@ -48,7 +43,6 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	public final SimpleBooleanProperty sortByVisibility = new SimpleBooleanProperty();
 	private final OutlineTreeWrapper tree;
 	private CommonClassInfo classInfo;
-	private final ChangeListener<?> listenerToUpdate = (observable, oldValue, newValue) -> onUpdate(classInfo);
 
 	public enum MemberType implements Translatable {
 		ALL(Icons.CLASS_N_FIELD_N_METHOD, "misc.all"),
@@ -149,21 +143,33 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		this.tree = new OutlineTreeWrapper(parent, filterValue, this);
 		TextField filter = createFilterBar();
 		filterValue.bind(filter.textProperty());
+		String currentClassName = parent.getCurrentClassInfo().getName();
+		WorkspaceAPI.getWorkspace().getResources().getClasses().filter(c -> currentClassName.startsWith(c.getName()))
+			.filter(c -> c.getInnerClasses().stream().anyMatch(ic -> currentClassName.startsWith(ic.getName())))
+			.findFirst().ifPresent(outer -> {
+					HBox box = new HBox(
+						new StackPane(Icons.getClassIcon(outer), Icons.getIconView(Icons.UP_FOR_ICON)),
+						new Label(" " + outer.getName()));
+					box.setPadding(new Insets(5, 5, 5, 5));
+					box.setOnMouseClicked(e -> CommonUX.openClass(outer));
+					setTop(box);
+				}
+			);
 		setCenter(tree);
 		setBottom(new VBox(createButtonBar(), filter));
 
 		showTypes.set(Configs.editor().showOutlinedTypes);
-		showTypes.addListener(new WeakChangeListener(listenerToUpdate));
+		showTypes.addListener((observable1, oldValue1, newValue1) -> onUpdate(classInfo));
 		showSynthetics.set(Configs.editor().showOutlinedSynthetics);
-		showSynthetics.addListener(new WeakChangeListener(listenerToUpdate));
+		showSynthetics.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
 		memberType.bindBidirectional(Configs.editor().showOutlinedMemberType);
-		memberType.addListener(new WeakChangeListener(listenerToUpdate));
+		memberType.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
 		visibility.bindBidirectional(Configs.editor().showOutlinedVisibility);
-		visibility.addListener(new WeakChangeListener(listenerToUpdate));
+		visibility.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
 		sortAlphabetically.bindBidirectional(Configs.editor().sortOutlinedAlphabetically);
-		sortAlphabetically.addListener(new WeakChangeListener(listenerToUpdate));
+		sortAlphabetically.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
 		sortByVisibility.bindBidirectional(Configs.editor().sortOutlinedByVisibility);
-		sortByVisibility.addListener(new WeakChangeListener(listenerToUpdate));
+		sortByVisibility.addListener((observable1, oldValue1, newValue1) -> onUpdate(classInfo));
 	}
 
 	private TextField createFilterBar() {
@@ -262,7 +268,6 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		addButton(box, "conf.editor.outline.sortbyvisibility", Icons.SORT_VISIBILITY, sortByVisibility,
 			(newVal) -> Configs.editor().sortOutlinedByVisibility.set(newVal));
 		// Member type
-		Class<? extends Enum<?>> enumChoice = MemberType.class;
 		Tooltip tipMemberType = new Tooltip();
 		tipMemberType.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedmembertype"));
 		Button memberTypeButton = new Button();

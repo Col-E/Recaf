@@ -36,9 +36,6 @@ public class Icons {
 	public static final String CLASS_ABSTRACT = "icons/class/class_abstract.png";
 	public static final String CLASS_EXCEPTION = "icons/class/class_exception.png";
 	public static final String CLASS_ABSTRACT_EXCEPTION = "icons/class/class_abstract_exception.png";
-	public static final String CLASS_UP = "icons/class/class_up.png";
-	public static final String CLASS_ANONYMOUS_UP = "icons/class/class_anonymous_up.png";
-	public static final String CLASS_EXCEPTION_UP = "icons/class/class_exception_up.png";
 	public static final String ANNOTATION = "icons/class/annotation.png";
 	public static final String INTERFACE = "icons/class/interface.png";
 	public static final String ENUM = "icons/class/enum.png";
@@ -133,6 +130,7 @@ public class Icons {
 	public static final String BACKWARD = "icons/backward.png";
 	public static final String SORT_ALPHABETICAL = "icons/sort-alphabetical.png";
 	public static final String SORT_VISIBILITY = "icons/sort-visibility.png";
+	public static final String UP_FOR_ICON = "icons/up_for_icon.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();
