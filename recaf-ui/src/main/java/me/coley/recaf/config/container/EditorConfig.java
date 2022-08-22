@@ -6,7 +6,9 @@ import me.coley.recaf.config.*;
 import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.DiffViewMode;
 import me.coley.recaf.ui.FileViewMode;
-import me.coley.recaf.ui.pane.OutlinePane;
+import me.coley.recaf.ui.pane.outilne.MemberType;
+import me.coley.recaf.ui.pane.outilne.OutlinePane;
+import me.coley.recaf.ui.pane.outilne.Visibility;
 import me.coley.recaf.ui.util.Icons;
 
 import java.util.Map;
@@ -72,7 +74,7 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedmembertype")
-	public ObjectProperty<OutlinePane.MemberType> showOutlinedMemberType = new SimpleObjectProperty<>(OutlinePane.MemberType.ALL);
+	public ObjectProperty<MemberType> showOutlinedMemberType = new SimpleObjectProperty<>(MemberType.ALL);
 
 	/**
 	 * Filter out members by visibility (public/protected/package/private). Showing at which state something can be accessed
@@ -80,14 +82,14 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedvisibility")
-	public ObjectProperty<OutlinePane.Visibility> showOutlinedVisibility = new SimpleObjectProperty<>(OutlinePane.Visibility.ALL);
+	public ObjectProperty<Visibility> showOutlinedVisibility = new SimpleObjectProperty<>(Visibility.ALL);
 
 	/**
 	 * Position of the icon for items in the outline.
 	 */
 	@Group("outline")
 	@ConfigID("outlinedvisibilityiconposition")
-	public ObjectProperty<OutlinePane.Visibility.IconPosition> outlineVisibilityIconPosition = new SimpleObjectProperty<>(OutlinePane.Visibility.IconPosition.RIGHT);
+	public ObjectProperty<Visibility.IconPosition> outlineVisibilityIconPosition = new SimpleObjectProperty<>(Visibility.IconPosition.RIGHT);
 
 	@Group("outline")
 	@ConfigID("sortalphabetically")

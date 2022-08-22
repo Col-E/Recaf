@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.pane;
+package me.coley.recaf.ui.pane.outilne;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.Property;
@@ -21,9 +21,7 @@ import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.tree.OutlineTree;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.NodeEvents;
-import me.coley.recaf.util.Translatable;
 
 import java.util.List;
 import java.util.function.Function;
@@ -37,105 +35,16 @@ import static me.coley.recaf.ui.util.Icons.getIconView;
  * @author Matt Coley
  */
 public class OutlinePane extends BorderPane implements ClassRepresentation {
+
 	public final SimpleBooleanProperty showTypes = new SimpleBooleanProperty();
 	public final SimpleBooleanProperty showSynthetics = new SimpleBooleanProperty(true);
 	public final SimpleObjectProperty<MemberType> memberType = new SimpleObjectProperty<>(MemberType.ALL);
 	public final SimpleObjectProperty<Visibility> visibility = new SimpleObjectProperty<>(Visibility.ALL);
-
 	public final SimpleBooleanProperty sortAlphabetically = new SimpleBooleanProperty();
 	public final SimpleBooleanProperty sortByVisibility = new SimpleBooleanProperty();
 	public final SimpleBooleanProperty caseSensitive = new SimpleBooleanProperty();
 	private final OutlineTree tree;
 	private CommonClassInfo classInfo;
-
-	public enum MemberType implements Translatable {
-		ALL(Icons.CLASS_N_FIELD_N_METHOD, "misc.all"),
-		FIELD(Icons.FIELD, "misc.member.field"),
-		METHOD(Icons.METHOD, "misc.member.method"),
-		FIELD_AND_METHOD(Icons.FIELD_N_METHOD, "misc.member.field_n_method"),
-		INNER_CLASS(Icons.CLASS, "misc.member.inner_class");
-		final String icon;
-		final String key;
-
-		MemberType(String icon, String key) {
-			this.icon = icon;
-			this.key = key;
-		}
-
-		@Override
-		public String getTranslationKey() {return key;}
-
-		public boolean shouldDisplay(MemberType filter) {
-			return this == ALL || this == filter || (this == FIELD_AND_METHOD && (filter == FIELD || filter == METHOD));
-		}
-	}
-
-	public enum Visibility implements Translatable {
-		ALL(Icons.ACCESS_ALL_VISIBILITY, (flags) -> true),
-		PUBLIC(Icons.ACCESS_PUBLIC, (flags) -> AccessFlag.isPublic(flags)),
-		PROTECTED(Icons.ACCESS_PROTECTED, (flags) -> AccessFlag.isProtected(flags)),
-		PACKAGE(Icons.ACCESS_PACKAGE, (flags) -> AccessFlag.isPackage(flags)),
-		PRIVATE(Icons.ACCESS_PRIVATE, (flags) -> AccessFlag.isPrivate(flags));
-		public final String icon;
-		private final Function<Integer, Boolean> isAccess;
-
-		Visibility(String icon, Function<Integer, Boolean> isAccess) {
-			this.icon = icon;
-			this.isAccess = isAccess;
-		}
-
-		public static Visibility ofItem(ItemInfo info) {
-			if (info instanceof MemberInfo) {
-				return ofMember((MemberInfo) info);
-			} else if (info instanceof CommonClassInfo) {
-				return ofClass((CommonClassInfo) info);
-			} else if (info instanceof InnerClassInfo) {
-				return ofClass((InnerClassInfo) info);
-			} else {
-				throw new IllegalArgumentException("Unknown item type: " + info.getClass().getSimpleName());
-			}
-		}
-
-		public boolean isAccess(int flags) {
-			return isAccess.apply(flags);
-		}
-
-		public static Visibility ofMember(MemberInfo memberInfo) {
-			return ofAccess(memberInfo.getAccess());
-		}
-
-		public static Visibility ofClass(CommonClassInfo info) {
-			return ofAccess(info.getAccess());
-		}
-
-		public static Visibility ofClass(InnerClassInfo info) {
-			return ofAccess(info.getAccess());
-		}
-
-		private static Visibility ofAccess(int access) {
-			if (AccessFlag.isPublic(access))
-				return PUBLIC;
-			if (AccessFlag.isProtected(access))
-				return PROTECTED;
-			if (AccessFlag.isPackage(access))
-				return PACKAGE;
-			if (AccessFlag.isPrivate(access))
-				return PRIVATE;
-			return ALL;
-		}
-
-		@Override
-		public String getTranslationKey() {return this == ALL ? "misc.all" : "misc.accessflag.visibility." + name().toLowerCase();}
-
-		public enum IconPosition implements Translatable {
-			NONE, LEFT, RIGHT;
-
-			@Override
-			public String getTranslationKey() {
-				return this == NONE ? "misc.none" : "misc.position." + name().toLowerCase();
-			}
-		}
-	}
 
 	/**
 	 * New outline panel.

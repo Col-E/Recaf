@@ -16,7 +16,9 @@ import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Updatable;
 import me.coley.recaf.ui.context.ContextBuilder;
-import me.coley.recaf.ui.pane.OutlinePane;
+import me.coley.recaf.ui.pane.outilne.MemberType;
+import me.coley.recaf.ui.pane.outilne.OutlinePane;
+import me.coley.recaf.ui.pane.outilne.Visibility;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.EscapeUtil;
@@ -57,22 +59,22 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 			int result = 0;
 			if (outlinePane.sortByVisibility.get()) {
 				if (a instanceof MemberInfo && b instanceof MemberInfo) {
-					result = OutlinePane.Visibility.ofMember((MemberInfo) a).compareTo(OutlinePane.Visibility.ofMember((MemberInfo) b));
+					result = Visibility.ofMember((MemberInfo) a).compareTo(Visibility.ofMember((MemberInfo) b));
 				} else if (a instanceof InnerClassInfo && b instanceof InnerClassInfo) {
-					result = OutlinePane.Visibility.ofClass((InnerClassInfo) a).compareTo(OutlinePane.Visibility.ofClass((InnerClassInfo) b));
+					result = Visibility.ofClass((InnerClassInfo) a).compareTo(Visibility.ofClass((InnerClassInfo) b));
 				} else if (a instanceof CommonClassInfo && b instanceof CommonClassInfo) {
-					result = OutlinePane.Visibility.ofClass((CommonClassInfo) a).compareTo(OutlinePane.Visibility.ofClass((CommonClassInfo) b));
+					result = Visibility.ofClass((CommonClassInfo) a).compareTo(Visibility.ofClass((CommonClassInfo) b));
 				}
 			}
 			if (result == 0 && outlinePane.sortAlphabetically.get())
 				result = a.getName().compareTo(b.getName());
 			return result;
 		};
-		outlineRoot.getChildren().addAll(getItems(OutlinePane.MemberType.INNER_CLASS,
+		outlineRoot.getChildren().addAll(getItems(MemberType.INNER_CLASS,
 			info.getInnerClasses(), caseSensitive, filterStr, InnerClassInfo::getAccess, comparator));
-		outlineRoot.getChildren().addAll(getItems(OutlinePane.MemberType.FIELD,
+		outlineRoot.getChildren().addAll(getItems(MemberType.FIELD,
 			info.getFields(), caseSensitive, filterStr, FieldInfo::getAccess, comparator));
-		outlineRoot.getChildren().addAll(getItems(OutlinePane.MemberType.METHOD,
+		outlineRoot.getChildren().addAll(getItems(MemberType.METHOD,
 			info.getMethods(), caseSensitive, filterStr, MemberInfo::getAccess, comparator));
 		outlineRoot.setExpanded(true);
 		// Set factory to null while we update the root. This allows existing cells to be aware that they should
@@ -87,7 +89,7 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 	}
 
 	private <T extends ItemInfo> List<OutlineItem> getItems(
-		OutlinePane.MemberType memberType,
+		MemberType memberType,
 		List<T> items,
 		boolean caseSensitive,
 		String filterStr,
@@ -238,10 +240,10 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 		var hbox = new HBox();
 
 		Node finalNode = node;
-		ChangeListener<OutlinePane.Visibility.IconPosition> listener = (observable, oldV, newV) -> {
-			if (newV != OutlinePane.Visibility.IconPosition.NONE) {
-				var visIcon = Icons.getIconView(OutlinePane.Visibility.ofItem(info).icon);
-				if (newV == OutlinePane.Visibility.IconPosition.LEFT) {
+		ChangeListener<Visibility.IconPosition> listener = (observable, oldV, newV) -> {
+			if (newV != Visibility.IconPosition.NONE) {
+				var visIcon = Icons.getIconView(Visibility.ofItem(info).icon);
+				if (newV == Visibility.IconPosition.LEFT) {
 					hbox.getChildren().setAll(visIcon, finalNode);
 				} else {
 					hbox.getChildren().setAll(finalNode, visIcon);
