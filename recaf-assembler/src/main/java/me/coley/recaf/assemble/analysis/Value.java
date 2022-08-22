@@ -126,6 +126,30 @@ public abstract class Value {
 	}
 
 	/**
+	 * {@link ObjectValue} but special type to be aware it is from a result of a merge with a {@link NullValue}.
+	 */
+	public static class NullMergedObjectValue extends ObjectValue {
+		/**
+		 * @param type
+		 * 		Type of the object.
+		 */
+		public NullMergedObjectValue(Type type) {
+			super(type);
+		}
+
+		@Override
+		public boolean isObject() {
+			return true;
+		}
+
+		@Override
+		public boolean isNull() {
+			// Saying false only because we cannot be certain due to flow control
+			return false;
+		}
+	}
+
+	/**
 	 * Value representing an array.
 	 */
 	public static class ArrayValue extends Value {

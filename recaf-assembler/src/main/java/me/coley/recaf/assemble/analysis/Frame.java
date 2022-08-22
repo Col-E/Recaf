@@ -116,6 +116,14 @@ public class Frame {
 				// Update the local with the new type
 				return new Value.TypeValue(commonType);
 			} else {
+				// TODO: Check
+				//    LDC Type
+				//    GOTO D
+				//  C:
+				//    ACONST_NULL
+				//    GOTO D
+				//  D:
+				//    ASTORE x
 				throw new FrameMergeException("Values not types in both frames!");
 			}
 		} else if (value instanceof Value.ObjectValue) {
@@ -142,7 +150,7 @@ public class Frame {
 				// Select widest type
 				Type widest = NumberUtil.getWidestType(numeric.getType(), otherNumeric.getType());
 				if (Objects.equals(numeric.getNumber(), otherNumeric.getNumber())) {
-					numeric = new Value.NumericValue(widest, numeric.getNumber());
+					numeric = new Value.NumericValue(widest, otherNumeric.getNumber());
 				} else {
 					numeric = new Value.NumericValue(widest);
 				}
@@ -173,6 +181,17 @@ public class Frame {
 				return new Value.ObjectValue(Types.OBJECT_TYPE);
 			} else {
 				throw new FrameMergeException("Values not arrays/objects in both frames!");
+			}
+		} else if (value instanceof Value.NullValue) {
+			if (otherValue instanceof Value.ObjectValue) {
+				Value.ObjectValue otherObject = (Value.ObjectValue) otherValue;
+				return new Value.NullMergedObjectValue(otherObject.getType());
+			} else if (otherValue instanceof Value.ArrayValue) {
+				return new Value.ObjectValue(Types.OBJECT_TYPE);
+			} else if (otherValue instanceof Value.NullValue) {
+				return value;
+			} else {
+				throw new FrameMergeException("Values not objects/arrays in both frames!");
 			}
 		}
 		return value;
