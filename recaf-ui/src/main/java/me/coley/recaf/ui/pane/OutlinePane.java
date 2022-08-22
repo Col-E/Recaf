@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.pane;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -26,7 +27,6 @@ import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.Translatable;
 
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static me.coley.recaf.ui.util.Icons.getClassIcon;
@@ -45,6 +45,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 
 	public final SimpleBooleanProperty sortAlphabetically = new SimpleBooleanProperty();
 	public final SimpleBooleanProperty sortByVisibility = new SimpleBooleanProperty();
+	public final SimpleBooleanProperty caseSensitive = new SimpleBooleanProperty();
 	private final OutlineTreeWrapper tree;
 	private CommonClassInfo classInfo;
 
@@ -161,7 +162,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 			);
 			outerNode.setSpacing(5);
 			breadcrumbs.getChildren().addAll(outerNode);
-			if (!outers.isEmpty())  breadcrumbs.getChildren().add(new NavigationBar.NavigationSeparator());
+			if (!outers.isEmpty()) breadcrumbs.getChildren().add(new NavigationBar.NavigationSeparator());
 		}
 		if (!outers.isEmpty()) {
 			for (int i = 0; i < outers.size(); i++) {
@@ -194,25 +195,22 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		}
 		if (!breadcrumbs.getChildren().isEmpty()) setTop(breadcrumbs);
 		setCenter(tree);
-		setBottom(new VBox(createButtonBar(), filter));
+		HBox.setHgrow(filter, Priority.ALWAYS);
 
-		showTypes.set(Configs.editor().showOutlinedTypes);
-		showTypes.addListener((observable1, oldValue1, newValue1) -> onUpdate(classInfo));
-		showSynthetics.set(Configs.editor().showOutlinedSynthetics);
-		showSynthetics.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
+		showTypes.bindBidirectional(Configs.editor().showOutlinedTypes);
+		showSynthetics.bindBidirectional(Configs.editor().showOutlinedSynthetics);
 		memberType.bindBidirectional(Configs.editor().showOutlinedMemberType);
-		memberType.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
 		visibility.bindBidirectional(Configs.editor().showOutlinedVisibility);
-		visibility.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
 		sortAlphabetically.bindBidirectional(Configs.editor().sortOutlinedAlphabetically);
-		sortAlphabetically.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
 		sortByVisibility.bindBidirectional(Configs.editor().sortOutlinedByVisibility);
-		sortByVisibility.addListener((observable1, oldValue1, newValue1) -> onUpdate(classInfo));
+		caseSensitive.bindBidirectional(Configs.editor().caseSensitiveOutlinedFilter);
+
+		setBottom(new VBox(createButtonBar(), new HBox(filter, createBooleanButton("conf.editor.outline.filter.casesensitive", Icons.CASE_SENSITIVITY, caseSensitive))));
 	}
 
 	private TextField createFilterBar() {
 		TextField filter = new TextField();
-		filter.setPromptText("Filter: Field/Method name...");
+		filter.promptTextProperty().bind(Lang.getBinding("conf.editor.outline.filter.prompt"));
 		filter.getStyleClass().add("filter-field");
 		NodeEvents.addKeyPressHandler(filter, e -> {
 			if (e.getCode() == KeyCode.ESCAPE) {
@@ -292,59 +290,50 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	 * @return Box containing tree display options.
 	 */
 	private Node createButtonBar() {
-		HBox box = new HBox();
-		// Show synthetics
-		addButton(box, "conf.editor.outline.showoutlinedsynths", Icons.SYNTHETIC, showSynthetics,
-			(newVal) -> Configs.editor().showOutlinedSynthetics = newVal);
-		// Show types
-		addButton(box, "conf.editor.outline.showoutlinedtypes", Icons.CODE, showTypes,
-			(newVal) -> Configs.editor().showOutlinedTypes = newVal);
-		// Sort alphabetically
-		addButton(box, "conf.editor.outline.sortalphabetically", Icons.SORT_ALPHABETICAL, sortAlphabetically,
-			(newVal) -> Configs.editor().sortOutlinedAlphabetically.set(newVal));
-		// sort by visibility
-		addButton(box, "conf.editor.outline.sortbyvisibility", Icons.SORT_VISIBILITY, sortByVisibility,
-			(newVal) -> Configs.editor().sortOutlinedByVisibility.set(newVal));
-		// Member type
-		Tooltip tipMemberType = new Tooltip();
-		tipMemberType.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedmembertype"));
-		Button memberTypeButton = new Button();
-		memberTypeButton.setTooltip(tipMemberType);
-		memberTypeButton.graphicProperty().bind(Bindings.createObjectBinding(() -> getIconView(memberType.get().icon), memberType));
-		memberTypeButton.setOnAction(e -> {
-			MemberType newType = MemberType.values()[(memberType.get().ordinal() + 1) % MemberType.values().length];
-			memberType.set(newType);
-		});
-		box.getChildren().add(memberTypeButton);
-		// Visibility
-		Tooltip tipVisibility = new Tooltip();
-		tipVisibility.textProperty().bind(Lang.getBinding("conf.editor.outline.showoutlinedvisibility"));
-		Button visibilityButton = new Button();
-		visibilityButton.setTooltip(tipVisibility);
-		visibilityButton.graphicProperty().bind(Bindings.createObjectBinding(() -> getIconView(visibility.get().icon), visibility));
-		visibilityButton.setOnAction(e -> {
-			Visibility newVisibility = Visibility.values()[(visibility.get().ordinal() + 1) % Visibility.values().length];
-			visibility.set(newVisibility);
-		});
-		box.getChildren().add(visibilityButton);
-		return box;
+		return new HBox(
+			// Show synthetics
+			createBooleanButton("conf.editor.outline.showoutlinedsynths", Icons.SYNTHETIC, showSynthetics),
+			// Show types
+			createBooleanButton("conf.editor.outline.showoutlinedtypes", Icons.CODE, showTypes),
+			// Sort alphabetically
+			createBooleanButton("conf.editor.outline.sortalphabetically", Icons.SORT_ALPHABETICAL, sortAlphabetically),
+			// sort by visibility
+			createBooleanButton("conf.editor.outline.sortbyvisibility", Icons.SORT_VISIBILITY, sortByVisibility),
+			// Member type
+			createMultiChoiceButton(MemberType.class, "conf.editor.outline.showoutlinedmembertype", memberType, m -> m.icon),
+			// Visibility
+			createMultiChoiceButton(Visibility.class, "conf.editor.outline.showoutlinedvisibility", visibility, v -> v.icon)
+		);
 	}
 
-	private void addButton(Pane parent, String tooltipKey, String graphic, SimpleBooleanProperty buttonOptionProperty, Consumer<Boolean> editOption) {
-		Button button = new Button();
-		var tooltip = new Tooltip();
-		tooltip.textProperty().bind(Lang.getBinding(tooltipKey));
-		button.setTooltip(tooltip);
-		button.setGraphic(getIconView(graphic));
+	private <E extends Enum<E>> Button createMultiChoiceButton(Class<E> enumClass, String translationKey, Property<E> enumProperty, Function<E, String> iconProvider) {
+		Button button = createButtonBase(translationKey);
+		button.graphicProperty().bind(Bindings.createObjectBinding(() -> getIconView(iconProvider.apply(enumProperty.getValue())), enumProperty));
 		button.setOnAction(e -> {
-			boolean old = buttonOptionProperty.get();
-			buttonOptionProperty.set(!old);
-			editOption.accept(!old);
+			enumProperty.setValue(enumClass.getEnumConstants()[(enumProperty.getValue().ordinal() + 1) % enumClass.getEnumConstants().length]);
+		});
+		enumProperty.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
+		return button;
+	}
+
+	private static Button createButtonBase(String translationKey) {
+		Button button = new Button();
+		Tooltip tooltip = new Tooltip();
+		tooltip.textProperty().bind(Lang.getBinding(translationKey));
+		button.setTooltip(tooltip);
+		return button;
+	}
+
+	private Button createBooleanButton(String tooltipKey, String graphic, SimpleBooleanProperty buttonOptionProperty) {
+		Button button = createButtonBase(tooltipKey);
+		button.setGraphic(getIconView(graphic));
+		button.setOnAction(e -> buttonOptionProperty.set(!buttonOptionProperty.get()));
+		buttonOptionProperty.addListener((observable, oldValue, newValue) -> {
+			updateButton(button, newValue);
 			onUpdate(classInfo);
-			updateButton(button, !old);
 		});
 		updateButton(button, buttonOptionProperty.get());
-		parent.getChildren().add(button);
+		return button;
 	}
 
 	private static void updateButton(Button button, boolean active) {

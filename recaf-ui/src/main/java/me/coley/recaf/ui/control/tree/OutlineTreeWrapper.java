@@ -1,6 +1,5 @@
 package me.coley.recaf.ui.control.tree;
 
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableStringValue;
 import me.coley.recaf.code.*;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
@@ -14,8 +13,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class OutlineTreeWrapper extends OutlineTree {
-
-	private final SimpleBooleanProperty caseSensitivity = new SimpleBooleanProperty();
 
 	private final OutlineTree tree;
 
@@ -31,7 +28,7 @@ public class OutlineTreeWrapper extends OutlineTree {
 
 	@Override
 	public void onUpdate(CommonClassInfo info) {
-		boolean caseSensitive = caseSensitivity.get();
+		boolean caseSensitive = outlinePane.caseSensitive.get();
 		String filterStr = caseSensitive ? filter.getValue() : filter.getValue().toLowerCase();
 		OutlineItem outlineRoot = new OutlineItem(null);
 		Comparator<ItemInfo> comparator = (a, b) -> {

@@ -1,9 +1,6 @@
 package me.coley.recaf.config.container;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.geometry.Pos;
 import me.coley.recaf.config.*;
 import me.coley.recaf.ui.ClassViewMode;
@@ -61,14 +58,14 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedtypes")
-	public boolean showOutlinedTypes;
+	public BooleanProperty showOutlinedTypes;
 
 	/**
 	 * Show synthetic fields and methods in the {@link OutlinePane}.
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedsynths")
-	public boolean showOutlinedSynthetics;
+	public BooleanProperty showOutlinedSynthetics;
 
 	/**
 	 * Filter out members by type (method/field).
@@ -103,6 +100,9 @@ public class EditorConfig implements ConfigContainer {
 	@ConfigID("sortbyvisibility")
 	public BooleanProperty sortOutlinedByVisibility = new SimpleBooleanProperty();
 
+	@Group("outline")
+	@ConfigID("filter.casesensitive")
+	public BooleanProperty caseSensitiveOutlinedFilter = new SimpleBooleanProperty();
 	/**
 	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.
 	 */
