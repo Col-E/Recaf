@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.control.tree;
 
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.WeakChangeListener;
 import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
@@ -25,6 +26,9 @@ import me.coley.recaf.util.threading.FxThreadUtil;
 import org.objectweb.asm.Type;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -34,31 +38,42 @@ import java.util.stream.Collectors;
  */
 public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonClassInfo> {
 	private final ClassRepresentation parent;
-	protected final OutlinePane outlinePane;
+	private final OutlinePane outlinePane;
+	private final ObservableStringValue filter;
 
-	public OutlineTree(ClassRepresentation parent, OutlinePane outlinePane) {
+	public OutlineTree(ClassRepresentation parent, ObservableStringValue filter, OutlinePane outlinePane) {
 		this.parent = parent;
 		getStyleClass().add("transparent-tree");
 		this.outlinePane = outlinePane;
+		this.filter = filter;
 	}
 
 	@Override
 	public void onUpdate(CommonClassInfo info) {
+		boolean caseSensitive = outlinePane.caseSensitive.get();
+		String filterStr = caseSensitive ? filter.getValue() : filter.getValue().toLowerCase();
 		OutlineItem outlineRoot = new OutlineItem(null);
-		if (outlinePane.memberType.get() != OutlinePane.MemberType.METHOD) {
-			for (FieldInfo fieldInfo : info.getFields()) {
-				if (!outlinePane.showSynthetics.get() && AccessFlag.isSynthetic(fieldInfo.getAccess()))
-					continue;
-				outlineRoot.getChildren().add(new OutlineItem(fieldInfo));
+		Comparator<ItemInfo> comparator = (a, b) -> {
+			int result = 0;
+			if (outlinePane.sortByVisibility.get()) {
+				if (a instanceof MemberInfo && b instanceof MemberInfo) {
+					result = OutlinePane.Visibility.ofMember((MemberInfo) a).compareTo(OutlinePane.Visibility.ofMember((MemberInfo) b));
+				} else if (a instanceof InnerClassInfo && b instanceof InnerClassInfo) {
+					result = OutlinePane.Visibility.ofClass((InnerClassInfo) a).compareTo(OutlinePane.Visibility.ofClass((InnerClassInfo) b));
+				} else if (a instanceof CommonClassInfo && b instanceof CommonClassInfo) {
+					result = OutlinePane.Visibility.ofClass((CommonClassInfo) a).compareTo(OutlinePane.Visibility.ofClass((CommonClassInfo) b));
+				}
 			}
-		}
-		if (outlinePane.memberType.get() != OutlinePane.MemberType.FIELD) {
-			for (MethodInfo methodInfo : info.getMethods()) {
-				if (!outlinePane.showSynthetics.get() && AccessFlag.isSynthetic(methodInfo.getAccess()))
-					continue;
-				outlineRoot.getChildren().add(new OutlineItem(methodInfo));
-			}
-		}
+			if (result == 0 && outlinePane.sortAlphabetically.get())
+				result = a.getName().compareTo(b.getName());
+			return result;
+		};
+		outlineRoot.getChildren().addAll(getItems(OutlinePane.MemberType.INNER_CLASS,
+			info.getInnerClasses(), caseSensitive, filterStr, InnerClassInfo::getAccess, comparator));
+		outlineRoot.getChildren().addAll(getItems(OutlinePane.MemberType.FIELD,
+			info.getFields(), caseSensitive, filterStr, FieldInfo::getAccess, comparator));
+		outlineRoot.getChildren().addAll(getItems(OutlinePane.MemberType.METHOD,
+			info.getMethods(), caseSensitive, filterStr, MemberInfo::getAccess, comparator));
 		outlineRoot.setExpanded(true);
 		// Set factory to null while we update the root. This allows existing cells to be aware that they should
 		// not attempt to put effort into redrawing since they are being replaced anyways.
@@ -69,6 +84,33 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 			// will use this factory when the FX thread requests them.
 			setCellFactory(param -> new OutlineCell(info));
 		});
+	}
+
+	private <T extends ItemInfo> List<OutlineItem> getItems(
+		OutlinePane.MemberType memberType,
+		List<T> items,
+		boolean caseSensitive,
+		String filterStr,
+		Function<T, Integer> accessGetter,
+		Comparator<ItemInfo> comparator) {
+		return outlinePane.memberType.get().shouldDisplay(memberType) ? items.stream()
+			.filter(item ->
+				filter(
+					accessGetter.apply(item), caseSensitive,
+					item instanceof InnerClassInfo ? ((InnerClassInfo) item).getInnerName() : item.getName(),
+					filterStr
+				)
+			)
+			.sorted(comparator).map(OutlineItem::new)
+			.collect(Collectors.toList()) : List.of();
+	}
+
+	private boolean filter(int access, boolean caseSensitive, String name, String filterStr) {
+		if (!outlinePane.visibility.get().isAccess(access))
+			return false;
+		if (!outlinePane.showSynthetics.get() && AccessFlag.isSynthetic(access))
+			return false;
+		return caseSensitive ? name.contains(filterStr) : name.toLowerCase().contains(filterStr);
 	}
 
 	/**

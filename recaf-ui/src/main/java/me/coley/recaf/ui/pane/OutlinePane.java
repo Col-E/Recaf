@@ -19,7 +19,6 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.tree.OutlineTree;
-import me.coley.recaf.ui.control.tree.OutlineTreeWrapper;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
@@ -46,7 +45,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	public final SimpleBooleanProperty sortAlphabetically = new SimpleBooleanProperty();
 	public final SimpleBooleanProperty sortByVisibility = new SimpleBooleanProperty();
 	public final SimpleBooleanProperty caseSensitive = new SimpleBooleanProperty();
-	private final OutlineTreeWrapper tree;
+	private final OutlineTree tree;
 	private CommonClassInfo classInfo;
 
 	public enum MemberType implements Translatable {
@@ -145,7 +144,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	 */
 	public OutlinePane(ClassRepresentation parent) {
 		SimpleStringProperty filterValue = new SimpleStringProperty();
-		this.tree = new OutlineTreeWrapper(parent, filterValue, this);
+		this.tree = new OutlineTree(parent, filterValue, this);
 		TextField filter = createFilterBar();
 		filterValue.bind(filter.textProperty());
 		List<String> outers = parent.getCurrentClassInfo().getOuterClassBreadcrumbs();

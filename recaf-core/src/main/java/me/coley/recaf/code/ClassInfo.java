@@ -198,6 +198,10 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		}, ClassReader.SKIP_CODE);
 
 		// create outer class breadcrumbs
+		// alternatives are not great:
+		// - splitting by $ can go wrong with obfuscation
+		// - searching for outer classes when opening the outline can be slow because if you have a big workspace/package,
+		//   you need to go multiple time through all the entries for reconstruction.
 		String outerClassName = outerClassOf(className, innerClasses);
 		List<String> breadcrumbs = new ArrayList<>();
 		while (outerClassName != null) {
@@ -214,6 +218,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				fields,
 				methods,
 				value,
+				// getting all inner classes which are directly visible, no nested inside nested ones
 				innerClasses.stream().filter(innerClass -> className.equals(innerClass.getOuterName()) && !className.equals(innerClass.getName())).collect(Collectors.toList()),
 				breadcrumbs);
 	}

@@ -178,11 +178,13 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 		} else if (type.isEnum()) {
 			return new ConfigEnum(container, field);
 		} else if (ObjectProperty.class.equals(type) && field.getGenericType() instanceof ParameterizedType) {
+			// need to be ObjectProperty<EnumTypeHere>
 			ParameterizedType pt = (ParameterizedType) field.getGenericType();
 			Type[] types = pt.getActualTypeArguments();
 			Type genericType = types.length >= 1 ? types[0] : null;
 			if (genericType instanceof Class) {
 				if (((Class<?>) genericType).isEnum()) {
+					// should be an enum
 					return new ConfigEnumProperty((Class<Enum<?>>) genericType, container, field);
 				} else {
 					logger.trace("Skip field, provided generic type is not an enum: {}#{} - {}", field.getName(), container.getClass(), type.getName());
