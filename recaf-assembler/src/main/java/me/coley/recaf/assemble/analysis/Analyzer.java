@@ -909,7 +909,7 @@ public class Analyzer {
 				}
 				case INSTANCEOF: {
 					Value value = frame.pop();
-					if (value instanceof Value.ObjectValue) {
+					if (value.isObject() || value.isNull()) {
 						// TODO: We can have a type-checker to know for certain if the check is redundant
 						frame.push(new Value.NumericValue(INT_TYPE));
 					} else {
@@ -924,6 +924,8 @@ public class Analyzer {
 					Value owner = frame.pop();
 					if (owner.isEmptyStack()) {
 						frame.markWonky("getfield has no stack value to use as an 'owner'");
+					} else if (owner.isNull()) {
+						frame.markWonky("getfield 'owner' on stack is null!");
 					} else if (!owner.isObject()) {
 						frame.markWonky("getfield 'owner' on stack not an object type!");
 					}
@@ -969,7 +971,9 @@ public class Analyzer {
 					}
 					// Pop field owner context
 					Value owner = frame.pop();
-					if (!owner.isObject()) {
+					if (owner.isNull()) {
+						frame.markWonky("putfield 'owner' on stack is null!");
+					} else if (!owner.isObject()) {
 						frame.markWonky("putfield 'owner' on stack not an object type");
 					}
 					break;
@@ -993,11 +997,15 @@ public class Analyzer {
 					// Pop method owner ctx
 					if (op != INVOKESTATIC) {
 						Value owner = frame.pop();
+						String opName = OpcodeUtil.opcodeToName(op).toLowerCase();
 						if (owner.isEmptyStack()) {
-							frame.markWonky(OpcodeUtil.opcodeToName(op).toLowerCase() +
+							frame.markWonky(opName +
 									" has no stack value to use as an 'owner'");
+						} else if (owner.isNull()) {
+							frame.markWonky(opName +
+									" 'owner' on stack is null!");
 						} else if (!owner.isObject()) {
-							frame.markWonky(OpcodeUtil.opcodeToName(op).toLowerCase() +
+							frame.markWonky(opName +
 									" 'owner' on stack not an object type!");
 						}
 					}
