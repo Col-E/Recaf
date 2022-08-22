@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -162,6 +164,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 
 	private static Node getConfigComponent(ConfigContainer container, Field field, String idKey) {
 		Class<?> type = field.getType();
+		// seems like StringProperty is not supported
 		if (ID_OVERRIDES.containsKey(idKey)) {
 			return ID_OVERRIDES.get(idKey).apply(container, field);
 		} else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
@@ -174,22 +177,21 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigPos(container, field);
 		} else if (type.isEnum()) {
 			return new ConfigEnum(container, field);
-		} else if (ObjectProperty.class.isAssignableFrom(type)) {
-			var genericType = field.isAnnotationPresent(UsingGenericTypes.class) ? field.getAnnotation(UsingGenericTypes.class).value() : null;
-			if (genericType != null) {
-				if (genericType.length != 1)
-					logger.warn("Skip field {}#{}, because UsingGenericTypes has more than one generic type", field.getName(), container.getClass());
-				else {
-					type = genericType[0];
-					if (type.isEnum()) {
-						return new ConfigEnumProperty((Class<Enum<?>>) type, container, field);
-					} else {
-						logger.trace("Skip field, provided generic type is not an enum: {}#{} - {}", field.getName(), container.getClass(), type.getName());
-					}
+		} else if (ObjectProperty.class.equals(type) && field.getGenericType() instanceof ParameterizedType) {
+			ParameterizedType pt = (ParameterizedType) field.getGenericType();
+			Type[] types = pt.getActualTypeArguments();
+			Type genericType = types.length >= 1 ? types[0] : null;
+			if (genericType instanceof Class) {
+				if (((Class<?>) genericType).isEnum()) {
+					return new ConfigEnumProperty((Class<Enum<?>>) genericType, container, field);
+				} else {
+					logger.trace("Skip field, provided generic type is not an enum: {}#{} - {}", field.getName(), container.getClass(), type.getName());
 				}
-			} else logger.trace("Skip field, missing generic type: {}#{} - Use @UsingGenericTypes to specify the generic type", container.getClass(), field.getName());
+			} else {
+				logger.trace("Skip field, missing generic class type: {}#{} - needs to be ObjectProperty<EnumTypeHere>", container.getClass(), field.getName());
+			}
 		} else if (BooleanProperty.class.isAssignableFrom(type)) {
-			return new ConfigBoolean(container,field, Lang.getBinding(idKey));
+			return new ConfigBoolean(container, field, Lang.getBinding(idKey));
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");

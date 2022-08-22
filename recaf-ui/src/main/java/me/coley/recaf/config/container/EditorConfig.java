@@ -58,21 +58,20 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedtypes")
-	public BooleanProperty showOutlinedTypes;
+	public BooleanProperty showOutlinedTypes = new SimpleBooleanProperty();
 
 	/**
 	 * Show synthetic fields and methods in the {@link OutlinePane}.
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedsynths")
-	public BooleanProperty showOutlinedSynthetics;
+	public BooleanProperty showOutlinedSynthetics = new SimpleBooleanProperty();
 
 	/**
 	 * Filter out members by type (method/field).
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedmembertype")
-	@UsingGenericTypes(OutlinePane.MemberType.class)
 	public ObjectProperty<OutlinePane.MemberType> showOutlinedMemberType = new SimpleObjectProperty<>(OutlinePane.MemberType.ALL);
 
 	/**
@@ -81,7 +80,6 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedvisibility")
-	@UsingGenericTypes(OutlinePane.Visibility.class)
 	public ObjectProperty<OutlinePane.Visibility> showOutlinedVisibility = new SimpleObjectProperty<>(OutlinePane.Visibility.ALL);
 
 	/**
@@ -89,7 +87,6 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("outline")
 	@ConfigID("outlinedvisibilityiconposition")
-	@UsingGenericTypes(OutlinePane.Visibility.IconPosition.class)
 	public ObjectProperty<OutlinePane.Visibility.IconPosition> outlineVisibilityIconPosition = new SimpleObjectProperty<>(OutlinePane.Visibility.IconPosition.RIGHT);
 
 	@Group("outline")
