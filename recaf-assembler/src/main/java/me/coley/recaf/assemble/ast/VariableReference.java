@@ -33,6 +33,15 @@ public interface VariableReference extends Element {
 	}
 
 	/**
+	 * Always {@code false} for instructions, but things like {@link me.coley.recaf.assemble.ast.arch.MethodParameter}
+	 * will be {@code true} since they can explicitly declare the object's type.
+	 *
+	 * @return {@code true} when the {@link #getVariableDescriptor()} denoting an object type knows the exact type.
+	 * {@code false} when the type is not known, therefore it is assumed to be {@link me.coley.recaf.util.Types#OBJECT_TYPE}.
+	 */
+	boolean isObjectDescriptorExplicitlyDeclared();
+
+	/**
 	 * @return Variable operation.
 	 */
 	OpType getVariableOperation();

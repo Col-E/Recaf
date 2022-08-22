@@ -44,6 +44,12 @@ public class VarInstruction extends AbstractInstruction implements Opcodes, Name
 	}
 
 	@Override
+	public boolean isObjectDescriptorExplicitlyDeclared() {
+		// Without stack analysis, we can only know something like 'ASTORE' implies 'Object'
+		return false;
+	}
+
+	@Override
 	public OpType getVariableOperation() {
 		int opcode = getOpcodeVal();
 		if (opcode == ALOAD || opcode == ILOAD || opcode == FLOAD || opcode == DLOAD || opcode == LLOAD)
