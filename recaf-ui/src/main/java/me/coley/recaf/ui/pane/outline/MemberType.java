@@ -1,8 +1,12 @@
-package me.coley.recaf.ui.pane.outilne;
+package me.coley.recaf.ui.pane.outline;
 
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.Translatable;
 
+/**
+ * Enum for differentiating different member type filters for {@link OutlinePane}.
+ * @author Amejonah
+ */
 public enum MemberType implements Translatable {
 	ALL(Icons.CLASS_N_FIELD_N_METHOD, "misc.all"),
 	FIELD(Icons.FIELD, "misc.member.field"),

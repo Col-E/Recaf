@@ -19,7 +19,7 @@ import me.coley.recaf.ui.control.CollapsibleTabPane;
 import me.coley.recaf.ui.control.hex.HexClassView;
 import me.coley.recaf.ui.pane.DecompilePane;
 import me.coley.recaf.ui.pane.HierarchyPane;
-import me.coley.recaf.ui.pane.outilne.OutlinePane;
+import me.coley.recaf.ui.pane.outline.OutlinePane;
 import me.coley.recaf.ui.pane.SmaliAssemblerPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;

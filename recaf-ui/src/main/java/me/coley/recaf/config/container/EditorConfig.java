@@ -1,15 +1,20 @@
 package me.coley.recaf.config.container;
 
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
-import me.coley.recaf.config.*;
+import me.coley.recaf.config.ConfigContainer;
+import me.coley.recaf.config.ConfigID;
+import me.coley.recaf.config.Group;
 import me.coley.recaf.config.bounds.IntBounds;
 import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.DiffViewMode;
 import me.coley.recaf.ui.FileViewMode;
-import me.coley.recaf.ui.pane.outilne.MemberType;
-import me.coley.recaf.ui.pane.outilne.OutlinePane;
-import me.coley.recaf.ui.pane.outilne.Visibility;
+import me.coley.recaf.ui.pane.outline.MemberType;
+import me.coley.recaf.ui.pane.outline.OutlinePane;
+import me.coley.recaf.ui.pane.outline.Visibility;
 import me.coley.recaf.ui.util.Icons;
 
 import java.util.Map;

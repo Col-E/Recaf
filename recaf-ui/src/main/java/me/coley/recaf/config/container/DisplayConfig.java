@@ -2,7 +2,10 @@ package me.coley.recaf.config.container;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import me.coley.recaf.config.*;
+import me.coley.recaf.config.ConfigContainer;
+import me.coley.recaf.config.ConfigID;
+import me.coley.recaf.config.Group;
+import me.coley.recaf.config.Ignore;
 import me.coley.recaf.config.bounds.IntBounds;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;

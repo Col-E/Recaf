@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.pane.outilne;
+package me.coley.recaf.ui.pane.outline;
 
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.InnerClassInfo;
@@ -10,12 +10,15 @@ import me.coley.recaf.util.Translatable;
 
 import java.util.function.Function;
 
+/**
+ * Enum for differentiating different visibility filter for {@link OutlinePane}
+ */
 public enum Visibility implements Translatable {
 	ALL(Icons.ACCESS_ALL_VISIBILITY, (flags) -> true),
-	PUBLIC(Icons.ACCESS_PUBLIC, (flags) -> AccessFlag.isPublic(flags)),
-	PROTECTED(Icons.ACCESS_PROTECTED, (flags) -> AccessFlag.isProtected(flags)),
-	PACKAGE(Icons.ACCESS_PACKAGE, (flags) -> AccessFlag.isPackage(flags)),
-	PRIVATE(Icons.ACCESS_PRIVATE, (flags) -> AccessFlag.isPrivate(flags));
+	PUBLIC(Icons.ACCESS_PUBLIC, AccessFlag::isPublic),
+	PROTECTED(Icons.ACCESS_PROTECTED, AccessFlag::isProtected),
+	PACKAGE(Icons.ACCESS_PACKAGE, AccessFlag::isPackage),
+	PRIVATE(Icons.ACCESS_PRIVATE, AccessFlag::isPrivate);
 	public final String icon;
 	private final Function<Integer, Boolean> isAccess;
 

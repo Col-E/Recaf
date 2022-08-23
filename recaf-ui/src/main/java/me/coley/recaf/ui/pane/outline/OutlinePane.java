@@ -1,4 +1,4 @@
-package me.coley.recaf.ui.pane.outilne;
+package me.coley.recaf.ui.pane.outline;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.Property;
@@ -6,12 +6,23 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
+import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.*;
+import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
@@ -26,13 +37,11 @@ import me.coley.recaf.util.NodeEvents;
 import java.util.List;
 import java.util.function.Function;
 
-import static me.coley.recaf.ui.util.Icons.getClassIcon;
-import static me.coley.recaf.ui.util.Icons.getIconView;
-
 /**
  * Visualization of the fields and methods of a {@link ClassInfo}.
  *
  * @author Matt Coley
+ * @author Amejonah
  */
 public class OutlinePane extends BorderPane implements ClassRepresentation {
 
@@ -65,7 +74,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		if (indexOfPathEnd != -1) {
 			previousOuterName = firstOuterName.substring(0, indexOfPathEnd + 1);
 			HBox outerNode = new HBox(
-				getIconView(Icons.FOLDER_PACKAGE),
+				Icons.getIconView(Icons.FOLDER_PACKAGE),
 				new Label(firstOuterName.substring(0, indexOfPathEnd))
 			);
 			outerNode.setSpacing(5);
@@ -78,8 +87,8 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				ClassInfo classInfo = RecafUI.getController().getWorkspace().getResources().getClass(outer);
 				HBox outerNode = new HBox(
 					new StackPane(
-						classInfo != null ? getClassIcon(classInfo) : getIconView(Icons.CLASS),
-						getIconView(Icons.UP_FOR_ICON)
+						classInfo != null ? Icons.getClassIcon(classInfo) : Icons.getIconView(Icons.CLASS),
+						Icons.getIconView(Icons.UP_FOR_ICON)
 					),
 					new Label(outer.startsWith(previousOuterName) ? outer.substring(previousOuterName.length()) : outer)
 				);
@@ -216,7 +225,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 
 	private <E extends Enum<E>> Button createMultiChoiceButton(Class<E> enumClass, String translationKey, Property<E> enumProperty, Function<E, String> iconProvider) {
 		Button button = createButtonBase(translationKey);
-		button.graphicProperty().bind(Bindings.createObjectBinding(() -> getIconView(iconProvider.apply(enumProperty.getValue())), enumProperty));
+		button.graphicProperty().bind(Bindings.createObjectBinding(() -> Icons.getIconView(iconProvider.apply(enumProperty.getValue())), enumProperty));
 		button.setOnAction(e -> {
 			enumProperty.setValue(enumClass.getEnumConstants()[(enumProperty.getValue().ordinal() + 1) % enumClass.getEnumConstants().length]);
 		});
@@ -234,7 +243,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 
 	private Button createBooleanButton(String tooltipKey, String graphic, SimpleBooleanProperty buttonOptionProperty) {
 		Button button = createButtonBase(tooltipKey);
-		button.setGraphic(getIconView(graphic));
+		button.setGraphic(Icons.getIconView(graphic));
 		button.setOnAction(e -> buttonOptionProperty.set(!buttonOptionProperty.get()));
 		buttonOptionProperty.addListener((observable, oldValue, newValue) -> {
 			updateButton(button, newValue);

@@ -15,6 +15,10 @@ import me.coley.recaf.util.ReflectUtil;
 
 import java.lang.reflect.Field;
 
+/**
+ * Spinner for setting a long property.
+ * @author Amejonah
+ */
 public class ConfigLong extends Spinner<Long> implements Unlabeled {
 	public ConfigLong(ConfigContainer container, Field field) {
 		long min = getMin(field);

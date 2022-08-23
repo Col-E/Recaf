@@ -12,6 +12,10 @@ import me.coley.recaf.util.ReflectUtil;
 
 import java.lang.reflect.Field;
 
+/**
+ * Spinner for setting an integer property.
+ * @author Amejonah
+ */
 public class ConfigInt extends Spinner<Integer> implements Unlabeled {
 	public ConfigInt(ConfigContainer container, Field field) {
 		int min = getMin(field);
