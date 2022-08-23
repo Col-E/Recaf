@@ -6,6 +6,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
+	private static final Logger LOGGER = Logging.get(ClassInfo.class);
 	public static long maxOuterDepth = 20;
 	private final byte[] value;
 	private final String name;
@@ -30,7 +32,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private ClassReader classReader;
 	private int hashCode;
 	private final List<InnerClassInfo> innerClasses;
-	private List<String> outerClassBreadcrumbs;
+	private final List<String> outerClassBreadcrumbs;
 
 	private ClassInfo(String name, String superName, String signature, List<String> interfaces, int version, int access,
 										List<FieldInfo> fields, List<MethodInfo> methods, byte[] value, List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs) {
@@ -212,8 +214,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		int counter = 0; // if some obfuscators think they can trick this by adding many inner classes
 		if (maxOuterDepth > 0) while (outerClassName != null) {
 			if (++counter > maxOuterDepth) {
-				Logging.get(ClassInfo.class)
-					.info("Class {} has too long breadcrumb of outer classes (over {}), " +
+				LOGGER.info("Class {} has too long breadcrumb of outer classes (over {}), " +
 						"cleared chain, as this assumed to be work from obfuscators.", className, maxOuterDepth);
 				breadcrumbs.clear(); // assuming some obfuscator is at work, so breadcrumbs might be invalid.
 				break;
