@@ -2,6 +2,8 @@ package me.coley.recaf.ui.pane;
 
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.LongProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -167,7 +169,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 		// seems like StringProperty is not supported
 		if (ID_OVERRIDES.containsKey(idKey)) {
 			return ID_OVERRIDES.get(idKey).apply(container, field);
-		} else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
+		} else if (boolean.class.equals(type) || Boolean.class.equals(type) || BooleanProperty.class.isAssignableFrom(type)) {
 			return new ConfigBoolean(container, field, Lang.getBinding(idKey));
 		} else if (ConfigRanged.hasBounds(field)) {
 			return new ConfigRanged(container, field);
@@ -192,8 +194,10 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			} else {
 				logger.trace("Skip field, missing generic class type: {}#{} - needs to be ObjectProperty<EnumTypeHere>", container.getClass(), field.getName());
 			}
-		} else if (BooleanProperty.class.isAssignableFrom(type)) {
-			return new ConfigBoolean(container, field, Lang.getBinding(idKey));
+		} else if (int.class.equals(type) || Integer.class.equals(type) || IntegerProperty.class.equals(type) ) {
+			return new ConfigInt(container, field);
+		} else if (long.class.equals(type) || Long.class.equals(type) || LongProperty.class.equals(type) ) {
+			return new ConfigLong(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");

@@ -2,7 +2,7 @@ package me.coley.recaf.config.container;
 
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
-import me.coley.recaf.config.IntBounds;
+import me.coley.recaf.config.bounds.IntBounds;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.util.Icons;

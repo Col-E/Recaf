@@ -3,6 +3,10 @@ package me.coley.recaf.ui.control.config;
 import javafx.beans.value.*;
 import javafx.scene.control.Slider;
 import me.coley.recaf.config.*;
+import me.coley.recaf.config.bounds.DoubleBounds;
+import me.coley.recaf.config.bounds.FloatBounds;
+import me.coley.recaf.config.bounds.IntBounds;
+import me.coley.recaf.config.bounds.LongBounds;
 import me.coley.recaf.util.ReflectUtil;
 
 import java.lang.reflect.Field;

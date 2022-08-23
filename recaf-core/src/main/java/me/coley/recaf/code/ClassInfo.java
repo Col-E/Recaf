@@ -1,6 +1,7 @@
 package me.coley.recaf.code;
 
 import me.coley.recaf.RecafConstants;
+import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
+	public static long maxOuterDepth = 20;
 	private final byte[] value;
 	private final String name;
 	private final String superName;
@@ -108,12 +110,12 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		if (o == null || getClass() != o.getClass()) return false;
 		ClassInfo info = (ClassInfo) o;
 		return access == info.access &&
-				name.equals(info.name) &&
-				Objects.equals(superName, info.superName) &&
-				Objects.equals(signature, info.signature) &&
-				interfaces.equals(info.interfaces) &&
-				fields.equals(info.fields) &&
-				methods.equals(info.methods);
+			name.equals(info.name) &&
+			Objects.equals(superName, info.superName) &&
+			Objects.equals(signature, info.signature) &&
+			interfaces.equals(info.interfaces) &&
+			fields.equals(info.fields) &&
+			methods.equals(info.methods);
 	}
 
 	@Override
@@ -172,7 +174,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
 			public void visit(int version, int access, String name, String signature,
-							  String superName, String[] interfaces) {
+												String superName, String[] interfaces) {
 				versionWrapper[0] = version;
 				interfacesWrapper[0] = Arrays.asList(interfaces);
 				signatureWrapper[0] = signature;
@@ -196,7 +198,10 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				innerClasses.add(new InnerClassInfo(className, name, outerName, innerName, access));
 			}
 		}, ClassReader.SKIP_CODE);
-
+		List<InnerClassInfo> directlyNested = // getting all inner classes which are directly visible, no nested inside nested ones
+			innerClasses.stream()
+				.filter(innerClass -> className.equals(innerClass.getOuterName()) && !className.equals(innerClass.getName()))
+				.collect(Collectors.toList());
 		// create outer class breadcrumbs
 		// alternatives are not great:
 		// - splitting by $ can go wrong with obfuscation
@@ -204,23 +209,30 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		//   you need to go multiple time through all the entries for reconstruction.
 		String outerClassName = outerClassOf(className, innerClasses);
 		List<String> breadcrumbs = new ArrayList<>();
-		while (outerClassName != null) {
+		int counter = 0; // if some obfuscators think they can trick this by adding many inner classes
+		if (maxOuterDepth > 0) while (outerClassName != null) {
+			if (++counter > maxOuterDepth) {
+				Logging.get(ClassInfo.class)
+					.info("Class {} has too long breadcrumb of outer classes (over {}), " +
+						"cleared chain, as this assumed to be work from obfuscators.", className, maxOuterDepth);
+				breadcrumbs.clear(); // assuming some obfuscator is at work, so breadcrumbs might be invalid.
+				break;
+			}
 			breadcrumbs.add(0, outerClassName);
 			outerClassName = outerClassOf(outerClassName, innerClasses);
 		}
 		return new ClassInfo(
-				className,
-				superName,
-				signatureWrapper[0],
-				interfacesWrapper[0],
-				versionWrapper[0],
-				access,
-				fields,
-				methods,
-				value,
-				// getting all inner classes which are directly visible, no nested inside nested ones
-				innerClasses.stream().filter(innerClass -> className.equals(innerClass.getOuterName()) && !className.equals(innerClass.getName())).collect(Collectors.toList()),
-				breadcrumbs);
+			className,
+			superName,
+			signatureWrapper[0],
+			interfacesWrapper[0],
+			versionWrapper[0],
+			access,
+			fields,
+			methods,
+			value,
+			directlyNested,
+			breadcrumbs);
 	}
 
 	private static @Nullable String outerClassOf(String name, List<InnerClassInfo> candidates) {

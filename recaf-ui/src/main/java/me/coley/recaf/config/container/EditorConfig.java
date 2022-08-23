@@ -3,6 +3,7 @@ package me.coley.recaf.config.container;
 import javafx.beans.property.*;
 import javafx.geometry.Pos;
 import me.coley.recaf.config.*;
+import me.coley.recaf.config.bounds.IntBounds;
 import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.DiffViewMode;
 import me.coley.recaf.ui.FileViewMode;
