@@ -247,9 +247,12 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		button.setOnAction(e -> {
 			boolean newV = !buttonOptionProperty.get();
 			buttonOptionProperty.set(newV);
-			updateButton(button, newV);
 		});
-		updateButton(button, buttonOptionProperty.get());
+		button.opacityProperty().bind(
+			Bindings.when(buttonOptionProperty)
+				.then(1.0)
+				.otherwise(0.4)
+		);
 		return button;
 	}
 
@@ -257,13 +260,5 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		Button button = createBooleanButton(tooltipKey, graphic, buttonOptionProperty);
 		buttonOptionProperty.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
 		return button;
-	}
-
-	private static void updateButton(Button button, boolean active) {
-		if (active) {
-			button.setOpacity(1.0);
-		} else {
-			button.setOpacity(0.4);
-		}
 	}
 }
