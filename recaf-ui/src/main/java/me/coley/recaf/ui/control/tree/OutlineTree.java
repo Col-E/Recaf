@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control.tree;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.WeakChangeListener;
@@ -146,6 +147,7 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 		protected void updateItem(ItemInfo item, boolean empty) {
 			super.updateItem(item, empty);
 			if (empty || isRootBeingUpdated()) {
+				textProperty().unbind();
 				setText(null);
 				setGraphic(null);
 				setOnMouseClicked(null);
@@ -173,30 +175,32 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 				String name = member.getName();
 				String desc = member.getDescriptor();
 				if (member.isField()) {
-					String text = name;
-					if (outlinePane.showTypes.get()) {
-						String type;
-						if (Types.isValidDesc(desc))
-							type = StringUtil.shortenPath(Type.getType(desc).getInternalName());
-						else type = "<INVALID>";
-						text = type + " " + text;
-					}
-					int maxLen = Configs.display().maxTreeTextLength;
-					setText(StringUtil.limit(EscapeUtil.escape(text), "...", maxLen));
+					textProperty().bind(Bindings.createStringBinding(() -> {
+						String text = name;
+						if (outlinePane.showTypes.get()) {
+							String type;
+							if (Types.isValidDesc(desc))
+								type = StringUtil.shortenPath(Type.getType(desc).getInternalName());
+							else type = "<INVALID>";
+							text = type + " " + text;
+						}
+						return StringUtil.limit(EscapeUtil.escape(text), "...", Configs.display().maxTreeTextLength.get());
+					}, outlinePane.showTypes, Configs.display().maxTreeTextLength));
 					setGraphic(getMemberIcon(member));
 					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item)
 						.setDeclaration(true)
 						.build());
 				} else {
-					String text = name;
-					if (outlinePane.showTypes.get()) {
-						text += "(" + Arrays.stream(Type.getArgumentTypes(desc))
-							.map(argType -> StringUtil.shortenPath(argType.getInternalName()))
-							.collect(Collectors.joining(", ")) +
-							")" + StringUtil.shortenPath(Type.getReturnType(desc).getInternalName());
-					}
-					int maxLen = Configs.display().maxTreeTextLength;
-					setText(StringUtil.limit(EscapeUtil.escape(text), "...", maxLen));
+					textProperty().bind(Bindings.createStringBinding(() -> {
+						String text = name;
+						if (outlinePane.showTypes.get()) {
+							text += "(" + Arrays.stream(Type.getArgumentTypes(desc))
+								.map(argType -> StringUtil.shortenPath(argType.getInternalName()))
+								.collect(Collectors.joining(", ")) +
+								")" + StringUtil.shortenPath(Type.getReturnType(desc).getInternalName());
+						}
+						return StringUtil.limit(EscapeUtil.escape(text), "...", Configs.display().maxTreeTextLength.get());
+					}, outlinePane.showTypes, Configs.display().maxTreeTextLength));
 					setGraphic(getMemberIcon(member));
 					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) member)
 						.setDeclaration(true)
@@ -206,10 +210,11 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 				setOnMouseClicked(e -> parent.selectMember(member));
 			} else if (item instanceof InnerClassInfo) {
 				InnerClassInfo innerClass = (InnerClassInfo) item;
-				setText(StringUtil.limit(
-					EscapeUtil.escape(innerClass.getInnerName()),
-					"...",
-					Configs.display().maxTreeTextLength));
+				textProperty().bind(Bindings.createStringBinding(() -> StringUtil.limit(
+						EscapeUtil.escape(innerClass.getInnerName()),
+						"...",
+						Configs.display().maxTreeTextLength.get())
+					, Configs.display().maxTreeTextLength));
 				ClassInfo classInfo = RecafUI.getController().getWorkspace().getResources().getClass(innerClass.getName());
 				if (classInfo == null) {
 					setGraphic(getMemberIcon(innerClass));

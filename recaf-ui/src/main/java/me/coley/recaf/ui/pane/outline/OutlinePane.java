@@ -209,13 +209,13 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	private Node createButtonBar() {
 		return new HBox(
 			// Show synthetics
-			createBooleanButton("conf.editor.outline.showoutlinedsynths", Icons.SYNTHETIC, showSynthetics),
+			createBooleanButtonWithUpdate("conf.editor.outline.showoutlinedsynths", Icons.SYNTHETIC, showSynthetics),
 			// Show types
 			createBooleanButton("conf.editor.outline.showoutlinedtypes", Icons.CODE, showTypes),
 			// Sort alphabetically
-			createBooleanButton("conf.editor.outline.sortalphabetically", Icons.SORT_ALPHABETICAL, sortAlphabetically),
+			createBooleanButtonWithUpdate("conf.editor.outline.sortalphabetically", Icons.SORT_ALPHABETICAL, sortAlphabetically),
 			// sort by visibility
-			createBooleanButton("conf.editor.outline.sortbyvisibility", Icons.SORT_VISIBILITY, sortByVisibility),
+			createBooleanButtonWithUpdate("conf.editor.outline.sortbyvisibility", Icons.SORT_VISIBILITY, sortByVisibility),
 			// Member type
 			createMultiChoiceButton(MemberType.class, "conf.editor.outline.showoutlinedmembertype", memberType, m -> m.icon),
 			// Visibility
@@ -244,12 +244,18 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	private Button createBooleanButton(String tooltipKey, String graphic, SimpleBooleanProperty buttonOptionProperty) {
 		Button button = createButtonBase(tooltipKey);
 		button.setGraphic(Icons.getIconView(graphic));
-		button.setOnAction(e -> buttonOptionProperty.set(!buttonOptionProperty.get()));
-		buttonOptionProperty.addListener((observable, oldValue, newValue) -> {
-			updateButton(button, newValue);
-			onUpdate(classInfo);
+		button.setOnAction(e -> {
+			boolean newV = !buttonOptionProperty.get();
+			buttonOptionProperty.set(newV);
+			updateButton(button, newV);
 		});
 		updateButton(button, buttonOptionProperty.get());
+		return button;
+	}
+
+	private Button createBooleanButtonWithUpdate(String tooltipKey, String graphic, SimpleBooleanProperty buttonOptionProperty) {
+		Button button = createBooleanButton(tooltipKey, graphic, buttonOptionProperty);
+		buttonOptionProperty.addListener((observable, oldValue, newValue) -> onUpdate(classInfo));
 		return button;
 	}
 

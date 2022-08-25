@@ -57,7 +57,7 @@ public class DisplayConfig implements ConfigContainer {
 	@IntBounds(min = 50, max = 500)
 	@Group("tree")
 	@ConfigID("maxtreetextlength")
-	public int maxTreeTextLength = 100;
+	public IntegerProperty maxTreeTextLength = new SimpleIntegerProperty(100);
 
 	/**
 	 * Show the file filter buttons in workspace tree. Disabling frees up some space.
