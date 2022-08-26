@@ -70,6 +70,9 @@ public class MethodInstruction extends AbstractInstruction {
 	public String print(PrintContext context) {
 		// TODO: Handle edge case where 'itf=true' when opcode is not 'invokeinterface'
 		//  - Jasm now has a custom instruction for it. Make sure we emit it in the disassembler properly.
+		if(isItf() && !this.getOpcode().equals("invokeinterface")) {
+			return getOpcode() + "interface" + " " + getOwner() + "." + getName() + " " + getDesc();
+		}
 		return getOpcode() + " " + getOwner() + "." + getName() + " " + getDesc();
 	}
 }
