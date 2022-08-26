@@ -13,6 +13,7 @@ import me.coley.recaf.assemble.transformer.ExpressionToAstTransformer;
 import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.util.NumberUtil;
+import me.coley.recaf.util.OpcodeUtil;
 import me.coley.recaf.util.Types;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Handle;
@@ -908,7 +909,7 @@ public class Analyzer {
 				}
 				case INSTANCEOF: {
 					Value value = frame.pop();
-					if (value instanceof Value.ObjectValue) {
+					if (value.isObject() || value.isNull()) {
 						// TODO: We can have a type-checker to know for certain if the check is redundant
 						frame.push(new Value.NumericValue(INT_TYPE));
 					} else {
@@ -921,7 +922,11 @@ public class Analyzer {
 				case GETFIELD: {
 					// Pop field owner ctx
 					Value owner = frame.pop();
-					if (!owner.isObject()) {
+					if (owner.isEmptyStack()) {
+						frame.markWonky("getfield has no stack value to use as an 'owner'");
+					} else if (owner.isNull()) {
+						frame.markWonky("getfield 'owner' on stack is null!");
+					} else if (!owner.isObject()) {
 						frame.markWonky("getfield 'owner' on stack not an object type!");
 					}
 					// Fall through
@@ -966,7 +971,9 @@ public class Analyzer {
 					}
 					// Pop field owner context
 					Value owner = frame.pop();
-					if (!owner.isObject()) {
+					if (owner.isNull()) {
+						frame.markWonky("putfield 'owner' on stack is null!");
+					} else if (!owner.isObject()) {
 						frame.markWonky("putfield 'owner' on stack not an object type");
 					}
 					break;
@@ -988,8 +995,20 @@ public class Analyzer {
 							frame.pop();
 					}
 					// Pop method owner ctx
-					if (op != INVOKESTATIC)
-						frame.pop();
+					if (op != INVOKESTATIC) {
+						Value owner = frame.pop();
+						String opName = OpcodeUtil.opcodeToName(op).toLowerCase();
+						if (owner.isEmptyStack()) {
+							frame.markWonky(opName +
+									" has no stack value to use as an 'owner'");
+						} else if (owner.isNull()) {
+							frame.markWonky(opName +
+									" 'owner' on stack is null!");
+						} else if (!owner.isObject()) {
+							frame.markWonky(opName +
+									" 'owner' on stack not an object type!");
+						}
+					}
 					// Push return value
 					Type retType = type.getReturnType();
 					if (Types.isVoid(retType)) {

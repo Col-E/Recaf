@@ -51,6 +51,12 @@ public class IincInstruction extends AbstractInstruction implements Named, Descr
 	}
 
 	@Override
+	public boolean isObjectDescriptorExplicitlyDeclared() {
+		// Type is not object, only ever an int.
+		return false;
+	}
+
+	@Override
 	public OpType getVariableOperation() {
 		return OpType.UPDATE;
 	}

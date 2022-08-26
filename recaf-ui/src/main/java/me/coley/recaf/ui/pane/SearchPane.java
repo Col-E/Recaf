@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class SearchPane extends BorderPane {
 	private static final Logger logger = Logging.get(SearchPane.class);
-	private final DockingRegion targetDockingRegion;
+	private final DockTab containingTab;
 
 	private SearchPane(ObservableValue<String> title, Node content) {
 		DockingWrapperPane wrapper = DockingWrapperPane.builder()
@@ -53,7 +53,7 @@ public class SearchPane extends BorderPane {
 				.content(content)
 				.size(600, 300)
 				.build();
-		targetDockingRegion = wrapper.getParentDockingRegion();
+		containingTab = wrapper.getTab();
 		setCenter(wrapper);
 	}
 
@@ -268,9 +268,10 @@ public class SearchPane extends BorderPane {
 		TreeSet<Result> sorted = new TreeSet<>(results);
 		ResultsPane resultsPane = new ResultsPane(search, sorted);
 		FxThreadUtil.run(() -> {
-			DockTab tab = RecafDockingManager.getInstance().createTabIn(targetDockingRegion,
+			DockingRegion region = containingTab.getParent();
+			DockTab tab = RecafDockingManager.getInstance().createTabIn(region,
 					() -> new DockTab(Lang.getBinding("search.results"), resultsPane));
-			targetDockingRegion.getSelectionModel().select(tab);
+			region.getSelectionModel().select(tab);
 		});
 	}
 

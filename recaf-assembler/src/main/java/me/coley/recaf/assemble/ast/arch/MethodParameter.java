@@ -34,6 +34,12 @@ public class MethodParameter extends BaseElement implements Named, Descriptor, V
 	}
 
 	@Override
+	public boolean isObjectDescriptorExplicitlyDeclared() {
+		// Parameter can specify a descriptor, so the type is explicitly declared.
+		return true;
+	}
+
+	@Override
 	public OpType getVariableOperation() {
 		return OpType.ASSIGN;
 	}

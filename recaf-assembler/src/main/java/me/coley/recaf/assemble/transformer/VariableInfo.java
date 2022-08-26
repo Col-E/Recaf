@@ -1,7 +1,7 @@
 package me.coley.recaf.assemble.transformer;
 
-import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.ast.Element;
+import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
@@ -15,6 +15,7 @@ import java.util.List;
  * @see Variables Consolidated.
  */
 public class VariableInfo implements Comparable<VariableInfo> {
+	private static final List<Type> UNKNOWN_USAGE = List.of(Types.OBJECT_TYPE);
 	private final List<Type> usages = new ArrayList<>();
 	private final List<Element> sources = new ArrayList<>();
 	private final int index;
@@ -33,7 +34,8 @@ public class VariableInfo implements Comparable<VariableInfo> {
 	 * @return Last usage type of the variable.
 	 */
 	public Type getLastUsedType() {
-		return usages.get(usages.size() - 1);
+		List<Type> usedTypes = getUsages();
+		return usedTypes.get(usedTypes.size() - 1);
 	}
 
 	/**
@@ -43,11 +45,12 @@ public class VariableInfo implements Comparable<VariableInfo> {
 	 * @return Common type of all usages.
 	 */
 	public Type getCommonType(InheritanceChecker checker) {
-		Type first = usages.get(0);
+		List<Type> usedTypes = getUsages();
+		Type first = usedTypes.get(0);
 		if (Types.isPrimitive(first.getDescriptor())) {
 			// Primitives just need to be the widest type
 			Type widest = first;
-			for (Type usage : usages) {
+			for (Type usage : usedTypes) {
 				if (usage.getSort() > widest.getSort())
 					widest = usage;
 			}
@@ -56,8 +59,8 @@ public class VariableInfo implements Comparable<VariableInfo> {
 			// Object types need a common parent
 			String commonName = first.getInternalName();
 			int i = 1;
-			while (i < usages.size()) {
-				commonName = checker.getCommonType(commonName, usages.get(i).getInternalName());
+			while (i < usedTypes.size()) {
+				commonName = checker.getCommonType(commonName, usedTypes.get(i).getInternalName());
 				i++;
 			}
 			return Type.getObjectType(commonName);
@@ -71,6 +74,13 @@ public class VariableInfo implements Comparable<VariableInfo> {
 	public void addType(Type type) {
 		if (!usages.contains(type))
 			usages.add(type);
+	}
+
+	/**
+	 * Clears usages.
+	 */
+	public void clearUsages() {
+		usages.clear();
 	}
 
 	/**
@@ -148,6 +158,13 @@ public class VariableInfo implements Comparable<VariableInfo> {
 	 * @return List of direct type usages of the variable.
 	 */
 	public List<Type> getUsages() {
+		// Because we choose to omit 'Object' as a usage when recording things such as:
+		//   ACONST_NULL
+		//   ASTORE name
+		// We will lazily include the 'Object' type here.
+		// 'Object' is only included as a usage if the exact type of 'Object' is explicitly used.
+		if (usages.isEmpty())
+			return UNKNOWN_USAGE;
 		return usages;
 	}
 

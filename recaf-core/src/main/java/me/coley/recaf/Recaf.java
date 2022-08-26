@@ -22,7 +22,7 @@ public final class Recaf {
 	 * 		Initialization parameters.
 	 */
 	public static void initialize(InitializerParameters parameters) {
-		logger.debug("Initialize: Recaf-{} ({})", BuildConfig.VERSION, BuildConfig.GIT_SHA);
+		logger.debug("Initialize: Recaf-{} ({}) - {}", BuildConfig.VERSION, BuildConfig.GIT_SHA, BuildConfig.GIT_DATE);
 		RuntimeProperties.dump(logger);
 		// Create presentation layer
 		PresentationType presentationType = parameters.getPresentationType();

@@ -49,6 +49,13 @@ public abstract class Value {
 	}
 
 	/**
+	 * @return {@code true} if the type is {@link EmptyPoppedValue}.
+	 */
+	public boolean isEmptyStack() {
+		return this instanceof EmptyPoppedValue;
+	}
+
+	/**
 	 * @return Copy of the value.
 	 */
 	public Value copy() {
@@ -115,6 +122,30 @@ public abstract class Value {
 		public int hashCode() {
 			// All null-values should have the same hash
 			return -1;
+		}
+	}
+
+	/**
+	 * {@link ObjectValue} but special type to be aware it is from a result of a merge with a {@link NullValue}.
+	 */
+	public static class NullMergedObjectValue extends ObjectValue {
+		/**
+		 * @param type
+		 * 		Type of the object.
+		 */
+		public NullMergedObjectValue(Type type) {
+			super(type);
+		}
+
+		@Override
+		public boolean isObject() {
+			return true;
+		}
+
+		@Override
+		public boolean isNull() {
+			// Saying false only because we cannot be certain due to flow control
+			return false;
 		}
 	}
 

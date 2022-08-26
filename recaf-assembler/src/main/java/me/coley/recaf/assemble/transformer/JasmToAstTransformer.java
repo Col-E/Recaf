@@ -102,7 +102,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitDirectVarInsn(int opcode, int var) throws AssemblerException {
-
+		// not supported
 	}
 
 	@Override
