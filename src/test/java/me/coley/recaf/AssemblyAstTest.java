@@ -282,6 +282,30 @@ public class AssemblyAstTest {
 		}
 
 		@Test
+		public void testMethodInsnInvokeStatic() {
+			String text = "INVOKESTATIC java/lang/System.exit(I)V";
+			MethodInsnAST methodAST = single(text);
+			assertEquals(text, methodAST.print());
+			assertEquals("INVOKESTATIC", methodAST.getOpcode().print());
+			assertEquals("java/lang/System", methodAST.getOwner().getType());
+			assertEquals("exit", methodAST.getName().getName());
+			assertEquals("(I)V", methodAST.getDesc().getDesc());
+			assertNull(methodAST.getItf());
+		}
+
+		@Test
+		public void testMethodInsnInvokeStaticItf() {
+			String text = "INVOKESTATIC java/util/function/Function.identity()Ljava/util/function/Function; itf";
+			MethodInsnAST methodAST = single(text);
+			assertEquals(text, methodAST.print());
+			assertEquals("INVOKESTATIC", methodAST.getOpcode().print());
+			assertEquals("java/util/function/Function", methodAST.getOwner().getType());
+			assertEquals("identity", methodAST.getName().getName());
+			assertEquals("()Ljava/util/function/Function;", methodAST.getDesc().getDesc());
+			assertNotNull(methodAST.getItf());
+		}
+
+		@Test
 		public void testLdcInsn() {
 			// int
 			String text = "LDC 1";
@@ -510,6 +534,15 @@ public class AssemblyAstTest {
 		public void testMemberSuggestFromMethod() {
 			List<String> suggestions = suggest(null, "INVOKESTATIC java/io/PrintStream.printl");
 			assertTrue(suggestions.contains("println(Ljava/lang/String;)V"));
+		}
+
+		@Test
+		public void testItfSuggest() {
+			List<String> suggestions = suggest(null, "INVOKESTATIC java/util/function/Function.identity()Ljava/util/function/Function; i");
+			assertTrue(suggestions.contains("itf"));
+			//
+			suggestions = suggest(null, "INVOKEVIRTUAL java/io/PrintStream.println i");
+			assertFalse(suggestions.contains("itf"));
 		}
 
 		@Test

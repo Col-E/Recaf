@@ -8,6 +8,7 @@ import me.coley.recaf.parse.bytecode.exception.AssemblerException;
 import me.coley.recaf.parse.bytecode.exception.VerifierException;
 import me.coley.recaf.workspace.LazyClasspathResource;
 import org.junit.jupiter.api.*;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Frame;
 
@@ -686,6 +687,21 @@ public class AssemblyCasesTest {
 			assertNotEquals(initial, retFrameLocal.getValue());
 			assertNotEquals(one, retFrameLocal.getValue());
 			assertEquals(two, retFrameLocal.getValue());
+		}
+
+		@Test
+		public void testInterfaceMethodRef() {
+			try {
+				MethodNode method = compile(parse(
+						"INVOKESTATIC java/util/function/Function.identity()Ljava/util/function/Function; itf\n" +
+							"POP\n" +
+							"RETURN"));
+				AbstractInsnNode invokeStaticInsn = method.instructions.get(1);
+				assertEquals(Opcodes.INVOKESTATIC, invokeStaticInsn.getOpcode());
+				assertTrue(((MethodInsnNode) invokeStaticInsn).itf, "INVOKESTATIC instruction must have itf=true");
+			} catch (AssemblerException ex) {
+				fail(ex);
+			}
 		}
 	}
 
