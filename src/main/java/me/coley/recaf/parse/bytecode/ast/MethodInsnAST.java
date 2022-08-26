@@ -85,6 +85,9 @@ public class MethodInsnAST extends InsnAST {
 		return desc;
 	}
 
+	/**
+	 * @return Itf AST for static invocations of interface methods.
+	 */
 	public ItfAST getItf() {
 		return itf;
 	}
