@@ -232,7 +232,7 @@ public class BytecodeToAstTransformer {
 					case AbstractInsnNode.METHOD_INSN:
 						MethodInsnNode methodInsn = (MethodInsnNode) insn;
 						code.addInstruction(new MethodInstruction(op, methodInsn.owner, methodInsn.name, methodInsn.desc,
-								op == Opcodes.INVOKEINTERFACE));
+								methodInsn.itf));
 						break;
 					case AbstractInsnNode.INVOKE_DYNAMIC_INSN:
 						InvokeDynamicInsnNode indyInsn = (InvokeDynamicInsnNode) insn;

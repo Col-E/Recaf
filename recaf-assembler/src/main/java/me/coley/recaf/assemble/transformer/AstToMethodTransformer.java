@@ -305,7 +305,7 @@ public class AstToMethodTransformer {
 					break;
 				case METHOD:
 					MethodInstruction method = (MethodInstruction) instruction;
-					addCode(list, instruction, new MethodInsnNode(op, method.getOwner(), method.getName(), method.getDesc()));
+					addCode(list, instruction, new MethodInsnNode(op, method.getOwner(), method.getName(), method.getDesc(), method.isItf()));
 					break;
 				case INDY: {
 					IndyInstruction indy = (IndyInstruction) instruction;
