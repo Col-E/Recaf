@@ -257,7 +257,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitThrows(ThrowsGroup throwsGroup) throws AssemblerException {
-		currentAttributes.addThrownException(new ThrownException(throwsGroup.getClassName().content()));
+		currentAttributes.addThrownException(new ThrownException(content(throwsGroup.getClassName())));
 	}
 
 	@Override
