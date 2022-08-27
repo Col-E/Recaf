@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.control.code;
 
 import me.coley.recaf.util.RegexUtil;
+import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -18,7 +19,7 @@ import java.util.function.BiConsumer;
  * @author Matt Coley
  */
 public class BracketTracking {
-	private static final Logger logger = Logging.get(BracketTracking.class);
+	private static final DebuggingLogger logger = Logging.get(BracketTracking.class);
 	private static final String MATCH_STYLE = "bracket-match";
 	private static final String BRACKET_PAIRS = "(){}[]<>";
 	private static final String BRACKET_PAIR_PATTERN = "[()\\{\\}\\[\\]<>]";
@@ -125,7 +126,7 @@ public class BracketTracking {
 	 * Clear all tracked pairs and recalculate the pairs contained in the document.
 	 */
 	private void recalculatePairs() {
-		logger.trace("Recalculating bracket pairs");
+		logger.debugging(l -> l.trace("Recalculating bracket pairs"));
 		// Clear old pairs
 		clearPairs();
 		// Rescan document for pairs
@@ -340,12 +341,12 @@ public class BracketTracking {
 		int len = editor.getLength();
 		// Skip if the pair is not in range.
 		if (pair.getStart() >= len - 1 || pair.getEnd() >= len) {
-			logger.trace("Skip add pair {}, not in document bounds", pair);
+			logger.debugging(l -> l.trace("Skip add pair {}, not in document bounds", pair));
 			return;
 		}
 		// Skip pairs that do not span a whole line
 		if (!editor.getText(pair.getStart(), pair.getEnd()).contains("\n")) {
-			logger.trace("Skip add pair {}, does not span line", pair);
+			logger.debugging(l -> l.trace("Skip add pair {}, does not span line", pair));
 			return;
 		}
 		// Update listeners if pair was added.
@@ -355,13 +356,13 @@ public class BracketTracking {
 			modified = bracketPairs.add(pair);
 		}
 		if (modified) {
-			logger.trace("Add pair {}", pair);
+			logger.debugging(l -> l.trace("Add pair {}", pair));
 			int paragraph = offsetToParagraph(pair.getStart());
 			if (paragraph >= 0) {
 				listeners.forEach(listener -> listener.onBracketAdded(paragraph + 1, pair));
 			}
 		} else {
-			logger.trace("Skip add pair {}, already exists", pair);
+			logger.debugging(l -> l.trace("Skip add pair {}, already exists", pair));
 		}
 	}
 
@@ -379,13 +380,13 @@ public class BracketTracking {
 			modified = bracketPairs.remove(pair);
 		}
 		if (modified) {
-			logger.trace("Remove pair {}", pair);
+			logger.debugging(l -> l.trace("Remove pair {}", pair));
 			int paragraph = offsetToParagraph(pair.getStart());
 			if (paragraph >= 0) {
 				listeners.forEach(listener -> listener.onBracketRemoved(paragraph + 1, pair));
 			}
 		} else {
-			logger.trace("Skip remove pair {}, never tracked to begin with", pair);
+			logger.debugging(l -> l.trace("Skip remove pair {}, never tracked to begin with", pair));
 		}
 	}
 
@@ -393,7 +394,7 @@ public class BracketTracking {
 	 * Remove all pairs from the tracked set.
 	 */
 	private void clearPairs() {
-		logger.trace("Clearing existing pairs");
+		logger.debugging(l -> l.trace("Clearing existing pairs"));
 		for (BracketPair pair : snapshot()) {
 			removePair(pair);
 		}

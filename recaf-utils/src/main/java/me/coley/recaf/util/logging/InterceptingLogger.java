@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
  *
  * @author Matt Coley
  */
-public abstract class InterceptingLogger implements Logger {
+public abstract class InterceptingLogger implements DebuggingLogger {
 	private final Logger backing;
 
 	/**

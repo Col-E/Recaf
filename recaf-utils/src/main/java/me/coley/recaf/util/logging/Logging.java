@@ -22,7 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author Matt Coley
  */
 public class Logging {
-	private static final Map<String, Logger> loggers = new ConcurrentHashMap<>();
+	private static final Map<String, DebuggingLogger> loggers = new ConcurrentHashMap<>();
 	private static final List<LogConsumer<String>> logConsumers = new ArrayList<>();
 	private static Level interceptLevel = Level.INFO;
 
@@ -32,7 +32,7 @@ public class Logging {
 	 *
 	 * @return Logger associated with name.
 	 */
-	public static Logger get(String name) {
+	public static DebuggingLogger get(String name) {
 		return loggers.computeIfAbsent(name, k -> intercept(k, getLogger(k)));
 	}
 
@@ -42,7 +42,7 @@ public class Logging {
 	 *
 	 * @return Logger associated with class.
 	 */
-	public static Logger get(Class<?> cls) {
+	public static DebuggingLogger get(Class<?> cls) {
 		return loggers.computeIfAbsent(cls.getName(), k -> intercept(k, getLogger(k)));
 	}
 
@@ -103,7 +103,7 @@ public class Logging {
 		logbackLogger.setAdditive(false);
 	}
 
-	private static Logger intercept(String name, Logger logger) {
+	private static DebuggingLogger intercept(String name, Logger logger) {
 		return new InterceptingLogger(logger) {
 			@Override
 			public void intercept(Level level, String message) {
