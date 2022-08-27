@@ -1,9 +1,9 @@
 ## Language name
-lang.name=中文
+lang.name=简体中文
 
 ##### General items
 ## Main and context menus
-menu.association.override=Override language
+menu.association.override=覆盖语言
 menu.association.none=未关联配置
 menu.config=配置
 menu.file=文件
@@ -11,13 +11,17 @@ menu.file.addtoworkspace=添加到工作空间
 menu.file.openworkspace=打开工作空间
 menu.file.exportapp=导出应用
 menu.file.exportworkspace=导出工作空间配置
+menu.file.modifications=查看差异
 menu.file.recent=最近
 menu.file.close=关闭
 menu.file.quit=退出
 menu.goto.class=转到类
 menu.goto.field=转到字段
 menu.goto.method=转到方法
+menu.goto.instruction=转到指令
 menu.goto.file=转到文件
+menu.goto.label=Go to label
+menu.edit.assemble.class=修改类
 menu.edit.assemble.field=修改字段
 menu.edit.assemble.method=修改方法
 menu.edit.remove=移除
@@ -38,19 +42,29 @@ menu.search.number=数值
 menu.search.references=引用
 menu.search.declarations=声明
 menu.search.noresults=没有结果
+menu.log.clear=清理
+menu.log.export=导出
 menu.mappings=映射
 menu.mappings.apply=应用
 menu.mappings.export=导出
+menu.mappings.generate=生成
 menu.scripting=脚本
+menu.scripting.none-found=未找到任何脚本
+menu.scripting.manage=管理脚本
 menu.scripting.new=新建脚本
-menu.scripting.open=打开脚本
+menu.scripting.edit=编辑
+menu.scripting.browse=浏览脚本
+menu.scripting.refresh=刷新脚本
 menu.scripting.save=保存脚本
 menu.scripting.execute=执行
 menu.scripting.editor=脚本编辑器
+menu.scripting.author=作者
+menu.scripting.version=版本
 menu.view=视图
 menu.view.hierarchy=类结构
 menu.view.hierarchy.children=子类
 menu.view.hierarchy.parents=父类
+menu.view.methodcfg=控制流图
 menu.tab.close=关闭
 menu.tab.closeothers=关闭其他
 menu.tab.closeall=关闭所有
@@ -64,19 +78,32 @@ menu.mode.class.decompile=反编译
 menu.mode.file.auto=自动
 menu.mode.file.text=文本
 menu.mode.file.hex=十六进制
+menu.mode.diff.decompile=反编译
+menu.mode.diff.disassemble=反汇编
 menu.vm=虚拟化
 menu.vm.optimize=优化
 menu.vm.run=运行
 menu.plugin=插件
+menu.plugin.manage=管理插件
 menu.plugin.installed=已安装
-menu.plugin.remote=远端
+menu.plugin.remote=远程
+menu.plugin.browse=浏览插件
+menu.plugin.enabled=启用
+menu.plugin.uninstall=卸载
+menu.plugin.uninstall.warning=您确定要删除改插件吗?
 
 ##### Dialog texts
 dialog.cancel=取消
+dialog.close=关闭
 dialog.confirm=确认
 dialog.finish=完成
 dialog.next=下一个
 dialog.previous=上一个
+dialog.dismiss=弃用
+dialog.configure=配置
+dialog.warning=警告
+dialog.restart=修改该配置需要您重启.\n您确定要应用吗?
+dialog.unknownextension=未知的文件扩展名. 是否要配置语言关联?
 
 ## File chooser
 dialog.file.open=打开
@@ -123,15 +150,19 @@ dialog.header.delete-resource=你确定要删除吗: %s？
 
 ## Rename class/file
 dialog.title.rename-class=重命名类
+dialog.title.rename-class-warning=警告
 dialog.title.rename-directory=重命名目录
 dialog.title.rename-field=重命名字段
 dialog.title.rename-file=重命名文件
+dialog.title.rename-file-warning=警告
 dialog.title.rename-method=重命名方法
 dialog.title.rename-package=重命名包
 dialog.header.rename-class=为类提供新名称，这可能会影响多个文件。
+dialog.header.rename-class-warning=您所选中的名字已被使用. 是否确定重命名?
 dialog.header.rename-directory=为目录提供新名称。
 dialog.header.rename-field=为字段提供新名称。
 dialog.header.rename-file=为文件提供新名称。
+dialog.header.rename-file-warning=目标文件已存在. 您确定要覆盖吗?
 dialog.header.rename-method=为方法提供新名称。
 dialog.header.rename-package=为包提供新名称。
 
@@ -145,9 +176,21 @@ dialog.header.move-directory=将目录移动到新的父目录。
 dialog.header.move-file=Move 将文件复制到新目录。
 dialog.header.move-package=将包移动到新的父包中。
 
+## VM actions
+dialog.title.vm-invoke-args=虚拟化方法调用
+dialog.title.vm-peephole-invoke-args=虚拟化窥孔(peephole)优化
+dialog.vm.execute=执行
+dialog.vm.optimize=优化
+dialog.vm.create-dummy=Use dummy
+dialog.vm.create-null=Use null
+
 ## Hex dialogs
 dialog.hex.title.insertcount=插入
 dialog.hex.header.insertcount=要插入多少字节？
+
+# Base Converter dialog
+dialog.conv.title.literal=Number literal
+dialog.conv.title.expression=Number expression
 
 ## Quick nav
 dialog.quicknav=快速导航
@@ -171,6 +214,14 @@ welcome.github.description=在GitHub上查看项目页面：源代码、反馈�
 ## Workspace
 workspace.title=工作空间
 
+## Changes view
+modifications.none=没有修改过任何项目
+modifications.title=修改
+
+## Java area
+java.decompiling=反编译类中...
+java.unparsable=JavaParser failed to interpret source, context actions only available 'Fields & Methods' tab
+
 ## Outline
 outline.title=字段&方法
 
@@ -184,10 +235,14 @@ logging.title=日志
 
 ## Assembler
 assembler.title=汇编器
-assembler.analysis.title=分析
+assembler.analysis.title=堆栈分析
+assembler.analysis.stack=堆栈
+assembler.analysis.name-column=名称
+assembler.analysis.value-column=值
 assembler.playground.title=Java转Bytecode
 assembler.playground.comment=您可以在这里编写常规的Java，并将其转换为字节码
-assembler.vartable.title=变量
+assembler.vartable.title=局部变量
+assembler.vartable.empty=<Requires compiling at least once>
 
 ## Search
 search.run=搜索
@@ -211,6 +266,27 @@ help.recaf=Recaf
 help.recaf.sub=关于Recaf的信息
 help.copy=将信息复制到剪贴板
 help.opendir=打开Recaf目录
+
+## Mapping generator
+mapgen.genimpl=命名规则
+mapgen.filters=过滤器
+mapgen.filters.add=增加新过滤器
+mapgen.filters.delete=删除
+mapgen.newfilter.excludealreadymapped=排除已被映射
+mapgen.newfilter.modifierexclude=排除修改
+mapgen.newfilter.modifierexcludeclass=排除于类上的修改
+mapgen.newfilter.modifierexcludefield=排除于字段上的修改
+mapgen.newfilter.modifierexcludemethod=排除于方法上的修改
+mapgen.newfilter.modifierinclude=包含修改
+mapgen.newfilter.modifierincludeclass=包含于类上的修改
+mapgen.newfilter.modifierincludefield=包含于字段上的修改
+mapgen.newfilter.modifierincludemethod=包含于方法上的修改
+mapgen.newfilter.pathexclude=排除路径
+mapgen.newfilter.pathinclude=包含路径
+mapgen.title.newfilter=新过滤器
+mapgen.header.newfilter=输入过滤内容
+mapgen.copy=复制到剪贴板
+mapgen.apply=应用
 
 ##### Tree
 tree.classes=类
@@ -236,6 +312,8 @@ conf.display.workspace.onfiledrop.addlibrary=添加为库
 conf.display.workspace.promptcloseworkspace=关闭工作工作空间时提示
 conf.display.workspace.promptdeleteitem=删除项目时提示
 conf.display.workspace.showselectionnavbar=显示选中导航栏
+conf.display.text=文本
+conf.display.text.fontsize=字体大小
 
 conf.editor=编辑器组件
 conf.editor.general=通用
@@ -243,15 +321,18 @@ conf.editor.general.classmode=默认类视图
 conf.editor.general.filemode=默认文件视图
 conf.editor.general.errorindicatorpos=错误指示器位置
 conf.editor.assoc=文件扩展名关联
+conf.editor.assoc.fileextassociations=关联
 conf.editor.outline=类概述
 conf.editor.outline.showoutlinedtypes=显示成员类型
-conf.editor.outline.showoutlinedsynths=显示合成(编译器生成)成员
+conf.editor.outline.showoutlinedsynths=显示synthetic成员(通常由编译器自动生成)
 conf.editor.text=文本编辑器
 conf.editor.text.showbracketfolds=显示括号折叠
 conf.editor.hex=十六进制编辑器
 conf.editor.hex.classhints=显示类文件提示
 conf.editor.hex.hexcolumns=列数
 conf.editor.hex.highlightcurrent=高亮当前选择
+conf.editor.diff=差异编辑器
+conf.editor.diff.diff-view-mode=类差异查看模式
 
 conf.binding=按键绑定
 conf.binding.navigation=导航
@@ -262,22 +343,29 @@ conf.binding.navigation.quicknav=快速导航
 conf.binding.edit=编辑
 conf.binding.edit.save=保存更改
 conf.binding.edit.undo=撤消更改
-conf.binding.inputprompt.initial=<waiting>
-conf.binding.inputprompt.finish=<ENTER to finish>
+conf.binding.inputprompt.initial=<等待中>
+conf.binding.inputprompt.finish=<ENTER 来结束>
 conf.binding.code=代码交互
 conf.binding.code.gotodef=转到类定义
 conf.binding.code.rename=选中重命名
 conf.binding.code.searchref=搜索引用
+conf.binding.appearance=外观
+conf.binding.appearance.fontsize.up=放大字体
+conf.binding.appearance.fontsize.down=缩小字体
 
 conf.assembler=汇编器
+conf.assembler.format=格式
+conf.assembler.format.prefix=为关键词使用点前缀
 conf.assembler.parse=解析
 conf.assembler.parse.recover=尝试错误恢复
 conf.assembler.validation=验证
 conf.assembler.validation.ast=启用AST验证
 conf.assembler.validation.bytecode=启用字节码验证
+conf.assembler.debug=调试
+conf.assembler.debug.ast-debug=显示AST调试信息
 
 conf.compiler=编译器
-conf.compiler.general=一般
+conf.compiler.general=通用
 conf.compiler.general.impl=编译器实现
 conf.compiler.general.phantoms=生成缺失类
 conf.compiler.debug=调试
@@ -286,11 +374,12 @@ conf.compiler.debug.lines=包括行号
 conf.compiler.debug.sourcefile=包括源文件
 
 conf.decompiler=反编译
-conf.decompiler.general=一般
+conf.decompiler.general=通用
 conf.decompiler.general.impl=反编译器实现
 conf.decompiler.general.enabletimeout=开启反编译器超时
 conf.decompiler.general.timeout=超时(毫秒)
 conf.decompiler.filter=过滤
+conf.decompiler.filter.escapeunicode=转义unicode
 conf.decompiler.filter.generics=去除类型参数
 conf.decompiler.filter.vars=去除变量信息
 conf.decompiler.filter.synthetics=去除合成标志
@@ -307,6 +396,12 @@ conf.export.general=通用
 conf.export.general.shadeLibs=将库捆绑到输出中
 conf.export.general.compress=在档案中使用压缩
 
+conf.plugin=插件
+conf.plugin.general=通用
+conf.plugin.general.enabled=启用
+conf.plugin.general.remote=远程
+conf.plugin.general.remotetime=缓存时间戳
+
 conf.recent=最近
 conf.recent.max=最大跟踪项目
 conf.recent.workspaces=最近工作空间
@@ -317,6 +412,9 @@ conf.ssvm.access.read=允许读
 conf.ssvm.access.write=允许写
 conf.ssvm.access.read.warn=启用此选项将允许SSVM操作读取您系统上的文件。\n启用此选项时要小心。
 conf.ssvm.access.write.warn=启用此选项将允许SSVM操作将文件写入您的系统。\n启用此选项时要非常小心。
-
-## Not translate
-conf.undefined=Undefined
+conf.ssvm.general=通用
+conf.ssvm.general.active=在加载工作环境时初始化SSVM
+conf.ssvm.remote=远程VM
+conf.ssvm.remote.active=启用
+conf.ssvm.remote.path=VM可执行文件路径
+conf.undefined=未定义
