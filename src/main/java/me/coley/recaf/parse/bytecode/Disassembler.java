@@ -297,6 +297,9 @@ public class Disassembler {
 		String name = EscapeUtil.escapeCommon(insn.name);
 		String desc = EscapeUtil.escapeCommon(insn.desc);
 		line.append(' ').append(owner).append('.').append(name).append(desc);
+		if (insn.getOpcode() == Opcodes.INVOKESTATIC && insn.itf) {
+			line.append(" itf");
+		}
 	}
 
 	private void visitJumpInsn(StringBuilder line, JumpInsnNode insn) {

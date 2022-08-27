@@ -4,6 +4,7 @@ import me.coley.recaf.parse.bytecode.*;
 import me.coley.recaf.parse.bytecode.ast.*;
 import me.coley.recaf.parse.bytecode.exception.ASTParseException;
 import me.coley.recaf.util.AutoCompleteUtil;
+import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +50,14 @@ public class MethodInsnParser extends AbstractParser<MethodInsnAST> {
 			DescParser descParser = new DescParser();
 			descParser.setOffset(line.indexOf('('));
 			DescAST desc = descParser.visit(lineNo, descS);
-			return new MethodInsnAST(lineNo, start, op, owner, name, desc);
+			// itf
+			ItfAST itf = null;
+			if (op.getOpcode() == Opcodes.INVOKESTATIC) {
+				if (trim.length > 2 && "itf".equals(trim[2])) {
+					itf = new ItfAST(lineNo, line.indexOf("itf", desc.getStart() + desc.getDesc().length()));
+				}
+			}
+			return new MethodInsnAST(lineNo, start, op, owner, name, desc, itf);
 		} catch(Exception ex) {
 			throw new ASTParseException(ex, lineNo, "Bad format for method instruction");
 		}
@@ -57,9 +65,18 @@ public class MethodInsnParser extends AbstractParser<MethodInsnAST> {
 
 	@Override
 	public List<String> suggest(ParseResult<RootAST> lastParse, String text) {
-		// METHOD owner.name+desc
+		// METHOD owner.name+desc [itf]
 		int space = text.indexOf(' ');
 		if (space >= 0) {
+			int secondSpace = text.indexOf(' ', space + 1);
+			if (secondSpace >= 0) {
+				if ("INVOKESTATIC".equals(text.substring(0, space))) {
+					return Collections.singletonList("itf");
+				} else {
+					return Collections.emptyList();
+				}
+			}
+
 			String sub = text.substring(space + 1);
 			int dot = sub.indexOf('.');
 			if (dot == -1)
