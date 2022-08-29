@@ -8,6 +8,11 @@ import me.coley.recaf.util.ReflectUtil;
 
 import java.lang.reflect.Field;
 
+/**
+ * ComboBox for switching between different enum options wrapped by {@link ObjectProperty}.
+ *
+ * @author Amejonah
+ */
 public class ConfigEnumProperty extends EnumComboBox<Enum<?>> implements Unlabeled {
 	private final ObjectProperty<Enum<?>> value = new SimpleObjectProperty<>();
 
@@ -16,6 +21,7 @@ public class ConfigEnumProperty extends EnumComboBox<Enum<?>> implements Unlabel
 	 * @param instance  Config container.
 	 * @param field     Config field.
 	 */
+	@SuppressWarnings("unchecked")
 	public ConfigEnumProperty(Class<Enum<?>> enumClass, ConfigContainer instance, Field field) {
 		super(enumClass, ((ObjectProperty<Enum<?>>) ReflectUtil.quietGet(instance, field)).get());
 		value.bindBidirectional(ReflectUtil.quietGet(instance, field));

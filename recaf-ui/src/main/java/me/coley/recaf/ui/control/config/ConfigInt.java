@@ -14,9 +14,16 @@ import java.lang.reflect.Field;
 
 /**
  * Spinner for setting an integer property.
+ *
  * @author Amejonah
  */
 public class ConfigInt extends Spinner<Integer> implements Unlabeled {
+	/**
+	 * @param container
+	 * 		Config container.
+	 * @param field
+	 * 		Config field.
+	 */
 	public ConfigInt(ConfigContainer container, Field field) {
 		int min = getMin(field);
 		int max = getMax(field);

@@ -11,18 +11,13 @@ import javafx.scene.control.TreeView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.FieldInfo;
-import me.coley.recaf.code.InnerClassInfo;
-import me.coley.recaf.code.ItemInfo;
-import me.coley.recaf.code.MemberInfo;
-import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.Updatable;
 import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.pane.outline.MemberType;
 import me.coley.recaf.ui.pane.outline.OutlinePane;
 import me.coley.recaf.ui.pane.outline.Visibility;
@@ -44,6 +39,7 @@ import java.util.stream.Collectors;
  * Tree that represents the {@link MemberInfo} of a {@link CommonClassInfo}.
  *
  * @author Matt Coley
+ * @author Amejonah
  */
 public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonClassInfo> {
 	private final ClassRepresentation parent;
@@ -78,11 +74,11 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 			return result;
 		};
 		outlineRoot.getChildren().addAll(getItems(MemberType.INNER_CLASS,
-			info.getInnerClasses(), caseSensitive, filterStr, InnerClassInfo::getAccess, comparator));
+				info.getInnerClasses(), caseSensitive, filterStr, InnerClassInfo::getAccess, comparator));
 		outlineRoot.getChildren().addAll(getItems(MemberType.FIELD,
-			info.getFields(), caseSensitive, filterStr, FieldInfo::getAccess, comparator));
+				info.getFields(), caseSensitive, filterStr, FieldInfo::getAccess, comparator));
 		outlineRoot.getChildren().addAll(getItems(MemberType.METHOD,
-			info.getMethods(), caseSensitive, filterStr, MemberInfo::getAccess, comparator));
+				info.getMethods(), caseSensitive, filterStr, MemberInfo::getAccess, comparator));
 		outlineRoot.setExpanded(true);
 		// Set factory to null while we update the root. This allows existing cells to be aware that they should
 		// not attempt to put effort into redrawing since they are being replaced anyways.
@@ -96,22 +92,22 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 	}
 
 	private <T extends ItemInfo> List<OutlineItem> getItems(
-		MemberType memberType,
-		List<T> items,
-		boolean caseSensitive,
-		String filterStr,
-		Function<T, Integer> accessGetter,
-		Comparator<ItemInfo> comparator) {
+			MemberType memberType,
+			List<T> items,
+			boolean caseSensitive,
+			String filterStr,
+			Function<T, Integer> accessGetter,
+			Comparator<ItemInfo> comparator) {
 		return outlinePane.memberType.get().shouldDisplay(memberType) ? items.stream()
-			.filter(item ->
-				filter(
-					accessGetter.apply(item), caseSensitive,
-					item instanceof InnerClassInfo ? ((InnerClassInfo) item).getInnerName() : item.getName(),
-					filterStr
+				.filter(item ->
+						filter(
+								accessGetter.apply(item), caseSensitive,
+								item instanceof InnerClassInfo ? ((InnerClassInfo) item).getInnerName() : item.getName(),
+								filterStr
+						)
 				)
-			)
-			.sorted(comparator).map(OutlineItem::new)
-			.collect(Collectors.toList()) : List.of();
+				.sorted(comparator).map(OutlineItem::new)
+				.collect(Collectors.toList()) : List.of();
 	}
 
 	private boolean filter(int access, boolean caseSensitive, String name, String filterStr) {
@@ -165,8 +161,8 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 				setOnMouseClicked(null);
 				if (classInfo instanceof ClassInfo) {
 					setContextMenu(ContextBuilder.forClass((ClassInfo) classInfo)
-						.setDeclaration(true)
-						.build());
+							.setDeclaration(true)
+							.build());
 				} else {
 					setContextMenu(null);
 				}
@@ -188,33 +184,33 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 					}, outlinePane.showTypes, Configs.display().maxTreeTextLength));
 					setGraphic(getMemberIcon(member));
 					setContextMenu(ContextBuilder.forField(classInfo, (FieldInfo) item)
-						.setDeclaration(true)
-						.build());
+							.setDeclaration(true)
+							.build());
 				} else {
 					textProperty().bind(Bindings.createStringBinding(() -> {
 						String text = name;
 						if (outlinePane.showTypes.get()) {
 							text += "(" + Arrays.stream(Type.getArgumentTypes(desc))
-								.map(argType -> StringUtil.shortenPath(argType.getInternalName()))
-								.collect(Collectors.joining(", ")) +
-								")" + StringUtil.shortenPath(Type.getReturnType(desc).getInternalName());
+									.map(argType -> StringUtil.shortenPath(argType.getInternalName()))
+									.collect(Collectors.joining(", ")) +
+									")" + StringUtil.shortenPath(Type.getReturnType(desc).getInternalName());
 						}
 						return StringUtil.limit(EscapeUtil.escape(text), "...", Configs.display().maxTreeTextLength.get());
 					}, outlinePane.showTypes, Configs.display().maxTreeTextLength));
 					setGraphic(getMemberIcon(member));
 					setContextMenu(ContextBuilder.forMethod(classInfo, (MethodInfo) member)
-						.setDeclaration(true)
-						.build());
+							.setDeclaration(true)
+							.build());
 				}
 				// Clicking the outline member selects it in the parent view
 				setOnMouseClicked(e -> parent.selectMember(member));
 			} else if (item instanceof InnerClassInfo) {
 				InnerClassInfo innerClass = (InnerClassInfo) item;
 				textProperty().bind(Bindings.createStringBinding(() -> StringUtil.limit(
-						EscapeUtil.escape(innerClass.getInnerName()),
-						"...",
-						Configs.display().maxTreeTextLength.get())
-					, Configs.display().maxTreeTextLength));
+								EscapeUtil.escape(innerClass.getInnerName()),
+								"...",
+								Configs.display().maxTreeTextLength.get())
+						, Configs.display().maxTreeTextLength));
 				ClassInfo classInfo = RecafUI.getController().getWorkspace().getResources().getClass(innerClass.getName());
 				if (classInfo == null) {
 					setGraphic(getMemberIcon(innerClass));
@@ -222,7 +218,9 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 				}
 				setGraphic(getMemberIcon(classInfo));
 				setContextMenu(ContextBuilder.forClass(classInfo).setDeclaration(false).build());
-				setOnMouseClicked(e -> {if (e.getButton() == MouseButton.PRIMARY) CommonUX.openClass(classInfo);});
+				setOnMouseClicked(e -> {
+					if (e.getButton() == MouseButton.PRIMARY) CommonUX.openClass(classInfo);
+				});
 			} else {
 				throw new IllegalArgumentException("Unknown item type: " + item.getClass().getName());
 			}
@@ -247,13 +245,13 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 		} else if (info instanceof CommonClassInfo) {
 			node = Icons.getClassIcon((CommonClassInfo) info);
 		}
-		if (node == null) {return null;}
-		var hbox = new HBox();
-
+		if (node == null)
+			return null;
+		HBox hbox = new HBox();
 		Node finalNode = node;
 		ChangeListener<Visibility.IconPosition> listener = (observable, oldV, newV) -> {
 			if (newV != Visibility.IconPosition.NONE) {
-				var visIcon = Icons.getIconView(Visibility.ofItem(info).icon);
+				IconView visIcon = Icons.getIconView(Visibility.ofItem(info).icon);
 				if (newV == Visibility.IconPosition.LEFT) {
 					hbox.getChildren().setAll(visIcon, finalNode);
 				} else {

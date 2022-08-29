@@ -11,7 +11,9 @@ import me.coley.recaf.util.Translatable;
 import java.util.function.Function;
 
 /**
- * Enum for differentiating different visibility filter for {@link OutlinePane}
+ * Enum for differentiating different visibility filter for {@link OutlinePane}.
+ *
+ * @author Amejonah
  */
 public enum Visibility implements Translatable {
 	ALL(Icons.ACCESS_ALL_VISIBILITY, (flags) -> true),
@@ -19,6 +21,7 @@ public enum Visibility implements Translatable {
 	PROTECTED(Icons.ACCESS_PROTECTED, AccessFlag::isProtected),
 	PACKAGE(Icons.ACCESS_PACKAGE, AccessFlag::isPackage),
 	PRIVATE(Icons.ACCESS_PRIVATE, AccessFlag::isPrivate);
+
 	public final String icon;
 	private final Function<Integer, Boolean> isAccess;
 
@@ -68,7 +71,9 @@ public enum Visibility implements Translatable {
 	}
 
 	@Override
-	public String getTranslationKey() {return this == ALL ? "misc.all" : "misc.accessflag.visibility." + name().toLowerCase();}
+	public String getTranslationKey() {
+		return this == ALL ? "misc.all" : "misc.accessflag.visibility." + name().toLowerCase();
+	}
 
 	public enum IconPosition implements Translatable {
 		NONE, LEFT, RIGHT;

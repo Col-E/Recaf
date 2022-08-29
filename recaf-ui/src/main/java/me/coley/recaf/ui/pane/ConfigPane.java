@@ -10,41 +10,18 @@ import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
-import me.coley.recaf.config.ConfigContainer;
-import me.coley.recaf.config.ConfigID;
-import me.coley.recaf.config.Configs;
-import me.coley.recaf.config.Group;
-import me.coley.recaf.config.Ignore;
+import me.coley.recaf.config.*;
 import me.coley.recaf.config.binds.Binding;
 import me.coley.recaf.ui.behavior.WindowShownListener;
 import me.coley.recaf.ui.control.BoundLabel;
-import me.coley.recaf.ui.control.config.ConfigActionableBoolean;
-import me.coley.recaf.ui.control.config.ConfigBinding;
-import me.coley.recaf.ui.control.config.ConfigBoolean;
-import me.coley.recaf.ui.control.config.ConfigCompiler;
-import me.coley.recaf.ui.control.config.ConfigDecompiler;
-import me.coley.recaf.ui.control.config.ConfigEnum;
-import me.coley.recaf.ui.control.config.ConfigEnumProperty;
-import me.coley.recaf.ui.control.config.ConfigInt;
-import me.coley.recaf.ui.control.config.ConfigLanguage;
-import me.coley.recaf.ui.control.config.ConfigLanguageAssociation;
-import me.coley.recaf.ui.control.config.ConfigLong;
-import me.coley.recaf.ui.control.config.ConfigPath;
-import me.coley.recaf.ui.control.config.ConfigPos;
-import me.coley.recaf.ui.control.config.ConfigRanged;
-import me.coley.recaf.ui.control.config.Unlabeled;
+import me.coley.recaf.ui.control.config.*;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.WindowBase;
@@ -55,11 +32,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.BiFunction;
 
 /**
@@ -117,7 +90,8 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			field.setAccessible(true);
 			Group group = field.getAnnotation(Group.class);
 			if (group == null) {
-				logger.trace("Skip field, missing config annotations: " + container.getClass() + "#" + field.getName() + " - Use @Ignore to ignore this field");
+				logger.trace("Skip field, missing config annotations: " + container.getClass() + "#" + field.getName()
+						+ " - Use @Ignore to ignore this field");
 				continue;
 			}
 			String groupKey = key + '.' + group.value();
@@ -170,7 +144,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 		}
 		// Creating horizontal tabs is an absolute hack: https://stackoverflow.com/a/24219414
 		StringBinding title = Lang.formatBy(TAB_TITLE_PADDING + "%s",
-			container.displayNameBinding());
+				container.displayNameBinding());
 		String iconPath = container.iconPath();
 		Node graphic = Icons.getIconView(iconPath, 32);
 		Tab tab = new Tab();
@@ -191,6 +165,7 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 		return tab;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static Node getConfigComponent(ConfigContainer container, Field field, String idKey) {
 		Class<?> type = field.getType();
 		// seems like StringProperty is not supported
@@ -216,14 +191,16 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 					// should be an enum
 					return new ConfigEnumProperty((Class<Enum<?>>) genericType, container, field);
 				} else {
-					logger.trace("Skip field, provided generic type is not an enum: {}#{} - {}", field.getName(), container.getClass(), type.getName());
+					logger.trace("Skip field, provided generic type is not an enum: {}#{} - {}",
+							field.getName(), container.getClass(), type.getName());
 				}
 			} else {
-				logger.trace("Skip field, missing generic class type: {}#{} - needs to be ObjectProperty<EnumTypeHere>", container.getClass(), field.getName());
+				logger.trace("Skip field, missing generic class type: {}#{} - needs to be ObjectProperty<EnumTypeHere>",
+						container.getClass(), field.getName());
 			}
-		} else if (int.class.equals(type) || Integer.class.equals(type) || IntegerProperty.class.equals(type) ) {
+		} else if (int.class.equals(type) || Integer.class.equals(type) || IntegerProperty.class.equals(type)) {
 			return new ConfigInt(container, field);
-		} else if (long.class.equals(type) || Long.class.equals(type) || LongProperty.class.equals(type) ) {
+		} else if (long.class.equals(type) || Long.class.equals(type) || LongProperty.class.equals(type)) {
 			return new ConfigLong(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
@@ -242,32 +219,32 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 		ID_OVERRIDES.put("conf.display.general.language", ConfigLanguage::new);
 		ID_OVERRIDES.put("conf.editor.assoc.fileextassociations", ConfigLanguageAssociation::new);
 		ID_OVERRIDES.put("conf.ssvm.remote.active", (c, f) ->
-			new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.remote.active"),
-				value -> Configs.ssvm().updateIntegration()));
+				new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.remote.active"),
+						value -> Configs.ssvm().updateIntegration()));
 		ID_OVERRIDES.put("conf.ssvm.remote.path", ConfigPath::new);
 		ID_OVERRIDES.put("conf.ssvm.access.read", (c, f) ->
-			new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.access.read"), value -> {
-				if (value) {
-					Alert a = new Alert(Alert.AlertType.WARNING);
-					WindowBase.installStyle(a.getDialogPane().getStylesheets());
-					WindowBase.installLogo((Stage) a.getDialogPane().getScene().getWindow());
-					a.headerTextProperty().bind(Lang.getBinding("conf.ssvm.access"));
-					a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.read.warn"));
-					a.show();
-				}
-				Configs.ssvm().updateIntegration();
-			}));
+				new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.access.read"), value -> {
+					if (value) {
+						Alert a = new Alert(Alert.AlertType.WARNING);
+						WindowBase.installStyle(a.getDialogPane().getStylesheets());
+						WindowBase.installLogo((Stage) a.getDialogPane().getScene().getWindow());
+						a.headerTextProperty().bind(Lang.getBinding("conf.ssvm.access"));
+						a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.read.warn"));
+						a.show();
+					}
+					Configs.ssvm().updateIntegration();
+				}));
 		ID_OVERRIDES.put("conf.ssvm.access.write", (c, f) ->
-			new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.access.write"), value -> {
-				if (value) {
-					Alert a = new Alert(Alert.AlertType.WARNING);
-					WindowBase.installStyle(a.getDialogPane().getStylesheets());
-					WindowBase.installLogo((Stage) a.getDialogPane().getScene().getWindow());
-					a.headerTextProperty().bind(Lang.getBinding("conf.ssvm.access"));
-					a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.write.warn"));
-					a.show();
-				}
-				Configs.ssvm().updateIntegration();
-			}));
+				new ConfigActionableBoolean(c, f, Lang.getBinding("conf.ssvm.access.write"), value -> {
+					if (value) {
+						Alert a = new Alert(Alert.AlertType.WARNING);
+						WindowBase.installStyle(a.getDialogPane().getStylesheets());
+						WindowBase.installLogo((Stage) a.getDialogPane().getScene().getWindow());
+						a.headerTextProperty().bind(Lang.getBinding("conf.ssvm.access"));
+						a.contentTextProperty().bind(Lang.getBinding("conf.ssvm.access.write.warn"));
+						a.show();
+					}
+					Configs.ssvm().updateIntegration();
+				}));
 	}
 }

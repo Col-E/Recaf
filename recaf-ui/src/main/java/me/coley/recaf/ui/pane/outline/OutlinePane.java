@@ -6,19 +6,10 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
-import javafx.scene.control.TreeItem;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
@@ -44,7 +35,6 @@ import java.util.function.Function;
  * @author Amejonah
  */
 public class OutlinePane extends BorderPane implements ClassRepresentation {
-
 	public final SimpleBooleanProperty showTypes = new SimpleBooleanProperty();
 	public final SimpleBooleanProperty showSynthetics = new SimpleBooleanProperty(true);
 	public final SimpleObjectProperty<MemberType> memberType = new SimpleObjectProperty<>(MemberType.ALL);
@@ -58,7 +48,8 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	/**
 	 * New outline panel.
 	 *
-	 * @param parent The parent panel the outline belongs to.
+	 * @param parent
+	 * 		The parent panel the outline belongs to.
 	 */
 	public OutlinePane(ClassRepresentation parent) {
 		SimpleStringProperty filterValue = new SimpleStringProperty();
@@ -74,8 +65,8 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		if (indexOfPathEnd != -1) {
 			previousOuterName = firstOuterName.substring(0, indexOfPathEnd + 1);
 			HBox outerNode = new HBox(
-				Icons.getIconView(Icons.FOLDER_PACKAGE),
-				new Label(firstOuterName.substring(0, indexOfPathEnd))
+					Icons.getIconView(Icons.FOLDER_PACKAGE),
+					new Label(firstOuterName.substring(0, indexOfPathEnd))
 			);
 			outerNode.setSpacing(5);
 			breadcrumbs.getChildren().addAll(outerNode);
@@ -86,11 +77,11 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				String outer = outers.get(i);
 				ClassInfo classInfo = RecafUI.getController().getWorkspace().getResources().getClass(outer);
 				HBox outerNode = new HBox(
-					new StackPane(
-						classInfo != null ? Icons.getClassIcon(classInfo) : Icons.getIconView(Icons.CLASS),
-						Icons.getIconView(Icons.UP_FOR_ICON)
-					),
-					new Label(outer.startsWith(previousOuterName) ? outer.substring(previousOuterName.length()) : outer)
+						new StackPane(
+								classInfo != null ? Icons.getClassIcon(classInfo) : Icons.getIconView(Icons.CLASS),
+								Icons.getIconView(Icons.UP_FOR_ICON)
+						),
+						new Label(outer.startsWith(previousOuterName) ? outer.substring(previousOuterName.length()) : outer)
 				);
 				previousOuterName = outer + "$";
 				outerNode.setSpacing(5);
@@ -208,18 +199,18 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 	 */
 	private Node createButtonBar() {
 		return new HBox(
-			// Show synthetics
-			createBooleanButtonWithUpdate("conf.editor.outline.showoutlinedsynths", Icons.SYNTHETIC, showSynthetics),
-			// Show types
-			createBooleanButton("conf.editor.outline.showoutlinedtypes", Icons.CODE, showTypes),
-			// Sort alphabetically
-			createBooleanButtonWithUpdate("conf.editor.outline.sortalphabetically", Icons.SORT_ALPHABETICAL, sortAlphabetically),
-			// sort by visibility
-			createBooleanButtonWithUpdate("conf.editor.outline.sortbyvisibility", Icons.SORT_VISIBILITY, sortByVisibility),
-			// Member type
-			createMultiChoiceButton(MemberType.class, "conf.editor.outline.showoutlinedmembertype", memberType, m -> m.icon),
-			// Visibility
-			createMultiChoiceButton(Visibility.class, "conf.editor.outline.showoutlinedvisibility", visibility, v -> v.icon)
+				// Show synthetics
+				createBooleanButtonWithUpdate("conf.editor.outline.showoutlinedsynths", Icons.SYNTHETIC, showSynthetics),
+				// Show types
+				createBooleanButton("conf.editor.outline.showoutlinedtypes", Icons.CODE, showTypes),
+				// Sort alphabetically
+				createBooleanButtonWithUpdate("conf.editor.outline.sortalphabetically", Icons.SORT_ALPHABETICAL, sortAlphabetically),
+				// sort by visibility
+				createBooleanButtonWithUpdate("conf.editor.outline.sortbyvisibility", Icons.SORT_VISIBILITY, sortByVisibility),
+				// Member type
+				createMultiChoiceButton(MemberType.class, "conf.editor.outline.showoutlinedmembertype", memberType, m -> m.icon),
+				// Visibility
+				createMultiChoiceButton(Visibility.class, "conf.editor.outline.showoutlinedvisibility", visibility, v -> v.icon)
 		);
 	}
 
@@ -249,9 +240,9 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 			buttonOptionProperty.set(newV);
 		});
 		button.opacityProperty().bind(
-			Bindings.when(buttonOptionProperty)
-				.then(1.0)
-				.otherwise(0.4)
+				Bindings.when(buttonOptionProperty)
+						.then(1.0)
+						.otherwise(0.4)
 		);
 		return button;
 	}

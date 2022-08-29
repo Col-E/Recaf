@@ -17,9 +17,16 @@ import java.lang.reflect.Field;
 
 /**
  * Spinner for setting a long property.
+ *
  * @author Amejonah
  */
 public class ConfigLong extends Spinner<Long> implements Unlabeled {
+	/**
+	 * @param container
+	 * 		Config container.
+	 * @param field
+	 * 		Config field.
+	 */
 	public ConfigLong(ConfigContainer container, Field field) {
 		long min = getMin(field);
 		long max = getMax(field);

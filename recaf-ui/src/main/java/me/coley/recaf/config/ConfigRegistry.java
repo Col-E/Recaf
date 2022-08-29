@@ -1,27 +1,10 @@
 package me.coley.recaf.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.InstanceCreator;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.FloatProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.LongProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleFloatProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleLongProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.ReflectUtil;
@@ -49,6 +32,7 @@ import java.util.function.Supplier;
  * Config value persistence and general management.
  *
  * @author Matt Coley
+ * @author Amejonah
  */
 public class ConfigRegistry {
 	private static final Logger logger = Logging.get(ConfigRegistry.class);
@@ -65,6 +49,7 @@ public class ConfigRegistry {
 		registerTypeAdapter(builder, StringProperty.class, (w, v) -> w.value(v.get()), r -> new SimpleStringProperty(r.nextString()));
 		builder.registerTypeAdapterFactory(new TypeAdapterFactory() {
 			@Override
+			@SuppressWarnings("unchecked")
 			public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
 				// exact type should be ObjectProperty<HereYourType>
 				if (!(ObjectProperty.class.equals(type.getRawType()) && type.getType() instanceof ParameterizedType))
@@ -74,7 +59,7 @@ public class ConfigRegistry {
 				// Taken from getActualTypeArguments():
 				//   Note that in some cases, the returned array be empty.
 				//   This can occur if this type represents a non-parameterized type nested within a parameterized type.
-				if (types.length == 0)	return null;
+				if (types.length == 0) return null;
 				// get the adapter for HereYourType (taken from above)
 				TypeAdapter<Object> delegate = gson.getAdapter((TypeToken<Object>) TypeToken.get(types[0]));
 				return new TypeAdapter<>() {

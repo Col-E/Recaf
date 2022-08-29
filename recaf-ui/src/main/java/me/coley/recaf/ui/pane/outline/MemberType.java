@@ -5,6 +5,7 @@ import me.coley.recaf.util.Translatable;
 
 /**
  * Enum for differentiating different member type filters for {@link OutlinePane}.
+ *
  * @author Amejonah
  */
 public enum MemberType implements Translatable {
@@ -13,6 +14,7 @@ public enum MemberType implements Translatable {
 	METHOD(Icons.METHOD, "misc.member.method"),
 	FIELD_AND_METHOD(Icons.FIELD_N_METHOD, "misc.member.field_n_method"),
 	INNER_CLASS(Icons.CLASS, "misc.member.inner_class");
+
 	final String icon;
 	final String key;
 
@@ -22,7 +24,9 @@ public enum MemberType implements Translatable {
 	}
 
 	@Override
-	public String getTranslationKey() {return key;}
+	public String getTranslationKey() {
+		return key;
+	}
 
 	public boolean shouldDisplay(MemberType filter) {
 		return this == ALL || this == filter || (this == FIELD_AND_METHOD && (filter == FIELD || filter == METHOD));

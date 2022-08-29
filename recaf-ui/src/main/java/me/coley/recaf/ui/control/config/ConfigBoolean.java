@@ -27,7 +27,7 @@ public class ConfigBoolean extends CheckBox {
 	public ConfigBoolean(ConfigContainer instance, Field field, ObservableValue<String> text) {
 		textProperty().bind(text);
 		if (ObservableBooleanValue.class.isAssignableFrom(field.getType())) {
-			var value = (ObservableBooleanValue) ReflectUtil.quietGet(instance, field);
+			ObservableBooleanValue value = ReflectUtil.quietGet(instance, field);
 			if (value instanceof BooleanProperty)
 				selectedProperty().bindBidirectional((BooleanProperty) value);
 			else

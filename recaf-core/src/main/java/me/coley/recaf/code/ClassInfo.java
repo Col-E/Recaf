@@ -8,7 +8,6 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.slf4j.Logger;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,17 +24,18 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private final String superName;
 	private final String signature;
 	private final List<String> interfaces;
+	private final List<InnerClassInfo> innerClasses;
+	private final List<String> outerClassBreadcrumbs;
 	private final int version;
 	private final int access;
 	private final List<FieldInfo> fields;
 	private final List<MethodInfo> methods;
 	private ClassReader classReader;
 	private int hashCode;
-	private final List<InnerClassInfo> innerClasses;
-	private final List<String> outerClassBreadcrumbs;
 
 	private ClassInfo(String name, String superName, String signature, List<String> interfaces, int version, int access,
-										List<FieldInfo> fields, List<MethodInfo> methods, byte[] value, List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs) {
+					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value,
+					  List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs) {
 		this.value = value;
 		this.name = name;
 		this.signature = signature;
@@ -112,12 +112,12 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		if (o == null || getClass() != o.getClass()) return false;
 		ClassInfo info = (ClassInfo) o;
 		return access == info.access &&
-			name.equals(info.name) &&
-			Objects.equals(superName, info.superName) &&
-			Objects.equals(signature, info.signature) &&
-			interfaces.equals(info.interfaces) &&
-			fields.equals(info.fields) &&
-			methods.equals(info.methods);
+				name.equals(info.name) &&
+				Objects.equals(superName, info.superName) &&
+				Objects.equals(signature, info.signature) &&
+				interfaces.equals(info.interfaces) &&
+				fields.equals(info.fields) &&
+				methods.equals(info.methods);
 	}
 
 	@Override
@@ -172,11 +172,10 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		List<FieldInfo> fields = new ArrayList<>();
 		List<MethodInfo> methods = new ArrayList<>();
 		List<InnerClassInfo> innerClasses = new ArrayList<>();
-
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
 			public void visit(int version, int access, String name, String signature,
-												String superName, String[] interfaces) {
+							  String superName, String[] interfaces) {
 				versionWrapper[0] = version;
 				interfacesWrapper[0] = Arrays.asList(interfaces);
 				signatureWrapper[0] = signature;
@@ -200,14 +199,14 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				innerClasses.add(new InnerClassInfo(className, name, outerName, innerName, access));
 			}
 		}, ClassReader.SKIP_CODE);
-		List<InnerClassInfo> directlyNested = // getting all inner classes which are directly visible, no nested inside nested ones
-			innerClasses.stream()
-				.filter(innerClass -> className.equals(innerClass.getOuterName()) && !className.equals(innerClass.getName()))
-				.collect(Collectors.toList());
-		// create outer class breadcrumbs
-		// alternatives are not great:
-		// - splitting by $ can go wrong with obfuscation
-		// - searching for outer classes when opening the outline can be slow because if you have a big workspace/package,
+		List<InnerClassInfo> directlyNested = // Getting all inner classes which are directly visible, no nested inside nested ones
+				innerClasses.stream()
+						.filter(innerClass -> className.equals(innerClass.getOuterName()) && !className.equals(innerClass.getName()))
+						.collect(Collectors.toList());
+		// Create outer class breadcrumbs
+		// Alternatives are not great:
+		// - Splitting by $ can go wrong with obfuscation.
+		// - Searching for outer classes when opening the outline can be slow because if you have a big workspace/package,
 		//   you need to go multiple time through all the entries for reconstruction.
 		String outerClassName = outerClassOf(className, innerClasses);
 		List<String> breadcrumbs = new ArrayList<>();
@@ -223,20 +222,20 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 			outerClassName = outerClassOf(outerClassName, innerClasses);
 		}
 		return new ClassInfo(
-			className,
-			superName,
-			signatureWrapper[0],
-			interfacesWrapper[0],
-			versionWrapper[0],
-			access,
-			fields,
-			methods,
-			value,
-			directlyNested,
-			breadcrumbs);
+				className,
+				superName,
+				signatureWrapper[0],
+				interfacesWrapper[0],
+				versionWrapper[0],
+				access,
+				fields,
+				methods,
+				value,
+				directlyNested,
+				breadcrumbs);
 	}
 
-	private static @Nullable String outerClassOf(String name, List<InnerClassInfo> candidates) {
+	private static String outerClassOf(String name, List<InnerClassInfo> candidates) {
 		if (name == null || name.isEmpty()) return null;
 		for (InnerClassInfo innerClass : candidates) {
 			if (name.equals(innerClass.getName())) {
