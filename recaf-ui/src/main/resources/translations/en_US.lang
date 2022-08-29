@@ -357,6 +357,7 @@ conf.binding.code=Code interactions
 conf.binding.code.gotodef=Goto definition
 conf.binding.code.rename=Rename selected
 conf.binding.code.searchref=Search references
+conf.binding.code.suggest=Show suggestions
 conf.binding.appearance=Appearance
 conf.binding.appearance.fontsize.up=Increase font size
 conf.binding.appearance.fontsize.down=Decrease font size

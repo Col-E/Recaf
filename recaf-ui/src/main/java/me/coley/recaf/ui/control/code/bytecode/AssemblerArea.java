@@ -127,15 +127,12 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		if (validate) {
 			pipeline.addAstValidationListener(this);
 		}
-
 		WorkspaceTreeService treeService = RecafUI.getController().getServices().getTreeService();
 		suggestions = new Suggestions(treeService.getCurrentClassTree(),
 				RecafUI.getController().getWorkspace().getResources()::getClass, null);
-
 		setOnKeyPressed(event -> {
-			if (event.isControlDown() && event.getCode() == KeyCode.SPACE) {
+			if (Configs.keybinds().suggest.match(event))
 				onSuggestionRequested();
-			}
 		});
 	}
 
