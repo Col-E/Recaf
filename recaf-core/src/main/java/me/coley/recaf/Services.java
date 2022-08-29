@@ -7,6 +7,7 @@ import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.WorkspaceSymbolSolver;
 import me.coley.recaf.ssvm.SsvmIntegration;
+import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.workspace.Workspace;
 
 /**
@@ -19,6 +20,7 @@ public class Services {
 	private final CompilerManager compilerManager;
 	private final DecompileManager decompileManager;
 	private final MappingsManager mappingsManager;
+	private WorkspaceTreeService treeService;
 	private SsvmIntegration ssvmIntegration;
 	private InheritanceGraph inheritanceGraph;
 	private WorkspaceSymbolSolver symbolSolver;
@@ -89,6 +91,13 @@ public class Services {
 	}
 
 	/**
+	 * @return Provides access to the {@link Workspace} package and class names as a tree model.
+	 */
+	public WorkspaceTreeService getTreeService() {
+		return treeService;
+	}
+
+	/**
 	 * Update services that are workspace-oriented.
 	 *
 	 * @param workspace
@@ -104,11 +113,13 @@ public class Services {
 			symbolSolver = null;
 			javaParserHelper = null;
 			ssvmIntegration = null;
+			treeService = null;
 		} else {
 			inheritanceGraph = new InheritanceGraph(workspace);
 			symbolSolver = WorkspaceSymbolSolver.create(workspace);
 			javaParserHelper = JavaParserHelper.create(symbolSolver);
 			ssvmIntegration = new SsvmIntegration(workspace);
+			treeService = new WorkspaceTreeService(workspace);
 		}
 	}
 }

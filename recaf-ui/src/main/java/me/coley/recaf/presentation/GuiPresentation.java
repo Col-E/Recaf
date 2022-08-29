@@ -7,7 +7,6 @@ import me.coley.recaf.RecafConstants;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.ConfigRegistry;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.ui.pane.assembler.suggestion.WorkspaceClassTree;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.*;
@@ -63,8 +62,6 @@ public class GuiPresentation implements Presentation {
 		);
 		// Call 'getSystemClasses' in a background thread so that later usage can use the cached value
 		ThreadUtil.run(ClasspathUtil::getSystemClasses);
-		// Install the workspace class tree listener to update the user classes when the workspace changes
-		controller.addListener(new WorkspaceClassTree());
 		// Open UI
 		JFXUtils.initializePlatform(() -> {
 			try {

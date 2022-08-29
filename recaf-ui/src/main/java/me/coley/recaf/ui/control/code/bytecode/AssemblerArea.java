@@ -33,9 +33,9 @@ import me.coley.recaf.ui.control.CtxMenu;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
-import me.coley.recaf.ui.pane.assembler.suggestion.WorkspaceClassTree;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.StackTraceUtil;
+import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.DelayedExecutor;
 import me.coley.recaf.util.threading.DelayedRunnable;
@@ -123,13 +123,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		pipeline.addBytecodeFailureListener(this);
 		pipeline.addBytecodeValidationListener(this);
 		pipeline.addPipelineCompletionListener(this);
-		pipeline.setDoUseAnalysis(false);
 		boolean validate = config().astValidation;
 		if (validate) {
 			pipeline.addAstValidationListener(this);
 		}
 
-		suggestions = new Suggestions(WorkspaceClassTree.getCurrentClassTree(),
+		WorkspaceTreeService treeService = RecafUI.getController().getServices().getTreeService();
+		suggestions = new Suggestions(treeService.getCurrentClassTree(),
 				RecafUI.getController().getWorkspace().getResources()::getClass, null);
 
 		setOnKeyPressed(event -> {
