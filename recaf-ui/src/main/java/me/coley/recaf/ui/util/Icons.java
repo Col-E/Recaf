@@ -465,6 +465,8 @@ public class Icons {
 			String lower = name.toLowerCase();
 			if (lower.endsWith(".jar")) {
 				provider = createProvider(Icons.FILE_JAR);
+			} else if (lower.endsWith(".apk")) {
+				provider = createProvider(Icons.ANDROID);
 			} else {
 				provider = createProvider(Icons.FILE_ZIP);
 			}
