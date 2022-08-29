@@ -745,7 +745,12 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		int endCol = selection.getEndColumnPosition();
 		// selecting stating from the first column, to avoid adding \t in the middle of a word
 		selection.selectRange(startPar, 0, endPar, endCol);
-		replaceText(getSelectionStart(), getSelectionStop(), "\t" + getSelectionText().replace("\n", "\n\t"));
+		replaceText(getSelectionStart(), getSelectionStop(),
+			e.isShiftDown() ?
+				(getSelectionText().startsWith("\t") ? getSelectionText().substring(1 ) : getSelectionText())
+					.replace("\n\t", "\n") :
+				"\t" + getSelectionText().replace("\n", "\n\t")
+		);
 		// setting the selection anew, for further indentation
 		selection.selectRange(startPar, 0, endPar, endCol);
 	}
