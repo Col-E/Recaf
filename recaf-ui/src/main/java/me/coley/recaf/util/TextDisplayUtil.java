@@ -30,7 +30,7 @@ public class TextDisplayUtil {
 		if (string == null)
 			return null;
 		String text = EscapeUtil.escape(string);
-		int max = Math.min(text.length(), Configs.display().maxTreeTextLength);
+		int max = Math.min(text.length(), Configs.display().maxTreeTextLength.get());
 		text = StringUtil.limit(text, "...", max);
 		return text;
 	}
@@ -45,7 +45,7 @@ public class TextDisplayUtil {
 		if (string == null)
 			return null;
 		String text = escapePath(string);
-		int max = Math.min(text.length(), Configs.display().maxTreeTextLength);
+		int max = Math.min(text.length(), Configs.display().maxTreeTextLength.get());
 		text = StringUtil.limit(text, "...", max);
 		return text;
 	}

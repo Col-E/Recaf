@@ -7,10 +7,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.FieldInfo;
-import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.code.Languages;
@@ -49,8 +46,11 @@ public class Icons {
 	// Member definitions
 	public static final String FIELD = "icons/member/field.png";
 	public static final String METHOD = "icons/member/method.png";
+	public static final String FIELD_N_METHOD = "icons/member/field_n_method.png";
+	public static final String CLASS_N_FIELD_N_METHOD = "icons/member/class_n_field_n_method.png";
 	public static final String METHOD_ABSTRACT = "icons/member/method_abstract.png";
 	// Access modifiers
+	public static final String ACCESS_ALL_VISIBILITY = "icons/modifier/all_visibility.png";
 	public static final String ACCESS_PUBLIC = "icons/modifier/public.png";
 	public static final String ACCESS_PROTECTED = "icons/modifier/protected.png";
 	public static final String ACCESS_PACKAGE = "icons/modifier/package.png";
@@ -128,6 +128,9 @@ public class Icons {
 	public static final String STOP = "icons/stop.png";
 	public static final String FORWARD = "icons/forward.png";
 	public static final String BACKWARD = "icons/backward.png";
+	public static final String SORT_ALPHABETICAL = "icons/sort-alphabetical.png";
+	public static final String SORT_VISIBILITY = "icons/sort-visibility.png";
+	public static final String UP_FOR_ICON = "icons/up-for-icon.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();
@@ -330,13 +333,14 @@ public class Icons {
 	}
 
 	/**
-	 * @param info
-	 * 		Class to represent.
+	 * @param name
+	 * 		Name of the class to represent.
+	 * @param access
+	 * 		Access flags of the class.
 	 *
 	 * @return Icon provider for a node to represent the file type.
 	 */
-	public static IconProvider getClassIconProvider(CommonClassInfo info) {
-		int access = info.getAccess();
+	public static IconProvider getClassIconProvider(String name, int access) {
 		if (AccessFlag.isAnnotation(access)) {
 			return () -> getIconView(ANNOTATION);
 		} else if (AccessFlag.isInterface(access)) {
@@ -346,7 +350,6 @@ public class Icons {
 		}
 		// Normal class, consider other edge cases
 		boolean isAbstract = AccessFlag.isAbstract(access);
-		String name = info.getName();
 		InheritanceGraph graph = getGraph();
 		if (graph != null && !graph.getCommon(name, "java/lang/Throwable").equals("java/lang/Object")) {
 			if (isAbstract) {
@@ -367,9 +370,39 @@ public class Icons {
 	 * @param info
 	 * 		Class to represent.
 	 *
+	 * @return Icon provider for a node to represent the file type.
+	 */
+	public static IconProvider getClassIconProvider(CommonClassInfo info) {
+		return getClassIconProvider(info.getName(), info.getAccess());
+	}
+
+	/**
+	 * @param info
+	 * 		Inner Class to represent.
+	 *
+	 * @return Icon provider for a node to represent the file type.
+	 */
+	public static IconProvider getClassIconProvider(InnerClassInfo info) {
+		return getClassIconProvider(info.getName(), info.getAccess());
+	}
+
+	/**
+	 * @param info
+	 * 		Class to represent.
+	 *
 	 * @return Node to represent the class.
 	 */
 	public static Node getClassIcon(CommonClassInfo info) {
+		return getClassIconProvider(info).makeIcon();
+	}
+
+	/**
+	 * @param info
+	 * 		Inner Class to represent.
+	 *
+	 * @return Node to represent the inner class.
+	 */
+	public static Node getClassIcon(InnerClassInfo info) {
 		return getClassIconProvider(info).makeIcon();
 	}
 

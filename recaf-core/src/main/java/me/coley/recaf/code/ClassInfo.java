@@ -1,12 +1,15 @@
 package me.coley.recaf.code;
 
 import me.coley.recaf.RecafConstants;
+import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Class info for resource. Provides some basic information about the class.
@@ -14,11 +17,15 @@ import java.util.*;
  * @author Matt Coley
  */
 public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
+	private static final Logger LOGGER = Logging.get(ClassInfo.class);
+	public static long maxOuterDepth = 20;
 	private final byte[] value;
 	private final String name;
 	private final String superName;
 	private final String signature;
 	private final List<String> interfaces;
+	private final List<InnerClassInfo> innerClasses;
+	private final List<String> outerClassBreadcrumbs;
 	private final int version;
 	private final int access;
 	private final List<FieldInfo> fields;
@@ -27,7 +34,8 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private int hashCode;
 
 	private ClassInfo(String name, String superName, String signature, List<String> interfaces, int version, int access,
-					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value) {
+					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value,
+					  List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs) {
 		this.value = value;
 		this.name = name;
 		this.signature = signature;
@@ -37,6 +45,8 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		this.access = access;
 		this.fields = fields;
 		this.methods = methods;
+		this.innerClasses = innerClasses;
+		this.outerClassBreadcrumbs = outerClassBreadcrumbs;
 	}
 
 	@Override
@@ -77,6 +87,16 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	@Override
 	public List<MethodInfo> getMethods() {
 		return methods;
+	}
+
+	@Override
+	public List<InnerClassInfo> getInnerClasses() {
+		return innerClasses;
+	}
+
+	@Override
+	public List<String> getOuterClassBreadcrumbs() {
+		return outerClassBreadcrumbs;
 	}
 
 	/**
@@ -151,6 +171,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		int[] versionWrapper = new int[1];
 		List<FieldInfo> fields = new ArrayList<>();
 		List<MethodInfo> methods = new ArrayList<>();
+		List<InnerClassInfo> innerClasses = new ArrayList<>();
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
 			public void visit(int version, int access, String name, String signature,
@@ -172,7 +193,34 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				methods.add(new MethodInfo(className, name, descriptor, sig, access, exceptions));
 				return null;
 			}
+
+			@Override
+			public void visitInnerClass(String name, String outerName, String innerName, int access) {
+				innerClasses.add(new InnerClassInfo(className, name, outerName, innerName, access));
+			}
 		}, ClassReader.SKIP_CODE);
+		List<InnerClassInfo> directlyNested = // Getting all inner classes which are directly visible, no nested inside nested ones
+				innerClasses.stream()
+						.filter(innerClass -> className.equals(innerClass.getOuterName()) && !className.equals(innerClass.getName()))
+						.collect(Collectors.toList());
+		// Create outer class breadcrumbs
+		// Alternatives are not great:
+		// - Splitting by $ can go wrong with obfuscation.
+		// - Searching for outer classes when opening the outline can be slow because if you have a big workspace/package,
+		//   you need to go multiple time through all the entries for reconstruction.
+		String outerClassName = outerClassOf(className, innerClasses);
+		List<String> breadcrumbs = new ArrayList<>();
+		int counter = 0; // if some obfuscators think they can trick this by adding many inner classes
+		if (maxOuterDepth > 0) while (outerClassName != null) {
+			if (++counter > maxOuterDepth) {
+				LOGGER.info("Class {} has too long breadcrumb of outer classes (over {}), " +
+						"cleared chain, as this assumed to be work from obfuscators.", className, maxOuterDepth);
+				breadcrumbs.clear(); // assuming some obfuscator is at work, so breadcrumbs might be invalid.
+				break;
+			}
+			breadcrumbs.add(0, outerClassName);
+			outerClassName = outerClassOf(outerClassName, innerClasses);
+		}
 		return new ClassInfo(
 				className,
 				superName,
@@ -182,6 +230,18 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				access,
 				fields,
 				methods,
-				value);
+				value,
+				directlyNested,
+				breadcrumbs);
+	}
+
+	private static String outerClassOf(String name, List<InnerClassInfo> candidates) {
+		if (name == null || name.isEmpty()) return null;
+		for (InnerClassInfo innerClass : candidates) {
+			if (name.equals(innerClass.getName())) {
+				return innerClass.getOuterName();
+			}
+		}
+		return null;
 	}
 }
