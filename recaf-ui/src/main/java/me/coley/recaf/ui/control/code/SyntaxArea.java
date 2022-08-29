@@ -7,6 +7,8 @@ import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.*;
@@ -87,6 +89,7 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 		}
 		setupParagraphFactory();
 		setupSyntaxUpdating();
+		addEventFilter(KeyEvent.KEY_PRESSED, this::handleTabForIndent);
 	}
 
 	@Override
@@ -729,6 +732,29 @@ public class SyntaxArea extends CodeArea implements BracketUpdateListener, Probl
 	private void reapplyStyles() {
 		styleProperty().set(styles.stream().map(StringBinding::getValue)
 				.collect(Collectors.joining("\n")));
+	}
+
+	private void handleTabForIndent(KeyEvent e) {
+		if (e.getCode() != KeyCode.TAB) return;
+		var selection = getCaretSelectionBind();
+		// if there are 2 or more lines involved
+		if (selection.getStartParagraphIndex() == selection.getEndParagraphIndex() || getSelectionText().isBlank())
+			return;
+		e.consume();
+		int startPar = selection.getStartParagraphIndex();
+		int endPar = selection.getEndParagraphIndex();
+		int endCol = selection.getEndColumnPosition();
+		// selecting stating from the first column, to avoid adding \t in the middle of a word
+		selection.selectRange(startPar, 0, endPar, endCol);
+		boolean shift = e.isShiftDown();
+		replaceText(getSelectionStart(), getSelectionStop(),
+			shift ?
+				(getSelectionText().startsWith("\t") ? getSelectionText().substring(1) : getSelectionText())
+					.replace("\n\t", "\n") :
+				"\t" + getSelectionText().replace("\n", "\n\t")
+		);
+		// setting the selection anew, for further indentation
+		selection.selectRange(startPar, 0, endPar, shift ? endCol : endCol + 1);
 	}
 
 	/**

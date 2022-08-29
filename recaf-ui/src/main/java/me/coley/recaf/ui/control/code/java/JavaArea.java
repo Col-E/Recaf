@@ -32,6 +32,7 @@ import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.JavaVersion;
+import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
@@ -75,7 +76,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			if (e.isMiddleButtonDown() || (e.isPrimaryButtonDown() && e.isControlDown()))
 				handleNavigation(e);
 		});
-		setOnKeyPressed(e -> {
+		NodeEvents.addKeyPressHandler(this, e -> {
 			int pos = getCaretPosition();
 			KeybindConfig config = Configs.keybinds();
 			if (config.gotoDef.match(e))

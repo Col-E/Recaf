@@ -7,6 +7,7 @@ import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.ui.control.code.ProblemTracking;
 import me.coley.recaf.ui.control.code.SyntaxArea;
+import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
@@ -39,7 +40,7 @@ public class ManifestArea extends SyntaxArea {
 	public ManifestArea(ProblemTracking problemTracking) {
 		super(Languages.MANIFEST, problemTracking);
 		// Register keybind / mouse action to open the main class when interacted with
-		setOnKeyPressed(e -> {
+		NodeEvents.addKeyPressHandler(this, e -> {
 			if (!StringUtil.isNullOrEmpty(mainClass) && Configs.keybinds().gotoDef.match(e)) {
 				rangeCheck(getCaretPosition());
 			}
