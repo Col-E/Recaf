@@ -81,9 +81,13 @@ public class Frame {
 				Value value = e.getValue();
 				Value otherValue = otherFrame.getLocal(name);
 				if (otherValue != null) {
-					Value newValue = mergeValue(value, otherValue, typeChecker);
-					setLocal(name, newValue);
-					modified |= !value.equals(newValue);
+					// If the values between this frame and the other do not match, we need to merge.
+					boolean valuesDifferAfterMerge = !value.equals(otherValue);
+					if (valuesDifferAfterMerge) {
+						Value newValue = mergeValue(value, otherValue, typeChecker);
+						setLocal(name, newValue);
+						modified = true;
+					}
 				}
 			}
 			int max = getStack().size();
@@ -94,9 +98,13 @@ public class Frame {
 			for (int i = 0; i < max; i++) {
 				Value value = getStack().get(i);
 				Value otherValue = otherFrame.getStack().get(i);
-				Value newValue = mergeValue(value, otherValue, typeChecker);
-				getStack().set(i, newValue);
-				modified |= !value.equals(newValue);
+				// If the values between this frame and the other do not match, we need to merge.
+				boolean valuesDifferAfterMerge = !value.equals(otherValue);
+				if (valuesDifferAfterMerge) {
+					Value newValue = mergeValue(value, otherValue, typeChecker);
+					getStack().set(i, newValue);
+					modified = true;
+				}
 			}
 			return modified;
 		}
@@ -139,7 +147,7 @@ public class Frame {
 			} else if (otherValue instanceof Value.ArrayValue) {
 				return new Value.ObjectValue(Types.OBJECT_TYPE);
 			} else if (otherValue instanceof Value.NullValue) {
-				return new Value.ObjectValue(Types.OBJECT_TYPE);
+				return value;
 			} else {
 				throw new FrameMergeException("Values not objects/arrays in both frames!");
 			}
@@ -184,8 +192,7 @@ public class Frame {
 			}
 		} else if (value instanceof Value.NullValue) {
 			if (otherValue instanceof Value.ObjectValue) {
-				Value.ObjectValue otherObject = (Value.ObjectValue) otherValue;
-				return new Value.NullMergedObjectValue(otherObject.getType());
+				return otherValue;
 			} else if (otherValue instanceof Value.ArrayValue) {
 				return new Value.ObjectValue(Types.OBJECT_TYPE);
 			} else if (otherValue instanceof Value.NullValue) {
@@ -215,6 +222,7 @@ public class Frame {
 		locals.clear();
 		stack.addAll(frame.stack);
 		locals.putAll(frame.locals);
+		// TODO: Should we copy other properties?
 	}
 
 	/**
@@ -349,5 +357,13 @@ public class Frame {
 	@Override
 	public int hashCode() {
 		return Objects.hash(locals, stack);
+	}
+
+	@Override
+	public String toString() {
+		return "Frame{" +
+				"locals=" + locals +
+				", stack=" + stack +
+				'}';
 	}
 }

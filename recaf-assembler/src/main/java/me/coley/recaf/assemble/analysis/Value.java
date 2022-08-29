@@ -126,30 +126,6 @@ public abstract class Value {
 	}
 
 	/**
-	 * {@link ObjectValue} but special type to be aware it is from a result of a merge with a {@link NullValue}.
-	 */
-	public static class NullMergedObjectValue extends ObjectValue {
-		/**
-		 * @param type
-		 * 		Type of the object.
-		 */
-		public NullMergedObjectValue(Type type) {
-			super(type);
-		}
-
-		@Override
-		public boolean isObject() {
-			return true;
-		}
-
-		@Override
-		public boolean isNull() {
-			// Saying false only because we cannot be certain due to flow control
-			return false;
-		}
-	}
-
-	/**
 	 * Value representing an array.
 	 */
 	public static class ArrayValue extends Value {
@@ -321,21 +297,6 @@ public abstract class Value {
 				return "Null";
 			return "\"" + text + "\"";
 		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (super.equals(o)) {
-				if (getClass() != o.getClass()) return super.equals(o);
-				StringValue that = (StringValue) o;
-				return Objects.equals(text, that.text);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(text);
-		}
 	}
 
 	/**
@@ -364,29 +325,6 @@ public abstract class Value {
 		@Override
 		public String toString() {
 			return String.format("%s<%s>", CLASS_TYPE.getInternalName(), argumentType.getInternalName());
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (super.equals(o)) {
-				// So the base type is both class, check if
-				// the other value is also Class<T>
-				if (o instanceof TypeValue) {
-					if (this == o) return true;
-					if (getClass() != o.getClass()) return false;
-					TypeValue that = (TypeValue) o;
-					return Objects.equals(argumentType, that.argumentType);
-				} else {
-					return true;
-				}
-			}
-			return false;
-
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(argumentType);
 		}
 	}
 
