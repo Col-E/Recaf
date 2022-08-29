@@ -7,7 +7,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.URL;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests for content sources.
@@ -21,6 +22,11 @@ public class ContentSourceTests extends TestUtils {
 	@Test
 	void testReadJar() {
 		assertDoesNotThrow(() -> testRead(new JarContentSource(sourcesDir.resolve("Sample.jar"))));
+	}
+
+	@Test
+	void testReadApk() {
+		assertDoesNotThrow(() -> testRead(new ApkContentSource(sourcesDir.resolve("Sample.apk"))));
 	}
 
 	@Test
@@ -40,7 +46,8 @@ public class ContentSourceTests extends TestUtils {
 
 	@Test
 	void testReadClass() {
-		assertDoesNotThrow(() -> testRead(new SingleFileContentSource(sourcesDir.resolve("Sample.class"))));	}
+		assertDoesNotThrow(() -> testRead(new SingleFileContentSource(sourcesDir.resolve("Sample.class"))));
+	}
 
 	@Test
 	void testReadUrl() {
@@ -64,7 +71,7 @@ public class ContentSourceTests extends TestUtils {
 			throw new IllegalStateException("No classes should have been read yet");
 		}
 		resource.read();
-		if (resource.getClasses().isEmpty()) {
+		if (resource.getClasses().isEmpty() && resource.getDexClasses().isEmpty()) {
 			throw new IllegalStateException("Classes should have been read from content source");
 		}
 	}

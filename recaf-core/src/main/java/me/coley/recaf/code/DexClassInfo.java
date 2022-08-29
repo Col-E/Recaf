@@ -1,9 +1,14 @@
 package me.coley.recaf.code;
 
 import me.coley.recaf.android.cf.MutableClassDef;
+import me.coley.recaf.util.DalvikUtils;
 import org.jf.dexlib2.Opcodes;
+import org.jf.dexlib2.ValueType;
+import org.jf.dexlib2.iface.Annotation;
+import org.jf.dexlib2.iface.AnnotationElement;
 import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.iface.Method;
+import org.jf.dexlib2.iface.value.*;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
@@ -152,8 +157,6 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 		// Supertype can be null, map it to object
 		String superName = Type.getType(classDef.getSuperclass() == null ?
 				"java/lang/Object" : classDef.getSuperclass()).getInternalName();
-		// TODO: Extract signature from annotations
-		String signature = null;
 		List<String> interfaces = classDef.getInterfaces().stream()
 				.map(itf -> Type.getType(itf).getInternalName())
 				.collect(Collectors.toList());
@@ -176,6 +179,8 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 			methods.add(new MethodInfo(className, method.getName(), buildMethodType(method),
 					methodSignature, method.getAccessFlags(), exceptions));
 		});
+		DalvikUtils.ClassData annotationData = DalvikUtils.parseAnnotations(classDef);
+		String signature = annotationData.signature;
 		return new DexClassInfo(
 				dexPath,
 				opcodes,
