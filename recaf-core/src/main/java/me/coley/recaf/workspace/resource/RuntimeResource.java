@@ -20,7 +20,6 @@ import java.util.Map;
  */
 public class RuntimeResource extends Resource {
 	private static final Object STUB = new Object();
-	private static boolean cached = false;
 	private static final Logger logger = Logging.get(RuntimeResource.class);
 	private static final RuntimeResource instance = new RuntimeResource();
 	private final ClassMap runtimeMap = createRuntimeMap();
@@ -42,7 +41,7 @@ public class RuntimeResource extends Resource {
 	}
 
 	private ClassMap createRuntimeMap() {
-		Map<String, ClassInfo> map = new HashMap<String, ClassInfo>() {
+		Map<String, ClassInfo> map = new HashMap<>() {
 			private final Map<String, Object> cache = new HashMap<>();
 
 			@Override

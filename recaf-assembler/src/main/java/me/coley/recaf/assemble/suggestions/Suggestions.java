@@ -20,15 +20,19 @@ import java.util.stream.Stream;
 
 import static me.coley.recaf.util.ClasspathUtil.Tree;
 
-
+/**
+ * Suggestion text provider.
+ *
+ * @author Nowilltolife
+ * @author xDark
+ */
 public class Suggestions {
-
+	private final static SuggestionResult EMPTY = new SuggestionResult("", Stream.empty());
+	private final static TreeSet<String> INSTRUCTIONS = new TreeSet<>(ParseInfo.actions.keySet());
 	private final Function<String, ProgramClass> mapper;
 	private final Tree systemClasses = ClasspathUtil.getSystemClasses();
 	private final Tree classes;
 	private MethodDefinition method;
-	public final static TreeSet<String> instructions = new TreeSet<>(ParseInfo.actions.keySet());
-	private final static SuggestionResult EMPTY = new SuggestionResult("", Stream.empty());
 
 	/**
 	 * @param classes
@@ -42,6 +46,10 @@ public class Suggestions {
 		this.method = method;
 	}
 
+	/**
+	 * @param method
+	 * 		Method context.
+	 */
 	public void setMethod(MethodDefinition method) {
 		this.method = method;
 	}
@@ -56,7 +64,7 @@ public class Suggestions {
 	 */
 	public SuggestionResult getSuggestion(Group group) {
 		if (group == null) {
-			return new SuggestionResult("", instructions.stream());
+			return new SuggestionResult("", INSTRUCTIONS.stream());
 		}
 		switch (group.type) {
 			case INSTRUCTION:
@@ -65,7 +73,7 @@ public class Suggestions {
 				String content = group.content();
 				return new SuggestionResult(
 						group.content(),
-						instructions.stream().filter(s -> !s.equals(content) && s.startsWith(content))
+						INSTRUCTIONS.stream().filter(s -> !s.equals(content) && s.startsWith(content))
 				);
 			}
 

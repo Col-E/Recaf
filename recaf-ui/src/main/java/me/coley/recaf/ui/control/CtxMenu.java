@@ -20,6 +20,14 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import java.util.Collection;
 import java.util.function.Function;
 
+/**
+ * A {@link org.fxmisc.flowless.Virtualized} version of {@link javafx.scene.control.ContextMenu}.
+ *
+ * @param <T>
+ * 		Menu content type.
+ *
+ * @author Matt Coley
+ */
 public class CtxMenu<T> extends PopupControl {
 	// TODO: Allow user to also manipulate (add) class of cells
 	//  - override default 'menu-item' properties like padding/size
@@ -46,6 +54,10 @@ public class CtxMenu<T> extends PopupControl {
 	private final ObservableList<T> items;
 	private final ObjectProperty<T> selectedItem = new SimpleObjectProperty<>();
 
+	/**
+	 * @param items
+	 * 		Initial collection of items.
+	 */
 	public CtxMenu(Collection<T> items) {
 		this.items = FXCollections.observableArrayList(items);
 		getStyleClass().setAll(DEFAULT_STYLE_CLASS);
@@ -53,54 +65,92 @@ public class CtxMenu<T> extends PopupControl {
 		setConsumeAutoHidingEvents(false);
 	}
 
+	/**
+	 * @param layoutMapper
+	 * 		Mapper of {@code T} items to {@link Node} representations.
+	 * @param items
+	 * 		Initial collection of items.
+	 */
 	public CtxMenu(Function<T, ? extends Node> layoutMapper, Collection<T> items) {
 		this(items);
 		mapperProperty.set(layoutMapper);
 	}
 
+	/**
+	 * Called when the user interacts with a menu item.
+	 */
 	private void runAction() {
 		getOnAction().handle(null);
 		hide();
 	}
 
+	/**
+	 * @return Action to run when user interacts with a menu item.
+	 */
 	public final EventHandler<ActionEvent> getOnAction() {
 		return onActionProperty().get();
 	}
 
+	/**
+	 * @param value
+	 * 		Action to run when user interacts with a menu item.
+	 */
 	public final void setOnAction(EventHandler<ActionEvent> value) {
 		onActionProperty().set(value);
 	}
 
+	/**
+	 * @return Property wrapper of action to run when user interacts with a menu item.
+	 */
 	public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
 		return onAction;
 	}
 
+	/**
+	 * @return Property wrapper of mapper of {@code T} items to {@link Node} representations.
+	 */
 	public ObjectProperty<Function<T, ? extends Node>> mapperProperty() {
 		return mapperProperty;
 	}
 
+	/**
+	 * @return Property wrapper of current selected item.
+	 */
 	public ObjectProperty<T> selectedItemProperty() {
 		return selectedItem;
 	}
 
+	/**
+	 * @return Menu items.
+	 */
 	public ObservableList<T> getItems() {
 		return items;
 	}
 
 	@Override
 	protected Skin<?> createDefaultSkin() {
-		return new CtxSkin<>(this, mapperProperty);
+		return new CtxSkin<>(this);
 	}
 
+	/**
+	 * Base UI implementation for {@link CtxMenu}.
+	 *
+	 * @param <T>
+	 * 		Item type.
+	 *
+	 * @see CtxCell Per-item UI implementation.
+	 */
 	private static class CtxSkin<T> implements Skin<PopupControl> {
 		private final VirtualFlow<T, CtxCell<T>> flow;
-		private final ObjectProperty<Function<T, ? extends Node>> layoutMapper;
 		private final CtxMenu<T> menu;
 		private final Node node;
 
-		public CtxSkin(CtxMenu<T> menu, ObjectProperty<Function<T, ? extends Node>> layoutMapper) {
+		/**
+		 * @param menu
+		 * 		Component to be a skin for.
+		 */
+		public CtxSkin(CtxMenu<T> menu) {
 			this.menu = menu;
-			this.layoutMapper = layoutMapper;
 			flow = VirtualFlow.createVertical(menu.items, i -> {
 				CtxCell<T> cell = new CtxCell<>(this);
 				cell.updateItem(i);
@@ -147,6 +197,13 @@ public class CtxMenu<T> extends PopupControl {
 			node = new VirtualizedScrollPane<>(flow);
 		}
 
+		/**
+		 * Marks the given index as the selected item in the {@link CtxMenu}.
+		 * All other items are de-selected.
+		 *
+		 * @param index
+		 * 		Index to select.
+		 */
 		private void select(int index) {
 			T item = menu.items.get(index);
 			menu.selectedItem.set(item);
@@ -176,12 +233,22 @@ public class CtxMenu<T> extends PopupControl {
 		}
 	}
 
+	/**
+	 * UI implementation for items of each {@code T} value.
+	 *
+	 * @param <T>
+	 * 		Item type.
+	 */
 	private static class CtxCell<T> implements Cell<T, Node> {
 		private static final PseudoClass FOCUSED_PSEUDO_CLASS = PseudoClass.getPseudoClass("focused");
 		private final BorderPane node = new BorderPane();
 		private final CtxSkin<T> skin;
 		private T item;
 
+		/**
+		 * @param skin
+		 * 		Parent UI.
+		 */
 		public CtxCell(CtxSkin<T> skin) {
 			this.skin = skin;
 			node.getStyleClass().add("menu-item");
@@ -211,7 +278,7 @@ public class CtxMenu<T> extends PopupControl {
 			if (item == null) {
 				reset();
 			} else {
-				Node cellContent = skin.layoutMapper.getValue().apply(item);
+				Node cellContent = skin.menu.mapperProperty.getValue().apply(item);
 				node.setLeft(cellContent);
 			}
 		}
@@ -221,6 +288,10 @@ public class CtxMenu<T> extends PopupControl {
 			return node;
 		}
 
+		/**
+		 * @param status
+		 *        {@code true} to set this item as the selected item.
+		 */
 		public void setFocused(boolean status) {
 			node.pseudoClassStateChanged(FOCUSED_PSEUDO_CLASS, status);
 		}
