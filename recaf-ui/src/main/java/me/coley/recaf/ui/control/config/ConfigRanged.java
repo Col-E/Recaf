@@ -1,7 +1,12 @@
 package me.coley.recaf.ui.control.config;
 
+import javafx.beans.value.*;
 import javafx.scene.control.Slider;
 import me.coley.recaf.config.*;
+import me.coley.recaf.config.bounds.DoubleBounds;
+import me.coley.recaf.config.bounds.FloatBounds;
+import me.coley.recaf.config.bounds.IntBounds;
+import me.coley.recaf.config.bounds.LongBounds;
 import me.coley.recaf.util.ReflectUtil;
 
 import java.lang.reflect.Field;
@@ -28,10 +33,24 @@ public class ConfigRanged extends Slider implements Unlabeled {
 		setShowTickMarks(true);
 		setShowTickLabels(true);
 		setSnapToTicks(true);
-		double value = ((Number) ReflectUtil.quietGet(instance, field)).doubleValue();
+		Object o = ReflectUtil.quietGet(instance, field);
+		double value = 0;
+		if (o instanceof WritableNumberValue) {
+			WritableNumberValue wnv = (WritableNumberValue) o;
+			value = wnv.getValue().doubleValue();
+			if(o instanceof ObservableNumberValue) ((ObservableNumberValue) o).addListener((o1, o2, o3) -> setValue(o3.doubleValue()));
+		} else if (o instanceof Number) {
+			value = ((Number) o).doubleValue();
+		} else {
+			throw new IllegalArgumentException("ConfigRanged requires a Number field");
+		}
 		setValue(value);
-		valueProperty().addListener((observable, old, current) ->
-				ReflectUtil.quietSet(instance, field, adapt(field, current)));
+		valueProperty().addListener((observable, old, current) -> {
+			if (WritableNumberValue.class.isAssignableFrom(field.getType())) {
+				((WritableNumberValue) ReflectUtil.quietGet(instance, field)).setValue(adapt(field, current));
+			} else
+				ReflectUtil.quietSet(instance, field, adapt(field, current));
+		});
 	}
 
 	/**
@@ -47,15 +66,15 @@ public class ConfigRanged extends Slider implements Unlabeled {
 				|| field.getAnnotation(FloatBounds.class) != null;
 	}
 
-	private static Object adapt(Field field, Number current) {
+	private static Number adapt(Field field, Number current) {
 		Class<?> type = field.getType();
-		if (int.class.equals(type) || Integer.class.equals(type))
+		if (int.class.equals(type) || Integer.class.equals(type) || WritableIntegerValue.class.isAssignableFrom(type))
 			return current.intValue();
-		else if (double.class.equals(type) || Double.class.equals(type))
+		else if (double.class.equals(type) || Double.class.equals(type) || WritableDoubleValue.class.isAssignableFrom(type))
 			return current.doubleValue();
-		else if (long.class.equals(type) || Long.class.equals(type))
+		else if (long.class.equals(type) || Long.class.equals(type) || WritableLongValue.class.isAssignableFrom(type))
 			return current.longValue();
-		else if (float.class.equals(type) || Float.class.equals(type))
+		else if (float.class.equals(type) || Float.class.equals(type) || WritableFloatValue.class.isAssignableFrom(type))
 			return current.floatValue();
 		throw new IllegalStateException("Unsupported primitive: " + type);
 	}

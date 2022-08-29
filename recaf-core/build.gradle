@@ -33,6 +33,8 @@ dependencies {
     api picocli
     api quiltflower
     api ssvm
+    api procyon_core
+    api procyon_compiler_tools
 
     // Android
     api smali

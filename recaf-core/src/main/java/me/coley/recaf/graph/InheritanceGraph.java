@@ -5,6 +5,7 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.util.Multimap;
 import me.coley.recaf.util.MultimapBuilder;
+import me.coley.recaf.util.Types;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
@@ -154,8 +155,12 @@ public class InheritanceGraph implements ResourceClassListener, ResourceDexClass
 		if (vertex == null || OBJECT.equals(first) || OBJECT.equals(second))
 			return OBJECT;
 		Set<String> firstParents = getVertex(first).parents()
-				.map(InheritanceVertex::getName).collect(Collectors.toSet());
+				.map(InheritanceVertex::getName)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 		firstParents.add(first);
+		// Ensure 'Object' is last
+		firstParents.remove(Types.OBJECT_TYPE.getInternalName());
+		firstParents.add(Types.OBJECT_TYPE.getInternalName());
 		// Base case
 		if (firstParents.contains(second))
 			return second;
@@ -171,7 +176,7 @@ public class InheritanceGraph implements ResourceClassListener, ResourceDexClass
 			if (nextVertex == null)
 				break;
 			for (String parent : nextVertex.getParents().stream()
-					.map(InheritanceVertex::getName).collect(Collectors.toSet())) {
+					.map(InheritanceVertex::getName).collect(Collectors.toList())) {
 				// Parent in the set of visited classes? Then its valid.
 				if (firstParents.contains(parent))
 					return parent;

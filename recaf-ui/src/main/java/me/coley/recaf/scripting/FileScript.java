@@ -36,7 +36,11 @@ public class FileScript extends Script {
 
 	@Override
 	public ScriptResult execute() {
-		return ScriptEngine.execute(path);
+		try {
+			return ScriptEngine.execute(path);
+		} catch (IOException ex) {
+			throw new IllegalStateException("Failed to read from local script file", ex);
+		}
 	}
 
 	@Override

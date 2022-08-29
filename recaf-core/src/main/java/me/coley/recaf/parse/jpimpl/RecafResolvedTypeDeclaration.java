@@ -8,6 +8,7 @@ import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.core.resolution.MethodUsageResolutionCapability;
+import com.github.javaparser.symbolsolver.core.resolution.SymbolResolutionCapability;
 import com.github.javaparser.symbolsolver.javaparsermodel.LambdaArgumentTypePlaceholder;
 import com.github.javaparser.symbolsolver.javassistmodel.JavassistTypeParameter;
 import com.github.javaparser.symbolsolver.logic.FunctionalInterfaceLogic;
@@ -34,7 +35,7 @@ import java.util.stream.Stream;
  * @author Matt Coley
  */
 public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceTypeDeclaration, ResolvedValueDeclaration,
-		MethodResolutionCapability, MethodUsageResolutionCapability {
+		MethodResolutionCapability, MethodUsageResolutionCapability, SymbolResolutionCapability {
 	protected final WorkspaceTypeSolver typeSolver;
 	protected final CommonClassInfo classInfo;
 	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -354,7 +355,7 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 			return AccessSpecifier.PROTECTED;
 		else if (AccessFlag.isPrivate(acc))
 			return AccessSpecifier.PRIVATE;
-		return AccessSpecifier.PACKAGE_PRIVATE;
+		return AccessSpecifier.NONE;
 	}
 
 	@Override
@@ -474,8 +475,7 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 			return Optional.empty();
 	}
 
-	// TODO: Implement 'SymbolResolutionCapability' when PR is merged
-	// @Override
+	@Override
 	public SymbolReference<? extends ResolvedValueDeclaration> solveSymbol(String name, TypeSolver typeSolver) {
 		// TODO: Iteratively look backwards instead of requesting all fields of all ancestors immediately
 		Optional<ResolvedFieldDeclaration> first = Stream.concat(getAllAncestors().stream()

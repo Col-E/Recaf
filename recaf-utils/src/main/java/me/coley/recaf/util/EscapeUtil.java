@@ -134,6 +134,11 @@ public final class EscapeUtil {
 		return 0;
 	}
 
+	public static final String SPACE = "\\u0020";
+	public static final String TAB = "\\u0009";
+	public static final String NEWLINE = "\\u000A";
+	public static final String RETURN = "\\u000D";
+
 	private static int computeUnescapeUnicodeSpace(String input, int cursor, StringBuilder builder) {
 		// Bounds check
 		if (cursor >= input.length()) {
@@ -145,16 +150,16 @@ public final class EscapeUtil {
 		// Check if next character is a space
 		switch (current) {
 			case " ":
-				escaped = "\\u0020";
+				escaped = SPACE;
 				break;
 			case "\t":
-				escaped = "\\u0009";
+				escaped = TAB;
 				break;
 			case "\n":
-				escaped = "\\u000A";
+				escaped = NEWLINE;
 				break;
 			case "\r":
-				escaped = "\\u000D";
+				escaped = RETURN;
 				break;
 		}
 		if (escaped != null) {

@@ -292,7 +292,7 @@ public class JavassistMethodTranslator {
 		if (op == Opcode.GOTO_W)
 			return pos + iterator.s32bitAt(pos + 1);
 		else
-			return pos + iterator.u16bitAt(pos + 1);
+			return pos + iterator.s16bitAt(pos + 1);
 	}
 
 	/// ================== Below are stubs for children to implement ================== ///

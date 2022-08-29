@@ -35,6 +35,7 @@ import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.pane.assembler.suggestion.WorkspaceClassTree;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.util.StackTraceUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.DelayedExecutor;
 import me.coley.recaf.util.threading.DelayedRunnable;
@@ -160,7 +161,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		astParseThread = ThreadUtil.scheduleAtFixedRate(() -> {
 			try {
 				if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
-					if(pipeline.getUnit() != null)
+					if (pipeline.getUnit() != null)
 						suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
 					logger.trace("AST updated and validated");
 					if (pipeline.isMethod() &&
@@ -213,7 +214,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		transformer.visit();
 		Unit unit = transformer.getUnit();
 
-		if(unit.isMethod()) suggestions.setMethod(unit.getDefinitionAsMethod());
+		if (unit.isMethod()) suggestions.setMethod(unit.getDefinitionAsMethod());
 
 		String code = unit.print(config().createContext());
 		// Update text
@@ -239,15 +240,15 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		Position position = offsetToPosition(caretPosition, Bias.Backward);
 
 		Group group = pipeline.getASTElementAt(position.getMajor() + 1, position.getMinor());
-		if(group != null) {
-			if(group.parent != null) {
-				if(group.parent.type != GroupType.BODY) {
+		if (group != null) {
+			if (group.parent != null) {
+				if (group.parent.type != GroupType.BODY) {
 					group = group.parent;
 				}
 			}
- 		}
+		}
 
-		if(suggestionsMenu != null) suggestionsMenu.hide();
+		if (suggestionsMenu != null) suggestionsMenu.hide();
 
 		CtxMenu<String> suggestionsMenu = getSuggestionMenu(caretPosition, group);
 		suggestionsMenu.setAutoHide(true);
@@ -511,7 +512,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
 		// Update field
-		if (apply) updateClass(fieldAssembled);
+		if (apply)
+			return updateClass(fieldAssembled);
 		return SaveResult.SUCCESS;
 	}
 
@@ -532,7 +534,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
 		// Update field
-		if (apply) updateClass(methodAssembled);
+		if (apply)
+			return updateClass(methodAssembled);
 		return SaveResult.SUCCESS;
 	}
 
@@ -562,9 +565,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 *
 	 * @param updatedField
 	 * 		Field that was compiled.
+	 *
+	 * @return Result of update operation.
 	 */
-	private void updateClass(FieldNode updatedField) {
-		updateClass(cw -> new FieldReplacingVisitor(cw, targetMember, updatedField));
+	private SaveResult updateClass(FieldNode updatedField) {
+		return updateClass(cw -> new FieldReplacingVisitor(cw, targetMember, updatedField));
 	}
 
 	/**
@@ -572,9 +577,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 *
 	 * @param updatedMethod
 	 * 		Method that was compiled.
+	 *
+	 * @return Result of update operation.
 	 */
-	private void updateClass(MethodNode updatedMethod) {
-		updateClass(cw -> new MethodReplacingVisitor(cw, targetMember, updatedMethod));
+	private SaveResult updateClass(MethodNode updatedMethod) {
+		return updateClass(cw -> new MethodReplacingVisitor(cw, targetMember, updatedMethod));
 	}
 
 	/**
@@ -582,30 +589,45 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 *
 	 * @param updatedClass
 	 * 		Class that was compiled.
+	 *
+	 * @return Result of update operation.
 	 */
-	private void updateClass(ClassNode updatedClass) {
-		updateClass(cw -> updatedClass);
+	private SaveResult updateClass(ClassNode updatedClass) {
+		return updateClass(cw -> updatedClass);
 	}
 
 	/**
 	 * @param replacerProvider
 	 * 		Function to map a class-writer to a delegated class visitor.
 	 *
+	 * @return Result of update operation.
+	 *
 	 * @see #updateClass(MethodNode)
 	 * @see #updateClass(FieldNode)
 	 */
-	private void updateClass(Function<ClassWriter, ClassVisitor> replacerProvider) {
+	private SaveResult updateClass(Function<ClassWriter, ClassVisitor> replacerProvider) {
 		// Because we are creating a new method, we need to generate frames.
 		int flags = ClassWriter.COMPUTE_FRAMES;
 		ClassWriter cw = new WorkspaceClassWriter(RecafUI.getController(), flags);
 		ClassVisitor replacer = replacerProvider.apply(cw);
 		ClassReader cr = classInfo.getClassReader();
 		// Read and filter through replacer. Skip frames since we're just going to compute them anyways.
-		cr.accept(replacer, ClassReader.SKIP_FRAMES);
+		try {
+			cr.accept(replacer, ClassReader.SKIP_FRAMES);
+		} catch (Exception ex) {
+			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(ex, getClass());
+			String classLocation = trace[0].getClassName();
+			if ("org.objectweb.asm.Frame".equals(classLocation))
+				logger.error("Failed to reassemble method (ASM frame generation)", ex);
+			else
+				logger.error("Failed to reassemble method (Unknown)", ex);
+			return SaveResult.FAILURE;
+		}
 		// Done, update the workspace
 		byte[] updatedClass = cw.toByteArray();
 		Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
 		resource.getClasses().put(ClassInfo.read(updatedClass));
+		return SaveResult.SUCCESS;
 	}
 
 	/**

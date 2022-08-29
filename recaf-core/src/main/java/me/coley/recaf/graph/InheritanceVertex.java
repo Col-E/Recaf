@@ -5,10 +5,7 @@ import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.Streams;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -218,7 +215,7 @@ public class InheritanceVertex {
 	 * @return The entire class hierarchy.
 	 */
 	public Set<InheritanceVertex> getFamily() {
-		Set<InheritanceVertex> vertices = new HashSet<>();
+		Set<InheritanceVertex> vertices = new LinkedHashSet<>();
 		visitFamily(vertices);
 		return vertices;
 	}
@@ -234,7 +231,7 @@ public class InheritanceVertex {
 	 * @return All classes this extends or implements.
 	 */
 	public Set<InheritanceVertex> getAllParents() {
-		return parents().collect(Collectors.toSet());
+		return parents().collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	/**
@@ -254,7 +251,7 @@ public class InheritanceVertex {
 				parents = this.parents;
 				if (parents == null) {
 					String name = getName();
-					parents = new HashSet<>();
+					parents = new LinkedHashSet<>();
 					String superName = value.getSuperName();
 					if (superName != null && !name.equals(superName)) {
 						InheritanceVertex parentVertex = lookup.apply(superName);
@@ -277,7 +274,7 @@ public class InheritanceVertex {
 	 * @return All classes this extends or implements.
 	 */
 	public Set<InheritanceVertex> getAllChildren() {
-		return children().collect(Collectors.toSet());
+		return children().collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	private Stream<InheritanceVertex> children() {
@@ -298,7 +295,7 @@ public class InheritanceVertex {
 							.stream()
 							.filter(childName -> !name.equals(childName))
 							.map(lookup)
-							.collect(Collectors.toSet());
+							.collect(Collectors.toCollection(LinkedHashSet::new));
 					this.children = children;
 				}
 			}

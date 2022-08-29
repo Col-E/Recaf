@@ -1,6 +1,9 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.util.threading.ThreadLocals;
+
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
@@ -117,7 +120,7 @@ public final class IOUtil {
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static byte[] toByteArray(InputStream in) throws IOException {
-		return toByteArray(in, newByteBuffer());
+		return toByteArray(in, ThreadLocals.getByteBuffer());
 	}
 
 	/**
@@ -421,7 +424,7 @@ public final class IOUtil {
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static void copy(InputStream in, OutputStream out) throws IOException {
-		copy(in, out, newByteBuffer());
+		copy(in, out, ThreadLocals.getByteBuffer());
 	}
 
 	/**
@@ -563,6 +566,10 @@ public final class IOUtil {
 		connection.setReadTimeout(readTimeoutMillis);
 		try (InputStream in = connection.getInputStream()) {
 			copy(in, out, buf);
+		} finally {
+			if (connection instanceof HttpURLConnection) {
+				((HttpURLConnection) connection).disconnect();
+			}
 		}
 	}
 
@@ -588,7 +595,7 @@ public final class IOUtil {
 							int connectionTimeoutMillis,
 							int readTimeoutMillis)
 			throws IOException {
-		copy(url, out, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
+		copy(url, out, ThreadLocals.getByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
 	}
 
 	/**
@@ -641,7 +648,7 @@ public final class IOUtil {
 							int connectionTimeoutMillis,
 							int readTimeoutMillis)
 			throws IOException {
-		copy(url, path, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
+		copy(url, path, ThreadLocals.getByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
 	}
 
 	/**
@@ -731,6 +738,38 @@ public final class IOUtil {
 		// Actually fallback to java.io package if possible,
 		// because IO is faster than NIO when for file status checking.
 		return isOnDefaultFileSystem(path) ? path.toFile().isFile() : Files.isRegularFile(path);
+	}
+
+	/**
+	 * @param path
+	 * 		Path to some file.
+	 *
+	 * @return First 16 bytes of the file.
+	 *
+	 * @throws IOException
+	 * 		When the file cannot be read from.
+	 */
+	public static byte[] readHeader(Path path) throws IOException {
+		return readFirstNBytes(path, 16);
+	}
+
+	/**
+	 * @param path
+	 * 		Path to some file.
+	 * @param n
+	 * 		Number of bytes to read.
+	 *
+	 * @return First n bytes of the file.
+	 *
+	 * @throws IOException
+	 * 		When the file cannot be read from.
+	 */
+	public static byte[] readFirstNBytes(Path path, int n) throws IOException {
+		byte[] data = new byte[n];
+		try (InputStream fis = Files.newInputStream(path)) {
+			fis.read(data);
+		}
+		return data;
 	}
 
 	private static final class OptimizedByteArrayOutputStream extends ByteArrayOutputStream {

@@ -1,14 +1,20 @@
 package me.coley.recaf.config.container;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
-import me.coley.recaf.config.IntBounds;
+import me.coley.recaf.config.bounds.IntBounds;
 import me.coley.recaf.ui.ClassViewMode;
 import me.coley.recaf.ui.DiffViewMode;
 import me.coley.recaf.ui.FileViewMode;
-import me.coley.recaf.ui.pane.OutlinePane;
+import me.coley.recaf.ui.pane.outline.MemberType;
+import me.coley.recaf.ui.pane.outline.OutlinePane;
+import me.coley.recaf.ui.pane.outline.Visibility;
 import me.coley.recaf.ui.util.Icons;
 
 import java.util.Map;
@@ -60,15 +66,48 @@ public class EditorConfig implements ConfigContainer {
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedtypes")
-	public boolean showOutlinedTypes;
+	public BooleanProperty showOutlinedTypes = new SimpleBooleanProperty();
 
 	/**
 	 * Show synthetic fields and methods in the {@link OutlinePane}.
 	 */
 	@Group("outline")
 	@ConfigID("showoutlinedsynths")
-	public boolean showOutlinedSynthetics;
+	public BooleanProperty showOutlinedSynthetics = new SimpleBooleanProperty();
 
+	/**
+	 * Filter out members by type (method/field).
+	 */
+	@Group("outline")
+	@ConfigID("showoutlinedmembertype")
+	public ObjectProperty<MemberType> showOutlinedMemberType = new SimpleObjectProperty<>(MemberType.ALL);
+
+	/**
+	 * Filter out members by visibility (public/protected/package/private). Showing at which state something can be accessed
+	 * Ex.: with protected selected, only protected and public members are shown.
+	 */
+	@Group("outline")
+	@ConfigID("showoutlinedvisibility")
+	public ObjectProperty<Visibility> showOutlinedVisibility = new SimpleObjectProperty<>(Visibility.ALL);
+
+	/**
+	 * Position of the icon for items in the outline.
+	 */
+	@Group("outline")
+	@ConfigID("outlinedvisibilityiconposition")
+	public ObjectProperty<Visibility.IconPosition> outlineVisibilityIconPosition = new SimpleObjectProperty<>(Visibility.IconPosition.RIGHT);
+
+	@Group("outline")
+	@ConfigID("sortalphabetically")
+	public BooleanProperty sortOutlinedAlphabetically = new SimpleBooleanProperty();
+
+	@Group("outline")
+	@ConfigID("sortbyvisibility")
+	public BooleanProperty sortOutlinedByVisibility = new SimpleBooleanProperty();
+
+	@Group("outline")
+	@ConfigID("filter.casesensitive")
+	public BooleanProperty caseSensitiveOutlinedFilter = new SimpleBooleanProperty();
 	/**
 	 * Highlight the current hovered item in a {@link me.coley.recaf.ui.control.hex.HexView}.
 	 */

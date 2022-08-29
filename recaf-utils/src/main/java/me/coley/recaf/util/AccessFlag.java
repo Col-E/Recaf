@@ -419,6 +419,16 @@ public enum AccessFlag {
 	 * @param acc
 	 * 		Access flag mask.
 	 *
+	 * @return {@code true} when the mask contains neither a private, protected nor public flag.
+	 */
+	public static boolean isPackage(int acc) {
+		return !isPrivate(acc) && !isProtected(acc) && !isPublic(acc);
+	}
+
+	/**
+	 * @param acc
+	 * 		Access flag mask.
+	 *
 	 * @return {@code true} when the mask contains the static flag.
 	 */
 	public static boolean isStatic(int acc) {

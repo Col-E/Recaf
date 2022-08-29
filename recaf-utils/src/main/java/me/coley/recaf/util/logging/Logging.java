@@ -4,8 +4,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.core.FileAppender;
 import me.coley.recaf.util.Blackhole;
-import me.coley.recaf.util.ClasspathUtil;
-import me.coley.recaf.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -24,7 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author Matt Coley
  */
 public class Logging {
-	private static final Map<String, Logger> loggers = new ConcurrentHashMap<>();
+	private static final Map<String, DebuggingLogger> loggers = new ConcurrentHashMap<>();
 	private static final List<LogConsumer<String>> logConsumers = new ArrayList<>();
 	private static Level interceptLevel = Level.INFO;
 
@@ -34,7 +32,7 @@ public class Logging {
 	 *
 	 * @return Logger associated with name.
 	 */
-	public static Logger get(String name) {
+	public static DebuggingLogger get(String name) {
 		return loggers.computeIfAbsent(name, k -> intercept(k, getLogger(k)));
 	}
 
@@ -44,7 +42,7 @@ public class Logging {
 	 *
 	 * @return Logger associated with class.
 	 */
-	public static Logger get(Class<?> cls) {
+	public static DebuggingLogger get(Class<?> cls) {
 		return loggers.computeIfAbsent(cls.getName(), k -> intercept(k, getLogger(k)));
 	}
 
@@ -105,35 +103,7 @@ public class Logging {
 		logbackLogger.setAdditive(false);
 	}
 
-	/**
-	 * For some reason, gradle's unit tests do NOT print any {@link Logger} call to sys-out.
-	 * This is a dumb fix for that.
-	 */
-	private static void addTestPhaseLogging() {
-		try {
-			// Check if JUnit exists, if so, we need to fix logging.
-			// If somebody figures out a better approach, please open a PR.
-			Class.forName("org.junit.jupiter.api.Assertions");
-			addLogConsumer(new LogConsumer<>() {
-				@Override
-				public void accept(String loggerName, Level level, String messageContent) {
-					loggerName = StringUtil.shortenPath(loggerName.replace('.', '/'));
-					System.out.println("[" + loggerName + "-" + level.name() + "] " + messageContent);
-				}
-
-				@Override
-				public void accept(String loggerName, Level level, String messageContent, Throwable throwable) {
-					loggerName = StringUtil.shortenPath(loggerName.replace('.', '/'));
-					System.err.println("[" + loggerName + "-" + level.name() + "] " + messageContent);
-					throwable.printStackTrace();
-				}
-			});
-		} catch (ClassNotFoundException ignored) {
-			// expected
-		}
-	}
-
-	private static Logger intercept(String name, Logger logger) {
+	private static DebuggingLogger intercept(String name, Logger logger) {
 		return new InterceptingLogger(logger) {
 			@Override
 			public void intercept(Level level, String message) {
@@ -150,7 +120,6 @@ public class Logging {
 	}
 
 	static {
-		addTestPhaseLogging();
 		Blackhole.consume(LoggingFilter.class);
 	}
 }

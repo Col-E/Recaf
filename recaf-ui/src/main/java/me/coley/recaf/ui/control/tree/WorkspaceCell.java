@@ -14,7 +14,7 @@ import me.coley.recaf.ui.control.tree.item.FieldItem;
 import me.coley.recaf.ui.control.tree.item.FileItem;
 import me.coley.recaf.ui.control.tree.item.MethodItem;
 import me.coley.recaf.ui.util.CellFactory;
-import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
@@ -83,7 +83,7 @@ public class WorkspaceCell extends TreeCell<BaseTreeValue> {
 				// TODO: Unbinding the cells a big aggressively here, but this seems to work for now
 				textProperty().unbind();
 			} else {
-				setText(EscapeUtil.escape(value.getPathElementValue()));
+				setText(TextDisplayUtil.escapeShortenPath(value.getPathElementValue()));
 			}
 			// Populate based on associated info, or the item class
 			BaseTreeItem item = value.getItem();

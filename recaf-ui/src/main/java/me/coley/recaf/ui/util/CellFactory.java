@@ -7,8 +7,7 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.context.ContextSource;
 import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.control.tree.item.*;
-import me.coley.recaf.util.EscapeUtil;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
@@ -89,52 +88,52 @@ public class CellFactory {
 		INFO_MAP.put(ClassInfo.class, (type, cell, resource, info) -> {
 			ClassInfo classInfo = (ClassInfo) info;
 			String className = info.getName();
-			cell.setText(EscapeUtil.escape(StringUtil.shortenPath(className)));
+			cell.setText(TextDisplayUtil.escapeShortenPath(className));
 			ThreadUtil.run(() -> getClassIconProvider(classInfo))
-				.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
-				.thenApply(icons -> t(icons.get1(), ContextBuilder.forClass(classInfo)
-					.setIcon(icons.get2())
-					.withResource(resource)
-					.setWhere(from(type))
-					.build()))
-				.thenAcceptAsync(result -> {
-					cell.setGraphic(result.get1());
-					cell.setContextMenu(result.get2());
-					LISTENERS.forEach(it -> it.forClass(type, cell, resource, classInfo));
-				}, FxThreadUtil.executor());
+					.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
+					.thenApply(icons -> t(icons.get1(), ContextBuilder.forClass(classInfo)
+							.setIcon(icons.get2())
+							.withResource(resource)
+							.setWhere(from(type))
+							.build()))
+					.thenAcceptAsync(result -> {
+						cell.setGraphic(result.get1());
+						cell.setContextMenu(result.get2());
+						LISTENERS.forEach(it -> it.forClass(type, cell, resource, classInfo));
+					}, FxThreadUtil.executor());
 		});
 		INFO_MAP.put(DexClassInfo.class, (type, cell, resource, info) -> {
 			DexClassInfo classInfo = (DexClassInfo) info;
 			String className = info.getName();
-			cell.setText(StringUtil.shortenPath(className));
+			cell.setText(TextDisplayUtil.escapeShortenPath(className));
 			ThreadUtil.run(() -> getClassIconProvider(classInfo))
-				.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
-				.thenAcceptAsync(icons -> {
-					cell.setGraphic(icons.get1());
-					cell.setContextMenu(ContextBuilder.forDexClass(classInfo)
-						.setIcon(icons.get2())
-						.withResource(resource)
-						.setWhere(from(type))
-						.build());
-					LISTENERS.forEach(it -> it.forDexClass(type, cell, resource, classInfo));
-				}, FxThreadUtil.executor());
+					.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
+					.thenAcceptAsync(icons -> {
+						cell.setGraphic(icons.get1());
+						cell.setContextMenu(ContextBuilder.forDexClass(classInfo)
+								.setIcon(icons.get2())
+								.withResource(resource)
+								.setWhere(from(type))
+								.build());
+						LISTENERS.forEach(it -> it.forDexClass(type, cell, resource, classInfo));
+					}, FxThreadUtil.executor());
 		});
 		INFO_MAP.put(FileInfo.class, (type, cell, resource, info) -> {
 			FileInfo fileInfo = (FileInfo) info;
 			String fileName = info.getName();
-			cell.setText(EscapeUtil.escape(StringUtil.shortenPath(fileName)));
+			cell.setText(TextDisplayUtil.escapeShortenPath(fileName));
 			ThreadUtil.run(() -> getFileIconProvider(fileInfo))
-				.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
-				.thenApply(icons -> t(icons.get1(), ContextBuilder.forFile(fileInfo)
-					.setIcon(icons.get2())
-					.withResource(resource)
-					.setWhere(from(type))
-					.build()))
-				.thenAcceptAsync(result -> {
-					cell.setGraphic(result.get1());
-					cell.setContextMenu(result.get2());
-					LISTENERS.forEach(it -> it.forFile(type, cell, resource, fileInfo));
-				}, FxThreadUtil.executor());
+					.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
+					.thenApply(icons -> t(icons.get1(), ContextBuilder.forFile(fileInfo)
+							.setIcon(icons.get2())
+							.withResource(resource)
+							.setWhere(from(type))
+							.build()))
+					.thenAcceptAsync(result -> {
+						cell.setGraphic(result.get1());
+						cell.setContextMenu(result.get2());
+						LISTENERS.forEach(it -> it.forFile(type, cell, resource, fileInfo));
+					}, FxThreadUtil.executor());
 		});
 		INFO_MAP.put(FieldInfo.class, (type, cell, resource, info) -> {
 			Resources resources = RecafUI.getController().getWorkspace().getResources();
@@ -144,7 +143,7 @@ public class CellFactory {
 				owner = resources.getClass(fieldInfo.getOwner());
 			}
 			String name = info.getName();
-			cell.setText(EscapeUtil.escape(name));
+			cell.setText(TextDisplayUtil.escapeShortenPath(name));
 			cell.setGraphic(getFieldIcon(fieldInfo));
 			cell.setContextMenu(ContextBuilder.forField(owner, fieldInfo)
 					.withResource(resource)
@@ -160,7 +159,7 @@ public class CellFactory {
 				owner = resources.getClass(methodInfo.getOwner());
 			}
 			String name = info.getName();
-			cell.setText(EscapeUtil.escape(name));
+			cell.setText(TextDisplayUtil.escapeShortenPath(name));
 			cell.setGraphic(getMethodIcon(methodInfo));
 			cell.setContextMenu(ContextBuilder.forMethod(owner, methodInfo)
 					.withResource(resource)

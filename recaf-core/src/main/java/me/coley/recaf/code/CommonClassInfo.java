@@ -44,6 +44,18 @@ public interface CommonClassInfo extends ItemInfo {
 	List<MethodInfo> getMethods();
 
 	/**
+	 * @return Class's inner classes.
+	 */
+	List<InnerClassInfo> getInnerClasses();
+
+	/**
+	 * Breadcrumbs of the outer class. For example: A, B for the class C which has B as an outer class.
+	 * This List <strong>MUST</strong> be sorted in order of the outest first. The last element is the outer of the class itself.
+	 * @return breadcrumbs of the outer class.
+	 */
+	List<String> getOuterClassBreadcrumbs();
+
+	/**
 	 * @param name
 	 * 		Field name.
 	 * @param descriptor

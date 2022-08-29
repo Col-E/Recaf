@@ -37,14 +37,28 @@ public class RegexUtil {
 	 * Checks if the entire input matches a pattern.
 	 *
 	 * @param pattern
-	 * 		pattern
+	 * 		Pattern to match.
 	 * @param input
-	 * 		an input to verify
+	 * 		Text to match against.
 	 *
-	 * @return {@code true} if input matches.
+	 * @return {@code true} when the input is a full match.
 	 */
 	public static boolean matches(String pattern, String input) {
 		return getMatcher(pattern, input).matches();
+	}
+
+	/**
+	 * Checks if any portion of the input matches a pattern.
+	 *
+	 * @param pattern
+	 * 		Pattern to match.
+	 * @param input
+	 * 		Text to match against.
+	 *
+	 * @return {@code true} when any part of the input matches.
+	 */
+	public static boolean matchesAny(String pattern, String input) {
+		return getMatcher(pattern, input).find();
 	}
 
 	/**

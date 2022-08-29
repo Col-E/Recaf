@@ -10,14 +10,16 @@ dependencies {
     api asm
     api asm_tree
     api cafedude
+    api dexlib
     api hppc
     api javassist
     api llzip
     api logback_classic
     api regex
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    testImplementation junit_api
+    testImplementation junit_params
+    testRuntimeOnly junit_engine
 }
 
 test {

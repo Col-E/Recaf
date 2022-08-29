@@ -9,8 +9,8 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.ApkContentSource;
-import me.coley.recaf.workspace.resource.source.ClassContentSource;
 import me.coley.recaf.workspace.resource.source.DirectoryContentSource;
+import me.coley.recaf.workspace.resource.source.SingleFileContentSource;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -56,7 +56,7 @@ public class ExportUtil {
 		exporter.compress = config.compress;
 		Resource resource = workspace.getResources().getPrimary();
 		UncheckedRunnable exportProcess;
-		if (resource.getContentSource() instanceof ClassContentSource && !exporter.shadeLibs) {
+		if (resource.getContentSource() instanceof SingleFileContentSource && !exporter.shadeLibs) {
 			exportProcess = exporter::writeAsSingleFile;
 		} else if (resource.getContentSource() instanceof DirectoryContentSource) {
 			exportProcess = exporter::writeAsDirectory;

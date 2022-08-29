@@ -1,8 +1,8 @@
 package me.coley.recaf.scripting;
 
-import bsh.EvalError;
-import bsh.ParseException;
-import bsh.TargetError;
+import me.coley.recaf.compile.CompilerDiagnostic;
+
+import java.util.List;
 
 /**
  * Wrapper for results of {@link ScriptEngine} calls.
@@ -10,99 +10,60 @@ import bsh.TargetError;
  * @author Matt Coley
  */
 public class ScriptResult {
-	private final Exception exception;
-	private final Object result;
+	private final List<CompilerDiagnostic> diagnostics;
+	private final Throwable throwable;
 
 	/**
-	 * @param result
-	 * 		Script result.
-	 * @param exception
-	 * 		Script failure reason.
+	 * @param diagnostics
+	 * 		Compiler error list.
 	 */
-	public ScriptResult(Object result, Exception exception) {
-		this.result = result;
-		this.exception = exception;
+	public ScriptResult(List<CompilerDiagnostic> diagnostics) {
+		this(diagnostics, null);
 	}
 
 	/**
-	 * @return {@code true} when there was no failures reported.
+	 * @param diagnostics
+	 * 		Compiler error list.
+	 * @param throwable
+	 * 		Runtime error value.
+	 */
+	public ScriptResult(List<CompilerDiagnostic> diagnostics, Throwable throwable) {
+		this.diagnostics = diagnostics;
+		this.throwable = throwable;
+	}
+
+	/**
+	 * @return {@code true} when there were no compiler or runtime errors.
 	 */
 	public boolean wasSuccess() {
-		return getException() == null;
+		return !wasCompileFailure() && !wasRuntimeError();
 	}
 
 	/**
-	 * @return {@code true} when there is an {@link #getException() failure}.
+	 * @return {@code true} when {@link #getCompileDiagnostics()} has content.
 	 */
-	public boolean failed() {
-		return getException() != null;
+	public boolean wasCompileFailure() {
+		return getCompileDiagnostics().size() > 0;
 	}
 
 	/**
-	 * @return {@code true} when there is an {@link #getException() failure} and it was due to an {@link EvalError}.
-	 *
-	 * @see #getExceptionAsEval()
+	 * @return {@code true} when {@link #getRuntimeThrowable()} is present.
 	 */
-	public boolean wasScriptFailure() {
-		return getException() instanceof EvalError;
+	public boolean wasRuntimeError() {
+		return throwable != null;
 	}
 
 	/**
-	 * @return {@code true} when there is an {@link #getException() failure} and it was due to an {@link ParseException}.
-	 *
-	 * @see #getExceptionAsParse()
+	 * @return List of compiler diagnostics.
 	 */
-	public boolean wasScriptParseFailure() {
-		return getException() instanceof ParseException;
+	public List<CompilerDiagnostic> getCompileDiagnostics() {
+		return diagnostics;
 	}
 
 	/**
-	 * @return {@code true} when there is an {@link #getException() failure} and it was due to an {@link TargetError}.
-	 *
-	 * @see #getExceptionAsTarget()
+	 * @return Exception thrown when running the generated script method.
 	 */
-	public boolean wasScriptTargetFailure() {
-		return getException() instanceof TargetError;
-	}
-
-	/**
-	 * @return Generic failure reason.
-	 */
-	public Exception getException() {
-		return exception;
-	}
-
-	/**
-	 * Can only be used when {@link #wasScriptFailure()} is {@code true}.
-	 *
-	 * @return Failure reason due to BSH failing to parse the script.
-	 */
-	public EvalError getExceptionAsEval() {
-		return (EvalError) exception;
-	}
-
-	/**
-	 * Can only be used when {@link #wasScriptTargetFailure()} is {@code true}.
-	 *
-	 * @return Failure reason due to BSH failing to parse the script.
-	 */
-	public TargetError getExceptionAsTarget() {
-		return (TargetError) exception;
-	}
-
-	/**
-	 * Can only be used when {@link #wasScriptTargetFailure()} is {@code true}.
-	 *
-	 * @return Failure reason due to BSH failing to parse the script.
-	 */
-	public ParseException getExceptionAsParse() {
-		return (ParseException) exception;
-	}
-
-	/**
-	 * @return Script result.
-	 */
-	public Object getResult() {
-		return result;
+	public Throwable getRuntimeThrowable() {
+		return throwable;
 	}
 }

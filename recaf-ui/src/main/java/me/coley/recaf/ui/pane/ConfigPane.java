@@ -1,6 +1,10 @@
 package me.coley.recaf.ui.pane;
 
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
@@ -13,10 +17,7 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
-import me.coley.recaf.config.ConfigContainer;
-import me.coley.recaf.config.ConfigID;
-import me.coley.recaf.config.Configs;
-import me.coley.recaf.config.Group;
+import me.coley.recaf.config.*;
 import me.coley.recaf.config.binds.Binding;
 import me.coley.recaf.ui.behavior.WindowShownListener;
 import me.coley.recaf.ui.control.BoundLabel;
@@ -29,6 +30,8 @@ import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -81,12 +84,14 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 				return o1.compareTo(o2);
 		});
 		for (Field field : container.getClass().getDeclaredFields()) {
+			if (field.isAnnotationPresent(Ignore.class)) continue;
 			if (Modifier.isTransient(field.getModifiers()))
 				continue;
 			field.setAccessible(true);
 			Group group = field.getAnnotation(Group.class);
 			if (group == null) {
-				logger.trace("Skip field, missing config annotations: " + container.getClass() + "#" + field.getName());
+				logger.trace("Skip field, missing config annotations: " + container.getClass() + "#" + field.getName()
+						+ " - Use @Ignore to ignore this field");
 				continue;
 			}
 			String groupKey = key + '.' + group.value();
@@ -160,11 +165,13 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 		return tab;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static Node getConfigComponent(ConfigContainer container, Field field, String idKey) {
 		Class<?> type = field.getType();
+		// seems like StringProperty is not supported
 		if (ID_OVERRIDES.containsKey(idKey)) {
 			return ID_OVERRIDES.get(idKey).apply(container, field);
-		} else if (boolean.class.equals(type) || Boolean.class.equals(type)) {
+		} else if (boolean.class.equals(type) || Boolean.class.equals(type) || BooleanProperty.class.isAssignableFrom(type)) {
 			return new ConfigBoolean(container, field, Lang.getBinding(idKey));
 		} else if (ConfigRanged.hasBounds(field)) {
 			return new ConfigRanged(container, field);
@@ -174,6 +181,27 @@ public class ConfigPane extends BorderPane implements WindowShownListener {
 			return new ConfigPos(container, field);
 		} else if (type.isEnum()) {
 			return new ConfigEnum(container, field);
+		} else if (ObjectProperty.class.equals(type) && field.getGenericType() instanceof ParameterizedType) {
+			// need to be ObjectProperty<EnumTypeHere>
+			ParameterizedType pt = (ParameterizedType) field.getGenericType();
+			Type[] types = pt.getActualTypeArguments();
+			Type genericType = types.length >= 1 ? types[0] : null;
+			if (genericType instanceof Class) {
+				if (((Class<?>) genericType).isEnum()) {
+					// should be an enum
+					return new ConfigEnumProperty((Class<Enum<?>>) genericType, container, field);
+				} else {
+					logger.trace("Skip field, provided generic type is not an enum: {}#{} - {}",
+							field.getName(), container.getClass(), type.getName());
+				}
+			} else {
+				logger.trace("Skip field, missing generic class type: {}#{} - needs to be ObjectProperty<EnumTypeHere>",
+						container.getClass(), field.getName());
+			}
+		} else if (int.class.equals(type) || Integer.class.equals(type) || IntegerProperty.class.equals(type)) {
+			return new ConfigInt(container, field);
+		} else if (long.class.equals(type) || Long.class.equals(type) || LongProperty.class.equals(type)) {
+			return new ConfigLong(container, field);
 		}
 		Label fallback = new Label(idKey + " - Unsupported field type: " + type);
 		fallback.setStyle("-fx-text-fill: orange;");

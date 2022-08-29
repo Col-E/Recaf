@@ -81,9 +81,13 @@ public class Frame {
 				Value value = e.getValue();
 				Value otherValue = otherFrame.getLocal(name);
 				if (otherValue != null) {
-					Value newValue = mergeValue(value, otherValue, typeChecker);
-					setLocal(name, newValue);
-					modified |= !value.equals(newValue);
+					// If the values between this frame and the other do not match, we need to merge.
+					boolean valuesDifferAfterMerge = !value.equals(otherValue);
+					if (valuesDifferAfterMerge) {
+						Value newValue = mergeValue(value, otherValue, typeChecker);
+						setLocal(name, newValue);
+						modified = true;
+					}
 				}
 			}
 			int max = getStack().size();
@@ -94,9 +98,13 @@ public class Frame {
 			for (int i = 0; i < max; i++) {
 				Value value = getStack().get(i);
 				Value otherValue = otherFrame.getStack().get(i);
-				Value newValue = mergeValue(value, otherValue, typeChecker);
-				getStack().set(i, newValue);
-				modified |= !value.equals(newValue);
+				// If the values between this frame and the other do not match, we need to merge.
+				boolean valuesDifferAfterMerge = !value.equals(otherValue);
+				if (valuesDifferAfterMerge) {
+					Value newValue = mergeValue(value, otherValue, typeChecker);
+					getStack().set(i, newValue);
+					modified = true;
+				}
 			}
 			return modified;
 		}
@@ -116,6 +124,14 @@ public class Frame {
 				// Update the local with the new type
 				return new Value.TypeValue(commonType);
 			} else {
+				// TODO: Check
+				//    LDC Type
+				//    GOTO D
+				//  C:
+				//    ACONST_NULL
+				//    GOTO D
+				//  D:
+				//    ASTORE x
 				throw new FrameMergeException("Values not types in both frames!");
 			}
 		} else if (value instanceof Value.ObjectValue) {
@@ -131,7 +147,7 @@ public class Frame {
 			} else if (otherValue instanceof Value.ArrayValue) {
 				return new Value.ObjectValue(Types.OBJECT_TYPE);
 			} else if (otherValue instanceof Value.NullValue) {
-				return new Value.ObjectValue(Types.OBJECT_TYPE);
+				return value;
 			} else {
 				throw new FrameMergeException("Values not objects/arrays in both frames!");
 			}
@@ -142,7 +158,7 @@ public class Frame {
 				// Select widest type
 				Type widest = NumberUtil.getWidestType(numeric.getType(), otherNumeric.getType());
 				if (Objects.equals(numeric.getNumber(), otherNumeric.getNumber())) {
-					numeric = new Value.NumericValue(widest, numeric.getNumber());
+					numeric = new Value.NumericValue(widest, otherNumeric.getNumber());
 				} else {
 					numeric = new Value.NumericValue(widest);
 				}
@@ -174,6 +190,16 @@ public class Frame {
 			} else {
 				throw new FrameMergeException("Values not arrays/objects in both frames!");
 			}
+		} else if (value instanceof Value.NullValue) {
+			if (otherValue instanceof Value.ObjectValue) {
+				return otherValue;
+			} else if (otherValue instanceof Value.ArrayValue) {
+				return new Value.ObjectValue(Types.OBJECT_TYPE);
+			} else if (otherValue instanceof Value.NullValue) {
+				return value;
+			} else {
+				throw new FrameMergeException("Values not objects/arrays in both frames!");
+			}
 		}
 		return value;
 	}
@@ -196,6 +222,7 @@ public class Frame {
 		locals.clear();
 		stack.addAll(frame.stack);
 		locals.putAll(frame.locals);
+		// TODO: Should we copy other properties?
 	}
 
 	/**
@@ -239,8 +266,10 @@ public class Frame {
 	 * @return Top value from the stack.
 	 */
 	public Value peek() {
-		if (stack.isEmpty())
+		if (stack.isEmpty()) {
+			markWonky("Cannot peek off empty stack!");
 			return new Value.EmptyPoppedValue();
+		}
 		return stack.get(stack.size() - 1);
 	}
 
@@ -248,8 +277,10 @@ public class Frame {
 	 * @return Top value from the stack.
 	 */
 	public Value pop() {
-		if (stack.isEmpty())
+		if (stack.isEmpty()) {
+			markWonky("Cannot pop off empty stack!");
 			return new Value.EmptyPoppedValue();
+		}
 		return stack.remove(stack.size() - 1);
 	}
 
@@ -326,5 +357,13 @@ public class Frame {
 	@Override
 	public int hashCode() {
 		return Objects.hash(locals, stack);
+	}
+
+	@Override
+	public String toString() {
+		return "Frame{" +
+				"locals=" + locals +
+				", stack=" + stack +
+				'}';
 	}
 }

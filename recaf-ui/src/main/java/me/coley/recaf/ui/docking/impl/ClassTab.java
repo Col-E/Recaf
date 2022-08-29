@@ -1,8 +1,13 @@
 package me.coley.recaf.ui.docking.impl;
 
+import javafx.beans.property.IntegerProperty;
+import javafx.scene.Node;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.docking.DockTab;
-import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.TextDisplayUtil;
+
+import java.util.function.Consumer;
 
 /**
  * Wrapper around content representing a {@link me.coley.recaf.code.CommonClassInfo}.
@@ -10,7 +15,7 @@ import me.coley.recaf.util.EscapeUtil;
  * @author Matt Coley
  * @see ClassRepresentation
  */
-public class ClassTab extends DockTab {
+public class ClassTab extends DockTab implements FontSizeChangeable {
 	private final ClassRepresentation classRepresentation;
 
 	/**
@@ -20,7 +25,7 @@ public class ClassTab extends DockTab {
 	 * 		Representation of the class.
 	 */
 	public ClassTab(String title, ClassRepresentation classRepresentation) {
-		super(EscapeUtil.escape(title), classRepresentation.getNodeRepresentation());
+		super(TextDisplayUtil.escapeShortenPath(title), classRepresentation.getNodeRepresentation());
 		this.classRepresentation = classRepresentation;
 	}
 
@@ -29,5 +34,19 @@ public class ClassTab extends DockTab {
 	 */
 	public ClassRepresentation getClassRepresentation() {
 		return classRepresentation;
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		if (!(classRepresentation instanceof FontSizeChangeable)) return;
+		FontSizeChangeable fsc = (FontSizeChangeable) classRepresentation;
+		fsc.bindFontSize(property);
+	}
+
+	@Override
+	public void  applyEventsForFontSizeChange(Consumer<Node> consumer) {
+		if (!(classRepresentation instanceof FontSizeChangeable)) return;
+		FontSizeChangeable fsc = (FontSizeChangeable) classRepresentation;
+		fsc.applyEventsForFontSizeChange(consumer);
 	}
 }

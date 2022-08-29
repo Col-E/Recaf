@@ -7,10 +7,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.FieldInfo;
-import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.code.Languages;
@@ -18,9 +15,11 @@ import me.coley.recaf.util.*;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,8 +46,11 @@ public class Icons {
 	// Member definitions
 	public static final String FIELD = "icons/member/field.png";
 	public static final String METHOD = "icons/member/method.png";
+	public static final String FIELD_N_METHOD = "icons/member/field_n_method.png";
+	public static final String CLASS_N_FIELD_N_METHOD = "icons/member/class_n_field_n_method.png";
 	public static final String METHOD_ABSTRACT = "icons/member/method_abstract.png";
 	// Access modifiers
+	public static final String ACCESS_ALL_VISIBILITY = "icons/modifier/all_visibility.png";
 	public static final String ACCESS_PUBLIC = "icons/modifier/public.png";
 	public static final String ACCESS_PROTECTED = "icons/modifier/protected.png";
 	public static final String ACCESS_PACKAGE = "icons/modifier/package.png";
@@ -126,6 +128,9 @@ public class Icons {
 	public static final String STOP = "icons/stop.png";
 	public static final String FORWARD = "icons/forward.png";
 	public static final String BACKWARD = "icons/backward.png";
+	public static final String SORT_ALPHABETICAL = "icons/sort-alphabetical.png";
+	public static final String SORT_VISIBILITY = "icons/sort-visibility.png";
+	public static final String UP_FOR_ICON = "icons/up-for-icon.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();
@@ -249,6 +254,27 @@ public class Icons {
 	 * @return Node to represent the file.
 	 */
 	public static Node getPathIcon(String name) {
+		Path path = Paths.get(name);
+		if (Files.isDirectory(path)) {
+			return getIconView(FOLDER);
+		} else if (Files.exists(path)) {
+			try {
+				// 'getFileIcon' only uses headers, so a temporary file-info with just the header will suffice
+				return getFileIcon(new FileInfo(name, IOUtil.readHeader(path)));
+			} catch (IOException ex) {
+				// If we cannot read the file, we'll just go off of the path name
+			}
+		}
+		return getPathNameIcon(name);
+	}
+
+	/**
+	 * @param name
+	 * 		Path/name of file to represent.
+	 *
+	 * @return Node to represent the file.
+	 */
+	public static Node getPathNameIcon(String name) {
 		int dotIndex = name.lastIndexOf('.');
 		if (dotIndex > 0) {
 			String ext = name.substring(dotIndex + 1).toLowerCase();
@@ -264,8 +290,9 @@ public class Icons {
 				case "modules":
 				case "jar":
 				case "war":
-				default:
 					return getIconView(FILE_JAR);
+				default:
+					break;
 			}
 		}
 		// Unknown
@@ -291,13 +318,14 @@ public class Icons {
 			return getIconView(FOLDER);
 		} else if (src instanceof ZipContentSource) {
 			return getIconView(FILE_ZIP);
-		} else if (src instanceof ClassContentSource) {
-			if (resource.getClasses().isEmpty()) {
-				// Fallback, this should not occur since the class content should contain exactly one item
-				return getIconView(FILE_CLASS);
-			} else {
+		} else if (src instanceof SingleFileContentSource) {
+			// Should contain a single class or file.
+			if (!resource.getClasses().isEmpty()) {
 				CommonClassInfo cls = resource.getClasses().values().iterator().next();
 				return getClassIcon(cls);
+			} else {
+				FileInfo file = resource.getFiles().values().iterator().next();
+				return getFileIcon(file);
 			}
 		}
 		// Default to jar
@@ -305,13 +333,14 @@ public class Icons {
 	}
 
 	/**
-	 * @param info
-	 * 		Class to represent.
+	 * @param name
+	 * 		Name of the class to represent.
+	 * @param access
+	 * 		Access flags of the class.
 	 *
 	 * @return Icon provider for a node to represent the file type.
 	 */
-	public static IconProvider getClassIconProvider(CommonClassInfo info) {
-		int access = info.getAccess();
+	public static IconProvider getClassIconProvider(String name, int access) {
 		if (AccessFlag.isAnnotation(access)) {
 			return () -> getIconView(ANNOTATION);
 		} else if (AccessFlag.isInterface(access)) {
@@ -321,8 +350,8 @@ public class Icons {
 		}
 		// Normal class, consider other edge cases
 		boolean isAbstract = AccessFlag.isAbstract(access);
-		String name = info.getName();
-		if (!getGraph().getCommon(name, "java/lang/Throwable").equals("java/lang/Object")) {
+		InheritanceGraph graph = getGraph();
+		if (graph != null && !graph.getCommon(name, "java/lang/Throwable").equals("java/lang/Object")) {
 			if (isAbstract) {
 				return () -> getIconView(CLASS_ABSTRACT_EXCEPTION);
 			} else {
@@ -341,9 +370,39 @@ public class Icons {
 	 * @param info
 	 * 		Class to represent.
 	 *
+	 * @return Icon provider for a node to represent the file type.
+	 */
+	public static IconProvider getClassIconProvider(CommonClassInfo info) {
+		return getClassIconProvider(info.getName(), info.getAccess());
+	}
+
+	/**
+	 * @param info
+	 * 		Inner Class to represent.
+	 *
+	 * @return Icon provider for a node to represent the file type.
+	 */
+	public static IconProvider getClassIconProvider(InnerClassInfo info) {
+		return getClassIconProvider(info.getName(), info.getAccess());
+	}
+
+	/**
+	 * @param info
+	 * 		Class to represent.
+	 *
 	 * @return Node to represent the class.
 	 */
 	public static Node getClassIcon(CommonClassInfo info) {
+		return getClassIconProvider(info).makeIcon();
+	}
+
+	/**
+	 * @param info
+	 * 		Inner Class to represent.
+	 *
+	 * @return Node to represent the inner class.
+	 */
+	public static Node getClassIcon(InnerClassInfo info) {
 		return getClassIconProvider(info).makeIcon();
 	}
 

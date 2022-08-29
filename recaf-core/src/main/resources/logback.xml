@@ -1,4 +1,4 @@
-<configuration debug="true">
+<configuration>
     <!-- This configuration only specifies writing to the console.
          Writing to the file is defined only in the UI module.
      -->

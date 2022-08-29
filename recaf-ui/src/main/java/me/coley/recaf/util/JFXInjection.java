@@ -1,6 +1,7 @@
 package me.coley.recaf.util;
 
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
 import javax.swing.*;
@@ -10,6 +11,7 @@ import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -18,6 +20,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -50,7 +53,13 @@ public class JFXInjection {
 	public static void ensureJavafxSupport() {
 		// Skip if platform class already exists
 		if (ClasspathUtil.classExists(JFXUtils.getPlatformClassName())) {
-			logger.info("JavaFX initialized: " + System.getProperty("javafx.version"));
+			Unchecked.run(() -> {
+				Class<?> versionClass = Class.forName("com.sun.javafx.runtime.VersionInfo");
+				Method setupSystemProperties = versionClass.getDeclaredMethod("setupSystemProperties");
+				setupSystemProperties.setAccessible(true);
+				setupSystemProperties.invoke(null);
+			});
+			logger.info("JavaFX initialized: {}", System.getProperty("javafx.version"));
 			return;
 		}
 		// Ensure dependencies are downloaded
@@ -62,7 +71,7 @@ public class JFXInjection {
 	 * @return List of path elements pointing to the local JavaFX dependencies to add into the classpath.
 	 */
 	private static List<Path> getLocalDependencies() {
-		List<Path> dependencyPaths = new ArrayList<>();
+		List<CompletableFuture<Path>> futures = new ArrayList<>();
 		try {
 			logger.info("Checking local cache for JavaFX dependencies...");
 			Path dependenciesDirectory = Directories.getDependenciesDirectory();
@@ -73,13 +82,16 @@ public class JFXInjection {
 				Path dependencyFilePath = dependenciesDirectory.resolve(getUrlArtifactFileName(dependencyUrlPath));
 				// Prune up-to-date paths from the 'old' list/
 				oldDependencies.remove(dependencyFilePath);
-				// Add the file to the paths list we will use later to inject/
-				dependencyPaths.add(dependencyFilePath);
 				// Write to local directory if they are not already downloaded.
 				if (!IOUtil.isRegularFile(dependencyFilePath)) {
 					logger.info("Downloading JFX artifact: {}", dependencyUrlPath);
 					URL depURL = new URL(dependencyUrlPath);
-					Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
+					futures.add(ThreadUtil.run(Unchecked.supply(() -> {
+						IOUtil.copy(depURL, dependencyFilePath, Integer.MAX_VALUE, Integer.MAX_VALUE);
+						return dependencyFilePath;
+					})));
+				} else {
+					futures.add(CompletableFuture.completedFuture(dependencyFilePath));
 				}
 			}
 			// Remove any old dependencies that do not match the expected version/
@@ -95,7 +107,12 @@ public class JFXInjection {
 			logger.error("Failed to write remote dependency to cache", ex);
 			alertUserFailedInit(ex);
 		}
-		return dependencyPaths;
+		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+				.thenApply(__ ->
+						futures.stream()
+								.map(x -> x.getNow(null))
+								.collect(Collectors.toList())
+				).join();
 	}
 
 	/**
@@ -171,7 +188,7 @@ public class JFXInjection {
 		JOptionPane.showMessageDialog(null,
 				scroll, "Error initializing JavaFX",
 				JOptionPane.ERROR_MESSAGE);
-		System.exit(0);
+		System.exit(1);
 	}
 
 	/**
@@ -195,7 +212,6 @@ public class JFXInjection {
 		return String.format("https://repo1.maven.org/maven2/org/openjfx/javafx-%s/%s/javafx-%s-%s",
 				component, JFX_VERSION, component, JFX_VERSION) + "-%s.jar";
 	}
-
 
 	/**
 	 * @return JavaFX Maven classifier based on the current OS/platform.

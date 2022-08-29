@@ -49,6 +49,13 @@ public abstract class Value {
 	}
 
 	/**
+	 * @return {@code true} if the type is {@link EmptyPoppedValue}.
+	 */
+	public boolean isEmptyStack() {
+		return this instanceof EmptyPoppedValue;
+	}
+
+	/**
 	 * @return Copy of the value.
 	 */
 	public Value copy() {
@@ -290,21 +297,6 @@ public abstract class Value {
 				return "Null";
 			return "\"" + text + "\"";
 		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (super.equals(o)) {
-				if (getClass() != o.getClass()) return super.equals(o);
-				StringValue that = (StringValue) o;
-				return Objects.equals(text, that.text);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(text);
-		}
 	}
 
 	/**
@@ -333,29 +325,6 @@ public abstract class Value {
 		@Override
 		public String toString() {
 			return String.format("%s<%s>", CLASS_TYPE.getInternalName(), argumentType.getInternalName());
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (super.equals(o)) {
-				// So the base type is both class, check if
-				// the other value is also Class<T>
-				if (o instanceof TypeValue) {
-					if (this == o) return true;
-					if (getClass() != o.getClass()) return false;
-					TypeValue that = (TypeValue) o;
-					return Objects.equals(argumentType, that.argumentType);
-				} else {
-					return true;
-				}
-			}
-			return false;
-
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(argumentType);
 		}
 	}
 

@@ -52,7 +52,7 @@ public class RecafResolvedFieldDeclaration implements ResolvedFieldDeclaration {
 			return AccessSpecifier.PROTECTED;
 		else if (AccessFlag.isPrivate(acc))
 			return AccessSpecifier.PRIVATE;
-		return AccessSpecifier.PACKAGE_PRIVATE;
+		return AccessSpecifier.NONE;
 	}
 
 	@Override

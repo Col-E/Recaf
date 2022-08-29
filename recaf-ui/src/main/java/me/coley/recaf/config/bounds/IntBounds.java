@@ -1,4 +1,6 @@
-package me.coley.recaf.config;
+package me.coley.recaf.config.bounds;
+
+import me.coley.recaf.config.ConfigID;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,14 +14,14 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface LongBounds {
+public @interface IntBounds {
 	/**
 	 * @return Lower bound range, inclusive.
 	 */
-	long min();
+	int min();
 
 	/**
 	 * @return Upper bound range, inclusive.
 	 */
-	long max();
+	int max();
 }

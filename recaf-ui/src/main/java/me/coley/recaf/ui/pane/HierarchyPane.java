@@ -22,7 +22,7 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.Translatable;
 import me.coley.recaf.util.threading.FxThreadUtil;
 
@@ -174,7 +174,7 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 					removeEventFilter(MouseEvent.MOUSE_PRESSED, onClickFilter);
 			} else {
 				setGraphic(Icons.getClassIcon(item));
-				setText(StringUtil.shortenPath(item.getName()));
+				setText(TextDisplayUtil.escapeShortenPath(item.getName()));
 				// Menu based on info subtype
 				if (item instanceof ClassInfo) {
 					setContextMenu(ContextBuilder.forClass((ClassInfo) item).build());

@@ -30,7 +30,7 @@ public class UrlContentSource extends ContentSource {
 	public UrlContentSource(URL url) {
 		super(SourceType.URL);
 		this.url = url;
-		backingType = parseType(url);
+		backingType = SourceType.fromUrl(url);
 	}
 
 	@Override
@@ -53,42 +53,12 @@ public class UrlContentSource extends ContentSource {
 		}
 		// Load from local file
 		logger.info("Parsing temporary file with backing content source type: {}", backingType.name());
-		switch (backingType) {
-			case CLASS:
-				new ClassContentSource(path).onRead(collection);
-				break;
-			case JAR:
-				new JarContentSource(path).onRead(collection);
-				break;
-			case WAR:
-				new WarContentSource(path).onRead(collection);
-				break;
-			case ZIP:
-				new ZipContentSource(path).onRead(collection);
-				break;
-			default:
-				throw new IllegalStateException("Unsupported backing type for URL content source");
-		}
+		backingType.sourceFromPath(path).onRead(collection);
 		// Delete if it was a temporary file
 		if (!isLocal) {
 			logger.info("Done parsing, removing temp file: {}", path);
 			IOUtil.deleteQuietly(path);
 		}
-	}
-
-	private static SourceType parseType(URL url) {
-		String urlText = url.getFile();
-		if (urlText.endsWith(".jar")) {
-			return SourceType.JAR;
-		} else if (urlText.endsWith(".zip")) {
-			return SourceType.ZIP;
-		} else if (urlText.endsWith(".war")) {
-			return SourceType.WAR;
-		} else if (urlText.endsWith(".class")) {
-			return SourceType.CLASS;
-		}
-		// Default case
-		return SourceType.JAR;
 	}
 
 	/**

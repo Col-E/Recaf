@@ -4,6 +4,7 @@ import difflib.Chunk;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
+import javafx.beans.property.IntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -21,6 +22,7 @@ import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.DiffViewMode;
+import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.behavior.ScrollSnapshot;
 import me.coley.recaf.ui.control.BoundLabel;
@@ -38,8 +40,8 @@ import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ByteHeaderUtil;
-import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
@@ -55,12 +57,10 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * A simple diff viewer to show a comparison of the changes made to classes/files.
@@ -68,7 +68,7 @@ import java.util.concurrent.TimeUnit;
  * @author Matt Coley
  */
 public class DiffViewPane extends BorderPane implements ControllerListener,
-		ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
+		ResourceClassListener, ResourceDexClassListener, ResourceFileListener, FontSizeChangeable {
 	private static final Logger logger = Logging.get(DiffViewPane.class);
 	private static final long TIMEOUT_MS = 10_000;
 	private final ObservableList<ItemInfo> items = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
@@ -100,8 +100,17 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 				} else {
 					CellFactory.update(CellOriginType.SEARCH_RESULTS, this, workspace.getResources().getPrimary(), item);
 					// Override with full name
-					setText(EscapeUtil.escape(item.getName()));
-					setOnMousePressed(e -> content.setCenter(createDiffDisplay(item)));
+					setText(TextDisplayUtil.escapeShortenPath(item.getName()));
+					setOnMousePressed(e -> {
+						SplitPane pane = (SplitPane) createDiffDisplay(item);
+						pane.getItems().forEach(paneItem -> {
+							if (paneItem instanceof FontSizeChangeable) {
+								((FontSizeChangeable) paneItem).bindFontSize(Configs.display().fontSize);
+								((FontSizeChangeable) paneItem).applyEventsForFontSizeChange(FontSizeChangeable.DEFAULT_APPLIER);
+							}
+						});
+						content.setCenter(pane);
+					});
 				}
 			}
 		});
@@ -291,6 +300,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	@Override
 	public void onNewClass(Resource resource, ClassInfo newValue) {
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
@@ -302,11 +312,13 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
 		items.remove(oldValue);
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
 	public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
@@ -318,11 +330,13 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	public void onUpdateDexClass(Resource resource, String dexName, DexClassInfo oldValue, DexClassInfo newValue) {
 		items.remove(oldValue);
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
 	public void onNewFile(Resource resource, FileInfo newValue) {
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
 	}
 
 	@Override
@@ -334,6 +348,17 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
 		items.remove(oldValue);
 		items.add(newValue);
+		items.sort(Comparator.comparing(ItemInfo::getName));
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		// will be done upon opening the view
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
+		// will be done upon opening the view
 	}
 
 	/**

@@ -1,10 +1,7 @@
 package me.coley.recaf.ui;
 
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.ui.pane.ConfigPane;
-import me.coley.recaf.ui.pane.DiffViewPane;
-import me.coley.recaf.ui.pane.PluginManagerPane;
-import me.coley.recaf.ui.pane.ScriptManagerPane;
+import me.coley.recaf.ui.pane.*;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.ui.window.MainWindow;
 
@@ -19,6 +16,7 @@ public class Windows {
 	private GenericWindow scriptManagerWindow;
 	private GenericWindow pluginManagerWindow;
 	private GenericWindow modificationsWindow;
+	private GenericWindow mappingViewWindow;
 
 	/**
 	 * Initialize the windows.
@@ -29,6 +27,7 @@ public class Windows {
 		scriptManagerWindow = new GenericWindow(ScriptManagerPane.getInstance());
 		pluginManagerWindow = new GenericWindow(PluginManagerPane.getInstance());
 		modificationsWindow = new GenericWindow(new DiffViewPane(RecafUI.getController()));
+		mappingViewWindow = new GenericWindow(AggregateMappingPane.get());
 	}
 
 	/**
@@ -64,5 +63,12 @@ public class Windows {
 	 */
 	public GenericWindow getModificationsWindow() {
 		return modificationsWindow;
+	}
+
+	/**
+	 * @return Aggregate mapping viewer window.
+	 */
+	public GenericWindow getMappingViewWindow() {
+		return mappingViewWindow;
 	}
 }

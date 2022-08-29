@@ -87,10 +87,12 @@ public class TinyV1Mappings extends MappingsAdapter {
 				sb.append("CLASS\t").append(oldClassName).append('\t').append(newClassName).append("\n");
 			}
 			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
+				String oldFieldDesc = fieldMapping.getDesc();
 				String oldFieldName = fieldMapping.getOldName();
 				String newFieldName = fieldMapping.getNewName();
 				// FIELD BaseClass baseField targetField
 				sb.append("FIELD\t").append(oldClassName).append('\t').append(oldFieldName)
+						.append('\t').append(oldFieldDesc)
 						.append('\t').append(newFieldName).append("\n");
 			}
 			for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {

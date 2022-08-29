@@ -6,7 +6,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import me.coley.recaf.ui.control.menu.ActionMenu;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
-import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 
 /**
  * Menu utilities.
@@ -23,7 +23,7 @@ public class Menus {
 	 * @return Header menu item.
 	 */
 	public static MenuItem createHeader(String name, Node graphic) {
-		MenuItem header = new MenuItem(EscapeUtil.escape(name));
+		MenuItem header = new MenuItem(TextDisplayUtil.escapeShortenPath(name));
 		header.getStyleClass().add("context-menu-header");
 		header.setGraphic(graphic);
 		header.setDisable(true);

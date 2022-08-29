@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.pane;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
@@ -11,6 +12,7 @@ import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.behavior.FontSizeChangeable;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.SearchBar;
@@ -44,13 +46,14 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * An editor for Android Dalvik bytecode.
  *
  * @author Matt Coley
  */
-public class SmaliAssemblerPane extends BorderPane implements ClassRepresentation {
+public class SmaliAssemblerPane extends BorderPane implements ClassRepresentation, FontSizeChangeable {
 	private static final Logger logger = Logging.get(SmaliAssemblerPane.class);
 	private final SyntaxArea smaliArea;
 	private DexClassInfo dexClass;
@@ -75,6 +78,16 @@ public class SmaliAssemblerPane extends BorderPane implements ClassRepresentatio
 		setCenter(stack);
 		// Search support
 		SearchBar.install(this, smaliArea);
+	}
+
+	@Override
+	public void applyEventsForFontSizeChange(Consumer<Node> consumer) {
+		smaliArea.applyEventsForFontSizeChange(consumer);
+	}
+
+	@Override
+	public void bindFontSize(IntegerProperty property) {
+		smaliArea.bindFontSize(property);
 	}
 
 	@Override

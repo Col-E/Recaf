@@ -20,7 +20,6 @@ import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
-import me.coley.recaf.ui.pane.ClassHierarchyPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.pane.graph.MethodGraphPane;
@@ -28,8 +27,7 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.EscapeUtil;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.visitor.MemberCopyingVisitor;
 import me.coley.recaf.util.visitor.MemberRemovingVisitor;
 import me.coley.recaf.workspace.resource.Resource;
@@ -171,8 +169,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 
 	@Override
 	public void delete() {
-		String ownerName = EscapeUtil.escape(ownerInfo.getName());
-		String methodName = EscapeUtil.escape(methodInfo.getName());
+		String ownerName = TextDisplayUtil.escapeShortenPath(ownerInfo.getName());
+		String methodName = TextDisplayUtil.escapeShortenPath(methodInfo.getName());
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {

@@ -49,6 +49,7 @@ public class InfoPane extends GridPane {
 				Lang.getBinding("help.system.sub")));
 		addRow(r++, new Label("Name"), new Label(System.getProperty("os.name")));
 		addRow(r++, new Label("Architecture"), new Label(System.getProperty("os.arch")));
+		addRow(r++, new Label("Processors"), new Label(String.valueOf(Runtime.getRuntime().availableProcessors())));
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);
 		// Java
@@ -74,6 +75,7 @@ public class InfoPane extends GridPane {
 		// Recaf
 		addRow(r++, new SubLabeled(Lang.getBinding("help.recaf"), Lang.getBinding("help.recaf.sub")));
 		addRow(r++, new Label("Version"), new Label(BuildConfig.VERSION));
+		addRow(r++, new Label("Build"), new Label(BuildConfig.GIT_SHA.substring(0, 7) + " " + BuildConfig.GIT_DATE));
 		addRow(r++, new Label("Settings directory"), new Label(baseDir.toAbsolutePath().toString()));
 		add(new Separator(), 0, (SEP_SIZE - 1) + r, 2, SEP_SIZE);
 		r += (SEP_SIZE + 1);

@@ -299,6 +299,119 @@ public class AnalysisTests extends JasmUtils {
 		}
 
 		@Test
+		public void testBackwardsTypeMergeSimple() {
+			// This isn't a complete method, but the analyzer is meant to work even in incomplete situations.
+			String code = "method static merge ()Ljava/lang/Object;\n" +
+					"start:\n" +
+					"  aconst_null\n" +
+					"assign:\n" +
+					"  dup\n" +
+					"  astore collection\n" +
+					"  ifnonnull yield\n" +
+					"  new java/util/Collection\n" +
+					"  goto assign\n" +
+					"yield:\n" +
+					"  aload collection\n" +
+					"  areturn\n" + "\nend";
+			handle(code, unit -> {
+				Analyzer analyzer = new Analyzer("Test", unit);
+				analyzer.setInheritanceChecker(ReflectiveInheritanceChecker.getInstance());
+				try {
+					Analysis results = analyzer.analyze();
+					// Assert variable is collection
+					Frame first = results.getFrames().get(5);
+					Frame last = results.getFrames().get(results.getFrames().size() - 1);
+					Value valueFirst = first.getLocal("collection");
+					Value valueLast = last.getLocal("collection");
+					// Check first frame where value is assigned
+					if (valueFirst instanceof Value.ObjectValue) {
+						Value.ObjectValue objectValue = (Value.ObjectValue) valueFirst;
+						assertEquals("java/util/Collection", objectValue.getType().getInternalName());
+					} else {
+						fail("var 'collection' at assign is not an object!  Is: " + valueLast);
+					}
+					// Check last frame where value is used
+					if (valueLast instanceof Value.ObjectValue) {
+						Value.ObjectValue objectValue = (Value.ObjectValue) valueLast;
+						assertEquals("java/util/Collection", objectValue.getType().getInternalName());
+					} else {
+						fail("var 'collection' at end is not an object!  Is: " + valueLast);
+					}
+					// Assert stack is also collection at 'areturn'
+					Frame mergeLabel = results.getFrames().get(results.getFrames().size() - 2);
+					Value mergeLabelStack = mergeLabel.peek();
+					if (mergeLabelStack instanceof Value.ObjectValue) {
+						Value.ObjectValue objectValue = (Value.ObjectValue) mergeLabelStack;
+						assertEquals("java/util/Collection", objectValue.getType().getInternalName());
+					} else {
+						fail("var 'collection' not an object!");
+					}
+				} catch (AstException ex) {
+					fail(ex);
+				}
+			});
+		}
+
+		@Test
+		public void testBackwardsTypeMerge() {
+			// This isn't a complete method, but the analyzer is meant to work even in incomplete situations.
+			String code = "method static merge (I kind)Ljava/lang/Object;\n" +
+					"start:\n" +
+					"  aconst_null\n" +
+					"assign:\n" +
+					"  dup\n" +
+					"  astore collection\n" +
+					"  ifnonnull yield\n" +
+					"  iload kind\n" +
+					"switch:\n" +
+					"  tableswitch 0 2 a b c default d\n" +
+					"a: new java/util/List \n goto assign\n" +
+					"b: new java/util/Set \n goto assign\n" +
+					"c: new java/util/HashSet \n goto assign\n" +
+					"d: new java/util/ArrayList \n  goto assign\n" +
+					"yield:\n" +
+					"  aload collection\n" +
+					"  areturn\n" + "\nend";
+			handle(code, unit -> {
+				Analyzer analyzer = new Analyzer("Test", unit);
+				analyzer.setInheritanceChecker(ReflectiveInheritanceChecker.getInstance());
+				try {
+					Analysis results = analyzer.analyze();
+					// Assert variable is collection
+					Frame first = results.getFrames().get(5);
+					Frame last = results.getFrames().get(results.getFrames().size() - 1);
+					Value valueFirst = first.getLocal("collection");
+					Value valueLast = last.getLocal("collection");
+					// Check first frame where value is assigned
+					if (valueFirst instanceof Value.ObjectValue) {
+						Value.ObjectValue objectValue = (Value.ObjectValue) valueFirst;
+						assertEquals("java/util/Collection", objectValue.getType().getInternalName());
+					} else {
+						fail("var 'collection' at assign is not an object!  Is: " + valueLast);
+					}
+					// Check last frame where value is used
+					if (valueLast instanceof Value.ObjectValue) {
+						Value.ObjectValue objectValue = (Value.ObjectValue) valueLast;
+						assertEquals("java/util/Collection", objectValue.getType().getInternalName());
+					} else {
+						fail("var 'collection' at end is not an object!  Is: " + valueLast);
+					}
+					// Assert stack is also collection
+					Frame mergeLabel = results.getFrames().get(results.getFrames().size() - 2);
+					Value mergeLabelStack = mergeLabel.peek();
+					if (mergeLabelStack instanceof Value.ObjectValue) {
+						Value.ObjectValue objectValue = (Value.ObjectValue) mergeLabelStack;
+						assertEquals("java/util/Collection", objectValue.getType().getInternalName());
+					} else {
+						fail("var 'collection' not an object!");
+					}
+				} catch (AstException ex) {
+					fail(ex);
+				}
+			});
+		}
+
+		@Test
 		public void testNoInfiniteLoop() {
 			// If our branch follow conditions are too loose this will infinite loop
 			String code = "method static merge (I kind)V\n" +
@@ -311,6 +424,30 @@ public class AnalysisTests extends JasmUtils {
 					"d: \n goto merge\n" +
 					"merge:\n" +
 					"  nop\n" + "\nend";
+			handle(code, unit -> {
+				Analyzer analyzer = new Analyzer("Test", unit);
+				analyzer.setInheritanceChecker(ReflectiveInheritanceChecker.getInstance());
+				try {
+					// Will not finish if we loop to death
+					assertNotNull(analyzer.analyze());
+				} catch (AstException ex) {
+					fail(ex);
+				}
+			});
+		}
+
+		@Test
+		public void testNoInfiniteLoopIinc() {
+			// If our frame merge conditions are too loose this will infinite loop since we always eval "i++"
+			String code = "method static merge (I kind)V\n" +
+					"start:\n" +
+					"  iconst_0\n" +
+					"  istore i\n" +
+					"loop:\n" +
+					"  iinc i 1\n" +
+					"  goto loop\n" +
+					"exit:\n" +
+					"  return\n" + "\nend";
 			handle(code, unit -> {
 				Analyzer analyzer = new Analyzer("Test", unit);
 				analyzer.setInheritanceChecker(ReflectiveInheritanceChecker.getInstance());

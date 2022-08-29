@@ -1,5 +1,7 @@
 package me.coley.recaf.compile;
 
+import java.util.Objects;
+
 /**
  * Simple compiler feedback wrapper.
  *
@@ -32,5 +34,23 @@ public class CompilerDiagnostic {
 	 */
 	public String getMessage() {
 		return message;
+	}
+
+	@Override
+	public String toString() {
+		return line + ":" + message;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		CompilerDiagnostic that = (CompilerDiagnostic) o;
+		return line == that.line && Objects.equals(message, that.message);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(line, message);
 	}
 }

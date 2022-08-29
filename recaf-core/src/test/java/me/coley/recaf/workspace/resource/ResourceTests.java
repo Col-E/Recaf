@@ -71,7 +71,7 @@ public class ResourceTests extends TestUtils {
 				ResourceIO.fromPath(sourcesDir.resolve("Sample.zip"), false).getContentSource().getClass());
 		assertEquals(WarContentSource.class,
 				ResourceIO.fromPath(sourcesDir.resolve("Sample.war"), false).getContentSource().getClass());
-		assertEquals(ClassContentSource.class,
+		assertEquals(SingleFileContentSource.class,
 				ResourceIO.fromPath(sourcesDir.resolve("Sample.class"), false).getContentSource().getClass());
 		assertEquals(ApkContentSource.class,
 				ResourceIO.fromPath(sourcesDir.resolve("Sample.apk"), false).getContentSource().getClass());

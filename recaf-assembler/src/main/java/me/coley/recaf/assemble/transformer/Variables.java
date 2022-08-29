@@ -190,7 +190,7 @@ public class Variables implements Iterable<VariableInfo> {
 					// supplied by the analysis process.
 					if (!analysisInformedVariables.contains(info)) {
 						analysisInformedVariables.add(info);
-						info.getUsages().clear();
+						info.clearUsages();
 					}
 				}
 				int index = (info == null) ? nextAvailableSlot : info.getIndex();
@@ -222,11 +222,21 @@ public class Variables implements Iterable<VariableInfo> {
 		info.addSource(source);
 		info.setName(identifier);
 		if (info.getUsages().isEmpty() || Types.isPrimitive(type) || isAssignment(source)) {
+			boolean isSpecificObjectTypeKnown = false;
+			if (source instanceof VariableReference) {
+				isSpecificObjectTypeKnown = ((VariableReference) source).isObjectDescriptorExplicitlyDeclared();
+			}
 			// Only track 'type' of usage when:
 			//  - We have nothing else to go off of
 			//  - We know the exact type since the type is primitive
 			//  - An assignment occurs, where we may not know the type, but we have to record 'something'
-			info.addType(type);
+			//  - Object is the type, but only in explicit cases where we know it is the intended type.
+			if (Types.OBJECT_TYPE.equals(type)) {
+				if (isSpecificObjectTypeKnown)
+					info.addType(type);
+			} else {
+				info.addType(type);
+			}
 		}
 		nameLookup.put(identifier, info);
 		if (type.getSize() > 1) {

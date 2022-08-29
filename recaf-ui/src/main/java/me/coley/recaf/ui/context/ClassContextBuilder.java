@@ -23,8 +23,7 @@ import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
-import me.coley.recaf.util.EscapeUtil;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
@@ -74,7 +73,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		if (icon == null) {
 			icon = Icons.getClassIcon(info);
 		}
-		menu.getItems().add(createHeader(StringUtil.shortenPath(name), icon));
+		menu.getItems().add(createHeader(TextDisplayUtil.escapeShortenPath(name), icon));
 		if (!declaration)
 			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {
@@ -163,7 +162,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 
 	@Override
 	public void delete() {
-		String name = EscapeUtil.escape(info.getName());
+		String name = TextDisplayUtil.escapeShortenPath(info.getName());
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
@@ -250,7 +249,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 	}
 
 	private void openHierarchy() {
-		String title = "Hierarchy: " + StringUtil.shortenPath(info.getName());
+		String title = "Hierarchy: " + TextDisplayUtil.escapeShortenPath(info.getName());
 		DockTab tab = RecafDockingManager.getInstance()
 				.createTab(() -> new ClassTab(title, new ClassHierarchyPane(info)));
 		tab.select();
