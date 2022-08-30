@@ -1,5 +1,7 @@
 package me.coley.recaf.code;
 
+import me.coley.recaf.util.StringUtil;
+
 import java.util.Locale;
 
 /**
@@ -15,6 +17,7 @@ public class FileInfo implements ItemInfo, LiteralInfo {
 	private final String name;
 	private final String extension;
 	private final byte[] value;
+	private Boolean isText;
 
 	/**
 	 * @param name
@@ -49,5 +52,16 @@ public class FileInfo implements ItemInfo, LiteralInfo {
 	 */
 	public String getExtension() {
 		return extension;
+	}
+
+	/**
+	 * @return {@code true} if file is a text file.
+	 */
+	public boolean isText() {
+		Boolean isText = this.isText;
+		if (isText == null) {
+			return this.isText = StringUtil.isText(value);
+		}
+		return isText;
 	}
 }

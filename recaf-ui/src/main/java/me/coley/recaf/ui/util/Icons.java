@@ -488,7 +488,7 @@ public class Icons {
 		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.AUDIO_HEADERS)) {
 			provider = createProvider(Icons.FILE_AUDIO);
 		} else {
-			if (StringUtil.isText(data)) {
+			if (file.isText()) {
 				String ext = file.getExtension().toLowerCase();
 				if (Languages.get(ext) != Languages.NONE) {
 					provider = createProvider(Icons.FILE_CODE);

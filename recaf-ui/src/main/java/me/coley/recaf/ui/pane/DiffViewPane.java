@@ -40,7 +40,6 @@ import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.util.CellFactory;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.ByteHeaderUtil;
-import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
@@ -180,7 +179,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 				initialImage.setImage(initialRaw);
 				currentImage.setImage(currentRaw);
 				split.getItems().addAll(initialImage, currentImage);
-			} else if (StringUtil.isText(currentRaw)) {
+			} else if (current.isText()) {
 				Language language = Languages.get(current.getExtension());
 				DiffableTextView initialText = new DiffableTextView(language);
 				DiffableTextView currentText = new DiffableTextView(language);
