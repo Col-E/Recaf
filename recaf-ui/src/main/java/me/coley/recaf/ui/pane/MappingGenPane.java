@@ -2,14 +2,16 @@ package me.coley.recaf.ui.pane;
 
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.util.StringConverter;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
@@ -46,6 +48,8 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class MappingGenPane extends VBox {
+	private static final DoubleProperty BTN_SIZE = new SimpleDoubleProperty(120);
+	private static final DoubleProperty BTN_FILL = new SimpleDoubleProperty(Double.MAX_VALUE);
 	private static final Logger logger = Logging.get(MappingGenPane.class);
 	private final ListView<FilterIntermediate> filterList = new ListView<>();
 	private final ComboBox<UxNameGenerator> generatorComboBox = new ComboBox<>();
@@ -77,6 +81,7 @@ public class MappingGenPane extends VBox {
 				throw new UnsupportedOperationException();
 			}
 		});
+		generatorComboBox.setMaxWidth(Double.MAX_VALUE);
 		generatorComboBox.getItems().addAll(createGenerators());
 		generatorComboBox.getSelectionModel().select(0);
 		generatorComboBox.setConverter(new StringConverter<>() {
@@ -94,10 +99,15 @@ public class MappingGenPane extends VBox {
 		filterList.setPrefHeight(300);
 		// Add combo to change name generator model
 		Label labelGeneratorTitle = new BoundLabel(Lang.getBinding("mapgen.genimpl"));
-		HBox boxGeneratorWrapper = new HBox(labelGeneratorTitle, generatorComboBox);
+		labelGeneratorTitle.setAlignment(Pos.CENTER);
+		labelGeneratorTitle.setPadding(new Insets(5, 10, 5, 0));
+		BorderPane boxGeneratorWrapper = new BorderPane();
+		boxGeneratorWrapper.setLeft(labelGeneratorTitle);
+		boxGeneratorWrapper.setCenter(generatorComboBox);
 		getChildren().add(boxGeneratorWrapper);
 		// Add filter list
 		Label labelFiltersTitle = new BoundLabel(Lang.getBinding("mapgen.filters"));
+		labelFiltersTitle.getStyleClass().add("h2");
 		getChildren().addAll(labelFiltersTitle, filterList);
 		// Add controls to add/remove filters
 		Button btnAddFilter = new ActionButton(Lang.getBinding("mapgen.filters.add"), () -> {
@@ -114,9 +124,14 @@ public class MappingGenPane extends VBox {
 				.addListener((observable, oldValue, newValue) -> hasFilterSelection.set(newValue != null));
 		btnRemoveRemove.disableProperty().bind(hasFilterSelection.not());
 		HBox boxFilterControls = new HBox(btnRemoveRemove, btnAddFilter, newFilterModeComboBox);
+		btnRemoveRemove.prefWidthProperty().bind(BTN_SIZE);
+		btnAddFilter.prefWidthProperty().bind(BTN_SIZE.multiply(0.777));
+		newFilterModeComboBox.maxWidthProperty().bind(BTN_FILL);
+		boxFilterControls.maxWidthProperty().bind(BTN_FILL);
+		HBox.setHgrow(newFilterModeComboBox, Priority.ALWAYS);
 		getChildren().add(boxFilterControls);
 		// Add button to apply the mappings
-		Button copy = new ActionButton(Lang.getBinding("mapgen.copy"), () -> {
+		Button btnCopy = new ActionButton(Lang.getBinding("mapgen.copy"), () -> {
 			IntermediateMappings intermediate = createMappings(controller).exportIntermediate();
 			MappingsTool outputImpl = outputTypeComboBox.getSelectionModel().getSelectedItem();
 			Mappings mappings = outputImpl.create();
@@ -127,14 +142,19 @@ public class MappingGenPane extends VBox {
 			Clipboard.getSystemClipboard().setContent(clipboard);
 			logger.info("Copied generated mappings to clipboard");
 		});
-		Button apply = new ActionButton(Lang.getBinding("mapgen.apply"), () -> {
+		Button btnApply = new ActionButton(Lang.getBinding("mapgen.apply"), () -> {
 			Mappings mappings = createMappings(controller);
 			// Apply
 			Resource primary = controller.getWorkspace().getResources().getPrimary();
 			MappingUtils.applyMappings(ClassReader.EXPAND_FRAMES, 0, controller, primary, mappings);
 			logger.info("Applied generated mappings");
 		});
-		HBox boxGenerateWrapper = new HBox(apply, copy, outputTypeComboBox);
+		HBox boxGenerateWrapper = new HBox(btnCopy, btnApply, outputTypeComboBox);
+		btnCopy.prefWidthProperty().bind(BTN_SIZE);
+		btnApply.prefWidthProperty().bind(BTN_SIZE.multiply(0.777));
+		outputTypeComboBox.maxWidthProperty().bind(BTN_FILL);
+		boxGenerateWrapper.maxWidthProperty().bind(BTN_FILL);
+		HBox.setHgrow(outputTypeComboBox, Priority.ALWAYS);
 		getChildren().add(boxGenerateWrapper);
 		setPadding(new Insets(10));
 		setFillWidth(true);
