@@ -166,12 +166,14 @@ public class MappingGenPane extends VBox {
 	 */
 	private enum NewFilterMode implements Translatable {
 		EXCLUDE_ALREADY_MAPPED,
+		// Access flags
 		MODIFIER_EXCLUDE_CLASS,
 		MODIFIER_EXCLUDE_FIELD,
 		MODIFIER_EXCLUDE_METHOD,
 		MODIFIER_INCLUDE_CLASS,
 		MODIFIER_INCLUDE_FIELD,
 		MODIFIER_INCLUDE_METHOD,
+		// Path names
 		PATH_INCLUDE,
 		PATH_EXCLUDE;
 
@@ -334,6 +336,9 @@ public class MappingGenPane extends VBox {
 		void reset();
 	}
 
+	/**
+	 * Exclude classes/fields/methods that match or do not match some given access flags.
+	 */
 	private static class ModifierIntermediate extends FilterIntermediate {
 		private final List<AccessFlag> flags;
 		private final boolean include;
@@ -396,7 +401,7 @@ public class MappingGenPane extends VBox {
 	}
 
 	/**
-	 * Excludes classes already mapped in the {@link AggregatedMappings} for the current workspace.
+	 * Excludes classes/fields/methods already mapped in the {@link AggregatedMappings} for the current workspace.
 	 */
 	private static class ExcludeExistingIntermediate extends FilterIntermediate {
 		protected ExcludeExistingIntermediate(List<FilterIntermediate> items) {

@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.control.code;
 
+import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
-import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Coley
  */
 public class ProblemTracking {
-	private static final Logger logger = Logging.get(ProblemTracking.class);
+	private static final DebuggingLogger logger = Logging.get(ProblemTracking.class);
 	private final Map<Integer, ProblemInfo> problemLineMap = new ConcurrentHashMap<>();
 	private final List<ProblemUpdateListener> listeners = new ArrayList<>();
 	private ProblemIndicatorInitializer indicatorInitializer;
@@ -47,7 +47,7 @@ public class ProblemTracking {
 	 * 		Last line of inserted text <i>(Inclusive)</i>, used to calculate number of lines to offset items.
 	 */
 	public void linesInserted(int startLine, int endLine) {
-		logger.trace("Lines inserted: {}-{}", startLine, endLine);
+		logger.debugging(l -> l.trace("Lines inserted: {}-{}", startLine, endLine));
 		TreeSet<Map.Entry<Integer, ProblemInfo>> set =
 				new TreeSet<>((o1, o2) -> Integer.compare(o2.getKey(), o1.getKey()));
 		set.addAll(problemLineMap.entrySet());
@@ -59,7 +59,8 @@ public class ProblemTracking {
 					int key = e.getKey();
 					removeProblem(key);
 					addProblem(key + shift, e.getValue());
-					logger.trace("Move problem '{}' down {} lines", e.getValue().getMessage(), shift);
+					logger.debugging(l -> l.trace("Move problem '{}' down {} lines",
+							e.getValue().getMessage(), shift));
 				});
 	}
 
@@ -73,7 +74,7 @@ public class ProblemTracking {
 	 * 		Last line of removed text <i>(Inclusive)</i>, used to calculate number of lines to offset items.
 	 */
 	public void linesRemoved(int startLine, int endLine) {
-		logger.trace("Lines removed: {}-{}", startLine, endLine);
+		logger.debugging(l -> l.trace("Lines removed: {}-{}", startLine, endLine));
 		// We will want to sort the order of removed lines so we
 		TreeSet<Map.Entry<Integer, ProblemInfo>> set = new TreeSet<>(Comparator.comparingInt(Map.Entry::getKey));
 		set.addAll(problemLineMap.entrySet());
@@ -86,10 +87,12 @@ public class ProblemTracking {
 					removeProblem(key);
 					// Don't add problem back if its in the removed range
 					if (key > startLine + shift) {
-						logger.trace("Move problem '{}' up {} lines", e.getValue().getMessage(), shift);
+						logger.debugging(l -> l.trace("Move problem '{}' up {} lines",
+								e.getValue().getMessage(), shift));
 						addProblem(key - shift, e.getValue());
 					} else {
-						logger.trace("Remove problem '{}' in deleted range", e.getValue().getMessage());
+						logger.debugging(l -> l.trace("Remove problem '{}' in deleted range",
+								e.getValue().getMessage()));
 					}
 				});
 	}

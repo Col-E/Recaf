@@ -31,6 +31,7 @@ import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.StackTraceUtil;
+import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.DelayedExecutor;
 import me.coley.recaf.util.threading.DelayedRunnable;
@@ -71,7 +72,7 @@ import static me.darknet.assembler.parser.Group.GroupType;
  */
 public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineCompletionListener,
 		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener {
-	private static final Logger logger = Logging.get(AssemblerArea.class);
+	private static final DebuggingLogger logger = Logging.get(AssemblerArea.class);
 	private static final int INITIAL_DELAY_MS = 500;
 	private static final int AST_LOOP_MS = 100;
 	private static final int PIPELINE_UPDATE_DELAY_MS = 300;
@@ -141,11 +142,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		astParseThread = ThreadUtil.scheduleAtFixedRate(() -> {
 			try {
 				if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
-					logger.trace("AST updated and validated");
+					logger.debugging(l -> l.trace("AST updated and validated"));
 					if (pipeline.isMethod() &&
 							pipeline.isOutputOutdated() &&
 							pipeline.generateMethod())
-						logger.trace("AST compiled to method and analysis executed");
+						logger.debugging(l -> l.trace("AST compiled to method and analysis executed"));
 				}
 			} catch (Throwable t) {
 				// Shouldn't occur, but make sure its known if it does
@@ -204,9 +205,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			pipeline.generateField();
 		SaveResult initialBuild = targetMember.isMethod() ? generateMethod(false) : generateField(false);
 		if (initialBuild == SaveResult.SUCCESS)
-			logger.trace("Initial build of disassemble successful!");
+			logger.debugging(l -> l.trace("Initial build of disassemble successful!"));
 		else
-			logger.trace("Initial build of disassemble failed!");
+			logger.warn("Initial build of disassemble failed!");
 	}
 
 	private void onMenuRequested(ContextMenuEvent e) {
