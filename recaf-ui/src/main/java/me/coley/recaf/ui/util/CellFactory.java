@@ -9,8 +9,6 @@ import me.coley.recaf.ui.control.tree.CellOriginType;
 import me.coley.recaf.ui.control.tree.item.*;
 import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.util.threading.FxThreadUtil;
-import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.Resources;
 import org.slf4j.Logger;
@@ -21,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 import static me.coley.recaf.ui.util.Icons.*;
-import static org.reactfx.util.Tuples.t;
 
 /**
  * Utility to populate cell properties based on their content.
@@ -89,51 +86,41 @@ public class CellFactory {
 			ClassInfo classInfo = (ClassInfo) info;
 			String className = info.getName();
 			cell.setText(TextDisplayUtil.escapeShortenPath(className));
-			ThreadUtil.run(() -> getClassIconProvider(classInfo))
-					.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
-					.thenApply(icons -> t(icons.get1(), ContextBuilder.forClass(classInfo)
-							.setIcon(icons.get2())
-							.withResource(resource)
-							.setWhere(from(type))
-							.build()))
-					.thenAcceptAsync(result -> {
-						cell.setGraphic(result.get1());
-						cell.setContextMenu(result.get2());
-						LISTENERS.forEach(it -> it.forClass(type, cell, resource, classInfo));
-					}, FxThreadUtil.executor());
+			IconProvider iconProvider = Icons.getClassIconProvider(classInfo);
+			cell.setContextMenu(ContextBuilder.forClass(classInfo)
+				.setIcon(iconProvider.makeIcon())
+				.withResource(resource)
+				.setWhere(from(type))
+				.build());
+			cell.setGraphic(iconProvider.makeIcon());
+			LISTENERS.forEach(it -> it.forClass(type, cell, resource, classInfo));
 		});
 		INFO_MAP.put(DexClassInfo.class, (type, cell, resource, info) -> {
 			DexClassInfo classInfo = (DexClassInfo) info;
 			String className = info.getName();
 			cell.setText(TextDisplayUtil.escapeShortenPath(className));
-			ThreadUtil.run(() -> getClassIconProvider(classInfo))
-					.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
-					.thenAcceptAsync(icons -> {
-						cell.setGraphic(icons.get1());
-						cell.setContextMenu(ContextBuilder.forDexClass(classInfo)
-								.setIcon(icons.get2())
-								.withResource(resource)
-								.setWhere(from(type))
-								.build());
-						LISTENERS.forEach(it -> it.forDexClass(type, cell, resource, classInfo));
-					}, FxThreadUtil.executor());
+			IconProvider iconProvider = Icons.getClassIconProvider(classInfo);
+			cell.setContextMenu(ContextBuilder.forDexClass(classInfo)
+				.setIcon(iconProvider.makeIcon())
+				.withResource(resource)
+				.setWhere(from(type))
+				.build());
+			cell.setGraphic(iconProvider.makeIcon());
+			LISTENERS.forEach(it -> it.forDexClass(type, cell, resource, classInfo));
 		});
 		INFO_MAP.put(FileInfo.class, (type, cell, resource, info) -> {
 			FileInfo fileInfo = (FileInfo) info;
 			String fileName = info.getName();
 			cell.setText(TextDisplayUtil.escapeShortenPath(fileName));
-			ThreadUtil.run(() -> getFileIconProvider(fileInfo))
-					.thenApply(provider -> t(provider.makeIcon(), provider.makeIcon()))
-					.thenApply(icons -> t(icons.get1(), ContextBuilder.forFile(fileInfo)
-							.setIcon(icons.get2())
-							.withResource(resource)
-							.setWhere(from(type))
-							.build()))
-					.thenAcceptAsync(result -> {
-						cell.setGraphic(result.get1());
-						cell.setContextMenu(result.get2());
-						LISTENERS.forEach(it -> it.forFile(type, cell, resource, fileInfo));
-					}, FxThreadUtil.executor());
+			IconProvider iconProvider = getFileIconProvider(fileInfo);
+			cell.setContextMenu(ContextBuilder.forFile(fileInfo)
+				.setIcon(iconProvider.makeIcon())
+				.withResource(resource)
+				.setWhere(from(type))
+				.build());
+
+			cell.setGraphic(iconProvider.makeIcon());
+			LISTENERS.forEach(it -> it.forFile(type, cell, resource, fileInfo));
 		});
 		INFO_MAP.put(FieldInfo.class, (type, cell, resource, info) -> {
 			Resources resources = RecafUI.getController().getWorkspace().getResources();
