@@ -3,7 +3,6 @@ package me.coley.recaf.util.logging;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.core.FileAppender;
-import me.coley.recaf.util.Blackhole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -83,6 +82,7 @@ public class Logging {
 		// We do it this way so the file path can be set at runtime.
 		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 		FileAppender fileAppender = new FileAppender<>();
+		fileAppender.addFilter(new LoggingFilter());
 		fileAppender.setFile(path.toString());
 		fileAppender.setContext(loggerContext);
 		fileAppender.setPrudent(true);
@@ -117,9 +117,5 @@ public class Logging {
 					logConsumers.forEach(consumer -> consumer.accept(name, level, message, t));
 			}
 		};
-	}
-
-	static {
-		Blackhole.consume(LoggingFilter.class);
 	}
 }
