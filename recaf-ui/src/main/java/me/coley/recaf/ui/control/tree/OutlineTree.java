@@ -157,6 +157,7 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 					separatorIndex = classInfo.getName().lastIndexOf('/');
 				if (separatorIndex > 0)
 					name = name.substring(separatorIndex + 1);
+				textProperty().unbind();
 				setText(EscapeUtil.escape(name));
 				setOnMouseClicked(null);
 				if (classInfo instanceof ClassInfo) {
