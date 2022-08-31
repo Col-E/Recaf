@@ -32,8 +32,8 @@ public class DockingRegion extends DetachableTabPane {
 	 *
 	 * @return Created tab.
 	 */
-	public DockTab createTab(DockTabFactory factory) {
-		DockTab tab = factory.get();
+	public <DT extends DockTab> DT createTab(DockTabFactory<DT> factory) {
+		DT tab = factory.get();
 		// Ensure we record tabs closing (and let them still declare close handlers via the factory)
 		EventHandler<Event> closeHandler = tab.getOnClosed();
 		tab.setOnClosed(e -> {

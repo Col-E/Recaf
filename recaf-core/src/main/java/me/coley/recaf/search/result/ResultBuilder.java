@@ -19,6 +19,7 @@ public class ResultBuilder {
 	private static final Logger logger = Logging.get(Result.class);
 	private final ResultFactory factory;
 	private FileInfo containingFile;
+	private int fileLine = -1;
 	private CommonClassInfo containingClass;
 	private FieldInfo containingField;
 	private MethodInfo containingMethod;
@@ -86,6 +87,17 @@ public class ResultBuilder {
 	public ResultBuilder inFile(FileInfo containingFile) {
 		this.containingFile = containingFile;
 		return this;
+	}
+
+	/**
+	 * @param containingFile
+	 * 		The file the matched item is contained within.
+	 *
+	 * @return Builder.
+	 */
+	public ResultBuilder inFile(FileInfo containingFile, int line) {
+		this.fileLine = line;
+		return inFile(containingFile);
 	}
 
 	/**
@@ -199,6 +211,10 @@ public class ResultBuilder {
 	 */
 	public AbstractInstruction getInstruction() {
 		return instruction;
+	}
+
+	public int getFileLine() {
+		return fileLine;
 	}
 
 	private interface ResultFactory {

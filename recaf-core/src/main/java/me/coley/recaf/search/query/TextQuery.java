@@ -75,9 +75,12 @@ public class TextQuery implements Query {
 		public void visitFile(FileInfo fileInfo) {
 			if (fileInfo.isText()) {
 				String text = new String(fileInfo.getValue(), StandardCharsets.UTF_8);
-				String[] lines = text.split("[\\n\\r]+");
-				for (String line : lines)
-					whenMatched(line.trim(), builder -> addFileText(builder, fileInfo));
+				String[] lines = text.split("\\R");
+				for (int i = 0; i < lines.length; i++) {
+					String line = lines[i];
+					int finalI = i;
+					whenMatched(line.trim(), builder -> addFileText(builder, fileInfo, finalI));
+				}
 			}
 		}
 

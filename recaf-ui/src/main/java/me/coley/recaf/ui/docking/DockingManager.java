@@ -45,7 +45,7 @@ public class DockingManager {
 	 *
 	 * @return Tab spawned in the given region.
 	 */
-	public DockTab createTabIn(DockingRegion region, DockTabFactory factory) {
+	public <T extends DockTab> T createTabIn(DockingRegion region, DockTabFactory<T> factory) {
 		return createTab(r -> r == region, DEFAULT_ORDER, factory);
 	}
 
@@ -55,7 +55,7 @@ public class DockingManager {
 	 *
 	 * @return Tab which is spawned in the most recently interacted with region.
 	 */
-	public DockTab createTab(DockTabFactory factory) {
+	public <T extends DockTab> T createTab(DockTabFactory<T> factory) {
 		return createTab(r -> true, DEFAULT_ORDER, factory);
 	}
 
@@ -69,7 +69,7 @@ public class DockingManager {
 	 *
 	 * @return Tab which is spawned in the most recently interacted with region that matches the filter.
 	 */
-	public DockTab createTab(RegionFilter filter, RegionPreference preference, DockTabFactory factory) {
+	public <T extends DockTab> T createTab(RegionFilter filter, RegionPreference preference, DockTabFactory<T> factory) {
 		// Prefer to be based on interaction order
 		Optional<DockingRegion> regionResult = recentInteractions.stream().filter(filter).min(preference);
 		// If not found, search across all regions
@@ -83,18 +83,18 @@ public class DockingManager {
 	}
 
 	/**
-	 * Called by {@link #createTab(RegionFilter, RegionPreference, DockTabFactory)}.
-	 * Used by child types of {@link DockingManager} to modify properties of any created tabs.
+	 * Called by {@link #createTab(RegionFilter, RegionPreference, DockTabFactory)}. Used by child types of
+	 * {@link DockingManager} to modify properties of any created tabs.
 	 *
 	 * @param region
 	 * 		Region the tab will belong to.
 	 * @param factory
 	 * 		Factory to decorate.
 	 *
-	 * @return The factory instance if there is no special handling.
-	 * Otherwise, a wrapper factory that adds additional properties to its generated tabs.
+	 * @return The factory instance if there is no special handling. Otherwise, a wrapper factory that adds additional
+	 * 		properties to its generated tabs.
 	 */
-	protected DockTabFactory decorateFactory(DockingRegion region, DockTabFactory factory) {
+	protected <T extends DockTab> DockTabFactory<T> decorateFactory(DockingRegion region, DockTabFactory<T> factory) {
 		return factory;
 	}
 

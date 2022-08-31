@@ -109,8 +109,8 @@ public class RecafDockingManager extends DockingManager {
 	}
 
 	@Override
-	protected DockTabFactory decorateFactory(DockingRegion region, DockTabFactory factory) {
-		DockTab tab = factory.get();
+	protected <T extends DockTab> DockTabFactory<T> decorateFactory(DockingRegion region, DockTabFactory<T> factory) {
+		T tab = factory.get();
 		Node content = tab.getContent();
 		// Update graphics and context menus to match tab content
 		ContextMenu menu = new ContextMenu();
