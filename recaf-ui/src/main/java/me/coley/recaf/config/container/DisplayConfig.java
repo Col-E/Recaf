@@ -73,6 +73,10 @@ public class DisplayConfig implements ConfigContainer {
 	@ConfigID("showselectionnavbar")
 	public boolean showSelectionNavbar = true;
 
+	@Group("workspace")
+	@ConfigID("showunreferencedclasswarning")
+	public boolean showUnreferencedClassWarning = true;
+
 	/**
 	 * Behavior to use when dropping a file into the workspace tree.
 	 */

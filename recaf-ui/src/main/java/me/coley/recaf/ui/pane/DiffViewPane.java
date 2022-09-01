@@ -433,6 +433,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		private String code;
 
 		public DiffableDecompilePane(CompletableFuture<Void> future) {
+			super(null);
+
 			this.future = future;
 			getJavaArea().setEditable(false);
 			// This is a lazy fix.

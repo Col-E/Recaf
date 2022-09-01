@@ -222,6 +222,8 @@ modifications.title=Modifications
 ## Java area
 java.decompiling=Decompiling class...
 java.unparsable=JavaParser failed to interpret source, context actions only available 'Fields & Methods' tab
+java.unreferencedclasswarning=Class possibly unreferenced
+java.unreferencedclasswarning.tooltip=This class does not appear to be directly referenced in code, but may still be used via reflection or custom class loaders.\nNote: Classes referenced only by other unreferenced classes will also be considered unreferenced.
 
 ## Outline
 outline.title=Fields & methods
@@ -313,6 +315,7 @@ conf.display.workspace.onfiledrop.addlibrary=Add as library
 conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
 conf.display.workspace.promptdeleteitem=Prompt when deleting items
 conf.display.workspace.showselectionnavbar=Show selection nav-bar
+conf.display.workspace.showunreferencedclasswarning=Show warning for unreferenced classes
 conf.display.text=Text
 conf.display.text.fontsize=Font size
 
