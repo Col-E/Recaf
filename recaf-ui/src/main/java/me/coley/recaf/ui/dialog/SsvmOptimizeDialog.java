@@ -106,7 +106,7 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 				});
 				byte[] modified = writer.toByteArray();
 				// Replace in workspace
-				WorkspaceAPI.getPrimaryResource().getClasses().put(owner.getName(), ClassInfo.read(modified));
+				WorkspaceAPI.getPrimaryResource().getClasses().put(owner.getName(), ClassInfo.read(modified, owner.getSourceType()));
 			});
 		});
 		runButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);

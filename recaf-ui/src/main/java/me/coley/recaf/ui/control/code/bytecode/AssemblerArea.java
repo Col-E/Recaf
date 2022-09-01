@@ -53,9 +53,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.slf4j.Logger;
 
-import java.util.Arrays;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -552,7 +550,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		// Done, update the workspace
 		byte[] updatedClass = cw.toByteArray();
 		Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
-		resource.getClasses().put(ClassInfo.read(updatedClass));
+		ClassSourceType type = ClassSourceType.PRIMARY;
+		if(classInfo != null)
+			type = classInfo.getSourceType();
+		resource.getClasses().put(ClassInfo.read(updatedClass, type));
 		return SaveResult.SUCCESS;
 	}
 

@@ -243,7 +243,10 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 			if (result.wasSuccess()) {
 				result.getValue().forEach((name, value) -> {
 					logger.info("Updating '{}'", name);
-					resources.getPrimary().getClasses().put(ClassInfo.read(value));
+					ClassSourceType type = ClassSourceType.PRIMARY;
+					if(getCurrentClassInfo() != null)
+						type = getCurrentClassInfo().getSourceType();
+					resources.getPrimary().getClasses().put(ClassInfo.read(value, type));
 				});
 				return SaveResult.SUCCESS;
 			} else {

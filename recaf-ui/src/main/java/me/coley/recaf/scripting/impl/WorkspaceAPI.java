@@ -2,6 +2,7 @@ package me.coley.recaf.scripting.impl;
 
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.util.logging.Logging;
@@ -279,7 +280,7 @@ public class WorkspaceAPI {
 	 */
 	public static void putClassInfo(Resource resource, byte[] content) {
 		if (resource != null)
-			resource.getClasses().put(ClassInfo.read(content));
+			resource.getClasses().put(ClassInfo.read(content, ClassSourceType.PRIMARY));
 	}
 
 	/**

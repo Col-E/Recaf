@@ -1,6 +1,7 @@
 package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.util.ByteHeaderUtil;
 import me.coley.recaf.util.IOUtil;
@@ -39,7 +40,7 @@ public class SingleFileContentSource extends FileContentSource {
 		if (ByteHeaderUtil.match(content, ByteHeaderUtil.CLASS)) {
 			try {
 				if (isParsableClass(content)) {
-					ClassInfo clazz = ClassInfo.read(content);
+					ClassInfo clazz = ClassInfo.read(content, ClassSourceType.PRIMARY);
 					collection.addClass(clazz);
 				} else {
 					String name = getPath().getFileName().toString();

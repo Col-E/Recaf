@@ -2,6 +2,7 @@ package me.coley.recaf.util;
 
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
@@ -61,7 +62,7 @@ public class CompileDependencyUpdater {
 			}
 			// Add to workspace
 			Resource resource = new Resource(new EmptyContentSource());
-			map.forEach((name, bytes) -> resource.getClasses().put(ClassInfo.read(bytes)));
+			map.forEach((name, bytes) -> resource.getClasses().put(ClassInfo.read(bytes, ClassSourceType.PHANTOM_GENERATED)));
 			workspace.getResources().getInternalLibraries().add(resource);
 		} catch (Exception e) {
 			logger.error("Failed to generate phantom classes", e);

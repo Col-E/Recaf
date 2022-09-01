@@ -31,11 +31,12 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private final List<FieldInfo> fields;
 	private final List<MethodInfo> methods;
 	private ClassReader classReader;
+	private final ClassSourceType sourceType;
 	private int hashCode;
 
 	private ClassInfo(String name, String superName, String signature, List<String> interfaces, int version, int access,
 					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value,
-					  List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs) {
+					  List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs, ClassSourceType sourceType) {
 		this.value = value;
 		this.name = name;
 		this.signature = signature;
@@ -47,6 +48,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		this.methods = methods;
 		this.innerClasses = innerClasses;
 		this.outerClassBreadcrumbs = outerClassBreadcrumbs;
+		this.sourceType = sourceType;
 	}
 
 	@Override
@@ -97,6 +99,11 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	@Override
 	public List<String> getOuterClassBreadcrumbs() {
 		return outerClassBreadcrumbs;
+	}
+
+	@Override
+	public ClassSourceType getSourceType() {
+		return sourceType;
 	}
 
 	/**
@@ -157,11 +164,12 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	 *
 	 * @param value
 	 * 		Class bytecode.
-	 *
+	 * @param sourceType
+	 * 			Class source type.
 	 * @return Parsed class information unit.
 	 */
 	@SuppressWarnings("unchecked")
-	public static ClassInfo read(byte[] value) {
+	public static ClassInfo read(byte[] value, ClassSourceType sourceType) {
 		ClassReader reader = new ClassReader(value);
 		String className = reader.getClassName();
 		String superName = reader.getSuperName();
@@ -232,7 +240,8 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				methods,
 				value,
 				directlyNested,
-				breadcrumbs);
+				breadcrumbs,
+				sourceType);
 	}
 
 	private static String outerClassOf(String name, List<InnerClassInfo> candidates) {

@@ -12,6 +12,7 @@ import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.decompile.DecompileResult;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.decompile.cfr.CfrDecompiler;
@@ -169,9 +170,9 @@ public class SsvmDeobfuscationTests extends TestUtils implements Opcodes {
 		target.getNode().accept(writer);
 		byte[] modified = writer.toByteArray();
 		workspace.getResources().getPrimary()
-				.getClasses().put(target.getInternalName(), ClassInfo.read(modified));
+				.getClasses().put(target.getInternalName(), ClassInfo.read(modified, ClassSourceType.PRIMARY));
 		// Decompile
-		ClassInfo info = ClassInfo.read(modified);
+		ClassInfo info = ClassInfo.read(modified, ClassSourceType.PRIMARY);
 		Decompiler decompiler = new CfrDecompiler();
 		DecompileResult decompile = decompiler.decompile(workspace, info);
 		return decompile.getValue();

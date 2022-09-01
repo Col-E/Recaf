@@ -6,6 +6,7 @@ import me.coley.cafedude.io.ClassFileReader;
 import me.coley.cafedude.io.ClassFileWriter;
 import me.coley.cafedude.transform.IllegalStrippingTransformer;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.source.ContentCollection;
@@ -37,7 +38,7 @@ public class ClassPatchingListener implements ContentSourceListener {
 				new IllegalStrippingTransformer(classFile).transform();
 				byte[] patched = new ClassFileWriter().write(classFile);
 				// Attempt to load
-				ClassInfo info = ClassInfo.read(patched);
+				ClassInfo info = ClassInfo.read(patched, ClassSourceType.PRIMARY);
 				collection.addClass(info);
 				return true;
 			} catch (InvalidClassException ex) {

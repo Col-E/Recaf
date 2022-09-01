@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource;
 
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.threading.ThreadLocals;
@@ -68,7 +69,7 @@ public class RuntimeResource extends Resource {
 					cache.put(key, STUB);
 					return null;
 				}
-				ClassInfo info = ClassInfo.read(value);
+				ClassInfo info = ClassInfo.read(value, ClassSourceType.INTERNAL_LIBRARY);
 				cache.put(key, info);
 				return info;
 			}
