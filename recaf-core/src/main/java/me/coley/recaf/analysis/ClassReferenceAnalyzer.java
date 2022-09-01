@@ -217,7 +217,7 @@ public class ClassReferenceAnalyzer {
      *          Whether the class name is referenced by code executed at runtime
      */
     public boolean isClassReferenced(CommonClassInfo classInfo) {
-        if (analyzeTask == null || referencedClasses.isEmpty())
+        if (analyzeTask == null)
             return true;
 
         // Analysis only takes a couple seconds so this should be fine

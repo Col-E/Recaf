@@ -22,7 +22,7 @@ public class AnalysisTests extends TestUtils {
         for (ClassInfo info : demoGame.getClasses().values()) {
             boolean shouldBeUnreferenced = info.getName().startsWith("game/unreferencedclasses");
             boolean isClassUnreferenced = !analyzer.isClassReferenced(info);
-            assertEquals(shouldBeUnreferenced, isClassUnreferenced);
+            assertEquals(shouldBeUnreferenced, isClassUnreferenced, info.getName());
         }
     }
 }
