@@ -106,7 +106,7 @@ public class InnerClassInfo implements ItemInfo {
 		final int slashIndex = name.indexOf("/");
 		return dollarIndex == -1 ?
 				slashIndex == -1 ?
-						name : name.substring(slashIndex)
-				: name.substring(dollarIndex);
+						name : name.charAt(name.length() - 1) == '/' ? name : name.substring(slashIndex + 1)
+				: name.charAt(name.length() - 1) == '$' ? name : name.substring(dollarIndex + 1);
 	}
 }

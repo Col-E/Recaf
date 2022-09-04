@@ -215,7 +215,8 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		}, ClassReader.SKIP_CODE);
 		List<InnerClassInfo> directlyNested = // Getting all inner classes which are directly visible, no nested inside nested ones
 				innerClasses.stream()
-						.filter(innerClass -> className.equals(innerClass.getOuterName()) && !className.equals(innerClass.getName()))
+						.filter(innerClass -> (innerClass.getOuterName() == null || className.equals(innerClass.getOuterName()))
+								&& !className.equals(innerClass.getName()))
 						.collect(Collectors.toList());
 		// Create outer class breadcrumbs
 		// Alternatives are not great:
