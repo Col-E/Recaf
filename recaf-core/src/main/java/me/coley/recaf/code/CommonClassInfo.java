@@ -22,6 +22,7 @@ public interface CommonClassInfo extends ItemInfo {
 	/**
 	 * @return Class's generic signature. May be {@code null}.
 	 */
+	@Nullable
 	String getSignature();
 
 	/**
@@ -34,8 +35,11 @@ public interface CommonClassInfo extends ItemInfo {
 	 */
 	int getAccess();
 
+	/**
+	 * @return Outer method where the class is in.
+	 */
 	@Nullable
-	OuterMethod getOuterMethod();
+	OuterMethodInfo getOuterMethod();
 
 	/**
 	 * @return Class's declared fields.

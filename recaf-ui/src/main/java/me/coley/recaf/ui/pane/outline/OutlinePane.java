@@ -96,7 +96,7 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 			breadcrumbsChildren.addAll(outerNode);
 			if (!outers.isEmpty()) breadcrumbsChildren.add(new NavigationBar.NavigationSeparator());
 		}
-		final OuterMethod outerMethod = parent.getCurrentClassInfo().getOuterMethod();
+		final OuterMethodInfo outerMethod = parent.getCurrentClassInfo().getOuterMethod();
 		if (outerMethod != null) {
 			outers.add(outerMethod.getOwner());
 		}

@@ -97,7 +97,7 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 
 	@Nullable
 	@Override
-	public OuterMethod getOuterMethod() {
+	public OuterMethodInfo getOuterMethod() {
 		// TODO: implement outer method if dex class is a method local class
 		return null;
 	}
