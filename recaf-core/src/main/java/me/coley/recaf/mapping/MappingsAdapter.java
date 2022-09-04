@@ -1,7 +1,7 @@
 package me.coley.recaf.mapping;
 
-import me.coley.recaf.graph.InheritanceGraph;
-import me.coley.recaf.graph.InheritanceVertex;
+import me.coley.recaf.graph.inheritance.InheritanceGraph;
+import me.coley.recaf.graph.inheritance.InheritanceVertex;
 import me.coley.recaf.mapping.data.*;
 import me.coley.recaf.mapping.format.IntermediateMappings;
 

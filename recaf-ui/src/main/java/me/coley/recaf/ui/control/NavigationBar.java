@@ -2,6 +2,8 @@ package me.coley.recaf.ui.control;
 
 import javafx.animation.Interpolator;
 import javafx.animation.Transition;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
@@ -18,10 +20,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.FieldInfo;
-import me.coley.recaf.code.MemberInfo;
-import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.parse.ParseHitResult;
 import me.coley.recaf.ui.CommonUX;
@@ -48,6 +47,8 @@ public class NavigationBar extends HBox {
 	private static final long EXPAND_ANIM_MS = 450;
 	private boolean lastShownState;
 	private CommonClassInfo lastClassInfo;
+
+	private final ObjectProperty<ItemInfo> currentItem = new SimpleObjectProperty<>();
 
 	/**
 	 * Deny public construction.
@@ -150,6 +151,9 @@ public class NavigationBar extends HBox {
 	 */
 	public void update(CommonClassInfo classInfo, MemberInfo memberInfo) {
 		this.lastClassInfo = classInfo;
+		if(classInfo == null || !shouldShow()) currentItem.set(null);
+		else if (memberInfo != null) currentItem.set(memberInfo);
+		else currentItem.set(classInfo);
 
 		// Hide if config disables displaying the navigation bar
 		if (!shouldShow()) {
@@ -254,6 +258,14 @@ public class NavigationBar extends HBox {
 	 */
 	public static NavigationBar getInstance() {
 		return instance;
+	}
+
+	public ItemInfo getCurrentItem() {
+		return currentItem.get();
+	}
+
+	public ObjectProperty<ItemInfo> currentItemProperty() {
+		return currentItem;
 	}
 
 	/**

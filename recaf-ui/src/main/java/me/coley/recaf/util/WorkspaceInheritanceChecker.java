@@ -4,7 +4,7 @@ import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
-import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.graph.inheritance.InheritanceGraph;
 
 /**
  * Type checker that pulls info from the current workspace.

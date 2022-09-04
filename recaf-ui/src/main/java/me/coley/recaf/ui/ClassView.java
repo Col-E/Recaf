@@ -1,5 +1,6 @@
 package me.coley.recaf.ui;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Side;
 import javafx.scene.Node;
@@ -9,18 +10,18 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.MemberInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.scripting.impl.WorkspaceAPI;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.CollapsibleTabPane;
+import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.hex.HexClassView;
 import me.coley.recaf.ui.pane.DecompilePane;
 import me.coley.recaf.ui.pane.HierarchyPane;
-import me.coley.recaf.ui.pane.outline.OutlinePane;
+import me.coley.recaf.ui.pane.MethodCallGraphPane;
 import me.coley.recaf.ui.pane.SmaliAssemblerPane;
+import me.coley.recaf.ui.pane.outline.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
@@ -39,6 +40,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	private final BorderPane mainViewWrapper = new BorderPane();
 	private final CollapsibleTabPane sideTabs = new CollapsibleTabPane();
 	private final SplitPane contentSplit = new SplitPane();
+	private final MethodCallGraphPane methodCallGraph;
 	private ClassViewMode mode = Configs.editor().defaultClassMode;
 	private ClassRepresentation mainView;
 	private CommonClassInfo info;
@@ -51,8 +53,13 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		this.info = info;
 		outline = new OutlinePane(this);
 		hierarchy = new HierarchyPane();
+		methodCallGraph = new MethodCallGraphPane(WorkspaceAPI.getWorkspace());
 		// Setup main view
 		mainView = createViewForClass(info);
+		methodCallGraph.currentMethodProperty().bind(Bindings.createObjectBinding(() -> {
+			final ItemInfo itemInfo = NavigationBar.getInstance().currentItemProperty().get();
+			return itemInfo instanceof MethodInfo ? (MethodInfo) itemInfo : null;
+		}, NavigationBar.getInstance().currentItemProperty()));
 		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
 		contentSplit.getItems().add(mainViewWrapper);
 		contentSplit.getStyleClass().add("view-split-pane");
@@ -106,6 +113,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		info = newValue;
 		outline.onUpdate(newValue);
 		hierarchy.onUpdate(newValue);
+		methodCallGraph.onUpdate(newValue);
 		if (mainView != null) {
 			mainView.onUpdate(newValue);
 		}
@@ -199,7 +207,8 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	public void populateSideTabs(CollapsibleTabPane tabPane) {
 		tabPane.getTabs().addAll(
 				createOutlineTab(),
-				createHierarchyTab()
+				createHierarchyTab(),
+				createCallGraphTab()
 		);
 		if (mainView instanceof ToolSideTabbed) {
 			((ToolSideTabbed) mainView).populateSideTabs(tabPane);
@@ -252,20 +261,24 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		sideTabs.setup();
 	}
 
-	private Tab createOutlineTab() {
+	private static Tab createTab(String translationKey, String iconPath, Node node) {
 		Tab tab = new Tab();
-		tab.textProperty().bind(Lang.getBinding("outline.title"));
-		tab.setGraphic(Icons.getIconView(Icons.T_STRUCTURE));
-		tab.setContent(outline);
+		tab.textProperty().bind(Lang.getBinding(translationKey));
+		tab.setGraphic(Icons.getIconView(iconPath));
+		tab.setContent(node);
 		return tab;
 	}
 
+	private Tab createOutlineTab() {
+		return createTab("outline.title", Icons.T_STRUCTURE, outline);
+	}
+
 	private Tab createHierarchyTab() {
-		Tab tab = new Tab();
-		tab.textProperty().bind(Lang.getBinding("hierarchy.title"));
-		tab.setGraphic(Icons.getIconView(Icons.T_TREE));
-		tab.setContent(hierarchy);
-		return tab;
+		return createTab("hierarchy.title", Icons.T_TREE, hierarchy);
+	}
+
+	private Tab createCallGraphTab() {
+		return createTab("callgraph.title", Icons.T_TREE, methodCallGraph);
 	}
 
 	private static Resource getPrimary() {

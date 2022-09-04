@@ -8,7 +8,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
-import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.graph.inheritance.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.util.AccessFlag;

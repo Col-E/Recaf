@@ -2,13 +2,16 @@ package me.coley.recaf;
 
 import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.decompile.DecompileManager;
-import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.graph.call.CallGraphRegistry;
+import me.coley.recaf.graph.inheritance.InheritanceGraph;
 import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.WorkspaceSymbolSolver;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.workspace.Workspace;
+
+import javax.annotation.Nullable;
 
 /**
  * Wrapper of multiple services that are provided by a controller.
@@ -25,6 +28,7 @@ public class Services {
 	private InheritanceGraph inheritanceGraph;
 	private WorkspaceSymbolSolver symbolSolver;
 	private JavaParserHelper javaParserHelper;
+	private CallGraphRegistry callGraphRegistry;
 
 	/**
 	 * Initialize services.
@@ -95,6 +99,14 @@ public class Services {
 	 */
 	public WorkspaceTreeService getTreeService() {
 		return treeService;
+  }
+
+  /**
+	 * @return Registry for all calls made mby all methods of the {@link Controller#getWorkspace() current workspace}.
+	 * If no workspace is set, then this will be {@code null}.
+	 */
+	public @Nullable CallGraphRegistry getCallGraphRegistry() {
+		return callGraphRegistry;
 	}
 
 	/**
@@ -114,12 +126,14 @@ public class Services {
 			javaParserHelper = null;
 			ssvmIntegration = null;
 			treeService = null;
+			callGraphRegistry = null;
 		} else {
 			inheritanceGraph = new InheritanceGraph(workspace);
 			symbolSolver = WorkspaceSymbolSolver.create(workspace);
 			javaParserHelper = JavaParserHelper.create(symbolSolver);
 			ssvmIntegration = new SsvmIntegration(workspace);
 			treeService = new WorkspaceTreeService(workspace);
+			callGraphRegistry = CallGraphRegistry.createAndLoad(workspace);
 		}
 	}
 }

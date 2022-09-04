@@ -18,7 +18,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
-import me.coley.recaf.graph.InheritanceVertex;
+import me.coley.recaf.graph.inheritance.InheritanceVertex;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;

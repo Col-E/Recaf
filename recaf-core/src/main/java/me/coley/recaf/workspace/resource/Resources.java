@@ -4,6 +4,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -103,7 +104,7 @@ public class Resources implements Iterable<Resource> {
 	 *
 	 * @return Class wrapper, if present. Otherwise {@code null}.
 	 */
-	public ClassInfo getClass(String name) {
+	public @Nullable ClassInfo getClass(String name) {
 		// Check primary resource for class
 		ClassInfo info = primary.getClasses().get(name);
 		if (info != null)
