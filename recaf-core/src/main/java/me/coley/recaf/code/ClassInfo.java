@@ -29,14 +29,15 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private final List<String> outerClassBreadcrumbs;
 	private final int version;
 	private final int access;
+	private final OuterMethod outerMethod;
 	private final List<FieldInfo> fields;
 	private final List<MethodInfo> methods;
 	private ClassReader classReader;
 	private int hashCode;
 
 	private ClassInfo(String name, String superName, String signature, List<String> interfaces, int version, int access,
-					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value,
-					  List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs) {
+										OuterMethod outerMethod, List<FieldInfo> fields, List<MethodInfo> methods, byte[] value,
+										List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs) {
 		this.value = value;
 		this.name = name;
 		this.signature = signature;
@@ -44,6 +45,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		this.interfaces = interfaces;
 		this.version = version;
 		this.access = access;
+		this.outerMethod = outerMethod;
 		this.fields = fields;
 		this.methods = methods;
 		this.innerClasses = innerClasses;
@@ -78,6 +80,11 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	@Override
 	public int getAccess() {
 		return access;
+	}
+
+	@Override
+	public @Nullable OuterMethod getOuterMethod() {
+		return outerMethod;
 	}
 
 	@Override
@@ -173,6 +180,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		List<FieldInfo> fields = new ArrayList<>();
 		List<MethodInfo> methods = new ArrayList<>();
 		List<InnerClassInfo> innerClasses = new ArrayList<>();
+		OuterMethod[] outerMethod = new OuterMethod[1];
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
 			public void visit(int version, int access, String name, String signature,
@@ -198,6 +206,11 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 			@Override
 			public void visitInnerClass(String name, @Nullable String outerName, @Nullable String innerName, int access) {
 				innerClasses.add(new InnerClassInfo(className, name, outerName, innerName, access));
+			}
+
+			@Override
+			public void visitOuterClass(String owner, @Nullable String name, @Nullable String descriptor) {
+				outerMethod[0] = new OuterMethod(className, owner, name, descriptor);
 			}
 		}, ClassReader.SKIP_CODE);
 		List<InnerClassInfo> directlyNested = // Getting all inner classes which are directly visible, no nested inside nested ones
@@ -229,6 +242,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				interfacesWrapper[0],
 				versionWrapper[0],
 				access,
+				outerMethod[0],
 				fields,
 				methods,
 				value,

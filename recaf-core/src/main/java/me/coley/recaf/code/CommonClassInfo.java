@@ -1,5 +1,6 @@
 package me.coley.recaf.code;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -32,6 +33,9 @@ public interface CommonClassInfo extends ItemInfo {
 	 * @return Class's access modifiers.
 	 */
 	int getAccess();
+
+	@Nullable
+	OuterMethod getOuterMethod();
 
 	/**
 	 * @return Class's declared fields.

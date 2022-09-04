@@ -5,28 +5,34 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.MemberInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.tree.OutlineTree;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.NodeEvents;
+import me.coley.recaf.util.StringUtil;
+import org.objectweb.asm.Type;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Visualization of the fields and methods of a {@link ClassInfo}.
@@ -56,12 +62,30 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 		this.tree = new OutlineTree(parent, filterValue, this);
 		TextField filter = createFilterBar();
 		filterValue.bind(filter.textProperty());
-		List<String> outers = parent.getCurrentClassInfo().getOuterClassBreadcrumbs();
+		HBox breadcrumbs = createBreadcrumbs(parent);
+		if (!breadcrumbs.getChildren().isEmpty()) setTop(breadcrumbs);
+		setCenter(tree);
+		HBox.setHgrow(filter, Priority.ALWAYS);
+
+		showTypes.bindBidirectional(Configs.editor().showOutlinedTypes);
+		showSynthetics.bindBidirectional(Configs.editor().showOutlinedSynthetics);
+		memberType.bindBidirectional(Configs.editor().showOutlinedMemberType);
+		visibility.bindBidirectional(Configs.editor().showOutlinedVisibility);
+		sortAlphabetically.bindBidirectional(Configs.editor().sortOutlinedAlphabetically);
+		sortByVisibility.bindBidirectional(Configs.editor().sortOutlinedByVisibility);
+		caseSensitive.bindBidirectional(Configs.editor().caseSensitiveOutlinedFilter);
+
+		setBottom(new VBox(createButtonBar(), new HBox(filter, createBooleanButton("conf.editor.outline.filter.casesensitive", Icons.CASE_SENSITIVITY, caseSensitive))));
+	}
+
+	private HBox createBreadcrumbs(ClassRepresentation parent) {
+		List<String> outers = new ArrayList<>(parent.getCurrentClassInfo().getOuterClassBreadcrumbs());
 		HBox breadcrumbs = new HBox();
 		breadcrumbs.setSpacing(5);
 		String previousOuterName = "";
 		String firstOuterName = !outers.isEmpty() ? outers.get(0) : parent.getCurrentClassInfo().getName();
 		int indexOfPathEnd = firstOuterName.lastIndexOf('/');
+		final ObservableList<Node> breadcrumbsChildren = breadcrumbs.getChildren();
 		if (indexOfPathEnd != -1) {
 			previousOuterName = firstOuterName.substring(0, indexOfPathEnd + 1);
 			HBox outerNode = new HBox(
@@ -69,8 +93,12 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 					new Label(firstOuterName.substring(0, indexOfPathEnd))
 			);
 			outerNode.setSpacing(5);
-			breadcrumbs.getChildren().addAll(outerNode);
-			if (!outers.isEmpty()) breadcrumbs.getChildren().add(new NavigationBar.NavigationSeparator());
+			breadcrumbsChildren.addAll(outerNode);
+			if (!outers.isEmpty()) breadcrumbsChildren.add(new NavigationBar.NavigationSeparator());
+		}
+		final OuterMethod outerMethod = parent.getCurrentClassInfo().getOuterMethod();
+		if (outerMethod != null) {
+			outers.add(outerMethod.getOwner());
 		}
 		if (!outers.isEmpty()) {
 			for (int i = 0; i < outers.size(); i++) {
@@ -86,34 +114,62 @@ public class OutlinePane extends BorderPane implements ClassRepresentation {
 				previousOuterName = outer + "$";
 				outerNode.setSpacing(5);
 				if (classInfo != null) {
-					outerNode.setOnMouseClicked(e -> {
-						if (e.getButton() == MouseButton.PRIMARY) CommonUX.openClass(classInfo);
-					});
-					ContextMenu menu = ContextBuilder.forClass(classInfo).setDeclaration(false).build();
-					outerNode.setOnContextMenuRequested(e -> {
-						menu.hide();
-						menu.show(outerNode, e.getScreenX(), e.getScreenY());
-					});
+					contextMenuAndOpenForClass(outerNode, classInfo);
 				}
-				breadcrumbs.getChildren().add(outerNode);
+				breadcrumbsChildren.add(outerNode);
 				if (i < outers.size() - 1) {
-					breadcrumbs.getChildren().add(new NavigationBar.NavigationSeparator());
+					breadcrumbsChildren.add(new NavigationBar.NavigationSeparator());
 				}
 			}
 		}
-		if (!breadcrumbs.getChildren().isEmpty()) setTop(breadcrumbs);
-		setCenter(tree);
-		HBox.setHgrow(filter, Priority.ALWAYS);
+		if (outerMethod != null) {
+			if (!breadcrumbsChildren.isEmpty()) breadcrumbsChildren.add(new NavigationBar.NavigationSeparator());
+			HBox outerMethodNode = new HBox(
+					new StackPane(Icons.getIconView(Icons.METHOD), Icons.getIconView(Icons.UP_FOR_ICON)),
+					new BoundLabel(Bindings.createStringBinding(() -> {
+						String text = outerMethod.getName();
+						if (text == null) return null;
+						String desc = outerMethod.getDescriptor();
+						if (showTypes.get() && desc != null) {
+							text += "(" + Arrays.stream(Type.getArgumentTypes(desc))
+									.map(argType -> StringUtil.shortenPath(argType.getInternalName()))
+									.collect(Collectors.joining(", ")) +
+									")" + StringUtil.shortenPath(Type.getReturnType(desc).getInternalName());
+						}
+						return StringUtil.limit(EscapeUtil.escape(text), "...", Configs.display().maxTreeTextLength.get());
+					}, showTypes, Configs.display().maxTreeTextLength))
+			);
+			ClassInfo classInfo = RecafUI.getController().getWorkspace().getResources().getClass(outerMethod.getOwner());
+			outerMethodNode.setSpacing(5);
+			if (classInfo != null && outerMethod.getName() != null) {
+				MethodInfo methodInfo = classInfo.findMethod(outerMethod.getName(), outerMethod.getDescriptor());
+				if (methodInfo != null) {
+					outerMethodNode.setOnMouseClicked(e -> {
+						if (e.getButton() == MouseButton.PRIMARY) CommonUX.openMember(classInfo, methodInfo);
+					});
+					ContextMenu menu = ContextBuilder.forMethod(classInfo, methodInfo).setDeclaration(false).build();
+					outerMethodNode.setOnContextMenuRequested(e -> {
+						menu.hide();
+						menu.show(outerMethodNode, e.getScreenX(), e.getScreenY());
+					});
+				} else {
+					contextMenuAndOpenForClass(outerMethodNode, classInfo);
+				}
+			}
+			breadcrumbsChildren.add(outerMethodNode);
+		}
+		return breadcrumbs;
+	}
 
-		showTypes.bindBidirectional(Configs.editor().showOutlinedTypes);
-		showSynthetics.bindBidirectional(Configs.editor().showOutlinedSynthetics);
-		memberType.bindBidirectional(Configs.editor().showOutlinedMemberType);
-		visibility.bindBidirectional(Configs.editor().showOutlinedVisibility);
-		sortAlphabetically.bindBidirectional(Configs.editor().sortOutlinedAlphabetically);
-		sortByVisibility.bindBidirectional(Configs.editor().sortOutlinedByVisibility);
-		caseSensitive.bindBidirectional(Configs.editor().caseSensitiveOutlinedFilter);
-
-		setBottom(new VBox(createButtonBar(), new HBox(filter, createBooleanButton("conf.editor.outline.filter.casesensitive", Icons.CASE_SENSITIVITY, caseSensitive))));
+	private static void contextMenuAndOpenForClass(HBox outerNode, ClassInfo classInfo) {
+		outerNode.setOnMouseClicked(e -> {
+			if (e.getButton() == MouseButton.PRIMARY) CommonUX.openClass(classInfo);
+		});
+		ContextMenu menu = ContextBuilder.forClass(classInfo).setDeclaration(false).build();
+		outerNode.setOnContextMenuRequested(e -> {
+			menu.hide();
+			menu.show(outerNode, e.getScreenX(), e.getScreenY());
+		});
 	}
 
 	private TextField createFilterBar() {

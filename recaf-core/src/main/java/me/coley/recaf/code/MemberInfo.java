@@ -1,5 +1,6 @@
 package me.coley.recaf.code;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -66,7 +67,7 @@ public abstract class MemberInfo implements ItemInfo {
 	/**
 	 * @return Member's generic signature. May be {@code null}.
 	 */
-	public String getSignature() {
+	public @Nullable String getSignature() {
 		return signature;
 	}
 

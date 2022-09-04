@@ -3,14 +3,11 @@ package me.coley.recaf.code;
 import me.coley.recaf.android.cf.MutableClassDef;
 import me.coley.recaf.util.DalvikUtils;
 import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.ValueType;
-import org.jf.dexlib2.iface.Annotation;
-import org.jf.dexlib2.iface.AnnotationElement;
 import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.iface.Method;
-import org.jf.dexlib2.iface.value.*;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -96,6 +93,13 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 	@Override
 	public int getAccess() {
 		return access;
+	}
+
+	@Nullable
+	@Override
+	public OuterMethod getOuterMethod() {
+		// TODO: implement outer method if dex class is a method local class
+		return null;
 	}
 
 	@Override
