@@ -1,5 +1,10 @@
 package me.coley.recaf.code;
 
+import org.objectweb.asm.Type;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * InnerClass Attribute, containing information about a used inner class.<br>
  * The root class (the most outer one) is not available in this attribute,
@@ -27,7 +32,20 @@ public class InnerClassInfo implements ItemInfo {
 	private final String innerName;
 	private final int access;
 
-	public InnerClassInfo(String className, String name, String outerName, String innerName, int access) {
+	/**
+	 * @param name
+	 * 		the internal name of an inner class (see {@link Type#getInternalName()}).
+	 * @param outerName
+	 * 		the internal name of the class to which the inner class belongs (see {@link
+	 *    Type#getInternalName()}). May be {@literal null} for not member classes.
+	 * @param innerName
+	 * 		the (simple) name of the inner class inside its enclosing class. May be
+	 *    {@literal null} for anonymous inner classes.
+	 * @param access
+	 * 		the access flags of the inner class as originally declared in the enclosing
+	 * 		class.
+	 */
+	public InnerClassInfo(String className, String name, @Nullable String outerName, @Nullable String innerName, int access) {
 		this.className = className;
 		this.name = name;
 		this.outerName = outerName;
@@ -52,16 +70,16 @@ public class InnerClassInfo implements ItemInfo {
 	}
 
 	/**
-	 * @return Internal name of the outer class in which this inner class is in.
+	 * @return Internal name of the outer class in which this inner class is in. May be null for not member classes.
 	 */
-	public String getOuterName() {
+	public @Nullable String getOuterName() {
 		return outerName;
 	}
 
 	/**
-	 * @return Simple name of the inner class.
+	 * @return Simple name of the inner class. May be null for anonymous inner classes.
 	 */
-	public String getInnerName() {
+	public @Nullable String getInnerName() {
 		return innerName;
 	}
 
@@ -77,5 +95,18 @@ public class InnerClassInfo implements ItemInfo {
 	 */
 	public int getAccess() {
 		return access;
+	}
+
+	/**
+	 * @return Either {@link #getInnerName()} if not null, otherwise the last "part" (after last $ or /) of {@link #getName()}.
+	 */
+	public @Nonnull String getSimpleName() {
+		if (innerName != null) return innerName;
+		final int dollarIndex = name.indexOf("$");
+		final int slashIndex = name.indexOf("/");
+		return dollarIndex == -1 ?
+				slashIndex == -1 ?
+						name : name.substring(slashIndex)
+				: name.substring(dollarIndex);
 	}
 }

@@ -8,6 +8,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -195,7 +196,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 			}
 
 			@Override
-			public void visitInnerClass(String name, String outerName, String innerName, int access) {
+			public void visitInnerClass(String name, @Nullable String outerName, @Nullable String innerName, int access) {
 				innerClasses.add(new InnerClassInfo(className, name, outerName, innerName, access));
 			}
 		}, ClassReader.SKIP_CODE);
