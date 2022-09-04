@@ -102,11 +102,10 @@ public class InnerClassInfo implements ItemInfo {
 	 */
 	public @Nonnull String getSimpleName() {
 		if (innerName != null) return innerName;
-		final int dollarIndex = name.indexOf("$");
-		final int slashIndex = name.indexOf("/");
-		return dollarIndex == -1 ?
-				slashIndex == -1 ?
-						name : name.charAt(name.length() - 1) == '/' ? name : name.substring(slashIndex + 1)
-				: name.charAt(name.length() - 1) == '$' ? name : name.substring(dollarIndex + 1);
+		int lastIndex = 0;
+		for (;lastIndex < Math.min(className.length(), name.length()); lastIndex++) {
+			if(className.charAt(lastIndex) != name.charAt(lastIndex)) break;
+		}
+		return lastIndex < name.length() ? name.substring(lastIndex) : name;
 	}
 }
