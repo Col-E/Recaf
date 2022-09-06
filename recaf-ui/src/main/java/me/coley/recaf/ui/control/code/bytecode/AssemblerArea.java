@@ -28,7 +28,7 @@ import me.coley.recaf.config.container.AssemblerConfig;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
-import me.coley.recaf.ui.control.CtxMenu;
+import me.coley.recaf.ui.control.VirtualizedContextMenu;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
@@ -87,7 +87,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	private MemberInfo targetMember;
 	private ContextMenu menu;
 	private final Suggestions suggestions;
-	private CtxMenu<String> suggestionsMenu;
+	private VirtualizedContextMenu<String> suggestionsMenu;
 
 	/**
 	 * Sets up the editor area.
@@ -246,7 +246,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		}
 		// Show new suggestions' context menu/list
 		if (suggestionsMenu != null) suggestionsMenu.hide();
-		CtxMenu<String> suggestionsMenu = createSuggestionsMenu(caretPosition, group);
+		VirtualizedContextMenu<String> suggestionsMenu = createSuggestionsMenu(caretPosition, group);
 		suggestionsMenu.setAutoHide(true);
 		suggestionsMenu.setHideOnEscape(true);
 		suggestionsMenu.show(this, getCaretBounds().get().getMinX(), getCaretBounds().get().getMaxY());
@@ -262,18 +262,18 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 *
 	 * @return Menu containing completion suggestions.
 	 */
-	private CtxMenu<String> createSuggestionsMenu(int position, Group suggestionGroup) {
+	private VirtualizedContextMenu<String> createSuggestionsMenu(int position, Group suggestionGroup) {
 		// Get suggestions content
 		SuggestionResult result = suggestions.getSuggestion(suggestionGroup);
 		String input = result.getInput();
 		Set<String> set = result.getResult().collect(Collectors.toCollection(TreeSet::new));
 		if (set.isEmpty())
-			return new CtxMenu<>(javafx.scene.control.Label::new, List.of("No suggestions"));
+			return new VirtualizedContextMenu<>(javafx.scene.control.Label::new, List.of("No suggestions"));
 		// Create the menu populated with completions
 		// TODO: Is it worthwhile to not collect as 'String' but rather as 'ItemInfo'?
 		//  - Classes can have the mapper populate an icon graphic
 		//  - Same for fields/methods
-		CtxMenu<String> menu = new CtxMenu<>(set);
+		VirtualizedContextMenu<String> menu = new VirtualizedContextMenu<>(set);
 		menu.setPrefSize(300, Math.min(set.size() * 35, 420));
 		menu.setOnAction(e -> {
 			String selected = menu.selectedItemProperty().get();

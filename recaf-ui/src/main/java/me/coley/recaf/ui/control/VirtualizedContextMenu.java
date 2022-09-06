@@ -28,7 +28,7 @@ import java.util.function.Function;
  *
  * @author Matt Coley
  */
-public class CtxMenu<T> extends PopupControl {
+public class VirtualizedContextMenu<T> extends PopupControl {
 	// TODO: Allow user to also manipulate (add) class of cells
 	//  - override default 'menu-item' properties like padding/size
 	private static final String DEFAULT_STYLE_CLASS = "context-menu";
@@ -43,7 +43,7 @@ public class CtxMenu<T> extends PopupControl {
 
 		@Override
 		public Object getBean() {
-			return CtxMenu.this;
+			return VirtualizedContextMenu.this;
 		}
 
 		@Override
@@ -58,7 +58,7 @@ public class CtxMenu<T> extends PopupControl {
 	 * @param items
 	 * 		Initial collection of items.
 	 */
-	public CtxMenu(Collection<T> items) {
+	public VirtualizedContextMenu(Collection<T> items) {
 		this.items = FXCollections.observableArrayList(items);
 		getStyleClass().setAll(DEFAULT_STYLE_CLASS);
 		setAutoHide(true);
@@ -71,7 +71,7 @@ public class CtxMenu<T> extends PopupControl {
 	 * @param items
 	 * 		Initial collection of items.
 	 */
-	public CtxMenu(Function<T, ? extends Node> layoutMapper, Collection<T> items) {
+	public VirtualizedContextMenu(Function<T, ? extends Node> layoutMapper, Collection<T> items) {
 		this(items);
 		mapperProperty.set(layoutMapper);
 	}
@@ -133,7 +133,7 @@ public class CtxMenu<T> extends PopupControl {
 	}
 
 	/**
-	 * Base UI implementation for {@link CtxMenu}.
+	 * Base UI implementation for {@link VirtualizedContextMenu}.
 	 *
 	 * @param <T>
 	 * 		Item type.
@@ -142,14 +142,14 @@ public class CtxMenu<T> extends PopupControl {
 	 */
 	private static class CtxSkin<T> implements Skin<PopupControl> {
 		private final VirtualFlow<T, CtxCell<T>> flow;
-		private final CtxMenu<T> menu;
+		private final VirtualizedContextMenu<T> menu;
 		private final Node node;
 
 		/**
 		 * @param menu
 		 * 		Component to be a skin for.
 		 */
-		public CtxSkin(CtxMenu<T> menu) {
+		public CtxSkin(VirtualizedContextMenu<T> menu) {
 			this.menu = menu;
 			flow = VirtualFlow.createVertical(menu.items, i -> {
 				CtxCell<T> cell = new CtxCell<>(this);
@@ -197,7 +197,7 @@ public class CtxMenu<T> extends PopupControl {
 		}
 
 		/**
-		 * Marks the given index as the selected item in the {@link CtxMenu}.
+		 * Marks the given index as the selected item in the {@link VirtualizedContextMenu}.
 		 * All other items are de-selected.
 		 *
 		 * @param index
