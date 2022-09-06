@@ -3,7 +3,6 @@ package me.coley.recaf.ui.control.code.bytecode;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.input.KeyCode;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
@@ -39,7 +38,6 @@ import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.DelayedExecutor;
 import me.coley.recaf.util.threading.DelayedRunnable;
-import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.util.visitor.FieldReplacingVisitor;
 import me.coley.recaf.util.visitor.MethodReplacingVisitor;
 import me.coley.recaf.util.visitor.SingleMemberVisitor;
@@ -62,8 +60,6 @@ import org.slf4j.Logger;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -80,9 +76,7 @@ import static me.darknet.assembler.parser.Group.GroupType;
 public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineCompletionListener,
 		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener {
 	private static final Logger logger = Logging.get(AssemblerArea.class);
-	private static final int INITIAL_DELAY_MS = 500;
-	private static final int AST_LOOP_MS = 100;
-	private static final int PIPELINE_UPDATE_DELAY_MS = 300;
+	private static final int PIPELINE_UPDATE_DELAY_MS = 400;
 	private final DelayedExecutor updatePipelineInput;
 	private final ProblemTracking problemTracking;
 	private final AssemblerPipeline pipeline;
@@ -91,7 +85,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	private ContextMenu menu;
 	private final Suggestions suggestions;
 	private CtxMenu<String> suggestionsMenu;
-	private ScheduledFuture<?> astParseThread;
 
 	/**
 	 * Sets up the editor area.
@@ -105,7 +98,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		super(Languages.JAVA_BYTECODE, problemTracking);
 		this.problemTracking = problemTracking;
 		this.pipeline = pipeline;
-		this.updatePipelineInput = new DelayedRunnable(PIPELINE_UPDATE_DELAY_MS, () -> pipeline.setText(getText()));
+		this.updatePipelineInput = new DelayedRunnable(PIPELINE_UPDATE_DELAY_MS, () -> {
+			pipeline.setText(getText());
+			handleAstUpdate();
+		});
 		// Setup variable highlighting
 		VariableHighlighter variableHighlighter = new VariableHighlighter(pipeline, this);
 		variableHighlighter.addIndicator(getIndicatorFactory());
@@ -114,8 +110,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		FlowHighlighter flowHighlighter = new FlowHighlighter(pipeline, this);
 		flowHighlighter.addIndicator(getIndicatorFactory());
 		flowHighlighter.addCaretPositionListener(caretPositionProperty());
-		// AST parsing loop
-		setupAstParseThread();
 		// Context menu support
 		setOnContextMenuRequested(this::onMenuRequested);
 		// Register listeners to hook into problem tracking
@@ -147,30 +141,28 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	@Override
 	public void cleanup() {
 		super.cleanup();
-		// Stop parse thread
-		astParseThread.cancel(true);
+		// Stop update thread
+		updatePipelineInput.cancel();
 	}
 
 	/**
-	 * Creates the thread that updates the AST in the background.
+	 * Updates and validates the AST.
 	 */
-	protected void setupAstParseThread() {
-		astParseThread = ThreadUtil.scheduleAtFixedRate(() -> {
-			try {
-				if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
-					if (pipeline.getUnit() != null)
-						suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
-					logger.trace("AST updated and validated");
-					if (pipeline.isMethod() &&
-							pipeline.isOutputOutdated() &&
-							pipeline.generateMethod())
-						logger.trace("AST compiled to method and analysis executed");
-				}
-			} catch (Throwable t) {
-				// Shouldn't occur, but make sure its known if it does
-				logger.error("Unhandled exception in the AST parse thread", t);
+	protected void handleAstUpdate() {
+		try {
+			if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
+				if (pipeline.getUnit() != null)
+					suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
+				logger.trace("AST updated and validated");
+				if (pipeline.isMethod() &&
+						pipeline.isOutputOutdated() &&
+						pipeline.generateMethod())
+					logger.trace("AST compiled to method and analysis executed");
 			}
-		}, INITIAL_DELAY_MS, AST_LOOP_MS, TimeUnit.MILLISECONDS);
+		} catch (Throwable t) {
+			// Shouldn't occur, but make sure its known if it does
+			logger.error("Unhandled exception in the AST parse thread", t);
+		}
 	}
 
 	/**
