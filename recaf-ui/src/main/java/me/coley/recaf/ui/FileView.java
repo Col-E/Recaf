@@ -20,7 +20,6 @@ import me.coley.recaf.ui.pane.BinaryXmlPane;
 import me.coley.recaf.ui.pane.elf.ElfExplorerPane;
 import me.coley.recaf.ui.pane.pe.PEExplorerPane;
 import me.coley.recaf.util.ByteHeaderUtil;
-import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 
@@ -176,7 +175,7 @@ public class FileView extends BorderPane implements FileRepresentation, ToolSide
 				return new BinaryXmlPane();
 			} else if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.AUDIO_HEADERS)) {
 				return new AudioPane();
-			} else if (StringUtil.isText(info.getValue())) {
+			} else if (info.isText()) {
 				return new TextView(Languages.get(info.getExtension()), null);
 			} else {
 				return new HexFileView();

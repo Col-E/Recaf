@@ -15,6 +15,7 @@ import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.assemble.validation.MessageLevel;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.assemble.validation.bytecode.BytecodeValidator;
+import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import me.darknet.assembler.parser.*;
 import org.objectweb.asm.tree.ClassNode;
@@ -30,7 +31,7 @@ import java.util.*;
  * @author Matt Coley
  */
 public class AssemblerPipeline {
-	private static final Logger logger = Logging.get(AssemblerPipeline.class);
+	private static final DebuggingLogger logger = Logging.get(AssemblerPipeline.class);
 	// Input config
 	private ClassSupplier classSupplier = ReflectiveClassSupplier.getInstance();
 	private InheritanceChecker inheritanceChecker = ReflectiveInheritanceChecker.getInstance();
@@ -235,7 +236,7 @@ public class AssemblerPipeline {
 			text = newText;
 			textDirty = true;
 			unitOutdated = true;
-			logger.trace("Assembler text updated");
+			logger.debugging(l -> l.trace("Assembler text updated"));
 		}
 	}
 
@@ -511,12 +512,12 @@ public class AssemblerPipeline {
 		if (code == null)
 			return false;
 		// JASM tokenize
-		logger.trace("Assembler AST updating: [JASM tokenize]");
+		logger.debugging(l -> l.trace("Assembler AST updating: [JASM tokenize]"));
 		Parser parser = new Parser(new Keywords(usePrefix ? "." : null));
 		List<Token> tokens = parser.tokenize("<assembler>", code);
 		parserCompletionListeners.forEach(l -> l.onCompleteTokenize(tokens));
 		// JASM parse
-		logger.trace("Assembler AST updating: [JASM parse]");
+		logger.debugging(l -> l.trace("Assembler AST updating: [JASM parse]"));
 		ParserContext ctx = new ParserContext(new LinkedList<>(tokens), parser); // convert to linked list to get a queue
 		List<Group> parsed;
 		try {
@@ -534,7 +535,7 @@ public class AssemblerPipeline {
 		latestJasmGroups = parsed;
 		parserCompletionListeners.forEach(l -> l.onCompleteParse(parsed));
 		// Transform to our AST
-		logger.trace("Assembler AST updating: [JASM --> AST transform]");
+		logger.debugging(l -> l.trace("Assembler AST updating: [JASM --> AST transform]"));
 		JasmToAstTransformer transformer = new JasmToAstTransformer(parsed);
 		Unit unit;
 		try {
@@ -552,7 +553,7 @@ public class AssemblerPipeline {
 			this.unit = null;
 			return true;
 		}
-		logger.trace("Assembler AST up-to-date!");
+		logger.debugging(l -> l.trace("Assembler AST up-to-date!"));
 		return true;
 	}
 

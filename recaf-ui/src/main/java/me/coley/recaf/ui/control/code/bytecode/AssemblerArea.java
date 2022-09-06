@@ -36,6 +36,7 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.StackTraceUtil;
 import me.coley.recaf.util.WorkspaceTreeService;
+import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.DelayedExecutor;
 import me.coley.recaf.util.threading.DelayedRunnable;
@@ -56,7 +57,6 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Set;
@@ -76,8 +76,10 @@ import static me.darknet.assembler.parser.Group.GroupType;
  */
 public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineCompletionListener,
 		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener {
-	private static final Logger logger = Logging.get(AssemblerArea.class);
-	private static final int PIPELINE_UPDATE_DELAY_MS = 400;
+	private static final DebuggingLogger logger = Logging.get(AssemblerArea.class);
+	private static final int INITIAL_DELAY_MS = 500;
+	private static final int AST_LOOP_MS = 100;
+	private static final int PIPELINE_UPDATE_DELAY_MS = 300;
 	private final DelayedExecutor updatePipelineInput;
 	private final ProblemTracking problemTracking;
 	private final AssemblerPipeline pipeline;
@@ -152,7 +154,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	protected void handleAstUpdate() {
 		try {
 			if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
-				logger.trace("AST updated and validated");
+				logger.debugging(l -> l.trace("AST updated and validated"));
 				// Update suggestions data with definition changes
 				if (pipeline.getUnit() != null)
 					suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
@@ -160,7 +162,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				if (pipeline.isMethod() &&
 						pipeline.isOutputOutdated() &&
 						pipeline.generateMethod())
-					logger.trace("AST compiled to method and analysis executed");
+					logger.debugging(l -> l.trace("AST compiled to method and analysis executed"));
 			}
 		} catch (Throwable t) {
 			// Shouldn't occur, but make sure its known if it does
@@ -221,9 +223,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			pipeline.generateField();
 		SaveResult initialBuild = targetMember.isMethod() ? generateMethod(false) : generateField(false);
 		if (initialBuild == SaveResult.SUCCESS)
-			logger.trace("Initial build of disassemble successful!");
+			logger.debugging(l -> l.trace("Initial build of disassemble successful!"));
 		else
-			logger.trace("Initial build of disassemble failed!");
+			logger.warn("Initial build of disassemble failed!");
 	}
 
 	/**

@@ -10,3 +10,8 @@
     /* The size here is used to perfectly align with the adjacent cell height of the local variable table cells */
     -fx-padding: 4 8 3 8;
 }
+.list-view {
+	-fx-background-color: rgb(45, 45, 46);
+	-fx-border-width: 1;
+	-fx-border-color: rgb(85, 85, 85);
+}
