@@ -98,7 +98,7 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 					final CallGraphVertex vertex = callGraph.getVertex(item.getValue());
 					if (vertex != null) {
 						final List<CallGraphItem> newTodo = vertex.getCalls()
-								.stream().map(CallGraphVertex::getMethodInfo).sorted(Comparator.comparing(MethodInfo::getName))
+								.stream().map(CallGraphVertex::getMethodInfo)
 								.map(c -> new CallGraphItem(c, visitedMethods.contains(c)))
 								.filter(i -> {
 									item.getChildren().add(i);

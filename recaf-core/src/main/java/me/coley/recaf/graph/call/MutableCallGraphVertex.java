@@ -2,13 +2,11 @@ package me.coley.recaf.graph.call;
 
 import me.coley.recaf.code.MethodInfo;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class MutableCallGraphVertex implements CallGraphVertex {
-	private final Set<CallGraphVertex> callers = new HashSet<>();
-	private final Set<CallGraphVertex> calls = new HashSet<>();
+	private final Set<CallGraphVertex> callers = Collections.newSetFromMap(new LinkedHashMap<>());
+	private final Set<CallGraphVertex> calls = Collections.newSetFromMap(new LinkedHashMap<>());
 	private final MethodInfo methodInfo;
 	boolean visited;
 
