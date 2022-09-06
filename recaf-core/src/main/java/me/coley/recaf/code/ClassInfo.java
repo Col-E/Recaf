@@ -1,7 +1,6 @@
 package me.coley.recaf.code;
 
 import me.coley.recaf.RecafConstants;
-import me.coley.recaf.assemble.util.ProgramClass;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -17,7 +16,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo, ProgramClass {
+public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private static final Logger LOGGER = Logging.get(ClassInfo.class);
 	public static long maxOuterDepth = 20;
 	private final byte[] value;

@@ -1,13 +1,11 @@
 package me.coley.recaf.code;
 
-import me.coley.recaf.assemble.util.ProgramField;
-
 /**
  * Field information.
  *
  * @author Matt Coley
  */
-public class FieldInfo extends MemberInfo implements ProgramField {
+public class FieldInfo extends MemberInfo {
 	private final Object value;
 
 	/**

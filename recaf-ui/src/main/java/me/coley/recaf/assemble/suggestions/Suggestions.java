@@ -2,9 +2,9 @@ package me.coley.recaf.assemble.suggestions;
 
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
-import me.coley.recaf.assemble.util.ProgramClass;
-import me.coley.recaf.assemble.util.ProgramField;
-import me.coley.recaf.assemble.util.ProgramMethod;
+import me.coley.recaf.code.CommonClassInfo;
+import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.ClasspathUtil;
 import me.darknet.assembler.instructions.ParseInfo;
@@ -29,18 +29,18 @@ import static me.coley.recaf.util.ClasspathUtil.Tree;
 public class Suggestions {
 	private final static SuggestionResult EMPTY = new SuggestionResult("", Stream.empty());
 	private final static TreeSet<String> INSTRUCTIONS = new TreeSet<>(ParseInfo.actions.keySet());
-	private final Function<String, ProgramClass> mapper;
+	private final Function<String, CommonClassInfo> mapper;
 	private final Tree systemClasses = ClasspathUtil.getSystemClasses();
 	private final Tree classes;
 	private MethodDefinition method;
 
 	/**
 	 * @param classes
-	 * 		a tree of current user classes
+	 * 		Tree of current user classes.
 	 * @param mapper
-	 * 		a function that maps a class name to a {@link ProgramClass} instance
+	 * 		Function that maps a class name to a {@link CommonClassInfo} instance.
 	 */
-	public Suggestions(Tree classes, Function<String, ProgramClass> mapper, MethodDefinition method) {
+	public Suggestions(Tree classes, Function<String, CommonClassInfo> mapper, MethodDefinition method) {
 		this.classes = classes;
 		this.mapper = mapper;
 		this.method = method;
@@ -102,7 +102,7 @@ public class Suggestions {
 				String className = children[0] == null ? "" : children[0].content();
 				if (!className.contains(".")) return startsWith(className);
 				String[] parts = className.split("\\.");
-				ProgramClass clazz = mapper.apply(parts[0]);
+				CommonClassInfo clazz = mapper.apply(parts[0]);
 				if (clazz == null) return EMPTY;
 				String methodName = parts.length == 1 ? "" : parts[1];
 				return getMethodSuggestion(clazz, instruction.content().equals("invokestatic"), methodName);
@@ -135,7 +135,7 @@ public class Suggestions {
 				String className = children[0] == null ? "" : children[0].content();
 				if (!className.contains(".")) return startsWith(className);
 				String[] parts = className.split("\\.");
-				ProgramClass clazz = mapper.apply(parts[0]);
+				CommonClassInfo clazz = mapper.apply(parts[0]);
 				if (clazz == null) return EMPTY;
 				String fieldName = parts.length == 1 ? "" : parts[1];
 				return getFieldSuggestion(clazz, inst.contains("static"), fieldName);
@@ -144,8 +144,8 @@ public class Suggestions {
 		return EMPTY;
 	}
 
-	private SuggestionResult getFieldSuggestion(ProgramClass clazz, boolean isStatic, String fieldName) {
-		Stream<ProgramField> fields = isStatic ?
+	private SuggestionResult getFieldSuggestion(CommonClassInfo clazz, boolean isStatic, String fieldName) {
+		Stream<FieldInfo> fields = isStatic ?
 				clazz.getFields().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) != 0)
 				: clazz.getFields().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) == 0);
 		return new SuggestionResult(
@@ -155,8 +155,8 @@ public class Suggestions {
 		);
 	}
 
-	private SuggestionResult getMethodSuggestion(ProgramClass clazz, boolean isStatic, String methodName) {
-		Stream<ProgramMethod> methods = isStatic ?
+	private SuggestionResult getMethodSuggestion(CommonClassInfo clazz, boolean isStatic, String methodName) {
+		Stream<MethodInfo> methods = isStatic ?
 				clazz.getMethods().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) != 0)
 				: clazz.getMethods().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) == 0);
 		return new SuggestionResult(
