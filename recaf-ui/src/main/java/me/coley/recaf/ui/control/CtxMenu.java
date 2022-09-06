@@ -161,7 +161,6 @@ public class CtxMenu<T> extends PopupControl {
 			flow.getStyleClass().add("context-menu");
 			flow.setPrefWidth(menu.getPrefWidth());
 			flow.setPrefHeight(menu.getPrefHeight());
-			// TODO: When moving requires scrolling to fit the next selected item in view, it doesn't 'appear' as focused
 			flow.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
 				T selected = menu.selectedItem.get();
 				int itemsSize = menu.items.size();
@@ -209,11 +208,11 @@ public class CtxMenu<T> extends PopupControl {
 			menu.selectedItem.set(item);
 			// Update focused state of visible cells
 			int start = flow.getFirstVisibleIndex();
-			int end = flow.getLastVisibleIndex();
+			int end = flow.getLastVisibleIndex() + 1; // +1 is odd, but fixes 'show' not keeping focus of target index
 			for (int i = start; i < end; i++)
 				flow.getCell(i).setFocused(i == index);
 			// Ensure selected item is visible
-			if (index <= start || index >= end)
+			if (index < start || index >= end)
 				flow.show(index);
 		}
 
@@ -280,6 +279,9 @@ public class CtxMenu<T> extends PopupControl {
 			} else {
 				Node cellContent = skin.menu.mapperProperty.getValue().apply(item);
 				node.setLeft(cellContent);
+				// New content needs to know if it is focused, and we don't have an index check due to the
+				// nature of VirtualFlows, so we do an equals check instead which isn't ideal but should suffice.	
+				setFocused(skin.menu.selectedItem.isEqualTo(item).get());
 			}
 		}
 
