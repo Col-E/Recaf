@@ -267,6 +267,7 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 		@Override
 		public void reset() {
 			node.setLeft(null);
+			setFocused(false);
 		}
 
 		@Override
