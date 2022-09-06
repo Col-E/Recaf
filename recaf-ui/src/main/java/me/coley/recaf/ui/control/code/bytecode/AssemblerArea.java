@@ -33,6 +33,7 @@ import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.StackTraceUtil;
 import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.util.logging.Logging;
@@ -124,7 +125,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		WorkspaceTreeService treeService = RecafUI.getController().getServices().getTreeService();
 		suggestions = new Suggestions(treeService.getCurrentClassTree(),
 				RecafUI.getController().getWorkspace().getResources()::getClass, null);
-		setOnKeyPressed(event -> {
+		NodeEvents.addKeyPressHandler(this, event -> {
 			if (Configs.keybinds().suggest.match(event))
 				onSuggestionRequested();
 		});
@@ -151,9 +152,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	protected void handleAstUpdate() {
 		try {
 			if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
+				logger.trace("AST updated and validated");
+				// Update suggestions data with definition changes
 				if (pipeline.getUnit() != null)
 					suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
-				logger.trace("AST updated and validated");
+				// Generate the ASM node type from the AST.
 				if (pipeline.isMethod() &&
 						pipeline.isOutputOutdated() &&
 						pipeline.generateMethod())
@@ -223,11 +226,14 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			logger.trace("Initial build of disassemble failed!");
 	}
 
+	/**
+	 * Displays the suggestions menu for content at the current caret position.
+	 */
 	private void onSuggestionRequested() {
-		// get current cursor position
+		// Get current cursor position
 		int caretPosition = getCaretPosition();
 		Position position = offsetToPosition(caretPosition, Bias.Backward);
-
+		// Get AST group at the position
 		Group group = pipeline.getASTElementAt(position.getMajor() + 1, position.getMinor());
 		if (group != null) {
 			if (group.parent != null) {
@@ -236,10 +242,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				}
 			}
 		}
-
+		// Show new suggestions' context menu/list
 		if (suggestionsMenu != null) suggestionsMenu.hide();
-
-		CtxMenu<String> suggestionsMenu = getSuggestionMenu(caretPosition, group);
+		CtxMenu<String> suggestionsMenu = createSuggestionsMenu(caretPosition, group);
 		suggestionsMenu.setAutoHide(true);
 		suggestionsMenu.setHideOnEscape(true);
 		suggestionsMenu.show(this, getCaretBounds().get().getMinX(), getCaretBounds().get().getMaxY());
@@ -247,14 +252,22 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		this.suggestionsMenu = suggestionsMenu;
 	}
 
-	private CtxMenu<String> getSuggestionMenu(int position, Group suggestionGroup) {
-		// set the menu to hold 10 entries before it starts to scroll
+	/**
+	 * @param position
+	 * 		Caret position.
+	 * @param suggestionGroup
+	 * 		JASM AST at position.
+	 *
+	 * @return Menu containing completion suggestions.
+	 */
+	private CtxMenu<String> createSuggestionsMenu(int position, Group suggestionGroup) {
+		// Get suggestions content
 		SuggestionResult result = suggestions.getSuggestion(suggestionGroup);
 		String input = result.getInput();
 		Set<String> set = result.getResult().collect(Collectors.toCollection(TreeSet::new));
-		if (set.isEmpty()) {
+		if (set.isEmpty())
 			return new CtxMenu<>(javafx.scene.control.Label::new, List.of("No suggestions"));
-		}
+		// Create the menu populated with completions
 		// TODO: Is it worthwhile to not collect as 'String' but rather as 'ItemInfo'?
 		//  - Classes can have the mapper populate an icon graphic
 		//  - Same for fields/methods
