@@ -156,6 +156,15 @@ public class ClasspathUtil {
 		}
 
 		/**
+		 * Unfreeze tree, allowing changes.
+		 */
+		public void unfreeze() {
+			frozen = false;
+			if (children != null)
+				children.values().forEach(Tree::unfreeze);
+		}
+
+		/**
 		 * @param child
 		 * 		Child path item.
 		 *
@@ -200,6 +209,49 @@ public class ClasspathUtil {
 		}
 
 		/**
+		 * Trim an item of the given path off the tree.
+		 *
+		 * @param path
+		 * 		Child path. Multiple path items are separated by the {@code /} character.
+		 */
+		public void trimPath(String path) {
+			String[] parts = path.split("/");
+			trimPath(parts);
+		}
+
+		/**
+		 * Trim an item of the given path off the tree.
+		 *
+		 * @param path
+		 * 		Child path items.
+		 */
+		public void trimPath(String... path) {
+			// Do nothing for frozen trees.
+			if (frozen)
+				return;
+			// Get the leaf of the path.
+			// If it does not exist, abort.
+			Tree node = this;
+			for (String part : path) {
+				Tree subtree = node.visit(part);
+				if (subtree == null)
+					return;
+				node = subtree;
+			}
+			// Remove the leaf from its parent.
+			Tree parent = node.getParent();
+			if (parent != null)
+				parent.children.remove(node.value);
+			// Cleanup. If trimming the leaf makes its previous parent a leaf, remove it as well.
+			// Repeat until the parent going up is no longer a leaf.
+			while (parent != null && parent.isLeaf()) {
+				node = parent;
+				parent = parent.getParent();
+				parent.children.remove(node.value);
+			}
+		}
+
+		/**
 		 * @return Direct leaves of this node.
 		 */
 		public Stream<Tree> getBranches() {
@@ -235,7 +287,7 @@ public class ClasspathUtil {
 					}
 					trees.addAll(tree.children.values());
 					return !trees.isEmpty();
-				};
+				}
 			}, false);
 		}
 

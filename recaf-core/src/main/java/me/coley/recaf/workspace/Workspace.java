@@ -55,6 +55,7 @@ public class Workspace {
 	public void removeLibrary(Resource library) {
 		if (resources.getLibraries().remove(library)) {
 			listeners.forEach(listener -> listener.onRemoveLibrary(this, library));
+			library.clearListeners();
 		}
 	}
 
