@@ -982,6 +982,10 @@ public class Analyzer {
 					// Pop arguments off stack and push method return value
 					MethodInstruction methodInstruction = (MethodInstruction) instruction;
 					String desc = methodInstruction.getDesc();
+					if (!Types.isValidDesc(desc)) {
+						frame.markWonky("Invalid method descriptor");
+						break;
+					}
 					Type type = Type.getMethodType(desc);
 					Type[] argTypes = type.getArgumentTypes();
 					for (int i = argTypes.length - 1; i >= 0; i--) {

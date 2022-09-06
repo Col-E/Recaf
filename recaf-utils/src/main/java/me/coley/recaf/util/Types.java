@@ -114,7 +114,9 @@ public class Types {
 		char first = desc.charAt(0);
 		if (first == '(') {
 			try {
-				Type.getMethodType(desc);
+				Type methodType = Type.getMethodType(desc);
+				methodType.getArgumentTypes();
+				methodType.getReturnType();
 				return true;
 			} catch (Throwable t) {
 				return false;
