@@ -40,3 +40,11 @@
 .context-menu-header .label {
     -fx-opacity: 1.0;
 }
+.virtualized-menu {
+    -fx-border-insets: 0;
+	-fx-border-width: 1;
+	-fx-border-color: rgb(61, 61, 62);
+}
+.virtualized-menu-item {
+    -fx-padding: 3 5 3 5;
+}

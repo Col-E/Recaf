@@ -10,9 +10,13 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.PopupControl;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Window;
+import me.coley.recaf.ui.util.DragResizer;
+import me.coley.recaf.ui.window.GenericWindow;
 import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -31,7 +35,8 @@ import java.util.function.Function;
 public class VirtualizedContextMenu<T> extends PopupControl {
 	// TODO: Allow user to also manipulate (add) class of cells
 	//  - override default 'menu-item' properties like padding/size
-	private static final String DEFAULT_STYLE_CLASS = "context-menu";
+	private static final String[] STYLE_CLASS_MENU = {"virtualized-menu", "context-menu"};
+	private static final String[] STYLE_CLASS_MENU_ITEM = {"virtualized-menu-item", "menu-item"};
 	private final ObjectProperty<Function<T, ? extends Node>> mapperProperty = new SimpleObjectProperty<>(t -> {
 		throw new UnsupportedOperationException();
 	});
@@ -60,7 +65,7 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 	 */
 	public VirtualizedContextMenu(Collection<T> items) {
 		this.items = FXCollections.observableArrayList(items);
-		getStyleClass().setAll(DEFAULT_STYLE_CLASS);
+		getStyleClass().setAll(STYLE_CLASS_MENU);
 		setAutoHide(true);
 		setConsumeAutoHidingEvents(false);
 	}
@@ -143,7 +148,7 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 	private static class CtxSkin<T> implements Skin<PopupControl> {
 		private final VirtualFlow<T, CtxCell<T>> flow;
 		private final VirtualizedContextMenu<T> menu;
-		private final Node node;
+		private final VirtualizedScrollPane<VirtualFlow<T, CtxCell<T>>> node;
 
 		/**
 		 * @param menu
@@ -158,7 +163,7 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 				return cell;
 			});
 			flow.setFocusTraversable(true);
-			flow.getStyleClass().add("context-menu");
+			flow.getStyleClass().setAll(STYLE_CLASS_MENU);
 			flow.setPrefWidth(menu.getPrefWidth());
 			flow.setPrefHeight(menu.getPrefHeight());
 			flow.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
@@ -194,6 +199,9 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 				e.consume();
 			});
 			node = new VirtualizedScrollPane<>(flow);
+			node.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+			node.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+			DragResizer.makeResizable(node, 100, 30);
 		}
 
 		/**
@@ -250,7 +258,7 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 		 */
 		public CtxCell(CtxSkin<T> skin) {
 			this.skin = skin;
-			node.getStyleClass().add("menu-item");
+			node.getStyleClass().setAll(STYLE_CLASS_MENU_ITEM);
 			node.setOnMousePressed(e -> {
 				if (item != null) {
 					skin.menu.selectedItem.set(item);
