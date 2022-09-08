@@ -3,6 +3,7 @@ package me.coley.recaf.ui.control.code.bytecode;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -18,8 +19,9 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.pipeline.*;
-import me.coley.recaf.assemble.suggestions.SuggestionResult;
+import me.coley.recaf.assemble.suggestions.Suggestion;
 import me.coley.recaf.assemble.suggestions.Suggestions;
+import me.coley.recaf.assemble.suggestions.SuggestionsResults;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
 import me.coley.recaf.assemble.validation.MessageLevel;
@@ -86,11 +88,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	private final DelayedExecutor updatePipelineInput;
 	private final ProblemTracking problemTracking;
 	private final AssemblerPipeline pipeline;
+	private final Suggestions suggestions;
+	private VirtualizedContextMenu<Suggestion> suggestionsMenu;
 	private ClassInfo classInfo;
 	private MemberInfo targetMember;
 	private ContextMenu menu;
-	private final Suggestions suggestions;
-	private VirtualizedContextMenu<String> suggestionsMenu;
 
 	/**
 	 * Sets up the editor area.
@@ -249,7 +251,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		}
 		// Show new suggestions' context menu/list
 		if (suggestionsMenu != null) suggestionsMenu.hide();
-		VirtualizedContextMenu<String> suggestionsMenu = createSuggestionsMenu(caretPosition, group);
+		VirtualizedContextMenu<Suggestion> suggestionsMenu = createSuggestionsMenu(caretPosition, group);
 		suggestionsMenu.setAutoHide(true);
 		suggestionsMenu.setHideOnEscape(true);
 		suggestionsMenu.show(this, getCaretBounds().get().getMinX(), getCaretBounds().get().getMaxY());
@@ -265,37 +267,55 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 *
 	 * @return Menu containing completion suggestions.
 	 */
-	private VirtualizedContextMenu<String> createSuggestionsMenu(int position, Group suggestionGroup) {
+	private VirtualizedContextMenu<Suggestion> createSuggestionsMenu(int position, Group suggestionGroup) {
 		// Get suggestions content
-		SuggestionResult result = suggestions.getSuggestion(suggestionGroup);
+		SuggestionsResults result = suggestions.getSuggestion(suggestionGroup);
 		String input = result.getInput();
-		Set<String> set = result.getResult().collect(Collectors.toCollection(TreeSet::new));
+		Set<Suggestion> set = result.getValues().collect(Collectors.toCollection(TreeSet::new));
 		if (set.isEmpty())
-			return new VirtualizedContextMenu<>(javafx.scene.control.Label::new, List.of("No suggestions"));
+			return new VirtualizedContextMenu<>(
+					s -> new javafx.scene.control.Label(s.getText()),
+					List.of(new Suggestion(null, "No suggestions"))
+			);
 		// Create the menu populated with completions
 		// TODO: Is it worthwhile to not collect as 'String' but rather as 'ItemInfo'?
 		//  - Classes can have the mapper populate an icon graphic
 		//  - Same for fields/methods
-		VirtualizedContextMenu<String> menu = new VirtualizedContextMenu<>(set);
+		VirtualizedContextMenu<Suggestion> menu = new VirtualizedContextMenu<>(set);
 		menu.setPrefSize(350, Math.min(set.size() * 15, 400));
 		menu.setOnAction(e -> {
-			String selected = menu.selectedItemProperty().get();
-			String insert = selected.substring(input.length());
+			Suggestion selected = menu.selectedItemProperty().get();
+			String selectedText = selected.getText();
+			String insert = selectedText.substring(input.length());
 			insertText(position, insert);
 			moveTo(position + insert.length());
 		});
 		menu.mapperProperty().set(suggestion -> {
+			String suggestionText = suggestion.getText();
 			// If there is no match to begin with, use the full suggestion
-			if (input == null || input.isBlank())
-				return new javafx.scene.control.Label(suggestion);
-			// Put a blue highlight on found match for the completion
-			Text inputText = new Text(input);
-			inputText.setFill(Color.rgb(0, 175, 255));
-			return new TextFlow(
-					new javafx.scene.control.Label(suggestion.substring(0, suggestion.indexOf(input))),
-					inputText,
-					new javafx.scene.control.Label(suggestion.substring(suggestion.indexOf(input) + input.length()))
-			);
+			Node text;
+			if (input == null || input.isBlank()) {
+				text = new javafx.scene.control.Label(suggestionText);
+			} else {
+				// Put a blue highlight on found match for the completion
+				Text inputText = new Text(input);
+				inputText.setFill(Color.rgb(0, 175, 255));
+				text = new TextFlow(
+						new javafx.scene.control.Label(suggestionText.substring(0, suggestionText.indexOf(input))),
+						inputText,
+						new javafx.scene.control.Label(suggestionText.substring(suggestionText.indexOf(input) + input.length()))
+				);
+			}
+			// Populate with icon if possible
+			ItemInfo info = suggestion.getInfo();
+			if (info != null) {
+				HBox graphics = new HBox(Icons.getInfoIcon(info));
+				if (info instanceof AccessibleInfo)
+					graphics.getChildren().add(Icons.getVisibilityIcon(((AccessibleInfo) info).getAccess()));
+				HBox box = new HBox(graphics, text);
+				box.setSpacing(10);
+				return box;
+			} else return text;
 		});
 		return menu;
 	}

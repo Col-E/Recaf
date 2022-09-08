@@ -27,7 +27,7 @@ import static me.coley.recaf.util.ClasspathUtil.Tree;
  * @author xDark
  */
 public class Suggestions {
-	private final static SuggestionResult EMPTY = new SuggestionResult("", Stream.empty());
+	private final static SuggestionsResults EMPTY = new SuggestionsResults("", Stream.empty());
 	private final static TreeSet<String> INSTRUCTIONS = new TreeSet<>(ParseInfo.actions.keySet());
 	private final Function<String, CommonClassInfo> mapper;
 	private final Tree systemClasses = ClasspathUtil.getSystemClasses();
@@ -62,27 +62,30 @@ public class Suggestions {
 	 *
 	 * @return Suggestions for the given group.
 	 */
-	public SuggestionResult getSuggestion(Group group) {
+	public SuggestionsResults getSuggestion(Group group) {
 		if (group == null) {
-			return new SuggestionResult("", INSTRUCTIONS.stream());
+			return new SuggestionsResults("", INSTRUCTIONS.stream()
+					.map(i -> new Suggestion(null, i)));
 		}
 		switch (group.type) {
 			case INSTRUCTION:
 				return getInstructionSuggestion(group);
 			case IDENTIFIER: {
 				String content = group.content();
-				return new SuggestionResult(
+				return new SuggestionsResults(
 						group.content(),
-						INSTRUCTIONS.stream().filter(s -> !s.equals(content) && s.startsWith(content))
+						INSTRUCTIONS.stream()
+								.filter(s -> !s.equals(content) && s.startsWith(content))
+								.map(i -> new Suggestion(null, i))
 				);
 			}
 
 		}
 		// return empty suggestion result
-		return new SuggestionResult("", Stream.empty());
+		return new SuggestionsResults("", Stream.empty());
 	}
 
-	private SuggestionResult getInstructionSuggestion(Group group) {
+	private SuggestionsResults getInstructionSuggestion(Group group) {
 		InstructionGroup instruction = (InstructionGroup) group;
 		Group[] children = instruction.children;
 		String inst = instruction.content();
@@ -125,8 +128,10 @@ public class Suggestions {
 				for (MethodParameter parameter : method.getParams().getParameters()) {
 					locals.add(parameter.getName());
 				}
-				return new SuggestionResult(children[0].content(),
-						locals.stream().filter(s -> s.startsWith(localName)));
+				return new SuggestionsResults(children[0].content(),
+						locals.stream()
+								.filter(s -> s.startsWith(localName))
+								.map(i -> new Suggestion(null, i)));
 			}
 			case "getstatic":
 			case "putstatic":
@@ -144,35 +149,44 @@ public class Suggestions {
 		return EMPTY;
 	}
 
-	private SuggestionResult getFieldSuggestion(CommonClassInfo clazz, boolean isStatic, String fieldName) {
+	private SuggestionsResults getFieldSuggestion(CommonClassInfo clazz, boolean isStatic, String fieldName) {
 		Stream<FieldInfo> fields = isStatic ?
 				clazz.getFields().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) != 0)
 				: clazz.getFields().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) == 0);
-		return new SuggestionResult(
+		return new SuggestionsResults(
 				fieldName,
-				fields.map(m -> m.getName() + " " + m.getDescriptor())
-						.filter(name -> !name.equals(fieldName) && name.startsWith(fieldName))
+				fields.filter(f -> !f.getName().equals(fieldName) && format(f).startsWith(fieldName))
+						.map(f -> new Suggestion(f, format(f)))
 		);
 	}
 
-	private SuggestionResult getMethodSuggestion(CommonClassInfo clazz, boolean isStatic, String methodName) {
+
+	private SuggestionsResults getMethodSuggestion(CommonClassInfo clazz, boolean isStatic, String methodName) {
 		Stream<MethodInfo> methods = isStatic ?
 				clazz.getMethods().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) != 0)
 				: clazz.getMethods().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) == 0);
-		return new SuggestionResult(
+		return new SuggestionsResults(
 				methodName,
-				methods.map(m -> m.getName() + " " + m.getDescriptor())
-						.filter(name -> !name.equals(methodName) && name.startsWith(methodName))
+				methods.filter(m -> !m.getName().equals(methodName) && format(m).startsWith(methodName))
+						.map(m -> new Suggestion(m, format(m)))
 		);
 	}
 
-	private SuggestionResult startsWith(String partial) {
-		return new SuggestionResult(
+	private static String format(FieldInfo info) {
+		return info.getName() + " " + info.getDescriptor();
+	}
+
+	private static String format(MethodInfo info) {
+		return info.getName() + " " + info.getDescriptor();
+	}
+
+	private SuggestionsResults startsWith(String partial) {
+		return new SuggestionsResults(
 				partial,
 				Stream.concat(
 						searchIn(classes, partial),
 						searchIn(systemClasses, partial)
-				)
+				).map(c -> new Suggestion(mapper.apply(c), c))
 		);
 	}
 

@@ -6,10 +6,11 @@ import java.util.stream.Stream;
  * Suggestion result.
  *
  * @author xDark
+ * @see Suggestion
  */
-public final class SuggestionResult {
+public final class SuggestionsResults {
 	private final String input;
-	private final Stream<String> result;
+	private final Stream<Suggestion> result;
 
 	/**
 	 * @param input
@@ -17,7 +18,7 @@ public final class SuggestionResult {
 	 * @param result
 	 * 		Stream of suggestions.
 	 */
-	public SuggestionResult(String input, Stream<String> result) {
+	public SuggestionsResults(String input, Stream<Suggestion> result) {
 		this.input = input;
 		this.result = result;
 	}
@@ -32,7 +33,7 @@ public final class SuggestionResult {
 	/**
 	 * @return Stream of suggestions.
 	 */
-	public Stream<String> getResult() {
+	public Stream<Suggestion> getValues() {
 		return result;
 	}
 }
