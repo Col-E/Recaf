@@ -3,6 +3,9 @@ package me.coley.recaf.ui.control.code.bytecode;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
@@ -274,7 +277,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		//  - Classes can have the mapper populate an icon graphic
 		//  - Same for fields/methods
 		VirtualizedContextMenu<String> menu = new VirtualizedContextMenu<>(set);
-		menu.setPrefSize(300, Math.min(set.size() * 35, 420));
+		menu.setPrefSize(350, Math.min(set.size() * 15, 400));
 		menu.setOnAction(e -> {
 			String selected = menu.selectedItemProperty().get();
 			String insert = selected.substring(input.length());
@@ -282,8 +285,17 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			moveTo(position + insert.length());
 		});
 		menu.mapperProperty().set(suggestion -> {
-			String insert = suggestion.substring(input.length());
-			return new javafx.scene.control.Label(insert);
+			// If there is no match to begin with, use the full suggestion
+			if (input == null || input.isBlank())
+				return new javafx.scene.control.Label(suggestion);
+			// Put a blue highlight on found match for the completion
+			Text inputText = new Text(input);
+			inputText.setFill(Color.rgb(0, 175, 255));
+			return new TextFlow(
+					new javafx.scene.control.Label(suggestion.substring(0, suggestion.indexOf(input))),
+					inputText,
+					new javafx.scene.control.Label(suggestion.substring(suggestion.indexOf(input) + input.length()))
+			);
 		});
 		return menu;
 	}
