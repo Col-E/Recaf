@@ -57,6 +57,8 @@ public final class CallGraphRegistry {
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 				MethodInfo info = methodMap.get(new Descriptor(name, descriptor));
+				if (info == null)
+					return null;
 				Map<MethodInfo, MutableCallGraphVertex> vertexMap = CallGraphRegistry.this.vertexMap;
 				MutableCallGraphVertex vertex = vertexMap.computeIfAbsent(info, MutableCallGraphVertex::new);
 				if (!vertex.visited) {
@@ -65,10 +67,11 @@ public final class CallGraphRegistry {
 						@Override
 						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
 							ClassInfo info = workspace.getResources().getClass(owner);
-							if (info == null) {
+							if (info == null)
 								return;
-							}
 							MethodInfo call = getMethodMap(info).get(new Descriptor(name, descriptor));
+							if (call == null)
+								return;
 							MutableCallGraphVertex nestedVertex = vertexMap.computeIfAbsent(call, MutableCallGraphVertex::new);
 							vertex.getCalls().add(nestedVertex);
 							nestedVertex.getCallers().add(vertex);

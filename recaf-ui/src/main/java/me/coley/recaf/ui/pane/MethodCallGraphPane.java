@@ -33,16 +33,30 @@ import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MethodCallGraphPane extends BorderPane implements Updatable<CommonClassInfo> {
-	public static final int MAX_TREE_DEPTH = 10;
+	public static final int MAX_TREE_DEPTH = 20;
 	private final Workspace workspace;
 	private CommonClassInfo classInfo;
 	private final ObjectProperty<MethodInfo> currentMethod = new SimpleObjectProperty<>();
 	private final CallGraphTreeView graphTreeView = new CallGraphTreeView();
+	private final CallGraphMode mode;
 
-	public MethodCallGraphPane(Workspace workspace) {
+	public enum CallGraphMode {
+		CALLS(CallGraphVertex::getCalls),
+		CALLERS(CallGraphVertex::getCallers);
+
+		private final Function<CallGraphVertex, Collection<CallGraphVertex>> childrenGetter;
+
+		CallGraphMode(Function<CallGraphVertex, Collection<CallGraphVertex>> getCallers) {
+			childrenGetter = getCallers;
+		}
+	}
+
+	public MethodCallGraphPane(Workspace workspace, CallGraphMode mode) {
+		this.mode = mode;
 		this.workspace = workspace;
 		currentMethod.addListener((ChangeListener<? super MethodInfo>) this::onUpdateMethod);
 		graphTreeView.onUpdate(classInfo);
@@ -76,13 +90,13 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 			final MethodInfo methodInfo = currentMethod.get();
 			if (methodInfo == null) setRoot(null);
 			else ThreadUtil.run(() -> {
-				CallGraphItem root = buildCallGraph(methodInfo, callGraph);
+				CallGraphItem root = buildCallGraph(methodInfo, callGraph, mode.childrenGetter);
 				root.setExpanded(true);
 				FxThreadUtil.run(() -> setRoot(root));
 			});
 		}
 
-		private CallGraphItem buildCallGraph(MethodInfo rootMethod, CallGraphRegistry callGraph) {
+		private CallGraphItem buildCallGraph(MethodInfo rootMethod, CallGraphRegistry callGraph, Function<CallGraphVertex, Collection<CallGraphVertex>> childrenGetter) {
 			ArrayDeque<MethodInfo> visitedMethods = new ArrayDeque<>();
 			ArrayDeque<List<CallGraphItem>> workingStack = new ArrayDeque<>();
 			CallGraphItem root;
@@ -97,10 +111,11 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 					depth++;
 					final CallGraphVertex vertex = callGraph.getVertex(item.getValue());
 					if (vertex != null) {
-						final List<CallGraphItem> newTodo = vertex.getCalls()
+						final List<CallGraphItem> newTodo = childrenGetter.apply(vertex)
 								.stream().map(CallGraphVertex::getMethodInfo)
 								.map(c -> new CallGraphItem(c, visitedMethods.contains(c)))
 								.filter(i -> {
+									if (i.getValue() == null) return false;
 									item.getChildren().add(i);
 									return !i.recursive;
 								}).collect(Collectors.toList());

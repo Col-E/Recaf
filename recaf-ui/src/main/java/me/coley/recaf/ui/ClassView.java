@@ -1,6 +1,7 @@
 package me.coley.recaf.ui;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Side;
 import javafx.scene.Node;
@@ -40,7 +41,8 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	private final BorderPane mainViewWrapper = new BorderPane();
 	private final CollapsibleTabPane sideTabs = new CollapsibleTabPane();
 	private final SplitPane contentSplit = new SplitPane();
-	private final MethodCallGraphPane methodCallGraph;
+	private final MethodCallGraphPane methodCallGraphCalls;
+	private final MethodCallGraphPane methodCallGraphCallers;
 	private ClassViewMode mode = Configs.editor().defaultClassMode;
 	private ClassRepresentation mainView;
 	private CommonClassInfo info;
@@ -53,13 +55,16 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		this.info = info;
 		outline = new OutlinePane(this);
 		hierarchy = new HierarchyPane();
-		methodCallGraph = new MethodCallGraphPane(WorkspaceAPI.getWorkspace());
+		methodCallGraphCalls = new MethodCallGraphPane(WorkspaceAPI.getWorkspace(), MethodCallGraphPane.CallGraphMode.CALLS);
+		methodCallGraphCallers = new MethodCallGraphPane(WorkspaceAPI.getWorkspace(), MethodCallGraphPane.CallGraphMode.CALLERS);
 		// Setup main view
 		mainView = createViewForClass(info);
-		methodCallGraph.currentMethodProperty().bind(Bindings.createObjectBinding(() -> {
+		final ObjectBinding<MethodInfo> currentMethodBinding = Bindings.createObjectBinding(() -> {
 			final ItemInfo itemInfo = NavigationBar.getInstance().currentItemProperty().get();
 			return itemInfo instanceof MethodInfo ? (MethodInfo) itemInfo : null;
-		}, NavigationBar.getInstance().currentItemProperty()));
+		}, NavigationBar.getInstance().currentItemProperty());
+		methodCallGraphCalls.currentMethodProperty().bind(currentMethodBinding);
+		methodCallGraphCallers.currentMethodProperty().bind(currentMethodBinding);
 		mainViewWrapper.setCenter(mainView.getNodeRepresentation());
 		contentSplit.getItems().add(mainViewWrapper);
 		contentSplit.getStyleClass().add("view-split-pane");
@@ -113,7 +118,8 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		info = newValue;
 		outline.onUpdate(newValue);
 		hierarchy.onUpdate(newValue);
-		methodCallGraph.onUpdate(newValue);
+		methodCallGraphCalls.onUpdate(newValue);
+		methodCallGraphCallers.onUpdate(newValue);
 		if (mainView != null) {
 			mainView.onUpdate(newValue);
 		}
@@ -208,7 +214,8 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		tabPane.getTabs().addAll(
 				createOutlineTab(),
 				createHierarchyTab(),
-				createCallGraphTab()
+				createCallGraphTabCalls(),
+				createCallGraphTabCallers()
 		);
 		if (mainView instanceof ToolSideTabbed) {
 			((ToolSideTabbed) mainView).populateSideTabs(tabPane);
@@ -277,8 +284,11 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		return createTab("hierarchy.title", Icons.T_TREE, hierarchy);
 	}
 
-	private Tab createCallGraphTab() {
-		return createTab("callgraph.title", Icons.T_TREE, methodCallGraph);
+	private Tab createCallGraphTabCalls() {
+		return createTab("callgraph.calls.title", Icons.T_TREE, methodCallGraphCalls);
+	}
+	private Tab createCallGraphTabCallers() {
+		return createTab("callgraph.callers.title", Icons.T_TREE, methodCallGraphCallers);
 	}
 
 	private static Resource getPrimary() {
