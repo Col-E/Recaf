@@ -137,10 +137,9 @@ public class JavaParserResolving {
 		if (solve != null) {
 			try {
 				value = solve.invoke(symbolSolver.getFacade(), node);
-			} catch (Throwable ex) {
+			} catch (Throwable ignored) {
 				// Some facade implementations just throw exceptions when they don't resolve values.
 				// We can ignore them and assume they failed to get anything useful.
-				ex.printStackTrace();
 			}
 		}
 		if (node instanceof InitializerDeclaration) {
