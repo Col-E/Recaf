@@ -7,7 +7,7 @@ import java.util.Objects;
  *
  * @author Matt Coley
  */
-public abstract class MemberInfo implements ItemInfo {
+public abstract class MemberInfo implements AccessibleInfo, ItemInfo {
 	private final String owner;
 	private final String name;
 	private final String descriptor;
