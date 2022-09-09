@@ -95,7 +95,7 @@ public final class Streams {
 	}
 
 	/**
-	 * Recursively traversed {@literal seed}.
+	 * Recursively traversed {@code seed}.
 	 *
 	 * @param seed
 	 * 		Initial seed.
@@ -105,11 +105,15 @@ public final class Streams {
 	 * @return Stream containing all traversed elements.
 	 */
 	public static <T> Stream<T> recurse(T seed, Function<? super T, Stream<? extends T>> fn) {
-		return Stream.concat(Stream.of(seed), Stream.of(seed).flatMap(fn).flatMap(x -> recurse(x, fn)));
+		return Stream.concat(
+				Stream.of(seed),
+				Stream.of(seed)
+						.flatMap(fn)
+						.flatMap(x -> recurse(x, fn)));
 	}
 
 	/**
-	 * Recursively traversed {@literal seed}.
+	 * Recursively traversed {@code seed}.
 	 *
 	 * @param seed
 	 * 		Initial stream.

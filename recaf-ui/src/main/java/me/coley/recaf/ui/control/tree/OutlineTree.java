@@ -102,7 +102,7 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 				.filter(item ->
 						filter(
 								accessGetter.apply(item), caseSensitive,
-								item instanceof InnerClassInfo ? ((InnerClassInfo) item).getInnerName() : item.getName(),
+								item instanceof InnerClassInfo ? ((InnerClassInfo) item).getSimpleName() : item.getName(),
 								filterStr
 						)
 				)
@@ -208,7 +208,7 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 			} else if (item instanceof InnerClassInfo) {
 				InnerClassInfo innerClass = (InnerClassInfo) item;
 				textProperty().bind(Bindings.createStringBinding(() -> StringUtil.limit(
-								EscapeUtil.escape(innerClass.getInnerName()),
+								EscapeUtil.escape(innerClass.getSimpleName()),
 								"...",
 								Configs.display().maxTreeTextLength.get())
 						, Configs.display().maxTreeTextLength));

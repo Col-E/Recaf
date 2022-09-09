@@ -7,6 +7,7 @@ import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.iface.Method;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -92,6 +93,13 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 	@Override
 	public int getAccess() {
 		return access;
+	}
+
+	@Nullable
+	@Override
+	public OuterMethodInfo getOuterMethod() {
+		// TODO: implement outer method if dex class is a method local class
+		return null;
 	}
 
 	@Override
