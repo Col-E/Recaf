@@ -363,13 +363,14 @@ conf.binding.appearance.fontsize.up=Increase font size
 conf.binding.appearance.fontsize.down=Decrease font size
 
 conf.assembler=Assembler
+conf.assembler.build.delay=Delay before updating bytecode
 conf.assembler.format=Format
 conf.assembler.format.prefix=Use dot prefix for keywords
 conf.assembler.parse=Parsing
 conf.assembler.parse.recover=Attempt error recovery
 conf.assembler.validation=Validation
 conf.assembler.validation.ast=Enable AST validation
-conf.assembler.validation.bytecode=Enable bytecode validation
+conf.assembler.validation.bytecode=Enable bytecode analysis
 conf.assembler.debug=Debugging
 conf.assembler.debug.ast-debug=Show AST debug info
 

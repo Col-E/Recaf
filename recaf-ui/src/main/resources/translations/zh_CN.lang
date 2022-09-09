@@ -354,13 +354,14 @@ conf.binding.appearance.fontsize.up=放大字体
 conf.binding.appearance.fontsize.down=缩小字体
 
 conf.assembler=汇编器
+conf.assembler.build.delay=更新字节码前的延迟
 conf.assembler.format=格式
 conf.assembler.format.prefix=为关键词使用点前缀
 conf.assembler.parse=解析
 conf.assembler.parse.recover=尝试错误恢复
 conf.assembler.validation=验证
 conf.assembler.validation.ast=启用AST验证
-conf.assembler.validation.bytecode=启用字节码验证
+conf.assembler.validation.bytecode=启用字节码分析
 conf.assembler.debug=调试
 conf.assembler.debug.ast-debug=显示AST调试信息
 

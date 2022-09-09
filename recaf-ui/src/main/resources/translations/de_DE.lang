@@ -275,11 +275,12 @@ conf.binding.inputprompt.initial=<Taste>
 conf.binding.inputprompt.finish=<ENTER zum bestätigen>
 
 conf.assembler=Assembler
+conf.assembler.build.delay=Verzögerung vor dem Aktualisieren des Bytecodes
 conf.assembler.parse=Parse
 conf.assembler.parse.recover=Versuche, Fehler zu beheben
 conf.assembler.validation=Validierung
-conf.assembler.validation.ast=AST-Validierung
-conf.assembler.validation.bytecode=Bytecode-Validierung
+conf.assembler.validation.ast=Aktivieren Sie die AST-Validierung
+conf.assembler.validation.bytecode=Aktivieren Sie die Bytecode-Analyse
 
 conf.compiler=Compiler
 conf.compiler.general=Allgemein

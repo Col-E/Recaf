@@ -82,9 +82,6 @@ import static me.darknet.assembler.parser.Group.GroupType;
 public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineCompletionListener,
 		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener {
 	private static final DebuggingLogger logger = Logging.get(AssemblerArea.class);
-	private static final int INITIAL_DELAY_MS = 500;
-	private static final int AST_LOOP_MS = 100;
-	private static final int PIPELINE_UPDATE_DELAY_MS = 300;
 	private final DelayedExecutor updatePipelineInput;
 	private final ProblemTracking problemTracking;
 	private final AssemblerPipeline pipeline;
@@ -106,7 +103,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		super(Languages.JAVA_BYTECODE, problemTracking);
 		this.problemTracking = problemTracking;
 		this.pipeline = pipeline;
-		this.updatePipelineInput = new DelayedRunnable(PIPELINE_UPDATE_DELAY_MS, () -> {
+		this.updatePipelineInput = new DelayedRunnable(config().updateDelayMs, () -> {
 			pipeline.setText(getText());
 			handleAstUpdate();
 		});
@@ -123,11 +120,15 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		// Register listeners to hook into problem tracking
 		pipeline.addParserFailureListener(this);
 		pipeline.addBytecodeFailureListener(this);
-		pipeline.addBytecodeValidationListener(this);
 		pipeline.addPipelineCompletionListener(this);
-		boolean validate = config().astValidation;
-		if (validate) {
+		boolean validateAst = config().astValidation;
+		if (validateAst) {
 			pipeline.addAstValidationListener(this);
+		}
+		boolean analyzeBytecode = config().bytecodeAnalysis;
+		pipeline.setDoUseAnalysis(analyzeBytecode);
+		if (analyzeBytecode) {
+			pipeline.addBytecodeValidationListener(this);
 		}
 		WorkspaceTreeService treeService = RecafUI.getController().getServices().getTreeService();
 		suggestions = new Suggestions(treeService.getCurrentClassTree(),
