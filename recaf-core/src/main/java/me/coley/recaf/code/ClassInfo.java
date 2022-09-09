@@ -36,8 +36,8 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private int hashCode;
 
 	private ClassInfo(String name, String superName, String signature, List<String> interfaces, int version, int access,
-										OuterMethodInfo outerMethod, List<FieldInfo> fields, List<MethodInfo> methods, byte[] value,
-										List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs) {
+					  OuterMethodInfo outerMethod, List<FieldInfo> fields, List<MethodInfo> methods, byte[] value,
+					  List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs) {
 		this.value = value;
 		this.name = name;
 		this.signature = signature;
@@ -83,7 +83,8 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	}
 
 	@Override
-	public @Nullable OuterMethodInfo getOuterMethod() {
+	@Nullable
+	public OuterMethodInfo getOuterMethod() {
 		return outerMethod;
 	}
 

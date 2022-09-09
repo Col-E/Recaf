@@ -34,15 +34,15 @@ public class InnerClassInfo implements ItemInfo {
 
 	/**
 	 * @param name
-	 * 		the internal name of an inner class (see {@link Type#getInternalName()}).
+	 * 		The internal name of an inner class (see {@link Type#getInternalName()}).
 	 * @param outerName
-	 * 		the internal name of the class to which the inner class belongs (see {@link
-	 *    Type#getInternalName()}). May be {@literal null} for not member classes.
+	 * 		The internal name of the class to which the inner class belongs (see {@link
+	 *        Type#getInternalName()}). May be {@code null} for not member classes.
 	 * @param innerName
-	 * 		the (simple) name of the inner class inside its enclosing class. May be
-	 *    {@literal null} for anonymous inner classes.
+	 * 		The (simple) name of the inner class inside its enclosing class. May be
+	 *        {@code null} for anonymous inner classes.
 	 * @param access
-	 * 		the access flags of the inner class as originally declared in the enclosing
+	 * 		The access flags of the inner class as originally declared in the enclosing
 	 * 		class.
 	 */
 	public InnerClassInfo(String className, String name, @Nullable String outerName, @Nullable String innerName, int access) {
@@ -56,7 +56,7 @@ public class InnerClassInfo implements ItemInfo {
 	/**
 	 * This is useful for backtracking to which class this attribute belongs to.
 	 *
-	 * @return Owner of this attribute
+	 * @return Owner of this attribute.
 	 */
 	public String getClassName() {
 		return className;
@@ -72,14 +72,16 @@ public class InnerClassInfo implements ItemInfo {
 	/**
 	 * @return Internal name of the outer class in which this inner class is in. May be null for not member classes.
 	 */
-	public @Nullable String getOuterName() {
+	@Nullable
+	public String getOuterName() {
 		return outerName;
 	}
 
 	/**
 	 * @return Simple name of the inner class. May be null for anonymous inner classes.
 	 */
-	public @Nullable String getInnerName() {
+	@Nullable
+	public String getInnerName() {
 		return innerName;
 	}
 
@@ -100,11 +102,13 @@ public class InnerClassInfo implements ItemInfo {
 	/**
 	 * @return Either {@link #getInnerName()} if not null, otherwise the last "part" (after last $ or /) of {@link #getName()}.
 	 */
-	public @Nonnull String getSimpleName() {
+	@Nonnull
+	public String getSimpleName() {
 		if (innerName != null) return innerName;
 		int lastIndex = 0;
-		for (;lastIndex < Math.min(className.length(), name.length()); lastIndex++) {
-			if(className.charAt(lastIndex) != name.charAt(lastIndex)) break;
+		int endIndex = Math.min(className.length(), name.length());
+		for (; lastIndex < endIndex; lastIndex++) {
+			if (className.charAt(lastIndex) != name.charAt(lastIndex)) break;
 		}
 		return lastIndex < name.length() ? name.substring(lastIndex) : name;
 	}

@@ -67,7 +67,8 @@ public abstract class MemberInfo implements ItemInfo {
 	/**
 	 * @return Member's generic signature. May be {@code null}.
 	 */
-	public @Nullable String getSignature() {
+	@Nullable
+	public String getSignature() {
 		return signature;
 	}
 

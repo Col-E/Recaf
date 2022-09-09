@@ -2,6 +2,11 @@ package me.coley.recaf.code;
 
 import javax.annotation.Nullable;
 
+/**
+ * Info for outer-method attribute.
+ *
+ * @author Amejonah
+ */
 public class OuterMethodInfo {
 	private final String className;
 	private final String owner;
@@ -12,12 +17,12 @@ public class OuterMethodInfo {
 
 	/**
 	 * @param owner
-	 * 		internal name of the enclosing class of the class.
+	 * 		Internal name of the enclosing class of the class.
 	 * @param name
-	 * 		the name of the method that contains the class, or {@literal null} if the class is
+	 * 		The name of the method that contains the class, or {@code null} if the class is
 	 * 		not enclosed in a method of its enclosing class.
 	 * @param descriptor
-	 * 		the descriptor of the method that contains the class, or {@literal null} if
+	 * 		The descriptor of the method that contains the class, or {@code null} if
 	 * 		the class is not enclosed in a method of its enclosing class.
 	 */
 	public OuterMethodInfo(String className, String owner, @Nullable String name, @Nullable String descriptor) {
@@ -39,8 +44,8 @@ public class OuterMethodInfo {
 	}
 
 	/**
-	 * @return The name of the method that contains the class, or {@literal null} if the class is
-	 * 		not enclosed in a method of its enclosing class (ex. (static) init block).
+	 * @return The name of the method that contains the class, or {@code null} if the class is
+	 * not enclosed in a method of its enclosing class (ex. (static) init block).
 	 */
 	@Nullable
 	public String getName() {
@@ -48,8 +53,8 @@ public class OuterMethodInfo {
 	}
 
 	/**
-	 * @return The descriptor of the method that contains the class, or {@literal null} if
-	 * 		the class is not enclosed in a method of its enclosing class (ex. (static) init block).
+	 * @return The descriptor of the method that contains the class, or {@code null} if
+	 * the class is not enclosed in a method of its enclosing class (ex. (static) init block).
 	 */
 	@Nullable
 	public String getDescriptor() {
