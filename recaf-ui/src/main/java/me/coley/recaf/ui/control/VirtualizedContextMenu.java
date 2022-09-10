@@ -7,6 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.PopupControl;
@@ -14,9 +15,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.Window;
 import me.coley.recaf.ui.util.DragResizer;
-import me.coley.recaf.ui.window.GenericWindow;
 import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -84,9 +83,25 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 	/**
 	 * Called when the user interacts with a menu item.
 	 */
-	private void runAction() {
-		getOnAction().handle(null);
+	private void runAction(ActionEvent event) {
+		final EventHandler<ActionEvent> action = getOnAction();
+		if(action != null) action.handle(event);
 		hide();
+	}
+
+	/**
+	 * Called when the user interacts with a menu item.
+	 */
+	private void runAction() {
+		runAction(null);
+	}
+
+	/**
+	 * Called when the user interacts with a menu item.
+	 * @param event source of the event to fire
+	 */
+	private void runAction(Event event) {
+		runAction(new ActionEvent(event, this));
 	}
 
 	/**
@@ -188,7 +203,8 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 							select(index + 1);
 						break;
 					case ENTER:
-						menu.runAction();
+					case TAB:
+						menu.runAction(e);
 						break;
 					default:
 						// Unhandled input, close menu
@@ -262,7 +278,7 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 			node.setOnMousePressed(e -> {
 				if (item != null) {
 					skin.menu.selectedItem.set(item);
-					skin.menu.runAction();
+					skin.menu.runAction(e);
 				}
 			});
 		}
@@ -301,7 +317,7 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 
 		/**
 		 * @param status
-		 *        {@code true} to set this item as the selected item.
+		 *    {@code true} to set this item as the selected item.
 		 */
 		public void setFocused(boolean status) {
 			node.pseudoClassStateChanged(FOCUSED_PSEUDO_CLASS, status);

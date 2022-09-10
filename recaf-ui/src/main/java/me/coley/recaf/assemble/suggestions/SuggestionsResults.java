@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 public final class SuggestionsResults {
 	private final String input;
 	private final Stream<Suggestion> result;
+	private boolean valid = true;
 
 	/**
 	 * @param input
@@ -34,6 +35,15 @@ public final class SuggestionsResults {
 	 * @return Stream of suggestions.
 	 */
 	public Stream<Suggestion> getValues() {
+		if(!valid) throw new IllegalStateException("Results are already invalidated!");
 		return result;
+	}
+
+	public boolean isValid() {
+		return valid;
+	}
+
+	public void invalidate() {
+		valid = false;
 	}
 }

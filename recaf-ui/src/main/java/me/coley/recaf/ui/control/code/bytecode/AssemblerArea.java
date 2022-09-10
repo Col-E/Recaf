@@ -3,6 +3,8 @@ package me.coley.recaf.ui.control.code.bytecode;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -273,6 +275,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		SuggestionsResults result = suggestions.getSuggestion(suggestionGroup);
 		String input = result.getInput();
 		Set<Suggestion> set = result.getValues().collect(Collectors.toCollection(TreeSet::new));
+		result.invalidate();
 		if (set.isEmpty())
 			return new VirtualizedContextMenu<>(
 					s -> new javafx.scene.control.Label(s.getText()),
@@ -286,10 +289,21 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		menu.setPrefSize(350, Math.min(set.size() * 15, 400));
 		menu.setOnAction(e -> {
 			Suggestion selected = menu.selectedItemProperty().get();
-			String selectedText = selected.getText();
-			String insert = selectedText.substring(input.length());
-			insertText(position, insert);
-			moveTo(position + insert.length());
+			if (selected == null)
+				// you actually should not be able to unselect an option
+				// a fix to that can be probably create a custom event, and pass down the selection
+				// another fix can be to not call this if you have not a selection
+				return;
+			String suggestionText = selected.getText();
+			if (e != null && e.getSource() != null && suggestionGroup != null
+					&& e.getSource() instanceof KeyEvent && ((KeyEvent) e.getSource()).getCode() == KeyCode.TAB) {
+				replaceText(suggestionGroup.start().getStart() + 1, suggestionGroup.end().getEnd() + 1, suggestionText);
+				moveTo(suggestionGroup.start().getStart() + 1 + suggestionText.length());
+			} else {
+				String insert = suggestionText.substring(input.length());
+				insertText(position, insert);
+				moveTo(position + insert.length());
+			}
 		});
 		menu.mapperProperty().set(suggestion -> {
 			String suggestionText = suggestion.getText();
@@ -536,7 +550,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * Generates and updates the {@link #getTargetMember() target field} if generation succeeded.
 	 *
 	 * @param apply
-	 *        {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated field.
+	 *    {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated field.
 	 *
 	 * @return Generation result status.
 	 */
@@ -558,7 +572,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * Generates and updates the {@link #getTargetMember() target method} if generation succeeded.
 	 *
 	 * @param apply
-	 *        {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
+	 *    {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
 	 *
 	 * @return Generation result status.
 	 */
@@ -580,7 +594,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * Generates and updates the {@link #getCurrentClassInfo() target class} if generation succeeded.
 	 *
 	 * @param apply
-	 *        {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
+	 *    {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
 	 *
 	 * @return Generation result status.
 	 */
@@ -672,7 +686,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * 		Validator that was visited.
 	 *
 	 * @return {@code true} if errors were reported.
-	 * {@code false} if no errors were reported.
+	 *    {@code false} if no errors were reported.
 	 */
 	private boolean reportErrors(ProblemOrigin origin, Validator<?> validator) {
 		// These are validation messages that aren't logical killers, but may prevent actual further processing.

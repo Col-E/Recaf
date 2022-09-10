@@ -15,6 +15,7 @@ import org.objectweb.asm.Opcodes;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -27,7 +28,6 @@ import static me.coley.recaf.util.ClasspathUtil.Tree;
  * @author xDark
  */
 public class Suggestions {
-	private final static SuggestionsResults EMPTY = new SuggestionsResults("", Stream.empty());
 	private final static TreeSet<String> INSTRUCTIONS = new TreeSet<>(ParseInfo.actions.keySet());
 	private final Function<String, CommonClassInfo> mapper;
 	private final Tree systemClasses = ClasspathUtil.getSystemClasses();
@@ -102,13 +102,8 @@ public class Suggestions {
 			case "invokevirtualinterface":
 			case "invokedynamic": {
 				// first child is class.name, so we have to suggest class name until the first .
-				String className = children[0] == null ? "" : children[0].content();
-				if (!className.contains(".")) return startsWith(className);
-				String[] parts = className.split("\\.");
-				CommonClassInfo clazz = mapper.apply(parts[0]);
-				if (clazz == null) return EMPTY;
-				String methodName = parts.length == 1 ? "" : parts[1];
-				return getMethodSuggestion(clazz, instruction.content().equals("invokestatic"), methodName);
+				return getInstructionSuggestionsResults(children, inst,
+						(clazz, methodName) -> getMethodSuggestion(clazz, instruction.content().equals("invokestatic"), methodName));
 			}
 			case "iload":
 			case "lload":
@@ -121,7 +116,6 @@ public class Suggestions {
 			case "dstore":
 			case "astore": {
 				String localName = children[0] == null ? "" : children[0].content();
-
 				Set<String> locals = new HashSet<>();
 				if (!AccessFlag.isStatic(method.getModifiers().value()))
 					locals.add("this");
@@ -137,16 +131,20 @@ public class Suggestions {
 			case "putstatic":
 			case "getfield":
 			case "putfield": {
-				String className = children[0] == null ? "" : children[0].content();
-				if (!className.contains(".")) return startsWith(className);
-				String[] parts = className.split("\\.");
-				CommonClassInfo clazz = mapper.apply(parts[0]);
-				if (clazz == null) return EMPTY;
-				String fieldName = parts.length == 1 ? "" : parts[1];
-				return getFieldSuggestion(clazz, inst.contains("static"), fieldName);
+				return getInstructionSuggestionsResults(children, inst,
+						(clazz, fieldName) -> getFieldSuggestion(clazz, inst.contains("static"), fieldName));
 			}
 		}
-		return EMPTY;
+		return new SuggestionsResults(inst, Stream.empty());
+	}
+
+	private SuggestionsResults getInstructionSuggestionsResults(Group[] children, String inst, BiFunction<CommonClassInfo, String, SuggestionsResults> suggestionMaker) {
+		String className = children[0] == null ? "" : children[0].content();
+		if (!className.contains(".")) return startsWith(className);
+		String[] parts = className.split("\\.");
+		CommonClassInfo clazz = mapper.apply(parts[0]);
+		if (clazz == null) return new SuggestionsResults(inst, Stream.empty());
+		return suggestionMaker.apply(clazz, parts.length == 1 ? "" : parts[1]);
 	}
 
 	private SuggestionsResults getFieldSuggestion(CommonClassInfo clazz, boolean isStatic, String fieldName) {
