@@ -110,6 +110,10 @@ public class InnerClassInfo implements ItemInfo {
 		for (; lastIndex < endIndex; lastIndex++) {
 			if (className.charAt(lastIndex) != name.charAt(lastIndex)) break;
 		}
-		return lastIndex < name.length() ? name.substring(lastIndex) : name;
+		if (lastIndex == 0)
+			return name;
+		else if (name.startsWith("$", lastIndex))
+			lastIndex++;
+		return name.substring(lastIndex);
 	}
 }
