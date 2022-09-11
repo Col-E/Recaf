@@ -42,6 +42,7 @@ import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.StackTraceUtil;
+import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
@@ -293,10 +294,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			if (e.getInputEvent() != null && suggestionGroup != null
 					&& e.getInputEvent() instanceof KeyEvent
 					&& ((KeyEvent) e.getInputEvent()).getCode() == KeyCode.TAB) {
-				replaceText(suggestionGroup.start().getStart() + 1, suggestionGroup.start().getEnd() + 1, suggestionText);
+				replaceText(suggestionGroup.start().getStart() + 1, suggestionGroup.start().getEnd() + 1,
+						TextDisplayUtil.escapePath(suggestionText));
 				moveTo(suggestionGroup.start().getStart() + 1 + suggestionText.length());
 			} else {
-				String insert = suggestionText.substring(input.length());
+				String insert = TextDisplayUtil.escapePath(suggestionText.substring(input.length()));
 				final int suggestionPlacement = suggestionGroup != null ? suggestionGroup.start().getEnd() + 1 : position;
 				insertText(suggestionPlacement, insert);
 				moveTo(suggestionPlacement + insert.length());
@@ -337,7 +339,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 						textFlow.getChildren().add(highlightedText);
 					}
 				}
-//				text = new javafx.scene.control.Label(suggestionText);
 			} else {
 				// Put a blue highlight on found match for the completion
 				Text inputText = new Text(input);
