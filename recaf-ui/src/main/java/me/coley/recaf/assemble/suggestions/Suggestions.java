@@ -12,9 +12,8 @@ import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.groups.InstructionGroup;
 import org.objectweb.asm.Opcodes;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
+import javax.annotation.Nullable;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -94,7 +93,7 @@ public class Suggestions {
 			case "anewarray":
 			case "checkcast":
 			case "instanceof":
-				return startsWith(children[0] == null ? "" : children[0].content());
+				return advancedSearch(children[0] == null ? "" : children[0].content());
 			case "invokestatic":
 			case "invokeinterface":
 			case "invokespecial":
@@ -138,6 +137,17 @@ public class Suggestions {
 		return new SuggestionsResults(inst, Stream.empty());
 	}
 
+	private SuggestionsResults advancedSearch(String search) {
+		if (search.isBlank())
+			return new SuggestionsResults(search, getAllClasses().map(c -> new Suggestion(mapper.apply(c), c)));
+		return new SuggestionsResults(search, getAllClasses().map(className -> {
+			if (className.equals(search)) return null;
+			final BitSet bitSet = matches(className, search);
+			if (bitSet == null) return null;
+			return new Suggestion(mapper.apply(className), className, bitSet);
+		}).filter(Objects::nonNull));
+	}
+
 	private SuggestionsResults getInstructionSuggestionsResults(Group[] children, String inst, BiFunction<CommonClassInfo, String, SuggestionsResults> suggestionMaker) {
 		String className = children[0] == null ? "" : children[0].content();
 		if (!className.contains(".")) return startsWith(className);
@@ -179,18 +189,40 @@ public class Suggestions {
 	}
 
 	private SuggestionsResults startsWith(String partial) {
-		return new SuggestionsResults(
-				partial,
-				Stream.concat(
-						searchIn(classes, partial),
-						searchIn(systemClasses, partial)
+		return new SuggestionsResults(partial,
+				(
+						"".equals(partial) ?
+								getAllClasses() :
+								getAllClasses().filter(x -> !x.equals(partial) && x.startsWith(partial))
 				).map(c -> new Suggestion(mapper.apply(c), c))
 		);
 	}
 
-	private Stream<String> searchIn(Tree root, String partial) {
-		return root.getAllLeaves()
-				.map(Tree::getFullValue)
-				.filter(x -> !x.equals(partial) && x.startsWith(partial));
+	private Stream<String> getAllClasses() {
+		return Stream.concat(classes.getAllLeaves()
+				.map(Tree::getFullValue), systemClasses.getAllLeaves()
+				.map(Tree::getFullValue));
+	}
+
+	/**
+	 * @param text
+	 * 		text to match over
+	 * @param search
+	 * 		advanced search string
+	 *
+	 * @return @{@code null} when no match, otherwise the chars matched
+	 */
+	@Nullable
+	private static BitSet matches(String text, String search) {
+		BitSet matches = new BitSet();
+		int idx = -1;
+		for (int i = 0, j = search.length(); i < j; i++) {
+			char ch = search.charAt(i);
+			if ((idx = text.indexOf(ch, idx + 1)) == -1) {
+				return null;
+			}
+			matches.set(idx);
+		}
+		return matches;
 	}
 }

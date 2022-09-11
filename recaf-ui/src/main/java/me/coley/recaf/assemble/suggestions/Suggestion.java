@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.suggestions;
 import me.coley.recaf.code.ItemInfo;
 
 import javax.annotation.Nullable;
+import java.util.BitSet;
 
 /**
  * Suggestion entry for {@link SuggestionsResults}
@@ -12,6 +13,22 @@ import javax.annotation.Nullable;
 public class Suggestion implements Comparable<Suggestion> {
 	private final ItemInfo info;
 	private final String text;
+	@Nullable
+	private final BitSet matchedChars;
+
+	/**
+	 * @param info
+	 * 		Associated item info of the suggestion.
+	 * @param text
+	 * 		Suggestion text.
+	 * @param matchedChars
+	 * 		Chars which match the search.
+	 */
+	public Suggestion(@Nullable ItemInfo info, String text, @Nullable BitSet matchedChars) {
+		this.info = info;
+		this.text = text;
+		this.matchedChars = matchedChars;
+	}
 
 	/**
 	 * @param info
@@ -20,8 +37,7 @@ public class Suggestion implements Comparable<Suggestion> {
 	 * 		Suggestion text.
 	 */
 	public Suggestion(@Nullable ItemInfo info, String text) {
-		this.info = info;
-		this.text = text;
+		this(info, text, null);
 	}
 
 	/**
@@ -45,5 +61,10 @@ public class Suggestion implements Comparable<Suggestion> {
 	@Override
 	public int compareTo(Suggestion o) {
 		return text.compareTo(o.text);
+	}
+
+	@Nullable
+	public BitSet getMatchedChars() {
+		return matchedChars;
 	}
 }

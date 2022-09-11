@@ -65,6 +65,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.util.BitSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -305,16 +306,47 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			String suggestionText = suggestion.getText();
 			// If there is no match to begin with, use the full suggestion
 			Node text;
+			final BitSet matchedChars = suggestion.getMatchedChars();
 			if (input == null || input.isBlank()) {
 				text = new javafx.scene.control.Label(suggestionText);
+			} else if (matchedChars != null) {
+				final TextFlow textFlow = new TextFlow();
+				text = textFlow;
+				boolean highlight = false;
+				String temp = "";
+				for(int i = 0; i < suggestionText.length(); i++) {
+					if(matchedChars.get(i) != highlight) {
+						if(!temp.isEmpty()) {
+							if (!highlight) textFlow.getChildren().add(new javafx.scene.control.Label(temp));
+							else {
+								Text highlightedText = new Text(temp);
+								highlightedText.setFill(Color.DODGERBLUE);
+								textFlow.getChildren().add(highlightedText);
+							}
+							temp = "";
+						}
+						highlight = !highlight;
+					}
+					temp += suggestionText.charAt(i);
+				}
+				if(!temp.isEmpty()) {
+					if (!highlight) textFlow.getChildren().add(new javafx.scene.control.Label(temp));
+					else {
+						Text highlightedText = new Text(temp);
+						highlightedText.setFill(Color.DODGERBLUE);
+						textFlow.getChildren().add(highlightedText);
+					}
+				}
+//				text = new javafx.scene.control.Label(suggestionText);
 			} else {
 				// Put a blue highlight on found match for the completion
 				Text inputText = new Text(input);
 				inputText.setFill(Color.rgb(0, 175, 255));
+				final int endIndex = suggestionText.indexOf(input);
 				text = new TextFlow(
-						new javafx.scene.control.Label(suggestionText.substring(0, suggestionText.indexOf(input))),
+						new javafx.scene.control.Label(suggestionText.substring(0, endIndex)),
 						inputText,
-						new javafx.scene.control.Label(suggestionText.substring(suggestionText.indexOf(input) + input.length()))
+						new javafx.scene.control.Label(suggestionText.substring(endIndex + input.length()))
 				);
 			}
 			// Populate with icon if possible
