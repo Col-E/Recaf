@@ -7,12 +7,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.control.PopupControl;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
+import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.ui.util.DragResizer;
@@ -20,6 +21,8 @@ import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -39,10 +42,14 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 	private final ObjectProperty<Function<T, ? extends Node>> mapperProperty = new SimpleObjectProperty<>(t -> {
 		throw new UnsupportedOperationException();
 	});
-	private final ObjectProperty<EventHandler<ActionEvent>> onAction = new ObjectPropertyBase<>() {
+	private final ObjectProperty<EventHandler<? super SelectionActionEvent<T>>> onAction = new ObjectPropertyBase<>() {
 		@Override
+		@SuppressWarnings({"unchecked", "RedundantCast", "rawtypes"}) // I hate generics sometimes
 		protected void invalidated() {
-			setEventHandler(ActionEvent.ACTION, get());
+			setEventHandler(
+					(EventType<SelectionActionEvent>) SelectionActionEvent.SELECTION_ACTION,
+					(EventHandler<? super SelectionActionEvent>) get()
+			);
 		}
 
 		@Override
@@ -83,31 +90,27 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 	/**
 	 * Called when the user interacts with a menu item.
 	 */
-	private void runAction(ActionEvent event) {
-		final EventHandler<ActionEvent> action = getOnAction();
-		if(action != null) action.handle(event);
+	private void runAction(SelectionActionEvent<T> event) {
+		final EventHandler<? super SelectionActionEvent<T>> action = getOnAction();
+		if (action != null) action.handle(event);
 		hide();
 	}
 
 	/**
 	 * Called when the user interacts with a menu item.
+	 *
+	 * @param event
+	 * 		source of the event to fire
 	 */
-	private void runAction() {
-		runAction(null);
-	}
-
-	/**
-	 * Called when the user interacts with a menu item.
-	 * @param event source of the event to fire
-	 */
-	private void runAction(Event event) {
-		runAction(new ActionEvent(event, this));
+	private void runAction(@Nullable InputEvent event) {
+		final T selection = selectedItem.get();
+		if (selection != null) runAction(new SelectionActionEvent<>(this, event, selection));
 	}
 
 	/**
 	 * @return Action to run when user interacts with a menu item.
 	 */
-	public final EventHandler<ActionEvent> getOnAction() {
+	public final EventHandler<? super SelectionActionEvent<T>> getOnAction() {
 		return onActionProperty().get();
 	}
 
@@ -115,14 +118,14 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 	 * @param value
 	 * 		Action to run when user interacts with a menu item.
 	 */
-	public final void setOnAction(EventHandler<ActionEvent> value) {
+	public final void setOnAction(EventHandler<? super SelectionActionEvent<T>> value) {
 		onActionProperty().set(value);
 	}
 
 	/**
 	 * @return Property wrapper of action to run when user interacts with a menu item.
 	 */
-	public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
+	public final ObjectProperty<EventHandler<? super SelectionActionEvent<T>>> onActionProperty() {
 		return onAction;
 	}
 
@@ -208,6 +211,7 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 						break;
 					default:
 						// Unhandled input, close menu
+						// what about continue searching? like continue filtering results
 						menu.hide();
 						return;
 				}
@@ -321,6 +325,31 @@ public class VirtualizedContextMenu<T> extends PopupControl {
 		 */
 		public void setFocused(boolean status) {
 			node.pseudoClassStateChanged(FOCUSED_PSEUDO_CLASS, status);
+		}
+	}
+
+	public static class SelectionActionEvent<T> extends ActionEvent {
+		public static final EventType<? super SelectionActionEvent<?>> SELECTION_ACTION = new EventType<>(ActionEvent.ACTION, "SELECTION_ACTION");
+		@Nullable
+		private final InputEvent inputEvent;
+		@Nonnull
+		private final T selection;
+
+		public SelectionActionEvent(VirtualizedContextMenu target, @Nullable InputEvent inputEvent, @Nonnull T selection) {
+			super(target, target);
+			this.inputEvent = inputEvent;
+			this.selection = selection;
+		}
+
+
+		@Nullable
+		public InputEvent getInputEvent() {
+			return inputEvent;
+		}
+
+		@Nonnull
+		public T getSelection() {
+			return selection;
 		}
 	}
 }

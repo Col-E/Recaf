@@ -288,21 +288,17 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		VirtualizedContextMenu<Suggestion> menu = new VirtualizedContextMenu<>(set);
 		menu.setPrefSize(350, Math.min(set.size() * 15, 400));
 		menu.setOnAction(e -> {
-			Suggestion selected = menu.selectedItemProperty().get();
-			if (selected == null)
-				// you actually should not be able to unselect an option
-				// a fix to that can be probably create a custom event, and pass down the selection
-				// another fix can be to not call this if you have not a selection
-				return;
-			String suggestionText = selected.getText();
-			if (e != null && e.getSource() != null && suggestionGroup != null
-					&& e.getSource() instanceof KeyEvent && ((KeyEvent) e.getSource()).getCode() == KeyCode.TAB) {
-				replaceText(suggestionGroup.start().getStart() + 1, suggestionGroup.end().getEnd() + 1, suggestionText);
+			String suggestionText = e.getSelection().getText();
+			if (e.getInputEvent() != null && suggestionGroup != null
+					&& e.getInputEvent() instanceof KeyEvent
+					&& ((KeyEvent) e.getInputEvent()).getCode() == KeyCode.TAB) {
+				replaceText(suggestionGroup.start().getStart() + 1, suggestionGroup.start().getEnd() + 1, suggestionText);
 				moveTo(suggestionGroup.start().getStart() + 1 + suggestionText.length());
 			} else {
 				String insert = suggestionText.substring(input.length());
-				insertText(position, insert);
-				moveTo(position + insert.length());
+				final int suggestionPlacement = suggestionGroup != null ? suggestionGroup.start().getEnd() + 1 : position;
+				insertText(suggestionPlacement, insert);
+				moveTo(suggestionPlacement + insert.length());
 			}
 		});
 		menu.mapperProperty().set(suggestion -> {
