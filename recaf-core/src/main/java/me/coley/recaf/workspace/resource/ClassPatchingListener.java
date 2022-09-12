@@ -87,12 +87,6 @@ public class ClassPatchingListener implements ContentSourceListener {
 		// no-op
 	}
 
-	private static int clearAndCountRemaining(Collection<?> collection) {
-		int count = collection.size();
-		collection.clear();
-		return count;
-	}
-
 	private static int clearAndCountRemaining(Map<?, ?> collection) {
 		int count = collection.size();
 		collection.clear();

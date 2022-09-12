@@ -39,7 +39,6 @@ public class HexClassView extends HexView implements ClassRepresentation {
 			// Update class info tab
 			ClassFileReader reader = new ClassFileReader();
 			reader.setDropDupeAnnotations(false);
-			reader.setDropEofAttributes(false);
 			reader.setDropForwardVersioned(false);
 			try {
 				if (classOffsetInfo != null)

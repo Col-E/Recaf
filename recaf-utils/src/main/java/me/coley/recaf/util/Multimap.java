@@ -82,6 +82,7 @@ public final class Multimap<K, V, C extends Collection<V>> {
 	 *
 	 * @return A collection of values or an empty list, if none.
 	 */
+	@SuppressWarnings("unchecked")
 	public Collection<V> getIfPresent(K key) {
 		return ((Map<K, Collection<V>>) backing).getOrDefault(key, List.of());
 	}
