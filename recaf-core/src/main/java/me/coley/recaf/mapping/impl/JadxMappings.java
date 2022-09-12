@@ -123,8 +123,4 @@ public class JadxMappings extends MappingsAdapter {
 		}
 		return sb.toString();
 	}
-
-	private static String removeNonePackage(String text) {
-		return text.replaceAll("(?:^|(?<=L))none/", "");
-	}
 }
