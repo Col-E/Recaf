@@ -1,6 +1,7 @@
 package me.coley.recaf.mapping.impl;
 
 import me.coley.recaf.mapping.MappingsAdapter;
+import me.coley.recaf.util.StringUtil;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,7 +25,7 @@ public class ProguardMappings extends MappingsAdapter {
 
     @Override
     public void parse(String mappingsText) {
-        List<String> lines = Arrays.asList(mappingsText.split("[\n\r]+"));
+        List<String> lines = Arrays.asList(StringUtil.splitNewline(mappingsText));
         Map<String, ProguardClassInfo> classMap = new HashMap<>(16384);
         StringBuilder firstCache = new StringBuilder();
         StringBuilder secondCache = new StringBuilder();

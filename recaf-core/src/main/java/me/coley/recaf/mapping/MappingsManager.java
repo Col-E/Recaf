@@ -1,9 +1,6 @@
 package me.coley.recaf.mapping;
 
-import me.coley.recaf.mapping.impl.ProguardMappings;
-import me.coley.recaf.mapping.impl.SimpleMappings;
-import me.coley.recaf.mapping.impl.SrgMappings;
-import me.coley.recaf.mapping.impl.TinyV1Mappings;
+import me.coley.recaf.mapping.impl.*;
 import me.coley.recaf.plugin.tools.ToolManager;
 
 import java.util.ArrayList;
@@ -25,6 +22,7 @@ public class MappingsManager extends ToolManager<MappingsTool> {
 	 */
 	public MappingsManager() {
 		register(new MappingsTool(SimpleMappings::new));
+		register(new MappingsTool(EnigmaMappings::new));
 		register(new MappingsTool(TinyV1Mappings::new));
 		register(new MappingsTool(SrgMappings::new));
 		register(new MappingsTool(ProguardMappings::new));

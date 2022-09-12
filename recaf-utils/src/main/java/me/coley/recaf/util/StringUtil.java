@@ -12,6 +12,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 /**
@@ -20,6 +21,32 @@ import java.util.function.Consumer;
  * @author Matt Coley
  */
 public class StringUtil {
+	/**
+	 * @param input
+	 * 		Some text containing newlines.
+	 *
+	 * @return Input split by newline.
+	 */
+	public static String[] splitNewline(String input) {
+		return input.split("\n\r|\r\n|\n");
+	}
+
+	/**
+	 * @param input
+	 * 		Some text containing newlines.
+	 *
+	 * @return Input split by newline.
+	 * Empty lines <i>(Containing only the newline split)</i> are omitted.
+	 */
+	public static String[] splitNewlineSkipEmpty(String input) {
+		String[] split = input.split("[\r\n]+");
+		// If the first line of the file is a newline split will still have
+		// one blank entry at the start.
+		if (split[0].isEmpty())
+			return Arrays.copyOfRange(split, 1, split.length);
+		return split;
+	}
+
 
 	/**
 	 * @param text

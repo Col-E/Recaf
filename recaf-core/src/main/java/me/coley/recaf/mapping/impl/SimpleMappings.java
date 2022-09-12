@@ -5,6 +5,7 @@ import me.coley.recaf.mapping.data.ClassMapping;
 import me.coley.recaf.mapping.data.FieldMapping;
 import me.coley.recaf.mapping.data.MethodMapping;
 import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.StringUtil;
 
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class SimpleMappings extends MappingsAdapter {
 
 	@Override
 	public void parse(String mappingText) {
-		String[] lines = mappingText.split("[\n\r]");
+		String[] lines = StringUtil.splitNewline(mappingText);
 		// # Comment
 		// BaseClass TargetClass
 		// BaseClass.baseField targetField
@@ -101,12 +102,13 @@ public class SimpleMappings extends MappingsAdapter {
 				String fieldDesc = fieldMapping.getDesc();
 				if (fieldDesc != null) {
 					// BaseClass.baseField baseDesc targetField
-					sb.append(oldClassName).append('.').append(oldFieldName).append(' ').append(fieldDesc)
+					sb.append(oldClassName).append('.').append(oldFieldName)
+							.append(' ').append(fieldDesc)
 							.append(' ').append(newFieldName).append("\n");
 				} else {
 					// BaseClass.baseField targetField
-					sb.append(oldClassName).append('.').append(oldFieldName).append(' ')
-							.append(newFieldName).append("\n");
+					sb.append(oldClassName).append('.').append(oldFieldName)
+							.append(' ').append(newFieldName).append("\n");
 				}
 			}
 			for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {
@@ -114,7 +116,8 @@ public class SimpleMappings extends MappingsAdapter {
 				String newMethodName = methodMapping.getNewName();
 				String methodDesc = methodMapping.getDesc();
 				// BaseClass.baseMethod(BaseMethodDesc) targetMethod
-				sb.append(oldClassName).append('.').append(oldMethodName).append(methodDesc)
+				sb.append(oldClassName).append('.').append(oldMethodName)
+						.append(methodDesc)
 						.append(' ').append(newMethodName).append("\n");
 			}
 		}
