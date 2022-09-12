@@ -24,6 +24,7 @@ public class MappingsManager extends ToolManager<MappingsTool> {
 		register(new MappingsTool(SimpleMappings::new));
 		register(new MappingsTool(EnigmaMappings::new));
 		register(new MappingsTool(TinyV1Mappings::new));
+		register(new MappingsTool(JadxMappings::new));
 		register(new MappingsTool(SrgMappings::new));
 		register(new MappingsTool(ProguardMappings::new));
 	}
