@@ -8,12 +8,15 @@ import me.coley.cafedude.transform.IllegalStrippingTransformer;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.visitor.IllegalSignatureRemovingVisitor;
 import me.coley.recaf.workspace.resource.source.ContentCollection;
 import me.coley.recaf.workspace.resource.source.ContentSourceListener;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A content listener that uses CafeDude to patch an assortment of ASM crashing capabilities.
@@ -76,6 +79,20 @@ public class ClassPatchingListener implements ContentSourceListener {
 			collection.addFile(new FileInfo(entry.getKey(), entry.getValue()));
 			return true;
 		});
+		// Handle stripping bogus signatures
+		Map<String, ClassInfo> patched = new HashMap<>();
+		collection.getClasses().forEach((name, info) -> {
+			ClassWriter writer = new ClassWriter(0);
+			IllegalSignatureRemovingVisitor remover = new IllegalSignatureRemovingVisitor(writer);
+			info.getClassReader().accept(remover, ClassReader.EXPAND_FRAMES);
+			if (remover.hasDetectedIllegalSignatures()) {
+				patched.put(name, ClassInfo.read(writer.toByteArray()));
+			}
+		});
+		if (!patched.isEmpty()) {
+			logger.info("Stripped malformed signature data from {} classes", patched.size());
+			patched.forEach((name, info) -> collection.replaceClass(info));
+		}
 		// TODO: Other actionable items
 		//   - collection.getPendingDuplicateFiles()
 		//   - collection.getPendingDuplicateClasses()

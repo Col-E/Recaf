@@ -2,6 +2,8 @@ package me.coley.recaf.util;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -296,5 +298,30 @@ public class Types {
 	 */
 	public static boolean isBoxedPrimitive(String desc) {
 		return PRIMITIVE_BOXES.contains(desc);
+	}
+
+	/**
+	 * @param signature
+	 * 		Signature text.
+	 * @param isTypeSignature
+	 * 		See {@code org.objectweb.asm.commons.ClassRemapper} for usage.
+	 *
+	 * @return {@code true} for signature being parsing.
+	 */
+	public static boolean isValidSignature(String signature, boolean isTypeSignature) {
+		if (signature == null)
+			return false;
+		try {
+			SignatureReader signatureReader = new SignatureReader(signature);
+			SignatureWriter signatureWriter = new SignatureWriter();
+			if (isTypeSignature) {
+				signatureReader.acceptType(signatureWriter);
+			} else {
+				signatureReader.accept(signatureWriter);
+			}
+			return true;
+		} catch (Exception ex) {
+			return false;
+		}
 	}
 }
