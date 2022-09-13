@@ -4,8 +4,12 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadUtil;
 import org.slf4j.Logger;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JEditorPane;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
@@ -14,13 +18,16 @@ import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 /**
@@ -107,12 +114,92 @@ public class JFXInjection {
 			logger.error("Failed to write remote dependency to cache", ex);
 			alertUserFailedInit(ex);
 		}
-		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-				.thenApply(__ ->
-						futures.stream()
-								.map(x -> x.getNow(null))
-								.collect(Collectors.toList())
+		return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+				.handle((__, ex) -> {
+							if (ex == null)
+								return futures.stream()
+										.map(x -> x.getNow(null))
+										.collect(Collectors.toList());
+							if (ex instanceof CompletionException)
+								ex = ex.getCause();
+							logger.error("An error occurred while downloading dependencies", ex);
+							logger.error("Please download them manually into {}", Directories.getDependenciesDirectory().toAbsolutePath());
+							logger.error("Deleting all dependencies which has 0b...");
+							try {
+								Files.walkFileTree(Directories.getDependenciesDirectory(), new FileVisitor<>() {
+									@Override
+									public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+										return FileVisitResult.CONTINUE;
+									}
+
+									@Override
+									public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+										if (attrs.size() == 0) {
+											logger.error("Deleted {}, re-download it when available.", file.getFileName());
+											Files.delete(file);
+										}
+										return FileVisitResult.CONTINUE;
+									}
+
+									@Override
+									public FileVisitResult visitFileFailed(Path file, IOException exc) {
+										return FileVisitResult.CONTINUE;
+									}
+
+									@Override
+									public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+										return FileVisitResult.CONTINUE;
+									}
+								});
+							} catch (IOException e) {
+								logger.error("Error while deleting files occurred.", e);
+							}
+							Toolkit toolkit = Toolkit.getDefaultToolkit();
+							toolkit.beep();
+							// Collect some debug info
+							StringWriter writer = new StringWriter();
+							writer.append("OS: ").append(System.getProperty("os.name")).append("\n");
+							writer.append("Version: ").append(System.getProperty("java.version")).append("\n");
+							writer.append("Vendor: ").append(System.getProperty("java.vm.vendor")).append("\n\n");
+							writer.append("Exception: ");
+							// Append exception to string
+							ex.printStackTrace(new PrintWriter(writer));
+							String errorString = writer.toString();
+							String style = "<style>" +
+									"p {font-family: Arial; font-size:14;} " +
+									"pre { background: #DDDDDD; padding: 5px; border: 1px solid black; }" +
+									"</style>";
+							String message = "<p>Something went wrong when trying to load JavaFX.<br></p><br>" +
+									"<pre>" + errorString + "</pre><p>" +
+									"This occurred when downloading dependencies. Please download them manually in " +
+									Directories.getDependenciesDirectory() + "</p><p>" +
+									"These dependencies needs to be available:<br>" +
+									JFX_DEPENDENCY_URLS.stream().map(url -> {
+										final String link = String.format(url, JFX_CLASSIFIER);
+										return "<li><a href='" + link + "'>" + link + "</a></li>";
+									}).collect(Collectors.joining("", "<ul>", "</ul>")) +
+									"</p>";
+							showErrorMessageWindow(toolkit, errorString, style, message);
+							return null;
+						}
 				).join();
+	}
+
+	private static void showErrorMessageWindow(Toolkit toolkit, String errorString, String style, String message) {
+		JEditorPane pane = new JEditorPane("text/html", style + message);
+		pane.setEditable(false);
+		pane.setOpaque(false);
+		int height = 250 + StringUtil.count("\n", errorString) * 22;
+		if (height > toolkit.getScreenSize().height - 100) {
+			height = toolkit.getScreenSize().height - 100;
+		}
+		JScrollPane scroll = new JScrollPane(pane);
+		scroll.setPreferredSize(new Dimension(800, height));
+		scroll.setBorder(BorderFactory.createEmptyBorder());
+		JOptionPane.showMessageDialog(null,
+				scroll, "Error initializing JavaFX",
+				JOptionPane.ERROR_MESSAGE);
+		System.exit(1);
 	}
 
 	/**
@@ -163,32 +250,19 @@ public class JFXInjection {
 		clipboard.setContents(selection, selection);
 		// Show message
 		String bugReportURL = "https://github.com/Col-E/Recaf/issues/new/choose";
-		String style = "<style>" +
-				"p {font-family: Arial; font-size:14;} " +
-				"pre { background: #DDDDDD; padding: 5px; border: 1px solid black; }" +
-				"</style>";
-		String message = "<p>Something went wrong when trying to load JavaFX.<br>" +
-				"<b>The following information about the problem has been copied to your clipboard:</b></p><br>" +
-				"<pre>" + errorString + "</pre>" +
-				"<p>Please make sure that you meet one of the following requirements:<br>" +
-				" 1. Use a JDK that bundles JavaFX<br>" +
-				" 2. Update to Java 11 or higher <i>(Recaf will automatically download JavaFX)</i><br><br>" +
-				"If you believe this is a bug, please " +
-				"<a href=\"" + bugReportURL + "\">open an issue on GitHub</a></p>";
-		JEditorPane pane = new JEditorPane("text/html", style + message);
-		pane.setEditable(false);
-		pane.setOpaque(false);
-		int height = 250 + StringUtil.count("\n", errorString) * 22;
-		if (height > toolkit.getScreenSize().height - 100) {
-			height = toolkit.getScreenSize().height - 100;
-		}
-		JScrollPane scroll = new JScrollPane(pane);
-		scroll.setPreferredSize(new Dimension(800, height));
-		scroll.setBorder(BorderFactory.createEmptyBorder());
-		JOptionPane.showMessageDialog(null,
-				scroll, "Error initializing JavaFX",
-				JOptionPane.ERROR_MESSAGE);
-		System.exit(1);
+		showErrorMessageWindow(toolkit, errorString, "<style>" +
+						"p {font-family: Arial; font-size:14;} " +
+						"pre { background: #DDDDDD; padding: 5px; border: 1px solid black; }" +
+						"</style>",
+
+				"<p>Something went wrong when trying to load JavaFX.<br>" +
+						"<b>The following information about the problem has been copied to your clipboard:</b></p><br>" +
+						"<pre>" + errorString + "</pre>" +
+						"<p>Please make sure that you meet one of the following requirements:<br>" +
+						" 1. Use a JDK that bundles JavaFX<br>" +
+						" 2. Update to Java 11 or higher <i>(Recaf will automatically download JavaFX)</i><br><br>" +
+						"If you believe this is a bug, please " +
+						"<a href=\"" + bugReportURL + "\">open an issue on GitHub</a></p>");
 	}
 
 	/**
@@ -242,7 +316,7 @@ public class JFXInjection {
 
 	/**
 	 * @return Operating system name pattern matching the maven classifier format.
-	 * This portion supplies the prefix in {@code OS-ARCH} classifiers.
+	 * 		This portion supplies the prefix in {@code OS-ARCH} classifiers.
 	 */
 	private static String normalizeOs() {
 		String os = normalize(RuntimeProperties.OS_NAME);
@@ -256,7 +330,7 @@ public class JFXInjection {
 
 	/**
 	 * @return Architecture name pattern matching the maven classifier format.
-	 * This portion supplies the suffix in {@code OS-ARCH} classifiers.
+	 * 		This portion supplies the suffix in {@code OS-ARCH} classifiers.
 	 */
 	private static String normalizeArch() {
 		// JavaFX only targets certain architectures, so we only care about normalizing a few.
