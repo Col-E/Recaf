@@ -120,9 +120,9 @@ public class Search {
 		if (visitor == null)
 			return Collections.emptyList();
 		// Visit all classes and files in the resource and consolidate results
-		for (ClassInfo classInfo : resource.getClasses().values())
+		for (ClassInfo classInfo : resource.getClasses())
 			classInfo.getClassReader().accept(visitor, ClassReader.SKIP_FRAMES);
-		for (FileInfo fileInfo : resource.getFiles().values())
+		for (FileInfo fileInfo : resource.getFiles())
 			visitor.visitFile(fileInfo);
 		// Wrap results in tree-set to sort, then list for index access
 		return new ArrayList<>(new TreeSet<>(visitor.getAllResults()));

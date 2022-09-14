@@ -324,10 +324,10 @@ public class Icons {
 		} else if (src instanceof SingleFileContentSource) {
 			// Should contain a single class or file.
 			if (!resource.getClasses().isEmpty()) {
-				CommonClassInfo cls = resource.getClasses().values().iterator().next();
+				CommonClassInfo cls = resource.getClasses().iterator().next();
 				return getClassIcon(cls);
 			} else {
-				FileInfo file = resource.getFiles().values().iterator().next();
+				FileInfo file = resource.getFiles().iterator().next();
 				return getFileIcon(file);
 			}
 		}
