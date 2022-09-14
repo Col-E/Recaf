@@ -91,6 +91,12 @@ public class Directories {
 	}
 
 	private static Path createBaseDirectory() {
+		// Try environment variable first
+		String recafDir = System.getenv("RECAF");
+		if (recafDir != null) {
+			return Paths.get(recafDir);
+		}
+		// Use generic data/config location
 		try {
 			// Windows: %APPDATA%/
 			// Mac:     $HOME/Library/Application Support/
