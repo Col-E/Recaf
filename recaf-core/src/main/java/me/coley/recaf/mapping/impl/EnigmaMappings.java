@@ -122,6 +122,11 @@ public class EnigmaMappings extends MappingsAdapter {
 				sb.append("CLASS ")
 						.append(oldClassName).append(' ')
 						.append(newClassName).append("\n");
+			} else {
+				// Not mapped, but need to include for context for following members
+				sb.append("CLASS ")
+						.append(oldClassName).append(' ')
+						.append(oldClassName).append("\n");
 			}
 			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
 				String oldFieldName = fieldMapping.getOldName();
