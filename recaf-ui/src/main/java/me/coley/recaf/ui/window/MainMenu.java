@@ -21,10 +21,7 @@ import me.coley.recaf.mapping.MappingsTool;
 import me.coley.recaf.ui.control.MenuLabel;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.menu.ClosableActionMenuItem;
-import me.coley.recaf.ui.pane.AggregateMappingPane;
-import me.coley.recaf.ui.pane.InfoPane;
-import me.coley.recaf.ui.pane.MappingGenPane;
-import me.coley.recaf.ui.pane.SearchPane;
+import me.coley.recaf.ui.pane.*;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Help;
@@ -241,6 +238,8 @@ public class MainMenu extends BorderPane implements ControllerListener {
 			menuScripting.getItems().add(separator());
 		}
 		menuScripting.getItems().add(action("menu.scripting.manage", Icons.OPEN_FILE, this::openScripts));
+		menuScripting.getItems().add(action("menu.scripting.new", Icons.PLUS,
+				() -> ScriptManagerPane.getInstance().createNewScript()));
 	}
 
 	private void exportPrimary() {

@@ -147,11 +147,11 @@ public class ScriptManagerPane extends BorderPane {
 		RecafUI.getWindows().getMainWindow().requestFocus();
 	}
 
-	private void createNewScript() {
+	public void createNewScript() {
 		String metadataTemplate = "// ==Metadata==\n" +
 				"// @name New Script\n" +
 				"// @description Script Description\n" +
-				"// @version 1.0\n" +
+				"// @version 1.0.0\n" +
 				"// @author Script Author\n" +
 				"// ==/Metadata==\n\n";
 		ScriptEditorPane scriptEditor = new ScriptEditorPane();
