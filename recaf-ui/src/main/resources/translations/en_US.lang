@@ -363,6 +363,7 @@ conf.binding.appearance.fontsize.up=Increase font size
 conf.binding.appearance.fontsize.down=Decrease font size
 
 conf.assembler=Assembler
+conf.assembler.build=Building
 conf.assembler.build.delay=Delay before updating bytecode
 conf.assembler.format=Format
 conf.assembler.format.prefix=Use dot prefix for keywords
