@@ -146,7 +146,7 @@ public class MappingGenPane extends VBox {
 			Mappings mappings = createMappings(controller);
 			// Apply
 			Resource primary = controller.getWorkspace().getResources().getPrimary();
-			MappingUtils.applyMappings(ClassReader.EXPAND_FRAMES, 0, controller, primary, mappings);
+			MappingUtils.applyMappings(0, 0, controller, primary, mappings);
 			logger.info("Applied generated mappings");
 		});
 		HBox boxGenerateWrapper = new HBox(btnCopy, btnApply, outputTypeComboBox);

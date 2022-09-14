@@ -211,7 +211,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 			Mappings mappings = mappingsTool.create();
 			mappings.parse(mappingsText);
 			Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
-			MappingUtils.applyMappings(ClassReader.EXPAND_FRAMES, 0, RecafUI.getController(), resource, mappings);
+			MappingUtils.applyMappings(0, 0, RecafUI.getController(), resource, mappings);
 		} finally {
 			remapping.set(false);
 		}

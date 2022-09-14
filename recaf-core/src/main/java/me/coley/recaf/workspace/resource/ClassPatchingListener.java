@@ -84,7 +84,7 @@ public class ClassPatchingListener implements ContentSourceListener {
 		collection.getClasses().forEach((name, info) -> {
 			ClassWriter writer = new ClassWriter(0);
 			IllegalSignatureRemovingVisitor remover = new IllegalSignatureRemovingVisitor(writer);
-			info.getClassReader().accept(remover, ClassReader.EXPAND_FRAMES);
+			info.getClassReader().accept(remover, 0);
 			if (remover.hasDetectedIllegalSignatures()) {
 				patched.put(name, ClassInfo.read(writer.toByteArray()));
 			}
