@@ -11,7 +11,10 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
@@ -22,7 +25,9 @@ import me.coley.recaf.mapping.*;
 import me.coley.recaf.mapping.gen.MappingGenerator;
 import me.coley.recaf.mapping.gen.NameGenerator;
 import me.coley.recaf.mapping.gen.NameGeneratorFilter;
+import me.coley.recaf.mapping.gen.filters.*;
 import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.EnumComboBox;
@@ -33,7 +38,6 @@ import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.Translatable;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
-import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -166,6 +170,8 @@ public class MappingGenPane extends VBox {
 	 */
 	private enum NewFilterMode implements Translatable {
 		EXCLUDE_ALREADY_MAPPED,
+		INCLUDE_NON_ASCII_NAMES,
+		INCLUDE_WHITESPACE_NAMES,
 		// Access flags
 		MODIFIER_EXCLUDE_CLASS,
 		MODIFIER_EXCLUDE_FIELD,
@@ -234,6 +240,12 @@ public class MappingGenPane extends VBox {
 					if (text != null)
 						return new PathFilterIntermediate(items, text, false);
 					break;
+				}
+				case INCLUDE_WHITESPACE_NAMES: {
+					return new IncludeWhitespaceNamesIntermediate(items);
+				}
+				case INCLUDE_NON_ASCII_NAMES: {
+					return new IncludeNonAsciiNamesIntermediate(items);
 				}
 			}
 			return null;
@@ -371,32 +383,13 @@ public class MappingGenPane extends VBox {
 
 		@Override
 		protected NameGeneratorFilter export() {
-			return new NameGeneratorFilter(getPriorFilter()) {
-				@Override
-				public boolean shouldMapClass(CommonClassInfo info) {
-					if (targetClasses && AccessFlag.hasAny(info.getAccess(), flags))
-						return false;
-					return super.shouldMapClass(info);
-				}
+			if (include)
+				return new IncludeModifiersNameFilter(getPriorFilter(), flags,
+						targetClasses, targetFields, targetMethods);
+			else
+				return new ExcludeModifiersNameFilter(getPriorFilter(), flags,
+						targetClasses, targetFields, targetMethods);
 
-				@Override
-				public boolean shouldMapField(CommonClassInfo owner, FieldInfo info) {
-					if (targetFields && AccessFlag.hasAny(info.getAccess(), flags))
-						return false;
-					if (targetClasses && AccessFlag.hasAny(owner.getAccess(), flags))
-						return false;
-					return super.shouldMapField(owner, info);
-				}
-
-				@Override
-				public boolean shouldMapMethod(CommonClassInfo owner, MethodInfo info) {
-					if (targetMethods && AccessFlag.hasAny(info.getAccess(), flags))
-						return false;
-					if (targetClasses && AccessFlag.hasAny(owner.getAccess(), flags))
-						return false;
-					return super.shouldMapMethod(owner, info);
-				}
-			};
 		}
 	}
 
@@ -417,28 +410,7 @@ public class MappingGenPane extends VBox {
 		protected NameGeneratorFilter export() {
 			MappingsManager mappingsManager = RecafUI.getController().getServices().getMappingsManager();
 			AggregatedMappings aggregate = mappingsManager.getAggregatedMappings();
-			return new NameGeneratorFilter(getPriorFilter()) {
-				@Override
-				public boolean shouldMapClass(CommonClassInfo info) {
-					if (aggregate.getReverseClassMapping(info.getName()) != null)
-						return false;
-					return super.shouldMapClass(info);
-				}
-
-				@Override
-				public boolean shouldMapField(CommonClassInfo owner, FieldInfo info) {
-					if (aggregate.getReverseFieldMapping(owner.getName(), info.getName(), info.getDescriptor()) != null)
-						return false;
-					return super.shouldMapField(owner, info);
-				}
-
-				@Override
-				public boolean shouldMapMethod(CommonClassInfo owner, MethodInfo info) {
-					if (aggregate.getReverseMethodMapping(owner.getName(), info.getName(), info.getDescriptor()) != null)
-						return false;
-					return super.shouldMapMethod(owner, info);
-				}
-			};
+			return new ExcludeExistingMappedFilter(getPriorFilter(), aggregate);
 		}
 	}
 
@@ -460,33 +432,54 @@ public class MappingGenPane extends VBox {
 
 		@Override
 		public String asString() {
-			return path;
+			String suffix = include ? "Include path: " : "Exclude path: ";
+			return suffix + path;
 		}
 
 		@Override
 		public NameGeneratorFilter export() {
-			return new NameGeneratorFilter(getPriorFilter()) {
-				@Override
-				public boolean shouldMapClass(CommonClassInfo info) {
-					String name = info.getName();
-					boolean startsWith = name.startsWith(path);
-					if (include && !startsWith)
-						return false; // (inclusion) class name does not match whitelisted path
-					else if (!include && startsWith)
-						return false; // (exclusion) class name contains blacklisted path
-					return super.shouldMapClass(info);
-				}
+			if (include)
+				return new IncludeClassNameFilter(getPriorFilter(), path, TextMatchMode.STARTS_WITH);
+			else
+				return new ExcludeClassNameFilter(getPriorFilter(), path, TextMatchMode.STARTS_WITH);
+		}
+	}
 
-				@Override
-				public boolean shouldMapField(CommonClassInfo owner, FieldInfo info) {
-					return super.shouldMapField(owner, info) && shouldMapClass(owner);
-				}
+	/**
+	 * Includes naming anything with unicode names.
+	 */
+	private static class IncludeWhitespaceNamesIntermediate extends FilterIntermediate {
+		private IncludeWhitespaceNamesIntermediate(List<FilterIntermediate> items) {
+			super(items);
+		}
 
-				@Override
-				public boolean shouldMapMethod(CommonClassInfo owner, MethodInfo info) {
-					return super.shouldMapMethod(owner, info) && shouldMapClass(owner);
-				}
-			};
+		@Override
+		public String asString() {
+			return Lang.get("mapgen.newfilter.includewhitespacenames");
+		}
+
+		@Override
+		public NameGeneratorFilter export() {
+			return new IncludeWhitespacesFilter(getPriorFilter());
+		}
+	}
+
+	/**
+	 * Include naming anything with non-standard ascii characters in names.
+	 */
+	private static class IncludeNonAsciiNamesIntermediate extends FilterIntermediate {
+		private IncludeNonAsciiNamesIntermediate(List<FilterIntermediate> items) {
+			super(items);
+		}
+
+		@Override
+		public String asString() {
+			return Lang.get("mapgen.newfilter.includenonasciinames");
+		}
+
+		@Override
+		public NameGeneratorFilter export() {
+			return new IncludeNonAsciiFilter(getPriorFilter());
 		}
 	}
 
