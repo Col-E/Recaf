@@ -38,5 +38,5 @@ and the basis to create UI presentations off of.
   - `tools` defines tool outlines. Examples of implementations: `compile`, `decompile`, `mapping.format` packages.
 - `presentation` outlines how front-ends for Recaf receive data on internal updates. See the `recaf-ui` module for an implementation.
 - `search` provides various search capabilities for strings, numbers, declarations, and references.
-- `ssvm` provides sand-boxed VM capabilities.
+- `ssvm` provides sand-boxed VM capabilities via [SSVM](https://github.com/xxDark/SSVM)
 - `workspace` outlines the workspace structure.
