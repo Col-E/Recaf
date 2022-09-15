@@ -1,6 +1,6 @@
 package me.coley.recaf.mapping;
 
-import me.coley.recaf.mapping.impl.*;
+import me.coley.recaf.mapping.format.*;
 import me.coley.recaf.plugin.tools.ToolManager;
 
 import java.util.ArrayList;

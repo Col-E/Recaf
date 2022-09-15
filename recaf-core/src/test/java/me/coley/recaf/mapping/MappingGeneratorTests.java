@@ -10,7 +10,7 @@ import me.coley.recaf.mapping.gen.MappingGenerator;
 import me.coley.recaf.mapping.gen.NameGenerator;
 import me.coley.recaf.mapping.gen.NameGeneratorFilter;
 import me.coley.recaf.mapping.gen.filters.ExcludeClassNameFilter;
-import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.mapping.format.IntermediateMappings;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;

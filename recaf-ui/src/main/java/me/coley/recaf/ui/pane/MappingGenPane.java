@@ -26,7 +26,7 @@ import me.coley.recaf.mapping.gen.MappingGenerator;
 import me.coley.recaf.mapping.gen.NameGenerator;
 import me.coley.recaf.mapping.gen.NameGeneratorFilter;
 import me.coley.recaf.mapping.gen.filters.*;
-import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.mapping.format.IntermediateMappings;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.control.BoundLabel;
