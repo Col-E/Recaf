@@ -114,7 +114,7 @@ public class Suggestions {
 			case "fstore":
 			case "dstore":
 			case "astore": {
-				String localName = children[0] == null ? "" : children[0].content();
+				String search = children[0] == null ? "" : children[0].content();
 				Set<String> locals = new HashSet<>();
 				if (!AccessFlag.isStatic(method.getModifiers().value()))
 					locals.add("this");
@@ -122,9 +122,14 @@ public class Suggestions {
 					locals.add(parameter.getName());
 				}
 				return new SuggestionsResults(children[0].content(),
-						locals.stream()
-								.filter(s -> s.startsWith(localName))
-								.map(i -> new Suggestion(null, i)));
+						search.isEmpty() ?
+								locals.stream().map(ln -> new Suggestion(null, ln)) :
+								locals.stream().map(localName -> {
+											BitSet bs = matches(search, localName);
+											if (bs == null) return null;
+											return new Suggestion(null, localName, bs);
+										})
+										.filter(Objects::nonNull));
 			}
 			case "getstatic":
 			case "putstatic":
@@ -150,7 +155,7 @@ public class Suggestions {
 
 	private SuggestionsResults getInstructionSuggestionsResults(Group[] children, String inst, BiFunction<CommonClassInfo, String, SuggestionsResults> suggestionMaker) {
 		String className = children[0] == null ? "" : children[0].content();
-		if (!className.contains(".")) return startsWith(className);
+		if (!className.contains(".")) return advancedSearch(className);
 		String[] parts = className.split("\\.");
 		CommonClassInfo clazz = mapper.apply(parts[0]);
 		if (clazz == null) return new SuggestionsResults(inst, Stream.empty());
