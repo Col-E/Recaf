@@ -126,6 +126,7 @@ public class DexClassInfo implements ItemInfo, CommonClassInfo {
 
 	@Override
 	public ClassSourceType getSourceType() {
+		// TODO: Return actual source type
 		return ClassSourceType.PRIMARY;
 	}
 

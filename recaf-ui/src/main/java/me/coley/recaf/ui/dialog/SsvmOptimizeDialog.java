@@ -10,6 +10,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.scripting.impl.WorkspaceAPI;
@@ -106,7 +107,7 @@ public class SsvmOptimizeDialog extends SsvmCommonDialog {
 				});
 				byte[] modified = writer.toByteArray();
 				// Replace in workspace
-				WorkspaceAPI.getPrimaryResource().getClasses().put(owner.getName(), ClassInfo.read(modified, owner.getSourceType()));
+				WorkspaceAPI.getPrimaryResource().getClasses().put(owner.getName(), ClassInfo.read(modified, ClassSourceType.PRIMARY));
 			});
 		});
 		runButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);

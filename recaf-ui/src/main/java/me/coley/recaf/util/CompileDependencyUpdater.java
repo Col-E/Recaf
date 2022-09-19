@@ -62,7 +62,7 @@ public class CompileDependencyUpdater {
 			}
 			// Add to workspace
 			Resource resource = new Resource(new EmptyContentSource());
-			map.forEach((name, bytes) -> resource.getClasses().put(ClassInfo.read(bytes, ClassSourceType.PHANTOM_GENERATED)));
+			map.forEach((name, bytes) -> resource.getClasses().put(ClassInfo.read(bytes, ClassSourceType.INTERNAL_LIBRARY)));
 			workspace.getResources().getInternalLibraries().add(resource);
 		} catch (Exception e) {
 			logger.error("Failed to generate phantom classes", e);
