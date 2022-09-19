@@ -1,5 +1,6 @@
 package me.coley.recaf.workspace.resource;
 
+import com.google.common.reflect.ClassPath;
 import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.util.IOUtil;
@@ -41,7 +42,7 @@ public class RuntimeResource extends Resource {
 	}
 
 	private ClassMap createRuntimeMap() {
-		Map<String, ClassInfo> map = new HashMap<String, ClassInfo>() {
+		Map<String, ClassInfo> map = new HashMap<>() {
 			private final Map<String, Object> cache = new HashMap<>();
 
 			@Override

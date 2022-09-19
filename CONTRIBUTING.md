@@ -15,6 +15,7 @@ The following is a series of guidelines for contributing to Recaf. They're not _
 
 **TLDR?**
 
+- Translations and feature ideas are appreciated too.
 - Follow the style of the rest of the code.
 - Comment your code where it makes sense.
 - Make sure the unit tests pass before submitting a pull request.
@@ -28,7 +29,7 @@ You can DM `Col-E#6255` on discord, or join the [Recaf discord](https://discord.
 
 [There is plenty to contribute that isn't based in code.](https://www.youtube.com/watch?v=GAqfMNB-YBU&t=603)
 
-For example you can contribute ideas or [write documentation](https://github.com/Col-E/Recaf-documentation).
+For example, you can contribute ideas, add translations, or [write documentation](https://github.com/Col-E/Recaf-documentation).
 
 ## What should I know before getting started?
 
@@ -43,7 +44,7 @@ There's multiple places where _"TODO"_ items may be:
 - [Issues](https://github.com/Col-E/Recaf/issues)
 - [Project board](https://github.com/Col-E/Recaf/projects)
 
-Additionally you can check for `// TODO:` messages in the source code.
+Additionally, you can check for `// TODO:` messages in the source code.
 Not everything is given its own issue or project goal.
 Most IDE's have a feature to show all of these messages.
 These are typically smaller scale items than what appear on the issues/project board.
@@ -67,7 +68,7 @@ When creating an issue select the `Feature request` button.
 This will provide a template that you can fill in the details for your feature idea.
 Be as descriptive as possible with your idea.
 
-**Note**: Not all ideas may be within Recaf's scope. In this case it should be implemented using the plugin api.
+**Note**: Not all ideas may be within Recaf's scope. In this case it should be implemented as a script or plugin.
 You can check out the template plugin project along with plugin documentation here: [Recaf-plugin-workspace](https://github.com/Recaf-Plugins/Recaf-plugin-workspace)
 
 ## Coding Guidelines

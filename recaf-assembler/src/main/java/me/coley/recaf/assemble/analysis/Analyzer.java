@@ -982,6 +982,10 @@ public class Analyzer {
 					// Pop arguments off stack and push method return value
 					MethodInstruction methodInstruction = (MethodInstruction) instruction;
 					String desc = methodInstruction.getDesc();
+					if (!Types.isValidDesc(desc)) {
+						frame.markWonky("Invalid method descriptor");
+						break;
+					}
 					Type type = Type.getMethodType(desc);
 					Type[] argTypes = type.getArgumentTypes();
 					for (int i = argTypes.length - 1; i >= 0; i--) {
@@ -1195,7 +1199,7 @@ public class Analyzer {
 			} else {
 				// Any non-return instruction should flow to the next block.
 				int op = instruction.getOpcodeVal();
-				if (op < Opcodes.IRETURN || op > Opcodes.RETURN) {
+				if ((op < Opcodes.IRETURN || op > Opcodes.RETURN)) {
 					Block blockTarget = analysis.blockFloor(insnIndex + 1);
 					if (blockCurrent != blockTarget)
 						blockCurrent.addJumpEdge(blockTarget);

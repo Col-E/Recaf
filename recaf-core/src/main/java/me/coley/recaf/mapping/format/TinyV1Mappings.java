@@ -1,9 +1,10 @@
-package me.coley.recaf.mapping.impl;
+package me.coley.recaf.mapping.format;
 
 import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.mapping.data.ClassMapping;
 import me.coley.recaf.mapping.data.FieldMapping;
 import me.coley.recaf.mapping.data.MethodMapping;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -30,7 +31,7 @@ public class TinyV1Mappings extends MappingsAdapter {
 
 	@Override
 	public void parse(String mappingText) {
-		String[] lines = mappingText.split("[\n\r]+");
+		String[] lines = StringUtil.splitNewline(mappingText);
 		int lineNum = 0;
 		for (String line : lines) {
 			lineNum++;
@@ -84,24 +85,30 @@ public class TinyV1Mappings extends MappingsAdapter {
 			if (classMapping != null) {
 				String newClassName = classMapping.getNewName();
 				// CLASS BaseClass TargetClass
-				sb.append("CLASS\t").append(oldClassName).append('\t').append(newClassName).append("\n");
+				sb.append("CLASS\t")
+						.append(oldClassName).append('\t')
+						.append(newClassName).append("\n");
 			}
 			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
 				String oldFieldDesc = fieldMapping.getDesc();
 				String oldFieldName = fieldMapping.getOldName();
 				String newFieldName = fieldMapping.getNewName();
 				// FIELD BaseClass baseField targetField
-				sb.append("FIELD\t").append(oldClassName).append('\t').append(oldFieldName)
-						.append('\t').append(oldFieldDesc)
-						.append('\t').append(newFieldName).append("\n");
+				sb.append("FIELD\t").append(oldClassName).append('\t')
+						.append(oldFieldName).append('\t')
+						.append(oldFieldDesc).append('\t')
+						.append(newFieldName).append("\n");
 			}
 			for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {
 				String oldMethodName = methodMapping.getOldName();
 				String newMethodName = methodMapping.getNewName();
 				String methodDesc = methodMapping.getDesc();
 				// METHOD BaseClass baseMethod (BaseMethodDesc) targetMethod
-				sb.append("METHOD\t").append(oldClassName).append('\t').append(methodDesc).append('\t')
-						.append(oldMethodName).append('\t').append(newMethodName).append("\n");
+				sb.append("METHOD\t")
+						.append(oldClassName).append('\t')
+						.append(methodDesc).append('\t')
+						.append(oldMethodName).append('\t')
+						.append(newMethodName).append("\n");
 			}
 		}
 		return sb.toString();

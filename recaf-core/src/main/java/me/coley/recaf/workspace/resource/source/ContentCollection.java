@@ -45,6 +45,8 @@ public class ContentCollection {
 	}
 
 	/**
+	 * Adds the given class. Checks for existing entries and puts duplicates in {@link #getPendingDuplicateClasses()}.
+	 *
 	 * @param info
 	 * 		Class to add.
 	 */
@@ -53,7 +55,17 @@ public class ContentCollection {
 		if (classes.containsKey(name))
 			addDuplicateClass(info);
 		else
-			classes.put(name, info);
+			replaceClass(info);
+	}
+
+	/**
+	 * Adds the given class, replacing any existing entry.
+	 *
+	 * @param info
+	 * 		Class to replace.
+	 */
+	public synchronized void replaceClass(ClassInfo info) {
+		classes.put(info.getName(), info);
 	}
 
 	/**

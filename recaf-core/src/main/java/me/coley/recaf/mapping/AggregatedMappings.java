@@ -4,7 +4,7 @@ import me.coley.recaf.mapping.data.ClassMapping;
 import me.coley.recaf.mapping.data.FieldMapping;
 import me.coley.recaf.mapping.data.MemberMapping;
 import me.coley.recaf.mapping.data.MethodMapping;
-import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.mapping.format.IntermediateMappings;
 
 import java.util.Collection;
 import java.util.HashMap;

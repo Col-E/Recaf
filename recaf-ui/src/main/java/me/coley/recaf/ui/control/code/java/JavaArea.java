@@ -347,28 +347,28 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	private ContextBuilder menuBuilderFor(int position) {
 		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(position);
 		if (infoAtPosition.isPresent()) {
-			ItemInfo itemInfo = infoAtPosition.get().getInfo();
+			ItemInfo info = infoAtPosition.get().getInfo();
 			boolean dec = infoAtPosition.get().isDeclaration();
-			if (itemInfo instanceof ClassInfo) {
-				ClassInfo info = (ClassInfo) itemInfo;
-				return ContextBuilder.forClass(info).setDeclaration(dec);
-			} else if (itemInfo instanceof DexClassInfo) {
-				DexClassInfo info = (DexClassInfo) itemInfo;
-				return ContextBuilder.forDexClass(info);
-			} else if (itemInfo instanceof FieldInfo) {
-				FieldInfo info = (FieldInfo) itemInfo;
+			if (info instanceof ClassInfo) {
+				ClassInfo classInfo = (ClassInfo) info;
+				return ContextBuilder.forClass(classInfo).setDeclaration(dec);
+			} else if (info instanceof DexClassInfo) {
+				DexClassInfo dexClassInfo = (DexClassInfo) info;
+				return ContextBuilder.forDexClass(dexClassInfo);
+			} else if (info instanceof FieldInfo) {
+				FieldInfo fieldInfo = (FieldInfo) info;
 				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(info.getOwner());
+						.getResources().getClass(fieldInfo.getOwner());
 				if (owner != null)
-					return ContextBuilder.forField(owner, info).setDeclaration(dec);
-			} else if (itemInfo instanceof MethodInfo) {
-				MethodInfo info = (MethodInfo) itemInfo;
+					return ContextBuilder.forField(owner, fieldInfo).setDeclaration(dec);
+			} else if (info instanceof MethodInfo) {
+				MethodInfo methodInfo = (MethodInfo) info;
 				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(info.getOwner());
+						.getResources().getClass(methodInfo.getOwner());
 				if (owner != null)
-					return ContextBuilder.forMethod(owner, info).setDeclaration(dec);
-			} else if (itemInfo instanceof LiteralExpressionInfo) {
-				return ContextBuilder.forLiteralExpression((LiteralExpressionInfo) itemInfo, this);
+					return ContextBuilder.forMethod(owner, methodInfo).setDeclaration(dec);
+			} else if (info instanceof LiteralExpressionInfo) {
+				return ContextBuilder.forLiteralExpression((LiteralExpressionInfo) info, this);
 			}
 		}
 		return null;
@@ -384,25 +384,25 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		// Check if there is info about the selected item
 		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(index);
 		if (infoAtPosition.isPresent()) {
-			ItemInfo itemInfo = infoAtPosition.get().getInfo();
-			if (itemInfo instanceof ClassInfo) {
-				ClassInfo info = (ClassInfo) itemInfo;
-				CommonUX.openClass(info);
-			} else if (itemInfo instanceof DexClassInfo) {
-				DexClassInfo info = (DexClassInfo) itemInfo;
-				CommonUX.openClass(info);
-			} else if (itemInfo instanceof FieldInfo) {
-				FieldInfo info = (FieldInfo) itemInfo;
+			ItemInfo info = infoAtPosition.get().getInfo();
+			if (info instanceof ClassInfo) {
+				ClassInfo classInfo = (ClassInfo) info;
+				CommonUX.openClass(classInfo);
+			} else if (info instanceof DexClassInfo) {
+				DexClassInfo dexClassInfo = (DexClassInfo) info;
+				CommonUX.openClass(dexClassInfo);
+			} else if (info instanceof FieldInfo) {
+				FieldInfo fieldInfo = (FieldInfo) info;
 				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(info.getOwner());
+						.getResources().getClass(fieldInfo.getOwner());
 				if (owner != null)
-					CommonUX.openMember(owner, info);
-			} else if (itemInfo instanceof MethodInfo) {
-				MethodInfo info = (MethodInfo) itemInfo;
+					CommonUX.openMember(owner, fieldInfo);
+			} else if (info instanceof MethodInfo) {
+				MethodInfo methodInfo = (MethodInfo) info;
 				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(info.getOwner());
+						.getResources().getClass(methodInfo.getOwner());
 				if (owner != null)
-					CommonUX.openMember(owner, info);
+					CommonUX.openMember(owner, methodInfo);
 			}
 		}
 	}

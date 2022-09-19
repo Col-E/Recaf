@@ -2,6 +2,7 @@ package me.coley.recaf.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Escape code replacement utility.
@@ -11,9 +12,33 @@ import java.util.Map;
 public final class EscapeUtil {
 	private static final Map<String, String> WHITESPACE_TO_ESCAPE = new HashMap<>();
 	private static final Map<String, String> ESCAPE_TO_WHITESPACE = new HashMap<>(); // TODO: Shouldn't we use this?
-	private static final char TERMINATOR = '\0';
+	public static final char TERMINATOR = '\0';
+	public static final String ESCAPED_SPACE = "\\u0020";
+	public static final String ESCAPED_TAB = "\\u0009";
+	public static final String ESCAPED_NEWLINE = "\\u000A";
+	public static final String ESCAPED_RETURN = "\\u000D";
 
 	private EscapeUtil() {
+	}
+
+	/**
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return {@code true} when text contains any whitespace characters.
+	 */
+	public static boolean containsWhitespace(String text) {
+		for (String whitespace : getWhitespaceStrings())
+			if (text.contains(whitespace))
+				return true;
+		return false;
+	}
+
+	/**
+	 * @return Set of strings representing various whitespaces.
+	 */
+	public static Set<String> getWhitespaceStrings() {
+		return WHITESPACE_TO_ESCAPE.keySet();
 	}
 
 	/**
@@ -134,11 +159,6 @@ public final class EscapeUtil {
 		return 0;
 	}
 
-	public static final String SPACE = "\\u0020";
-	public static final String TAB = "\\u0009";
-	public static final String NEWLINE = "\\u000A";
-	public static final String RETURN = "\\u000D";
-
 	private static int computeUnescapeUnicodeSpace(String input, int cursor, StringBuilder builder) {
 		// Bounds check
 		if (cursor >= input.length()) {
@@ -150,16 +170,16 @@ public final class EscapeUtil {
 		// Check if next character is a space
 		switch (current) {
 			case " ":
-				escaped = SPACE;
+				escaped = ESCAPED_SPACE;
 				break;
 			case "\t":
-				escaped = TAB;
+				escaped = ESCAPED_TAB;
 				break;
 			case "\n":
-				escaped = NEWLINE;
+				escaped = ESCAPED_NEWLINE;
 				break;
 			case "\r":
-				escaped = RETURN;
+				escaped = ESCAPED_RETURN;
 				break;
 		}
 		if (escaped != null) {

@@ -4,7 +4,7 @@ import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.mapping.data.ClassMapping;
-import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.mapping.format.IntermediateMappings;
 import me.coley.recaf.ui.behavior.ScrollSnapshot;
 import me.coley.recaf.ui.behavior.Scrollable;
 import me.coley.recaf.ui.docking.DockTab;

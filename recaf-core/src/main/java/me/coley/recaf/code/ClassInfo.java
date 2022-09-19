@@ -8,6 +8,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +29,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private final List<String> outerClassBreadcrumbs;
 	private final int version;
 	private final int access;
+	private final OuterMethodInfo outerMethod;
 	private final List<FieldInfo> fields;
 	private final List<MethodInfo> methods;
 	private ClassReader classReader;
@@ -35,7 +37,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	private int hashCode;
 
 	private ClassInfo(String name, String superName, String signature, List<String> interfaces, int version, int access,
-					  List<FieldInfo> fields, List<MethodInfo> methods, byte[] value,
+					  OuterMethodInfo outerMethod, List<FieldInfo> fields, List<MethodInfo> methods, byte[] value,
 					  List<InnerClassInfo> innerClasses, List<String> outerClassBreadcrumbs, ClassSourceType sourceType) {
 		this.value = value;
 		this.name = name;
@@ -44,6 +46,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		this.interfaces = interfaces;
 		this.version = version;
 		this.access = access;
+		this.outerMethod = outerMethod;
 		this.fields = fields;
 		this.methods = methods;
 		this.innerClasses = innerClasses;
@@ -79,6 +82,12 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 	@Override
 	public int getAccess() {
 		return access;
+	}
+
+	@Override
+	@Nullable
+	public OuterMethodInfo getOuterMethod() {
+		return outerMethod;
 	}
 
 	@Override
@@ -180,6 +189,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		List<FieldInfo> fields = new ArrayList<>();
 		List<MethodInfo> methods = new ArrayList<>();
 		List<InnerClassInfo> innerClasses = new ArrayList<>();
+		OuterMethodInfo[] outerMethod = new OuterMethodInfo[1];
 		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
 			@Override
 			public void visit(int version, int access, String name, String signature,
@@ -203,19 +213,25 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 			}
 
 			@Override
-			public void visitInnerClass(String name, String outerName, String innerName, int access) {
+			public void visitInnerClass(String name, @Nullable String outerName, @Nullable String innerName, int access) {
 				innerClasses.add(new InnerClassInfo(className, name, outerName, innerName, access));
+			}
+
+			@Override
+			public void visitOuterClass(String owner, @Nullable String name, @Nullable String descriptor) {
+				outerMethod[0] = new OuterMethodInfo(className, owner, name, descriptor);
 			}
 		}, ClassReader.SKIP_CODE);
 		List<InnerClassInfo> directlyNested = // Getting all inner classes which are directly visible, no nested inside nested ones
 				innerClasses.stream()
-						.filter(innerClass -> className.equals(innerClass.getOuterName()) && !className.equals(innerClass.getName()))
+						.filter(innerClass -> (innerClass.getOuterName() == null || className.equals(innerClass.getOuterName()))
+								&& !className.equals(innerClass.getName()))
 						.collect(Collectors.toList());
 		// Create outer class breadcrumbs
 		// Alternatives are not great:
 		// - Splitting by $ can go wrong with obfuscation.
 		// - Searching for outer classes when opening the outline can be slow because if you have a big workspace/package,
-		//   you need to go multiple time through all the entries for reconstruction.
+		//   you need to go multiple times through all the entries for reconstruction.
 		String outerClassName = outerClassOf(className, innerClasses);
 		List<String> breadcrumbs = new ArrayList<>();
 		int counter = 0; // if some obfuscators think they can trick this by adding many inner classes
@@ -236,6 +252,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 				interfacesWrapper[0],
 				versionWrapper[0],
 				access,
+				outerMethod[0],
 				fields,
 				methods,
 				value,

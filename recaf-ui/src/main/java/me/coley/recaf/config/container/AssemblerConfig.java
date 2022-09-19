@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.config.ConfigContainer;
 import me.coley.recaf.config.ConfigID;
 import me.coley.recaf.config.Group;
+import me.coley.recaf.config.bounds.IntBounds;
 import me.coley.recaf.ui.util.Icons;
 
 /**
@@ -15,12 +16,16 @@ public class AssemblerConfig implements ConfigContainer {
 	@Group("format")
 	@ConfigID("prefix")
 	public boolean usePrefix = true;
+	@Group("build")
+	@ConfigID("delay")
+	@IntBounds(min = 10, max = 1110)
+	public int updateDelayMs = 200;
 	@Group("validation")
 	@ConfigID("ast")
 	public boolean astValidation = true;
 	@Group("validation")
 	@ConfigID("bytecode")
-	public boolean bytecodeValidation = true;
+	public boolean bytecodeAnalysis = true;
 	@Group("debug")
 	@ConfigID("ast-debug")
 	public boolean astDebug = false;

@@ -11,7 +11,10 @@ import me.coley.recaf.code.*;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.code.Languages;
-import me.coley.recaf.util.*;
+import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.ByteHeaderUtil;
+import me.coley.recaf.util.IOUtil;
+import me.coley.recaf.util.ResourceUtil;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.source.*;
 
@@ -321,15 +324,39 @@ public class Icons {
 		} else if (src instanceof SingleFileContentSource) {
 			// Should contain a single class or file.
 			if (!resource.getClasses().isEmpty()) {
-				CommonClassInfo cls = resource.getClasses().values().iterator().next();
+				CommonClassInfo cls = resource.getClasses().iterator().next();
 				return getClassIcon(cls);
 			} else {
-				FileInfo file = resource.getFiles().values().iterator().next();
+				FileInfo file = resource.getFiles().iterator().next();
 				return getFileIcon(file);
 			}
 		}
 		// Default to jar
 		return getIconView(FILE_JAR);
+	}
+
+	/**
+	 * Delegates to the appropriate icon provider depending on the info type.
+	 *
+	 * @param info
+	 * 		Generic info.
+	 *
+	 * @return Specific icon for info type.
+	 */
+	public static Node getInfoIcon(ItemInfo info) {
+		// Order of checks is what is likely the most common use case.
+		if (info instanceof MethodInfo) {
+			return getMethodIcon((MethodInfo) info);
+		} else if (info instanceof FieldInfo) {
+			return getFieldIcon((FieldInfo) info);
+		} else if (info instanceof CommonClassInfo) {
+			return getClassIcon((CommonClassInfo) info);
+		} else if (info instanceof FileInfo) {
+			return getFileIcon((FileInfo) info);
+		} else if (info instanceof InnerClassInfo) {
+			return getClassIcon((InnerClassInfo) info);
+		}
+		return null;
 	}
 
 	/**
@@ -465,6 +492,8 @@ public class Icons {
 			String lower = name.toLowerCase();
 			if (lower.endsWith(".jar")) {
 				provider = createProvider(Icons.FILE_JAR);
+			} else if (lower.endsWith(".apk")) {
+				provider = createProvider(Icons.ANDROID);
 			} else {
 				provider = createProvider(Icons.FILE_ZIP);
 			}

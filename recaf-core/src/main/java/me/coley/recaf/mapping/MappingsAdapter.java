@@ -3,7 +3,7 @@ package me.coley.recaf.mapping;
 import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.graph.InheritanceVertex;
 import me.coley.recaf.mapping.data.*;
-import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.mapping.format.IntermediateMappings;
 
 import java.util.HashMap;
 import java.util.Iterator;

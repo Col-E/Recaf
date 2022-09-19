@@ -1,4 +1,4 @@
-package me.coley.recaf.mapping.impl;
+package me.coley.recaf.mapping.format;
 
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.mapping.data.ClassMapping;

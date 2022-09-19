@@ -3,6 +3,10 @@ package me.coley.recaf.ui.control.code.bytecode;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
@@ -15,6 +19,9 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.pipeline.*;
+import me.coley.recaf.assemble.suggestions.Suggestion;
+import me.coley.recaf.assemble.suggestions.Suggestions;
+import me.coley.recaf.assemble.suggestions.SuggestionsResults;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
 import me.coley.recaf.assemble.validation.MessageLevel;
@@ -26,16 +33,18 @@ import me.coley.recaf.config.container.AssemblerConfig;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
+import me.coley.recaf.ui.control.VirtualizedContextMenu;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.StackTraceUtil;
+import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.DelayedExecutor;
 import me.coley.recaf.util.threading.DelayedRunnable;
-import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.util.visitor.FieldReplacingVisitor;
 import me.coley.recaf.util.visitor.MethodReplacingVisitor;
 import me.coley.recaf.util.visitor.SingleMemberVisitor;
@@ -54,9 +63,13 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static me.coley.recaf.ui.control.code.ProblemOrigin.BYTECODE_PARSING;
 import static me.coley.recaf.ui.control.code.ProblemOrigin.BYTECODE_VALIDATION;
@@ -71,16 +84,14 @@ import static me.darknet.assembler.parser.Group.GroupType;
 public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineCompletionListener,
 		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener {
 	private static final DebuggingLogger logger = Logging.get(AssemblerArea.class);
-	private static final int INITIAL_DELAY_MS = 500;
-	private static final int AST_LOOP_MS = 100;
-	private static final int PIPELINE_UPDATE_DELAY_MS = 300;
 	private final DelayedExecutor updatePipelineInput;
 	private final ProblemTracking problemTracking;
 	private final AssemblerPipeline pipeline;
+	private final Suggestions suggestions;
+	private VirtualizedContextMenu<Suggestion> suggestionsMenu;
 	private ClassInfo classInfo;
 	private MemberInfo targetMember;
 	private ContextMenu menu;
-	private ScheduledFuture<?> astParseThread;
 
 	/**
 	 * Sets up the editor area.
@@ -94,7 +105,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		super(Languages.JAVA_BYTECODE, problemTracking);
 		this.problemTracking = problemTracking;
 		this.pipeline = pipeline;
-		this.updatePipelineInput = new DelayedRunnable(PIPELINE_UPDATE_DELAY_MS, () -> pipeline.setText(getText()));
+		this.updatePipelineInput = new DelayedRunnable(config().updateDelayMs, () -> {
+			pipeline.setText(getText());
+			handleAstUpdate();
+		});
 		// Setup variable highlighting
 		VariableHighlighter variableHighlighter = new VariableHighlighter(pipeline, this);
 		variableHighlighter.addIndicator(getIndicatorFactory());
@@ -103,19 +117,28 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		FlowHighlighter flowHighlighter = new FlowHighlighter(pipeline, this);
 		flowHighlighter.addIndicator(getIndicatorFactory());
 		flowHighlighter.addCaretPositionListener(caretPositionProperty());
-		// AST parsing loop
-		setupAstParseThread();
 		// Context menu support
 		setOnContextMenuRequested(this::onMenuRequested);
 		// Register listeners to hook into problem tracking
 		pipeline.addParserFailureListener(this);
 		pipeline.addBytecodeFailureListener(this);
-		pipeline.addBytecodeValidationListener(this);
 		pipeline.addPipelineCompletionListener(this);
-		boolean validate = config().astValidation;
-		if (validate) {
+		boolean validateAst = config().astValidation;
+		if (validateAst) {
 			pipeline.addAstValidationListener(this);
 		}
+		boolean analyzeBytecode = config().bytecodeAnalysis;
+		pipeline.setDoUseAnalysis(analyzeBytecode);
+		if (analyzeBytecode) {
+			pipeline.addBytecodeValidationListener(this);
+		}
+		WorkspaceTreeService treeService = RecafUI.getController().getServices().getTreeService();
+		suggestions = new Suggestions(treeService.getCurrentClassTree(),
+				RecafUI.getController().getWorkspace().getResources()::getClass, null);
+		NodeEvents.addKeyPressHandler(this, event -> {
+			if (Configs.keybinds().suggest.match(event))
+				onSuggestionRequested();
+		});
 	}
 
 	@Override
@@ -129,28 +152,30 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	@Override
 	public void cleanup() {
 		super.cleanup();
-		// Stop parse thread
-		astParseThread.cancel(true);
+		// Stop update thread
+		updatePipelineInput.cancel();
 	}
 
 	/**
-	 * Creates the thread that updates the AST in the background.
+	 * Updates and validates the AST.
 	 */
-	protected void setupAstParseThread() {
-		astParseThread = ThreadUtil.scheduleAtFixedRate(() -> {
-			try {
-				if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
-					logger.debugging(l -> l.trace("AST updated and validated"));
-					if (pipeline.isMethod() &&
-							pipeline.isOutputOutdated() &&
-							pipeline.generateMethod())
-						logger.debugging(l -> l.trace("AST compiled to method and analysis executed"));
-				}
-			} catch (Throwable t) {
-				// Shouldn't occur, but make sure its known if it does
-				logger.error("Unhandled exception in the AST parse thread", t);
+	protected void handleAstUpdate() {
+		try {
+			if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
+				logger.debugging(l -> l.trace("AST updated and validated"));
+				// Update suggestions data with definition changes
+				if (pipeline.getUnit() != null)
+					suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
+				// Generate the ASM node type from the AST.
+				if (pipeline.isMethod() &&
+						pipeline.isOutputOutdated() &&
+						pipeline.generateMethod())
+					logger.debugging(l -> l.trace("AST compiled to method and analysis executed"));
 			}
-		}, INITIAL_DELAY_MS, AST_LOOP_MS, TimeUnit.MILLISECONDS);
+		} catch (Throwable t) {
+			// Shouldn't occur, but make sure its known if it does
+			logger.error("Unhandled exception in the AST parse thread", t);
+		}
 	}
 
 	/**
@@ -190,6 +215,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		}
 		transformer.visit();
 		Unit unit = transformer.getUnit();
+
+		if (unit.isMethod()) suggestions.setMethod(unit.getDefinitionAsMethod());
+
 		String code = unit.print(config().createContext());
 		// Update text
 		setText(code);
@@ -206,6 +234,93 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			logger.debugging(l -> l.trace("Initial build of disassemble successful!"));
 		else
 			logger.warn("Initial build of disassemble failed!");
+	}
+
+	/**
+	 * Displays the suggestions menu for content at the current caret position.
+	 */
+	private void onSuggestionRequested() {
+		// Get current cursor position
+		int caretPosition = getCaretPosition();
+		Position position = offsetToPosition(caretPosition, Bias.Backward);
+		// Get AST group at the position
+		Group group = pipeline.getASTElementAt(position.getMajor() + 1, position.getMinor());
+		if (group != null) {
+			if (group.parent != null) {
+				if (group.parent.type != GroupType.BODY) {
+					group = group.parent;
+				}
+			}
+		}
+		// Show new suggestions' context menu/list
+		if (suggestionsMenu != null) suggestionsMenu.hide();
+		VirtualizedContextMenu<Suggestion> suggestionsMenu = createSuggestionsMenu(caretPosition, group);
+		suggestionsMenu.setAutoHide(true);
+		suggestionsMenu.setHideOnEscape(true);
+		suggestionsMenu.show(this, getCaretBounds().get().getMinX(), getCaretBounds().get().getMaxY());
+		suggestionsMenu.requestFocus();
+		this.suggestionsMenu = suggestionsMenu;
+	}
+
+	/**
+	 * @param position
+	 * 		Caret position.
+	 * @param suggestionGroup
+	 * 		JASM AST at position.
+	 *
+	 * @return Menu containing completion suggestions.
+	 */
+	private VirtualizedContextMenu<Suggestion> createSuggestionsMenu(int position, Group suggestionGroup) {
+		// Get suggestions content
+		SuggestionsResults result = suggestions.getSuggestion(suggestionGroup);
+		String input = result.getInput();
+		Set<Suggestion> set = result.getValues().collect(Collectors.toCollection(TreeSet::new));
+		if (set.isEmpty())
+			return new VirtualizedContextMenu<>(
+					s -> new javafx.scene.control.Label(s.getText()),
+					List.of(new Suggestion(null, "No suggestions"))
+			);
+		// Create the menu populated with completions
+		// TODO: Is it worthwhile to not collect as 'String' but rather as 'ItemInfo'?
+		//  - Classes can have the mapper populate an icon graphic
+		//  - Same for fields/methods
+		VirtualizedContextMenu<Suggestion> menu = new VirtualizedContextMenu<>(set);
+		menu.setPrefSize(350, Math.min(set.size() * 15, 400));
+		menu.setOnAction(e -> {
+			Suggestion selected = menu.selectedItemProperty().get();
+			String selectedText = selected.getText();
+			String insert = selectedText.substring(input.length());
+			insertText(position, insert);
+			moveTo(position + insert.length());
+		});
+		menu.mapperProperty().set(suggestion -> {
+			String suggestionText = suggestion.getText();
+			// If there is no match to begin with, use the full suggestion
+			Node text;
+			if (input == null || input.isBlank()) {
+				text = new javafx.scene.control.Label(suggestionText);
+			} else {
+				// Put a blue highlight on found match for the completion
+				Text inputText = new Text(input);
+				inputText.setFill(Color.rgb(0, 175, 255));
+				text = new TextFlow(
+						new javafx.scene.control.Label(suggestionText.substring(0, suggestionText.indexOf(input))),
+						inputText,
+						new javafx.scene.control.Label(suggestionText.substring(suggestionText.indexOf(input) + input.length()))
+				);
+			}
+			// Populate with icon if possible
+			ItemInfo info = suggestion.getInfo();
+			if (info != null) {
+				HBox graphics = new HBox(Icons.getInfoIcon(info));
+				if (info instanceof AccessibleInfo)
+					graphics.getChildren().add(Icons.getVisibilityIcon(((AccessibleInfo) info).getAccess()));
+				HBox box = new HBox(graphics, text);
+				box.setSpacing(10);
+				return box;
+			} else return text;
+		});
+		return menu;
 	}
 
 	private void onMenuRequested(ContextMenuEvent e) {

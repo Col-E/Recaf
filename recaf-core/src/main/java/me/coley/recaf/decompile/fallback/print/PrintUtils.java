@@ -12,6 +12,7 @@ import me.coley.cafedude.classfile.annotation.Utf8ElementValue;
 import me.coley.cafedude.classfile.constant.*;
 import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
 import java.util.stream.Collectors;
@@ -35,8 +36,12 @@ public class PrintUtils implements PrintBase {
 		String args = annotation.getValues().entrySet().stream()
 				.map(e -> pool.getUtf(e.getKey()) + " = " + elementToString(pool, e.getValue()))
 				.collect(Collectors.joining(", "));
-		String annotationName = Type.getType(annotationDesc).getInternalName();
-		return "@" + PrintBase.filterShortenName(annotationName) + "(" + args + ")";
+		if (Types.isValidDesc(annotationDesc)) {
+			String annotationName = Type.getType(annotationDesc).getInternalName();
+			return "@" + PrintBase.filterShortenName(annotationName) + "(" + args + ")";
+		} else {
+			return "// Invalid annotation removed";
+		}
 	}
 
 	/**

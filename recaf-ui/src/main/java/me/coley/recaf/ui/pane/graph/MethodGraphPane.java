@@ -15,6 +15,7 @@ import me.coley.recaf.assemble.analysis.Block;
 import me.coley.recaf.assemble.analysis.Edge;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
+import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.code.*;
 import me.coley.recaf.ui.behavior.MemberEditor;
@@ -42,6 +43,8 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 	private ClassInfo declaring;
 	private final Graph graph = new Graph();
 
+
+
 	/**
 	 * @param declaring
 	 * 		Class declaring the method.
@@ -51,7 +54,7 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 	public MethodGraphPane(ClassInfo declaring, MethodInfo method) {
 		this.declaring = declaring;
 		this.method = method;
-		graph.getNodeGestures().setDragButton(MouseButton.NONE);
+		graph.getNodeGestures().setDragButton(MouseButton.SECONDARY);
 		graph.getViewportGestures().setPanButton(MouseButton.PRIMARY);
 		graph.getViewportGestures().setZoomBounds(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 		setCenter(graph.getCanvas());
@@ -103,6 +106,12 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 			logger.error("Error analyzing method control flow blocks", e);
 			return;
 		}
+		// Remove last block if it is just one label instruction
+		if (blocks.size() > 0) {
+			Block last = blocks.get(blocks.lastKey());
+			if (last.getInstructions().size() == 1 && last.getInstructions().get(0) instanceof Label)
+				blocks.remove(blocks.lastKey());
+		}
 		// Create graph model
 		Model model = graph.getModel();
 		model.clear();
@@ -146,6 +155,7 @@ public class MethodGraphPane extends BorderPane implements MemberEditor {
 			Block targetBlock = outboundEdge.getTo();
 			BlockCell targetCell = cellMap.get(targetBlock);
 			DoubleCorneredEdge edge = new DoubleCorneredEdge(cell, targetCell, Orientation.VERTICAL);
+
 			model.addEdge(edge);
 			visitEdge(cellMap, visited, targetBlock);
 		}

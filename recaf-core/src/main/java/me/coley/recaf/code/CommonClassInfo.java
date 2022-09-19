@@ -1,5 +1,6 @@
 package me.coley.recaf.code;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -7,7 +8,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public interface CommonClassInfo extends ItemInfo {
+public interface CommonClassInfo extends AccessibleInfo, ItemInfo {
 	/**
 	 * @return Class's name.
 	 */
@@ -21,6 +22,7 @@ public interface CommonClassInfo extends ItemInfo {
 	/**
 	 * @return Class's generic signature. May be {@code null}.
 	 */
+	@Nullable
 	String getSignature();
 
 	/**
@@ -32,6 +34,12 @@ public interface CommonClassInfo extends ItemInfo {
 	 * @return Class's access modifiers.
 	 */
 	int getAccess();
+
+	/**
+	 * @return Outer method where the class is in.
+	 */
+	@Nullable
+	OuterMethodInfo getOuterMethod();
 
 	/**
 	 * @return Class's declared fields.

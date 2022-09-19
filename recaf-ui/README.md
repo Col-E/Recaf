@@ -1,3 +1,3 @@
 # UI
 
-The UI module is the desktop/cli application portion of Recaf.
+The UI module is the desktop application portion of Recaf.

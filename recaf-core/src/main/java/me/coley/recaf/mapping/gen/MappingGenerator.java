@@ -12,10 +12,7 @@ import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.workspace.resource.Resource;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 
@@ -150,12 +147,25 @@ public class MappingGenerator {
 				if (methodName.equals(mappedMethodName))
 					continue;
 				if (inheritableMethods.contains(method)) {
-					// Method is 'inheritable' meaning it needs to have a consistent name
-					// for the entire family.
-					family.forEach(familyVertex -> {
-						if (familyVertex.hasMethod(methodName, methodDesc))
-							mappings.addMethod(familyVertex.getName(), methodName, methodDesc, mappedMethodName);
-					});
+					// Method is 'inheritable' meaning it needs to have a consistent name for the entire family.
+					// But if one of the members of the family is filtered, then we cannot map anything.
+					boolean shouldMapFamily = true;
+					List<Runnable> pendingMapAdditions = new ArrayList<>();
+					for (InheritanceVertex familyVertex : family) {
+						if (familyVertex.hasMethod(methodName, methodDesc)) {
+							if (filter == null || filter.shouldMapMethod(familyVertex.getValue(), method)) {
+								pendingMapAdditions.add(() ->
+										mappings.addMethod(familyVertex.getName(), methodName, methodDesc, mappedMethodName));
+							} else {
+								shouldMapFamily = false;
+								pendingMapAdditions.clear();
+								break;
+							}
+						}
+					}
+					// Nothing in the family was filtered, we can add the method mappings.
+					if (shouldMapFamily)
+						pendingMapAdditions.forEach(Runnable::run);
 				} else {
 					// Not 'inheritable' so an independent mapping is all we need.
 					mappings.addMethod(ownerName, methodName, methodDesc, mappedMethodName);

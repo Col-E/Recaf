@@ -114,6 +114,13 @@ public class KeybindConfig implements ConfigContainer {
 	@ConfigID("searchref")
 	public Binding searchReferences = newBind(CONTROL, H);
 
+	/**
+	 * Initiate suggestion prompt for current text.
+	 */
+	@Group("code")
+	@ConfigID("suggest")
+	public Binding suggest = newBind(CONTROL, SPACE);
+
 	@Override
 	public String iconPath() {
 		return Icons.KEYBOARD;

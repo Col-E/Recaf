@@ -261,6 +261,8 @@ public final class Launcher {
 		} catch (ClassNotFoundException ignored) {
 			logger.error("JavaFX is not present on classpath");
 			logger.error("Downloading missing JavaFX dependencies");
+			// TODO: JavaFX versions are not tied to the VM version, so we should be looking for the
+			//       latest stable releases available on maven central
 			downloadDependencies(dependenciesDir,
 					attributes.getValue(String.format("JavaFX-Dependencies-%d", getVmVersion())).split(";"),
 					classpath);

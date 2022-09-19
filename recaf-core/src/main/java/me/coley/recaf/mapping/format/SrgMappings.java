@@ -1,10 +1,11 @@
-package me.coley.recaf.mapping.impl;
+package me.coley.recaf.mapping.format;
 
 import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.mapping.RemapperImpl;
 import me.coley.recaf.mapping.data.ClassMapping;
 import me.coley.recaf.mapping.data.FieldMapping;
 import me.coley.recaf.mapping.data.MethodMapping;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
@@ -31,7 +32,7 @@ public class SrgMappings extends MappingsAdapter {
 
 	@Override
 	public void parse(String mappingText) {
-		String[] lines = mappingText.split("[\n\r]+");
+		String[] lines = StringUtil.splitNewline(mappingText);
 		int line = 0;
 		for (String lineStr : lines) {
 			line++;
@@ -87,15 +88,18 @@ public class SrgMappings extends MappingsAdapter {
 			if (classMapping != null) {
 				String newClassName = classMapping.getNewName();
 				// CL: BaseClass TargetClass
-				sb.append("CL: ").append(oldClassName).append(' ').append(newClassName).append("\n");
+				sb.append("CL: ").append(oldClassName).append(' ')
+						.append(newClassName).append("\n");
 			}
 			String newClassName = classMapping == null ? oldClassName : classMapping.getNewName();
 			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
 				String oldFieldName = fieldMapping.getOldName();
 				String newFieldName = fieldMapping.getNewName();
 				// FD: BaseClass/baseField TargetClass/targetField
-				sb.append("FD: ").append(oldClassName).append('/').append(oldFieldName)
-						.append(' ').append(newClassName).append('/').append(newFieldName).append("\n");
+				sb.append("FD: ")
+						.append(oldClassName).append('/').append(oldFieldName)
+						.append(' ')
+						.append(newClassName).append('/').append(newFieldName).append("\n");
 			}
 			for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {
 				String oldMethodName = methodMapping.getOldName();
@@ -103,8 +107,13 @@ public class SrgMappings extends MappingsAdapter {
 				String methodDesc = methodMapping.getDesc();
 				String mappedDesc = remapper.mapDesc(methodDesc);
 				// MD: BaseClass/baseMethod baseDesc TargetClass/targetMethod targetDesc
-				sb.append("MD: ").append(oldClassName).append('/').append(oldMethodName).append(' ').append(methodDesc)
-						.append(' ').append(newClassName).append('/').append(newMethodName).append(' ')
+				sb.append("MD: ")
+						.append(oldClassName).append('/').append(oldMethodName)
+						.append(' ')
+						.append(methodDesc)
+						.append(' ')
+						.append(newClassName).append('/').append(newMethodName)
+						.append(' ')
 						.append(mappedDesc).append('\n');
 			}
 		}

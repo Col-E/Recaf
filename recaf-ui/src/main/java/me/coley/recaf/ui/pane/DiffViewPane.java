@@ -497,8 +497,8 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		protected AssemblerArea createAssembler(ProblemTracking tracking, AssemblerPipeline pipeline) {
 			return new AssemblerArea(tracking, pipeline) {
 				@Override
-				protected void setupAstParseThread() {
-					// Do not create the parse thread, we only care about the text.
+				protected void handleAstUpdate() {
+					// Do nothing, we only care about the text.
 					// It does not need to be parsed.
 				}
 			};

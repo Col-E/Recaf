@@ -1,10 +1,10 @@
 package me.coley.recaf.mapping;
 
 import me.coley.recaf.TestUtils;
-import me.coley.recaf.mapping.impl.IntermediateMappings;
-import me.coley.recaf.mapping.impl.ProguardMappings;
-import me.coley.recaf.mapping.impl.SimpleMappings;
-import me.coley.recaf.mapping.impl.TinyV1Mappings;
+import me.coley.recaf.mapping.format.IntermediateMappings;
+import me.coley.recaf.mapping.format.ProguardMappings;
+import me.coley.recaf.mapping.format.SimpleMappings;
+import me.coley.recaf.mapping.format.TinyV1Mappings;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;

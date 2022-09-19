@@ -1,5 +1,10 @@
 package me.coley.recaf.code;
 
+import org.objectweb.asm.Type;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * InnerClass Attribute, containing information about a used inner class.<br>
  * The root class (the most outer one) is not available in this attribute,
@@ -27,7 +32,20 @@ public class InnerClassInfo implements ItemInfo {
 	private final String innerName;
 	private final int access;
 
-	public InnerClassInfo(String className, String name, String outerName, String innerName, int access) {
+	/**
+	 * @param name
+	 * 		The internal name of an inner class (see {@link Type#getInternalName()}).
+	 * @param outerName
+	 * 		The internal name of the class to which the inner class belongs (see {@link
+	 *        Type#getInternalName()}). May be {@code null} for not member classes.
+	 * @param innerName
+	 * 		The (simple) name of the inner class inside its enclosing class. May be
+	 *        {@code null} for anonymous inner classes.
+	 * @param access
+	 * 		The access flags of the inner class as originally declared in the enclosing
+	 * 		class.
+	 */
+	public InnerClassInfo(String className, String name, @Nullable String outerName, @Nullable String innerName, int access) {
 		this.className = className;
 		this.name = name;
 		this.outerName = outerName;
@@ -38,7 +56,7 @@ public class InnerClassInfo implements ItemInfo {
 	/**
 	 * This is useful for backtracking to which class this attribute belongs to.
 	 *
-	 * @return Owner of this attribute
+	 * @return Owner of this attribute.
 	 */
 	public String getClassName() {
 		return className;
@@ -52,15 +70,17 @@ public class InnerClassInfo implements ItemInfo {
 	}
 
 	/**
-	 * @return Internal name of the outer class in which this inner class is in.
+	 * @return Internal name of the outer class in which this inner class is in. May be null for not member classes.
 	 */
+	@Nullable
 	public String getOuterName() {
 		return outerName;
 	}
 
 	/**
-	 * @return Simple name of the inner class.
+	 * @return Simple name of the inner class. May be null for anonymous inner classes.
 	 */
+	@Nullable
 	public String getInnerName() {
 		return innerName;
 	}
@@ -77,5 +97,23 @@ public class InnerClassInfo implements ItemInfo {
 	 */
 	public int getAccess() {
 		return access;
+	}
+
+	/**
+	 * @return Either {@link #getInnerName()} if not null, otherwise the last "part" (after last $ or /) of {@link #getName()}.
+	 */
+	@Nonnull
+	public String getSimpleName() {
+		if (innerName != null) return innerName;
+		int lastIndex = 0;
+		int endIndex = Math.min(className.length(), name.length());
+		for (; lastIndex < endIndex; lastIndex++) {
+			if (className.charAt(lastIndex) != name.charAt(lastIndex)) break;
+		}
+		if (lastIndex == 0)
+			return name;
+		else if (name.startsWith("$", lastIndex))
+			lastIndex++;
+		return name.substring(lastIndex);
 	}
 }

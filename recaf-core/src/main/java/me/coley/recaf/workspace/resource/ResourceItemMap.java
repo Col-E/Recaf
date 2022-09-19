@@ -17,7 +17,7 @@ import java.util.stream.Stream;
  * @see ClassMap
  * @see FileMap
  */
-public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
+public class ResourceItemMap<I extends ItemInfo> implements Map<String, I>, Iterable<I> {
 	private final Logger logger = Logging.get(getClass());
 	private final List<CommonItemListener<I>> listeners = new ArrayList<>();
 	private final Map<String, Stack<I>> history = new HashMap<>();
@@ -266,5 +266,10 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I> {
 	@Override
 	public Set<Entry<String, I>> entrySet() {
 		return backing.entrySet();
+	}
+
+	@Override
+	public Iterator<I> iterator() {
+		return backing.values().iterator();
 	}
 }

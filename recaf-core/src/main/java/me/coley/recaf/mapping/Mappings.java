@@ -1,6 +1,6 @@
 package me.coley.recaf.mapping;
 
-import me.coley.recaf.mapping.impl.IntermediateMappings;
+import me.coley.recaf.mapping.format.IntermediateMappings;
 
 /**
  * Outline of all mapping implementations, allowing for clear retrieval regardless of internal storage of mappings.

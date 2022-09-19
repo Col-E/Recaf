@@ -349,13 +349,14 @@ conf.binding.code.rename=Přejmenovat vybrané
 conf.binding.code.searchref=Hledat reference
 
 conf.assembler=Assembler
+conf.assembler.build.delay=Zpoždění před aktualizací bytecodu
 conf.assembler.format=Formát
 conf.assembler.format.prefix=Použití tečkové předpony pro klíčová slova
 conf.assembler.parse=Parsování
 conf.assembler.parse.recover=Pokusit se o obnovení chyby
 conf.assembler.validation=Ověření
 conf.assembler.validation.ast=Povolit ověřování abstraktního stromu syntaxe
-conf.assembler.validation.bytecode=Povolit ověřování bytecodu
+conf.assembler.validation.bytecode=Povolit analýzu bytecodu
 conf.assembler.debug=Ladění
 conf.assembler.debug.ast-debug=Zobrazit ladicí informace AST
 
