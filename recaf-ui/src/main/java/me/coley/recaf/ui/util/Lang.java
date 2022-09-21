@@ -66,7 +66,12 @@ public class Lang {
 		} else {
 			logger.warn("Tried to set translations to '{}', but no entries for the translations were found!", translationsKey);
 			// For case it fails to load, use default.
-			setCurrentTranslations(DEFAULT_TRANSLATIONS);
+			// If for some reason the default translations are not loading, we got a problem...
+			if (!DEFAULT_TRANSLATIONS.equals(translationsKey)) {
+				setCurrentTranslations(DEFAULT_TRANSLATIONS);
+			} else {
+				logger.error("Could not load default translations: {}", DEFAULT_TRANSLATIONS);
+			}
 		}
 	}
 
