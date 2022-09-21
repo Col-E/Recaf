@@ -162,7 +162,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
 				logger.debugging(l -> l.trace("AST updated and validated"));
 				// Update suggestions data with definition changes
-				if (pipeline.getUnit() != null)
+				if (pipeline.getUnit() != null && pipeline.isMethod())
 					suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
 				// Generate the ASM node type from the AST.
 				if (pipeline.isMethod() &&
