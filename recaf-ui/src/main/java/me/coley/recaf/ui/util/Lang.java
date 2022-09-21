@@ -312,9 +312,14 @@ public class Lang {
 		// Load provided translations
 		SelfReferenceUtil.initializeFromContext(Lang.class);
 		SelfReferenceUtil selfReferenceUtil = SelfReferenceUtil.getInstance();
-		for (InternalPath translationPath : selfReferenceUtil.getTranslations()) {
+		List<InternalPath> translations = selfReferenceUtil.getTranslations();
+		if (translations.size() > 0)
+			logger.debug("Found {} translations", translations.size());
+		else
+			logger.error("Translations could not be loaded! CodeSource: {}",
+					Lang.class.getProtectionDomain().getCodeSource().getLocation());
+		for (InternalPath translationPath : translations) {
 			String translationName = FilenameUtils.removeExtension(translationPath.getFileName());
-
 			try {
 				load(translationName, translationPath.getURL().openStream());
 				translationKeys.add(translationName);
