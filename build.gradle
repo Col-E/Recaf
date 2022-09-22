@@ -95,7 +95,7 @@ subprojects {
         junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
         junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
         llzip = "com.github.Col-E:LL-Java-Zip:$lljzipVersion"
-        logback_classic = 'ch.qos.logback:logback-classic:1.4.1'
+        logback_classic = 'ch.qos.logback:logback-classic:1.2.10' // newer releases break in jar releases
         pe = 'com.github.cademtz:JavaPeParser:1.0.0'
         picocli = 'info.picocli:picocli:4.6.3'
         quiltflower = "org.quiltmc:quiltflower:$quiltflowerVersion"
