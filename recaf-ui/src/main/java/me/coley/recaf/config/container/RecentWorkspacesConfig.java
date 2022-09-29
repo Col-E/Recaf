@@ -80,6 +80,21 @@ public class RecentWorkspacesConfig implements ConfigContainer {
 
 	/**
 	 * @param workspace
+	 * 		Workspace to check for serialization compatibility.
+	 *
+	 * @return {@code true} when can be used in {@link #addWorkspace(Workspace)}.
+	 */
+	public boolean canSerialize(Workspace workspace) {
+		try {
+			WorkspaceModel.from(workspace);
+			return true;
+		} catch (UnsupportedOperationException ignored) {
+			return false;
+		}
+	}
+
+	/**
+	 * @param workspace
 	 * 		Workspace to add to the recent list.
 	 */
 	public void addWorkspace(Workspace workspace) {

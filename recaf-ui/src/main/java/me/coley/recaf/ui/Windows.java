@@ -13,6 +13,7 @@ import me.coley.recaf.ui.window.MainWindow;
 public class Windows {
 	private MainWindow mainWindow;
 	private GenericWindow configWindow;
+	private GenericWindow attachWindow;
 	private GenericWindow scriptManagerWindow;
 	private GenericWindow pluginManagerWindow;
 	private GenericWindow modificationsWindow;
@@ -24,6 +25,7 @@ public class Windows {
 	public void initialize() {
 		mainWindow = new MainWindow();
 		configWindow = new GenericWindow(new ConfigPane());
+		attachWindow = new GenericWindow(AttachPane.getInstance());
 		scriptManagerWindow = new GenericWindow(ScriptManagerPane.getInstance());
 		pluginManagerWindow = new GenericWindow(PluginManagerPane.getInstance());
 		modificationsWindow = new GenericWindow(new DiffViewPane(RecafUI.getController()));
@@ -42,6 +44,13 @@ public class Windows {
 	 */
 	public GenericWindow getConfigWindow() {
 		return configWindow;
+	}
+
+	/**
+	 * @return Attach window.
+	 */
+	public GenericWindow getAttachWindow() {
+		return attachWindow;
 	}
 
 	/**

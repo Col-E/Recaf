@@ -7,6 +7,7 @@ menu.association.override=Override language
 menu.association.none=No associations configured
 menu.config=Config
 menu.file=File
+menu.file.attach=Attach to remote
 menu.file.addtoworkspace=Add to workspace
 menu.file.openworkspace=Open workspace
 menu.file.exportapp=Export application

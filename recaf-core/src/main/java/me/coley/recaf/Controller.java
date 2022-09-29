@@ -80,15 +80,18 @@ public class Controller {
 	 *
 	 * @param workspace
 	 * 		New workspace, or {@code null} to close the workspace without a replacement.
+	 *
+	 * @return {@code true} when the workspace was updated.
+	 * {@code false} when the change was rejected.
 	 */
-	public void setWorkspace(Workspace workspace) {
+	public boolean setWorkspace(Workspace workspace) {
 		// Close current workspace
 		if (this.workspace != null) {
 			if (presentation.workspaceLayer().closeWorkspace(this.workspace)) {
 				this.workspace.cleanup();
 			} else {
 				// Presentation layer cancelled closing the workspace
-				return;
+				return false;
 			}
 		}
 		// Set new workspace & update services
@@ -103,6 +106,7 @@ public class Controller {
 		if (workspace != null) {
 			presentation.workspaceLayer().openWorkspace(workspace);
 		}
+		return true;
 	}
 
 	/**

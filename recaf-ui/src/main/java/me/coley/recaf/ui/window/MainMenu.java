@@ -21,7 +21,10 @@ import me.coley.recaf.mapping.MappingsTool;
 import me.coley.recaf.ui.control.MenuLabel;
 import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.menu.ClosableActionMenuItem;
-import me.coley.recaf.ui.pane.*;
+import me.coley.recaf.ui.pane.InfoPane;
+import me.coley.recaf.ui.pane.MappingGenPane;
+import me.coley.recaf.ui.pane.ScriptManagerPane;
+import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.prompt.WorkspaceActionType;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Help;
@@ -32,7 +35,6 @@ import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
-import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 import java.awt.*;
@@ -87,6 +89,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		MenuItem itemQuit = action("menu.file.quit", Icons.CLOSE, this::quit);
 		menuFile.getItems().add(itemAddToWorkspace);
 		menuFile.getItems().add(action("menu.file.openworkspace", Icons.OPEN_FILE, this::openWorkspace));
+		menuFile.getItems().add(action("menu.file.attach", Icons.DEBUG, this::openAttach));
 		menuFile.getItems().add(menuRecent);
 		menuFile.getItems().add(separator());
 		menuFile.getItems().add(itemExportPrimary);
@@ -254,6 +257,15 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		RecafUI.getWindows().getMainWindow().close();
 	}
 
+	private void openAttach() {
+		GenericWindow window = RecafUI.getWindows().getAttachWindow();
+		window.titleProperty().bind(Lang.getBinding("menu.file.attach"));
+		window.getStage().setWidth(750);
+		window.getStage().setHeight(450);
+		window.show();
+		window.requestFocus();
+	}
+
 	private void openConfig() {
 		GenericWindow window = RecafUI.getWindows().getConfigWindow();
 		window.titleProperty().bind(Lang.getBinding("menu.config"));
@@ -303,7 +315,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	}
 
 	private void openMappingViewer() {
-		GenericWindow window =  RecafUI.getWindows().getMappingViewWindow();
+		GenericWindow window = RecafUI.getWindows().getMappingViewWindow();
 		window.titleProperty().bind(Lang.getBinding("menu.mappings.view"));
 		window.show();
 	}
@@ -319,7 +331,9 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		boolean isEmpty = newWorkspace == null;
 		noWorkspace.set(isEmpty);
 		if (!isEmpty) {
-			Configs.recentWorkspaces().addWorkspace(newWorkspace);
+			RecentWorkspacesConfig recentWorkspaces = Configs.recentWorkspaces();
+			if (recentWorkspaces.canSerialize(newWorkspace))
+				recentWorkspaces.addWorkspace(newWorkspace);
 		}
 	}
 

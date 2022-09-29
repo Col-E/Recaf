@@ -67,9 +67,12 @@ public class WorkspaceAPI {
 	/**
 	 * @param workspace
 	 * 		Workspace to apply to the current Recaf instance.
+	 *
+	 * @return {@code true} when the workspace was updated.
+	 * {@code false} when the change was rejected.
 	 */
-	public static void setWorkspace(Workspace workspace) {
-		RecafUI.getController().setWorkspace(workspace);
+	public static boolean setWorkspace(Workspace workspace) {
+		return RecafUI.getController().setWorkspace(workspace);
 	}
 
 	/**

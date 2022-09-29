@@ -115,6 +115,7 @@ public class Icons {
 	public static final String EXPORT = "icons/export.png";
 	public static final String CLOSE = "icons/close.png";
 	public static final String SWAP = "icons/swap.png";
+	public static final String DEBUG = "icons/debug.png";
 	public static final String NUMBERS = "icons/numbers.png";
 	public static final String KEYBOARD = "icons/keyboard.png";
 	public static final String DOCUMENTATION = "icons/documentation.png";

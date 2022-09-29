@@ -24,6 +24,7 @@ dependencies {
     api diff
     api directories
     api gson
+    api instrument_server
     api (jadx) { exclude group: 'com.android.tools.build' }
     api jadx_input
     api java_parser

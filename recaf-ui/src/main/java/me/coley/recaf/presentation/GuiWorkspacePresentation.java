@@ -51,8 +51,10 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 			// Update recent workspaces list in main menu.
 			// We do this in the "close" section because its makes it easy to assume
 			// that this is the final form of the workspace.
-			Configs.recentWorkspaces().addWorkspace(workspace);
-			getMainMenu().refreshRecent();
+			if (Configs.recentWorkspaces().canSerialize(workspace)) {
+				Configs.recentWorkspaces().addWorkspace(workspace);
+				getMainMenu().refreshRecent();
+			}
 			// Close workspace tree
 			Workspace oldWorkspace = getWorkspacePane().getWorkspace();
 			getWorkspacePane().onNewWorkspace(oldWorkspace, null);

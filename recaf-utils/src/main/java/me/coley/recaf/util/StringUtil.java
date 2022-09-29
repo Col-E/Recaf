@@ -47,6 +47,19 @@ public class StringUtil {
 		return split;
 	}
 
+	/**
+	 * @param defaultText
+	 * 		Text to return.
+	 * @param fallback
+	 * 		Fallback to use if the default text is blank.
+	 *
+	 * @return Text or fallback if text is empty.
+	 */
+	public static String withEmptyFallback(String defaultText, String fallback) {
+		if (defaultText == null || defaultText.trim().isBlank())
+			return fallback;
+		return defaultText;
+	}
 
 	/**
 	 * @param text

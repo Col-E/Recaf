@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 public class Directories {
 	private static final Logger logger = Logging.get(Directories.class);
 	private static final Path baseDirectory = createBaseDirectory();
+	private static final Path agentDirectory = resolveDirectory("agent");
 	private static final Path classpathDirectory = resolveDirectory("classpath");
 	private static final Path configDirectory = resolveDirectory("config");
 	private static final Path dependenciesDirectory = resolveDirectory("dependencies");
@@ -30,6 +31,13 @@ public class Directories {
 	 */
 	public static Path getBaseDirectory() {
 		return baseDirectory;
+	}
+
+	/**
+	 * @return Directory where agent jars are stored.
+	 */
+	public static Path getAgentDirectory() {
+		return agentDirectory;
 	}
 
 	/**
