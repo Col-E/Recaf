@@ -99,7 +99,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 				} else {
 					CellFactory.update(CellOriginType.SEARCH_RESULTS, this, workspace.getResources().getPrimary(), item);
 					// Override with full name
-					setText(TextDisplayUtil.escapeShortenPath(item.getName()));
+					setText(TextDisplayUtil.shortenEscapeLimit(item.getName()));
 					setOnMousePressed(e -> {
 						SplitPane pane = (SplitPane) createDiffDisplay(item);
 						pane.getItems().forEach(paneItem -> {

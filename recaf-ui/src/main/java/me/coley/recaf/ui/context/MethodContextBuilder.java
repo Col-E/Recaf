@@ -169,8 +169,8 @@ public class MethodContextBuilder extends MemberContextBuilder {
 
 	@Override
 	public void delete() {
-		String ownerName = TextDisplayUtil.escapeShortenPath(ownerInfo.getName());
-		String methodName = TextDisplayUtil.escapeShortenPath(methodInfo.getName());
+		String ownerName = TextDisplayUtil.shortenEscapeLimit(ownerInfo.getName());
+		String methodName = TextDisplayUtil.shortenEscapeLimit(methodInfo.getName());
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {

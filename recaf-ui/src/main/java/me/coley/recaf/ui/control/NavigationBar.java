@@ -164,7 +164,7 @@ public class NavigationBar extends HBox {
 		getChildren().clear();
 		for (int i = 0; i < elements.length; i++) {
 			boolean isLast = i == elements.length - 1;
-			String elementText = TextDisplayUtil.escapeShortenPath(elements[i]);
+			String elementText = TextDisplayUtil.shortenEscapeLimit(elements[i]);
 
 			// Last element will always be a class.
 			if (isLast) {

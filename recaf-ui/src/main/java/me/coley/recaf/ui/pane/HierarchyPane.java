@@ -174,7 +174,7 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 					removeEventFilter(MouseEvent.MOUSE_PRESSED, onClickFilter);
 			} else {
 				setGraphic(Icons.getClassIcon(item));
-				setText(TextDisplayUtil.escapeShortenPath(item.getName()));
+				setText(TextDisplayUtil.shortenEscapeLimit(item.getName()));
 				// Menu based on info subtype
 				if (item instanceof ClassInfo) {
 					setContextMenu(ContextBuilder.forClass((ClassInfo) item).build());

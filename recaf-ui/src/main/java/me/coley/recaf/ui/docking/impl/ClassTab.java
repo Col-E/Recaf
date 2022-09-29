@@ -25,7 +25,7 @@ public class ClassTab extends DockTab implements FontSizeChangeable {
 	 * 		Representation of the class.
 	 */
 	public ClassTab(String title, ClassRepresentation classRepresentation) {
-		super(TextDisplayUtil.escapeShortenPath(title), classRepresentation.getNodeRepresentation());
+		super(TextDisplayUtil.shortenEscapeLimit(title), classRepresentation.getNodeRepresentation());
 		this.classRepresentation = classRepresentation;
 	}
 

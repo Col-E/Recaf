@@ -403,7 +403,7 @@ public class ClassInfoFormatter implements ConstantPoolConstants {
 	}
 
 	private static Node dim(Object value) {
-		String text = TextDisplayUtil.escapeShortenPath(Objects.toString(value));
+		String text = TextDisplayUtil.shortenEscapeLimit(Objects.toString(value));
 		Label label = new Label(text);
 		label.getStyleClass().add("monospace");
 		label.getStyleClass().add("faint");

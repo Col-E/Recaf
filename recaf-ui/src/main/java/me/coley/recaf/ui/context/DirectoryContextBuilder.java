@@ -46,7 +46,7 @@ public class DirectoryContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = directoryName;
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(TextDisplayUtil.escapeShortenPath(name), Icons.getIconView(Icons.FOLDER)));
+		menu.getItems().add(createHeader(TextDisplayUtil.shortenEscapeLimit(name), Icons.getIconView(Icons.FOLDER)));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
@@ -100,7 +100,7 @@ public class DirectoryContextBuilder extends ContextBuilder {
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
 				StringBinding title = Lang.getBinding("dialog.title.delete-directory");
-				StringBinding header = Lang.format("dialog.header.delete-directory", "\n" + TextDisplayUtil.escapeShortenPath(directoryName));
+				StringBinding header = Lang.format("dialog.header.delete-directory", "\n" + TextDisplayUtil.shortenEscapeLimit(directoryName));
 				ConfirmDialog deleteDialog = new ConfirmDialog(title, header, Icons.getImageView(Icons.ACTION_DELETE));
 				boolean canRemove = deleteDialog.showAndWait().orElse(false);
 				if (!canRemove) {

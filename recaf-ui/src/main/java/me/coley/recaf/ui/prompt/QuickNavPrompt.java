@@ -128,10 +128,10 @@ public class QuickNavPrompt extends GenericWindow {
 							MemberInfo member = (MemberInfo) item.info;
 							String def = member.isMethod() ?
 									member.getName() + member.getDescriptor() : member.getName();
-							setText(TextDisplayUtil.escapeShortenPath(member.getOwner()) + " " +
-									TextDisplayUtil.escapeShorten(def));
+							setText(TextDisplayUtil.shortenEscapeLimit(member.getOwner()) + " " +
+									TextDisplayUtil.escapeLimit(def));
 						} else {
-							setText(TextDisplayUtil.escapeShortenPath(item.info.getName()));
+							setText(TextDisplayUtil.shortenEscapeLimit(item.info.getName()));
 						}
 
 					}

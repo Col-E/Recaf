@@ -147,8 +147,8 @@ public class FieldContextBuilder extends MemberContextBuilder {
 
 	@Override
 	public void delete() {
-		String ownerName = TextDisplayUtil.escapeShortenPath(ownerInfo.getName());
-		String fieldName = TextDisplayUtil.escapeShortenPath(fieldInfo.getName());
+		String ownerName = TextDisplayUtil.shortenEscapeLimit(ownerInfo.getName());
+		String fieldName = TextDisplayUtil.shortenEscapeLimit(fieldInfo.getName());
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {

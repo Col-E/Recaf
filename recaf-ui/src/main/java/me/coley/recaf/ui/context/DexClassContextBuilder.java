@@ -52,7 +52,7 @@ public class DexClassContextBuilder extends DeclarableContextBuilder {
 		if (icon == null) {
 			icon = Icons.getClassIcon(info);
 		}
-		menu.getItems().add(createHeader(TextDisplayUtil.escapeShortenPath(name), icon));
+		menu.getItems().add(createHeader(TextDisplayUtil.shortenEscapeLimit(name), icon));
 		menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 
 		// TODO: Android dex class context menu items

@@ -25,7 +25,7 @@ public class FileTab extends DockTab implements FontSizeChangeable {
 	 * 		Representation of the file.
 	 */
 	public FileTab(String title, FileRepresentation fileRepresentation) {
-		super(TextDisplayUtil.escapeShortenPath(title), fileRepresentation.getNodeRepresentation());
+		super(TextDisplayUtil.shortenEscapeLimit(title), fileRepresentation.getNodeRepresentation());
 		this.fileRepresentation = fileRepresentation;
 	}
 

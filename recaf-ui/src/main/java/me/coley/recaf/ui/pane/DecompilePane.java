@@ -262,7 +262,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 			if (Configs.decompiler().enableDecompilerTimeout) {
 				timeout = Configs.decompiler().decompileTimeout + 500;
 			}
-			String name = TextDisplayUtil.escapeShorten(newValue.getName());
+			String name = TextDisplayUtil.escapeLimit(newValue.getName());
 			log.debug("Queueing decompilation for {} with timeout {}ms", name, timeout);
 			// Create new threaded decompile
 			CompletableFuture<String> decompileFuture = CompletableFuture.supplyAsync(() -> {

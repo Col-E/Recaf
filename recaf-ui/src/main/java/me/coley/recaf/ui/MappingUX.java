@@ -85,7 +85,7 @@ public class MappingUX {
 				Workspace workspace = RecafUI.getController().getWorkspace();
 				CommonClassInfo newClassInfo = workspace.getResources().getClass(newName);
 				RecafDockingManager docking = RecafDockingManager.getInstance();
-				String title = TextDisplayUtil.escapeShortenPath(newName);
+				String title = TextDisplayUtil.shortenEscapeLimit(newName);
 				ClassTab newTab = (ClassTab) docking.createTab(() -> new ClassTab(title, oldView));
 				newTab.select();
 				oldView.refreshView();

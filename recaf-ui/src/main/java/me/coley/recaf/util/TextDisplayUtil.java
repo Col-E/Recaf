@@ -14,7 +14,7 @@ public class TextDisplayUtil {
 	 *
 	 * @return Output, shortened by path name, escaping common ascii values.
 	 */
-	public static String escapePath(String string) {
+	public static String shortenEscape(String string) {
 		if (string == null)
 			return null;
 		return EscapeUtil.escape(StringUtil.shortenPath(string));
@@ -26,7 +26,7 @@ public class TextDisplayUtil {
 	 *
 	 * @return Output, shortened by path name and then by config display length, escaping common ascii values.
 	 */
-	public static String escapeShorten(String string) {
+	public static String escapeLimit(String string) {
 		if (string == null)
 			return null;
 		String text = EscapeUtil.escape(string);
@@ -41,10 +41,10 @@ public class TextDisplayUtil {
 	 *
 	 * @return Output, shortened by path name and then by config display length, escaping common ascii values.
 	 */
-	public static String escapeShortenPath(String string) {
+	public static String shortenEscapeLimit(String string) {
 		if (string == null)
 			return null;
-		String text = escapePath(string);
+		String text = shortenEscape(string);
 		int max = Math.min(text.length(), Configs.display().maxTreeTextLength.get());
 		text = StringUtil.limit(text, "...", max);
 		return text;

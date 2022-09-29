@@ -41,7 +41,7 @@ public class CommonUX {
 				Animations.animateNotice(tab.getContent(), 1000);
 		} else {
 			// Create the tab
-			String title = TextDisplayUtil.escapeShortenPath(info.getName());
+			String title = TextDisplayUtil.shortenEscapeLimit(info.getName());
 			tab = (ClassTab) RecafDockingManager.getInstance()
 					.createTab(CommonUX::anyRegion, CommonUX::byPopulatedClasses,
 							() -> new ClassTab(title, new ClassView(info)));
@@ -91,7 +91,7 @@ public class CommonUX {
 				Animations.animateNotice(tab.getContent(), 1000);
 		} else {
 			// Create the tab
-			String title = TextDisplayUtil.escapeShortenPath(info.getName());
+			String title = TextDisplayUtil.shortenEscapeLimit(info.getName());
 			tab = (FileTab) RecafDockingManager.getInstance()
 					.createTab(CommonUX::anyRegion, CommonUX::byPopulatedFiles,
 							() -> new FileTab(title, new FileView(info)));

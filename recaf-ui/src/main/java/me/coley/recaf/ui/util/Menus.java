@@ -23,7 +23,7 @@ public class Menus {
 	 * @return Header menu item.
 	 */
 	public static MenuItem createHeader(String name, Node graphic) {
-		MenuItem header = new MenuItem(TextDisplayUtil.escapeShortenPath(name));
+		MenuItem header = new MenuItem(TextDisplayUtil.shortenEscapeLimit(name));
 		header.getStyleClass().add("context-menu-header");
 		header.setGraphic(graphic);
 		header.setDisable(true);

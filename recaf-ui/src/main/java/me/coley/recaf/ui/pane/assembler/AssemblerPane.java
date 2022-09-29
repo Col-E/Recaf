@@ -201,7 +201,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		components.forEach(c -> c.setTargetMember(targetMember));
 		// Update tab display
 		tab.textProperty().unbind();
-		tab.setText(TextDisplayUtil.escapeShortenPath(targetMember.getName()));
+		tab.setText(TextDisplayUtil.shortenEscapeLimit(targetMember.getName()));
 		if (targetMember.isMethod()) {
 			// Setup bottom tabs with bytecode helper tools for methods.
 			if (bottomTabs.getTabs().isEmpty()) {

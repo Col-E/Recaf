@@ -85,7 +85,7 @@ public class CellFactory {
 		INFO_MAP.put(ClassInfo.class, (type, cell, resource, info) -> {
 			ClassInfo classInfo = (ClassInfo) info;
 			String className = info.getName();
-			cell.setText(TextDisplayUtil.escapeShortenPath(className));
+			cell.setText(TextDisplayUtil.shortenEscapeLimit(className));
 			IconProvider iconProvider = Icons.getClassIconProvider(classInfo);
 			cell.setContextMenu(ContextBuilder.forClass(classInfo)
 				.setIcon(iconProvider.makeIcon())
@@ -98,7 +98,7 @@ public class CellFactory {
 		INFO_MAP.put(DexClassInfo.class, (type, cell, resource, info) -> {
 			DexClassInfo classInfo = (DexClassInfo) info;
 			String className = info.getName();
-			cell.setText(TextDisplayUtil.escapeShortenPath(className));
+			cell.setText(TextDisplayUtil.shortenEscapeLimit(className));
 			IconProvider iconProvider = Icons.getClassIconProvider(classInfo);
 			cell.setContextMenu(ContextBuilder.forDexClass(classInfo)
 				.setIcon(iconProvider.makeIcon())
@@ -111,7 +111,7 @@ public class CellFactory {
 		INFO_MAP.put(FileInfo.class, (type, cell, resource, info) -> {
 			FileInfo fileInfo = (FileInfo) info;
 			String fileName = info.getName();
-			cell.setText(TextDisplayUtil.escapeShortenPath(fileName));
+			cell.setText(TextDisplayUtil.shortenEscapeLimit(fileName));
 			IconProvider iconProvider = getFileIconProvider(fileInfo);
 			cell.setContextMenu(ContextBuilder.forFile(fileInfo)
 				.setIcon(iconProvider.makeIcon())
@@ -130,7 +130,7 @@ public class CellFactory {
 				owner = resources.getClass(fieldInfo.getOwner());
 			}
 			String name = info.getName();
-			cell.setText(TextDisplayUtil.escapeShortenPath(name));
+			cell.setText(TextDisplayUtil.shortenEscapeLimit(name));
 			cell.setGraphic(getFieldIcon(fieldInfo));
 			cell.setContextMenu(ContextBuilder.forField(owner, fieldInfo)
 					.withResource(resource)
@@ -146,7 +146,7 @@ public class CellFactory {
 				owner = resources.getClass(methodInfo.getOwner());
 			}
 			String name = info.getName();
-			cell.setText(TextDisplayUtil.escapeShortenPath(name));
+			cell.setText(TextDisplayUtil.shortenEscapeLimit(name));
 			cell.setGraphic(getMethodIcon(methodInfo));
 			cell.setContextMenu(ContextBuilder.forMethod(owner, methodInfo)
 					.withResource(resource)

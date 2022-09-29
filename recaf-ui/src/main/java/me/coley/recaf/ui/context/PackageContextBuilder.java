@@ -45,7 +45,7 @@ public class PackageContextBuilder extends ContextBuilder {
 	public ContextMenu build() {
 		String name = packageName;
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().add(createHeader(TextDisplayUtil.escapeShortenPath(name), Icons.getIconView(Icons.FOLDER_PACKAGE)));
+		menu.getItems().add(createHeader(TextDisplayUtil.shortenEscapeLimit(name), Icons.getIconView(Icons.FOLDER_PACKAGE)));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
 			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
@@ -73,7 +73,7 @@ public class PackageContextBuilder extends ContextBuilder {
 	}
 
 	private void delete() {
-		String name = TextDisplayUtil.escapeShortenPath(packageName);
+		String name = TextDisplayUtil.shortenEscapeLimit(packageName);
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {

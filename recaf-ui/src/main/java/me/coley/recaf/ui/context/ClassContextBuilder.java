@@ -73,7 +73,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		if (icon == null) {
 			icon = Icons.getClassIcon(info);
 		}
-		menu.getItems().add(createHeader(TextDisplayUtil.escapeShortenPath(name), icon));
+		menu.getItems().add(createHeader(TextDisplayUtil.shortenEscapeLimit(name), icon));
 		if (!declaration)
 			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {
@@ -162,7 +162,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 
 	@Override
 	public void delete() {
-		String name = TextDisplayUtil.escapeShortenPath(info.getName());
+		String name = TextDisplayUtil.shortenEscapeLimit(info.getName());
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (Configs.display().promptDeleteItem) {
@@ -249,7 +249,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 	}
 
 	private void openHierarchy() {
-		String title = "Hierarchy: " + TextDisplayUtil.escapeShortenPath(info.getName());
+		String title = "Hierarchy: " + TextDisplayUtil.shortenEscapeLimit(info.getName());
 		DockTab tab = RecafDockingManager.getInstance()
 				.createTab(() -> new ClassTab(title, new ClassHierarchyPane(info)));
 		tab.select();
