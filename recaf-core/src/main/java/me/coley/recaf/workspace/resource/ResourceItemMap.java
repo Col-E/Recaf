@@ -1,6 +1,7 @@
 package me.coley.recaf.workspace.resource;
 
 import me.coley.recaf.code.ItemInfo;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
@@ -112,7 +113,7 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I>, Iter
 			throw new IllegalStateException("Failed history increment, no prior history to build on for: " + key);
 		}
 		int size = itemHistory.size();
-		logger.debug("Increment history: {} - {} states", key, size);
+		logger.debug("Increment history: {} - {} states", EscapeUtil.escapeCommon(key), size);
 		itemHistory.push(itemInfo);
 	}
 

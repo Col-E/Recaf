@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.PrintContext;
+import me.coley.recaf.util.EscapeUtil;
 
 /**
  * Field reference instruction.
@@ -57,6 +58,9 @@ public class FieldInstruction extends AbstractInstruction {
 
 	@Override
 	public String print(PrintContext context) {
-		return getOpcode() + " " + getOwner() + '.' + getName() + ' ' + getDesc();
+		return getOpcode() + " " +
+				EscapeUtil.escapeSpace(getOwner()) + '.' +
+				EscapeUtil.escapeSpace(getName()) + ' ' +
+				EscapeUtil.escapeSpace(getDesc());
 	}
 }

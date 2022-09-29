@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.PrintContext;
+import me.coley.recaf.util.EscapeUtil;
 
 /**
  * Method reference instruction.
@@ -71,9 +72,15 @@ public class MethodInstruction extends AbstractInstruction {
 		// Jasm has a custom format for normal 'invokex' instructions but with the abstracted away flag 'itf' set to
 		// true, that's why we have to use the format 'invokexinterface' to tell jasm to use these special instructions.
 		// we check for op != 'invokeinterface' because invokeinterface is always itf=true
-		if(isItf() && !this.getOpcode().equals("invokeinterface")) {
-			return getOpcode() + "interface" + " " + getOwner() + "." + getName() + " " + getDesc();
+		if (isItf() && !this.getOpcode().equals("invokeinterface")) {
+			return getOpcode() + "interface " +
+					EscapeUtil.escapeSpace(getOwner()) + '.' +
+					EscapeUtil.escapeSpace(getName()) + ' ' +
+					EscapeUtil.escapeSpace(getDesc());
 		}
-		return getOpcode() + " " + getOwner() + "." + getName() + " " + getDesc();
+		return getOpcode() + " " +
+				EscapeUtil.escapeSpace(getOwner()) + '.' +
+				EscapeUtil.escapeSpace(getName()) + ' ' +
+				EscapeUtil.escapeSpace(getDesc());
 	}
 }
