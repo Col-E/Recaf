@@ -121,7 +121,7 @@ public class JavaParserRecovery {
 					}
 				}
 				// Apply comment recovery if set
-				if (commentOut) {
+				if (commentOut && lineInfo.text.length() >= 2) {
 					// Insert line comment, and substring the line by '//'s length.
 					// The user's wont see this so its OK. This balances out the change so context actions
 					// do not occur at offset positions.

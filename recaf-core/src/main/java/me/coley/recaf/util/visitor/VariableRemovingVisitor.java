@@ -14,13 +14,13 @@ public class VariableRemovingVisitor extends ClassVisitor {
 	 * 		Parent visitor.
 	 */
 	public VariableRemovingVisitor(ClassVisitor cv) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 	}
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-		return new MethodVisitor(RecafConstants.ASM_VERSION, mv) {
+		return new MethodVisitor(RecafConstants.getAsmVersion(), mv) {
 			@Override
 			public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath,
 																  Label[] start, Label[] end, int[] index,

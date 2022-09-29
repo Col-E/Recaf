@@ -16,7 +16,7 @@ public class SignatureRemovingVisitor extends ClassVisitor {
 	 * @param cv Parent visitor.
 	 */
 	public SignatureRemovingVisitor(ClassVisitor cv) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 	}
 
 	@Override
@@ -32,7 +32,7 @@ public class SignatureRemovingVisitor extends ClassVisitor {
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String s, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, desc, null, exceptions);
-		return new MethodVisitor(RecafConstants.ASM_VERSION, mv) {
+		return new MethodVisitor(RecafConstants.getAsmVersion(), mv) {
 			@Override
 			public void visitLocalVariable(String name, String desc, String s, Label start, Label end, int index) {
 				super.visitLocalVariable(name, desc, null, start, end, index);

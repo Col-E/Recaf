@@ -8,7 +8,6 @@ import javax.annotation.Nullable;
  * @author Amejonah
  */
 public class OuterMethodInfo {
-	private final String className;
 	private final String owner;
 	@Nullable
 	private final String name;
@@ -25,15 +24,10 @@ public class OuterMethodInfo {
 	 * 		The descriptor of the method that contains the class, or {@code null} if
 	 * 		the class is not enclosed in a method of its enclosing class.
 	 */
-	public OuterMethodInfo(String className, String owner, @Nullable String name, @Nullable String descriptor) {
-		this.className = className;
+	public OuterMethodInfo(String owner, @Nullable String name, @Nullable String descriptor) {
 		this.owner = owner;
 		this.name = name;
 		this.descriptor = descriptor;
-	}
-
-	public String getClassName() {
-		return className;
 	}
 
 	/**

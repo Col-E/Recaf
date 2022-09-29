@@ -44,7 +44,7 @@ public abstract class QueryVisitor extends ClassVisitor {
 	 * 		Delegate query visitor, may be {@code null}.
 	 */
 	public QueryVisitor(Resource resource, QueryVisitor visitor) {
-		super(RecafConstants.ASM_VERSION, visitor);
+		super(RecafConstants.getAsmVersion(), visitor);
 		this.resource = resource;
 		this.delegate = visitor;
 	}

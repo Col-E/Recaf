@@ -7,12 +7,10 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.parse.jpimpl.RecafResolvedTypeDeclaration;
 import me.coley.recaf.util.StringUtil;
-import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceListener;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
-import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -26,7 +24,6 @@ import java.util.Set;
  * @author Matt Coley
  */
 public class WorkspaceTypeSolver implements TypeSolver, WorkspaceListener, ResourceClassListener {
-	private static final Logger logger = Logging.get(WorkspaceTypeSolver.class);
 	private final Map<String, RecafResolvedTypeDeclaration> nameToDeclarationCache = new HashMap<>();
 	private final Set<String> failedResolves = new HashSet<>();
 	private final TypeSolver childSolver = new ReflectionTypeSolver(false);

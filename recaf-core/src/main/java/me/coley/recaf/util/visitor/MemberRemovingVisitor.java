@@ -22,7 +22,7 @@ public class MemberRemovingVisitor extends ClassVisitor {
 	 * 		Member to remove.
 	 */
 	public MemberRemovingVisitor(ClassVisitor cv, MemberInfo memberInfo) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 		this.memberInfo = memberInfo;
 	}
 

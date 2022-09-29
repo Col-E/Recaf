@@ -11,7 +11,7 @@ import org.objectweb.asm.*;
  * @author Matt Coley
  */
 public class ValidationVisitor extends ClassVisitor {
-	private static final int API = RecafConstants.ASM_VERSION;
+	private static final int API = RecafConstants.getAsmVersion();
 
 	/**
 	 * Create visitor.

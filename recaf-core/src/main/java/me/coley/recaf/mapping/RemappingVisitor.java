@@ -23,7 +23,7 @@ public class RemappingVisitor extends ClassRemapper {
 	 * 		Mappings to apply.
 	 */
 	public RemappingVisitor(ClassVisitor cv, Mappings mappings) {
-		super(RecafConstants.ASM_VERSION, cv, new RemapperImpl(mappings));
+		super(RecafConstants.getAsmVersion(), cv, new RemapperImpl(mappings));
 		// Shadow the parent type's remapper locally so we can use our newly defined methods
 		this.remapper = ((RemapperImpl) super.remapper);
 	}
@@ -55,7 +55,7 @@ public class RemappingVisitor extends ClassRemapper {
 		private final String methodDesc;
 
 		public VariableRenamingMethodVisitor(String className, String methodName, String methodDesc, MethodVisitor mv) {
-			super(RecafConstants.ASM_VERSION, mv);
+			super(RecafConstants.getAsmVersion(), mv);
 			this.className = className;
 			this.methodName = methodName;
 			this.methodDesc = methodDesc;

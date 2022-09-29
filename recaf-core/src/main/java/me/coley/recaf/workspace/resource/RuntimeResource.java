@@ -49,7 +49,7 @@ public class RuntimeResource extends Resource {
 				if (name == null)
 					return null;
 				String key = name.toString();
-				if (key.contains("."))
+				if (key.indexOf('.') >= 0)
 					key = key.replace('.', '/');
 				Object present = cache.get(key);
 				if (present == STUB)

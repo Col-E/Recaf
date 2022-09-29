@@ -25,7 +25,7 @@ public class MemberCopyingVisitor extends ClassVisitor {
 	 * 		Name of copied member.
 	 */
 	public MemberCopyingVisitor(ClassVisitor cv, MemberInfo memberInfo, String copyName) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 		this.memberInfo = memberInfo;
 		this.copyName = copyName;
 	}
@@ -56,7 +56,7 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		private final FieldVisitor copy;
 
 		public CopyingFieldVisitor(FieldVisitor original, FieldVisitor copy) {
-			super(RecafConstants.ASM_VERSION, original);
+			super(RecafConstants.getAsmVersion(), original);
 			this.copy = copy;
 		}
 
@@ -86,7 +86,7 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		private final MethodVisitor copy;
 
 		public CopyingMethodVisitor(MethodVisitor original, MethodVisitor copy) {
-			super(RecafConstants.ASM_VERSION, original);
+			super(RecafConstants.getAsmVersion(), original);
 			this.copy = copy;
 		}
 
@@ -305,7 +305,7 @@ public class MemberCopyingVisitor extends ClassVisitor {
 		private final AnnotationVisitor copy;
 
 		public CopyingAnnotationVisitor(AnnotationVisitor original, AnnotationVisitor copy) {
-			super(RecafConstants.ASM_VERSION, original);
+			super(RecafConstants.getAsmVersion(), original);
 			this.copy = copy;
 		}
 

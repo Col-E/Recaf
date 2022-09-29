@@ -25,7 +25,7 @@ public class MethodReplacingVisitor extends ClassVisitor {
 	 * 		Method to replace with.
 	 */
 	public MethodReplacingVisitor(ClassVisitor cv, MemberInfo memberInfo, MethodNode replacementMethod) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 		this.memberInfo = memberInfo;
 		this.replacementMethod = replacementMethod;
 	}

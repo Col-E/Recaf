@@ -15,7 +15,7 @@ public class ClassHollowingVisitor extends ClassVisitor {
 	 * 		Parent visitor.
 	 */
 	public ClassHollowingVisitor(ClassVisitor cv) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class ClassHollowingVisitor extends ClassVisitor {
 		 * 		Parent field visitor.
 		 */
 		public FieldHollower(FieldVisitor fv) {
-			super(RecafConstants.ASM_VERSION, fv);
+			super(RecafConstants.getAsmVersion(), fv);
 		}
 
 		@Override
@@ -95,7 +95,7 @@ public class ClassHollowingVisitor extends ClassVisitor {
 		 * 		Return type of the method being visited.
 		 */
 		public MethodHollower(MethodVisitor mv, boolean isAbstract, Type retType) {
-			super(RecafConstants.ASM_VERSION, mv);
+			super(RecafConstants.getAsmVersion(), mv);
 			this.isAbstract = isAbstract;
 			this.retType = retType;
 		}

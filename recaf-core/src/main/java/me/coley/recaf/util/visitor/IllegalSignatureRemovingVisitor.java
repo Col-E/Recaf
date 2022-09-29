@@ -20,7 +20,7 @@ public class IllegalSignatureRemovingVisitor extends ClassVisitor {
 	 * 		Parent visitor.
 	 */
 	public IllegalSignatureRemovingVisitor(ClassVisitor cv) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 	}
 
 	/**
@@ -43,7 +43,7 @@ public class IllegalSignatureRemovingVisitor extends ClassVisitor {
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String s, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, desc, map(s, false), exceptions);
-		return new MethodVisitor(RecafConstants.ASM_VERSION, mv) {
+		return new MethodVisitor(RecafConstants.getAsmVersion(), mv) {
 			@Override
 			public void visitLocalVariable(String name, String desc, String s, Label start, Label end, int index) {
 				super.visitLocalVariable(name, desc, map(s, true), start, end, index);

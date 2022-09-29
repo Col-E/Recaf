@@ -69,7 +69,7 @@ public class GuiPresentation implements Presentation {
 				RecafUI.getWindows().getMainWindow().show();
 			} catch (Throwable ex) {
 				logger.error("Recaf crashed due to an unhandled error." +
-						"Please open a bug report: " + RecafConstants.URL_BUG_REPORT, ex);
+						"Please open a bug report: " + RecafConstants.getUrlBugReport(), ex);
 				Platform.exit();
 				System.exit(-1);
 			}

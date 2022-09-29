@@ -14,7 +14,7 @@ public class SyntheticRemovingVisitor extends ClassVisitor {
 	 * 		Parent visitor.
 	 */
 	public SyntheticRemovingVisitor(ClassVisitor cv) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 	}
 
 	private static int strip(int access) {

@@ -22,7 +22,6 @@ dependencies {
     implementation docking
     implementation richtextfx
 
-    // TODO: Replace once 0.0.4 is released officially
     implementation 'com.github.Col-E:fxgraph:0.0.4'
     implementation pe
     implementation jelf

@@ -24,7 +24,7 @@ public class CustomAttributeCollectingVisitor extends ClassVisitor {
 	 * 		Parent visitor.
 	 */
 	public CustomAttributeCollectingVisitor(ClassVisitor cv) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 		fieldCustomAttributes
 				= Multimap.from(new HashMap<>(), ArrayList::new);
 		methodCustomAttributes
@@ -87,7 +87,7 @@ public class CustomAttributeCollectingVisitor extends ClassVisitor {
 	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
 		FieldVisitor fv = super.visitField(access, name, descriptor, signature, value);
-		return new FieldVisitor(RecafConstants.ASM_VERSION, fv) {
+		return new FieldVisitor(RecafConstants.getAsmVersion(), fv) {
 			@Override
 			public void visitAttribute(Attribute attribute) {
 				fieldCustomAttributes.get(name).add(attribute);
@@ -99,7 +99,7 @@ public class CustomAttributeCollectingVisitor extends ClassVisitor {
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
-		return new MethodVisitor(RecafConstants.ASM_VERSION, mv) {
+		return new MethodVisitor(RecafConstants.getAsmVersion(), mv) {
 			@Override
 			public void visitAttribute(Attribute attribute) {
 				methodCustomAttributes.get(name).add(attribute);

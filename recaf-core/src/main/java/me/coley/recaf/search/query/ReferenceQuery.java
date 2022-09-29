@@ -148,7 +148,7 @@ public class ReferenceQuery implements Query {
 			private final FieldInfo fieldInfo;
 
 			protected RefFieldVisitor(FieldVisitor fv, FieldInfo fieldInfo) {
-				super(RecafConstants.ASM_VERSION, fv);
+				super(RecafConstants.getAsmVersion(), fv);
 				this.fieldInfo = fieldInfo;
 			}
 
@@ -181,7 +181,7 @@ public class ReferenceQuery implements Query {
 			private final MethodInfo methodInfo;
 
 			public RefMethodVisitor(MethodVisitor delegate, MethodInfo methodInfo) {
-				super(RecafConstants.ASM_VERSION, delegate);
+				super(RecafConstants.getAsmVersion(), delegate);
 				this.methodInfo = methodInfo;
 			}
 
@@ -294,7 +294,7 @@ public class ReferenceQuery implements Query {
 
 		private abstract class RefAnnotationVisitor extends AnnotationVisitor {
 			protected RefAnnotationVisitor(AnnotationVisitor av) {
-				super(RecafConstants.ASM_VERSION, av);
+				super(RecafConstants.getAsmVersion(), av);
 			}
 
 			protected abstract void matchAnnoRef(String internalName);

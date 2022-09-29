@@ -234,7 +234,7 @@ public final class ZipPluginLoader implements PluginLoader {
 	private static final class PluginAnnotationVisitor extends ClassVisitor {
 
 		PluginAnnotationVisitor() {
-			super(RecafConstants.ASM_VERSION);
+			super(RecafConstants.getAsmVersion());
 		}
 
 		@Override

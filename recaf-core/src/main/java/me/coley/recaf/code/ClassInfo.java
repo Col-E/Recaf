@@ -182,7 +182,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 		List<MethodInfo> methods = new ArrayList<>();
 		List<InnerClassInfo> innerClasses = new ArrayList<>();
 		OuterMethodInfo[] outerMethod = new OuterMethodInfo[1];
-		reader.accept(new ClassVisitor(RecafConstants.ASM_VERSION) {
+		reader.accept(new ClassVisitor(RecafConstants.getAsmVersion()) {
 			@Override
 			public void visit(int version, int access, String name, String signature,
 							  String superName, String[] interfaces) {
@@ -211,7 +211,7 @@ public class ClassInfo implements ItemInfo, LiteralInfo, CommonClassInfo {
 
 			@Override
 			public void visitOuterClass(String owner, @Nullable String name, @Nullable String descriptor) {
-				outerMethod[0] = new OuterMethodInfo(className, owner, name, descriptor);
+				outerMethod[0] = new OuterMethodInfo(owner, name, descriptor);
 			}
 		}, ClassReader.SKIP_CODE);
 		List<InnerClassInfo> directlyNested = // Getting all inner classes which are directly visible, no nested inside nested ones

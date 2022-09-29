@@ -25,7 +25,7 @@ public class FieldReplacingVisitor extends ClassVisitor {
 	 * 		Field to replace with.
 	 */
 	public FieldReplacingVisitor(ClassVisitor cv, MemberInfo memberInfo, FieldNode replacementField) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 		this.memberInfo = memberInfo;
 		this.replacementField = replacementField;
 	}

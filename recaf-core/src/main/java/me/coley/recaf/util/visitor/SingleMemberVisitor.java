@@ -20,7 +20,7 @@ public class SingleMemberVisitor extends ClassVisitor {
 	 * 		Target member to visit.
 	 */
 	public SingleMemberVisitor(ClassVisitor cv, MemberInfo info) {
-		super(RecafConstants.ASM_VERSION, cv);
+		super(RecafConstants.getAsmVersion(), cv);
 		this.info = info;
 	}
 

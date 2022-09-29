@@ -122,7 +122,7 @@ public class TextQuery implements Query {
 			private final FieldInfo fieldInfo;
 
 			public TextFieldVisitor(FieldVisitor delegate, FieldInfo fieldInfo) {
-				super(RecafConstants.ASM_VERSION, delegate);
+				super(RecafConstants.getAsmVersion(), delegate);
 				this.fieldInfo = fieldInfo;
 			}
 
@@ -145,7 +145,7 @@ public class TextQuery implements Query {
 			private final MethodInfo methodInfo;
 
 			public TextMethodVisitor(MethodVisitor delegate, MethodInfo methodInfo) {
-				super(RecafConstants.ASM_VERSION, delegate);
+				super(RecafConstants.getAsmVersion(), delegate);
 				this.methodInfo = methodInfo;
 			}
 
@@ -232,7 +232,7 @@ public class TextQuery implements Query {
 			private final Consumer<ResultBuilder> resultDelegate;
 
 			public TextAnnotationVisitor(AnnotationVisitor delegate, Consumer<ResultBuilder> resultDelegate) {
-				super(RecafConstants.ASM_VERSION, delegate);
+				super(RecafConstants.getAsmVersion(), delegate);
 				this.resultDelegate = resultDelegate;
 			}
 
