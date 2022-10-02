@@ -5,7 +5,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.scene.control.ComboBox;
 import javafx.util.StringConverter;
-import me.coley.recaf.ui.control.parameterinput.component.control.combobox.ComboBoxComponent;
+import me.coley.recaf.ui.jfxbuilder.component.control.combobox.ComboBoxComponent;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.Translatable;
 

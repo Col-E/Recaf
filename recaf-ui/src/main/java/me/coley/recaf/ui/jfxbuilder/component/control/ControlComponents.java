@@ -1,0 +1,64 @@
+package me.coley.recaf.ui.jfxbuilder.component.control;
+
+import javafx.beans.value.ObservableStringValue;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.Node;
+import me.coley.recaf.ui.jfxbuilder.component.control.button.ButtonComponent;
+import me.coley.recaf.ui.jfxbuilder.component.control.checkbox.CheckBoxComponent;
+import me.coley.recaf.ui.jfxbuilder.component.control.checkbox.CheckBoxComponentImpl;
+import me.coley.recaf.ui.jfxbuilder.component.control.choice.MultipleChoiceSelector;
+import me.coley.recaf.ui.jfxbuilder.component.control.choice.MultipleChoiceSelector.SelectionMode;
+import me.coley.recaf.ui.jfxbuilder.component.control.field.TextFieldComponent;
+import me.coley.recaf.ui.jfxbuilder.component.control.label.LabelComponent;
+import me.coley.recaf.ui.jfxbuilder.component.control.nodeswitch.NodeSwitchComponent;
+import me.coley.recaf.ui.jfxbuilder.util.function.ToObservableString;
+import me.coley.recaf.ui.jfxbuilder.util.function.ToString;
+
+public class ControlComponents {
+	private ControlComponents() {}
+
+	public static Node nodeWithData(Node node, Object data) {
+		node.setUserData(data);
+		return node;
+	}
+
+	public static <C> MultipleChoiceSelector<C> choice(C[] choices, ToObservableString<C> transformer, C selected, SelectionMode mode) {
+		return MultipleChoiceSelector.choice(choices, transformer, selected, mode);
+	}
+
+	public static MultipleChoiceSelector<String> choice(String[] choices, String selected, SelectionMode mode) {
+		return MultipleChoiceSelector.choice(choices, (ToString<String>) s->s, selected, mode);
+	}
+
+	public static <C> MultipleChoiceSelector<C> choice(C[] choices, ToString<C> transformer, C selected, SelectionMode mode) {
+		return MultipleChoiceSelector.choice(choices, transformer, selected, mode);
+	}
+
+	public static <Choice, R extends NodeSwitchComponent<Choice, R>> R nodeSwitch(Choice[] choices, ObservableValue<Choice> observable) {
+		return NodeSwitchComponent.nodeSwitch(choices, observable);
+	}
+
+	public static LabelComponent label(String text) {
+		return LabelComponent.label(text);
+	}
+
+	public static LabelComponent label(ObservableStringValue text) {
+		return LabelComponent.label(text);
+	}
+
+	public static <R extends TextFieldComponent<R>> R textField() {
+		return TextFieldComponent.textField();
+	}
+
+	public static <R extends ButtonComponent<R>> R button(String text) {
+		return ButtonComponent.button(text);
+	}
+
+	public static <R extends ButtonComponent<R>> R button(ObservableStringValue text) {
+		return  ButtonComponent.button(text);
+	}
+
+	public static CheckBoxComponent checkbox() {
+		return new CheckBoxComponentImpl();
+	}
+}

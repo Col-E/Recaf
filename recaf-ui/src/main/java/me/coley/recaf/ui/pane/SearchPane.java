@@ -21,8 +21,8 @@ import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.ColumnPane;
 import me.coley.recaf.ui.control.EnumComboBox;
-import me.coley.recaf.ui.control.parameterinput.component.container.Containers;
-import me.coley.recaf.ui.control.parameterinput.component.control.choice.MultipleChoiceSelector.SelectionMode;
+import me.coley.recaf.ui.jfxbuilder.component.container.Containers;
+import me.coley.recaf.ui.jfxbuilder.component.control.choice.MultipleChoiceSelector.SelectionMode;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.DockingRegion;
 import me.coley.recaf.ui.docking.RecafDockingManager;
@@ -43,7 +43,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static me.coley.recaf.ui.control.parameterinput.component.control.ControlComponents.*;
+import static me.coley.recaf.ui.jfxbuilder.component.control.ControlComponents.*;
 
 /**
  * Panel for search operations.
