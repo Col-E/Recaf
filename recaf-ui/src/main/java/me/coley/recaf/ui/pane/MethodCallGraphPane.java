@@ -27,7 +27,7 @@ import me.coley.recaf.ui.behavior.Updatable;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.AccessFlag;
-import me.coley.recaf.util.TextDisplayUtil;
+import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -172,7 +172,7 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 					removeEventFilter(MouseEvent.MOUSE_PRESSED, onClickFilter);
 			} else {
 				onClickFilter = null;
-				Text classText = new Text(TextDisplayUtil.escapeShortenPath(item.getOwner()));
+				Text classText = new Text(EscapeUtil.escape(item.getOwner()));
 				classText.setFill(Color.CADETBLUE);
 				Text methodText = new Text(item.getName());
 				if (AccessFlag.isStatic(item.getAccess())) methodText.setFill(Color.GREEN);
