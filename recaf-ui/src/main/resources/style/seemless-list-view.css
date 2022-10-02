@@ -1,7 +1,0 @@
-.indexed-cell:even {
-    -fx-background-color: rgb(50, 50, 50);
-}
-
-.indexed-cell:odd {
-    -fx-background-color: rgb(50, 50, 50);
-}

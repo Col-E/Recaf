@@ -45,7 +45,7 @@ public class DockingManager {
 	 *
 	 * @return Tab spawned in the given region.
 	 */
-	public <T extends DockTab> T createTabIn(DockingRegion region, DockTabFactory<T> factory) {
+	public <DT extends DockTab> DT createTabIn(DockingRegion region, DockTabFactory<DT> factory) {
 		return createTab(r -> r == region, DEFAULT_ORDER, factory);
 	}
 
@@ -55,7 +55,7 @@ public class DockingManager {
 	 *
 	 * @return Tab which is spawned in the most recently interacted with region.
 	 */
-	public <T extends DockTab> T createTab(DockTabFactory<T> factory) {
+	public <DT extends DockTab> DT createTab(DockTabFactory<DT> factory) {
 		return createTab(r -> true, DEFAULT_ORDER, factory);
 	}
 
@@ -69,7 +69,7 @@ public class DockingManager {
 	 *
 	 * @return Tab which is spawned in the most recently interacted with region that matches the filter.
 	 */
-	public <T extends DockTab> T createTab(RegionFilter filter, RegionPreference preference, DockTabFactory<T> factory) {
+	public <DT extends DockTab> DT createTab(RegionFilter filter, RegionPreference preference, DockTabFactory<DT> factory) {
 		// Prefer to be based on interaction order
 		Optional<DockingRegion> regionResult = recentInteractions.stream().filter(filter).min(preference);
 		// If not found, search across all regions
@@ -94,7 +94,7 @@ public class DockingManager {
 	 * @return The factory instance if there is no special handling. Otherwise, a wrapper factory that adds additional
 	 * 		properties to its generated tabs.
 	 */
-	protected <T extends DockTab> DockTabFactory<T> decorateFactory(DockingRegion region, DockTabFactory<T> factory) {
+	protected <DT extends DockTab> DockTabFactory<DT> decorateFactory(DockingRegion region, DockTabFactory<DT> factory) {
 		return factory;
 	}
 

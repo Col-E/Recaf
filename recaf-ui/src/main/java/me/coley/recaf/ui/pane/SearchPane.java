@@ -60,13 +60,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SearchPane extends BorderPane {
 	private static final Logger logger = Logging.get(SearchPane.class);
 	private final DockTab containingTab;
+	private Instant lastTyped = Instant.EPOCH;
+	private CompletableFuture<?> typeCooldownFuture = null;
+
 
 	private SearchPane(ObservableValue<String> title, Node content) {
 		DockingWrapperPane wrapper = DockingWrapperPane.builder()
-			.title(title)
-			.content(content)
-			.size(600, 300)
-			.build();
+				.title(title)
+				.content(content)
+				.size(600, 300)
+				.build();
 		containingTab = wrapper.getTab();
 		setCenter(wrapper);
 	}
@@ -80,12 +83,14 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param text Initial query.
+	 * @param text
+	 * 		Initial query.
+	 *
 	 * @return Text search panel.
 	 */
 	public static SearchPane createTextSearch(String text) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
-			Lang.getBinding("menu.search.string"));
+				Lang.getBinding("menu.search.string"));
 		// Inputs
 		TextField txtText = new TextField(text);
 		EnumComboBox<TextMatchMode> comboMode = new EnumComboBox<>(TextMatchMode.class, TextMatchMode.CONTAINS);
@@ -104,7 +109,7 @@ public class SearchPane extends BorderPane {
 		var obSet = new BatchObservableSetWrapper<>(new TreeSet<Result>(), 25);
 		var obList = FXCollections.observableList(new ArrayList<Result>());
 		var listView = new ListView<>(obList);
-		listView.getStylesheets().add("/style/seemless-list-view.css");
+		listView.getStyleClass().add("seemless");
 		obSet.batchListenAndApplyInto(obList);
 		listView.setCellFactory(param -> new ResultListCell(txtText));
 		check.selectedProperty().addListener((observable, oldValue, newValue) -> {
@@ -112,18 +117,18 @@ public class SearchPane extends BorderPane {
 		});
 		txtText.textProperty().addListener((observable, oldValue, newValue) -> {
 			searchPane.lastTyped = Instant.now();
-			if (searchPane.future == null && check.isSelected()) {
-				searchPane.future = ThreadUtil.runDelayed(1000, searchPane.new TextChangeCooldown(obSet, txtText, comboMode));
+			if (searchPane.typeCooldownFuture == null && check.isSelected()) {
+				searchPane.typeCooldownFuture = ThreadUtil.runDelayed(1000, searchPane.new TextChangeCooldown(obSet, txtText, comboMode));
 			}
 		});
 		return searchPane;
 	}
 
 	private void toggleLiveSearch(
-		String search, TextMatchMode matchMode,
-		ColumnPane columns, Collection<Result> results,
-		ObservableList<Result> obList, ListView<Result> listView,
-		boolean newValue
+			String search, TextMatchMode matchMode,
+			ColumnPane columns, Collection<Result> results,
+			ObservableList<Result> obList, ListView<Result> listView,
+			boolean newValue
 	) {
 		results.clear();
 		if (!newValue) {
@@ -132,15 +137,15 @@ public class SearchPane extends BorderPane {
 		}
 		var size = Bindings.size(obList);
 		containingTab.setContent(new VBox(columns,
-			new BoundLabel(Bindings.createStringBinding(() -> "Found " + size.get(), size)),
-			listView));
+				new BoundLabel(Bindings.createStringBinding(() -> "Found " + size.get(), size)),
+				listView));
 		VBox.setVgrow(listView, Priority.ALWAYS);
 		if (search.isEmpty())
 			return;
 		runSearch(new Search().text(search, matchMode), results, () -> {
-			if(results instanceof BatchObservableSet)
+			if (results instanceof BatchObservableSet)
 				((BatchObservableSet<Result>) results).triggerBatchListeners(true);
-			future = null;
+			typeCooldownFuture = null;
 		});
 	}
 
@@ -156,8 +161,8 @@ public class SearchPane extends BorderPane {
 			}
 			HBox box = new HBox(Icons.getFileIcon(fileInfo), filePathText);
 			box.setOnMouseClicked(line != -1 ?
-				(e -> CommonUX.openFile(fileInfo, line + 1)) :
-				(e -> CommonUX.openFile(fileInfo)));
+					(e -> CommonUX.openFile(fileInfo, line + 1)) :
+					(e -> CommonUX.openFile(fileInfo)));
 			box.setSpacing(6);
 			return box;
 		} else if (location instanceof ClassLocation) {
@@ -166,16 +171,13 @@ public class SearchPane extends BorderPane {
 			HBox box = new HBox(Icons.getClassIcon(classInfo), new Label(classInfo.getName()));
 			MemberInfo member = classLocation.getContainingMember();
 			box.setOnMouseClicked(member != null ?
-				(e -> CommonUX.openMember(classInfo, member)) :
-				(e -> CommonUX.openClass(classInfo)));
+					(e -> CommonUX.openMember(classInfo, member)) :
+					(e -> CommonUX.openClass(classInfo)));
 			box.setSpacing(6);
 			return box;
 		}
 		return new Label(location.toString());
 	}
-
-	private Instant lastTyped = Instant.EPOCH;
-	private CompletableFuture<?> future = null;
 
 	/**
 	 * @return Empty number search panel.
@@ -185,12 +187,14 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param number Initial query.
+	 * @param number
+	 * 		Initial query.
+	 *
 	 * @return Number search panel.
 	 */
 	public static SearchPane createNumberSearch(String number) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
-			Lang.getBinding("menu.search.number"));
+				Lang.getBinding("menu.search.number"));
 		// Inputs
 		TextField txtNumber = new TextField(number);
 		EnumComboBox<NumberMatchMode> comboMode = new EnumComboBox<>(NumberMatchMode.class, NumberMatchMode.EQUALS);
@@ -215,9 +219,13 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param owner Internal name of owner.
-	 * @param name  Reference name.
-	 * @param desc  Reference descriptor.
+	 * @param owner
+	 * 		Internal name of owner.
+	 * @param name
+	 * 		Reference name.
+	 * @param desc
+	 * 		Reference descriptor.
+	 *
 	 * @return Reference search panel.
 	 */
 	public static SearchPane createReferenceSearch(String owner, String name, String desc) {
@@ -225,15 +233,20 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param owner Internal name of owner.
-	 * @param name  Reference name.
-	 * @param desc  Reference descriptor.
-	 * @param mode  Text match mode for member input.
+	 * @param owner
+	 * 		Internal name of owner.
+	 * @param name
+	 * 		Reference name.
+	 * @param desc
+	 * 		Reference descriptor.
+	 * @param mode
+	 * 		Text match mode for member input.
+	 *
 	 * @return Reference search panel.
 	 */
 	public static SearchPane createReferenceSearch(String owner, String name, String desc, TextMatchMode mode) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
-			Lang.getBinding("menu.search.references"));
+				Lang.getBinding("menu.search.references"));
 		// Inputs
 		TextField txtOwner = new TextField(owner);
 		TextField txtName = new TextField(name);
@@ -252,8 +265,8 @@ public class SearchPane extends BorderPane {
 		columns.add(modeLabel, comboMode);
 		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchReference(
-				txtOwner.getText(), txtName.getText(), txtDesc.getText(),
-				comboMode.getValue());
+					txtOwner.getText(), txtName.getText(), txtDesc.getText(),
+					comboMode.getValue());
 		}));
 		return searchPane;
 	}
@@ -266,14 +279,18 @@ public class SearchPane extends BorderPane {
 	}
 
 	/**
-	 * @param owner Internal name of owner.
-	 * @param name  Declaration name.
-	 * @param desc  Declaration descriptor.
+	 * @param owner
+	 * 		Internal name of owner.
+	 * @param name
+	 * 		Declaration name.
+	 * @param desc
+	 * 		Declaration descriptor.
+	 *
 	 * @return Declaration search panel.
 	 */
 	public static SearchPane createDeclarationSearch(String owner, String name, String desc) {
 		StringBinding title = Lang.formatBy("%s: %s", Lang.getBinding("menu.search"),
-			Lang.getBinding("menu.search.declarations"));
+				Lang.getBinding("menu.search.declarations"));
 		// Inputs
 		TextField txtOwner = new TextField(owner);
 		TextField txtName = new TextField(name);
@@ -292,8 +309,8 @@ public class SearchPane extends BorderPane {
 		columns.add(modeLabel, comboMode);
 		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchDeclaration(
-				txtOwner.getText(), txtName.getText(), txtDesc.getText(),
-				comboMode.getValue());
+					txtOwner.getText(), txtName.getText(), txtDesc.getText(),
+					comboMode.getValue());
 		}));
 		return searchPane;
 	}
@@ -347,7 +364,7 @@ public class SearchPane extends BorderPane {
 		FxThreadUtil.run(() -> {
 			DockingRegion region = containingTab.getParent();
 			DockTab tab = RecafDockingManager.getInstance().createTabIn(region,
-				() -> new DockTab(Lang.getBinding("search.results"), resultsPane));
+					() -> new DockTab(Lang.getBinding("search.results"), resultsPane));
 			region.getSelectionModel().select(tab);
 		});
 	}
@@ -385,7 +402,7 @@ public class SearchPane extends BorderPane {
 
 		@Override
 		public void run() {
-			if (future == null)
+			if (typeCooldownFuture == null)
 				return;
 			if (lastTyped.until(Instant.now(), ChronoUnit.MILLIS) <= 700) {
 				ThreadUtil.runDelayed(400, this);
@@ -395,11 +412,11 @@ public class SearchPane extends BorderPane {
 			String text = txtText.getText();
 			if (!text.isEmpty()) {
 				runSearch(
-					new Search().text(text, comboMode.getValue()), results,
-					() -> {
-						results.triggerBatchListeners(true);
-						future = null;
-					}
+						new Search().text(text, comboMode.getValue()), results,
+						() -> {
+							results.triggerBatchListeners(true);
+							typeCooldownFuture = null;
+						}
 				);
 			}
 		}
@@ -418,34 +435,35 @@ public class SearchPane extends BorderPane {
 		protected void updateItem(Result item, boolean empty) {
 			super.updateItem(item, empty);
 			//						updateSelected(false);
-			setGraphic(null);
-			setText(null);
-			if (empty || !(item instanceof TextResult))
-				return;
-			String input = txtText.getText();
-			String matchedText = ((TextResult) item).getMatchedText();
-			// put a blue highlight on found match
-			Text inputText = new Text(input);
-			inputText.setFill(Color.DODGERBLUE);
-			int index = matchedText.indexOf(input);
-			if (index == -1) {
-				setText(matchedText);
-				return;
+			if (empty || !(item instanceof TextResult)) {
+				setGraphic(null);
+				setText(null);
+			} else {
+				String input = txtText.getText();
+				String matchedText = ((TextResult) item).getMatchedText();
+				// put a blue highlight on found match
+				Text inputText = new Text(input);
+				inputText.setFill(Color.DODGERBLUE);
+				int index = matchedText.indexOf(input);
+				if (index == -1) {
+					setText(matchedText);
+					return;
+				}
+				final Region locationNode = representLocation(item.getLocation());
+				AnchorPane pane = new AnchorPane(locationNode);
+				AnchorPane.setRightAnchor(locationNode, 0.0);
+				AnchorPane.setTopAnchor(locationNode, 0.0);
+				AnchorPane.setBottomAnchor(locationNode, 0.0);
+				locationNode.setBackground(Background.fill(Color.rgb(50, 50, 50)));
+				pane.setMaxWidth(Region.USE_COMPUTED_SIZE);
+				StackPane stackPane = new StackPane(
+						new TextFlow(new Label(matchedText.substring(0, index)),
+								inputText,
+								new Label(matchedText.substring(index + input.length()))),
+						pane
+				);
+				setGraphic(stackPane);
 			}
-			final Region locationNode = representLocation(item.getLocation());
-			AnchorPane pane = new AnchorPane(locationNode);
-			AnchorPane.setRightAnchor(locationNode, 0.0);
-			AnchorPane.setTopAnchor(locationNode, 0.0);
-			AnchorPane.setBottomAnchor(locationNode, 0.0);
-			locationNode.setBackground(Background.fill(Color.rgb(50, 50, 50)));
-			pane.setMaxWidth(Region.USE_COMPUTED_SIZE);
-			StackPane stackPane = new StackPane(
-				new TextFlow(new Label(matchedText.substring(0, index)),
-					inputText,
-					new Label(matchedText.substring(index + input.length()))),
-				pane
-			);
-			setGraphic(stackPane);
 		}
 	}
 }

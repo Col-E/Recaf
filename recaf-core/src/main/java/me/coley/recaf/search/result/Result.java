@@ -10,6 +10,7 @@ import java.util.UUID;
  */
 public abstract class Result implements Comparable<Result> {
 	private final Location location;
+	private final UUID uuid = UUID.randomUUID();
 
 	/**
 	 * @param builder
@@ -52,8 +53,6 @@ public abstract class Result implements Comparable<Result> {
 	public int hashCode() {
 		return location.hashCode();
 	}
-
-	private final UUID uuid = UUID.randomUUID();
 
 	@Override
 	public int compareTo(Result o) {

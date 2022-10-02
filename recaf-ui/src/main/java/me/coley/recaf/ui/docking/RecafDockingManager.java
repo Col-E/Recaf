@@ -109,8 +109,8 @@ public class RecafDockingManager extends DockingManager {
 	}
 
 	@Override
-	protected <T extends DockTab> DockTabFactory<T> decorateFactory(DockingRegion region, DockTabFactory<T> factory) {
-		T tab = factory.get();
+	protected <DT extends DockTab> DockTabFactory<DT> decorateFactory(DockingRegion region, DockTabFactory<DT> factory) {
+		DT tab = factory.get();
 		Node content = tab.getContent();
 		// Update graphics and context menus to match tab content
 		ContextMenu menu = new ContextMenu();
@@ -151,9 +151,9 @@ public class RecafDockingManager extends DockingManager {
 					new ActionMenuItem(Lang.getBinding("menu.tab.close"), getIconView(CLOSE), tab::close),
 					new ActionMenuItem(Lang.getBinding("menu.tab.closeothers"), getIconView(CLOSE), () -> {
 						TabPane tabPane = tab.getTabPane();
-						List<Tab> toClose =  tabPane.getTabs().stream()
+						List<javafx.scene.control.Tab> toClose =  tabPane.getTabs().stream()
 								.filter(t -> !tab.equals(t))
-								.filter(Tab::isClosable)
+								.filter(javafx.scene.control.Tab::isClosable)
 								.collect(Collectors.toList());
 						toClose.removeIf(t -> {
 							if (t instanceof DockTab) {
@@ -166,8 +166,8 @@ public class RecafDockingManager extends DockingManager {
 					}),
 					new ActionMenuItem(Lang.getBinding("menu.tab.closeall"), getIconView(CLOSE), () -> {
 						TabPane tabPane = tab.getTabPane();
-						List<Tab> toClose = tabPane.getTabs().stream()
-								.filter(Tab::isClosable)
+						List<javafx.scene.control.Tab> toClose = tabPane.getTabs().stream()
+								.filter(javafx.scene.control.Tab::isClosable)
 								.collect(Collectors.toList());
 						toClose.removeIf(t -> {
 							if (t instanceof DockTab) {

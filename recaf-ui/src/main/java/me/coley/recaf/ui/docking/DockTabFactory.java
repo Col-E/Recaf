@@ -7,5 +7,4 @@ import java.util.function.Supplier;
  *
  * @author Matt Coley
  */
-public interface DockTabFactory<Tab extends DockTab> extends Supplier<Tab> {
-}
+public interface DockTabFactory<DT extends DockTab> extends Supplier<DT> {}
