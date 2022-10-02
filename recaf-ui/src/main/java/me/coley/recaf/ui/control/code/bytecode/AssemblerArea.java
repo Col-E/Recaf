@@ -40,10 +40,7 @@ import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.NodeEvents;
-import me.coley.recaf.util.StackTraceUtil;
-import me.coley.recaf.util.TextDisplayUtil;
-import me.coley.recaf.util.WorkspaceTreeService;
+import me.coley.recaf.util.*;
 import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.DelayedExecutor;
@@ -295,10 +292,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 					&& e.getInputEvent() instanceof KeyEvent
 					&& ((KeyEvent) e.getInputEvent()).getCode() == KeyCode.TAB) {
 				replaceText(suggestionGroup.start().getStart() + 1, suggestionGroup.start().getEnd() + 1,
-						TextDisplayUtil.escapePath(suggestionText));
+						EscapeUtil.escape(suggestionText));
 				moveTo(suggestionGroup.start().getStart() + 1 + suggestionText.length());
 			} else {
-				String insert = TextDisplayUtil.escapePath(suggestionText.substring(input.length()));
+				String insert = EscapeUtil.escape(suggestionText.substring(input.length()));
 				final int suggestionPlacement = suggestionGroup != null ? suggestionGroup.start().getEnd() + 1 : position;
 				insertText(suggestionPlacement, insert);
 				moveTo(suggestionPlacement + insert.length());
