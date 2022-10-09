@@ -121,11 +121,13 @@ public abstract class BaseArg extends BaseElement implements Printable {
 				return context.fmtKeyword("annotation-enum " ) + value;
 			case BOOLEAN:
 				return (Boolean) value ? "true" : "false";
+			case LONG:
+				return value + "L";
+			case FLOAT:
+				return value + "F";
+			case DOUBLE:
 			case SHORT:
 			case INTEGER:
-			case FLOAT:
-			case DOUBLE:
-			case LONG:
 			default:
 				return String.valueOf(value);
 		}
