@@ -4,6 +4,7 @@ import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.ClasspathUtil;
@@ -93,7 +94,7 @@ public class Suggestions {
 			case "anewarray":
 			case "checkcast":
 			case "instanceof":
-				return advancedSearch(children[0] == null ? "" : children[0].content());
+				return advancedSearchClasses(children[0] == null ? "" : children[0].content());
 			case "invokestatic":
 			case "invokeinterface":
 			case "invokespecial":
@@ -121,15 +122,7 @@ public class Suggestions {
 				for (MethodParameter parameter : method.getParams().getParameters()) {
 					locals.add(parameter.getName());
 				}
-				return new SuggestionsResults(children[0].content(),
-						search.isEmpty() ?
-								locals.stream().map(ln -> new Suggestion(null, ln)) :
-								locals.stream().map(localName -> {
-											BitSet bs = matches(search, localName);
-											if (bs == null) return null;
-											return new Suggestion(null, localName, bs);
-										})
-										.filter(Objects::nonNull));
+				return new SuggestionsResults(children[0].content(), advancedSearchStrings(search, locals));
 			}
 			case "getstatic":
 			case "putstatic":
@@ -142,20 +135,9 @@ public class Suggestions {
 		return new SuggestionsResults(inst, Stream.empty());
 	}
 
-	private SuggestionsResults advancedSearch(String search) {
-		if (search.isBlank())
-			return new SuggestionsResults(search, getAllClasses().map(c -> new Suggestion(mapper.apply(c), c)));
-		return new SuggestionsResults(search, getAllClasses().map(className -> {
-			if (className.equals(search)) return null;
-			final BitSet bitSet = matches(className, search);
-			if (bitSet == null) return null;
-			return new Suggestion(mapper.apply(className), className, bitSet);
-		}).filter(Objects::nonNull));
-	}
-
 	private SuggestionsResults getInstructionSuggestionsResults(Group[] children, String inst, BiFunction<CommonClassInfo, String, SuggestionsResults> suggestionMaker) {
 		String className = children[0] == null ? "" : children[0].content();
-		if (!className.contains(".")) return advancedSearch(className);
+		if (!className.contains(".")) return advancedSearchClasses(className);
 		String[] parts = className.split("\\.");
 		CommonClassInfo clazz = mapper.apply(parts[0]);
 		if (clazz == null) return new SuggestionsResults(inst, Stream.empty());
@@ -168,11 +150,9 @@ public class Suggestions {
 				: clazz.getFields().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) == 0);
 		return new SuggestionsResults(
 				fieldName,
-				fields.filter(f -> !f.getName().equals(fieldName) && format(f).startsWith(fieldName))
-						.map(f -> new Suggestion(f, format(f)))
+				startsWithSearchFields(fieldName, fields)
 		);
 	}
-
 
 	private SuggestionsResults getMethodSuggestion(CommonClassInfo clazz, boolean isStatic, String methodName) {
 		Stream<MethodInfo> methods = isStatic ?
@@ -180,9 +160,37 @@ public class Suggestions {
 				: clazz.getMethods().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) == 0);
 		return new SuggestionsResults(
 				methodName,
-				methods.filter(m -> !m.getName().equals(methodName) && format(m).startsWith(methodName))
-						.map(m -> new Suggestion(m, format(m)))
+				startsWithSearchMethods(methodName, methods)
 		);
+	}
+
+	private static Stream<Suggestion> startsWithSearchMethods(String methodName, Stream<MethodInfo> methods) {
+		return startsWithSearchInfo(methodName, methods, Suggestions::format, MethodInfo::getName);
+	}
+
+	private static Stream<Suggestion> startsWithSearchFields(String fieldName, Stream<FieldInfo> fields) {
+		return startsWithSearchInfo(fieldName, fields, Suggestions::format, FieldInfo::getName);
+	}
+
+	private static <I extends ItemInfo> Stream<Suggestion>
+	startsWithSearchInfo(
+			String search,
+			Stream<I> infoStream,
+			Function<I, String> formatInfo,
+			Function<I, String> getName
+	) {
+		return infoStream.filter(f -> getName.apply(f).startsWith(search)).map(f -> new Suggestion(f, formatInfo.apply(f)));
+	}
+
+	private static Stream<Suggestion> advancedSearchStrings(String search, Set<String> locals) {
+		return search.isEmpty() ?
+				locals.stream().map(ln -> new Suggestion(null, ln)) :
+				locals.stream().map(localName -> {
+							BitSet bs = matches(search, localName);
+							if (bs == null) return null;
+							return new Suggestion(null, localName, bs);
+						})
+						.filter(Objects::nonNull);
 	}
 
 	private static String format(FieldInfo info) {
@@ -193,14 +201,26 @@ public class Suggestions {
 		return info.getName() + " " + info.getDescriptor();
 	}
 
-	private SuggestionsResults startsWith(String partial) {
+
+	private SuggestionsResults startsWithSearchClasses(String partial) {
 		return new SuggestionsResults(partial,
 				(
 						"".equals(partial) ?
 								getAllClasses() :
-								getAllClasses().filter(x -> !x.equals(partial) && x.startsWith(partial))
+								getAllClasses().filter(x -> x.startsWith(partial))
 				).map(c -> new Suggestion(mapper.apply(c), c))
 		);
+	}
+
+	private SuggestionsResults advancedSearchClasses(String search) {
+		if (search.isBlank())
+			return new SuggestionsResults(search, getAllClasses().map(c -> new Suggestion(mapper.apply(c), c)));
+		return new SuggestionsResults(search, getAllClasses().map(className -> {
+			if (className.equals(search)) return null;
+			final BitSet bitSet = matches(className, search);
+			if (bitSet == null) return null;
+			return new Suggestion(mapper.apply(className), className, bitSet);
+		}).filter(Objects::nonNull));
 	}
 
 	private Stream<String> getAllClasses() {
