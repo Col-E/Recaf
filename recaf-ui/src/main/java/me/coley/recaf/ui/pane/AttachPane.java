@@ -193,8 +193,7 @@ public class AttachPane extends BorderPane {
 						}
 						// Read main class attribute from jar manifest
 						if (Files.isRegularFile(jarPath)) {
-							try {
-								JarFile jar = new JarFile(jarPath.toFile());
+							try (JarFile jar = new JarFile(jarPath.toFile())) {
 								source = jar.getManifest().getMainAttributes().getValue("Main-Class");
 							} catch (IOException ignored) {
 								// Can't read from jar, oh well
