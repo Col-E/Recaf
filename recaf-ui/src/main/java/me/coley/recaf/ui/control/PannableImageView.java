@@ -64,6 +64,7 @@ public class PannableImageView extends BorderPane {
 		});
 		setOnScroll(e -> {
 			double zoomSpeed = 0.05;
+			if(e.getDeltaY() == 0) return; // sometimes happens, but since change is 0, we can ignore it
 			double zoomModifier = e.getDeltaY() > 0 ?
 					1.0 + zoomSpeed : 1.00 - zoomSpeed;
 			view.setScaleX(view.getScaleX() * zoomModifier);
