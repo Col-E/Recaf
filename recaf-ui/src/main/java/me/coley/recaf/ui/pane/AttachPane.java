@@ -37,9 +37,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.jar.JarFile;
 
 /**
@@ -52,18 +50,18 @@ public class AttachPane extends BorderPane {
 	private static final long currentPid = ProcessHandle.current().pid();
 	private static final AttachPane instance = new AttachPane();
 	private final DescriptorComparator descriptorComparator = new DescriptorComparator();
-	private final Map<VirtualMachineDescriptor, VirtualMachine> virtualMachineMap = new HashMap<>();
-	private final Map<VirtualMachineDescriptor, Exception> virtualMachineFailureMap = new HashMap<>();
-	private final Map<VirtualMachineDescriptor, Integer> virtualMachinePidMap = new HashMap<>();
-	private final Map<VirtualMachineDescriptor, Properties> virtualMachinePropertiesMap = new HashMap<>();
-	private final Map<VirtualMachineDescriptor, String> virtualMachineMainClassMap = new HashMap<>();
+	private final Map<VirtualMachineDescriptor, VirtualMachine> virtualMachineMap = new ConcurrentHashMap<>();
+	private final Map<VirtualMachineDescriptor, Exception> virtualMachineFailureMap = new ConcurrentHashMap<>();
+	private final Map<VirtualMachineDescriptor, Integer> virtualMachinePidMap = new ConcurrentHashMap<>();
+	private final Map<VirtualMachineDescriptor, Properties> virtualMachinePropertiesMap = new ConcurrentHashMap<>();
+	private final Map<VirtualMachineDescriptor, String> virtualMachineMainClassMap = new ConcurrentHashMap<>();
 	private final ObservableList<VirtualMachineDescriptor> virtualMachineDescriptors = FXCollections.observableArrayList();
 	private boolean agentExtractFailure;
 
 	private AttachPane() {
 		extractAgent();
 		// Schedule checking for new VMs
-		ThreadUtil.scheduleAtFixedRate(() -> FxThreadUtil.run(this::update), 0, 1, TimeUnit.SECONDS);
+		ThreadUtil.scheduleAtFixedRate(this::update, 0, 1, TimeUnit.SECONDS);
 		// Setup UI
 		BorderPane listWrapper = new BorderPane();
 		listWrapper.setPadding(new Insets(5));
@@ -110,51 +108,76 @@ public class AttachPane extends BorderPane {
 	 * <b>Must be invoked on the FX thread.</b>
 	 */
 	private void update() {
-		List<VirtualMachineDescriptor> list = VirtualMachine.list();
+		int numDescriptors = virtualMachineDescriptors.size();
+		List<VirtualMachineDescriptor> virtualMachineDescriptorsCopy = new ArrayList<>(virtualMachineDescriptors);
+		List<VirtualMachineDescriptor> remoteVmList = VirtualMachine.list();
 		Set<VirtualMachineDescriptor> toRemove = new HashSet<>(virtualMachineDescriptors);
-		for (VirtualMachineDescriptor descriptor : list) {
+		List<CompletableFuture<?>> attachFutures = new ArrayList<>();
+		for (VirtualMachineDescriptor descriptor : remoteVmList) {
 			// Still active in VM list, keep it.
 			toRemove.remove(descriptor);
 			// Add if not in the list.
 			if (!virtualMachineDescriptors.contains(descriptor)) {
 				String label = descriptor.id() + " - " + StringUtil.withEmptyFallback(descriptor.displayName(), "?");
-				try {
-					int pid = mapToPid(descriptor);
-					if (pid == currentPid) // skip self
-						continue;
-					AttachProvider provider = descriptor.provider();
-					VirtualMachine machine = provider.attachVirtualMachine(descriptor);
-					virtualMachineMap.put(descriptor, machine);
-					logger.trace("Remote JVM descriptor found (attach-success): " + label);
-					// Extract additional information
-					virtualMachinePropertiesMap.put(descriptor, machine.getSystemProperties());
-					virtualMachinePidMap.put(descriptor, pid);
-					virtualMachineMainClassMap.put(descriptor, mapToMainClass(descriptor));
-				} catch (IOException ex) {
-					virtualMachineFailureMap.put(descriptor, ex);
-					logger.trace("Remote JVM descriptor found (attach-success, read-failure): " + label);
-				} catch (AttachNotSupportedException ex) {
-					virtualMachineFailureMap.put(descriptor, ex);
-					logger.trace("Remote JVM descriptor found (attach-failure): " + label);
-				} catch (Throwable t) {
-					logger.error("Unhandled exception populating remote VM info", t);
-				}
-				// Insert descriptor in sorted order.
-				int lastComparison = 1;
-				for (int i = 0; i < virtualMachineDescriptors.size(); i++) {
-					VirtualMachineDescriptor other = virtualMachineDescriptors.get(i);
-					int comparison = descriptorComparator.compare(descriptor, other);
-					if (comparison < lastComparison) {
-						virtualMachineDescriptors.add(i, descriptor);
-						return;
+				int pid = mapToPid(descriptor);
+				if (pid == currentPid) // skip self
+					continue;
+				// Using futures for attach in case one of the VM's decides to hang on response.
+				// Using 'orTimeout' we can prevent such hangs from affecting us.
+				attachFutures.add(ThreadUtil.run(() -> {
+					try {
+						AttachProvider provider = descriptor.provider();
+						return provider.attachVirtualMachine(descriptor);
+					} catch (IOException ex) {
+						virtualMachineFailureMap.put(descriptor, ex);
+						logger.trace("Remote JVM descriptor found (attach-success, read-failure): " + label);
+					} catch (AttachNotSupportedException ex) {
+						virtualMachineFailureMap.put(descriptor, ex);
+						logger.trace("Remote JVM descriptor found (attach-failure): " + label);
+					} catch (Throwable t) {
+						logger.error("Unhandled exception populating remote VM info", t);
 					}
-				}
-				// Greater than all entries, append to end
-				virtualMachineDescriptors.add(descriptor);
+					return null;
+				}).orTimeout(500, TimeUnit.MILLISECONDS).thenAccept(machine -> {
+					if (machine != null) {
+						virtualMachineMap.put(descriptor, machine);
+						logger.trace("Remote JVM descriptor found (attach-success): " + label);
+						// Extract additional information
+						try {
+							virtualMachinePropertiesMap.put(descriptor, machine.getSystemProperties());
+							virtualMachinePidMap.put(descriptor, pid);
+							virtualMachineMainClassMap.put(descriptor, mapToMainClass(descriptor));
+							// Insert descriptor in sorted order.
+							int lastComparison = 1;
+							synchronized (virtualMachineDescriptorsCopy) {
+								for (int i = 0; i < numDescriptors; i++) {
+									VirtualMachineDescriptor other = virtualMachineDescriptorsCopy.get(i);
+									int comparison = descriptorComparator.compare(descriptor, other);
+									if (comparison < lastComparison) {
+										virtualMachineDescriptorsCopy.add(i, descriptor);
+										return;
+									}
+								}
+								// Greater than all entries, append to end
+								virtualMachineDescriptorsCopy.add(descriptor);
+							}
+						} catch (IOException ex) {
+							logger.error("Could not read system properties from remote JVM: " + descriptor, ex);
+						}
+					}
+				}));
 			}
 		}
-		// Remove entries not visited in this pass
-		virtualMachineDescriptors.removeAll(toRemove);
+		// When all attach attachFutures complete, update the observable list to update the UI
+		ThreadUtil.allOf(attachFutures.toArray(new CompletableFuture[0])).thenRun(() -> {
+			// Remove entries not visited in this pass
+			virtualMachineDescriptorsCopy.removeAll(toRemove);
+			// Update target observable list on FX thread
+			FxThreadUtil.run(() -> {
+				virtualMachineDescriptors.clear();
+				virtualMachineDescriptors.addAll(virtualMachineDescriptorsCopy);
+			});
+		});
 	}
 
 	/**
@@ -216,6 +239,8 @@ public class AttachPane extends BorderPane {
 		if (end == -1)
 			end = trim.length();
 		return trim.substring(0, end);
+		// Alternative idea for later: Use 'sun/launcher/LauncherHelper' as mentioned by xxDark
+		//  - reliable source for main-class
 	}
 
 	/**

@@ -4,6 +4,7 @@ import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import static me.coley.recaf.util.threading.ThreadPoolFactory.newScheduledThreadPool;
@@ -128,6 +129,27 @@ public class ThreadUtil {
 			// Other error
 			return true;
 		}
+	}
+
+	/**
+	 * @param futures All futures to create a wrapper future of.
+	 * @return Wrapper for all futures.
+	 */
+	public static CompletableFuture<Void> allOf(CompletableFuture<?>... futures) {
+		AtomicBoolean thrown = new AtomicBoolean();
+		CompletableFuture<Void> allOf = CompletableFuture.allOf(futures);
+		for (CompletableFuture<?> f : futures) {
+			f.exceptionally(t -> {
+				if (thrown.compareAndSet(false, true)) {
+					for (CompletableFuture<?> f1 : futures) {
+						f1.completeExceptionally(t);
+					}
+					allOf.completeExceptionally(t);
+				}
+				return null;
+			});
+		}
+		return allOf;
 	}
 
 	/**

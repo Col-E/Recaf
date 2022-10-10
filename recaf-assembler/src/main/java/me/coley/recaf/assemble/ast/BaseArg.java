@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.ast;
 import me.coley.recaf.assemble.ast.arch.Annotation;
 import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.OpcodeUtil;
+import me.coley.recaf.util.StringUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 
@@ -120,10 +121,11 @@ public abstract class BaseArg extends BaseElement implements Printable {
 				return context.fmtKeyword("annotation-enum " ) + value;
 			case BOOLEAN:
 				return (Boolean) value ? "true" : "false";
-			case FLOAT:
-				return value + "F";
 			case LONG:
 				return value + "L";
+			case FLOAT:
+				return value + "F";
+			case DOUBLE:
 			case SHORT:
 			case INTEGER:
 			default:
