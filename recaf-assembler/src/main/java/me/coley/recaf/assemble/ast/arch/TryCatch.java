@@ -76,6 +76,6 @@ public class TryCatch extends BaseElement implements CodeEntry {
 		if (type == null)
 			type = ANY_TYPE;
 		return String.format("%s %s %s %s %s", context.fmtKeyword("catch"),
-				EscapeUtil.escapeSpace(type), startLabel, endLabel, handlerLabel);
+				EscapeUtil.escapeNonValid(type), startLabel, endLabel, handlerLabel);
 	}
 }

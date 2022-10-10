@@ -18,7 +18,7 @@ public interface PrintBase {
 	 * @return Filtered name.
 	 */
 	static String filterName(String name) {
-		return EscapeUtil.escapeSpace(name);
+		return EscapeUtil.escapeNonValid(name);
 	}
 
 	/**
