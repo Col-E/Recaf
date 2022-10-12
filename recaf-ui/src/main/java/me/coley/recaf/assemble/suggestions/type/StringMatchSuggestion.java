@@ -47,6 +47,11 @@ public class StringMatchSuggestion extends StringSuggestion {
 		return matchedChars;
 	}
 
+	@Nullable
+	public String getInput() {
+		return input;
+	}
+
 	@Nonnull
 	@Override
 	public Node viewAsNode() {

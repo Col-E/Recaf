@@ -3,8 +3,6 @@ package me.coley.recaf.ui.control.code.bytecode;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
@@ -20,7 +18,6 @@ import me.coley.recaf.assemble.pipeline.*;
 import me.coley.recaf.assemble.suggestions.Suggestions;
 import me.coley.recaf.assemble.suggestions.SuggestionsResults;
 import me.coley.recaf.assemble.suggestions.type.NoSuggestionsSuggestion;
-import me.coley.recaf.assemble.suggestions.type.StringMatchSuggestion;
 import me.coley.recaf.assemble.suggestions.type.Suggestion;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
@@ -38,7 +35,6 @@ import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.StackTraceUtil;
 import me.coley.recaf.util.WorkspaceTreeService;
@@ -272,7 +268,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	private VirtualizedContextMenu<Suggestion> createSuggestionsMenu(int position, Group suggestionGroup) {
 		// Get suggestions content
 		SuggestionsResults result = suggestions.getSuggestion(suggestionGroup);
-		String input = result.getInput();
 		Set<Suggestion> set = result.getValues().collect(Collectors.toCollection(TreeSet::new));
 		result.invalidate();
 		if (set.isEmpty()) {
@@ -284,23 +279,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		//  - Same for fields/methods
 		VirtualizedContextMenu<Suggestion> menu = new VirtualizedContextMenu<>(Suggestion::viewAsNode, set);
 		menu.setPrefSize(350, Math.min(set.size() * 15, 400));
-		menu.setOnAction(e -> {
-			Suggestion suggestion = e.getSelection();
-			if(!(suggestion instanceof StringMatchSuggestion)) return;
-			String suggestionText = ((StringMatchSuggestion) suggestion).getSuggestedText();
-			if (e.getInputEvent() != null && suggestionGroup != null
-					&& e.getInputEvent() instanceof KeyEvent
-					&& ((KeyEvent) e.getInputEvent()).getCode() == KeyCode.TAB) {
-				replaceText(suggestionGroup.start().getStart() + 1, suggestionGroup.start().getEnd() + 1,
-						EscapeUtil.escape(suggestionText));
-				moveTo(suggestionGroup.start().getStart() + 1 + suggestionText.length());
-			} else {
-				String insert = EscapeUtil.escape(suggestionText.substring(input.length()));
-				final int suggestionPlacement = suggestionGroup != null ? suggestionGroup.start().getEnd() + 1 : position;
-				insertText(suggestionPlacement, insert);
-				moveTo(suggestionPlacement + insert.length());
-			}
-		});
+		// Would be a good idea to work with "contexts" rather than pass this through like so
+		menu.setOnAction(e -> e.getSelection().onAction(e, position, suggestionGroup, this));
 		return menu;
 	}
 
