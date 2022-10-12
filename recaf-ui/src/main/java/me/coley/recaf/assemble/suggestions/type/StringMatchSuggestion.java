@@ -9,7 +9,9 @@ import javafx.scene.text.TextFlow;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 
 public class StringMatchSuggestion extends StringSuggestion {
 	@Nullable
@@ -50,6 +52,46 @@ public class StringMatchSuggestion extends StringSuggestion {
 	@Nullable
 	public String getInput() {
 		return input;
+	}
+
+	@Override
+	public int compareTo(@Nonnull Suggestion o) {
+		return o instanceof StringMatchSuggestion ? compareTo(((StringMatchSuggestion) o)) : super.compareTo(o);
+	}
+
+	public int compareTo(@Nonnull StringMatchSuggestion o) {
+		if (matchedChars == null || o.matchedChars == null)
+			return super.compareTo(o);
+		List<Integer> thisProximity = proximityCounts(matchedChars);
+		List<Integer> otherProximity = proximityCounts(matchedChars);
+		if(thisProximity.isEmpty() && otherProximity.isEmpty()) return 0;
+		int result = Boolean.compare(!thisProximity.isEmpty(), !otherProximity.isEmpty());
+		if (result != 0) return result;
+		result = Integer.compare(thisProximity.stream().mapToInt(Integer::intValue).sum(), otherProximity.stream().mapToInt(Integer::intValue).sum());
+		if (result != 0) return result;
+		// cannot be empty, as we already checked it in above
+		// what we could do more is quartil, so we can see which has the most greater "blobs"
+		return Integer.compare(thisProximity.stream().mapToInt(Integer::intValue).max().getAsInt(), otherProximity.stream().mapToInt(Integer::intValue).max().getAsInt());
+	}
+
+	private List<Integer> proximityCounts(BitSet matchedChars) {
+		if (matchedChars == null || matchedChars.isEmpty())
+			return new ArrayList<>();
+		List<Integer> counts = new ArrayList<>();
+		boolean latch = matchedChars.get(0);
+		if (latch) counts.add(0);
+		for (int i = 1; i < matchedChars.size(); i++) {
+			final boolean actualBit = matchedChars.get(i);
+			if (latch && actualBit)
+				counts.set(counts.size() - 1, counts.get(counts.size() - 1) + 1);
+			else if (latch != actualBit) {
+				latch = !latch;
+				if (latch) counts.add(0);
+				else if (counts.get(counts.size() - 1) == 0)
+					counts.remove(counts.size() - 1);
+			}
+		}
+		return counts;
 	}
 
 	@Nonnull
