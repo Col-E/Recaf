@@ -2,6 +2,10 @@ package me.coley.recaf.assemble.suggestions;
 
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
+import me.coley.recaf.assemble.suggestions.type.InfoSuggestion;
+import me.coley.recaf.assemble.suggestions.type.StringMatchSuggestion;
+import me.coley.recaf.assemble.suggestions.type.StringSuggestion;
+import me.coley.recaf.assemble.suggestions.type.Suggestion;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
@@ -64,8 +68,7 @@ public class Suggestions {
 	 */
 	public SuggestionsResults getSuggestion(Group group) {
 		if (group == null) {
-			return new SuggestionsResults("", INSTRUCTIONS.stream()
-					.map(i -> new Suggestion(null, i)));
+			return new SuggestionsResults("", INSTRUCTIONS.stream().map(StringSuggestion::new));
 		}
 		switch (group.type) {
 			case INSTRUCTION:
@@ -76,7 +79,7 @@ public class Suggestions {
 						group.content(),
 						INSTRUCTIONS.stream()
 								.filter(s -> !s.equals(content) && s.startsWith(content))
-								.map(i -> new Suggestion(null, i))
+								.map(insn -> new StringMatchSuggestion(content, insn))
 				);
 			}
 
@@ -94,7 +97,7 @@ public class Suggestions {
 			case "anewarray":
 			case "checkcast":
 			case "instanceof":
-				return advancedSearchClasses(children[0] == null ? "" : children[0].content());
+				return fuzzySearchClasses(children[0] == null ? "" : children[0].content());
 			case "invokestatic":
 			case "invokeinterface":
 			case "invokespecial":
@@ -122,7 +125,7 @@ public class Suggestions {
 				for (MethodParameter parameter : method.getParams().getParameters()) {
 					locals.add(parameter.getName());
 				}
-				return new SuggestionsResults(children[0].content(), advancedSearchStrings(search, locals));
+				return new SuggestionsResults(children[0].content(), fuzzySearchStrings(search, locals));
 			}
 			case "getstatic":
 			case "putstatic":
@@ -137,7 +140,7 @@ public class Suggestions {
 
 	private SuggestionsResults getInstructionSuggestionsResults(Group[] children, String inst, BiFunction<CommonClassInfo, String, SuggestionsResults> suggestionMaker) {
 		String className = children[0] == null ? "" : children[0].content();
-		if (!className.contains(".")) return advancedSearchClasses(className);
+		if (!className.contains(".")) return fuzzySearchClasses(className);
 		String[] parts = className.split("\\.");
 		CommonClassInfo clazz = mapper.apply(parts[0]);
 		if (clazz == null) return new SuggestionsResults(inst, Stream.empty());
@@ -174,21 +177,19 @@ public class Suggestions {
 
 	private static <I extends ItemInfo> Stream<Suggestion>
 	startsWithSearchInfo(
-			String search,
-			Stream<I> infoStream,
-			Function<I, String> formatInfo,
-			Function<I, String> getName
+			String search, Stream<I> infoStream,
+			Function<I, String> formatInfo, Function<I, String> getName
 	) {
-		return infoStream.filter(f -> getName.apply(f).startsWith(search)).map(f -> new Suggestion(f, formatInfo.apply(f)));
+		return infoStream.filter(f -> getName.apply(f).startsWith(search)).map(f -> new InfoSuggestion(search, f, formatInfo.apply(f)));
 	}
 
-	private static Stream<Suggestion> advancedSearchStrings(String search, Set<String> locals) {
+	private static Stream<? extends Suggestion> fuzzySearchStrings(String search, Set<String> locals) {
 		return search.isEmpty() ?
-				locals.stream().map(ln -> new Suggestion(null, ln)) :
+				locals.stream().map(ln -> new StringMatchSuggestion(search, ln)) :
 				locals.stream().map(localName -> {
 							BitSet bs = matches(search, localName);
 							if (bs == null) return null;
-							return new Suggestion(null, localName, bs);
+							return new StringMatchSuggestion(search, localName, bs);
 						})
 						.filter(Objects::nonNull);
 	}
@@ -208,18 +209,18 @@ public class Suggestions {
 						"".equals(partial) ?
 								getAllClasses() :
 								getAllClasses().filter(x -> x.startsWith(partial))
-				).map(c -> new Suggestion(mapper.apply(c), c))
+				).map(c -> new InfoSuggestion(partial, mapper.apply(c), c))
 		);
 	}
 
-	private SuggestionsResults advancedSearchClasses(String search) {
+	private SuggestionsResults fuzzySearchClasses(String search) {
 		if (search.isBlank())
-			return new SuggestionsResults(search, getAllClasses().map(c -> new Suggestion(mapper.apply(c), c)));
+			return new SuggestionsResults(search, getAllClasses().map(c -> new InfoSuggestion(search, mapper.apply(c), c)));
 		return new SuggestionsResults(search, getAllClasses().map(className -> {
 			if (className.equals(search)) return null;
 			final BitSet bitSet = matches(className, search);
 			if (bitSet == null) return null;
-			return new Suggestion(mapper.apply(className), className, bitSet);
+			return new InfoSuggestion(search, mapper.apply(className), className, bitSet);
 		}).filter(Objects::nonNull));
 	}
 
