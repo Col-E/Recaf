@@ -23,7 +23,7 @@ public class InfoSuggestion extends StringMatchSuggestion {
 	 * @param matchedChars
 	 * 		Chars which match the search.
 	 */
-	public InfoSuggestion(String input, ItemInfo info, String text, @Nullable BitSet matchedChars) {
+	public InfoSuggestion(String input, @Nonnull ItemInfo info, String text, @Nullable BitSet matchedChars) {
 		super(input, info.getName(), matchedChars);
 		this.info = info;
 	}
@@ -35,7 +35,7 @@ public class InfoSuggestion extends StringMatchSuggestion {
 	 * @param text
 	 * 		Suggestion text.
 	 */
-	public InfoSuggestion(String input, ItemInfo info, String text) {
+	public InfoSuggestion(String input, @Nonnull ItemInfo info, String text) {
 		this(input, info, text, null);
 	}
 

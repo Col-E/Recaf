@@ -180,7 +180,9 @@ public class Suggestions {
 			String search, Stream<I> infoStream,
 			Function<I, String> formatInfo, Function<I, String> getName
 	) {
-		return infoStream.filter(f -> getName.apply(f).startsWith(search)).map(f -> new InfoSuggestion(search, f, formatInfo.apply(f)));
+		return infoStream.filter(f -> getName.apply(f).startsWith(search)).map(f -> {
+			return new InfoSuggestion(search, f, formatInfo.apply(f));
+		});
 	}
 
 	private static Stream<? extends Suggestion> fuzzySearchStrings(String search, Set<String> locals) {
@@ -209,18 +211,23 @@ public class Suggestions {
 						"".equals(partial) ?
 								getAllClasses() :
 								getAllClasses().filter(x -> x.startsWith(partial))
-				).map(c -> new InfoSuggestion(partial, mapper.apply(c), c))
+				).map(c -> createClassSuggestion(partial, c, null))
 		);
+	}
+
+	private Suggestion createClassSuggestion(String partial, String c, @Nullable BitSet bitSet) {
+		final CommonClassInfo info = mapper.apply(c);
+		return info == null ? new StringMatchSuggestion(partial, c, bitSet) : new InfoSuggestion(partial, info, c, bitSet);
 	}
 
 	private SuggestionsResults fuzzySearchClasses(String search) {
 		if (search.isBlank())
-			return new SuggestionsResults(search, getAllClasses().map(c -> new InfoSuggestion(search, mapper.apply(c), c)));
+			return new SuggestionsResults(search, getAllClasses().map(c -> createClassSuggestion(search, c, null)));
 		return new SuggestionsResults(search, getAllClasses().map(className -> {
 			if (className.equals(search)) return null;
 			final BitSet bitSet = matches(className, search);
 			if (bitSet == null) return null;
-			return new InfoSuggestion(search, mapper.apply(className), className, bitSet);
+			return createClassSuggestion(search, className, bitSet);
 		}).filter(Objects::nonNull));
 	}
 
