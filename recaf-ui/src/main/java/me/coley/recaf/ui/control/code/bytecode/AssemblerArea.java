@@ -184,32 +184,34 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			logger.warn("Cannot disassemble, target class info missing");
 			return;
 		}
-		if (targetMember == null) {
-			logger.warn("Cannot disassemble, target member info missing");
-			return;
-		}
-		// Get the target member node
+		BytecodeToAstTransformer transformer;
 		ClassNode node = new ClassNode();
 		ClassReader cr = classInfo.getClassReader();
-		cr.accept(new SingleMemberVisitor(node, targetMember), ClassReader.SKIP_FRAMES);
-		// Since we visit only the target member info, there should only be one member in the list.
-		if (targetMember.isMethod() && node.methods.isEmpty()) {
-			logger.error("Failed to isolate method for disassembling '{}.{}{}'",
-					node.name, targetMember.getName(), targetMember.getDescriptor());
-			return;
-		} else if (targetMember.isField() && node.fields.isEmpty()) {
-			logger.error("Failed to isolate field for disassembling '{}.{} {}'",
-					node.name, targetMember.getName(), targetMember.getDescriptor());
-			return;
-		}
-		// Disassemble
-		BytecodeToAstTransformer transformer;
-		if (targetMember.isField()) {
-			FieldNode field = node.fields.get(0);
-			transformer = new BytecodeToAstTransformer(field);
+		if(targetMember != null) {
+			// Get the target member node
+			cr.accept(new SingleMemberVisitor(node, targetMember), ClassReader.SKIP_FRAMES);
+			// Since we visit only the target member info, there should only be one member in the list.
+			if (targetMember.isMethod() && node.methods.isEmpty()) {
+				logger.error("Failed to isolate method for disassembling '{}.{}{}'",
+						node.name, targetMember.getName(), targetMember.getDescriptor());
+				return;
+			} else if (targetMember.isField() && node.fields.isEmpty()) {
+				logger.error("Failed to isolate field for disassembling '{}.{} {}'",
+						node.name, targetMember.getName(), targetMember.getDescriptor());
+				return;
+			}
+			// Disassemble
+			if (targetMember.isField()) {
+				FieldNode field = node.fields.get(0);
+				transformer = new BytecodeToAstTransformer(field);
+			} else {
+				MethodNode method = node.methods.get(0);
+				transformer = new BytecodeToAstTransformer(method);
+			}
 		} else {
-			MethodNode method = node.methods.get(0);
-			transformer = new BytecodeToAstTransformer(method);
+			// Disassemble
+			cr.accept(node, ClassReader.SKIP_FRAMES);
+			transformer = new BytecodeToAstTransformer(node);
 		}
 		transformer.visit();
 		Unit unit = transformer.getUnit();
@@ -225,9 +227,17 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		pipeline.updateAst(config().usePrefix);
 		if (pipeline.isMethod())
 			pipeline.generateMethod();
-		else
+		else if (pipeline.isField())
 			pipeline.generateField();
-		SaveResult initialBuild = targetMember.isMethod() ? generateMethod(false) : generateField(false);
+		else
+			pipeline.generateClass();
+		SaveResult initialBuild;
+		if(pipeline.isMethod())
+			initialBuild = generateMethod(false);
+		else if(pipeline.isField())
+			initialBuild = generateField(false);
+		else
+			initialBuild = generateClass(false);
 		if (initialBuild == SaveResult.SUCCESS)
 			logger.debugging(l -> l.trace("Initial build of disassemble successful!"));
 		else
@@ -524,12 +534,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
 		// Generate
-		if (targetMember.isMethod())
-			return generateMethod(true);
-		else if (targetMember.isField())
-			return generateField(true);
-		else
-			return generateClass(true);
+		if(targetMember == null) return generateClass(true);
+		else {
+			if (targetMember.isMethod())
+				return generateMethod(true);
+			else
+				return generateField(true);
+		}
 	}
 
 	/**

@@ -78,8 +78,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
-			// TODO: Re-enable when ready
-			// menu.getItems().add(action("menu.edit.assemble.class", Icons.ACTION_EDIT, this::assemble));
+			menu.getItems().add(action("menu.edit.assemble.class", Icons.ACTION_EDIT, this::assemble));
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));

@@ -14,10 +14,17 @@ import java.util.List;
 public class ClassDefinition extends AbstractDefinition implements Definition {
 	// TODO: Finish implementing the class
 	private final String name;
-	private final String superClass;
+	private String superClass;
 	private final List<String> interfaces;
 	private final List<FieldDefinition> definedFields = new ArrayList<>();
 	private final List<MethodDefinition> definedMethods = new ArrayList<>();
+
+	public ClassDefinition(Modifiers modifiers, String name) {
+		this.name = name;
+		this.superClass = "java/lang/Object";
+		this.interfaces = new ArrayList<>();
+		setModifiers(modifiers);
+	}
 
 	public ClassDefinition(Modifiers modifiers, String name, String superClass, List<String> interfaces) {
 		this.name = name;
@@ -129,5 +136,13 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	 */
 	public void addField(FieldDefinition field) {
 		definedFields.add(field);
+	}
+
+	public void addInterface(String interfaceName) {
+		interfaces.add(interfaceName);
+	}
+
+	public void setSuperClass(String superClass) {
+		this.superClass = superClass;
 	}
 }

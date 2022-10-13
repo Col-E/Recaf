@@ -166,13 +166,17 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 							break;
 						}
 					}
-				} else {
+				} else if(unit.isMethod()) {
 					for (MethodInfo method : newValue.getMethods()) {
 						if (method.getName().equals(name) && method.getDescriptor().equals(desc)) {
 							setTargetMember(method);
 							break;
 						}
 					}
+				} else if(unit.isClass()) {
+					// prepare for class editing
+					this.targetMember = null;
+					this.assemblerArea.setTargetMember(null);
 				}
 			}
 			// Skip if we triggered this update
