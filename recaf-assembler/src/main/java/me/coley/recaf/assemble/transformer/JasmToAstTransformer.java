@@ -276,6 +276,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			} else if(activeMember instanceof MethodDefinition) {
 				currentClass.addMethod((MethodDefinition) activeMember);
 			}
+		} else {
+			this.unit = new Unit(activeMember);
 		}
 	}
 

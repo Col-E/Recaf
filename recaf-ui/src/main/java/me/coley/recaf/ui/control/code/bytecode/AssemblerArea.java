@@ -209,7 +209,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				transformer = new BytecodeToAstTransformer(method);
 			}
 		} else {
-			// Disassemble
+			// Disassemble class object
 			cr.accept(node, ClassReader.SKIP_FRAMES);
 			transformer = new BytecodeToAstTransformer(node);
 		}
