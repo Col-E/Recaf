@@ -3,10 +3,6 @@ package me.coley.recaf.ui.control.code.bytecode;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
@@ -19,10 +15,10 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.pipeline.*;
-import me.coley.recaf.assemble.suggestions.FuzzySuggestionComparator;
-import me.coley.recaf.assemble.suggestions.Suggestion;
 import me.coley.recaf.assemble.suggestions.Suggestions;
 import me.coley.recaf.assemble.suggestions.SuggestionsResults;
+import me.coley.recaf.assemble.suggestions.type.NoSuggestionsSuggestion;
+import me.coley.recaf.assemble.suggestions.type.Suggestion;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
 import me.coley.recaf.assemble.validation.MessageLevel;
@@ -39,7 +35,6 @@ import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.util.StackTraceUtil;
 import me.coley.recaf.util.WorkspaceTreeService;
@@ -65,7 +60,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.BitSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -275,97 +269,16 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		// Get suggestions content
 		SuggestionsResults result = suggestions.getSuggestion(suggestionGroup);
 		String input = result.getInput();
-		Set<Suggestion> set = result.getValues()
-				.collect(Collectors.toCollection(() -> new TreeSet<>(new FuzzySuggestionComparator(input))));
+		Set<Suggestion> set = result.getValues().collect(Collectors.toCollection(TreeSet::new));
 		result.invalidate();
-		if (set.isEmpty())
-			return new VirtualizedContextMenu<>(
-					s -> new javafx.scene.control.Label(s.getText()),
-					List.of(new Suggestion(null, "No suggestions"))
-			);
+		if (set.isEmpty()) {
+			return new VirtualizedContextMenu<>(Suggestion::viewAsNode, List.of(new NoSuggestionsSuggestion()));
+		}
 		// Create the menu populated with completions
-		VirtualizedContextMenu<Suggestion> menu = new VirtualizedContextMenu<>(set);
-		menu.setPrefSize(350, Math.min(set.size() * 15, 400)); // FIXME: Shouldn't be such an ugly manaul hack
-		menu.setOnAction(e -> {
-			// We should replace any matched text if possible.
-			// If the user has done something like 'class.` and we suggest starting from the '.' then we just append.
-			boolean replaceMode = input.length() > 1;
-			String suggestionText = e.getSelection().getText();
-			if (replaceMode) {
-				int groupStart = suggestionGroup.start().getStart() + 1;
-				int groupEnd = suggestionGroup.start().getEnd() + 1;
-				// We don't want to replace the whole group. Just the newly suggested bits.
-				// So find where the suggestion begins, the replace text from there.
-				String existingTestInGroup = getText(groupStart, groupEnd);
-				int suggestStartInExisting = Math.max(0, existingTestInGroup.lastIndexOf(input));
-				int replaceStart = groupStart + suggestStartInExisting;
-				replaceText(replaceStart, groupEnd,
-						EscapeUtil.escape(suggestionText));
-				moveTo(replaceStart + suggestionText.length());
-			} else {
-				String insert = EscapeUtil.escape(suggestionText.substring(input.length()));
-				final int suggestionPlacement = suggestionGroup != null ? suggestionGroup.start().getEnd() + 1 : position;
-				insertText(suggestionPlacement, insert);
-				moveTo(suggestionPlacement + insert.length());
-			}
-		});
-		menu.mapperProperty().set(suggestion -> {
-			String suggestionText = suggestion.getText();
-			// If there is no match to begin with, use the full suggestion
-			Node text;
-			final BitSet matchedChars = suggestion.getMatchedChars();
-			if (input == null || input.isBlank()) {
-				text = new javafx.scene.control.Label(suggestionText);
-			} else if (matchedChars != null) {
-				final TextFlow textFlow = new TextFlow();
-				text = textFlow;
-				boolean highlight = false;
-				String temp = "";
-				for(int i = 0; i < suggestionText.length(); i++) {
-					if(matchedChars.get(i) != highlight) {
-						if(!temp.isEmpty()) {
-							if (!highlight) textFlow.getChildren().add(new javafx.scene.control.Label(temp));
-							else {
-								Text highlightedText = new Text(temp);
-								highlightedText.setFill(Color.DODGERBLUE);
-								textFlow.getChildren().add(highlightedText);
-							}
-							temp = "";
-						}
-						highlight = !highlight;
-					}
-					temp += suggestionText.charAt(i);
-				}
-				if(!temp.isEmpty()) {
-					if (!highlight) textFlow.getChildren().add(new javafx.scene.control.Label(temp));
-					else {
-						Text highlightedText = new Text(temp);
-						highlightedText.setFill(Color.DODGERBLUE);
-						textFlow.getChildren().add(highlightedText);
-					}
-				}
-			} else {
-				// Put a blue highlight on found match for the completion
-				Text inputText = new Text(input);
-				inputText.setFill(Color.rgb(0, 175, 255));
-				final int endIndex = suggestionText.indexOf(input);
-				text = new TextFlow(
-						new javafx.scene.control.Label(suggestionText.substring(0, endIndex)),
-						inputText,
-						new javafx.scene.control.Label(suggestionText.substring(endIndex + input.length()))
-				);
-			}
-			// Populate with icon if possible
-			ItemInfo info = suggestion.getInfo();
-			if (info != null) {
-				HBox graphics = new HBox(Icons.getInfoIcon(info));
-				if (info instanceof AccessibleInfo)
-					graphics.getChildren().add(Icons.getVisibilityIcon(((AccessibleInfo) info).getAccess()));
-				HBox box = new HBox(graphics, text);
-				box.setSpacing(10);
-				return box;
-			} else return text;
-		});
+		VirtualizedContextMenu<Suggestion> menu = new VirtualizedContextMenu<>(Suggestion::viewAsNode, set);
+		menu.setPrefSize(350, Math.min(set.size() * 15, 400));
+		// Would be a good idea to work with "contexts" rather than pass this through like so
+		menu.setOnAction(e -> e.getSelection().onAction(e, position, suggestionGroup, this));
 		return menu;
 	}
 
@@ -584,7 +497,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * Generates and updates the {@link #getTargetMember() target field} if generation succeeded.
 	 *
 	 * @param apply
-	 *    {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated field.
+	 *        {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated field.
 	 *
 	 * @return Generation result status.
 	 */
@@ -606,7 +519,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * Generates and updates the {@link #getTargetMember() target method} if generation succeeded.
 	 *
 	 * @param apply
-	 *    {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
+	 *        {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
 	 *
 	 * @return Generation result status.
 	 */
@@ -628,7 +541,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * Generates and updates the {@link #getCurrentClassInfo() target class} if generation succeeded.
 	 *
 	 * @param apply
-	 *    {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
+	 *        {@code true} to update the {@link #getCurrentClassInfo() declaring class} with the generated method.
 	 *
 	 * @return Generation result status.
 	 */
@@ -720,7 +633,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * 		Validator that was visited.
 	 *
 	 * @return {@code true} if errors were reported.
-	 *    {@code false} if no errors were reported.
+	 * {@code false} if no errors were reported.
 	 */
 	private boolean reportErrors(ProblemOrigin origin, Validator<?> validator) {
 		// These are validation messages that aren't logical killers, but may prevent actual further processing.
