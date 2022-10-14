@@ -211,11 +211,11 @@ public class Suggestions {
 
 	/**
 	 * @param text
-	 * 		text to match over
+	 * 		Text to match over.
 	 * @param search
-	 * 		advanced search string
+	 * 		Search text.
 	 *
-	 * @return @{@code null} when no match, otherwise the chars matched
+	 * @return {@code null} when no match, otherwise the chars matched
 	 */
 	@Nullable
 	private static BitSet matches(String text, String search) {

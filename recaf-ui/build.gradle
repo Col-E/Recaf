@@ -20,11 +20,12 @@ dependencies {
     implementation project(':recaf-core')
     implementation project(':recaf-plugin')
     implementation docking
+    implementation fuzzy
     implementation richtextfx
-
     implementation 'com.github.Col-E:fxgraph:0.0.4'
     implementation pe
     implementation jelf
+
     // We compile against JFX but do not bundle. The launcher will download the platform specific implementation for end users.
     def javafxPlatform = getJavaFxPlatform()
     def javafxVersion = '19'

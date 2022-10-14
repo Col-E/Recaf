@@ -58,13 +58,16 @@ public class Suggestion implements Comparable<Suggestion> {
 		return text;
 	}
 
-	@Override
-	public int compareTo(Suggestion o) {
-		return text.compareTo(o.text);
-	}
-
+	/**
+	 * @return Chars which match the search.
+	 */
 	@Nullable
 	public BitSet getMatchedChars() {
 		return matchedChars;
+	}
+
+	@Override
+	public int compareTo(Suggestion o) {
+		return text.compareTo(o.text);
 	}
 }

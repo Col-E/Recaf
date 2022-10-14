@@ -21,6 +21,7 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.pipeline.*;
+import me.coley.recaf.assemble.suggestions.FuzzySuggestionComparator;
 import me.coley.recaf.assemble.suggestions.Suggestion;
 import me.coley.recaf.assemble.suggestions.Suggestions;
 import me.coley.recaf.assemble.suggestions.SuggestionsResults;
@@ -53,6 +54,7 @@ import me.coley.recaf.workspace.resource.Resource;
 import me.darknet.assembler.parser.AssemblerException;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.groups.*;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -63,10 +65,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.BitSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -273,7 +272,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		// Get suggestions content
 		SuggestionsResults result = suggestions.getSuggestion(suggestionGroup);
 		String input = result.getInput();
-		Set<Suggestion> set = result.getValues().collect(Collectors.toCollection(TreeSet::new));
+		Set<Suggestion> set = result.getValues()
+				.collect(Collectors.toCollection(() -> new TreeSet<>(new FuzzySuggestionComparator(input))));
 		result.invalidate();
 		if (set.isEmpty())
 			return new VirtualizedContextMenu<>(
