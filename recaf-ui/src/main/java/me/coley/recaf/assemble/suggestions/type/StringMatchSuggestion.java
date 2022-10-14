@@ -6,6 +6,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import me.coley.recaf.assemble.suggestions.FuzzySuggestionComparator;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -13,6 +14,11 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
+/**
+ * Suggestion impl for matched strings.
+ *
+ * @author Amejonah
+ */
 public class StringMatchSuggestion extends StringSuggestion {
 	@Nullable
 	private final String input;
@@ -43,7 +49,6 @@ public class StringMatchSuggestion extends StringSuggestion {
 		this(input, suggestedText, null);
 	}
 
-
 	@Nullable
 	public BitSet getMatchedChars() {
 		return matchedChars;
@@ -60,18 +65,26 @@ public class StringMatchSuggestion extends StringSuggestion {
 	}
 
 	public int compareTo(@Nonnull StringMatchSuggestion o) {
+		if (this == o)
+			return 0;
 		if (matchedChars == null || o.matchedChars == null)
 			return super.compareTo(o);
 		List<Integer> thisProximity = proximityCounts(matchedChars);
 		List<Integer> otherProximity = proximityCounts(matchedChars);
-		if(thisProximity.isEmpty() && otherProximity.isEmpty()) return 0;
+		if (thisProximity.isEmpty() && otherProximity.isEmpty()) return 0;
 		int result = Boolean.compare(!thisProximity.isEmpty(), !otherProximity.isEmpty());
-		if (result != 0) return result;
+		if (result != 0)
+			return result;
 		result = Integer.compare(thisProximity.stream().mapToInt(Integer::intValue).sum(), otherProximity.stream().mapToInt(Integer::intValue).sum());
-		if (result != 0) return result;
+		if (result != 0)
+			return result;
 		// cannot be empty, as we already checked it in above
 		// what we could do more is quartil, so we can see which has the most greater "blobs"
-		return Integer.compare(thisProximity.stream().mapToInt(Integer::intValue).max().getAsInt(), otherProximity.stream().mapToInt(Integer::intValue).max().getAsInt());
+		result = Integer.compare(thisProximity.stream().mapToInt(Integer::intValue).max().getAsInt(), otherProximity.stream().mapToInt(Integer::intValue).max().getAsInt());
+		if (result != 0)
+			return result;
+		// fallback fuzzy
+		return new FuzzySuggestionComparator(input).compare(getSuggestedText(), o.getSuggestedText());
 	}
 
 	private List<Integer> proximityCounts(BitSet matchedChars) {

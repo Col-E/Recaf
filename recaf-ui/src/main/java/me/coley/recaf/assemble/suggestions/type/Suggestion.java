@@ -13,10 +13,9 @@ import java.util.Collection;
 /**
  * Suggestion entry for {@link SuggestionsResults}
  *
- * @author Matt Coley
+ * @author Amejonah
  */
 public interface Suggestion extends Comparable<Suggestion> {
-
 	@Nonnull
 	Node viewAsNode();
 
@@ -26,5 +25,6 @@ public interface Suggestion extends Comparable<Suggestion> {
 	}
 
 	<Area extends StyledTextArea<Collection<String>, Collection<String>>>
-	void onAction(VirtualizedContextMenu.SelectionActionEvent<Suggestion> e, int position, Group suggestionGroup, Area area);
+	void onAction(VirtualizedContextMenu.SelectionActionEvent<Suggestion> e, SuggestionsResults results,
+				  int position, Group suggestionGroup, Area area);
 }

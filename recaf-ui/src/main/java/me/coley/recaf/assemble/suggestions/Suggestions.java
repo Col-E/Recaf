@@ -2,13 +2,10 @@ package me.coley.recaf.assemble.suggestions;
 
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodParameter;
-import me.coley.recaf.assemble.suggestions.type.InfoSuggestion;
-import me.coley.recaf.assemble.suggestions.type.StringMatchSuggestion;
-import me.coley.recaf.assemble.suggestions.type.StringSuggestion;
-import me.coley.recaf.assemble.suggestions.type.Suggestion;
+import me.coley.recaf.assemble.suggestions.type.*;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
-import me.coley.recaf.code.ItemInfo;
+import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.ClasspathUtil;
@@ -167,19 +164,29 @@ public class Suggestions {
 		);
 	}
 
-	private static Stream<Suggestion> startsWithSearchMethods(String methodName, Stream<MethodInfo> methods) {
-		return startsWithSearchInfo(methodName, methods, Suggestions::format, MethodInfo::getName);
+	private static Stream<MemberInfoSuggestion> startsWithSearchMethods(String methodName, Stream<MethodInfo> methods) {
+		return startsWithSearchInfo(methodName, methods, Suggestions::format);
 	}
 
-	private static Stream<Suggestion> startsWithSearchFields(String fieldName, Stream<FieldInfo> fields) {
-		return startsWithSearchInfo(fieldName, fields, Suggestions::format, FieldInfo::getName);
+	private static Stream<MemberInfoSuggestion> startsWithSearchFields(String fieldName, Stream<FieldInfo> fields) {
+		return startsWithSearchInfo(fieldName, fields, Suggestions::format);
 	}
 
-	private static <I extends ItemInfo> Stream<Suggestion> startsWithSearchInfo(
+	private static <I extends MemberInfo> Stream<MemberInfoSuggestion> startsWithSearchInfo(
 			String search, Stream<I> infoStream,
-			Function<I, String> formatInfo, Function<I, String> getName) {
-		return infoStream.filter(f -> getName.apply(f).startsWith(search))
-				.map(f -> new InfoSuggestion(search, f, formatInfo.apply(f)));
+			Function<I, String> formatInfo) {
+		return infoStream.filter(f -> !f.getName().equals(search))
+				.map(f -> {
+					if (search.isBlank()) {
+						return new MemberInfoSuggestion(search, f, null);
+					} else {
+						String fmt = formatInfo.apply(f);
+						BitSet matchingChars = matches(fmt, search);
+						if (matchingChars == null)
+							return null;
+						return new MemberInfoSuggestion(search, f, matchingChars);
+					}
+				}).filter(Objects::nonNull);
 	}
 
 	private static Stream<? extends Suggestion> fuzzySearchStrings(String search, Set<String> locals) {
@@ -201,20 +208,9 @@ public class Suggestions {
 		return info.getName() + " " + info.getDescriptor();
 	}
 
-
-	private SuggestionsResults startsWithSearchClasses(String partial) {
-		return new SuggestionsResults(partial,
-				(
-						"".equals(partial) ?
-								getAllClasses() :
-								getAllClasses().filter(x -> x.startsWith(partial))
-				).map(c -> createClassSuggestion(partial, c, null))
-		);
-	}
-
 	private Suggestion createClassSuggestion(String partial, String c, @Nullable BitSet bitSet) {
 		final CommonClassInfo info = mapper.apply(c);
-		return info == null ? new StringMatchSuggestion(partial, c, bitSet) : new InfoSuggestion(partial, info, c, bitSet);
+		return info == null ? new StringMatchSuggestion(partial, c, bitSet) : new InfoSuggestion(partial, info, bitSet);
 	}
 
 	private SuggestionsResults fuzzySearchClasses(String search) {

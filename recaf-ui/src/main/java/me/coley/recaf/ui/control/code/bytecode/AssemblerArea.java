@@ -267,10 +267,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 */
 	private VirtualizedContextMenu<Suggestion> createSuggestionsMenu(int position, Group suggestionGroup) {
 		// Get suggestions content
-		SuggestionsResults result = suggestions.getSuggestion(suggestionGroup);
-		String input = result.getInput();
-		Set<Suggestion> set = result.getValues().collect(Collectors.toCollection(TreeSet::new));
-		result.invalidate();
+		SuggestionsResults results = suggestions.getSuggestion(suggestionGroup);
+		Set<Suggestion> set = results.getValues().collect(Collectors.toCollection(TreeSet::new));
+		results.invalidate();
 		if (set.isEmpty()) {
 			return new VirtualizedContextMenu<>(Suggestion::viewAsNode, List.of(new NoSuggestionsSuggestion()));
 		}
@@ -278,7 +277,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		VirtualizedContextMenu<Suggestion> menu = new VirtualizedContextMenu<>(Suggestion::viewAsNode, set);
 		menu.setPrefSize(350, Math.min(set.size() * 15, 400));
 		// Would be a good idea to work with "contexts" rather than pass this through like so
-		menu.setOnAction(e -> e.getSelection().onAction(e, position, suggestionGroup, this));
+		menu.setOnAction(e -> e.getSelection().onAction(e, results, position, suggestionGroup, this));
 		return menu;
 	}
 
