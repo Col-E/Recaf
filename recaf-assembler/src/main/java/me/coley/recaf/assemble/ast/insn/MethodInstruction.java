@@ -74,13 +74,13 @@ public class MethodInstruction extends AbstractInstruction {
 		// we check for op != 'invokeinterface' because invokeinterface is always itf=true
 		if (isItf() && !this.getOpcode().equals("invokeinterface")) {
 			return getOpcode() + "interface " +
-					EscapeUtil.escapeSpace(getOwner()) + '.' +
-					EscapeUtil.escapeSpace(getName()) + ' ' +
-					EscapeUtil.escapeSpace(getDesc());
+					EscapeUtil.escapeNonValid(getOwner()) + '.' +
+					EscapeUtil.escapeNonValid(getName()) + ' ' +
+					EscapeUtil.escapeNonValid(getDesc());
 		}
 		return getOpcode() + " " +
-				EscapeUtil.escapeSpace(getOwner()) + '.' +
-				EscapeUtil.escapeSpace(getName()) + ' ' +
-				EscapeUtil.escapeSpace(getDesc());
+				EscapeUtil.escapeNonValid(getOwner()) + '.' +
+				EscapeUtil.escapeNonValid(getName()) + ' ' +
+				EscapeUtil.escapeNonValid(getDesc());
 	}
 }

@@ -210,7 +210,7 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 	 */
 	protected void buildDeclarationReturnType(StringBuilder sb, MethodModel model) {
 		Type methodType = Type.getMethodType(model.getDesc());
-		String returnTypeName = EscapeUtil.escapeSpace(methodType.getReturnType().getClassName());
+		String returnTypeName = EscapeUtil.escapeNonValid(methodType.getReturnType().getClassName());
 		if (returnTypeName.contains("."))
 			returnTypeName = returnTypeName.substring(returnTypeName.lastIndexOf(".") + 1);
 		sb.append(returnTypeName).append(' ');
@@ -256,7 +256,7 @@ public class BasicMethodPrintStrategy implements MethodPrintStrategy {
 		for (int param = 0; param < argTypes.length; param++) {
 			// Get arg type text
 			Type argType = argTypes[param];
-			String argTypeName = EscapeUtil.escapeSpace(argType.getClassName());
+			String argTypeName = EscapeUtil.escapeNonValid(argType.getClassName());
 			if (argTypeName.contains("."))
 				argTypeName = argTypeName.substring(argTypeName.lastIndexOf(".") + 1);
 			boolean isLast = param == argTypes.length - 1;
