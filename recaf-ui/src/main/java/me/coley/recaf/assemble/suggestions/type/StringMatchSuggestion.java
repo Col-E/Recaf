@@ -70,17 +70,21 @@ public class StringMatchSuggestion extends StringSuggestion {
 		if (matchedChars == null || o.matchedChars == null)
 			return super.compareTo(o);
 		List<Integer> thisProximity = proximityCounts(matchedChars);
-		List<Integer> otherProximity = proximityCounts(matchedChars);
+		List<Integer> otherProximity = proximityCounts(o.matchedChars);
 		if (thisProximity.isEmpty() && otherProximity.isEmpty()) return 0;
 		int result = Boolean.compare(!thisProximity.isEmpty(), !otherProximity.isEmpty());
 		if (result != 0)
 			return result;
-		result = Integer.compare(thisProximity.stream().mapToInt(Integer::intValue).sum(), otherProximity.stream().mapToInt(Integer::intValue).sum());
+		int thisSum = thisProximity.stream().mapToInt(Integer::intValue).sum();
+		int otherSum = otherProximity.stream().mapToInt(Integer::intValue).sum();
+		result = Integer.compare(otherSum, thisSum);
 		if (result != 0)
 			return result;
 		// cannot be empty, as we already checked it in above
 		// what we could do more is quartil, so we can see which has the most greater "blobs"
-		result = Integer.compare(thisProximity.stream().mapToInt(Integer::intValue).max().getAsInt(), otherProximity.stream().mapToInt(Integer::intValue).max().getAsInt());
+		int thisProxMax = thisProximity.stream().mapToInt(Integer::intValue).max().getAsInt();
+		int otherProxMax = otherProximity.stream().mapToInt(Integer::intValue).max().getAsInt();
+		result = Integer.compare(otherProxMax, thisProxMax);
 		if (result != 0)
 			return result;
 		// fallback fuzzy
