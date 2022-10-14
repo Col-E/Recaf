@@ -3,8 +3,6 @@ package me.coley.recaf.ui.control.code.bytecode;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -41,7 +39,10 @@ import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.*;
+import me.coley.recaf.util.EscapeUtil;
+import me.coley.recaf.util.NodeEvents;
+import me.coley.recaf.util.StackTraceUtil;
+import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.DelayedExecutor;
@@ -54,7 +55,6 @@ import me.coley.recaf.workspace.resource.Resource;
 import me.darknet.assembler.parser.AssemblerException;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.groups.*;
-import me.xdrop.fuzzywuzzy.FuzzySearch;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -65,7 +65,10 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -281,19 +284,24 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 					List.of(new Suggestion(null, "No suggestions"))
 			);
 		// Create the menu populated with completions
-		// TODO: Is it worthwhile to not collect as 'String' but rather as 'ItemInfo'?
-		//  - Classes can have the mapper populate an icon graphic
-		//  - Same for fields/methods
 		VirtualizedContextMenu<Suggestion> menu = new VirtualizedContextMenu<>(set);
-		menu.setPrefSize(350, Math.min(set.size() * 15, 400));
+		menu.setPrefSize(350, Math.min(set.size() * 15, 400)); // FIXME: Shouldn't be such an ugly manaul hack
 		menu.setOnAction(e -> {
+			// We should replace any matched text if possible.
+			// If the user has done something like 'class.` and we suggest starting from the '.' then we just append.
+			boolean replaceMode = input.length() > 1;
 			String suggestionText = e.getSelection().getText();
-			if (e.getInputEvent() != null && suggestionGroup != null
-					&& e.getInputEvent() instanceof KeyEvent
-					&& ((KeyEvent) e.getInputEvent()).getCode() == KeyCode.TAB) {
-				replaceText(suggestionGroup.start().getStart() + 1, suggestionGroup.start().getEnd() + 1,
+			if (replaceMode) {
+				int groupStart = suggestionGroup.start().getStart() + 1;
+				int groupEnd = suggestionGroup.start().getEnd() + 1;
+				// We don't want to replace the whole group. Just the newly suggested bits.
+				// So find where the suggestion begins, the replace text from there.
+				String existingTestInGroup = getText(groupStart, groupEnd);
+				int suggestStartInExisting = Math.max(0, existingTestInGroup.lastIndexOf(input));
+				int replaceStart = groupStart + suggestStartInExisting;
+				replaceText(replaceStart, groupEnd,
 						EscapeUtil.escape(suggestionText));
-				moveTo(suggestionGroup.start().getStart() + 1 + suggestionText.length());
+				moveTo(replaceStart + suggestionText.length());
 			} else {
 				String insert = EscapeUtil.escape(suggestionText.substring(input.length()));
 				final int suggestionPlacement = suggestionGroup != null ? suggestionGroup.start().getEnd() + 1 : position;
