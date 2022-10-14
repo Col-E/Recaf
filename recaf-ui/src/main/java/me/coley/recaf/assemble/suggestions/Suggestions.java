@@ -168,8 +168,13 @@ public class Suggestions {
 				: clazz.getFields().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) == 0);
 		return new SuggestionsResults(
 				fieldName,
-				fields.filter(f -> !f.getName().equals(fieldName) && format(f).startsWith(fieldName))
-						.map(f -> new Suggestion(f, format(f)))
+				fields.filter(f -> !f.getName().equals(fieldName))
+						.map(f -> {
+							BitSet matchingChars = matches(format(f), fieldName);
+							if (matchingChars == null)
+								return null;
+							return new Suggestion(f, format(f), matchingChars);
+						}).filter(Objects::nonNull)
 		);
 	}
 
@@ -180,8 +185,13 @@ public class Suggestions {
 				: clazz.getMethods().stream().filter(m -> (m.getAccess() & Opcodes.ACC_STATIC) == 0);
 		return new SuggestionsResults(
 				methodName,
-				methods.filter(m -> !m.getName().equals(methodName) && format(m).startsWith(methodName))
-						.map(m -> new Suggestion(m, format(m)))
+				methods.filter(m -> !m.getName().equals(methodName))
+						.map(m -> {
+							BitSet matchingChars = matches(format(m), methodName);
+							if (matchingChars == null)
+								return null;
+							return new Suggestion(m, format(m), matchingChars);
+						}).filter(Objects::nonNull)
 		);
 	}
 
