@@ -36,6 +36,7 @@ dependencies {
     api ssvm
     api procyon_core
     api procyon_compiler_tools
+    api jlinker
 
     // Android
     api smali
