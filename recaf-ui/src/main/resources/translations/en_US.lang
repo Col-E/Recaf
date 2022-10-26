@@ -67,6 +67,7 @@ menu.view.hierarchy=Class hierarchy
 menu.view.hierarchy.children=Children
 menu.view.hierarchy.parents=Parents
 menu.view.methodcfg=Control flow graph
+menu.view.methodcallgraph=Call Graph
 menu.tab.close=Close
 menu.tab.closeothers=Close others
 menu.tab.closeall=Close all

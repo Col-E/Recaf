@@ -3,6 +3,7 @@ package me.coley.recaf.ui.pane;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableObjectValue;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.control.Label;
@@ -32,6 +33,8 @@ import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -55,12 +58,16 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 		}
 	}
 
-	public MethodCallGraphPane(Workspace workspace, CallGraphMode mode) {
+	public MethodCallGraphPane(@Nonnull Workspace workspace, @Nonnull CallGraphMode mode, @Nullable ObservableObjectValue<MethodInfo> methodInfoObservable) {
 		this.mode = mode;
 		this.workspace = workspace;
 		currentMethod.addListener((ChangeListener<? super MethodInfo>) this::onUpdateMethod);
 		graphTreeView.onUpdate(classInfo);
 		setCenter(graphTreeView);
+		if (methodInfoObservable != null) currentMethod.bind(methodInfoObservable);
+	}
+	public MethodCallGraphPane(@Nonnull Workspace workspace, @Nonnull CallGraphMode mode) {
+		this(workspace, mode, null);
 	}
 
 	private void onUpdateMethod(
