@@ -3,13 +3,9 @@ package me.coley.recaf.ui.pane;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableObjectValue;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
-import javafx.scene.control.Label;
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -27,6 +23,7 @@ import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.Updatable;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.util.Icons;
+import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.EscapeUtil;
 import me.coley.recaf.util.threading.FxThreadUtil;
@@ -58,16 +55,13 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 		}
 	}
 
-	public MethodCallGraphPane(@Nonnull Workspace workspace, @Nonnull CallGraphMode mode, @Nullable ObservableObjectValue<MethodInfo> methodInfoObservable) {
+	public MethodCallGraphPane(@Nonnull Workspace workspace, @Nonnull CallGraphMode mode, @Nullable ObjectProperty<MethodInfo> methodInfoObservable) {
 		this.mode = mode;
 		this.workspace = workspace;
 		currentMethod.addListener((ChangeListener<? super MethodInfo>) this::onUpdateMethod);
 		graphTreeView.onUpdate(classInfo);
 		setCenter(graphTreeView);
-		if (methodInfoObservable != null) currentMethod.bind(methodInfoObservable);
-	}
-	public MethodCallGraphPane(@Nonnull Workspace workspace, @Nonnull CallGraphMode mode) {
-		this(workspace, mode, null);
+		if (methodInfoObservable != null) currentMethod.bindBidirectional(methodInfoObservable);
 	}
 
 	private void onUpdateMethod(
@@ -133,7 +127,7 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 					continue;
 				}
 				workingStack.pop();
-				if(!visitedMethods.isEmpty()) visitedMethods.pop();
+				if (!visitedMethods.isEmpty()) visitedMethods.pop();
 				depth--;
 			}
 			return root;
@@ -150,10 +144,6 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 		private CallGraphItem(MethodInfo info, boolean recursive) {
 			super(info);
 			this.recursive = recursive;
-		}
-
-		private CallGraphItem(MethodInfo info) {
-			this(info, false);
 		}
 	}
 
@@ -192,7 +182,13 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 				//				setText(TextDisplayUtil.escapeShortenPath(item.getOwner()) + "#" + item.getName());
 				ClassInfo classInfo = workspace.getResources().getClass(item.getOwner());
 				if (classInfo != null) {
-					setContextMenu(ContextBuilder.forMethod(classInfo, item).setDeclaration(false).build());
+					final ContextMenu contextMenu = ContextBuilder.forMethod(classInfo, item).setDeclaration(false).build();
+					final MenuItem focusItem = new MenuItem();
+					// Add Icon: focusItem.setGraphic(Icons.getIconView(Icons.FOCUS));
+					focusItem.textProperty().bind(Lang.getBinding("menu.view.methodcallgraph.focus"));
+					focusItem.setOnAction(e -> currentMethod.set(item));
+					contextMenu.getItems().add(1, focusItem);
+					setContextMenu(contextMenu);
 					// Override the double click behavior to open the class. Doesn't work using the "setOn..." methods.
 					onClickFilter = (MouseEvent e) -> {
 						if (e.getClickCount() >= 2 && e.getButton().equals(MouseButton.PRIMARY)) {

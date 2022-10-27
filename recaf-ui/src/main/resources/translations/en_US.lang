@@ -70,6 +70,7 @@ menu.view.methodcfg=Control flow graph
 menu.view.methodcallgraph=Call Graph
 menu.view.methodcallgraph.calls=Calls
 menu.view.methodcallgraph.callers=Callers
+menu.view.methodcallgraph.focus=Focus on Method
 menu.tab.close=Close
 menu.tab.closeothers=Close others
 menu.tab.closeall=Close all
