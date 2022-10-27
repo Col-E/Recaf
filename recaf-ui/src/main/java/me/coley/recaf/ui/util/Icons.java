@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Icons {
 	private static final Image EMPTY_IMAGE = new WritableImage(1, 1);
+	public static final String FOCUS = "icons/focus.png";
 	// Class definitions
 	public static final String CLASS = "icons/class/class.png";
 	public static final String CLASS_ANONYMOUS = "icons/class/class_anonymous.png";

@@ -184,7 +184,7 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 				if (classInfo != null) {
 					final ContextMenu contextMenu = ContextBuilder.forMethod(classInfo, item).setDeclaration(false).build();
 					final MenuItem focusItem = new MenuItem();
-					// Add Icon: focusItem.setGraphic(Icons.getIconView(Icons.FOCUS));
+					focusItem.setGraphic(Icons.getIconView(Icons.FOCUS));
 					focusItem.textProperty().bind(Lang.getBinding("menu.view.methodcallgraph.focus"));
 					focusItem.setOnAction(e -> currentMethod.set(item));
 					contextMenu.getItems().add(1, focusItem);
