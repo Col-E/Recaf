@@ -21,6 +21,7 @@ import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
+import me.coley.recaf.ui.pane.DockingWrapperPane;
 import me.coley.recaf.ui.pane.MethodCallGraphsPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.pane.assembler.AssemblerPane;
@@ -101,7 +102,12 @@ public class MethodContextBuilder extends MemberContextBuilder {
 	}
 
 	private void callGraph() {
-		new GenericWindow(new MethodCallGraphsPane(WorkspaceAPI.getWorkspace(), methodInfo)).show();
+		final MethodCallGraphsPane graphsPane = new MethodCallGraphsPane(WorkspaceAPI.getWorkspace(), methodInfo);
+		new GenericWindow(DockingWrapperPane.builder()
+				.title(graphsPane.currentMethodInfoProperty().map(method -> method.getOwner() + "#" + method.getName() + method.getDescriptor()))
+				.content(graphsPane)
+				.size(600, 300)
+				.build()).show();
 	}
 
 	@Override
