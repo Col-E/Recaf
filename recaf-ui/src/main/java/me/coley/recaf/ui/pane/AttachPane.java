@@ -15,13 +15,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.AgentResource;
@@ -30,6 +30,11 @@ import org.slf4j.Logger;
 import software.coley.instrument.BuildConfig;
 import software.coley.instrument.Client;
 import software.coley.instrument.Extractor;
+import software.coley.instrument.Server;
+import software.coley.instrument.io.ByteBufferAllocator;
+import software.coley.instrument.message.MessageFactory;
+import software.coley.instrument.sock.SocketAvailability;
+import software.coley.instrument.util.Discovery;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,7 +42,9 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarFile;
 
 /**
@@ -268,46 +275,35 @@ public class AttachPane extends BorderPane {
 		VirtualMachine virtualMachine = virtualMachineMap.get(item);
 		try {
 			// Will initialize agent server with default arguments
-			try {
-				String agentAbsolutePath = getAgentJarPath().toAbsolutePath().toString();
-				virtualMachine.loadAgent(agentAbsolutePath);
-			} catch (AgentLoadException ex) {
-				// The agent jar file is written in Java 8. But Recaf uses Java 11+.
-				// This is a problem on OUR side because Java 11+ handles agent interactions differently.
-				//  - https://stackoverflow.com/a/54454418/
-				// Basically in Java 10 they added a prefix string requirement.
-				// But the Java 8 VM doesn't have that so our VM will mark it as invalid.
-				if (!ex.getMessage().equals("0"))
-					// If the result we get back is '0' then that means it was actually a success
-					throw ex;
+			Properties properties = virtualMachinePropertiesMap.get(item);
+			int port = Discovery.extractPort(properties);
+			if (port <= 0) {
+				// Port not found, server is not running on remote VM.
+				// Load the agent to start it.
+				try {
+					port = SocketAvailability.findAvailable();
+					String agentAbsolutePath = getAgentJarPath().toAbsolutePath().toString();
+					virtualMachine.loadAgent(agentAbsolutePath, "debug;port=" + port);
+				} catch (AgentLoadException ex) {
+					// The agent jar file is written in Java 8. But Recaf uses Java 11+.
+					// This is a problem on OUR side because Java 11+ handles agent interactions differently.
+					//  - https://stackoverflow.com/a/54454418/
+					// Basically in Java 10 they added a prefix string requirement.
+					// But the Java 8 VM doesn't have that so our VM will mark it as invalid.
+					if (!ex.getMessage().equals("0"))
+						// If the result we get back is '0' then that means it was actually a success
+						throw ex;
+				}
 			}
 			// Connect with client
-			Client client = new Client();
-			if (client.connect()) {
-				AgentResource resource = new AgentResource(client);
-				Runnable[] wrapper = new Runnable[1];
-				Workspace workspace = new Workspace(new Resources(resource)) {
-					@Override
-					public void cleanup() {
-						super.cleanup();
-						Runnable cleanupAction = wrapper[0];
-						if (cleanupAction != null)
-							cleanupAction.run();
-					}
-				};
-				// Only schedule updates to the agent resource if the workspace is loaded.
-				if (RecafUI.getController().setWorkspace(workspace)) {
-					resource.populateSystemIgnores();
-					ScheduledExecutorService service = ThreadPoolFactory.newScheduledThreadPool("agent-resource");
-					ScheduledFuture<?> agentResourceUpdateFuture =
-							service.scheduleAtFixedRate(resource::updateClassList, 1, 1, TimeUnit.SECONDS);
-					wrapper[0] = () -> {
-						agentResourceUpdateFuture.cancel(true);
-						service.shutdownNow();
-					};
-				}
+			Client client = new Client("localhost", port, ByteBufferAllocator.HEAP, MessageFactory.create());
+			AgentResource resource = new AgentResource(client);
+			Workspace workspace = new Workspace(new Resources(resource));
+			Controller controller = RecafUI.getController();
+			if (resource.setup() && controller.setWorkspace(workspace)) {
+				logger.info("Connected to remote process '{}' over port {}", item.id(), port);
 			} else {
-				logger.error("Could not connect to agent server, client connect gave 'false'");
+				resource.close();
 			}
 		} catch (AgentLoadException ex) {
 			logger.error("Agent on remote VM '{}' could not be loaded", item, ex);
