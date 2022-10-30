@@ -313,6 +313,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 				case "Infinity":
 				case "-Infinity":
 					return ArgType.DOUBLE;
+				case "NaNf":
 				case "Infinityf":
 				case "-Infinityf":
 					return ArgType.FLOAT;
