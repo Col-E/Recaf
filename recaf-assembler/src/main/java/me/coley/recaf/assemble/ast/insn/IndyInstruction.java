@@ -85,11 +85,11 @@ public class IndyInstruction extends AbstractInstruction {
 		if (name.isEmpty()) {
 			name = "empty"; // TODO: Is this how we should handle empty BSM name?
 		} else {
-			name = EscapeUtil.escapeSpace(name);
+			name = EscapeUtil.escapeNonValid(name);
 		}
 		sb.append(getOpcode()).append(' ');
 		sb.append(name).append(' ');
-		sb.append(EscapeUtil.escapeSpace(desc)).append(' ');
+		sb.append(EscapeUtil.escapeNonValid(desc)).append(' ');
 		sb.append(context.fmtKeyword("handle ")).append(handle).append(' ');
 		sb.append(context.fmtKeyword("args ")).append(args).append(" ").append(context.fmtKeyword("end"));
 		return sb.toString();

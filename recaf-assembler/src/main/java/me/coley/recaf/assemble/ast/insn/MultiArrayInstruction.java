@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.PrintContext;
+import me.coley.recaf.util.EscapeUtil;
 
 /**
  * Multi array instruction.
@@ -46,6 +47,6 @@ public class MultiArrayInstruction extends AbstractInstruction {
 
 	@Override
 	public String print(PrintContext context) {
-		return getOpcode() + " " + getDesc() + " " + getDimensions();
+		return getOpcode() + " " + EscapeUtil.escapeNonValid(getDesc()) + " " + getDimensions();
 	}
 }

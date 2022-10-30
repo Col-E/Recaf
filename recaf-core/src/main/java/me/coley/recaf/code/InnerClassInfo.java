@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * @author Amejonah
  */
 public class InnerClassInfo implements ItemInfo {
-	private final String className;
+	private final String outerDeclaringClass;
 	private final String name;
 	private final String outerName;
 	private final String innerName;
@@ -45,8 +45,8 @@ public class InnerClassInfo implements ItemInfo {
 	 * 		The access flags of the inner class as originally declared in the enclosing
 	 * 		class.
 	 */
-	public InnerClassInfo(String className, String name, @Nullable String outerName, @Nullable String innerName, int access) {
-		this.className = className;
+	public InnerClassInfo(String outerDeclaringClass, String name, @Nullable String outerName, @Nullable String innerName, int access) {
+		this.outerDeclaringClass = outerDeclaringClass;
 		this.name = name;
 		this.outerName = outerName;
 		this.innerName = innerName;
@@ -58,8 +58,8 @@ public class InnerClassInfo implements ItemInfo {
 	 *
 	 * @return Owner of this attribute.
 	 */
-	public String getClassName() {
-		return className;
+	public String getOuterDeclaringClass() {
+		return outerDeclaringClass;
 	}
 
 	/**
@@ -106,9 +106,9 @@ public class InnerClassInfo implements ItemInfo {
 	public String getSimpleName() {
 		if (innerName != null) return innerName;
 		int lastIndex = 0;
-		int endIndex = Math.min(className.length(), name.length());
+		int endIndex = Math.min(outerDeclaringClass.length(), name.length());
 		for (; lastIndex < endIndex; lastIndex++) {
-			if (className.charAt(lastIndex) != name.charAt(lastIndex)) break;
+			if (outerDeclaringClass.charAt(lastIndex) != name.charAt(lastIndex)) break;
 		}
 		if (lastIndex == 0)
 			return name;

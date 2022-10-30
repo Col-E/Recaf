@@ -64,6 +64,11 @@ public class PannableImageView extends BorderPane {
 		});
 		setOnScroll(e -> {
 			double zoomSpeed = 0.05;
+			// in some environments the scroll events are prefixed by an event with a delta of 0 before the actual event
+			// which causes the below logic to assume it is a zoom out.
+			// Since the change is 0 we can just ignore it and return here.
+			if(e.getDeltaY() == 0)
+				return;
 			double zoomModifier = e.getDeltaY() > 0 ?
 					1.0 + zoomSpeed : 1.00 - zoomSpeed;
 			view.setScaleX(view.getScaleX() * zoomModifier);

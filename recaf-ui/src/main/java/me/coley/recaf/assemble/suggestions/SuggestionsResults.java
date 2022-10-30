@@ -1,5 +1,7 @@
 package me.coley.recaf.assemble.suggestions;
 
+import me.coley.recaf.assemble.suggestions.type.Suggestion;
+
 import java.util.stream.Stream;
 
 /**
@@ -10,7 +12,8 @@ import java.util.stream.Stream;
  */
 public final class SuggestionsResults {
 	private final String input;
-	private final Stream<Suggestion> result;
+	private final Stream<? extends Suggestion> result;
+	private boolean valid = true;
 
 	/**
 	 * @param input
@@ -18,7 +21,7 @@ public final class SuggestionsResults {
 	 * @param result
 	 * 		Stream of suggestions.
 	 */
-	public SuggestionsResults(String input, Stream<Suggestion> result) {
+	public SuggestionsResults(String input, Stream<? extends Suggestion> result) {
 		this.input = input;
 		this.result = result;
 	}
@@ -33,7 +36,16 @@ public final class SuggestionsResults {
 	/**
 	 * @return Stream of suggestions.
 	 */
-	public Stream<Suggestion> getValues() {
+	public Stream<? extends Suggestion> getValues() {
+		if(!valid) throw new IllegalStateException("Results are already invalidated!");
 		return result;
+	}
+
+	public boolean isValid() {
+		return valid;
+	}
+
+	public void invalidate() {
+		valid = false;
 	}
 }

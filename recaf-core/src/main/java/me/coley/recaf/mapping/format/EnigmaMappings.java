@@ -107,7 +107,6 @@ public class EnigmaMappings extends MappingsAdapter {
 				throw new IllegalArgumentException(FAIL + "failed parsing line " + line, ex);
 			}
 		}
-
 	}
 
 	@Override
@@ -125,7 +124,6 @@ public class EnigmaMappings extends MappingsAdapter {
 			} else {
 				// Not mapped, but need to include for context for following members
 				sb.append("CLASS ")
-						.append(oldClassName).append(' ')
 						.append(oldClassName).append("\n");
 			}
 			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
@@ -135,9 +133,8 @@ public class EnigmaMappings extends MappingsAdapter {
 				// FIELD baseField targetField baseDesc
 				sb.append("\tFIELD ")
 						.append(oldFieldName).append(' ')
-						.append(fieldDesc).append(' ')
-						.append(newFieldName).append("\n");
-
+						.append(newFieldName).append(' ')
+						.append(fieldDesc).append("\n");
 			}
 			for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {
 				String oldMethodName = methodMapping.getOldName();
@@ -146,8 +143,8 @@ public class EnigmaMappings extends MappingsAdapter {
 				// METHOD baseMethod targetMethod baseMethodDesc
 				sb.append("\tMETHOD ")
 						.append(oldMethodName).append(' ')
-						.append(methodDesc).append(' ')
-						.append(newMethodName).append("\n");
+						.append(newMethodName).append(' ')
+						.append(methodDesc).append("\n");
 			}
 		}
 		return sb.toString();
