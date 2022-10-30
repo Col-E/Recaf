@@ -8,20 +8,15 @@ import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.MemoizedFunction;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resources;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class CallGraphRegistry {
 	private Map<ClassInfo, Map<Descriptor, MethodInfo>> methodMap = new HashMap<>();
@@ -52,6 +47,40 @@ public final class CallGraphRegistry {
 		methodMap = null;
 	}
 
+	@Nullable
+	private static MethodInfo resolveMethodInfo(
+			LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver,
+			Function<String, ClassInfo> classInfoFromPathResolver,
+			int opcode,
+			ClassInfo callClassInfo,
+			String name,
+			String descriptor
+	) {
+		Result<dev.xdark.jlinker.Resolution<ClassInfo, MethodInfo>> result;
+		switch (opcode) {
+			case Opcodes.INVOKESPECIAL:
+			case Opcodes.INVOKEVIRTUAL:
+			case Opcodes.H_INVOKESPECIAL:
+			case Opcodes.H_INVOKEVIRTUAL:
+				result = resolver.resolveVirtualMethod(classInfo(callClassInfo, classInfoFromPathResolver), name, descriptor);
+				break;
+			case Opcodes.INVOKESTATIC:
+			case Opcodes.H_INVOKESTATIC:
+				result = resolver.resolveStaticMethod(classInfo(callClassInfo, classInfoFromPathResolver), name, descriptor);
+				break;
+			case Opcodes.INVOKEINTERFACE:
+			case Opcodes.H_INVOKEINTERFACE:
+				result = resolver.resolveInterfaceMethod(classInfo(callClassInfo, classInfoFromPathResolver), name, descriptor);
+				break;
+			default:
+				throw new IllegalArgumentException("Opcode in visitMethodInsn must be INVOKEVIRTUAL, INVOKESPECIAL, INVOKESTATIC or INVOKEINTERFACE.");
+		}
+		if (result.isSuccess()) {
+			return result.value().member().innerValue();
+		}
+		return null;
+	}
+
 	private Map<Descriptor, MethodInfo> getMethodMap(ClassInfo info) {
 		return methodMap.computeIfAbsent(info, k ->
 				k.getMethods()
@@ -77,7 +106,7 @@ public final class CallGraphRegistry {
 			BiFunction<String, String, MethodInfo> thisClassMethodInfoResolver,
 			Function<ClassInfo, BiFunction<String, String, MethodInfo>> otherMethodInfoResolver
 	) {
-		LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver = LinkResolver.jvm();
+		final LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver = LinkResolver.jvm();
 		info.getClassReader().accept(new ClassVisitor(Opcodes.ASM9) {
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
@@ -89,6 +118,31 @@ public final class CallGraphRegistry {
 				if (!vertex.visited) {
 					vertex.visited = true;
 					return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+
+						@Override
+						public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+							if (!"java/lang/invoke/LambdaMetafactory".equals(bootstrapMethodHandle.getOwner())
+									|| !"metafactory".equals(bootstrapMethodHandle.getName())
+									|| !"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;".equals(bootstrapMethodHandle.getDesc())) {
+								System.out.println(bootstrapMethodHandle);
+								super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+								return;
+							}
+							Optional<Handle> handleObj = (Optional<Handle>) (Optional) Stream.of(bootstrapMethodArguments).filter(o -> o instanceof Handle).findFirst();
+							if (handleObj.isEmpty()) {
+								super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+								return;
+							}
+							Handle handle = handleObj.get();
+							switch (handle.getTag()) {
+								case Opcodes.H_INVOKESPECIAL:
+								case Opcodes.H_INVOKEVIRTUAL:
+								case Opcodes.H_INVOKESTATIC:
+								case Opcodes.H_INVOKEINTERFACE:
+									visitMethodInsn(handle.getTag(), handle.getOwner(), handle.getName(), handle.getDesc(), handle.isInterface());
+							}
+						}
+
 						@Override
 						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
 							ClassInfo callClassInfo = classInfoFromPathResolver.apply(owner);
@@ -96,28 +150,13 @@ public final class CallGraphRegistry {
 								return;
 							MethodInfo call = otherMethodInfoResolver.apply(callClassInfo).apply(name, descriptor);
 							if (call == null) {
-								Result<dev.xdark.jlinker.Resolution<ClassInfo, MethodInfo>> result;
-								switch (opcode) {
-									case Opcodes.INVOKESPECIAL:
-									case Opcodes.INVOKEVIRTUAL:
-										result = resolver.resolveVirtualMethod(classInfo(callClassInfo, classInfoFromPathResolver), name, descriptor);
-										break;
-									case Opcodes.INVOKESTATIC:
-										result = resolver.resolveStaticMethod(classInfo(callClassInfo, classInfoFromPathResolver), name, descriptor);
-										break;
-									case Opcodes.INVOKEINTERFACE:
-										result = resolver.resolveInterfaceMethod(classInfo(callClassInfo, classInfoFromPathResolver), name, descriptor);
-										break;
-									default:
-										throw new IllegalArgumentException("Opcode in visitMethodInsn must be INVOKEVIRTUAL, INVOKESPECIAL, INVOKESTATIC or INVOKEINTERFACE.");
-								}
-								if (result.isSuccess()) {
-									call = result.value().member().innerValue();
-								}
+								call = resolveMethodInfo(resolver, classInfoFromPathResolver, opcode, callClassInfo, name, descriptor);
 								// should it log on else here? or would it be spam?
 							}
-							if (call == null)
+							if (call == null) {
+								//								System.out.println("Cannot resolve " + callClassInfo.getName() + "#" + name + descriptor);
 								return;
+							}
 							MutableCallGraphVertex nestedVertex = vertexMap.computeIfAbsent(call, MutableCallGraphVertex::new);
 							vertex.getCalls().add(nestedVertex);
 							nestedVertex.getCallers().add(vertex);

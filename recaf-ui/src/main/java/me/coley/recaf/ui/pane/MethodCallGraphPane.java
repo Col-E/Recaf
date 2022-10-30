@@ -75,7 +75,6 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 	@Override
 	public void onUpdate(CommonClassInfo newValue) {
 		classInfo = newValue;
-
 	}
 
 	private class CallGraphTreeView extends TreeView<MethodInfo> implements Updatable<CommonClassInfo> {
