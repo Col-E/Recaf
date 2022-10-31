@@ -315,6 +315,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 				case "Infinity":
 				case "-Infinity":
 					return ArgType.DOUBLE;
+				case "NaNf":
 				case "Infinityf":
 				case "-Infinityf":
 					return ArgType.FLOAT;
@@ -417,6 +418,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			if (content.equals("false")) return false;
 			if (content.equals("null")) return null;
 			if (content.equals("NaN")) return Double.NaN;
+			if (content.equals("NaNf")) return Float.NaN;
 			if (content.equals("Infinity")) return Double.POSITIVE_INFINITY;
 			if (content.equals("-Infinity")) return Double.NEGATIVE_INFINITY;
 			if (content.equals("Infinityf")) return Float.POSITIVE_INFINITY;
