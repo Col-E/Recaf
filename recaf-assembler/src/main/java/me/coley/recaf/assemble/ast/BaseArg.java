@@ -51,6 +51,10 @@ public abstract class BaseArg extends BaseElement implements Printable {
 			return argMapper.apply(ArgType.SHORT, value);
 		else if (value instanceof Integer)
 			return argMapper.apply(ArgType.INTEGER, value);
+		else if (value instanceof Byte)
+			return argMapper.apply(ArgType.BYTE, value);
+		else if (value instanceof Character)
+			return argMapper.apply(ArgType.CHAR, value);
 		else if (value instanceof Float)
 			return argMapper.apply(ArgType.FLOAT, value);
 		else if (value instanceof Double)
@@ -125,8 +129,11 @@ public abstract class BaseArg extends BaseElement implements Printable {
 				return value + "L";
 			case FLOAT:
 				return value + "F";
+			case CHAR:
+				return "'" + value + "'";
 			case DOUBLE:
 			case SHORT:
+			case BYTE:
 			case INTEGER:
 			default:
 				return String.valueOf(value);

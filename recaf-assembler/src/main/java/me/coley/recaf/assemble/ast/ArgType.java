@@ -8,6 +8,8 @@ package me.coley.recaf.assemble.ast;
 public enum ArgType {
 	TYPE,
 	STRING,
+	BYTE,
+	CHAR,
 	SHORT,
 	BOOLEAN,
 	INTEGER,

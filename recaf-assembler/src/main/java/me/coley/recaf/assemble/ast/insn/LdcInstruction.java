@@ -163,7 +163,11 @@ public class LdcInstruction extends AbstractInstruction {
 					return getOpcode() + " " + context.fmtKeyword("type ") + type.getInternalName();
 				else
 					return getOpcode() + " " + context.fmtKeyword("type ") + type;
+			case CHAR:
+				return getOpcode() + " '" + getValue() + "'";
 			case INTEGER:
+			case BYTE:
+			case SHORT:
 			case DOUBLE:
 				return getOpcode() + " " + getValue();
 			case LONG:

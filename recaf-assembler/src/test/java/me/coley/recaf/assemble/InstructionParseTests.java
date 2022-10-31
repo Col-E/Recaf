@@ -293,6 +293,11 @@ public class InstructionParseTests extends JasmUtils {
 		}
 
 		@Test
+		public void testChar() {
+			handle("ldc 'A'", ldc -> assertEquals('A', ldc.getValue()));
+		}
+
+		@Test
 		public void testType() {
 			handle("ldc type java/lang/Object", ldc -> assertEquals(Type.getObjectType("java/lang/Object"), ldc.getValue()));
 			handle("ldc type DefaultPackage", ldc -> assertEquals(Type.getObjectType("DefaultPackage"), ldc.getValue()));
