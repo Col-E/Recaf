@@ -351,9 +351,9 @@ public class AssemblerPipeline {
 	 * {@code null} if no AST is available.
 	 */
 	public Element getCodeElementAt(int position) {
-		if (unit == null || !unit.isMethod())
+		if (unit == null || !unit.isCurrentMethod())
 			return null;
-		Code code = unit.getDefinitionAsMethod().getCode();
+		Code code = unit.getCurrentMethod().getCode();
 		if (code == null)
 			return null;
 		return code.getChildAt(position);

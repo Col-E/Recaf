@@ -200,7 +200,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitField(FieldDeclarationGroup dcl) throws AssemblerException {
-		FieldDefinition field = new FieldDefinition(fromAccessMods(dcl.accessMods), dcl.name.content(), dcl.descriptor.content());
+		FieldDefinition field = wrap(dcl,
+				new FieldDefinition(fromAccessMods(dcl.accessMods), dcl.name.content(), dcl.descriptor.content()));
 
 		if (currentAttributes.getSignature() != null) {
 			field.setSignature(currentAttributes.getSignature());
@@ -223,12 +224,12 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			parameters.add(new MethodParameter(param.getDescriptorValue(), param.getNameValue()));
 		}
 		this.code = new Code();
-		MethodDefinition method = new MethodDefinition(
+		MethodDefinition method = wrap(dcl, new MethodDefinition(
 				fromAccessMods(dcl.accessMods),
 				content(dcl.name),
 				parameters,
 				dcl.returnType,
-				this.code);
+				this.code));
 		for (ThrownException thrown : currentAttributes.getThrownExceptions()) {
 			method.addThrownException(thrown);
 		}
@@ -319,6 +320,9 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			return ArgType.HANDLE;
 		} else if (group instanceof IdentifierGroup) {
 			String content = group.content();
+			if(content.startsWith("'") && content.endsWith("'") && content.length() == 3) {
+				return ArgType.CHAR;
+			}
 			switch (content) {
 				case "true":
 				case "false":
@@ -423,6 +427,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			return group.content();
 		} else {
 			String content = group.content();
+			if(content.startsWith("'") && content.endsWith("'") && content.length() == 3)
+				return content.charAt(1);
 			if (content.equals("true")) return true;
 			if (content.equals("false")) return false;
 			if (content.equals("null")) return null;

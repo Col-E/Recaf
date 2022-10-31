@@ -67,9 +67,9 @@ public class FlowHighlighter implements IndicatorApplier {
 			int col = assemblerArea.getCaretColumn();
 			Element elementOnLine = pipeline.getCodeElementAt(line, col);
 			Unit unit = pipeline.getUnit();
-			if (unit == null || unit.isField())
+			if (unit == null || unit.isCurrentField())
 				return;
-			Code code = pipeline.getUnit().getDefinitionAsMethod().getCode();
+			Code code = pipeline.getUnit().getCurrentMethod().getCode();
 			if (elementOnLine instanceof FlowControl) {
 				try {
 					Map<String, Label> labelMap = code.getLabels();
@@ -111,7 +111,7 @@ public class FlowHighlighter implements IndicatorApplier {
 		Unit unit = pipeline.getUnit();
 		if (unit == null)
 			return;
-		Code code = unit.getDefinitionAsMethod().getCode();
+		Code code = unit.getCurrentMethod().getCode();
 		// Need to refresh flow control instructions
 		for (FlowControl flow : code.getChildrenOfType(FlowControl.class)) {
 			int line = flow.getLine();

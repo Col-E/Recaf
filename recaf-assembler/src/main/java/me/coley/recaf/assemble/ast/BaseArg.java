@@ -61,6 +61,8 @@ public abstract class BaseArg extends BaseElement implements Printable {
 			return argMapper.apply(ArgType.TYPE, value);
 		else if (value instanceof Annotation)
 			return argMapper.apply(ArgType.ANNO, value);
+		else if (value instanceof Character)
+			return argMapper.apply(ArgType.CHAR, value);
 		else if (value instanceof List)
 			return argMapper.apply(ArgType.ANNO_LIST, value);
 		else if (value instanceof Handle) {
@@ -104,6 +106,8 @@ public abstract class BaseArg extends BaseElement implements Printable {
 					return context.fmtKeyword("type ") + type.getInternalName();
 				else
 					return context.fmtKeyword("type ") + type.getDescriptor();
+			case CHAR:
+				return "'" + value + "'";
 			case STRING:
 				return " \"" + EscapeUtil.escape((String) getValue()) + '\"';
 			case HANDLE:

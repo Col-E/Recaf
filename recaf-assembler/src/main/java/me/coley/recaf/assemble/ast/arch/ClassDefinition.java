@@ -18,6 +18,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	private final List<String> interfaces;
 	private final List<FieldDefinition> definedFields = new ArrayList<>();
 	private final List<MethodDefinition> definedMethods = new ArrayList<>();
+	private AbstractDefinition currentDefinition;
 
 	public ClassDefinition(Modifiers modifiers, String name) {
 		this.name = name;
@@ -63,6 +64,10 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	 */
 	public List<String> getInterfaces() {
 		return interfaces;
+	}
+
+	public AbstractDefinition getCurrentDefinition() {
+		return currentDefinition;
 	}
 
 	@Override
@@ -126,6 +131,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	 */
 	public void addMethod(MethodDefinition method) {
 		definedMethods.add(method);
+		child(method);
 	}
 
 	/**
@@ -136,6 +142,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	 */
 	public void addField(FieldDefinition field) {
 		definedFields.add(field);
+		child(field);
 	}
 
 	public void addInterface(String interfaceName) {
@@ -144,5 +151,9 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 
 	public void setSuperClass(String superClass) {
 		this.superClass = superClass;
+	}
+
+	public void setCurrentDefinition(AbstractDefinition currentDefinition) {
+		this.currentDefinition = currentDefinition;
 	}
 }

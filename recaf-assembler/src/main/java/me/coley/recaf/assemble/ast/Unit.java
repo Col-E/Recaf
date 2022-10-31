@@ -5,6 +5,9 @@ import me.coley.recaf.assemble.ast.arch.ClassDefinition;
 import me.coley.recaf.assemble.ast.arch.FieldDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 /**
  * The complete unit of a field or method.
  *
@@ -101,4 +104,39 @@ public class Unit extends BaseElement {
 			throw new IllegalStateException("Not a method");
 		return (MethodDefinition) definition;
 	}
+
+	public AbstractDefinition getCurrentDefinition() {
+		if(!definition.isClass()) return definition;
+		else {
+			return getDefinitionAsClass().getCurrentDefinition() == null ? definition : getDefinitionAsClass().getCurrentDefinition();
+		}
+	}
+
+	public boolean isCurrentMethod() {
+		return getCurrentDefinition().isMethod();
+	}
+
+	public boolean isCurrentField() {
+		return getCurrentDefinition().isField();
+	}
+
+	public boolean isCurrentClass() {
+		return getCurrentDefinition().isClass();
+	}
+
+	public MethodDefinition getCurrentMethod() {
+		AbstractDefinition def = getCurrentDefinition();
+		if(!def.isMethod())
+			throw new IllegalStateException("Not a method");
+		return (MethodDefinition) def;
+	}
+
+	public FieldDefinition getCurrentField() {
+		AbstractDefinition def = getCurrentDefinition();
+		if(!def.isField())
+			throw new IllegalStateException("Not a field");
+		return (FieldDefinition) def;
+	}
+
+
 }

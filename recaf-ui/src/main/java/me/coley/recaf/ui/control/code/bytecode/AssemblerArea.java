@@ -32,6 +32,7 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.VirtualizedContextMenu;
 import me.coley.recaf.ui.control.code.*;
+import me.coley.recaf.ui.pane.assembler.SelectedUpdater;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
@@ -104,6 +105,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			pipeline.setText(getText());
 			handleAstUpdate();
 		});
+		SelectedUpdater selectedUpdater = new SelectedUpdater(pipeline, this);
+		selectedUpdater.addCaretPositionListener(caretPositionProperty());
 		// Setup variable highlighting
 		VariableHighlighter variableHighlighter = new VariableHighlighter(pipeline, this);
 		variableHighlighter.addIndicator(getIndicatorFactory());
