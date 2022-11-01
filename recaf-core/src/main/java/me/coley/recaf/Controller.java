@@ -120,16 +120,25 @@ public class Controller {
 			@Override
 			public void onNewClass(Resource resource, ClassInfo newValue) {
 				getPresentation().workspaceLayer().onNewClass(resource, newValue);
+				if (services.getCallGraphRegistry() != null) {
+					services.getCallGraphRegistry().onNewClass(resource, newValue);
+				}
 			}
 
 			@Override
 			public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
 				getPresentation().workspaceLayer().onUpdateClass(resource, oldValue, newValue);
+				if (services.getCallGraphRegistry() != null) {
+					services.getCallGraphRegistry().onUpdateClass(resource, oldValue, newValue);
+				}
 			}
 
 			@Override
 			public void onRemoveClass(Resource resource, ClassInfo oldValue) {
 				getPresentation().workspaceLayer().onRemoveClass(resource, oldValue);
+				if (services.getCallGraphRegistry() != null) {
+					services.getCallGraphRegistry().onRemoveClass(resource, oldValue);
+				}
 			}
 		};
 		ResourceDexClassListener dexListener = new ResourceDexClassListener() {
@@ -145,7 +154,7 @@ public class Controller {
 
 			@Override
 			public void onUpdateDexClass(Resource resource, String dexName,
-										 DexClassInfo oldValue, DexClassInfo newValue) {
+																	 DexClassInfo oldValue, DexClassInfo newValue) {
 				getPresentation().workspaceLayer().onUpdateDexClass(resource, dexName, oldValue, newValue);
 			}
 		};

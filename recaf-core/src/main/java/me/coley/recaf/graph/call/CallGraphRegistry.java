@@ -4,11 +4,18 @@ import dev.xdark.jlinker.LinkResolver;
 import dev.xdark.jlinker.Result;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.MemberSignature;
 import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.util.CancelSignal;
 import me.coley.recaf.util.MemoizedFunction;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceListener;
+import me.coley.recaf.workspace.resource.Resource;
+import me.coley.recaf.workspace.resource.ResourceClassListener;
 import me.coley.recaf.workspace.resource.Resources;
 import org.objectweb.asm.*;
+import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -16,11 +23,12 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public final class CallGraphRegistry {
+public final class CallGraphRegistry implements WorkspaceListener, ResourceClassListener {
+	private static final Logger LOGGER = Logging.get(CallGraphRegistry.class);
 	private Map<ClassInfo, Map<Descriptor, MethodInfo>> methodMap = new HashMap<>();
 	private final Map<MethodInfo, MutableCallGraphVertex> vertexMap = new HashMap<>();
+	private final Map<String, Set<UnresolvedCall>> unresolvedCalls = new HashMap<>();
 	private final Workspace workspace;
 
 	public CallGraphRegistry(Workspace workspace) {
@@ -29,6 +37,7 @@ public final class CallGraphRegistry {
 
 	public static CallGraphRegistry createAndLoad(Workspace workspace) {
 		CallGraphRegistry registry = new CallGraphRegistry(workspace);
+		workspace.addListener(registry);
 		registry.load();
 		return registry;
 	}
@@ -44,7 +53,8 @@ public final class CallGraphRegistry {
 				= MemoizedFunction.memoize(clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor)));
 		// seems like a hack tho, needs feedback!
 		resources.getClasses().forEach(info -> visitClass(info, classInfoFromPathResolver, methodMapGetter));
-		methodMap = null;
+		methodMap = new HashMap<>();
+		LOGGER.info("Loaded {} vertices, {} unresolved calls", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
 	}
 
 	@Nullable
@@ -97,16 +107,8 @@ public final class CallGraphRegistry {
 			Function<String, ClassInfo> classInfoFromPathResolver,
 			Function<ClassInfo, BiFunction<String, String, MethodInfo>> otherMethodInfoResolver
 	) {
-		visitClass(info, classInfoFromPathResolver, otherMethodInfoResolver.apply(info), otherMethodInfoResolver);
-	}
-
-	private void visitClass(
-			ClassInfo info,
-			Function<String, ClassInfo> classInfoFromPathResolver,
-			BiFunction<String, String, MethodInfo> thisClassMethodInfoResolver,
-			Function<ClassInfo, BiFunction<String, String, MethodInfo>> otherMethodInfoResolver
-	) {
 		final LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver = LinkResolver.jvm();
+		BiFunction<String, String, MethodInfo> thisClassMethodInfoResolver = otherMethodInfoResolver.apply(info);
 		info.getClassReader().accept(new ClassVisitor(Opcodes.ASM9) {
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
@@ -124,16 +126,15 @@ public final class CallGraphRegistry {
 							if (!"java/lang/invoke/LambdaMetafactory".equals(bootstrapMethodHandle.getOwner())
 									|| !"metafactory".equals(bootstrapMethodHandle.getName())
 									|| !"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;".equals(bootstrapMethodHandle.getDesc())) {
-								System.out.println(bootstrapMethodHandle);
 								super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
 								return;
 							}
-							Optional<Handle> handleObj = (Optional<Handle>) (Optional) Stream.of(bootstrapMethodArguments).filter(o -> o instanceof Handle).findFirst();
-							if (handleObj.isEmpty()) {
+							Object handleObj = bootstrapMethodArguments.length == 3 ? bootstrapMethodArguments[1] : null;
+							if (!(handleObj instanceof Handle)) {
 								super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
 								return;
 							}
-							Handle handle = handleObj.get();
+							Handle handle = (Handle) handleObj;
 							switch (handle.getTag()) {
 								case Opcodes.H_INVOKESPECIAL:
 								case Opcodes.H_INVOKEVIRTUAL:
@@ -145,21 +146,7 @@ public final class CallGraphRegistry {
 
 						@Override
 						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-							ClassInfo callClassInfo = classInfoFromPathResolver.apply(owner);
-							if (callClassInfo == null)
-								return;
-							MethodInfo call = otherMethodInfoResolver.apply(callClassInfo).apply(name, descriptor);
-							if (call == null) {
-								call = resolveMethodInfo(resolver, classInfoFromPathResolver, opcode, callClassInfo, name, descriptor);
-								// should it log on else here? or would it be spam?
-							}
-							if (call == null) {
-								//								System.out.println("Cannot resolve " + callClassInfo.getName() + "#" + name + descriptor);
-								return;
-							}
-							MutableCallGraphVertex nestedVertex = vertexMap.computeIfAbsent(call, MutableCallGraphVertex::new);
-							vertex.getCalls().add(nestedVertex);
-							nestedVertex.getCallers().add(vertex);
+							visitMethodInstruction(opcode, owner, name, descriptor, vertex, classInfoFromPathResolver, otherMethodInfoResolver, resolver, vertexMap);
 						}
 					};
 				}
@@ -168,7 +155,133 @@ public final class CallGraphRegistry {
 		}, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
 	}
 
-	private static final class Descriptor {
+	private void visitMethodInstruction(
+			int opcode, String owner, String name, String descriptor, MutableCallGraphVertex vertex,
+			Function<String, ClassInfo> classInfoFromPathResolver,
+			Function<ClassInfo, BiFunction<String, String, MethodInfo>> otherMethodInfoResolver,
+			LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver,
+			Map<MethodInfo, MutableCallGraphVertex> vertexMap
+	) {
+		ClassInfo callClassInfo = classInfoFromPathResolver.apply(owner);
+		if (callClassInfo == null) {
+			unresolvedCalls.computeIfAbsent(owner, k -> new HashSet<>()).add(new UnresolvedCall(opcode, owner, name, descriptor, vertex));
+			return;
+		}
+		MethodInfo call = otherMethodInfoResolver.apply(callClassInfo).apply(name, descriptor);
+		if (call == null) {
+			try {
+				call = resolveMethodInfo(resolver, classInfoFromPathResolver, opcode, callClassInfo, name, descriptor);
+			} catch (CancelSignal ignored) {}
+			// should it log on else here? or would it be spam?
+		}
+		if (call == null) {
+			unresolvedCalls.computeIfAbsent(owner, k -> new HashSet<>()).add(new UnresolvedCall(opcode, owner, name, descriptor, vertex));
+			return;
+		}
+		MutableCallGraphVertex nestedVertex =
+				vertexMap.computeIfAbsent(call, MutableCallGraphVertex::new);
+		vertex.getCalls().add(nestedVertex);
+		nestedVertex.getCallers().add(vertex);
+	}
+
+	private void updateUnresolved(
+			Function<String, ClassInfo> classInfoFromPathResolver,
+			Function<ClassInfo, BiFunction<String, String, MethodInfo>> otherMethodInfoResolver,
+			LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver
+	) {
+		Set<UnresolvedCall> calls = unresolvedCalls.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+		unresolvedCalls.clear();
+		calls.forEach(unresolvedCall -> visitMethodInstruction(
+				unresolvedCall.opcode,
+				unresolvedCall.owner,
+				unresolvedCall.name,
+				unresolvedCall.descriptor,
+				unresolvedCall.vertex,
+				classInfoFromPathResolver,
+				otherMethodInfoResolver,
+				resolver,
+				vertexMap)
+		);
+	}
+
+	@Override
+	public void onAddLibrary(Workspace workspace, Resource library) {
+		Function<String, ClassInfo> classInfoFromPathResolver
+				= MemoizedFunction.memoize(path ->
+				library.getClasses().stream().filter(c -> c.getName().equals(path)).findAny().orElseGet(() -> workspace.getResources().getClass(path))
+		);
+		Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
+				= MemoizedFunction.memoize(clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor)));
+		updateUnresolved(classInfoFromPathResolver, methodMapGetter, LinkResolver.jvm());
+		library.getClasses().forEach(c -> visitClass(c, classInfoFromPathResolver, methodMapGetter));
+		LOGGER.info("There are now {} vertices, and {} unresolved calls", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
+	}
+
+	@Override
+	public void onNewClass(Resource resource, ClassInfo newValue) {
+		final Function<String, ClassInfo> classInfoFromPathResolver
+				= MemoizedFunction.memoize(path -> workspace.getResources().getClass(path));
+		final Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
+				= MemoizedFunction.memoize(clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor)));
+		updateUnresolved(classInfoFromPathResolver, methodMapGetter, LinkResolver.jvm());
+		visitClass(newValue, classInfoFromPathResolver, methodMapGetter);
+	}
+
+	@Override
+	public void onRemoveLibrary(Workspace workspace, Resource library) {
+	}
+
+	@Override
+	public void onRemoveClass(Resource resource, ClassInfo oldValue) {
+
+	}
+
+	@Override
+	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
+
+	}
+
+	private static class UnresolvedCall {
+		final int opcode;
+		final String owner;
+		final String name;
+		final String descriptor;
+		final MutableCallGraphVertex vertex;
+
+		private UnresolvedCall(int opcode, String owner, String name, String descriptor, MutableCallGraphVertex vertex) {
+			this.opcode = opcode;
+			this.owner = owner;
+			this.name = name;
+			this.descriptor = descriptor;
+			this.vertex = vertex;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+
+			UnresolvedCall that = (UnresolvedCall) o;
+
+			if (opcode != that.opcode) return false;
+			if (!owner.equals(that.owner)) return false;
+			if (!name.equals(that.name)) return false;
+			if (!descriptor.equals(that.descriptor)) return false;
+			return vertex.equals(that.vertex);
+		}
+
+		@Override
+		public int hashCode() {
+			int result = opcode;
+			result = 31 * result + owner.hashCode();
+			result = 31 * result + name.hashCode();
+			result = 31 * result + descriptor.hashCode();
+			result = 31 * result + vertex.hashCode();
+			return result;
+		}
+	}
+
+	protected static final class Descriptor {
 		private final String name, desc;
 
 		Descriptor(String name, String desc) {
@@ -176,9 +289,13 @@ public final class CallGraphRegistry {
 			this.desc = desc;
 		}
 
+		Descriptor(MemberSignature signature) {
+			this.name = signature.getName();
+			this.desc = signature.getDescriptor();
+		}
+
 		Descriptor(MethodInfo info) {
-			this.name = info.getName();
-			this.desc = info.getDescriptor();
+			this(info.getMemberSignature());
 		}
 
 		@Override
@@ -217,7 +334,8 @@ public final class CallGraphRegistry {
 				String superName = node.getSuperName();
 				if (superName == null) return null;
 				final ClassInfo classInfo = fn.apply(superName);
-				return classInfo == null ? null : classInfo(classInfo, fn);
+				if (classInfo == null) throw CancelSignal.get();
+				return classInfo(classInfo, fn);
 			}
 
 			@Override

@@ -9,11 +9,9 @@ import java.util.Objects;
  * @author Matt Coley
  */
 public abstract class MemberInfo implements AccessibleInfo, ItemInfo {
-	private final String owner;
-	private final String name;
-	private final String descriptor;
 	private final String signature;
 	private final int access;
+	private final MemberSignature memberSignature;
 
 	/**
 	 * @param owner
@@ -25,12 +23,10 @@ public abstract class MemberInfo implements AccessibleInfo, ItemInfo {
 	 * @param access
 	 * 		Member access modifiers.
 	 */
-	public MemberInfo(String owner, String name, String descriptor, String signature, int access) {
-		this.name = name;
-		this.owner = owner;
-		this.descriptor = descriptor;
+	public MemberInfo(String owner, String name, String descriptor, @Nullable String signature, int access) {
 		this.signature = signature;
 		this.access = access;
+		memberSignature = new MemberSignature(owner, name, descriptor);
 	}
 
 	/**
@@ -49,19 +45,19 @@ public abstract class MemberInfo implements AccessibleInfo, ItemInfo {
 	 * @return Name of type defining the member.
 	 */
 	public String getOwner() {
-		return owner;
+		return memberSignature.owner;
 	}
 
 	@Override
 	public String getName() {
-		return name;
+		return memberSignature.name;
 	}
 
 	/**
 	 * @return Member descriptor.
 	 */
 	public String getDescriptor() {
-		return descriptor;
+		return memberSignature.descriptor;
 	}
 
 	/**
@@ -70,6 +66,10 @@ public abstract class MemberInfo implements AccessibleInfo, ItemInfo {
 	@Nullable
 	public String getSignature() {
 		return signature;
+	}
+
+	public MemberSignature getMemberSignature() {
+		return memberSignature;
 	}
 
 	/**
@@ -85,17 +85,17 @@ public abstract class MemberInfo implements AccessibleInfo, ItemInfo {
 		if (o == null || getClass() != o.getClass()) return false;
 		MemberInfo that = (MemberInfo) o;
 		return access == that.access &&
-				Objects.equals(owner, that.owner) &&
+				Objects.equals(memberSignature.owner, that.memberSignature.owner) &&
 				Objects.equals(getName(), that.getName()) &&
-				Objects.equals(descriptor, that.descriptor) &&
+				Objects.equals(memberSignature.descriptor, that.memberSignature.descriptor) &&
 				Objects.equals(signature, that.signature);
 	}
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hashCode(owner);
-		result = 31 * result + Objects.hashCode(name);
-		result = 31 * result + Objects.hashCode(descriptor);
+		int result = Objects.hashCode(memberSignature.owner);
+		result = 31 * result + Objects.hashCode(memberSignature.name);
+		result = 31 * result + Objects.hashCode(memberSignature.descriptor);
 		result = 31 * result + Objects.hashCode(signature);
 		result = 31 * result + access;
 		return result;
@@ -104,9 +104,9 @@ public abstract class MemberInfo implements AccessibleInfo, ItemInfo {
 	@Override
 	public String toString() {
 		return "MemberInfo{" +
-				"owner='" + owner + '\'' +
+				"owner='" + memberSignature.owner + '\'' +
 				", name='" + getName() + '\'' +
-				", descriptor='" + descriptor + '\'' +
+				", descriptor='" + memberSignature.descriptor + '\'' +
 				", access=" + access +
 				'}';
 	}

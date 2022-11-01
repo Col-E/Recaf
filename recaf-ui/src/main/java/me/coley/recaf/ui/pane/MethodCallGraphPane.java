@@ -113,6 +113,7 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 					if (vertex != null) {
 						final List<CallGraphItem> newTodo = childrenGetter.apply(vertex)
 								.stream().map(CallGraphVertex::getMethodInfo)
+								.filter(Objects::nonNull)
 								.map(c -> new CallGraphItem(c, visitedMethods.contains(c)))
 								.filter(i -> {
 									if (i.getValue() == null) return false;
