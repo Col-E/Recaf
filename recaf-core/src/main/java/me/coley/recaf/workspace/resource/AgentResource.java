@@ -18,12 +18,11 @@ import software.coley.instrument.message.broadcast.BroadcastClassloaderMessage;
 import software.coley.instrument.message.request.RequestClassMessage;
 import software.coley.instrument.message.request.RequestClassloaderClassesMessage;
 import software.coley.instrument.message.request.RequestClassloadersMessage;
+import software.coley.instrument.message.request.RequestRedefineMessage;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Workspace unit that works through an agent {@link software.coley.instrument.Client}.
@@ -34,6 +33,8 @@ public class AgentResource extends Resource {
 	private static final Logger logger = Logging.get(AgentResource.class);
 	private final Set<String> ignored = new HashSet<>();
 	private final Set<ClassLoaderInfo> remoteLoaders = new HashSet<>();
+	private final Set<String> queuedRedefines = new ConcurrentSkipListSet<>();
+	private final Map<Integer, Integer> infoToLoaderId = new HashMap<>();
 	private final Multimap<Integer, ClassData, Set<ClassData>> remoteClasses = Multimap.from(new HashMap<>(), HashSet::new);
 	private final Client client;
 
@@ -44,14 +45,46 @@ public class AgentResource extends Resource {
 	public AgentResource(Client client) {
 		super(new AgentContentSource());
 		this.client = client;
+		addClassListener(new ResourceClassListener() {
+			@Override
+			public void onNewClass(Resource resource, ClassInfo newValue) {
+				// no-op
+			}
+
+			@Override
+			public void onRemoveClass(Resource resource, ClassInfo oldValue) {
+				infoToLoaderId.remove(lookup(oldValue));
+			}
+
+			@Override
+			public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
+				Integer loaderId = infoToLoaderId.remove(lookup(oldValue));
+				String name = newValue.getName();
+				if (loaderId != null) {
+					// Transfer to new state
+					infoToLoaderId.put(lookup(newValue), loaderId);
+					// Request class update
+					queuedRedefines.add(name);
+					client.sendAsync(new RequestRedefineMessage(loaderId, name, newValue.getValue()), reply -> {
+						if (reply.isSuccess()) {
+							logger.debug("Redefine '{}' success", name);
+						} else {
+							logger.debug("Redefine '{}' failed: {}", name, reply.getMessage());
+						}
+					});
+				} else {
+					logger.warn("Class '{}' has no known loader reference in remote VM", name);
+				}
+			}
+		});
 	}
+
 
 	/**
 	 * Setup client connection handling.
 	 */
 	public boolean setup() {
 		try {
-			software.coley.instrument.util.Logger.level = software.coley.instrument.util.Logger.DEBUG;
 			client.setBroadcastListener((messageType, message) -> {
 				switch (messageType) {
 					case MessageConstants.ID_BROADCAST_LOADER:
@@ -63,8 +96,8 @@ public class AgentResource extends Resource {
 						ClassData data = classMessage.getData();
 						if (data.getClassLoaderId() == ApiConstants.BOOTSTRAP_CLASSLOADER_ID)
 							return;
-						logger.info("BROAD: " + data.getName());
-						put(data);
+						if (!recentlyRequestedRedefine(data))
+							put(data);
 						break;
 					default:
 						// unknown broadcast packet
@@ -81,11 +114,9 @@ public class AgentResource extends Resource {
 					int loaderId = loader.getId();
 					if (loader.isBootstrap())
 						continue;
-					logger.info("LOADER: " + loader.getName());
 					// Request all classes from classloader
 					client.sendAsync(new RequestClassloaderClassesMessage(loaderId), classesReply -> {
 						// TODO: If we close the workspace, this needs to stop
-						logger.info("LOADER-CLASSES: " + loader.getId() + "-" + classesReply.getClasses().size());
 						for (String name : classesReply.getClasses()) {
 							if (getClass(loaderId, name) == null) {
 								ClassData data = requestClass(loaderId, name);
@@ -106,6 +137,16 @@ public class AgentResource extends Resource {
 
 	/**
 	 * @param data
+	 * 		Data to check.
+	 *
+	 * @return {@code true} if the class was recently redefined.
+	 */
+	private boolean recentlyRequestedRedefine(ClassData data) {
+		return queuedRedefines.remove(data.getName());
+	}
+
+	/**
+	 * @param data
 	 * 		Class to store.
 	 */
 	private void put(ClassData data) {
@@ -114,7 +155,9 @@ public class AgentResource extends Resource {
 		//  is in its own section that can be swapped through. We could also implement this as a custom
 		//  'Resources' impl with a resource per each classloader. Any-way we look at it a proper implementation
 		//  requires refactoring to the workspace API to represent the remote VM correctly.
-		getClasses().put(ClassInfo.read(data.getCode()));
+		ClassInfo info = ClassInfo.read(data.getCode());
+		infoToLoaderId.put(lookup(data), data.getClassLoaderId());
+		getClasses().put(info);
 	}
 
 	/**
@@ -161,7 +204,6 @@ public class AgentResource extends Resource {
 	 * @return Remote data of class.
 	 */
 	private ClassData requestClass(int loaderId, String className) {
-		logger.info("Request: " + className);
 		ClassData[] wrapper = new ClassData[1];
 		client.sendBlocking(new RequestClassMessage(loaderId, className), reply -> {
 			if (reply.hasData()) {
@@ -215,6 +257,16 @@ public class AgentResource extends Resource {
 		if (outerClassBreadcrumbs.isEmpty())
 			return false;
 		return isRuntimeClass(outerClassBreadcrumbs.get(0));
+	}
+
+	private static int lookup(ClassData data) {
+		if (data == null) return -1;
+		return Arrays.hashCode(data.getCode());
+	}
+
+	private static int lookup(ClassInfo info) {
+		if (info == null) return -1;
+		return Arrays.hashCode(info.getValue());
 	}
 
 	private static class AgentContentSource extends ContentSource {

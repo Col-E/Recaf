@@ -283,7 +283,7 @@ public class AttachPane extends BorderPane {
 				try {
 					port = SocketAvailability.findAvailable();
 					String agentAbsolutePath = getAgentJarPath().toAbsolutePath().toString();
-					virtualMachine.loadAgent(agentAbsolutePath, "debug;port=" + port);
+					virtualMachine.loadAgent(agentAbsolutePath, "port=" + port);
 				} catch (AgentLoadException ex) {
 					// The agent jar file is written in Java 8. But Recaf uses Java 11+.
 					// This is a problem on OUR side because Java 11+ handles agent interactions differently.
