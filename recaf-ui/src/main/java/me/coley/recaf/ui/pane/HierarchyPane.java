@@ -24,7 +24,9 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.Translatable;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
+import org.slf4j.Logger;
 
 
 /**
@@ -33,6 +35,7 @@ import me.coley.recaf.util.threading.FxThreadUtil;
  * @author Matt Coley
  */
 public class HierarchyPane extends BorderPane implements Updatable<CommonClassInfo> {
+	private static final Logger logger = Logging.get(HierarchyPane.class);
 	private final HierarchyTree tree = new HierarchyTree();
 	private HierarchyMode mode = HierarchyMode.PARENTS;
 	private CommonClassInfo info;
@@ -112,11 +115,16 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 		public void onUpdate(CommonClassInfo newValue) {
 			InheritanceGraph graph = RecafUI.getController().getServices().getInheritanceGraph();
 			HierarchyItem root = new HierarchyItem(newValue);
-			InheritanceVertex vertex = graph.getVertex(newValue.getName());
-			if (mode == HierarchyMode.PARENTS) {
-				createParents(root, vertex);
-			} else if (mode == HierarchyMode.CHILDREN) {
-				createChildren(root, vertex);
+			String name = newValue.getName();
+			InheritanceVertex vertex = graph.getVertex(name);
+			if (vertex != null) {
+				if (mode == HierarchyMode.PARENTS) {
+					createParents(root, vertex);
+				} else if (mode == HierarchyMode.CHILDREN) {
+					createChildren(root, vertex);
+				}
+			} else {
+				logger.warn("Vertex lookup failed for class '{}'", name);
 			}
 			FxThreadUtil.run(() -> setRoot(root));
 		}
