@@ -5,10 +5,10 @@ import javassist.bytecode.BadBytecode;
 import javassist.bytecode.MethodInfo;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.meta.Expression;
-import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.compiler.JavassistASMTranslator;
 import me.coley.recaf.assemble.compiler.JavassistCompilationResult;
 import me.coley.recaf.assemble.compiler.JavassistCompiler;
+import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.util.AccessFlag;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.TryCatchBlockNode;
@@ -73,12 +73,12 @@ public class ExpressionToAsmTransformer {
 			return result;
 		// Transform the expression
 		CtClass declaring;
-		byte[] selfClassBytes = classSupplier.getClass(selfType);
-		if (selfClassBytes != null) {
+		try {
 			// Fetched from supplier
+			byte[] selfClassBytes = classSupplier.getClass(selfType);
 			InputStream stream = new ByteArrayInputStream(selfClassBytes);
 			declaring = ClassPool.getDefault().makeClass(stream, false);
-		} else {
+		} catch (ClassNotFoundException ex) {
 			// Fallback, make a new class
 			declaring = ClassPool.getDefault().makeClass(selfType);
 		}
