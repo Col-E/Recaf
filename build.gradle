@@ -11,6 +11,7 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'jacoco'
     apply plugin: 'checkstyle'
     apply plugin: VersionsPlugin
 
@@ -33,6 +34,12 @@ subprojects {
     tasks.withType(Test).configureEach {
         reports.html.required = false
         reports.junitXml.required = false
+
+        jacoco {
+            includes = [ 'me/coley/recaf/**']
+        }
+
+        finalizedBy jacocoTestReport
     }
 
     checkstyleMain.exclude '**/generated-src/**'
