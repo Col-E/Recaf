@@ -12,6 +12,9 @@ import java.util.function.Consumer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/**
+ * Tests that validate {@link Expression} values can be parsed from source text.
+ */
 public class ExpressionParseTests extends JasmUtils {
 	@ParameterizedTest
 	@ValueSource(strings = {

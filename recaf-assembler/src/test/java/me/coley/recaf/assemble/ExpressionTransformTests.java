@@ -104,7 +104,7 @@ public class ExpressionTransformTests {
 		MethodDefinition definition = new MethodDefinition(modifiers, "exampleMethod", params, "V", new Code());
 		Variables variables = new Variables();
 		try {
-			variables.visitDefinition(selfType, definition);
+			variables.visitImplicitThis(selfType, definition);
 			variables.visitParams(definition);
 		} catch (Exception ex) {
 			fail(ex);

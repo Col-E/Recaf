@@ -248,7 +248,7 @@ public class AssemblerPipeline {
 	}
 
 	/**
-	 * @return {@code true} if there are changes seen since the last call to {@link #updateAst()}.
+	 * @return {@code true} if there are changes seen since the last call to {@link #updateAst(boolean)}.
 	 */
 	public boolean isDirty() {
 		return textDirty;
