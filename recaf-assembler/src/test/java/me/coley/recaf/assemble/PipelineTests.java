@@ -38,6 +38,7 @@ public class PipelineTests {
 		pipeline.addAstValidationListener(listener);
 		pipeline.addParserFailureListener(listener);
 		pipeline.addBytecodeFailureListener(listener);
+		pipeline.addBytecodeValidationListener(listener);
 		return pipeline;
 	}
 
