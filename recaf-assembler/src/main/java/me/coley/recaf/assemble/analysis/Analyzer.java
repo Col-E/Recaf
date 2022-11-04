@@ -46,11 +46,37 @@ public class Analyzer {
 	/**
 	 * @param selfType
 	 * 		Internal name of class defining the method.
+	 * @param method
+	 * 		The method definition.
 	 */
 	public Analyzer(String selfType, MethodDefinition method) {
+		this(selfType, method, method.getCode());
+	}
+
+	/**
+	 * @param selfType
+	 * 		Internal name of class defining the method.
+	 * @param method
+	 * 		The method definition.
+	 * @param code
+	 * 		The code to analyze.
+	 * 		Typically {@link MethodDefinition#getCode()} but can be different for things like {@link Expression} parsing.
+	 */
+	public Analyzer(String selfType, MethodDefinition method, Code code) {
 		this.selfType = selfType;
 		this.method = method;
-		code = method.getCode();
+		this.code = code;
+	}
+
+	/**
+	 * @param code New code source to use in copied analyzer.
+	 * @return New analyzer instance with same properties except for a different {@link Code} source.
+	 */
+	private Analyzer withCode(Code code) {
+		Analyzer analyzer = new Analyzer(selfType, method, code);
+		analyzer.setExpressionToAstTransformer(expressionToAstTransformer);
+		analyzer.setInheritanceChecker(inheritanceChecker);
+		return analyzer;
 	}
 
 	/**
@@ -101,6 +127,12 @@ public class Analyzer {
 	public Analysis analyze(boolean block, boolean frames) throws AstException {
 		List<AbstractInstruction> instructions = code.getChildrenOfType(AbstractInstruction.class);
 		Analysis analysis = new Analysis(instructions.size());
+		analyze(analysis, instructions, block, frames);
+		return analysis;
+	}
+
+	private void analyze(Analysis analysis, List<AbstractInstruction> instructions,
+						 boolean block, boolean frames) throws AstException {
 		try {
 			if (!instructions.isEmpty()) {
 				if (block)
@@ -114,7 +146,6 @@ public class Analyzer {
 			logger.error("Uncaught exception during analysis", t);
 			throw new MethodCompileException(code, t, "Uncaught exception during analysis!");
 		}
-		return analysis;
 	}
 
 	private void fillFrames(Analysis analysis, List<AbstractInstruction> instructions) throws AstException {
@@ -207,12 +238,26 @@ public class Analyzer {
 				throw new IllegalAstException(instruction, "Expression transformer not supplied!");
 			// When the PC hits an expression, jump into the converted AST
 			try {
+				// Convert to independent code block
 				Code code = expressionToAstTransformer.transform((Expression) instruction);
-				// TODO: I think we can have this call analyze and then copy the frame data from the
-				//       final results into this frame.
-				//        - Unless the user does 'EXPR throw new Error();' the stack before/after EXPR should be the same
-				//        - Mostly just need to assert variable types are consistent, and if values are being tracked
-				//          the values get updated (unless 2+ paths exist, then stop tracking due to unknown state)
+				// Create analysis results for the code block.
+				// Override the first frame so that its initializer copies state from the current frame.
+				List<AbstractInstruction> exprInstructions = code.getChildrenOfType(AbstractInstruction.class);
+				Analysis exprResults = new Analysis(exprInstructions.size());
+				exprResults.getFrames().set(0, new Frame() {
+					@Override
+					public void initialize(String selfTypeName, MethodDefinition definition) {
+						super.initialize(selfTypeName, definition);
+						getLocals().putAll(frame.getLocals());
+					}
+				});
+				// Analyze the expression code. Use a copied analyzer using the converted expression AST as its source.
+				Analyzer analyzer = withCode(code);
+				analyzer.analyze(exprResults, exprInstructions, false, true);
+				// Merge the last frame's results into the current frame
+				List<Frame> exprFrames = exprResults.getFrames();
+				Frame exprLastFrame = exprFrames.get(exprFrames.size() - 1);
+				frame.merge(exprLastFrame, this);
 			} catch (Exception ex) {
 				throw new IllegalAstException(instruction, ex);
 			}
@@ -1208,7 +1253,6 @@ public class Analyzer {
 			}
 		}
 	}
-
 
 	private static void binaryOp(Frame frame, Type type, BiFunction<Number, Number, Number> function) {
 		Value value1 = frame.pop();

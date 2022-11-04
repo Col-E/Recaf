@@ -1,0 +1,8 @@
+method dummy (Z bool)V
+a:
+  // Using method parameter variable
+  expr
+     if (bool) System.out.println("true");
+     else System.out.println("false");
+  end
+end
