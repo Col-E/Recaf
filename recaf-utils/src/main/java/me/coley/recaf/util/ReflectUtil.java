@@ -155,6 +155,8 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
 	 * @param field
 	 * 		Field to set.
 	 * @param value
@@ -167,6 +169,8 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
 	 * @param field
 	 * 		Field to set.
 	 * @param value
@@ -179,6 +183,8 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
 	 * @param field
 	 * 		Field to set.
 	 * @param value
@@ -191,6 +197,8 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
 	 * @param field
 	 * 		Field to set.
 	 * @param value
@@ -203,6 +211,8 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
 	 * @param field
 	 * 		Field to set.
 	 * @param value
@@ -215,6 +225,8 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
 	 * @param field
 	 * 		Field to set.
 	 * @param value
@@ -227,6 +239,8 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
 	 * @param field
 	 * 		Field to set.
 	 * @param value
@@ -239,6 +253,8 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
 	 * @param field
 	 * 		Field to set.
 	 * @param value
@@ -251,6 +267,8 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
+	 *
 	 * @param field
 	 * 		Field to set.
 	 * @param value
