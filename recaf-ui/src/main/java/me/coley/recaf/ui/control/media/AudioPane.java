@@ -1,51 +1,35 @@
 package me.coley.recaf.ui.control.media;
 
-import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
 import javafx.scene.effect.Bloom;
 import javafx.scene.effect.GaussianBlur;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.LinearGradient;
 import me.coley.recaf.code.FileInfo;
-import me.coley.recaf.ui.behavior.Cleanable;
-import me.coley.recaf.ui.behavior.FileRepresentation;
-import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.ResizableCanvas;
-import me.coley.recaf.ui.media.AudioPlayer;
 import me.coley.recaf.ui.media.CombinedPlayer;
 import me.coley.recaf.ui.media.FxPlayer;
-import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.ui.media.Player;
 import me.coley.recaf.util.threading.FxThreadUtil;
-import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
 
 /**
  * A pane for displaying and playing audio files.
  *
  * @author Matt Coley
  */
-public class AudioPane extends BorderPane implements FileRepresentation, Cleanable {
-	private static final Logger logger = Logging.get(AudioPane.class);
-	private final AudioPlayer player = new CombinedPlayer(List.of(new FxPlayer()));
+public class AudioPane extends MediaPane {
 	private final Canvas canvas = new ResizableCanvas();
-	private FileInfo fileInfo;
+	private final Player player = new CombinedPlayer(Collections.singletonList(new FxPlayer()));
 
 	/**
 	 * Setup the pane.
 	 */
 	public AudioPane() {
 		setCenter(canvas);
-		setBottom(interactionBar());
-		setStyle("-fx-background-color: black");
 		// Makes the spike slightly softer looking
 		// The combination of the faint blur and bloom prevent the 'creeping glow' that occurs with just the bloom
 		// when used on lower resolutions.
@@ -89,41 +73,6 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 			g.applyEffect(blur);
 			drawTimeText(g);
 		});
-	}
-
-	private Region interactionBar() {
-		HBox box = new HBox();
-		Button btnPlay = new Button();
-		Button btnPause = new Button();
-		Button btnStop = new Button();
-		btnPause.setDisable(true);
-		btnStop.setDisable(true);
-		btnPlay.setGraphic(Icons.getIconView(Icons.PLAY));
-		btnPause.setGraphic(Icons.getIconView(Icons.PAUSE));
-		btnStop.setGraphic(Icons.getIconView(Icons.STOP));
-		btnPlay.getStyleClass().add("rounded-button-left");
-		btnStop.getStyleClass().add("rounded-button-right");
-		btnPlay.setOnAction(e -> {
-			player.play();
-			btnPlay.setDisable(true);
-			btnPause.setDisable(false);
-			btnStop.setDisable(false);
-		});
-		btnPause.setOnAction(e -> {
-			player.pause();
-			btnPlay.setDisable(false);
-			btnPause.setDisable(true);
-			btnStop.setDisable(false);
-		});
-		btnStop.setOnAction(e -> {
-			player.stop();
-			btnPlay.setDisable(false);
-			btnPause.setDisable(true);
-			btnStop.setDisable(true);
-		});
-		box.getChildren().addAll(btnPlay, btnPause, btnStop);
-		box.setAlignment(Pos.CENTER);
-		return box;
 	}
 
 	private void onLoadFailure(IOException ex) {
@@ -172,26 +121,6 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 	}
 
 	@Override
-	public FileInfo getCurrentFileInfo() {
-		return fileInfo;
-	}
-
-	@Override
-	public SaveResult save() {
-		return SaveResult.IGNORED;
-	}
-
-	@Override
-	public boolean supportsEditing() {
-		return false;
-	}
-
-	@Override
-	public Node getNodeRepresentation() {
-		return this;
-	}
-
-	@Override
 	public void onUpdate(FileInfo newValue) {
 		fileInfo = newValue;
 		try {
@@ -204,7 +133,7 @@ public class AudioPane extends BorderPane implements FileRepresentation, Cleanab
 	}
 
 	@Override
-	public void cleanup() {
-		player.reset();
+	protected Player getPlayer() {
+		return player;
 	}
 }

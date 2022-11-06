@@ -1,5 +1,7 @@
 package me.coley.recaf.util;
 
+import sun.misc.Unsafe;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -14,6 +16,7 @@ import java.util.Map;
  * @author xDark
  */
 public final class ReflectUtil {
+	private static final Unsafe unsafe = UnsafeUtil.get();
 	private static final Map<Class<?>, ThrowableGetter<?>> GETTERS = new HashMap<>();
 	private static final Map<Class<?>, ThrowableSetter<?>> SETTERS = new HashMap<>();
 	private static final ThrowableGetter<?> DEFAULT_GETTER = ReflectUtil::get;
@@ -149,6 +152,114 @@ public final class ReflectUtil {
 		} catch (ReflectiveOperationException ex) {
 			throw new IllegalStateException("Invoke failure: " + type.getName(), ex);
 		}
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param value
+	 * 		Value to set.
+	 */
+	public static void unsafePut(Field field, Object value) {
+		Object fieldBase = unsafe.staticFieldBase(field);
+		long fieldOffset = unsafe.staticFieldOffset(field);
+		unsafe.putObject(fieldBase, fieldOffset, value);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param value
+	 * 		Value to set.
+	 */
+	public static void unsafePut(Field field, boolean value) {
+		Object fieldBase = unsafe.staticFieldBase(field);
+		long fieldOffset = unsafe.staticFieldOffset(field);
+		unsafe.putBoolean(fieldBase, fieldOffset, value);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param value
+	 * 		Value to set.
+	 */
+	public static void unsafePut(Field field, byte value) {
+		Object fieldBase = unsafe.staticFieldBase(field);
+		long fieldOffset = unsafe.staticFieldOffset(field);
+		unsafe.putByte(fieldBase, fieldOffset, value);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param value
+	 * 		Value to set.
+	 */
+	public static void unsafePut(Field field, short value) {
+		Object fieldBase = unsafe.staticFieldBase(field);
+		long fieldOffset = unsafe.staticFieldOffset(field);
+		unsafe.putShort(fieldBase, fieldOffset, value);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param value
+	 * 		Value to set.
+	 */
+	public static void unsafePut(Field field, char value) {
+		Object fieldBase = unsafe.staticFieldBase(field);
+		long fieldOffset = unsafe.staticFieldOffset(field);
+		unsafe.putChar(fieldBase, fieldOffset, value);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param value
+	 * 		Value to set.
+	 */
+	public static void unsafePut(Field field, int value) {
+		Object fieldBase = unsafe.staticFieldBase(field);
+		long fieldOffset = unsafe.staticFieldOffset(field);
+		unsafe.putInt(fieldBase, fieldOffset, value);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param value
+	 * 		Value to set.
+	 */
+	public static void unsafePut(Field field, float value) {
+		Object fieldBase = unsafe.staticFieldBase(field);
+		long fieldOffset = unsafe.staticFieldOffset(field);
+		unsafe.putFloat(fieldBase, fieldOffset, value);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param value
+	 * 		Value to set.
+	 */
+	public static void unsafePut(Field field, double value) {
+		Object fieldBase = unsafe.staticFieldBase(field);
+		long fieldOffset = unsafe.staticFieldOffset(field);
+		unsafe.putDouble(fieldBase, fieldOffset, value);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to set.
+	 * @param value
+	 * 		Value to set.
+	 */
+	public static void unsafePut(Field field, long value) {
+		Object fieldBase = unsafe.staticFieldBase(field);
+		long fieldOffset = unsafe.staticFieldOffset(field);
+		unsafe.putLong(fieldBase, fieldOffset, value);
 	}
 
 	/**

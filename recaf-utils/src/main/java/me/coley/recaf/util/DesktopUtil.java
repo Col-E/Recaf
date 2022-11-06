@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -11,6 +12,14 @@ import java.net.URI;
  * @author Matt Coley
  */
 public class DesktopUtil {
+	private static Dimension screenSize;
+
+	/**
+	 * @return Screen dimensions.
+	 */
+	public static Dimension getScreenSize() {
+		return screenSize;
+	}
 
 	/**
 	 * Attempts to launch a browser to display a {@link URI}.
@@ -46,6 +55,14 @@ public class DesktopUtil {
 				throw new IOException("No browser found");
 			default:
 				throw new IllegalStateException("Unsupported OS");
+		}
+	}
+
+	static {
+		try {
+			screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		} catch (Exception ex) {
+			screenSize = null;
 		}
 	}
 }

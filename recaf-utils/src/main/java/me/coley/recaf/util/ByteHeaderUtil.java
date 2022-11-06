@@ -75,6 +75,14 @@ public class ByteHeaderUtil {
 			MP3_ID3, MP3_NO_ID1, MP3_NO_ID2, MP3_NO_ID3,
 			M4A,
 			M4ADash);
+	// Video
+	// For MP4/QuickTime see: https://www.ftyps.com/
+	public static final int[] MP4_FYTP_MMP4 = {WILD, WILD, WILD, WILD, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x6D, 0x70, 0x34};
+	public static final int[] MP4_FYTP_MP42 = {WILD, WILD, WILD, WILD, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32};
+	public static final List<int[]> VIDEO_HEADERS = List.of(
+			MP4_FYTP_MMP4,
+			MP4_FYTP_MP42
+	);
 	// Misc
 	public static final int[] BINARY_XML = {0x03, 0x00, 0x08, 0x00};
 	public static final int[] PDF = {0x25, 0x50, 0x44, 0x46, 0x2D};
@@ -104,7 +112,21 @@ public class ByteHeaderUtil {
 	 * @return {@code true} when array prefix matches one of the patterns.
 	 */
 	public static boolean matchAny(byte[] array, List<int[]> patterns) {
-		return getMatch(array, patterns) != null;
+		return matchAny(array, 0, patterns);
+	}
+
+	/**
+	 * @param array
+	 * 		File data to compare against.
+	 * @param offset
+	 * 		Offset into the data to check at.
+	 * @param patterns
+	 * 		The header patterns to check against.
+	 *
+	 * @return {@code true} when array prefix matches one of the patterns.
+	 */
+	public static boolean matchAny(byte[] array, int offset, List<int[]> patterns) {
+		return getMatch(array, offset, patterns) != null;
 	}
 
 	/**
@@ -117,9 +139,24 @@ public class ByteHeaderUtil {
 	 * {@code null} if no match was found.
 	 */
 	public static int[] getMatch(byte[] array, List<int[]> patterns) {
+		return getMatch(array, 0, patterns);
+	}
+
+	/**
+	 * @param array
+	 * 		File data to compare against.
+	 * @param offset
+	 * 		Offset into the data to check at.
+	 * @param patterns
+	 * 		The header patterns to check against.
+	 *
+	 * @return The pattern in the list matched against the array.
+	 * {@code null} if no match was found.
+	 */
+	public static int[] getMatch(byte[] array, int offset, List<int[]> patterns) {
 		for (int i = 0, j = patterns.size(); i < j; i++) {
 			int[] pattern;
-			if (match(array, pattern = patterns.get(i))) {
+			if (match(array, offset, pattern = patterns.get(i))) {
 				return pattern;
 			}
 		}
@@ -135,10 +172,24 @@ public class ByteHeaderUtil {
 	 * @return {@code true} when array prefix matches pattern.
 	 */
 	public static boolean match(byte[] array, int... pattern) {
+		return match(array, 0, pattern);
+	}
+
+	/**
+	 * @param array
+	 * 		File data to compare against.
+	 * @param offset
+	 * 		Offset into the data to check at.
+	 * @param pattern
+	 * 		The header pattern.
+	 *
+	 * @return {@code true} when array prefix matches pattern.
+	 */
+	public static boolean match(byte[] array, int offset, int... pattern) {
 		int patternLen;
-		if (array == null || array.length < (patternLen = pattern.length))
+		if (array == null || array.length < offset + (patternLen = pattern.length))
 			return false;
-		for (int i = 0; i < patternLen; i++) {
+		for (int i = offset; i < patternLen + offset; i++) {
 			int patternVal = pattern[i];
 			if (patternVal == WILD)
 				continue;

@@ -228,7 +228,7 @@ public class HexView extends BorderPane implements ToolSideTabbed, Searchable, C
 		Menu menuCopy = Menus.menu("menu.hex.copyas");
 		menuCopy.getItems().add(Menus.actionLiteral("String", Icons.QUOTE, () -> {
 			int start = range.getStart();
-			int end = range.getEnd();
+			int end = range.getEnd() + 1;
 			byte[] data = new byte[end - start];
 			for (int i = start; i <= end; i++) {
 				data[i - start] = (byte) hex.getHexAtOffset(i);
