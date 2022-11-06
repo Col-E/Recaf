@@ -2,12 +2,12 @@ package me.coley.recaf.ui.media;
 
 import com.sun.media.jfxmedia.locator.Locator;
 import com.sun.media.jfxmediaimpl.MediaUtils;
-import dev.xdark.ssvm.util.UnsafeUtil;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.scene.media.Media;
 import me.coley.recaf.util.RecafURLStreamHandlerProvider;
 import me.coley.recaf.util.ReflectUtil;
+import me.coley.recaf.util.UnsafeUtil;
 import sun.misc.Unsafe;
 
 import java.io.FileNotFoundException;
