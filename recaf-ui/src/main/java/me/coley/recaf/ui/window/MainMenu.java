@@ -238,10 +238,10 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	 */
 	public void updateScriptMenu(Collection<MenuItem> scriptItems) {
 		menuScripting.getItems().clear();
-		if (scriptItems != null && !scriptItems.isEmpty()) {
-			menuScripting.getItems().addAll(scriptItems);
-			menuScripting.getItems().add(separator());
-		}
+		Menu recent = menu("menu.scripting.list", Icons.FILE_TEXT);
+		if (scriptItems != null)
+			recent.getItems().addAll(scriptItems);
+		menuScripting.getItems().add(recent);
 		menuScripting.getItems().add(action("menu.scripting.manage", Icons.OPEN_FILE, this::openScripts));
 		menuScripting.getItems().add(action("menu.scripting.new", Icons.PLUS,
 				() -> ScriptManagerPane.getInstance().createNewScript()));

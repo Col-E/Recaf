@@ -51,6 +51,7 @@ menu.mappings.export=Export
 menu.mappings.generate=Generate
 menu.mappings.view=Current mappings
 menu.scripting=Scripting
+menu.scripting.list=Scripts
 menu.scripting.none-found=No scripts found
 menu.scripting.manage=Manage scripts
 menu.scripting.new=New script
