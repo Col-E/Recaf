@@ -90,7 +90,7 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 	private ClassRepresentation createViewForClass(CommonClassInfo info) {
 		if (mode == ClassViewMode.DECOMPILE) {
 			if (info instanceof ClassInfo) {
-				return new DecompilePane();
+				return new DecompilePane(info);
 			} else if (info instanceof DexClassInfo) {
 				return new SmaliAssemblerPane();
 			} else {

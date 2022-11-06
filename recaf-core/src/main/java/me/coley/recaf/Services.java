@@ -1,5 +1,6 @@
 package me.coley.recaf;
 
+import me.coley.recaf.analysis.ClassReferenceAnalyzer;
 import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.graph.InheritanceGraph;
@@ -25,6 +26,7 @@ public class Services {
 	private InheritanceGraph inheritanceGraph;
 	private WorkspaceSymbolSolver symbolSolver;
 	private JavaParserHelper javaParserHelper;
+	private ClassReferenceAnalyzer classReferenceAnalyzer;
 
 	/**
 	 * Initialize services.
@@ -98,6 +100,13 @@ public class Services {
 	}
 
 	/**
+	 * @return The class reference analyzer.
+	 */
+	public ClassReferenceAnalyzer getClassReferenceAnalyzer() {
+		return classReferenceAnalyzer;
+	}
+
+	/**
 	 * Update services that are workspace-oriented.
 	 *
 	 * @param workspace
@@ -120,6 +129,7 @@ public class Services {
 			javaParserHelper = JavaParserHelper.create(symbolSolver);
 			ssvmIntegration = new SsvmIntegration(workspace);
 			treeService = new WorkspaceTreeService(workspace);
+			classReferenceAnalyzer = new ClassReferenceAnalyzer(workspace);
 		}
 	}
 }

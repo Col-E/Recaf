@@ -9,14 +9,13 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MemberInfo;
@@ -42,6 +41,7 @@ import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -67,8 +67,11 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 
 	/**
 	 * Create and set up the panel.
+	 *
+	 * @param commonClassInfo
+	 * 			Class info of the viewed class.
 	 */
-	public DecompilePane() {
+	public DecompilePane(@Nullable CommonClassInfo commonClassInfo) {
 		ProblemTracking tracking = new ProblemTracking();
 		tracking.setIndicatorInitializer(new ProblemIndicatorInitializer(tracking));
 		this.javaArea = new JavaArea(tracking);
@@ -91,7 +94,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		// Search support
 		SearchBar.install(this, javaArea);
 		// Bottom controls for quick config changes
-		Node buttonBar = createButtonBar();
+		Node buttonBar = createButtonBar(commonClassInfo);
 		setBottom(buttonBar);
 	}
 
@@ -105,7 +108,7 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		javaArea.bindFontSize(property);
 	}
 
-	private Node createButtonBar() {
+	private Node createButtonBar(CommonClassInfo commonClassInfo) {
 		HBox box = new HBox();
 		box.setSpacing(10);
 		box.getStyleClass().add("button-container");
@@ -123,6 +126,22 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		Label decompilersLabel = new Label("Decompiler: ");
 		box.getChildren().add(decompilersLabel);
 		box.getChildren().add(decompilerCombo);
+
+		if (commonClassInfo != null &&
+				Configs.display().showUnreferencedClassWarning &&
+				commonClassInfo.getSourceType() != ClassSourceType.INTERNAL_LIBRARY && // don't show warning for internal libraries
+		        !RecafUI.getController().getServices()
+				.getClassReferenceAnalyzer()
+				.isClassReferenced(commonClassInfo)) {
+			BoundLabel unreferencedClass = new BoundLabel(Lang.getBinding("java.unreferencedclasswarning"));
+			unreferencedClass.setGraphic(Icons.getIconView(Icons.INFO));
+			Tooltip tooltip = new Tooltip();
+			tooltip.textProperty().bind(Lang.getBinding("java.unreferencedclasswarning.tooltip"));
+			unreferencedClass.setTooltip(tooltip);
+			unreferencedClass.setAlignment(Pos.CENTER_RIGHT);
+			box.getChildren().add(unreferencedClass);
+		}
+
 		// TODO: Add button to configure current decompiler
 		//   (pull from tool map, each decompiler has separate config page)
 		// Select preferred decompiler, or whatever is first if the preferred option is not available

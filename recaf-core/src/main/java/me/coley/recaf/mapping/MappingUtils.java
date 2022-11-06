@@ -51,7 +51,7 @@ public class MappingUtils {
 				// Update class if it has any modified references
 				if (remapVisitor.hasMappingBeenApplied()) {
 					modifiedClasses.add(originalName);
-					ClassInfo updatedInfo = ClassInfo.read(cw.toByteArray());
+					ClassInfo updatedInfo = ClassInfo.read(cw.toByteArray(), classInfo.getSourceType());
 					String newName = updatedInfo.getName();
 					ClassMap classes = resource.getClasses();
 					synchronized(resource) {

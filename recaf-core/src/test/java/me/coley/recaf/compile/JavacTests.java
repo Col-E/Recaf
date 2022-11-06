@@ -1,6 +1,7 @@
 package me.coley.recaf.compile;
 
 import me.coley.recaf.TestUtils;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.compile.javac.JavacCompiler;
 import me.coley.recaf.code.ClassInfo;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ public class JavacTests extends TestUtils implements Opcodes {
 		assertEquals(1, result.getValue().size());
 		byte[] compiled = result.getValue().get(name);
 		assertNotNull(compiled);
-		ClassInfo info = ClassInfo.read(compiled);
+		ClassInfo info = ClassInfo.read(compiled, ClassSourceType.PRIMARY);
 		assertEquals(name, info.getName());
 		assertEquals(0, info.getFields().size());
 		assertEquals(2, info.getMethods().size()); // main + ctor

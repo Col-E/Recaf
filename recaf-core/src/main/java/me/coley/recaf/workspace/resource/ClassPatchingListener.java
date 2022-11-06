@@ -6,6 +6,7 @@ import me.coley.cafedude.io.ClassFileReader;
 import me.coley.cafedude.io.ClassFileWriter;
 import me.coley.cafedude.transform.IllegalStrippingTransformer;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.visitor.IllegalSignatureRemovingVisitor;
@@ -40,7 +41,7 @@ public class ClassPatchingListener implements ContentSourceListener {
 				new IllegalStrippingTransformer(classFile).transform();
 				byte[] patched = new ClassFileWriter().write(classFile);
 				// Attempt to load
-				ClassInfo info = ClassInfo.read(patched);
+				ClassInfo info = ClassInfo.read(patched, ClassSourceType.PRIMARY);
 				collection.addClass(info);
 				return true;
 			} catch (InvalidClassException ex) {
@@ -86,7 +87,7 @@ public class ClassPatchingListener implements ContentSourceListener {
 			IllegalSignatureRemovingVisitor remover = new IllegalSignatureRemovingVisitor(writer);
 			info.getClassReader().accept(remover, 0);
 			if (remover.hasDetectedIllegalSignatures()) {
-				patched.put(name, ClassInfo.read(writer.toByteArray()));
+				patched.put(name, ClassInfo.read(writer.toByteArray(), ClassSourceType.PRIMARY));
 			}
 		});
 		if (!patched.isEmpty()) {

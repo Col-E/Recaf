@@ -153,7 +153,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 				ClassWriter cw = new ClassWriter(WRITE_FLAGS);
 				ClassReader cr = info.getClassReader();
 				cr.accept(new RemappingVisitor(cw, mappings), READ_FLAGS);
-				resource.getClasses().put(ClassInfo.read(cw.toByteArray()));
+				resource.getClasses().put(ClassInfo.read(cw.toByteArray(), info.getSourceType()));
 			}
 		} else {
 			logger.error("Failed to resolve containing resource for class '{}'", name);

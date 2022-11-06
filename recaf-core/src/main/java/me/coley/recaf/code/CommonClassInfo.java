@@ -52,6 +52,11 @@ public interface CommonClassInfo extends AccessibleInfo, ItemInfo {
 	List<MethodInfo> getMethods();
 
 	/**
+	 * @return Class's source type.
+	 */
+	ClassSourceType getSourceType();
+
+	/**
 	 * @return Class's inner classes.
 	 */
 	List<InnerClassInfo> getInnerClasses();

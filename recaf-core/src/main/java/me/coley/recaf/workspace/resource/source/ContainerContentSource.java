@@ -1,6 +1,7 @@
 package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.ClassSourceType;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.io.ByteSourceConsumer;
@@ -52,7 +53,7 @@ public abstract class ContainerContentSource<E> extends FileContentSource {
 					try {
 						if (isParsableClass(bytes)) {
 							// Class can be parsed, record it as a class
-							ClassInfo clazz = ClassInfo.read(bytes);
+							ClassInfo clazz = ClassInfo.read(bytes, ClassSourceType.PRIMARY);
 							int index = name.lastIndexOf(".class");
 							String nameFromPath = index == -1 ? name : name.substring(0, index);
 							String nameFromClass = clazz.getName();

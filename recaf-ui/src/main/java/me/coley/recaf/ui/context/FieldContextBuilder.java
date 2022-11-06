@@ -3,10 +3,7 @@ package me.coley.recaf.ui.context;
 import javafx.beans.binding.StringBinding;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
-import me.coley.recaf.code.ClassInfo;
-import me.coley.recaf.code.CommonClassInfo;
-import me.coley.recaf.code.DexClassInfo;
-import me.coley.recaf.code.FieldInfo;
+import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.search.TextMatchMode;
@@ -134,7 +131,7 @@ public class FieldContextBuilder extends MemberContextBuilder {
 					ClassWriter cw = new ClassWriter(WRITE_FLAGS);
 					ClassReader cr = javaOwner.getClassReader();
 					cr.accept(new MemberCopyingVisitor(cw, fieldInfo, newName), READ_FLAGS);
-					resource.getClasses().put(ClassInfo.read(cw.toByteArray()));
+					resource.getClasses().put(ClassInfo.read(cw.toByteArray(), javaOwner.getSourceType()));
 				} else if (ownerInfo instanceof DexClassInfo) {
 					// TODO: Copy dex member
 					logger.warn("Android currently unsupported");
@@ -167,7 +164,7 @@ public class FieldContextBuilder extends MemberContextBuilder {
 				ClassReader cr = javaOwner.getClassReader();
 				MemberRemovingVisitor remover = new MemberRemovingVisitor(cw, fieldInfo);
 				cr.accept(remover, READ_FLAGS);
-				resource.getClasses().put(ClassInfo.read(cw.toByteArray()));
+				resource.getClasses().put(ClassInfo.read(cw.toByteArray(), javaOwner.getSourceType()));
 				removed = remover.isRemoved();
 			} else if (ownerInfo instanceof DexClassInfo) {
 				// TODO: Dex member removal
