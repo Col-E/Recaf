@@ -56,9 +56,10 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		Resources resources = workspace.getResources();
 		Function<String, ClassInfo> classInfoFromPathResolver = MemoizedFunction.memoize(path -> workspace.getResources().getClass(path));
 		Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
-				= MemoizedFunction.memoize(clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor)));
+				= clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor));
 		// seems like a hack tho, needs feedback!
-		resources.getClasses().forEach(info -> visitClass(info, classInfoFromPathResolver, methodMapGetter));
+		final CachedLinkResolver resolver = new CachedLinkResolver();
+		resources.getClasses().forEach(info -> visitClass(info, classInfoFromPathResolver, methodMapGetter, resolver));
 		methodMap.clear();
 		LOGGER.debug("Loaded {} vertices, {} unresolved calls", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
 	}
@@ -73,20 +74,21 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 			String descriptor
 	) {
 		Result<dev.xdark.jlinker.Resolution<ClassInfo, MethodInfo>> result;
+		final dev.xdark.jlinker.ClassInfo<ClassInfo> classInfo = classInfo(callClassInfo, classInfoFromPathResolver);
 		switch (opcode) {
 			case Opcodes.INVOKESPECIAL:
 			case Opcodes.INVOKEVIRTUAL:
 			case Opcodes.H_INVOKESPECIAL:
 			case Opcodes.H_INVOKEVIRTUAL:
-				result = resolver.resolveVirtualMethod(classInfo(callClassInfo, classInfoFromPathResolver), name, descriptor);
+				result = resolver.resolveVirtualMethod(classInfo, name, descriptor);
 				break;
 			case Opcodes.INVOKESTATIC:
 			case Opcodes.H_INVOKESTATIC:
-				result = resolver.resolveStaticMethod(classInfo(callClassInfo, classInfoFromPathResolver), name, descriptor);
+				result = resolver.resolveStaticMethod(classInfo, name, descriptor);
 				break;
 			case Opcodes.INVOKEINTERFACE:
 			case Opcodes.H_INVOKEINTERFACE:
-				result = resolver.resolveInterfaceMethod(classInfo(callClassInfo, classInfoFromPathResolver), name, descriptor);
+				result = resolver.resolveInterfaceMethod(classInfo, name, descriptor);
 				break;
 			default:
 				throw new IllegalArgumentException("Opcode in visitMethodInsn must be INVOKEVIRTUAL, INVOKESPECIAL, INVOKESTATIC or INVOKEINTERFACE.");
@@ -111,9 +113,8 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 	private void visitClass(
 			ClassInfo info,
 			Function<String, ClassInfo> classInfoFromPathResolver,
-			Function<ClassInfo, BiFunction<String, String, MethodInfo>> otherMethodInfoResolver
+			Function<ClassInfo, BiFunction<String, String, MethodInfo>> otherMethodInfoResolver, LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver
 	) {
-		final LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver = LinkResolver.jvm();
 		BiFunction<String, String, MethodInfo> thisClassMethodInfoResolver = otherMethodInfoResolver.apply(info);
 		info.getClassReader().accept(new MethodCallsResolverClassVisitor(thisClassMethodInfoResolver, classInfoFromPathResolver, otherMethodInfoResolver, resolver), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
 	}
@@ -176,7 +177,8 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
 				= clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor));
 		updateUnresolved(classInfoFromPathResolver, methodMapGetter, LinkResolver.jvm());
-		library.getClasses().forEach(c -> visitClass(c, classInfoFromPathResolver, methodMapGetter));
+		final CachedLinkResolver resolver = new CachedLinkResolver();
+		library.getClasses().forEach(c -> visitClass(c, classInfoFromPathResolver, methodMapGetter, resolver));
 		LOGGER.debug("There are now {} vertices, and {} unresolved calls.", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
 	}
 
@@ -188,7 +190,7 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		final Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
 				= clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor));
 		updateUnresolved(classInfoFromPathResolver, methodMapGetter, LinkResolver.jvm());
-		visitClass(newValue, classInfoFromPathResolver, methodMapGetter);
+		visitClass(newValue, classInfoFromPathResolver, methodMapGetter, new CachedLinkResolver());
 		LOGGER.debug("There are now {} vertices, and {} unresolved calls.", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
 	}
 
@@ -252,7 +254,8 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		LOGGER.debug("After affecting {} classes, there are now {} vertices, and {} unresolved calls. Rewiring {} existing classes.", affectedClasses.size(), vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum(), existingAffectedClasses.size());
 		Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
 				= clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor));
-		existingAffectedClasses.forEach(classInfo -> visitClass(classInfo, classInfoFromPathResolver, methodMapGetter));
+		final CachedLinkResolver resolver = new CachedLinkResolver();
+		existingAffectedClasses.forEach(classInfo -> visitClass(classInfo, classInfoFromPathResolver, methodMapGetter, resolver));
 	}
 
 	@Override
@@ -337,8 +340,29 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		}
 	}
 
-	private static dev.xdark.jlinker.ClassInfo<ClassInfo> classInfo(@Nonnull ClassInfo node, Function<String, ClassInfo> fn) {
+	private static dev.xdark.jlinker.ClassInfo<ClassInfo> classInfo(
+			@Nonnull ClassInfo node, Function<String, ClassInfo> pathToClass) {
 		return new dev.xdark.jlinker.ClassInfo<>() {
+			private dev.xdark.jlinker.ClassInfo<ClassInfo> superClass = null;
+			private List<dev.xdark.jlinker.ClassInfo<ClassInfo>> interfaces = null;
+			private final BiFunction<String, String, dev.xdark.jlinker.MemberInfo<?>> methodResolver = MemoizedFunction.memoize((name, descriptor) -> {
+				for (MethodInfo method : node.getMethods()) {
+					if (name.equals(method.getName()) && descriptor.equals(method.getDescriptor())) {
+						return methodInfo(method);
+					}
+				}
+				return null;
+			});
+
+			private final BiFunction<String, String, dev.xdark.jlinker.MemberInfo<?>> fieldResolver = MemoizedFunction.memoize((name, descriptor) -> {
+				for (FieldInfo field : node.getFields()) {
+					if (name.equals(field.getName()) && descriptor.equals(field.getDescriptor())) {
+						return fieldInfo(field);
+					}
+				}
+				return null;
+			});
+
 			@Override
 			public ClassInfo innerValue() {
 				return node;
@@ -352,40 +376,33 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 			@Nonnull
 			@Override
 			public dev.xdark.jlinker.ClassInfo<ClassInfo> superClass() {
+				if (superClass != null) return superClass;
 				String superName = node.getSuperName();
-				if (superName == null) return null;
-				final ClassInfo classInfo = fn.apply(superName);
+				// should it just return null instead?
+				if (superName == null) throw CancelSignal.get();
+				final ClassInfo classInfo = pathToClass.apply(superName);
 				if (classInfo == null) throw CancelSignal.get();
-				return classInfo(classInfo, fn);
+				return superClass = classInfo(classInfo, pathToClass);
 			}
 
 			@Nonnull
 			@Override
 			public List<dev.xdark.jlinker.ClassInfo<ClassInfo>> interfaces() {
-				return node.getInterfaces().stream().map(x -> {
-					final ClassInfo classInfo = fn.apply(x);
-					return classInfo == null ? null : classInfo(classInfo, fn);
+				if (interfaces != null) return interfaces;
+				return interfaces = node.getInterfaces().stream().map(x -> {
+					final ClassInfo classInfo = pathToClass.apply(x);
+					return classInfo == null ? null : classInfo(classInfo, pathToClass);
 				}).filter(Objects::nonNull).collect(Collectors.toList());
 			}
 
 			@Override
 			public dev.xdark.jlinker.MemberInfo<?> getMethod(String name, String descriptor) {
-				for (MethodInfo method : node.getMethods()) {
-					if (name.equals(method.getName()) && descriptor.equals(method.getDescriptor())) {
-						return methodInfo(method);
-					}
-				}
-				return null;
+				return methodResolver.apply(name, descriptor);
 			}
 
 			@Override
 			public dev.xdark.jlinker.MemberInfo<?> getField(String name, String descriptor) {
-				for (FieldInfo field : node.getFields()) {
-					if (name.equals(field.getName()) && descriptor.equals(field.getDescriptor())) {
-						return fieldInfo(field);
-					}
-				}
-				return null;
+				return fieldResolver.apply(name, descriptor);
 			}
 		};
 	}
