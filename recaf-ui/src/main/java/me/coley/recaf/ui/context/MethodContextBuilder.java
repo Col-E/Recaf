@@ -70,16 +70,18 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		menu.getItems().add(createHeader(methodInfo.getName(), Icons.getMethodIcon(methodInfo)));
 		if (!declaration)
 			menu.getItems().add(action("menu.goto.method", Icons.OPEN, this::openDefinition));
-		if (isPrimary() && isOwnerJvmClass()) {
+		if (isOwnerJvmClass()) {
 			// TODO: When android cases are supported, remove 'isOwnerJvmClass()' check
-			Menu refactor = menu("menu.refactor");
-			if (declaration) {
-				menu.getItems().add(action("menu.edit.assemble.method", Icons.ACTION_EDIT, this::assemble));
-				menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
-				menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+			if (isPrimary()) {
+				Menu refactor = menu("menu.refactor");
+				if (declaration) {
+					menu.getItems().add(action("menu.edit.assemble.method", Icons.ACTION_EDIT, this::assemble));
+					menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
+					menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+				}
+				refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
+				menu.getItems().add(refactor);
 			}
-			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
-			menu.getItems().add(refactor);
 			Menu view = menu("menu.view", Icons.EYE);
 			view.getItems().add(action("menu.view.methodcfg", Icons.CHILDREN, this::graph));
 			view.getItems().add(action("menu.view.methodcallgraph", Icons.CHILDREN, this::callGraph));
