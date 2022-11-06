@@ -160,7 +160,6 @@ public class ScriptEngine {
 						(int) diagnostic.getLineNumber() - 1,
 						diagnostic.getMessage(Locale.US))
 		));
-		compiler.setLogging(false);
 		compiler.setDebug(options, JavacCompiler.createDebugValue(true, true, true));
 		return compiler.compile(className, code, options);
 	}
