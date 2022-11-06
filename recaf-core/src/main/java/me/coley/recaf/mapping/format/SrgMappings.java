@@ -40,6 +40,9 @@ public class SrgMappings extends MappingsAdapter {
 			String type = args[0];
 			try {
 				switch (type) {
+					case "PK:":
+						// Ignore package entries
+						break;
 					case "CL:":
 						String obfClass = args[1];
 						String renamedClass = args[2];
