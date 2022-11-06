@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 public final class CallGraphRegistry implements WorkspaceListener, ResourceClassListener {
 	private static final Logger LOGGER = Logging.get(CallGraphRegistry.class);
-	private Map<ClassInfo, Map<Descriptor, MethodInfo>> methodMap = new HashMap<>();
+	private final Map<ClassInfo, Map<Descriptor, MethodInfo>> methodMap = new HashMap<>();
 	private final Map<MethodInfo, MutableCallGraphVertex> vertexMap = new HashMap<>();
 	private final Map<String, Set<UnresolvedCall>> unresolvedCalls = new HashMap<>();
 	private final Workspace workspace;
@@ -42,6 +42,12 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		return registry;
 	}
 
+	public void clear() {
+		methodMap.clear();
+		vertexMap.clear();
+		unresolvedCalls.clear();
+	}
+
 	public @Nullable CallGraphVertex getVertex(MethodInfo info) {
 		return vertexMap.get(info);
 	}
@@ -53,8 +59,8 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 				= MemoizedFunction.memoize(clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor)));
 		// seems like a hack tho, needs feedback!
 		resources.getClasses().forEach(info -> visitClass(info, classInfoFromPathResolver, methodMapGetter));
-		methodMap = new HashMap<>();
-		LOGGER.info("Loaded {} vertices, {} unresolved calls", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
+		methodMap.clear();
+		LOGGER.debug("Loaded {} vertices, {} unresolved calls", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
 	}
 
 	@Nullable
@@ -109,50 +115,7 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 	) {
 		final LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver = LinkResolver.jvm();
 		BiFunction<String, String, MethodInfo> thisClassMethodInfoResolver = otherMethodInfoResolver.apply(info);
-		info.getClassReader().accept(new ClassVisitor(Opcodes.ASM9) {
-			@Override
-			public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-				MethodInfo info = thisClassMethodInfoResolver.apply(name, descriptor);
-				if (info == null)
-					return null;
-				Map<MethodInfo, MutableCallGraphVertex> vertexMap = CallGraphRegistry.this.vertexMap;
-				MutableCallGraphVertex vertex = vertexMap.computeIfAbsent(info, MutableCallGraphVertex::new);
-				if (!vertex.visited) {
-					vertex.visited = true;
-					return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-
-						@Override
-						public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
-							if (!"java/lang/invoke/LambdaMetafactory".equals(bootstrapMethodHandle.getOwner())
-									|| !"metafactory".equals(bootstrapMethodHandle.getName())
-									|| !"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;".equals(bootstrapMethodHandle.getDesc())) {
-								super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
-								return;
-							}
-							Object handleObj = bootstrapMethodArguments.length == 3 ? bootstrapMethodArguments[1] : null;
-							if (!(handleObj instanceof Handle)) {
-								super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
-								return;
-							}
-							Handle handle = (Handle) handleObj;
-							switch (handle.getTag()) {
-								case Opcodes.H_INVOKESPECIAL:
-								case Opcodes.H_INVOKEVIRTUAL:
-								case Opcodes.H_INVOKESTATIC:
-								case Opcodes.H_INVOKEINTERFACE:
-									visitMethodInsn(handle.getTag(), handle.getOwner(), handle.getName(), handle.getDesc(), handle.isInterface());
-							}
-						}
-
-						@Override
-						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-							visitMethodInstruction(opcode, owner, name, descriptor, vertex, classInfoFromPathResolver, otherMethodInfoResolver, resolver, vertexMap);
-						}
-					};
-				}
-				return null;
-			}
-		}, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+		info.getClassReader().accept(new MethodCallsResolverClassVisitor(thisClassMethodInfoResolver, classInfoFromPathResolver, otherMethodInfoResolver, resolver), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
 	}
 
 	private void visitMethodInstruction(
@@ -178,8 +141,7 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 			unresolvedCalls.computeIfAbsent(owner, k -> new HashSet<>()).add(new UnresolvedCall(opcode, owner, name, descriptor, vertex));
 			return;
 		}
-		MutableCallGraphVertex nestedVertex =
-				vertexMap.computeIfAbsent(call, MutableCallGraphVertex::new);
+		MutableCallGraphVertex nestedVertex = vertexMap.computeIfAbsent(call, MutableCallGraphVertex::new);
 		vertex.getCalls().add(nestedVertex);
 		nestedVertex.getCallers().add(vertex);
 	}
@@ -206,39 +168,97 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 
 	@Override
 	public void onAddLibrary(Workspace workspace, Resource library) {
+		LOGGER.debug("Adding {} classes...", library.getClasses().size());
 		Function<String, ClassInfo> classInfoFromPathResolver
 				= MemoizedFunction.memoize(path ->
 				library.getClasses().stream().filter(c -> c.getName().equals(path)).findAny().orElseGet(() -> workspace.getResources().getClass(path))
 		);
 		Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
-				= MemoizedFunction.memoize(clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor)));
+				= clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor));
 		updateUnresolved(classInfoFromPathResolver, methodMapGetter, LinkResolver.jvm());
 		library.getClasses().forEach(c -> visitClass(c, classInfoFromPathResolver, methodMapGetter));
-		LOGGER.info("There are now {} vertices, and {} unresolved calls", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
+		LOGGER.debug("There are now {} vertices, and {} unresolved calls.", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
 	}
 
 	@Override
 	public void onNewClass(Resource resource, ClassInfo newValue) {
+		LOGGER.debug("Adding {} methods...", newValue.getMethods().size());
 		final Function<String, ClassInfo> classInfoFromPathResolver
 				= MemoizedFunction.memoize(path -> workspace.getResources().getClass(path));
 		final Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
-				= MemoizedFunction.memoize(clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor)));
+				= clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor));
 		updateUnresolved(classInfoFromPathResolver, methodMapGetter, LinkResolver.jvm());
 		visitClass(newValue, classInfoFromPathResolver, methodMapGetter);
+		LOGGER.debug("There are now {} vertices, and {} unresolved calls.", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
 	}
 
 	@Override
 	public void onRemoveLibrary(Workspace workspace, Resource library) {
+		//		LOGGER.debug("Removing {} classes...", library.getClasses().size());
+		//		updateRemovedMethods(workspace, library.getClasses().values());
+		//		LOGGER.debug("There are now {} vertices, and {} unresolved calls", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
+		clear();
+		load();
 	}
 
 	@Override
 	public void onRemoveClass(Resource resource, ClassInfo oldValue) {
+		//		LOGGER.debug("Removing {} methods...", oldValue.getMethods().size());
+		//		updateRemovedMethods(workspace, Set.of(oldValue));
+		//		LOGGER.debug("There are now {} vertices, and {} unresolved calls.", vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum());
+		clear();
+		load();
+	}
 
+	private void updateRemovedMethods(Workspace workspace, Collection<ClassInfo> removedClasses) {
+		// doesn't work as expected, as it leaves - for whatever reason - zombie vertices and calls
+		// so, it's just "cleaner" to reload the whole thing...
+		Set<String> removedClassNames = removedClasses.stream().map(ClassInfo::getName).collect(Collectors.toSet());
+		methodMap.keySet().removeIf(c -> removedClassNames.contains(c.getName()));
+		unresolvedCalls.keySet().removeIf(removedClassNames::contains);
+		unresolvedCalls.values().removeIf(cs -> {
+			cs.removeIf(c -> removedClassNames.contains(c.vertex.getMethodInfo().getOwner()));
+			return cs.isEmpty();
+		});
+		Set<CallGraphVertex> affectedVertices = vertexMap.values().stream()
+				.filter(v -> removedClassNames.contains(v.getMethodInfo().getOwner()))
+				.flatMap(vertex -> {
+					// removed -/> called
+					for (CallGraphVertex m : vertex.getCalls()) {
+						m.getCallers().remove(vertex);
+					}
+					// callers -> removed
+					return vertex.getCallers().stream();
+				})
+				.filter(m -> removedClassNames.contains(m.getMethodInfo().getOwner()))
+				.collect(Collectors.toSet());
+		vertexMap.values().removeIf(v -> removedClassNames.contains(v.getMethodInfo().getOwner()));
+		// these are all MutableCallGraphVertex, we know it, right? riiight?
+		//noinspection unchecked,rawtypes
+		for (MutableCallGraphVertex affectedVertex : (Set<MutableCallGraphVertex>) (Set) affectedVertices) {
+			affectedVertex.visited = false;
+			// callers -/> called
+			for (CallGraphVertex call : affectedVertex.getCalls()) {
+				call.getCallers().remove(affectedVertex);
+			}
+			affectedVertex.getCalls().clear();
+		}
+		final Set<String> affectedClasses = affectedVertices.stream()
+				.map(v -> v.getMethodInfo().getOwner()).collect(Collectors.toSet());
+		Function<String, ClassInfo> classInfoFromPathResolver = MemoizedFunction.memoize(path -> workspace.getResources().getClass(path));
+		final Set<ClassInfo> existingAffectedClasses = affectedClasses.stream()
+				.map(classInfoFromPathResolver)
+				.filter(Objects::nonNull).collect(Collectors.toSet());
+		LOGGER.debug("After affecting {} classes, there are now {} vertices, and {} unresolved calls. Rewiring {} existing classes.", affectedClasses.size(), vertexMap.size(), unresolvedCalls.values().stream().mapToInt(Set::size).sum(), existingAffectedClasses.size());
+		Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
+				= clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor));
+		existingAffectedClasses.forEach(classInfo -> visitClass(classInfo, classInfoFromPathResolver, methodMapGetter));
 	}
 
 	@Override
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
-
+		onRemoveClass(resource, oldValue);
+		onNewClass(resource, newValue);
 	}
 
 	private static class UnresolvedCall {
@@ -329,6 +349,7 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 				return node.getAccess();
 			}
 
+			@Nonnull
 			@Override
 			public dev.xdark.jlinker.ClassInfo<ClassInfo> superClass() {
 				String superName = node.getSuperName();
@@ -338,6 +359,7 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 				return classInfo(classInfo, fn);
 			}
 
+			@Nonnull
 			@Override
 			public List<dev.xdark.jlinker.ClassInfo<ClassInfo>> interfaces() {
 				return node.getInterfaces().stream().map(x -> {
@@ -404,5 +426,63 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 				return false;
 			}
 		};
+	}
+
+	private class MethodCallsResolverClassVisitor extends ClassVisitor {
+		private final BiFunction<String, String, MethodInfo> thisClassMethodInfoResolver;
+		private final Function<String, ClassInfo> classInfoFromPathResolver;
+		private final Function<ClassInfo, BiFunction<String, String, MethodInfo>> otherMethodInfoResolver;
+		private final LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver;
+
+		public MethodCallsResolverClassVisitor(BiFunction<String, String, MethodInfo> thisClassMethodInfoResolver, Function<String, ClassInfo> classInfoFromPathResolver, Function<ClassInfo, BiFunction<String, String, MethodInfo>> otherMethodInfoResolver, LinkResolver<ClassInfo, MethodInfo, FieldInfo> resolver) {
+			super(Opcodes.ASM9);
+			this.thisClassMethodInfoResolver = thisClassMethodInfoResolver;
+			this.classInfoFromPathResolver = classInfoFromPathResolver;
+			this.otherMethodInfoResolver = otherMethodInfoResolver;
+			this.resolver = resolver;
+		}
+
+		@Override
+		public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+			MethodInfo info = thisClassMethodInfoResolver.apply(name, descriptor);
+			if (info == null)
+				return null;
+			Map<MethodInfo, MutableCallGraphVertex> vertexMap = CallGraphRegistry.this.vertexMap;
+			MutableCallGraphVertex vertex = vertexMap.computeIfAbsent(info, MutableCallGraphVertex::new);
+			if (!vertex.visited) {
+				vertex.visited = true;
+				return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+
+					@Override
+					public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+						if (!"java/lang/invoke/LambdaMetafactory".equals(bootstrapMethodHandle.getOwner())
+								|| !"metafactory".equals(bootstrapMethodHandle.getName())
+								|| !"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;".equals(bootstrapMethodHandle.getDesc())) {
+							super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+							return;
+						}
+						Object handleObj = bootstrapMethodArguments.length == 3 ? bootstrapMethodArguments[1] : null;
+						if (!(handleObj instanceof Handle)) {
+							super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+							return;
+						}
+						Handle handle = (Handle) handleObj;
+						switch (handle.getTag()) {
+							case Opcodes.H_INVOKESPECIAL:
+							case Opcodes.H_INVOKEVIRTUAL:
+							case Opcodes.H_INVOKESTATIC:
+							case Opcodes.H_INVOKEINTERFACE:
+								visitMethodInsn(handle.getTag(), handle.getOwner(), handle.getName(), handle.getDesc(), handle.isInterface());
+						}
+					}
+
+					@Override
+					public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+						visitMethodInstruction(opcode, owner, name, descriptor, vertex, classInfoFromPathResolver, otherMethodInfoResolver, resolver, vertexMap);
+					}
+				};
+			}
+			return null;
+		}
 	}
 }

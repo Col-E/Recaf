@@ -7,23 +7,13 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 public final class MutableCallGraphVertex implements CallGraphVertex {
-	private final Set<CallGraphVertex> callers = Collections.newSetFromMap(new LinkedHashMap<>());
+	private final Set<CallGraphVertex> callers = new HashSet<>();
 	private final Set<CallGraphVertex> calls = Collections.newSetFromMap(new LinkedHashMap<>());
-	MethodInfo methodInfo;
-	private MemberSignature signature;
+	private final MethodInfo methodInfo;
 	boolean visited;
 
 	public MutableCallGraphVertex(@Nonnull MethodInfo methodInfo) {
 		this.methodInfo = methodInfo;
-	}
-
-	public MutableCallGraphVertex(@Nonnull MemberSignature signature) {
-		this.signature = signature;
-	}
-
-	public void setMethodInfo(MethodInfo methodInfo) {
-		this.methodInfo = methodInfo;
-		this.signature = methodInfo.getMemberSignature();
 	}
 
 	@Override
@@ -34,7 +24,7 @@ public final class MutableCallGraphVertex implements CallGraphVertex {
 	@Nonnull
 	@Override
 	public MemberSignature getSignature() {
-		return signature;
+		return methodInfo.getMemberSignature();
 	}
 
 	@Override
@@ -45,5 +35,20 @@ public final class MutableCallGraphVertex implements CallGraphVertex {
 	@Override
 	public Collection<CallGraphVertex> getCalls() {
 		return calls;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		MutableCallGraphVertex that = (MutableCallGraphVertex) o;
+
+		return methodInfo.equals(that.methodInfo);
+	}
+
+	@Override
+	public int hashCode() {
+		return methodInfo.hashCode();
 	}
 }

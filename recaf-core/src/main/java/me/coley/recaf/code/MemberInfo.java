@@ -1,5 +1,6 @@
 package me.coley.recaf.code;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Objects;
 
@@ -11,6 +12,7 @@ import java.util.Objects;
 public abstract class MemberInfo implements AccessibleInfo, ItemInfo {
 	private final String signature;
 	private final int access;
+	@Nonnull
 	private final MemberSignature memberSignature;
 
 	/**
@@ -68,6 +70,7 @@ public abstract class MemberInfo implements AccessibleInfo, ItemInfo {
 		return signature;
 	}
 
+	@Nonnull
 	public MemberSignature getMemberSignature() {
 		return memberSignature;
 	}

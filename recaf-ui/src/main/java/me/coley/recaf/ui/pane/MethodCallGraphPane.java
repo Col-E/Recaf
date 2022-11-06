@@ -26,8 +26,6 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.EscapeUtil;
-import me.coley.recaf.util.threading.FxThreadUtil;
-import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import javax.annotation.Nonnull;
@@ -89,11 +87,11 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 			CallGraphRegistry callGraph = RecafUI.getController().getServices().getCallGraphRegistry();
 			final MethodInfo methodInfo = currentMethod.get();
 			if (methodInfo == null) setRoot(null);
-			else ThreadUtil.run(() -> {
+			else {
 				CallGraphItem root = buildCallGraph(methodInfo, callGraph, mode.childrenGetter);
 				root.setExpanded(true);
-				FxThreadUtil.run(() -> setRoot(root));
-			});
+				setRoot(root);
+			}
 		}
 
 		private CallGraphItem buildCallGraph(MethodInfo rootMethod, CallGraphRegistry callGraph, Function<CallGraphVertex, Collection<CallGraphVertex>> childrenGetter) {
@@ -165,6 +163,7 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 				setText(null);
 				setGraphic(null);
 				setOnMouseClicked(null);
+				setContextMenu(null);
 				if (onClickFilter != null)
 					removeEventFilter(MouseEvent.MOUSE_PRESSED, onClickFilter);
 			} else {
@@ -191,7 +190,7 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 					setContextMenu(contextMenu);
 					// Override the double click behavior to open the class. Doesn't work using the "setOn..." methods.
 					onClickFilter = (MouseEvent e) -> {
-						if (e.getClickCount() >= 2 && e.getButton().equals(MouseButton.PRIMARY)) {
+						if (e.getButton().equals(MouseButton.PRIMARY) && e.getClickCount() >= 2) {
 							e.consume();
 							CommonUX.openMember(classInfo, item);
 						}
