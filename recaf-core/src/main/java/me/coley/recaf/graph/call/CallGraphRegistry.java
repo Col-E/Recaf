@@ -48,8 +48,13 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		unresolvedCalls.clear();
 	}
 
-	public @Nullable CallGraphVertex getVertex(MethodInfo info) {
+	@Nullable
+	public CallGraphVertex getVertex(MethodInfo info) {
 		return vertexMap.get(info);
+	}
+
+	public Map<String, Set<UnresolvedCall>> getUnresolvedCalls() {
+		return unresolvedCalls;
 	}
 
 	public void load() {
@@ -155,11 +160,11 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		Set<UnresolvedCall> calls = unresolvedCalls.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
 		unresolvedCalls.clear();
 		calls.forEach(unresolvedCall -> visitMethodInstruction(
-				unresolvedCall.opcode,
-				unresolvedCall.owner,
-				unresolvedCall.name,
-				unresolvedCall.descriptor,
-				unresolvedCall.vertex,
+				unresolvedCall.getOpcode(),
+				unresolvedCall.getOwner(),
+				unresolvedCall.getName(),
+				unresolvedCall.getDescriptor(),
+				unresolvedCall.getVertex(),
 				classInfoFromPathResolver,
 				otherMethodInfoResolver,
 				resolver,
@@ -213,13 +218,14 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 	}
 
 	private void updateRemovedMethods(Workspace workspace, Collection<ClassInfo> removedClasses) {
-		// doesn't work as expected, as it leaves - for whatever reason - zombie vertices and calls
-		// so, it's just "cleaner" to reload the whole thing...
+		// Doesn't work as expected, as it leaves - for whatever reason - zombie vertices and calls
+		// So, it's just "cleaner" to reload the whole thing...
+		// I leave this, so someday we can return to it, and have an idea of what to do
 		Set<String> removedClassNames = removedClasses.stream().map(ClassInfo::getName).collect(Collectors.toSet());
 		methodMap.keySet().removeIf(c -> removedClassNames.contains(c.getName()));
 		unresolvedCalls.keySet().removeIf(removedClassNames::contains);
 		unresolvedCalls.values().removeIf(cs -> {
-			cs.removeIf(c -> removedClassNames.contains(c.vertex.getMethodInfo().getOwner()));
+			cs.removeIf(c -> removedClassNames.contains(c.getVertex().getMethodInfo().getOwner()));
 			return cs.isEmpty();
 		});
 		Set<CallGraphVertex> affectedVertices = vertexMap.values().stream()
@@ -262,46 +268,6 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 	public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
 		onRemoveClass(resource, oldValue);
 		onNewClass(resource, newValue);
-	}
-
-	private static class UnresolvedCall {
-		final int opcode;
-		final String owner;
-		final String name;
-		final String descriptor;
-		final MutableCallGraphVertex vertex;
-
-		private UnresolvedCall(int opcode, String owner, String name, String descriptor, MutableCallGraphVertex vertex) {
-			this.opcode = opcode;
-			this.owner = owner;
-			this.name = name;
-			this.descriptor = descriptor;
-			this.vertex = vertex;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-
-			UnresolvedCall that = (UnresolvedCall) o;
-
-			if (opcode != that.opcode) return false;
-			if (!owner.equals(that.owner)) return false;
-			if (!name.equals(that.name)) return false;
-			if (!descriptor.equals(that.descriptor)) return false;
-			return vertex.equals(that.vertex);
-		}
-
-		@Override
-		public int hashCode() {
-			int result = opcode;
-			result = 31 * result + owner.hashCode();
-			result = 31 * result + name.hashCode();
-			result = 31 * result + descriptor.hashCode();
-			result = 31 * result + vertex.hashCode();
-			return result;
-		}
 	}
 
 	protected static final class Descriptor {

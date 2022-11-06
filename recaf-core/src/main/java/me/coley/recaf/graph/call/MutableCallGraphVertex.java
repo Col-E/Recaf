@@ -16,6 +16,7 @@ public final class MutableCallGraphVertex implements CallGraphVertex {
 		this.methodInfo = methodInfo;
 	}
 
+	@Nonnull
 	@Override
 	public MethodInfo getMethodInfo() {
 		return methodInfo;

@@ -19,6 +19,7 @@ import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.graph.call.CallGraphRegistry;
 import me.coley.recaf.graph.call.CallGraphVertex;
+import me.coley.recaf.graph.call.UnresolvedCall;
 import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.behavior.Updatable;
 import me.coley.recaf.ui.context.ContextBuilder;
@@ -33,6 +34,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MethodCallGraphPane extends BorderPane implements Updatable<CommonClassInfo> {
 	public static final int MAX_TREE_DEPTH = 20;
@@ -109,10 +111,18 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 					depth++;
 					final CallGraphVertex vertex = callGraph.getVertex(item.getValue());
 					if (vertex != null) {
-						final List<CallGraphItem> newTodo = childrenGetter.apply(vertex)
-								.stream().map(CallGraphVertex::getMethodInfo)
+						final List<CallGraphItem> newTodo = Stream.concat(
+										childrenGetter.apply(vertex)
+												.stream().map(CallGraphVertex::getMethodInfo),
+										mode == CallGraphMode.CALLERS ?
+												Stream.empty() :
+												callGraph.getUnresolvedCalls().values().stream()
+														.flatMap(Collection::stream)
+														.filter(uc -> uc.getVertex().equals(vertex))
+														.map(UnresolvedCall::asMethodInfo)
+								)
 								.filter(Objects::nonNull)
-								.map(c -> new CallGraphItem(c, visitedMethods.contains(c)))
+								.map(c -> new CallGraphItem(c, !(c instanceof UnresolvedCall.UnresolvedMethodInfo) && visitedMethods.contains(c)))
 								.filter(i -> {
 									if (i.getValue() == null) return false;
 									item.getChildren().add(i);
@@ -166,12 +176,13 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 				setContextMenu(null);
 				if (onClickFilter != null)
 					removeEventFilter(MouseEvent.MOUSE_PRESSED, onClickFilter);
+				setOpacity(1);
 			} else {
 				onClickFilter = null;
 				Text classText = new Text(EscapeUtil.escape(item.getOwner()));
 				classText.setFill(Color.CADETBLUE);
 				Text methodText = new Text(item.getName());
-				if (AccessFlag.isStatic(item.getAccess())) methodText.setFill(Color.GREEN);
+				if (AccessFlag.isStatic(item.getAccess())) methodText.setFill(Color.LIGHTGREEN);
 				else methodText.setFill(Color.YELLOW);
 				HBox box = new HBox(Icons.getMethodIcon(item), new TextFlow(classText, new Label("#"), methodText, new Label(item.getDescriptor())));
 				box.setSpacing(5);
@@ -196,6 +207,8 @@ public class MethodCallGraphPane extends BorderPane implements Updatable<CommonC
 						}
 					};
 					addEventFilter(MouseEvent.MOUSE_PRESSED, onClickFilter);
+				} else {
+					setOpacity(0.5);
 				}
 			}
 		}
