@@ -28,6 +28,8 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import org.slf4j.Logger;
 
+import java.util.Objects;
+
 
 /**
  * Visualization of the class hierarchy for children and parent relations.
@@ -135,8 +137,10 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 				if (parentVertex.getName().equals("java/lang/Object"))
 					continue;
 				HierarchyItem subItem = new HierarchyItem(parentVertex.getValue());
-				root.getChildren().add(subItem);
-				createParents(subItem, parentVertex);
+				if (noLoops(root, subItem)) {
+					root.getChildren().add(subItem);
+					createParents(subItem, parentVertex);
+				}
 			}
 		}
 
@@ -144,9 +148,21 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 			root.setExpanded(true);
 			for (InheritanceVertex childVertex : rootVertex.getChildren()) {
 				HierarchyItem subItem = new HierarchyItem(childVertex.getValue());
-				root.getChildren().add(subItem);
-				createChildren(subItem, childVertex);
+				if (noLoops(root, subItem)) {
+					root.getChildren().add(subItem);
+					createChildren(subItem, childVertex);
+				}
 			}
+		}
+
+		private boolean noLoops(TreeItem<?> root, TreeItem<?> child) {
+			if (root == null)
+				return true;
+			// HierarchyItem implements a hashCode based on class names
+			// So any cycle should trigger this and we'll abort.
+			if (root.hashCode() == child.hashCode())
+				return false;
+			return noLoops(root.getParent(), child);
 		}
 	}
 
@@ -156,6 +172,25 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 	static class HierarchyItem extends TreeItem<CommonClassInfo> {
 		private HierarchyItem(CommonClassInfo info) {
 			super(info);
+		}
+
+		@Override
+		public int hashCode() {
+			CommonClassInfo value = getValue();
+			if (value == null)
+				return  -1;
+			int result = value.getName().hashCode();
+			result = 31 * result + (value.getSuperName().hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof HierarchyItem) {
+				HierarchyItem other = (HierarchyItem) obj;
+				return Objects.equals(getValue(), other.getValue());
+			}
+			return false;
 		}
 	}
 

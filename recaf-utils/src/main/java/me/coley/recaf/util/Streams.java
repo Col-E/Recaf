@@ -2,8 +2,7 @@ package me.coley.recaf.util;
 
 import me.coley.recaf.util.threading.CountDown;
 
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -101,6 +100,8 @@ public final class Streams {
 	 * 		Initial seed.
 	 * @param fn
 	 * 		Transforming function.
+	 * @param <T>
+	 * 		Element type.
 	 *
 	 * @return Stream containing all traversed elements.
 	 */
@@ -119,10 +120,47 @@ public final class Streams {
 	 * 		Initial stream.
 	 * @param fn
 	 * 		Transforming function.
+	 * @param <T>
+	 * 		Element type.
 	 *
 	 * @return Stream containing all traversed elements.
 	 */
 	public static <T> Stream<T> recurse(Stream<? extends T> seed, Function<? super T, Stream<? extends T>> fn) {
 		return seed.flatMap(x -> recurse(x, fn));
+	}
+
+	/**
+	 * @param flatMap
+	 * 		Transforming function.
+	 * @param <T>
+	 * 		Element type.
+	 *
+	 * @return Stream containing all traversed elements.
+	 */
+	public static <T> Stream<T> recurseWithoutCycles(T seed, Function<T, Set<T>> flatMap) {
+		Deque<Iterator<T>> vertices = new ArrayDeque<>();
+		Set<T> visited = new HashSet<>();
+		vertices.push(Collections.singletonList(seed).iterator());
+		return StreamSupport.stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+			@Override
+			public boolean tryAdvance(Consumer<? super T> action) {
+				while (true) {
+					Iterator<T> iterator = vertices.peek();
+					if (iterator == null) {
+						return false;
+					}
+					if (!iterator.hasNext()) {
+						vertices.poll();
+						continue;
+					}
+					T vertex = iterator.next();
+					if (visited.add(vertex)) {
+						action.accept(vertex);
+						vertices.push(flatMap.apply(vertex).iterator());
+						return true;
+					}
+				}
+			}
+		}, false);
 	}
 }

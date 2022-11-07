@@ -5,7 +5,10 @@ import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.Streams;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -238,7 +241,7 @@ public class InheritanceVertex {
 	 * @return All classes this extends or implements.
 	 */
 	public Stream<InheritanceVertex> allParents() {
-		return Streams.recurse(this, x -> x.getParents().stream());
+		return Streams.recurseWithoutCycles(this, InheritanceVertex::getParents);
 	}
 
 	/**
@@ -278,7 +281,7 @@ public class InheritanceVertex {
 	}
 
 	private Stream<InheritanceVertex> allChildren() {
-		return Streams.recurse(this, x -> x.getChildren().stream());
+		return Streams.recurseWithoutCycles(this, InheritanceVertex::getChildren);
 	}
 
 	/**
