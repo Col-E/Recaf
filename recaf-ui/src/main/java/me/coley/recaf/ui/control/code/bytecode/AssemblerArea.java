@@ -32,8 +32,8 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.VirtualizedContextMenu;
 import me.coley.recaf.ui.control.code.*;
-import me.coley.recaf.ui.pane.assembler.SelectedUpdater;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
+import me.coley.recaf.ui.pane.assembler.SelectedUpdater;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.NodeEvents;
@@ -105,7 +105,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			pipeline.setText(getText());
 			handleAstUpdate();
 		});
-		SelectedUpdater selectedUpdater = new SelectedUpdater(pipeline, this);
+		// Setup selection updater for full-class assembling.
+		// This handles which member is currently active for things like the analysis tab.
+		SelectedUpdater selectedUpdater = new SelectedUpdater(pipeline);
 		selectedUpdater.addCaretPositionListener(caretPositionProperty());
 		// Setup variable highlighting
 		VariableHighlighter variableHighlighter = new VariableHighlighter(pipeline, this);
@@ -187,7 +189,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		BytecodeToAstTransformer transformer;
 		ClassNode node = new ClassNode();
 		ClassReader cr = classInfo.getClassReader();
-		if(targetMember != null) {
+		if (targetMember != null) {
 			// Get the target member node
 			cr.accept(new SingleMemberVisitor(node, targetMember), ClassReader.SKIP_FRAMES);
 			// Since we visit only the target member info, there should only be one member in the list.
@@ -221,27 +223,32 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		String code = unit.print(config().createContext());
 		// Update text
 		setText(code);
-		// Also attempt to recompile once the code is set.
+		// Also attempt to assemble once the code is set.
 		// We do not want to update the class, this is to initialize the pipeline state without the user needing
 		// to manually trigger a save first.
-		pipeline.updateAst(config().usePrefix);
-		if (pipeline.isMethod())
-			pipeline.generateMethod();
-		else if (pipeline.isField())
-			pipeline.generateField();
-		else
-			pipeline.generateClass();
-		SaveResult initialBuild;
-		if(pipeline.isMethod())
-			initialBuild = generateMethod(false);
-		else if(pipeline.isField())
-			initialBuild = generateField(false);
-		else
-			initialBuild = generateClass(false);
-		if (initialBuild == SaveResult.SUCCESS)
-			logger.debugging(l -> l.trace("Initial build of disassemble successful!"));
-		else
-			logger.warn("Initial build of disassemble failed!");
+		if (pipeline.updateAst(config().usePrefix)) {
+			// Assemble the target member/class
+			if (pipeline.isMethod())
+				pipeline.generateMethod();
+			else if (pipeline.isField())
+				pipeline.generateField();
+			else
+				pipeline.generateClass();
+
+			// Run an initial generation within our assembler UI.
+			// This will populate the local variable and analysis tab contents.
+			SaveResult initialBuild;
+			if (pipeline.isMethod())
+				initialBuild = generateMethod(false);
+			else if (pipeline.isField())
+				initialBuild = generateField(false);
+			else
+				initialBuild = generateClass(false);
+			if (initialBuild == SaveResult.SUCCESS)
+				logger.debugging(l -> l.trace("Initial build of disassemble successful!"));
+			else
+				logger.warn("Initial build of disassemble failed!");
+		}
 	}
 
 	/**
@@ -497,7 +504,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
 		// Generate
-		if(targetMember == null) return generateClass(true);
+		if (targetMember == null) return generateClass(true);
 		else {
 			if (targetMember.isMethod())
 				return generateMethod(true);
@@ -615,6 +622,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 *
 	 * @see #updateClass(MethodNode)
 	 * @see #updateClass(FieldNode)
+	 * @see #updateClass(ClassNode)
 	 */
 	private SaveResult updateClass(Function<ClassWriter, ClassVisitor> replacerProvider) {
 		// Because we are creating a new method, we need to generate frames.

@@ -93,9 +93,9 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 	private static Map<String, AstVarInfo> fromUnit(AstValidator validator, Unit unit) throws AstException {
 		Map<String, AstVarInfo> variables = new HashMap<>();
 		// Skip for fields
-		if (unit.isField())
+		if (!unit.isMethod())
 			return variables;
-		MethodDefinition definition = (MethodDefinition) unit.getDefinition();
+		MethodDefinition definition = unit.getDefinitionAsMethod();
 		// Skip if no code-items
 		if (definition.getCode().isEmpty())
 			return variables;

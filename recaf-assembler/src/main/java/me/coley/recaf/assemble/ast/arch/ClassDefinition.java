@@ -12,7 +12,6 @@ import java.util.List;
  * @author Nowilltolife
  */
 public class ClassDefinition extends AbstractDefinition implements Definition {
-	// TODO: Finish implementing the class
 	private final String name;
 	private String superClass;
 	private final List<String> interfaces;
@@ -36,6 +35,44 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 
 	public ClassDefinition(Modifiers modifiers, String name, String superClass, String... interfaces) {
 		this(modifiers, name, superClass, Arrays.asList(interfaces));
+	}
+
+	/**
+	 * Adds a new method to the class.
+	 *
+	 * @param method
+	 * 		Method to add.
+	 */
+	public void addMethod(MethodDefinition method) {
+		definedMethods.add(method);
+		child(method);
+	}
+
+	/**
+	 * Adds a new field to the class.
+	 *
+	 * @param field
+	 * 		Field to add.
+	 */
+	public void addField(FieldDefinition field) {
+		definedFields.add(field);
+		child(field);
+	}
+
+	/**
+	 * @param interfaceName
+	 * 		Interface to add.
+	 */
+	public void addInterface(String interfaceName) {
+		interfaces.add(interfaceName);
+	}
+
+	/**
+	 * @param superClass
+	 * 		New super-type name.
+	 */
+	public void setSuperClass(String superClass) {
+		this.superClass = superClass;
 	}
 
 	/**
@@ -66,6 +103,20 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		return interfaces;
 	}
 
+	/**
+	 * @param currentDefinition
+	 * 		New selection within the class.
+	 */
+	public void setCurrentDefinition(AbstractDefinition currentDefinition) {
+		// Must be a valid definition within the class.
+		if (!definedFields.contains(currentDefinition) || !definedMethods.contains(currentDefinition))
+			return;
+		this.currentDefinition = currentDefinition;
+	}
+
+	/**
+	 * @return Currently selected definition.
+	 */
 	public AbstractDefinition getCurrentDefinition() {
 		return currentDefinition;
 	}
@@ -121,39 +172,5 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 			sb.append(method.print(context)).append("\n\n");
 		}
 		return sb.toString();
-	}
-
-	/**
-	 * Adds a new method to the class.
-	 *
-	 * @param method
-	 * 		Method to add.
-	 */
-	public void addMethod(MethodDefinition method) {
-		definedMethods.add(method);
-		child(method);
-	}
-
-	/**
-	 * Adds a new field to the class.
-	 *
-	 * @param field
-	 * 		Field to add.
-	 */
-	public void addField(FieldDefinition field) {
-		definedFields.add(field);
-		child(field);
-	}
-
-	public void addInterface(String interfaceName) {
-		interfaces.add(interfaceName);
-	}
-
-	public void setSuperClass(String superClass) {
-		this.superClass = superClass;
-	}
-
-	public void setCurrentDefinition(AbstractDefinition currentDefinition) {
-		this.currentDefinition = currentDefinition;
 	}
 }

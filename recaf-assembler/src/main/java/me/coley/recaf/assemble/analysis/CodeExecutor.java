@@ -295,10 +295,12 @@ public class CodeExecutor {
 			}
 		} else {
 			int op = instruction.getOpcodeVal();
-			InstructionExecutor insnExecutor = INSN_EXECUTORS.get(op);
-			if (insnExecutor == null)
-				throw new AnalysisException(instruction, "No instruction executor registered for instruction type");
-			insnExecutor.handle(frame, instruction);
+			if (op >= 0) {
+				InstructionExecutor insnExecutor = INSN_EXECUTORS.get(op);
+				if (insnExecutor == null)
+					throw new AnalysisException(instruction, "No instruction executor registered for instruction type");
+				insnExecutor.handle(frame, instruction);
+			}
 		}
 		logger.debugging(l -> l.info(" - Stack POST: {}", frame.getStack()));
 		// If we had already visited the frame the following frames may already be done.

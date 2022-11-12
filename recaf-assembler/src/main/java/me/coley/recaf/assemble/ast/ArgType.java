@@ -10,7 +10,6 @@ public enum ArgType {
 	CHAR,
 	STRING,
 	BYTE,
-	CHAR,
 	SHORT,
 	BOOLEAN,
 	INTEGER,

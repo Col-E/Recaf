@@ -5,9 +5,6 @@ import me.coley.recaf.assemble.ast.arch.ClassDefinition;
 import me.coley.recaf.assemble.ast.arch.FieldDefinition;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 /**
  * The complete unit of a field or method.
  *
@@ -106,10 +103,12 @@ public class Unit extends BaseElement {
 	}
 
 	public AbstractDefinition getCurrentDefinition() {
-		if(!definition.isClass()) return definition;
-		else {
-			return getDefinitionAsClass().getCurrentDefinition() == null ? definition : getDefinitionAsClass().getCurrentDefinition();
-		}
+		// TODO: The concept of 'selection' should not be defined in the AST model.
+		//   This should be moved elsewhere. Refer to PR #611 to see the scope of this change-set
+		if (definition.isClass()) {
+			AbstractDefinition currentSelection = getDefinitionAsClass().getCurrentDefinition();
+			return currentSelection == null ? definition : currentSelection;
+		} else return definition;
 	}
 
 	public boolean isCurrentMethod() {
@@ -126,17 +125,15 @@ public class Unit extends BaseElement {
 
 	public MethodDefinition getCurrentMethod() {
 		AbstractDefinition def = getCurrentDefinition();
-		if(!def.isMethod())
+		if (!def.isMethod())
 			throw new IllegalStateException("Not a method");
 		return (MethodDefinition) def;
 	}
 
 	public FieldDefinition getCurrentField() {
 		AbstractDefinition def = getCurrentDefinition();
-		if(!def.isField())
+		if (!def.isField())
 			throw new IllegalStateException("Not a field");
 		return (FieldDefinition) def;
 	}
-
-
 }

@@ -188,13 +188,15 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitSuper(ExtendsGroup extendsGroup) throws AssemblerException {
-		if(currentClass == null) throw new AssemblerException("No class defined, cannot define super class", extendsGroup.location());
+		if (currentClass == null)
+			throw new AssemblerException("No class defined, cannot define super class", extendsGroup.location());
 		currentClass.setSuperClass(content(extendsGroup));
 	}
 
 	@Override
 	public void visitImplements(ImplementsGroup implementsGroup) throws AssemblerException {
-		if(currentClass == null) throw new AssemblerException("No class defined, cannot define super class", implementsGroup.location());
+		if (currentClass == null)
+			throw new AssemblerException("No class defined, cannot define super class", implementsGroup.location());
 		currentClass.addInterface(content(implementsGroup));
 	}
 
@@ -271,10 +273,10 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitEnd() throws AssemblerException {
-		if(currentClass != null) {
-			if(activeMember instanceof FieldDefinition) {
+		if (currentClass != null) {
+			if (activeMember instanceof FieldDefinition) {
 				currentClass.addField((FieldDefinition) activeMember);
-			} else if(activeMember instanceof MethodDefinition) {
+			} else if (activeMember instanceof MethodDefinition) {
 				currentClass.addMethod((MethodDefinition) activeMember);
 			}
 		} else {
@@ -284,7 +286,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitEndClass() throws AssemblerException {
-		if(currentClass != null) {
+		if (currentClass != null) {
 			this.unit = new Unit(currentClass);
 		}
 		if (activeMember != null && activeMember.isField())

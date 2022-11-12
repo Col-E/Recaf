@@ -67,7 +67,7 @@ public class FlowHighlighter implements IndicatorApplier {
 			int col = assemblerArea.getCaretColumn();
 			Element elementOnLine = pipeline.getCodeElementAt(line, col);
 			Unit unit = pipeline.getUnit();
-			if (unit == null || unit.isCurrentField())
+			if (unit == null || !unit.isCurrentMethod())
 				return;
 			Code code = pipeline.getUnit().getCurrentMethod().getCode();
 			if (elementOnLine instanceof FlowControl) {

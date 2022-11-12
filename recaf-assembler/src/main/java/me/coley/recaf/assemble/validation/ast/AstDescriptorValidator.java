@@ -21,8 +21,7 @@ public class AstDescriptorValidator implements AstValidationVisitor {
 	@Override
 	public void visit(AstValidator validator) {
 		Predicate<String> isValid = Types::isValidDesc;
-
-		if (validator.getUnit().isField())
+		if (!validator.getUnit().isMethod())
 			return;
 		Code code = validator.getUnit().getDefinitionAsMethod().getCode();
 		if (code == null)

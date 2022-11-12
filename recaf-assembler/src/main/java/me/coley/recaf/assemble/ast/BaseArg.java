@@ -133,8 +133,6 @@ public abstract class BaseArg extends BaseElement implements Printable {
 				return value + "L";
 			case FLOAT:
 				return value + "F";
-			case CHAR:
-				return "'" + value + "'";
 			case DOUBLE:
 			case SHORT:
 			case BYTE:
