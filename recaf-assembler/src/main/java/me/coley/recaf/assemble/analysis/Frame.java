@@ -61,8 +61,8 @@ public class Frame {
 	/**
 	 * @param otherFrame
 	 * 		Frame to merge with.
-	 * @param analyzer
-	 * 		Analyzer for context and type hierarchy lookups.
+	 * @param typeChecker
+	 * 		For hierarchy look-ups.
 	 *
 	 * @return {@code true} when the merge changed the stack or local states.
 	 * {@code false} if no changes were made after the merge was completed.
@@ -71,11 +71,10 @@ public class Frame {
 	 * 		When the frames cannot be merged for some reason.
 	 * 		Exception message will elaborate on exact cause.
 	 */
-	public boolean merge(Frame otherFrame, Analyzer analyzer) throws FrameMergeException {
+	public boolean merge(Frame otherFrame, InheritanceChecker typeChecker) throws FrameMergeException {
 		wonky |= otherFrame.isWonky();
 		if (visited) {
 			boolean modified = false;
-			InheritanceChecker typeChecker = analyzer.getInheritanceChecker();
 			for (Map.Entry<String, Value> e : locals.entrySet()) {
 				String name = e.getKey();
 				Value value = e.getValue();
@@ -266,11 +265,26 @@ public class Frame {
 	 * @return Top value from the stack.
 	 */
 	public Value peek() {
+		return peek(0);
+	}
+
+	/**
+	 * @param offset
+	 * 		Offset from the top of the stack.
+	 *
+	 * @return Top offset value from the stack.
+	 */
+	public Value peek(int offset) {
 		if (stack.isEmpty()) {
 			markWonky("Cannot peek off empty stack!");
 			return new Value.EmptyPoppedValue();
 		}
-		return stack.get(stack.size() - 1);
+		int index = stack.size() - (1 + offset);
+		if (index < 0) {
+			markWonky("Cannot peek offset(" + offset + ") from stack top!");
+			return new Value.EmptyPoppedValue();
+		}
+		return stack.get(index);
 	}
 
 	/**

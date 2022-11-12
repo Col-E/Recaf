@@ -85,6 +85,18 @@ public class Types {
 	}
 
 	/**
+	 * @param type
+	 * 		Base type.
+	 * @param dimensions
+	 * 		Array dimensions.
+	 *
+	 * @return Array type of dimension size.
+	 */
+	public static Type array(Type type, int dimensions) {
+		return Type.getType(StringUtil.repeat("[", dimensions) + type.getDescriptor());
+	}
+
+	/**
 	 * @param methodType
 	 * 		Parsed method descriptor type.
 	 *

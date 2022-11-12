@@ -589,6 +589,20 @@ public class AnalysisTests extends JasmUtils {
 					"  return\n" +
 					"end", AnalysisTests::failure);
 		}
+
+		@Test
+		public void unsupportedJsr() {
+			handle("method dummy ()V\n" +
+					"a: \n" +
+					"  jsr sub\n" +
+					"  goto exit\n" +
+					"sub:\n" +
+					"  astore address\n" +
+					"  ret address\n" +
+					"exit:\n" +
+					"  return\n" +
+					"end", AnalysisTests::failure);
+		}
 	}
 
 	private static void correct(MethodDefinition unit) {

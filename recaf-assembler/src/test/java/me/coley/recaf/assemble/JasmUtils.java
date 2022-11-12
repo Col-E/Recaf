@@ -13,7 +13,6 @@ import java.util.LinkedList;
  */
 public class JasmUtils {
 	protected static final Keywords DEFAULT_KEYWORDS = new Keywords();
-	protected static final Keywords DOT_KEYWORDS = new Keywords(".");
 
 	protected static Unit createSilentUnit(Keywords keywords, String code) {
 		try {
