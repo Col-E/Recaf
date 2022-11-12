@@ -13,6 +13,7 @@ import me.darknet.assembler.compiler.FieldDescriptor;
 import me.darknet.assembler.compiler.MethodDescriptor;
 import me.darknet.assembler.parser.*;
 import me.darknet.assembler.parser.groups.*;
+import me.darknet.assembler.transform.FieldVisitor;
 import me.darknet.assembler.transform.MethodVisitor;
 import me.darknet.assembler.transform.Transformer;
 import me.darknet.assembler.transform.Visitor;
@@ -26,7 +27,7 @@ import java.util.*;
  *
  * @author Nowilltolife
  */
-public class JasmToAstTransformer implements Visitor, MethodVisitor {
+public class JasmToAstTransformer implements Visitor, MethodVisitor, FieldVisitor {
 	private final Collection<Group> groups;
 	private final Attributes currentAttributes = new Attributes();
 	private Code code = new Code();
@@ -201,7 +202,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	}
 
 	@Override
-	public void visitField(FieldDeclarationGroup dcl) throws AssemblerException {
+	public FieldVisitor visitField(FieldDeclarationGroup dcl) throws AssemblerException {
 		FieldDefinition field = wrap(dcl,
 				new FieldDefinition(fromAccessMods(dcl.accessMods), dcl.name.content(), dcl.descriptor.content()));
 
@@ -217,6 +218,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			field.setConstVal(new ConstVal(convert(dcl.constantValue), from(dcl.constantValue)));
 
 		currentAttributes.clear();
+		return this;
 	}
 
 	@Override
@@ -272,9 +274,9 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 	}
 
 	@Override
-	public void visitEnd() throws AssemblerException {
-		if (currentClass != null) {
-			if (activeMember instanceof FieldDefinition) {
+	public void visitEnd() {
+		if(currentClass != null) {
+			if(activeMember instanceof FieldDefinition) {
 				currentClass.addField((FieldDefinition) activeMember);
 			} else if (activeMember instanceof MethodDefinition) {
 				currentClass.addMethod((MethodDefinition) activeMember);
