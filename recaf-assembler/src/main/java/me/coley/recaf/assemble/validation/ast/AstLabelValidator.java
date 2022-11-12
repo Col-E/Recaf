@@ -20,9 +20,9 @@ import static me.coley.recaf.assemble.validation.ValidationMessage.error;
 public class AstLabelValidator implements AstValidationVisitor {
 	@Override
 	public void visit(AstValidator validator) {
-		if (!validator.getUnit().isMethod())
+		if (!validator.getUnit().isCurrentMethod())
 			return;
-		Code code = validator.getUnit().getDefinitionAsMethod().getCode();
+		Code code = validator.getUnit().getCurrentMethod().getCode();
 		if (code == null)
 			return;
 		Predicate<String> existence = name -> code.getLabels().containsKey(name);
