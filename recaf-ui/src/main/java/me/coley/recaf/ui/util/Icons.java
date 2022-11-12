@@ -517,6 +517,8 @@ public class Icons {
 			}
 		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.AUDIO_HEADERS)) {
 			provider = createProvider(Icons.FILE_AUDIO);
+		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.VIDEO_HEADERS)) {
+			provider = createProvider(Icons.PLAY);
 		} else {
 			if (file.isText()) {
 				String ext = file.getExtension().toLowerCase();

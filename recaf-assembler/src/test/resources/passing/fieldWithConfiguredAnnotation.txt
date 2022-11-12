@@ -1,0 +1,10 @@
+// metadata
+annotation com/example/AnnotationWithValues
+  boolTrue  true
+  boolFalse false
+  someInt   256
+  someFloat 1.0F
+  someDec   3.14159265359
+  text      "hello world"
+end
+field static Ljava/lang/Object; annotated

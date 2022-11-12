@@ -7,7 +7,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
@@ -21,10 +20,10 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
-import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.ui.behavior.*;
 import me.coley.recaf.ui.control.BoundLabel;
+import me.coley.recaf.ui.control.DecompilerCombo;
 import me.coley.recaf.ui.control.ErrorDisplay;
 import me.coley.recaf.ui.control.SearchBar;
 import me.coley.recaf.ui.control.code.ProblemIndicatorInitializer;
@@ -42,6 +41,7 @@ import me.coley.recaf.workspace.Workspace;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -110,26 +110,21 @@ public class DecompilePane extends BorderPane implements ClassRepresentation, Cl
 		box.setSpacing(10);
 		box.getStyleClass().add("button-container");
 		box.setAlignment(Pos.CENTER_LEFT);
-		DecompileManager manager = RecafUI.getController().getServices().getDecompileManager();
-		ComboBox<String> decompilerCombo = new ComboBox<>();
-		for (Decompiler decompiler : manager.getRegisteredImpls()) {
-			decompilerCombo.getItems().add(decompiler.getName());
-		}
+		String initialDecompilerName = Configs.decompiler().decompiler;
+		DecompilerCombo decompilerCombo = new DecompilerCombo();
 		decompilerCombo.getSelectionModel().selectedItemProperty().addListener((observable, old, current) -> {
-			decompiler = manager.get(current);
+			this.decompiler = current;
 			if (lastClass != null)
 				onUpdate(lastClass);
 		});
 		Label decompilersLabel = new Label("Decompiler: ");
 		box.getChildren().add(decompilersLabel);
 		box.getChildren().add(decompilerCombo);
+		// Change selection to trigger decompilation
+		if (!decompilerCombo.select(initialDecompilerName))
+			decompilerCombo.getSelectionModel().selectFirst();
 		// TODO: Add button to configure current decompiler
 		//   (pull from tool map, each decompiler has separate config page)
-		// Select preferred decompiler, or whatever is first if the preferred option is not available
-		decompilerCombo.getSelectionModel().select(Configs.decompiler().decompiler);
-		if (decompilerCombo.getSelectionModel().isEmpty()) {
-			decompilerCombo.getSelectionModel().select(0);
-		}
 		return box;
 	}
 

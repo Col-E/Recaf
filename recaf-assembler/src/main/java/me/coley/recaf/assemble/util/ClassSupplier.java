@@ -15,8 +15,11 @@ public interface ClassSupplier {
 	 * 		Internal class name.
 	 *
 	 * @return Class bytecode.
+	 *
+	 * @throws ClassNotFoundException
+	 * 		When the given class could not be found.
 	 */
-	byte[] getClass(String name);
+	byte[] getClass(String name) throws ClassNotFoundException;
 
 	/**
 	 * @param declaringClass
@@ -46,9 +49,12 @@ public interface ClassSupplier {
 			for (Iterator<String> it = declaringClass.getClassPool().getImportedPackages(); it.hasNext(); ) {
 				String packageName = it.next();
 				String tmp = packageName.replace('.', '/') + '/' + type.replace('.', '$');
-				if (getClass(tmp) != null) {
-					type = tmp;
-					break;
+				try {
+					if (getClass(tmp) != null) {
+						type = tmp;
+						break;
+					}
+				} catch (ClassNotFoundException ignored) {
 				}
 			}
 		} else {

@@ -248,7 +248,7 @@ public class AssemblerPipeline {
 	}
 
 	/**
-	 * @return {@code true} if there are changes seen since the last call to {@link #updateAst()}.
+	 * @return {@code true} if there are changes seen since the last call to {@link #updateAst(boolean)}.
 	 */
 	public boolean isDirty() {
 		return textDirty;
@@ -648,18 +648,8 @@ public class AssemblerPipeline {
 		AstToFieldTransformer transformer = new AstToFieldTransformer();
 		transformer.setDefinition(unit.getDefinitionAsField());
 		FieldNode fieldAssembled = transformer.buildField();
-		if (bytecodeValidationListeners.size() > 0) {
-			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, fieldAssembled);
-			try {
-				bytecodeValidator.visit();
-			} catch (BytecodeException ex) {
-				// Fatal bytecode validation exception
-				bytecodeFailureListeners.forEach(l -> l.onValidationFailure(fieldAssembled, ex));
-				return false;
-			}
-			// Check for bytecode validation problems
-			bytecodeValidationListeners.forEach(l -> l.onBytecodeValidationComplete(fieldAssembled, bytecodeValidator));
-		}
+		if (!validateNode(fieldAssembled))
+			return false;
 		// Done
 		lastField = fieldAssembled;
 		outputOutdated = false;
@@ -693,18 +683,8 @@ public class AssemblerPipeline {
 			transformer.setDefinition(unit.getDefinitionAsMethod());
 			transformer.visit();
 			MethodNode methodAssembled = transformer.buildMethod();
-			if (bytecodeValidationListeners.size() > 0) {
-				BytecodeValidator bytecodeValidator = new BytecodeValidator(type, methodAssembled);
-				try {
-					bytecodeValidator.visit();
-				} catch (BytecodeException ex) {
-					// Fatal bytecode validation exception
-					bytecodeFailureListeners.forEach(l -> l.onValidationFailure(methodAssembled, ex));
-					return false;
-				}
-				// Check for bytecode validation problems
-				bytecodeValidationListeners.forEach(l -> l.onBytecodeValidationComplete(methodAssembled, bytecodeValidator));
-			}
+			if (!validateNode(methodAssembled))
+				return false;
 			// Done
 			lastMethod = methodAssembled;
 			lastAnalysis = transformer.getAnalysis();

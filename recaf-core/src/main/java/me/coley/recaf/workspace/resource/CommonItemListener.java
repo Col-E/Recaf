@@ -6,11 +6,7 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.ItemInfo;
 
 /**
- * Listener for receiving item update events. For usage see:
- * <ul>
- *     <li>{@link #wrapClass(ResourceClassListener)}</li>
- *     <li></li>
- * </ul>
+ * Listener for receiving item update events.
  *
  * @param <I>
  * 		Item type implementation. Either {@link ClassInfo} or {@link FileInfo}.

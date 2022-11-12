@@ -51,6 +51,7 @@ menu.mappings.export=Export
 menu.mappings.generate=Generate
 menu.mappings.view=Current mappings
 menu.scripting=Scripting
+menu.scripting.list=Scripts
 menu.scripting.none-found=No scripts found
 menu.scripting.manage=Manage scripts
 menu.scripting.new=New script
@@ -245,6 +246,7 @@ assembler.playground.title=Java to Bytecode
 assembler.playground.comment=You can write regular Java in here and have it translated to bytecode
 assembler.vartable.title=Variables
 assembler.vartable.empty=<Requires compiling at least once>
+assembler.suggestions.none=No suggestions
 
 ## Search
 search.run=Search

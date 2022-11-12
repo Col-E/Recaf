@@ -1,7 +1,9 @@
 package me.coley.recaf.assemble.analysis;
 
+import me.coley.recaf.assemble.util.InheritanceChecker;
+
 /**
- * Exception to wrap anything going wrong in {@link Frame#merge(Frame, Analyzer)}.
+ * Exception to wrap anything going wrong in {@link Frame#merge(Frame, InheritanceChecker)}.
  *
  * @author Matt Coley
  */

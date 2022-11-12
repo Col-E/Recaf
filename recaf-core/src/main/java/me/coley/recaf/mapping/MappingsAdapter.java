@@ -183,7 +183,7 @@ public class MappingsAdapter implements Mappings {
 		InheritanceVertex vertex = graph.getVertex(owner);
 		if (vertex == null)
 			return null;
-		Iterator<InheritanceVertex> iterator = vertex.parents().iterator();
+		Iterator<InheritanceVertex> iterator = vertex.allParents().iterator();
 		while (iterator.hasNext()) {
 			vertex = iterator.next();
 			MappingKey key = lookup.apply(vertex.getName());

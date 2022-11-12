@@ -1,0 +1,3 @@
+// metadata
+signature Ljava/util/List<Ljava/lang/String;>;
+field static Ljava/util/List; stringList

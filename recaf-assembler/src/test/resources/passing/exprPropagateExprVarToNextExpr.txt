@@ -1,0 +1,13 @@
+method dummy ()V
+a:
+  // We define 'version' in this block
+  expr
+     String version = System.getProperty("java.version");
+  end
+b:
+  // Use the 'version' variable here from the above block.
+  // The variable meta-data should have been propagated along here.
+  expr
+     System.out.println(version);
+  end
+end

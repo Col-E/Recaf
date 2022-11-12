@@ -49,10 +49,24 @@ public abstract class Value {
 	}
 
 	/**
+	 * @return {@code true} if the type is {@link NumericValue}, representing a {@code long} or {@code double}.
+	 */
+	public boolean isWideNumeric() {
+		return isNumeric() && ((NumericValue) this).requireWidePadding();
+	}
+
+	/**
 	 * @return {@code true} if the type is {@link EmptyPoppedValue}.
 	 */
 	public boolean isEmptyStack() {
 		return this instanceof EmptyPoppedValue;
+	}
+
+	/**
+	 * @return {@code true} if the type is {@link WideReservedValue}.
+	 */
+	public boolean isWideReserved() {
+		return this instanceof WideReservedValue;
 	}
 
 	/**
@@ -389,6 +403,14 @@ public abstract class Value {
 		 */
 		public boolean isPrimitive() {
 			return primitive;
+		}
+
+		/**
+		 * @return {@code true} when the value holds a value that requires wide padding.
+		 */
+		public boolean requireWidePadding() {
+			return isPrimitive() &&
+					(type == Type.LONG_TYPE || type == Type.DOUBLE_TYPE);
 		}
 
 		@Override

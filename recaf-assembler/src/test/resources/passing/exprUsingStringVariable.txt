@@ -1,0 +1,10 @@
+method dummy ()V
+a:
+  ldc "hello world"
+  astore text
+b:
+  // Using recently declared variable
+  expr
+     System.out.println(text);
+  end
+end

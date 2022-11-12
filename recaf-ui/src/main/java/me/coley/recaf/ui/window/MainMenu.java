@@ -34,6 +34,7 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.AgentResource;
 import me.coley.recaf.workspace.resource.Resource;
 import org.slf4j.Logger;
 
@@ -53,6 +54,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	private static final Logger logger = Logging.get(MainMenu.class);
 	private static MainMenu menu;
 	private final BooleanProperty noWorkspace = new SimpleBooleanProperty(true);
+	private final BooleanProperty agentWorkspace = new SimpleBooleanProperty(false);
 	private final BooleanProperty remapping = new SimpleBooleanProperty(false);
 	private final MenuLabel status = new MenuLabel("Status: IDLE");
 	private final Menu menuRecent = menu("menu.file.recent", Icons.RECENT);
@@ -82,7 +84,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		itemViewChanges.disableProperty().bind(noWorkspace);
 		itemClose.disableProperty().bind(noWorkspace);
 		menuSearch.disableProperty().bind(noWorkspace);
-		menuMappings.disableProperty().bind(noWorkspace.or(remapping));
+		menuMappings.disableProperty().bind(noWorkspace.or(remapping).or(agentWorkspace));
 		SimpleListProperty<MenuItem> recentItemsProperty = new SimpleListProperty<>(menuRecent.getItems());
 		menuRecent.disableProperty().bind(recentItemsProperty.emptyProperty());
 
@@ -236,10 +238,10 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	 */
 	public void updateScriptMenu(Collection<MenuItem> scriptItems) {
 		menuScripting.getItems().clear();
-		if (scriptItems != null && !scriptItems.isEmpty()) {
-			menuScripting.getItems().addAll(scriptItems);
-			menuScripting.getItems().add(separator());
-		}
+		Menu recent = menu("menu.scripting.list", Icons.FILE_TEXT);
+		if (scriptItems != null)
+			recent.getItems().addAll(scriptItems);
+		menuScripting.getItems().add(recent);
 		menuScripting.getItems().add(action("menu.scripting.manage", Icons.OPEN_FILE, this::openScripts));
 		menuScripting.getItems().add(action("menu.scripting.new", Icons.PLUS,
 				() -> ScriptManagerPane.getInstance().createNewScript()));
@@ -331,6 +333,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 		boolean isEmpty = newWorkspace == null;
 		noWorkspace.set(isEmpty);
 		if (!isEmpty) {
+			agentWorkspace.set(newWorkspace.getResources().getPrimary() instanceof AgentResource);
 			RecentWorkspacesConfig recentWorkspaces = Configs.recentWorkspaces();
 			if (recentWorkspaces.canSerialize(newWorkspace))
 				recentWorkspaces.addWorkspace(newWorkspace);

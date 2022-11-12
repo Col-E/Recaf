@@ -3,13 +3,13 @@ package me.coley.recaf.ui.media;
 import java.io.IOException;
 
 /**
- * A common base for audio players sourced from different back-ends.
+ * A common base for media players sourced from different back-ends.
  *
  * @author Matt Coley
  * @see FxPlayer
  * @see CombinedPlayer
  */
-public abstract class AudioPlayer {
+public abstract class Player {
 	private SpectrumListener listener;
 
 	/**
@@ -61,7 +61,7 @@ public abstract class AudioPlayer {
 	public abstract void load(String path) throws IOException;
 
 	/**
-	 * @return Length of the currently loaded audio in seconds,
+	 * @return Length of the currently loaded media in seconds,
 	 * or a negative value if the duration could not be determined.
 	 */
 	public double getMaxSeconds() {
@@ -69,7 +69,7 @@ public abstract class AudioPlayer {
 	}
 
 	/**
-	 * @return Current offset in the currently loaded audio in seconds,
+	 * @return Current offset in the currently loaded media in seconds,
 	 * or a negative value if the current time could not be determined.
 	 */
 	public double getCurrentSeconds() {

@@ -1,0 +1,7 @@
+method dummy (Ljava/lang/String; text)V
+a:
+  // Using method parameter variable
+  expr
+     System.out.println(text);
+  end
+end

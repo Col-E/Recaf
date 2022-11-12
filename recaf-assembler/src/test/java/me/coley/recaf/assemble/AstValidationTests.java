@@ -99,6 +99,7 @@ public class AstValidationTests extends JasmUtils {
 		@ValueSource(strings = {
 				"field static final dummy I\n" + " 0",
 				"field static       dummy J\n" + " 9000000000L",
+				"field static       dummy C\n" + " 'A'",
 				"field static       dummy F\n" + " 10.5F",
 				"field static       dummy D\n" + " 10.5",
 				"field static       dummy Ljava/lang/String;\n" + " \"text\""

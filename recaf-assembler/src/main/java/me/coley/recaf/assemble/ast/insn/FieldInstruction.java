@@ -59,8 +59,8 @@ public class FieldInstruction extends AbstractInstruction {
 	@Override
 	public String print(PrintContext context) {
 		return getOpcode() + " " +
-				EscapeUtil.escapeSpace(getOwner()) + '.' +
-				EscapeUtil.escapeSpace(getName()) + ' ' +
-				EscapeUtil.escapeSpace(getDesc());
+				EscapeUtil.escapeNonValid(getOwner()) + '.' +
+				EscapeUtil.escapeNonValid(getName()) + ' ' +
+				EscapeUtil.escapeNonValid(getDesc());
 	}
 }

@@ -6,9 +6,9 @@ import me.coley.recaf.compile.CompilerDiagnostic;
 import me.coley.recaf.compile.CompilerResult;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.JavaVersion;
+import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
-import org.slf4j.Logger;
 
 import javax.tools.*;
 import java.io.File;
@@ -27,10 +27,9 @@ public class JavacCompiler extends Compiler {
 	private static final String KEY_TARGET = "target";
 	private static final String KEY_CLASSPATH = "classpath";
 	private static final String KEY_DEBUG = "debug";
-	private static final Logger logger = Logging.get(JavacCompiler.class);
+	private static final DebuggingLogger logger = Logging.get(JavacCompiler.class);
 	private static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 	private final List<Resource> classpath = new ArrayList<>();
-	private boolean logging = true;
 	private JavacListener listener;
 
 	/**
@@ -61,7 +60,7 @@ public class JavacCompiler extends Compiler {
 			String cp = options.get(KEY_CLASSPATH).getValue().toString();
 			args.add("-classpath");
 			args.add(cp);
-			if (logging) logger.trace("Compiler classpath: {}", cp);
+			logger.debugging(l -> l.info("Compiler classpath: {}", cp));
 		}
 		if (options.containsKey(KEY_TARGET)) {
 			int value = (int) options.get(KEY_TARGET).getValue();
@@ -75,31 +74,32 @@ public class JavacCompiler extends Compiler {
 				args.add("-target");
 				args.add(target);
 			}
-			if (logging) logger.debug("Compiler target: {}", target);
+			logger.debugging(l -> l.info("Compiler target: {}", target));
 		}
 		if (options.containsKey(KEY_DEBUG)) {
 			String value = options.get(KEY_DEBUG).getValue().toString();
 			if (value.isEmpty())
 				value = "none";
 			args.add("-g:" + value);
-			if (logging) logger.debug("Compiler debug: {}", value);
+			String finalValue = value;
+			logger.debugging(l -> l.info("Compiler debug: {}", finalValue));
 		} else {
 			args.add("-g:none");
-			if (logging) logger.debug("Compiler debug: none");
+			logger.debugging(l -> l.info("Compiler debug: none"));
 		}
 		// Invoke compiler
 		try {
 			JavaCompiler.CompilationTask task =
 					compiler.getTask(null, fm, listenerWrapper, args, null, unitMap.getFiles());
 			if (task.call()) {
-				if (logging) logger.info("Compilation of '{}' finished", className);
+				logger.debugging(l -> l.info("Compilation of '{}' finished", className));
 				return new CompilerResult(this, unitMap.getCompilations());
 			} else {
-				if (logging) logger.error("Compilation of '{}' failed", className);
+				logger.debugging(l -> l.error("Compilation of '{}' failed", className));
 				return new CompilerResult(this, errors);
 			}
 		} catch (RuntimeException ex) {
-			if (logging) logger.error("Compilation of '{}' crashed: {}", className, ex);
+			logger.debugging(l -> l.error("Compilation of '{}' crashed: {}", className, ex));
 			return new CompilerResult(this, ex);
 		}
 	}
@@ -220,13 +220,5 @@ public class JavacCompiler extends Compiler {
 			value = s.substring(0, value.length() - 1);
 		}
 		return value;
-	}
-
-	/**
-	 * @param logging
-	 * 		Flag to enable/disable logging.
-	 */
-	public void setLogging(boolean logging) {
-		this.logging = logging;
 	}
 }

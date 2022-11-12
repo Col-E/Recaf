@@ -19,20 +19,8 @@ import java.util.TreeSet;
  * @author Matt Coley
  */
 public class PackageSelectDialog extends ConfirmDialog {
-	private PackageListView packageList;
+	private PackageListView packageList = new PackageListView();
 	private String currentPackage;
-
-	/**
-	 * @param title
-	 * 		Dialog window title.
-	 * @param header
-	 * 		Header text.
-	 * @param graphic
-	 * 		Header graphic.
-	 */
-	public PackageSelectDialog(String title, String header, Node graphic) {
-		super(title, header, graphic);
-	}
 
 	/**
 	 * @param title
@@ -44,6 +32,13 @@ public class PackageSelectDialog extends ConfirmDialog {
 	 */
 	public PackageSelectDialog(StringBinding title, StringBinding header, Node graphic) {
 		super(title, header, graphic);
+		GridPane.setHgrow(packageList, Priority.ALWAYS);
+		grid.add(packageList, 0, 0);
+		grid.setPrefWidth(600);
+		// Ensure confirmation is only allowed when a new value is provided.
+		rebindButtonProperty();
+		// Window appears with package list focused.
+		setOnShown(e -> packageList.requestFocus());
 	}
 
 	/**
@@ -84,19 +79,6 @@ public class PackageSelectDialog extends ConfirmDialog {
 	 */
 	public String getSelectedPackage() {
 		return packageList.getSelectionModel().getSelectedItem();
-	}
-
-	@Override
-	protected void init() {
-		super.init();
-		packageList = new PackageListView();
-		GridPane.setHgrow(packageList, Priority.ALWAYS);
-		grid.add(packageList, 0, 0);
-		grid.setPrefWidth(600);
-		// Ensure confirmation is only allowed when a new value is provided.
-		rebindButtonProperty();
-		// Window appears with package list focused.
-		setOnShown(e -> packageList.requestFocus());
 	}
 
 	private void rebindButtonProperty() {

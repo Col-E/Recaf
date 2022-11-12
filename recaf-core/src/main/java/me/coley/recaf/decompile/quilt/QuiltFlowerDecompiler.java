@@ -1,94 +1,66 @@
 package me.coley.recaf.decompile.quilt;
 
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.InnerClassInfo;
 import me.coley.recaf.decompile.DecompileOption;
 import me.coley.recaf.decompile.Decompiler;
 import me.coley.recaf.util.ReflectUtil;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
-import org.jetbrains.java.decompiler.main.ClassesProcessor;
-import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.IdentityRenamerFactory;
-import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.main.Fernflower;
+import org.jetbrains.java.decompiler.main.extern.IContextSource;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-import org.jetbrains.java.decompiler.struct.IDecompiledData;
-import org.jetbrains.java.decompiler.struct.StructClass;
-import org.jetbrains.java.decompiler.struct.StructContext;
-import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.*;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 
 /**
  * QuiltFlower decompiler implementation.
  *
  * @author Matt Coley
  */
-public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData, IBytecodeProvider, IResultSaver {
+public class QuiltFlowerDecompiler extends Decompiler {
 	private static final Logger logger = Logging.get(QuiltFlowerDecompiler.class);
+	private final IFernflowerLogger ffLogger = new QuiltLogger();
+	private final IResultSaver noOpSaver = new NoOpSaver();
 	private final Map<String, Object> fernFlowerProperties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
-	private final ThreadLocal<DecompileContext> context = new ThreadLocal<>();
-	private final LazyLoader loader = new LazyLoader(this);
+	private final ThreadLocal<String> target = new ThreadLocal<>();
+	private final ThreadLocal<String> result = new ThreadLocal<>();
 
 	public QuiltFlowerDecompiler() {
-		super("QuiltFlower", "1.8.1");
+		super("QuiltFlower", "1.9.0");
 		fernFlowerProperties.put("ind", "    ");
 	}
 
 	@Override
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
 		try {
-			StructContext structContext = new StructContext(this, this, loader);
-			ClassesProcessor classesProcessor = new ClassesProcessor(structContext);
-			IFernflowerLogger ffLogger = new IFernflowerLogger() {
-				@Override
-				public void writeMessage(String message, Severity severity) {
-					logger.trace("QuiltFlower: {}", message);
-				}
-
-				@Override
-				public void writeMessage(String message, Severity severity, Throwable t) {
-					if (t instanceof ThreadDeath) {
-						// QuiltFlower catches all throwable types
-						// We must propagate thread death ourselves
-						ReflectUtil.propagate(t);
-					}
-					logger.error("QuiltFlower: {}", message, t);
-				}
-			};
-			DecompilerContext decompilerContext = new DecompilerContext(fernFlowerProperties, ffLogger, structContext, classesProcessor,
-					null, s -> new IdentityRenamerFactory());
-			// Reset input
-			String name = classInfo.getName();
-			DecompileContext context = new DecompileContext(name, classesProcessor);
-			this.context.set(context);
-			// Update the thread-local decompiler context
-			DecompilerContext.setCurrentContext(decompilerContext);
-			// FF wants some odd naming convention where '.class' suffix always exists
-			String qualified = (name + ".class");
-			// Load in the data
-			byte[] code = applyPreInterceptors(classInfo.getValue());
-			structContext.addData(name, qualified, code, true);
-			classesProcessor.loadClasses(null);
-			// Decompile
-			structContext.saveContext();
-			structContext.close();
-			// Cleanup and yield value
-			String decompiled = context.targetDecompiled;
+			// TODO: For batch decompile, do not call this multiple times.
+			//  Create an alternative version that passes the full workspace source with 'addSource'
+			//  then record outputs
+			target.set(classInfo.getName());
+			Fernflower fernflower = new Fernflower(noOpSaver, fernFlowerProperties, ffLogger);
+			fernflower.addSource(new SingleContextSource(workspace, classInfo));
+			fernflower.addLibrary(new FullContextSource(workspace));
+			fernflower.decompileContext();
+			fernflower.clearContext();
+			String decompiled = result.get();
 			if (decompiled == null)
-				return "// Failed to decompile: " + name;
+				return "// Failed to decompile: " + classInfo.getName();
 			return decompiled;
 		} catch (Exception e) {
 			logger.error("QuiltFlower encountered an error when decompiling", e);
 			return "// " + StringUtil.traceToString(e).replace("\n", "\n// ");
 		} finally {
-			context.set(null);
+			target.set(null);
+			result.set(null);
 		}
 	}
 
@@ -98,93 +70,153 @@ public class QuiltFlowerDecompiler extends Decompiler implements IDecompiledData
 		return new HashMap<>();
 	}
 
-	@Override
-	public String getClassEntryName(StructClass cl, String entryName) {
-		DecompileContext context = this.context.get();
-		if (context == null)
-			return null;
-		ClassesProcessor.ClassNode node = context.processor.getMapRootClasses().get(cl.qualifiedName);
-		if (node == null || node.type != ClassesProcessor.ClassNode.CLASS_ROOT) {
-			return null;
-		} else {
-			return cl.qualifiedName;
+	private class SingleContextSource extends BaseContextSource {
+		private final ClassInfo info;
+
+		protected SingleContextSource(Workspace workspace, ClassInfo info) {
+			super(workspace);
+			this.info = info;
+		}
+
+		@Override
+		public Entries getEntries() {
+			// TODO: Bug in QF makes it so that 'addLibrary' doesn't yield inner info for a class provided with 'addSource'
+			//  So for now until this is fixed upstream we will also supply inners here.
+			//  This will make QF decompile each inner class separately as well, but its the best fix for now without
+			//  too much of a perf hit.
+			List<Entry> entries = new ArrayList<>();
+			entries.add(new Entry(info.getName(), Entry.BASE_VERSION));
+			for (InnerClassInfo innerClass : info.getInnerClasses())
+				entries.add(new Entry(innerClass.getName(), Entry.BASE_VERSION));
+			return new Entries(entries, Collections.emptyList(), Collections.emptyList());
 		}
 	}
 
-	@Override
-	public String getClassContent(StructClass cl) {
-		try {
-			DecompileContext context = this.context.get();
-			if (context == null)
-				throw new IllegalStateException("Thread local ClassesProcessor not available!");
-			TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
-			ClassesProcessor proc = context.processor;
-			proc.writeClass(cl, buffer);
-			return buffer.convertToStringAndAllowDataDiscard();
-		} catch (Throwable t) {
-			DecompilerContext.getLogger().writeMessage("Class " + cl.qualifiedName + " couldn't be fully decompiled.", t);
-			return null;
+	private class FullContextSource extends BaseContextSource {
+		protected FullContextSource(Workspace workspace) {
+			super(workspace);
+		}
+
+		@Override
+		public Entries getEntries() {
+			List<Entry> entries = workspace.getResources().getClasses()
+					.map(c -> new Entry(c.getName(), Entry.BASE_VERSION))
+					.collect(Collectors.toList());
+			return new Entries(entries, Collections.emptyList(), Collections.emptyList());
 		}
 	}
 
-	@Override
-	public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
-		// For some reason 'qualifiedName' is the internal class name.
-		DecompileContext context = this.context.get();
-		if (qualifiedName.equals(context.targetClass))
-			context.targetDecompiled = content;
+	private abstract class BaseContextSource implements IContextSource {
+		protected final Workspace workspace;
+
+		protected BaseContextSource(Workspace workspace) {
+			this.workspace = workspace;
+		}
+
+		@Override
+		public String getName() {
+			return "recaf";
+		}
+
+		@Override
+		public InputStream getInputStream(String resource) {
+			String name = resource.substring(0, resource.length() - IContextSource.CLASS_SUFFIX.length());
+			ClassInfo info = workspace.getResources().getClass(name);
+			if (info == null) return InputStream.nullInputStream();
+			return new ByteArrayInputStream(applyPreInterceptors(info.getValue()));
+		}
+
+		@Override
+		public IOutputSink createOutputSink(IResultSaver saver) {
+			return new IOutputSink() {
+				@Override
+				public void begin() {
+					// no-op
+				}
+
+				@Override
+				public void acceptClass(String qualifiedName, String fileName, String content, int[] mapping) {
+					if (target.get().equals(qualifiedName))
+						result.set(content);
+				}
+
+				@Override
+				public void acceptDirectory(String directory) {
+					// no-op
+				}
+
+				@Override
+				public void acceptOther(String path) {
+					// no-op
+				}
+
+				@Override
+				public void close() {
+					// no-op
+				}
+			};
+		}
 	}
 
-	@Override
-	public byte[] getBytecode(String externalPath, String internalPath) {
-		// Does not seem to be used
-		throw new UnsupportedOperationException();
+	/**
+	 * We save results via {@link BaseContextSource#createOutputSink(IResultSaver)} so this can remain empty.
+	 */
+	private static class NoOpSaver implements IResultSaver {
+		@Override
+		public void saveFolder(String path) {
+			// no-op
+		}
+
+		@Override
+		public void copyFile(String source, String path, String entryName) {
+			// no-op
+		}
+
+		@Override
+		public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
+			// no-op
+		}
+
+		@Override
+		public void createArchive(String path, String archiveName, Manifest manifest) {
+			// no-op
+		}
+
+		@Override
+		public void saveDirEntry(String path, String archiveName, String entryName) {
+			// no-op
+		}
+
+		@Override
+		public void copyEntry(String source, String path, String archiveName, String entry) {
+			// no-op
+		}
+
+		@Override
+		public void saveClassEntry(String path, String archiveName, String qualifiedName, String entryName, String content) {
+			// no-op
+		}
+
+		@Override
+		public void closeArchive(String path, String archiveName) {
+			// no-op
+		}
 	}
 
-	@Override
-	public void saveFolder(String path) {
-		// no-op
-	}
+	private static class QuiltLogger extends IFernflowerLogger {
+		@Override
+		public void writeMessage(String message, Severity severity) {
+			logger.trace("QuiltFlower: {}", message);
+		}
 
-	@Override
-	public void copyFile(String source, String path, String entryName) {
-		// no-op
-	}
-
-	@Override
-	public void createArchive(String path, String archiveName, Manifest manifest) {
-		// no-op
-	}
-
-	@Override
-	public void saveDirEntry(String path, String archiveName, String entryName) {
-		// no-op
-	}
-
-	@Override
-	public void copyEntry(String source, String path, String archiveName, String entry) {
-		// no-op
-	}
-
-	@Override
-	public void saveClassEntry(String path, String archiveName, String qualifiedName, String entryName, String content) {
-		// no-op
-	}
-
-	@Override
-	public void closeArchive(String path, String archiveName) {
-		// no-op
-	}
-
-	private static final class DecompileContext {
-
-		final String targetClass;
-		final ClassesProcessor processor;
-		String targetDecompiled;
-
-		DecompileContext(String targetClass, ClassesProcessor processor) {
-			this.targetClass = targetClass;
-			this.processor = processor;
+		@Override
+		public void writeMessage(String message, Severity severity, Throwable t) {
+			if (t instanceof ThreadDeath) {
+				// QuiltFlower catches all throwable types
+				// We must propagate thread death ourselves
+				ReflectUtil.propagate(t);
+			}
+			logger.error("QuiltFlower: {}", message, t);
 		}
 	}
 }

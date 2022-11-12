@@ -4,19 +4,19 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Audio-player that wraps multiple other implementations for wider support.
+ * Media-player that wraps multiple other implementations for wider support.
  *
  * @author Matt Coley
  */
-public class CombinedPlayer extends AudioPlayer {
-	private final List<AudioPlayer> delegates;
-	private AudioPlayer currentPlayer;
+public class CombinedPlayer extends Player {
+	private final List<Player> delegates;
+	private Player currentPlayer;
 
 	/**
 	 * @param delegates
 	 * 		Backing players.
 	 */
-	public CombinedPlayer(List<AudioPlayer> delegates) {
+	public CombinedPlayer(List<Player> delegates) {
 		this.delegates = delegates;
 	}
 
@@ -64,13 +64,14 @@ public class CombinedPlayer extends AudioPlayer {
 		// Reset prior content
 		stop();
 		// Attempt to load content from delegates
-		for (AudioPlayer player : delegates) {
+		for (Player player : delegates) {
 			try {
 				player.load(path);
 				// Success, use ths player
 				currentPlayer = player;
 				return;
 			} catch (IOException ignored) {
+				ignored.printStackTrace();
 				// ignore to allow other delegated players to attempt loading
 			}
 		}

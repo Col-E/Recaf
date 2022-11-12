@@ -154,7 +154,7 @@ public class InheritanceGraph implements ResourceClassListener, ResourceDexClass
 		InheritanceVertex vertex = getVertex(first);
 		if (vertex == null || OBJECT.equals(first) || OBJECT.equals(second))
 			return OBJECT;
-		Set<String> firstParents = getVertex(first).parents()
+		Set<String> firstParents = getVertex(first).allParents()
 				.map(InheritanceVertex::getName)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 		firstParents.add(first);

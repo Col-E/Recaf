@@ -142,7 +142,11 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I>, Iter
 		backing.put(key, priorItem);
 		// Notify listener
 		for (CommonItemListener<I> listener : listeners) {
-			listener.onUpdateItem(container, currentItem, priorItem);
+			try {
+				listener.onUpdateItem(container, currentItem, priorItem);
+			} catch (Throwable t) {
+				logger.error("Uncaught error in resource listener (revert)", t);
+			}
 		}
 	}
 
@@ -216,10 +220,14 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I>, Iter
 		I info = backing.put(key, itemInfo);
 		// Notify listener
 		for (CommonItemListener<I> listener : listeners) {
-			if (info == null) {
-				listener.onNewItem(container, itemInfo);
-			} else {
-				listener.onUpdateItem(container, info, itemInfo);
+			try {
+				if (info == null) {
+					listener.onNewItem(container, itemInfo);
+				} else {
+					listener.onUpdateItem(container, info, itemInfo);
+				}
+			} catch (Throwable t) {
+				logger.error("Uncaught error in resource listener (put)", t);
 			}
 		}
 		// Update history
@@ -236,7 +244,13 @@ public class ResourceItemMap<I extends ItemInfo> implements Map<String, I>, Iter
 		I info = backing.remove(key);
 		if (info != null) {
 			// Notify listener
-			listeners.forEach(listener -> listener.onRemoveItem(container, info));
+			for (CommonItemListener<I> listener : listeners) {
+				try {
+					listener.onRemoveItem(container, info);
+				} catch (Throwable t) {
+					logger.error("Uncaught error in resource listener (remove)", t);
+				}
+			}
 			// Update history
 			removeHistory(info.getName());
 		}

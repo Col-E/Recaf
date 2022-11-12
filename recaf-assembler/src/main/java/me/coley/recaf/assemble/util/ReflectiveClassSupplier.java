@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.util;
 
 import me.coley.recaf.util.IOUtil;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,16 +20,23 @@ public class ReflectiveClassSupplier implements ClassSupplier {
 	}
 
 	@Override
-	public byte[] getClass(String name) {
+	public byte[] getClass(String name) throws ClassNotFoundException {
 		byte[] data = cache.get(name);
-		try {
-			if (data == null) {
-				data = IOUtil.toByteArray(ClassLoader.getSystemResourceAsStream(name + ".class"));
+		if (data == null) {
+			try {
+				InputStream classStream = ClassLoader.getSystemResourceAsStream(name + ".class");
+				if (classStream == null) {
+					throw new ClassNotFoundException(name);
+				}
+				data = IOUtil.toByteArray(classStream);
 				cache.put(name, data);
+			} catch (ClassNotFoundException ex) {
+				// Pass to callee
+				throw ex;
+			} catch (Exception ex) {
+				// return ClassPool.getDefault().makeClass(name.replace('/', '.')).toBytecode();
+				throw new IllegalStateException(ex);
 			}
-		} catch (Exception ex) {
-			//return ClassPool.getDefault().makeClass(name.replace('/', '.')).toBytecode();
-			throw new IllegalStateException(ex);
 		}
 		return data;
 	}

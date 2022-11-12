@@ -319,6 +319,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			return ArgType.HANDLE;
 		} else if (group instanceof IdentifierGroup) {
 			String content = group.content();
+			if (content.length() == 3 && content.charAt(0) == '\'' && content.charAt(2) == '\'')
+				return ArgType.CHAR;
 			switch (content) {
 				case "true":
 				case "false":
@@ -327,6 +329,7 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 				case "Infinity":
 				case "-Infinity":
 					return ArgType.DOUBLE;
+				case "NaNf":
 				case "Infinityf":
 				case "-Infinityf":
 					return ArgType.FLOAT;
@@ -419,14 +422,17 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			HandleGroup handle = (HandleGroup) group;
 			HandleInfo info = from(handle);
 			return info.toHandle();
-		} else if (group.type == Group.GroupType.STRING){
+		} else if (group.type == Group.GroupType.STRING) {
 			return group.content();
 		} else {
 			String content = group.content();
+			if (content.length() == 3 && content.charAt(0) == '\'' && content.charAt(2) == '\'')
+				return content.charAt(1);
 			if (content.equals("true")) return true;
 			if (content.equals("false")) return false;
 			if (content.equals("null")) return null;
 			if (content.equals("NaN")) return Double.NaN;
+			if (content.equals("NaNf")) return Float.NaN;
 			if (content.equals("Infinity")) return Double.POSITIVE_INFINITY;
 			if (content.equals("-Infinity")) return Double.NEGATIVE_INFINITY;
 			if (content.equals("Infinityf")) return Float.POSITIVE_INFINITY;

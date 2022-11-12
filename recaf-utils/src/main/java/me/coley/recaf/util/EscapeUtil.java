@@ -17,6 +17,8 @@ public final class EscapeUtil {
 	public static final String ESCAPED_TAB = "\\u0009";
 	public static final String ESCAPED_NEWLINE = "\\u000A";
 	public static final String ESCAPED_RETURN = "\\u000D";
+	public static final String ESCAPED_DOUBLE_QUOTE = "\\u0022";
+	public static final String ESCAPED_DOUBLE_SLASH = "\\u005C\\u005C";
 
 	private EscapeUtil() {
 	}
@@ -66,15 +68,15 @@ public final class EscapeUtil {
 	}
 
 	/**
-	 * Replaces any escapeable squence with the an escaped sequence, inclduing spaces.
+	 * Replaces any non JASM-compliant characters with an escaped sequence.
 	 *
 	 * @param input
 	 * 		Input text.
 	 *
 	 * @return String without escaped characters.
 	 */
-	public static String escapeSpace(String input) {
-		return visit(input, EscapeUtil::computeUnescapeUnicodeSpace);
+	public static String escapeNonValid(String input) {
+		return visit(input, EscapeUtil::computeUnescapeUnicodeNonValid);
 	}
 
 	/**
@@ -159,7 +161,7 @@ public final class EscapeUtil {
 		return 0;
 	}
 
-	private static int computeUnescapeUnicodeSpace(String input, int cursor, StringBuilder builder) {
+	private static int computeUnescapeUnicodeNonValid(String input, int cursor, StringBuilder builder) {
 		// Bounds check
 		if (cursor >= input.length()) {
 			return 0;
@@ -180,6 +182,12 @@ public final class EscapeUtil {
 				break;
 			case "\r":
 				escaped = ESCAPED_RETURN;
+				break;
+			case "\"" :
+				escaped = ESCAPED_DOUBLE_QUOTE;
+				break;
+			case "//" :
+				escaped = ESCAPED_DOUBLE_SLASH;
 				break;
 		}
 		if (escaped != null) {
