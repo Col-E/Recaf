@@ -200,7 +200,8 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 
 	@Override
 	public void visitField(FieldDeclarationGroup dcl) throws AssemblerException {
-		FieldDefinition field = new FieldDefinition(fromAccessMods(dcl.accessMods), dcl.name.content(), dcl.descriptor.content());
+		FieldDefinition field = wrap(dcl,
+				new FieldDefinition(fromAccessMods(dcl.accessMods), dcl.name.content(), dcl.descriptor.content()));
 
 		if (currentAttributes.getSignature() != null) {
 			field.setSignature(currentAttributes.getSignature());
@@ -223,12 +224,12 @@ public class JasmToAstTransformer implements Visitor, MethodVisitor {
 			parameters.add(new MethodParameter(param.getDescriptorValue(), param.getNameValue()));
 		}
 		this.code = new Code();
-		MethodDefinition method = new MethodDefinition(
+		MethodDefinition method = wrap(dcl, new MethodDefinition(
 				fromAccessMods(dcl.accessMods),
 				content(dcl.name),
 				parameters,
 				dcl.returnType,
-				this.code);
+				this.code));
 		for (ThrownException thrown : currentAttributes.getThrownExceptions()) {
 			method.addThrownException(thrown);
 		}
