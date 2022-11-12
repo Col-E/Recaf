@@ -3,12 +3,10 @@ package me.coley.recaf.assemble.transformer;
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.HandleInfo;
-import me.coley.recaf.assemble.ast.arch.Annotation;
-import me.coley.recaf.assemble.ast.arch.Modifier;
-import me.coley.recaf.assemble.ast.arch.Modifiers;
-import me.coley.recaf.assemble.ast.arch.ThrownException;
+import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.meta.Signature;
 import me.coley.recaf.util.EscapeUtil;
+import me.darknet.assembler.compiler.FieldDescriptor;
 import me.darknet.assembler.compiler.MethodDescriptor;
 import me.darknet.assembler.parser.AssemblerException;
 import me.darknet.assembler.parser.Group;
@@ -38,12 +36,22 @@ public class JasmTransformUtil {
 	}
 
 	public static HandleInfo convertHandle(HandleGroup handle) {
-		MethodDescriptor mdh = new MethodDescriptor(handle.getName().content(), handle.getDescriptor().content());
-		return wrap(handle, new HandleInfo(
-				handle.getHandleType().content(),
-				mdh.getOwner(),
-				mdh.getName(),
-				mdh.getDescriptor()));
+		String desc = handle.getDescriptor().content();
+		if (desc.charAt(0) == '(') {
+			MethodDescriptor mdh = new MethodDescriptor(handle.getName().content(), desc);
+			return wrap(handle, new HandleInfo(
+					handle.getHandleType().content(),
+					mdh.getOwner(),
+					mdh.getName(),
+					mdh.getDescriptor()));
+		} else {
+			FieldDescriptor mdh = new FieldDescriptor(handle.getName().content(), desc);
+			return wrap(handle, new HandleInfo(
+					handle.getHandleType().content(),
+					mdh.getOwner(),
+					mdh.getName(),
+					mdh.getDesc()));
+		}
 	}
 
 	public static Annotation convertAnnotation(AnnotationGroup annotation) throws AssemblerException {
