@@ -1,7 +1,7 @@
 package me.coley.recaf.assemble.pipeline;
 
 import me.coley.recaf.assemble.AstException;
-import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
+import me.coley.recaf.assemble.transformer.JasmToUnitTransformer;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.darknet.assembler.parser.AssemblerException;
 import me.darknet.assembler.parser.ParserContext;
@@ -24,7 +24,7 @@ public interface ParserFailureListener {
 	void onParseFail(AssemblerException ex);
 
 	/**
-	 * Called when {@link AssemblerPipeline#updateAst()} fails due to the {@link JasmToAstTransformer} not
+	 * Called when {@link AssemblerPipeline#updateAst()} fails due to the {@link JasmToUnitTransformer} not
 	 * handling the contents of the parsed {@code List&gt;Group&lt;} from the prior AST parsing.
 	 *
 	 * @param ex

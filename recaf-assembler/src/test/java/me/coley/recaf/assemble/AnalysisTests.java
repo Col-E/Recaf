@@ -6,7 +6,7 @@ import me.coley.recaf.assemble.analysis.Frame;
 import me.coley.recaf.assemble.analysis.Value;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
-import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
+import me.coley.recaf.assemble.transformer.JasmToUnitTransformer;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.darknet.assembler.parser.AssemblerException;
 import me.darknet.assembler.parser.Group;
@@ -642,7 +642,7 @@ public class AnalysisTests extends JasmUtils {
 			assertNotEquals(groups.isEmpty(), true, "Parser did not find unit context with input: " + original);
 
 			// Transform to our AST
-			JasmToAstTransformer transformer = new JasmToAstTransformer(groups);
+			JasmToUnitTransformer transformer = new JasmToUnitTransformer(groups);
 			Unit unit = transformer.generateUnit();
 
 			// Handle

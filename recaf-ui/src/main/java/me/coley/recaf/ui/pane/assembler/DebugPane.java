@@ -68,11 +68,14 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
 						if (empty) {
 							setText(null);
 						} else {
-							setText(item.type.name() + ": " + item.content + " " + item.location.line + ":" + item.location.column);
-							Location loc = item.location;
+							Location loc = item.getLocation();
+							setText(item.getType().name() + ": " +
+									item.getContent() + " " +
+									loc.getLine() + ":" +
+									loc.getColumn());
 							setOnMouseClicked(event -> {
 								if (event.getClickCount() == 2) {
-									assemblerArea.selectPosition(loc.line, loc.column);
+									assemblerArea.selectPosition(loc.getLine(), loc.getColumn());
 								}
 							});
 						}
@@ -134,15 +137,15 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
 			} else if (item == null) {
 				setText("Root");
 			} else {
-				String content = item.value == null ? "" : item.content();
-				Location loc = item.location();
-				setText((loc.line == -1 ? "" : "" + loc.line + " ") + item.type + ": " +
+				String content = item.getValue() == null ? "" : item.content();
+				Location loc = item.getStartLocation();
+				setText((loc.getLine() == -1 ? "" : "" + loc.getLine() + " ") + item.getType() + ": " +
 						content);
 				setOnMouseClicked(event -> {
 					if (event.getClickCount() == 2) {
-						assemblerArea.selectPosition(loc.line, loc.column);
-						listView.getSelectionModel().select(item.value);
-						listView.scrollTo(item.value);
+						assemblerArea.selectPosition(loc.getLine(), loc.getColumn());
+						listView.getSelectionModel().select(item.getValue());
+						listView.scrollTo(item.getValue());
 					}
 				});
 			}

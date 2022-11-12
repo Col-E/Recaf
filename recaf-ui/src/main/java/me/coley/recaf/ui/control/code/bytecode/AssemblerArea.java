@@ -20,7 +20,8 @@ import me.coley.recaf.assemble.suggestions.SuggestionsResults;
 import me.coley.recaf.assemble.suggestions.type.NoSuggestionsSuggestion;
 import me.coley.recaf.assemble.suggestions.type.Suggestion;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
-import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
+import me.coley.recaf.assemble.transformer.JasmToUnitTransformer;
+import me.coley.recaf.assemble.transformer.JasmTransformUtil;
 import me.coley.recaf.assemble.validation.MessageLevel;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.Validator;
@@ -261,9 +262,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		// Get AST group at the position
 		Group group = pipeline.getASTElementAt(position.getMajor() + 1, position.getMinor());
 		if (group != null) {
-			if (group.parent != null) {
-				if (group.parent.type != GroupType.BODY) {
-					group = group.parent;
+			Group parent = group.getParent();
+			if (parent != null) {
+				if (!parent.isType(GroupType.BODY)) {
+					group = parent;
 				}
 			}
 		}
@@ -391,13 +393,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				return null;
 			}
 			String label;
-			if (actual.type != GroupType.CASE_LABEL && actual.type != GroupType.DEFAULT_LABEL) {
-				actual = actual.parent;
+			if (!actual.isType(GroupType.CASE_LABEL) && !actual.isType(GroupType.DEFAULT_LABEL)) {
+				actual = actual.getParent();
 			}
-			if (actual.type == GroupType.CASE_LABEL) {
+			if (actual.isType(GroupType.CASE_LABEL)) {
 				CaseLabelGroup caseLabel = (CaseLabelGroup) actual;
-				label = caseLabel.getVal().getLabel();
-			} else if (actual.type == GroupType.DEFAULT_LABEL) {
+				label = caseLabel.getLabelValue().getLabel();
+			} else if (actual.isType(GroupType.DEFAULT_LABEL)) {
 				DefaultLabelGroup defaultLabel = (DefaultLabelGroup) actual;
 				label = defaultLabel.getLabel();
 			} else {
@@ -420,9 +422,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				return null;
 			}
 			String label = "";
-			if (actual.type == GroupType.LABEL) {
+			if (actual.isType(GroupType.LABEL)) {
 				label = ((LabelGroup) actual).getLabel();
-			} else if (actual.type == GroupType.DEFAULT_LABEL) {
+			} else if (actual.isType(GroupType.DEFAULT_LABEL)) {
 				DefaultLabelGroup defaultLabel = (DefaultLabelGroup) actual;
 				label = defaultLabel.getLabel();
 			}
@@ -440,25 +442,25 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		if (actual == null) {
 			return null;
 		}
-		Group parent = actual.parent;
+		Group parent = actual.getParent();
 		if (parent == null) {
 			return null;
 		}
-		if (parent.type == GroupType.TYPE) {
+		if (parent.isType(GroupType.TYPE)) {
 			TypeGroup type = (TypeGroup) parent;
-			if (type.descriptor.content().startsWith("(")) {
+			if (type.getDescriptor().content().startsWith("(")) {
 				return null;
 			}
 			ClassInfo classInfo = RecafUI.getController().getWorkspace()
-					.getResources().getClass(type.descriptor.content());
+					.getResources().getClass(type.getDescriptor().content());
 			if (classInfo == null) {
-				logger.warn("Cannot find class '{}'", type.descriptor.content());
+				logger.warn("Cannot find class '{}'", type.getDescriptor().content());
 				return null;
 			}
 			return ContextBuilder.forClass(classInfo);
-		} else if (parent.type == GroupType.HANDLE) {
+		} else if (parent.isType(GroupType.HANDLE)) {
 			HandleGroup handle = (HandleGroup) parent;
-			HandleInfo hi = JasmToAstTransformer.from(handle);
+			HandleInfo hi = JasmTransformUtil.convertHandle(handle);
 			CommonClassInfo ownerInfo = RecafUI.getController().getWorkspace()
 					.getResources().getClass(hi.getOwner());
 			if (ownerInfo == null) {

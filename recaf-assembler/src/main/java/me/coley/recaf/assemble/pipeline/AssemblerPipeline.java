@@ -21,7 +21,6 @@ import me.darknet.assembler.parser.*;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -424,10 +423,10 @@ public class AssemblerPipeline {
 	 * @return {@link Group} that is either the {@code root} or a child at the given line and column.
 	 */
 	public Group getASTElementAt(int lineNo, int colPos, Group root) {
-		Token token = root.value; // the root token value
+		Token token = root.getValue(); // the root token value
 		if (token == null) {
 			// group may still have children
-			for (Group child : root.children) {
+			for (Group child : root.getChildren()) {
 				Group grp = getASTElementAt(lineNo, colPos, child);
 				if (grp != null)
 					return grp;
@@ -437,10 +436,10 @@ public class AssemblerPipeline {
 		Location location = token.getLocation(); // get the actual location
 		int line = location.getLine(); // get the line number
 		int startCol = location.getColumn(); // get the start column
-		int endCol = startCol + token.content.length(); // get the end column
+		int endCol = startCol + token.getContent().length(); // get the end column
 		if (line == lineNo && startCol <= colPos && colPos <= endCol) // if the line and column are correct
 			return root;
-		for (Group child : root.children) { // check all the children
+		for (Group child : root.getChildren()) { // check all the children
 			Group grp = getASTElementAt(lineNo, colPos, child); // get the child (or null)
 			if (grp != null) // if there is a child at the given line and column
 				return grp; // return the child
@@ -477,10 +476,10 @@ public class AssemblerPipeline {
 	 * @return {@link Group} that is either the {@code root} or a child at the given line and column.
 	 */
 	public Group getASTElementAt(int position, Group root) {
-		Token token = root.value; // the root token value
+		Token token = root.getValue(); // the root token value
 		if (token == null) {
 			// group may still have children
-			for (Group child : root.children) {
+			for (Group child : root.getChildren()) {
 				Group grp = getASTElementAt(position, child);
 				if (grp != null)
 					return grp;
@@ -491,7 +490,7 @@ public class AssemblerPipeline {
 		int end = token.getEnd();
 		if (start <= position && position <= end) // if the position is between the start and end
 			return root;
-		for (Group child : root.children) { // check all the children
+		for (Group child : root.getChildren()) { // check all the children
 			Group grp = getASTElementAt(position, child); // get the child (or null)
 			if (grp != null) // if there is a child at the given line and column
 				return grp; // return the child
@@ -536,7 +535,7 @@ public class AssemblerPipeline {
 		parserCompletionListeners.forEach(l -> l.onCompleteParse(parsed));
 		// Transform to our AST
 		logger.debugging(l -> l.trace("Assembler AST updating: [JASM --> AST transform]"));
-		JasmToAstTransformer transformer = new JasmToAstTransformer(parsed);
+		JasmToUnitTransformer transformer = new JasmToUnitTransformer(parsed);
 		Unit unit;
 		try {
 			unit = transformer.generateUnit();
