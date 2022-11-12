@@ -18,9 +18,9 @@ import static me.coley.recaf.assemble.validation.ValidationMessage.error;
 public class AstIntInsnValidator implements AstValidationVisitor, Opcodes {
 	@Override
 	public void visit(AstValidator validator) {
-		if (!validator.getUnit().isMethod())
+		if (!validator.getUnit().isCurrentMethod())
 			return;
-		Code code = validator.getUnit().getDefinitionAsMethod().getCode();
+		Code code = validator.getUnit().getCurrentMethod().getCode();
 		if (code == null)
 			return;
 		for (AbstractInstruction instruction : code.getInstructions()) {

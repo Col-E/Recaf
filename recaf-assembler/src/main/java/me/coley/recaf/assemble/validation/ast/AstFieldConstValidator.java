@@ -19,9 +19,9 @@ public class AstFieldConstValidator implements AstValidationVisitor {
 	public void visit(AstValidator validator) {
 		Unit unit = validator.getUnit();
 		// Check const-val on field of wrong type
-		// Check const-val on field that isn't a "constant" thus it wont apply at runtime
-		if (unit.isField()) {
-			FieldDefinition def = (FieldDefinition) unit.getDefinition();
+		// Check const-val on field that isn't a "constant" thus it won't apply at runtime
+		if (unit.isCurrentField()) {
+			FieldDefinition def = unit.getCurrentField();
 			ConstVal value = def.getConstVal();
 			if (value == null)
 				return;
