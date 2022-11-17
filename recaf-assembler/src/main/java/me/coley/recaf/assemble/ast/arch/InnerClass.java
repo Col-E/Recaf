@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.PrintContext;
+import me.coley.recaf.util.EscapeUtil;
 
 public class InnerClass extends BaseElement {
 
@@ -35,10 +36,14 @@ public class InnerClass extends BaseElement {
 
     @Override
     public String print(PrintContext context) {
-        return context.fmtKeyword("innerclass") + ' ' +
-                modifiers.print(context).toLowerCase() + ' ' +
-                name + ' ' +
-                outerName + ' ' +
-                innerName;
+        StringBuilder sb = new StringBuilder();
+        sb.append(context.fmtKeyword("innerclass")).append(' ');
+        if (modifiers.value() > 0) {
+            sb.append(modifiers.print(context).toLowerCase()).append(' ');
+        }
+        sb.append(EscapeUtil.escapeNonValid(name)).append(' ');
+        sb.append(EscapeUtil.escapeNonValid(outerName)).append(' ');
+        sb.append(EscapeUtil.escapeNonValid(innerName));
+        return sb.toString();
     }
 }
