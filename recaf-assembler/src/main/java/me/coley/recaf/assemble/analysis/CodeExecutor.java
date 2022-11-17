@@ -298,7 +298,8 @@ public class CodeExecutor {
 			if (op >= 0) {
 				InstructionExecutor insnExecutor = INSN_EXECUTORS.get(op);
 				if (insnExecutor == null)
-					throw new AnalysisException(instruction, "No instruction executor registered for instruction type");
+					throw new AnalysisException(instruction, "No instruction executor registered for instruction type: "
+							+ instruction.getOpcode());
 				insnExecutor.handle(frame, instruction);
 			}
 		}
@@ -331,6 +332,7 @@ public class CodeExecutor {
 	static {
 		// Instructions are in order of opcode value (see Opcodes from ASM)
 		NopExecutor nopExecutor = new NopExecutor();
+		INSN_EXECUTORS.put(-1, nopExecutor); // catch-all
 		INSN_EXECUTORS.put(NOP, nopExecutor);
 		INSN_EXECUTORS.put(ACONST_NULL, new ConstPushExecutor(new Value.NullValue()));
 		INSN_EXECUTORS.put(ICONST_M1, new ConstPushExecutor(new Value.NumericValue(INT_TYPE, -1)));
