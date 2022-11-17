@@ -14,7 +14,7 @@ dependencies {
     api asm
     api asm_tree
 
-    api "com.github.Nowilltolife:Jasm:$jasmVersion"
+    api "com.github.Nowilltolife:JASM:$jasmVersion"
 
     // Testing
     testImplementation asm_util
