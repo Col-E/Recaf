@@ -88,6 +88,41 @@ public class JasmToUnitTransformer extends AbstractTopLevelGroupVisitor implemen
 			public void visitSignature(SignatureGroup signature) {
 				classDefinition.setSignature(convertSignature(signature));
 			}
+
+			@Override
+			public void visitVersion(VersionGroup version) throws AssemblerException {
+				classDefinition.setVersion(version.getVersion());
+			}
+
+			@Override
+			public void visitSourceFile(SourceFileGroup sourceFile) throws AssemblerException {
+				classDefinition.setSourceFile(sourceFile.getSourceFile());
+			}
+
+			@Override
+			public void visitInnerClass(InnerClassGroup innerClass) throws AssemblerException {
+				classDefinition.addInnerClass(convertInnerClass(innerClass));
+			}
+
+			@Override
+			public void visitNestHost(NestHostGroup nestHost) throws AssemblerException {
+				classDefinition.setNestHost(content(nestHost.getHostName()));
+			}
+
+			@Override
+			public void visitNestMember(NestMemberGroup nestMember) throws AssemblerException {
+				classDefinition.addNestMember(content(nestMember.getMemberName()));
+			}
+
+			@Override
+			public void visitModule(ModuleGroup module) throws AssemblerException {
+
+			}
+
+			@Override
+			public void visitPermittedSubclass(PermittedSubclassGroup permittedSubclass) throws AssemblerException {
+				classDefinition.addPermittedSubclass(content(permittedSubclass.getSubclass()));
+			}
 		};
 	}
 

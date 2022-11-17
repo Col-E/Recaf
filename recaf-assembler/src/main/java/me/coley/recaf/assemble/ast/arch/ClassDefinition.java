@@ -13,8 +13,14 @@ import java.util.List;
  */
 public class ClassDefinition extends AbstractDefinition implements Definition {
 	private final String name;
+	private String sourceFile;
+	private String nestHost;
+	private int version;
 	private String superClass;
 	private final List<String> interfaces;
+	private final List<String> permittedSubclasses = new ArrayList<>();
+	private final List<InnerClass> innerClasses = new ArrayList<>();
+	private final List<String> nestMembers = new ArrayList<>();
 	private final List<FieldDefinition> definedFields = new ArrayList<>();
 	private final List<MethodDefinition> definedMethods = new ArrayList<>();
 
@@ -66,12 +72,36 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		interfaces.add(interfaceName);
 	}
 
+	public void addInnerClass(InnerClass innerClass) {
+		innerClasses.add(innerClass);
+	}
+
+	public void addNestMember(String nestMember) {
+		nestMembers.add(nestMember);
+	}
+
+	public void addPermittedSubclass(String permittedSubclass) {
+		permittedSubclasses.add(permittedSubclass);
+	}
+
 	/**
 	 * @param superClass
 	 * 		New super-type name.
 	 */
 	public void setSuperClass(String superClass) {
 		this.superClass = superClass;
+	}
+
+	public void setSourceFile(String sourceFile) {
+		this.sourceFile = sourceFile;
+	}
+
+	public void setNestHost(String nestHost) {
+		this.nestHost = nestHost;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
 	}
 
 	/**
@@ -94,6 +124,31 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	public String getSuperClass() {
 		return superClass;
 	}
+
+	public String getSourceFile() {
+		return sourceFile;
+	}
+
+	public String getNestHost() {
+		return nestHost;
+	}
+
+	public List<String> getPermittedSubclasses() {
+		return permittedSubclasses;
+	}
+
+	public int getVersion() {
+		return version;
+	}
+
+	public List<String> getNestMembers() {
+		return nestMembers;
+	}
+
+	public List<InnerClass> getInnerClasses() {
+		return innerClasses;
+	}
+
 
 	/**
 	 * @return Interface types the class implements.
@@ -130,7 +185,23 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	@Override
 	public String print(PrintContext context) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(context.fmtKeyword("class ")).append(name);
+		sb.append(context.fmtKeyword("version")).append(' ').append(version - 44).append('\n');
+		if(sourceFile != null) {
+			sb.append(context.fmtKeyword("sourcefile")).append(' ').append(sourceFile).append('\n');
+		}
+		if(nestHost != null) {
+			sb.append(context.fmtKeyword("nesthost")).append(' ').append(nestHost).append('\n');
+		}
+		for (String permittedSubclass : permittedSubclasses) {
+			sb.append(context.fmtKeyword("permittedsubclass")).append(' ').append(permittedSubclass).append('\n');
+		}
+		for (String nestMember : nestMembers) {
+			sb.append(context.fmtKeyword("nestmember")).append(' ').append(nestMember).append('\n');
+		}
+		for (InnerClass innerClass : innerClasses) {
+			sb.append(innerClass.print(context)).append('\n');
+		}
+		sb.append(buildDefString(context, context.fmtKeyword("class"))).append(name);
 		if (superClass != null) {
 			sb.append("\n").append(context.fmtKeyword("extends ")).append(superClass);
 		}

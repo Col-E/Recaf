@@ -356,6 +356,22 @@ public class BytecodeToAstTransformer {
 			transformer.visit();
 			definition.addField(transformer.getUnit().getDefinitionAsField());
 		}
+		definition.setVersion(classNode.version);
+		definition.setSourceFile(classNode.sourceFile);
+		if(classNode.permittedSubclasses != null) {
+			for (String permittedSubclass : classNode.permittedSubclasses) {
+				definition.addPermittedSubclass(permittedSubclass);
+			}
+		}
+		if(classNode.innerClasses != null) {
+			for (InnerClassNode innerClass : classNode.innerClasses) {
+				Modifiers mods = new Modifiers();
+				for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.INNER_CLASS, innerClass.access)) {
+					mods.add(Modifier.byName(flag.getName()));
+				}
+				definition.addInnerClass(new InnerClass(mods, innerClass.name, innerClass.outerName, innerClass.innerName));
+			}
+		}
 		// Done
 		unit = new Unit(definition);
 	}

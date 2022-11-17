@@ -62,6 +62,17 @@ public class JasmTransformUtil {
 		return wrap(annotation, new Annotation(annotation.isInvisible(), annotation.getClassGroup().content(), args));
 	}
 
+	public static InnerClass convertInnerClass(InnerClassGroup innerClass) throws AssemblerException {
+		Modifiers modifiers = new Modifiers();
+		for (AccessModGroup accessMod : innerClass.getAccessMods().getAccessMods())
+			modifiers.add(Modifier.byName(accessMod.content().replace(".", "")));
+		return wrap(innerClass, new InnerClass(
+				modifiers,
+				content(innerClass.getName()),
+				content(innerClass.getOuterName()),
+				content(innerClass.getInnerName())));
+	}
+
 	public static Object convert(Group group) throws AssemblerException {
 		if (group.isType(Group.GroupType.NUMBER)) {
 			return ((NumberGroup) group).getNumber();

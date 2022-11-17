@@ -3,6 +3,7 @@ package me.coley.recaf.assemble.transformer;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.ast.arch.ClassDefinition;
 import me.coley.recaf.assemble.ast.arch.FieldDefinition;
+import me.coley.recaf.assemble.ast.arch.InnerClass;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.util.InheritanceChecker;
@@ -40,6 +41,7 @@ public class AstToClassTransformer {
 		// TODO: This does not populate all possible elements of the class
 		//  - can be completed later though
 		ClassNode node = new ClassNode();
+		node.version = definition.getVersion();
 		node.access = definition.getModifiers().value();
 		node.name = definition.getName();
 		node.superName = definition.getSuperClass();
@@ -56,6 +58,21 @@ public class AstToClassTransformer {
 			methodTransformer.setDefinition(definedMethod);
 			methodTransformer.visit();
 			node.methods.add(methodTransformer.buildMethod());
+		}
+		for (InnerClass innerClass : definition.getInnerClasses()) {
+			node.visitInnerClass(innerClass.getName(),
+					innerClass.getOuterName(),
+					innerClass.getInnerName(),
+					innerClass.getModifiers().value());
+		}
+		if(definition.getSourceFile() != null) {
+			node.sourceFile = definition.getSourceFile();
+		}
+		if(definition.getNestHost() != null) {
+			node.visitNestHost(definition.getNestHost());
+		}
+		for (String nestMember : definition.getNestMembers()) {
+			node.visitNestMember(nestMember);
 		}
 		return node;
 	}
