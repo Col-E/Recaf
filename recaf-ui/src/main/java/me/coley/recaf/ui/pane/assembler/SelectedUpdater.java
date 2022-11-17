@@ -1,10 +1,10 @@
 package me.coley.recaf.ui.pane.assembler;
 
 import javafx.beans.value.ObservableValue;
+import me.coley.recaf.assemble.ContextualPipeline;
+import me.coley.recaf.assemble.ContextualUnit;
 import me.coley.recaf.assemble.ast.Element;
-import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.AbstractDefinition;
-import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 
@@ -13,13 +13,13 @@ import me.coley.recaf.util.logging.Logging;
  */
 public class SelectedUpdater {
 	private static final DebuggingLogger logger = Logging.get(SelectedUpdater.class);
-	private final AssemblerPipeline pipeline;
+	private final ContextualPipeline pipeline;
 
 	/**
 	 * @param pipeline
 	 * 		Assembler pipeline.
 	 */
-	public SelectedUpdater(AssemblerPipeline pipeline) {
+	public SelectedUpdater(ContextualPipeline pipeline) {
 		this.pipeline = pipeline;
 	}
 
@@ -29,7 +29,7 @@ public class SelectedUpdater {
 	 */
 	public void addCaretPositionListener(ObservableValue<Integer> caretObserver) {
 		caretObserver.addListener((observable, priorIndex, currentIndex) -> {
-			Unit unit = pipeline.getUnit();
+			ContextualUnit unit = pipeline.getContextualUnit();
 			if (unit == null)
 				return;
 			if (!unit.isClass())
@@ -43,7 +43,7 @@ public class SelectedUpdater {
 				// Finally, update the child
 				logger.debugging(l -> l.info("Selected child definition in class: {} {}",
 						childDefinition.getName(), childDefinition.getDesc()));
-				unit.getDefinitionAsClass().setCurrentDefinition(childDefinition);
+				pipeline.setCurrentDefinition(childDefinition);
 			}
 		});
 	}

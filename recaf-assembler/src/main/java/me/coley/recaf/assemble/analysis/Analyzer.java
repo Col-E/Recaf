@@ -130,9 +130,9 @@ public class Analyzer {
 		// Simulate execution
 		CodeExecutor executor = new CodeExecutor();
 		executor.setAnalysis(analysis);
-		executor.configure(code);
 		executor.setInheritanceChecker(inheritanceChecker);
 		executor.setExpressionToAstTransformer(expressionToAstTransformer);
+		executor.configure(code);
 		executor.execute();
 	}
 

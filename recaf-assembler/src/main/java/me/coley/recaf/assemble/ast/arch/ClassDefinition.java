@@ -17,7 +17,6 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	private final List<String> interfaces;
 	private final List<FieldDefinition> definedFields = new ArrayList<>();
 	private final List<MethodDefinition> definedMethods = new ArrayList<>();
-	private AbstractDefinition currentDefinition;
 
 	public ClassDefinition(Modifiers modifiers, String name) {
 		this.name = name;
@@ -101,24 +100,6 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	 */
 	public List<String> getInterfaces() {
 		return interfaces;
-	}
-
-	/**
-	 * @param currentDefinition
-	 * 		New selection within the class.
-	 */
-	public void setCurrentDefinition(AbstractDefinition currentDefinition) {
-		// Must be a valid definition within the class.
-		if (!definedFields.contains(currentDefinition) || !definedMethods.contains(currentDefinition))
-			return;
-		this.currentDefinition = currentDefinition;
-	}
-
-	/**
-	 * @return Currently selected definition.
-	 */
-	public AbstractDefinition getCurrentDefinition() {
-		return currentDefinition;
 	}
 
 	@Override

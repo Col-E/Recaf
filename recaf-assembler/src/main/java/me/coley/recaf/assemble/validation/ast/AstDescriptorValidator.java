@@ -2,6 +2,8 @@ package me.coley.recaf.assemble.validation.ast;
 
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.Code;
+import me.coley.recaf.assemble.ast.Unit;
+import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Handle;
@@ -20,11 +22,18 @@ import static me.coley.recaf.assemble.validation.ValidationMessage.error;
 public class AstDescriptorValidator implements AstValidationVisitor {
 	@Override
 	public void visit(AstValidator validator) {
-		Predicate<String> isValid = Types::isValidDesc;
+		Unit unit = validator.getUnit();
+		if (unit.isClass()) {
+			for (MethodDefinition method : unit.getDefinitionAsClass().getDefinedMethods()) {
+				handle(validator, method);
+			}
+		} else if (unit.isMethod())
+			handle(validator, unit.getDefinitionAsMethod());
+	}
 
-		if (!validator.getUnit().isCurrentMethod())
-			return;
-		Code code = validator.getUnit().getCurrentMethod().getCode();
+	private static void handle(AstValidator validator, MethodDefinition methodDefinition) {
+		Predicate<String> isValid = Types::isValidDesc;
+		Code code = methodDefinition.getCode();
 		if (code == null)
 			return;
 		for (AbstractInstruction instruction : code.getInstructions()) {

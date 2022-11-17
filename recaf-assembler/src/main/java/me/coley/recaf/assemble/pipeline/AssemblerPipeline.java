@@ -44,11 +44,11 @@ public class AssemblerPipeline {
 	// Inputs
 	private String type;
 	private String text;
+	private boolean doUseAnalysis = true;
 	// States
 	private boolean textDirty = true;
 	private boolean unitOutdated = true;
 	private boolean outputOutdated = true;
-	private boolean doUseAnalysis = true;
 	// Outputs
 	private Unit unit;
 	private List<Group> latestJasmGroups;
@@ -224,6 +224,14 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * @return {@code true} for when analysis is to be done for method generation,
+	 * allowing more accurate error messages, local variables, and stack analysis.
+	 */
+	public boolean doUseAnalysis() {
+		return doUseAnalysis;
+	}
+
+	/**
 	 * Updates input text. Changes the state so that
 	 *
 	 * @param newText
@@ -281,7 +289,11 @@ public class AssemblerPipeline {
 	 * {@code false} when up-to-date.
 	 */
 	public boolean isOutputOutdated() {
-		return outputOutdated || (isMethod() ? lastMethod != null : lastField != null);
+		if (outputOutdated) return true;
+		if (isMethod() && lastMethod == null) return true;
+		if (isField() && lastField == null) return true;
+		if (isClass() && lastClass == null) return true;
+		return false;
 	}
 
 	/**
@@ -313,12 +325,32 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * Protected since this is intended to only be used by child implementations of {@link AssemblerPipeline}.
+	 *
+	 * @param lastVariables
+	 * 		Last collection of generated variables.
+	 */
+	protected void setLastVariables(Variables lastVariables) {
+		this.lastVariables = lastVariables;
+	}
+
+	/**
 	 * Analysis is only done when {@link }
 	 *
 	 * @return Last analysis from {@link #generateMethod()}.
 	 */
 	public Analysis getLastAnalysis() {
 		return lastAnalysis;
+	}
+
+	/**
+	 * Protected since this is intended to only be used by child implementations of {@link AssemblerPipeline}.
+	 *
+	 * @param lastAnalysis
+	 * 		Last analysis.
+	 */
+	protected void setLastAnalysis(Analysis lastAnalysis) {
+		this.lastAnalysis = lastAnalysis;
 	}
 
 	/**
@@ -350,9 +382,9 @@ public class AssemblerPipeline {
 	 * {@code null} if no AST is available.
 	 */
 	public Element getCodeElementAt(int position) {
-		if (unit == null || !unit.isCurrentMethod())
+		if (unit == null || !unit.isMethod())
 			return null;
-		Code code = unit.getCurrentMethod().getCode();
+		Code code = unit.getDefinitionAsMethod().getCode();
 		if (code == null)
 			return null;
 		return code.getChildAt(position);

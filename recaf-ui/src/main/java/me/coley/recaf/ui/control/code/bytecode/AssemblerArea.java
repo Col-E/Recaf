@@ -6,6 +6,7 @@ import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
+import me.coley.recaf.assemble.ContextualPipeline;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.analysis.Frame;
@@ -20,7 +21,6 @@ import me.coley.recaf.assemble.suggestions.SuggestionsResults;
 import me.coley.recaf.assemble.suggestions.type.NoSuggestionsSuggestion;
 import me.coley.recaf.assemble.suggestions.type.Suggestion;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
-import me.coley.recaf.assemble.transformer.JasmToUnitTransformer;
 import me.coley.recaf.assemble.transformer.JasmTransformUtil;
 import me.coley.recaf.assemble.validation.MessageLevel;
 import me.coley.recaf.assemble.validation.ValidationMessage;
@@ -98,7 +98,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * @param pipeline
 	 * 		Assembler pipeline.
 	 */
-	public AssemblerArea(ProblemTracking problemTracking, AssemblerPipeline pipeline) {
+	public AssemblerArea(ProblemTracking problemTracking, ContextualPipeline pipeline) {
 		super(Languages.JAVA_BYTECODE, problemTracking);
 		this.problemTracking = problemTracking;
 		this.pipeline = pipeline;
@@ -525,9 +525,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 */
 	private SaveResult generateField(boolean apply) {
 		// Generate field
-		if (!pipeline.generateField())
+		if (pipeline.isOutputOutdated() && !pipeline.generateField())
 			return SaveResult.FAILURE;
 		FieldNode fieldAssembled = pipeline.getLastField();
+		if (fieldAssembled == null)
+			logger.error("Field was not assembled after pipeline completion!");
 		// Check if there were reported errors
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
@@ -547,9 +549,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 */
 	private SaveResult generateMethod(boolean apply) {
 		// Generate method if not up-to-date
-		if (pipeline.isUnitOutdated() && !pipeline.generateMethod())
+		if (pipeline.isOutputOutdated() && !pipeline.generateMethod())
 			return SaveResult.FAILURE;
 		MethodNode methodAssembled = pipeline.getLastMethod();
+		if (methodAssembled == null)
+			logger.error("Class was not assembled after pipeline completion!");
 		// Check if there were reported errors
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
@@ -569,9 +573,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 */
 	private SaveResult generateClass(boolean apply) {
 		// Generate method if not up-to-date
-		if (pipeline.isUnitOutdated() && !pipeline.generateClass())
+		if (pipeline.isOutputOutdated() && !pipeline.generateClass())
 			return SaveResult.FAILURE;
 		ClassNode classAssembled = pipeline.getLastClass();
+		if (classAssembled == null)
+			logger.error("Class was not assembled after pipeline completion!");
 		// Check if there were reported errors
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
@@ -613,7 +619,26 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * @return Result of update operation.
 	 */
 	private SaveResult updateClass(ClassNode updatedClass) {
-		return updateClass(cw -> updatedClass);
+		// Because we are operating on whole class that likely hasn't gotten any frames,
+		// we're going to need to compute them.
+		int flags = ClassWriter.COMPUTE_FRAMES;
+		ClassWriter cw = new WorkspaceClassWriter(RecafUI.getController(), flags);
+		try {
+			updatedClass.accept(cw);
+		} catch (Exception ex) {
+			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(ex, getClass());
+			String classLocation = trace[0].getClassName();
+			if ("org.objectweb.asm.Frame".equals(classLocation))
+				logger.error("Failed to reassemble method (ASM frame generation)", ex);
+			else
+				logger.error("Failed to reassemble method (Unknown)", ex);
+			return SaveResult.FAILURE;
+		}
+		// Done, update the workspace
+		byte[] updatedBytecode = cw.toByteArray();
+		Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
+		resource.getClasses().put(ClassInfo.read(updatedBytecode));
+		return SaveResult.SUCCESS;
 	}
 
 	/**
@@ -645,9 +670,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			return SaveResult.FAILURE;
 		}
 		// Done, update the workspace
-		byte[] updatedClass = cw.toByteArray();
+		byte[] updatedBytecode = cw.toByteArray();
 		Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
-		resource.getClasses().put(ClassInfo.read(updatedClass));
+		resource.getClasses().put(ClassInfo.read(updatedBytecode));
 		return SaveResult.SUCCESS;
 	}
 

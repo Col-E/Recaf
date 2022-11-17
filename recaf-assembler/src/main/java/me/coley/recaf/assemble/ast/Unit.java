@@ -101,39 +101,4 @@ public class Unit extends BaseElement {
 			throw new IllegalStateException("Not a method");
 		return (MethodDefinition) definition;
 	}
-
-	public AbstractDefinition getCurrentDefinition() {
-		// TODO: The concept of 'selection' should not be defined in the AST model.
-		//   This should be moved elsewhere. Refer to PR #611 to see the scope of this change-set
-		if (definition.isClass()) {
-			AbstractDefinition currentSelection = getDefinitionAsClass().getCurrentDefinition();
-			return currentSelection == null ? definition : currentSelection;
-		} else return definition;
-	}
-
-	public boolean isCurrentMethod() {
-		return getCurrentDefinition().isMethod();
-	}
-
-	public boolean isCurrentField() {
-		return getCurrentDefinition().isField();
-	}
-
-	public boolean isCurrentClass() {
-		return getCurrentDefinition().isClass();
-	}
-
-	public MethodDefinition getCurrentMethod() {
-		AbstractDefinition def = getCurrentDefinition();
-		if (!def.isMethod())
-			throw new IllegalStateException("Not a method");
-		return (MethodDefinition) def;
-	}
-
-	public FieldDefinition getCurrentField() {
-		AbstractDefinition def = getCurrentDefinition();
-		if (!def.isField())
-			throw new IllegalStateException("Not a field");
-		return (FieldDefinition) def;
-	}
 }

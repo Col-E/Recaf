@@ -3,11 +3,10 @@ package me.coley.recaf.ui.pane.assembler;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
+import me.coley.recaf.assemble.ContextualPipeline;
 import me.coley.recaf.assemble.ast.Element;
-import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.VariableReference;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
-import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.ui.control.code.IndicatorApplier;
 import me.coley.recaf.ui.control.code.IndicatorFactory;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
@@ -23,7 +22,7 @@ import java.util.List;
  */
 public class VariableHighlighter implements IndicatorApplier {
 	private final List<Integer> linesToRefresh = new ArrayList<>();
-	private final AssemblerPipeline pipeline;
+	private final ContextualPipeline pipeline;
 	private final AssemblerArea assemblerArea;
 	private String targetId;
 
@@ -33,7 +32,7 @@ public class VariableHighlighter implements IndicatorApplier {
 	 * @param assemblerArea
 	 * 		Target assembler area.
 	 */
-	public VariableHighlighter(AssemblerPipeline pipeline, AssemblerArea assemblerArea) {
+	public VariableHighlighter(ContextualPipeline pipeline, AssemblerArea assemblerArea) {
 		this.pipeline = pipeline;
 		this.assemblerArea = assemblerArea;
 	}
@@ -80,10 +79,9 @@ public class VariableHighlighter implements IndicatorApplier {
 			linesToRefresh.clear();
 		}
 		// Redraw new matched lines
-		Unit unit = pipeline.getUnit();
-		if (unit == null || !unit.isCurrentMethod())
+		if (!pipeline.isCurrentMethod())
 			return;
-		for (AbstractInstruction instruction : unit.getCurrentMethod().getCode().getInstructions()) {
+		for (AbstractInstruction instruction : pipeline.getCurrentMethod().getCode().getInstructions()) {
 			if (instruction instanceof VariableReference) {
 				int line = instruction.getLine();
 				if (line > 0)

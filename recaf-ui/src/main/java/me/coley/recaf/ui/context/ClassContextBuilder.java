@@ -125,7 +125,8 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 				// Open assembler.
 				AssemblerPane assembler = new AssemblerPane();
 				assembler.onUpdate(getCurrent());
-				new GenericWindow(assembler, 800, 300).show();
+				assembler.setTargetMember(null);
+				new GenericWindow(assembler, 800, 600).show();
 			} else {
 				logger.error("No class info for {}", name);
 			}
