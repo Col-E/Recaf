@@ -176,9 +176,9 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 						String text = name;
 						if (outlinePane.showTypes.get()) {
 							String type;
-							if (Types.isValidDesc(desc))
-								type = StringUtil.shortenPath(Type.getType(desc).getInternalName());
-							else type = "<INVALID>";
+							if (Types.isValidDesc(desc)) {
+								type = Types.pretty(Type.getType(desc));
+							} else type = "<INVALID>";
 							text = type + " " + text;
 						}
 						return StringUtil.limit(EscapeUtil.escape(text), "...", Configs.display().maxTreeTextLength.get());
@@ -192,9 +192,9 @@ public class OutlineTree extends TreeView<ItemInfo> implements Updatable<CommonC
 						String text = name;
 						if (outlinePane.showTypes.get()) {
 							text += "(" + Arrays.stream(Type.getArgumentTypes(desc))
-									.map(argType -> StringUtil.shortenPath(argType.getInternalName()))
+									.map(Types::pretty)
 									.collect(Collectors.joining(", ")) +
-									")" + StringUtil.shortenPath(Type.getReturnType(desc).getInternalName());
+									")" + Types.pretty(Type.getReturnType(desc));
 						}
 						return StringUtil.limit(EscapeUtil.escape(text), "...", Configs.display().maxTreeTextLength.get());
 					}, outlinePane.showTypes, Configs.display().maxTreeTextLength));
