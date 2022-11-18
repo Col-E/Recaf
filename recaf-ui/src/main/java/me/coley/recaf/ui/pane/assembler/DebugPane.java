@@ -93,7 +93,9 @@ public class DebugPane extends BorderPane implements ParserCompletionListener {
 		public GroupTreeItem add(Group group) {
 			GroupTreeItem item = new GroupTreeItem(group);
 			for (Group child : group.getChildren()) {
-				item.getChildren().add(add(child));
+				if(child != null) {
+					item.getChildren().add(add(child));
+				}
 			}
 			return item;
 		}

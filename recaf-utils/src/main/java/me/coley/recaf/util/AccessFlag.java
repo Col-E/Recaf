@@ -32,6 +32,9 @@ public enum AccessFlag {
 			Type.CLASS, Type.INNER_CLASS, Type.METHOD, Type.FIELD, Type.PARAM),
 	ACC_ANNOTATION(Opcodes.ACC_ANNOTATION, "annotation-interface", false, Type.CLASS, Type.INNER_CLASS),
 	ACC_ENUM(Opcodes.ACC_ENUM, "enum", true, Type.CLASS, Type.INNER_CLASS, Type.FIELD),
+	ACC_OPEN(Opcodes.ACC_OPEN, "open", false, Type.MODULE),
+	ACC_STATIC_PHASE(Opcodes.ACC_STATIC_PHASE, "static-phase", false, Type.MODULE),
+	ACC_TRANSITIVE(Opcodes.ACC_TRANSITIVE, "transitive", false, Type.MODULE),
 	ACC_MODULE(Opcodes.ACC_MODULE, "module", false, Type.CLASS),
 	ACC_MANDATED(Opcodes.ACC_MANDATED, "mandated", false, Type.PARAM);
 
@@ -603,6 +606,7 @@ public enum AccessFlag {
 		INNER_CLASS("public protected private abstract static final strictfp interface annotation-interface enum module"),
 		METHOD("public protected private abstract static final synchronized native strictfp"),
 		FIELD("public protected private static final transient volatile"),
+		MODULE("open mandated synthetic mandated"),
 		PARAM("final");
 
 		private final String order;

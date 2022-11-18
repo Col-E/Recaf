@@ -5,10 +5,13 @@ import me.coley.recaf.assemble.ast.arch.ClassDefinition;
 import me.coley.recaf.assemble.ast.arch.FieldDefinition;
 import me.coley.recaf.assemble.ast.arch.InnerClass;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
+import me.coley.recaf.assemble.ast.arch.module.*;
+import me.coley.recaf.assemble.ast.arch.module.Module;
 import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.util.ReflectiveClassSupplier;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
+import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 
@@ -73,6 +76,29 @@ public class AstToClassTransformer {
 		}
 		for (String nestMember : definition.getNestMembers()) {
 			node.visitNestMember(nestMember);
+		}
+		Module module = definition.getModule();
+		if(module != null) {
+			ModuleVisitor visitor = node.visitModule(module.getName(), module.getModifiers().value(), module.getVersion());
+			for (String aPackage : module.getPackages()) {
+				visitor.visitPackage(aPackage);
+			}
+			for (ModuleRequire require : module.getRequires()) {
+				visitor.visitRequire(require.getName(), require.getModifiers().value(), require.getVersion());
+			}
+			for (ModuleExport export : module.getExports()) {
+				visitor.visitExport(export.getName(), export.getModifiers().value(), export.getPackages().toArray(new String[0]));
+			}
+			for (ModuleOpen open : module.getOpens()) {
+				visitor.visitOpen(open.getName(), open.getModifiers().value(), open.getPackages().toArray(new String[0]));
+			}
+			for (String use : module.getUses()) {
+				visitor.visitUse(use);
+			}
+			for (ModuleProvide provide : module.getProvides()) {
+				visitor.visitProvide(provide.getName(), provide.getPackages().toArray(new String[0]));
+			}
+			visitor.visitEnd();
 		}
 		return node;
 	}

@@ -77,6 +77,9 @@ public class Modifier extends BaseElement implements Named {
 		nameMap.put("annotation-interface", new Modifier("ANNOTATION-INTERFACE", Opcodes.ACC_ANNOTATION));
 		nameMap.put("enum", new Modifier("ENUM", Opcodes.ACC_ENUM));
 		nameMap.put("module", new Modifier("MODULE", Opcodes.ACC_MODULE));
+		nameMap.put("open", new Modifier("OPEN", Opcodes.ACC_OPEN));
+		nameMap.put("transitive", new Modifier("TRANSITIVE", Opcodes.ACC_TRANSITIVE));
+		nameMap.put("static-phase", new Modifier("STATIC-PHASE", Opcodes.ACC_STATIC_PHASE));
 		nameMap.put("mandated", new Modifier("MANDATED", Opcodes.ACC_MANDATED));
 	}
 }

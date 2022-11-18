@@ -4,6 +4,8 @@ import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.arch.*;
+import me.coley.recaf.assemble.ast.arch.module.*;
+import me.coley.recaf.assemble.ast.arch.module.Module;
 import me.coley.recaf.assemble.ast.meta.Signature;
 import me.coley.recaf.util.EscapeUtil;
 import me.darknet.assembler.compiler.FieldDescriptor;
@@ -13,6 +15,7 @@ import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.Location;
 import me.darknet.assembler.parser.Token;
 import me.darknet.assembler.parser.groups.*;
+import me.darknet.assembler.parser.groups.module.*;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
@@ -71,6 +74,63 @@ public class JasmTransformUtil {
 				content(innerClass.getName()),
 				content(innerClass.getOuterName()),
 				content(innerClass.getInnerName())));
+	}
+
+	public static Module convertModule(ModuleGroup moduleGroup) throws AssemblerException {
+		Modifiers modifiers = new Modifiers();
+		for (AccessModGroup accessMod : moduleGroup.getAccessMods().getAccessMods())
+			modifiers.add(Modifier.byName(accessMod.content().replace(".", "")));
+		String name = content(moduleGroup.getName());
+		String version = content(moduleGroup.getVersion());
+		Module module = new Module(name, modifiers);
+		module.setVersion(version);
+		if(moduleGroup.getMainClass() != null) {
+			module.setMainClass(content(moduleGroup.getMainClass()));
+		}
+		for (PackageGroup aPackage : moduleGroup.getPackages()) {
+			module.addPackage(content(aPackage.getPackageClass()));
+		}
+		for (RequireGroup require : moduleGroup.getRequires()) {
+			Modifiers requireModifiers = new Modifiers();
+			for (AccessModGroup accessMod : require.getAccessMods().getAccessMods())
+				requireModifiers.add(Modifier.byName(accessMod.content().replace(".", "")));
+			ModuleRequire moduleRequire = new ModuleRequire(content(require.getModule()), requireModifiers);
+			if(require.getVersion() != null) {
+				moduleRequire.setVersion(content(require.getVersion()));
+			}
+			module.addRequire(moduleRequire);
+		}
+		for (ExportGroup export : moduleGroup.getExports()) {
+			Modifiers exportModifiers = new Modifiers();
+			for (AccessModGroup accessMod : export.getAccessMods().getAccessMods())
+				exportModifiers.add(Modifier.byName(accessMod.content().replace(".", "")));
+			ModuleExport moduleExport = new ModuleExport(content(export.getModule()), exportModifiers);
+			for (IdentifierGroup identifierGroup : export.getTo().getTo()) {
+				moduleExport.addPackage(content(identifierGroup));
+			}
+			module.addExport(moduleExport);
+		}
+		for (OpenGroup open : moduleGroup.getOpens()) {
+			Modifiers openModifiers = new Modifiers();
+			for (AccessModGroup accessMod : open.getAccessMods().getAccessMods())
+				openModifiers.add(Modifier.byName(accessMod.content().replace(".", "")));
+			ModuleOpen moduleExport = new ModuleOpen(content(open.getModule()), openModifiers);
+			for (IdentifierGroup identifierGroup : open.getTo().getTo()) {
+				moduleExport.addPackage(content(identifierGroup));
+			}
+			module.addOpen(moduleExport);
+		}
+		for (UseGroup use : moduleGroup.getUses()) {
+			module.addUse(content(use.getService()));
+		}
+		for (ProvideGroup provide : moduleGroup.getProvides()) {
+			ModuleProvide moduleProvide = new ModuleProvide(content(provide.getService()));
+			for (IdentifierGroup identifierGroup : provide.getWith()) {
+				moduleProvide.addPackage(content(identifierGroup));
+			}
+			module.addProvide(moduleProvide);
+		}
+		return module;
 	}
 
 	public static Object convert(Group group) throws AssemblerException {

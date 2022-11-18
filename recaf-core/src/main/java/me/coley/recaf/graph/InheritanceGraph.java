@@ -238,9 +238,11 @@ public class InheritanceGraph implements ResourceClassListener, ResourceDexClass
 		if (!newValue.getName().equals(name))
 			throw new IllegalStateException("onUpdateClass should not permit a class name change");
 		// Update hierarchy now that super-name changed
-		if (!oldValue.getSuperName().equals(newValue.getSuperName())) {
-			removeParentToChildLookup(name, oldValue.getSuperName());
-			populateParentToChildLookup(name, newValue.getSuperName());
+		if(oldValue.getSuperName() != null && newValue.getSuperName() != null) {
+			if (!oldValue.getSuperName().equals(newValue.getSuperName())) {
+				removeParentToChildLookup(name, oldValue.getSuperName());
+				populateParentToChildLookup(name, newValue.getSuperName());
+			}
 		}
 		// Same deal, but for interfaces
 		Set<String> interfaces = new HashSet<>(oldValue.getInterfaces());

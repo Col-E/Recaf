@@ -17,6 +17,7 @@ import me.darknet.assembler.parser.Token;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * An extension of the {@link AssemblerPipeline} to support context-sensitive behaviors when working with
@@ -70,6 +71,8 @@ public class ContextualPipeline extends AssemblerPipeline implements ParserCompl
 	 */
 	public void setCurrentDefinition(AbstractDefinition currentDefinition) {
 		if (contextualUnit != null) {
+			if(Objects.equals(contextualUnit.getCurrentDefinition(), currentDefinition))
+				return;
 			contextualUnit.setCurrentDefinition(currentDefinition);
 			if (currentDefinition.isMethod()) {
 				try {

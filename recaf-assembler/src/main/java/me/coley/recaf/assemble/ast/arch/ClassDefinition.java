@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.PrintContext;
+import me.coley.recaf.assemble.ast.arch.module.Module;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +18,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	private String nestHost;
 	private int version;
 	private String superClass;
+	private Module module;
 	private final List<String> interfaces;
 	private final List<String> permittedSubclasses = new ArrayList<>();
 	private final List<InnerClass> innerClasses = new ArrayList<>();
@@ -26,7 +28,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 
 	public ClassDefinition(Modifiers modifiers, String name) {
 		this.name = name;
-		this.superClass = "java/lang/Object";
+		this.superClass = null;
 		this.interfaces = new ArrayList<>();
 		setModifiers(modifiers);
 	}
@@ -104,6 +106,10 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		this.version = version;
 	}
 
+	public void setModule(Module module) {
+		this.module = module;
+	}
+
 	/**
 	 * @return Fields defined in the class.
 	 */
@@ -139,6 +145,10 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 
 	public int getVersion() {
 		return version;
+	}
+
+	public Module getModule() {
+		return module;
 	}
 
 	public List<String> getNestMembers() {
@@ -200,6 +210,9 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		}
 		for (InnerClass innerClass : innerClasses) {
 			sb.append(innerClass.print(context)).append('\n');
+		}
+		if(module != null) {
+			sb.append(module.print(context)).append('\n');
 		}
 		sb.append(buildDefString(context, context.fmtKeyword("class"))).append(name);
 		if (superClass != null) {

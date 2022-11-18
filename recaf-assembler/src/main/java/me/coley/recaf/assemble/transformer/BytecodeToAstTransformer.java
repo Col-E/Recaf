@@ -5,6 +5,8 @@ import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.*;
+import me.coley.recaf.assemble.ast.arch.module.*;
+import me.coley.recaf.assemble.ast.arch.module.Module;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.ast.meta.Signature;
@@ -371,6 +373,85 @@ public class BytecodeToAstTransformer {
 				}
 				definition.addInnerClass(new InnerClass(mods, innerClass.name, innerClass.outerName, innerClass.innerName));
 			}
+		}
+		if(classNode.module != null) {
+			ModuleNode moduleNode = classNode.module;
+			Modifiers mods = new Modifiers();
+			for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.MODULE, moduleNode.access)) {
+				mods.add(Modifier.byName(flag.getName()));
+			}
+			Module module = new Module(moduleNode.name, mods);
+			if(moduleNode.version != null) {
+				module.setVersion(moduleNode.version);
+			}
+			if(moduleNode.mainClass != null) {
+				module.setMainClass(moduleNode.mainClass);
+			}
+			if(moduleNode.packages != null) {
+				for (String pkg : moduleNode.packages) {
+					module.addPackage(pkg);
+				}
+			}
+			if(moduleNode.requires != null) {
+				for (ModuleRequireNode requires : moduleNode.requires) {
+					Modifiers reqMods = new Modifiers();
+					for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.MODULE, requires.access)) {
+						reqMods.add(Modifier.byName(flag.getName()));
+					}
+					ModuleRequire moduleRequire = new ModuleRequire(requires.module, reqMods);
+					if(requires.version != null) {
+						moduleRequire.setVersion(requires.version);
+					}
+					module.addRequire(moduleRequire);
+				}
+			}
+			if(moduleNode.exports != null) {
+				for (ModuleExportNode exports : moduleNode.exports) {
+					Modifiers expMods = new Modifiers();
+					for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.MODULE, exports.access)) {
+						expMods.add(Modifier.byName(flag.getName()));
+					}
+					ModuleExport moduleExport = new ModuleExport(exports.packaze, expMods);
+					if(exports.modules != null) {
+						for (String target : exports.modules) {
+							moduleExport.addPackage(target);
+						}
+					}
+					module.addExport(moduleExport);
+				}
+			}
+			if(moduleNode.opens != null) {
+				for (ModuleOpenNode opens : moduleNode.opens) {
+					Modifiers opnMods = new Modifiers();
+					for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.MODULE, opens.access)) {
+						opnMods.add(Modifier.byName(flag.getName()));
+					}
+					ModuleOpen moduleOpen = new ModuleOpen(opens.packaze, opnMods);
+					if(opens.modules != null) {
+						for (String target : opens.modules) {
+							moduleOpen.addPackage(target);
+						}
+					}
+					module.addOpen(moduleOpen);
+				}
+			}
+			if(moduleNode.uses != null) {
+				for (String service : moduleNode.uses) {
+					module.addUse(service);
+				}
+			}
+			if(moduleNode.provides != null) {
+				for (ModuleProvideNode provides : moduleNode.provides) {
+					ModuleProvide moduleProvide = new ModuleProvide(provides.service);
+					if(provides.providers != null) {
+						for (String provider : provides.providers) {
+							moduleProvide.addPackage(provider);
+						}
+					}
+					module.addProvide(moduleProvide);
+				}
+			}
+			definition.setModule(module);
 		}
 		// Done
 		unit = new Unit(definition);

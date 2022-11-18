@@ -116,7 +116,7 @@ public class JasmToUnitTransformer extends AbstractTopLevelGroupVisitor implemen
 
 			@Override
 			public void visitModule(ModuleGroup module) throws AssemblerException {
-
+				classDefinition.setModule(convertModule(module));
 			}
 
 			@Override
