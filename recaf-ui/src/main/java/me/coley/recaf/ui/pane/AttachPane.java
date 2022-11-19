@@ -15,8 +15,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.WindowEvent;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.ui.behavior.WindowCloseListener;
+import me.coley.recaf.ui.behavior.WindowShownListener;
 import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.StringUtil;
@@ -30,7 +33,6 @@ import org.slf4j.Logger;
 import software.coley.instrument.BuildConfig;
 import software.coley.instrument.Client;
 import software.coley.instrument.Extractor;
-import software.coley.instrument.Server;
 import software.coley.instrument.io.ByteBufferAllocator;
 import software.coley.instrument.message.MessageFactory;
 import software.coley.instrument.sock.SocketAvailability;
@@ -52,7 +54,7 @@ import java.util.jar.JarFile;
  *
  * @author Matt Coley
  */
-public class AttachPane extends BorderPane {
+public class AttachPane extends BorderPane implements WindowCloseListener, WindowShownListener {
 	private static final Logger logger = Logging.get(AttachPane.class);
 	private static final long currentPid = ProcessHandle.current().pid();
 	private static final AttachPane instance = new AttachPane();
@@ -64,6 +66,7 @@ public class AttachPane extends BorderPane {
 	private final Map<VirtualMachineDescriptor, String> virtualMachineMainClassMap = new ConcurrentHashMap<>();
 	private final ObservableList<VirtualMachineDescriptor> virtualMachineDescriptors = FXCollections.observableArrayList();
 	private boolean agentExtractFailure;
+	private boolean windowVisible;
 
 	private AttachPane() {
 		extractAgent();
@@ -83,6 +86,16 @@ public class AttachPane extends BorderPane {
 
 	public static AttachPane getInstance() {
 		return instance;
+	}
+
+	@Override
+	public void onClose(WindowEvent e) {
+		windowVisible = false;
+	}
+
+	@Override
+	public void onShown(WindowEvent e) {
+		windowVisible = true;
 	}
 
 	/**
@@ -115,6 +128,8 @@ public class AttachPane extends BorderPane {
 	 * <b>Must be invoked on the FX thread.</b>
 	 */
 	private void update() {
+		if (!windowVisible)
+			return;
 		int numDescriptors = virtualMachineDescriptors.size();
 		List<VirtualMachineDescriptor> virtualMachineDescriptorsCopy = new ArrayList<>(virtualMachineDescriptors);
 		List<VirtualMachineDescriptor> remoteVmList = VirtualMachine.list();
