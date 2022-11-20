@@ -484,7 +484,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	/**
 	 * An extension of the assembler pane for line difference highlighting.
 	 *
-	 * @author Nowilltolife
+	 * @author Justus Garbe
 	 */
 	private static class DiffAssemblerPane extends AssemblerPane implements Diffable {
 		public DiffAssemblerPane() {

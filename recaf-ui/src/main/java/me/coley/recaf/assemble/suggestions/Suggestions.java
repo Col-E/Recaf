@@ -25,7 +25,7 @@ import static me.coley.recaf.util.ClasspathUtil.Tree;
 /**
  * Suggestion text provider.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  * @author xDark
  */
 public class Suggestions {

@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 /**
  * Keeps an up-to-date instance of {@link ClasspathUtil.Tree} for the current {@link Workspace}.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public class WorkspaceTreeService implements WorkspaceListener, ResourceClassListener {
 	private final Workspace workspace;

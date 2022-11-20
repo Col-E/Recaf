@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * A utility pane to add to {@link AssemblerPane} to debug the parsed tokens/groups.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public class DebugPane extends BorderPane implements ParserCompletionListener {
 	private final GroupTreeView treeView;

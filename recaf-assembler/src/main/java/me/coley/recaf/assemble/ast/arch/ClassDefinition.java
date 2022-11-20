@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Definition of a class.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public class ClassDefinition extends AbstractDefinition implements Definition {
 	private final String name;

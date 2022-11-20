@@ -26,7 +26,7 @@ import static me.coley.recaf.assemble.transformer.JasmTransformUtil.*;
 /**
  * JASM visitor to generate AST instances.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  * @author Matt Coley
  */
 public class JasmToUnitTransformer extends AbstractTopLevelGroupVisitor implements Opcodes {

@@ -18,7 +18,7 @@ import org.objectweb.asm.tree.FieldNode;
 /**
  * Transforms a {@link ClassDefinition} into a {@link ClassNode}.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public class AstToClassTransformer {
 	private final ClassDefinition definition;

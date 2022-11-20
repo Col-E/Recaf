@@ -9,7 +9,7 @@ import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 
 /**
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public class SelectedUpdater {
 	private static final DebuggingLogger logger = Logging.get(SelectedUpdater.class);
