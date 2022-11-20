@@ -7,6 +7,11 @@ import me.coley.recaf.assemble.ast.arch.Modifiers;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Module export statement.
+ *
+ * @author Justus Garbe
+ */
 public class ModuleExport extends BaseElement {
 
     private final String name;

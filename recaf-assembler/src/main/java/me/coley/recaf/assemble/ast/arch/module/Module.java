@@ -7,6 +7,11 @@ import me.coley.recaf.assemble.ast.arch.Modifiers;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * AST element for the java module attribute.
+ *
+ * @author Justus Garbe
+ */
 public class Module extends BaseElement {
 
     private final String name;

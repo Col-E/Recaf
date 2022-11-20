@@ -65,6 +65,12 @@ public class JasmTransformUtil {
 		return wrap(annotation, new Annotation(annotation.isInvisible(), annotation.getClassGroup().content(), args));
 	}
 
+	/**
+	 * Convert a {@link InnerClassGroup} to a {@link InnerClass}.
+	 * @param innerClass Inner class group.
+	 * @return Inner class.
+	 * @throws AssemblerException If the inner class group is invalid.
+	 */
 	public static InnerClass convertInnerClass(InnerClassGroup innerClass) throws AssemblerException {
 		Modifiers modifiers = new Modifiers();
 		for (AccessModGroup accessMod : innerClass.getAccessMods().getAccessMods())
@@ -76,6 +82,12 @@ public class JasmTransformUtil {
 				content(innerClass.getInnerName())));
 	}
 
+	/**
+	 * Convert a {@link ModuleGroup} to a {@link Module}.
+	 * @param moduleGroup Module group.
+	 * @return Module.
+	 * @throws AssemblerException If the module group is invalid.
+	 */
 	public static Module convertModule(ModuleGroup moduleGroup) throws AssemblerException {
 		Modifiers modifiers = new Modifiers();
 		for (AccessModGroup accessMod : moduleGroup.getAccessMods().getAccessMods())

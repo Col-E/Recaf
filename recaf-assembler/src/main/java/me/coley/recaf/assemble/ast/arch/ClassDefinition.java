@@ -74,14 +74,26 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		interfaces.add(interfaceName);
 	}
 
+	/**
+	 * @param innerClass
+	 * 		Inner class to add.
+	 */
 	public void addInnerClass(InnerClass innerClass) {
 		innerClasses.add(innerClass);
 	}
 
+	/**
+	 * @param nestMember
+	 * 		Nest member to add.
+	 */
 	public void addNestMember(String nestMember) {
 		nestMembers.add(nestMember);
 	}
 
+	/**
+	 * @param permittedSubclass
+	 * 		Permitted subclass to add.
+	 */
 	public void addPermittedSubclass(String permittedSubclass) {
 		permittedSubclasses.add(permittedSubclass);
 	}
@@ -94,18 +106,34 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		this.superClass = superClass;
 	}
 
+	/**
+	 * @param sourceFile
+	 * 		New source file name.
+	 */
 	public void setSourceFile(String sourceFile) {
 		this.sourceFile = sourceFile;
 	}
 
+	/**
+	 * @param nestHost
+	 * 		New nest host name.
+	 */
 	public void setNestHost(String nestHost) {
 		this.nestHost = nestHost;
 	}
 
+	/**
+	 * @param version
+	 * 		New class version.
+	 */
 	public void setVersion(int version) {
 		this.version = version;
 	}
 
+	/**
+	 * @param module
+	 * 		New module.
+	 */
 	public void setModule(Module module) {
 		this.module = module;
 	}
@@ -131,34 +159,54 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		return superClass;
 	}
 
+	/**
+	 * @return Source file name.
+	 */
 	public String getSourceFile() {
 		return sourceFile;
 	}
 
+	/**
+	 * @return Nest host name.
+	 */
 	public String getNestHost() {
 		return nestHost;
 	}
 
+	/**
+	 * @return List of permitted subclasses.
+	 */
 	public List<String> getPermittedSubclasses() {
 		return permittedSubclasses;
 	}
 
+	/**
+	 * @return List of inner classes.
+	 */
 	public int getVersion() {
 		return version;
 	}
 
+	/**
+	 * @return Module of the class.
+	 */
 	public Module getModule() {
 		return module;
 	}
 
+	/**
+	 * @return List of nest members.
+	 */
 	public List<String> getNestMembers() {
 		return nestMembers;
 	}
 
+	/**
+	 * @return List of inner classes.
+	 */
 	public List<InnerClass> getInnerClasses() {
 		return innerClasses;
 	}
-
 
 	/**
 	 * @return Interface types the class implements.

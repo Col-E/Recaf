@@ -6,6 +6,11 @@ import me.coley.recaf.assemble.ast.PrintContext;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Module provide statement.
+ *
+ * @author Justus Garbe
+ */
 public class ModuleProvide extends BaseElement {
 
     private final String name;

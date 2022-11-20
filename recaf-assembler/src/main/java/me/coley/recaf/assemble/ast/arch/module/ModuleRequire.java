@@ -4,6 +4,11 @@ import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.arch.Modifiers;
 
+/**
+ * Module require statement.
+ *
+ * @author Justus Garbe
+ */
 public class ModuleRequire extends BaseElement {
 
     private final String name;

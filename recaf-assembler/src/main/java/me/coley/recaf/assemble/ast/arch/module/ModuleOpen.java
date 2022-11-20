@@ -7,6 +7,11 @@ import me.coley.recaf.assemble.ast.arch.Modifiers;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Module open statement.
+ *
+ * @author Justus Garbe
+ */
 public class ModuleOpen extends BaseElement {
     private final String name;
     private final Modifiers modifiers;

@@ -3,6 +3,11 @@ package me.coley.recaf.assemble.ast.arch;
 import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.PrintContext;
 
+/**
+ * Nest member declaration.
+ *
+ * @author Justus Garbe
+ */
 public class NestMember extends BaseElement {
 
     private final String member;

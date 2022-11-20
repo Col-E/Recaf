@@ -4,6 +4,11 @@ import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.util.EscapeUtil;
 
+/**
+ * Inner class declaration.
+ *
+ * @author Justus Garbe
+ */
 public class InnerClass extends BaseElement {
 
     private final Modifiers modifiers;
