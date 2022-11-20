@@ -101,7 +101,8 @@ public abstract class WindowBase extends Stage implements TabStageAccessor {
 					oldHandler.handle(e);
 				}
 			});
-		} else if (root instanceof WindowShownListener) {
+		}
+		if (root instanceof WindowShownListener) {
 			EventHandler<WindowEvent> oldHandler = stage.getOnShown();
 			stage.setOnShown(e -> {
 				if (root.getScene().getWindow() != stage)
@@ -111,11 +112,10 @@ public abstract class WindowBase extends Stage implements TabStageAccessor {
 					oldHandler.handle(e);
 				}
 			});
-		} else {
-			for (Node child : root.getChildrenUnmodifiable()) {
-				if (child instanceof Parent) {
-					installListeners(stage, (Parent) child);
-				}
+		}
+		for (Node child : root.getChildrenUnmodifiable()) {
+			if (child instanceof Parent) {
+				installListeners(stage, (Parent) child);
 			}
 		}
 	}

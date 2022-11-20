@@ -2,13 +2,10 @@ package me.coley.recaf.assemble;
 
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.transformer.AstToMethodTransformer;
+import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
-import me.coley.recaf.assemble.validation.ValidationMessage;
-import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.Unchecked;
-import me.darknet.assembler.parser.AssemblerException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,7 +13,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
@@ -38,6 +34,7 @@ public class AssembleEntireClasspathTests extends JasmUtils {
 	@ParameterizedTest
 	@MethodSource("lookup")
 	public void test(String name) {
+		AssemblerPipeline pipeline = PipelineTests.createPipeline();
 		String debug = "?";
 		try {
 			ClassReader cr = new ClassReader(name);
@@ -55,50 +52,10 @@ public class AssembleEntireClasspathTests extends JasmUtils {
 				line += 1 + StringUtil.count("\n", code);
 				debug += "\n" + code;
 				assertNotNull(code, "Failed to disassemble: " + location);
-				// JASM parse
-				Unit unitCtx;
-				try {
-					unitCtx = createUnit(DOT_KEYWORDS, code);
-				} catch (AssemblerException ex) {
-					System.err.println(code);
-					fail("Error generating unit: " + ex.describe(), ex);
-					return;
-				} catch (Throwable t) {
-					System.err.println(code);
-					fail("Error generating unit", t);
-					return;
-				}
-				assertNotNull(unitCtx, "Parser did not find unit context! Input: " + location);
-				// Validate
-				AstValidator validator = new AstValidator(unitCtx);
-				validator.visit();
-				for (ValidationMessage message : validator.getMessages()) {
-					int line = message.getSource().getLine();
-					String errMessage = "// " + line + " : " + message;
-					System.err.println(errMessage);
-				}
-				if (!validator.getMessages().isEmpty()) {
-					System.err.println(debug);
-					assertEquals(0, validator.getMessages().size(), "There were validation errors");
-				}
-
-				// Generate
-				AstToMethodTransformer generator = new AstToMethodTransformer(node.name);
-				generator.setUseAnalysis(true);
-				generator.setDefinition(unitCtx.getDefinitionAsMethod());
-				try {
-					generator.visit();
-					MethodNode methodAssembled = generator.buildMethod();
-					assertNotNull(methodAssembled);
-					// Verify method and see if it can be written
-					node.accept(new CheckClassAdapter(null));
-				} catch (MethodCompileException ex) {
-					System.err.println("// " + ex.getSource().getLine() + " : " + ex.getMessage());
-					System.err.println(code);
-					ex.printStackTrace();
-					fail();
-					return;
-				}
+				// Run assembler pipeline
+				//  - AST validation
+				//  - Method generation
+				assertTrue(PipelineTests.generate(node.name, true, pipeline, code));
 			}
 			// Sleep call is so if you try and stop it'll actually have a moment to acknowledge the request
 			Thread.sleep(1);

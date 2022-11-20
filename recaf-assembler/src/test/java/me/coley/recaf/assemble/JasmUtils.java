@@ -1,7 +1,7 @@
 package me.coley.recaf.assemble;
 
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
+import me.coley.recaf.assemble.transformer.JasmToUnitTransformer;
 import me.darknet.assembler.parser.Keywords;
 import me.darknet.assembler.parser.Parser;
 import me.darknet.assembler.parser.ParserContext;
@@ -13,7 +13,6 @@ import java.util.LinkedList;
  */
 public class JasmUtils {
 	protected static final Keywords DEFAULT_KEYWORDS = new Keywords();
-	protected static final Keywords DOT_KEYWORDS = new Keywords(".");
 
 	protected static Unit createSilentUnit(Keywords keywords, String code) {
 		try {
@@ -25,7 +24,7 @@ public class JasmUtils {
 
 	protected static Unit createUnit(Keywords keywords, String code) throws Throwable {
 		ParserContext ctx = createParser(keywords, code);
-		JasmToAstTransformer transformer = new JasmToAstTransformer(ctx.parse());
+		JasmToUnitTransformer transformer = new JasmToUnitTransformer(ctx.parse());
 		return transformer.generateUnit();
 	}
 

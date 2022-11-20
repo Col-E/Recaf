@@ -256,7 +256,7 @@ public class AstToMethodTransformer {
 	 * 		or when a variable index is already reserved by a wide variable of the prior slot.
 	 */
 	private void createVariables() throws MethodCompileException {
-		variables.visitDefinition(selfType, definition);
+		variables.visitImplicitThis(selfType, definition);
 		variables.visitParams(definition);
 		if (!AccessFlag.isAbstract(definition.getModifiers().value())) {
 			variables.visitCodeFirstPass(code);

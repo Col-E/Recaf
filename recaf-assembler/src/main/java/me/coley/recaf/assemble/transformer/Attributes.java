@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Class to hold attributes about {@link Definition}s that appear before the actual definition.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public class Attributes {
 	private final List<ThrownException> thrownExceptions = new ArrayList<>();

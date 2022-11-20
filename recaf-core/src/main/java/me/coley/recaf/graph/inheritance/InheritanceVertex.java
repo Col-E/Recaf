@@ -5,7 +5,10 @@ import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.Streams;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,7 +70,7 @@ public class InheritanceVertex {
 	public boolean hasFieldInSelfOrParents(String name, String desc) {
 		if (hasField(name, desc))
 			return true;
-		return parents()
+		return allParents()
 				.filter(v -> v != this)
 				.anyMatch(parent -> parent.hasFieldInSelfOrParents(name, desc));
 	}
@@ -83,7 +86,7 @@ public class InheritanceVertex {
 	public boolean hasFieldInSelfOrChildren(String name, String desc) {
 		if (hasField(name, desc))
 			return true;
-		return children()
+		return allChildren()
 				.filter(v -> v != this)
 				.anyMatch(parent -> parent.hasFieldInSelfOrChildren(name, desc));
 	}
@@ -114,7 +117,7 @@ public class InheritanceVertex {
 	public boolean hasMethodInSelfOrParents(String name, String desc) {
 		if (hasMethod(name, desc))
 			return true;
-		return parents()
+		return allParents()
 				.filter(v -> v != this)
 				.anyMatch(parent -> parent.hasMethodInSelfOrParents(name, desc));
 	}
@@ -130,7 +133,7 @@ public class InheritanceVertex {
 	public boolean hasMethodInSelfOrChildren(String name, String desc) {
 		if (hasMethod(name, desc))
 			return true;
-		return children()
+		return allChildren()
 				.filter(v -> v != this)
 				.anyMatch(parent -> parent.hasMethodInSelfOrChildren(name, desc));
 	}
@@ -222,7 +225,7 @@ public class InheritanceVertex {
 
 	private void visitFamily(Set<InheritanceVertex> vertices) {
 		vertices.add(this);
-		Stream.concat(parents(), "java/lang/Object".equals(getName()) ? Stream.empty() : children())
+		Stream.concat(allParents(), "java/lang/Object".equals(getName()) ? Stream.empty() : allChildren())
 				.filter(v -> !vertices.contains(v))
 				.forEach(v -> v.visitFamily(vertices));
 	}
@@ -231,14 +234,14 @@ public class InheritanceVertex {
 	 * @return All classes this extends or implements.
 	 */
 	public Set<InheritanceVertex> getAllParents() {
-		return parents().collect(Collectors.toCollection(LinkedHashSet::new));
+		return allParents().collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	/**
 	 * @return All classes this extends or implements.
 	 */
-	public Stream<InheritanceVertex> parents() {
-		return Streams.recurse(this, x -> x.getParents().stream());
+	public Stream<InheritanceVertex> allParents() {
+		return Streams.recurseWithoutCycles(this, InheritanceVertex::getParents);
 	}
 
 	/**
@@ -274,11 +277,11 @@ public class InheritanceVertex {
 	 * @return All classes this extends or implements.
 	 */
 	public Set<InheritanceVertex> getAllChildren() {
-		return children().collect(Collectors.toCollection(LinkedHashSet::new));
+		return allChildren().collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
-	private Stream<InheritanceVertex> children() {
-		return Streams.recurse(this, x -> x.getChildren().stream());
+	private Stream<InheritanceVertex> allChildren() {
+		return Streams.recurseWithoutCycles(this, InheritanceVertex::getChildren);
 	}
 
 	/**

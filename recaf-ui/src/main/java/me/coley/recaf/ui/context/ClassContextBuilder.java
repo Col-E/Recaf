@@ -25,6 +25,7 @@ import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.ClassMap;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -78,8 +79,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 			menu.getItems().add(action("menu.goto.class", Icons.OPEN, this::openDefinition));
 		if (isPrimary()) {
 			Menu refactor = menu("menu.refactor");
-			// TODO: Re-enable when ready
-			// menu.getItems().add(action("menu.edit.assemble.class", Icons.ACTION_EDIT, this::assemble));
+			menu.getItems().add(action("menu.edit.assemble.class", Icons.ACTION_EDIT, this::assemble));
 			menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
 			menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
 			refactor.getItems().add(action("menu.refactor.move", Icons.ACTION_MOVE, this::move));
@@ -122,10 +122,11 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 		Resource resource = getContainingResource();
 		if (resource != null) {
 			if (info != null) {
-				// Open assembler
+				// Open assembler.
 				AssemblerPane assembler = new AssemblerPane();
-				assembler.onUpdate(info);
-				new GenericWindow(assembler, 800, 300).show();
+				assembler.onUpdate(getCurrent());
+				assembler.setTargetMember(null);
+				new GenericWindow(assembler, 800, 600).show();
 			} else {
 				logger.error("No class info for {}", name);
 			}
@@ -151,7 +152,7 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 				mappings.addClass(name, newName);
 				// Create the new class bytecode filtered through the renamer
 				ClassWriter cw = new ClassWriter(WRITE_FLAGS);
-				ClassReader cr = info.getClassReader();
+				ClassReader cr = getCurrent().getClassReader();
 				cr.accept(new RemappingVisitor(cw, mappings), READ_FLAGS);
 				resource.getClasses().put(ClassInfo.read(cw.toByteArray()));
 			}
@@ -251,7 +252,28 @@ public class ClassContextBuilder extends DeclarableContextBuilder {
 	private void openHierarchy() {
 		String title = "Hierarchy: " + TextDisplayUtil.shortenEscapeLimit(info.getName());
 		DockTab tab = RecafDockingManager.getInstance()
-				.createTab(() -> new ClassTab(title, new ClassHierarchyPane(info)));
+				.createTab(() -> new ClassTab(title, new ClassHierarchyPane(getCurrent())));
 		tab.select();
+	}
+
+	/**
+	 * This context builder may be placed on an item that doesn't update consistently.
+	 * For example, the workspace tree doesn't update its tree unless the class name has changed.
+	 * Because of this, doing something like opening the class-level assembler will yield the original
+	 * class state when the menu was generated.
+	 * <br>
+	 * This is a workaround to supply the current instance of the class for sensitive operations like
+	 * class-level assembling.
+	 *
+	 * @return Current instance of {@link ClassInfo}.
+	 */
+	private ClassInfo getCurrent() {
+		Resource container = findContainerResource();
+		if (container == null) {
+			logger.error("Attempted to lookup current info of class '{}' when container was not resolved", info.getName());
+			throw new IllegalArgumentException();
+		}
+		ClassMap classes = container.getClasses();
+		return classes.get(info.getName());
 	}
 }

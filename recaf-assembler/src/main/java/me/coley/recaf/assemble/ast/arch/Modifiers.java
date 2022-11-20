@@ -38,7 +38,7 @@ public class Modifiers extends BaseElement implements Element, Iterable<Modifier
 	@Override
 	public String print(PrintContext context) {
 		return modifiers.stream()
-				.map(m -> m.print(context))
+				.map(m -> m.print(context).toLowerCase())
 				.collect(Collectors.joining(" "));
 	}
 

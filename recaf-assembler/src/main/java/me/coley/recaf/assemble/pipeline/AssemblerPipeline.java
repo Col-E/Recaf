@@ -21,7 +21,6 @@ import me.darknet.assembler.parser.*;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -45,11 +44,11 @@ public class AssemblerPipeline {
 	// Inputs
 	private String type;
 	private String text;
+	private boolean doUseAnalysis = true;
 	// States
 	private boolean textDirty = true;
 	private boolean unitOutdated = true;
 	private boolean outputOutdated = true;
-	private boolean doUseAnalysis = true;
 	// Outputs
 	private Unit unit;
 	private List<Group> latestJasmGroups;
@@ -225,6 +224,14 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * @return {@code true} for when analysis is to be done for method generation,
+	 * allowing more accurate error messages, local variables, and stack analysis.
+	 */
+	public boolean doUseAnalysis() {
+		return doUseAnalysis;
+	}
+
+	/**
 	 * Updates input text. Changes the state so that
 	 *
 	 * @param newText
@@ -248,7 +255,7 @@ public class AssemblerPipeline {
 	}
 
 	/**
-	 * @return {@code true} if there are changes seen since the last call to {@link #updateAst()}.
+	 * @return {@code true} if there are changes seen since the last call to {@link #updateAst(boolean)}.
 	 */
 	public boolean isDirty() {
 		return textDirty;
@@ -282,7 +289,11 @@ public class AssemblerPipeline {
 	 * {@code false} when up-to-date.
 	 */
 	public boolean isOutputOutdated() {
-		return outputOutdated || (isMethod() ? lastMethod != null : lastField != null);
+		if (outputOutdated) return true;
+		if (isMethod() && lastMethod == null) return true;
+		if (isField() && lastField == null) return true;
+		if (isClass() && lastClass == null) return true;
+		return false;
 	}
 
 	/**
@@ -314,12 +325,32 @@ public class AssemblerPipeline {
 	}
 
 	/**
+	 * Protected since this is intended to only be used by child implementations of {@link AssemblerPipeline}.
+	 *
+	 * @param lastVariables
+	 * 		Last collection of generated variables.
+	 */
+	protected void setLastVariables(Variables lastVariables) {
+		this.lastVariables = lastVariables;
+	}
+
+	/**
 	 * Analysis is only done when {@link }
 	 *
 	 * @return Last analysis from {@link #generateMethod()}.
 	 */
 	public Analysis getLastAnalysis() {
 		return lastAnalysis;
+	}
+
+	/**
+	 * Protected since this is intended to only be used by child implementations of {@link AssemblerPipeline}.
+	 *
+	 * @param lastAnalysis
+	 * 		Last analysis.
+	 */
+	protected void setLastAnalysis(Analysis lastAnalysis) {
+		this.lastAnalysis = lastAnalysis;
 	}
 
 	/**
@@ -424,10 +455,10 @@ public class AssemblerPipeline {
 	 * @return {@link Group} that is either the {@code root} or a child at the given line and column.
 	 */
 	public Group getASTElementAt(int lineNo, int colPos, Group root) {
-		Token token = root.value; // the root token value
+		Token token = root.getValue(); // the root token value
 		if (token == null) {
 			// group may still have children
-			for (Group child : root.children) {
+			for (Group child : root.getChildren()) {
 				Group grp = getASTElementAt(lineNo, colPos, child);
 				if (grp != null)
 					return grp;
@@ -437,10 +468,10 @@ public class AssemblerPipeline {
 		Location location = token.getLocation(); // get the actual location
 		int line = location.getLine(); // get the line number
 		int startCol = location.getColumn(); // get the start column
-		int endCol = startCol + token.content.length(); // get the end column
+		int endCol = startCol + token.getContent().length(); // get the end column
 		if (line == lineNo && startCol <= colPos && colPos <= endCol) // if the line and column are correct
 			return root;
-		for (Group child : root.children) { // check all the children
+		for (Group child : root.getChildren()) { // check all the children
 			Group grp = getASTElementAt(lineNo, colPos, child); // get the child (or null)
 			if (grp != null) // if there is a child at the given line and column
 				return grp; // return the child
@@ -477,10 +508,10 @@ public class AssemblerPipeline {
 	 * @return {@link Group} that is either the {@code root} or a child at the given line and column.
 	 */
 	public Group getASTElementAt(int position, Group root) {
-		Token token = root.value; // the root token value
+		Token token = root.getValue(); // the root token value
 		if (token == null) {
 			// group may still have children
-			for (Group child : root.children) {
+			for (Group child : root.getChildren()) {
 				Group grp = getASTElementAt(position, child);
 				if (grp != null)
 					return grp;
@@ -491,7 +522,7 @@ public class AssemblerPipeline {
 		int end = token.getEnd();
 		if (start <= position && position <= end) // if the position is between the start and end
 			return root;
-		for (Group child : root.children) { // check all the children
+		for (Group child : root.getChildren()) { // check all the children
 			Group grp = getASTElementAt(position, child); // get the child (or null)
 			if (grp != null) // if there is a child at the given line and column
 				return grp; // return the child
@@ -536,7 +567,7 @@ public class AssemblerPipeline {
 		parserCompletionListeners.forEach(l -> l.onCompleteParse(parsed));
 		// Transform to our AST
 		logger.debugging(l -> l.trace("Assembler AST updating: [JASM --> AST transform]"));
-		JasmToAstTransformer transformer = new JasmToAstTransformer(parsed);
+		JasmToUnitTransformer transformer = new JasmToUnitTransformer(parsed);
 		Unit unit;
 		try {
 			unit = transformer.generateUnit();
@@ -648,18 +679,8 @@ public class AssemblerPipeline {
 		AstToFieldTransformer transformer = new AstToFieldTransformer();
 		transformer.setDefinition(unit.getDefinitionAsField());
 		FieldNode fieldAssembled = transformer.buildField();
-		if (bytecodeValidationListeners.size() > 0) {
-			BytecodeValidator bytecodeValidator = new BytecodeValidator(type, fieldAssembled);
-			try {
-				bytecodeValidator.visit();
-			} catch (BytecodeException ex) {
-				// Fatal bytecode validation exception
-				bytecodeFailureListeners.forEach(l -> l.onValidationFailure(fieldAssembled, ex));
-				return false;
-			}
-			// Check for bytecode validation problems
-			bytecodeValidationListeners.forEach(l -> l.onBytecodeValidationComplete(fieldAssembled, bytecodeValidator));
-		}
+		if (!validateNode(fieldAssembled))
+			return false;
 		// Done
 		lastField = fieldAssembled;
 		outputOutdated = false;
@@ -693,18 +714,8 @@ public class AssemblerPipeline {
 			transformer.setDefinition(unit.getDefinitionAsMethod());
 			transformer.visit();
 			MethodNode methodAssembled = transformer.buildMethod();
-			if (bytecodeValidationListeners.size() > 0) {
-				BytecodeValidator bytecodeValidator = new BytecodeValidator(type, methodAssembled);
-				try {
-					bytecodeValidator.visit();
-				} catch (BytecodeException ex) {
-					// Fatal bytecode validation exception
-					bytecodeFailureListeners.forEach(l -> l.onValidationFailure(methodAssembled, ex));
-					return false;
-				}
-				// Check for bytecode validation problems
-				bytecodeValidationListeners.forEach(l -> l.onBytecodeValidationComplete(methodAssembled, bytecodeValidator));
-			}
+			if (!validateNode(methodAssembled))
+				return false;
 			// Done
 			lastMethod = methodAssembled;
 			lastAnalysis = transformer.getAnalysis();

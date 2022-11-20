@@ -3,13 +3,12 @@ package me.coley.recaf.ui.pane.assembler;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
+import me.coley.recaf.assemble.ContextualPipeline;
 import me.coley.recaf.assemble.IllegalAstException;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.FlowControl;
-import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.meta.Label;
-import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.ui.control.code.IndicatorApplier;
 import me.coley.recaf.ui.control.code.IndicatorFactory;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
@@ -27,7 +26,7 @@ public class FlowHighlighter implements IndicatorApplier {
 	private final Set<FlowControl> sources = new HashSet<>();
 	private final Set<String> destinations = new HashSet<>();
 	private final List<Integer> linesToRefresh = new ArrayList<>();
-	private final AssemblerPipeline pipeline;
+	private final ContextualPipeline pipeline;
 	private final AssemblerArea assemblerArea;
 
 	/**
@@ -36,7 +35,7 @@ public class FlowHighlighter implements IndicatorApplier {
 	 * @param assemblerArea
 	 * 		Target assembler area.
 	 */
-	public FlowHighlighter(AssemblerPipeline pipeline, AssemblerArea assemblerArea) {
+	public FlowHighlighter(ContextualPipeline pipeline, AssemblerArea assemblerArea) {
 		this.pipeline = pipeline;
 		this.assemblerArea = assemblerArea;
 	}
@@ -66,10 +65,9 @@ public class FlowHighlighter implements IndicatorApplier {
 			int line = assemblerArea.getCaretLine();
 			int col = assemblerArea.getCaretColumn();
 			Element elementOnLine = pipeline.getCodeElementAt(line, col);
-			Unit unit = pipeline.getUnit();
-			if (unit == null || unit.isField())
+			if (!pipeline.isCurrentMethod())
 				return;
-			Code code = pipeline.getUnit().getDefinitionAsMethod().getCode();
+			Code code = pipeline.getCurrentMethod().getCode();
 			if (elementOnLine instanceof FlowControl) {
 				try {
 					Map<String, Label> labelMap = code.getLabels();
@@ -108,10 +106,9 @@ public class FlowHighlighter implements IndicatorApplier {
 			linesToRefresh.clear();
 		}
 		// Redraw new matched lines
-		Unit unit = pipeline.getUnit();
-		if (unit == null)
+		if (!pipeline.isCurrentMethod())
 			return;
-		Code code = unit.getDefinitionAsMethod().getCode();
+		Code code = pipeline.getCurrentMethod().getCode();
 		// Need to refresh flow control instructions
 		for (FlowControl flow : code.getChildrenOfType(FlowControl.class)) {
 			int line = flow.getLine();

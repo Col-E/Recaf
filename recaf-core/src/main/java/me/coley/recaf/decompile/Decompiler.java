@@ -1,6 +1,7 @@
 package me.coley.recaf.decompile;
 
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.decompile.fallback.FallbackDecompiler;
 import me.coley.recaf.plugin.tools.Tool;
 import me.coley.recaf.workspace.Workspace;
 
@@ -147,5 +148,12 @@ public abstract class Decompiler extends Tool<DecompileOption<?>> {
 	 */
 	public void removePostDecompileInterceptor(PostDecompileInterceptor interceptor) {
 		postDecompileInterceptors.add(interceptor);
+	}
+
+	@Override
+	public int compareTo(Tool o) {
+		if (o instanceof FallbackDecompiler)
+			return -1;
+		return super.compareTo(o);
 	}
 }

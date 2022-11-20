@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for definitions and other arch nodes.
  */
-public class DefinitionArchTests extends JasmUtils {
+public class DefinitionTests extends JasmUtils {
 	@Test
 	public void testSimpleDefinition() {
 		handle("method simple ()V\nend", unit -> {

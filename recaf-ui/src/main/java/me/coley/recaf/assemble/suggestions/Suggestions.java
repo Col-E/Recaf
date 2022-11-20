@@ -25,7 +25,7 @@ import static me.coley.recaf.util.ClasspathUtil.Tree;
 /**
  * Suggestion text provider.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  * @author xDark
  */
 public class Suggestions {
@@ -67,7 +67,7 @@ public class Suggestions {
 		if (group == null) {
 			return new SuggestionsResults("", INSTRUCTIONS.stream().map(StringSuggestion::new));
 		}
-		switch (group.type) {
+		switch (group.getType()) {
 			case INSTRUCTION:
 				return getInstructionSuggestion(group);
 			case IDENTIFIER: {
@@ -87,14 +87,14 @@ public class Suggestions {
 
 	private SuggestionsResults getInstructionSuggestion(Group group) {
 		InstructionGroup instruction = (InstructionGroup) group;
-		Group[] children = instruction.children;
+		List<Group> children = instruction.getChildren();
 		String inst = instruction.content();
 		switch (instruction.content()) {
 			case "new":
 			case "anewarray":
 			case "checkcast":
 			case "instanceof":
-				return fuzzySearchClasses(children[0] == null ? "" : children[0].content());
+				return fuzzySearchClasses(children.get(0) == null ? "" : children.get(0).content());
 			case "invokestatic":
 			case "invokeinterface":
 			case "invokespecial":
@@ -115,14 +115,14 @@ public class Suggestions {
 			case "fstore":
 			case "dstore":
 			case "astore": {
-				String search = children[0] == null ? "" : children[0].content();
+				String search = children.get(0) == null ? "" : children.get(0).content();
 				Set<String> locals = new HashSet<>();
 				if (!AccessFlag.isStatic(method.getModifiers().value()))
 					locals.add("this");
 				for (MethodParameter parameter : method.getParams().getParameters()) {
 					locals.add(parameter.getName());
 				}
-				return new SuggestionsResults(children[0].content(), fuzzySearchStrings(search, locals));
+				return new SuggestionsResults(children.get(0).content(), fuzzySearchStrings(search, locals));
 			}
 			case "getstatic":
 			case "putstatic":
@@ -135,8 +135,8 @@ public class Suggestions {
 		return new SuggestionsResults(inst, Stream.empty());
 	}
 
-	private SuggestionsResults getInstructionSuggestionsResults(Group[] children, String inst, BiFunction<CommonClassInfo, String, SuggestionsResults> suggestionMaker) {
-		String className = children[0] == null ? "" : children[0].content();
+	private SuggestionsResults getInstructionSuggestionsResults(List<Group> children, String inst, BiFunction<CommonClassInfo, String, SuggestionsResults> suggestionMaker) {
+		String className = children.get(0) == null ? "" : children.get(0).content();
 		if (!className.contains(".")) return fuzzySearchClasses(className);
 		String[] parts = className.split("\\.");
 		CommonClassInfo clazz = mapper.apply(parts[0]);

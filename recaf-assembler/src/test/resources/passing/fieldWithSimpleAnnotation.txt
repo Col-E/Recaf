@@ -1,0 +1,3 @@
+// metadata
+annotation java/io/Serializable end
+field static Ljava/util/List; stringList

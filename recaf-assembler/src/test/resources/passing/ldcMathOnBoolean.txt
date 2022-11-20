@@ -1,0 +1,10 @@
+method static handleCode (I code)V
+a:
+ ldc true
+ ldc false
+ iand
+ ifeq b
+b:
+ return
+end:
+end

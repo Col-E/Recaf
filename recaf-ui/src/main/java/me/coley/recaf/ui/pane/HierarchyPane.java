@@ -24,7 +24,11 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.Translatable;
+import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
+import org.slf4j.Logger;
+
+import java.util.Objects;
 
 
 /**
@@ -33,6 +37,7 @@ import me.coley.recaf.util.threading.FxThreadUtil;
  * @author Matt Coley
  */
 public class HierarchyPane extends BorderPane implements Updatable<CommonClassInfo> {
+	private static final Logger logger = Logging.get(HierarchyPane.class);
 	private final HierarchyTree tree = new HierarchyTree();
 	private HierarchyMode mode = HierarchyMode.PARENTS;
 	private CommonClassInfo info;
@@ -112,11 +117,16 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 		public void onUpdate(CommonClassInfo newValue) {
 			InheritanceGraph graph = RecafUI.getController().getServices().getInheritanceGraph();
 			HierarchyItem root = new HierarchyItem(newValue);
-			InheritanceVertex vertex = graph.getVertex(newValue.getName());
-			if (mode == HierarchyMode.PARENTS) {
-				createParents(root, vertex);
-			} else if (mode == HierarchyMode.CHILDREN) {
-				createChildren(root, vertex);
+			String name = newValue.getName();
+			InheritanceVertex vertex = graph.getVertex(name);
+			if (vertex != null) {
+				if (mode == HierarchyMode.PARENTS) {
+					createParents(root, vertex);
+				} else if (mode == HierarchyMode.CHILDREN) {
+					createChildren(root, vertex);
+				}
+			} else {
+				logger.warn("Vertex lookup failed for class '{}'", name);
 			}
 			FxThreadUtil.run(() -> setRoot(root));
 		}
@@ -127,8 +137,10 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 				if (parentVertex.getName().equals("java/lang/Object"))
 					continue;
 				HierarchyItem subItem = new HierarchyItem(parentVertex.getValue());
-				root.getChildren().add(subItem);
-				createParents(subItem, parentVertex);
+				if (noLoops(root, subItem)) {
+					root.getChildren().add(subItem);
+					createParents(subItem, parentVertex);
+				}
 			}
 		}
 
@@ -136,9 +148,21 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 			root.setExpanded(true);
 			for (InheritanceVertex childVertex : rootVertex.getChildren()) {
 				HierarchyItem subItem = new HierarchyItem(childVertex.getValue());
-				root.getChildren().add(subItem);
-				createChildren(subItem, childVertex);
+				if (noLoops(root, subItem)) {
+					root.getChildren().add(subItem);
+					createChildren(subItem, childVertex);
+				}
 			}
+		}
+
+		private boolean noLoops(TreeItem<?> root, TreeItem<?> child) {
+			if (root == null)
+				return true;
+			// HierarchyItem implements a hashCode based on class names
+			// So any cycle should trigger this and we'll abort.
+			if (root.hashCode() == child.hashCode())
+				return false;
+			return noLoops(root.getParent(), child);
 		}
 	}
 
@@ -148,6 +172,25 @@ public class HierarchyPane extends BorderPane implements Updatable<CommonClassIn
 	static class HierarchyItem extends TreeItem<CommonClassInfo> {
 		private HierarchyItem(CommonClassInfo info) {
 			super(info);
+		}
+
+		@Override
+		public int hashCode() {
+			CommonClassInfo value = getValue();
+			if (value == null)
+				return  -1;
+			int result = value.getName().hashCode();
+			result = 31 * result + (value.getSuperName().hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof HierarchyItem) {
+				HierarchyItem other = (HierarchyItem) obj;
+				return Objects.equals(getValue(), other.getValue());
+			}
+			return false;
 		}
 	}
 

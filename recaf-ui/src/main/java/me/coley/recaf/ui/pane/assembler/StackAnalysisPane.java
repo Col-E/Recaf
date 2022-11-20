@@ -7,15 +7,14 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.assemble.ContextualPipeline;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.analysis.Frame;
 import me.coley.recaf.assemble.analysis.Value;
 import me.coley.recaf.assemble.ast.Code;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.HandleInfo;
-import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
-import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.code.*;
 import me.coley.recaf.ui.behavior.MemberEditor;
 import me.coley.recaf.ui.behavior.SaveResult;
@@ -38,7 +37,7 @@ import java.util.TreeSet;
 public class StackAnalysisPane extends BorderPane implements MemberEditor {
 	private final FrameVariableTable variableView = new FrameVariableTable();
 	private final FrameStackView stackView = new FrameStackView();
-	private final AssemblerPipeline pipeline;
+	private final ContextualPipeline pipeline;
 
 	/**
 	 * @param assemblerArea
@@ -46,7 +45,7 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 	 * @param pipeline
 	 * 		Assembler pipeline.
 	 */
-	public StackAnalysisPane(AssemblerArea assemblerArea, AssemblerPipeline pipeline) {
+	public StackAnalysisPane(AssemblerArea assemblerArea, ContextualPipeline pipeline) {
 		this.pipeline = pipeline;
 		BorderPane stackWrapper = new BorderPane(stackView);
 		Label stackTitle = new BoundLabel(Lang.getBinding("assembler.analysis.stack"));
@@ -64,12 +63,17 @@ public class StackAnalysisPane extends BorderPane implements MemberEditor {
 		if (pipeline == null || pipeline.getUnit() == null)
 			return;
 		Analysis analysis = pipeline.getLastAnalysis();
-		if (analysis == null)
+		if (analysis == null) {
+			// Clear if we are working on a class-level and 'lose' selection of the method.
+			if (pipeline.isClass()) {
+				variableView.getItems().clear();
+				stackView.getItems().clear();
+			}
 			return;
-		Unit unit = pipeline.getUnit();
-		if (unit == null || unit.isField())
+		}
+		if (!pipeline.isCurrentMethod())
 			return;
-		Code code = unit.getDefinitionAsMethod().getCode();
+		Code code = pipeline.getCurrentMethod().getCode();
 		Element element = code.getChildAt(paragraphIndex + 1, columnIndex);
 		if (element instanceof AbstractInstruction) {
 			int insnIndex = code.getInstructions().indexOf(element);

@@ -42,7 +42,7 @@ public class Variables implements Iterable<VariableInfo> {
 	 * 		When a variable index is already reserved by a wide variable of the prior slot.
 	 * 		Since this is just the parameter step, this should not actually occur.
 	 */
-	public void visitDefinition(String selfType, MethodDefinition definition) throws MethodCompileException {
+	public void visitImplicitThis(String selfType, MethodDefinition definition) throws MethodCompileException {
 		// When the method is not static we need to allocate "this" to slot 0
 		if (!AccessFlag.isStatic(definition.getModifiers().value())) {
 			addVariableUsage(0, "this", Type.getObjectType(selfType), definition);

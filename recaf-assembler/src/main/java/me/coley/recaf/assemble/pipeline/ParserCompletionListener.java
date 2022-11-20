@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Listener for Jasm completion and the complete parsing into an eventual {@link Unit} for the Recaf AST.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public interface ParserCompletionListener {
 	/**
