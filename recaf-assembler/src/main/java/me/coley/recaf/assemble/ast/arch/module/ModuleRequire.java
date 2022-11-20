@@ -41,8 +41,12 @@ public class ModuleRequire extends BaseElement {
             sb.append(' ');
         }
         sb.append(context.fmtIdentifier(name));
-        sb.append(' ');
-        sb.append(version);
+        if(version != null) {
+            sb.append(" ");
+            sb.append(context.fmtKeyword("version"));
+            sb.append(" ");
+            sb.append(context.fmtIdentifier(version));
+        }
         return sb.toString();
     }
 }

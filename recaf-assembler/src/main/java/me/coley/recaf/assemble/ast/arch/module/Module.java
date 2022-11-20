@@ -105,8 +105,12 @@ public class Module extends BaseElement {
         sb.append(modifiers.print(context));
         sb.append(" ");
         sb.append(context.fmtIdentifier(name));
-        sb.append(" ");
-        sb.append(context.fmtIdentifier(version));
+        if(version != null) {
+            sb.append(" ");
+            sb.append(context.fmtKeyword("version"));
+            sb.append(" ");
+            sb.append(context.fmtIdentifier(version));
+        }
         sb.append("\n");
         if(mainClass != null) {
             sb.append('\t').append(context.fmtKeyword("mainclass")).append(" ");

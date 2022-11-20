@@ -81,9 +81,9 @@ public class JasmTransformUtil {
 		for (AccessModGroup accessMod : moduleGroup.getAccessMods().getAccessMods())
 			modifiers.add(Modifier.byName(accessMod.content().replace(".", "")));
 		String name = content(moduleGroup.getName());
-		String version = content(moduleGroup.getVersion());
 		Module module = new Module(name, modifiers);
-		module.setVersion(version);
+		if(moduleGroup.getVersion() != null)
+			module.setVersion(content(moduleGroup.getVersion().getVersionIdentifier()));
 		if(moduleGroup.getMainClass() != null) {
 			module.setMainClass(content(moduleGroup.getMainClass()));
 		}
@@ -96,7 +96,7 @@ public class JasmTransformUtil {
 				requireModifiers.add(Modifier.byName(accessMod.content().replace(".", "")));
 			ModuleRequire moduleRequire = new ModuleRequire(content(require.getModule()), requireModifiers);
 			if(require.getVersion() != null) {
-				moduleRequire.setVersion(content(require.getVersion()));
+				moduleRequire.setVersion(content(require.getVersion().getVersionIdentifier()));
 			}
 			module.addRequire(moduleRequire);
 		}
