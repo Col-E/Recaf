@@ -7,9 +7,9 @@ package me.coley.recaf.assemble.ast;
  */
 public enum ArgType {
 	TYPE,
+	CHAR,
 	STRING,
 	BYTE,
-	CHAR,
 	SHORT,
 	BOOLEAN,
 	INTEGER,

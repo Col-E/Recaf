@@ -15,9 +15,9 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import me.coley.recaf.Controller;
 import me.coley.recaf.ControllerListener;
+import me.coley.recaf.assemble.ContextualPipeline;
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
@@ -484,7 +484,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	/**
 	 * An extension of the assembler pane for line difference highlighting.
 	 *
-	 * @author Nowilltolife
+	 * @author Justus Garbe
 	 */
 	private static class DiffAssemblerPane extends AssemblerPane implements Diffable {
 		public DiffAssemblerPane() {
@@ -492,7 +492,7 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 		}
 
 		@Override
-		protected AssemblerArea createAssembler(ProblemTracking tracking, AssemblerPipeline pipeline) {
+		protected AssemblerArea createAssembler(ProblemTracking tracking, ContextualPipeline pipeline) {
 			return new AssemblerArea(tracking, pipeline) {
 				@Override
 				protected void handleAstUpdate() {

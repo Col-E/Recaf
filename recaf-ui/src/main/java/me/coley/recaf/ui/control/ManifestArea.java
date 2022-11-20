@@ -27,7 +27,7 @@ import java.util.jar.Manifest;
 /**
  * Syntax area implementation with a focus on Java jar manifests.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public class ManifestArea extends SyntaxArea {
 	private static final Logger logger = Logging.get(ManifestArea.class);

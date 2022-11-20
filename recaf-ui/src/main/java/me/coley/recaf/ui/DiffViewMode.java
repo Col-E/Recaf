@@ -6,7 +6,7 @@ import me.coley.recaf.util.Translatable;
 /**
  * Display options for {@link me.coley.recaf.ui.pane.DiffViewPane}.
  *
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public enum DiffViewMode implements Translatable {
 	DECOMPILE,

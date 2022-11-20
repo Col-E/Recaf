@@ -11,7 +11,7 @@ import java.util.List;
  * Common base implementation for definition types.
  *
  * @author Matt Coley
- * @author Nowilltolife
+ * @author Justus Garbe
  */
 public abstract class AbstractDefinition extends BaseElement implements Definition {
 	private final List<Annotation> annotations = new ArrayList<>();

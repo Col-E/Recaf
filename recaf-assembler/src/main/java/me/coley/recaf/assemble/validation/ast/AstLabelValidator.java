@@ -1,6 +1,8 @@
 package me.coley.recaf.assemble.validation.ast;
 
 import me.coley.recaf.assemble.ast.Code;
+import me.coley.recaf.assemble.ast.Unit;
+import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.ast.arch.TryCatch;
 import me.coley.recaf.assemble.ast.insn.*;
 
@@ -20,9 +22,17 @@ import static me.coley.recaf.assemble.validation.ValidationMessage.error;
 public class AstLabelValidator implements AstValidationVisitor {
 	@Override
 	public void visit(AstValidator validator) {
-		if (validator.getUnit().isField())
-			return;
-		Code code = validator.getUnit().getDefinitionAsMethod().getCode();
+		Unit unit = validator.getUnit();
+		if (unit.isClass()) {
+			for (MethodDefinition method : unit.getDefinitionAsClass().getDefinedMethods()) {
+				handle(validator, method);
+			}
+		} else if (unit.isMethod())
+			handle(validator, unit.getDefinitionAsMethod());
+	}
+
+	private static void handle(AstValidator validator, MethodDefinition methodDefinition) {
+		Code code = methodDefinition.getCode();
 		if (code == null)
 			return;
 		Predicate<String> existence = name -> code.getLabels().containsKey(name);

@@ -277,6 +277,33 @@ public class Types {
 	}
 
 	/**
+	 * @param type
+	 * 		Input type.
+	 *
+	 * @return Pretty-printed type.
+	 */
+	public static String pretty(Type type) {
+		int sort = type.getSort();
+		String suffix = null;
+		String name;
+		if (sort == Type.ARRAY) {
+			suffix = StringUtil.repeat("[]", type.getDimensions());
+			type = type.getElementType();
+			sort = type.getSort();
+		}
+		if (sort <= Type.DOUBLE) {
+			name = getSortName(sort);
+		} else {
+			name = type.getInternalName();
+		}
+		String pretty = StringUtil.shortenPath(name);
+		if (suffix != null) {
+			pretty += suffix;
+		}
+		return pretty;
+	}
+
+	/**
 	 * @param desc
 	 * 		Some class name.
 	 *

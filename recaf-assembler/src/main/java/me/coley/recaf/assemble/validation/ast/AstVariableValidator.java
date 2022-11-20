@@ -34,7 +34,17 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 
 	@Override
 	public void visit(AstValidator validator) throws AstException {
-		Map<String, AstVarInfo> variables = fromUnit(validator, validator.getUnit());
+		Unit unit = validator.getUnit();
+		if (unit.isClass()) {
+			for (MethodDefinition method : unit.getDefinitionAsClass().getDefinedMethods()) {
+				handle(validator, method);
+			}
+		} else if (unit.isMethod())
+			handle(validator, unit.getDefinitionAsMethod());
+	}
+
+	private static void handle(AstValidator validator, MethodDefinition methodDefinition) {
+		Map<String, AstVarInfo> variables = fromUnit(validator, methodDefinition);
 		// Ensure 'this' is allowed
 		if (!AccessFlag.isStatic(validator.getUnit().getDefinition().getModifiers().value())) {
 			AstVarInfo thisVar = variables.get("this");
@@ -90,18 +100,14 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 		return Type.getType(typeDesc).getSort();
 	}
 
-	private static Map<String, AstVarInfo> fromUnit(AstValidator validator, Unit unit) throws AstException {
+	private static Map<String, AstVarInfo> fromUnit(AstValidator validator, MethodDefinition methodDefinition) {
 		Map<String, AstVarInfo> variables = new HashMap<>();
-		// Skip for fields
-		if (unit.isField())
-			return variables;
-		MethodDefinition definition = (MethodDefinition) unit.getDefinition();
 		// Skip if no code-items
-		if (definition.getCode().isEmpty())
+		if (methodDefinition.getCode().isEmpty())
 			return variables;
-		Code code = definition.getCode();
+		Code code = methodDefinition.getCode();
 		// Pull from parameters
-		for (MethodParameter parameter : definition.getParams().getParameters()) {
+		for (MethodParameter parameter : methodDefinition.getParams().getParameters()) {
 			String desc = parameter.getDesc();
 			AstVarInfo info = new AstVarInfo(parameter.getName(), -1);
 			info.addUsage(parameter, desc, parameter.getVariableOperation());
@@ -138,7 +144,7 @@ public class AstVariableValidator implements AstValidationVisitor, Opcodes {
 					info.addUsage(instruction, varType.getDescriptor(), usage);
 					variables.put(varId, info);
 					// Can't "use" before value is not set... Unless it's "this" which always exists
-					if ("this".equals(varId) && !AccessFlag.isStatic(definition.getModifiers().value()))
+					if ("this".equals(varId) && !AccessFlag.isStatic(methodDefinition.getModifiers().value()))
 						continue;
 					if (usage != VariableReference.OpType.ASSIGN) {
 						info.markUsedBeforeDefined();

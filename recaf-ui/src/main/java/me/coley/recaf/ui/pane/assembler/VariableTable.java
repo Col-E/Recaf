@@ -7,9 +7,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
+import me.coley.recaf.assemble.ContextualPipeline;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.insn.AbstractInstruction;
-import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.assemble.transformer.VariableInfo;
 import me.coley.recaf.assemble.transformer.Variables;
 import me.coley.recaf.assemble.util.InheritanceChecker;
@@ -20,8 +20,8 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.code.bytecode.AssemblerArea;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.WorkspaceInheritanceChecker;
+import me.coley.recaf.util.threading.FxThreadUtil;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  */
 public class VariableTable extends BorderPane implements MemberEditor {
 	private final TableView<VariableInfo> tableView = new TableView<>();
-	private final AssemblerPipeline pipeline;
+	private final ContextualPipeline pipeline;
 
 	/**
 	 * @param assemblerArea
@@ -41,7 +41,7 @@ public class VariableTable extends BorderPane implements MemberEditor {
 	 * @param pipeline
 	 * 		Assembler pipeline.
 	 */
-	public VariableTable(AssemblerArea assemblerArea, AssemblerPipeline pipeline) {
+	public VariableTable(AssemblerArea assemblerArea, ContextualPipeline pipeline) {
 		this.pipeline = pipeline;
 
 		InheritanceChecker checker = WorkspaceInheritanceChecker.getInstance();
@@ -81,7 +81,7 @@ public class VariableTable extends BorderPane implements MemberEditor {
 			// Select it
 			if (line != targetLine) {
 				assemblerArea.selectPosition(targetPos);
-				FxThreadUtil.run( () -> {
+				FxThreadUtil.run(() -> {
 					assemblerArea.selectLine();
 					assemblerArea.showParagraphAtCenter(targetLine);
 				});
@@ -104,12 +104,15 @@ public class VariableTable extends BorderPane implements MemberEditor {
 		setDisable(true);
 
 		pipeline.addPipelineCompletionListener(method -> populateVariables());
+		pipeline.addCurrentDefinitionListener((unit, selection) -> populateVariables());
 	}
 
 	private void populateVariables() {
 		Variables variables = pipeline.getLastVariables();
 		if (variables != null) {
 			tableView.setItems(FXCollections.observableArrayList(variables.inSortedOrder()));
+		} else {
+			tableView.setItems(FXCollections.observableArrayList());
 		}
 	}
 

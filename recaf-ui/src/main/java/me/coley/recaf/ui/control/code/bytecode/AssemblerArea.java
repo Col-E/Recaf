@@ -6,6 +6,7 @@ import javafx.scene.input.ContextMenuEvent;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.assemble.AstException;
 import me.coley.recaf.assemble.BytecodeException;
+import me.coley.recaf.assemble.ContextualPipeline;
 import me.coley.recaf.assemble.MethodCompileException;
 import me.coley.recaf.assemble.analysis.Analysis;
 import me.coley.recaf.assemble.analysis.Frame;
@@ -20,7 +21,7 @@ import me.coley.recaf.assemble.suggestions.SuggestionsResults;
 import me.coley.recaf.assemble.suggestions.type.NoSuggestionsSuggestion;
 import me.coley.recaf.assemble.suggestions.type.Suggestion;
 import me.coley.recaf.assemble.transformer.BytecodeToAstTransformer;
-import me.coley.recaf.assemble.transformer.JasmToAstTransformer;
+import me.coley.recaf.assemble.transformer.JasmTransformUtil;
 import me.coley.recaf.assemble.validation.MessageLevel;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.Validator;
@@ -33,6 +34,7 @@ import me.coley.recaf.ui.context.ContextBuilder;
 import me.coley.recaf.ui.control.VirtualizedContextMenu;
 import me.coley.recaf.ui.control.code.*;
 import me.coley.recaf.ui.pane.assembler.FlowHighlighter;
+import me.coley.recaf.ui.pane.assembler.SelectedUpdater;
 import me.coley.recaf.ui.pane.assembler.VariableHighlighter;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.NodeEvents;
@@ -96,7 +98,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * @param pipeline
 	 * 		Assembler pipeline.
 	 */
-	public AssemblerArea(ProblemTracking problemTracking, AssemblerPipeline pipeline) {
+	public AssemblerArea(ProblemTracking problemTracking, ContextualPipeline pipeline) {
 		super(Languages.JAVA_BYTECODE, problemTracking);
 		this.problemTracking = problemTracking;
 		this.pipeline = pipeline;
@@ -104,6 +106,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			pipeline.setText(getText());
 			handleAstUpdate();
 		});
+		// Setup selection updater for full-class assembling.
+		// This handles which member is currently active for things like the analysis tab.
+		SelectedUpdater selectedUpdater = new SelectedUpdater(pipeline);
+		selectedUpdater.addCaretPositionListener(caretPositionProperty());
 		// Setup variable highlighting
 		VariableHighlighter variableHighlighter = new VariableHighlighter(pipeline, this);
 		variableHighlighter.addIndicator(getIndicatorFactory());
@@ -181,32 +187,34 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			logger.warn("Cannot disassemble, target class info missing");
 			return;
 		}
-		if (targetMember == null) {
-			logger.warn("Cannot disassemble, target member info missing");
-			return;
-		}
-		// Get the target member node
+		BytecodeToAstTransformer transformer;
 		ClassNode node = new ClassNode();
 		ClassReader cr = classInfo.getClassReader();
-		cr.accept(new SingleMemberVisitor(node, targetMember), ClassReader.SKIP_FRAMES);
-		// Since we visit only the target member info, there should only be one member in the list.
-		if (targetMember.isMethod() && node.methods.isEmpty()) {
-			logger.error("Failed to isolate method for disassembling '{}.{}{}'",
-					node.name, targetMember.getName(), targetMember.getDescriptor());
-			return;
-		} else if (targetMember.isField() && node.fields.isEmpty()) {
-			logger.error("Failed to isolate field for disassembling '{}.{} {}'",
-					node.name, targetMember.getName(), targetMember.getDescriptor());
-			return;
-		}
-		// Disassemble
-		BytecodeToAstTransformer transformer;
-		if (targetMember.isField()) {
-			FieldNode field = node.fields.get(0);
-			transformer = new BytecodeToAstTransformer(field);
+		if (targetMember != null) {
+			// Get the target member node
+			cr.accept(new SingleMemberVisitor(node, targetMember), ClassReader.SKIP_FRAMES);
+			// Since we visit only the target member info, there should only be one member in the list.
+			if (targetMember.isMethod() && node.methods.isEmpty()) {
+				logger.error("Failed to isolate method for disassembling '{}.{}{}'",
+						node.name, targetMember.getName(), targetMember.getDescriptor());
+				return;
+			} else if (targetMember.isField() && node.fields.isEmpty()) {
+				logger.error("Failed to isolate field for disassembling '{}.{} {}'",
+						node.name, targetMember.getName(), targetMember.getDescriptor());
+				return;
+			}
+			// Disassemble
+			if (targetMember.isField()) {
+				FieldNode field = node.fields.get(0);
+				transformer = new BytecodeToAstTransformer(field);
+			} else {
+				MethodNode method = node.methods.get(0);
+				transformer = new BytecodeToAstTransformer(method);
+			}
 		} else {
-			MethodNode method = node.methods.get(0);
-			transformer = new BytecodeToAstTransformer(method);
+			// Disassemble class object
+			cr.accept(node, ClassReader.SKIP_FRAMES);
+			transformer = new BytecodeToAstTransformer(node);
 		}
 		transformer.visit();
 		Unit unit = transformer.getUnit();
@@ -216,19 +224,32 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		String code = unit.print(config().createContext());
 		// Update text
 		setText(code);
-		// Also attempt to recompile once the code is set.
+		// Also attempt to assemble once the code is set.
 		// We do not want to update the class, this is to initialize the pipeline state without the user needing
 		// to manually trigger a save first.
-		pipeline.updateAst(config().usePrefix);
-		if (pipeline.isMethod())
-			pipeline.generateMethod();
-		else
-			pipeline.generateField();
-		SaveResult initialBuild = targetMember.isMethod() ? generateMethod(false) : generateField(false);
-		if (initialBuild == SaveResult.SUCCESS)
-			logger.debugging(l -> l.trace("Initial build of disassemble successful!"));
-		else
-			logger.warn("Initial build of disassemble failed!");
+		if (pipeline.updateAst(config().usePrefix)) {
+			// Assemble the target member/class
+			if (pipeline.isMethod())
+				pipeline.generateMethod();
+			else if (pipeline.isField())
+				pipeline.generateField();
+			else
+				pipeline.generateClass();
+
+			// Run an initial generation within our assembler UI.
+			// This will populate the local variable and analysis tab contents.
+			SaveResult initialBuild;
+			if (pipeline.isMethod())
+				initialBuild = generateMethod(false);
+			else if (pipeline.isField())
+				initialBuild = generateField(false);
+			else
+				initialBuild = generateClass(false);
+			if (initialBuild == SaveResult.SUCCESS)
+				logger.debugging(l -> l.trace("Initial build of disassemble successful!"));
+			else
+				logger.warn("Initial build of disassemble failed!");
+		}
 	}
 
 	/**
@@ -241,9 +262,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		// Get AST group at the position
 		Group group = pipeline.getASTElementAt(position.getMajor() + 1, position.getMinor());
 		if (group != null) {
-			if (group.parent != null) {
-				if (group.parent.type != GroupType.BODY) {
-					group = group.parent;
+			Group parent = group.getParent();
+			if (parent != null) {
+				if (!parent.isType(GroupType.BODY)) {
+					group = parent;
 				}
 			}
 		}
@@ -371,13 +393,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				return null;
 			}
 			String label;
-			if (actual.type != GroupType.CASE_LABEL && actual.type != GroupType.DEFAULT_LABEL) {
-				actual = actual.parent;
+			if (!actual.isType(GroupType.CASE_LABEL) && !actual.isType(GroupType.DEFAULT_LABEL)) {
+				actual = actual.getParent();
 			}
-			if (actual.type == GroupType.CASE_LABEL) {
+			if (actual.isType(GroupType.CASE_LABEL)) {
 				CaseLabelGroup caseLabel = (CaseLabelGroup) actual;
-				label = caseLabel.getVal().getLabel();
-			} else if (actual.type == GroupType.DEFAULT_LABEL) {
+				label = caseLabel.getLabelValue().getLabel();
+			} else if (actual.isType(GroupType.DEFAULT_LABEL)) {
 				DefaultLabelGroup defaultLabel = (DefaultLabelGroup) actual;
 				label = defaultLabel.getLabel();
 			} else {
@@ -400,9 +422,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				return null;
 			}
 			String label = "";
-			if (actual.type == GroupType.LABEL) {
+			if (actual.isType(GroupType.LABEL)) {
 				label = ((LabelGroup) actual).getLabel();
-			} else if (actual.type == GroupType.DEFAULT_LABEL) {
+			} else if (actual.isType(GroupType.DEFAULT_LABEL)) {
 				DefaultLabelGroup defaultLabel = (DefaultLabelGroup) actual;
 				label = defaultLabel.getLabel();
 			}
@@ -420,25 +442,25 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		if (actual == null) {
 			return null;
 		}
-		Group parent = actual.parent;
+		Group parent = actual.getParent();
 		if (parent == null) {
 			return null;
 		}
-		if (parent.type == GroupType.TYPE) {
+		if (parent.isType(GroupType.TYPE)) {
 			TypeGroup type = (TypeGroup) parent;
-			if (type.descriptor.content().startsWith("(")) {
+			if (type.getDescriptor().content().startsWith("(")) {
 				return null;
 			}
 			ClassInfo classInfo = RecafUI.getController().getWorkspace()
-					.getResources().getClass(type.descriptor.content());
+					.getResources().getClass(type.getDescriptor().content());
 			if (classInfo == null) {
-				logger.warn("Cannot find class '{}'", type.descriptor.content());
+				logger.warn("Cannot find class '{}'", type.getDescriptor().content());
 				return null;
 			}
 			return ContextBuilder.forClass(classInfo);
-		} else if (parent.type == GroupType.HANDLE) {
+		} else if (parent.isType(GroupType.HANDLE)) {
 			HandleGroup handle = (HandleGroup) parent;
-			HandleInfo hi = JasmToAstTransformer.from(handle);
+			HandleInfo hi = JasmTransformUtil.convertHandle(handle);
 			CommonClassInfo ownerInfo = RecafUI.getController().getWorkspace()
 					.getResources().getClass(hi.getOwner());
 			if (ownerInfo == null) {
@@ -484,12 +506,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
 		// Generate
-		if (targetMember.isMethod())
-			return generateMethod(true);
-		else if (targetMember.isField())
-			return generateField(true);
-		else
-			return generateClass(true);
+		if (targetMember == null) return generateClass(true);
+		else {
+			if (targetMember.isMethod())
+				return generateMethod(true);
+			else
+				return generateField(true);
+		}
 	}
 
 	/**
@@ -502,9 +525,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 */
 	private SaveResult generateField(boolean apply) {
 		// Generate field
-		if (!pipeline.generateField())
+		if (pipeline.isOutputOutdated() && !pipeline.generateField())
 			return SaveResult.FAILURE;
 		FieldNode fieldAssembled = pipeline.getLastField();
+		if (fieldAssembled == null)
+			logger.error("Field was not assembled after pipeline completion!");
 		// Check if there were reported errors
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
@@ -524,9 +549,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 */
 	private SaveResult generateMethod(boolean apply) {
 		// Generate method if not up-to-date
-		if (pipeline.isUnitOutdated() && !pipeline.generateMethod())
+		if (pipeline.isOutputOutdated() && !pipeline.generateMethod())
 			return SaveResult.FAILURE;
 		MethodNode methodAssembled = pipeline.getLastMethod();
+		if (methodAssembled == null)
+			logger.error("Class was not assembled after pipeline completion!");
 		// Check if there were reported errors
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
@@ -546,9 +573,11 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 */
 	private SaveResult generateClass(boolean apply) {
 		// Generate method if not up-to-date
-		if (pipeline.isUnitOutdated() && !pipeline.generateClass())
+		if (pipeline.isOutputOutdated() && !pipeline.generateClass())
 			return SaveResult.FAILURE;
 		ClassNode classAssembled = pipeline.getLastClass();
+		if (classAssembled == null)
+			logger.error("Class was not assembled after pipeline completion!");
 		// Check if there were reported errors
 		if (problemTracking.hasProblems(ProblemLevel.ERROR))
 			return SaveResult.FAILURE;
@@ -590,7 +619,26 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * @return Result of update operation.
 	 */
 	private SaveResult updateClass(ClassNode updatedClass) {
-		return updateClass(cw -> updatedClass);
+		// Because we are operating on whole class that likely hasn't gotten any frames,
+		// we're going to need to compute them.
+		int flags = ClassWriter.COMPUTE_FRAMES;
+		ClassWriter cw = new WorkspaceClassWriter(RecafUI.getController(), flags);
+		try {
+			updatedClass.accept(cw);
+		} catch (Exception ex) {
+			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(ex, getClass());
+			String classLocation = trace[0].getClassName();
+			if ("org.objectweb.asm.Frame".equals(classLocation))
+				logger.error("Failed to reassemble method (ASM frame generation)", ex);
+			else
+				logger.error("Failed to reassemble method (Unknown)", ex);
+			return SaveResult.FAILURE;
+		}
+		// Done, update the workspace
+		byte[] updatedBytecode = cw.toByteArray();
+		Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
+		resource.getClasses().put(ClassInfo.read(updatedBytecode));
+		return SaveResult.SUCCESS;
 	}
 
 	/**
@@ -601,6 +649,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 *
 	 * @see #updateClass(MethodNode)
 	 * @see #updateClass(FieldNode)
+	 * @see #updateClass(ClassNode)
 	 */
 	private SaveResult updateClass(Function<ClassWriter, ClassVisitor> replacerProvider) {
 		// Because we are creating a new method, we need to generate frames.
@@ -621,9 +670,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			return SaveResult.FAILURE;
 		}
 		// Done, update the workspace
-		byte[] updatedClass = cw.toByteArray();
+		byte[] updatedBytecode = cw.toByteArray();
 		Resource resource = RecafUI.getController().getWorkspace().getResources().getPrimary();
-		resource.getClasses().put(ClassInfo.read(updatedClass));
+		resource.getClasses().put(ClassInfo.read(updatedBytecode));
 		return SaveResult.SUCCESS;
 	}
 

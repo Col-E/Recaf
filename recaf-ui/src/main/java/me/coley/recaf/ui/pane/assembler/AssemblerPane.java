@@ -10,8 +10,8 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.WindowEvent;
+import me.coley.recaf.assemble.ContextualPipeline;
 import me.coley.recaf.assemble.ast.Unit;
-import me.coley.recaf.assemble.pipeline.AssemblerPipeline;
 import me.coley.recaf.code.*;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable, WindowCloseListener {
 	private static final boolean DEBUG_AST = false;
-	private final AssemblerPipeline pipeline = new AssemblerPipeline();
+	private final ContextualPipeline pipeline = new ContextualPipeline();
 	private final List<MemberEditor> components = new ArrayList<>();
 	private final CollapsibleTabPane bottomTabs = new CollapsibleTabPane();
 	private final SplitPane split = new SplitPane();
@@ -129,7 +129,7 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 		return tab;
 	}
 
-	protected AssemblerArea createAssembler(ProblemTracking tracking, AssemblerPipeline pipeline) {
+	protected AssemblerArea createAssembler(ProblemTracking tracking, ContextualPipeline pipeline) {
 		return new AssemblerArea(tracking, pipeline);
 	}
 
@@ -166,13 +166,17 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 							break;
 						}
 					}
-				} else {
+				} else if (unit.isMethod()) {
 					for (MethodInfo method : newValue.getMethods()) {
 						if (method.getName().equals(name) && method.getDescriptor().equals(desc)) {
 							setTargetMember(method);
 							break;
 						}
 					}
+				} else if (unit.isClass()) {
+					// Prepare for class editing
+					targetMember = null;
+					assemblerArea.setTargetMember(null);
 				}
 			}
 			// Skip if we triggered this update
@@ -199,10 +203,29 @@ public class AssemblerPane extends BorderPane implements MemberEditor, Cleanable
 	public void setTargetMember(MemberInfo targetMember) {
 		this.targetMember = targetMember;
 		components.forEach(c -> c.setTargetMember(targetMember));
-		// Update tab display
-		tab.textProperty().unbind();
-		tab.setText(TextDisplayUtil.shortenEscapeLimit(targetMember.getName()));
-		if (targetMember.isMethod()) {
+		if (targetMember == null) {
+			// Update tab display
+			tab.textProperty().unbind();
+			tab.setText(TextDisplayUtil.shortenEscapeLimit(classInfo.getName()));
+			// Setup bottom tabs with bytecode helper tools for methods.
+			if (bottomTabs.getTabs().isEmpty()) {
+				bottomTabs.setSide(Side.BOTTOM);
+				bottomTabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+				bottomTabs.getTabs().addAll(
+						createVariableTable(),
+						createStackAnalysis(),
+						createPlayground()
+				);
+				if (DEBUG_AST || Configs.assembler().astDebug)
+					bottomTabs.getTabs().add(createDebug());
+				bottomTabs.setup();
+				split.getItems().add(bottomTabs);
+			}
+			tab.setGraphic(Icons.getClassIcon(classInfo));
+		} else if (targetMember.isMethod()) {
+			// Update tab display
+			tab.textProperty().unbind();
+			tab.setText(TextDisplayUtil.shortenEscapeLimit(targetMember.getName()));
 			// Setup bottom tabs with bytecode helper tools for methods.
 			if (bottomTabs.getTabs().isEmpty()) {
 				bottomTabs.setSide(Side.BOTTOM);
