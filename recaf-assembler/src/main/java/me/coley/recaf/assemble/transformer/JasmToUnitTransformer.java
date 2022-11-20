@@ -67,17 +67,16 @@ public class JasmToUnitTransformer extends AbstractTopLevelGroupVisitor implemen
 				convertModifiers(decl.getAccessMods()),
 				content(decl.getName())
 		));
+		if(decl.getExtendsGroup() != null) {
+			classDefinition.setSuperClass(content(decl.getExtendsGroup().getClassName()));
+		}
+		if(decl.getImplementsGroups() != null) {
+			for(ImplementsGroup impl : decl.getImplementsGroups()) {
+				classDefinition.addInterface(content(impl.getClassName()));
+			}
+		}
 		setDefinition(classDefinition);
 		return new ClassGroupVisitor() {
-			@Override
-			public void visitExtends(ExtendsGroup group) {
-				classDefinition.setSuperClass(content(group.getClassName()));
-			}
-
-			@Override
-			public void visitImplements(ImplementsGroup group) {
-				classDefinition.addInterface(content(group.getClassName()));
-			}
 
 			@Override
 			public void visitAnnotation(AnnotationGroup annotation) throws AssemblerException {

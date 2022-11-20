@@ -105,8 +105,10 @@ public class JasmTransformUtil {
 			for (AccessModGroup accessMod : export.getAccessMods().getAccessMods())
 				exportModifiers.add(Modifier.byName(accessMod.content().replace(".", "")));
 			ModuleExport moduleExport = new ModuleExport(content(export.getModule()), exportModifiers);
-			for (IdentifierGroup identifierGroup : export.getTo().getTo()) {
-				moduleExport.addPackage(content(identifierGroup));
+			if(export.getTo() != null) {
+				for (IdentifierGroup identifierGroup : export.getTo().getTo()) {
+					moduleExport.addPackage(content(identifierGroup));
+				}
 			}
 			module.addExport(moduleExport);
 		}
@@ -115,8 +117,10 @@ public class JasmTransformUtil {
 			for (AccessModGroup accessMod : open.getAccessMods().getAccessMods())
 				openModifiers.add(Modifier.byName(accessMod.content().replace(".", "")));
 			ModuleOpen moduleExport = new ModuleOpen(content(open.getModule()), openModifiers);
-			for (IdentifierGroup identifierGroup : open.getTo().getTo()) {
-				moduleExport.addPackage(content(identifierGroup));
+			if(open.getTo() != null) {
+				for (IdentifierGroup identifierGroup : open.getTo().getTo()) {
+					moduleExport.addPackage(content(identifierGroup));
+				}
 			}
 			module.addOpen(moduleExport);
 		}
@@ -125,8 +129,10 @@ public class JasmTransformUtil {
 		}
 		for (ProvideGroup provide : moduleGroup.getProvides()) {
 			ModuleProvide moduleProvide = new ModuleProvide(content(provide.getService()));
-			for (IdentifierGroup identifierGroup : provide.getWith()) {
-				moduleProvide.addPackage(content(identifierGroup));
+			if(provide.getWith() != null) {
+				for (IdentifierGroup identifierGroup : provide.getWith().getWith()) {
+					moduleProvide.addPackage(content(identifierGroup));
+				}
 			}
 			module.addProvide(moduleProvide);
 		}

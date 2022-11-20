@@ -29,10 +29,18 @@ public class ModuleProvide extends BaseElement {
 
     @Override
     public String print(PrintContext context) {
-        return context.fmtKeyword("provides")
-                + " " + context.fmtIdentifier(name)
-                + " " + context.fmtKeyword("with")
-                + " " + String.join(" ", packages)
-                + " " + context.fmtKeyword("end");
+        StringBuilder sb = new StringBuilder();
+        sb.append(context.fmtKeyword("provides"))
+          .append(" ")
+          .append(context.fmtIdentifier(name));
+        if(packages.size() > 0) {
+            sb.append(" ")
+              .append(context.fmtKeyword("with"))
+              .append(" ")
+              .append(String.join(" ", packages))
+              .append(" ")
+              .append(context.fmtKeyword("end"));
+        }
+        return sb.toString();
     }
 }

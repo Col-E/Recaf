@@ -43,12 +43,14 @@ public class ModuleOpen extends BaseElement {
             sb.append(' ');
         }
         sb.append(context.fmtIdentifier(name));
-        sb.append(' ');
-        sb.append(context.fmtKeyword("to"));
-        sb.append(' ');
-        sb.append(String.join(" ", packages));
-        sb.append(' ');
-        sb.append(context.fmtKeyword("end"));
+        if(packages.size() > 0) {
+            sb.append(' ');
+            sb.append(context.fmtKeyword("to"));
+            sb.append(' ');
+            sb.append(String.join(" ", packages));
+            sb.append(' ');
+            sb.append(context.fmtKeyword("end"));
+        }
         return sb.toString();
     }
 }
