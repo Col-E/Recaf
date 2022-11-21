@@ -1,6 +1,6 @@
 package me.coley.recaf;
 
-import dev.xdark.recaf.plugin.RecafPluginManager;
+import me.coley.recaf.plugin.RecafPluginManager;
 import me.coley.recaf.launch.InitializerParameters;
 import me.coley.recaf.presentation.PresentationType;
 import me.coley.recaf.scripting.ScriptEngine;

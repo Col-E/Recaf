@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.plugin.item;
 
 import dev.xdark.recaf.plugin.PluginInformation;
-import dev.xdark.recaf.plugin.RecafPluginManager;
+import me.coley.recaf.plugin.RecafPluginManager;
 import dev.xdark.recaf.plugin.repository.PluginRepositoryItem;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.util.logging.Logging;

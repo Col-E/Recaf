@@ -1,6 +1,6 @@
 package me.coley.recaf.presentation;
 
-import dev.xdark.recaf.plugin.RecafPluginManager;
+import me.coley.recaf.plugin.RecafPluginManager;
 import javafx.application.Platform;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafConstants;

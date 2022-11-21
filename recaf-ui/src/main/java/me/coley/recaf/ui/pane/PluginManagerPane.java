@@ -3,7 +3,7 @@ package me.coley.recaf.ui.pane;
 import dev.xdark.recaf.plugin.Plugin;
 import dev.xdark.recaf.plugin.PluginContainer;
 import dev.xdark.recaf.plugin.PluginInformation;
-import dev.xdark.recaf.plugin.RecafPluginManager;
+import me.coley.recaf.plugin.RecafPluginManager;
 import dev.xdark.recaf.plugin.repository.CommonPluginRepository;
 import dev.xdark.recaf.plugin.repository.PluginRepository;
 import javafx.beans.binding.StringBinding;

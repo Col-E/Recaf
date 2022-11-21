@@ -7,6 +7,11 @@ import java.util.Collection;
 
 public interface PluginManager {
 	/**
+	 * @return Allocator to use for creating plugin instances.
+	 */
+	ClassAllocator getAllocator();
+
+	/**
 	 * @param source
 	 * 		source to pick from.
 	 *
@@ -79,7 +84,34 @@ public interface PluginManager {
 	 * 		if there was no loader for the given source,
 	 * 		or plugin failed to load.
 	 */
-	<T extends Plugin> PluginContainer<T> loadPlugin(ByteSource source) throws PluginLoadException;
+	default <T extends Plugin> PluginContainer<T> loadPlugin(ByteSource source) throws PluginLoadException {
+		for (PluginLoader loader : getLoaders()) {
+			try {
+				// Skip unsupported sources
+				if (!loader.isSupported(source))
+					continue;
+				// Load and record plugin container
+				PluginContainer<T> container = loader.load(getAllocator(), source);
+				return loadPlugin(container);
+			} catch(IOException | UnsupportedSourceException ex) {
+				throw new PluginLoadException("Could not load plugin due to an error", ex);
+			}
+		}
+		throw new PluginLoadException("Plugin manager was unable to locate suitable loader for the source.");
+	}
+
+	/**
+	 * Loads and registers a plugin.
+	 *
+	 * @param container
+	 *        Container of a {@link Plugin}.
+	 *
+	 * @return loaded plugin.
+	 *
+	 * @throws PluginLoadException
+	 * 		Plugin failed to load.
+	 */
+	<T extends Plugin> PluginContainer<T> loadPlugin(PluginContainer<T> container) throws PluginLoadException;
 
 	/**
 	 * Unloads a plugin.

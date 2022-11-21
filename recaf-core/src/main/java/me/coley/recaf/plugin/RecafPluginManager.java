@@ -1,5 +1,6 @@
-package dev.xdark.recaf.plugin;
+package me.coley.recaf.plugin;
 
+import dev.xdark.recaf.plugin.*;
 import dev.xdark.recaf.plugin.java.ZipPluginLoader;
 import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.io.ByteSources;

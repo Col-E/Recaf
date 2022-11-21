@@ -3,7 +3,6 @@ package dev.xdark.recaf.plugin;
 import me.coley.recaf.io.ByteSource;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * The plugin loader.
@@ -17,6 +16,8 @@ public interface PluginLoader {
 	/**
 	 * Loads a plugin from {@link ByteSource}.
 	 *
+	 * @param allocator
+	 * 		Allocator to initialize {@link Plugin} instances with.
 	 * @param in
 	 *        {@link ByteSource} to load plugin from.
 	 *
@@ -29,7 +30,7 @@ public interface PluginLoader {
 	 * @throws UnsupportedSourceException
 	 * 		If loader does not support this type of source.
 	 */
-	<T extends Plugin> PluginContainer<T> load(ByteSource in) throws IOException, PluginLoadException, UnsupportedSourceException;
+	<T extends Plugin> PluginContainer<T> load(ClassAllocator allocator, ByteSource in) throws IOException, PluginLoadException, UnsupportedSourceException;
 
 	boolean isSupported(ByteSource source) throws IOException;
 

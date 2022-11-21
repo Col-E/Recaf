@@ -14,6 +14,12 @@ public class SimplePluginManager implements PluginManager {
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final Map<String, PluginContainer<?>> nameMap = new HashMap<>();
 	private final Map<? super Plugin, PluginContainer<?>> instanceMap = new IdentityHashMap<>();
+	private final ClassAllocator classAllocator = new ConstructorClassAllocator();
+
+	@Override
+	public ClassAllocator getAllocator() {
+		return classAllocator;
+	}
 
 	@Override
 	public PluginLoader getLoader(ByteSource source) throws IOException {
@@ -64,31 +70,19 @@ public class SimplePluginManager implements PluginManager {
 	}
 
 	@Override
-	public <T extends Plugin> PluginContainer<T> loadPlugin(ByteSource source) throws PluginLoadException {
-		for (PluginLoader loader : loaders) {
+	public <T extends Plugin> PluginContainer<T> loadPlugin(PluginContainer<T> container) throws PluginLoadException {
+		String name = container.getInformation().getName();
+		if (nameMap.putIfAbsent(name.toLowerCase(Locale.ROOT), container) != null) {
+			// Plugin already exists, we do not allow
+			// multiple plugins with the same name.
 			try {
-				// Skip unsupported sources
-				if (!loader.isSupported(source))
-					continue;
-				// Load and record plugin container
-				PluginContainer<T> container = loader.load(source);
-				String name = container.getInformation().getName();
-				if (nameMap.putIfAbsent(name.toLowerCase(Locale.ROOT), container) != null) {
-					// Plugin already exists, we do not allow
-					// multiple plugins with the same name.
-					try {
-						container.getLoader().disablePlugin(container);
-					} catch(Exception ignored) {
-					}
-					throw new PluginLoadException("Duplicate plugin: " + name);
-				}
-				instanceMap.put(container.getPlugin(), container);
-				return container;
-			} catch(IOException | UnsupportedSourceException ex) {
-				throw new PluginLoadException("Could not load plugin due to an error", ex);
+				container.getLoader().disablePlugin(container);
+			} catch(Exception ignored) {
 			}
+			throw new PluginLoadException("Duplicate plugin: " + name);
 		}
-		throw new PluginLoadException("Plugin manager was unable to locate suitable loader for the source.");
+		instanceMap.put(container.getPlugin(), container);
+		return container;
 	}
 
 	@Override

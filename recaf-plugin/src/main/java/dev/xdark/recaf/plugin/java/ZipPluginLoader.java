@@ -1,11 +1,6 @@
 package dev.xdark.recaf.plugin.java;
 
-import dev.xdark.recaf.plugin.Plugin;
-import dev.xdark.recaf.plugin.PluginClassLoader;
-import dev.xdark.recaf.plugin.PluginContainer;
-import dev.xdark.recaf.plugin.PluginLoadException;
-import dev.xdark.recaf.plugin.PluginLoader;
-import dev.xdark.recaf.plugin.UnsupportedSourceException;
+import dev.xdark.recaf.plugin.*;
 import me.coley.recaf.RecafConstants;
 import me.coley.recaf.io.ByteSource;
 import me.coley.recaf.util.ByteHeaderUtil;
@@ -55,7 +50,7 @@ public final class ZipPluginLoader implements PluginLoader {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Plugin> PluginContainer<T> load(ByteSource source) throws IOException, PluginLoadException, UnsupportedSourceException {
+	public <T extends Plugin> PluginContainer<T> load(ClassAllocator allocator, ByteSource source) throws IOException, PluginLoadException, UnsupportedSourceException {
 		// Read whole zip archive into memory.
 		Map<String, byte[]> content = new HashMap<>();
 		try(ZipInputStream zis = new ZipInputStream(source.openStream())) {
@@ -128,8 +123,8 @@ public final class ZipPluginLoader implements PluginLoader {
 			// Actually create plugin instance.
 			T plugin;
 			try {
-				plugin = (T) entrypoint.getConstructor().newInstance();
-			} catch(ReflectiveOperationException ex) {
+				plugin = (T) allocator.instance(entrypoint);
+			} catch(AllocationException ex) {
 				throw new PluginLoadException("Could not create plugin instance", ex);
 			}
 			// Don't forget to register a loader.

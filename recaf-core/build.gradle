@@ -16,6 +16,7 @@ configurations {
 
 dependencies {
     api project(':recaf-assembler')
+    api project(':recaf-plugin')
     api project(':recaf-jdk-tools')
 
     api fileTree(dir: 'libs', include: ['*.jar'])
