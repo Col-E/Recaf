@@ -14,7 +14,11 @@ public class SimplePluginManager implements PluginManager {
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final Map<String, PluginContainer<?>> nameMap = new HashMap<>();
 	private final Map<? super Plugin, PluginContainer<?>> instanceMap = new IdentityHashMap<>();
-	private final ClassAllocator classAllocator = new ConstructorClassAllocator();
+	private ClassAllocator classAllocator = new ConstructorClassAllocator();
+
+	protected void setClassAllocator(ClassAllocator classAllocator) {
+		this.classAllocator = classAllocator;
+	}
 
 	@Override
 	public ClassAllocator getAllocator() {
