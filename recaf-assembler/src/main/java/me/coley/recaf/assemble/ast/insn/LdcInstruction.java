@@ -177,7 +177,13 @@ public class LdcInstruction extends AbstractInstruction {
 			case FLOAT:
 				return getOpcode() + " " + getValue() + 'f';
 			case HANDLE:
-				return getOpcode() + ' ' + context.fmtKeyword("handle ") + ((HandleInfo) getValue()).print(context);
+				String handle = context.fmtKeyword("handle ");
+				Object value = getValue();
+				if(value instanceof Handle) {
+					value = new HandleInfo((Handle) value);
+				}
+				HandleInfo info = (HandleInfo) value;
+				return getOpcode() + " " + handle + info.print(context);
 			default:
 				throw new IllegalStateException("Unhandled constant value type: " + getValueType());
 		}
