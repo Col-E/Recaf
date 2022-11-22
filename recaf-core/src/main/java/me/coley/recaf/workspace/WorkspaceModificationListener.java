@@ -7,7 +7,7 @@ import me.coley.recaf.workspace.resource.Resource;
  *
  * @author Matt Coley
  */
-public interface WorkspaceListener {
+public interface WorkspaceModificationListener {
 	/**
 	 * @param workspace
 	 * 		The workspace.

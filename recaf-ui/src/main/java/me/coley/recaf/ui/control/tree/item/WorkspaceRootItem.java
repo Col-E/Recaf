@@ -6,7 +6,7 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.WorkspaceListener;
+import me.coley.recaf.workspace.WorkspaceModificationListener;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
 import me.coley.recaf.workspace.resource.ResourceDexClassListener;
@@ -20,7 +20,7 @@ import java.util.Map;
  *
  * @author Matt Coley
  */
-public class WorkspaceRootItem extends BaseTreeItem implements WorkspaceListener,
+public class WorkspaceRootItem extends BaseTreeItem implements WorkspaceModificationListener,
 		ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
 	private final Map<Resource, ResourceItem> resourceToItem = new HashMap<>();
 	private final Workspace workspace;

@@ -12,7 +12,7 @@ import java.util.List;
  * @author Matt Coley
  */
 public class Workspace {
-	private final List<WorkspaceListener> listeners = new ArrayList<>();
+	private final List<WorkspaceModificationListener> listeners = new ArrayList<>();
 	private final Resources resources;
 
 	/**
@@ -70,7 +70,7 @@ public class Workspace {
 	 * @param listener
 	 * 		New workspace event listener to add.
 	 */
-	public void addListener(WorkspaceListener listener) {
+	public void addListener(WorkspaceModificationListener listener) {
 		listeners.add(listener);
 	}
 
@@ -78,7 +78,7 @@ public class Workspace {
 	 * @param listener
 	 * 		Workspace event listener to remove.
 	 */
-	public void removeListener(WorkspaceListener listener) {
+	public void removeListener(WorkspaceModificationListener listener) {
 		listeners.remove(listener);
 	}
 }

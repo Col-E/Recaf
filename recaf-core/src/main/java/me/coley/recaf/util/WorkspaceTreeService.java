@@ -3,7 +3,7 @@ package me.coley.recaf.util;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.WorkspaceListener;
+import me.coley.recaf.workspace.WorkspaceModificationListener;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
 
@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  *
  * @author Justus Garbe
  */
-public class WorkspaceTreeService implements WorkspaceListener, ResourceClassListener {
+public class WorkspaceTreeService implements WorkspaceModificationListener, ResourceClassListener {
 	private final Workspace workspace;
 	private CompletableFuture<ClasspathUtil.Tree> future;
 
