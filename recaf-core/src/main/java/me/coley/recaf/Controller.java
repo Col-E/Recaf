@@ -22,7 +22,7 @@ import java.util.Set;
  */
 public class Controller {
 	private final Set<ControllerListener> listeners = new HashSet<>();
-	private final Services services = new Services(this);
+	private final Services services = new Services();
 	private final Presentation presentation;
 	private Workspace workspace;
 

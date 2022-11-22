@@ -28,6 +28,7 @@ public class RecafPluginManager extends SimplePluginManager {
 
 	private RecafPluginManager() {
 		registerLoader(new ZipPluginLoader(RecafPluginManager.class.getClassLoader()));
+		setClassAllocator(new RecafPluginClassAllocator());
 	}
 
 	@Override

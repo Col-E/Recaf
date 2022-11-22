@@ -1,5 +1,7 @@
 package me.coley.recaf.graph;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import me.coley.recaf.cdi.WorkspaceScoped;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.DexClassInfo;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
+@WorkspaceScoped
 public class InheritanceGraph implements ResourceClassListener, ResourceDexClassListener {
 	private static final InheritanceVertex STUB = new InheritanceVertex(null, null, null, false);
 	private static final String OBJECT = "java/lang/Object";

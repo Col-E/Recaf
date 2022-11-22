@@ -3,12 +3,15 @@ package me.coley.recaf;
 import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.mapping.AggregateMappingManager;
 import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.WorkspaceSymbolSolver;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.workspace.Workspace;
+
+import static me.coley.recaf.cdi.RecafContainer.create;
 
 /**
  * Wrapper of multiple services that are provided by a controller.
@@ -20,22 +23,23 @@ public class Services {
 	private final CompilerManager compilerManager;
 	private final DecompileManager decompileManager;
 	private final MappingsManager mappingsManager;
+	// TODO: Handle workspace scoped auto-matically via CDI
+	private AggregateMappingManager aggregateMappingManager;
 	private WorkspaceTreeService treeService;
 	private SsvmIntegration ssvmIntegration;
 	private InheritanceGraph inheritanceGraph;
-	private WorkspaceSymbolSolver symbolSolver;
 	private JavaParserHelper javaParserHelper;
+	// TODO: Make the symbol-solver part of JavaParserHelper, remove public accessor here
+	//       since it will be a sub-value of the JP helper.
+	private WorkspaceSymbolSolver symbolSolver;
 
 	/**
 	 * Initialize services.
-	 *
-	 * @param controller
-	 * 		Parent controller instance.
 	 */
-	Services(Controller controller) {
-		compilerManager = new CompilerManager();
-		decompileManager = new DecompileManager();
-		mappingsManager = new MappingsManager();
+	Services() {
+		compilerManager = create(CompilerManager.class);
+		decompileManager = create(DecompileManager.class);
+		mappingsManager = create(MappingsManager.class);
 	}
 
 	/**
@@ -57,6 +61,13 @@ public class Services {
 	 */
 	public MappingsManager getMappingsManager() {
 		return mappingsManager;
+	}
+
+	/**
+	 * @return The aggregate mappings.
+	 */
+	public AggregateMappingManager getAggregateMappingManager() {
+		return aggregateMappingManager;
 	}
 
 	/**
@@ -104,17 +115,19 @@ public class Services {
 	 * 		New parent workspace in the controller.
 	 */
 	void updateWorkspace(Workspace workspace) {
-		mappingsManager.clearAggregated();
-		if (ssvmIntegration != null) {
-			ssvmIntegration.cleanup();
-		}
+		// Clean up SSVM when new workspace is set
+		if (ssvmIntegration != null) ssvmIntegration.cleanup();
+
+		// Clear / reset services
 		if (workspace == null) {
 			inheritanceGraph = null;
 			symbolSolver = null;
 			javaParserHelper = null;
 			ssvmIntegration = null;
 			treeService = null;
+			aggregateMappingManager = null;
 		} else {
+			aggregateMappingManager = create(AggregateMappingManager.class);
 			inheritanceGraph = new InheritanceGraph(workspace);
 			symbolSolver = WorkspaceSymbolSolver.create(workspace);
 			javaParserHelper = JavaParserHelper.create(symbolSolver);

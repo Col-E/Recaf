@@ -1,5 +1,6 @@
 package me.coley.recaf;
 
+import me.coley.recaf.cdi.RecafContainer;
 import me.coley.recaf.launch.InitializerParameters;
 import me.coley.recaf.presentation.Presentation;
 import me.coley.recaf.presentation.PresentationType;
@@ -22,9 +23,11 @@ public final class Recaf {
 	 * 		Initialization parameters.
 	 */
 	public static void initialize(InitializerParameters parameters) {
-		logger.debug("Initialize: Recaf-{} ({}) - {}", BuildConfig.VERSION, BuildConfig.GIT_SHA, BuildConfig.GIT_DATE);
+		logger.info("Initialize: Recaf-{} ({}) - {}", BuildConfig.VERSION, BuildConfig.GIT_SHA, BuildConfig.GIT_DATE);
 		RuntimeProperties.dump(logger);
+		logger.debug("Initializing Recaf CDI container...");
 		// Create presentation layer
+		logger.debug("Initializing presentation...");
 		PresentationType presentationType = parameters.getPresentationType();
 		Presentation presentation;
 		try {

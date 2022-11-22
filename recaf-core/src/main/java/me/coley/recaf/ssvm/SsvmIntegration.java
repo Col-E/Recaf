@@ -5,6 +5,7 @@ import dev.xdark.ssvm.execution.VMException;
 import dev.xdark.ssvm.mirror.InstanceJavaClass;
 import dev.xdark.ssvm.value.InstanceValue;
 import dev.xdark.ssvm.value.Value;
+import me.coley.recaf.cdi.WorkspaceScoped;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.AccessFlag;
@@ -22,6 +23,7 @@ import java.util.function.Consumer;
  *
  * @author Matt Coley
  */
+@WorkspaceScoped
 public class SsvmIntegration {
 	private static final Logger logger = Logging.get(SsvmIntegration.class);
 	private static final ExecutorService vmThreadPool = ThreadPoolFactory.newFixedThreadPool("Recaf SSVM", 1, true);

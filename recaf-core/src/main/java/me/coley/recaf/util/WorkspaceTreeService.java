@@ -1,5 +1,6 @@
 package me.coley.recaf.util;
 
+import me.coley.recaf.cdi.WorkspaceScoped;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -15,6 +16,7 @@ import java.util.function.Consumer;
  *
  * @author Justus Garbe
  */
+@WorkspaceScoped
 public class WorkspaceTreeService implements WorkspaceModificationListener, ResourceClassListener {
 	private final Workspace workspace;
 	private CompletableFuture<ClasspathUtil.Tree> future;

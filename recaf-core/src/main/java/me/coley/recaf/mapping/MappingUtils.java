@@ -96,7 +96,7 @@ public class MappingUtils {
 			adapter.enableHierarchyLookup(controller.getServices().getInheritanceGraph());
 		}
 		Set<String> modifiedClasses = applyMappingsWithoutAggregation(read, write, resource, mappings);
-		controller.getServices().getMappingsManager().updateAggregateMappings(mappings);
+		controller.getServices().getAggregateMappingManager().updateAggregateMappings(mappings);
 		return modifiedClasses;
 	}
 }

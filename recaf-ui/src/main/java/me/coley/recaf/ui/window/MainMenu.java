@@ -220,7 +220,7 @@ public class MainMenu extends BorderPane implements ControllerListener {
 	}
 
 	private void exportMappings(MappingsTool mappingsTool) {
-		Mappings currentAggregate = RecafUI.getController().getServices().getMappingsManager().getAggregatedMappings();
+		Mappings currentAggregate = RecafUI.getController().getServices().getAggregateMappingManager().getAggregatedMappings();
 		if (!currentAggregate.supportsExportIntermediate()) {
 			logger.error("Cannot export aggregated mappings, intermediate export not supported!");
 			return;

@@ -1,13 +1,9 @@
 package me.coley.recaf.scripting.impl;
 
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.mapping.AggregatedMappings;
-import me.coley.recaf.mapping.MappingUtils;
-import me.coley.recaf.mapping.Mappings;
-import me.coley.recaf.mapping.MappingsManager;
+import me.coley.recaf.mapping.*;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.resource.Resource;
-import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
 /**
@@ -23,7 +19,7 @@ public class MappingsAPI {
 	 * This contains a flattened history of all the user's applied mappings.
 	 */
 	public static AggregatedMappings getAggregatedMappings() {
-		return getMappingsManager().getAggregatedMappings();
+		return getAggregatedMappingManager().getAggregatedMappings();
 	}
 
 	/**
@@ -33,7 +29,7 @@ public class MappingsAPI {
 	 * @return The {@link #getAggregatedMappings()} in the given mappings format as text.
 	 */
 	public static String exportAggregateMappings(Mappings mappings) {
-		Mappings currentAggregate = getMappingsManager().getAggregatedMappings();
+		Mappings currentAggregate = getAggregatedMappingManager().getAggregatedMappings();
 		if (!currentAggregate.supportsExportIntermediate()) {
 			logger.error("Cannot export aggregated mappings, intermediate export not supported!");
 			return null;
@@ -61,5 +57,12 @@ public class MappingsAPI {
 	 */
 	private static MappingsManager getMappingsManager() {
 		return RecafUI.getController().getServices().getMappingsManager();
+	}
+
+	/**
+	 * @return The aggregate mapping manager.
+	 */
+	private static AggregateMappingManager getAggregatedMappingManager() {
+		return RecafUI.getController().getServices().getAggregateMappingManager();
 	}
 }

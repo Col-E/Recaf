@@ -6,6 +6,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 import me.coley.recaf.RecafUI;
+import me.coley.recaf.Services;
 import me.coley.recaf.mapping.*;
 import me.coley.recaf.plugin.tools.Tool;
 
@@ -26,10 +27,12 @@ public class AggregateMappingPane extends BorderPane implements AggregatedMappin
 	private AggregateMappingPane() {
 		// TODO: More integrated display with class and member icons?
 		//  - Text export already a feature from the menu dropdown, which this is basically a live preview of atm
-		MappingsManager manager = RecafUI.getController().getServices().getMappingsManager();
-		manager.addAggregatedMappingsListener(this);
+		Services services = RecafUI.getController().getServices();
+		AggregateMappingManager aggregateMappings = services.getAggregateMappingManager();
+		MappingsManager mappingsManager = services.getMappingsManager();
+		aggregateMappings.addAggregatedMappingsListener(this);
 		text.getStyleClass().add("monospaced");
-		combo.getItems().addAll(manager.getRegisteredImpls().stream()
+		combo.getItems().addAll(mappingsManager.getRegisteredImpls().stream()
 				.filter(MappingsTool::supportsTextExport)
 				.collect(Collectors.toList()));
 		combo.getItems().sort(Comparator.comparing(Tool::getName));
@@ -44,7 +47,7 @@ public class AggregateMappingPane extends BorderPane implements AggregatedMappin
 
 			@Override
 			public MappingsTool fromString(String name) {
-				return manager.get(name);
+				return mappingsManager.get(name);
 			}
 		});
 		// Layout
@@ -52,7 +55,7 @@ public class AggregateMappingPane extends BorderPane implements AggregatedMappin
 		setCenter(text);
 		setBottom(combo);
 		// Setup initial state
-		onAggregatedMappingsUpdated(manager.getAggregatedMappings());
+		onAggregatedMappingsUpdated(aggregateMappings.getAggregatedMappings());
 	}
 
 	@Override

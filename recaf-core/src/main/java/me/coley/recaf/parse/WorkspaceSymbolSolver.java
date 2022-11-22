@@ -9,6 +9,7 @@ import com.github.javaparser.resolution.declarations.ResolvedMethodLikeDeclarati
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
+import me.coley.recaf.cdi.WorkspaceScoped;
 import me.coley.recaf.workspace.Workspace;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
+@WorkspaceScoped
 public class WorkspaceSymbolSolver extends JavaSymbolSolver {
 	private final WorkspaceTypeSolver typeSolver;
 	private final JavaParserFacade facade;

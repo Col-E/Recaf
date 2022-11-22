@@ -408,8 +408,8 @@ public class MappingGenPane extends VBox {
 
 		@Override
 		protected NameGeneratorFilter export() {
-			MappingsManager mappingsManager = RecafUI.getController().getServices().getMappingsManager();
-			AggregatedMappings aggregate = mappingsManager.getAggregatedMappings();
+			AggregateMappingManager aggregateMappingManager = RecafUI.getController().getServices().getAggregateMappingManager();
+			AggregatedMappings aggregate = aggregateMappingManager.getAggregatedMappings();
 			return new ExcludeExistingMappedFilter(getPriorFilter(), aggregate);
 		}
 	}

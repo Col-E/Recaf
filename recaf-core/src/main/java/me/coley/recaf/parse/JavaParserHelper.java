@@ -9,6 +9,7 @@ import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.expr.SimpleName;
 import jregex.Matcher;
 import me.coley.recaf.Controller;
+import me.coley.recaf.cdi.WorkspaceScoped;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.code.LiteralExpressionInfo;
@@ -25,6 +26,7 @@ import java.util.Optional;
  *
  * @author Matt Coley
  */
+@WorkspaceScoped
 public class JavaParserHelper {
 	private final WorkspaceSymbolSolver symbolSolver;
 	private final JavaParser parser;

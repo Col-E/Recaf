@@ -27,6 +27,7 @@ dependencies {
     api asm_tree
     api asm_util
     api baksmali
+    api cdi
     api cfr
     api common_io
     api dexlib
@@ -36,6 +37,7 @@ dependencies {
     api instrument_server
     api (jadx) { exclude group: 'com.android.tools.build' }
     api jadx_input
+    api jandex
     api java_parser
     api javax_annos
     api jphantom

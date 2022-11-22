@@ -3,6 +3,7 @@ package me.coley.recaf.parse;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import me.coley.recaf.Controller;
+import me.coley.recaf.cdi.RecafContainer;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.presentation.EmptyPresentation;
@@ -26,6 +27,7 @@ public class JavaParserHelperTests {
 
 	@BeforeAll
 	static void setup() {
+		RecafContainer.initialize();
 		workspace = new Workspace(new Resources(RuntimeResource.get()));
 		controller = new Controller(new EmptyPresentation());
 		controller.setWorkspace(workspace);
