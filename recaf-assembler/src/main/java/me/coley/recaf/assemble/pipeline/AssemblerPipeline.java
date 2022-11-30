@@ -17,8 +17,14 @@ import me.coley.recaf.assemble.validation.ast.AstValidator;
 import me.coley.recaf.assemble.validation.bytecode.BytecodeValidator;
 import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
+import me.darknet.assembler.exceptions.arguments.TooManyArgumentException;
+import me.darknet.assembler.instructions.Argument;
 import me.darknet.assembler.parser.*;
 import me.darknet.assembler.exceptions.AssemblerException;
+import me.darknet.assembler.parser.groups.BodyGroup;
+import me.darknet.assembler.parser.groups.ClassDeclarationGroup;
+import me.darknet.assembler.parser.groups.InstructionGroup;
+import me.darknet.assembler.parser.groups.MethodDeclarationGroup;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -550,9 +556,11 @@ public class AssemblerPipeline {
 		// JASM parse
 		logger.debugging(l -> l.trace("Assembler AST updating: [JASM parse]"));
 		ParserContext ctx = new ParserContext(new LinkedList<>(tokens), parser); // convert to linked list to get a queue
+		ctx.setOneLine(true);
 		List<Group> parsed;
 		try {
 			parsed = new ArrayList<>(ctx.parse());
+			validateGroups(parsed);
 		} catch (AssemblerException ex) {
 			// Parser problems are fatal
 			parserFailureListeners.forEach(l -> l.onParseFail(ex));
@@ -564,6 +572,7 @@ public class AssemblerPipeline {
 		if (Thread.interrupted())
 			return false;
 		latestJasmGroups = parsed;
+
 		parserCompletionListeners.forEach(l -> l.onCompleteParse(parsed));
 		// Transform to our AST
 		logger.debugging(l -> l.trace("Assembler AST updating: [JASM --> AST transform]"));
@@ -586,6 +595,40 @@ public class AssemblerPipeline {
 		}
 		logger.debugging(l -> l.trace("Assembler AST up-to-date!"));
 		return true;
+	}
+
+	private void validateGroups(List<Group> parsed) throws AssemblerException{
+		for (Group group : parsed) {
+			if(group instanceof MethodDeclarationGroup) {
+				MethodDeclarationGroup method = (MethodDeclarationGroup) group;
+				validateBody(method.getBody());
+			}
+			if(group instanceof ClassDeclarationGroup) {
+				ClassDeclarationGroup clazz = (ClassDeclarationGroup) group;
+				for (Group child : clazz.getChildren()) {
+					if(child instanceof MethodDeclarationGroup) {
+						MethodDeclarationGroup method = (MethodDeclarationGroup) child;
+						validateBody(method.getBody());
+					}
+				}
+			}
+		}
+	}
+
+	private void validateBody(BodyGroup body) throws AssemblerException {
+		for (Group child : body.getChildren()) {
+			if(child instanceof InstructionGroup) {
+				InstructionGroup instruction = (InstructionGroup) child;
+				validateInstruction(instruction);
+			}
+		}
+	}
+
+	private void validateInstruction(InstructionGroup instruction) throws AssemblerException {
+		Argument[] missingArgs = instruction.getMissingArguments();
+		if(missingArgs.length != 0) {
+			throw new MissingArgumentsException(instruction.getEndLocation(), missingArgs);
+		}
 	}
 
 	/**
