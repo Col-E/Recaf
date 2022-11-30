@@ -49,8 +49,9 @@ import me.coley.recaf.util.visitor.MethodReplacingVisitor;
 import me.coley.recaf.util.visitor.SingleMemberVisitor;
 import me.coley.recaf.util.visitor.WorkspaceClassWriter;
 import me.coley.recaf.workspace.resource.Resource;
-import me.darknet.assembler.parser.AssemblerException;
+import me.darknet.assembler.exceptions.AssemblerException;
 import me.darknet.assembler.parser.Group;
+import me.darknet.assembler.parser.Token;
 import me.darknet.assembler.parser.groups.*;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -79,7 +80,8 @@ import static me.darknet.assembler.parser.Group.GroupType;
  * @author Matt Coley
  */
 public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineCompletionListener,
-		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener {
+		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener,
+		ParserCompletionListener {
 	private static final DebuggingLogger logger = Logging.get(AssemblerArea.class);
 	private final DelayedExecutor updatePipelineInput;
 	private final ProblemTracking problemTracking;
@@ -124,6 +126,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		pipeline.addParserFailureListener(this);
 		pipeline.addBytecodeFailureListener(this);
 		pipeline.addPipelineCompletionListener(this);
+		pipeline.addParserCompletionListener(this);
 		boolean validateAst = config().astValidation;
 		if (validateAst) {
 			pipeline.addAstValidationListener(this);
@@ -841,6 +844,21 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 
 	private static AssemblerConfig config() {
 		return Configs.assembler();
+	}
+
+	@Override
+	public void onCompleteTokenize(List<Token> tokens) {
+		// no-op
+	}
+
+	@Override
+	public void onCompleteParse(List<Group> groups) {
+		problemTracking.clearOfType(BYTECODE_PARSING);
+	}
+
+	@Override
+	public void onCompleteTransform(Unit unit) {
+		// no-op
 	}
 
 	public class LabelContextBuilder extends ContextBuilder {

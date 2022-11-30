@@ -18,6 +18,7 @@ import me.coley.recaf.assemble.validation.bytecode.BytecodeValidator;
 import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import me.darknet.assembler.parser.*;
+import me.darknet.assembler.exceptions.AssemblerException;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -292,8 +293,7 @@ public class AssemblerPipeline {
 		if (outputOutdated) return true;
 		if (isMethod() && lastMethod == null) return true;
 		if (isField() && lastField == null) return true;
-		if (isClass() && lastClass == null) return true;
-		return false;
+		return isClass() && lastClass == null;
 	}
 
 	/**
