@@ -7,7 +7,7 @@ import me.coley.recaf.assemble.pipeline.BytecodeValidationListener;
 import me.coley.recaf.assemble.pipeline.ParserFailureListener;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.Validator;
-import me.darknet.assembler.parser.AssemblerException;
+import me.darknet.assembler.exceptions.AssemblerException;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;

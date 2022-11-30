@@ -10,7 +10,7 @@ import me.coley.recaf.assemble.ast.meta.Signature;
 import me.coley.recaf.util.EscapeUtil;
 import me.darknet.assembler.compiler.FieldDescriptor;
 import me.darknet.assembler.compiler.MethodDescriptor;
-import me.darknet.assembler.parser.AssemblerException;
+import me.darknet.assembler.exceptions.AssemblerException;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.Location;
 import me.darknet.assembler.parser.Token;
