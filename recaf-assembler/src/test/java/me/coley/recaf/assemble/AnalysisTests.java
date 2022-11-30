@@ -8,7 +8,7 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.transformer.JasmToUnitTransformer;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
-import me.darknet.assembler.parser.AssemblerException;
+import me.darknet.assembler.exceptions.AssemblerException;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.ParserContext;
 import org.junit.jupiter.api.Nested;

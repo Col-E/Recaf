@@ -24,6 +24,7 @@ public class JasmUtils {
 
 	protected static Unit createUnit(Keywords keywords, String code) throws Throwable {
 		ParserContext ctx = createParser(keywords, code);
+		ctx.setVerifyInstructions(false); // TODO: ENABLE AGAIN WHEN JASM FIXED FOR SIGNED INTEGER VERIFICATION
 		JasmToUnitTransformer transformer = new JasmToUnitTransformer(ctx.parse());
 		return transformer.generateUnit();
 	}
