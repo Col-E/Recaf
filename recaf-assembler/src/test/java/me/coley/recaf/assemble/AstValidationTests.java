@@ -3,6 +3,7 @@ package me.coley.recaf.assemble;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,6 +19,26 @@ import static org.junit.jupiter.api.Assertions.*;
  * code from the AST, not if that code will be correct.
  */
 public class AstValidationTests extends JasmUtils {
+	@Disabled("JASM will catch this before it gets to validation")
+	@Nested
+	class Int {
+		@Test
+		public void testCorrect() {
+			for (int i = Byte.MIN_VALUE; i < Byte.MAX_VALUE; i++)
+				assertCorrect("method dummy ()V\n" + "bipush " + i + "\nend");
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = {
+				"method dummy ()V\n" + "bipush " + (Byte.MIN_VALUE - 1) + "\nend",
+				"method dummy ()V\n" + "bipush " + (Byte.MAX_VALUE + 1) + "\nend",
+				"method dummy ()V\n" + "sipush " + (Short.MIN_VALUE - 1) + "\nend",
+				"method dummy ()V\n" + "sipush " + (Short.MAX_VALUE + 1) + "\nend",
+		})
+		public void testMissingTryCatchLabels(String original) {
+			assertMatch(original, ValidationMessage.INT_VAL_TOO_BIG);
+		}
+	}
 
 	@Nested
 	class VariableUsage {
