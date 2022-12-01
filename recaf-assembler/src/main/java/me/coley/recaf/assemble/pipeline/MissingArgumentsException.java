@@ -8,9 +8,14 @@ import java.util.Arrays;
 
 public class MissingArgumentsException extends AssemblerException {
 
-    private Argument[] missing;
+    private final Argument[] missing;
 
     public MissingArgumentsException(Location location, Argument... missing) {
         super("Missing arguments: " + Arrays.toString(missing), location);
+        this.missing = missing;
+    }
+
+    public Argument[] getMissing() {
+        return missing;
     }
 }
