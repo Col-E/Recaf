@@ -277,7 +277,7 @@ public class JasmToUnitTransformer extends AbstractTopLevelGroupVisitor implemen
 
 			@Override
 			public void visitLdcInsn(Group constant) throws AssemblerException {
-				add(new LdcInstruction(Opcodes.LDC, convert(constant), argType(constant)));
+				add(new LdcInstruction(Opcodes.LDC, convert(constant)));
 			}
 
 			@Override
