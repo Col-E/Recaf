@@ -85,7 +85,7 @@ public class IndyInstruction extends AbstractInstruction {
 		sb.append(context.fmtIdentifier(name)).append(' ');
 		sb.append(context.fmtIdentifier(desc)).append(' ');
 		sb.append(context.fmtKeyword("handle ")).append(handle).append(' ');
-		sb.append(context.fmtKeyword("args ")).append(args).append(" ").append(context.fmtKeyword("end"));
+		sb.append(context.fmtKeyword("args ")).append(args).append(context.fmtKeyword("end"));
 		return sb.toString();
 	}
 
