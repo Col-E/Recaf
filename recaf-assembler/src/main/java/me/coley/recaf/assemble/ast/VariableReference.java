@@ -17,7 +17,7 @@ public interface VariableReference extends Element {
 	 * @return Whitespace escaped variable identifier.
 	 */
 	default String getEscapedVariableIdentifier() {
-		return EscapeUtil.escapeNonValid(getVariableIdentifier());
+		return EscapeUtil.formatIdentifier(getVariableIdentifier());
 	}
 
 	/**
@@ -29,7 +29,7 @@ public interface VariableReference extends Element {
 	 * @return Whitespace escaped variable descriptor.
 	 */
 	default String getEscapedVariableDescriptor() {
-		return EscapeUtil.escapeNonValid(getVariableDescriptor());
+		return EscapeUtil.formatIdentifier(getVariableDescriptor());
 	}
 
 	/**

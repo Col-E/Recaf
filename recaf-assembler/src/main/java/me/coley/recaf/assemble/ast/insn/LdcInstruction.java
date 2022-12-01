@@ -160,9 +160,9 @@ public class LdcInstruction extends AbstractInstruction {
 			case TYPE:
 				Type type = (Type) getValue();
 				if (type.getSort() == Type.OBJECT)
-					return getOpcode() + " " + context.fmtKeyword("type ") + type.getInternalName();
+					return getOpcode() + " " + context.fmtKeyword("type ") + context.fmtIdentifier(type.getInternalName());
 				else
-					return getOpcode() + " " + context.fmtKeyword("type ") + type;
+					return getOpcode() + " " + context.fmtKeyword("type ") + context.fmtIdentifier(type.getDescriptor());
 			case BOOLEAN:
 				return getOpcode() + " " + (getValue() == Boolean.TRUE ? "true" : "false");
 			case CHAR:

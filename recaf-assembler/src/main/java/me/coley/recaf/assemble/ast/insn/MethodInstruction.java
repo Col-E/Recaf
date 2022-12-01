@@ -72,15 +72,13 @@ public class MethodInstruction extends AbstractInstruction {
 		// Jasm has a custom format for normal 'invokex' instructions but with the abstracted away flag 'itf' set to
 		// true, that's why we have to use the format 'invokexinterface' to tell jasm to use these special instructions.
 		// we check for op != 'invokeinterface' because invokeinterface is always itf=true
-		if (isItf() && !this.getOpcode().equals("invokeinterface")) {
-			return getOpcode() + "interface " +
-					EscapeUtil.escapeNonValid(getOwner()) + '.' +
-					EscapeUtil.escapeNonValid(getName()) + ' ' +
-					EscapeUtil.escapeNonValid(getDesc());
+		String opcode = getOpcode();
+		if (isItf() && !opcode.equals("invokeinterface")) {
+			opcode = opcode + "interface";
 		}
-		return getOpcode() + " " +
-				EscapeUtil.escapeNonValid(getOwner()) + '.' +
-				EscapeUtil.escapeNonValid(getName()) + ' ' +
-				EscapeUtil.escapeNonValid(getDesc());
+		return opcode + " " +
+				context.fmtIdentifier(getOwner()) + '.' +
+				context.fmtIdentifier(getName()) + ' ' +
+				context.fmtIdentifier(getDesc());
 	}
 }

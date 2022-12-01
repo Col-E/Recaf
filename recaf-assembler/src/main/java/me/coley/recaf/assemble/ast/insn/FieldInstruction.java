@@ -59,8 +59,8 @@ public class FieldInstruction extends AbstractInstruction {
 	@Override
 	public String print(PrintContext context) {
 		return getOpcode() + " " +
-				EscapeUtil.escapeNonValid(getOwner()) + '.' +
-				EscapeUtil.escapeNonValid(getName()) + ' ' +
-				EscapeUtil.escapeNonValid(getDesc());
+				context.fmtIdentifier(getOwner()) + '.' +
+				context.fmtIdentifier(getName()) + ' ' +
+				context.fmtIdentifier(getDesc());
 	}
 }

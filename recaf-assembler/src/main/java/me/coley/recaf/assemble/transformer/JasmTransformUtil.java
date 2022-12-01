@@ -299,6 +299,8 @@ public class JasmTransformUtil {
 	}
 
 	public static String content(Group group) {
+		String content = group.content();
+		if(content.equals(EscapeUtil.EMPTY_PLACEHOLDER)) return "";
 		return EscapeUtil.unescape(group.content());
 	}
 }

@@ -47,6 +47,6 @@ public class MultiArrayInstruction extends AbstractInstruction {
 
 	@Override
 	public String print(PrintContext context) {
-		return getOpcode() + " " + EscapeUtil.escapeNonValid(getDesc()) + " " + getDimensions();
+		return getOpcode() + " " + context.fmtIdentifier(getDesc()) + " " + getDimensions();
 	}
 }

@@ -30,7 +30,7 @@ public class ThrownException extends BaseElement implements CodeEntry {
 
 	@Override
 	public String print(PrintContext context) {
-		return context.fmtKeyword("throws ") + exceptionType;
+		return context.fmtKeyword("throws ") + context.fmtIdentifier(exceptionType);
 	}
 
 	@Override

@@ -73,6 +73,6 @@ public class IincInstruction extends AbstractInstruction implements Named, Descr
 
 	@Override
 	public String print(PrintContext context) {
-		return getOpcode() + " " + getVariableIdentifier() + " " + getIncrement();
+		return getOpcode() + " " + getEscapedVariableIdentifier() + " " + getIncrement();
 	}
 }
