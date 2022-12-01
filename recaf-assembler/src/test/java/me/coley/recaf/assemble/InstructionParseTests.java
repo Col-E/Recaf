@@ -443,6 +443,7 @@ public class InstructionParseTests extends JasmUtils {
 			handle("aload A", v -> assertEquals("A", v.getVariableIdentifier()));
 			handle("aload 雨", v -> assertEquals("雨", v.getVariableIdentifier()));
 			handle("aload \\\\u96E8", v -> assertEquals("\\u96E8", v.getVariableIdentifier()));
+			handle("aload \\e", v -> assertEquals("", v.getVariableIdentifier()));
 		}
 
 		private void handle(String original, Consumer<VarInstruction> handler) {
