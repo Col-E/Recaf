@@ -16,6 +16,7 @@ import org.objectweb.asm.Type;
  */
 public class LdcInstruction extends AbstractInstruction {
 	private final BaseArg arg;
+	private final Object value;
 
 	/**
 	 * @param opcode
@@ -26,6 +27,7 @@ public class LdcInstruction extends AbstractInstruction {
 	public LdcInstruction(int opcode, Object value) {
 		super(opcode);
 		this.arg = BaseArg.of(LdcArg::new, value);
+		this.value = value;
 	}
 
 	/**
@@ -44,7 +46,7 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @return Constant value.
 	 */
 	public Object getValue() {
-		return arg.getValue();
+		return value;
 	}
 
 	/**
