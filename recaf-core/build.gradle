@@ -30,6 +30,8 @@ dependencies {
     api cdi
     api cfr
     api common_io
+    api extra_collections
+    api extra_observables
     api dexlib
     api diff
     api directories

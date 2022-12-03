@@ -91,10 +91,12 @@ subprojects {
         diff = 'com.googlecode.java-diff-utils:diffutils:1.3.0'
         directories = 'dev.dirs:directories:26'
         docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'
+        extra_collections = 'com.github.Col-E:ExtraCollections:1.2.1'
+        extra_observables = 'com.github.Col-E:ExtraObservables:1.0.0'
         fuzzy = 'me.xdrop:fuzzywuzzy:1.4.0'
         gson = 'com.google.code.gson:gson:2.9.1'
         hppc = 'com.carrotsearch:hppc:0.9.1'
-        instrument_server = 'com.github.Col-E:InstrumentationServer:1.3.4'
+        instrument_server = 'com.github.Col-E:InstrumentationServer:1.3.5'
         jadx = "io.github.skylot:jadx-core:$jadxVersion"
         jadx_input = "io.github.skylot:jadx-java-input:$jadxVersion"
         jandex = 'org.jboss:jandex:3.0.3'

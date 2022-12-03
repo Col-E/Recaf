@@ -79,6 +79,12 @@ public class AgentResource extends Resource {
 		});
 	}
 
+	/**
+	 * @return Remote port of client.
+	 */
+	public int getPort() {
+		return client.getPort();
+	}
 
 	/**
 	 * Setup client connection handling.

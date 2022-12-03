@@ -25,7 +25,7 @@ public class Windows {
 	public void initialize() {
 		mainWindow = new MainWindow();
 		configWindow = new GenericWindow(new ConfigPane());
-		attachWindow = new GenericWindow(AttachPane.getInstance());
+		attachWindow = new GenericWindow(new AttachPane(RecafUI.getController().getServices().getInstrumentationManager()));
 		scriptManagerWindow = new GenericWindow(ScriptManagerPane.getInstance());
 		pluginManagerWindow = new GenericWindow(PluginManagerPane.getInstance());
 		modificationsWindow = new GenericWindow(new DiffViewPane(RecafUI.getController()));

@@ -3,6 +3,7 @@ package me.coley.recaf;
 import me.coley.recaf.compile.CompilerManager;
 import me.coley.recaf.decompile.DecompileManager;
 import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.instrument.InstrumentationManager;
 import me.coley.recaf.mapping.AggregateMappingManager;
 import me.coley.recaf.mapping.MappingsManager;
 import me.coley.recaf.parse.JavaParserHelper;
@@ -23,6 +24,7 @@ public class Services {
 	private final CompilerManager compilerManager;
 	private final DecompileManager decompileManager;
 	private final MappingsManager mappingsManager;
+	private final InstrumentationManager instrumentationManager;
 	// TODO: Handle workspace scoped auto-matically via CDI
 	private AggregateMappingManager aggregateMappingManager;
 	private WorkspaceTreeService treeService;
@@ -40,6 +42,7 @@ public class Services {
 		compilerManager = create(CompilerManager.class);
 		decompileManager = create(DecompileManager.class);
 		mappingsManager = create(MappingsManager.class);
+		instrumentationManager = create(InstrumentationManager.class);
 	}
 
 	/**
@@ -61,6 +64,13 @@ public class Services {
 	 */
 	public MappingsManager getMappingsManager() {
 		return mappingsManager;
+	}
+
+	/**
+	 * @return The instrumentation manager.
+	 */
+	public InstrumentationManager getInstrumentationManager() {
+		return instrumentationManager;
 	}
 
 	/**
