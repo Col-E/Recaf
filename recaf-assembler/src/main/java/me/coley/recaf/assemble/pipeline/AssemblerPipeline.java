@@ -560,6 +560,7 @@ public class AssemblerPipeline {
 		List<Group> parsed;
 		try {
 			parsed = new ArrayList<>(ctx.parse());
+			latestJasmGroups = parsed;
 			validateGroups(parsed);
 		} catch (AssemblerException ex) {
 			// Parser problems are fatal
@@ -571,7 +572,6 @@ public class AssemblerPipeline {
 		}
 		if (Thread.interrupted())
 			return false;
-		latestJasmGroups = parsed;
 
 		parserCompletionListeners.forEach(l -> l.onCompleteParse(parsed));
 		// Transform to our AST

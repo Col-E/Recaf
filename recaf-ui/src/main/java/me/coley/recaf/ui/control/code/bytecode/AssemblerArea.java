@@ -85,7 +85,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	private static final DebuggingLogger logger = Logging.get(AssemblerArea.class);
 	private final DelayedExecutor updatePipelineInput;
 	private final ProblemTracking problemTracking;
-	private final AssemblerPipeline pipeline;
+	private final ContextualPipeline pipeline;
 	private final Suggestions suggestions;
 	private VirtualizedContextMenu<Suggestion> suggestionsMenu;
 	private ClassInfo classInfo;
@@ -168,8 +168,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
 				logger.debugging(l -> l.trace("AST updated and validated"));
 				// Update suggestions data with definition changes
-				if (pipeline.getUnit() != null && pipeline.isMethod())
-					suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
+				if (pipeline.getUnit() != null && pipeline.isCurrentMethod())
+					suggestions.setMethod(pipeline.getCurrentMethod());
 				// Generate the ASM node type from the AST.
 				if (pipeline.isMethod() &&
 						pipeline.isOutputOutdated() &&
@@ -222,8 +222,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		transformer.visit();
 		Unit unit = transformer.getUnit();
 
-		if (unit.isMethod()) suggestions.setMethod(unit.getDefinitionAsMethod());
-
 		String code = unit.print(config().createContext());
 		// Update text
 		setText(code);
@@ -238,6 +236,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				pipeline.generateField();
 			else
 				pipeline.generateClass();
+
+			if(pipeline.isCurrentMethod()) {
+				suggestions.setMethod(pipeline.getCurrentMethod());
+			}
 
 			// Run an initial generation within our assembler UI.
 			// This will populate the local variable and analysis tab contents.
@@ -291,6 +293,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * @return Menu containing completion suggestions.
 	 */
 	private VirtualizedContextMenu<Suggestion> createSuggestionsMenu(int position, Group suggestionGroup) {
+		// Update suggestions
+		if(pipeline.isCurrentMethod()) {
+			suggestions.setMethod(pipeline.getCurrentMethod());
+		}
 		// Get suggestions content
 		SuggestionsResults results = suggestions.getSuggestion(suggestionGroup);
 		Set<Suggestion> set = results.getValues().collect(Collectors.toCollection(TreeSet::new));
