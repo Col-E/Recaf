@@ -1,6 +1,7 @@
 package me.coley.recaf.ui.behavior;
 
 import javafx.scene.Node;
+import me.coley.recaf.workspace.WorkspaceCloseListener;
 
 /**
  * Children of this type represent some item, and thus should provide access to the
@@ -8,7 +9,7 @@ import javafx.scene.Node;
  *
  * @author Matt Coley
  */
-public interface Representation {
+public interface Representation extends WorkspaceCloseListener {
 	/**
 	 * Called when the "save" keybind is pressed.
 	 * The current representation of the class/file is updated in the primary resource.

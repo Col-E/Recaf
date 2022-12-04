@@ -1,21 +1,15 @@
 package me.coley.recaf.scripting;
 
 import jregex.Matcher;
-import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.logging.Logging;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Represents an executable script.
@@ -24,10 +18,10 @@ import java.util.stream.Stream;
  */
 public abstract class Script {
 	private static final Logger logger = Logging.get(Script.class);
+	public static final String EXTENSION = ".bsh";
 	// Matches:
 	//      @key   value
 	private static final String TAG_PATTERN = "//(\\s+)?@({key}\\S+)\\s+({value}.+)";
-	private static final String EXTENSION = ".bsh";
 	private final Map<String, String> tags = new HashMap<>();
 	protected String name;
 
@@ -91,7 +85,6 @@ public abstract class Script {
 		}
 	}
 
-
 	/**
 	 * Instantiate a new script from a file.
 	 *
@@ -114,22 +107,6 @@ public abstract class Script {
 	 */
 	public static SourceScript fromSource(String source) {
 		return new SourceScript(source);
-	}
-
-	/**
-	 * Scan the 'scripts' directory for scripts.
-	 *
-	 * @return A list of scrips or {@code null} if none could be found
-	 */
-	public static List<Script> getAvailableScripts() {
-		try (Stream<Path> stream = Files.walk(Directories.getScriptsDirectory(), FileVisitOption.FOLLOW_LINKS)) {
-			return stream.filter(f -> f.toString().endsWith(Script.EXTENSION))
-					.map(Script::fromPath)
-					.collect(Collectors.toList());
-		} catch (IOException ex) {
-			logger.error("Failed to fetch available scripts", ex);
-			return null;
-		}
 	}
 
 	/**

@@ -57,7 +57,7 @@ public class RecafContainer extends DelegatingContext {
 	 *
 	 * @return Instance of bean.
 	 */
-	public static <T> T create(Class<T> cls) {
+	public static <T> T get(Class<T> cls) {
 		if (!isBean(cls))
 			throw new IllegalArgumentException("Class is not a CDI bean: " + cls);
 		if (isPresentInContainer(cls))

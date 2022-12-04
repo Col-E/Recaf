@@ -1,44 +1,39 @@
 package me.coley.recaf;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import me.coley.recaf.cdi.WorkspaceBeanContext;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.presentation.Presentation;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceManager;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
 import me.coley.recaf.workspace.resource.ResourceDexClassListener;
 import me.coley.recaf.workspace.resource.ResourceFileListener;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
- * Backbone of all internal Recaf handling.
- *
  * @author Matt Coley
  */
+@ApplicationScoped
 public class Controller {
-	private final Set<ControllerListener> listeners = new HashSet<>();
-	private final Services services = new Services();
-	private final Presentation presentation;
-	private Workspace workspace;
+	private static final WorkspaceBeanContext workspaceBeanContext = WorkspaceBeanContext.getInstance();
+	private final WorkspaceManager workspaceManager;
+	private Presentation presentation;
 
-	/**
-	 * @param presentation
-	 * 		Presentation implementation.
-	 */
-	public Controller(Presentation presentation) {
-		this.presentation = presentation;
-	}
-
-	/**
-	 * @return Controller services.
-	 */
-	public Services getServices() {
-		return services;
+	@Inject
+	public Controller(WorkspaceManager workspaceManager) {
+		this.workspaceManager = workspaceManager;
+		// Ensure presentation layer is forwarded listener events
+		workspaceManager.addWorkspaceOpenListener(this::addPresentationLayerListeners);
+		// Ensure CDI system for workspace scoped beans are forwarded events
+		workspaceManager.addWorkspaceOpenListener(workspaceBeanContext);
+		workspaceManager.addWorkspaceCloseListener(workspaceBeanContext);
 	}
 
 	/**
@@ -49,64 +44,14 @@ public class Controller {
 	}
 
 	/**
-	 * @return Current open workspace.
+	 * @param presentation
+	 * 		Presentation implementation.
 	 */
-	public Workspace getWorkspace() {
-		return workspace;
-	}
-
-	/**
-	 * Add a new controller listener.
-	 *
-	 * @param listener
-	 * 		New controller listener.
-	 */
-	public void addListener(ControllerListener listener) {
-		listeners.add(listener);
-	}
-
-	/**
-	 * Remove a controller listener.
-	 *
-	 * @param listener
-	 * 		Controller listener to remove.
-	 */
-	public void removeListener(ControllerListener listener) {
-		listeners.remove(listener);
-	}
-
-	/**
-	 * Set the current workspace. Will close an existing one if it exists.
-	 *
-	 * @param workspace
-	 * 		New workspace, or {@code null} to close the workspace without a replacement.
-	 *
-	 * @return {@code true} when the workspace was updated.
-	 * {@code false} when the change was rejected.
-	 */
-	public boolean setWorkspace(Workspace workspace) {
-		// Close current workspace
-		if (this.workspace != null) {
-			if (presentation.workspaceLayer().closeWorkspace(this.workspace)) {
-				this.workspace.cleanup();
-			} else {
-				// Presentation layer cancelled closing the workspace
-				return false;
-			}
-		}
-		// Set new workspace & update services
-		Workspace oldWorkspace = this.workspace;
-		this.workspace = workspace;
-		this.services.updateWorkspace(workspace);
-		if (workspace != null) {
-			addPresentationLayerListeners(workspace);
-		}
-		listeners.forEach(listener -> listener.onNewWorkspace(oldWorkspace, workspace));
-		// Open new workspace, if non-null
-		if (workspace != null) {
-			presentation.workspaceLayer().openWorkspace(workspace);
-		}
-		return true;
+	public void setPresentation(Presentation presentation) {
+		if (presentation == null) throw new IllegalArgumentException("Presentation cannot be null!");
+		if (this.presentation != null) throw new IllegalStateException("Presentation already set!");
+		this.presentation = presentation;
+		workspaceManager.addListener(presentation.workspaceLayer());
 	}
 
 	/**
@@ -116,53 +61,54 @@ public class Controller {
 	 * 		Workspace to add listeners to.
 	 */
 	private void addPresentationLayerListeners(Workspace workspace) {
+		Presentation.WorkspacePresentation presentation = getPresentation().workspaceLayer();
 		ResourceClassListener classListener = new ResourceClassListener() {
 			@Override
 			public void onNewClass(Resource resource, ClassInfo newValue) {
-				getPresentation().workspaceLayer().onNewClass(resource, newValue);
+				presentation.onNewClass(resource, newValue);
 			}
 
 			@Override
 			public void onUpdateClass(Resource resource, ClassInfo oldValue, ClassInfo newValue) {
-				getPresentation().workspaceLayer().onUpdateClass(resource, oldValue, newValue);
+				presentation.onUpdateClass(resource, oldValue, newValue);
 			}
 
 			@Override
 			public void onRemoveClass(Resource resource, ClassInfo oldValue) {
-				getPresentation().workspaceLayer().onRemoveClass(resource, oldValue);
+				presentation.onRemoveClass(resource, oldValue);
 			}
 		};
 		ResourceDexClassListener dexListener = new ResourceDexClassListener() {
 			@Override
 			public void onNewDexClass(Resource resource, String dexName, DexClassInfo newValue) {
-				getPresentation().workspaceLayer().onNewDexClass(resource, dexName, newValue);
+				presentation.onNewDexClass(resource, dexName, newValue);
 			}
 
 			@Override
 			public void onRemoveDexClass(Resource resource, String dexName, DexClassInfo oldValue) {
-				getPresentation().workspaceLayer().onRemoveDexClass(resource, dexName, oldValue);
+				presentation.onRemoveDexClass(resource, dexName, oldValue);
 			}
 
 			@Override
 			public void onUpdateDexClass(Resource resource, String dexName,
 										 DexClassInfo oldValue, DexClassInfo newValue) {
-				getPresentation().workspaceLayer().onUpdateDexClass(resource, dexName, oldValue, newValue);
+				presentation.onUpdateDexClass(resource, dexName, oldValue, newValue);
 			}
 		};
 		ResourceFileListener fileListener = new ResourceFileListener() {
 			@Override
 			public void onNewFile(Resource resource, FileInfo newValue) {
-				getPresentation().workspaceLayer().onNewFile(resource, newValue);
+				presentation.onNewFile(resource, newValue);
 			}
 
 			@Override
 			public void onUpdateFile(Resource resource, FileInfo oldValue, FileInfo newValue) {
-				getPresentation().workspaceLayer().onUpdateFile(resource, oldValue, newValue);
+				presentation.onUpdateFile(resource, oldValue, newValue);
 			}
 
 			@Override
 			public void onRemoveFile(Resource resource, FileInfo oldValue) {
-				getPresentation().workspaceLayer().onRemoveFile(resource, oldValue);
+				presentation.onRemoveFile(resource, oldValue);
 			}
 		};
 		// Add

@@ -17,6 +17,7 @@ and the basis to create UI presentations off of.
 ## Packages & features
 
 - `android` outlines data types for android support.
+- `cdi` handles contexts and dependency injection
 - `code` outlines data types for classes/fields/methods and more. These types reside within `Resource` types.
 - `compile` provides access to Java compiler implementations.
   - By default, only `javac` is available.

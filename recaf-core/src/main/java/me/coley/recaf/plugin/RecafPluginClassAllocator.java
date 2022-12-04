@@ -22,7 +22,7 @@ public class RecafPluginClassAllocator implements ClassAllocator {
 		if (isBean(cls) && (hasInjects(cls) || isWorkspaceBean(cls))) {
 			// Beans that have injects should be created by the CDI container.
 			// Beans that are @WorkspaceScoped must be created by the CDI container.
-			return RecafContainer.create(cls);
+			return RecafContainer.get(cls);
 		} else {
 			// For our purposes we can just use simple constructor allocation.
 			// There is nothing to be injected and no state needs to be managed.

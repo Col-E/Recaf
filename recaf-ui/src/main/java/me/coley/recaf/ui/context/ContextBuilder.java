@@ -23,8 +23,6 @@ import java.util.List;
  * @author Matt Coley
  */
 public abstract class ContextBuilder {
-	protected static final int WRITE_FLAGS = 0;
-	protected static final int READ_FLAGS = 0;
 	protected static final Logger logger = Logging.get(ContextBuilder.class);
 	protected ContextSource where;
 	private Resource containingResource;
@@ -214,7 +212,7 @@ public abstract class ContextBuilder {
 		// Commonly invoked from the UI thread.
 		// We don't want to hang the UI for larger mapping operations.
 		ThreadUtil.run(() -> {
-			MappingUtils.applyMappings(READ_FLAGS, WRITE_FLAGS, RecafUI.getController(), resource, mappings);
+			MappingUtils.applyMappings(RecafUI.getController(), resource, mappings);
 			// Restoration needs to be on UI thread
 			FxThreadUtil.run(() -> MappingUX.handleClassRemapping(snapshot, mappings));
 		});

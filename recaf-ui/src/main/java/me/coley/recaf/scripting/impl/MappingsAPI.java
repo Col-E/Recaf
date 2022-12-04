@@ -49,7 +49,7 @@ public class MappingsAPI {
 	 */
 	public static void applyMappings(Mappings mappings, String mappingsText, Resource resource) {
 		mappings.parse(mappingsText);
-		MappingUtils.applyMappings(0, 0, RecafUI.getController(), resource, mappings);
+		MappingUtils.applyMappings(RecafUI.getController(), resource, mappings);
 	}
 
 	/**

@@ -1,15 +1,12 @@
 package me.coley.recaf.presentation;
 
 import javafx.scene.Node;
-import me.coley.recaf.Controller;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.Cleanable;
 import me.coley.recaf.ui.behavior.Representation;
-import me.coley.recaf.ui.control.NavigationBar;
 import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.RecafDockingManager;
@@ -17,7 +14,7 @@ import me.coley.recaf.ui.docking.impl.ClassTab;
 import me.coley.recaf.ui.docking.impl.FileTab;
 import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
-import me.coley.recaf.ui.window.MainMenu;
+import me.coley.recaf.ui.menu.MainMenu;
 import me.coley.recaf.ui.window.MainWindow;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -31,53 +28,8 @@ import java.util.List;
  * @author Matt Coley
  */
 public class GuiWorkspacePresentation implements Presentation.WorkspacePresentation {
-	/**
-	 * @param controller
-	 * 		Parent.
-	 */
-	public GuiWorkspacePresentation(Controller controller) {
-	}
-
 	@Override
-	public boolean closeWorkspace(Workspace workspace) {
-		boolean doClose;
-		if (Configs.display().promptCloseWorkspace) {
-			doClose = WorkspaceClosePrompt.prompt(workspace);
-		} else {
-			doClose = true;
-		}
-		// Close all workspace items if close is allowed.
-		if (doClose) {
-			// Update recent workspaces list in main menu.
-			// We do this in the "close" section because its makes it easy to assume
-			// that this is the final form of the workspace.
-			if (Configs.recentWorkspaces().canSerialize(workspace)) {
-				Configs.recentWorkspaces().addWorkspace(workspace);
-				getMainMenu().refreshRecent();
-			}
-			// Close workspace tree
-			Workspace oldWorkspace = getWorkspacePane().getWorkspace();
-			getWorkspacePane().onNewWorkspace(oldWorkspace, null);
-			// Close workspace tabs
-			List<DockTab> tabs = getDocking().getAllTabs();
-			for (DockTab tab : tabs) {
-				Node content = tab.getContent();
-				// Cleanup the view if possible
-				if (content instanceof Cleanable)
-					((Cleanable) content).cleanup();
-				// Remove the tab
-				if (content instanceof Representation)
-					tab.close();
-			}
-
-			// Clear the navbar
-			NavigationBar.getInstance().clear();
-		}
-		return doClose;
-	}
-
-	@Override
-	public void openWorkspace(Workspace workspace) {
+	public void onWorkspaceOpened(Workspace workspace) {
 		Workspace oldWorkspace = getWorkspacePane().getWorkspace();
 		getWorkspacePane().onNewWorkspace(oldWorkspace, workspace);
 		// Update root when workspace updates libraries
@@ -86,6 +38,46 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 			WorkspaceRootItem root = getWorkspacePane().getTree().getRootItem();
 			workspace.addListener(root);
 		});
+	}
+
+	@Override
+	public void onWorkspaceClosed(Workspace workspace) {
+
+		// Close workspace tree
+		Workspace oldWorkspace = getWorkspacePane().getWorkspace();
+		getWorkspacePane().onNewWorkspace(oldWorkspace, null);
+		// Close workspace tabs
+		List<DockTab> tabs = getDocking().getAllTabs();
+		for (DockTab tab : tabs) {
+			Node content = tab.getContent();
+			// Cleanup the view if possible
+			if (content instanceof Cleanable)
+				((Cleanable) content).cleanup();
+			// Remove the tab
+			if (content instanceof Representation)
+				tab.close();
+		}
+	}
+
+	@Override
+	public boolean canClose(Workspace current) {
+		boolean doClose;
+		if (Configs.display().promptCloseWorkspace) {
+			doClose = WorkspaceClosePrompt.prompt(current);
+		} else {
+			doClose = true;
+		}
+		return doClose;
+	}
+
+	@Override
+	public void onAddLibrary(Workspace workspace, Resource library) {
+		// TODO: Hooks
+	}
+
+	@Override
+	public void onRemoveLibrary(Workspace workspace, Resource library) {
+		// TODO: Hooks
 	}
 
 	@Override
@@ -180,18 +172,6 @@ public class GuiWorkspacePresentation implements Presentation.WorkspacePresentat
 		FileTab tab = docking.getFileTabs().get(oldValue.getName());
 		if (tab != null)
 			tab.close();
-	}
-
-	private static MainWindow getMainWindow() {
-		return RecafUI.getWindows().getMainWindow();
-	}
-
-	private static MainMenu getMainMenu() {
-		return MainMenu.getInstance();
-	}
-
-	private static WorkspacePane getWorkspacePane() {
-		return WorkspacePane.getInstance();
 	}
 
 	private static RecafDockingManager getDocking() {

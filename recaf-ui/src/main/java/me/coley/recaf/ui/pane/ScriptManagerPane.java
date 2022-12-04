@@ -1,16 +1,20 @@
 package me.coley.recaf.ui.pane;
 
+import jakarta.inject.Inject;
 import javafx.beans.binding.StringBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.scripting.FileScript;
 import me.coley.recaf.scripting.Script;
+import me.coley.recaf.scripting.ScriptManager;
 import me.coley.recaf.scripting.ScriptResult;
 import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.docking.DockTab;
@@ -19,25 +23,14 @@ import me.coley.recaf.ui.util.Animations;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Labels;
 import me.coley.recaf.ui.util.Lang;
-import me.coley.recaf.ui.window.MainMenu;
 import me.coley.recaf.util.DesktopUtil;
 import me.coley.recaf.util.Directories;
 import me.coley.recaf.util.logging.Logging;
-import me.coley.recaf.util.threading.FxThreadUtil;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-
-import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 /**
  * Displays local scripts.
@@ -46,35 +39,17 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
  */
 public class ScriptManagerPane extends BorderPane {
 	private static final Logger logger = Logging.get(ScriptManagerPane.class);
-	private static final ScriptManagerPane instance = new ScriptManagerPane();
-	private static final ExecutorService THREAD_POOL = ThreadPoolFactory.newSingleThreadExecutor("script manager");
 	private final VBox scriptsList = new VBox();
 	private final ScrollPane scrollPane = new ScrollPane(scriptsList);
 
-	// Set up a watcher service to monitor changes in the scripts directory
-	static {
-		THREAD_POOL.submit(() -> {
-			try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
-				Directories.getScriptsDirectory().register(watchService, ENTRY_MODIFY, ENTRY_DELETE);
-				while (true) {
-					WatchKey wk = watchService.take();
-					try {
-						if (!wk.pollEvents().isEmpty())
-							FxThreadUtil.run(instance::populateScripts);
-					} finally {
-						wk.reset();
-					}
-				}
-			} catch (IOException ex) {
-				logger.error("Filesystem watch error", ex);
-			} catch (InterruptedException ignored) {
-			}
+	@Inject
+	public ScriptManagerPane(ScriptManager scriptManager) {
+		scriptManager.getScripts().addChangeListener((source, change) -> {
+			populateScripts(source);
 		});
-	}
 
-	// No public construction
-	private ScriptManagerPane() {
 		scrollPane.setFitToWidth(true);
+		scrollPane.setContent(scriptsList);
 
 		setCenter(scrollPane);
 
@@ -96,46 +71,32 @@ public class ScriptManagerPane extends BorderPane {
 
 		left.getChildren().addAll(newScript, browseScripts);
 
-		Button refresh = new Button();
-		refresh.textProperty().bind(Lang.getBinding("menu.scripting.refresh"));
-		refresh.setGraphic(Icons.getIconView(Icons.ACTION_SEARCH));
-		refresh.setOnAction(event -> populateScripts());
-		refresh.setAlignment(Pos.CENTER_RIGHT);
-
 		actionPane.setLeft(left);
-		actionPane.setRight(refresh);
 
 		setBottom(actionPane);
 
-		populateScripts();
+		populateScripts(Collections.emptyList());
 	}
 
-	private void populateScripts() {
+	private void populateScripts(List<Script> scripts) {
 		scriptsList.getChildren().clear();
-
-		List<Script> scripts = Script.getAvailableScripts();
 
 		if (scripts == null || scripts.isEmpty()) {
 			Label label = new BoundLabel(Lang.getBinding("menu.scripting.none-found"));
 			label.setAlignment(Pos.CENTER);
 			label.getStyleClass().addAll("h2", "b");
 			scrollPane.setContent(label);
-			MainMenu.getInstance().updateScriptMenu(Collections.emptyList());
 			return;
 		}
 
-		List<MenuItem> scriptMenuItems = new ArrayList<>();
 		for (Script script : scripts) {
-			addScript(script);
+			BorderPane scriptRow = createScriptRow(script);
 
-			MenuItem item = new MenuItem(script.getName());
-			item.setGraphic(Icons.getIconView(Icons.PLAY));
-			item.setOnAction(event -> script.execute());
-			scriptMenuItems.add(item);
+			Separator separator = new Separator(Orientation.HORIZONTAL);
+			separator.prefWidthProperty().bind(scrollPane.widthProperty());
+
+			scriptsList.getChildren().addAll(scriptRow, separator);
 		}
-
-		MainMenu.getInstance().updateScriptMenu(scriptMenuItems);
-		scrollPane.setContent(scriptsList);
 	}
 
 	private void showScriptEditor(ScriptEditorPane pane) {
@@ -144,6 +105,7 @@ public class ScriptManagerPane extends BorderPane {
 		scriptEditorTab.setGraphic(Icons.getIconView(Icons.CODE));
 		pane.setTab(scriptEditorTab);
 		scriptEditorTab.select();
+		// TODO: Open in same window?
 		RecafUI.getWindows().getMainWindow().requestFocus();
 	}
 
@@ -180,7 +142,7 @@ public class ScriptManagerPane extends BorderPane {
 		}
 	}
 
-	private void addScript(Script script) {
+	private BorderPane createScriptRow(Script script) {
 		BorderPane scriptRow = new BorderPane();
 		scriptRow.setPadding(new Insets(4, 4, 4, 4));
 
@@ -237,20 +199,10 @@ public class ScriptManagerPane extends BorderPane {
 
 		actions.getChildren().addAll(executeButton, editButton);
 
-		Separator separator = new Separator(Orientation.HORIZONTAL);
-		separator.prefWidthProperty().bind(scrollPane.widthProperty());
-
 		scriptRow.setLeft(info);
 		scriptRow.setRight(actions);
 
 		scriptRow.prefWidthProperty().bind(widthProperty());
-		scriptsList.getChildren().addAll(scriptRow, separator);
-	}
-
-	/**
-	 * @return The instance
-	 */
-	public static ScriptManagerPane getInstance() {
-		return instance;
+		return scriptRow;
 	}
 }

@@ -5,7 +5,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.*;
+import me.coley.recaf.workspace.resource.Resource;
 
 /**
  * A presentation that has no display at all. Ideal for using Recaf as a library.
@@ -28,12 +28,27 @@ public class EmptyPresentation implements Presentation {
 	 */
 	public static class EmptyWorkspacePresentation implements WorkspacePresentation {
 		@Override
-		public boolean closeWorkspace(Workspace workspace) {
+		public void onWorkspaceOpened(Workspace workspace) {
+			// no-op
+		}
+
+		@Override
+		public void onWorkspaceClosed(Workspace workspace) {
+			// no-op
+		}
+
+		@Override
+		public boolean canClose(Workspace current) {
 			return true;
 		}
 
 		@Override
-		public void openWorkspace(Workspace workspace) {
+		public void onAddLibrary(Workspace workspace, Resource library) {
+			// no-op
+		}
+
+		@Override
+		public void onRemoveLibrary(Workspace workspace, Resource library) {
 			// no-op
 		}
 

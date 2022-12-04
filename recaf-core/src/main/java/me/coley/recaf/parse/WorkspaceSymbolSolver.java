@@ -9,6 +9,7 @@ import com.github.javaparser.resolution.declarations.ResolvedMethodLikeDeclarati
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
+import jakarta.inject.Inject;
 import me.coley.recaf.cdi.WorkspaceScoped;
 import me.coley.recaf.workspace.Workspace;
 
@@ -25,7 +26,8 @@ public class WorkspaceSymbolSolver extends JavaSymbolSolver {
 	private final WorkspaceTypeSolver typeSolver;
 	private final JavaParserFacade facade;
 
-	private WorkspaceSymbolSolver(WorkspaceTypeSolver typeSolver) {
+	@Inject
+	public WorkspaceSymbolSolver(WorkspaceTypeSolver typeSolver) {
 		super(typeSolver);
 		this.typeSolver = typeSolver;
 		facade = JavaParserFacade.get(typeSolver);

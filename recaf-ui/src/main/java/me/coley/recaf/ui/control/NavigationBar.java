@@ -1,5 +1,6 @@
 package me.coley.recaf.ui.control;
 
+import jakarta.inject.Inject;
 import javafx.animation.Interpolator;
 import javafx.animation.Transition;
 import javafx.geometry.Pos;
@@ -17,7 +18,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MemberInfo;
@@ -30,10 +30,13 @@ import me.coley.recaf.ui.control.code.java.JavaArea;
 import me.coley.recaf.ui.control.menu.ActionMenuItem;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
+import me.coley.recaf.ui.menu.MainMenu;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.util.TextDisplayUtil;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceCloseListener;
+import me.coley.recaf.workspace.WorkspaceManager;
 import org.slf4j.Logger;
 
 import java.util.Optional;
@@ -43,16 +46,17 @@ import java.util.Optional;
  *
  * @author yapht
  */
-public class NavigationBar extends HBox {
+public class NavigationBar extends HBox implements WorkspaceCloseListener {
 	private static final Logger logger = Logging.get(NavigationBar.class);
 	private static final long EXPAND_ANIM_MS = 450;
+	private final WorkspaceManager workspaceManager;
 	private boolean lastShownState;
 	private CommonClassInfo lastClassInfo;
 
-	/**
-	 * Deny public construction.
-	 */
-	private NavigationBar() {
+	@Inject
+	public NavigationBar(WorkspaceManager workspaceManager) {
+		this.workspaceManager = workspaceManager;
+		workspaceManager.addWorkspaceCloseListener(this);
 		getStyleClass().add("navbar");
 		setAlignment(Pos.CENTER_LEFT);
 		setMaxHeight(30);
@@ -78,6 +82,11 @@ public class NavigationBar extends HBox {
 		});
 	}
 
+	@Override
+	public void onWorkspaceClosed(Workspace workspace) {
+		clear();
+	}
+
 	/**
 	 * Tries to update the NavBar with the method or field the caret is placed on.
 	 *
@@ -93,26 +102,25 @@ public class NavigationBar extends HBox {
 		CommonClassInfo targetClass = area.getCurrentClassInfo();
 		if (targetClass == null)
 			return;
-		NavigationBar navigationBar = NavigationBar.getInstance();
 		Optional<ParseHitResult> infoAtPosition = area.declarationAtPosition(area.getCaretPosition());
 		if (infoAtPosition.isPresent()) {
 			ParseHitResult result = infoAtPosition.get();
 			if (result.getInfo() instanceof MethodInfo) {
 				MethodInfo method = (MethodInfo) result.getInfo();
 				CommonClassInfo declarator = getDeclarator(targetClass, method);
-				navigationBar.update(declarator, method);
+				update(declarator, method);
 			} else if (result.getInfo() instanceof FieldInfo) {
 				FieldInfo field = (FieldInfo) result.getInfo();
 				CommonClassInfo declarator = getDeclarator(targetClass, field);
-				navigationBar.update(declarator, field);
+				update(declarator, field);
 			} else if (result.getInfo() instanceof CommonClassInfo) {
 				// Could either be the target class, or an inner class.
 				CommonClassInfo clazz = (CommonClassInfo) result.getInfo();
-				navigationBar.update(clazz, null);
+				update(clazz, null);
 			}
 		} else {
 			// Can't find a declaration, just use the class.
-			navigationBar.update(targetClass, null);
+			update(targetClass, null);
 		}
 	}
 
@@ -128,7 +136,7 @@ public class NavigationBar extends HBox {
 	 * @return Class that declares the member, or the given fallback.
 	 */
 	private CommonClassInfo getDeclarator(CommonClassInfo fallback, MemberInfo member) {
-		Workspace workspace = RecafUI.getController().getWorkspace();
+		Workspace workspace =workspaceManager.getCurrent();
 		if (workspace != null) {
 			String owner = member.getOwner();
 			CommonClassInfo result = workspace.getResources().getClass(owner);
@@ -199,7 +207,7 @@ public class NavigationBar extends HBox {
 	}
 
 	/**
-	 * Handle animation of sliding the navigation bar out from under the {@link me.coley.recaf.ui.window.MainMenu}.
+	 * Handle animation of sliding the navigation bar out from under the {@link MainMenu}.
 	 *
 	 * @param shown
 	 *        {@code true} to open the bar.
@@ -241,19 +249,6 @@ public class NavigationBar extends HBox {
 	 */
 	public void clear() {
 		animateShown(false);
-	}
-
-	/**
-	 * Gets the navigation bar instance.
-	 * Note: There is only going to be one navigation bar for now until the docking system is reworked.
-	 */
-	private static final NavigationBar instance = new NavigationBar();
-
-	/**
-	 * @return Singleton instance of nav-bar.
-	 */
-	public static NavigationBar getInstance() {
-		return instance;
 	}
 
 	/**

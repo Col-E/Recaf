@@ -1,6 +1,6 @@
 package me.coley.recaf.util.visitor;
 
-import me.coley.recaf.Controller;
+import me.coley.recaf.graph.InheritanceGraph;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
@@ -12,32 +12,31 @@ import java.util.Map;
  * @author Matt Coley
  */
 public class WorkspaceClassWriter extends ClassWriter {
-	private final Controller controller;
+	private final InheritanceGraph graph;
 	private Map<String, String> mappings;
 	private Map<String, String> reverseMappings;
 
 	/**
-	 * @param controller
-	 * 		Controller to pull workspace inheritance graph from.
+	 * @param graph
+	 * 		Inheritance graph to use for common type analysis.
+	 * @param flags
+	 * 		Writer flags.
+	 */
+	public WorkspaceClassWriter(InheritanceGraph graph, int flags) {
+		this(graph, null, flags);
+	}
+
+	/**
+	 * @param graph
+	 * 		Inheritance graph to use for common type analysis.
 	 * @param cr
 	 * 		Reader used to read the original class data.
 	 * @param flags
 	 * 		Writer flags.
 	 */
-	public WorkspaceClassWriter(Controller controller, ClassReader cr, int flags) {
+	public WorkspaceClassWriter(InheritanceGraph graph, ClassReader cr, int flags) {
 		super(cr, flags);
-		this.controller = controller;
-	}
-
-	/**
-	 * @param controller
-	 * 		Controller to pull workspace inheritance graph from.
-	 * @param flags
-	 * 		Writer flags.
-	 */
-	public WorkspaceClassWriter(Controller controller, int flags) {
-		super(flags);
-		this.controller = controller;
+		this.graph = graph;
 	}
 
 	@Override
@@ -53,7 +52,7 @@ public class WorkspaceClassWriter extends ClassWriter {
 			type2 = reverseMappings.getOrDefault(type2, type2);
 		}
 		// Find common parent in workspace
-		String common = controller.getServices().getInheritanceGraph().getCommon(type1, type2);
+		String common = graph.getCommon(type1, type2);
 		if (common != null && !common.equals("java/lang/Object")) {
 			// Assuming we have mappings we want to make sure the common name is using the mapped name.
 			if (mappings != null)

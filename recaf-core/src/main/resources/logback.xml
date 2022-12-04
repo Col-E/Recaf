@@ -11,4 +11,13 @@
     <root level="trace">
         <appender-ref ref="STDOUT"/>
     </root>
+    <!-- Disable 3rd party loggers -->
+    <logger name="org.jboss.weld.Bootstrap" level="OFF"/>
+    <logger name="org.jboss.weld.Bean" level="OFF"/>
+    <logger name="org.jboss.weld.Reflection" level="OFF"/>
+    <logger name="org.jboss.weld.Event" level="OFF"/>
+    <logger name="org.jboss.weld.Context" level="OFF"/>
+    <logger name="org.jboss.weld.Resolution" level="OFF"/>
+    <logger name="org.jboss.weld.BeanManager" level="OFF"/>
+    <logger name="org.jboss.weld.Validator" level="OFF"/>
 </configuration>

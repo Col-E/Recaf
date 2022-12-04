@@ -2,19 +2,20 @@ package me.coley.recaf.ui.pane;
 
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
-import me.coley.recaf.ControllerListener;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.WorkspaceFilterField;
 import me.coley.recaf.ui.control.tree.WorkspaceTreeWrapper;
 import me.coley.recaf.util.NodeEvents;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceCloseListener;
+import me.coley.recaf.workspace.WorkspaceOpenListener;
 
 /**
  * Panel representing the current workspace.
  *
  * @author Matt Coley
  */
-public class WorkspacePane extends BorderPane implements ControllerListener {
+public class WorkspacePane extends BorderPane implements WorkspaceOpenListener, WorkspaceCloseListener {
 	private static final WorkspacePane INSTANCE = new WorkspacePane();
 	private final WorkspaceTreeWrapper tree = new WorkspaceTreeWrapper();
 	private final WorkspaceFilterField filter = new WorkspaceFilterField(tree);
@@ -79,7 +80,12 @@ public class WorkspacePane extends BorderPane implements ControllerListener {
 	}
 
 	@Override
-	public void onNewWorkspace(Workspace oldWorkspace, Workspace newWorkspace) {
-		tree.setWorkspace(newWorkspace);
+	public void onWorkspaceOpened(Workspace workspace) {
+		tree.setWorkspace(workspace);
+	}
+
+	@Override
+	public void onWorkspaceClosed(Workspace workspace) {
+		tree.setWorkspace(null);
 	}
 }

@@ -64,7 +64,6 @@ public class BeanUtils {
 	 * @return {@code true} if a recognized scope is annotating the class.
 	 */
 	public static boolean isBean(Class<?> cls) {
-		// TODO: Cache
 		for (Annotation annotation : cls.getAnnotations())
 			if (RECOGNIZED_SCOPES.contains(annotation.annotationType()))
 				return true;
@@ -78,7 +77,6 @@ public class BeanUtils {
 	 * @return {@code true} if {@link WorkspaceScoped} is annotating the class.
 	 */
 	public static boolean isWorkspaceBean(Class<?> cls) {
-		// TODO: Cache
 		for (Annotation annotation : cls.getAnnotations())
 			if (annotation.annotationType().equals(WorkspaceScoped.class))
 				return true;

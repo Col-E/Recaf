@@ -4,11 +4,13 @@ import jakarta.enterprise.context.spi.AlterableContext;
 import jakarta.enterprise.context.spi.Contextual;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.spi.Bean;
-import me.coley.recaf.workspace.WorkspaceCloseListener;
-import me.coley.recaf.workspace.WorkspaceOpenListener;
 import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceCloseListener;
+import me.coley.recaf.workspace.WorkspaceModificationListener;
+import me.coley.recaf.workspace.WorkspaceOpenListener;
+import me.coley.recaf.workspace.resource.Resource;
 
 import java.lang.annotation.Annotation;
 import java.util.Map;
@@ -16,14 +18,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Context for tracking {@link WorkspaceScoped} beans.
+ * <br>
+ * Beans in this context are alive for the duration of however long the {@link Workspace} is active.
+ * When the current workspace closes, all beans are discarded. When a new workspace is opened the beans
+ * can be re-created for however long that new one is alive.
  *
  * @author Matt Coley
  */
-public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenListener, WorkspaceCloseListener {
+public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenListener, WorkspaceCloseListener, WorkspaceModificationListener {
 	private static final DebuggingLogger logger = Logging.get(WorkspaceBeanContext.class);
 	private static final WorkspaceBeanContext INSTANCE = new WorkspaceBeanContext();
 	private final Map<String, WorkspaceBean<?>> map = new ConcurrentHashMap<>();
-	private boolean active = true;
+	private boolean active;
 
 	public static WorkspaceBeanContext getInstance() {
 		return INSTANCE;
@@ -76,17 +82,34 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 		}
 	}
 
+	@Override
+	public void onWorkspaceOpened(Workspace workspace) {
+		active = true;
+		workspace.addListener(this);
+	}
 
-	/**
-	 * {@inheritDoc}
-	 * <br>
-	 * Called directly from {@link Dispatch#workspaceClose(Workspace)}.
-	 */
 	@Override
 	public void onWorkspaceClosed(Workspace workspace) {
 		for (WorkspaceBean<?> bean : map.values()) {
 			try {
 				bean.onWorkspaceClosed(workspace);
+				bean.destroy();
+			} catch (Throwable t) {
+				logger.error("Failed to update {} bean: {}",
+						WorkspaceScoped.class.getSimpleName(),
+						bean.getName());
+			}
+		}
+		// Clear cached beans so that the next workspace allocates new instances upon request
+		map.clear();
+		active = false;
+	}
+
+	@Override
+	public void onAddLibrary(Workspace workspace, Resource library) {
+		for (WorkspaceBean<?> bean : map.values()) {
+			try {
+				bean.onAddLibrary(workspace, library);
 			} catch (Throwable t) {
 				logger.error("Failed to update {} bean: {}",
 						WorkspaceScoped.class.getSimpleName(),
@@ -95,16 +118,11 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * <br>
-	 * Called directly from {@link Dispatch#workspaceOpen(Workspace)}.
-	 */
 	@Override
-	public void onWorkspaceOpened(Workspace workspace) {
+	public void onRemoveLibrary(Workspace workspace, Resource library) {
 		for (WorkspaceBean<?> bean : map.values()) {
 			try {
-				bean.onWorkspaceOpened(workspace);
+				bean.onRemoveLibrary(workspace, library);
 			} catch (Throwable t) {
 				logger.error("Failed to update {} bean: {}",
 						WorkspaceScoped.class.getSimpleName(),
@@ -115,11 +133,7 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 
 	@Override
 	public boolean isActive() {
+		// Active when a workspace is set
 		return active;
-	}
-
-	public void setActive(boolean active) {
-		logger.debugging(l -> l.info("Active = {}", active));
-		this.active = active;
 	}
 }

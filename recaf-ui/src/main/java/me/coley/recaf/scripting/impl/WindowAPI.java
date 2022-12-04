@@ -1,7 +1,7 @@
 package me.coley.recaf.scripting.impl;
 
 import me.coley.recaf.RecafUI;
-import me.coley.recaf.ui.Windows;
+import me.coley.recaf.ui.window.Windows;
 import me.coley.recaf.ui.window.GenericWindow;
 import me.coley.recaf.ui.window.MainWindow;
 

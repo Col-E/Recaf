@@ -1,14 +1,16 @@
 package me.coley.recaf.ui.pane;
 
+import jakarta.inject.Inject;
 import javafx.geometry.Insets;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
-import me.coley.recaf.RecafUI;
-import me.coley.recaf.Services;
+import me.coley.recaf.cdi.WorkspaceScoped;
 import me.coley.recaf.mapping.*;
 import me.coley.recaf.plugin.tools.Tool;
+import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceCloseListener;
 
 import java.util.Comparator;
 import java.util.stream.Collectors;
@@ -18,19 +20,17 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-public class AggregateMappingPane extends BorderPane implements AggregatedMappingsListener {
-	private static AggregateMappingPane instance;
+@WorkspaceScoped
+public class AggregateMappingPane extends BorderPane implements AggregatedMappingsListener, WorkspaceCloseListener {
 	private final TextArea text = new TextArea();
 	private final ComboBox<MappingsTool> combo = new ComboBox<>();
 	private AggregatedMappings lastMappings;
 
-	private AggregateMappingPane() {
+	@Inject
+	public AggregateMappingPane(AggregateMappingManager aggregateMappingManager, MappingsManager mappingsManager) {
 		// TODO: More integrated display with class and member icons?
 		//  - Text export already a feature from the menu dropdown, which this is basically a live preview of atm
-		Services services = RecafUI.getController().getServices();
-		AggregateMappingManager aggregateMappings = services.getAggregateMappingManager();
-		MappingsManager mappingsManager = services.getMappingsManager();
-		aggregateMappings.addAggregatedMappingsListener(this);
+		aggregateMappingManager.addAggregatedMappingsListener(this);
 		text.getStyleClass().add("monospaced");
 		combo.getItems().addAll(mappingsManager.getRegisteredImpls().stream()
 				.filter(MappingsTool::supportsTextExport)
@@ -55,7 +55,7 @@ public class AggregateMappingPane extends BorderPane implements AggregatedMappin
 		setCenter(text);
 		setBottom(combo);
 		// Setup initial state
-		onAggregatedMappingsUpdated(aggregateMappings.getAggregatedMappings());
+		onAggregatedMappingsUpdated(aggregateMappingManager.getAggregatedMappings());
 	}
 
 	@Override
@@ -67,12 +67,9 @@ public class AggregateMappingPane extends BorderPane implements AggregatedMappin
 		text.setText(output.exportText());
 	}
 
-	/**
-	 * @return Aggregate mapping viewer pane instance.
-	 */
-	public static AggregateMappingPane get() {
-		if (instance == null)
-			instance = new AggregateMappingPane();
-		return instance;
+	@Override
+	public void onWorkspaceClosed(Workspace workspace) {
+		// Workspace closed
+		text.setDisable(true);
 	}
 }

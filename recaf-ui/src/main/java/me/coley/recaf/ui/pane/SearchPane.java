@@ -6,7 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
-import me.coley.recaf.RecafUI;
+import me.coley.recaf.cdi.RecafContainer;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.search.NumberMatchMode;
@@ -27,6 +27,7 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceManager;
 import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
@@ -227,7 +228,7 @@ public class SearchPane extends BorderPane {
 	}
 
 	private void runSearch(Search search) {
-		Workspace workspace = RecafUI.getController().getWorkspace();
+		Workspace workspace = RecafContainer.get(WorkspaceManager.class).getCurrent();
 		if (workspace == null) {
 			logger.error("Cannot search since no workspace is open!");
 			Toolkit.getDefaultToolkit().beep();

@@ -7,6 +7,7 @@ import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.expr.SimpleName;
+import jakarta.inject.Inject;
 import jregex.Matcher;
 import me.coley.recaf.Controller;
 import me.coley.recaf.cdi.WorkspaceScoped;
@@ -31,22 +32,14 @@ public class JavaParserHelper {
 	private final WorkspaceSymbolSolver symbolSolver;
 	private final JavaParser parser;
 
-	private JavaParserHelper(WorkspaceSymbolSolver symbolSolver) {
+	@Inject
+	public JavaParserHelper(WorkspaceSymbolSolver symbolSolver) {
 		this.symbolSolver = symbolSolver;
 		parser = new JavaParser(new ParserConfiguration()
 				.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_16)
 				.setSymbolResolver(this.symbolSolver));
 	}
 
-	/**
-	 * @param controller
-	 * 		Recaf controller, used to pull a {@link WorkspaceTypeSolver}.
-	 *
-	 * @return Instance of JavaParser helper utility.
-	 */
-	public static JavaParserHelper create(Controller controller) {
-		return create(controller.getServices().getSymbolSolver());
-	}
 
 	/**
 	 * @param symbolSolver
@@ -56,6 +49,13 @@ public class JavaParserHelper {
 	 */
 	public static JavaParserHelper create(WorkspaceSymbolSolver symbolSolver) {
 		return new JavaParserHelper(symbolSolver);
+	}
+
+	/**
+	 * @return Symbol solver of helper.
+	 */
+	public WorkspaceSymbolSolver getSymbolSolver() {
+		return symbolSolver;
 	}
 
 	/**

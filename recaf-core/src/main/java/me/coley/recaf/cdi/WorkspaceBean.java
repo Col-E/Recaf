@@ -4,8 +4,10 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.spi.Contextual;
 import jakarta.enterprise.context.spi.CreationalContext;
 import me.coley.recaf.workspace.WorkspaceCloseListener;
+import me.coley.recaf.workspace.WorkspaceModificationListener;
 import me.coley.recaf.workspace.WorkspaceOpenListener;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.resource.Resource;
 
 /**
  * Wrapper for a bean class annotated with {@link WorkspaceScoped}.
@@ -15,7 +17,7 @@ import me.coley.recaf.workspace.Workspace;
  *
  * @author Matt Coley
  */
-public class WorkspaceBean<T> implements WorkspaceOpenListener, WorkspaceCloseListener {
+public class WorkspaceBean<T> implements WorkspaceModificationListener, WorkspaceCloseListener {
 	private final Contextual<T> contextual;
 	private final CreationalContext<T> creationalContext;
 	private final T bean;
@@ -66,8 +68,14 @@ public class WorkspaceBean<T> implements WorkspaceOpenListener, WorkspaceCloseLi
 	}
 
 	@Override
-	public void onWorkspaceOpened(Workspace workspace) {
-		if (bean instanceof WorkspaceOpenListener)
-			((WorkspaceOpenListener) bean).onWorkspaceOpened(workspace);
+	public void onAddLibrary(Workspace workspace, Resource library) {
+		if (bean instanceof WorkspaceModificationListener)
+			((WorkspaceModificationListener) bean).onAddLibrary(workspace, library);
+	}
+
+	@Override
+	public void onRemoveLibrary(Workspace workspace, Resource library) {
+		if (bean instanceof WorkspaceModificationListener)
+			((WorkspaceModificationListener) bean).onRemoveLibrary(workspace, library);
 	}
 }

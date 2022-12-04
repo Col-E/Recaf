@@ -4,12 +4,12 @@ import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.nodeTypes.NodeWithRange;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
-import me.coley.recaf.Controller;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
 import me.coley.recaf.compile.CompileOption;
 import me.coley.recaf.compile.Compiler;
@@ -37,6 +37,7 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceManager;
 import me.coley.recaf.workspace.resource.Resources;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -59,6 +60,9 @@ import static me.coley.recaf.parse.JavaParserResolving.resolvedValueToInfo;
  */
 public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	private static final Logger logger = Logging.get(JavaArea.class);
+	private final JavaParserHelper javaParserHelper;
+	private final WorkspaceManager workspaceManager;
+	private final CompilerManager compilerManager;
 	private CommonClassInfo lastInfo;
 	private CompletableFuture<CompilationUnit> parseFuture;
 	private Consumer<CompilationUnit> queuedParseAction;
@@ -68,10 +72,18 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	 * @param problemTracking
 	 * 		Optional problem tracking implementation to enable line problem indicators.
 	 */
-	public JavaArea(ProblemTracking problemTracking) {
-		super(Languages.JAVA, problemTracking);
+	@Inject
+	public JavaArea(NavigationBar navigationBar,
+					Provider<ProblemTracking> problemTracking,
+					JavaParserHelper javaParserHelper,
+					WorkspaceManager workspaceManager,
+					CompilerManager compilerManager) {
+		super(Languages.JAVA, problemTracking.get());
+		this.workspaceManager = workspaceManager;
+		this.javaParserHelper = javaParserHelper;
+		this.compilerManager = compilerManager;
 		setOnContextMenuRequested(this::onMenuRequested);
-		caretPositionProperty().addListener((ob, old, cur) -> NavigationBar.getInstance().tryUpdateNavbar(this));
+		caretPositionProperty().addListener((ob, old, cur) -> navigationBar.tryUpdateNavbar(this));
 		setOnMousePressed(e -> {
 			if (e.isMiddleButtonDown() || (e.isPrimaryButtonDown() && e.isControlDown()))
 				handleNavigation(e);
@@ -147,7 +159,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	}
 
 	private void doSelectMember(CompilationUnit ast, MemberInfo memberInfo) {
-		WorkspaceTypeSolver solver = RecafUI.getController().getServices().getSymbolSolver().getTypeSolver();
+		WorkspaceTypeSolver solver = javaParserHelper.getSymbolSolver().getTypeSolver();
 		if (memberInfo.isField()) {
 			ast.findFirst(FieldDeclaration.class, dec -> {
 				MemberInfo declaredInfo = (MemberInfo) resolvedValueToInfo(solver, dec.resolve());
@@ -188,12 +200,10 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 
 	@Override
 	public SaveResult save() {
-		Controller controller = RecafUI.getController();
-		Workspace workspace = controller.getWorkspace();
+		Workspace workspace = workspaceManager.getCurrent();
 		// For now there is only one implementation, plain ol "javac"
 		CompilerConfig config = Configs.compiler();
 		String compilerName = config.impl;
-		CompilerManager compilerManager = controller.getServices().getCompilerManager();
 		Compiler compiler = compilerManager.get(compilerName);
 		boolean findCompiler = false;
 		if (compiler == null) {
@@ -265,12 +275,17 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	@Override
 	public boolean supportsEditing() {
 		// The save keybind should invoke the compiler
-		return true;
+		return !isDisabled();
 	}
 
 	@Override
 	public Node getNodeRepresentation() {
 		return this;
+	}
+
+	@Override
+	public void onWorkspaceClosed(Workspace workspace) {
+		setDisabled(true);
 	}
 
 	/**
@@ -344,6 +359,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 	private ContextBuilder menuBuilderFor(int position) {
 		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(position);
 		if (infoAtPosition.isPresent()) {
+			Workspace workspace = workspaceManager.getCurrent();
 			ItemInfo info = infoAtPosition.get().getInfo();
 			boolean dec = infoAtPosition.get().isDeclaration();
 			if (info instanceof ClassInfo) {
@@ -354,14 +370,12 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 				return ContextBuilder.forDexClass(dexClassInfo);
 			} else if (info instanceof FieldInfo) {
 				FieldInfo fieldInfo = (FieldInfo) info;
-				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(fieldInfo.getOwner());
+				CommonClassInfo owner = workspace.getResources().getClass(fieldInfo.getOwner());
 				if (owner != null)
 					return ContextBuilder.forField(owner, fieldInfo).setDeclaration(dec);
 			} else if (info instanceof MethodInfo) {
 				MethodInfo methodInfo = (MethodInfo) info;
-				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(methodInfo.getOwner());
+				CommonClassInfo owner = workspace.getResources().getClass(methodInfo.getOwner());
 				if (owner != null)
 					return ContextBuilder.forMethod(owner, methodInfo).setDeclaration(dec);
 			} else if (info instanceof LiteralExpressionInfo) {
@@ -381,6 +395,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		// Check if there is info about the selected item
 		Optional<ParseHitResult> infoAtPosition = resolveAtPosition(index);
 		if (infoAtPosition.isPresent()) {
+			Workspace workspace = workspaceManager.getCurrent();
 			ItemInfo info = infoAtPosition.get().getInfo();
 			if (info instanceof ClassInfo) {
 				ClassInfo classInfo = (ClassInfo) info;
@@ -390,14 +405,12 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 				CommonUX.openClass(dexClassInfo);
 			} else if (info instanceof FieldInfo) {
 				FieldInfo fieldInfo = (FieldInfo) info;
-				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(fieldInfo.getOwner());
+				CommonClassInfo owner = workspace.getResources().getClass(fieldInfo.getOwner());
 				if (owner != null)
 					CommonUX.openMember(owner, fieldInfo);
 			} else if (info instanceof MethodInfo) {
 				MethodInfo methodInfo = (MethodInfo) info;
-				CommonClassInfo owner = RecafUI.getController().getWorkspace()
-						.getResources().getClass(methodInfo.getOwner());
+				CommonClassInfo owner = workspace.getResources().getClass(methodInfo.getOwner());
 				if (owner != null)
 					CommonUX.openMember(owner, methodInfo);
 			}
@@ -417,8 +430,7 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		int line = hitPos.getMajor() + 1; // Position is 0 indexed
 		int column = hitPos.getMinor();
 		// Parse what is at the location
-		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
-		return helper.declarationAt(parseFuture.getNow(null), line, column);
+		return javaParserHelper.declarationAt(parseFuture.getNow(null), line, column);
 	}
 
 	/**
@@ -434,16 +446,14 @@ public class JavaArea extends SyntaxArea implements ClassRepresentation {
 		int line = hitPos.getMajor() + 1; // Position is 0 indexed
 		int column = hitPos.getMinor();
 		// Parse what is at the location
-		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
-		return helper.at(parseFuture.getNow(null), line, column);
+		return javaParserHelper.at(parseFuture.getNow(null), line, column);
 	}
 
 	/**
 	 * Update the latest AST.
 	 */
 	private CompilationUnit updateParse() {
-		JavaParserHelper helper = RecafUI.getController().getServices().getJavaParserHelper();
-		ParseResult<CompilationUnit> result = helper.parseClass(getText());
+		ParseResult<CompilationUnit> result = javaParserHelper.parseClass(getText());
 		CompilationUnit unit = result.getResult().orElse(null);
 		// Display warning to users that code was unparsable so that they stop asking us why right-click doesn't work.
 		if (getProblemTracking() != null) {

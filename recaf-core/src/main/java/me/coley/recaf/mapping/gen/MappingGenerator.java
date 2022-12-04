@@ -1,6 +1,7 @@
 package me.coley.recaf.mapping.gen;
 
-import me.coley.recaf.Controller;
+import jakarta.inject.Inject;
+import me.coley.recaf.cdi.WorkspaceScoped;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
@@ -10,6 +11,7 @@ import me.coley.recaf.graph.InheritanceVertex;
 import me.coley.recaf.mapping.Mappings;
 import me.coley.recaf.mapping.MappingsAdapter;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.workspace.WorkspaceManager;
 import me.coley.recaf.workspace.resource.Resource;
 
 import java.util.*;
@@ -21,19 +23,16 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Matt Coley
  */
+@WorkspaceScoped
 public class MappingGenerator {
 	private final Resource resource;
 	private final InheritanceGraph inheritanceGraph;
 	private NameGenerator nameGenerator;
 	private NameGeneratorFilter filter;
 
-	/**
-	 * @param controller
-	 * 		Controller to pull primary resource and inheritance graph from.
-	 */
-	public MappingGenerator(Controller controller) {
-		this(controller.getWorkspace().getResources().getPrimary(),
-				controller.getServices().getInheritanceGraph());
+	@Inject
+	public MappingGenerator(WorkspaceManager workspaceManager, InheritanceGraph inheritanceGraph) {
+		this(workspaceManager.getCurrentPrimaryResource(), inheritanceGraph);
 	}
 
 	/**

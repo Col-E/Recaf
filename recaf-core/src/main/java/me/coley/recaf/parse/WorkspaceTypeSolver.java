@@ -4,11 +4,14 @@ import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclar
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import jakarta.inject.Inject;
+import me.coley.recaf.cdi.WorkspaceScoped;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.parse.jpimpl.RecafResolvedTypeDeclaration;
 import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.WorkspaceModificationListener;
+import me.coley.recaf.workspace.WorkspaceOpenListener;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
 
@@ -23,18 +26,29 @@ import java.util.Set;
  *
  * @author Matt Coley
  */
-public class WorkspaceTypeSolver implements TypeSolver, WorkspaceModificationListener, ResourceClassListener {
+@WorkspaceScoped
+public class WorkspaceTypeSolver implements TypeSolver, WorkspaceOpenListener, WorkspaceModificationListener, ResourceClassListener {
 	private final Map<String, RecafResolvedTypeDeclaration> nameToDeclarationCache = new HashMap<>();
 	private final Set<String> failedResolves = new HashSet<>();
 	private final TypeSolver childSolver = new ReflectionTypeSolver(false);
-	private final Workspace workspace;
+	private Workspace workspace;
 	private TypeSolver parent;
+
+	@Inject
+	public WorkspaceTypeSolver() {
+		// For DI
+	}
 
 	/**
 	 * @param workspace
 	 * 		Workspace to pull classes from.
 	 */
 	public WorkspaceTypeSolver(Workspace workspace) {
+		onWorkspaceOpened(workspace);
+	}
+
+	@Override
+	public void onWorkspaceOpened(Workspace workspace) {
 		this.workspace = workspace;
 		// Listener will ensure cache does not de-sync with changes to library states, class updates, etc
 		workspace.addListener(this);

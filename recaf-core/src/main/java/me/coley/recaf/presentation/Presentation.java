@@ -1,8 +1,13 @@
 package me.coley.recaf.presentation;
 
 import me.coley.recaf.Controller;
-import me.coley.recaf.workspace.Workspace;
-import me.coley.recaf.workspace.resource.*;
+import me.coley.recaf.workspace.WorkspaceCloseCondition;
+import me.coley.recaf.workspace.WorkspaceCloseListener;
+import me.coley.recaf.workspace.WorkspaceModificationListener;
+import me.coley.recaf.workspace.WorkspaceOpenListener;
+import me.coley.recaf.workspace.resource.ResourceClassListener;
+import me.coley.recaf.workspace.resource.ResourceDexClassListener;
+import me.coley.recaf.workspace.resource.ResourceFileListener;
 
 /**
  * Base outline for how Recaf should present behaviors.
@@ -26,23 +31,7 @@ public interface Presentation {
 	/**
 	 * Presentation implementation for workspace content.
 	 */
-	interface WorkspacePresentation extends ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
-		/**
-		 * Close the given <i>(should match current)</i> workspace.
-		 *
-		 * @param workspace
-		 * 		Closed workspace.
-		 *
-		 * @return {@code true} on successful close. {@code false} if the closure was cancelled.
-		 */
-		boolean closeWorkspace(Workspace workspace);
-
-		/**
-		 * Opens the given <i>(should match current)</i> workspace.
-		 *
-		 * @param workspace
-		 * 		New workspace.
-		 */
-		void openWorkspace(Workspace workspace);
+	interface WorkspacePresentation extends WorkspaceOpenListener, WorkspaceCloseListener, WorkspaceCloseCondition,
+			WorkspaceModificationListener, ResourceClassListener, ResourceDexClassListener, ResourceFileListener {
 	}
 }

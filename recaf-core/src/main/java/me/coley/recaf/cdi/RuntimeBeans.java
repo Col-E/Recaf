@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Since the {@link org.jboss.weld.environment.se.WeldContainer} cannot create beans after it is initialized we will
- * store additional beans here. These are accessed via {@link RecafContainer#create(Class)}.
+ * store additional beans here. These are accessed via {@link RecafContainer#get(Class)}.
  *
  * @author Matt Coley
  */
@@ -35,9 +35,14 @@ public class RuntimeBeans {
 	 * 		Instance of bean class.
 	 *
 	 * @return Instance of class of bean.
+	 * {@code null} when an instance could not be created.
 	 */
 	public <T> T instance(Bean<T> bean) {
-		return bean.create(impl.createCreationalContext(bean));
+		try {
+			return bean.create(impl.createCreationalContext(bean));
+		} catch (Exception ex) {
+			return null;
+		}
 	}
 
 	/**

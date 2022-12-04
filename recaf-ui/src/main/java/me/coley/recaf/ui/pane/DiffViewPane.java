@@ -4,6 +4,7 @@ import difflib.Chunk;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
+import jakarta.inject.Inject;
 import javafx.beans.property.IntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,8 +14,6 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
-import me.coley.recaf.Controller;
-import me.coley.recaf.ControllerListener;
 import me.coley.recaf.assemble.ContextualPipeline;
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.Unit;
@@ -45,6 +44,8 @@ import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceManager;
+import me.coley.recaf.workspace.WorkspaceOpenListener;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.ResourceClassListener;
 import me.coley.recaf.workspace.resource.ResourceDexClassListener;
@@ -66,7 +67,7 @@ import java.util.function.Consumer;
  *
  * @author Matt Coley
  */
-public class DiffViewPane extends BorderPane implements ControllerListener,
+public class DiffViewPane extends BorderPane implements WorkspaceOpenListener,
 		ResourceClassListener, ResourceDexClassListener, ResourceFileListener, FontSizeChangeable {
 	private static final Logger logger = Logging.get(DiffViewPane.class);
 	private static final long TIMEOUT_MS = 10_000;
@@ -74,14 +75,15 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	private Workspace workspace;
 
 	/**
-	 * Create the diff viewer, and add listeners to the controller so that we can live update which
+	 * Create the diff viewer, and add listeners to the workspace manager so that we can live update which
 	 * classes and files have history to display.
 	 *
-	 * @param controller
-	 * 		Controller to add listener to.
+	 * @param workspaceManager
+	 * 		Workspace manager to add listener to.
 	 */
-	public DiffViewPane(Controller controller) {
-		controller.addListener(this);
+	@Inject
+	public DiffViewPane(WorkspaceManager workspaceManager) {
+		workspaceManager.addListener(this);
 		// Primary display of selected item
 		BorderPane content = new BorderPane();
 		// List of modified items (classes/files/etc)
@@ -283,13 +285,13 @@ public class DiffViewPane extends BorderPane implements ControllerListener,
 	}
 
 	@Override
-	public void onNewWorkspace(Workspace oldWorkspace, Workspace newWorkspace) {
-		workspace = newWorkspace;
+	public void onWorkspaceOpened(Workspace workspace) {
+		this.workspace = workspace;
 		// Clear old items
 		items.clear();
 		// Add listeners to receive new items
-		if (newWorkspace != null) {
-			Resource resource = newWorkspace.getResources().getPrimary();
+		if (workspace != null) {
+			Resource resource = workspace.getResources().getPrimary();
 			resource.addClassListener(this);
 			resource.addDexListener(this);
 			resource.addFileListener(this);

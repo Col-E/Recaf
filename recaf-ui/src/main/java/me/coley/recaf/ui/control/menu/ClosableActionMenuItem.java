@@ -11,11 +11,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import me.coley.recaf.ui.control.GraphicActionButton;
 import me.coley.recaf.ui.util.Icons;
-import me.coley.recaf.ui.window.MainMenu;
-import me.coley.recaf.util.threading.ThreadPoolFactory;
+import me.coley.recaf.ui.menu.MainMenu;
 import me.coley.recaf.util.threading.ThreadUtil;
-
-import java.util.concurrent.ExecutorService;
 
 /**
  * MenuItem with an on-click and on-close runnable action.

@@ -11,7 +11,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.ui.control.tree.item.WorkspaceRootItem;
 import me.coley.recaf.ui.dnd.DragAndDrop;
 import me.coley.recaf.ui.dnd.FileDropListener;
@@ -43,7 +42,7 @@ public class WorkspaceTreeWrapper extends StackPane implements FileDropListener 
 	public WorkspaceTreeWrapper() {
 		tree.setShowRoot(false);
 		getChildren().add(tree);
-		setWorkspace(RecafUI.getController().getWorkspace());
+		setWorkspace(null);
 		getStyleClass().add("workspace-tree");
 		// Add drag-and-drop support
 		DragAndDrop.installFileSupport(this, this);

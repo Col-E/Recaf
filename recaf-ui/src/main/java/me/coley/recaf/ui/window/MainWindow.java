@@ -1,17 +1,19 @@
 package me.coley.recaf.ui.window;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.WindowEvent;
 import me.coley.recaf.BuildConfig;
-import me.coley.recaf.RecafUI;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.control.LoggingTextArea;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.DockingRegion;
 import me.coley.recaf.ui.docking.RecafDockingManager;
+import me.coley.recaf.ui.menu.MainMenu;
 import me.coley.recaf.ui.pane.WelcomePane;
 import me.coley.recaf.ui.pane.WorkspacePane;
 import me.coley.recaf.ui.prompt.WorkspaceClosePrompt;
@@ -19,6 +21,7 @@ import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
+import me.coley.recaf.workspace.WorkspaceManager;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -31,11 +34,15 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author Matt Coley
  */
+@ApplicationScoped
 public class MainWindow extends WindowBase {
-	/**
-	 * Create the window.
-	 */
-	public MainWindow() {
+	private final WorkspaceManager workspaceManager;
+	private final MainMenu mainMenu;
+
+	@Inject
+	public MainWindow(MainMenu mainMenu, WorkspaceManager workspaceManager) {
+		this.mainMenu = mainMenu;
+		this.workspaceManager = workspaceManager;
 		init();
 		setTitle("Recaf " + BuildConfig.VERSION);
 	}
@@ -51,7 +58,7 @@ public class MainWindow extends WindowBase {
 				return;
 			}
 			// Close if there is no workspace
-			Workspace workspace = RecafUI.getController().getWorkspace();
+			Workspace workspace = workspaceManager.getCurrent();
 			if (workspace == null) {
 				System.exit(0);
 				return;
@@ -109,7 +116,7 @@ public class MainWindow extends WindowBase {
 
 		// Wrap it up, add menu to top
 		BorderPane root = new BorderPane(verticalSplit);
-		root.setTop(MainMenu.getInstance());
+		root.setTop(mainMenu);
 		return new Scene(root);
 	}
 

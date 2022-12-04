@@ -2,6 +2,7 @@ package me.coley.recaf.mapping;
 
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.graph.InheritanceGraph;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.resource.ClassMap;
 import me.coley.recaf.workspace.resource.Resource;
@@ -54,7 +55,7 @@ public class MappingUtils {
 					ClassInfo updatedInfo = ClassInfo.read(cw.toByteArray());
 					String newName = updatedInfo.getName();
 					ClassMap classes = resource.getClasses();
-					synchronized(resource) {
+					synchronized (resource) {
 						newNames.add(newName);
 						classes.put(updatedInfo);
 						// Remove old classes if they have been renamed and do not occur
@@ -73,30 +74,29 @@ public class MappingUtils {
 	/**
 	 * Quick utility for applying mappings for operations like copy, rename, move.
 	 *
-	 * @param read
-	 * 		Flags to use to parse classes in the resource.
-	 * @param write
-	 * 		Flags to use to write back classes to the resource.
-	 * @param controller
-	 * 		Controller to update aggregated mappings <i>(See: {@link MappingsManager})</i>
 	 * @param resource
 	 * 		Resource to apply mappings to.
 	 * @param mappings
 	 * 		The mappings to apply.
+	 * @param graph
+	 * 		Inheritance graph to enrich common type resolution with.
+	 * @param aggregateMappingManager
+	 * 		Aggregate mappings to update.
 	 *
 	 * @return Names of the classes in the resource that had modifications as a result of the mapping operation.
 	 */
-	public static Set<String> applyMappings(int read, int write, Controller controller,
-											Resource resource, Mappings mappings) {
+	public static Set<String> applyMappings(Resource resource, Mappings mappings,
+											InheritanceGraph graph, AggregateMappingManager aggregateMappingManager) {
 		// Check if mappings can be enriched with type look-ups
-		if (mappings instanceof MappingsAdapter) {
+		if (graph != null && mappings instanceof MappingsAdapter) {
 			// If we have "Dog extends Animal" and both define "jump" this lets "Dog.jump()" see "Animal.jump()"
 			// allowing mappings that aren't complete for their type hierarchies to be filled in.
 			MappingsAdapter adapter = (MappingsAdapter) mappings;
-			adapter.enableHierarchyLookup(controller.getServices().getInheritanceGraph());
+			adapter.enableHierarchyLookup(graph);
 		}
-		Set<String> modifiedClasses = applyMappingsWithoutAggregation(read, write, resource, mappings);
-		controller.getServices().getAggregateMappingManager().updateAggregateMappings(mappings);
+		Set<String> modifiedClasses = applyMappingsWithoutAggregation(0, 0, resource, mappings);
+		if (aggregateMappingManager != null)
+			aggregateMappingManager.updateAggregateMappings(mappings);
 		return modifiedClasses;
 	}
 }

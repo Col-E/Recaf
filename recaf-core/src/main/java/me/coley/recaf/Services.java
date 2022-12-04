@@ -12,7 +12,7 @@ import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.util.WorkspaceTreeService;
 import me.coley.recaf.workspace.Workspace;
 
-import static me.coley.recaf.cdi.RecafContainer.create;
+import static me.coley.recaf.cdi.RecafContainer.get;
 
 /**
  * Wrapper of multiple services that are provided by a controller.
@@ -39,10 +39,10 @@ public class Services {
 	 * Initialize services.
 	 */
 	Services() {
-		compilerManager = create(CompilerManager.class);
-		decompileManager = create(DecompileManager.class);
-		mappingsManager = create(MappingsManager.class);
-		instrumentationManager = create(InstrumentationManager.class);
+		compilerManager = get(CompilerManager.class);
+		decompileManager = get(DecompileManager.class);
+		mappingsManager = get(MappingsManager.class);
+		instrumentationManager = get(InstrumentationManager.class);
 	}
 
 	/**
@@ -137,7 +137,7 @@ public class Services {
 			treeService = null;
 			aggregateMappingManager = null;
 		} else {
-			aggregateMappingManager = create(AggregateMappingManager.class);
+			aggregateMappingManager = get(AggregateMappingManager.class);
 			inheritanceGraph = new InheritanceGraph(workspace);
 			symbolSolver = WorkspaceSymbolSolver.create(workspace);
 			javaParserHelper = JavaParserHelper.create(symbolSolver);

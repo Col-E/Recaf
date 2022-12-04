@@ -1,14 +1,16 @@
 package me.coley.recaf.presentation;
 
-import me.coley.recaf.plugin.RecafPluginManager;
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.application.Platform;
 import me.coley.recaf.Controller;
 import me.coley.recaf.RecafConstants;
-import me.coley.recaf.RecafUI;
+import me.coley.recaf.cdi.RecafContainer;
 import me.coley.recaf.config.ConfigRegistry;
 import me.coley.recaf.config.Configs;
+import me.coley.recaf.plugin.RecafPluginManager;
 import me.coley.recaf.ui.prompt.WorkspaceIOPrompts;
 import me.coley.recaf.ui.util.Lang;
+import me.coley.recaf.ui.window.Windows;
 import me.coley.recaf.util.*;
 import me.coley.recaf.util.logging.Logging;
 import me.coley.recaf.util.threading.ThreadUtil;
@@ -23,14 +25,12 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
+@ApplicationScoped
 public class GuiPresentation implements Presentation {
 	private static final Logger logger = Logging.get(GuiPresentation.class);
-	private Controller controller;
 
 	@Override
 	public void initialize(Controller controller) {
-		this.controller = controller;
-		RecafUI.set(controller);
 		// Patch JDK restrictions
 		AccessPatcher.patch();
 		// Setup JavaFX
@@ -65,8 +65,8 @@ public class GuiPresentation implements Presentation {
 		// Open UI
 		JFXUtils.initializePlatform(() -> {
 			try {
-				RecafUI.initialize();
-				RecafUI.getWindows().getMainWindow().show();
+				Windows windows = RecafContainer.get(Windows.class);
+				windows.getMainWindow().show();
 			} catch (Throwable ex) {
 				logger.error("Recaf crashed due to an unhandled error." +
 						"Please open a bug report: " + RecafConstants.getUrlBugReport(), ex);
@@ -99,6 +99,6 @@ public class GuiPresentation implements Presentation {
 
 	@Override
 	public WorkspacePresentation workspaceLayer() {
-		return new GuiWorkspacePresentation(controller);
+		return new GuiWorkspacePresentation();
 	}
 }

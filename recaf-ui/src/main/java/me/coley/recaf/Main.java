@@ -1,5 +1,6 @@
 package me.coley.recaf;
 
+import me.coley.recaf.cdi.RecafContainer;
 import me.coley.recaf.plugin.RecafPluginManager;
 import me.coley.recaf.launch.InitializerParameters;
 import me.coley.recaf.presentation.PresentationType;
@@ -37,6 +38,8 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		setupLogging();
+		// Initialize container
+		RecafContainer.initialize();
 		// Initialization plugin
 		RecafPluginManager.initialize();
 		// Read application parameters
