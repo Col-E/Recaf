@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.arch.module.Module;
+import me.coley.recaf.assemble.ast.arch.record.Record;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +20,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	private int version;
 	private String superClass;
 	private Module module;
+	private Record record;
 	private final List<String> interfaces;
 	private final List<String> permittedSubclasses = new ArrayList<>();
 	private final List<InnerClass> innerClasses = new ArrayList<>();
@@ -136,6 +138,14 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	 */
 	public void setModule(Module module) {
 		this.module = module;
+	}
+
+	/**
+	 * @param record
+	 * 		New record.
+	 */
+	public void setRecord(Record record) {
+		this.record = record;
 	}
 
 	/**
