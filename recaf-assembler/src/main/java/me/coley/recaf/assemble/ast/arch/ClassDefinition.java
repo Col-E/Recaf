@@ -205,6 +205,13 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	}
 
 	/**
+	 * @return Record of the class.
+	 */
+	public Record getRecord() {
+		return record;
+	}
+
+	/**
 	 * @return List of nest members.
 	 */
 	public List<String> getNestMembers() {
@@ -271,6 +278,9 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		}
 		if(module != null) {
 			sb.append(module.print(context)).append('\n');
+		}
+		if(record != null) {
+			sb.append(record.print(context)).append('\n');
 		}
 		sb.append(buildDefString(context, context.fmtKeyword("class"))).append(name);
 		if (superClass != null) {

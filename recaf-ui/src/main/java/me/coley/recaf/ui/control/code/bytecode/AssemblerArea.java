@@ -52,7 +52,7 @@ import me.coley.recaf.workspace.resource.Resource;
 import me.darknet.assembler.exceptions.AssemblerException;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.Token;
-import me.darknet.assembler.parser.groups.*;
+import me.darknet.assembler.parser.groups.instructions.*;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;

@@ -12,7 +12,7 @@ import me.coley.recaf.util.ClasspathUtil;
 import me.coley.recaf.util.EscapeUtil;
 import me.darknet.assembler.instructions.ParseInfo;
 import me.darknet.assembler.parser.Group;
-import me.darknet.assembler.parser.groups.InstructionGroup;
+import me.darknet.assembler.parser.groups.instructions.InstructionGroup;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nullable;

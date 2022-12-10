@@ -12,6 +12,15 @@ import me.darknet.assembler.exceptions.AssemblerException;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.ParserContext;
 import me.darknet.assembler.parser.groups.*;
+import me.darknet.assembler.parser.groups.attributes.*;
+import me.darknet.assembler.parser.groups.annotation.*;
+import me.darknet.assembler.parser.groups.declaration.*;
+import me.darknet.assembler.parser.groups.frame.*;
+import me.darknet.assembler.parser.groups.instructions.*;
+import me.darknet.assembler.parser.groups.method.*;
+import me.darknet.assembler.parser.groups.module.*;
+import me.darknet.assembler.parser.groups.record.RecordComponentGroup;
+import me.darknet.assembler.parser.groups.record.RecordGroup;
 import me.darknet.assembler.transform.*;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
@@ -119,8 +128,18 @@ public class JasmToUnitTransformer extends AbstractTopLevelGroupVisitor implemen
 			}
 
 			@Override
+			public void visitRecord(RecordGroup record) throws AssemblerException {
+				classDefinition.setRecord(convertRecord(record));
+			}
+
+			@Override
 			public void visitPermittedSubclass(PermittedSubclassGroup permittedSubclass) throws AssemblerException {
 				classDefinition.addPermittedSubclass(content(permittedSubclass.getSubclass()));
+			}
+
+			@Override
+			public void visitDeprecated(DeprecatedGroup deprecated) throws AssemblerException {
+				classDefinition.setDeprecated(true);
 			}
 		};
 	}
@@ -160,6 +179,11 @@ public class JasmToUnitTransformer extends AbstractTopLevelGroupVisitor implemen
 			@Override
 			public void visitSignature(SignatureGroup signature) {
 				fieldDefinition.setSignature(convertSignature(signature));
+			}
+
+			@Override
+			public void visitDeprecated(DeprecatedGroup deprecated) throws AssemblerException {
+				fieldDefinition.setDeprecated(true);
 			}
 		};
 	}
@@ -304,6 +328,16 @@ public class JasmToUnitTransformer extends AbstractTopLevelGroupVisitor implemen
 			}
 
 			@Override
+			public void visitLocalVariable(IdentifierGroup name, IdentifierGroup desc, IdentifierGroup start, IdentifierGroup end, int index) throws AssemblerException {
+				// no-op, Recaf only supports named variables
+			}
+
+			@Override
+			public void visitFrame(FrameGroup frame) throws AssemblerException {
+				// no-op, Recaf computes frames
+			}
+
+			@Override
 			public void visitMultiANewArrayInsn(String desc, int dims) {
 				add(new MultiArrayInstruction(Opcodes.MULTIANEWARRAY, desc, dims));
 			}
@@ -331,6 +365,11 @@ public class JasmToUnitTransformer extends AbstractTopLevelGroupVisitor implemen
 			@Override
 			public void visitExpr(ExprGroup expr) {
 				add(new Expression(expr.getTextGroup().content()));
+			}
+
+			@Override
+			public void visitDeprecated(DeprecatedGroup deprecated) throws AssemblerException {
+				methodDefinition.setDeprecated(true);
 			}
 
 			@Override

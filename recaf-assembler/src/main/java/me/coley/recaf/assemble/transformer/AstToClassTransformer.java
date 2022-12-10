@@ -1,19 +1,25 @@
 package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.MethodCompileException;
-import me.coley.recaf.assemble.ast.arch.ClassDefinition;
-import me.coley.recaf.assemble.ast.arch.FieldDefinition;
-import me.coley.recaf.assemble.ast.arch.InnerClass;
-import me.coley.recaf.assemble.ast.arch.MethodDefinition;
+import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.arch.module.*;
 import me.coley.recaf.assemble.ast.arch.module.Module;
+import me.coley.recaf.assemble.ast.arch.record.Record;
+import me.coley.recaf.assemble.ast.arch.record.RecordComponent;
 import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.util.ReflectiveClassSupplier;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ModuleVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.RecordComponentVisitor;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Transforms a {@link ClassDefinition} into a {@link ClassNode}.
@@ -45,10 +51,33 @@ public class AstToClassTransformer {
 		//  - can be completed later though
 		ClassNode node = new ClassNode();
 		node.version = definition.getVersion();
-		node.access = definition.getModifiers().value();
+		node.access = definition.getModifiers().value() | (definition.isDeprecated() ? Opcodes.ACC_DEPRECATED : 0);
 		node.name = definition.getName();
 		node.superName = definition.getSuperClass();
 		node.interfaces = definition.getInterfaces();
+		List<AnnotationNode> visibleAnnotations = new ArrayList<>();
+		List<AnnotationNode> invisibleAnnotations = new ArrayList<>();
+		for (Annotation annotation : definition.getAnnotations()) {
+			AnnotationNode annotationNode = new AnnotationNode("L" + annotation.getType() + ";");
+			annotationNode.values = new ArrayList<>();
+			annotation.getArgs().forEach((argName, argVal) -> {
+				annotationNode.values.add(argName);
+				annotationNode.values.add(AnnotationHelper.map(argVal));
+			});
+			if (annotation.isVisible()) {
+				visibleAnnotations.add(annotationNode);
+			} else {
+				invisibleAnnotations.add(annotationNode);
+			}
+		}
+		if (visibleAnnotations.size() > 0)
+			node.visibleAnnotations = visibleAnnotations;
+		else
+			node.visibleAnnotations = null;
+		if (invisibleAnnotations.size() > 0)
+			node.invisibleAnnotations = invisibleAnnotations;
+		else
+			node.invisibleAnnotations = null;
 		AstToFieldTransformer fieldTransformer = new AstToFieldTransformer();
 		for (FieldDefinition definedField : definition.getDefinedFields()) {
 			fieldTransformer.setDefinition(definedField);
@@ -99,6 +128,19 @@ public class AstToClassTransformer {
 				visitor.visitProvide(provide.getName(), provide.getPackages().toArray(new String[0]));
 			}
 			visitor.visitEnd();
+		}
+		Record record = definition.getRecord();
+		if(record != null) {
+			for (RecordComponent component : record.getComponents()) {
+				String signature = component.getSignature() == null ? null : component.getSignature().getSignature();
+				RecordComponentVisitor visitor = node.visitRecordComponent(component.getName(), component.getDescriptor(), signature);
+				for (Annotation annotation : component.getAnnotations()) {
+					AnnotationVisitor annotationVisitor = visitor.visitAnnotation("L" + annotation.getType() + ";", annotation.isVisible());
+					annotation.getArgs().forEach((argName, argVal) -> annotationVisitor.visit(argName, AnnotationHelper.map(argVal)));
+					annotationVisitor.visitEnd();
+				}
+				visitor.visitEnd();
+			}
 		}
 		return node;
 	}

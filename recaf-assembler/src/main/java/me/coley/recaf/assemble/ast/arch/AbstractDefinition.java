@@ -10,6 +10,7 @@ import me.coley.recaf.assemble.ast.PrintContext;
  */
 public abstract class AbstractDefinition extends AbstractAttributable implements Definition {
     private Modifiers modifiers;
+    private boolean deprecated;
 
     @Override
     public Modifiers getModifiers() {
@@ -20,9 +21,20 @@ public abstract class AbstractDefinition extends AbstractAttributable implements
         this.modifiers = modifiers;
     }
 
+    @Override
+    public boolean isDeprecated() {
+        return deprecated;
+    }
+
+    public void setDeprecated(boolean deprecated) {
+        this.deprecated = deprecated;
+    }
+
     protected String buildDefString(PrintContext context, String type) {
         StringBuilder sb = new StringBuilder();
         sb.append(super.buildDefString(context));
+        if (deprecated)
+            sb.append(context.fmtKeyword("deprecated")).append("\n");
         sb.append(type).append(" ");
         if (getModifiers().value() > 0) {
             sb.append(getModifiers().print(context).toLowerCase()).append(' ');

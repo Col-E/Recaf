@@ -37,4 +37,9 @@ public interface Definition extends Element, Descriptor, Named {
      */
     Modifiers getModifiers();
 
+    /**
+     * @return {@code true} if the element is deprecated.
+     */
+    boolean isDeprecated();
+
 }

@@ -11,7 +11,6 @@ public abstract class AbstractAttributable extends BaseElement implements Attrib
 
     private final List<Annotation> annotations = new ArrayList<>();
     private Signature signature;
-    private boolean deprecated;
 
     @Override
     public List<Annotation> getAnnotations() {
@@ -32,23 +31,12 @@ public abstract class AbstractAttributable extends BaseElement implements Attrib
         this.signature = signature;
     }
 
-    @Override
-    public boolean isDeprecated() {
-        return deprecated;
-    }
-
-    public void setDeprecated(boolean deprecated) {
-        this.deprecated = deprecated;
-    }
-
     public void addAnnotation(Annotation annotation) {
         annotations.add(annotation);
     }
 
     protected String buildDefString(PrintContext context) {
         StringBuilder sb = new StringBuilder();
-        if (deprecated)
-            sb.append(context.fmtKeyword("deprecated")).append("\n");
         if (signature != null)
             sb.append(getSignature().print(context));
         for (Annotation annotation : annotations)

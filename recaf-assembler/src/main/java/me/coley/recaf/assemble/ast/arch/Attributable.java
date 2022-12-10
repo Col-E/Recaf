@@ -16,9 +16,4 @@ public interface Attributable {
      */
     Signature getSignature();
 
-    /**
-     * @return {@code true} if the element is deprecated.
-     */
-    boolean isDeprecated();
-
 }

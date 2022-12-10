@@ -7,6 +7,8 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.arch.module.*;
 import me.coley.recaf.assemble.ast.arch.module.Module;
+import me.coley.recaf.assemble.ast.arch.record.Record;
+import me.coley.recaf.assemble.ast.arch.record.RecordComponent;
 import me.coley.recaf.assemble.ast.insn.*;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.ast.meta.Signature;
@@ -98,6 +100,9 @@ public class BytecodeToAstTransformer {
 		}
 		// Setup other attributes
 		FieldDefinition definition = new FieldDefinition(modifiers, fieldNode.name, fieldNode.desc);
+		// check if ACC_DEPRECATED is set
+		if ((fieldNode.access & Opcodes.ACC_DEPRECATED) != 0)
+			definition.setDeprecated(true);
 		if (fieldNode.signature != null && !fieldNode.signature.equals(fieldNode.desc))
 			definition.setSignature(new Signature(fieldNode.signature));
 		if (fieldNode.value != null) {
@@ -166,6 +171,9 @@ public class BytecodeToAstTransformer {
 		String retType = methodType.getReturnType().getDescriptor();
 		Code code = new Code();
 		MethodDefinition definition = new MethodDefinition(modifiers, methodNode.name, params, retType, code);
+		// check if ACC_DEPRECATED is set
+		if ((methodNode.access & Opcodes.ACC_DEPRECATED) != 0)
+			definition.setDeprecated(true);
 		// Setup other attributes
 		if (methodNode.signature != null && !methodNode.signature.equals(methodNode.desc))
 			definition.setSignature(new Signature(methodNode.signature));
@@ -345,6 +353,9 @@ public class BytecodeToAstTransformer {
 		ClassDefinition definition = new ClassDefinition(modifiers, classNode.name, classNode.superName, classNode.interfaces);
 		if (classNode.signature != null)
 			definition.setSignature(new Signature(classNode.signature));
+		// check if ACC_DEPRECATED is set
+		if ((classNode.access & Opcodes.ACC_DEPRECATED) != 0)
+			definition.setDeprecated(true);
 		AnnotationHelper.visitAnnos(definition, true, classNode.visibleAnnotations);
 		AnnotationHelper.visitAnnos(definition, false, classNode.invisibleAnnotations);
 		// Create AST for all methods & fields
@@ -452,6 +463,27 @@ public class BytecodeToAstTransformer {
 				}
 			}
 			definition.setModule(module);
+		}
+		if(classNode.nestHostClass != null) {
+			definition.setNestHost(classNode.nestHostClass);
+		}
+		if(classNode.nestMembers != null) {
+			for (String nestMember : classNode.nestMembers) {
+				definition.addNestMember(nestMember);
+			}
+		}
+		if(classNode.recordComponents != null) {
+			Record record = new Record();
+			for (RecordComponentNode recordComponent : classNode.recordComponents) {
+				RecordComponent component = new RecordComponent(recordComponent.name, recordComponent.descriptor);
+				if(recordComponent.signature != null) {
+					component.setSignature(new Signature(recordComponent.signature));
+				}
+				AnnotationHelper.visitAnnos(component, true, recordComponent.visibleAnnotations);
+				AnnotationHelper.visitAnnos(component, false, recordComponent.invisibleAnnotations);
+				record.addComponent(component);
+			}
+			definition.setRecord(record);
 		}
 		// Done
 		unit = new Unit(definition);

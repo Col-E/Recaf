@@ -28,7 +28,7 @@ public class AstToFieldTransformer {
 	public FieldNode buildField() {
 		if (definition == null)
 			throw new IllegalStateException("No definition set!");
-		int access = definition.getModifiers().value();
+		int access = definition.getModifiers().value() | (definition.isDeprecated() ? Opcodes.ACC_DEPRECATED : 0);;
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
 		String signature = definition.getSignature() != null ? definition.getSignature().getSignature() : null;
