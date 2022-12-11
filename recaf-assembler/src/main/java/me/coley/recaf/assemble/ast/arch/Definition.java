@@ -10,36 +10,36 @@ import me.coley.recaf.assemble.ast.Named;
  * @author Matt Coley
  */
 public interface Definition extends Element, Descriptor, Named {
-    /**
-     * @return {@code true} if the current instance is a class or interface.
-     */
-    boolean isClass();
+	/**
+	 * @return {@code true} if the current instance is a class or interface.
+	 */
+	boolean isClass();
 
-    /**
-     * @return {@code true} if the current instance is a field or method.
-     */
-    default boolean isMember() {
-        return !isClass() && (isField() || isMethod());
-    }
+	/**
+	 * @return {@code true} if the current instance is a field or method.
+	 */
+	default boolean isMember() {
+		return !isClass() && (isField() || isMethod());
+	}
 
-    /**
-     * @return {@code true} if the current instance is a field.
-     */
-    boolean isField();
+	/**
+	 * @return {@code true} if the current instance is a field.
+	 */
+	boolean isField();
 
-    /**
-     * @return {@code true} if the current instance is a method.
-     */
-    boolean isMethod();
+	/**
+	 * @return {@code true} if the current instance is a method.
+	 */
+	boolean isMethod();
 
-    /**
-     * @return Member's modifiers.
-     */
-    Modifiers getModifiers();
+	/**
+	 * @return Member's modifiers.
+	 */
+	Modifiers getModifiers();
 
-    /**
-     * @return {@code true} if the element is deprecated.
-     */
-    boolean isDeprecated();
+	/**
+	 * @return {@code true} if the element is deprecated.
+	 */
+	boolean isDeprecated();
 
 }

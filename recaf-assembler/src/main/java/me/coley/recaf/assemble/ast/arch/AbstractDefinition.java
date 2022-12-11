@@ -9,36 +9,36 @@ import me.coley.recaf.assemble.ast.PrintContext;
  * @author Justus Garbe
  */
 public abstract class AbstractDefinition extends AbstractAttributable implements Definition {
-    private Modifiers modifiers;
-    private boolean deprecated;
+	private Modifiers modifiers;
+	private boolean deprecated;
 
-    @Override
-    public Modifiers getModifiers() {
-        return modifiers;
-    }
+	@Override
+	public Modifiers getModifiers() {
+		return modifiers;
+	}
 
-    public void setModifiers(Modifiers modifiers) {
-        this.modifiers = modifiers;
-    }
+	public void setModifiers(Modifiers modifiers) {
+		this.modifiers = modifiers;
+	}
 
-    @Override
-    public boolean isDeprecated() {
-        return deprecated;
-    }
+	@Override
+	public boolean isDeprecated() {
+		return deprecated;
+	}
 
-    public void setDeprecated(boolean deprecated) {
-        this.deprecated = deprecated;
-    }
+	public void setDeprecated(boolean deprecated) {
+		this.deprecated = deprecated;
+	}
 
-    protected String buildDefString(PrintContext context, String type) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(super.buildDefString(context));
-        if (deprecated)
-            sb.append(context.fmtKeyword("deprecated")).append("\n");
-        sb.append(type).append(" ");
-        if (getModifiers().value() > 0) {
-            sb.append(getModifiers().print(context).toLowerCase()).append(' ');
-        }
-        return sb.toString();
-    }
+	protected String buildDefString(PrintContext context, String type) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(super.buildDefString(context));
+		if (deprecated)
+			sb.append(context.fmtKeyword("deprecated")).append("\n");
+		sb.append(type).append(" ");
+		if (getModifiers().value() > 0) {
+			sb.append(getModifiers().print(context).toLowerCase()).append(' ');
+		}
+		return sb.toString();
+	}
 }

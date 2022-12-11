@@ -9,39 +9,39 @@ import java.util.List;
 
 public abstract class AbstractAttributable extends BaseElement implements Attributable {
 
-    private final List<Annotation> annotations = new ArrayList<>();
-    private Signature signature;
+	private final List<Annotation> annotations = new ArrayList<>();
+	private Signature signature;
 
-    @Override
-    public List<Annotation> getAnnotations() {
-        return annotations;
-    }
+	@Override
+	public List<Annotation> getAnnotations() {
+		return annotations;
+	}
 
-    public void setAnnotations(List<Annotation> annotations) {
-        this.annotations.clear();
-        this.annotations.addAll(annotations);
-    }
+	public void setAnnotations(List<Annotation> annotations) {
+		this.annotations.clear();
+		this.annotations.addAll(annotations);
+	}
 
-    @Override
-    public Signature getSignature() {
-        return signature;
-    }
+	@Override
+	public Signature getSignature() {
+		return signature;
+	}
 
-    public void setSignature(Signature signature) {
-        this.signature = signature;
-    }
+	public void setSignature(Signature signature) {
+		this.signature = signature;
+	}
 
-    public void addAnnotation(Annotation annotation) {
-        annotations.add(annotation);
-    }
+	public void addAnnotation(Annotation annotation) {
+		annotations.add(annotation);
+	}
 
-    protected String buildDefString(PrintContext context) {
-        StringBuilder sb = new StringBuilder();
-        if (signature != null)
-            sb.append(getSignature().print(context));
-        for (Annotation annotation : annotations)
-            sb.append(annotation.print(context));
-        return sb.toString();
-    }
+	protected String buildDefString(PrintContext context) {
+		StringBuilder sb = new StringBuilder();
+		if (signature != null)
+			sb.append(getSignature().print(context));
+		for (Annotation annotation : annotations)
+			sb.append(annotation.print(context));
+		return sb.toString();
+	}
 
 }

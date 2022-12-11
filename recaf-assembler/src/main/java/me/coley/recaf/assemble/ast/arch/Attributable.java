@@ -6,14 +6,14 @@ import java.util.List;
 
 public interface Attributable {
 
-    /**
-     * @return element's annotations.
-     */
-    List<Annotation> getAnnotations();
+	/**
+	 * @return element's annotations.
+	 */
+	List<Annotation> getAnnotations();
 
-    /**
-     * @return element's signature.
-     */
-    Signature getSignature();
+	/**
+	 * @return element's signature.
+	 */
+	Signature getSignature();
 
 }
