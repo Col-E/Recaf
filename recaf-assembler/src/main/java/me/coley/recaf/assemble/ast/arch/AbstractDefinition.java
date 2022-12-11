@@ -8,7 +8,7 @@ import me.coley.recaf.assemble.ast.PrintContext;
  * @author Matt Coley
  * @author Justus Garbe
  */
-public abstract class AbstractDefinition extends AbstractAttributable implements Definition {
+public abstract class AbstractDefinition extends AttributeContainer implements Definition {
 	private Modifiers modifiers;
 	private boolean deprecated;
 

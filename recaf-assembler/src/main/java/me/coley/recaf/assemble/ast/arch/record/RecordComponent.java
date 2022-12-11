@@ -1,9 +1,9 @@
 package me.coley.recaf.assemble.ast.arch.record;
 
 import me.coley.recaf.assemble.ast.PrintContext;
-import me.coley.recaf.assemble.ast.arch.AbstractAttributable;
+import me.coley.recaf.assemble.ast.arch.AttributeContainer;
 
-public class RecordComponent extends AbstractAttributable {
+public class RecordComponent extends AttributeContainer {
 
 	private final String name;
 	private final String descriptor;

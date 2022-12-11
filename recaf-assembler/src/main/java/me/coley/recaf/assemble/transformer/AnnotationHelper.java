@@ -2,8 +2,7 @@ package me.coley.recaf.assemble.transformer;
 
 import me.coley.recaf.assemble.ast.ArgType;
 import me.coley.recaf.assemble.ast.BaseArg;
-import me.coley.recaf.assemble.ast.arch.AbstractAttributable;
-import me.coley.recaf.assemble.ast.arch.AbstractDefinition;
+import me.coley.recaf.assemble.ast.arch.Annotatable;
 import me.coley.recaf.assemble.ast.arch.Annotation;
 import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
@@ -31,7 +30,7 @@ public class AnnotationHelper {
 	 * @param annotations
 	 * 		The annotations to add.
 	 */
-	public static void visitAnnos(AbstractAttributable code, boolean visible, List<AnnotationNode> annotations) {
+	public static void visitAnnos(Annotatable code, boolean visible, List<AnnotationNode> annotations) {
 		if (annotations == null)
 			return;
 		for (AnnotationNode annotation : annotations) {

@@ -7,9 +7,9 @@ import me.coley.recaf.assemble.ast.meta.Signature;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractAttributable extends BaseElement implements Attributable {
+public abstract class AttributeContainer extends BaseElement implements Annotatable, GenericTyped {
 
-	private final List<Annotation> annotations = new ArrayList<>();
+	private List<Annotation> annotations = new ArrayList<>();
 	private Signature signature;
 
 	@Override
@@ -18,8 +18,7 @@ public abstract class AbstractAttributable extends BaseElement implements Attrib
 	}
 
 	public void setAnnotations(List<Annotation> annotations) {
-		this.annotations.clear();
-		this.annotations.addAll(annotations);
+		this.annotations = annotations;
 	}
 
 	@Override
@@ -33,6 +32,7 @@ public abstract class AbstractAttributable extends BaseElement implements Attrib
 
 	public void addAnnotation(Annotation annotation) {
 		annotations.add(annotation);
+		child(annotation);
 	}
 
 	protected String buildDefString(PrintContext context) {
