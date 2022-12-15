@@ -9,7 +9,7 @@ import java.util.List;
 
 public abstract class AttributeContainer extends BaseElement implements Annotatable, GenericTyped {
 
-	private List<Annotation> annotations = new ArrayList<>();
+	private final List<Annotation> annotations = new ArrayList<>();
 	private Signature signature;
 
 	@Override
@@ -18,7 +18,8 @@ public abstract class AttributeContainer extends BaseElement implements Annotata
 	}
 
 	public void setAnnotations(List<Annotation> annotations) {
-		this.annotations = annotations;
+		this.annotations.clear();
+		this.annotations.addAll(annotations);
 	}
 
 	@Override
