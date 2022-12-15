@@ -142,7 +142,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 
 	/**
 	 * @param record
-	 * 		New record.
+	 * 		New record attribute.
 	 */
 	public void setRecord(Record record) {
 		this.record = record;
@@ -191,7 +191,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	}
 
 	/**
-	 * @return List of inner classes.
+	 * @return Class version of the class.
 	 */
 	public int getVersion() {
 		return version;
@@ -205,7 +205,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	}
 
 	/**
-	 * @return Record of the class.
+	 * @return Record attribute of the class.
 	 */
 	public Record getRecord() {
 		return record;
