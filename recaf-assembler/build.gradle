@@ -9,7 +9,7 @@ repositories {
 dependencies {
     api project(':recaf-utils')
 
-    def jasmVersion = '1.4.3.1'
+    def jasmVersion = '1.4.3.3'
 
     api asm
     api asm_tree

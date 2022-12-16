@@ -3,9 +3,6 @@ package me.coley.recaf.assemble.ast.arch;
 import me.coley.recaf.assemble.ast.Descriptor;
 import me.coley.recaf.assemble.ast.Element;
 import me.coley.recaf.assemble.ast.Named;
-import me.coley.recaf.assemble.ast.meta.Signature;
-
-import java.util.List;
 
 /**
  * Outlines a class <i>({@link ClassDefinition})</i> or member <i>({@link FieldDefinition} or {@link MethodDefinition})</i>.
@@ -41,13 +38,8 @@ public interface Definition extends Element, Descriptor, Named {
 	Modifiers getModifiers();
 
 	/**
-	 * @return Member's annotations.
+	 * @return {@code true} if the element is deprecated.
 	 */
-	List<Annotation> getAnnotations();
-
-	/**
-	 * @return Member's signature.
-	 */
-	Signature getSignature();
+	boolean isDeprecated();
 
 }

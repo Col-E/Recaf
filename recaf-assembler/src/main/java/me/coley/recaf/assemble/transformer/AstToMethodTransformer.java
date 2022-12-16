@@ -97,7 +97,7 @@ public class AstToMethodTransformer {
 			throw new MethodCompileException(definition, "The instructions have not been successfully generated!" +
 					"Cannot build method instance.");
 		}
-		int access = definition.getModifiers().value();
+		int access = definition.getModifiers().value() | (definition.isDeprecated() ? Opcodes.ACC_DEPRECATED : 0);;
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
 		String signature = definition.getSignature() != null ? definition.getSignature().getSignature() : null;
