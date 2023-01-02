@@ -346,7 +346,7 @@ public class BytecodeToAstTransformer {
 	 */
 	private void visitClass() {
 		Modifiers modifiers = new Modifiers();
-		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.FIELD, classNode.access)) {
+		for (AccessFlag flag : AccessFlag.getApplicableFlags(AccessFlag.Type.CLASS, classNode.access)) {
 			modifiers.add(Modifier.byName(flag.getName()));
 		}
 		// Setup other attributes
