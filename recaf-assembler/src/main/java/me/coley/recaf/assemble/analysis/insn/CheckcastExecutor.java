@@ -32,7 +32,7 @@ public class CheckcastExecutor implements InstructionExecutor {
 		String typeStr = typeInstruction.getType();
 		Type type = typeStr.charAt(0) == '[' ? Type.getType(typeStr) : Type.getObjectType(typeStr);
 		if (type.getSort() == ARRAY) {
-			frame.push(new Value.ArrayValue(type.getDimensions(), type));
+			frame.push(new Value.ArrayValue(type.getDimensions(), type.getElementType()));
 		} else {
 			frame.push(new Value.ObjectValue(type));
 		}

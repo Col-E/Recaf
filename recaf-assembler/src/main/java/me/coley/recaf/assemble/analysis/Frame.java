@@ -49,7 +49,7 @@ public class Frame {
 			} else {
 				Type type = Type.getType(parameter.getDesc());
 				if (type.getSort() == Type.ARRAY) {
-					v = new Value.ArrayValue(type.getDimensions(), type);
+					v = new Value.ArrayValue(type.getDimensions(), type.getElementType());
 				} else {
 					v = new Value.ObjectValue(type);
 				}
@@ -170,8 +170,8 @@ public class Frame {
 				Value.ArrayValue array = (Value.ArrayValue) value;
 				Value.ArrayValue otherArray = (Value.ArrayValue) otherValue;
 				// Merge array types
-				Type arrayType = array.getElementType();
-				Type otherArrayType = otherArray.getElementType();
+				Type arrayType = array.getArrayType();
+				Type otherArrayType = otherArray.getArrayType();
 				if (Types.isPrimitive(arrayType)) {
 					Type widest = arrayType.getSort() > otherArrayType.getSort() ? arrayType : otherArrayType;
 					return new Value.ArrayValue(array.getDimensions(), widest);

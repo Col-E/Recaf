@@ -8,6 +8,7 @@ import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.ast.arch.MethodDefinition;
 import me.coley.recaf.assemble.transformer.JasmToUnitTransformer;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
+import me.coley.recaf.util.Types;
 import me.darknet.assembler.exceptions.AssemblerException;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.ParserContext;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -249,6 +251,119 @@ public class AnalysisTests extends JasmUtils {
 					assertEquals(Type.BYTE_TYPE, value.getElementType());
 					assertEquals(5, array.length);
 					// TODO: When tracking strings, ensure 'text' is 'Hello'
+				} catch (AstException ex) {
+					fail(ex);
+				}
+			});
+		}
+
+		@Test
+		public void test2DArrayMath() {
+			// int[][] array = {{1, 2, 3}, {1, 2, 3}};
+			// for (int i = 0; i < array.length; i++) for (int j = 0; j < array.length; j++) array[i][j] *= array[j][i];
+			String code = "method static foo ()V\n" +
+					"A:\n" +
+					"    iconst_2\n" +
+					"    anewarray [I\n" +
+					"    dup\n" +
+					"    iconst_0\n" +
+					"    iconst_3\n" +
+					"    newarray int\n" +
+					"    dup\n" +
+					"    iconst_0\n" +
+					"    iconst_1\n" +
+					"    iastore\n" +
+					"    dup\n" +
+					"    iconst_1\n" +
+					"    iconst_2\n" +
+					"    iastore\n" +
+					"    dup\n" +
+					"    iconst_2\n" +
+					"    iconst_3\n" +
+					"    iastore\n" +
+					"    aastore\n" +
+					"    dup\n" +
+					"    iconst_1\n" +
+					"    iconst_3\n" +
+					"    newarray int\n" +
+					"    dup\n" +
+					"    iconst_0\n" +
+					"    iconst_1\n" +
+					"    iastore\n" +
+					"    dup\n" +
+					"    iconst_1\n" +
+					"    iconst_2\n" +
+					"    iastore\n" +
+					"    dup\n" +
+					"    iconst_2\n" +
+					"    iconst_3\n" +
+					"    iastore\n" +
+					"    aastore\n" +
+					"    astore array\n" +
+					"B:\n" +
+					"    iconst_0\n" +
+					"    istore i\n" +
+					"C:\n" +
+					"    iload i\n" +
+					"    aload array\n" +
+					"    arraylength\n" +
+					"    if_icmpge I\n" +
+					"D:\n" +
+					"    iconst_0\n" +
+					"    istore j\n" +
+					"E:\n" +
+					"    iload j\n" +
+					"    aload array\n" +
+					"    arraylength\n" +
+					"    if_icmpge H\n" +
+					"F:\n" +
+					"    aload array\n" +
+					"    iload i\n" +
+					"    aaload\n" +
+					"    iload j\n" +
+					"    dup2\n" +
+					"    iaload\n" +
+					"    aload array\n" +
+					"    iload j\n" +
+					"    aaload\n" +
+					"    iload i\n" +
+					"    iaload\n" +
+					"    imul\n" +
+					"    iastore\n" +
+					"G:\n" +
+					"    iinc j 1\n" +
+					"    goto E\n" +
+					"H:\n" +
+					"    iinc i 1\n" +
+					"    goto C\n" +
+					"I:\n" +
+					"    return\n" +
+					"J:\n" +
+					"end";
+			handle(code, unit -> {
+				Analyzer analyzer = new Analyzer("Test", unit);
+				try {
+					Analysis results = analyzer.analyze();
+
+					// Assert no wonky frames
+					boolean wonky = false;
+					List<Frame> frames = results.getFrames();
+					for (int i = 0; i < frames.size(); i++) {
+						Frame frame = frames.get(i);
+						if (frame.isWonky()) {
+							System.err.println(i + " Wonky: " + frame.getWonkyReason());
+							wonky = true;
+						}
+					}
+					assertFalse(wonky, "Should not have any wonky frames");
+
+					// Assert array contents
+					Frame last = frames.get(frames.size() - 2);
+					Value.ArrayValue value = (Value.ArrayValue) last.getLocal("array");
+					Value[] array = value.getArray();
+					assertEquals(Types.array(Type.INT_TYPE, 2), value.getArrayType());
+					assertEquals(Type.INT_TYPE, value.getElementType());
+					assertEquals(2, array.length);
 				} catch (AstException ex) {
 					fail(ex);
 				}

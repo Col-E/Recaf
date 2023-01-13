@@ -18,10 +18,12 @@ public class MultiNewArrayExecutor implements InstructionExecutor {
 		if (!(instruction instanceof MultiArrayInstruction))
 			throw new AnalysisException(instruction, "Expected multi-array insn");
 		MultiArrayInstruction newArrayInstruction = (MultiArrayInstruction) instruction;
-		Type type = Type.getType(newArrayInstruction.getDesc()).getElementType();
+		Type elementType = Type.getType(newArrayInstruction.getDesc()).getElementType();
 		int numDimensions = newArrayInstruction.getDimensions();
+
 		// Create N-Dimensional array
-		Value.ArrayValue arrayValue = new Value.ArrayValue(numDimensions, type);
+		Value.ArrayValue arrayValue = new Value.ArrayValue(numDimensions, elementType);
+
 		// Attempt to create correctly-sized sub-arrays from stack
 		Value[] backingArray = arrayValue.getArray();
 		for (int i = 0; i < numDimensions; i++) {
@@ -29,13 +31,13 @@ public class MultiNewArrayExecutor implements InstructionExecutor {
 			if (stackTop instanceof Value.NumericValue) {
 				Number size = ((Value.NumericValue) stackTop).getNumber();
 				if (size == null) {
-					backingArray[i] = new Value.ArrayValue(numDimensions, type);
+					backingArray[i] = new Value.ArrayValue(numDimensions, elementType);
 				} else {
-					backingArray[i] = new Value.ArrayValue(numDimensions, size.intValue(), type);
+					backingArray[i] = new Value.ArrayValue(numDimensions, size.intValue(), elementType);
 				}
 			} else {
 				// Unknown size due to non-numeric value
-				backingArray[i] = new Value.ArrayValue(numDimensions, type);
+				backingArray[i] = new Value.ArrayValue(numDimensions, elementType);
 				frame.markWonky("cannot compute array dimensions, stack top value[" + i + "] is non-numeric");
 			}
 		}
