@@ -579,6 +579,17 @@ public class AnalysisTests extends JasmUtils {
 	@Nested
 	public class Correctness {
 		@Test
+		public void castNullToObject() {
+			handle("method dummy ()V\n" +
+					"a: \n" +
+					"  aconst_null\n" +
+					"  checkcast java/lang/String\n" +
+					"b: \n" +
+					"  putstatic Test.string_field Ljava/lang/String;\n" +
+					"end", AnalysisTests::correct);
+		}
+
+		@Test
 		public void stringAndNullMergeOk() {
 			handle("method dummy (Z bool)V\n" +
 					"a: \n" +
@@ -724,8 +735,10 @@ public class AnalysisTests extends JasmUtils {
 		Analyzer analyzer = new Analyzer("Test", unit);
 		try {
 			Analysis results = analyzer.analyze();
-			for (Frame frame : results.getFrames()) {
-				assertFalse(frame.isWonky());
+			List<Frame> frames = results.getFrames();
+			for (int i = 0; i < frames.size(); i++) {
+				Frame frame = frames.get(i);
+				assertFalse(frame.isWonky(), i + ": " + frame.getWonkyReason());
 			}
 		} catch (AstException ex) {
 			fail(ex);
