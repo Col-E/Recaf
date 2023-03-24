@@ -14,6 +14,12 @@ Don't know bytecode? That's ok because Recaf supports [recompiling decompiled co
 
 For more information: _[Read the documentation](https://col-e.github.io/Recaf-documentation/)_
 
+## Important notice for newer versions: 3X and 4X
+
+[![](https://img.youtube.com/vi/IIFnXFoiiSo/sddefault.jpg)](https://www.youtube.com/watch?v=IIFnXFoiiSo)
+
+This video explains what's going on in the the Recaf developer space. What's going on with 3x and 4x, and plans for the future.
+
 ## Download
 
 See the [releases](https://github.com/Col-E/Recaf/releases) page for the latest build.
