@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  */
 public class JFXInjection {
 	private static final String JFX_CLASSIFIER = createClassifier();
-	private static final String JFX_VERSION = "19";
+	private static final String JFX_VERSION = "19.0.2";
 	private static final List<String> JFX_DEPENDENCY_URLS = Arrays.asList(
 			jfxUrlPattern("media"),
 			jfxUrlPattern("controls"),
