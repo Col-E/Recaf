@@ -1,19 +1,29 @@
 package me.coley.recaf.ui.pane;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.Event;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.ClassInfo;
+import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FileInfo;
+import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.search.NumberMatchMode;
 import me.coley.recaf.search.Search;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.search.query.QueryVisitor;
-import me.coley.recaf.search.result.Result;
+import me.coley.recaf.search.result.*;
+import me.coley.recaf.ui.CommonUX;
 import me.coley.recaf.ui.control.ActionButton;
 import me.coley.recaf.ui.control.BoundLabel;
 import me.coley.recaf.ui.control.ColumnPane;
@@ -21,9 +31,12 @@ import me.coley.recaf.ui.control.EnumComboBox;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.DockingRegion;
 import me.coley.recaf.ui.docking.RecafDockingManager;
+import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.util.NumberUtil;
 import me.coley.recaf.util.logging.Logging;
+import me.coley.recaf.util.observable.BatchObservableSet;
+import me.coley.recaf.util.observable.BatchObservableSetWrapper;
 import me.coley.recaf.util.threading.FxThreadUtil;
 import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
@@ -31,10 +44,11 @@ import me.coley.recaf.workspace.resource.Resource;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 
-import java.awt.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
+import java.awt.Toolkit;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,6 +60,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SearchPane extends BorderPane {
 	private static final Logger logger = Logging.get(SearchPane.class);
 	private final DockTab containingTab;
+	private Instant lastTyped = Instant.EPOCH;
+	private CompletableFuture<?> typeCooldownFuture = null;
+
 
 	private SearchPane(ObservableValue<String> title, Node content) {
 		DockingWrapperPane wrapper = DockingWrapperPane.builder()
@@ -87,7 +104,79 @@ public class SearchPane extends BorderPane {
 		columns.add(null, new ActionButton(Lang.getBinding("search.run"), () -> {
 			searchPane.searchText(txtText.getText(), comboMode.getValue());
 		}));
+		var check = new CheckBox();
+		columns.add(new BoundLabel(Lang.getBinding("search.live")), check);
+		var obSet = new BatchObservableSetWrapper<>(new TreeSet<Result>(), 25);
+		var obList = FXCollections.observableList(new ArrayList<Result>());
+		var listView = new ListView<>(obList);
+		listView.getStyleClass().add("seemless");
+		obSet.batchListenAndApplyInto(obList);
+		listView.setCellFactory(param -> new ResultListCell(txtText));
+		check.selectedProperty().addListener((observable, oldValue, newValue) -> {
+			searchPane.toggleLiveSearch(txtText.getText(), comboMode.getValue(), columns, obSet, obList, listView, newValue);
+		});
+		txtText.textProperty().addListener((observable, oldValue, newValue) -> {
+			searchPane.lastTyped = Instant.now();
+			if (searchPane.typeCooldownFuture == null && check.isSelected()) {
+				searchPane.typeCooldownFuture = ThreadUtil.runDelayed(1000, searchPane.new TextChangeCooldown(obSet, txtText, comboMode));
+			}
+		});
 		return searchPane;
+	}
+
+	private void toggleLiveSearch(
+			String search, TextMatchMode matchMode,
+			ColumnPane columns, Collection<Result> results,
+			ObservableList<Result> obList, ListView<Result> listView,
+			boolean newValue
+	) {
+		results.clear();
+		if (!newValue) {
+			containingTab.setContent(columns);
+			return;
+		}
+		var size = Bindings.size(obList);
+		containingTab.setContent(new VBox(columns,
+				new BoundLabel(Bindings.createStringBinding(() -> "Found " + size.get(), size)),
+				listView));
+		VBox.setVgrow(listView, Priority.ALWAYS);
+		if (search.isEmpty())
+			return;
+		runSearch(new Search().text(search, matchMode), results, () -> {
+			if (results instanceof BatchObservableSet)
+				((BatchObservableSet<Result>) results).triggerBatchListeners(true);
+			typeCooldownFuture = null;
+		});
+	}
+
+	private static Region representLocation(Location location) {
+		if (location instanceof FileLocation) {
+			FileInfo fileInfo = ((FileLocation) location).getContainingFile();
+			TextFlow filePathText = new TextFlow(new Label(fileInfo.getName()));
+			int line = ((FileLocation) location).getLine();
+			if (line != -1) {
+				Text lineNbText = new Text(String.valueOf(((FileLocation) location).getLine()));
+				lineNbText.setFill(Color.STEELBLUE);
+				filePathText.getChildren().addAll(new Label(" at "), lineNbText);
+			}
+			HBox box = new HBox(Icons.getFileIcon(fileInfo), filePathText);
+			box.setOnMouseClicked(line != -1 ?
+					(e -> CommonUX.openFile(fileInfo, line + 1)) :
+					(e -> CommonUX.openFile(fileInfo)));
+			box.setSpacing(6);
+			return box;
+		} else if (location instanceof ClassLocation) {
+			final ClassLocation classLocation = (ClassLocation) location;
+			CommonClassInfo classInfo = classLocation.getContainingClass();
+			HBox box = new HBox(Icons.getClassIcon(classInfo), new Label(classInfo.getName()));
+			MemberInfo member = classLocation.getContainingMember();
+			box.setOnMouseClicked(member != null ?
+					(e -> CommonUX.openMember(classInfo, member)) :
+					(e -> CommonUX.openClass(classInfo)));
+			box.setSpacing(6);
+			return box;
+		}
+		return new Label(location.toString());
 	}
 
 	/**
@@ -227,6 +316,12 @@ public class SearchPane extends BorderPane {
 	}
 
 	private void runSearch(Search search) {
+		final Set<Result> results = ConcurrentHashMap.newKeySet(1024);
+		runSearch(search, results, () -> onSearchFinish(search, results));
+	}
+
+
+	private void runSearch(Search search, Collection<Result> results, Runnable onFinish) {
 		Workspace workspace = RecafUI.getController().getWorkspace();
 		if (workspace == null) {
 			logger.error("Cannot search since no workspace is open!");
@@ -234,7 +329,6 @@ public class SearchPane extends BorderPane {
 			return;
 		}
 		Resource resource = workspace.getResources().getPrimary();
-		Set<Result> results = ConcurrentHashMap.newKeySet(1024);
 		// Multi-thread search, using an atomic integer to track progress across threads
 		AtomicInteger latch = new AtomicInteger(resource.getClasses().size() + resource.getFiles().size());
 		for (ClassInfo info : new HashSet<>(resource.getClasses().values())) {
@@ -245,7 +339,7 @@ public class SearchPane extends BorderPane {
 					visitor.storeResults(results);
 				}
 				if (latch.decrementAndGet() == 0) {
-					onSearchFinish(search, results);
+					onFinish.run();
 				}
 			});
 		}
@@ -257,7 +351,7 @@ public class SearchPane extends BorderPane {
 					visitor.storeResults(results);
 				}
 				if (latch.decrementAndGet() == 0) {
-					onSearchFinish(search, results);
+					onFinish.run();
 				}
 			});
 		}
@@ -293,5 +387,83 @@ public class SearchPane extends BorderPane {
 	private void searchDeclaration(String owner, String name, String desc, TextMatchMode mode) {
 		Search search = new Search().declaration(owner, name, desc, mode);
 		runSearch(search);
+	}
+
+	private class TextChangeCooldown implements Runnable {
+		private final BatchObservableSet<Result> results;
+		private final TextField txtText;
+		private final EnumComboBox<TextMatchMode> comboMode;
+
+		public TextChangeCooldown(BatchObservableSet<Result> results, TextField txtText, EnumComboBox<TextMatchMode> comboMode) {
+			this.results = results;
+			this.txtText = txtText;
+			this.comboMode = comboMode;
+		}
+
+		@Override
+		public void run() {
+			if (typeCooldownFuture == null)
+				return;
+			if (lastTyped.until(Instant.now(), ChronoUnit.MILLIS) <= 700) {
+				ThreadUtil.runDelayed(400, this);
+				return;
+			}
+			results.clear();
+			String text = txtText.getText();
+			if (!text.isEmpty()) {
+				runSearch(
+						new Search().text(text, comboMode.getValue()), results,
+						() -> {
+							results.triggerBatchListeners(true);
+							typeCooldownFuture = null;
+						}
+				);
+			}
+		}
+	}
+
+	private static class ResultListCell extends ListCell<Result> {
+
+		private final TextField txtText;
+
+		public ResultListCell(TextField txtText) {
+			this.txtText = txtText;
+			addEventFilter(MouseEvent.MOUSE_PRESSED, Event::consume);
+		}
+
+		@Override
+		protected void updateItem(Result item, boolean empty) {
+			super.updateItem(item, empty);
+			//						updateSelected(false);
+			if (empty || !(item instanceof TextResult)) {
+				setGraphic(null);
+				setText(null);
+			} else {
+				String input = txtText.getText();
+				String matchedText = ((TextResult) item).getMatchedText();
+				// put a blue highlight on found match
+				Text inputText = new Text(input);
+				inputText.setFill(Color.DODGERBLUE);
+				int index = matchedText.indexOf(input);
+				if (index == -1) {
+					setText(matchedText);
+					return;
+				}
+				final Region locationNode = representLocation(item.getLocation());
+				AnchorPane pane = new AnchorPane(locationNode);
+				AnchorPane.setRightAnchor(locationNode, 0.0);
+				AnchorPane.setTopAnchor(locationNode, 0.0);
+				AnchorPane.setBottomAnchor(locationNode, 0.0);
+				locationNode.setBackground(Background.fill(Color.rgb(50, 50, 50)));
+				pane.setMaxWidth(Region.USE_COMPUTED_SIZE);
+				StackPane stackPane = new StackPane(
+						new TextFlow(new Label(matchedText.substring(0, index)),
+								inputText,
+								new Label(matchedText.substring(index + input.length()))),
+						pane
+				);
+				setGraphic(stackPane);
+			}
+		}
 	}
 }

@@ -1,6 +1,7 @@
 package me.coley.recaf.search.result;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * The base result contains location information of the matched value.
@@ -9,6 +10,7 @@ import java.util.Objects;
  */
 public abstract class Result implements Comparable<Result> {
 	private final Location location;
+	private final UUID uuid = UUID.randomUUID();
 
 	/**
 	 * @param builder
@@ -35,14 +37,6 @@ public abstract class Result implements Comparable<Result> {
 	}
 
 	@Override
-	public int compareTo(Result o) {
-		if (o == this) {
-			return 0;
-		}
-		return location.compareTo(o.location);
-	}
-
-	@Override
 	public String toString() {
 		return "Result{value=" + getValue() + ", Location=" + location + '}';
 	}
@@ -58,5 +52,17 @@ public abstract class Result implements Comparable<Result> {
 	@Override
 	public int hashCode() {
 		return location.hashCode();
+	}
+
+	@Override
+	public int compareTo(Result o) {
+		if (o == this) {
+			return 0;
+		}
+		int cmp = location.compareTo(o.location);
+		if (cmp == 0) {
+			return uuid.compareTo(o.uuid);
+		}
+		return cmp;
 	}
 }

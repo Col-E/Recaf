@@ -15,3 +15,11 @@
 	-fx-border-width: 1;
 	-fx-border-color: rgb(85, 85, 85);
 }
+
+.list-view.seemless .indexed-cell:even {
+    -fx-background-color: rgb(50, 50, 50);
+}
+
+.list-view.seemless .indexed-cell:odd {
+    -fx-background-color: rgb(50, 50, 50);
+}

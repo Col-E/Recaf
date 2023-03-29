@@ -166,4 +166,8 @@ public class ClassLocation implements Location {
 		}
 		return instructionAsString;
 	}
+
+	public MemberInfo getContainingMember() {
+		return containingField != null ? containingField : containingMethod;
+	}
 }

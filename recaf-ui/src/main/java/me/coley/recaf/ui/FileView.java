@@ -210,4 +210,8 @@ public class FileView extends BorderPane implements FileRepresentation, ToolSide
 			((FontSizeChangeable) mainView).applyEventsForFontSizeChange(consumer);
 		}
 	}
+
+	public FileRepresentation getMainView() {
+		return mainView;
+	}
 }

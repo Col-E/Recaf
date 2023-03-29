@@ -7,6 +7,8 @@ import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.ui.behavior.ClassRepresentation;
+import me.coley.recaf.ui.control.TextView;
+import me.coley.recaf.ui.control.code.SyntaxArea;
 import me.coley.recaf.ui.docking.DockingRegion;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
@@ -83,6 +85,20 @@ public class CommonUX {
 	 * @return Tab containing the opened class representation.
 	 */
 	public static FileTab openFile(FileInfo info) {
+		return openFile(info, -1);
+	}
+
+	/**
+	 * Open the file info type.
+	 *
+	 * @param info
+	 * 		File info.
+	 * @param line
+	 * 		Scroll to line.
+	 *
+	 * @return Tab containing the opened class representation.
+	 */
+	public static FileTab openFile(FileInfo info, int line) {
 		RecafDockingManager docking = RecafDockingManager.getInstance();
 		FileTab tab = docking.getFileTabs().get(info.getName());
 		if (tab != null) {
@@ -92,12 +108,23 @@ public class CommonUX {
 		} else {
 			// Create the tab
 			String title = TextDisplayUtil.shortenEscapeLimit(info.getName());
-			tab = (FileTab) RecafDockingManager.getInstance()
+			tab = RecafDockingManager.getInstance()
 					.createTab(CommonUX::anyRegion, CommonUX::byPopulatedFiles,
 							() -> new FileTab(title, new FileView(info)));
 		}
 		tab.select();
+		var view = tab.getContent();
 		bringToFront(tab);
+		if (line != -1 && view instanceof FileView) {
+			var mainView = ((FileView) view).getMainView();
+			if (mainView instanceof TextView) {
+				final SyntaxArea textArea = ((TextView) mainView).getTextArea();
+				textArea.requestFocus();
+				textArea.showParagraphAtCenter(line - 1);
+				textArea.selectPosition(line, 0);
+				textArea.selectLine();
+			}
+		}
 		return tab;
 	}
 

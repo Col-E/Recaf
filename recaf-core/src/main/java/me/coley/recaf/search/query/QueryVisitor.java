@@ -98,6 +98,11 @@ public abstract class QueryVisitor extends ClassVisitor {
 				.then(results::add);
 	}
 
+	protected void addFileText(ResultBuilder builder, FileInfo fileInfo, int line) {
+		builder.inFile(fileInfo, line)
+			.then(results::add);
+	}
+
 	protected void addField(ResultBuilder builder, String name, String desc) {
 		builder.inClass(currentClass)
 				.inField(currentClass.findField(name, desc))
