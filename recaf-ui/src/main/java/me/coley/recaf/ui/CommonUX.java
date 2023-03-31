@@ -2,6 +2,7 @@ package me.coley.recaf.ui;
 
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FileInfo;
 import me.coley.recaf.code.MemberInfo;
@@ -146,8 +147,9 @@ public class CommonUX {
 	}
 
 	private static void bringToFront(Tab tab) {
-		if (tab.getTabPane() == null) return;
-		Scene scene = tab.getTabPane().getScene();
+		TabPane tabPane = tab.getTabPane();
+		if (tabPane == null) return;
+		Scene scene = tabPane.getScene();
 		if (scene == null) return;
 		scene.getWindow().requestFocus();
 		tab.getContent().requestFocus();

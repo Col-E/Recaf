@@ -34,6 +34,7 @@ public class DockingRegion extends DetachableTabPane {
 	 */
 	public DockTab createTab(DockTabFactory factory) {
 		DockTab tab = factory.get();
+
 		// Ensure we record tabs closing (and let them still declare close handlers via the factory)
 		EventHandler<Event> closeHandler = tab.getOnClosed();
 		tab.setOnClosed(e -> {
@@ -41,6 +42,7 @@ public class DockingRegion extends DetachableTabPane {
 				closeHandler.handle(e);
 			manager.onTabClose(tab);
 		});
+
 		// Ensure the manager is aware of which tabs per region are selected.
 		EventHandler<Event> selectionHandler = tab.getOnSelectionChanged();
 		tab.setOnSelectionChanged(e -> {
@@ -54,6 +56,7 @@ public class DockingRegion extends DetachableTabPane {
 				manager.onTabSelection(parent, tab);
 			}
 		});
+
 		// Ensure we record tabs moving between regions.
 		tab.tabPaneProperty().addListener((observable, oldValue, newValue) -> {
 			// Do not mark the tab as 'closed' if the new parent is 'null'.

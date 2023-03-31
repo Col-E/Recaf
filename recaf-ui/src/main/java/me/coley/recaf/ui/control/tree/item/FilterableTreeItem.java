@@ -146,6 +146,27 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	}
 
 	/**
+	 * Expand all parents to this item.
+	 */
+	public void expandParents() {
+		TreeItem<?> item = this;
+		while ((item = item.getParent()) != null)
+			item.setExpanded(true);
+	}
+
+	/**
+	 * Opens children recursively as long as only as there is only a path of single children.
+	 *
+	 * @param item
+	 * 		Item to recursively open.
+	 */
+	public static void recurseOpen(TreeItem<?> item) {
+		item.setExpanded(true);
+		if (item.getChildren().size() == 1)
+			recurseOpen(item.getChildren().get(0));
+	}
+
+	/**
 	 * @return Predicate property.
 	 */
 	public ObjectProperty<Predicate<TreeItem<T>>> predicateProperty() {
