@@ -25,6 +25,6 @@ public class ConfigDecompiler extends DecompilerCombo implements Unlabeled {
 		select(initialDecompilerName);
 
 		getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) ->
-				ReflectUtil.quietSet(instance, field, newValue));
+				ReflectUtil.quietSet(instance, field, newValue.getName()));
 	}
 }
