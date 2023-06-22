@@ -1,57 +1,149 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches:
-      - dev3
+      - dev4
   pull_request:
     branches:
-      - dev3
+      - dev4
+  workflow_dispatch:
+    inputs:
+      is-a-release:
+        description: Publish release? (Only works on master, and for untagged versions)
+        type: boolean
 
 permissions:
-  checks: write
-  pull-requests: write
+  contents: write
 
 jobs:
-  build:
+  test:
+    name: Run test suite
+    needs: setup
     strategy:
       fail-fast: false
       matrix:
-        # Alternative for testing on multiple platforms. Ubuntu runs the quickest with the latest JVM.
-        #   os: [ubuntu-latest, windows-latest, macos-latest]
-        #   java-version: [11, 17]
         os: [ ubuntu-latest ]
         java-version: [ 17 ]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup Java JDK
-        uses: actions/setup-java@v2.5.0
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup JDK
+        uses: actions/setup-java@v3
         with:
-          distribution: adopt-hotspot
-          java-version: ${{ matrix.java-version }}
-      - run: ./gradlew --info build
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v2.3.1
+          distribution: temurin
+          java-version: 17
+          check-latest: true
+      # The project version extract NEEDS to have the gradle wrapper already downloaded.
+      # So we have a dummy step here just to initialize it.
+      - name: Download Gradle wrapper
+        run: ./gradlew --version
+      - name: Run tests
+        run: ./gradlew test
+      - name: Upload test results
         if: always()
+        uses: actions/upload-artifact@v3
         with:
-          name: Event File
+          name: Test artifacts
           retention-days: 21
           path: |
             **/TEST-*
             **/hs_err_pid*
-      - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  # taken from: https://github.com/EnricoMi/publish-unit-test-result-action/blob/v1.20/README.md#support-fork-repositories-and-dependabot-branches
-  event_file:
-    name: "Event File"
+
+  # Publishes the test results of 'test'
+  publish-test-results:
+    name: Publish tests results
+    needs: test
+    if: always()
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
     steps:
-      - name: Upload
-        uses: actions/upload-artifact@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
         with:
-          name: Event File
-          path: ${{ github.event_path }}
+          path: artifacts
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          check_name: Unit Test results
+          files: artifacts/unit-test-*/**/*.xml
+
+  # Builds the projects and attempts to publish a release if the current project version
+  # does not match any existing tags in the repository.
+  build-and-release:
+    name: Publish release
+    needs: test
+    if: inputs.is-a-release && github.repository == 'Col-E/Recaf' && github.ref == 'refs/heads/master'
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Required depth for JReleaser
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      # The project version extract NEEDS to have the gradle wrapper already downloaded.
+      # So we have a dummy step here just to initialize it.
+      - name: Download Gradle wrapper
+        run: ./gradlew --version
+      # Set environment variable for the project version: "var_to_set=$(command_to_run)" >> sink
+      #  - For maven:  echo "PROJECT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+      #  - For gradle: echo "PROJECT_VERSION=$(./gradlew properties | grep -Po '(?<=version: ).*')" >> $GITHUB_ENV
+      - name: Extract project version to environment variable
+        run: echo "PROJECT_VERSION=$(./gradlew properties | grep -Po '(?<=version\W ).*')" >> $GITHUB_ENV
+      # Check if a tag exists that matches the current project version.
+      # Write the existence state to the step output 'tagExists'.
+      - name: Check the package version has corresponding Git tag
+        id: tagged
+        shell: bash
+        run: |
+          git show-ref --tags --verify --quiet -- "refs/tags/${{ env.PROJECT_VERSION }}" && echo "tagExists=1" >> $GITHUB_OUTPUT || echo "tagExists=0" >> $GITHUB_OUTPUT
+          git show-ref --tags --verify --quiet -- "refs/tags/${{ env.PROJECT_VERSION }}" && echo "Tag for current version exists" || echo "Tag for current version does not exist"
+      # If the tag could not be fetched, show a message and abort the job.
+      # The wonky if logic is a workaround for: https://github.com/actions/runner/issues/1173
+      - name: Abort if tag exists, or existence check fails
+        if: ${{ false && steps.tagged.outputs.tagExists }}
+        run: |
+          echo "Output of 'tagged' step: ${{ steps.tagged.outputs.tagExists }}"
+          echo "Failed to check if tag exists."
+          echo "PROJECT_VERSION: ${{ env.PROJECT_VERSION }}"
+          echo "Tags $(git tag | wc -l):"
+          git tag
+          git show-ref --tags --verify -- "refs/tags/${{ env.PROJECT_VERSION }}"
+          exit 1
+      # Run build to generate the release artifacts.
+      # Tag does not exist AND trigger was manual. Deploy release artifacts!
+      - name: Build release artifacts
+        run: ./gradlew publish # TODO: Publish all modules' artifacts into a single directory
+      # Make release with JReleaser, only running when the project version does not exist as a tag on the repository.
+      - name: Publish release
+        uses: jreleaser/release-action@v2
+        with:
+          arguments: full-release
+        env:
+          JRELEASER_PROJECT_VERSION: ${{ env.PROJECT_VERSION }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_GPG_PASSPHRASE: ${{ secrets.JRELEASER_GPG_PASSPHRASE }}
+          JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.JRELEASER_GPG_PUBLIC_KEY }}
+          JRELEASER_GPG_SECRET_KEY: ${{ secrets.JRELEASER_GPG_SECRET_KEY }}
+          JRELEASER_NEXUS2_USERNAME: ${{ secrets.JRELEASER_DEPLOY_MAVEN_NEXUS2_USERNAME }}
+          JRELEASER_NEXUS2_PASSWORD: ${{ secrets.JRELEASER_DEPLOY_MAVEN_NEXUS2_PASSWORD }}
+      # Upload JRelease debug log
+      - name: JReleaser output
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: jreleaser-release
+          path: |
+            out/jreleaser/trace.log
+            out/jreleaser/output.properties
