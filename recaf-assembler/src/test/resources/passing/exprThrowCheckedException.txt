@@ -1,7 +1,0 @@
-throws java/io/IOException
-method dummy (Ljava/lang/String; text)V
-a:
-  expr
-     throw new java.io.IOException();
-  end
-end

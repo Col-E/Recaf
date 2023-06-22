@@ -1,3 +1,0 @@
-// metadata
-annotation java/io/Serializable end
-method abstract static handleCode (I code)V end

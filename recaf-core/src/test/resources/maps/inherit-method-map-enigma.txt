@@ -1,3 +1,0 @@
-CLASS test/Greetings rename/Hello
-	FIELD oldField newField Ljava/lang/String;
-	METHOD say speak ()V

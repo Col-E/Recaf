@@ -1,6 +1,0 @@
-method dummy (Ljava/lang/String; text)V
-a:
-  expr
-     throw new IllegalStateException();
-  end
-end

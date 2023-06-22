@@ -1,8 +1,0 @@
-rootProject.name = 'recaf'
-include 'recaf-utils',
-        'recaf-core',
-        'recaf-launcher',
-        'recaf-ui',
-        'recaf-plugin',
-        'recaf-assembler',
-        'recaf-jdk-tools'

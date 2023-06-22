@@ -1,3 +1,0 @@
-test/Greetings rename/Hello
-test/Greetings.oldField Ljava/lang/String; newField
-test/Greetings.say()V speak

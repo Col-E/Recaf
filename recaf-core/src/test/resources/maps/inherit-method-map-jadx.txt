@@ -1,4 +1,0 @@
-c test.Greetings Hello
-# TODO: What is the field format?
-# f test.Greetings.oldField newField
-m test.Greetings.say()V speak
