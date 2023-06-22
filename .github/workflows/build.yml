@@ -19,7 +19,6 @@ permissions:
 jobs:
   test:
     name: Run test suite
-    needs: setup
     strategy:
       fail-fast: false
       matrix:
