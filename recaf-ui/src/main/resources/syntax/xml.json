@@ -1,0 +1,56 @@
+{
+  "name": "Extensible markup language",
+  "regex": "",
+  "classes": [],
+  "sub-rules": [
+    {
+      "name": "MultiLineComment",
+      "regex": "<!--[\\w\\W]*?-->",
+      "backtrack-mark": "<!--",
+      "advance-mark": "-->",
+      "classes": [
+        "comment-multi"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Tag",
+      "regex": "<[\\s\\S]+?>",
+      "classes": [],
+      "sub-rules": [
+        {
+          "name": "TagName",
+          "regex": "(?:<|<\\/)[\\w\\-?]+>?",
+          "classes": [
+            "tag-name"
+          ],
+          "sub-rules": []
+        },
+        {
+          "name": "TagNameEnd",
+          "regex": "\\B\\??/?>",
+          "classes": [
+            "tag-name"
+          ],
+          "sub-rules": []
+        },
+        {
+          "name": "TagParameter",
+          "regex": "[\\w-:]+(?==)",
+          "classes": [
+            "tag-param"
+          ],
+          "sub-rules": []
+        },
+        {
+          "name": "Strings",
+          "regex": "\"(?:[^\"\\\\]|\\\\.)*\"",
+          "classes": [
+            "string"
+          ],
+          "sub-rules": []
+        }
+      ]
+    }
+  ]
+}

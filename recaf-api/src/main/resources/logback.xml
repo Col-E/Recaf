@@ -1,0 +1,23 @@
+<configuration>
+    <!-- This configuration only specifies writing to the console.
+         Writing to the file is defined only in the UI module.
+     -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="software.coley.recaf.analytics.logging.RecafLoggingFilter" />
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%logger{0}/%thread] %-5level: %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="trace">
+        <appender-ref ref="STDOUT"/>
+    </root>
+    <!-- Disable 3rd party loggers -->
+    <logger name="org.jboss.weld.Bootstrap" level="OFF"/>
+    <logger name="org.jboss.weld.Bean" level="OFF"/>
+    <logger name="org.jboss.weld.Reflection" level="OFF"/>
+    <logger name="org.jboss.weld.Event" level="OFF"/>
+    <logger name="org.jboss.weld.Context" level="OFF"/>
+    <logger name="org.jboss.weld.Resolution" level="OFF"/>
+    <logger name="org.jboss.weld.BeanManager" level="OFF"/>
+    <logger name="org.jboss.weld.Validator" level="OFF"/>
+</configuration>

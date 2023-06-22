@@ -1,0 +1,463 @@
+## Language name
+lang.name=Deutsch
+
+##### General items
+## Main and context menus
+menu.association.override=Sprache überschreiben
+menu.association.none=Keine Assoziation
+menu.config=Konfiguration
+menu.file=Datei
+menu.file.attach=An Remote anschließen
+menu.file.addtoworkspace=Zur Arbeitsumgebung hinzufügen
+menu.file.openworkspace=Arbeitsumgebung öffnen
+menu.file.exportapp=Applikation Exportieren
+menu.file.exportworkspace=Arbeitsumgebung exportieren
+menu.file.modifications=Änderungen anzeigen
+menu.file.recent=Zuletzt geöffnete Arbeitsumgebungen
+menu.file.close=Schließen
+menu.file.quit=Beenden
+menu.goto.class=Zu Klasse springen
+menu.goto.field=Zu Feld springen
+menu.goto.method=Zu Methode springen
+menu.goto.instruction=Zu Befehl springen
+menu.goto.file=Zu Datei springen
+menu.goto.label=Zu Label springen
+menu.edit.assemble.class=Klasse bearbeiten
+menu.edit.assemble.field=Feld bearbeiten
+menu.edit.assemble.method=Methode bearbeiten
+menu.edit.remove=Entfernen
+menu.edit.copy=Kopieren
+menu.edit.delete=Löschen
+menu.help=Hilfe
+menu.help.discord=Discord
+menu.help.docs=Online-Dokumentation
+menu.help.github=Github
+menu.help.issues=Problem melden
+menu.help.sysinfo=Systeminformationen
+menu.refactor=Refaktorieren
+menu.refactor.move=Verschieben
+menu.refactor.rename=Umbenennen
+menu.search=Suchen
+menu.search.string=String
+menu.search.number=Zahl
+menu.search.references=Referenzen
+menu.search.declarations=Deklarationen
+menu.search.noresults=Keine Ergebnisse
+menu.log.clear=Log löschen
+menu.log.export=Log exportieren
+menu.mappings=Mappings
+menu.mappings.apply=Anwenden
+menu.mappings.export=Exportieren
+menu.mappings.generate=Generieren
+menu.mappings.view=Aktuelle Mappings
+menu.scripting=Skripting
+menu.scripting.list=Skripte
+menu.scripting.none-found=Keine Skripts
+menu.scripting.manage=Skripts verwalten
+menu.scripting.new=Neues Skript
+menu.scripting.edit=Skript bearbeiten
+menu.scripting.browse=Skripts durchsuchen
+menu.scripting.refresh=Skripts aktualisieren
+menu.scripting.save=Skript speichern
+menu.scripting.execute=Skript ausführen
+menu.scripting.editor=Skripteditor
+menu.scripting.author=Autor/-in
+menu.scripting.version=Version
+menu.view=Ansicht
+menu.view.hierarchy=Klassenhierarchie
+menu.view.hierarchy.children=Klassen und Unterklassen
+menu.view.hierarchy.parents=Übergeordnete Klassen
+menu.view.methodcfg=Kontrollflussdiagramm
+menu.tab.close=Schließen
+menu.tab.closeothers=Andere schließen
+menu.tab.closeall=Alle schließen
+menu.tab.copypath=Pfad kopieren
+menu.image.resetscale=Skalierung zurücksetzen
+menu.image.center=Zentrieren
+menu.hex.copyas=Kopieren als...
+menu.mode=Modus
+menu.mode.class.auto=Automatisch
+menu.mode.class.decompile=Dekompilieren
+menu.mode.file.auto=Automatisch
+menu.mode.file.text=Text
+menu.mode.file.hex=Hexadezimal
+menu.mode.diff.decompile=Dekompilieren
+menu.mode.diff.disassemble=Disassemblen
+menu.vm=Virtualisieren
+menu.vm.optimize=Optimieren
+menu.vm.run=Starten
+menu.plugin=Plugins
+menu.plugin.manage=Plugins verwalten
+menu.plugin.installed=Installiert
+menu.plugin.remote=Remote
+menu.plugin.browse=Plugins durchsuchen
+menu.plugin.enabled=Aktiviert
+menu.plugin.uninstall=Deinstallieren
+menu.plugin.uninstall.warning=Wollen Sie dieses Plugin wirklich deinstallieren?
+
+##### Dialog texts
+dialog.cancel=Abbrechen
+dialog.close=Schließen
+dialog.confirm=Bestätigen
+dialog.finish=Fertig
+dialog.next=Weiter
+dialog.previous=Zurück
+dialog.dismiss=Verwerfen
+dialog.configure=Konfigurieren
+dialog.warning=Warnung
+dialog.restart=Um die Änderungen zu übernehmen, muss die Anwendung neu gestartet werden.\nMöchten Sie die Anwendung neu starten?
+dialog.unknownextension=Unbekannte Dateiendung
+
+## File chooser
+dialog.file.open=Öffnen
+dialog.file.export=Exportieren
+dialog.filefilter.any=Alle Dateien
+dialog.filefilter.mapping=Mapping-Dateien
+dialog.filefilter.input=Applikationsdateien
+dialog.filefilter.workspace=Arbeitsumgebungen
+
+## File drop items
+dialog.title.create-workspace=Arbeitsumgebung erstellen
+dialog.title.update-workspace=Arbeitsumgebung aktualisieren
+dialog.title.close-workspace=Arbeitsumgebung schließen?
+dialog.option.create-workspace=Neue Arbeitsumgebung erstellen
+dialog.option.update-workspace=Zur aktuellen Arbeitsumgebung hinzufügen
+
+## Copy class/file
+dialog.title.copy-class=Klasse kopieren
+dialog.title.copy-directory=Verzeichnis kopieren
+dialog.title.copy-field=Feld kopieren
+dialog.title.copy-file=Datei kopieren
+dialog.title.copy-method=Methode kopieren
+dialog.header.copy-class=Geben Sie einen neuen Klassennamen ein
+dialog.header.copy-directory=Geben Sie einen neuen Verzeichnisnamen ein
+dialog.header.copy-field=Geben Sie einen neuen Feldnamen ein
+dialog.header.copy-file=Geben Sie einen neuen Dateinamen ein
+dialog.header.copy-method=Geben Sie einen neuen Methodennamen ein
+
+## Delete class/file
+dialog.title.delete-class=Klasse löschen
+dialog.title.delete-directory=Verzeichnis löschen
+dialog.title.delete-field=Feld löschen
+dialog.title.delete-file=Datei löschen
+dialog.title.delete-method=Methode löschen
+dialog.title.delete-package=Package löschen
+dialog.title.delete-resource=Ressource löschen
+dialog.header.delete-class=Sind Sie sicher, dass Sie %s löschen wollen?
+dialog.header.delete-directory=Sind Sie sicher, dass Sie %s löschen wollen?
+dialog.header.delete-field=Sind Sie sicher, dass Sie %s löschen wollen?
+dialog.header.delete-file=Sind Sie sicher, dass Sie %s löschen wollen?
+dialog.header.delete-method=Sind Sie sicher, dass Sie %s löschen wollen?
+dialog.header.delete-package=Sind Sie sicher, dass Sie %s löschen wollen?
+dialog.header.delete-resource=Sind Sie sicher, dass Sie %s löschen wollen?
+
+## Rename class/file
+dialog.title.rename-class=Klasse umbenennen
+dialog.title.rename-class-warning=Warnung
+dialog.title.rename-directory=Verzeichnis umbenennen
+dialog.title.rename-field=Feld umbenennen
+dialog.title.rename-file=Datei umbenennen
+dialog.title.rename-file-warning=Warnung
+dialog.title.rename-method=Methode umbenennen
+dialog.title.rename-package=Package umbenennen
+dialog.header.rename-class=Geben Sie einen neuen Klassennamen ein. Dies kann mehrere Dateien ändern.
+dialog.header.rename-class-warning=Der Name, den Sie gewählt haben, ist bereits vergeben. Sind Sie sicher, dass Sie die Klasse umbenennen wollen?
+dialog.header.rename-directory=Geben Sie einen neuen Verzeichnisnamen ein
+dialog.header.rename-field=Geben Sie einen neuen Feldnamen ein
+dialog.header.rename-file=Geben Sie einen neuen Dateinamen ein
+dialog.header.rename-file-warning=Der Name, den Sie gewählt haben, ist bereits vergeben. Sind Sie sicher, dass Sie die Datei umbenennen wollen?
+dialog.header.rename-method=Geben Sie einen neuen Methodennamen ein
+dialog.header.rename-package=Geben Sie einen neuen Packagenamen ein
+
+## Move class/file
+dialog.title.move-class=Klasse verschieben
+dialog.title.move-directory=Verzeichnis verschieben
+dialog.title.move-file=Datei verschieben
+dialog.title.move-package=Package verschieben
+dialog.header.move-class=Klasse zu einem anderen Package verschieben
+dialog.header.move-directory=Verzeichnis zu einem anderen Verzeichnis verschieben
+dialog.header.move-file=Datei zu einem anderen Verzeichnis verschieben
+dialog.header.move-package=Package zu einem anderen Package verschieben
+
+## VM actions
+dialog.title.vm-invoke-args=Methodenaufruf virtualisieren
+dialog.title.vm-peephole-invoke-args=Virtualisierte Peephole-Optimierung
+dialog.vm.execute=Ausführen
+dialog.vm.optimize=Optimieren
+dialog.vm.create-dummy=Dummy benutzen
+dialog.vm.create-null=Null benutzen
+
+## Hex dialogs
+dialog.hex.title.insertcount=Einfügen
+dialog.hex.header.insertcount=Wie viele Bytes sollen eingefügt werden?
+
+# Base Converter dialog
+dialog.conv.title.literal=Zahlenliteral
+dialog.conv.title.expression=Zahlenausdruck
+
+## Quick nav
+dialog.quicknav=Schnellnavigation
+
+## Wizard
+wizard.chooseaction=Wählen Sie eine Aktion
+wizard.selectprimary=Wählen Sie eine Primärressource
+wizard.currentworkspace=Aktuelle Arbeitsumgebung
+
+
+##### Panels
+## Welcome
+welcome.title=Willkommen
+welcome.discord.title=Treten Sie dem Discord-Server bei
+welcome.discord.description=Recaf hat einen Discord-Server, um sich mit anderen Recaf-Benutzern zu treffen.
+welcome.documentation.title=Dokumentation
+welcome.documentation.description=Lesen Sie die Dokumentation, um sich über die Funktionen der Anwendung zu informieren.
+welcome.github.title=Recaf auf Github
+welcome.github.description=Sehen Sie sich die Projektseite auf GitHub an: Quellcode, Problemhilfe und mehr.
+
+## Workspace
+workspace.title=Arbeitsumgebung
+
+## Changes view
+modifications.none=Kein Änderungsverlauf für Objekt
+modifications.title=Änderungen
+
+## Java area
+java.decompiling=Klasse wird dekompiliert...
+java.unparsable=JavaParser konnte die Quelle nicht interpretieren, Kontextaktionen sind nur auf dem "Felder und Methoden"-Tab verfügbar
+
+## Outline
+fieldsandmethods.title=Felder und Methoden
+
+## Hierarchy
+hierarchy.title=Hieararchie
+hierarchy.children=Subelemente
+hierarchy.parents=Übergeordnete Elemente
+
+## Logging
+logging.title=Logging
+
+## Assembler
+assembler.title=Assembler
+assembler.analysis.title=Variablen & Stack
+assembler.analysis.stack=Stack
+assembler.analysis.name-column=Name
+assembler.analysis.value-column=Wert
+assembler.playground.title=Java zu Bytecode
+assembler.playground.comment=Sie können hier Java-Code schreiben, um es zu Bytecode zu konvertieren.
+assembler.vartable.title=Variablen
+assembler.vartable.empty=<Muss mindestens einmal kompiliert werden>
+assembler.suggestions.none=Keine Vorschläge
+
+## Search
+search.run=Suchen
+search.results=Suchergebnisse
+search.text=Textsuchbegriff
+search.textmode=Textsuchmodus
+search.number=Nummersuchbegriff
+search.numbermode=Nummersuchmodus
+search.refowner=Referenz-Besitzer
+search.refname=Referenz-Name
+search.refdesc=Referenz-Descriptor
+
+## Help
+help.system=System
+help.system.sub=Informationen über das System
+help.java=Java
+help.java.sub=Informationen über Java
+help.javafx=JavaFX
+help.javafx.sub=Information über das JavaFX UI
+help.recaf=Recaf
+help.recaf.sub=Informationen über Recaf
+help.copy=In die Zwischenablage kopieren
+help.opendir=Recaf-Verzeichnis öffnen
+
+## Mapping generator
+mapgen.genimpl=Namenskonvention
+mapgen.filters=Filter
+mapgen.filters.add=Filter hinzufügen
+mapgen.filters.delete=Ausgewählte löschen
+mapgen.newfilter.excludealreadymapped=Bereits gemappte ausschließen
+mapgen.newfilter.modifierexclude=Modifier ausschließen
+mapgen.newfilter.modifierexcludeclass=Klassen-Modifier ausschließen
+mapgen.newfilter.modifierexcludefield=Feld-Modifier ausschließen
+mapgen.newfilter.modifierexcludemethod=Methoden-Modifier ausschließen
+mapgen.newfilter.modifierinclude=Modifier einschließen
+mapgen.newfilter.modifierincludeclass=Klassen-Modifier einschließen
+mapgen.newfilter.modifierincludefield=Feld-Modifier einschließen
+mapgen.newfilter.modifierincludemethod=Methoden-Modifier einschließen
+mapgen.newfilter.includewhitespacenames=Namen mit ungültigem Lehrzeichen einschließen
+mapgen.newfilter.includenonasciinames=Namen mit Nicht-ASCII-Zeichen einschließen
+mapgen.newfilter.pathexclude=Pfad-Blacklist
+mapgen.newfilter.pathinclude=Pfad-Whitelist
+mapgen.title.newfilter=Neuer Filter
+mapgen.header.newfilter=Filter-Inhalt eingeben
+mapgen.copy=In die Zwischenablage kopieren
+mapgen.apply=Anwenden
+
+##### Tree
+tree.classes=Klassen
+tree.files=Dateien
+tree.prompt=Dateien hier ablegen
+tree.hidelibs=Bibliotheken ausblenden
+
+##### Config
+conf.display=Darstellung
+conf.display.general=Allgemeines
+conf.display.general.flashopentabs=Aktiviere das Blinken von neuen Tabs
+conf.display.general.language=Sprache
+conf.display.tree=Tree-Darstellungs-Einstellungen
+conf.display.tree.maxtreedirectorydepth=Maximale Anzahl der Ebenen im Tree
+conf.display.tree.maxtreetextlength=Maximale Textlänge im Tree
+conf.display.workspace=Arbeitsumgebungs-Einstellungen
+conf.display.workspace.showfilterbuttons=Zeige Filter-Buttons
+conf.display.workspace.onfiledrop=Wähle Arbeitsumgebung bei Datei-Drop
+conf.display.workspace.onfiledrop.choose=Lass mich wählen
+conf.display.workspace.onfiledrop.createnew=Erstelle eine neue Arbeitsumgebung
+conf.display.workspace.onfiledrop.addlibrary=Füge Datei als Bibliothek hinzu
+conf.display.workspace.promptcloseworkspace=Aufforderung beim Schließen der Arbeitsumgebung
+conf.display.workspace.promptdeleteitem=Aufforderung beim Löschen eines Elements
+conf.display.workspace.showselectionnavbar=Zeige Navigationsleiste
+conf.display.text=Text
+conf.display.text.fontsize=Schriftgröße
+
+conf.editor=Editor-Komponenten
+conf.editor.general=Allgemein
+conf.editor.general.classmode=Klassenmodus
+conf.editor.general.filemode=Dateimodus
+conf.editor.general.errorindicatorpos=Fehlerindikator-Position
+conf.editor.assoc=Dateiendungs-Assoziationen
+conf.editor.assoc.fileextassociations=Dateiendungs-Assoziationen
+fieldsandmethods.title=Klassen-Outline
+fieldsandmethods.showoutlinedtypes=Zeige Outline-Typen
+fieldsandmethods.showoutlinedsynths=Synthetische (vom Compiler generierte) Typen anzeigen
+fieldsandmethods.showoutlinedvisibility=Nach Member-Sichtbarkeit filtern
+fieldsandmethods.showoutlinedmembertype=Nach Member-Typ filtern
+fieldsandmethods.outlinedvisibilityiconposition=Sichtbarkeitssymbol-Position
+fieldsandmethods.sortalphabetically=Alphabetisch sortieren
+fieldsandmethods.sortbyvisibility=Nach Sichbarkeit sortieren
+fieldsandmethods.filter.prompt=Filter: Feld-/Methodename...
+conf.editor.text=Texteditor
+conf.editor.text.showbracketfolds=Zeige Einzugsfächer für Klammern
+conf.editor.hex=Hex-Editor
+conf.editor.hex.classhints=Klassen-Hints anzeigen
+conf.editor.hex.hexcolumns=Anzahl der Hex-Spalten
+conf.editor.hex.highlightcurrent=Aktuellen Byte hervorheben
+conf.editor.diff=Differenz-Editor
+conf.editor.diff.diff-view-mode=Klassendifferenz-Ansichtsmodus
+
+conf.binding=Tastenbelegung
+conf.binding.navigation=Navigation
+conf.binding.navigation.closetab=Tab schließen
+conf.binding.navigation.find=Finden
+conf.binding.navigation.fullscreen=Vollbild
+conf.binding.navigation.quicknav=Schnellnavigation
+conf.binding.edit=Bearbeiten
+conf.binding.edit.save=Speichern
+conf.binding.edit.undo=Rückgängig
+conf.binding.inputprompt.initial=<Taste>
+conf.binding.inputprompt.finish=<ENTER zum bestätigen>
+conf.binding.code=Code-Interaktionen
+conf.binding.code.gotodef=Zu Definition springen
+conf.binding.code.rename=Ausgewähltes umbenennen
+conf.binding.code.searchref=Referenzen suchen
+conf.binding.code.suggest=Vorschläge anzeigen
+conf.binding.appearance=Erscheinungsbild
+conf.binding.appearance.fontsize.up=Schrift vergrößern
+conf.binding.appearance.fontsize.down=Schrift verkleinern
+
+conf.assembler=Assembler
+conf.assembler.build=Build
+conf.assembler.build.delay=Verzögerung vor dem Aktualisieren des Bytecodes
+conf.assembler.format=Format
+conf.assembler.format.prefix=Punkt-Präfix für Schlüssenwörter benutzen
+conf.assembler.parse=Parse
+conf.assembler.parse.recover=Fehlerbehebung versuchen
+conf.assembler.validation=Validierung
+conf.assembler.validation.ast=AST-Validierung aktivieren
+conf.assembler.validation.bytecode=Bytecode-Analyse aktivieren
+conf.assembler.debug=Debugging
+conf.assembler.debug.ast-debug=AST-Debuginformationen anzeigen
+
+conf.compiler=Compiler
+conf.compiler.general=Allgemein
+conf.compiler.general.impl=Implementierung
+conf.compiler.general.phantoms=Generiere Fehlende Phantoms
+conf.compiler.debug=Debug
+conf.compiler.debug.vars=Debugging-Symbole einschließen
+conf.compiler.debug.lines=Zeilennummern einschließen
+conf.compiler.debug.sourcefile=Quelldatei einschließen
+
+conf.decompiler=Decompiler
+conf.decompiler.general=Allgemein
+conf.decompiler.general.impl=Decompiler-Implementierung
+conf.decompiler.general.enabletimeout=Decompiler-Timeout aktivieren
+conf.decompiler.general.timeout=Timeout in Millisekunden
+conf.decompiler.filter=Filterung
+conf.decompiler.filter.escapeunicode=Unicode escapen
+conf.decompiler.filter.generics=Entferne generische Typen
+conf.decompiler.filter.vars=Entferne Variablen-Informationen
+conf.decompiler.filter.synthetics=Entferne synthetische Typen
+conf.decompiler.classfile=Klassen-Datei
+conf.decompiler.classfile.maxouterdepth=Maximale Breadcrumbs-Tiefe der äußeren Klasse\n(-1: Prüfung deaktivieren, 0: Breadcrumbs deaktivieren)
+
+conf.dialog=Dialog
+conf.dialog.fileprompt=Datei-Aufforderung
+conf.dialog.fileprompt.load=Datei laden
+conf.dialog.fileprompt.export=Exportiere Datei
+conf.dialog.fileprompt.loadmap=Map laden
+conf.dialog.fileprompt.exportmap=Letzte Map exportieren
+
+conf.export=Export
+conf.export.general=Allgemein
+conf.export.general.shadeLibs=Biliotheken zum Output hinzufügen
+conf.export.general.compress=Dateien komprimieren
+
+conf.plugin=Plugins
+conf.plugin.general=Allgemein
+conf.plugin.general.enabled=Aktiviert
+conf.plugin.general.remote=Remote
+conf.plugin.general.remotetime=Cache-Zeitstempel
+
+conf.recent=Zuletzt verwendete
+conf.recent.max=Maximale Anzahl der zuletzt verwendeten Dateien
+conf.recent.workspaces=Maximale Anzahl der zuletzt verwendeten Arbeitsumgebungen
+
+conf.ssvm=SSVM
+conf.ssvm.access=File-IO-Zugriff
+conf.ssvm.access.read=Lesen erlauben
+conf.ssvm.access.write=Schreiben erlauben
+conf.ssvm.access.read.warn=Wenn Sie dies aktivieren, können SSVM-Aktionen Dateien auf Ihrem System lesen.\nSeien Sie vorsichtig, wenn Sie diese Option aktivieren.
+conf.ssvm.access.write.warn=Wenn Sie dies aktivieren, können SSVM-Aktionen Dateien auf Ihrem System schreiben.\nSeien Sie vorsichtig, wenn Sie diese Option aktivieren.
+conf.ssvm.general=Allgemein
+conf.ssvm.general.active=SSVM beim Laden von Arbeitsumgebungen initialisieren
+conf.ssvm.remote=Remote-VM
+conf.ssvm.remote.active=Aktiv
+conf.ssvm.remote.path=Pfad zur ausführbaren VM-Datei
+conf.undefined=Undefiniert
+
+misc.all=Alle
+misc.none=Keine
+misc.casesensitive=Groß- und Kleinschreibung beachten
+misc.member.field=Feld
+misc.member.method=Methode
+misc.member.field_n_method=Feld und Methode
+misc.member.inner_class=Innere Klasse
+misc.member.inner_interface=Inneres Interface
+misc.member.inner_enum=Inneres Enum
+misc.member.inner_annotation=Innere Annotation
+misc.accessflag.visibility.public=Public
+misc.accessflag.visibility.protected=Protected
+misc.accessflag.visibility.private=Private
+misc.accessflag.visibility.package=Package
+misc.direction.up=Hoch
+misc.direction.down=Nach unten
+misc.direction.left=Links
+misc.direction.right=Rechts
+misc.direction.top=Nach oben
+misc.direction.bottom=Nach unten
+misc.position.top=Oben
+misc.position.bottom=Unten
+misc.position.left=Links
+misc.position.right=Rechts
+misc.position.center=Mitte
+misc.position.middle=Mitte

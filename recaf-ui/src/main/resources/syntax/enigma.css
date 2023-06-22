@@ -1,0 +1,7 @@
+.code-area .keyword {
+    -fx-fill: rgb(0, 175, 255);
+}
+
+.code-area .comment {
+	-fx-fill: rgb(175, 175, 215);
+}

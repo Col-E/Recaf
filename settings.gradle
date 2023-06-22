@@ -1,0 +1,6 @@
+rootProject.name = 'Recaf'
+
+include 'recaf-api'
+include 'recaf-core'
+include 'recaf-ui'
+

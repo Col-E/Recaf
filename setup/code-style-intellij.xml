@@ -1,0 +1,39 @@
+<code_scheme name="recaf" version="173">
+  <JavaCodeStyleSettings>
+    <option name="CLASS_NAMES_IN_JAVADOC" value="3" />
+    <option name="JD_ADD_BLANK_AFTER_PARM_COMMENTS" value="true" />
+    <option name="JD_ADD_BLANK_AFTER_RETURN" value="true" />
+    <option name="JD_DO_NOT_WRAP_ONE_LINE_COMMENTS" value="true" />
+    <option name="JD_PRESERVE_LINE_FEEDS" value="true" />
+    <option name="JD_PARAM_DESCRIPTION_ON_NEW_LINE" value="true" />
+    <REPEAT_ANNOTATIONS>
+      <ANNO name="jakarta.annotation.Nonnull" />
+      <ANNO name="jakarta.annotation.Nullable" />
+      <ANNO name="javax.annotation.Nonnull" />
+      <ANNO name="javax.annotation.Nullable" />
+    </REPEAT_ANNOTATIONS>
+  </JavaCodeStyleSettings>
+  <JetCodeStyleSettings>
+    <option name="CODE_STYLE_DEFAULTS" value="KOTLIN_OFFICIAL" />
+  </JetCodeStyleSettings>
+  <codeStyleSettings language="JAVA">
+    <indentOptions>
+      <option name="USE_TAB_CHARACTER" value="true" />
+    </indentOptions>
+    <arrangement>
+      <groups>
+        <group>
+          <type>GETTERS_AND_SETTERS</type>
+          <order>KEEP</order>
+        </group>
+        <group>
+          <type>OVERRIDDEN_METHODS</type>
+          <order>KEEP</order>
+        </group>
+      </groups>
+    </arrangement>
+  </codeStyleSettings>
+  <codeStyleSettings language="kotlin">
+    <option name="CODE_STYLE_DEFAULTS" value="KOTLIN_OFFICIAL" />
+  </codeStyleSettings>
+</code_scheme>

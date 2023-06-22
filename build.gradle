@@ -1,0 +1,109 @@
+plugins {
+    id "com.github.ben-manes.versions" version "0.42.0" apply false
+    id 'gov.tak.gradle.plugins.coverage-report-aggregator' version '1.3.0'
+    id 'gov.tak.gradle.plugins.checker-processor' version "1.2.7"
+}
+
+allprojects {
+    group 'software.coley'
+    version '4.0.0-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+    apply plugin: 'com.github.ben-manes.versions'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        google()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://maven.quiltmc.org/repository/release/' }
+    }
+
+    // ======================= DEPENDENCIES ========================
+
+    apply from: rootProject.file('dependencies.gradle')
+
+    // ========================== COMPILE ==========================
+
+    // https://docs.gradle.org/current/userguide/toolchains.html
+    // gradlew -q javaToolchains - see the list of detected toolchains.
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    // Append options for unchecked/deprecation
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile).configureEach {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+            options.encoding = 'UTF-8'
+            options.incremental = true
+        }
+    }
+
+    // Enable automatic generation of null checks on annotated methods
+    afterEvaluate { Project p ->
+        p.plugins.apply('gov.tak.gradle.plugins.checker-processor')
+    }
+
+    // ========================== TESTING ==========================
+
+    // All modules should have the same test framework setup.
+    test {
+        useJUnitPlatform()
+
+        systemProperty 'junit.jupiter.execution.parallel.enabled', true
+        systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
+    }
+
+    // All modules with Java components should share the same test dependencies.
+    plugins.withType(JavaPlugin).configureEach {
+        dependencies {
+            testImplementation junit_api
+            testImplementation junit_params
+            testImplementation mockito
+            testRuntimeOnly junit_engine
+        }
+    }
+
+    // Need to tell any test-fixture-plugin to include dependencies
+    // in its own configuration. Otherwise it can get confused.
+    plugins.withType(JavaTestFixturesPlugin).configureEach {
+        dependencies {
+            testFixturesApi junit_api
+            testFixturesApi junit_params
+            testFixturesApi mockito
+        }
+    }
+
+    // Configure report outputs, and jacoco packages to target.
+    tasks.withType(Test).configureEach {
+        reports.html.required = false
+        reports.junitXml.required = false
+
+        jacoco {
+            includes = ['software/coley/recaf/**']
+        }
+    }
+}
+
+// Always emit HTML aggregate report
+jacocoAggregation {
+    outputHtml = true
+}
+
+// Build aggregate report when test phase completes
+tasks.register('test') {
+    dependsOn(subprojects.test)
+    doLast {
+        buildJacocoAggregate.execute()
+    }
+}

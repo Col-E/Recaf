@@ -1,0 +1,99 @@
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: normal;
+    src: local('JetBrains Mono'), url('../fonts/JetBrainsMono.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: bold;
+    src: local('JetBrains Mono'), url('../fonts/JetBrainsMono-Bold.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: italic;
+    font-weight: normal;
+    src: local('JetBrains Mono'), url('../fonts/JetBrainsMono-Italic.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: italic;
+    font-weight: bold;
+    src: local('JetBrains Mono'), url('../fonts/JetBrainsMono-BoldItalic.ttf') format('truetype');
+}
+
+.code-area {
+	-fx-background-color: -color-bg-default;
+	-fx-accent: -color-accent-7;
+    -fx-cursor: text;
+}
+.code-area .text {
+    -fx-fill: -color-base-3;
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 12px;
+}
+
+/*
+=================================== Paragraph box ==================================
+Style for handling paragraph boxes, which in RichTextFX are considered to be the
+complete line, spanning the full width of the text-area.
+*/
+.code-area .paragraph-box {
+    -fx-padding: -0.5 0 -0.5 0;
+}
+.code-area .paragraph-box:has-caret {
+    -fx-background-color: -color-base-8;
+}
+.code-area .paragraph-box .paragraph-text {
+    -fx-line-spacing: 1;
+}
+
+/*
+=================================== Caret / Cursor ==================================
+Style for caret, which is the vertical line indicating where in the text you are.
+*/
+.code-area .caret {
+    -fx-stroke: -color-fg-default;
+}
+
+/*
+====================================== Selection =====================================
+Style for handling selection color.
+*/
+.code-area .main-selection {
+    -fx-fill: -color-accent-6;
+}
+
+/*
+==================================== Line numbers ====================================
+Style for line numbers added next to paragraphs. Simply shows what lines text is on.
+*/
+.code-area .lineno {
+	-fx-background-color: -color-bg-overlay;
+	-fx-max-height: 1000px;
+}
+.code-area .lineno .text {
+    -fx-fill: -color-fg-muted;
+}
+
+/*
+================================ Brace matching lines ================================
+Style for the vertical line added next to paragraphs to indicate which lines contain
+the content for the selected brace pair.
+
+Consider the following case:
+1:  ...
+2:  {<CARET>
+3:   ...
+4:  }
+5:  ...
+
+The caret is next to the brace opener on line 2, which is closed on line 4.
+Thus, lines [2-4] will be matched lines, and 1, 5+ will be unmatched.
+*/
+.code-area .matched-brace-line .line {
+    -fx-border-color: transparent transparent transparent -color-accent-3;
+    -fx-border-width: 0 0 0 2px;
+    -fx-pref-width: 1;
+}

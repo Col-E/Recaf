@@ -1,0 +1,39 @@
+.code-area .keyword {
+    -fx-fill: rgb(0, 175, 255);
+}
+
+.code-area .string {
+    -fx-fill: rgb(175, 215, 223);
+}
+
+.code-area .constant {
+	-fx-fill: rgb(125, 215, 215);
+}
+
+.code-area .annotation {
+    -fx-fill: rgb(0, 215, 215);
+}
+
+.code-area .comment-javadoc {
+	-fx-fill: rgb(105, 135, 215);
+}
+
+.code-area .comment-javadoc-link {
+    -fx-fill: rgb(210, 220, 235);
+}
+
+.code-area .comment-javadoc-tag {
+    -fx-font-weight: bold;
+}
+
+.code-area .comment-javadoc-name {
+    -fx-fill: rgb(165, 200, 255);
+}
+
+.code-area .comment-multi {
+	-fx-fill: rgb(155, 155, 215);
+}
+
+.code-area .comment-line {
+	-fx-fill: rgb(175, 175, 215);
+}

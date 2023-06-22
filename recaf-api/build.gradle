@@ -1,0 +1,82 @@
+import java.nio.file.Files
+
+plugins {
+    id "com.peterabeles.gversion" version "1.10"
+}
+
+apply plugin: 'java-library'
+apply plugin: 'java-test-fixtures'
+
+dependencies {
+    api(android_common) {
+        exclude group: 'net.java.dev.jna'
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'com.android.tools'
+    }
+    api(apk_analyzer) {
+        exclude group: 'com.android.tools.smali'
+        exclude group: 'com.android.tools'
+    }
+    api(binary_resources) {
+        exclude group: 'com.android.tools'
+    }
+    api asm
+    api asm_analysis
+    api asm_commons
+    api asm_tree
+    api asm_util
+    api cafedude
+    api cdi_api
+    api(dex_translator) {
+        exclude group: 'com.android.tools'
+    }
+    api directories
+    api extra_collections
+    api extra_observables
+    api gson // required by R8 (from dex-translator)
+    api instrument_server
+    api llzip
+    api logging_impl
+    api jackson
+    api jlinker
+    api openrewrite
+    api regex
+}
+
+// Force generation of gversion data class when the version information is not up-to-date
+tasks.register('conditionalBuildConfigUpdate') {
+    if (!isBuildConfigUpToDate()) {
+        finalizedBy createVersionFile
+    }
+}
+project.compileJava.dependsOn('conditionalBuildConfigUpdate')
+gversion {
+    srcDir = "src/generated/java/"
+    classPackage = "software.coley.recaf"
+    className = "RecafBuildConfig"
+    dateFormat = "yyyy MM/dd HH:mm"
+    debug = true
+    language = "java"
+    explicitType = false
+    annotate = false
+}
+sourceSets {
+    // Need to add the generated class to the source set
+    main {
+        java {
+            srcDirs 'src/generated/java', 'src/main/java'
+        }
+    }
+}
+
+private boolean isBuildConfigUpToDate() {
+    File buildConfigPath = project.file(gversion.srcDir +
+            gversion.classPackage.replace('.', '/') + '/' +
+            gversion.className + ".java")
+    if (buildConfigPath.exists()) {
+        String text = Files.readString(buildConfigPath.toPath())
+        if (text.contains('VERSION = "' + project.version + '"'))
+            return true
+    }
+    return false
+}

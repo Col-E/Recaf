@@ -1,0 +1,15 @@
+.code-area .tag-name {
+    -fx-fill: rgb(90, 160, 220);
+}
+
+.code-area .tag-param {
+    -fx-fill: rgb(140, 190, 220);
+}
+
+.code-area .comment-multi {
+	-fx-fill: rgb(120, 120, 120);
+}
+
+.code-area .string {
+    -fx-fill: rgb(150, 200, 105);
+}

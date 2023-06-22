@@ -1,0 +1,23 @@
+{
+  "name": "Enigma mappings",
+  "regex": "",
+  "classes": [],
+  "sub-rules": [
+    {
+      "name": "SingleLineComment",
+      "regex": "(?:COMMENT|#).+",
+      "classes": [
+        "comment"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Keywords",
+      "regex": "(?:^|\\n)\\s*(?:CLASS|FIELD|METHOD|ARG)",
+      "classes": [
+        "keyword"
+      ],
+      "sub-rules": []
+    }
+  ]
+}

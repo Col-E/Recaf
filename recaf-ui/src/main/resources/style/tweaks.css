@@ -1,0 +1,100 @@
+/* Applies common 5px padding to component */
+.padded {
+    -fx-padding: 5px;
+}
+
+/* Fix for TiwulFX relying on Modena values while we use AtlantaFX */
+.adjacent-drop {
+	-fx-background-color: -color-accent-2;
+	-fx-border-color: -color-accent-8;
+}
+
+.dark-scroll-pane > .viewport {
+   -fx-background-color: -color-bg-inset;
+}
+
+/* AtlantaFX tweaks to split-pane default behavior/style to fit the docking UI style more. */
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-background-insets: 5px;
+}
+.split-pane > .split-pane-divider,
+.split-pane > .split-pane-divider:pressed,
+.split-pane > .split-pane-divider:pressed > .horizontal-grabber,
+.split-pane > .split-pane-divider:pressed > .vertical-grabber {
+    -fx-background-color: transparent;
+    -fx-background-insets: 6px;
+    -fx-padding: 2px;
+}
+
+/* AtlantaFX tweaks to allow borderless text-fields */
+.text-field.accent {
+    -fx-background-insets: 0;
+    -fx-background-color: -color-input-bg;
+}
+.text-field.accent:focused {
+    -fx-background-color: -color-input-bg;
+}
+
+/* Clearly separates filter from the workspace tree */
+.workspace-filter-pane {
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1px 0 0 0;
+}
+.workspace-filter-text {
+    -fx-border-width: 0;
+    -fx-background-insets: 0;
+}
+
+/* Applies background colors */
+.background {
+    -fx-background-color: -color-bg-default;
+}
+
+/* Visual tweak to tab-pane separator */
+.tab-pane {
+    -fx-padding: 0px;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1px;
+    -fx-border-insets: 1px; /* removing this causes some issues with our split-pane changes */
+}
+.tab-pane.floating > .tab-header-area {
+    -fx-background-color: -color-border-muted, -color-bg-inset;
+    -fx-background-insets: 0, 0 0 1px 0;
+}
+
+/* Custom tab-pane for display in editor views */
+.side-tab-pane {
+    -fx-background-color: -color-bg-overlay;
+    -fx-border-color: -color-base-6;
+    -fx-border-width: 0 0 0 1px;
+}
+.side-tab-content {
+    -fx-background-color: -color-bg-overlay;
+    -fx-border-color: -color-base-6;
+    -fx-border-width: 0 0 0 1px;
+}
+.side-tab-grip {
+    -fx-background-color: -color-bg-inset;
+    -fx-border-color: -color-base-6;
+    -fx-border-width: 0 0 0 1px;
+}
+.side-tab {
+    -fx-background-color: -color-bg-overlay;
+}
+.side-tab:hover,
+.side-tab:armed,
+.side-tab:focused {
+    -fx-background-color: -color-base-8;
+}
+
+/* Used at top of editor control */
+.search-bar {
+    -fx-background-color: -color-bg-inset;
+    -fx-border-color: -color-base-6;
+    -fx-border-width: 0 0 1px 0;
+}
+.search-bar .text-field {
+    -fx-border-color: -color-base-6;
+    -fx-border-width: 0 1px 0 0;
+}

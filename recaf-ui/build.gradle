@@ -1,0 +1,27 @@
+plugins {
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+application {
+    mainClass = 'software.coley.recaf.Main'
+}
+
+javafx {
+    version = "19"
+    modules = ['javafx.controls']
+}
+
+dependencies {
+    implementation project(':recaf-core')
+    testImplementation(testFixtures(project(":recaf-api")))
+    testImplementation(testFixtures(project(":recaf-core")))
+
+    implementation atlantafx
+    implementation docking
+    implementation ikonli
+    implementation ikonli_pack
+    implementation richtextfx
+    implementation treemapfx
+}

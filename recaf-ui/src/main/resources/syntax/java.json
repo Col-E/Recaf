@@ -1,0 +1,102 @@
+{
+  "name": "Java language",
+  "regex": "",
+  "classes": [],
+  "sub-rules": [
+    {
+      "name": "JavadocComment",
+      "regex": "\\/\\*\\*[\\S\\s]+?\\*\\/",
+      "backtrack-mark": "/*",
+      "advance-mark": "*/",
+      "classes": [
+        "comment-javadoc"
+      ],
+      "sub-rules": [
+        {
+          "name": "JavadocLink",
+          "regex": "(?<=\\{\\@link)\\s+\\S+?[\\s\\S]*?(?=})",
+          "classes": [
+            "comment-javadoc-link"
+          ],
+          "sub-rules": []
+        },
+        {
+          "name": "JavadocTag",
+          "regex": "\\B(?:@[\\w]+)\\b",
+          "classes": [
+            "comment-javadoc-tag"
+          ],
+          "sub-rules": []
+        },
+        {
+          "name": "JavadocParamName",
+          "regex": "(?<=@param)\\s+\\b(?:\\w+)\\b",
+          "classes": [
+            "comment-javadoc-name"
+          ],
+          "sub-rules": []
+        }
+      ]
+    },
+    {
+      "name": "MultiLineComment",
+      "regex": "/[*](?:.|\\n)+?\\*/",
+      "backtrack-mark": "/*",
+      "advance-mark": "*/",
+      "classes": [
+        "comment-multi"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "SingleLineComment",
+      "regex": "//[^\\n]*",
+      "classes": [
+        "comment-line"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Annotations",
+      "regex": "\\B(?:@[\\w]+)\\b",
+      "classes": [
+        "annotation"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Constants",
+      "regex": "(?:0[xX][0-9a-fA-F]+)+|(?:\\b(?:[\\d._]*[\\d])\\b)+|\\b(?:true|false|null)\\b",
+      "classes": [
+        "constant"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "MultiLineString",
+      "regex": "\"{3}(?:.|\\n)+?\"{3}",
+      "backtrack-mark": "\"\"\"",
+      "advance-mark": "\"\"\"",
+      "classes": [
+        "string"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Strings",
+      "regex": "(?:\\\"(?:[^\\n\"\\\\]|\\\\.)*?\\\")|(?:\\'(?:[^'\\n\\\\]|\\\\.)*?\\')",
+      "classes": [
+        "string"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Keywords",
+      "regex": "\\b(?:abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|record|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|var|void|volatile|while)\\b",
+      "classes": [
+        "keyword"
+      ],
+      "sub-rules": []
+    }
+  ]
+}

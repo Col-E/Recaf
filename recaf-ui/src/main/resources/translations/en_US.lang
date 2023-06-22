@@ -1,0 +1,687 @@
+## Language name
+lang.name=English
+
+##### General items
+## Main and context menus
+menu.association.override=Override language
+menu.association.none=No associations configured
+menu.config=Config
+menu.config.edit=Edit
+menu.config.export=Export
+menu.config.import=Import
+menu.file=File
+menu.file.attach=Attach to remote
+menu.file.addtoworkspace=Add to workspace
+menu.file.openworkspace=Open workspace
+menu.file.exportapp=Export application
+menu.file.exportworkspace=Export workspace config
+menu.file.modifications=View modifications
+menu.file.recent=Recent
+menu.file.close=Close
+menu.file.quit=Quit
+menu.goto.class=Go to class
+menu.goto.field=Go to field
+menu.goto.method=Go to method
+menu.goto.instruction=Go to instruction
+menu.goto.file=Go to file
+menu.goto.label=Go to label
+menu.edit=Edit
+menu.edit.add.field=Add field
+menu.edit.add.method=Add method
+menu.edit.add.annotation=Add annotation
+menu.edit.remove.field=Remove fields
+menu.edit.remove.method=Remove methods
+menu.edit.remove.annotation=Remove annotations
+menu.edit.assemble.class=Edit class
+menu.edit.assemble.field=Edit field
+menu.edit.assemble.method=Edit method
+menu.edit.remove=Remove
+menu.edit.copy=Copy
+menu.edit.delete=Delete
+menu.help=Help
+menu.help.discord=Discord
+menu.help.docs=Online user documentation
+menu.help.docsdev=Online developer documentation
+menu.help.github=Github
+menu.help.issues=Issue tracker
+menu.help.sysinfo=System information
+menu.refactor=Refactor
+menu.refactor.move=Move
+menu.refactor.rename=Rename
+menu.search=Search
+menu.search.string=Strings
+menu.search.number=Numbers
+menu.search.references=References
+menu.search.declarations=Declarations
+menu.search.noresults=No results
+menu.mappings=Mappings
+menu.mappings.apply=Apply
+menu.mappings.export=Export
+menu.mappings.export.unsupported=%s (Unsupported)
+menu.mappings.generate=Generate
+menu.mappings.view=Current mappings
+menu.scripting=Scripting
+menu.scripting.list=Scripts
+menu.scripting.none-found=No scripts found
+menu.scripting.manage=Manage scripts
+menu.scripting.new=New script
+menu.scripting.edit=Edit
+menu.scripting.browse=Browse scripts
+menu.scripting.save=Save script
+menu.scripting.execute=Execute
+menu.scripting.editor=Script editor
+menu.scripting.author=Author
+menu.scripting.version=Version
+menu.view=View
+menu.view.hierarchy=Class hierarchy
+menu.view.hierarchy.children=Children
+menu.view.hierarchy.parents=Parents
+menu.view.methodcfg=Control flow graph
+menu.tab.close=Close
+menu.tab.closeothers=Close others
+menu.tab.closeall=Close all
+menu.tab.copypath=Copy path
+menu.image.resetscale=Reset zoom
+menu.image.center=Center image
+menu.hex.copyas=Copy as...
+menu.mode=Change view
+menu.mode.class.auto=Automatic
+menu.mode.class.decompile=Decompile
+menu.mode.file.auto=Automatic
+menu.mode.file.text=Text
+menu.mode.file.hex=Hex
+menu.mode.diff.decompile=Decompile
+menu.mode.diff.disassemble=Disassemble
+menu.vm=Virtualize
+menu.vm.optimize=Optimize
+menu.vm.run=Run
+menu.plugin=Plugins
+menu.plugin.manage=Manage plugins
+menu.plugin.installed=Installed
+menu.plugin.remote=Remote
+menu.plugin.browse=Browse plugins
+menu.plugin.enabled=Enabled
+menu.plugin.uninstall=Uninstall
+menu.plugin.uninstall.warning=Are you sure you want to delete this plugin?
+
+##### Dialog texts
+dialog.cancel=Cancel
+dialog.close=Close
+dialog.confirm=Confirm
+dialog.finish=Finish
+dialog.next=Next
+dialog.previous=Previous
+dialog.dismiss=Dismiss
+dialog.configure=Configure
+dialog.warning=Warning
+dialog.restart=To change this configuration option, a restart is recommended.\nAre you sure you want to apply?
+dialog.unknownextension=Unknown file extension. Do you want to configure a language association?
+
+## File chooser
+dialog.title.primary=Primary resource
+dialog.title.supporting=Supporting resources
+dialog.file.open=Open
+dialog.file.open.directory=Directories
+dialog.file.open.file=Files
+dialog.file.export=Export
+dialog.file.save=Save
+dialog.file.nothing=Nothing selected
+dialog.filefilter.any=Any type
+dialog.filefilter.mapping=Mappings
+dialog.filefilter.input=Applications
+dialog.filefilter.workspace=Workspaces
+
+## File drop items
+dialog.title.create-workspace=Create workspace
+dialog.title.update-workspace=Handle workspace input
+dialog.title.close-workspace=Close workspace?
+dialog.option.create-workspace=Create new workspace
+dialog.option.update-workspace=Add to workspace
+
+## Copy class/file
+dialog.title.copy-class=Copy class
+dialog.title.copy-directory=Copy directory
+dialog.title.copy-field=Copy field
+dialog.title.copy-file=Copy file
+dialog.title.copy-method=Copy method
+dialog.header.copy-class=Provide a new name for the copied class.
+dialog.header.copy-directory=Provide a new name for the copied directory.
+dialog.header.copy-field=Provide a new name for the copied field.
+dialog.header.copy-file=Provide a new name for the copied file.
+dialog.header.copy-method=Provide a new name for the copied method.
+
+## Delete class/file
+dialog.title.delete-class=Delete class
+dialog.title.delete-directory=Delete directory
+dialog.title.delete-field=Delete field
+dialog.title.delete-file=Delete file
+dialog.title.delete-method=Delete method
+dialog.title.delete-package=Delete package
+dialog.title.delete-resource=Delete resource
+dialog.header.delete-class=Are you sure you want to delete: %s?
+dialog.header.delete-directory=Are you sure you want to delete: %s?
+dialog.header.delete-field=Are you sure you want to delete: %s?
+dialog.header.delete-file=Are you sure you want to delete: %s?
+dialog.header.delete-method=Are you sure you want to delete: %s?
+dialog.header.delete-package=Are you sure you want to delete: %s?
+dialog.header.delete-resource=Are you sure you want to delete: %s?
+
+## Rename class/file
+dialog.title.rename-class=Rename class
+dialog.title.rename-class-warning=Warning
+dialog.title.rename-directory=Rename directory
+dialog.title.rename-field=Rename field
+dialog.title.rename-file=Rename file
+dialog.title.rename-file-warning=Warning
+dialog.title.rename-method=Rename method
+dialog.title.rename-package=Rename package
+dialog.header.rename-class=Provide a new name for the class.
+dialog.header.rename-class-error=The class name already exists.\nPlease choose a different name.
+dialog.header.rename-class-warning=The class name you have chosen is already in use.\nAre you sure you want to rename the class?
+dialog.header.rename-directory=Provide a new name for the directory.
+dialog.header.rename-field=Provide a new name for the field.
+dialog.header.rename-file=Provide a new name for the file.
+dialog.header.rename-file-warning=The file already exists. Do you want to overwrite it?
+dialog.header.rename-method=Provide a new name for the method.
+dialog.header.rename-package=Provide a new name for the package.
+
+## Move class/file
+dialog.title.move-class=Select a destination package
+dialog.title.move-directory=Select a destination (parent) directory
+dialog.title.move-file=Select a destination directory
+dialog.title.move-package=Select a destination (parent) package
+dialog.header.move-class=Move the class to a new package.
+dialog.header.move-directory=Move the directory into to a new parent directory.
+dialog.header.move-file=Move the file to a new directory.
+dialog.header.move-package=Move the package into to a new parent package.
+
+## VM actions
+dialog.title.vm-invoke-args=Virtualize method call
+dialog.title.vm-peephole-invoke-args=Virtualized peephole optimization
+dialog.vm.execute=Execute
+dialog.vm.optimize=Optimize
+dialog.vm.create-dummy=Use dummy
+dialog.vm.create-null=Use null
+
+## Hex dialogs
+dialog.hex.title.insertcount=Insert
+dialog.hex.header.insertcount=How many bytes to insert?
+
+# Base Converter dialog
+dialog.conv.title.literal=Number literal
+dialog.conv.title.expression=Number expression
+
+## Quick nav
+dialog.quicknav=Quick navigation
+
+## Error dialog
+dialog.error.exportworkspace.title=Failed to export workspace
+dialog.error.exportworkspace.header=An error occurred when writing to the destination
+dialog.error.exportworkspace.content=The error was:
+dialog.error.loadworkspace.title=Failed to load workspace
+dialog.error.loadworkspace.header=An error occurred when reading from the selected files
+dialog.error.loadworkspace.content=The error was:
+dialog.error.loadsupport.title=Failed to load supporting resources
+dialog.error.loadsupport.header=An error occurred when reading from the selected files
+dialog.error.loadsupport.content=The error was:
+dialog.error.attach.title=Failed to attach to JVM
+dialog.error.attach.header=An error occurred when connecting to the remote JVM
+dialog.error.attach.content=The error was:
+
+## Wizard
+wizard.chooseaction=Choose an action
+wizard.selectprimary=Select primary resource
+wizard.currentworkspace=Current workspace
+
+
+##### Panels
+## Welcome
+welcome.title=Welcome
+welcome.discord.title=Join the Discord
+welcome.discord.description=Recaf has a discord group for faster-pace discussions and assorted programming talk
+welcome.documentation.title=Documentation
+welcome.documentation.description=Read the docs to learn how to use Recaf's various features
+welcome.github.title=Recaf on Github
+welcome.github.description=Check out the project page on GitHub: Source code, open issues, and more
+
+## Workspace
+workspace.title=Workspace
+workspace.filter-prompt=Filter: Class/file name...
+workspace.info=Information
+
+## Attach
+attach.unsupported=Attach failed to initialize
+attach.unsupported.detail=The attach agent failed to self-extract.
+attach.connect=Connect
+attach.tab.properties=Properties
+attach.tab.classloading=Classes
+attach.tab.compilation=Compilation
+attach.tab.system=System
+attach.tab.runtime=Runtime
+attach.tab.thread=Threads
+
+## Changes view
+modifications.none=No modification history for item
+modifications.title=Modifications
+
+## Java area
+java.decompiling=Decompiling class...
+java.unparsable=JavaParser failed to interpret source, context actions only available 'Fields & Methods' side tab
+java.savewitherrors=It seems like this is your first time making changes that resulted in errors.\nThese are typically a result of the decompiled code not being semantically correct Java.\nYou must resolve these errors before changes will be saved.\n\nSome suggestions:\n - Change decompilers\n - Hover over the red error boxes, or click the error box at the top to see what the errors are\n - Use the assembler instead of recompilation to make changes
+java.savewitherrors.title=Regarding recompile errors
+java.decompiler=Decompiler
+java.targetversion=Compile target version
+java.targetversion.auto=Match class file version
+java.targetdebug=Compile with debug info
+
+## Search bar
+find.replace=Replace
+find.replaceall=Replace all
+find.regexinvalid=Replacement text
+find.regexreplace=Replacement text
+
+## Fields and methods
+fieldsandmethods.title=Fields & methods
+fieldsandmethods.showoutlinedtypes=Show member types
+fieldsandmethods.showoutlinedsynths=Show synthetic (compiler-generated) members
+fieldsandmethods.showoutlinedvisibility=Filter by member visibility
+fieldsandmethods.showoutlinedmembertype=Filter by member type
+fieldsandmethods.outlinedvisibilityiconposition=Visibility icon position
+fieldsandmethods.sortalphabetically=Sort alphabetically
+fieldsandmethods.sortbyvisibility=Sort by visibility
+fieldsandmethods.filter.prompt=Filter: Field/Method name...
+
+## Hierarchy
+hierarchy.title=Inheritance
+hierarchy.children=Children
+hierarchy.parents=Parents
+
+## Logging
+logging.title=Logging
+
+## Assembler
+assembler.title=Assembler
+assembler.analysis.title=Variables & Stack
+assembler.analysis.stack=Stack
+assembler.analysis.name-column=Name
+assembler.analysis.value-column=Value
+assembler.playground.title=Java to Bytecode
+assembler.playground.comment=You can write regular Java in here and have it translated to bytecode
+assembler.vartable.title=Variables
+assembler.vartable.empty=<Requires compiling at least once>
+assembler.suggestions.none=No suggestions
+
+## Search
+search.run=Search
+search.results=Results
+search.text=Text content
+search.textmode=Text match mode
+search.number=Number value
+search.numbermode=Number match mode
+search.refowner=Member owner
+search.refname=Member name
+search.refdesc=Member type descriptor
+
+## Help
+help.system=System
+help.system.sub=Information about the OS
+help.java=Java
+help.java.sub=Information about the JVM
+help.javafx=JavaFX
+help.javafx.sub=Information about the JavaFX UI
+help.recaf=Recaf
+help.recaf.sub=Information about Recaf
+help.copy=Copy information to clipboard
+help.opendir=Open Recaf directory
+
+## Mapping generator
+mapgen=Mapping generator
+mapgen.genimpl=Naming convention
+mapgen.filter.name=Name
+mapgen.filters=Filters
+mapgen.filters.add=Add filter
+mapgen.filters.edit=Edit selected
+mapgen.filters.editdone=Done
+mapgen.filters.delete=Delete selected
+mapgen.filters.type=Filter type
+mapgen.filter.modifiers.tooltip=Modifiers are separated by spaces
+mapgen.filter.excludealreadymapped=Exclude already mapped
+mapgen.filter.excludemodifier=Exclude modifiers
+mapgen.filter.excludeclasses=Exclude classes
+mapgen.filter.excludename=Exclude names
+mapgen.filter.excludeclass=Exclude on classes
+mapgen.filter.excludefield=Exclude on fields
+mapgen.filter.excludemethod=Exclude on methods
+mapgen.filter.includemodifier=Include modifiers
+mapgen.filter.includeclass=Include on classes
+mapgen.filter.includefield=Include on fields
+mapgen.filter.includemethod=Include on methods
+mapgen.filter.includewhitespacenames=Include whitespaces
+mapgen.filter.includenonasciinames=Include non-ascii
+mapgen.filter.includekeywords=Include keywords
+mapgen.filter.includename=Include names
+mapgen.filter.includeclasses=Include classes
+mapgen.title.newfilter=New filter
+mapgen.header.newfilter=Input filter content
+mapgen.preview.empty=Statistics of generated mappings will appear here\n\n\n
+mapgen.generate=Generate
+mapgen.apply=Apply
+
+## Mapping view
+mapprog=Mapping progress
+mapprog.metric.size=Class file size
+mapprog.metric.membercount=Class fields & methods
+
+##### Tree
+tree.classes=Classes
+tree.files=Files
+tree.defaultpackage=(Default package)
+tree.defaultdirectory=(Root directory)
+tree.prompt=Drag your files here
+tree.hidelibs=Hide libraries
+
+##### Services
+service=All services
+service.analysis=Analysis
+service.analysis.graph-calls-config=Call graph
+service.analysis.graph-calls-config.active=Enable on workspaces open
+service.analysis.graph-inheritance-config=Inheritance graph
+service.analysis.search-config=Search
+service.analysis.entry-points=Entry points
+service.analysis.entry-points.none=No entries found
+service.compile=Compilation
+service.compile.java-compiler-config=Javac
+service.compile.java-compiler-config.generate-phantoms=Generate missing classes
+service.compile.java-compiler-config.default-emit-debug=Default to include debug
+service.compile.java-compiler-config.default-target-version=Default to class version
+service.debug=Attach/Debug
+service.debug.attach-config=Attach config
+service.debug.attach-config.attach-jmx-bean-agent=Attach JMX bean agent
+service.debug.attach-config.passive-scanning=Passive scanning state
+service.config-manager-config=Config manager
+service.decompile=Decompilation
+service.decompile.decompiler-cfr-config=CFR
+service.decompile.decompiler-cfr-config.aexagg=Try to extend and merge exceptions more aggressively
+service.decompile.decompiler-cfr-config.aexagg2=Try to extend and merge exceptions more aggressively (may change semantics)
+service.decompile.decompiler-cfr-config.aggressivedocopy=Clone code from impossible jumps into loops with 'first' test
+service.decompile.decompiler-cfr-config.aggressivedoextension=Fold impossible jumps into do loops with 'first' test
+service.decompile.decompiler-cfr-config.aggressiveduff=Fold duff device style switches with additional control.
+service.decompile.decompiler-cfr-config.aggressivesizethreshold=Opcode count at which to trigger aggressive reductions
+service.decompile.decompiler-cfr-config.allowmalformedswitch=Allow potentially malformed switch statements
+service.decompile.decompiler-cfr-config.antiobf=Undo various obfuscations
+service.decompile.decompiler-cfr-config.arrayiter=Re-sugar array based iteration
+service.decompile.decompiler-cfr-config.collectioniter=Re-sugar collection based iteration
+service.decompile.decompiler-cfr-config.commentmonitors=Replace monitors with comments - useful if we're completely confused
+service.decompile.decompiler-cfr-config.comments=Output comments describing decompiler status, fallback flags etc.
+service.decompile.decompiler-cfr-config.constobf=Undo constant obfuscation
+service.decompile.decompiler-cfr-config.decodeenumswitch=Re-sugar switch on enum
+service.decompile.decompiler-cfr-config.decodefinally=Re-sugar finally statements
+service.decompile.decompiler-cfr-config.decodelambdas=Re-build lambda functions
+service.decompile.decompiler-cfr-config.decodestringswitch=Re-sugar switch on String
+service.decompile.decompiler-cfr-config.eclipse=Enable transformations to handle Eclipse code better
+service.decompile.decompiler-cfr-config.elidescala=Elide things which aren't helpful in scala output (serialVersionUID, @ScalaSignature)
+service.decompile.decompiler-cfr-config.forbidanonymousclasses=Don't allow anonymous classes.
+service.decompile.decompiler-cfr-config.forbidmethodscopedclasses=Don't allow method scoped classes.
+service.decompile.decompiler-cfr-config.forceclassfilever=Force the version of the classfile (and hence java) that classfiles are decompiled as.
+service.decompile.decompiler-cfr-config.forcecondpropagate=Pull results of deterministic jumps back through some constant assignments
+service.decompile.decompiler-cfr-config.forceexceptionprune=Remove nested exception handlers if they don't change semantics
+service.decompile.decompiler-cfr-config.forcereturningifs=Move return up to jump site
+service.decompile.decompiler-cfr-config.forcetopsort=Force basic block sorting.  Usually only useful when obfuscation is present.
+service.decompile.decompiler-cfr-config.forcetopsortaggress=Force extra aggressive topsort options
+service.decompile.decompiler-cfr-config.forcetopsortnopull=Force topsort not to pull try blocks
+service.decompile.decompiler-cfr-config.forloopaggcapture=Allow for loops to aggressively roll mutations into update section, even if they don't appear to be involved with the predicate
+service.decompile.decompiler-cfr-config.hidebridgemethods=Hide bridge methods
+service.decompile.decompiler-cfr-config.hidelangimports=Hide imports from java.lang.
+service.decompile.decompiler-cfr-config.hidelongstrings=Hide very long strings - useful if obfuscators have placed fake code in strings
+service.decompile.decompiler-cfr-config.hideutf=Hide UTF8 characters - quote them instead of showing the raw characters
+service.decompile.decompiler-cfr-config.ignoreexceptions=Drop exception information if completely stuck (WARNING : changes semantics, dangerous!)
+service.decompile.decompiler-cfr-config.ignoreexceptionsalways=Drop exception information (WARNING : changes semantics, dangerous!)
+service.decompile.decompiler-cfr-config.innerclasses=Decompile inner classes
+service.decompile.decompiler-cfr-config.instanceofpattern=Re-sugar instanceof pattern matches
+service.decompile.decompiler-cfr-config.j14classobj=Reverse java 1.4 class object construction
+service.decompile.decompiler-cfr-config.labelledblocks=Allow code to be emitted which uses labelled blocks, (handling odd forward gotos)
+service.decompile.decompiler-cfr-config.lenient=Be a bit more lenient in situations where we'd normally throw an exception
+service.decompile.decompiler-cfr-config.liftconstructorinit=Lift initialisation code common to all constructors into member initialisation
+service.decompile.decompiler-cfr-config.obfattr=Undo attribute obfuscation
+service.decompile.decompiler-cfr-config.obfcontrol=Undo control flow obfuscation
+service.decompile.decompiler-cfr-config.override=Generate @Override annotations (if method is seen to implement interface method, or override a base class method)
+service.decompile.decompiler-cfr-config.previewfeatures=Decompile preview features if class was compiled with 'javac --enable-preview'
+service.decompile.decompiler-cfr-config.pullcodecase=Pull code into case statements agressively
+service.decompile.decompiler-cfr-config.recordtypes=Re-sugar record types
+service.decompile.decompiler-cfr-config.recover=Allow more and more aggressive options to be set if decompilation fails
+service.decompile.decompiler-cfr-config.recovertypeclash=Split lifetimes where analysis caused type clash
+service.decompile.decompiler-cfr-config.recovertypehints=Recover type hints for iterators from first pass
+service.decompile.decompiler-cfr-config.reducecondscope=Reduce the scope of conditionals, possibly generating more anonymous blocks
+service.decompile.decompiler-cfr-config.relinkconst=Relink constants - if there is an inlined reference to a field, attempt to de-inline.
+service.decompile.decompiler-cfr-config.relinkconststring=Relink constant strings - if there is a local reference to a string which matches a static final, use the static final.
+service.decompile.decompiler-cfr-config.removebadgenerics=Hide generics where we've obviously got it wrong, and fallback to non-generic
+service.decompile.decompiler-cfr-config.removeboilerplate=Remove boilderplate functions - constructor boilerplate, lambda deserialisation etc.
+service.decompile.decompiler-cfr-config.removedeadconditionals=Remove code that can't be executed.
+service.decompile.decompiler-cfr-config.removedeadmethods=Remove pointless methods - default constructor etc.
+service.decompile.decompiler-cfr-config.removeinnerclasssynthetics=Remove (where possible) implicit outer class references in inner classes
+service.decompile.decompiler-cfr-config.renamedupmembers=Rename ambiguous/duplicate fields.
+service.decompile.decompiler-cfr-config.renameenumidents=Rename ENUM identifiers which do not match their 'expected' string names.
+service.decompile.decompiler-cfr-config.renameillegalidents=Rename identifiers which are not valid java identifiers.
+service.decompile.decompiler-cfr-config.renamesmallmembers=Rename small members.  Note - this WILL break reflection based access, so is not automatically enabled.
+service.decompile.decompiler-cfr-config.sealed=Decompile 'sealed' constructs
+service.decompile.decompiler-cfr-config.showinferrable=Decorate methods with explicit types if not implied by arguments
+service.decompile.decompiler-cfr-config.showversion=Show used CFR version in header (handy to turn off when regression testing)
+service.decompile.decompiler-cfr-config.skipbatchinnerclasses=When processing many files, skip inner classes, as they will be processed as part of outer classes anyway.
+service.decompile.decompiler-cfr-config.staticinitreturn=Try to remove return from static init
+service.decompile.decompiler-cfr-config.stringbuffer=Convert new StringBuffer().append.append.append to string + string + string
+service.decompile.decompiler-cfr-config.stringbuilder=Convert new StringBuilder().append.append.append to string + string + string
+service.decompile.decompiler-cfr-config.stringconcat=Convert usages of StringConcatFactor to string + string + string
+service.decompile.decompiler-cfr-config.sugarasserts=Re-sugar assert calls
+service.decompile.decompiler-cfr-config.sugarboxing=Where possible, remove pointless boxing wrappers
+service.decompile.decompiler-cfr-config.sugarenums=Re-sugar enums
+service.decompile.decompiler-cfr-config.sugarretrolambda=Where possible, resugar uses of retro lambda
+service.decompile.decompiler-cfr-config.switchexpression=Re-sugar switch expression
+service.decompile.decompiler-cfr-config.tidymonitors=Remove support code for monitors - e.g. catch blocks just to exit a monitor
+service.decompile.decompiler-cfr-config.tryresources=Reconstruct try-with-resources
+service.decompile.decompiler-cfr-config.usenametable=Use local variable name table if present
+service.decompile.decompiler-cfr-config.usesignatures=Use signatures in addition to descriptors (when they are not obviously incorrect)
+service.decompile.decompiler-cfr-config.version=Show the current CFR version
+service.decompile.decompiler-procyon-config=Procyon
+service.decompile.decompiler-procyon-config.alwaysGenerateExceptionVariableForCatchBlocks=Always generate catch block
+service.decompile.decompiler-procyon-config.arePreviewFeaturesEnabled=Enable language preview features
+service.decompile.decompiler-procyon-config.bytecodeOutputOptions=Bytecode output options
+service.decompile.decompiler-procyon-config.disableForEachTransforms=Disable forEach(...) transforms
+service.decompile.decompiler-procyon-config.excludeNestedTypes=Exclude nested types
+service.decompile.decompiler-procyon-config.flattenSwitchBlocks=Flatten switch blocks
+service.decompile.decompiler-procyon-config.forceExplicitImports=Force explicit imports
+service.decompile.decompiler-procyon-config.forceExplicitTypeArguments=Force explicit type arguments
+service.decompile.decompiler-procyon-config.forceFullyQualifiedReferences=Force fully qualified references
+service.decompile.decompiler-procyon-config.forcedCompilerTarget=Target language version
+service.decompile.decompiler-procyon-config.includeErrorDiagnostics=Include error diagnostics
+service.decompile.decompiler-procyon-config.includeLineNumbersInBytecode=Show debug line numbers (bytecode)
+service.decompile.decompiler-procyon-config.isUnicodeOutputEnabled=Enable unicode in output
+service.decompile.decompiler-procyon-config.mergeVariables=Merge variables when possible
+service.decompile.decompiler-procyon-config.retainPointlessSwitches=Retain useless switches
+service.decompile.decompiler-procyon-config.retainRedundantCasts=Retain useless casts
+service.decompile.decompiler-procyon-config.showDebugLineNumbers=Show debug line numbers
+service.decompile.decompiler-procyon-config.showSyntheticMembers=Show synthetic members
+service.decompile.decompiler-procyon-config.simplifyMemberReferences=Simplify member references
+service.decompile.decompiler-procyon-config.textBlockLineMinimum=Text block minimum lines
+service.decompile.decompilers-config=Decompile manager
+service.decompile.decompilers-config.pref-android-decompiler=Preferred Android decompiler
+service.decompile.decompilers-config.pref-jvm-decompiler=Preferred Java decompiler
+service.io=IO
+service.io.directories-config=Directories
+service.io.export-config=Exporting
+service.io.export-config.bundle-supporting-resources=Bundle supporting resources into output
+service.io.export-config.compression=Compression strategy for contents of output
+service.io.export-config.create-zip-dir-entries=Create ZIP 'directory' entries in output
+service.io.recent-workspaces-config=Recent workspaces
+service.io.recent-workspaces-config.last-workspace-export-path=Last workspace export path
+service.io.recent-workspaces-config.last-workspace-open-path=Last workspace open path
+service.io.recent-workspaces-config.max-recent-workspaces=Maximum record of recent paths
+service.io.recent-workspaces-config.recent-workspaces=Recent workspace
+service.io.resource-importer-config=Resource importing
+service.io.resource-importer-config.zip-strategy=ZIP parsing strategy
+service.mapping=Mapping
+service.mapping.mapping-aggregator-config=Mapping aggregation
+service.mapping.mapping-formats-config=Mapping formats
+service.mapping.mapping-generator-config=Mapping generator
+service.plugin=Plugins
+service.plugin.plugin-manager-config=Plugin manager
+service.plugin.script-manager-config=Script manager
+service.plugin.script-manager-config.file-watching=Passively scan scripts directory for changes
+service.ui=User interface
+service.ui.bind-config=Bindings
+service.ui.bind-config.bundle=Binding map bundle
+service.ui.class-editing-config=Class editing
+service.ui.class-editing-config.default-android-editor=Default editor for Android classes
+service.ui.class-editing-config.default-jvm-editor=Default editor for JVM classes
+service.ui.decompile-pane-config=Decompilation panel
+service.ui.decompile-pane-config.timeout-seconds=Decompiler timeout (seconds)
+service.ui.decompile-pane-config.mapping-acceleration=Accelerate remapping operations
+service.ui.text-format-config=Text format
+service.ui.text-format-config.escape=Enable text escapes
+service.ui.text-format-config.max-length=Maximum text display length
+service.ui.text-format-config.shorten=Enable text shortening
+service.ui.window-manager-config=Window manager
+service.ui.workspace-explorer-config=Workspace explorer
+service.ui.workspace-explorer-config.drag-drop-action=Drag & drop behavior
+
+##### Config
+# conf.display=Appearance
+# conf.display.general=General
+# conf.display.general.flashopentabs=Flash open tab on re-focus
+# conf.display.general.language=Language
+# conf.display.tree=Tree display settings
+# conf.display.tree.maxtreedirectorydepth=Max tree directory depth
+# conf.display.tree.maxtreetextlength=Max item text length
+# conf.display.workspace=Workspace behavior
+# conf.display.workspace.showfilterbuttons=Show advanced filter buttons
+# conf.display.workspace.onfiledrop=On file drop action
+# conf.display.workspace.onfiledrop.choose=Let me choose
+# conf.display.workspace.onfiledrop.createnew=Create new workspace
+# conf.display.workspace.onfiledrop.addlibrary=Add as library
+# conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
+# conf.display.workspace.promptdeleteitem=Prompt when deleting items
+# conf.display.workspace.showselectionnavbar=Show selection nav-bar
+# conf.display.text=Text
+# conf.display.text.fontsize=Font size
+#
+# conf.editor=Editor Components
+# conf.editor.general=General
+# conf.editor.general.classmode=Default class view
+# conf.editor.general.filemode=Default file view
+# conf.editor.general.errorindicatorpos=Error indicator position
+# conf.editor.assoc=File extension associations
+# conf.editor.assoc.fileextassociations=Associations
+# conf.editor.text=Text editor
+# conf.editor.text.showbracketfolds=Show bracket folds
+# conf.editor.hex=Hex editor
+# conf.editor.hex.classhints=Show class file hints
+# conf.editor.hex.hexcolumns=Number of columns
+# conf.editor.hex.highlightcurrent=Highlight current selection
+# conf.editor.diff=Difference Editor
+# conf.editor.diff.diff-view-mode=Class difference view mode
+#
+# conf.binding=Keybinding
+# conf.binding.navigation=Navigation
+# conf.binding.navigation.closetab=Close tab
+# conf.binding.navigation.find=Find
+# conf.binding.navigation.fullscreen=Fullscreen
+# conf.binding.navigation.quicknav=Quick navigation
+# conf.binding.edit=Editing
+# conf.binding.edit.save=Save changes
+# conf.binding.edit.undo=Undo change
+# conf.binding.inputprompt.initial=<waiting>
+# conf.binding.inputprompt.finish=<ENTER to finish>
+# conf.binding.code=Code interactions
+# conf.binding.code.gotodef=Goto definition
+# conf.binding.code.rename=Rename selected
+# conf.binding.code.searchref=Search references
+# conf.binding.code.suggest=Show suggestions
+# conf.binding.appearance=Appearance
+# conf.binding.appearance.fontsize.up=Increase font size
+# conf.binding.appearance.fontsize.down=Decrease font size
+#
+# conf.assembler=Assembler
+# conf.assembler.build=Building
+# conf.assembler.build.delay=Delay before updating bytecode
+# conf.assembler.format=Format
+# conf.assembler.format.prefix=Use dot prefix for keywords
+# conf.assembler.parse=Parsing
+# conf.assembler.parse.recover=Attempt error recovery
+# conf.assembler.validation=Validation
+# conf.assembler.validation.ast=Enable AST validation
+# conf.assembler.validation.bytecode=Enable bytecode analysis
+# conf.assembler.debug=Debugging
+# conf.assembler.debug.ast-debug=Show AST debug info
+#
+# conf.compiler=Compiler
+# conf.compiler.general=General
+# conf.compiler.general.impl=Compiler implementation
+# conf.compiler.general.phantoms=Generate missing classes
+# conf.compiler.debug=Debug
+# conf.compiler.debug.vars=Include debug symbols
+# conf.compiler.debug.lines=Include line numbers
+# conf.compiler.debug.sourcefile=Include source file
+#
+# conf.decompiler.filter=Filtering
+# conf.decompiler.filter.escapeunicode=Escape unicode
+# conf.decompiler.filter.generics=Strip type arguments
+# conf.decompiler.filter.vars=Strip variable info
+# conf.decompiler.filter.synthetics=Strip synthetic flags
+# conf.decompiler.classfile=Classfile
+# conf.decompiler.classfile.maxouterdepth=Max outer class breadcrumbs depth\n(-1: disable check, 0: disable breadcrumbs)
+#
+# conf.plugin=Plugins
+# conf.plugin.general=General
+# conf.plugin.general.enabled=Enabled
+# conf.plugin.general.remote=Remote
+# conf.plugin.general.remotetime=Cache timestamp
+#
+# conf.ssvm=SSVM
+# conf.ssvm.access=File IO access
+# conf.ssvm.access.read=Allow read
+# conf.ssvm.access.write=Allow write
+# conf.ssvm.access.read.warn=Enabling this will allow SSVM actions to read files on your system.\nBe careful when enabling this option.
+# conf.ssvm.access.write.warn=Enabling this will allow SSVM actions to write files to your system.\nBe VERY careful when enabling this option.
+# conf.ssvm.general=General
+# conf.ssvm.general.active=Initialize SSVM when loading workspaces
+# conf.ssvm.remote=Remote VM
+# conf.ssvm.remote.active=Active
+# conf.ssvm.remote.path=Path to VM executable
+# conf.undefined=Undefined
+
+misc.acknowledge=Acknowledge
+misc.all=All
+misc.none=None
+misc.enabled=Enabled
+misc.disabled=Disabled
+misc.clear=Clear
+misc.export=Export
+misc.casesensitive=Case sensitive
+misc.regex=Regex
+misc.member.field=Field
+misc.member.method=Method
+misc.member.field_n_method=Field and method
+misc.member.inner_class=Inner class
+misc.member.inner_interface=Inner interface
+misc.member.inner_enum=Inner enum
+misc.member.inner_annotation=Inner annotation
+misc.accessflag.visibility.public=Public
+misc.accessflag.visibility.protected=Protected
+misc.accessflag.visibility.private=Private
+misc.accessflag.visibility.package=Package
+misc.direction.up=Up
+misc.direction.down=Down
+misc.direction.left=Left
+misc.direction.right=Right
+misc.direction.top=Top
+misc.direction.bottom=Bottom
+misc.position.top=Top
+misc.position.bottom=Bottom
+misc.position.left=Left
+misc.position.right=Right
+misc.position.center=Center
+misc.position.middle=Middle
+misc.text.equals=Equals
+misc.text.contains=Contains
+misc.text.startswith=Starts with
+misc.text.endswith=Ends with
+misc.text.regex=Regex
