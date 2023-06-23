@@ -86,7 +86,7 @@ public class SearchService implements Service {
 
 		// Run visitors on contents of workspace
 		ExecutorService service = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID + ":" + queries.hashCode());
-		WorkspacePathNode workspaceNode = new WorkspacePathNode(workspace);
+		WorkspacePathNode workspaceNode = PathNodes.workspacePath(workspace);
 		for (WorkspaceResource resource : workspace.getAllResources(false)) {
 			ResourcePathNode resourceNode = workspaceNode.child(resource);
 			// Visit android content

@@ -85,7 +85,7 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 			root = null;
 		} else {
 			// Create root
-			rootPath = new WorkspacePathNode(workspace);
+			rootPath = PathNodes.workspacePath(workspace);
 			root = new WorkspaceTreeNode(rootPath);
 			List<WorkspaceResource> resources = workspace.getAllResources(false);
 			for (WorkspaceResource resource : resources)

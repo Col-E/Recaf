@@ -6,6 +6,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.source.AstService;
@@ -74,7 +75,7 @@ public class MappingResults {
 					@Nonnull ClassInfo postMapping) {
 		String preMappingName = preMapping.getName();
 		String postMappingName = postMapping.getName();
-		BundlePathNode bundlePath = new WorkspacePathNode(workspace).child(resource).child(bundle);
+		BundlePathNode bundlePath = PathNodes.bundlePath(workspace, resource, bundle);
 		ClassPathNode preMappingPath = bundlePath.child(preMapping.getPackageName()).child(preMapping);
 		ClassPathNode postMappingPath = bundlePath.child(postMapping.getPackageName()).child(postMapping);
 		synchronized (mappedClasses) {

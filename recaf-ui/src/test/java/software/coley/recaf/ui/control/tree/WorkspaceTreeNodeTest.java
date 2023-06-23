@@ -48,7 +48,7 @@ class WorkspaceTreeNodeTest {
 		String packageName = Objects.requireNonNull(primaryClassInfo.getPackageName());
 		String parentPackageName = packageName.substring(0, packageName.lastIndexOf('/'));
 
-		p5 = new WorkspacePathNode(workspace);
+		p5 = PathNodes.workspacePath(workspace);
 		p4 = p5.child(primaryResource);
 		p3 = p4.child(primaryJvmBundle);
 		p2 = p3.child(packageName);

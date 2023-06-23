@@ -245,7 +245,7 @@ public interface Workspace extends Closing {
 	@Nonnull
 	default SortedSet<ClassPathNode> findJvmClasses(@Nonnull Predicate<JvmClassInfo> filter) {
 		SortedSet<ClassPathNode> results = new TreeSet<>();
-		WorkspacePathNode workspacePath = new WorkspacePathNode(this);
+		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
 		for (WorkspaceResource resource : getAllResources(true)) {
 			JvmClassBundle bundle = resource.getJvmClassBundle();
 			BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
@@ -269,7 +269,7 @@ public interface Workspace extends Closing {
 	@Nonnull
 	default SortedSet<ClassPathNode> findVersionedJvmClasses(@Nonnull Predicate<JvmClassInfo> filter) {
 		SortedSet<ClassPathNode> results = new TreeSet<>();
-		WorkspacePathNode workspacePath = new WorkspacePathNode(this);
+		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
 		for (WorkspaceResource resource : getAllResources(true)) {
 			ResourcePathNode resourcePath = workspacePath.child(resource);
 			for (JvmClassBundle bundle : resource.getVersionedJvmClassBundles().values()) {
@@ -295,7 +295,7 @@ public interface Workspace extends Closing {
 	@Nonnull
 	default SortedSet<ClassPathNode> findAndroidClasses(@Nonnull Predicate<AndroidClassInfo> filter) {
 		SortedSet<ClassPathNode> results = new TreeSet<>();
-		WorkspacePathNode workspacePath = new WorkspacePathNode(this);
+		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
 		for (WorkspaceResource resource : getAllResources(true)) {
 			ResourcePathNode resourcePath = workspacePath.child(resource);
 			for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
@@ -343,7 +343,7 @@ public interface Workspace extends Closing {
 	@Nonnull
 	default SortedSet<FilePathNode> findFiles(@Nonnull Predicate<FileInfo> filter) {
 		SortedSet<FilePathNode> results = new TreeSet<>();
-		WorkspacePathNode workspacePath = new WorkspacePathNode(this);
+		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
 		// Internal resources don't have files, so we won't iterate over those.
 		for (WorkspaceResource resource : getAllResources(false)) {
 			ResourcePathNode resourcePath = workspacePath.child(resource);
