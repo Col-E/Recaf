@@ -13,14 +13,20 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.services.info.ResourceSummarizer;
 import software.coley.recaf.services.info.ResourceSummaryService;
 import software.coley.recaf.services.info.SummaryConsumer;
+import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -31,12 +37,16 @@ import java.util.Map;
  * @see ResourceSummaryService Manages content to display here via discovered {@link ResourceSummarizer} types.
  */
 @Dependent
-public class WorkspaceInformationPane extends BorderPane {
+public class WorkspaceInformationPane extends BorderPane implements Navigable {
+	private final WorkspacePathNode path;
+
 	@Inject
 	public WorkspaceInformationPane(@Nonnull TextProviderService textService,
 									@Nonnull IconProviderService iconService,
 									@Nonnull ResourceSummaryService summaryService,
 									@Nonnull Workspace workspace) {
+		path = PathNodes.workspacePath(workspace);
+
 		// Adding content
 		Grid content = new Grid();
 		content.setPadding(new Insets(5));
@@ -66,6 +76,23 @@ public class WorkspaceInformationPane extends BorderPane {
 			// Break each summary by newline
 			content.add(new Separator(), 0, content.getRowCount(), 2, 1);
 		}
+	}
+
+	@Nonnull
+	@Override
+	public PathNode<?> getPath() {
+		return path;
+	}
+
+	@Nonnull
+	@Override
+	public Collection<Navigable> getNavigableChildren() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public void disable() {
+		setDisable(true);
 	}
 
 	private static class Grid extends GridPane implements SummaryConsumer {

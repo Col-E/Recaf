@@ -7,6 +7,8 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.cdi.InitializationStage;
 import software.coley.recaf.info.AndroidClassInfo;
@@ -29,9 +31,7 @@ import software.coley.recaf.workspace.model.resource.ResourceFileListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Tracks available {@link Navigable} content currently open in the UI.
@@ -47,9 +47,11 @@ import java.util.List;
 @ApplicationScoped
 public class NavigationManager implements Navigable, Service {
 	public static final String ID = "navigation";
+	private static final Logger logger = Logging.get(NavigationManager.class);
 	private final List<Navigable> children = new ArrayList<>();
+	private final Map<Navigable, DockingTab> childrenToTab = new IdentityHashMap<>();
+	private final Map<DockingTab, NavigableSpy> tabToSpy = new IdentityHashMap<>();
 	private final Forwarding forwarding = new Forwarding();
-	private final NavigableSpy spy = new NavigableSpy();
 	private final NavigationManagerConfig config;
 	private PathNode<?> path = new DummyInitialNode();
 
@@ -63,6 +65,10 @@ public class NavigationManager implements Navigable, Service {
 		dockingManager.addTabCreationListener((parent, tab) -> {
 			ObjectProperty<Node> contentProperty = tab.contentProperty();
 
+			// Create spy for the tab.
+			NavigableSpy spy = new NavigableSpy(tab);
+			tabToSpy.put(tab, spy);
+
 			// Add listener, so if content changes we are made aware of the changes.
 			contentProperty.addListener(spy);
 
@@ -70,6 +76,12 @@ public class NavigationManager implements Navigable, Service {
 			spy.changed(contentProperty, null, contentProperty.getValue());
 		});
 		dockingManager.addTabClosureListener(((parent, tab) -> {
+			NavigableSpy spy = tabToSpy.get(tab);
+			if (spy == null) {
+				logger.warn("Tab {} was closed, but had no associated content spy instance", tab.getText());
+				return;
+			}
+
 			// Remove content from navigation tracking.
 			spy.remove(tab.getContent());
 
@@ -77,9 +89,19 @@ public class NavigationManager implements Navigable, Service {
 			tab.contentProperty().removeListener(spy);
 		}));
 
+		// When the workspace closes, close all associated children.
+		workspaceManager.addWorkspaceCloseListener(workspace -> {
+			for (Navigable child : new HashSet<>(children)) {
+				child.disable();
+				DockingTab dockingTab = childrenToTab.get(child);
+				if (dockingTab != null)
+					dockingTab.close();
+			}
+		});
+
 		// Track current workspace so that we are navigable ourselves.
 		workspaceManager.addWorkspaceOpenListener(workspace -> {
-			WorkspacePathNode workspacePath = new WorkspacePathNode(workspace);
+			WorkspacePathNode workspacePath = PathNodes.workspacePath(workspace);
 			path = workspacePath;
 
 			// Update forwarding's path.
@@ -142,6 +164,12 @@ public class NavigationManager implements Navigable, Service {
 	 * Listener to update {@link #children}.
 	 */
 	private class NavigableSpy implements ChangeListener<Node> {
+		private final DockingTab tab;
+
+		public NavigableSpy(DockingTab tab) {
+			this.tab = tab;
+		}
+
 		@Override
 		public void changed(ObservableValue<? extends Node> observable, Node oldValue, Node newValue) {
 			remove(oldValue);
@@ -149,13 +177,17 @@ public class NavigationManager implements Navigable, Service {
 		}
 
 		void add(Node value) {
-			if (value instanceof Navigable navigable)
+			if (value instanceof Navigable navigable) {
 				children.add(navigable);
+				childrenToTab.put(navigable, tab);
+			}
 		}
 
 		void remove(Node value) {
-			if (value instanceof Navigable navigable)
+			if (value instanceof Navigable navigable) {
 				children.remove(navigable);
+				childrenToTab.remove(navigable);
+			}
 		}
 	}
 
