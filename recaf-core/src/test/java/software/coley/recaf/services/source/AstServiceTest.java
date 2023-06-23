@@ -19,6 +19,7 @@ import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.*;
 import software.coley.recaf.util.Types;
+import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -1071,9 +1073,10 @@ public class AstServiceTest extends TestBase {
 		}
 	}
 
+	@SuppressWarnings("LanguageMismatch")
 	private static void handleUnit(String source, BiConsumer<J.CompilationUnit, ExecutionContext> consumer) {
 		InMemoryExecutionContext context = new InMemoryExecutionContext(Throwable::printStackTrace);
-		List<J.CompilationUnit> units = parser.parse(context, source);
+		List<J.CompilationUnit> units = Unchecked.cast(parser.parse(context, source).collect(Collectors.toList()));
 		assertEquals(1, units.size());
 		if (consumer != null)
 			consumer.accept(units.get(0), context);

@@ -35,6 +35,7 @@ import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -42,6 +43,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Enables context actions on an {@link Editor} by parsing the source text as Java and modeling the AST.
@@ -276,7 +278,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			// Parse the current source
 			long start = System.currentTimeMillis();
 			logger.debugging(l -> l.info("Starting AST parse..."));
-			List<J.CompilationUnit> units = parser.parse(text);
+			List<J.CompilationUnit> units = Unchecked.cast(parser.parse(text).collect(Collectors.toList()));
 			if (units.isEmpty()) {
 				unit = null;
 				logger.warn("Could not create Java AST model from source of: {} after {}ms",

@@ -67,10 +67,10 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 			int endIndex = mappedType.lastIndexOf('/');
 			if (endIndex > 0) {
 				String mappedPackage = mappedType.substring(0, endIndex).replace('/', '.');
-				pkg = pkg.withTemplate(
-						JavaTemplate.builder(this::getCursor, mappedPackage).build(),
-						pkg.getCoordinates().replace()
-				);
+				pkg = JavaTemplate.builder(mappedPackage)
+						.contextSensitive()
+						.build()
+						.apply(getCursor(), pkg.getCoordinates().replace());
 			}
 		}
 		return pkg;

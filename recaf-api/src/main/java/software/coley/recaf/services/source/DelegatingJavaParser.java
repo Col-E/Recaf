@@ -1,11 +1,10 @@
 package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.openrewrite.ExecutionContext;
-import org.openrewrite.internal.lang.Nullable;
+import org.openrewrite.SourceFile;
 import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.marker.JavaSourceSet;
-import org.openrewrite.java.tree.J;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 
@@ -13,9 +12,8 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * Delegating implementation of {@link JavaParser}.
@@ -36,9 +34,9 @@ public class DelegatingJavaParser implements JavaParser {
 
 	@Nonnull
 	@Override
-	public List<J.CompilationUnit> parseInputs(@Nonnull Iterable<Input> sources,
-											   @Nullable Path relativeTo,
-											   @Nonnull ExecutionContext ctx) {
+	public Stream<SourceFile> parseInputs(@Nonnull Iterable<Input> sources,
+										  @Nullable Path relativeTo,
+										  @Nonnull ExecutionContext ctx) {
 		try {
 			// The default source-set type generation logic is not well optimized.
 			// We also do not gain significant benefits from it, so we can skip it entirely.
@@ -46,7 +44,7 @@ public class DelegatingJavaParser implements JavaParser {
 			return delegate.parseInputs(sources, relativeTo, ctx);
 		} catch (Throwable t) {
 			logger.error("Error while parsing source into AST", t);
-			return Collections.emptyList();
+			return Stream.empty();
 		}
 	}
 
@@ -67,23 +65,10 @@ public class DelegatingJavaParser implements JavaParser {
 		delegate.setClasspath(classpath);
 	}
 
-	@Override
-	@SuppressWarnings("deprecation")
-	public void setSourceSet(@Nonnull String sourceSet) {
-		delegate.setSourceSet(sourceSet);
-	}
-
-	@Nonnull
-	@Override
-	@SuppressWarnings("deprecation")
-	public JavaSourceSet getSourceSet(@Nonnull ExecutionContext ctx) {
-		return delegate.getSourceSet(ctx);
-	}
-
 	@Nonnull
 	@Override
 	public Path sourcePathFromSourceText(@Nonnull Path prefix, @Nonnull String sourceCode) {
 		// Bogus, we do not want obfuscated inputs triggering path get operations.
-		return Paths.get(UUID.randomUUID().toString());
+		return Paths.get(UUID.randomUUID() + ".java");
 	}
 }
