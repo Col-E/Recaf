@@ -6,13 +6,15 @@ import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.path.PathNode;
 
+import java.util.function.Function;
+
 /**
  * Cell for rendering {@link PathNode} items.
  *
  * @author Matt Coley
  */
 public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
-	private final ContextSource source;
+	private final Function<PathNode<?>, ContextSource> sourceFunc;
 	private final CellConfigurationService configurationService;
 
 	/**
@@ -23,7 +25,18 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 	 */
 	public WorkspaceTreeCell(@Nonnull ContextSource source,
 							 @Nonnull CellConfigurationService configurationService) {
-		this.source = source;
+		this(path -> source, configurationService);
+	}
+
+	/**
+	 * @param sourceFunc
+	 * 		Context requester source function.
+	 * @param configurationService
+	 * 		Service to configure cell content.
+	 */
+	public WorkspaceTreeCell(@Nonnull Function<PathNode<?>, ContextSource> sourceFunc,
+							 @Nonnull CellConfigurationService configurationService) {
+		this.sourceFunc = sourceFunc;
 		this.configurationService = configurationService;
 	}
 
@@ -33,7 +46,7 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 		if (empty || item == null) {
 			configurationService.reset(this);
 		} else {
-			configurationService.configure(this, item, source);
+			configurationService.configure(this, item, sourceFunc.apply(item));
 		}
 	}
 }

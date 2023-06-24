@@ -31,6 +31,7 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Displays parents and children of a {@link ClassInfo}.
@@ -53,7 +54,8 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 
 		// Configure tree.
 		tree.setShowRoot(true);
-		tree.setCellFactory(param -> new WorkspaceTreeCell(ContextSource.REFERENCE, configurationService));
+		tree.setCellFactory(param -> new WorkspaceTreeCell(p -> Objects.equals(p, path) ?
+				ContextSource.DECLARATION : ContextSource.REFERENCE, configurationService));
 		tree.getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 
 		// Configure toggle button between parent & child display.
