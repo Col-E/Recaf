@@ -72,7 +72,7 @@ public final class EscapeUtil {
 	}
 
 	/**
-	 * Replaces any non JASM-compliant characters with an escaped sequence.
+	 * Replaces all standard characters with unicode escapes.
 	 * <br>
 	 * This includes both unicode and standard escapes, with a few extras.
 	 *
@@ -81,7 +81,7 @@ public final class EscapeUtil {
 	 *
 	 * @return String without escaped characters.
 	 */
-	public static String escapeJasm(String input) {
+	public static String escapeComplete(String input) {
 		return visit(input, EscapeUtil::computeUnescapeUnicodeJasm);
 	}
 

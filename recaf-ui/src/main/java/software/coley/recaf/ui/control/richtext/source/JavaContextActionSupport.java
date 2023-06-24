@@ -9,10 +9,14 @@ import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
+import org.openrewrite.ParseError;
+import org.openrewrite.ParseExceptionResult;
+import org.openrewrite.SourceFile;
 import org.openrewrite.Tree;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.marker.Marker;
 import org.openrewrite.marker.Range;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -278,18 +282,26 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			// Parse the current source
 			long start = System.currentTimeMillis();
 			logger.debugging(l -> l.info("Starting AST parse..."));
-			List<J.CompilationUnit> units = Unchecked.cast(parser.parse(text).collect(Collectors.toList()));
-			if (units.isEmpty()) {
+			List<SourceFile> results = parser.parse(text).toList();
+			long diff = (System.currentTimeMillis() - start);
+			String classNameEsc = EscapeUtil.escapeAll(className);
+			if (results.isEmpty()) {
 				unit = null;
-				logger.warn("Could not create Java AST model from source of: {} after {}ms",
-						className, (System.currentTimeMillis() - start));
+				logger.warn("Could not create Java AST model from source of: {} after {}ms", classNameEsc, diff);
 			} else {
-				unit = units.get(0);
-				logger.debugging(l -> l.info("AST parsed successfully, took {}ms",
-						(System.currentTimeMillis() - start)));
+				SourceFile result = results.get(0);
+				if (result instanceof ParseError parseError) {
+					unit = null;
+					ParseExceptionResult errResult = (ParseExceptionResult) parseError.getMarkers().getMarkers().get(0);
+					logger.warn("Parse error from source of: {} after {}ms, err={}",
+							classNameEsc, diff, errResult.getMessage());
+				} else if (result instanceof J.CompilationUnit unit) {
+					this.unit = unit;
+					logger.debugging(l -> l.info("AST parsed successfully, took {}ms", diff));
 
-				// Run queued tasks
-				if (queuedSelectionTask != null) queuedSelectionTask.run();
+					// Run queued tasks
+					if (queuedSelectionTask != null) queuedSelectionTask.run();
+				}
 			}
 
 			// Wipe offset map now that we have a new AST
