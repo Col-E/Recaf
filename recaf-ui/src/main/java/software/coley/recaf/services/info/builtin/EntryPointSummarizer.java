@@ -58,6 +58,8 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 				List<MethodMember> entryMethods = cls.getMethods().stream()
 						.filter(this::isJvmEntry)
 						.toList();
+				// TODO: The 'gotoDeclaration' usage here will always hold the original reference
+				//  - If a user makes a change to the class, these links will not point to the updated class
 				if (!entryMethods.isEmpty()) {
 					// Add entry for class
 					String classDisplay = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, cls).makeText();
