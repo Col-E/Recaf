@@ -1,7 +1,7 @@
 def asmVersion = '9.5'
 def cafeDudeVersion = '1.10.2'
 def junitVersion = '5.9.2'
-def androidToolsVersion = '31.2.0-alpha02'
+def androidToolsVersion = '31.2.0-alpha09'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
@@ -38,7 +38,7 @@ project.ext {
 
     instrument_server = 'software.coley:instrumentation-server:1.3.6'
 
-    jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.1'
+    jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2'
 
     jlinker = 'com.github.xxDark:jlinker:1.0.4'
 
