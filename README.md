@@ -15,6 +15,10 @@ An easy to use modern Java bytecode editor that abstracts away the complexities 
 - Support for standard Java _and_ Android applications
 - Multiple decompilers to switch between, with all of their parameters made fully configurable
 - Built in compiler to allow recompiling decompiled classes, even if some referenced classes are missing *(When supported, support may vary depending on code complexity and obfuscation)*
+- A bytecode assembler with a simple syntax, and supported tooling
+    - See the state of local variables and stack values at any point in methods
+    - Access variables by names instead of indices for clearer code
+    - Convert snippets of Java source code to bytecode sequences automatically
 - Searching for a variety of different content: Strings/numeric constants, classes and member references, instruction patterns
 - Tools for deobfuscating obfuscated code
     - Specially crafted class files with the intent of crashing reverse engineering tools are automatically patched when opened in Recaf
