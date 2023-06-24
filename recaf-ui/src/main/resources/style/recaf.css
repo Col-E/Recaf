@@ -841,6 +841,22 @@ Text {
   -fx-scale-shape: false;
 }
 
+.list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:hover,
+.tree-view > .virtual-flow > .clipped-container > .sheet > .tree-cell:filled:hover,
+.table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:hover,
+.tree-table-view > .virtual-flow > .clipped-container > .sheet > .tree-table-row-cell:filled:hover {
+  -color-cell-fg: -color-cell-fg-hover;
+  -fx-background-color: -color-cell-border, -color-cell-bg-hover;
+}
+
+.list-view:focused > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:hover,
+.tree-view:focused > .virtual-flow > .clipped-container > .sheet > .tree-cell:filled:hover,
+.table-view:focused > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:hover,
+.tree-table-view:focused > .virtual-flow > .clipped-container > .sheet > .tree-table-row-cell:filled:hover {
+  -color-cell-fg: -color-cell-fg-hover-focused;
+  -fx-background-color: -color-cell-border, -color-cell-bg-hover-focused;
+}
+
 .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected,
 .tree-view > .virtual-flow > .clipped-container > .sheet > .tree-cell:filled:selected,
 .table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected,
@@ -906,6 +922,10 @@ Text {
 .list-view {
   -color-cell-bg: rgb(35, 35, 35);
   -color-cell-fg: -color-fg-default;
+  -color-cell-bg-hover: rgb(50, 50, 50);
+  -color-cell-fg-hover: -color-fg-default;
+  -color-cell-bg-hover-focused: -color-base-9;
+  -color-cell-fg-hover-focused: -color-fg-default;
   -color-cell-bg-selected: rgb(50, 50, 50);
   -color-cell-fg-selected: -color-fg-default;
   -color-cell-bg-selected-focused: -color-base-9;
@@ -955,6 +975,10 @@ Text {
 .table-view {
   -color-cell-bg: rgb(35, 35, 35);
   -color-cell-fg: -color-fg-default;
+  -color-cell-bg-hover: rgb(50, 50, 50);
+  -color-cell-fg-hover: -color-fg-default;
+  -color-cell-bg-hover-focused: -color-base-9;
+  -color-cell-fg-hover-focused: -color-fg-default;
   -color-cell-bg-selected: rgb(50, 50, 50);
   -color-cell-fg-selected: -color-fg-default;
   -color-cell-bg-selected-focused: -color-base-9;
@@ -1117,6 +1141,10 @@ Add support for NO_HEADER tweak in tables .table-view.no-header > .column-header
 .tree-view {
   -color-cell-bg: rgb(35, 35, 35);
   -color-cell-fg: -color-fg-default;
+  -color-cell-bg-hover: rgb(50, 50, 50);
+  -color-cell-fg-hover: -color-fg-default;
+  -color-cell-bg-hover-focused: -color-base-9;
+  -color-cell-fg-hover-focused: -color-fg-default;
   -color-cell-bg-selected: rgb(50, 50, 50);
   -color-cell-fg-selected: -color-fg-default;
   -color-cell-bg-selected-focused: -color-base-9;
@@ -1184,6 +1212,10 @@ Add support for NO_HEADER tweak in tables .table-view.no-header > .column-header
 .tree-table-view {
   -color-cell-bg: rgb(35, 35, 35);
   -color-cell-fg: -color-fg-default;
+  -color-cell-bg-hover: rgb(50, 50, 50);
+  -color-cell-fg-hover: -color-fg-default;
+  -color-cell-bg-hover-focused: -color-base-9;
+  -color-cell-fg-hover-focused: -color-fg-default;
   -color-cell-bg-selected: rgb(50, 50, 50);
   -color-cell-fg-selected: -color-fg-default;
   -color-cell-bg-selected-focused: -color-base-9;
