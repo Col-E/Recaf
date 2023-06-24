@@ -12,6 +12,9 @@ import java.util.List;
  */
 public class ByteHeaderUtil {
 	private static final int WILD = Integer.MIN_VALUE;
+	// JVM/Android
+	public static final int[] CLASS = {0xCA, 0xFE, 0xBA, 0xBE};
+	public static final int[] DEX = {0x64, 0x65, 0x78, 0x0A};
 	// Archives
 	public static final int[] TAR_LZW = {0x1F, 0x9D};
 	public static final int[] TAR_LZH = {0x1F, 0xA0};
@@ -40,15 +43,11 @@ public class ByteHeaderUtil {
 			SEVEN_Z,
 			JMOD);
 	// Programs
-	public static final int[] CLASS = {0xCA, 0xFE, 0xBA, 0xBE};
-	public static final int[] DEX = {0x64, 0x65, 0x78, 0x0A};
 	public static final int[] PE = {0x4D, 0x5A};
 	public static final int[] ELF = {0x7F, 0x45, 0x4C, 0x46};
 	public static final int[] DYLIB_32 = {0xCE, 0xFA, 0xED, 0xFE};
 	public static final int[] DYLIB_64 = {0xCF, 0xFA, 0xED, 0xFE};
 	public static final List<int[]> PROGRAM_HEADERS = List.of(
-			CLASS,
-			DEX,
 			PE,
 			ELF,
 			DYLIB_32,
