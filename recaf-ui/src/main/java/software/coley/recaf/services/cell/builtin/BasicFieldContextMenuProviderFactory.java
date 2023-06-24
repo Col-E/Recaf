@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
@@ -16,6 +17,8 @@ import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.ui.control.ActionMenuItem;
+import software.coley.recaf.util.Menus;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -54,27 +57,37 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
 
 			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.goto.field", CarbonIcons.ARROW_RIGHT,
-					() -> {
-						ClassPathNode classPath = PathNodes.classPath(workspace, resource, bundle, declaringClass);
-						try {
-							actions.gotoDeclaration(classPath)
-									.requestFocus(field);
-						} catch (IncompletePathException ex) {
-							logger.error("Cannot go to method due to incomplete path", ex);
-						}
-					}));
-			// TODO: implement operations
-			//  - Go to
-			//  - Edit
-			//    - (field / method assembler)
-			//    - Add annotation
-			//    - Remove annotations
-			//  - Copy
-			//  - Delete
-			//  - Refactor
-			//    - Rename
-			//  - Search references
+			if (source.isReference()) {
+				items.add(action("menu.goto.field", CarbonIcons.ARROW_RIGHT,
+						() -> {
+							ClassPathNode classPath = PathNodes.classPath(workspace, resource, bundle, declaringClass);
+							try {
+								actions.gotoDeclaration(classPath)
+										.requestFocus(field);
+							} catch (IncompletePathException ex) {
+								logger.error("Cannot go to method due to incomplete path", ex);
+							}
+						}));
+			} else {
+				// TODO: implement operations
+				//  - Edit
+				//    - (field / method assembler)
+				//    - Add annotation
+				//    - Remove annotations
+				//  - Copy
+				//  - Delete
+			}
+			// TODO: Implement search UI, and open that when these actions are run
+			// Search actions
+			ActionMenuItem searchMemberRefs = action("menu.search.field-references", CarbonIcons.CODE, () -> {
+			});
+			searchMemberRefs.setDisable(true);
+
+			// Refactor actions
+			ActionMenuItem rename = action("menu.refactor.rename", CarbonIcons.TAG_EDIT,
+					() -> actions.renameField(workspace, resource, bundle, declaringClass, field));
+
+			items.addAll(searchMemberRefs, rename);
 			return menu;
 		};
 	}

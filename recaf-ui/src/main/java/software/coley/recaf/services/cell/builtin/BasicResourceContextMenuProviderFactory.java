@@ -29,10 +29,7 @@ public class BasicResourceContextMenuProviderFactory extends AbstractContextMenu
 															  @Nonnull Workspace workspace,
 															  @Nonnull WorkspaceResource resource) {
 		return () -> {
-			// TODO: Need to make 'thing to string' an injectable service too.
-			//      Though for this, I don't think we need to make plugin support, so the impl can be much simpler than graphic/menu stuff
-			String name = resource.getClass().getSimpleName();
-
+			String name = textService.getResourceTextProvider(workspace, resource).makeText();
 			IconProvider iconProvider = iconService.getResourceIconProvider(workspace, resource);
 			ContextMenu menu = new ContextMenu();
 			addHeader(menu, name, iconProvider.makeIcon());

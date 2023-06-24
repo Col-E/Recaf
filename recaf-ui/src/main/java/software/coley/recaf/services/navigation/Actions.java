@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.AnnotationInfo;
+import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
@@ -464,7 +465,12 @@ public class Actions implements Service {
 		// Handle renaming based on the different resolved content type.
 		if (path instanceof ClassPathNode classPath)
 			Unchecked.run(() -> renameClass(classPath));
-		// TODO: Handle other types (fields/methods)
+		else if (path instanceof ClassMemberPathNode memberPathNode) {
+			if (memberPathNode.isField())
+				Unchecked.run(() -> renameField(memberPathNode));
+			else
+				Unchecked.run(() -> renameMethod(memberPathNode));
+		}
 	}
 
 	/**
@@ -493,16 +499,7 @@ public class Actions implements Service {
 			logger.error("Cannot resolve required path nodes for class '{}', missing bundle in path", info.getName());
 			throw new IncompletePathException(ClassBundle.class);
 		}
-
-		// Handle JVM vs Android
-		if (info.isJvmClass()) {
-			renameClass(workspace, resource, (JvmClassBundle) bundle, info.asJvmClass());
-		} else if (info.isAndroidClass()) {
-			// TODO: Android renaming
-			logger.error("TODO: Android renaming");
-		} else {
-			throw new UnsupportedContent("Unsupported class type: " + info.getClass().getName());
-		}
+		renameClass(workspace, resource, bundle, info);
 	}
 
 	/**
@@ -515,12 +512,12 @@ public class Actions implements Service {
 	 * @param bundle
 	 * 		Containing bundle.
 	 * @param info
-	 * 		Class to go rename.
+	 * 		Class to rename.
 	 */
 	public void renameClass(@Nonnull Workspace workspace,
 							@Nonnull WorkspaceResource resource,
-							@Nonnull JvmClassBundle bundle,
-							@Nonnull JvmClassInfo info) {
+							@Nonnull ClassBundle<? extends ClassInfo> bundle,
+							@Nonnull ClassInfo info) {
 		String originalName = info.getName();
 		Consumer<String> renameTask = newName -> {
 			// Create mapping for the class and any inner classes.
@@ -540,6 +537,144 @@ public class Actions implements Service {
 		new NamePopup(renameTask)
 				.withInitialClassName(originalName)
 				.forClassRename(bundle)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to rename the given field.
+	 *
+	 * @param path
+	 * 		Path to field.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	public void renameField(@Nonnull ClassMemberPathNode path) throws IncompletePathException {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
+		ClassInfo declaringClass = path.getValueOfType(ClassInfo.class);
+		FieldMember fieldMember = (FieldMember) path.getValue();
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for field '{}', missing workspace in path", fieldMember.getName());
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for field '{}', missing resource in path", fieldMember.getName());
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for field '{}', missing bundle in path", fieldMember.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+		if (declaringClass == null) {
+			logger.error("Cannot resolve required path nodes for field '{}', missing class in path", fieldMember.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+		renameField(workspace, resource, bundle, declaringClass, fieldMember);
+	}
+
+	/**
+	 * Prompts the user to rename the given field.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Class containing the field.
+	 * @param field
+	 * 		Field to rename.
+	 */
+	public void renameField(@Nonnull Workspace workspace,
+							@Nonnull WorkspaceResource resource,
+							@Nonnull ClassBundle<? extends ClassInfo> bundle,
+							@Nonnull ClassInfo declaringClass,
+							@Nonnull FieldMember field) {
+		String originalName = field.getName();
+		Consumer<String> renameTask = newName -> {
+			IntermediateMappings mappings = new IntermediateMappings();
+			mappings.addField(declaringClass.getName(), field.getDescriptor(), originalName, newName);
+
+			// Apply the mappings.
+			MappingApplier applier = applierProvider.get();
+			MappingResults results = applier.applyToPrimaryResource(mappings);
+			results.apply();
+		};
+		new NamePopup(renameTask)
+				.withInitialMemberName(originalName)
+				.forFieldRename(declaringClass, field)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to rename the given method.
+	 *
+	 * @param path
+	 * 		Path to method.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	public void renameMethod(@Nonnull ClassMemberPathNode path) throws IncompletePathException {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
+		ClassInfo declaringClass = path.getValueOfType(ClassInfo.class);
+		MethodMember methodMember = (MethodMember) path.getValue();
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for method '{}', missing workspace in path", methodMember.getName());
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for method '{}', missing resource in path", methodMember.getName());
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for method '{}', missing bundle in path", methodMember.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+		if (declaringClass == null) {
+			logger.error("Cannot resolve required path nodes for method '{}', missing class in path", methodMember.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+		renameMethod(workspace, resource, bundle, declaringClass, methodMember);
+	}
+
+	/**
+	 * Prompts the user to rename the given method.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Class containing the method.
+	 * @param method
+	 * 		Method to rename.
+	 */
+	public void renameMethod(@Nonnull Workspace workspace,
+							 @Nonnull WorkspaceResource resource,
+							 @Nonnull ClassBundle<? extends ClassInfo> bundle,
+							 @Nonnull ClassInfo declaringClass,
+							 @Nonnull MethodMember method) {
+		String originalName = method.getName();
+		Consumer<String> renameTask = newName -> {
+			IntermediateMappings mappings = new IntermediateMappings();
+			mappings.addMethod(declaringClass.getName(), method.getDescriptor(), originalName, newName);
+
+			// Apply the mappings.
+			MappingApplier applier = applierProvider.get();
+			MappingResults results = applier.applyToPrimaryResource(mappings);
+			results.apply();
+		};
+		new NamePopup(renameTask)
+				.withInitialMemberName(originalName)
+				.forMethodRename(declaringClass, method)
 				.show();
 	}
 

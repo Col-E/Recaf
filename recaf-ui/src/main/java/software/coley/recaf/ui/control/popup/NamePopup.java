@@ -13,6 +13,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RecafScene;
@@ -33,7 +35,7 @@ import static org.kordamp.ikonli.carbonicons.CarbonIcons.CLOSE;
  * @author Matt Coley
  */
 public class NamePopup extends RecafStage {
-	private final BooleanProperty classNameConflict = new SimpleBooleanProperty(false);
+	private final BooleanProperty nameConflict = new SimpleBooleanProperty(false);
 	private final Label output = new Label();
 	private final TextField nameInput = new TextField();
 	private final Button accept;
@@ -73,7 +75,7 @@ public class NamePopup extends RecafStage {
 	 */
 	private void accept(@Nonnull Consumer<String> nameConsumer) {
 		// Do nothing if conflict detected
-		if (classNameConflict.get()) {
+		if (nameConflict.get()) {
 			Toolkit.getDefaultToolkit().beep();
 			return;
 		}
@@ -95,9 +97,9 @@ public class NamePopup extends RecafStage {
 		output.textProperty().bind(Lang.getBinding("dialog.header.rename-class-error"));
 
 		// Bind conflict property
-		classNameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
-		accept.disableProperty().bind(classNameConflict);
-		output.visibleProperty().bind(classNameConflict);
+		nameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
+		accept.disableProperty().bind(nameConflict);
+		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
 
@@ -114,9 +116,53 @@ public class NamePopup extends RecafStage {
 		output.textProperty().bind(Lang.getBinding("dialog.header.rename-class-error"));
 
 		// Bind conflict property
-		classNameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
-		accept.disableProperty().bind(classNameConflict);
-		output.visibleProperty().bind(classNameConflict);
+		nameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
+		accept.disableProperty().bind(nameConflict);
+		output.visibleProperty().bind(nameConflict);
+		return this;
+	}
+
+	/**
+	 * @param declaringClass
+	 * 		Class the field is declared in.
+	 * 		Used to check for name overlap.
+	 * @param member
+	 * 		Current field info.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup forFieldRename(@Nonnull ClassInfo declaringClass, @Nonnull ClassMember member) {
+		titleProperty().bind(Lang.getBinding("dialog.title.rename-field"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.rename-field-error"));
+
+		// Bind conflict property
+		String descriptor = member.getDescriptor();
+		nameConflict.bind(nameInput.textProperty().map(name -> declaringClass.getDeclaredField(name, descriptor) != null));
+		accept.disableProperty().bind(nameConflict);
+		output.visibleProperty().bind(nameConflict);
+		return this;
+	}
+
+	/**
+	 * @param declaringClass
+	 * 		Class the method is declared in.
+	 * 		Used to check for name overlap.
+	 * @param member
+	 * 		Current method info.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup forMethodRename(@Nonnull ClassInfo declaringClass, @Nonnull ClassMember member) {
+		titleProperty().bind(Lang.getBinding("dialog.title.rename-method"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.rename-method-error"));
+
+		// Bind conflict property
+		String descriptor = member.getDescriptor();
+		nameConflict.bind(nameInput.textProperty().map(name -> declaringClass.getDeclaredMethod(name, descriptor) != null));
+		accept.disableProperty().bind(nameConflict);
+		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
 
@@ -133,6 +179,22 @@ public class NamePopup extends RecafStage {
 
 		// Select the last portion of the name.
 		nameInput.selectRange(name.lastIndexOf('/') + 1, name.length());
+		return this;
+	}
+
+	@Nonnull
+	public NamePopup withInitialMemberName(@Nonnull String name) {
+		// TODO: Need to handle escaping names with newlines and such
+		//  - and handle un-escaping when calling the consumer<string>
+		nameInput.setText(name);
+
+		// Need to get focus before selecting range.
+		// When the input gets focus, it resets the selection.
+		// But if we focus it, then set the selection we're good.
+		nameInput.requestFocus();
+
+		// Select the name.
+		nameInput.selectAll();
 		return this;
 	}
 }

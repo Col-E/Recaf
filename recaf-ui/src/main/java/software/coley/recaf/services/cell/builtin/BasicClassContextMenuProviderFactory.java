@@ -164,22 +164,37 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			items.add(edit);
 			items.add(copy);
 			items.add(delete);
+
 			// Disable items if not applicable
 			removeFields.setDisable(info.getFields().isEmpty());
 			removeMethods.setDisable(info.getMethods().isEmpty());
 			removeAnnotations.setDisable(info.getAnnotations().isEmpty());
+
+			// Not implemented yet, so disable
 			editClass.setDisable(true);
 			addField.setDisable(true);
 			addMethod.setDisable(true);
 			addAnnotation.setDisable(true);
 		}
+		// TODO: Implement search UI, and open that when these actions are run
+		// Search actions
+		Menu search = Menus.menu("menu.search", CarbonIcons.SEARCH);
+		ActionMenuItem searchMemberRefs = action("menu.search.class.member-references", CarbonIcons.CODE, () -> {
+		});
+		ActionMenuItem searchTypeRefs = action("menu.search.class.type-references", CarbonIcons.CODE_REFERENCE, () -> {
+		});
+		searchMemberRefs.setDisable(true);
+		searchTypeRefs.setDisable(true);
+		search.getItems().addAll(searchMemberRefs, searchTypeRefs);
+
+		// Refactor actions
 		Menu refactor = Menus.menu("menu.refactor", CarbonIcons.PAINT_BRUSH);
 		ActionMenuItem rename = action("menu.refactor.rename", CarbonIcons.TAG_EDIT, () -> actions.renameClass(workspace, resource, bundle, info));
 		ActionMenuItem move = action("menu.refactor.move", CarbonIcons.STACKED_MOVE, () -> actions.moveClass(workspace, resource, bundle, info));
 		refactor.getItems().addAll(rename, move);
-		items.add(refactor);
+		items.addAll(search, refactor);
+
 		// TODO: implement operations
-		//  - Search references
 		//  - View
 		//    - Class hierarchy
 		//  - Deobfuscate

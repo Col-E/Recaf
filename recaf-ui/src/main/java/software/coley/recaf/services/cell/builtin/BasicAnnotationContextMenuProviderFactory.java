@@ -41,6 +41,9 @@ public class BasicAnnotationContextMenuProviderFactory extends AbstractContextMe
 			IconProvider iconProvider = iconService.getAnnotationIconProvider(workspace, resource, bundle, annotated, annotation);
 			ContextMenu menu = new ContextMenu();
 			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
+			// TODO: Actions
+			//  - Goto annotation type declaration
+			//  - Goto annotated class/member
 			return menu;
 		};
 	}

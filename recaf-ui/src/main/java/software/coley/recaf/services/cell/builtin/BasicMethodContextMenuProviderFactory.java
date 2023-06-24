@@ -16,6 +16,7 @@ import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -53,28 +54,39 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
 
 			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.goto.method", CarbonIcons.ARROW_RIGHT,
-					() -> {
-						ClassPathNode classPath = PathNodes.classPath(workspace, resource, bundle, declaringClass);
-						try {
-							actions.gotoDeclaration(classPath)
-									.requestFocus(method);
-						} catch (IncompletePathException ex) {
-							logger.error("Cannot go to method due to incomplete path", ex);
-						}
-					}));
+			if (source.isReference()) {
+				items.add(action("menu.goto.method", CarbonIcons.ARROW_RIGHT,
+						() -> {
+							ClassPathNode classPath = PathNodes.classPath(workspace, resource, bundle, declaringClass);
+							try {
+								actions.gotoDeclaration(classPath)
+										.requestFocus(method);
+							} catch (IncompletePathException ex) {
+								logger.error("Cannot go to method due to incomplete path", ex);
+							}
+						}));
+			} else {
+				// TODO: implement additional operations
+				//  - Edit
+				//    - (field / method assembler)
+				//    - Add annotation
+				//    - Remove annotations
+				//    - Make no-op
+				//  - Copy
+				//  - Delete
+			}
+
+			// TODO: Implement search UI, and open that when these actions are run
+			// Search actions
+			ActionMenuItem searchMemberRefs = action("menu.search.method-references", CarbonIcons.CODE, () -> {
+			});
+			searchMemberRefs.setDisable(true);
+
+			// Refactor actions
+			ActionMenuItem rename = action("menu.refactor.rename", CarbonIcons.TAG_EDIT,
+					() -> actions.renameMethod(workspace, resource, bundle, declaringClass, method));
+
 			// TODO: implement additional operations
-			//  - Go to
-			//  - Edit
-			//    - (field / method assembler)
-			//    - Add annotation
-			//    - Remove annotations
-			//    - Make no-op
-			//  - Copy
-			//  - Delete
-			//  - Refactor
-			//    - Rename
-			//  - Search references
 			//  - View
 			//    - Control flow graph
 			//    - Application flow graph
@@ -83,6 +95,7 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			//    - Optimize with pattern matchers
 			//    - Optimize with SSVM
 			//  - Simulate with SSVM (Virtualize > Run)
+			items.addAll(searchMemberRefs, rename);
 			return menu;
 		};
 	}
