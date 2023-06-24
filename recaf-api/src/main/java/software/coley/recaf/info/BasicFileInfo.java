@@ -83,4 +83,9 @@ public class BasicFileInfo implements FileInfo {
 	public Map<String, Property<?>> getProperties() {
 		return properties.getProperties();
 	}
+
+	@Override
+	public String toString() {
+		return name;
+	}
 }
