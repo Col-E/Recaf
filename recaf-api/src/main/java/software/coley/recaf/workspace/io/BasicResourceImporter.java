@@ -142,12 +142,6 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			if (entryName.endsWith("/") && Unchecked.getOr(headerSource::isEmpty, false))
 				return;
 
-			// Skip the following cases:
-			//  - zero-length directories
-			//  - path traversal attempts
-			if (entryName.contains("//") || entryName.contains("../"))
-				return;
-
 			// Read the value of the entry to figure out how to handle adding it to the resource builder.
 			Info info;
 			try {

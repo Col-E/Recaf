@@ -147,8 +147,11 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 
 			// Insert the directory path, separated by '/'.
 			// Update 'node' as we build/fetch the directory path items.
+			// We use '-1' as a limit in split to allow empty directories to be split properly:
+			//  '//' --> ['', '', '']
 			String fullDirectory = directoryPath.getValue();
-			String[] directoryParts = fullDirectory.split("/");
+			String[] directoryParts = fullDirectory.split("/", -1);
+
 			StringBuilder directoryBuilder = new StringBuilder();
 			for (String directoryPart : directoryParts) {
 				// Build up directory path.
