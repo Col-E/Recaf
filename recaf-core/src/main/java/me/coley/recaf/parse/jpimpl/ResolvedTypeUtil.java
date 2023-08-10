@@ -1,11 +1,11 @@
 package me.coley.recaf.parse.jpimpl;
 
+import com.github.javaparser.resolution.TypeSolver;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParametrizable;
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.resolution.types.ResolvedVoidType;
-import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import javassist.bytecode.SignatureAttribute;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.parse.WorkspaceTypeSolver;

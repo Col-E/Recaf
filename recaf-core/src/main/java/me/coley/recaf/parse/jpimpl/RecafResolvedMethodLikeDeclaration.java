@@ -5,10 +5,10 @@ import com.github.javaparser.resolution.declarations.ResolvedMethodLikeDeclarati
 import com.github.javaparser.resolution.declarations.ResolvedParameterDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
+import com.github.javaparser.resolution.model.SymbolReference;
+import com.github.javaparser.resolution.model.typesystem.ReferenceTypeImpl;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javassistmodel.JavassistTypeParameter;
-import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
-import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 import javassist.bytecode.SignatureAttribute;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.parse.WorkspaceTypeSolver;
@@ -108,7 +108,7 @@ public abstract class RecafResolvedMethodLikeDeclaration implements ResolvedMeth
 				if (declaration instanceof RecafResolvedTypeDeclaration)
 					return new RecafResolvedReferenceType((RecafResolvedTypeDeclaration) declaration);
 				else
-					return new ReferenceTypeImpl(declaration, typeSolver);
+					return new ReferenceTypeImpl(declaration);
 			}
 			throw new ResolveLookupException("Failed to resolve: " + exceptionType);
 		} else {

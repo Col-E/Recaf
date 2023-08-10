@@ -2,12 +2,14 @@ package me.coley.recaf.parse;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.resolution.Context;
+import com.github.javaparser.resolution.TypeSolver;
 import com.github.javaparser.resolution.declarations.*;
+import com.github.javaparser.resolution.model.SymbolReference;
 import com.github.javaparser.resolution.types.ResolvedArrayType;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.resolution.types.ResolvedTypeVariable;
-import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFactory;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
@@ -15,8 +17,6 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserParameterDeclaration;
 import com.github.javaparser.symbolsolver.logic.AbstractClassDeclaration;
 import com.github.javaparser.symbolsolver.logic.AbstractTypeDeclaration;
-import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
-import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.reflectionmodel.*;
 import me.coley.recaf.parse.jpimpl.RecafResolvedTypeDeclaration;
 import me.coley.recaf.parse.jpimpl.RecafResolvedFieldDeclaration;
@@ -437,7 +437,7 @@ public class JavaParserPrinting {
 	 *
 	 * @return The type solver field associated with the node. May be {@code null}.
 	 */
-	public static TypeSolver getTypeSolver(AssociableToAST<?> node) {
+	public static TypeSolver getTypeSolver(AssociableToAST node) {
 		try {
 			Field field = ReflectUtil.getDeclaredField(node.getClass(), "typeSolver");
 			return ReflectUtil.quietGet(node, field);
