@@ -69,7 +69,7 @@ subprojects {
         def jadxVersion = '1.4.4' // fails on 1.4.7 (runtime, no logger found)
         def jpVersion = '3.24.4' // fails on '3.25.4', breaking changes
         def junitVersion = '5.10.0'
-        def lljzipVersion = '1.1.8' // fail on '2.1.3', breaking changes
+        def lljzipVersion = '2.1.3'
         def ssvmVersion = '1.9.0.3'
         def quiltflowerVersion = '1.9.0'
         def procyonVersion = '0.6.0'
@@ -101,7 +101,7 @@ subprojects {
         junit_api = "org.junit.jupiter:junit-jupiter-api:$junitVersion"
         junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
         junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
-        llzip = "com.github.Col-E:LL-Java-Zip:$lljzipVersion"
+        llzip = "software.coley:lljzip:$lljzipVersion"
         logback_classic = 'ch.qos.logback:logback-classic:1.2.10' // newer releases break in jar releases
         pe = 'com.github.cademtz:JavaPeParser:1.0.0' // fails on 2.2.3, breaking changes
         picocli = 'info.picocli:picocli:4.7.4'

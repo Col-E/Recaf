@@ -1,8 +1,8 @@
 package me.coley.recaf.workspace.resource.source;
 
 import me.coley.recaf.io.ByteSourceElement;
-import software.coley.llzip.part.LocalFileHeader;
-import software.coley.llzip.util.BufferData;
+import software.coley.lljzip.format.model.LocalFileHeader;
+import software.coley.lljzip.util.BufferData;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
