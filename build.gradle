@@ -13,7 +13,6 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'jacoco'
-    apply plugin: 'checkstyle'
     apply plugin: VersionsPlugin
 
     // https://docs.gradle.org/current/userguide/toolchains.html
@@ -42,8 +41,6 @@ subprojects {
 
         finalizedBy jacocoTestReport
     }
-
-    checkstyleMain.exclude '**/generated-src/**'
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'

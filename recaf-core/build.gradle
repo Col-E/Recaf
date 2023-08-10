@@ -61,10 +61,6 @@ test {
     useJUnitPlatform()
 }
 
-checkstyle {
-    checkstyleTest.enabled = false
-}
-
 jar {
     manifest.attributes('Specification-Version': project.version)
 }
