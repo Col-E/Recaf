@@ -616,7 +616,17 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * @return Result of update operation.
 	 */
 	private SaveResult updateClass(MethodNode updatedMethod) {
-		return updateClass(cw -> new MethodReplacingVisitor(cw, targetMember, updatedMethod));
+		try {
+			return updateClass(cw -> new MethodReplacingVisitor(cw, targetMember, updatedMethod));
+		} catch (Throwable t) {
+			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(t, getClass());
+			String classLocation = trace[0].getClassName();
+			if ("org.objectweb.asm.Frame".equals(classLocation))
+				logger.error("Failed to reassemble method (ASM frame generation)", t);
+			else
+				logger.error("Failed to reassemble method (Unknown)", t);
+			return SaveResult.FAILURE;
+		}
 	}
 
 	/**
@@ -634,13 +644,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		ClassWriter cw = new WorkspaceClassWriter(RecafUI.getController(), flags);
 		try {
 			updatedClass.accept(cw);
-		} catch (Exception ex) {
-			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(ex, getClass());
+		} catch (Throwable t) {
+			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(t, getClass());
 			String classLocation = trace[0].getClassName();
 			if ("org.objectweb.asm.Frame".equals(classLocation))
-				logger.error("Failed to reassemble method (ASM frame generation)", ex);
+				logger.error("Failed to reassemble class (ASM frame generation)", t);
 			else
-				logger.error("Failed to reassemble method (Unknown)", ex);
+				logger.error("Failed to reassemble class (Unknown)", t);
 			return SaveResult.FAILURE;
 		}
 		// Done, update the workspace
@@ -673,9 +683,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(ex, getClass());
 			String classLocation = trace[0].getClassName();
 			if ("org.objectweb.asm.Frame".equals(classLocation))
-				logger.error("Failed to reassemble method (ASM frame generation)", ex);
+				logger.error("Failed to reassemble class (ASM frame generation)", ex);
 			else
-				logger.error("Failed to reassemble method (Unknown)", ex);
+				logger.error("Failed to reassemble class (Unknown)", ex);
 			return SaveResult.FAILURE;
 		}
 		// Done, update the workspace
