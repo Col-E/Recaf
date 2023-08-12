@@ -83,7 +83,7 @@
     -fx-background-color: -color-bg-overlay;
 }
 .side-tab:hover,
-.side-tab:armed,
+.side-tab:selected,
 .side-tab:focused {
     -fx-background-color: -color-base-8;
 }

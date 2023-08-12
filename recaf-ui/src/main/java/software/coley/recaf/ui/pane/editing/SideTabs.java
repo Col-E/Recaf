@@ -1,6 +1,5 @@
 package software.coley.recaf.ui.pane.editing;
 
-import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -8,6 +7,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
@@ -177,6 +177,12 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 	 * Node adapter for {@link Tab} to display.
 	 */
 	private static class TabAdapter extends VBox {
+		private static final PseudoClass STATE_SELECTED = new PseudoClass() {
+			@Override
+			public String getPseudoClassName() {
+				return "selected";
+			}
+		};
 		private final ObservableBoolean selected = new ObservableBoolean(false);
 		private final Tab tab;
 
@@ -187,6 +193,7 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 		public TabAdapter(Tab tab) {
 			this.tab = tab;
 			ObservableList<String> styleClasses = getStyleClass();
+			styleClasses.add("side-tab");
 			setPadding(new Insets(5));
 			setSpacing(5);
 
@@ -201,19 +208,7 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 
 			// Handle visual state change with selection & hover events.
 			selected.addChangeListener((ob, old, cur) -> {
-				if (cur) {
-					if (!styleClasses.contains("side-tab"))
-						styleClasses.add("side-tab");
-				} else
-					styleClasses.remove("side-tab");
-			});
-			setOnMouseEntered(e -> {
-				if (!selected.getValue() && !styleClasses.contains("side-tab"))
-					styleClasses.add("side-tab");
-			});
-			setOnMouseExited(e -> {
-				if (!selected.getValue())
-					styleClasses.remove("side-tab");
+				pseudoClassStateChanged(STATE_SELECTED, cur);
 			});
 		}
 	}
