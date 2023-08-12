@@ -1,10 +1,13 @@
 package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
+import jakarta.enterprise.context.Dependent;
 import javafx.scene.layout.Pane;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.ui.docking.DockingManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +41,12 @@ public interface Navigable {
 
 	/**
 	 * Disables this navigable component.
+	 * <p>
+	 * Called when:
+	 * <ul>
+	 *     <li>A {@link Dependent} {@link Navigable} content within a tab tracked by {@link DockingManager} is closed.</li>
+	 *     <li>An associated {@link ClassInfo} or {@link FileInfo} in the workspace is removed.</li>
+	 * </ul>
 	 */
 	void disable();
 

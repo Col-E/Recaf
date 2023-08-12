@@ -188,6 +188,9 @@ public class NavigationManager implements Navigable, Service {
 			if (value instanceof Navigable navigable) {
 				children.remove(navigable);
 				childrenToTab.remove(navigable);
+
+				// For dependent beans, we are likely not going to see them ever again.
+				// Call disable to clean them up.
 				if (value.getClass().getDeclaredAnnotation(Dependent.class) != null)
 					navigable.disable();
 			}
