@@ -72,6 +72,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	private static final Logger logger = Logging.get(JvmDecompilerPane.class);
 	private static final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("recompile");
 	private final ObservableInteger javacTarget;
+	private final ObservableInteger javacDownsampleTarget;
 	private final ObservableBoolean javacDebug;
 	private final ModalPaneComponent overlayModal = new ModalPaneComponent();
 	private final PhantomGenerator phantomGenerator;
@@ -93,11 +94,12 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		this.phantomGenerator = phantomGenerator;
 		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
 		this.javacTarget = new ObservableInteger(javacConfig.getDefaultTargetVersion().getValue());
+		this.javacDownsampleTarget = new ObservableInteger(javacConfig.getDefaultDownsampleTargetVersion().getValue());
 		this.javacConfig = javacConfig;
 		this.javac = javac;
 
 		// Install tools container with configurator
-		new JvmDecompilerPaneConfigurator(toolsContainer, config, decompiler, javacTarget, javacDebug, decompilerManager);
+		new JvmDecompilerPaneConfigurator(toolsContainer, config, decompiler, javacTarget, javacDownsampleTarget, javacDebug, decompilerManager);
 		toolsContainer.install(editor);
 
 		// Setup keybindings
@@ -171,6 +173,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 			boolean debug = javacDebug.getValue();
 			JavacArgumentsBuilder builder = new JavacArgumentsBuilder()
 					.withVersionTarget(useConfiguredVersion(info))
+					.withDownsampleTarget(javacDownsampleTarget.getValue())
 					.withDebugVariables(debug)
 					.withDebugSourceName(debug)
 					.withDebugLineNumbers(debug)

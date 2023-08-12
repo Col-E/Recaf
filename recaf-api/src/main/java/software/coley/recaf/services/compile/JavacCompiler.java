@@ -30,6 +30,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @ApplicationScoped
 public class JavacCompiler implements Service {
 	public static final String SERVICE_ID = "java-compiler";
+	public static final int MIN_DOWNSAMPLE_VER = 8;
 	private static final DebuggingLogger logger = Logging.get(JavacCompiler.class);
 	private static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 	private final JavacCompilerConfig config;
@@ -125,7 +126,13 @@ public class JavacCompiler implements Service {
 			} else {
 				logger.debugging(l -> l.error("Compilation of '{}' failed", className));
 			}
-			return new CompilerResult(unitMap.getCompilations(), diagnostics);
+			CompileMap compilations = unitMap.getCompilations();
+			int downsampleTarget = arguments.getDownsampleTarget();
+			if (downsampleTarget >= MIN_DOWNSAMPLE_VER)
+				compilations.downsample(downsampleTarget);
+			else if (downsampleTarget >= 0)
+				logger.warn("Cannot downsample beyond Java {}", JavacCompiler.MIN_DOWNSAMPLE_VER);
+			return new CompilerResult(compilations, diagnostics);
 		} catch (RuntimeException ex) {
 			logger.debugging(l -> l.error("Compilation of '{}' crashed: {}", className, ex));
 			return new CompilerResult(ex);

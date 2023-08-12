@@ -14,6 +14,7 @@ public final class JavacArgumentsBuilder {
 	private String classSource;
 	private String classPath = System.getProperty("java.class.path");
 	private int versionTarget = JavaVersion.get();
+	private int downsampleTarget = -1;
 	private boolean debugVariables = true;
 	private boolean debugLineNumbers = true;
 	private boolean debugSourceName = true;
@@ -55,8 +56,21 @@ public final class JavacArgumentsBuilder {
 	}
 
 	/**
+	 * @param downsampleTarget
+	 * 		Java version to target via down sampling. Negative to disable downs sampling.
+	 * 		See: {@link JavacCompiler#MIN_DOWNSAMPLE_VER} for lowest supported target.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public JavacArgumentsBuilder withDownsampleTarget(int downsampleTarget) {
+		this.downsampleTarget = downsampleTarget;
+		return this;
+	}
+
+	/**
 	 * @param versionTarget
-	 * 		Java bytecode version to target.
+	 * 		Java version to target.
 	 *
 	 * @return Builder.
 	 */
@@ -113,7 +127,7 @@ public final class JavacArgumentsBuilder {
 			throw new IllegalArgumentException("Class source must not be null");
 
 		return new JavacArguments(className, classSource,
-				classPath, versionTarget,
+				classPath, versionTarget, downsampleTarget,
 				debugVariables, debugLineNumbers, debugSourceName);
 	}
 }

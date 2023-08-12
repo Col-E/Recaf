@@ -31,6 +31,10 @@ dependencies {
         exclude group: 'com.android.tools'
     }
     api directories
+    api(downgrader) {
+        exclude group: 'org.ow2.asm'
+        exclude group: 'org.slf4j'
+    }
     api extra_collections
     api extra_observables
     api gson // required by R8 (from dex-translator)

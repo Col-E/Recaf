@@ -25,13 +25,15 @@ public class JavacCompilerConfig extends BasicConfigContainer implements Service
 	private final ObservableBoolean generatePhantoms = new ObservableBoolean(true);
 	private final ObservableBoolean defaultEmitDebug = new ObservableBoolean(true);
 	private final ObservableInteger defaultTargetVersion = new ObservableInteger(-1);
+	private final ObservableInteger defaultDownsampleTargetVersion = new ObservableInteger(-1);
 
 	@Inject
 	public JavacCompilerConfig() {
 		super(ConfigGroups.SERVICE_COMPILE, JavacCompiler.SERVICE_ID + CONFIG_SUFFIX);
 		addValue(new BasicConfigValue<>("generate-phantoms", Boolean.class, generatePhantoms));
 		addValue(new BasicConfigValue<>("default-emit-debug", Boolean.class, defaultEmitDebug));
-		addValue(new BasicConfigValue<>("default-target-version", Integer.class, defaultTargetVersion));
+		addValue(new BasicConfigValue<>("default-compile-target-version", Integer.class, defaultTargetVersion));
+		addValue(new BasicConfigValue<>("default-downsample-target-version", Integer.class, defaultDownsampleTargetVersion));
 	}
 
 	/**
@@ -68,5 +70,17 @@ public class JavacCompilerConfig extends BasicConfigContainer implements Service
 	@Nonnull
 	public ObservableInteger getDefaultTargetVersion() {
 		return defaultTargetVersion;
+	}
+
+	/**
+	 * Not enforced internally by {@link JavacCompiler}.
+	 * Callers should check this value and ensure to call {@link JavacArgumentsBuilder#withDownsampleTarget(int)}.
+	 *
+	 * @return Negative to disable down sampling, otherwise target version to downsample compiled code to
+	 * <i>(In class file version format)</i>
+	 */
+	@Nonnull
+	public ObservableInteger getDefaultDownsampleTargetVersion() {
+		return defaultDownsampleTargetVersion;
 	}
 }

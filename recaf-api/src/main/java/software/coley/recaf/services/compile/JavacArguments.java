@@ -19,6 +19,7 @@ public class JavacArguments {
 	// Options
 	private final String classPath;
 	private final int versionTarget;
+	private final int downsampleTarget;
 	private final boolean debugVariables;
 	private final boolean debugLineNumbers;
 	private final boolean debugSourceName;
@@ -31,7 +32,9 @@ public class JavacArguments {
 	 * @param classPath
 	 * 		Classpath to use with compiler.
 	 * @param versionTarget
-	 * 		Java bytecode version to target.
+	 * 		Java version to target.
+	 * @param downsampleTarget
+	 * 		Java version to target via down sampling. Negative to disable downs sampling.
 	 * @param debugVariables
 	 * 		Debug flag to include variable info.
 	 * @param debugLineNumbers
@@ -40,12 +43,13 @@ public class JavacArguments {
 	 * 		Debug flag to include source file name.
 	 */
 	public JavacArguments(@Nonnull String className, @Nonnull String classSource,
-						  @Nullable String classPath, int versionTarget,
+						  @Nullable String classPath, int versionTarget, int downsampleTarget,
 						  boolean debugVariables, boolean debugLineNumbers, boolean debugSourceName) {
 		this.className = className;
 		this.classSource = classSource;
 		this.classPath = classPath;
 		this.versionTarget = versionTarget;
+		this.downsampleTarget = downsampleTarget;
 		this.debugVariables = debugVariables;
 		this.debugLineNumbers = debugLineNumbers;
 		this.debugSourceName = debugSourceName;
@@ -100,10 +104,17 @@ public class JavacArguments {
 	}
 
 	/**
-	 * @return Java bytecode version to target.
+	 * @return Java version to target.
 	 */
 	public int getVersionTarget() {
 		return versionTarget;
+	}
+
+	/**
+	 * @return Java version to target via down sampling. Negative to disable downs sampling.
+	 */
+	public int getDownsampleTarget() {
+		return Math.min(downsampleTarget, JavacCompiler.MIN_DOWNSAMPLE_VER);
 	}
 
 	/**

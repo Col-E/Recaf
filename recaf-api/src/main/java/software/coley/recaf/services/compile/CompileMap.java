@@ -1,5 +1,13 @@
 package software.coley.recaf.services.compile;
 
+import net.raphimc.javadowngrader.JavaDowngrader;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.ClassNode;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
+
+import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -9,6 +17,8 @@ import java.util.TreeMap;
  * @author Matt Coley
  */
 public class CompileMap extends TreeMap<String, byte[]> {
+	private static final Logger logger = Logging.get(CompileMap.class);
+
 	/**
 	 * @param map
 	 * 		Map to copy.
@@ -38,5 +48,29 @@ public class CompileMap extends TreeMap<String, byte[]> {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Down sample all classes in the map to the target version.
+	 *
+	 * @param version
+	 * 		Target version to downsample to.
+	 */
+	public void downsample(int version) {
+		for (Map.Entry<String, byte[]> entry : new HashSet<>(entrySet())) {
+			String key = entry.getKey();
+			try {
+				ClassNode node = new ClassNode();
+				new ClassReader(entry.getValue()).accept(node, 0);
+				if (node.version > version) {
+					JavaDowngrader.downgrade(node, version);
+					ClassWriter writer = new ClassWriter(0);
+					node.accept(writer);
+					put(key, writer.toByteArray());
+				}
+			} catch (Throwable t) {
+				logger.error("Failed down sampling '{}' to version {}", key, version, t);
+			}
+		}
 	}
 }

@@ -275,6 +275,8 @@ java.savewitherrors.title=Regarding recompile errors
 java.decompiler=Decompiler
 java.targetversion=Compile target version
 java.targetversion.auto=Match class file version
+java.targetdownsampleversion=Downsample target version
+java.targetdownsampleversion.disabled=Disabled
 java.targetdebug=Compile with debug info
 
 ## Search bar
@@ -396,7 +398,8 @@ service.compile=Compilation
 service.compile.java-compiler-config=Javac
 service.compile.java-compiler-config.generate-phantoms=Generate missing classes
 service.compile.java-compiler-config.default-emit-debug=Default to include debug
-service.compile.java-compiler-config.default-target-version=Default to class version
+service.compile.java-compiler-config.default-compile-target-version=Default class version target
+service.compile.java-compiler-config.default-downsample-target-version=Default downsample class version target
 service.debug=Attach/Debug
 service.debug.attach-config=Attach config
 service.debug.attach-config.attach-jmx-bean-agent=Attach JMX bean agent
