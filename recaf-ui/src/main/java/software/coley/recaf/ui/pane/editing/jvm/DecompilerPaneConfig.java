@@ -60,6 +60,8 @@ public class DecompilerPaneConfig extends BasicConfigContainer {
 
 	private static boolean isDevEnv() {
 		// Should only be true when building Recaf from source/build-system.
-		return System.getProperty("java.class.path").contains("recaf-ui" + File.separator + "build");
+		String path = System.getProperty("java.class.path");
+		return path.contains("recaf-ui" + File.separator + "build") ||
+				path.contains("recaf-ui" + File.separator + "out");
 	}
 }
