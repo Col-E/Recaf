@@ -112,6 +112,7 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 
 	@Override
 	public void disable() {
+		children.forEach(Navigable::disable);
 		pathUpdateListeners.clear();
 		setDisable(true);
 	}
