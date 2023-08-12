@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.pane.editing.media;
 
+import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -47,8 +48,9 @@ public abstract class MediaPane extends BorderPane implements FileNavigable, Upd
 		btnPlay.setGraphic(Icons.getIconView(Icons.PLAY));
 		btnPause.setGraphic(Icons.getIconView(Icons.PAUSE));
 		btnStop.setGraphic(Icons.getIconView(Icons.STOP));
-		btnPlay.getStyleClass().add("rounded-button-left");
-		btnStop.getStyleClass().add("rounded-button-right");
+		btnPlay.getStyleClass().add(Styles.LEFT_PILL);
+		btnPause.getStyleClass().add(Styles.CENTER_PILL);
+		btnStop.getStyleClass().add(Styles.RIGHT_PILL);
 		btnPlay.setOnAction(e -> {
 			getPlayer().play();
 			btnPlay.setDisable(true);

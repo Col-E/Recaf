@@ -25,6 +25,7 @@ import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.ImageCanvas;
 import software.coley.recaf.ui.control.PannableView;
+import software.coley.recaf.util.Animations;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collection;
@@ -85,7 +86,7 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 	 */
 	private class ColorAdjustmentControls extends Group {
 		private ColorAdjustmentControls() {
-			setupShowOnHover();
+			Animations.setupShowOnHover(this);
 
 			GridPane box = new GridPane();
 			box.setAlignment(Pos.CENTER);
@@ -102,27 +103,6 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 			box.getStyleClass().addAll(Styles.BORDER_DEFAULT, Styles.BG_SUBTLE, "round-container");
 
 			getChildren().add(box);
-		}
-
-		private void setupShowOnHover() {
-			double hiddenOpacity = 0.1;
-			DoubleProperty opacity = opacityProperty();
-			opacity.set(hiddenOpacity);
-
-			FadeTransition show = new FadeTransition(Duration.millis(250), this);
-			show.setToValue(1.0);
-
-			FadeTransition hide = new FadeTransition(Duration.millis(250), this);
-			hide.setToValue(hiddenOpacity);
-
-			setOnMouseEntered(e -> {
-				show.setFromValue(opacity.doubleValue());
-				show.play();
-			});
-			setOnMouseExited(e -> {
-				hide.setFromValue(opacity.doubleValue());
-				hide.play();
-			});
 		}
 	}
 }

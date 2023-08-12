@@ -3,12 +3,14 @@ package software.coley.recaf.ui.pane.editing.media;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.scene.control.Label;
 import javafx.scene.media.MediaView;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.ui.media.FxPlayer;
 import software.coley.recaf.ui.media.Player;
+import software.coley.recaf.util.FxThreadUtil;
 
 import java.io.IOException;
 
@@ -38,9 +40,16 @@ public class VideoPane extends MediaPane {
 				view.setPreserveRatio(true);
 				view.fitHeightProperty().bind(heightProperty().subtract(40));
 			} catch (IOException ex) {
-				logger.warn("Could not load video from '{}'", fileInfo.getName(), ex);
+				onLoadFailure(fileInfo, ex);
 			}
 		}
+	}
+
+	private void onLoadFailure(@Nonnull FileInfo fileInfo, @Nonnull IOException ex) {
+		logger.warn("Could not load video from '{}'", fileInfo.getName(), ex);
+		FxThreadUtil.delayedRun(100, () -> {
+			setCenter(new Label(ex.getMessage()));
+		});
 	}
 
 	@Override

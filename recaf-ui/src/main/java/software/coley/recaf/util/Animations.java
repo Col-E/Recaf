@@ -1,5 +1,7 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
+import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -80,5 +82,32 @@ public class Animations {
 		KeyFrame kf = new KeyFrame(Duration.millis(millis), kv);
 		timeline.getKeyFrames().add(kf);
 		timeline.play();
+	}
+
+	/**
+	 * Registers mouse-enter/exit events which transition the opacity of the given node.
+	 *
+	 * @param node
+	 * 		Not to install show-on-hover.
+	 */
+	public static void setupShowOnHover(@Nonnull Node node) {
+		double hiddenOpacity = 0.1;
+		DoubleProperty opacity = node.opacityProperty();
+		opacity.set(hiddenOpacity);
+
+		FadeTransition show = new FadeTransition(Duration.millis(250), node);
+		show.setToValue(1.0);
+
+		FadeTransition hide = new FadeTransition(Duration.millis(250), node);
+		hide.setToValue(hiddenOpacity);
+
+		node.setOnMouseEntered(e -> {
+			show.setFromValue(opacity.doubleValue());
+			show.play();
+		});
+		node.setOnMouseExited(e -> {
+			hide.setFromValue(opacity.doubleValue());
+			hide.play();
+		});
 	}
 }

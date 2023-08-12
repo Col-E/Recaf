@@ -79,12 +79,11 @@ public class ByteHeaderUtil {
 			M4ADash);
 	// Video
 	// For MP4/QuickTime see: https://www.ftyps.com/
-	// JavaFX does not support MOV/MKV
-	public static final int[] MP4_FYTP_MMP4 = {WILD, WILD, WILD, WILD, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x6D, 0x70, 0x34};
-	public static final int[] MP4_FYTP_MP42 = {WILD, WILD, WILD, WILD, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32};
+	public static final int[] MP4_FTYP = {WILD, WILD, WILD, WILD, 0x66, 0x74, 0x79, 0x70};
+	public static final int[] MKV = {0x1A, 0x45, 0xDF, 0xA3, 0xA3, 0x42, 0x86, 0x81, 0x01, 0x42, 0xF7, 0x81};
 	public static final List<int[]> VIDEO_HEADERS = List.of(
-			MP4_FYTP_MMP4,
-			MP4_FYTP_MP42
+			MP4_FTYP,
+			MKV
 	);
 	// Android files (Modular chunk system, use unsigned short LE headers)
 	public static final int[] BINARY_XML = {0x03, 0x00};
