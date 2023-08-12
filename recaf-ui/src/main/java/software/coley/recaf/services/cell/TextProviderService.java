@@ -15,10 +15,7 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
-import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.*;
 
 import java.util.Map;
 
@@ -279,6 +276,8 @@ public class TextProviderService implements Service {
 						.orElse(null);
 				if (dexName != null)
 					return dexName;
+			} else if (bundle instanceof AgentServerRemoteVmResource.RemoteJvmClassBundle remoteBundle) {
+				return formatConfig.filter(remoteBundle.getLoaderInfo().getName());
 			}
 
 			if (bundle instanceof ClassBundle)

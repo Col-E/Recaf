@@ -89,7 +89,21 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	 */
 	private void setupListenerDelegation() {
 		WorkspaceResource resource = this;
-		jvmClassBundleStream().forEach(bundle -> bundle.addBundleListener(new BundleListener<>() {
+		jvmClassBundleStream().forEach(bundle -> delegateJvmClassBundle(resource, bundle));
+		androidClassBundleStream().forEach(bundle -> delegateAndroidClassBundle(resource, bundle));
+		fileBundleStream().forEach(bundle -> delegateFileBundle(resource, bundle));
+	}
+
+	/**
+	 * Adds listeners to the given bundle to forward to the appropriate resource-level listener types.
+	 *
+	 * @param resource
+	 * 		Resource to delegate to.
+	 * @param bundle
+	 * 		Bundle to delegate from.
+	 */
+	protected void delegateJvmClassBundle(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle) {
+		bundle.addBundleListener(new BundleListener<>() {
 			@Override
 			public void onNewItem(String key, JvmClassInfo cls) {
 				for (ResourceJvmClassListener listener : jvmClassListeners) {
@@ -122,8 +136,19 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 					}
 				}
 			}
-		}));
-		androidClassBundleStream().forEach(bundle -> bundle.addBundleListener(new BundleListener<>() {
+		});
+	}
+
+	/**
+	 * Adds listeners to the given bundle to forward to the appropriate resource-level listener types.
+	 *
+	 * @param resource
+	 * 		Resource to delegate to.
+	 * @param bundle
+	 * 		Bundle to delegate from.
+	 */
+	protected void delegateAndroidClassBundle(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle) {
+		bundle.addBundleListener(new BundleListener<>() {
 			@Override
 			public void onNewItem(String key, AndroidClassInfo cls) {
 				for (ResourceAndroidClassListener listener : androidClassListeners) {
@@ -156,8 +181,19 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 					}
 				}
 			}
-		}));
-		fileBundleStream().forEach(bundle -> bundle.addBundleListener(new BundleListener<>() {
+		});
+	}
+
+	/**
+	 * Adds listeners to the given bundle to forward to the appropriate resource-level listener types.
+	 *
+	 * @param resource
+	 * 		Resource to delegate to.
+	 * @param bundle
+	 * 		Bundle to delegate from.
+	 */
+	protected void delegateFileBundle(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle) {
+		bundle.addBundleListener(new BundleListener<>() {
 			@Override
 			public void onNewItem(String key, FileInfo file) {
 				for (ResourceFileListener listener : fileListeners) {
@@ -190,7 +226,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 					}
 				}
 			}
-		}));
+		});
 	}
 
 	/**

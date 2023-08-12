@@ -25,10 +25,7 @@ import software.coley.recaf.workspace.model.bundle.BundleListener;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Stream;
 
@@ -41,6 +38,7 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 	private static final DebuggingLogger logger = Logging.get(AgentServerRemoteVmResource.class);
 	private final Map<Integer, RemoteJvmClassBundle> remoteBundleMap = new HashMap<>();
 	private final Map<Integer, ClassLoaderInfo> remoteLoaders = new HashMap<>();
+	private final Map<Integer, Set<ClassData>> queuedClasses = new HashMap<>();
 	private final Set<String> queuedRedefines = new ConcurrentSkipListSet<>();
 	private final VirtualMachine virtualMachine;
 	private final Client client;
@@ -114,7 +112,17 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 					// New loader reported
 					BroadcastClassloaderMessage loaderMessage = (BroadcastClassloaderMessage) message;
 					ClassLoaderInfo loaderInfo = loaderMessage.getClassLoader();
-					remoteLoaders.put(loaderInfo.getId(), loaderInfo);
+					int loaderId = loaderInfo.getId();
+					remoteLoaders.put(loaderId, loaderInfo);
+
+					// If the loader was one that we saw classes for earlier, now we can
+					// link those to this loader.
+					Set<ClassData> pendingClasses = queuedClasses.remove(loaderId);
+					if (pendingClasses != null) {
+						for (ClassData pendingClass : pendingClasses) {
+							handleReceiveClassData(pendingClass, null);
+						}
+					}
 					break;
 				case MessageConstants.ID_BROADCAST_CLASS:
 					// New class, or update to existing class reported
@@ -147,7 +155,7 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 				// Get/create bundle for loader
 				ClassLoaderInfo loaderInfo = remoteLoaders.get(loaderId);
 				RemoteJvmClassBundle bundle = remoteBundleMap
-						.computeIfAbsent(loaderId, id -> new RemoteJvmClassBundle(loaderInfo));
+						.computeIfAbsent(loaderId, id -> createRemoteBundle(loaderInfo));
 
 				// Request all classes from classloader
 				logger.info("Sending initial request for class names in classloader {}...", loader.getName());
@@ -158,7 +166,7 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 					for (String className : classes) {
 						// If class does not exist in bundle, then request it from remote server
 						if (bundle.get(className) == null) {
-							client.sendBlocking(new RequestClassMessage(loaderId, className), reply -> {
+							client.sendAsync(new RequestClassMessage(loaderId, className), reply -> {
 								if (reply.hasData()) {
 									ClassData data = reply.getData();
 									handleReceiveClassData(data, bundle);
@@ -190,23 +198,45 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 			// Get the bundle for the remote classloader if not specified by parameter
 			if (bundle == null) {
 				ClassLoaderInfo loaderInfo = remoteLoaders.get(loaderId);
-				bundle = remoteBundleMap
-						.computeIfAbsent(loaderId, id -> new RemoteJvmClassBundle(loaderInfo));
+				if (loaderInfo == null) {
+					queuedClasses.computeIfAbsent(loaderId, i -> new HashSet<>()).add(data);
+					return;
+				}
+				bundle = remoteBundleMap.computeIfAbsent(loaderId, id -> createRemoteBundle(loaderInfo));
 			}
 
 			// Add the class
 			JvmClassInfo classInfo = new JvmClassInfoBuilder(new ClassReader(data.getCode())).build();
 			RemoteClassloaderProperty.set(classInfo, loaderId);
-			bundle.initialPut(classInfo);
+			bundle.put(classInfo);
 		}
+	}
+
+	/**
+	 * Creates a new {@link RemoteJvmClassBundle} and sets up listener delegation.
+	 *
+	 * @param loaderInfo
+	 * 		Loader to associate with some classes in a bundle.
+	 *
+	 * @return New bundle for classes within that loader.
+	 */
+	@Nonnull
+	private RemoteJvmClassBundle createRemoteBundle(@Nonnull ClassLoaderInfo loaderInfo) {
+		RemoteJvmClassBundle bundle = new RemoteJvmClassBundle(loaderInfo);
+		delegateJvmClassBundle(this, bundle);
+		return bundle;
 	}
 
 	/**
 	 * JVM bundle extension adding a listener to handle syncing local changes with the remote server.
 	 */
-	private class RemoteJvmClassBundle extends BasicJvmClassBundle {
-		private RemoteJvmClassBundle(ClassLoaderInfo loaderInfo) {
-			this.addBundleListener(new BundleListener<>() {
+	public class RemoteJvmClassBundle extends BasicJvmClassBundle {
+		private final ClassLoaderInfo loaderInfo;
+
+		private RemoteJvmClassBundle(@Nonnull ClassLoaderInfo loaderInfo) {
+			this.loaderInfo = loaderInfo;
+
+			addBundleListener(new BundleListener<>() {
 				@Override
 				public void onNewItem(String key, JvmClassInfo value) {
 					// Should occur when we get data from the client.
@@ -238,6 +268,14 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 					throw new IllegalStateException("Remove operations should not occur for remote VM resource!");
 				}
 			});
+		}
+
+		/**
+		 * @return Loader information for this bundle.
+		 */
+		@Nonnull
+		public ClassLoaderInfo getLoaderInfo() {
+			return loaderInfo;
 		}
 	}
 }
