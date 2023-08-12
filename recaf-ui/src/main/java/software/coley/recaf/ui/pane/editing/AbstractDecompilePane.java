@@ -38,6 +38,7 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.AstMappingVisitor;
+import software.coley.recaf.services.text.FileTypeAssociationService;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
@@ -46,8 +47,6 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
-import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
-import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.android.AndroidDecompilerPane;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
@@ -87,6 +86,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	protected AbstractDecompilePane(@Nonnull DecompilerPaneConfig config,
 									@Nonnull SearchBar searchBar,
 									@Nonnull JavaContextActionSupport contextActionSupport,
+									@Nonnull FileTypeAssociationService languageAssociation,
 									@Nonnull DecompilerManager decompilerManager) {
 		this.config = config;
 		this.contextActionSupport = contextActionSupport;
@@ -96,8 +96,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 
 		// Configure the editor
 		editor = new Editor();
-		editor.getStylesheets().add("/syntax/java.css");
-		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJavaLanguage()));
+		languageAssociation.configureEditorSyntax("java", editor);
 		editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addLineGraphicFactories(

@@ -7,6 +7,7 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.source.AstResolveResult;
+import software.coley.recaf.services.text.FileTypeAssociationService;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
@@ -28,9 +29,10 @@ public class AndroidDecompilerPane extends AbstractDecompilePane {
 								 @Nonnull SearchBar searchBar,
 								 @Nonnull ToolsContainerComponent toolsContainer,
 								 @Nonnull JavaContextActionSupport contextActionSupport,
+								 @Nonnull FileTypeAssociationService languageAssociation,
 								 @Nonnull DecompilerManager decompilerManager,
 								 @Nonnull Actions actions) {
-		super(config, searchBar, contextActionSupport, decompilerManager);
+		super(config, searchBar, contextActionSupport, languageAssociation, decompilerManager);
 
 		// Install tools container with configurator
 		new AndroidDecompilerPaneConfigurator(toolsContainer, config, decompiler, decompilerManager);

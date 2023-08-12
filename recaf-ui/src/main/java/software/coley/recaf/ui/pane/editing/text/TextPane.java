@@ -11,6 +11,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.FileNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.services.text.FileTypeAssociationService;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
@@ -35,12 +36,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Dependent
 public class TextPane extends BorderPane implements FileNavigable, UpdatableNavigable {
 	protected final AtomicBoolean updateLock = new AtomicBoolean();
+	private final FileTypeAssociationService languageAssociation;
 	protected final Editor editor;
 	protected FilePathNode path;
 
 	@Inject
-	public TextPane(@Nonnull KeybindingConfig keys,
+	public TextPane(@Nonnull FileTypeAssociationService languageAssociation,
+					@Nonnull KeybindingConfig keys,
 					@Nonnull SearchBar searchBar) {
+		this.languageAssociation = languageAssociation;
+
 		// Configure the editor
 		editor = new Editor();
 		editor.setSelectedBracketTracking(new SelectedBracketTracking());
@@ -116,14 +121,11 @@ public class TextPane extends BorderPane implements FileNavigable, UpdatableNavi
 			if (info.isTextFile()) {
 				TextFileInfo textInfo = info.asTextFile();
 
-				// TODO: Select correct stylesheet & syntax highlighter impl
-				//    editor.getStylesheets().add("/syntax/java.css");
-				//    editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJavaLanguage()));
-				//     - Remember to allow users to customize mapping of file extensions to different types
+				// Configure the editor to syntax-highlight based on the file extension.
+				languageAssociation.configureEditorSyntax(info, editor);
 
-				FxThreadUtil.run(() -> {
-					editor.setText(textInfo.getText());
-				});
+				// Update the text.
+				FxThreadUtil.run(() -> editor.setText(textInfo.getText()));
 			}
 		}
 	}

@@ -31,6 +31,7 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.phantom.PhantomGenerationException;
 import software.coley.recaf.services.phantom.PhantomGenerator;
 import software.coley.recaf.services.source.AstResolveResult;
+import software.coley.recaf.services.text.FileTypeAssociationService;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
@@ -85,12 +86,13 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 							 @Nonnull SearchBar searchBar,
 							 @Nonnull ToolsContainerComponent toolsContainer,
 							 @Nonnull JavaContextActionSupport contextActionSupport,
+							 @Nonnull FileTypeAssociationService languageAssociation,
 							 @Nonnull DecompilerManager decompilerManager,
 							 @Nonnull JavacCompiler javac,
 							 @Nonnull JavacCompilerConfig javacConfig,
 							 @Nonnull PhantomGenerator phantomGenerator,
 							 @Nonnull Actions actions) {
-		super(config, searchBar, contextActionSupport, decompilerManager);
+		super(config, searchBar, contextActionSupport, languageAssociation, decompilerManager);
 		this.phantomGenerator = phantomGenerator;
 		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
 		this.javacTarget = new ObservableInteger(javacConfig.getDefaultTargetVersion().getValue());

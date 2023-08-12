@@ -32,6 +32,7 @@ import software.coley.recaf.services.mapping.gen.NameGenerator;
 import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.filter.*;
 import software.coley.recaf.services.mapping.gen.generator.IncrementingNameGenerator;
+import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.*;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
@@ -119,7 +120,7 @@ public class MappingGeneratorPane extends StackPane {
 		// Editor to preview the current mappings
 		Editor editor = new Editor();
 		editor.setText("# A preview of your mappings will appear here once generated");
-		editor.getStylesheets().add("/syntax/enigma.css");
+		editor.getStylesheets().add(LanguageStylesheets.getEnigmaStylesheet());
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getLangEngimaMap()));
 		editor.getCodeArea().setEditable(false);
 		editor.disableProperty().bind(mappingsToApply.isNull());

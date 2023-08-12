@@ -9,7 +9,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.*;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Random;
@@ -58,6 +61,20 @@ public class StringUtil {
 		int i = text.indexOf(cutoff);
 		if (i < 0) return text;
 		return text.substring(0, i);
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param after
+	 * 		Sequence to find and use as a cut-off point.
+	 *
+	 * @return Input text, after the occurrence of the given pattern.
+	 */
+	public static String getAfter(@Nonnull String text, @Nonnull String after) {
+		int i = text.lastIndexOf(after);
+		if (i < 0) return text;
+		return text.substring(i + after.length());
 	}
 
 	/**
