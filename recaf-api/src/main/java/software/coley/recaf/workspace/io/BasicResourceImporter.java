@@ -133,7 +133,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Read ZIP entries
 		ZipArchive archive = config.getZipStrategy().getValue().mapping().apply(source.readAll());
 		archive.getLocalFiles().forEach(header -> {
-			LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header);
+			boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
+			LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
 			String entryName = header.getFileNameAsString();
 
 			// Skip directories. There is no such thing as a 'directory' entry in ZIP files.

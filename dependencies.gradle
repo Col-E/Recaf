@@ -23,7 +23,7 @@ project.ext {
     cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
     cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.0.Final'
 
-    dex_translator = 'software.coley:dex-translator:1.1.0'
+    dex_translator = 'software.coley:dex-translator:1.1.1'
 
     directories = 'dev.dirs:directories:26'
     docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'

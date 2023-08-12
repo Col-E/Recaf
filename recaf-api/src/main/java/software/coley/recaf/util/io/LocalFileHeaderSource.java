@@ -16,10 +16,16 @@ import java.io.InputStream;
  */
 public final class LocalFileHeaderSource implements ByteSource {
 	private final LocalFileHeader fileHeader;
+	private final boolean isAndroid;
 	private ByteData decompressed;
 
 	public LocalFileHeaderSource(LocalFileHeader fileHeader) {
+		this(fileHeader, false);
+	}
+
+	public LocalFileHeaderSource(LocalFileHeader fileHeader, boolean isAndroid) {
 		this.fileHeader = fileHeader;
+		this.isAndroid = isAndroid;
 	}
 
 	@Nonnull
@@ -62,6 +68,17 @@ public final class LocalFileHeaderSource implements ByteSource {
 	private ByteData decompress() throws IOException {
 		ByteData decompressed = this.decompressed;
 		if (decompressed == null) {
+			// From: https://cs.android.com/android/_/android/platform/frameworks/base/+/b3559643b946829933a76ed45750d13edfefad30:tools/aapt/ZipFile.cpp;l=436
+			//  - If the compression mode given fails, it will get treated as STORED as a fallback
+			if (isAndroid) {
+				try {
+					return this.decompressed = ZipCompressions.decompress(fileHeader);
+				} catch (IOException ex) {
+					return this.decompressed = fileHeader.getFileData();
+				}
+			}
+
+			// In other cases, malformed content should throw an exception and be handled by the caller.
 			return this.decompressed = ZipCompressions.decompress(fileHeader);
 		}
 		return decompressed;
