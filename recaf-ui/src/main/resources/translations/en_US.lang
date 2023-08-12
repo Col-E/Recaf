@@ -278,6 +278,9 @@ java.targetversion.auto=Match class file version
 java.targetdownsampleversion=Downsample target version
 java.targetdownsampleversion.disabled=Disabled
 java.targetdebug=Compile with debug info
+java.info=Class information
+java.info.version=Class version
+java.info.sourcefile=Source file name
 
 ## Search bar
 find.replace=Replace

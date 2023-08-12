@@ -34,6 +34,7 @@ public class AndroidDecompilerPane extends AbstractDecompilePane {
 
 		// Install tools container with configurator
 		new AndroidDecompilerPaneConfigurator(toolsContainer, config, decompiler, decompilerManager);
+		new AndroidClassInfoProvider(toolsContainer, this);
 		toolsContainer.install(editor);
 
 		// Setup keybindings
