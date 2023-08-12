@@ -1,4 +1,4 @@
-package software.coley.recaf.services.info;
+package software.coley.recaf.services.info.association;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -9,6 +9,7 @@ import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicMapConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
+import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 

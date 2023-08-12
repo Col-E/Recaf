@@ -32,7 +32,7 @@ import software.coley.recaf.services.script.ScriptEngine;
 import software.coley.recaf.services.script.ScriptFile;
 import software.coley.recaf.services.script.ScriptManager;
 import software.coley.recaf.services.script.ScriptManagerConfig;
-import software.coley.recaf.services.info.FileTypeAssociationService;
+import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.ActionButton;

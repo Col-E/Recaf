@@ -1,4 +1,4 @@
-package software.coley.recaf.services.info;
+package software.coley.recaf.services.info.summary;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;

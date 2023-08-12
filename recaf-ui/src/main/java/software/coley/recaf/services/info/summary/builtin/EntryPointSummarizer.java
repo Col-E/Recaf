@@ -1,4 +1,4 @@
-package software.coley.recaf.services.info.builtin;
+package software.coley.recaf.services.info.summary.builtin;
 
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
@@ -10,8 +10,8 @@ import javafx.scene.control.Label;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
-import software.coley.recaf.services.info.ResourceSummarizer;
-import software.coley.recaf.services.info.SummaryConsumer;
+import software.coley.recaf.services.info.summary.ResourceSummarizer;
+import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.util.Lang;

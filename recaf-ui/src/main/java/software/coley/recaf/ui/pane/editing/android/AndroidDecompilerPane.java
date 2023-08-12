@@ -7,7 +7,7 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.source.AstResolveResult;
-import software.coley.recaf.services.info.FileTypeAssociationService;
+import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
