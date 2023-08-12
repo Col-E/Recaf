@@ -116,6 +116,16 @@ public class BasicInfoImporter implements InfoImporter {
 					.withRawContent(data)
 					.withName(name)
 					.build();
+		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.AUDIO_HEADERS)) {
+			return new AudioFileInfoBuilder()
+					.withRawContent(data)
+					.withName(name)
+					.build();
+		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.VIDEO_HEADERS)) {
+			return new VideoFileInfoBuilder()
+					.withRawContent(data)
+					.withName(name)
+					.build();
 		}
 
 		// TODO: Record content-type (for quick recognition of media and other common file types)

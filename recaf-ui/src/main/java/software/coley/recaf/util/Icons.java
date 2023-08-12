@@ -61,6 +61,7 @@ public class Icons {
 	public static final String FILE_CLASS = "icons/file/class.png";
 	public static final String FILE_IMAGE = "icons/file/image.png";
 	public static final String FILE_AUDIO = "icons/file/audio.png";
+	public static final String FILE_VIDEO = "icons/file/video.png";
 	public static final String FILE_PROGRAM = "icons/file/program.png";
 	public static final String FILE_LIBRARY = "icons/file/library.png";
 	// Action

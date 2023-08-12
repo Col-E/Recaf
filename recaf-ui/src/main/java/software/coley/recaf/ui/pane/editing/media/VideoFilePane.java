@@ -1,25 +1,25 @@
-package software.coley.recaf.ui.pane.editing.image;
+package software.coley.recaf.ui.pane.editing.media;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.info.ImageFileInfo;
+import software.coley.recaf.info.AudioFileInfo;
+import software.coley.recaf.info.VideoFileInfo;
 import software.coley.recaf.ui.pane.editing.FilePane;
 
 /**
- * Displays {@link ImageFileInfo}.
+ * File pane for {@link VideoFileInfo}.
  *
  * @author Matt Coley
  */
 @Dependent
-public class ImageFilePane extends FilePane {
-	private final Instance<ImagePane> imageProvider;
+public class VideoFilePane extends FilePane {
+	private final Instance<VideoPane> videoProvider;
 
 	@Inject
-	public ImageFilePane(@Nonnull Instance<ImagePane> imageProvider) {
-		this.imageProvider = imageProvider;
+	public VideoFilePane(@Nonnull Instance<VideoPane> videoProvider) {
+		this.videoProvider = videoProvider;
 	}
 
 	@Override
@@ -30,6 +30,6 @@ public class ImageFilePane extends FilePane {
 			return;
 
 		// Update content in pane.
-		setDisplay(imageProvider.get());
+		setDisplay(videoProvider.get());
 	}
 }

@@ -24,6 +24,7 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 	private static final IconProvider TEXT = Icons.createProvider(Icons.FILE_TEXT);
 	private static final IconProvider TEXT_CODE = Icons.createProvider(Icons.FILE_CODE);
 	private static final IconProvider AUDIO = Icons.createProvider(Icons.FILE_AUDIO);
+	private static final IconProvider VIDEO = Icons.createProvider(Icons.FILE_VIDEO);
 	private static final IconProvider IMAGE = Icons.createProvider(Icons.FILE_IMAGE);
 	private static final IconProvider EXECUTABLE = Icons.createProvider(Icons.FILE_PROGRAM);
 	private static final IconProvider ZIP = Icons.createProvider(Icons.FILE_ZIP);
@@ -62,6 +63,8 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 			return EXECUTABLE;
 		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.AUDIO_HEADERS))
 			return AUDIO;
+		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.VIDEO_HEADERS))
+			return VIDEO;
 		if (ByteHeaderUtil.match(content, ByteHeaderUtil.DEX))
 			return ANDROID;
 

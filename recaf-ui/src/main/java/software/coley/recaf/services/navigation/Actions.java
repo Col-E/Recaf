@@ -36,9 +36,11 @@ import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
-import software.coley.recaf.ui.pane.editing.image.ImageFilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
+import software.coley.recaf.ui.pane.editing.media.AudioFilePane;
+import software.coley.recaf.ui.pane.editing.media.ImageFilePane;
+import software.coley.recaf.ui.pane.editing.media.VideoFilePane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.FxThreadUtil;
@@ -82,6 +84,8 @@ public class Actions implements Service {
 	private final Instance<BinaryXmlFilePane> binaryXmlPaneProvider;
 	private final Instance<TextFilePane> textPaneProvider;
 	private final Instance<ImageFilePane> imagePaneProvider;
+	private final Instance<AudioFilePane> audioPaneProvider;
+	private final Instance<VideoFilePane> videoPaneProvider;
 	private final ActionsConfig config;
 
 	@Inject
@@ -95,7 +99,9 @@ public class Actions implements Service {
 				   @Nonnull Instance<AndroidClassPane> androidPaneProvider,
 				   @Nonnull Instance<BinaryXmlFilePane> binaryXmlPaneProvider,
 				   @Nonnull Instance<TextFilePane> textPaneProvider,
-				   @Nonnull Instance<ImageFilePane> imagePaneProvider) {
+				   @Nonnull Instance<ImageFilePane> imagePaneProvider,
+				   @Nonnull Instance<AudioFilePane> audioPaneProvider,
+				   @Nonnull Instance<VideoFilePane> videoPaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
@@ -107,6 +113,8 @@ public class Actions implements Service {
 		this.binaryXmlPaneProvider = binaryXmlPaneProvider;
 		this.textPaneProvider = textPaneProvider;
 		this.imagePaneProvider = imagePaneProvider;
+		this.audioPaneProvider = audioPaneProvider;
+		this.videoPaneProvider = videoPaneProvider;
 	}
 
 	/**
@@ -315,6 +323,10 @@ public class Actions implements Service {
 			return gotoDeclaration(workspace, resource, bundle, info.asImageFile());
 		} else if (info instanceof BinaryXmlFileInfo binaryXml) {
 			return gotoDeclaration(workspace, resource, bundle, binaryXml);
+		} else if (info.isAudioFile()) {
+			return gotoDeclaration(workspace, resource, bundle, info.asAudioFile());
+		} else if (info.isVideoFile()) {
+			return gotoDeclaration(workspace, resource, bundle, info.asVideoFile());
 		}
 		throw new UnsupportedContent("Unsupported file type: " + info.getClass().getName());
 	}
@@ -445,6 +457,102 @@ public class Actions implements Service {
 
 			// Create content for the tab.
 			ImageFilePane content = imagePaneProvider.get();
+			content.onUpdatePath(path);
+
+			// Build the tab.
+			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			ContextMenu menu = new ContextMenu();
+			ObservableList<MenuItem> items = menu.getItems();
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
+				ClipboardContent clipboard = new ClipboardContent();
+				clipboard.putString(info.getName());
+				Clipboard.getSystemClipboard().setContent(clipboard);
+			}));
+			items.add(separator());
+			addCloseActions(menu, tab);
+			tab.setContextMenu(menu);
+			return tab;
+		});
+	}
+
+	/**
+	 * Brings a {@link FileNavigable} component representing the given audio file into focus.
+	 * If no such component exists, one is created.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Image file to go to.
+	 *
+	 * @return Navigable content representing audio file content of the path.
+	 */
+	@Nonnull
+	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
+										 @Nonnull WorkspaceResource resource,
+										 @Nonnull FileBundle bundle,
+										 @Nonnull AudioFileInfo info) {
+		FilePathNode path = buildPath(workspace, resource, bundle, info);
+		return (FileNavigable) getOrCreatePathContent(path, () -> {
+			// Create text/graphic for the tab to create.
+			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
+			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			if (title == null) throw new IllegalStateException("Missing title");
+			if (graphic == null) throw new IllegalStateException("Missing graphic");
+
+			// Create content for the tab.
+			AudioFilePane content = audioPaneProvider.get();
+			content.onUpdatePath(path);
+
+			// Build the tab.
+			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			ContextMenu menu = new ContextMenu();
+			ObservableList<MenuItem> items = menu.getItems();
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
+				ClipboardContent clipboard = new ClipboardContent();
+				clipboard.putString(info.getName());
+				Clipboard.getSystemClipboard().setContent(clipboard);
+			}));
+			items.add(separator());
+			addCloseActions(menu, tab);
+			tab.setContextMenu(menu);
+			return tab;
+		});
+	}
+
+	/**
+	 * Brings a {@link FileNavigable} component representing the given vdeo file into focus.
+	 * If no such component exists, one is created.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Image file to go to.
+	 *
+	 * @return Navigable content representing video file content of the path.
+	 */
+	@Nonnull
+	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
+										 @Nonnull WorkspaceResource resource,
+										 @Nonnull FileBundle bundle,
+										 @Nonnull VideoFileInfo info) {
+		FilePathNode path = buildPath(workspace, resource, bundle, info);
+		return (FileNavigable) getOrCreatePathContent(path, () -> {
+			// Create text/graphic for the tab to create.
+			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
+			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			if (title == null) throw new IllegalStateException("Missing title");
+			if (graphic == null) throw new IllegalStateException("Missing graphic");
+
+			// Create content for the tab.
+			VideoFilePane content = videoPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.

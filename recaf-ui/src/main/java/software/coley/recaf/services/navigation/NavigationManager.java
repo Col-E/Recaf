@@ -2,6 +2,7 @@ package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
@@ -187,6 +188,8 @@ public class NavigationManager implements Navigable, Service {
 			if (value instanceof Navigable navigable) {
 				children.remove(navigable);
 				childrenToTab.remove(navigable);
+				if (value.getClass().getDeclaredAnnotation(Dependent.class) != null)
+					navigable.disable();
 			}
 		}
 	}

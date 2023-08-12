@@ -65,6 +65,22 @@ public interface FileInfo extends Info {
 	}
 
 	/**
+	 * @return Self cast to audio file.
+	 */
+	@Nonnull
+	default AudioFileInfo asAudioFile() {
+		throw new IllegalStateException("Non-audio file cannot be cast to audio file");
+	}
+
+	/**
+	 * @return Self cast to video file.
+	 */
+	@Nonnull
+	default VideoFileInfo asVideoFile() {
+		throw new IllegalStateException("Non-video file cannot be cast to video file");
+	}
+
+	/**
 	 * @return Self cast to zip file.
 	 */
 	@Nonnull
@@ -90,9 +106,23 @@ public interface FileInfo extends Info {
 	}
 
 	/**
-	 * @return {@code true} if self is a image file.
+	 * @return {@code true} if self is an image file.
 	 */
 	default boolean isImageFile() {
+		return false;
+	}
+
+	/**
+	 * @return {@code true} if self is an audio file.
+	 */
+	default boolean isAudioFile() {
+		return false;
+	}
+
+	/**
+	 * @return {@code true} if self is a video file.
+	 */
+	default boolean isVideoFile() {
 		return false;
 	}
 
