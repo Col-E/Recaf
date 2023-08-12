@@ -1,4 +1,4 @@
-package software.coley.recaf.services.text;
+package software.coley.recaf.services.info;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,7 +14,6 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexRule;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
-import software.coley.recaf.util.StringUtil;
 
 import static software.coley.recaf.util.StringUtil.*;
 
@@ -66,10 +65,10 @@ public class FileTypeAssociationService implements Service {
 	 */
 	public void configureEditorSyntax(@Nonnull String fileExtension, @Nonnull Editor editor) {
 		String lowerExtension = fileExtension.toLowerCase();
-		String mappedExtension = config.getExtensionsToLangKeys().getOrDefault(lowerExtension, lowerExtension);
+		String languageKey = config.getExtensionsToLangKeys().getOrDefault(lowerExtension, lowerExtension);
 
-		String sheet = LanguageStylesheets.getLanguageStylesheet(mappedExtension);
-		RegexRule language = RegexLanguages.getLanguage(mappedExtension);
+		String sheet = LanguageStylesheets.getLanguageStylesheet(languageKey);
+		RegexRule language = RegexLanguages.getLanguage(languageKey);
 
 		ObservableList<String> stylesheets = editor.getStylesheets();
 		if (sheet != null && !stylesheets.contains(sheet))

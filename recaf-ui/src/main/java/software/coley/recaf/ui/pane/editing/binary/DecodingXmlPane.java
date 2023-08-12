@@ -13,7 +13,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.FileNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
-import software.coley.recaf.services.text.FileTypeAssociationService;
+import software.coley.recaf.services.info.FileTypeAssociationService;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;

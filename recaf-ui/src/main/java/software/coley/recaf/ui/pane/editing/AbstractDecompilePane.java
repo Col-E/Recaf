@@ -38,7 +38,7 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.AstMappingVisitor;
-import software.coley.recaf.services.text.FileTypeAssociationService;
+import software.coley.recaf.services.info.FileTypeAssociationService;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
