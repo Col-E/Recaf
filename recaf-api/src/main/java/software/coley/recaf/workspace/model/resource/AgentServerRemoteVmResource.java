@@ -84,9 +84,8 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public Stream<JvmClassBundle> jvmClassBundleStream() {
-		return (Stream<JvmClassBundle>) (Object) remoteBundleMap.values().stream();
+		return Stream.concat(super.jvmClassBundleStream(), remoteBundleMap.values().stream());
 	}
 
 	@Override

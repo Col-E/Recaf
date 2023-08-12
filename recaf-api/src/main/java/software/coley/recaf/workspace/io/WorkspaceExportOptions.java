@@ -203,11 +203,13 @@ public class WorkspaceExportOptions {
 		 */
 		private void mapInto(Map<String, byte[]> map, WorkspaceResource resource) {
 			// Place classes into map
-			for (JvmClassInfo classInfo : resource.getJvmClassBundle()) {
-				String key = classInfo.getName() + ".class";
-				map.put(key, classInfo.getBytecode());
-				updateProperties(key, classInfo);
-			}
+			resource.jvmClassBundleStream().forEach(bundle -> {
+				for (JvmClassInfo classInfo : bundle) {
+					String key = classInfo.getName() + ".class";
+					map.put(key, classInfo.getBytecode());
+					updateProperties(key, classInfo);
+				}
+			});
 
 			// Place versioned files into map
 			for (Map.Entry<Integer, JvmClassBundle> entry : resource.getVersionedJvmClassBundles().entrySet()) {
