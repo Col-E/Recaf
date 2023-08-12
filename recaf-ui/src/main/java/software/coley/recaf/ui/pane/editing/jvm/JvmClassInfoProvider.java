@@ -14,6 +14,7 @@ import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.pane.editing.AbstractClassInfoProvider;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
+import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.util.Lang;
 
 import java.util.Objects;
@@ -55,7 +56,7 @@ public class JvmClassInfoProvider extends AbstractClassInfoProvider<JvmClassInfo
 		versionLabel.getStyleClass().addAll(Styles.TEXT_BOLD);
 		sourceLabel.getStyleClass().addAll(Styles.TEXT_BOLD);
 
-		Label versionValueLabel = new Label(String.valueOf(info.getVersion()));
+		Label versionValueLabel = new Label(String.valueOf(info.getVersion() - JavaVersion.VERSION_OFFSET));
 		Label sourceValueLabel = new Label(Objects.requireNonNullElse(info.getSourceFileName(), ""));
 
 		int row = 0;
