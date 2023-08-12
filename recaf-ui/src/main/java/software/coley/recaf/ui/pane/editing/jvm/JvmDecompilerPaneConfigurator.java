@@ -14,6 +14,7 @@ import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.ObservableCheckBox;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilerPaneConfigurator;
+import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.ToStringConverter;
@@ -28,6 +29,8 @@ public class JvmDecompilerPaneConfigurator extends AbstractDecompilerPaneConfigu
 	private final ObservableBoolean javacDebug;
 
 	/**
+	 * @param toolsContainer
+	 * 		Container to house tool buttons for display in the {@link Editor}.
 	 * @param config
 	 * 		Containing {@link JvmDecompilerPane} config singleton.
 	 * @param decompiler
@@ -39,12 +42,13 @@ public class JvmDecompilerPaneConfigurator extends AbstractDecompilerPaneConfigu
 	 * @param decompilerManager
 	 * 		Manager to pull available {@link JvmDecompiler} instances from.
 	 */
-	public JvmDecompilerPaneConfigurator(@Nonnull DecompilerPaneConfig config,
+	public JvmDecompilerPaneConfigurator(@Nonnull ToolsContainerComponent toolsContainer,
+										 @Nonnull DecompilerPaneConfig config,
 										 @Nonnull ObservableObject<JvmDecompiler> decompiler,
 										 @Nonnull ObservableInteger javacTarget,
 										 @Nonnull ObservableBoolean javacDebug,
 										 @Nonnull DecompilerManager decompilerManager) {
-		super(config, decompiler, decompilerManager);
+		super(toolsContainer, config, decompiler, decompilerManager);
 		this.javacTarget = javacTarget;
 		this.javacDebug = javacDebug;
 	}

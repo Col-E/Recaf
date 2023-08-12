@@ -3,25 +3,25 @@ package software.coley.recaf.ui.pane.editing;
 import atlantafx.base.controls.Popover;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
-import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.geometry.HPos;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.util.StringConverter;
+import javafx.scene.control.Button;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.control.Spinner;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
-import software.coley.recaf.ui.control.*;
+import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.ObservableComboBox;
+import software.coley.recaf.ui.control.ObservableSpinner;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.ui.control.richtext.EditorComponent;
-import software.coley.recaf.ui.control.richtext.ScrollbarPaddingUtil;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
-import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
-import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.util.Lang;
 
 import java.util.ArrayList;
@@ -31,14 +31,15 @@ import java.util.ArrayList;
  *
  * @author Matt Coley
  */
-public abstract class AbstractDecompilerPaneConfigurator extends Button implements EditorComponent {
-	private final ChangeListener<Boolean> handleScrollbarVisibility = (ob, old, cur) -> ScrollbarPaddingUtil.handleScrollbarVisibility(this, cur);
+public abstract class AbstractDecompilerPaneConfigurator extends Button {
 	private final DecompilerPaneConfig config;
 	private final ObservableObject<JvmDecompiler> decompiler;
 	private final DecompilerManager decompilerManager;
 	private Popover popover;
 
 	/**
+	 * @param toolsContainer
+	 * 		Container to house tool buttons for display in the {@link Editor}.
 	 * @param config
 	 * 		Containing {@link AbstractDecompilePane} config singleton.
 	 * @param decompiler
@@ -46,7 +47,8 @@ public abstract class AbstractDecompilerPaneConfigurator extends Button implemen
 	 * @param decompilerManager
 	 * 		Manager to pull available {@link JvmDecompiler} instances from.
 	 */
-	public AbstractDecompilerPaneConfigurator(@Nonnull DecompilerPaneConfig config,
+	public AbstractDecompilerPaneConfigurator(@Nonnull ToolsContainerComponent toolsContainer,
+											  @Nonnull DecompilerPaneConfig config,
 											  @Nonnull ObservableObject<JvmDecompiler> decompiler,
 											  @Nonnull DecompilerManager decompilerManager) {
 		this.config = config;
@@ -55,22 +57,7 @@ public abstract class AbstractDecompilerPaneConfigurator extends Button implemen
 		setGraphic(new FontIconView(CarbonIcons.SETTINGS));
 		getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT);
 		setOnAction(this::showConfiguratorPopover);
-
-		// Initial layout
-		StackPane.setAlignment(this, Pos.BOTTOM_RIGHT);
-		StackPane.setMargin(this, new Insets(7));
-	}
-
-	@Override
-	public void install(@Nonnull Editor editor) {
-		editor.getPrimaryStack().getChildren().add(this);
-		editor.getVerticalScrollbar().visibleProperty().addListener(handleScrollbarVisibility);
-	}
-
-	@Override
-	public void uninstall(@Nonnull Editor editor) {
-		editor.getPrimaryStack().getChildren().remove(this);
-		editor.getVerticalScrollbar().visibleProperty().removeListener(handleScrollbarVisibility);
+		toolsContainer.add(this);
 	}
 
 	private void showConfiguratorPopover(ActionEvent e) {

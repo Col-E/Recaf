@@ -12,7 +12,7 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
-import software.coley.recaf.ui.pane.editing.AbstractDecompilerPaneConfigurator;
+import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 
 /**
@@ -26,14 +26,15 @@ public class AndroidDecompilerPane extends AbstractDecompilePane {
 	public AndroidDecompilerPane(@Nonnull DecompilerPaneConfig config,
 								 @Nonnull KeybindingConfig keys,
 								 @Nonnull SearchBar searchBar,
+								 @Nonnull ToolsContainerComponent toolsContainer,
 								 @Nonnull JavaContextActionSupport contextActionSupport,
 								 @Nonnull DecompilerManager decompilerManager,
 								 @Nonnull Actions actions) {
 		super(config, searchBar, contextActionSupport, decompilerManager);
 
-		// Install configurator popup
-		AbstractDecompilerPaneConfigurator configurator = new AndroidDecompilerPaneConfigurator(config, decompiler, decompilerManager);
-		configurator.install(editor);
+		// Install tools container with configurator
+		new AndroidDecompilerPaneConfigurator(toolsContainer, config, decompiler, decompilerManager);
+		toolsContainer.install(editor);
 
 		// Setup keybindings
 		setOnKeyPressed(e -> {

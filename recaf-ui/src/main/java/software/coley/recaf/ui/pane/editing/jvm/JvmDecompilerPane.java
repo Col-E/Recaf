@@ -41,7 +41,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
-import software.coley.recaf.ui.pane.editing.AbstractDecompilerPaneConfigurator;
+import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.JavaVersion;
@@ -82,6 +82,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	public JvmDecompilerPane(@Nonnull DecompilerPaneConfig config,
 							 @Nonnull KeybindingConfig keys,
 							 @Nonnull SearchBar searchBar,
+							 @Nonnull ToolsContainerComponent toolsContainer,
 							 @Nonnull JavaContextActionSupport contextActionSupport,
 							 @Nonnull DecompilerManager decompilerManager,
 							 @Nonnull JavacCompiler javac,
@@ -95,10 +96,9 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		this.javacConfig = javacConfig;
 		this.javac = javac;
 
-		// Install configurator popup
-		AbstractDecompilerPaneConfigurator configurator = new JvmDecompilerPaneConfigurator(config, decompiler,
-				javacTarget, javacDebug, decompilerManager);
-		configurator.install(editor);
+		// Install tools container with configurator
+		new JvmDecompilerPaneConfigurator(toolsContainer, config, decompiler, javacTarget, javacDebug, decompilerManager);
+		toolsContainer.install(editor);
 
 		// Setup keybindings
 		setOnKeyPressed(e -> {
