@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.AnnotationInfo;
-import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
@@ -37,6 +36,7 @@ import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
+import software.coley.recaf.ui.pane.editing.image.ImageFilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
@@ -81,6 +81,7 @@ public class Actions implements Service {
 	private final Instance<AndroidClassPane> androidPaneProvider;
 	private final Instance<BinaryXmlFilePane> binaryXmlPaneProvider;
 	private final Instance<TextFilePane> textPaneProvider;
+	private final Instance<ImageFilePane> imagePaneProvider;
 	private final ActionsConfig config;
 
 	@Inject
@@ -93,7 +94,8 @@ public class Actions implements Service {
 				   @Nonnull Instance<JvmClassPane> jvmPaneProvider,
 				   @Nonnull Instance<AndroidClassPane> androidPaneProvider,
 				   @Nonnull Instance<BinaryXmlFilePane> binaryXmlPaneProvider,
-				   @Nonnull Instance<TextFilePane> textPaneProvider) {
+				   @Nonnull Instance<TextFilePane> textPaneProvider,
+				   @Nonnull Instance<ImageFilePane> imagePaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
@@ -104,6 +106,7 @@ public class Actions implements Service {
 		this.androidPaneProvider = androidPaneProvider;
 		this.binaryXmlPaneProvider = binaryXmlPaneProvider;
 		this.textPaneProvider = textPaneProvider;
+		this.imagePaneProvider = imagePaneProvider;
 	}
 
 	/**
@@ -308,6 +311,8 @@ public class Actions implements Service {
 		// Handle text vs binary
 		if (info.isTextFile()) {
 			return gotoDeclaration(workspace, resource, bundle, info.asTextFile());
+		} else if (info.isImageFile()) {
+			return gotoDeclaration(workspace, resource, bundle, info.asImageFile());
 		} else if (info instanceof BinaryXmlFileInfo binaryXml) {
 			return gotoDeclaration(workspace, resource, bundle, binaryXml);
 		}
@@ -362,7 +367,6 @@ public class Actions implements Service {
 		});
 	}
 
-
 	/**
 	 * Brings a {@link FileNavigable} component representing the given text file into focus.
 	 * If no such component exists, one is created.
@@ -393,6 +397,54 @@ public class Actions implements Service {
 
 			// Create content for the tab.
 			TextFilePane content = textPaneProvider.get();
+			content.onUpdatePath(path);
+
+			// Build the tab.
+			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			ContextMenu menu = new ContextMenu();
+			ObservableList<MenuItem> items = menu.getItems();
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
+				ClipboardContent clipboard = new ClipboardContent();
+				clipboard.putString(info.getName());
+				Clipboard.getSystemClipboard().setContent(clipboard);
+			}));
+			items.add(separator());
+			addCloseActions(menu, tab);
+			tab.setContextMenu(menu);
+			return tab;
+		});
+	}
+
+	/**
+	 * Brings a {@link FileNavigable} component representing the given image file into focus.
+	 * If no such component exists, one is created.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Image file to go to.
+	 *
+	 * @return Navigable content representing image file content of the path.
+	 */
+	@Nonnull
+	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
+										 @Nonnull WorkspaceResource resource,
+										 @Nonnull FileBundle bundle,
+										 @Nonnull ImageFileInfo info) {
+		FilePathNode path = buildPath(workspace, resource, bundle, info);
+		return (FileNavigable) getOrCreatePathContent(path, () -> {
+			// Create text/graphic for the tab to create.
+			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
+			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			if (title == null) throw new IllegalStateException("Missing title");
+			if (graphic == null) throw new IllegalStateException("Missing graphic");
+
+			// Create content for the tab.
+			ImageFilePane content = imagePaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.

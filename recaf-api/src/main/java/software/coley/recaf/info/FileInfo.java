@@ -57,6 +57,14 @@ public interface FileInfo extends Info {
 	}
 
 	/**
+	 * @return Self cast to image file.
+	 */
+	@Nonnull
+	default ImageFileInfo asImageFile() {
+		throw new IllegalStateException("Non-image file cannot be cast to image file");
+	}
+
+	/**
 	 * @return Self cast to zip file.
 	 */
 	@Nonnull
@@ -75,9 +83,16 @@ public interface FileInfo extends Info {
 	}
 
 	/**
-	 * @return {@code true} if self is a zip file.
+	 * @return {@code true} if self is a text file.
 	 */
 	default boolean isTextFile() {
+		return false;
+	}
+
+	/**
+	 * @return {@code true} if self is a image file.
+	 */
+	default boolean isImageFile() {
 		return false;
 	}
 

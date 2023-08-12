@@ -6,6 +6,7 @@ import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.FileNavigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
 
 /**
@@ -13,6 +14,7 @@ import software.coley.recaf.ui.pane.editing.text.TextFilePane;
  *
  * @author Matt Coley
  * @see TextFilePane
+ * @see BinaryXmlFilePane
  */
 public abstract class FilePane extends AbstractContentPane<FilePathNode> implements FileNavigable {
 	@Override

@@ -51,6 +51,12 @@
     -fx-background-color: -color-bg-default;
 }
 
+/* Rounds the display of a container by its bg/border colors */
+.round-container {
+  -fx-border-radius: 10em;
+  -fx-background-radius: 10em;
+}
+
 /* Visual tweak to tab-pane separator */
 .tab-pane {
     -fx-padding: 0px;

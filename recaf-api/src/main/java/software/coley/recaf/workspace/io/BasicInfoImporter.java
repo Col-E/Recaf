@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.builder.*;
-import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.io.ByteSource;
@@ -100,15 +99,20 @@ public class BasicInfoImporter implements InfoImporter {
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (name.endsWith(".arsc") &&
+		} else if (name.toUpperCase().endsWith(".ARSC") &&
 				ByteHeaderUtil.match(data, ByteHeaderUtil.ARSC)) {
 			return new ArscFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (name.endsWith(".xml") &&
+		} else if (name.toUpperCase().endsWith(".XML") &&
 				ByteHeaderUtil.match(data, ByteHeaderUtil.BINARY_XML)) {
 			return new BinaryXmlFileInfoBuilder()
+					.withRawContent(data)
+					.withName(name)
+					.build();
+		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.IMAGE_HEADERS)) {
+			return new ImageFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
