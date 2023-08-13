@@ -6,6 +6,11 @@ import software.coley.recaf.services.cell.IconProviderService;
 import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.services.navigation.Actions;
 
+/**
+ * Common base to context menu provider factories.
+ *
+ * @author Matt Coley
+ */
 public abstract class AbstractContextMenuProviderFactory implements ContextMenuProviderFactory {
 	protected final TextProviderService textService;
 	protected final IconProviderService iconService;

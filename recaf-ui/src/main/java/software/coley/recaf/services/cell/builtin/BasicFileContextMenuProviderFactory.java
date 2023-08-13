@@ -12,6 +12,7 @@ import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -49,16 +50,19 @@ public class BasicFileContextMenuProviderFactory extends AbstractContextMenuProv
 			ObservableList<MenuItem> items = menu.getItems();
 
 			FilePathNode filePath = PathNodes.filePath(workspace, resource, bundle, info);
-			items.add(action("menu.goto.file", CarbonIcons.ARROW_RIGHT, runnable(() -> actions.gotoDeclaration(filePath))));
-
-			// TODO: implement operations
-			//  - Copy
-			//  - Delete
-			//  - Refactor
-			//    - Rename
-			//    - Move
-			//  - Search references
-			//  - Override text-view language
+			if (source.isReference()) {
+				items.add(action("menu.goto.file", CarbonIcons.ARROW_RIGHT, runnable(() -> actions.gotoDeclaration(filePath))));
+			} else if (source.isDeclaration()) {
+				items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
+				// TODO: implement operations
+				//  - Copy
+				//  - Delete
+				//  - Refactor
+				//    - Rename
+				//    - Move
+				//  - Search references
+				//  - Override text-view language (FileTypeAssociationService)
+			}
 			return menu;
 		};
 	}

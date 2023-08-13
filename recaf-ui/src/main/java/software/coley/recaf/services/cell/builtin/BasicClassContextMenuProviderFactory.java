@@ -16,6 +16,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.ActionMenuItem;
+import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.Menus;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -136,6 +137,7 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT,
 					() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
 		} else if (source.isDeclaration()) {
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
 			ActionMenuItem copy = action("menu.edit.copy", CarbonIcons.COPY_FILE, () -> actions.copyClass(workspace, resource, bundle, info));
 			ActionMenuItem delete = action("menu.edit.delete", CarbonIcons.DELETE, () -> actions.deleteClass(workspace, resource, bundle, info));
 			Menu edit = Menus.menu("menu.edit", CarbonIcons.EDIT);

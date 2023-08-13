@@ -11,8 +11,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -42,10 +40,7 @@ import software.coley.recaf.ui.pane.editing.media.AudioFilePane;
 import software.coley.recaf.ui.pane.editing.media.ImageFilePane;
 import software.coley.recaf.ui.pane.editing.media.VideoFilePane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
-import software.coley.recaf.util.EscapeUtil;
-import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.Unchecked;
+import software.coley.recaf.util.*;
 import software.coley.recaf.util.visitors.ClassAnnotationRemovingVisitor;
 import software.coley.recaf.util.visitors.MemberPredicate;
 import software.coley.recaf.util.visitors.MemberRemovingVisitor;
@@ -213,11 +208,7 @@ public class Actions implements Service {
 							() -> content.setEditorType(JvmClassEditorType.HEX))
 			);
 			items.add(mode);
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
-				ClipboardContent clipboard = new ClipboardContent();
-				clipboard.putString(info.getName());
-				Clipboard.getSystemClipboard().setContent(clipboard);
-			}));
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
 			items.add(separator());
 			addCloseActions(menu, tab);
 			tab.setContextMenu(menu);
@@ -271,11 +262,7 @@ public class Actions implements Service {
 			});
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", () -> {
-				ClipboardContent clipboard = new ClipboardContent();
-				clipboard.putString(info.getName());
-				Clipboard.getSystemClipboard().setContent(clipboard);
-			}));
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
 			items.add(separator());
 			addCloseActions(menu, tab);
 			tab.setContextMenu(menu);
@@ -367,11 +354,7 @@ public class Actions implements Service {
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
-				ClipboardContent clipboard = new ClipboardContent();
-				clipboard.putString(info.getName());
-				Clipboard.getSystemClipboard().setContent(clipboard);
-			}));
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
 			items.add(separator());
 			addCloseActions(menu, tab);
 			tab.setContextMenu(menu);
@@ -415,11 +398,7 @@ public class Actions implements Service {
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
-				ClipboardContent clipboard = new ClipboardContent();
-				clipboard.putString(info.getName());
-				Clipboard.getSystemClipboard().setContent(clipboard);
-			}));
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
 			items.add(separator());
 			addCloseActions(menu, tab);
 			tab.setContextMenu(menu);
@@ -463,11 +442,7 @@ public class Actions implements Service {
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
-				ClipboardContent clipboard = new ClipboardContent();
-				clipboard.putString(info.getName());
-				Clipboard.getSystemClipboard().setContent(clipboard);
-			}));
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
 			items.add(separator());
 			addCloseActions(menu, tab);
 			tab.setContextMenu(menu);
@@ -511,11 +486,7 @@ public class Actions implements Service {
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
-				ClipboardContent clipboard = new ClipboardContent();
-				clipboard.putString(info.getName());
-				Clipboard.getSystemClipboard().setContent(clipboard);
-			}));
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
 			items.add(separator());
 			addCloseActions(menu, tab);
 			tab.setContextMenu(menu);
@@ -559,11 +530,7 @@ public class Actions implements Service {
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> {
-				ClipboardContent clipboard = new ClipboardContent();
-				clipboard.putString(info.getName());
-				Clipboard.getSystemClipboard().setContent(clipboard);
-			}));
+			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
 			items.add(separator());
 			addCloseActions(menu, tab);
 			tab.setContextMenu(menu);

@@ -3,13 +3,19 @@ package software.coley.recaf.services.cell.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+
+import static software.coley.recaf.util.Menus.action;
 
 /**
  * Basic implementation for {@link PackageContextMenuProviderFactory}.
@@ -38,13 +44,19 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 			IconProvider iconProvider = iconService.getPackageIconProvider(workspace, resource, bundle, packageName);
 			ContextMenu menu = new ContextMenu();
 			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
-			// TODO: implement operations
-			//  - Copy
-			//  - Delete
-			//  - Refactor
-			//    - Rename
-			//    - Move
-			//  - Search references
+
+			ObservableList<MenuItem> items = menu.getItems();
+			if (source.isDeclaration()) {
+				items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(packageName)));
+				// TODO: implement operations
+				//  - Copy
+				//  - Delete
+				//  - Refactor
+				//    - Rename
+				//    - Move
+				//  - Search references
+			}
+
 			return menu;
 		};
 	}

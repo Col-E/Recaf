@@ -18,7 +18,8 @@ import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.ActionMenuItem;
-import software.coley.recaf.util.Menus;
+import software.coley.recaf.util.ClipboardUtil;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -69,6 +70,8 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 							}
 						}));
 			} else {
+				items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(declaringClass, field)));
+
 				// TODO: implement operations
 				//  - Edit
 				//    - (field / method assembler)
