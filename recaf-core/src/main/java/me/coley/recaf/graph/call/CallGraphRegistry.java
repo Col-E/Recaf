@@ -33,9 +33,14 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 	}
 
 	public static CallGraphRegistry createAndLoad(Workspace workspace) {
+		CallGraphRegistry registry = create(workspace);
+		registry.load();
+		return registry;
+	}
+
+	public static CallGraphRegistry create(Workspace workspace) {
 		CallGraphRegistry registry = new CallGraphRegistry(workspace);
 		workspace.addListener(registry);
-		registry.load();
 		return registry;
 	}
 
@@ -86,8 +91,10 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		final dev.xdark.jlinker.ClassInfo<ClassInfo> classInfo = classInfo(callClassInfo, classInfoFromPathResolver);
 		switch (opcode) {
 			case Opcodes.INVOKESPECIAL:
-			case Opcodes.INVOKEVIRTUAL:
 			case Opcodes.H_INVOKESPECIAL:
+				result = resolver.resolveSpecialMethod(classInfo, name, descriptor);
+				break;
+			case Opcodes.INVOKEVIRTUAL:
 			case Opcodes.H_INVOKEVIRTUAL:
 				result = resolver.resolveVirtualMethod(classInfo, name, descriptor);
 				break;

@@ -6,7 +6,9 @@ import dev.xdark.jlinker.Result;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
+import me.coley.recaf.decompile.PostDecompileInterceptor;
 import me.coley.recaf.util.MemoizedFunction;
+import org.checkerframework.checker.units.qual.C;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -35,6 +37,10 @@ class CachedLinkResolver implements LinkResolver<ClassInfo, MethodInfo, FieldInf
 			staticFieldResolver = MemoizedFunction.memoize(
 			c -> MemoizedFunction.memoize((name, descriptor) -> backedResolver.resolveStaticField(c, name, descriptor))
 	);
+	private final Function<dev.xdark.jlinker.ClassInfo<ClassInfo>, BiFunction<String, String, Result<Resolution<ClassInfo, MethodInfo>>>>
+			specialMethodResolver = MemoizedFunction.memoize(
+			c -> MemoizedFunction.memoize((name, descriptor) -> backedResolver.resolveSpecialMethod(c, name, descriptor))
+	);
 
 	@Override
 	public Result<Resolution<ClassInfo, MethodInfo>> resolveStaticMethod(dev.xdark.jlinker.ClassInfo<ClassInfo> owner, String name, String descriptor, boolean itf) {
@@ -44,6 +50,11 @@ class CachedLinkResolver implements LinkResolver<ClassInfo, MethodInfo, FieldInf
 	@Override
 	public Result<Resolution<ClassInfo, MethodInfo>> resolveStaticMethod(dev.xdark.jlinker.ClassInfo<ClassInfo> owner, String name, String descriptor) {
 		return resolveStaticMethod(owner, name, descriptor, false);
+	}
+
+	@Override
+	public Result<Resolution<ClassInfo, MethodInfo>> resolveSpecialMethod(dev.xdark.jlinker.ClassInfo<ClassInfo> owner, String name, String descriptor, boolean itf) {
+		return specialMethodResolver.apply(owner).apply(name, descriptor);
 	}
 
 	@Override

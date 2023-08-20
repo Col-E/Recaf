@@ -9,6 +9,7 @@ import me.coley.recaf.parse.JavaParserHelper;
 import me.coley.recaf.parse.WorkspaceSymbolSolver;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.util.WorkspaceTreeService;
+import me.coley.recaf.util.threading.ThreadUtil;
 import me.coley.recaf.workspace.Workspace;
 
 import javax.annotation.Nullable;
@@ -133,7 +134,9 @@ public class Services {
 			javaParserHelper = JavaParserHelper.create(symbolSolver);
 			ssvmIntegration = new SsvmIntegration(workspace);
 			treeService = new WorkspaceTreeService(workspace);
-			callGraphRegistry = CallGraphRegistry.createAndLoad(workspace);
+			CallGraphRegistry callGraphRegistry1 = CallGraphRegistry.create(workspace);
+			callGraphRegistry = callGraphRegistry1;
+			ThreadUtil.run(callGraphRegistry1::load);
 		}
 	}
 }
