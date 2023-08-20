@@ -46,9 +46,9 @@ public class InnerClass extends BaseElement {
         if (modifiers.value() > 0) {
             sb.append(modifiers.print(context).toLowerCase()).append(' ');
         }
-        sb.append(EscapeUtil.escapeNonValid(name)).append(' ');
-        sb.append(EscapeUtil.escapeNonValid(outerName)).append(' ');
-        sb.append(EscapeUtil.escapeNonValid(innerName));
+        sb.append(context.fmtIdentifier(name)).append(' ');
+        sb.append(context.fmtIdentifier(outerName)).append(' ');
+        sb.append(context.fmtIdentifier(innerName));
         return sb.toString();
     }
 }

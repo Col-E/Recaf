@@ -49,9 +49,10 @@ import me.coley.recaf.util.visitor.MethodReplacingVisitor;
 import me.coley.recaf.util.visitor.SingleMemberVisitor;
 import me.coley.recaf.util.visitor.WorkspaceClassWriter;
 import me.coley.recaf.workspace.resource.Resource;
-import me.darknet.assembler.parser.AssemblerException;
+import me.darknet.assembler.exceptions.AssemblerException;
 import me.darknet.assembler.parser.Group;
-import me.darknet.assembler.parser.groups.*;
+import me.darknet.assembler.parser.Token;
+import me.darknet.assembler.parser.groups.instructions.*;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
@@ -79,11 +80,12 @@ import static me.darknet.assembler.parser.Group.GroupType;
  * @author Matt Coley
  */
 public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineCompletionListener,
-		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener {
+		AstValidationListener, BytecodeValidationListener, ParserFailureListener, BytecodeFailureListener,
+		ParserCompletionListener {
 	private static final DebuggingLogger logger = Logging.get(AssemblerArea.class);
 	private final DelayedExecutor updatePipelineInput;
 	private final ProblemTracking problemTracking;
-	private final AssemblerPipeline pipeline;
+	private final ContextualPipeline pipeline;
 	private final Suggestions suggestions;
 	private VirtualizedContextMenu<Suggestion> suggestionsMenu;
 	private ClassInfo classInfo;
@@ -124,6 +126,7 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		pipeline.addParserFailureListener(this);
 		pipeline.addBytecodeFailureListener(this);
 		pipeline.addPipelineCompletionListener(this);
+		pipeline.addParserCompletionListener(this);
 		boolean validateAst = config().astValidation;
 		if (validateAst) {
 			pipeline.addAstValidationListener(this);
@@ -165,8 +168,8 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			if (pipeline.updateAst(config().usePrefix) && pipeline.validateAst()) {
 				logger.debugging(l -> l.trace("AST updated and validated"));
 				// Update suggestions data with definition changes
-				if (pipeline.getUnit() != null && pipeline.isMethod())
-					suggestions.setMethod(pipeline.getUnit().getDefinitionAsMethod());
+				if (pipeline.getUnit() != null && pipeline.isCurrentMethod())
+					suggestions.setMethod(pipeline.getCurrentMethod());
 				// Generate the ASM node type from the AST.
 				if (pipeline.isMethod() &&
 						pipeline.isOutputOutdated() &&
@@ -219,8 +222,6 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		transformer.visit();
 		Unit unit = transformer.getUnit();
 
-		if (unit.isMethod()) suggestions.setMethod(unit.getDefinitionAsMethod());
-
 		String code = unit.print(config().createContext());
 		// Update text
 		setText(code);
@@ -235,6 +236,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 				pipeline.generateField();
 			else
 				pipeline.generateClass();
+
+			if(pipeline.isCurrentMethod()) {
+				suggestions.setMethod(pipeline.getCurrentMethod());
+			}
 
 			// Run an initial generation within our assembler UI.
 			// This will populate the local variable and analysis tab contents.
@@ -288,6 +293,10 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * @return Menu containing completion suggestions.
 	 */
 	private VirtualizedContextMenu<Suggestion> createSuggestionsMenu(int position, Group suggestionGroup) {
+		// Update suggestions
+		if(pipeline.isCurrentMethod()) {
+			suggestions.setMethod(pipeline.getCurrentMethod());
+		}
 		// Get suggestions content
 		SuggestionsResults results = suggestions.getSuggestion(suggestionGroup);
 		Set<Suggestion> set = results.getValues().collect(Collectors.toCollection(TreeSet::new));
@@ -607,7 +616,17 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 	 * @return Result of update operation.
 	 */
 	private SaveResult updateClass(MethodNode updatedMethod) {
-		return updateClass(cw -> new MethodReplacingVisitor(cw, targetMember, updatedMethod));
+		try {
+			return updateClass(cw -> new MethodReplacingVisitor(cw, targetMember, updatedMethod));
+		} catch (Throwable t) {
+			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(t, getClass());
+			String classLocation = trace[0].getClassName();
+			if ("org.objectweb.asm.Frame".equals(classLocation))
+				logger.error("Failed to reassemble method (ASM frame generation)", t);
+			else
+				logger.error("Failed to reassemble method (Unknown)", t);
+			return SaveResult.FAILURE;
+		}
 	}
 
 	/**
@@ -625,13 +644,13 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 		ClassWriter cw = new WorkspaceClassWriter(RecafUI.getController(), flags);
 		try {
 			updatedClass.accept(cw);
-		} catch (Exception ex) {
-			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(ex, getClass());
+		} catch (Throwable t) {
+			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(t, getClass());
 			String classLocation = trace[0].getClassName();
 			if ("org.objectweb.asm.Frame".equals(classLocation))
-				logger.error("Failed to reassemble method (ASM frame generation)", ex);
+				logger.error("Failed to reassemble class (ASM frame generation)", t);
 			else
-				logger.error("Failed to reassemble method (Unknown)", ex);
+				logger.error("Failed to reassemble class (Unknown)", t);
 			return SaveResult.FAILURE;
 		}
 		// Done, update the workspace
@@ -664,9 +683,9 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 			StackTraceElement[] trace = StackTraceUtil.cutOffToUsage(ex, getClass());
 			String classLocation = trace[0].getClassName();
 			if ("org.objectweb.asm.Frame".equals(classLocation))
-				logger.error("Failed to reassemble method (ASM frame generation)", ex);
+				logger.error("Failed to reassemble class (ASM frame generation)", ex);
 			else
-				logger.error("Failed to reassemble method (Unknown)", ex);
+				logger.error("Failed to reassemble class (Unknown)", ex);
 			return SaveResult.FAILURE;
 		}
 		// Done, update the workspace
@@ -841,6 +860,21 @@ public class AssemblerArea extends SyntaxArea implements MemberEditor, PipelineC
 
 	private static AssemblerConfig config() {
 		return Configs.assembler();
+	}
+
+	@Override
+	public void onCompleteTokenize(List<Token> tokens) {
+		// no-op
+	}
+
+	@Override
+	public void onCompleteParse(List<Group> groups) {
+		problemTracking.clearOfType(BYTECODE_PARSING);
+	}
+
+	@Override
+	public void onCompleteTransform(Unit unit) {
+		// no-op
 	}
 
 	public class LabelContextBuilder extends ContextBuilder {

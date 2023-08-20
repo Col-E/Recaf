@@ -89,6 +89,6 @@ public class HandleInfo extends BaseElement {
 
 	@Override
 	public String print(PrintContext context) {
-			return tag + " " + EscapeUtil.escapeNonValid(owner + '.' + name) + ' ' + EscapeUtil.escapeNonValid(desc);
+			return tag + " " + context.fmtIdentifier(owner + '.' + name) + ' ' + context.fmtIdentifier(desc);
 	}
 }

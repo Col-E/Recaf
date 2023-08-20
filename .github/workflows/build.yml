@@ -41,10 +41,6 @@ jobs:
           path: |
             **/TEST-*
             **/hs_err_pid*
-      - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # taken from: https://github.com/EnricoMi/publish-unit-test-result-action/blob/v1.20/README.md#support-fork-repositories-and-dependabot-branches
   event_file:
     name: "Event File"

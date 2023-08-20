@@ -8,7 +8,8 @@ import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
 import static org.objectweb.asm.Opcodes.*;
-import static org.objectweb.asm.Type.*;
+import static org.objectweb.asm.Type.ARRAY;
+import static org.objectweb.asm.Type.INT;
 
 /**
  * Executor for loading values from an array on the stack to the stack.
@@ -19,49 +20,44 @@ public class ArrayLoadExecutor implements InstructionExecutor {
 	@Override
 	public void handle(Frame frame, AbstractInstruction instruction) throws AnalysisException {
 		int op = instruction.getOpcodeVal();
+		int fallbackDimensions = -1;
 		Type fallback = Types.fromArrayOpcode(op);
 		Value index = frame.pop();
 		Value array = frame.pop();
-		if (array instanceof Value.ArrayValue && index instanceof Value.NumericValue) {
+		if (array instanceof Value.ArrayValue) {
 			Value.ArrayValue arrayValue = (Value.ArrayValue) array;
-			Type elementType = arrayValue.getElementType();
+			Type arrayType = arrayValue.getArrayType();
+			fallbackDimensions = arrayType.getDimensions() - 1;
+			fallback = arrayValue.getArrayType();
 			switch (op) {
+				case BALOAD:
+				case CALOAD:
+				case SALOAD:
 				case IALOAD:
-					if (elementType != INT_TYPE)
-						frame.markWonky("'iaload' used on non int[] array");
+					if (arrayType.getElementType().getSort() > INT)
+						frame.markWonky("'iaload' used on non int[] (or narrower) array");
 					break;
 				case LALOAD:
-					if (elementType != LONG_TYPE)
+					if (arrayType != Types.LONG_ARRAY_TYPE)
 						frame.markWonky("'laload' used on non long[] array");
 					break;
 				case FALOAD:
-					if (elementType != FLOAT_TYPE)
+					if (arrayType != Types.FLOAT_ARRAY_TYPE)
 						frame.markWonky("'faload' used on non float[] array");
 					break;
 				case DALOAD:
-					if (elementType != DOUBLE_TYPE)
+					if (arrayType != Types.DOUBLE_ARRAY_TYPE)
 						frame.markWonky("'daload' used on non double[] array");
 					break;
 				case AALOAD:
-					if (elementType.getSort() < ARRAY)
+					if (arrayType.getSort() < ARRAY)
 						frame.markWonky("'aaload' used on non Object[] array");
 					break;
-				case BALOAD:
-					if (elementType != BYTE_TYPE)
-						frame.markWonky("'iaload' used on non byte[] array");
-					break;
-				case CALOAD:
-					if (elementType != CHAR_TYPE)
-						frame.markWonky("'caload' used on non char[] array");
-					break;
-				case SALOAD:
-					if (elementType != SHORT_TYPE)
-						frame.markWonky("'saload' used on non short[] array");
-					break;
+
 			}
 			// Check if we were able to track array size beforehand
 			Value[] backingArray = arrayValue.getArray();
-			if (backingArray != null) {
+			if (backingArray != null && index.isNumeric()) {
 				// Check if we know the actual index
 				Value.NumericValue arrayIndex = (Value.NumericValue) index;
 				if (arrayIndex.getNumber() != null) {
@@ -83,9 +79,9 @@ public class ArrayLoadExecutor implements InstructionExecutor {
 			}
 		} else {
 			// Wrong stack value types
-			if (array instanceof Value.ArrayValue) {
+			if (!index.isNumeric()) {
 				frame.markWonky("cannot use index for array operation, index on stack is a non-numeric value");
-			} else {
+			} else if (!array.isArray()) {
 				frame.markWonky("cannot use array for array operation, array on stack is a non-array value");
 			}
 		}
@@ -96,6 +92,22 @@ public class ArrayLoadExecutor implements InstructionExecutor {
 			} else if (fallback.getSort() <= Type.DOUBLE) {
 				frame.push(new Value.NumericValue(fallback));
 				frame.push(new Value.WideReservedValue());
+			} else if (fallback.getSort() == ARRAY) {
+				if (fallbackDimensions > 0) {
+					// It's an array in an array
+					frame.push(new Value.ArrayValue(fallbackDimensions, fallback.getElementType()));
+				} else {
+					// It's a value in an array
+					Type elementType = fallback.getElementType();
+					if (elementType.getSort() <= Type.FLOAT) {
+						frame.push(new Value.NumericValue(elementType));
+					} else if (elementType.getSort() <= Type.DOUBLE) {
+						frame.push(new Value.NumericValue(elementType));
+						frame.push(new Value.WideReservedValue());
+					} else {
+						frame.push(new Value.ObjectValue(elementType));
+					}
+				}
 			} else {
 				frame.push(new Value.ObjectValue(fallback));
 			}

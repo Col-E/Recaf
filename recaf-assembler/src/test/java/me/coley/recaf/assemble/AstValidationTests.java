@@ -3,6 +3,7 @@ package me.coley.recaf.assemble;
 import me.coley.recaf.assemble.ast.Unit;
 import me.coley.recaf.assemble.validation.ValidationMessage;
 import me.coley.recaf.assemble.validation.ast.AstValidator;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * code from the AST, not if that code will be correct.
  */
 public class AstValidationTests extends JasmUtils {
+	@Disabled("JASM will catch this before it gets to validation")
 	@Nested
 	class Int {
 		@Test

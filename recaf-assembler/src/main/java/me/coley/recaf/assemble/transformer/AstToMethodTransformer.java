@@ -13,6 +13,7 @@ import me.coley.recaf.assemble.util.ClassSupplier;
 import me.coley.recaf.assemble.util.InheritanceChecker;
 import me.coley.recaf.assemble.util.ReflectiveInheritanceChecker;
 import me.coley.recaf.util.AccessFlag;
+import me.coley.recaf.util.EscapeUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
@@ -97,7 +98,7 @@ public class AstToMethodTransformer {
 			throw new MethodCompileException(definition, "The instructions have not been successfully generated!" +
 					"Cannot build method instance.");
 		}
-		int access = definition.getModifiers().value();
+		int access = definition.getModifiers().value() | (definition.isDeprecated() ? Opcodes.ACC_DEPRECATED : 0);;
 		String name = definition.getName();
 		String descriptor = definition.getDesc();
 		String signature = definition.getSignature() != null ? definition.getSignature().getSignature() : null;
@@ -349,7 +350,11 @@ public class AstToMethodTransformer {
 					break;
 				case LDC:
 					LdcInstruction ldc = (LdcInstruction) instruction;
-					addCode(list, instruction, new LdcInsnNode(ldc.getValue()));
+					Object cst = ldc.getValue();
+					// TODO: We need to handle escapes better, but this works for \\u0000 escapes for now
+					if (cst instanceof String)
+						cst = EscapeUtil.unescape((String) cst);
+					addCode(list, instruction, new LdcInsnNode(cst));
 					break;
 				case TYPE:
 					TypeInstruction type = (TypeInstruction) instruction;

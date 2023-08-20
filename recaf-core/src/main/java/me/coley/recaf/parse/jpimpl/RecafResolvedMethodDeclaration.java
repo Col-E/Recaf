@@ -1,9 +1,9 @@
 package me.coley.recaf.parse.jpimpl;
 
+import com.github.javaparser.resolution.Context;
 import com.github.javaparser.resolution.MethodUsage;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.types.ResolvedType;
-import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.core.resolution.TypeVariableResolutionCapability;
 import javassist.bytecode.SignatureAttribute;
 import me.coley.recaf.code.MethodInfo;
@@ -65,5 +65,10 @@ public class RecafResolvedMethodDeclaration extends RecafResolvedMethodLikeDecla
 	@Override
 	public boolean isStatic() {
 		return AccessFlag.isStatic(methodInfo.getAccess());
+	}
+
+	@Override
+	public String toDescriptor() {
+		return methodInfo.getDescriptor();
 	}
 }

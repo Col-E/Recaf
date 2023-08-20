@@ -32,7 +32,7 @@ public class FieldDefinition extends AbstractDefinition {
 		StringBuilder sb = new StringBuilder();
 		sb.append(super.buildDefString(context, context.fmtKeyword("field")));
 		// Make sure to escape the name
-		sb.append(EscapeUtil.escapeNonValid(name)).append(' ').append(EscapeUtil.escape(type));
+		sb.append(context.fmtIdentifier(name)).append(' ').append(context.fmtIdentifier(type));
 		// Print value if exists
 		if (getConstVal() != null) {
 			sb.append(" ").append(getConstVal().print(context));

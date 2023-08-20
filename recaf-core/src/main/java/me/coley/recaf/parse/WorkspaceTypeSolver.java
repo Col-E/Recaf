@@ -1,8 +1,8 @@
 package me.coley.recaf.parse;
 
+import com.github.javaparser.resolution.TypeSolver;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
-import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
-import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.resolution.model.SymbolReference;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.parse.jpimpl.RecafResolvedTypeDeclaration;

@@ -9,9 +9,10 @@ import me.coley.recaf.code.MemberInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.util.AccessFlag;
 import me.coley.recaf.util.ClasspathUtil;
+import me.coley.recaf.util.EscapeUtil;
 import me.darknet.assembler.instructions.ParseInfo;
 import me.darknet.assembler.parser.Group;
-import me.darknet.assembler.parser.groups.InstructionGroup;
+import me.darknet.assembler.parser.groups.instructions.InstructionGroup;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nullable;
@@ -89,12 +90,13 @@ public class Suggestions {
 		InstructionGroup instruction = (InstructionGroup) group;
 		List<Group> children = instruction.getChildren();
 		String inst = instruction.content();
+		String first = children.isEmpty() ? "" : children.get(0) == null ? "" : children.get(0).content();
 		switch (instruction.content()) {
 			case "new":
 			case "anewarray":
 			case "checkcast":
 			case "instanceof":
-				return fuzzySearchClasses(children.get(0) == null ? "" : children.get(0).content());
+				return fuzzySearchClasses(first);
 			case "invokestatic":
 			case "invokeinterface":
 			case "invokespecial":
@@ -115,14 +117,13 @@ public class Suggestions {
 			case "fstore":
 			case "dstore":
 			case "astore": {
-				String search = children.get(0) == null ? "" : children.get(0).content();
 				Set<String> locals = new HashSet<>();
 				if (!AccessFlag.isStatic(method.getModifiers().value()))
 					locals.add("this");
 				for (MethodParameter parameter : method.getParams().getParameters()) {
 					locals.add(parameter.getName());
 				}
-				return new SuggestionsResults(children.get(0).content(), fuzzySearchStrings(search, locals));
+				return new SuggestionsResults(first, fuzzySearchStrings(first, locals));
 			}
 			case "getstatic":
 			case "putstatic":
@@ -136,7 +137,7 @@ public class Suggestions {
 	}
 
 	private SuggestionsResults getInstructionSuggestionsResults(List<Group> children, String inst, BiFunction<CommonClassInfo, String, SuggestionsResults> suggestionMaker) {
-		String className = children.get(0) == null ? "" : children.get(0).content();
+		String className = children.isEmpty() ? "" : children.get(0) == null ? "" : children.get(0).content();
 		if (!className.contains(".")) return fuzzySearchClasses(className);
 		String[] parts = className.split("\\.");
 		CommonClassInfo clazz = mapper.apply(parts[0]);
@@ -205,7 +206,7 @@ public class Suggestions {
 	}
 
 	private static String format(MethodInfo info) {
-		return info.getName() + " " + info.getDescriptor();
+		return EscapeUtil.formatIdentifier(info.getName()) + " " + EscapeUtil.formatIdentifier(info.getDescriptor());
 	}
 
 	private Suggestion createClassSuggestion(String partial, String c, @Nullable BitSet bitSet) {

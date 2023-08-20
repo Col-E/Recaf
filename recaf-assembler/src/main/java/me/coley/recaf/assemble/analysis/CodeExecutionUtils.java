@@ -20,7 +20,7 @@ public class CodeExecutionUtils {
 			actualType = objectValue.getType();
 		} else if (peek.isArray()) {
 			Value.ArrayValue arrayValue = (Value.ArrayValue) peek;
-			actualType = Types.array(arrayValue.getElementType(), arrayValue.getDimensions());
+			actualType = arrayValue.getArrayType();
 		} else if (peek.isNumeric()) {
 			Value.NumericValue numericValue = (Value.NumericValue) peek;
 			actualType = numericValue.getType();

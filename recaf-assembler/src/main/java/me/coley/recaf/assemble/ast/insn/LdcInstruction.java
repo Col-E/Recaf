@@ -1,6 +1,7 @@
 package me.coley.recaf.assemble.ast.insn;
 
 import me.coley.recaf.assemble.ast.ArgType;
+import me.coley.recaf.assemble.ast.BaseArg;
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.util.EscapeUtil;
@@ -14,7 +15,7 @@ import org.objectweb.asm.Type;
  * @author Matt Coley
  */
 public class LdcInstruction extends AbstractInstruction {
-	private final ArgType type;
+	private final BaseArg arg;
 	private final Object value;
 
 	/**
@@ -23,84 +24,10 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @param value
 	 * 		String value.
 	 */
-	public LdcInstruction(int opcode, String value) {
-		this(opcode, value, ArgType.STRING);
-	}
-
-	/**
-	 * @param opcode
-	 * 		LDC instruction opcode.
-	 * @param value
-	 * 		Type value.
-	 */
-	public LdcInstruction(int opcode, Type value) {
-		this(opcode, value, ArgType.TYPE);
-	}
-
-	/**
-	 * @param opcode
-	 * 		LDC instruction opcode.
-	 * @param value
-	 * 		Handle value.
-	 */
-	public LdcInstruction(int opcode, HandleInfo value) {
-		this(opcode, value, ArgType.HANDLE);
-	}
-
-	/**
-	 * @param opcode
-	 * 		LDC instruction opcode.
-	 * @param value
-	 * 		Handle value.
-	 */
-	public LdcInstruction(int opcode, Handle value) {
-		this(opcode, value, ArgType.HANDLE);
-	}
-
-	/**
-	 * @param opcode
-	 * 		LDC instruction opcode.
-	 * @param value
-	 * 		Int value.
-	 */
-	public LdcInstruction(int opcode, int value) {
-		this(opcode, value, ArgType.INTEGER);
-	}
-
-	/**
-	 * @param opcode
-	 * 		LDC instruction opcode.
-	 * @param value
-	 * 		Float value.
-	 */
-	public LdcInstruction(int opcode, float value) {
-		this(opcode, value, ArgType.FLOAT);
-	}
-
-	/**
-	 * @param opcode
-	 * 		LDC instruction opcode.
-	 * @param value
-	 * 		Double value.
-	 */
-	public LdcInstruction(int opcode, double value) {
-		this(opcode, value, ArgType.DOUBLE);
-	}
-
-	/**
-	 * @param opcode
-	 * 		LDC instruction opcode.
-	 * @param value
-	 * 		Long value.
-	 */
-	public LdcInstruction(int opcode, long value) {
-		this(opcode, value, ArgType.LONG);
-	}
-
-	public LdcInstruction(int opcode, Object value, ArgType type) {
+	public LdcInstruction(int opcode, Object value) {
 		super(opcode);
+		this.arg = BaseArg.of(LdcArg::new, value);
 		this.value = value;
-		this.type = type;
 	}
 
 	/**
@@ -110,23 +37,7 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @return Ldc AST instance based on value.
 	 */
 	public static LdcInstruction of(Object value) {
-		if (value instanceof String)
-			return new LdcInstruction(Opcodes.LDC, (String) value);
-		else if (value instanceof Integer)
-			return new LdcInstruction(Opcodes.LDC, (int) value);
-		else if (value instanceof Float)
-			return new LdcInstruction(Opcodes.LDC, (float) value);
-		else if (value instanceof Double)
-			return new LdcInstruction(Opcodes.LDC, (double) value);
-		else if (value instanceof Long)
-			return new LdcInstruction(Opcodes.LDC, (long) value);
-		else if (value instanceof Type)
-			return new LdcInstruction(Opcodes.LDC, (Type) value);
-		else if (value instanceof Handle)
-			return new LdcInstruction(Opcodes.LDC, (Handle) value);
-		else if (value == null)
-			throw new IllegalStateException("LDC content must not be null!");
-		throw new IllegalStateException("Unsupported LDC content type: " + value.getClass().getName());
+		return new LdcInstruction(Opcodes.LDC, value);
 	}
 
 	/**
@@ -142,7 +53,7 @@ public class LdcInstruction extends AbstractInstruction {
 	 * @return Type of content of the {@link #getValue() constant value}.
 	 */
 	public ArgType getValueType() {
-		return type;
+		return arg.getType();
 	}
 
 	@Override
@@ -152,34 +63,17 @@ public class LdcInstruction extends AbstractInstruction {
 
 	@Override
 	public String print(PrintContext context) {
-		switch (getValueType()) {
-			case STRING:
-				// We escape whatever string value is here because it makes parsing much simpler.
-				// However, if the user wishes to insert unescaped text that's on them.
-				return getOpcode() + " \"" + EscapeUtil.escape((String) getValue()) + '\"';
-			case TYPE:
-				Type type = (Type) getValue();
-				if (type.getSort() == Type.OBJECT)
-					return getOpcode() + " " + context.fmtKeyword("type ") + type.getInternalName();
-				else
-					return getOpcode() + " " + context.fmtKeyword("type ") + type;
-			case BOOLEAN:
-				return getOpcode() + " " + (getValue() == Boolean.TRUE ? "true" : "false");
-			case CHAR:
-				return getOpcode() + " '" + getValue() + "'";
-			case INTEGER:
-			case BYTE:
-			case SHORT:
-			case DOUBLE:
-				return getOpcode() + " " + getValue();
-			case LONG:
-				return getOpcode() + " " + getValue() + 'L';
-			case FLOAT:
-				return getOpcode() + " " + getValue() + 'f';
-			case HANDLE:
-				return getOpcode() + ' ' + context.fmtKeyword("handle ") + ((HandleInfo) getValue()).print(context);
-			default:
-				throw new IllegalStateException("Unhandled constant value type: " + getValueType());
+		return getOpcode() + " " + arg.print(context);
+	}
+
+	private static class LdcArg extends BaseArg {
+
+		/**
+		 * @param type  Type of value.
+		 * @param value Value instance.
+		 */
+		public LdcArg(ArgType type, Object value) {
+			super(type, value);
 		}
 	}
 }

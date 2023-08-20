@@ -19,20 +19,30 @@ public class NewObjectArrayExecutor implements InstructionExecutor {
 	public void handle(Frame frame, AbstractInstruction instruction) throws AnalysisException {
 		// Get array type
 		TypeInstruction newArrayInstruction = (TypeInstruction) instruction;
-		Type type = Type.getObjectType(newArrayInstruction.getType());
+		String newArrayType = newArrayInstruction.getType();
+		boolean isCreatingArrayOfArrays = newArrayType.charAt(0) == '[';
+		Type elementType = isCreatingArrayOfArrays ?
+				Type.getType(newArrayType).getElementType() : Type.getObjectType(newArrayType);
+		int dimensions = isCreatingArrayOfArrays ? Type.getType(newArrayType).getDimensions() +1: 1;
+
 		// Get array size, if possible
 		Value.ArrayValue arrayValue;
 		Value stackTop = frame.pop();
 		if (stackTop instanceof Value.NumericValue) {
 			Number size = ((Value.NumericValue) stackTop).getNumber();
 			if (size == null) {
-				arrayValue = new Value.ArrayValue(1, type);
+				arrayValue = new Value.ArrayValue(dimensions, elementType);
 			} else {
-				arrayValue = new Value.ArrayValue(1, size.intValue(), type);
+				arrayValue = new Value.ArrayValue(dimensions, size.intValue(), elementType);
+
+				// We can fill in for default values
+				if (elementType.getSort() <= Type.DOUBLE)
+					for (int i = 0; i < size.intValue(); i++)
+						arrayValue.getArray()[i] = new Value.NullValue();
 			}
 		} else {
 			// Unknown size due to non-numeric value
-			arrayValue = new Value.ArrayValue(1, type);
+			arrayValue = new Value.ArrayValue(1, elementType);
 			frame.markWonky("cannot compute array dimensions, stack top value is non-numeric");
 		}
 		frame.push(arrayValue);

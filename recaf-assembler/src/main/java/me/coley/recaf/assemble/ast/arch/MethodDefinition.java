@@ -43,9 +43,9 @@ public class MethodDefinition extends AbstractDefinition {
 		for (ThrownException thrownException : thrownExceptions)
 			sb.append(thrownException.print(context)).append("\n");
 		sb.append(super.buildDefString(context, context.fmtKeyword("method")));
-		sb.append(EscapeUtil.escape(name)).append(' ');
+		sb.append(context.fmtIdentifier(name)).append(' ');
 		sb.append('(').append(params.print(context)).append(')');
-		sb.append(returnType);
+		sb.append(context.fmtIdentifier(returnType));
 		sb.append('\n');
 		sb.append(code.print(context));
 		sb.append('\n');

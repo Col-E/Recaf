@@ -1,11 +1,6 @@
 package me.coley.recaf.assemble.ast.arch;
 
-import me.coley.recaf.assemble.ast.BaseElement;
 import me.coley.recaf.assemble.ast.PrintContext;
-import me.coley.recaf.assemble.ast.meta.Signature;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Common base implementation for definition types.
@@ -13,53 +8,37 @@ import java.util.List;
  * @author Matt Coley
  * @author Justus Garbe
  */
-public abstract class AbstractDefinition extends BaseElement implements Definition {
-	private final List<Annotation> annotations = new ArrayList<>();
+public abstract class AbstractDefinition extends AttributeContainer implements Definition {
 	private Modifiers modifiers;
-	private Signature signature;
+	private boolean deprecated;
 
 	@Override
 	public Modifiers getModifiers() {
 		return modifiers;
 	}
 
-	@Override
-	public List<Annotation> getAnnotations() {
-		return annotations;
-	}
-
-	@Override
-	public Signature getSignature() {
-		return signature;
-	}
-
-	public void addAnnotation(Annotation annotation) {
-		annotations.add(annotation);
-	}
-
 	public void setModifiers(Modifiers modifiers) {
 		this.modifiers = modifiers;
 	}
 
-	public void setAnnotations(List<Annotation> annotations) {
-		this.annotations.clear();
-		this.annotations.addAll(annotations);
+	@Override
+	public boolean isDeprecated() {
+		return deprecated;
+	}
+
+	public void setDeprecated(boolean deprecated) {
+		this.deprecated = deprecated;
 	}
 
 	protected String buildDefString(PrintContext context, String type) {
 		StringBuilder sb = new StringBuilder();
-		if(signature != null)
-			sb.append(signature.print(context));
-		for (Annotation annotation : getAnnotations())
-			sb.append(annotation.print(context));
+		sb.append(super.buildDefString(context));
+		if (deprecated)
+			sb.append(context.fmtKeyword("deprecated")).append("\n");
 		sb.append(type).append(" ");
 		if (getModifiers().value() > 0) {
 			sb.append(getModifiers().print(context).toLowerCase()).append(' ');
 		}
 		return sb.toString();
-	}
-
-	public void setSignature(Signature signature) {
-		this.signature = signature;
 	}
 }

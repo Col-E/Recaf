@@ -13,6 +13,7 @@ import me.coley.recaf.assemble.ast.meta.Expression;
 import me.coley.recaf.assemble.ast.meta.Label;
 import me.coley.recaf.assemble.transformer.ExpressionToAstTransformer;
 import me.coley.recaf.assemble.util.InheritanceChecker;
+import me.coley.recaf.util.StringUtil;
 import me.coley.recaf.util.logging.DebuggingLogger;
 import me.coley.recaf.util.logging.Logging;
 import org.objectweb.asm.Opcodes;
@@ -219,7 +220,8 @@ public class CodeExecutor {
 			frame.copy(priorFrame);
 		}
 		logger.debugging(l -> l.info("Executing {} : {}", currentOffset, instruction.print(PrintContext.DEFAULT_CTX)));
-		logger.debugging(l -> l.info(" - Stack PRE: {}", frame.getStack()));
+		logger.debugging(l -> l.info(" - Stack PRE: {}", frame.getStack().isEmpty() ? "." :
+				StringUtil.substringRelative(frame.getStack().toString(), 1, 1)));
 		// Collect flow control paths, track if the path is forced.
 		// If it is forced we won't be going to the next instruction.
 		boolean continueNextExec = true;
@@ -303,7 +305,8 @@ public class CodeExecutor {
 				insnExecutor.handle(frame, instruction);
 			}
 		}
-		logger.debugging(l -> l.info(" - Stack POST: {}", frame.getStack()));
+		logger.debugging(l -> l.info(" - Stack POST: {}", frame.getStack().isEmpty() ? "." :
+				StringUtil.substringRelative(frame.getStack().toString(), 1, 1)));
 		// If we had already visited the frame the following frames may already be done.
 		// We only need to recompute them if the old state and new state have matching local/stack states.
 		boolean mergeWasDiff = false;

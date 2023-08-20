@@ -12,6 +12,7 @@ import java.util.Set;
 public final class EscapeUtil {
 	private static final Map<String, String> WHITESPACE_TO_ESCAPE = new HashMap<>();
 	private static final Map<String, String> ESCAPE_TO_WHITESPACE = new HashMap<>(); // TODO: Shouldn't we use this?
+	public static final String EMPTY_PLACEHOLDER = "\\e";
 	public static final char TERMINATOR = '\0';
 	public static final String ESCAPED_SPACE = "\\u0020";
 	public static final String ESCAPED_TAB = "\\u0009";
@@ -19,6 +20,7 @@ public final class EscapeUtil {
 	public static final String ESCAPED_RETURN = "\\u000D";
 	public static final String ESCAPED_DOUBLE_QUOTE = "\\u0022";
 	public static final String ESCAPED_DOUBLE_SLASH = "\\u005C\\u005C";
+	public static final String ESCAPED_EMPTY = "\\\\e";
 
 	private EscapeUtil() {
 	}
@@ -306,6 +308,22 @@ public final class EscapeUtil {
 		// Mapping between whitespace unicode value and character
 		WHITESPACE_TO_ESCAPE.put(unescape, escape);
 		ESCAPE_TO_WHITESPACE.put(escape, unescape);
+	}
+
+	/**
+	 * Format a JVM identifier, such as a class name, field name, or method name.
+	 * This method will escape any characters that are not allowed in assembler
+	 * @param identifier Identifier to format.
+	 * @return Formatted identifier.
+	 */
+	public static String formatIdentifier(String identifier) {
+		if (identifier.isEmpty()) {
+			return EscapeUtil.EMPTY_PLACEHOLDER;
+		}
+		if (identifier.equals(EscapeUtil.EMPTY_PLACEHOLDER)) {
+			return EscapeUtil.ESCAPED_EMPTY;
+		}
+		return EscapeUtil.escapeNonValid(identifier);
 	}
 
 	static {

@@ -1,7 +1,7 @@
 package me.coley.recaf.io;
 
 import me.coley.recaf.util.ReflectUtil;
-import software.coley.llzip.util.ByteData;
+import software.coley.lljzip.util.ByteData;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

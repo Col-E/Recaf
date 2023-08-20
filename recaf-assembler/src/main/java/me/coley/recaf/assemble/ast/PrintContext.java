@@ -20,13 +20,8 @@ public class PrintContext {
 		return keywordPrefix + text;
 	}
 
-	/**
-	 * Format a JVM identifier, such as a class name, field name, or method name.
-	 * This method will escape any characters that are not allowed in assembler
-	 * @param identifier Identifier to format.
-	 * @return Formatted identifier.
-	 */
 	public String fmtIdentifier(String identifier) {
-		return EscapeUtil.escapeNonValid(identifier);
+		return EscapeUtil.formatIdentifier(identifier);
 	}
+
 }

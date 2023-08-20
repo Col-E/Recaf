@@ -11,11 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.objectweb.asm.Type;
+import org.opentest4j.AssertionFailedError;
 
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests strictly for parsing into the AST nodes.
@@ -370,6 +370,15 @@ public class InstructionParseTests extends JasmUtils {
 			handle("sipush 0xF", i -> assertEquals(0xF, i.getValue()));
 		}
 
+		@Test
+		public void testOutOfBounds() {
+			assertThrows(AssertionFailedError.class, () -> handle("sipush 32768", i -> {}));
+			assertThrows(AssertionFailedError.class, () -> handle("sipush -32769", i -> {}));
+			assertThrows(AssertionFailedError.class, () -> handle("sipush 0x10000", i -> {}));
+			assertThrows(AssertionFailedError.class, () -> handle("bipush 128", i -> {}));
+			assertThrows(AssertionFailedError.class, () -> handle("bipush -129", i -> {}));
+		}
+
 		private void handle(String original, Consumer<IntInstruction> handler) {
 			IntInstruction insn = (IntInstruction) staticHandle(original);
 
@@ -378,6 +387,7 @@ public class InstructionParseTests extends JasmUtils {
 
 			handler.accept(insn);
 		}
+
 	}
 
 	@Nested
@@ -433,6 +443,7 @@ public class InstructionParseTests extends JasmUtils {
 			handle("aload A", v -> assertEquals("A", v.getVariableIdentifier()));
 			handle("aload 雨", v -> assertEquals("雨", v.getVariableIdentifier()));
 			handle("aload \\\\u96E8", v -> assertEquals("\\u96E8", v.getVariableIdentifier()));
+			handle("aload \\e", v -> assertEquals("", v.getVariableIdentifier()));
 		}
 
 		private void handle(String original, Consumer<VarInstruction> handler) {

@@ -16,10 +16,8 @@ public class Dup2X1Executor implements InstructionExecutor {
 		Value value1 = frame.pop();
 		Value value2 = frame.pop();
 		Value value3 = frame.pop();
-		Value value4 = frame.pop();
 		frame.push(value2); // inserted
 		frame.push(value1); // inserted
-		frame.push(value4); // original
 		frame.push(value3); // original
 		frame.push(value2); // original
 		frame.push(value1); // original

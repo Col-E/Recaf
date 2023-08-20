@@ -4,13 +4,14 @@ import com.github.javaparser.resolution.MethodUsage;
 import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
+import com.github.javaparser.resolution.model.typesystem.ReferenceTypeImpl;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.resolution.types.ResolvedTypeTransformer;
 import com.github.javaparser.resolution.types.parametrization.ResolvedTypeParametersMap;
-import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -73,6 +74,11 @@ public class RecafResolvedReferenceType extends ResolvedReferenceType {
 	}
 
 	@Override
+	public List<ResolvedReferenceType> getAllAncestors(Function<ResolvedReferenceTypeDeclaration, List<ResolvedReferenceType>> traverser) {
+		return declaration.getAllAncestors();
+	}
+
+	@Override
 	public List<ResolvedReferenceType> getDirectAncestors() {
 		List<ResolvedReferenceType> list = new ArrayList<>();
 		declaration.getSuperClass().ifPresent(list::add);
@@ -123,7 +129,7 @@ public class RecafResolvedReferenceType extends ResolvedReferenceType {
 			return this;
 		if (typeDeclaration instanceof RecafResolvedTypeDeclaration)
 			return new RecafResolvedReferenceType((RecafResolvedTypeDeclaration) typeDeclaration);
-		return new ReferenceTypeImpl(typeDeclaration, typeParameters, declaration.typeSolver);
+		return new ReferenceTypeImpl(typeDeclaration, typeParameters);
 	}
 
 	@Override
@@ -132,7 +138,7 @@ public class RecafResolvedReferenceType extends ResolvedReferenceType {
 			return this;
 		if (typeDeclaration instanceof RecafResolvedTypeDeclaration)
 			return new RecafResolvedReferenceType((RecafResolvedTypeDeclaration) typeDeclaration);
-		return new ReferenceTypeImpl(typeDeclaration, declaration.typeSolver);
+		return new ReferenceTypeImpl(typeDeclaration);
 	}
 
 	@Override

@@ -36,6 +36,6 @@ public class TypeInstruction extends AbstractInstruction {
 
 	@Override
 	public String print(PrintContext context) {
-		return String.format("%s %s", getOpcode(), EscapeUtil.escapeNonValid(getType()));
+		return String.format("%s %s", getOpcode(), context.fmtIdentifier(getType()));
 	}
 }

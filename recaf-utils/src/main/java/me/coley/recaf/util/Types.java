@@ -16,6 +16,10 @@ import java.util.Collection;
 public class Types {
 	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
 	public static final Type STRING_TYPE = Type.getObjectType("java/lang/String");
+	public static final Type INT_ARRAY_TYPE = Type.getType("[I");
+	public static final Type FLOAT_ARRAY_TYPE = Type.getType("[F");
+	public static final Type DOUBLE_ARRAY_TYPE = Type.getType("[D");
+	public static final Type LONG_ARRAY_TYPE = Type.getType("[J");
 	private static final Type[] PRIMITIVES = new Type[]{
 			Type.VOID_TYPE,
 			Type.BOOLEAN_TYPE,

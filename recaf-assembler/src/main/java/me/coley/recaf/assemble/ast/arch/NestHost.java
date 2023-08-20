@@ -21,6 +21,6 @@ public class NestHost extends BaseElement {
 
     @Override
     public String print(PrintContext context) {
-        return context.fmtKeyword("nesthost") + ' ' + host;
+        return context.fmtKeyword("nesthost") + ' ' + context.fmtIdentifier(host);
     }
 }

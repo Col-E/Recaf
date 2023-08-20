@@ -6,16 +6,24 @@ import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.arch.*;
 import me.coley.recaf.assemble.ast.arch.module.*;
 import me.coley.recaf.assemble.ast.arch.module.Module;
+import me.coley.recaf.assemble.ast.arch.record.Record;
+import me.coley.recaf.assemble.ast.arch.record.RecordComponent;
 import me.coley.recaf.assemble.ast.meta.Signature;
 import me.coley.recaf.util.EscapeUtil;
 import me.darknet.assembler.compiler.FieldDescriptor;
 import me.darknet.assembler.compiler.MethodDescriptor;
-import me.darknet.assembler.parser.AssemblerException;
+import me.darknet.assembler.exceptions.AssemblerException;
 import me.darknet.assembler.parser.Group;
 import me.darknet.assembler.parser.Location;
 import me.darknet.assembler.parser.Token;
 import me.darknet.assembler.parser.groups.*;
+import me.darknet.assembler.parser.groups.attributes.*;
+import me.darknet.assembler.parser.groups.annotation.*;
+import me.darknet.assembler.parser.groups.method.*;
 import me.darknet.assembler.parser.groups.module.*;
+import me.darknet.assembler.parser.groups.instructions.*;
+import me.darknet.assembler.parser.groups.record.RecordComponentGroup;
+import me.darknet.assembler.parser.groups.record.RecordGroup;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
@@ -149,6 +157,24 @@ public class JasmTransformUtil {
 			module.addProvide(moduleProvide);
 		}
 		return module;
+	}
+
+	public static Record convertRecord(RecordGroup group) throws AssemblerException {
+		Record record = new Record();
+		for (RecordComponentGroup component : group.getComponents()) {
+			RecordComponent recordComponent = new RecordComponent(content(component.getIdentifier()), content(component.getDescriptor()));
+			for (AttributeGroup attribute : component.getAttributes()) {
+				if(attribute instanceof AnnotationGroup) {
+					recordComponent.addAnnotation(convertAnnotation((AnnotationGroup) attribute));
+				} else if(attribute instanceof SignatureGroup) {
+					recordComponent.setSignature(new Signature(content(((SignatureGroup) attribute).getDescriptor())));
+				} else {
+					throw new AssemblerException("Unknown attribute type: " + attribute.getClass().getSimpleName(), component.getStartLocation());
+				}
+			}
+			record.addComponent(recordComponent);
+		}
+		return record;
 	}
 
 	public static Object convert(Group group) throws AssemblerException {
@@ -299,6 +325,8 @@ public class JasmTransformUtil {
 	}
 
 	public static String content(Group group) {
+		String content = group.content();
+		if(content.equals(EscapeUtil.EMPTY_PLACEHOLDER)) return "";
 		return EscapeUtil.unescape(group.content());
 	}
 }

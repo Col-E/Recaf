@@ -149,10 +149,10 @@ public class ScriptManagerPane extends BorderPane {
 
 	public void createNewScript() {
 		String metadataTemplate = "// ==Metadata==\n" +
-				"// @name New Script\n" +
-				"// @description Script Description\n" +
+				"// @name Name\n" +
+				"// @description Description\n" +
 				"// @version 1.0.0\n" +
-				"// @author Script Author\n" +
+				"// @author Author\n" +
 				"// ==/Metadata==\n\n";
 		ScriptEditorPane scriptEditor = new ScriptEditorPane();
 		scriptEditor.setText(metadataTemplate);

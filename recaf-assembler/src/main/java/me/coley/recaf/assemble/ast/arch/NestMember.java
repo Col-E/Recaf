@@ -22,7 +22,7 @@ public class NestMember extends BaseElement {
 
     @Override
     public String print(PrintContext context) {
-        return context.fmtKeyword("nestmember") + ' ' + member;
+        return context.fmtKeyword("nestmember") + ' ' + context.fmtIdentifier(member);
     }
 
 }

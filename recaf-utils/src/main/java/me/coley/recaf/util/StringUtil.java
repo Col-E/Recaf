@@ -63,6 +63,20 @@ public class StringUtil {
 
 	/**
 	 * @param text
+	 * 		Text to cut.
+	 * @param start
+	 * 		Position from start forward to cut from.
+	 * @param end
+	 * 		Position from end to cut off.
+	 *
+	 * @return Substring text in range.
+	 */
+	public static String substringRelative(String text, int start, int end) {
+		return text.substring(start, text.length() - end);
+	}
+
+	/**
+	 * @param text
 	 * 		Text to check.
 	 *
 	 * @return {@code true} when the given text represents a decimal number.

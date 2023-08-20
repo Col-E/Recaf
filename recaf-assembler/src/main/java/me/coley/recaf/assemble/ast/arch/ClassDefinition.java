@@ -2,6 +2,7 @@ package me.coley.recaf.assemble.ast.arch;
 
 import me.coley.recaf.assemble.ast.PrintContext;
 import me.coley.recaf.assemble.ast.arch.module.Module;
+import me.coley.recaf.assemble.ast.arch.record.Record;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +20,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	private int version;
 	private String superClass;
 	private Module module;
+	private Record record;
 	private final List<String> interfaces;
 	private final List<String> permittedSubclasses = new ArrayList<>();
 	private final List<InnerClass> innerClasses = new ArrayList<>();
@@ -139,6 +141,14 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	}
 
 	/**
+	 * @param record
+	 * 		New record attribute.
+	 */
+	public void setRecord(Record record) {
+		this.record = record;
+	}
+
+	/**
 	 * @return Fields defined in the class.
 	 */
 	public List<FieldDefinition> getDefinedFields() {
@@ -181,7 +191,7 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	}
 
 	/**
-	 * @return List of inner classes.
+	 * @return Class version of the class.
 	 */
 	public int getVersion() {
 		return version;
@@ -192,6 +202,13 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 	 */
 	public Module getModule() {
 		return module;
+	}
+
+	/**
+	 * @return Record attribute of the class.
+	 */
+	public Record getRecord() {
+		return record;
 	}
 
 	/**
@@ -261,6 +278,9 @@ public class ClassDefinition extends AbstractDefinition implements Definition {
 		}
 		if(module != null) {
 			sb.append(module.print(context)).append('\n');
+		}
+		if(record != null) {
+			sb.append(record.print(context)).append('\n');
 		}
 		sb.append(buildDefString(context, context.fmtKeyword("class"))).append(name);
 		if (superClass != null) {

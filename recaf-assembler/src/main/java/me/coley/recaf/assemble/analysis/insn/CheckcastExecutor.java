@@ -22,7 +22,7 @@ public class CheckcastExecutor implements InstructionExecutor {
 
 		// Stack value should be an object/array
 		Value value = frame.pop();
-		if (!value.isObject() && !value.isArray())
+		if (!value.isObject() && !value.isArray() && !value.isNull())
 			frame.markWonky("checkcast expected an object or array reference on the stack");
 
 		// Replace top stack value with cast type. Otherwise, it's a ClassCastException.
@@ -32,7 +32,7 @@ public class CheckcastExecutor implements InstructionExecutor {
 		String typeStr = typeInstruction.getType();
 		Type type = typeStr.charAt(0) == '[' ? Type.getType(typeStr) : Type.getObjectType(typeStr);
 		if (type.getSort() == ARRAY) {
-			frame.push(new Value.ArrayValue(type.getDimensions(), type));
+			frame.push(new Value.ArrayValue(type.getDimensions(), type.getElementType()));
 		} else {
 			frame.push(new Value.ObjectValue(type));
 		}

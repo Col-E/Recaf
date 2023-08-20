@@ -26,38 +26,38 @@ public class ArrayStoreExecutor implements InstructionExecutor {
 		Value array = frame.pop();
 		if (array instanceof Value.ArrayValue && index instanceof Value.NumericValue) {
 			Value.ArrayValue arrayValue = (Value.ArrayValue) array;
-			Type elementType = arrayValue.getElementType();
+			Type arrayType = arrayValue.getArrayType();
 			switch (op) {
 				case IASTORE:
-					if (elementType != INT_TYPE)
-						frame.markWonky("'iastore' used on non int[] array");
+					if (arrayType.getElementType().getSort() > INT)
+						frame.markWonky("'iastore' used on non int[] (or narrower type) array");
 					break;
 				case LASTORE:
-					if (elementType != LONG_TYPE)
+					if (arrayType != Types.LONG_ARRAY_TYPE)
 						frame.markWonky("'lastore' used on non long[] array");
 					break;
 				case FASTORE:
-					if (elementType != FLOAT_TYPE)
+					if (arrayType != Types.FLOAT_ARRAY_TYPE)
 						frame.markWonky("'fastore' used on non float[] array");
 					break;
 				case DASTORE:
-					if (elementType != DOUBLE_TYPE)
+					if (arrayType != Types.DOUBLE_ARRAY_TYPE)
 						frame.markWonky("'dastore' used on non double[] array");
 					break;
 				case AASTORE:
-					if (elementType.getSort() < ARRAY)
+					if (arrayType.getSort() < ARRAY)
 						frame.markWonky("'aastore' used on non Object[] array");
 					break;
 				case BASTORE:
-					if (elementType != BYTE_TYPE)
+					if (arrayType != BYTE_TYPE)
 						frame.markWonky("'iastore' used on non byte[] array");
 					break;
 				case CASTORE:
-					if (elementType != CHAR_TYPE)
+					if (arrayType != CHAR_TYPE)
 						frame.markWonky("'castore' used on non char[] array");
 					break;
 				case SASTORE:
-					if (elementType != SHORT_TYPE)
+					if (arrayType != SHORT_TYPE)
 						frame.markWonky("'sastore' used on non short[] array");
 					break;
 			}

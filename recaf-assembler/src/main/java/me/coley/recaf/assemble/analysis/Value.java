@@ -2,6 +2,8 @@ package me.coley.recaf.assemble.analysis;
 
 import me.coley.recaf.assemble.ast.HandleInfo;
 import me.coley.recaf.assemble.ast.PrintContext;
+import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.Types;
 import org.objectweb.asm.Type;
 
 import java.util.Arrays;
@@ -166,22 +168,30 @@ public abstract class Value {
 		 * 		Element type.
 		 */
 		public ArrayValue(int dimensions, int size, Type elementType) {
+			// Validate passed element type
+			if (elementType.getSort() == Type.ARRAY)
+				throw new IllegalArgumentException("Given element type still has array in descriptor");
+
 			this.dimensions = dimensions;
 			this.elementType = elementType;
+
 			if (dimensions == 1 && size >= 0) {
 				// Single dimensional array
 				this.array = new Value[size];
-				// We can fill in the default values
+
+				// We can fill in for unknown values
 				if (elementType.getSort() <= Type.DOUBLE)
 					for (int i = 0; i < size; i++)
-						array[i] = new NumericValue(elementType, 0);
+						array[i] = new NumericValue(elementType);
 				else
 					for (int i = 0; i < size; i++)
-						array[i] = new NullValue();
+						array[i] = new ObjectValue(Types.OBJECT_TYPE);
 			} else if (dimensions > 1) {
 				// If there are more than 1 dimensions, the size should == the num of dimensions
 				// The size of each sub-array is declared on the stack
 				this.array = new Value[dimensions];
+				for (int i = 0; i < array.length; i++)
+					array[i] = new ArrayValue(dimensions - 1, elementType);
 			} else {
 				// Unhandled
 				this.array = null;
@@ -204,6 +214,13 @@ public abstract class Value {
 		}
 
 		/**
+		 * @return Array type.
+		 */
+		public Type getArrayType() {
+			return Types.array(getElementType(), getDimensions());
+		}
+
+		/**
 		 * @return Number of dimensions of the array.
 		 */
 		public int getDimensions() {
@@ -223,9 +240,9 @@ public abstract class Value {
 		@Override
 		public String toString() {
 			if (array == null)
-				return "null";
+				return "[?]";
 			return "[" + Arrays.stream(getArray())
-					.map(Object::toString)
+					.map(o -> o == null ? "null" : o.toString())
 					.collect(Collectors.joining(", ")) +
 					"]";
 		}
