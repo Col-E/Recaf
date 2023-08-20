@@ -68,7 +68,7 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		final CachedLinkResolver resolver = new CachedLinkResolver();
 		resources.getClasses().forEach(info -> visitClass(info, classInfoFromPathResolver, methodMapGetter, resolver));
 		methodMap.clear();
-		LOGGER.debug("Loaded {} vertices for {} classes, {} unresolved calls for {} methods in {} classes", vertexMap.size(),
+		LOGGER.info("Loaded {} vertices for {} classes, {} unresolved calls for {} methods in {} classes", vertexMap.size(),
 				vertexMap.keySet().stream().map(MethodInfo::getOwner).distinct().count(),
 				unresolvedCalls.values().stream().mapToInt(Set::size).sum(),
 				unresolvedCalls.values().stream().flatMap(Collection::stream).map(UnresolvedCall::getVertex).distinct().count(),
@@ -192,7 +192,7 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 
 	@Override
 	public void onAddLibrary(Workspace workspace, Resource library) {
-		LOGGER.debug("Adding {} classes...", library.getClasses().size());
+		LOGGER.info("Adding {} classes...", library.getClasses().size());
 		Function<String, ClassInfo> classInfoFromPathResolver
 				= MemoizedFunction.memoize(path ->
 				library.getClasses().stream().filter(c -> c.getName().equals(path)).findAny().orElseGet(() -> workspace.getResources().getClass(path))
@@ -202,7 +202,7 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 		updateUnresolved(classInfoFromPathResolver, methodMapGetter, LinkResolver.jvm());
 		final CachedLinkResolver resolver = new CachedLinkResolver();
 		library.getClasses().forEach(c -> visitClass(c, classInfoFromPathResolver, methodMapGetter, resolver));
-		LOGGER.debug("There are now {} vertices for {} classes, {} unresolved calls for {} methods in {} classes", vertexMap.size(),
+		LOGGER.info("There are now {} vertices for {} classes, {} unresolved calls for {} methods in {} classes", vertexMap.size(),
 				vertexMap.keySet().stream().map(MethodInfo::getOwner).distinct().count(),
 				unresolvedCalls.values().stream().mapToInt(Set::size).sum(),
 				unresolvedCalls.values().stream().flatMap(Collection::stream).map(UnresolvedCall::getVertex).distinct().count(),
@@ -214,14 +214,14 @@ public final class CallGraphRegistry implements WorkspaceListener, ResourceClass
 
 	@Override
 	public void onNewClass(Resource resource, ClassInfo newValue) {
-		LOGGER.debug("Adding {} methods...", newValue.getMethods().size());
+		LOGGER.info("Adding {} methods...", newValue.getMethods().size());
 		final Function<String, ClassInfo> classInfoFromPathResolver
 				= MemoizedFunction.memoize(path -> workspace.getResources().getClass(path));
 		final Function<ClassInfo, BiFunction<String, String, MethodInfo>> methodMapGetter
 				= clazz -> (name, descriptor) -> getMethodMap(clazz).get(new Descriptor(name, descriptor));
 		updateUnresolved(classInfoFromPathResolver, methodMapGetter, LinkResolver.jvm());
 		visitClass(newValue, classInfoFromPathResolver, methodMapGetter, new CachedLinkResolver());
-		LOGGER.debug("There are now {} vertices for {} classes, {} unresolved calls for {} methods in {} classes", vertexMap.size(),
+		LOGGER.info("There are now {} vertices for {} classes, {} unresolved calls for {} methods in {} classes", vertexMap.size(),
 				vertexMap.keySet().stream().map(MethodInfo::getOwner).distinct().count(),
 				unresolvedCalls.values().stream().mapToInt(Set::size).sum(),
 				unresolvedCalls.values().stream().flatMap(Collection::stream).map(UnresolvedCall::getVertex).distinct().count(),
