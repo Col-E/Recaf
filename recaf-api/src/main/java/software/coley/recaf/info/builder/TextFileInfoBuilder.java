@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.BasicTextFileInfo;
 import software.coley.recaf.info.BasicZipFileInfo;
 import software.coley.recaf.info.TextFileInfo;
@@ -23,6 +24,7 @@ public class TextFileInfoBuilder extends FileInfoBuilder<TextFileInfoBuilder> {
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicTextFileInfo build() {
 		return new BasicTextFileInfo(this);

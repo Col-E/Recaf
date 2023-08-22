@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.BasicAudioFileInfo;
 import software.coley.recaf.info.AudioFileInfo;
 
@@ -21,6 +22,7 @@ public class AudioFileInfoBuilder extends FileInfoBuilder<AudioFileInfoBuilder> 
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicAudioFileInfo build() {
 		return new BasicAudioFileInfo(this);

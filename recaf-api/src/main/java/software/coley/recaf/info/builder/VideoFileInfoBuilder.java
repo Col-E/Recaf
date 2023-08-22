@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.BasicVideoFileInfo;
 import software.coley.recaf.info.VideoFileInfo;
 
@@ -21,6 +22,7 @@ public class VideoFileInfoBuilder extends FileInfoBuilder<VideoFileInfoBuilder> 
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicVideoFileInfo build() {
 		return new BasicVideoFileInfo(this);

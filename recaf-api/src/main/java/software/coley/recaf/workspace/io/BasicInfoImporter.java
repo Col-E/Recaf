@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.builder.*;
+import software.coley.recaf.info.properties.builtin.IllegalClassSuspectProperty;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.io.ByteSource;
@@ -63,7 +64,14 @@ public class BasicInfoImporter implements InfoImporter {
 				// Yield class
 				return new JvmClassInfoBuilder(new ClassReader(data)).build();
 			} catch (Throwable t) {
-				throw new IOException("Unhandled exception when reading class: " + name, t);
+				// Invalid class, either some new edge case we need to add to CafeDude, or the file
+				// isn't a class, but the structure models it close enough to look like one at a glance.
+				// It may be unpacked later.
+				return new FileInfoBuilder<>()
+						.withRawContent(data)
+						.withName(name)
+						.withProperty(IllegalClassSuspectProperty.INSTANCE)
+						.build();
 			}
 		}
 

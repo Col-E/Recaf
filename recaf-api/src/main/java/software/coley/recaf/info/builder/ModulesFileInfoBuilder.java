@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.BasicModulesFileInfo;
 import software.coley.recaf.info.ModulesFileInfo;
 
@@ -21,6 +22,7 @@ public class ModulesFileInfoBuilder extends FileInfoBuilder<ModulesFileInfoBuild
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicModulesFileInfo build() {
 		return new BasicModulesFileInfo(this);

@@ -1,8 +1,7 @@
 package software.coley.recaf.info;
 
 import com.google.devrel.gmscore.tools.apk.arsc.BinaryResourceFile;
-
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 
 /**
  * Outline of files that utilize the Android chunk format.

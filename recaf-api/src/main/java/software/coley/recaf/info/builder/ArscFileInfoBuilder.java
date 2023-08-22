@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ArscFileInfo;
 import software.coley.recaf.info.BasicArscFileInfo;
 import software.coley.recaf.info.BasicBinaryXmlFileInfo;
@@ -18,6 +19,7 @@ public class ArscFileInfoBuilder extends ChunkFileInfoBuilder<ArscFileInfoBuilde
 		super(arscInfo);
 	}
 
+	@Nonnull
 	@Override
 	public BasicArscFileInfo build() {
 		return new BasicArscFileInfo(this);

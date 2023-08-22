@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.BasicBinaryXmlFileInfo;
 import software.coley.recaf.info.BinaryXmlFileInfo;
 
@@ -17,6 +18,7 @@ public class BinaryXmlFileInfoBuilder extends ChunkFileInfoBuilder<BinaryXmlFile
 		super(xmlInfo);
 	}
 
+	@Nonnull
 	@Override
 	public BasicBinaryXmlFileInfo build() {
 		return new BasicBinaryXmlFileInfo(this);

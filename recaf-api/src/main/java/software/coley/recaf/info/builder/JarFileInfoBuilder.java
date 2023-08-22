@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.BasicJarFileInfo;
 import software.coley.recaf.info.JarFileInfo;
 
@@ -13,14 +14,15 @@ public class JarFileInfoBuilder extends ZipFileInfoBuilder {
 		// empty
 	}
 
-	public JarFileInfoBuilder(JarFileInfo jarInfo) {
+	public JarFileInfoBuilder(@Nonnull JarFileInfo jarInfo) {
 		super(jarInfo);
 	}
 
-	public JarFileInfoBuilder(ZipFileInfoBuilder other) {
+	public JarFileInfoBuilder(@Nonnull ZipFileInfoBuilder other) {
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicJarFileInfo build() {
 		return new BasicJarFileInfo(this);

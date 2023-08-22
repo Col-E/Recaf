@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.*;
 
 /**
@@ -12,14 +13,15 @@ public class JModFileInfoBuilder extends ZipFileInfoBuilder {
 		// empty
 	}
 
-	public JModFileInfoBuilder(JModFileInfo jmodInfo) {
+	public JModFileInfoBuilder(@Nonnull JModFileInfo jmodInfo) {
 		super(jmodInfo);
 	}
 
-	public JModFileInfoBuilder(FileInfoBuilder<?> other) {
+	public JModFileInfoBuilder(@Nonnull FileInfoBuilder<?> other) {
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicJModFileInfo build() {
 		return new BasicJModFileInfo(this);

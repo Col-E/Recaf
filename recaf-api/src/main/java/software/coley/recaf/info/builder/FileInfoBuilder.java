@@ -1,7 +1,9 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
+import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
 import software.coley.recaf.util.StringUtil;
 
@@ -25,19 +27,20 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 		// default
 	}
 
-	protected FileInfoBuilder(FileInfo fileInfo) {
+	protected FileInfoBuilder(@Nonnull FileInfo fileInfo) {
 		// copy state
 		withName(fileInfo.getName());
 		withRawContent(fileInfo.getRawContent());
 		withProperties(new BasicPropertyContainer(fileInfo.getProperties()));
 	}
 
-	protected FileInfoBuilder(FileInfoBuilder<?> other) {
+	protected FileInfoBuilder(@Nonnull FileInfoBuilder<?> other) {
 		withName(other.getName());
 		withRawContent(other.getRawContent());
 		withProperties(other.getProperties());
 	}
 
+	@Nonnull
 	@SuppressWarnings("unchecked")
 	public static <B extends FileInfoBuilder<?>> B forFile(FileInfo info) {
 		FileInfoBuilder<?> builder;
@@ -69,19 +72,25 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public B withProperties(PropertyContainer properties) {
+	public B withProperties(@Nonnull PropertyContainer properties) {
 		this.properties = properties;
 		return (B) this;
 	}
 
 	@SuppressWarnings("unchecked")
-	public B withName(String name) {
+	public B withProperty(@Nonnull Property<?> property) {
+		properties.setProperty(property);
+		return (B) this;
+	}
+
+	@SuppressWarnings("unchecked")
+	public B withName(@Nonnull String name) {
 		this.name = name;
 		return (B) this;
 	}
 
 	@SuppressWarnings("unchecked")
-	public B withRawContent(byte[] rawContent) {
+	public B withRawContent(@Nonnull byte[] rawContent) {
 		this.rawContent = rawContent;
 		return (B) this;
 	}
@@ -98,6 +107,7 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 		return rawContent;
 	}
 
+	@Nonnull
 	public BasicFileInfo build() {
 		if (name == null) throw new IllegalArgumentException("Name is required");
 		if (rawContent == null) throw new IllegalArgumentException("Content is required");

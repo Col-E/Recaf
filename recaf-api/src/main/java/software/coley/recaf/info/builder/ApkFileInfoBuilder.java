@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.*;
 
 /**
@@ -12,14 +13,15 @@ public class ApkFileInfoBuilder extends ZipFileInfoBuilder {
 		// empty
 	}
 
-	public ApkFileInfoBuilder(ApkFileInfo apkInfo) {
+	public ApkFileInfoBuilder(@Nonnull ApkFileInfo apkInfo) {
 		super(apkInfo);
 	}
 
-	public ApkFileInfoBuilder(ZipFileInfoBuilder other) {
+	public ApkFileInfoBuilder(@Nonnull ZipFileInfoBuilder other) {
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicApkFileInfo build() {
 		return new BasicApkFileInfo(this);

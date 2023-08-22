@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.*;
 
 /**
@@ -12,14 +13,15 @@ public class WarFileInfoBuilder extends ZipFileInfoBuilder {
 		// empty
 	}
 
-	public WarFileInfoBuilder(WarFileInfo warInfo) {
+	public WarFileInfoBuilder(@Nonnull WarFileInfo warInfo) {
 		super(warInfo);
 	}
 
-	public WarFileInfoBuilder(FileInfoBuilder<?> other) {
+	public WarFileInfoBuilder(@Nonnull FileInfoBuilder<?> other) {
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicWarFileInfo build() {
 		return new BasicWarFileInfo(this);

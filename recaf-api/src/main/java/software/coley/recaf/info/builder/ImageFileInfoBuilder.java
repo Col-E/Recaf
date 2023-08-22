@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.BasicImageFileInfo;
 import software.coley.recaf.info.ImageFileInfo;
 
@@ -21,6 +22,7 @@ public class ImageFileInfoBuilder extends FileInfoBuilder<ImageFileInfoBuilder> 
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicImageFileInfo build() {
 		return new BasicImageFileInfo(this);

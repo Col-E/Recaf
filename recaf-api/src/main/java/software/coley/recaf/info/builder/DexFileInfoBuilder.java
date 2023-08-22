@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.BasicDexFileInfo;
 import software.coley.recaf.info.DexFileInfo;
 
@@ -21,6 +22,7 @@ public class DexFileInfoBuilder extends FileInfoBuilder<DexFileInfoBuilder> {
 		super(other);
 	}
 
+	@Nonnull
 	@Override
 	public BasicDexFileInfo build() {
 		return new BasicDexFileInfo(this);
