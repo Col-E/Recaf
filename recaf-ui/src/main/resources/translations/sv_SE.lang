@@ -1,0 +1,698 @@
+## Language name
+lang.name=English
+
+##### General items
+## Main and context menus
+menu.association.override=Överskrid Språk
+menu.association.none=Inga tilldelningar konfigurerade
+menu.config=Konfiguration
+menu.config.edit=Redigera
+menu.config.export=Exportera
+menu.config.import=Importera
+menu.file=Fil
+menu.file.attach=Anslut till fjärr
+menu.file.addtoworkspace=Lägg till i arbetsmiljö
+menu.file.openworkspace=Öppna arbetsmiljö
+menu.file.exportapp=Exportera applikation
+menu.file.exportworkspace=Exportera arbetsmiljö konfiguration
+menu.file.modifications=Visa ändringar
+menu.file.recent=Senaste
+menu.file.close=Stäng
+menu.file.quit=Avsluta
+menu.goto.class=Gå till klass
+menu.goto.field=Gå till fält
+menu.goto.method=Gå till metod
+menu.goto.instruction=Gå till instruktion
+menu.goto.file=Gå till fil
+menu.goto.label=Gå till etikett
+menu.edit=Redigera
+menu.edit.add.field=Lägg till fält
+menu.edit.add.method=Lägg till metod
+menu.edit.add.annotation=Lägg till annotering
+menu.edit.remove.field=Ta bort fält
+menu.edit.remove.method=Ta bort metod
+menu.edit.remove.annotation=Ta bort annotering
+menu.edit.assemble.class=Redigera klass
+menu.edit.assemble.field=Redigera fält
+menu.edit.assemble.method=Redigera metod
+menu.edit.remove=Ta bort
+menu.edit.copy=Kopiera
+menu.edit.delete=Radera
+menu.help=Hjälp
+menu.help.discord=Discord
+menu.help.docs=Online-Dokumentation för användare
+menu.help.docsdev=Online-Dokumentation för utvecklare
+menu.help.github=Github
+menu.help.issues=Rapportera problem
+menu.help.sysinfo=System information
+menu.refactor=Refaktorisera
+menu.refactor.move=Flytta
+menu.refactor.rename=Byt namn
+menu.search=Sök
+menu.search.string=String
+menu.search.number=Nummer
+menu.search.class.member-references=Member references
+menu.search.class.type-references=Type references
+menu.search.method-overrides=Metodöverskridningar
+menu.search.method-references=Metod referenser
+menu.search.field-references=Fält referenser
+menu.search.noresults=Inga resultat
+menu.mappings=Mappings
+menu.mappings.apply=Tillämpa
+menu.mappings.export=Exportera
+menu.mappings.export.unsupported=%s (Ej stödd)
+menu.mappings.generate=Generera
+menu.mappings.view=Nuvarande mappings
+menu.scripting=Skriptning
+menu.scripting.list=Skript
+menu.scripting.none-found=Inga skript hittades
+menu.scripting.manage=Hantera skript
+menu.scripting.new=Nytt skript
+menu.scripting.edit=Redigera
+menu.scripting.browse=Bläddra i skript
+menu.scripting.save=Spara skript
+menu.scripting.execute=Utför
+menu.scripting.editor=Skriptredigerare
+menu.scripting.author=Skapare
+menu.scripting.version=Version
+menu.view=Visa
+menu.view.hierarchy=Klass hierarki
+menu.view.hierarchy.children=Underklasser
+menu.view.hierarchy.parents=Föräldraklasser
+menu.view.methodcfg=kontrollflödesgraf
+menu.tab.close=Stäng
+menu.tab.closeothers=Stäng andra
+menu.tab.closeall=Stäng alla
+menu.tab.copypath=Kopiera sökväg
+menu.image.resetscale=Återställ zoom
+menu.image.center=Centrera bild
+menu.hex.copyas=Kopiera som...
+menu.mode=Ändra vy
+menu.mode.class.auto=Automatisk
+menu.mode.class.decompile=Dekompilera
+menu.mode.file.auto=Automatisk
+menu.mode.file.text=Text
+menu.mode.file.hex=Hex
+menu.mode.diff.decompile=Dekompilera
+menu.mode.diff.disassemble=Disassemblera
+menu.vm=Virtualisera
+menu.vm.optimize=Optimera
+menu.vm.run=Kör
+menu.plugin=Plugins
+menu.plugin.manage=Hantera plugins
+menu.plugin.installed=Installerade
+menu.plugin.remote=Fjärr
+menu.plugin.browse=Bläddra bland plugins
+menu.plugin.enabled=Aktiverade
+menu.plugin.uninstall=Avinstallera
+menu.plugin.uninstall.warning=Är du säker på att du vill ta bort det här pluginet?
+
+##### Dialog texts
+dialog.cancel=Avbryt
+dialog.close=Stäng
+dialog.confirm=Bekräfta
+dialog.finish=Slutför
+dialog.next=Nästa
+dialog.previous=Föregående
+dialog.dismiss=Avvisa
+dialog.configure=Konfigurera
+dialog.warning=Varning
+dialog.restart=För att ändra den här konfigurationsinställningen rekommenderas en omstart.\nÄr du säker på att du vill tillämpa ändringen?
+dialog.unknownextension=Okänd filändelse. Vill du konfigurera en språkförknippning?
+
+## File chooser
+dialog.title.primary=Primär resurs
+dialog.title.supporting=Stödjande resurser
+dialog.file.open=Öppna
+dialog.file.open.directory=Kataloger
+dialog.file.open.file=Filer
+dialog.file.export=Exportera
+dialog.file.save=Spara
+dialog.file.nothing=Inget valt
+dialog.filefilter.any=Alla typer
+dialog.filefilter.mapping=Mappings
+dialog.filefilter.input=Applikationer
+dialog.filefilter.workspace=Arbetsmiljöer
+
+## File drop items
+dialog.title.create-workspace=Skapa arbetsmiljö
+dialog.title.update-workspace=Hantera arbetsmiljöinmatning
+dialog.title.close-workspace=Stäng arbetsmiljön?
+dialog.option.create-workspace=Skapa ny arbetsmiljö
+dialog.option.update-workspace=Lägg till i arbetsmiljön
+
+## Copy class/file
+dialog.title.copy-class=Kopiera klass
+dialog.title.copy-directory=Kopiera katalog
+dialog.title.copy-field=Kopiera fält
+dialog.title.copy-file=Kopiera fil
+dialog.title.copy-method=Kopiera metod
+dialog.header.copy-class=Ange ett nytt namn för den kopierade klassen.
+dialog.header.copy-directory=Ange ett nytt namn för den kopierade katalogen.
+dialog.header.copy-field=Ange ett nytt namn för det kopierade fältet.
+dialog.header.copy-file=Ange ett nytt namn för den kopierade filen.
+dialog.header.copy-method=Ange ett nytt namn för den kopierade metoden.
+
+## Delete class/file
+dialog.title.delete-class=Radera klass
+dialog.title.delete-directory=Radera katalog
+dialog.title.delete-field=Radera fält
+dialog.title.delete-file=Radera fil
+dialog.title.delete-method=Radera metod
+dialog.title.delete-package=Radera paket
+dialog.title.delete-resource=Radera resurs
+dialog.header.delete-class=Är du säker på att du vill radera: %s?
+dialog.header.delete-directory=Är du säker på att du vill radera: %s?
+dialog.header.delete-field=Är du säker på att du vill radera: %s?
+dialog.header.delete-file=Är du säker på att du vill radera: %s?
+dialog.header.delete-method=Är du säker på att du vill radera: %s?
+dialog.header.delete-package=Är du säker på att du vill radera: %s?
+dialog.header.delete-resource=Är du säker på att du vill radera: %s?
+
+## Rename class/file
+dialog.title.rename-class=Byt namn på klass
+dialog.title.rename-class-warning=Varning
+dialog.title.rename-directory=Byt namn på katalog
+dialog.title.rename-field=Byt namn på fält
+dialog.title.rename-file=Byt namn på fil
+dialog.title.rename-file-warning=Varning
+dialog.title.rename-method=Byt namn på metod
+dialog.title.rename-package=Byt namn på paket
+dialog.header.rename-class=Ange ett nytt namn för klassen.
+dialog.header.rename-class-error=Klassnamnet finns redan.\nVänligen välj ett annat namn.
+dialog.header.rename-directory=Ange ett nytt namn för katalogen.
+dialog.header.rename-field=Ange ett nytt namn för fältet.
+dialog.header.rename-field-error=Fältnamnet finns redan.\nVänligen välj ett annat namn.
+dialog.header.rename-file=Ange ett nytt namn för filen.
+dialog.header.rename-method=Ange ett nytt namn för metoden.
+dialog.header.rename-method-error=Metodnamnet finns redan.\nVänligen välj ett annat namn.
+dialog.header.rename-package=Ange ett nytt namn för paketet.
+
+## Move class/file
+dialog.title.move-class=Välj ett destinationspaket
+dialog.title.move-directory=Välj en destinations (överordnad) katalog
+dialog.title.move-file=Välj en destinationskatalog
+dialog.title.move-package=Välj ett destinations (överordnat) paket
+dialog.header.move-class=För över klassen till ett nytt paket.
+dialog.header.move-directory=För över katalogen till en ny föräldrakatalog.
+dialog.header.move-file=För över filen till en ny katalog.
+dialog.header.move-package=För över paketet till ett nytt föräldrapaket.
+
+## VM actions
+dialog.title.vm-invoke-args=Virtualisera metodanrop
+dialog.title.vm-peephole-invoke-args=Virtualiserad peephole-optimering
+dialog.vm.execute=Utför
+dialog.vm.optimize=Optimera
+dialog.vm.create-dummy=Använd dummy
+dialog.vm.create-null=Använd null
+
+## Hex dialogs
+dialog.hex.title.insertcount=Infoga
+dialog.hex.header.insertcount=Hur många byte vill du infoga?
+
+# Base Converter dialog
+dialog.conv.title.literal=Nummer Literal
+dialog.conv.title.expression=Nummer uttryck
+
+## Quick nav
+dialog.quicknav=Snabbnavigering
+
+## Error dialog
+dialog.error.exportworkspace.title=Misslyckades med att exportera arbetsmiljö
+dialog.error.exportworkspace.header=Ett fel inträffade när det skrevs till destinationen
+dialog.error.exportworkspace.content=Felmeddelandet var:
+dialog.error.loadworkspace.title=Misslyckades med att ladda arbetsmiljö
+dialog.error.loadworkspace.header=Ett fel inträffade när det lästes från de valda filerna
+dialog.error.loadworkspace.content=Felmeddelandet var:
+dialog.error.loadsupport.title=Misslyckades med att ladda stödjande resurser
+dialog.error.loadsupport.header=Ett fel inträffade när det lästes från de valda filerna
+dialog.error.loadsupport.content=Felmeddelandet var:
+dialog.error.attach.title=Misslyckades med att ansluta till JVM
+dialog.error.attach.header=Ett fel inträffade när anslutningen till den avlägsna JVM:en upprättades
+dialog.error.attach.content=Felmeddelandet var:
+
+## Wizard
+wizard.chooseaction=Välj en åtgärd
+wizard.selectprimary=Välj primär resurs
+wizard.currentworkspace=Aktuell arbetsmiljö
+
+
+##### Panels
+## Welcome
+welcome.title=Välkommen
+welcome.discord.title=Gå med i Discord
+welcome.discord.description=Recaf har en Discord-grupp för snabbare diskussioner och varierat programmeringssnack
+welcome.documentation.title=Dokumentation
+welcome.documentation.description=Läs dokumentationen för att lära dig hur du använder Recafs olika funktioner
+welcome.github.title=Recaf på Github
+welcome.github.description=Kolla in projektets sida på GitHub: Källkod, öppna ärenden och mer
+
+## Workspace
+workspace.title=Arbetsmiljö
+workspace.filter-prompt=Filter: Klass-/filnamn...
+workspace.info=Information
+
+## Attach
+attach.unsupported=Anslutning misslyckades med att initialisera
+attach.unsupported.detail=Anslutningsagenten misslyckades med självextrahering.
+attach.connect=Anslut
+attach.tab.properties=Egenskaper
+attach.tab.classloading=Klasser
+attach.tab.compilation=Kompilering
+attach.tab.system=System
+attach.tab.runtime=Körning
+attach.tab.thread=Trådar
+
+## Changes view
+modifications.none=Ingen ändringshistorik för objektet
+modifications.title=Ändringar
+
+## Java area
+java.decompiling=Dekompilera av klass...
+java.unparsable=JavaParser misslyckades med att tolka källkoden, kontextåtgärder är endast tillgängliga i fliken 'Fält och Metoder'
+java.savewitherrors=Det verkar som att detta är första gången du gör ändringar som resulterade i fel.\nDessa fel uppstår vanligtvis när den dekompilerade koden inte är semantiskt korrekt Java.\nDu måste åtgärda dessa fel innan ändringarna kan sparas.\n\nNågra förslag:\n - Ändra dekompileraren\n - Hovra över de röda felrutorna eller klicka på felrutan högst upp för att se vad felen är\n - Använd assembler istället för rekompilering för att göra ändringar
+java.savewitherrors.title=Angående rekompileringsfel
+java.decompiler=Dekompilerare
+java.targetversion=Kompilera för målversion
+java.targetversion.auto=Matcha klass fil version
+java.targetdownsampleversion=Nedsamplingsmålversion
+java.targetdownsampleversion.disabled=Inaktiverad
+java.targetdebug=Kompilera med felsökningsinformation
+java.info=Klassinformation
+java.info.version=Klassversion
+java.info.sourcefile=Källfilsnamn
+
+## Search bar
+find.replace=Ersätt
+find.replaceall=Ersätt alla
+find.regexinvalid=Text att ersätta med
+find.regexreplace=Text att ersätta med
+
+## Fields and methods
+fieldsandmethods.title=Fält och metoder
+fieldsandmethods.showoutlinedtypes=Visa medlemstyper
+fieldsandmethods.showoutlinedsynths=Visa syntetiska (kompileringsgenererade) medlemmar
+fieldsandmethods.showoutlinedvisibility=Filtrera efter medlems synlighet
+fieldsandmethods.showoutlinedmembertype=Filtrera efter medlemstyp
+fieldsandmethods.outlinedvisibilityiconposition=Synlighetsikons placering
+fieldsandmethods.sortalphabetically=Sortera alfabetiskt
+fieldsandmethods.sortbyvisibility=Sortera efter synlighet
+fieldsandmethods.filter.prompt=Filter: Fält/metodnamn...
+
+## Hierarchy
+hierarchy.title=Hierarki
+hierarchy.children=Tillägg
+hierarchy.parents=Föräldrar
+
+## Logging
+logging.title=Loggning
+
+## Assembler
+assembler.title=Assembler
+assembler.analysis.title=Variabler & Stack
+assembler.analysis.stack=Stack
+assembler.analysis.name-column=Namn
+assembler.analysis.value-column=Värde
+assembler.playground.title=Java till Bytecode
+assembler.playground.comment=Du kan skriva vanlig Java här och låta den översättas till bytekod
+assembler.vartable.title=Variabler
+assembler.vartable.empty=<Kräver kompilering minst en gång>
+assembler.suggestions.none=Inga förslag
+
+## Search
+search.run=Sök
+search.results=Resultat
+search.text=Textinnehåll
+search.textmode=Textmatchläge
+search.number=Nummervärde
+search.numbermode=Nummermatchläge
+search.refowner=Medlemsägare
+search.refname=Medlemsnamn
+search.refdesc=Medlemstypbeskrivning
+
+## Help
+help.system=System
+help.system.sub=Information om operativsystemet
+help.java=Java
+help.java.sub=Information om JVM (Java virtuell maskin)
+help.javafx=JavaFX
+help.javafx.sub=Information om JavaFX-gränssnittet
+help.recaf=Recaf
+help.recaf.sub=Information om Recaf
+help.copy=Kopiera information till urklipp
+help.opendir=Öppna Recaf-katalogen
+
+## Mapping generator
+mapgen=Mapping-generator
+mapgen.genimpl=Namngivningskonvention
+mapgen.filter.name=Namn
+mapgen.filters=Filter
+mapgen.filters.add=Lägg till filter
+mapgen.filters.edit=Redigera valt
+mapgen.filters.editdone=Klar
+mapgen.filters.delete=Radera valt
+mapgen.filters.type=Filtertyp
+mapgen.filter.modifiers.tooltip=Modifierare separeras med mellanslag
+mapgen.filter.excludealreadymapped=Uteslut redan kartlagda
+mapgen.filter.excludemodifier=Uteslut modifierare
+mapgen.filter.excludeclasses=Uteslut klasser
+mapgen.filter.excludename=Uteslut namn
+mapgen.filter.excludeclass=Uteslut på klasser
+mapgen.filter.excludefield=Uteslut på fält
+mapgen.filter.excludemethod=Uteslut på metoder
+mapgen.filter.includemodifier=Inkludera modifierare
+mapgen.filter.includeclass=Inkludera på klasser
+mapgen.filter.includefield=Inkludera på fält
+mapgen.filter.includemethod=Inkludera på metoder
+mapgen.filter.includewhitespacenames=Inkludera mellanslagsnamn
+mapgen.filter.includenonasciinames=Inkludera icke-ascii-namn
+mapgen.filter.includekeywords=Inkludera nyckelord
+mapgen.filter.includename=Inkludera namn
+mapgen.filter.includeclasses=Inkludera klasser
+mapgen.title.newfilter=Nytt filter
+mapgen.header.newfilter=Ange filterinnehåll
+mapgen.preview.empty=Statistik över genererade kartläggningar visas här\n\n\n
+mapgen.generate=Generera
+mapgen.apply=Använd
+
+## Mapping view
+mapprog=Mapping framsteg
+mapprog.metric.size=Klass filstorlek
+mapprog.metric.membercount=Klassfält och metoder
+
+##### Tree
+tree.classes=Klasser
+tree.files=Filer
+tree.defaultpackage=(Standardpaket)
+tree.defaultdirectory=(Rotkatalog)
+tree.prompt=Dra dina filer hit
+tree.hidelibs=Dölj bibliotek
+
+##### Services
+service=Alla tjänster
+service.analysis=Analys
+service.analysis.graph-calls-config=Samtalsgraf
+service.analysis.graph-calls-config.active=Aktivera vid öppning av arbetsmiljöer
+service.analysis.graph-inheritance-config=Hierarkigraf
+service.analysis.search-config=Sök
+service.analysis.entry-points=Ingångspunkter
+service.analysis.entry-points.none=Inga poster hittades
+service.compile=Kompilering
+service.compile.java-compiler-config=Javac
+service.compile.java-compiler-config.generate-phantoms=Generera saknade klasser
+service.compile.java-compiler-config.default-emit-debug=Standard för att inkludera felsökning
+service.compile.java-compiler-config.default-compile-target-version=Standard målversionsklass
+service.compile.java-compiler-config.default-downsample-target-version=Standard målversionsklass för nedsampling
+service.debug=Anslutning/Felsökning
+service.debug.attach-config=Anslutningskonfiguration
+service.debug.attach-config.attach-jmx-bean-agent=Anslut JMX bean-agent
+service.debug.attach-config.passive-scanning=Passiv skanningstillstånd
+service.config-manager-config=Konfigurationshanterare
+service.decompile=Avkompilering
+service.decompile.decompiler-cfr-config=CFR
+service.decompile.decompiler-cfr-config.aexagg=Försök att utöka och sammanfoga exceptions mer aggressivt
+service.decompile.decompiler-cfr-config.aexagg2=Försök att utöka och sammanfoga exceptions mer aggressivt (kan ändra semantiken)
+service.decompile.decompiler-cfr-config.aggressivedocopy=Klona kod från omöjliga hopp in i loopar med 'första' test
+service.decompile.decompiler-cfr-config.aggressivedoextension=Vik omöjliga hopp i do-loopar med 'första' test
+service.decompile.decompiler-cfr-config.aggressiveduff=Vik Duff-liknande omkopplare med ytterligare kontroll.
+service.decompile.decompiler-cfr-config.aggressivesizethreshold=Opcode-räkning vid vilken aggressiva minskningar utlöses
+service.decompile.decompiler-cfr-config.allowmalformedswitch=Tillåt potentiellt felaktiga switch-satser
+service.decompile.decompiler-cfr-config.antiobf=Ångra olika obfuskeringar
+service.decompile.decompiler-cfr-config.arrayiter=Återskapa iteration baserad på array
+service.decompile.decompiler-cfr-config.collectioniter=Återskapa iteration baserad på samling
+service.decompile.decompiler-cfr-config.commentmonitors=Ersätt monitorer med kommentarer - användbart om vi är helt förvirrade
+service.decompile.decompiler-cfr-config.comments=Utmatning av kommentarer som beskriver dekompilerarens status, återfallflaggor etc.
+service.decompile.decompiler-cfr-config.constobf=Ångra konstant obfuscering
+service.decompile.decompiler-cfr-config.decodeenumswitch=Återskapa switch för enum
+service.decompile.decompiler-cfr-config.decodefinally=Återskapa finally-satser
+service.decompile.decompiler-cfr-config.decodelambdas=Återskapa lambda-funktioner
+service.decompile.decompiler-cfr-config.decodestringswitch=Återskapa switch för string
+service.decompile.decompiler-cfr-config.eclipse=Aktivera transformationer för att hantera Eclipse-kod bättre
+service.decompile.decompiler-cfr-config.elidescala=Ta bort saker som inte är användbara i Scala-utmatning (serialVersionUID, @ScalaSignature)
+service.decompile.decompiler-cfr-config.forbidanonymousclasses=Tillåt inte anonyma klasser.
+service.decompile.decompiler-cfr-config.forbidmethodscopedclasses=Tillåt inte klasser som är begränsade till metoder.
+service.decompile.decompiler-cfr-config.forceclassfilever=Anger versionen av klassfilen (och därmed Java) som klassfiler dekompileras som.
+service.decompile.decompiler-cfr-config.forcecondpropagate=Drar tillbaka resultat av deterministiska hopp genom vissa konstanta tilldelningar
+service.decompile.decompiler-cfr-config.forceexceptionprune=Ta bort inbäddade exceptions om de inte ändrar semantiken
+service.decompile.decompiler-cfr-config.forcereturningifs=Flytta returnering till hoppunkten
+service.decompile.decompiler-cfr-config.forcetopsort=Uppmana grundläggande blocksortering. Vanligtvis endast användbart när obfuskering är närvarande.
+service.decompile.decompiler-cfr-config.forcetopsortaggress=Tvångsaktivera extra aggressiva topsort-alternativ
+service.decompile.decompiler-cfr-config.forcetopsortnopull=Tvångsaktivera topsort att inte flytta 'try' block
+service.decompile.decompiler-cfr-config.forloopaggcapture=Tillåt for-loopar att aggressivt rulla mutationer i uppdateringssektionen, även om de inte verkar vara involverade i predikatet
+service.decompile.decompiler-cfr-config.hidebridgemethods=Dölj bridge-metoder
+service.decompile.decompiler-cfr-config.hidelangimports=Dölj import från java.lang.
+decompiler-cfr-config.hidelongstrings=Dölj mycket långa strings - användbart om förvrängare har placerat falsk kod i strings
+service.decompile.decompiler-cfr-config.hideutf=Dölj UTF8-tecken - citera dem istället för att visa de råa tecknen
+service.decompile.decompiler-cfr-config.ignoreexceptions=Ignorera exception-information om helt fast (VARNING: ändrar semantiken, farligt!)
+service.decompile.decompiler-cfr-config.ignoreexceptionsalways=Ignorera exception-information (VARNING: ändrar semantiken, farligt!)
+service.decompile.decompiler-cfr-config.innerclasses=Dekompilera inre klasser
+service.decompile.decompiler-cfr-config.instanceofpattern=Återskapa instanceof mönstervarianter
+service.decompile.decompiler-cfr-config.j14classobj=Omvänd Java 1.4-klassobjektskonstruktion
+service.decompile.decompiler-cfr-config.labelledblocks=Tillåt att generera kod som använder märkta block (hantering av udda forward gotos)
+service.decompile.decompiler-cfr-config.lenient=Var lite mer eftergivande i situationer där vi normalt skulle kasta en exception
+service.decompile.decompiler-cfr-config.liftconstructorinit=Flytta initialiseringskod som är gemensam för alla konstruktorer till medlemsinitialisering
+service.decompile.decompiler-cfr-config.obfattr=Ångra attribut obfuskering
+service.decompile.decompiler-cfr-config.obfcontrol=Ångra control-flow obfuskering
+service.decompile.decompiler-cfr-config.override=Generera @Override-annoteringar (om en metod anses implementera en gränssnittsmetod eller återställa en basklassmetod)
+service.decompile.decompiler-cfr-config.previewfeatures=Dekompilera förhandsgranskningsfunktioner om klassen kompilerades med 'javac --enable-preview'
+service.decompile.decompiler-cfr-config.pullcodecase=Flytta kod till case-satser aggressivt
+service.decompile.decompiler-cfr-config.recordtypes=Återskapa record-typer
+service.decompile.decompiler-cfr-config.recover=Tillåt fler och mer aggressiva alternativ att ställas in om dekompileringen misslyckas
+service.decompile.decompiler-cfr-config.recovertypeclash=Dela upp livslängder där analysen orsakade typkonflikt
+service.decompile.decompiler-cfr-config.recovertypehints=Återställ typledtrådar för iteratorer från första genomgången
+service.decompile.decompiler-cfr-config.reducecondscope=Minska omfånget av villkorssatser, vilket kan generera fler anonyma block
+service.decompile.decompiler-cfr-config.relinkconst=Återlänka konstanter - om det finns en inlinad referens till ett fält, försök att de-inlinera.
+service.decompile.decompiler-cfr-config.relinkconststring=Återlänka konstanta strings - om det finns en lokal referens till en string som matchar en static final, använd den static final.
+service.decompile.decompiler-cfr-config.removebadgenerics=Dölj generiska typer där det uppenbarligen är fel och återgå till icke-generiska
+service.decompile.decompiler-cfr-config.removeboilerplate=Ta bort boilerplate-funktioner - konstrukton boilerplate, lambda-deserialisering etc.
+service.decompile.decompiler-cfr-config.removedeadconditionals=Ta bort kod som inte kan köras.
+service.decompile.decompiler-cfr-config.removedeadmethods=Ta bort meningslösa metoder - standardkonstruktorer osv.
+service.decompile.decompiler-cfr-config.removeinnerclasssynthetics=Ta bort (om möjligt) implicita yttre klassreferenser i inre klasser
+service.decompile.decompiler-cfr-config.renamedupmembers=Byt namn på otydliga/dubbla fält.
+service.decompile.decompiler-cfr-config.renameenumidents=Byt namn på ENUM-identifierare som inte matchar deras 'förväntade' strängnamn.
+service.decompile.decompiler-cfr-config.renameillegalidents=Byt namn på identifierare som inte är giltiga Java-identifierare.
+service.decompile.decompiler-cfr-config.renamesmallmembers=Byt namn på små medlemmar. Observera att detta KOMMER att bryta reflektionbaserad åtkomst, så det är inte automatiskt aktiverat.
+service.decompile.decompiler-cfr-config.sealed=Dekompilera 'sealed'-konstruktioner
+service.decompile.decompiler-cfr-config.showinferrable=Lägg till explicita typer i metoder om de inte kan härledas från argumenten
+service.decompile.decompiler-cfr-config.showversion=Visa använd CFR-version i rubriken (praktiskt att stänga av vid regressionsprovning)
+service.decompile.decompiler-cfr-config.skipbatchinnerclasses=När du bearbetar många filer, hoppa över inre klasser, eftersom de ändå kommer att bearbetas som en del av yttre klasser.
+service.decompile.decompiler-cfr-config.staticinitreturn=Försök ta bort returnering från statisk initiering
+service.decompile.decompiler-cfr-config.stringbuffer=Konvertera new StringBuffer().append.append.append till string + string + string
+service.decompile.decompiler-cfr-config.stringbuilder=Konvertera new StringBuilder().append.append.append till string + string + string
+service.decompile.decompiler-cfr-config.stringconcat=Konvertera användningar av StringConcatFactor till string + string + string
+service.decompile.decompiler-cfr-config.sugarasserts=Re-sugar assert-anrop
+service.decompile.decompiler-cfr-config.sugarboxing=I den mån det är möjligt, ta bort meningslösa boxningsomslag
+service.decompile.decompiler-cfr-config.sugarenums=Re-sugar enums
+service.decompile.decompiler-cfr-config.sugarretrolambda=I den mån det är möjligt, återskapa användningar av retro lambda
+service.decompile.decompiler-cfr-config.switchexpression=Re-sugar switch-uttryck
+service.decompile.decompiler-cfr-config.tidymonitors=Ta bort supportkod för monitorer - t.ex. catch-block som bara används för att avsluta en monitor
+service.decompile.decompiler-cfr-config.tryresources=Återskapa try-with-resources
+service.decompile.decompiler-cfr-config.usenametable=Använd lokal variabelnamnstabell om den finns
+service.decompile.decompiler-cfr-config.usesignatures=Använd signaturer utöver beskrivare (när de inte är uppenbart felaktiga)
+service.decompile.decompiler-cfr-config.version=Visa aktuell CFR-version
+service.decompile.decompiler-procyon-config=Procyon
+service.decompile.decompiler-procyon-config.alwaysGenerateExceptionVariableForCatchBlocks=Generera alltid exceptionsvariabler för catch-block
+service.decompile.decompiler-procyon-config.arePreviewFeaturesEnabled=Aktivera förhandsgranskningsfunktioner för språket
+service.decompile.decompiler-procyon-config.bytecodeOutputOptions=Bytecode-utdataalternativ
+service.decompile.decompiler-procyon-config.disableForEachTransforms=Inaktivera forEach(...) omvandlingar
+service.decompile.decompiler-procyon-config.excludeNestedTypes=Exkludera nästlade typer
+service.decompile.decompiler-procyon-config.flattenSwitchBlocks=Sammanfoga switch-block
+service.decompile.decompiler-procyon-config.forceExplicitImports=Tvinga fram explicita importeringar
+service.decompile.decompiler-procyon-config.forceExplicitTypeArguments=Tvinga fram explicita typargument
+service.decompile.decompiler-procyon-config.forceFullyQualifiedReferences=Tvinga fram fullständigt kvalificerade referenser
+service.decompile.decompiler-procyon-config.forcedCompilerTarget=Målspråkversion
+service.decompile.decompiler-procyon-config.includeErrorDiagnostics=Inkludera fel diagnostik
+service.decompile.decompiler-procyon-config.includeLineNumbersInBytecode=Visa debuggningsradnummer (bytecode)
+service.decompile.decompiler-procyon-config.isUnicodeOutputEnabled=Aktivera unicode i utdata
+service.decompile.decompiler-procyon-config.mergeVariables=Slå samman variabler när det är möjligt
+service.decompile.decompiler-procyon-config.retainPointlessSwitches=Behåll meningslösa switch-satser
+service.decompile.decompiler-procyon-config.retainRedundantCasts=Behåll onödiga typomvandlingar
+service.decompile.decompiler-procyon-config.showDebugLineNumbers=Visa debuggningsradnummer
+service.decompile.decompiler-procyon-config.showSyntheticMembers=Visa syntetiska medlemmar
+service.decompile.decompiler-procyon-config.simplifyMemberReferences=Förenkla medlemsreferenser
+service.decompile.decompiler-procyon-config.textBlockLineMinimum=Textblock minimilinjer
+service.decompile.decompilers-config=Dekompileringshanterare
+service.decompile.decompilers-config.pref-android-decompiler=Föredragen Android-dekompilerare
+service.decompile.decompilers-config.pref-jvm-decompiler=Föredragen Java-dekompilerare
+service.io=IO
+service.io.directories-config=Kataloger
+service.io.export-config=Export
+service.io.export-config=Inkludera stödresurser i utdata
+service.io.export-config.compression=Komprimeringsstrategi för innehållet i utdata
+service.io.export-config.create-zip-dir-entries=Skapa ZIP 'katalog'-poster i utdata
+service.io.recent-workspaces-config=Senaste arbetsmiljöer
+service.io.recent-workspaces-config.last-workspace-export-path=Senaste arbetsmiljöns exportväg
+service.io.recent-workspaces-config.last-workspace-open-path=Senaste arbetsmiljöns öppningsväg
+service.io.recent-workspaces-config.max-recent-workspaces=Maximalt antal sparade senaste sökvägar
+service.io.recent-workspaces-config.recent-workspaces=Senaste arbetsmiljö
+service.io.resource-importer-config=Import av resurser
+service.io.resource-importer-config.zip-strategy=ZIP-analysstrategi
+service.mapping=Mapping
+service.mapping.mapping-aggregator-config=Mappingaggregering
+service.mapping.mapping-formats-config=Mappingformat
+service.mapping.mapping-generator-config=Mappinggenerator
+service.plugin=Plugin
+service.plugin.plugin-manager-config=Plugin hanterare
+service.plugin.script-manager-config=Skript hanterare
+service.plugin.script-manager-config.file-watching=Aktivt skanna skriptkatalogen för ändringar
+service.ui=Användargränssnitt
+service.ui.bind-config=Bindningar
+service.ui.bind-config.bundle=Inkluderad bindnings-map
+service.ui.class-editing-config=Klassredigering
+service.ui.class-editing-config.default-android-editor=Standardredigerare för Android-klasser
+service.ui.class-editing-config.default-jvm-editor=Standardredigerare för JVM-klasser
+service.ui.decompile-pane-config=Dekompileringspanel
+service.ui.decompile-pane-config.timeout-seconds=Timeout för dekompilerare (sekunder)
+service.ui.decompile-pane-config.mapping-acceleration=Accelerera om-mappningsoperationer
+service.ui.text-format-config=Textformat
+service.ui.text-format-config.escape=Aktivera text-escapes
+service.ui.text-format-config.max-length=Maximal textvisningslängd
+service.ui.text-format-config.shorten=Aktivera textförkortning
+service.ui.file-type-association-config=Filtypassociationer
+service.ui.file-type-association-config.extensions-to-langs=Filtillägg till språk-mappning
+service.ui.window-manager-config=Fönsterhanterare
+service.ui.workspace-explorer-config=Arbetsutrymmesutforskare
+service.ui.workspace-explorer-config.drag-drop-action=Dragg- och släpp-beteende
+
+##### Config
+# conf.display=Appearance
+# conf.display.general=General
+# conf.display.general.flashopentabs=Flash open tab on re-focus
+# conf.display.general.language=Language
+# conf.display.tree=Tree display settings
+# conf.display.tree.maxtreedirectorydepth=Max tree directory depth
+# conf.display.tree.maxtreetextlength=Max item text length
+# conf.display.workspace=Workspace behavior
+# conf.display.workspace.showfilterbuttons=Show advanced filter buttons
+# conf.display.workspace.onfiledrop=On file drop action
+# conf.display.workspace.onfiledrop.choose=Let me choose
+# conf.display.workspace.onfiledrop.createnew=Create new workspace
+# conf.display.workspace.onfiledrop.addlibrary=Add as library
+# conf.display.workspace.promptcloseworkspace=Prompt when closing workspace
+# conf.display.workspace.promptdeleteitem=Prompt when deleting items
+# conf.display.workspace.showselectionnavbar=Show selection nav-bar
+# conf.display.text=Text
+# conf.display.text.fontsize=Font size
+#
+# conf.editor=Editor Components
+# conf.editor.general=General
+# conf.editor.general.classmode=Default class view
+# conf.editor.general.filemode=Default file view
+# conf.editor.general.errorindicatorpos=Error indicator position
+# conf.editor.assoc=File extension associations
+# conf.editor.assoc.fileextassociations=Associations
+# conf.editor.text=Text editor
+# conf.editor.text.showbracketfolds=Show bracket folds
+# conf.editor.hex=Hex editor
+# conf.editor.hex.classhints=Show class file hints
+# conf.editor.hex.hexcolumns=Number of columns
+# conf.editor.hex.highlightcurrent=Highlight current selection
+# conf.editor.diff=Difference Editor
+# conf.editor.diff.diff-view-mode=Class difference view mode
+#
+# conf.binding=Keybinding
+# conf.binding.navigation=Navigation
+# conf.binding.navigation.closetab=Close tab
+# conf.binding.navigation.find=Find
+# conf.binding.navigation.fullscreen=Fullscreen
+# conf.binding.navigation.quicknav=Quick navigation
+# conf.binding.edit=Editing
+# conf.binding.edit.save=Save changes
+# conf.binding.edit.undo=Undo change
+# conf.binding.inputprompt.initial=<waiting>
+# conf.binding.inputprompt.finish=<ENTER to finish>
+# conf.binding.code=Code interactions
+# conf.binding.code.gotodef=Goto definition
+# conf.binding.code.rename=Rename selected
+# conf.binding.code.searchref=Search references
+# conf.binding.code.suggest=Show suggestions
+# conf.binding.appearance=Appearance
+# conf.binding.appearance.fontsize.up=Increase font size
+# conf.binding.appearance.fontsize.down=Decrease font size
+#
+# conf.assembler=Assembler
+# conf.assembler.build=Building
+# conf.assembler.build.delay=Delay before updating bytecode
+# conf.assembler.format=Format
+# conf.assembler.format.prefix=Use dot prefix for keywords
+# conf.assembler.parse=Parsing
+# conf.assembler.parse.recover=Attempt error recovery
+# conf.assembler.validation=Validation
+# conf.assembler.validation.ast=Enable AST validation
+# conf.assembler.validation.bytecode=Enable bytecode analysis
+# conf.assembler.debug=Debugging
+# conf.assembler.debug.ast-debug=Show AST debug info
+#
+# conf.compiler=Compiler
+# conf.compiler.general=General
+# conf.compiler.general.impl=Compiler implementation
+# conf.compiler.general.phantoms=Generate missing classes
+# conf.compiler.debug=Debug
+# conf.compiler.debug.vars=Include debug symbols
+# conf.compiler.debug.lines=Include line numbers
+# conf.compiler.debug.sourcefile=Include source file
+#
+# conf.decompiler.filter=Filtering
+# conf.decompiler.filter.escapeunicode=Escape unicode
+# conf.decompiler.filter.generics=Strip type arguments
+# conf.decompiler.filter.vars=Strip variable info
+# conf.decompiler.filter.synthetics=Strip synthetic flags
+# conf.decompiler.classfile=Classfile
+# conf.decompiler.classfile.maxouterdepth=Max outer class breadcrumbs depth\n(-1: disable check, 0: disable breadcrumbs)
+#
+# conf.plugin=Plugins
+# conf.plugin.general=General
+# conf.plugin.general.enabled=Enabled
+# conf.plugin.general.remote=Remote
+# conf.plugin.general.remotetime=Cache timestamp
+#
+# conf.ssvm=SSVM
+# conf.ssvm.access=File IO access
+# conf.ssvm.access.read=Allow read
+# conf.ssvm.access.write=Allow write
+# conf.ssvm.access.read.warn=Enabling this will allow SSVM actions to read files on your system.\nBe careful when enabling this option.
+# conf.ssvm.access.write.warn=Enabling this will allow SSVM actions to write files to your system.\nBe VERY careful when enabling this option.
+# conf.ssvm.general=General
+# conf.ssvm.general.active=Initialize SSVM when loading workspaces
+# conf.ssvm.remote=Remote VM
+# conf.ssvm.remote.active=Active
+# conf.ssvm.remote.path=Path to VM executable
+# conf.undefined=Undefined
+
+misc.acknowledge=Bekräfta
+misc.all=Alla
+misc.none=Ingen
+misc.enabled=Aktiverad
+misc.disabled=Inaktiverad
+misc.clear=Rensa
+misc.export=Exportera
+misc.casesensitive=Skiftlägeskänslig
+misc.regex=Regex
+misc.member.field=Fält
+misc.member.method=Metod
+misc.member.field_n_method=Fält och metod
+misc.member.inner_class=Inre klass
+misc.member.inner_interface=Inre gränssnitt
+misc.member.inner_enum=Inre uppräkning
+misc.member.inner_annotation=Inre annotering
+misc.accessflag.visibility.public=Publik
+misc.accessflag.visibility.protected=Skyddad
+misc.accessflag.visibility.private=Privat
+misc.accessflag.visibility.package=Paket
+misc.direction.up=Uppåt
+misc.direction.down=Nedåt
+misc.direction.left=Vänster
+misc.direction.right=Höger
+misc.direction.top=Topp
+misc.direction.bottom=Botten
+misc.position.top=Topp
+misc.position.bottom=Botten
+misc.position.left=Vänster
+misc.position.right=Höger
+misc.position.center=Mitten
+misc.position.middle=Mellan
+misc.text.equals=Equals
+misc.text.contains=Innehåller
+misc.text.startswith=Börjar med
+misc.text.endswith=Slutar med
+misc.text.regex=Regex
