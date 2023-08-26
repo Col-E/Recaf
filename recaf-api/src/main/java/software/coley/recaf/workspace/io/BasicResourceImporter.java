@@ -16,10 +16,7 @@ import software.coley.recaf.util.*;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
-import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
-import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -348,7 +345,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					// Put it into the correct versioned class bundle.
 					int version = Integer.parseInt(versionName);
 					BasicJvmClassBundle bundle = (BasicJvmClassBundle) versionedJvmClassBundles
-							.computeIfAbsent(version, v -> new BasicJvmClassBundle());
+							.computeIfAbsent(version, BasicVersionedClassBundle::new);
 
 					// Handle duplicate classes
 					JvmClassInfo existingClass = bundle.get(className);

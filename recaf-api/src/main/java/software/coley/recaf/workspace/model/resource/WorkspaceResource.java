@@ -118,7 +118,7 @@ public interface WorkspaceResource extends Closing {
 	 * @return Stream of all versioned JVM class bundles in the resource.
 	 */
 	default Stream<JvmClassBundle> versionedJvmClassBundleStream() {
-		return of(getJvmClassBundle());
+		return getVersionedJvmClassBundles().values().stream();
 	}
 
 	/**

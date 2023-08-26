@@ -5,9 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.Info;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -44,6 +42,14 @@ public interface Bundle<I extends Info> extends Map<String, I>, Iterable<I>, Clo
 	 */
 	@Nullable
 	I put(I info);
+
+	/**
+	 * @return A copied collection of {@link #values()}, allowing modification during iteration.
+	 */
+	@Nonnull
+	default Collection<I> valuesAsCopy() {
+		return new ArrayList<>(values());
+	}
 
 	/**
 	 * @return Stream of items.

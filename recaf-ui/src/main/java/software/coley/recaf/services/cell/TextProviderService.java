@@ -278,6 +278,8 @@ public class TextProviderService implements Service {
 					return dexName;
 			} else if (bundle instanceof AgentServerRemoteVmResource.RemoteJvmClassBundle remoteBundle) {
 				return formatConfig.filter(remoteBundle.getLoaderInfo().getName());
+			} else if (bundle instanceof VersionedClassBundle versionedClassBundle) {
+				return Lang.get("tree.classes") + " (Java " + versionedClassBundle.version() + ")";
 			}
 
 			if (bundle instanceof ClassBundle)
