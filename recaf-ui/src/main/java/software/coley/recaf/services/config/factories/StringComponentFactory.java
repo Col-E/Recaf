@@ -8,7 +8,12 @@ import software.coley.observables.Observable;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.config.TypedConfigComponentFactory;
-
+/**
+ * Factory for general {@link String} values.
+ *
+ * @author pvpb0t
+ * @since 8/25/2023
+ */
 @ApplicationScoped
 public class StringComponentFactory extends TypedConfigComponentFactory<String> {
 
