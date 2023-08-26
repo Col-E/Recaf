@@ -105,7 +105,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	protected void delegateJvmClassBundle(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle) {
 		bundle.addBundleListener(new BundleListener<>() {
 			@Override
-			public void onNewItem(String key, JvmClassInfo cls) {
+			public void onNewItem(@Nonnull String key, @Nonnull JvmClassInfo cls) {
 				for (ResourceJvmClassListener listener : jvmClassListeners) {
 					try {
 						listener.onNewClass(resource, bundle, cls);
@@ -116,7 +116,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 			}
 
 			@Override
-			public void onUpdateItem(String key, JvmClassInfo oldCls, JvmClassInfo newCls) {
+			public void onUpdateItem(@Nonnull String key, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
 				for (ResourceJvmClassListener listener : jvmClassListeners) {
 					try {
 						listener.onUpdateClass(resource, bundle, oldCls, newCls);
@@ -127,7 +127,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 			}
 
 			@Override
-			public void onRemoveItem(String key, JvmClassInfo cls) {
+			public void onRemoveItem(@Nonnull String key, @Nonnull JvmClassInfo cls) {
 				for (ResourceJvmClassListener listener : jvmClassListeners) {
 					try {
 						listener.onRemoveClass(resource, bundle, cls);
@@ -150,7 +150,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	protected void delegateAndroidClassBundle(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle) {
 		bundle.addBundleListener(new BundleListener<>() {
 			@Override
-			public void onNewItem(String key, AndroidClassInfo cls) {
+			public void onNewItem(@Nonnull String key, @Nonnull AndroidClassInfo cls) {
 				for (ResourceAndroidClassListener listener : androidClassListeners) {
 					try {
 						listener.onNewClass(resource, bundle, cls);
@@ -161,7 +161,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 			}
 
 			@Override
-			public void onUpdateItem(String key, AndroidClassInfo oldCls, AndroidClassInfo newCls) {
+			public void onUpdateItem(@Nonnull String key, @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls) {
 				for (ResourceAndroidClassListener listener : androidClassListeners) {
 					try {
 						listener.onUpdateClass(resource, bundle, oldCls, newCls);
@@ -172,7 +172,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 			}
 
 			@Override
-			public void onRemoveItem(String key, AndroidClassInfo cls) {
+			public void onRemoveItem(@Nonnull String key, @Nonnull AndroidClassInfo cls) {
 				for (ResourceAndroidClassListener listener : androidClassListeners) {
 					try {
 						listener.onRemoveClass(resource, bundle, cls);
@@ -195,7 +195,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	protected void delegateFileBundle(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle) {
 		bundle.addBundleListener(new BundleListener<>() {
 			@Override
-			public void onNewItem(String key, FileInfo file) {
+			public void onNewItem(@Nonnull String key, @Nonnull FileInfo file) {
 				for (ResourceFileListener listener : fileListeners) {
 					try {
 						listener.onNewFile(resource, bundle, file);
@@ -206,7 +206,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 			}
 
 			@Override
-			public void onUpdateItem(String key, FileInfo oldFile, FileInfo newFile) {
+			public void onUpdateItem(@Nonnull String key, @Nonnull FileInfo oldFile, @Nonnull FileInfo newFile) {
 				for (ResourceFileListener listener : fileListeners) {
 					try {
 						listener.onUpdateFile(resource, bundle, oldFile, newFile);
@@ -217,7 +217,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 			}
 
 			@Override
-			public void onRemoveItem(String key, FileInfo file) {
+			public void onRemoveItem(@Nonnull String key, @Nonnull FileInfo file) {
 				for (ResourceFileListener listener : fileListeners) {
 					try {
 						listener.onRemoveFile(resource, bundle, file);

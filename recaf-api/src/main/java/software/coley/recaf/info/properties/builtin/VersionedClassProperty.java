@@ -1,5 +1,6 @@
 package software.coley.recaf.info.properties.builtin;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.JvmClassInfo;
@@ -13,6 +14,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  * @author Matt Coley
  */
 public class VersionedClassProperty extends BasicProperty<Integer> {
+	private static final Int2ObjectArrayMap<VersionedClassProperty> cache = new Int2ObjectArrayMap<>();
 	public static final String KEY = "meta-inf-versioned";
 
 	/**
@@ -44,7 +46,7 @@ public class VersionedClassProperty extends BasicProperty<Integer> {
 	 * 		used as key for {@link WorkspaceResource#getVersionedJvmClassBundles()}.
 	 */
 	public static void set(@Nonnull JvmClassInfo classInfo, int version) {
-		classInfo.setProperty(new VersionedClassProperty(version));
+		classInfo.setProperty(cache.computeIfAbsent(version, VersionedClassProperty::new));
 	}
 
 	/**

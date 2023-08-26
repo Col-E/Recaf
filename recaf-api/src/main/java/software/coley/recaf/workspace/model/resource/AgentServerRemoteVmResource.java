@@ -237,13 +237,13 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 
 			addBundleListener(new BundleListener<>() {
 				@Override
-				public void onNewItem(String key, JvmClassInfo value) {
+				public void onNewItem(@Nonnull String key, @Nonnull JvmClassInfo value) {
 					// Should occur when we get data from the client.
 					// No action needed.
 				}
 
 				@Override
-				public void onUpdateItem(String key, JvmClassInfo oldValue, JvmClassInfo newValue) {
+				public void onUpdateItem(@Nonnull String key, @Nonnull JvmClassInfo oldValue, @Nonnull JvmClassInfo newValue) {
 					// Should occur when the user makes changes to a class from recaf.
 					// We need to send this definition to the remote server.
 
@@ -262,7 +262,7 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 				}
 
 				@Override
-				public void onRemoveItem(String key, JvmClassInfo value) {
+				public void onRemoveItem(@Nonnull String key, @Nonnull JvmClassInfo value) {
 					// Should not occur
 					throw new IllegalStateException("Remove operations should not occur for remote VM resource!");
 				}

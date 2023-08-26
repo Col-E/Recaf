@@ -1,5 +1,8 @@
 package software.coley.recaf.workspace.model.bundle;
 
+
+import jakarta.annotation.Nonnull;
+
 /**
  * Listener for updates to contents within a {@link Bundle}.
  *
@@ -15,7 +18,7 @@ public interface BundleListener<I> {
 	 * @param value
 	 * 		Item value.
 	 */
-	void onNewItem(String key, I value);
+	void onNewItem(@Nonnull String key, @Nonnull I value);
 
 	/**
 	 * @param key
@@ -25,7 +28,7 @@ public interface BundleListener<I> {
 	 * @param newValue
 	 * 		New item value.
 	 */
-	void onUpdateItem(String key, I oldValue, I newValue);
+	void onUpdateItem(@Nonnull String key, @Nonnull I oldValue, @Nonnull I newValue);
 
 	/**
 	 * @param key
@@ -33,5 +36,5 @@ public interface BundleListener<I> {
 	 * @param value
 	 * 		Item value.
 	 */
-	void onRemoveItem(String key, I value);
+	void onRemoveItem(@Nonnull String key, @Nonnull I value);
 }
