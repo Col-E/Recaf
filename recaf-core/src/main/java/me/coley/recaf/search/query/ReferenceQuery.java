@@ -194,6 +194,7 @@ public class ReferenceQuery implements Query {
 			@Override
 			public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 				AnnotationVisitor av = super.visitAnnotation(desc, visible);
+				if(desc.isEmpty()) return av;
 				String type = desc.substring(1, desc.length() - 1);
 				whenMatched(type, null, null,
 						builder -> addMethodAnno(builder, methodInfo, type));
@@ -203,6 +204,7 @@ public class ReferenceQuery implements Query {
 			@Override
 			public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
 				AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+				if(desc.isEmpty()) return av;
 				String type = desc.substring(1, desc.length() - 1);
 				whenMatched(type, null, null,
 						builder -> addMethodAnno(builder, methodInfo, type));
@@ -212,6 +214,7 @@ public class ReferenceQuery implements Query {
 			@Override
 			public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
 				AnnotationVisitor av = super.visitParameterAnnotation(parameter, desc, visible);
+				if(desc.isEmpty()) return av;
 				String type = desc.substring(1, desc.length() - 1);
 				whenMatched(type, null, null,
 						builder -> addMethodAnno(builder, methodInfo, type));

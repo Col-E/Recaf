@@ -198,6 +198,7 @@ public class TextQuery implements Query {
 			@Override
 			public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
 				AnnotationVisitor av = super.visitParameterAnnotation(parameter, desc, visible);
+				if(desc.isEmpty()) return av;
 				return new TextAnnotationVisitor(av, builder -> addMethodAnno(builder,
 						methodInfo.getName(), methodInfo.getDescriptor(), desc));
 			}
@@ -205,6 +206,7 @@ public class TextQuery implements Query {
 			@Override
 			public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
 				AnnotationVisitor av = super.visitInsnAnnotation(typeRef, typePath, desc, visible);
+				if(desc.isEmpty()) return av;
 				return new TextAnnotationVisitor(av, builder -> addMethodAnno(builder,
 						methodInfo.getName(), methodInfo.getDescriptor(), desc));
 			}
@@ -213,6 +215,7 @@ public class TextQuery implements Query {
 			public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc,
 															 boolean visible) {
 				AnnotationVisitor av = super.visitTryCatchAnnotation(typeRef, typePath, desc, visible);
+				if(desc.isEmpty()) return av;
 				return new TextAnnotationVisitor(av, builder -> addMethodAnno(builder,
 						methodInfo.getName(), methodInfo.getDescriptor(), desc));
 			}
@@ -223,6 +226,7 @@ public class TextQuery implements Query {
 																  String desc, boolean visible) {
 				AnnotationVisitor av = super.visitLocalVariableAnnotation(typeRef, typePath, start, end,
 						index, desc, visible);
+				if(desc.isEmpty()) return av;
 				return new TextAnnotationVisitor(av, builder -> addMethodAnno(builder,
 						methodInfo.getName(), methodInfo.getDescriptor(), desc));
 			}
