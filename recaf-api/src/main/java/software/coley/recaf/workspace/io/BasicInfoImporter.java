@@ -76,28 +76,7 @@ public class BasicInfoImporter implements InfoImporter {
 			}
 		}
 
-		// Check for ZIP containers (For ZIP/JAR/JMod/WAR)
-		if (ByteHeaderUtil.matchAtAnyOffset(data, ByteHeaderUtil.ZIP)) {
-			ZipFileInfoBuilder builder = new ZipFileInfoBuilder()
-					.withRawContent(data)
-					.withName(name);
-
-			// Handle by file name if known, otherwise treat as regular ZIP.
-			if (name == null) return builder.build();
-
-			// Record name, handle extension to determine info-type
-			String extension = IOUtil.getExtension(name);
-			if (extension == null) return builder.build();
-			return switch (extension.toUpperCase()) {
-				case "JAR" -> builder.asJar().build();
-				case "APK" -> builder.asApk().build();
-				case "WAR" -> builder.asWar().build();
-				case "JMOD" -> builder.asJMod().build();
-				default -> builder.build();
-			};
-		}
-
-		// Not a ZIP container, start comparing against other known file types.
+		// Comparing against known file types.
 		if (ByteHeaderUtil.match(data, ByteHeaderUtil.DEX)) {
 			return new DexFileInfoBuilder()
 					.withRawContent(data)
@@ -135,6 +114,31 @@ public class BasicInfoImporter implements InfoImporter {
 					.withRawContent(data)
 					.withName(name)
 					.build();
+		}
+
+		// Check for ZIP containers (For ZIP/JAR/JMod/WAR)
+		//  - While this is more common, some of the known file types may match 'ZIP' with
+		//    our 'any-offset' condition we have here.
+		//  - We need 'any-offset' to catch all ZIP cases, but it can match some of the file types
+		//    above in some conditions, which means we have to check for it last.
+		if (ByteHeaderUtil.matchAtAnyOffset(data, ByteHeaderUtil.ZIP)) {
+			ZipFileInfoBuilder builder = new ZipFileInfoBuilder()
+					.withRawContent(data)
+					.withName(name);
+
+			// Handle by file name if known, otherwise treat as regular ZIP.
+			if (name == null) return builder.build();
+
+			// Record name, handle extension to determine info-type
+			String extension = IOUtil.getExtension(name);
+			if (extension == null) return builder.build();
+			return switch (extension.toUpperCase()) {
+				case "JAR" -> builder.asJar().build();
+				case "APK" -> builder.asApk().build();
+				case "WAR" -> builder.asWar().build();
+				case "JMOD" -> builder.asJMod().build();
+				default -> builder.build();
+			};
 		}
 
 		// TODO: Record content-type (for quick recognition of media and other common file types)

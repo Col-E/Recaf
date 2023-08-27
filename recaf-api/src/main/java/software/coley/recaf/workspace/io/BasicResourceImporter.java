@@ -128,9 +128,9 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		Map<String, WorkspaceFileResource> embeddedResources = new HashMap<>();
 
 		// Read ZIP entries
+		boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
 		ZipArchive archive = config.getZipStrategy().getValue().mapping().apply(source.readAll());
 		archive.getLocalFiles().forEach(header -> {
-			boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
 			LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
 			String entryName = header.getFileNameAsString();
 
