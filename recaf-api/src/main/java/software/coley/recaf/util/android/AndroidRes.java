@@ -13,8 +13,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.info.ArscFileInfo;
-import software.coley.recaf.util.MultiMap;
+import software.coley.android.xml.AndroidResourceProvider;
 import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 
 import java.io.IOException;
@@ -25,12 +24,12 @@ import java.util.stream.Collectors;
  * Android resource information.
  * <ul>
  *     <li>{@link #getAndroidBase()} - Common Android resource information</li>
- *     <li>{@link #fromArsc(ArscFileInfo)} - Android resource information from an ARSC file</li>
+ *     <li>{@link #fromArsc(BinaryResourceFile)} - Android resource information from an ARSC file</li>
  * </ul>
  *
  * @author Matt Coley
  */
-public class AndroidRes {
+public class AndroidRes implements AndroidResourceProvider {
 	private static final XmlMapper MAPPER = new XmlMapper();
 	private static final AndroidRes ANDROID_BASE;
 	private final Int2ObjectMap<String> resIdToName;
@@ -40,7 +39,7 @@ public class AndroidRes {
 	private final Map<String, Object2LongMap<String>> attrToFlags;
 	private final Map<String, BinaryResourceValue> attrToSimpleResource;
 	private final Map<String, Map<Integer, BinaryResourceValue>> attrToComplexResource;
-	private final MultiMap<String, String, Set<String>> formatToAttrs;
+	private final Map<String, Set<String>> formatToAttrs;
 
 	private AndroidRes(@Nonnull Int2ObjectMap<String> resIdToName,
 					   @Nonnull Object2IntMap<String> resNameToId,
@@ -49,7 +48,7 @@ public class AndroidRes {
 					   @Nonnull Map<String, Object2LongMap<String>> attrToFlags,
 					   @Nonnull Map<String, BinaryResourceValue> attrToSimpleResource,
 					   @Nonnull Map<String, Map<Integer, BinaryResourceValue>> attrToComplexResource,
-					   @Nonnull MultiMap<String, String, Set<String>> formatToAttrs) {
+					   @Nonnull Map<String, Set<String>> formatToAttrs) {
 		this.resIdToName = resIdToName;
 		this.resNameToId = resNameToId;
 		this.attrToFormat = attrToFormat;
@@ -64,12 +63,11 @@ public class AndroidRes {
 	 * @param arsc
 	 * 		ARSC resource file to parse resource information from.
 	 *
-	 * @return Resource info from the ARSC file.
+	 * @return Resource information model unpacked from the chunked data.
 	 */
 	@Nonnull
-	public static AndroidRes fromArsc(@Nonnull ArscFileInfo arsc) {
-		BinaryResourceFile chunkModel = arsc.getChunkModel();
-		List<Chunk> chunks = chunkModel.getChunks();
+	public static AndroidRes fromArsc(@Nonnull BinaryResourceFile arsc) {
+		List<Chunk> chunks = arsc.getChunks();
 
 		// Maps to collect data into.
 		Int2ObjectMap<String> resIdToName = new Int2ObjectOpenHashMap<>();
@@ -79,11 +77,12 @@ public class AndroidRes {
 		Map<String, Object2LongMap<String>> attrToFlags = new TreeMap<>();
 		Map<String, BinaryResourceValue> attrToSimpleResource = new TreeMap<>();
 		Map<String, Map<Integer, BinaryResourceValue>> attrToComplexResource = new TreeMap<>();
-		MultiMap<String, String, Set<String>> formatToAttrs = MultiMap.from(new TreeMap<>(), HashSet::new);
+		Map<String, Set<String>> formatToAttrs = new TreeMap<>();
 
 		// Parse the chunks in the ARSC, extracting all entries
 		for (Chunk chunk : chunks) {
-			if (chunk instanceof ResourceTableChunk resourceTableChunk) {
+			if (chunk instanceof ResourceTableChunk) {
+				ResourceTableChunk resourceTableChunk = (ResourceTableChunk) chunk;
 				for (PackageChunk packageChunk : resourceTableChunk.getPackages()) {
 					int packageId = packageChunk.getId();
 					for (TypeChunk typeChunk : packageChunk.getTypeChunks()) {
@@ -140,12 +139,12 @@ public class AndroidRes {
 		return resNameToId.getOrDefault(resName, -1);
 	}
 
-	/**
-	 * @param resId
-	 * 		Resource ID.
-	 *
-	 * @return Name of resource, or {@code null} if not present.
-	 */
+	@Override
+	public boolean hasResName(int resId) {
+		return resIdToName.get(resId) != null;
+	}
+
+	@Override
 	@Nullable
 	public String getResName(int resId) {
 		return resIdToName.get(resId);
@@ -161,27 +160,15 @@ public class AndroidRes {
 		String resName = getResName(resId);
 		if (resName == null)
 			return false;
-		return isResEnum(resName);
+		return hasResEnum(resName);
 	}
 
-	/**
-	 * @param resName
-	 * 		Resource name.
-	 *
-	 * @return {@code true} when the resource is a known enum.
-	 */
-	public boolean isResEnum(@Nonnull String resName) {
+	@Override
+	public boolean hasResEnum(@Nonnull String resName) {
 		return attrToEnum.containsKey(resName);
 	}
 
-	/**
-	 * @param resName
-	 * 		Resource name.
-	 * @param value
-	 * 		Enum value key.
-	 *
-	 * @return Enum name for the associated value if known, otherwise {@code null}.
-	 */
+	@Override
 	@Nullable
 	public String getResEnumName(@Nonnull String resName, long value) {
 		Object2LongMap<String> values = attrToEnum.get(resName);
@@ -195,6 +182,69 @@ public class AndroidRes {
 	}
 
 	/**
+	 * @param resName
+	 * 		Resource name.
+	 *
+	 * @return {@code true} when the resource is a known value.
+	 */
+	public boolean isSimpleResValue(@Nonnull String resName) {
+		return attrToSimpleResource.containsKey(resName);
+	}
+
+	/**
+	 * @param resName
+	 * 		Resource name.
+	 *
+	 * @return Resource value for the associated value if known, otherwise {@code null}.
+	 */
+	@Nullable
+	public BinaryResourceValue getSimpleResValue(@Nonnull String resName) {
+		return attrToSimpleResource.get(resName);
+	}
+
+	/**
+	 * @param resName
+	 * 		Resource name.
+	 *
+	 * @return {@code true} when the resource is a known value.
+	 */
+	public boolean isComplexResValue(@Nonnull String resName) {
+		return attrToComplexResource.containsKey(resName);
+	}
+
+	/**
+	 * @param resName
+	 * 		Resource name.
+	 *
+	 * @return Resource value for the associated value if known, otherwise {@code null}.
+	 */
+	@Nullable
+	public Map<Integer, BinaryResourceValue> getComplexResValue(@Nonnull String resName) {
+		return attrToComplexResource.get(resName);
+	}
+
+	/**
+	 * @param attrName
+	 * 		Attribute name.
+	 *
+	 * @return {@code true} when the attribute has an associated format.
+	 */
+	public boolean attributeHasFormat(@Nonnull String attrName) {
+		return attrToFormat.containsKey(attrName);
+	}
+
+	/**
+	 * @param attrName
+	 * 		Attribute name.
+	 *
+	 * @return Format identifier for the associated value if known, otherwise {@code null}.
+	 */
+	@Nullable
+	public String getAttributeFormat(@Nonnull String attrName) {
+		return attrToFormat.get(attrName);
+	}
+
+	/**
 	 * @param resId
 	 * 		Resource ID.
 	 *
@@ -204,27 +254,15 @@ public class AndroidRes {
 		String resName = getResName(resId);
 		if (resName == null)
 			return false;
-		return isResEnum(resName);
+		return hasResEnum(resName);
 	}
 
-	/**
-	 * @param resName
-	 * 		Resource name.
-	 *
-	 * @return {@code true} when the resource is a known flag.
-	 */
-	public boolean isResFlag(@Nonnull String resName) {
+	@Override
+	public boolean hasResFlag(@Nonnull String resName) {
 		return attrToFlags.containsKey(resName);
 	}
 
-	/**
-	 * @param resName
-	 * 		Resource name.
-	 * @param mask
-	 * 		Flag value mask.
-	 *
-	 * @return Flag names <i>(Separated by {@code |})</i> for the associated value if known, otherwise {@code null}.
-	 */
+	@Override
 	@Nonnull
 	public String getResFlagNames(@Nonnull String resName, long mask) {
 		Object2LongMap<String> values = attrToFlags.get(resName);
@@ -253,14 +291,14 @@ public class AndroidRes {
 			}
 
 			// Parse the attribute manifest
-			MultiMap<String, String, Set<String>> formatToAttrs = MultiMap.from(new TreeMap<>(), HashSet::new);
+			Map<String, Set<String>> formatToAttrs = new TreeMap<>();
 			Map<String, String> attrToFormat = new TreeMap<>();
 			Map<String, Object2LongMap<String>> attrToEnum = new TreeMap<>();
 			Map<String, Object2LongMap<String>> attrToFlags = new TreeMap<>();
-			JsonNode tree = MAPPER.readTree(AndroidApiResource.class.getResourceAsStream("/android/attrs_manifest.xml"));
+			JsonNode tree = MAPPER.readTree(AndroidRes.class.getResourceAsStream("/android/attrs_manifest.xml"));
 			for (JsonNode child : tree)
 				visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, child);
-			tree = MAPPER.readTree(AndroidApiResource.class.getResourceAsStream("/android/attrs.xml"));
+			tree = MAPPER.readTree(AndroidRes.class.getResourceAsStream("/android/attrs.xml"));
 			for (JsonNode child : tree)
 				visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, child);
 			ANDROID_BASE = new AndroidRes(resIdToName, resNameToId,
@@ -270,13 +308,14 @@ public class AndroidRes {
 		}
 	}
 
-	private static void visit(@Nonnull MultiMap<String, String, Set<String>> formatToAttrs,
+	private static void visit(@Nonnull Map<String, Set<String>> formatToAttrs,
 							  @Nonnull Map<String, String> attrToFormat,
 							  @Nonnull Map<String, Object2LongMap<String>> attrToEnum,
 							  @Nonnull Map<String, Object2LongMap<String>> attrToFlags,
 							  @Nonnull JsonNode node) {
 		JsonNode nameNode = node.get("name");
-		if (nameNode != null && node instanceof ObjectNode childObject) {
+		if (nameNode != null && node instanceof ObjectNode) {
+			ObjectNode childObject = (ObjectNode) node;
 			String name = nameNode.asText();
 
 			// Handle different kinds of entries
@@ -284,11 +323,12 @@ public class AndroidRes {
 			if (formatNode != null) {
 				String format = formatNode.asText();
 				attrToFormat.put(name, format);
-				formatToAttrs.put(format, name);
+				formatToAttrs.computeIfAbsent(format, f -> new TreeSet<>()).add(name);
 				return;
 			} else {
 				JsonNode flagNode = childObject.get("flag");
-				if (flagNode instanceof ArrayNode flagArray) {
+				if (flagNode instanceof ArrayNode) {
+					ArrayNode flagArray = (ArrayNode) flagNode;
 					Object2LongMap<String> nameToValue = new Object2LongOpenHashMap<>();
 					for (JsonNode flagEntry : flagArray) {
 						String flagName = flagEntry.get("name").asText();
@@ -300,18 +340,22 @@ public class AndroidRes {
 					}
 					attrToFlags.put(name, nameToValue);
 					return;
-				} else if (node.get("enum") instanceof ArrayNode enumArray) {
-					Object2LongMap<String> nameToValue = new Object2LongOpenHashMap<>();
-					for (JsonNode flagEntry : enumArray) {
-						String enumName = flagEntry.get("name").asText();
-						String enumValueText = flagEntry.get("value").asText();
-						if (enumValueText.startsWith("0x"))
-							enumValueText = enumValueText.substring(2);
-						long enumValue = Long.parseLong(enumValueText);
-						nameToValue.put(enumName, enumValue);
+				} else {
+					JsonNode enumNode = node.get("enum");
+					if (enumNode instanceof ArrayNode) {
+						ArrayNode enumArray = (ArrayNode) enumNode;
+						Object2LongMap<String> nameToValue = new Object2LongOpenHashMap<>();
+						for (JsonNode flagEntry : enumArray) {
+							String enumName = flagEntry.get("name").asText();
+							String enumValueText = flagEntry.get("value").asText();
+							if (enumValueText.startsWith("0x"))
+								enumValueText = enumValueText.substring(2);
+							long enumValue = Long.parseLong(enumValueText);
+							nameToValue.put(enumName, enumValue);
+						}
+						attrToEnum.put(name, nameToValue);
+						return;
 					}
-					attrToEnum.put(name, nameToValue);
-					return;
 				}
 			}
 		}

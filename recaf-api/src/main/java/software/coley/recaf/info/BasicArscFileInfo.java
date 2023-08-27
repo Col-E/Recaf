@@ -24,7 +24,7 @@ public class BasicArscFileInfo extends BasicAndroidChunkFileInfo implements Arsc
 	@Override
 	public AndroidRes getResourceInfo() {
 		if (res == null)
-			res = AndroidRes.fromArsc(this);
+			res = AndroidRes.fromArsc(getChunkModel());
 		return res;
 	}
 }

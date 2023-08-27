@@ -1,7 +1,6 @@
 def asmVersion = '9.5'
 def cafeDudeVersion = '1.10.2'
 def junitVersion = '5.9.2'
-def androidToolsVersion = '31.2.0-alpha09'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
@@ -10,9 +9,8 @@ project.ext {
     asm_tree = "org.ow2.asm:asm-tree:$asmVersion"
     asm_util = "org.ow2.asm:asm-util:$asmVersion"
 
-    android_common = "com.android.tools:common:$androidToolsVersion"
-    apk_analyzer = "com.android.tools.apkparser:apkanalyzer:$androidToolsVersion"
-    binary_resources = "com.android.tools.apkparser:binary-resources:$androidToolsVersion"
+    // Use our fork of Android's release with fixes and less transitive dependencies
+    binary_resources = 'com.github.Col-E:binary-resources:31.3.0-alpha01.2'
 
     atlantafx = 'io.github.mkpaz:atlantafx-base:2.0.0'
 
@@ -23,7 +21,7 @@ project.ext {
     cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
     cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.0.Final'
 
-    dex_translator = 'software.coley:dex-translator:1.1.0'
+    dex_translator = 'software.coley:dex-translator:1.1.1'
 
     directories = 'dev.dirs:directories:26'
     docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'
