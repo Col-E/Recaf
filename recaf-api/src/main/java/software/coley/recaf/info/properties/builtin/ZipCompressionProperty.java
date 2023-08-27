@@ -2,7 +2,7 @@ package software.coley.recaf.info.properties.builtin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.llzip.format.compression.ZipCompressions;
+import software.coley.lljzip.format.compression.ZipCompressions;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.BasicProperty;
 import software.coley.recaf.info.properties.Property;

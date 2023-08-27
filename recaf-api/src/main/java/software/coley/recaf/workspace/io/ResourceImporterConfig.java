@@ -2,8 +2,8 @@ package software.coley.recaf.workspace.io;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import software.coley.llzip.ZipIO;
-import software.coley.llzip.format.model.ZipArchive;
+import software.coley.lljzip.ZipIO;
+import software.coley.lljzip.format.model.ZipArchive;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
@@ -39,11 +39,13 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	 */
 	public enum ZipStrategy {
 		JVM,
+		STANDARD,
 		NAIVE;
 
 		public UncheckedFunction<byte[], ZipArchive> mapping() {
 			if (this == JVM) return ZipIO::readJvm;
-			else return ZipIO::readStandard;
+			else if (this == STANDARD) return ZipIO::readStandard;
+			else return ZipIO::readNaive;
 		}
 	}
 }

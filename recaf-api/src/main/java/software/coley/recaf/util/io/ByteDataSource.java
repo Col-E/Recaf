@@ -1,8 +1,8 @@
 package software.coley.recaf.util.io;
 
 import jakarta.annotation.Nonnull;
-import software.coley.llzip.util.ByteData;
-import software.coley.llzip.util.ByteDataUtil;
+import software.coley.lljzip.util.ByteData;
+import software.coley.lljzip.util.ByteDataUtil;
 import software.coley.recaf.util.threading.ThreadLocals;
 
 import java.io.IOException;

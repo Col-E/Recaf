@@ -1,10 +1,10 @@
 package software.coley.recaf.util.io;
 
 import jakarta.annotation.Nonnull;
-import software.coley.llzip.format.compression.ZipCompressions;
-import software.coley.llzip.format.model.LocalFileHeader;
-import software.coley.llzip.util.ByteData;
-import software.coley.llzip.util.ByteDataUtil;
+import software.coley.lljzip.format.compression.ZipCompressions;
+import software.coley.lljzip.format.model.LocalFileHeader;
+import software.coley.lljzip.util.ByteData;
+import software.coley.lljzip.util.ByteDataUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
