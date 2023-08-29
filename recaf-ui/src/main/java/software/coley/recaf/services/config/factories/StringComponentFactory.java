@@ -12,7 +12,6 @@ import software.coley.recaf.services.config.TypedConfigComponentFactory;
  * Factory for general {@link String} values.
  *
  * @author pvpb0t
- * @since 8/25/2023
  */
 @ApplicationScoped
 public class StringComponentFactory extends TypedConfigComponentFactory<String> {
@@ -39,5 +38,4 @@ public class StringComponentFactory extends TypedConfigComponentFactory<String> 
 
         return textField;
     }
-
 }

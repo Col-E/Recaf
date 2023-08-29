@@ -12,7 +12,6 @@ import software.coley.recaf.services.config.TypedConfigComponentFactory;
  * Factory for general {@link Integer} values.
  *
  * @author pvpb0t
- * @since 8/25/2023
  */
 @ApplicationScoped
 public class IntegerComponentFactory extends TypedConfigComponentFactory<Integer> {
@@ -39,5 +38,4 @@ public class IntegerComponentFactory extends TypedConfigComponentFactory<Integer
 
         return textField;
     }
-
 }
