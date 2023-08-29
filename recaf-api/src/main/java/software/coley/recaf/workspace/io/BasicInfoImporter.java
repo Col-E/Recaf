@@ -13,7 +13,7 @@ import software.coley.recaf.info.builder.*;
 import software.coley.recaf.info.properties.builtin.IllegalClassSuspectProperty;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
-import software.coley.recaf.util.android.AndroidChunkUtil;
+import software.coley.recaf.util.android.AndroidXmlUtil;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.visitors.CustomAttributeCollectingVisitor;
 
@@ -94,7 +94,7 @@ public class BasicInfoImporter implements InfoImporter {
 					.withName(name)
 					.build();
 		} else if (name.toUpperCase().endsWith(".XML") &&
-				(ByteHeaderUtil.match(data, ByteHeaderUtil.BINARY_XML) || AndroidChunkUtil.isObscuredXml(data))) {
+				(ByteHeaderUtil.match(data, ByteHeaderUtil.BINARY_XML) || AndroidXmlUtil.hasXmlIndicators(data))) {
 			return new BinaryXmlFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
