@@ -24,18 +24,11 @@ public class StringComponentFactory extends TypedConfigComponentFactory<String> 
     @Override
     public Node create(ConfigContainer container, ConfigValue<String> value) {
         Observable<String> observable = value.getObservable();
-        String translationKey = container.getScopedId(value);
         TextField textField = new TextField();
         textField.setText(observable.getValue());
-
         textField.textProperty().addListener((observableValue, oldValue, newValue) -> {
-            try {
-                observable.setValue(newValue);
-            } catch (NumberFormatException e) {
-                textField.setText(oldValue);
-            }
+            observable.setValue(newValue);
         });
-
         return textField;
     }
 }
