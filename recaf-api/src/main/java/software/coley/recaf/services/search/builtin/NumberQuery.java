@@ -5,12 +5,10 @@ import jakarta.annotation.Nullable;
 import regexodus.Matcher;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.FilePathNode;
-import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.search.FileSearchVisitor;
+import software.coley.recaf.services.search.ResultSink;
 import software.coley.recaf.util.NumberMatchMode;
 import software.coley.recaf.util.NumberUtil;
-
-import java.util.function.BiConsumer;
 
 import static software.coley.recaf.util.RegexUtil.getMatcher;
 
@@ -58,7 +56,7 @@ public class NumberQuery extends AbstractValueQuery {
 		}
 
 		@Override
-		public void visit(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+		public void visit(@Nonnull ResultSink resultSink,
 						  @Nonnull FilePathNode filePath,
 						  @Nonnull FileInfo fileInfo) {
 			if (delegate != null) delegate.visit(resultSink, filePath, fileInfo);

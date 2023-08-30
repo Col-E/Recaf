@@ -17,7 +17,6 @@ import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collections;
@@ -57,12 +56,40 @@ public class SearchService implements Service {
 	/**
 	 * @param workspace
 	 * 		Workspace to search in.
+	 * @param query
+	 * 		Query of search parameters.
+	 * @param feedback
+	 * 		Search visitation feedback. Allows early cancellation of searches.
+	 *
+	 * @return Results of search.
+	 */
+	public Results search(@Nonnull Workspace workspace, @Nonnull Query query, @Nonnull SearchFeedback feedback) {
+		return search(workspace, Collections.singletonList(query), feedback);
+	}
+
+	/**
+	 * @param workspace
+	 * 		Workspace to search in.
 	 * @param queries
 	 * 		Multiple queries of search parameters.
 	 *
 	 * @return Results of search.
 	 */
 	public Results search(@Nonnull Workspace workspace, @Nonnull List<Query> queries) {
+		return search(workspace, queries, SearchFeedback.NO_OP);
+	}
+
+	/**
+	 * @param workspace
+	 * 		Workspace to search in.
+	 * @param queries
+	 * 		Multiple queries of search parameters.
+	 * @param feedback
+	 * 		Search visitation feedback. Allows early cancellation of searches.
+	 *
+	 * @return Results of search.
+	 */
+	public Results search(@Nonnull Workspace workspace, @Nonnull List<Query> queries, @Nonnull SearchFeedback feedback) {
 		Results results = new Results();
 
 		// Build visitors
@@ -94,10 +121,14 @@ public class SearchService implements Service {
 				for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
 					BundlePathNode bundleNode = resourceNode.child(bundle);
 					for (AndroidClassInfo classInfo : bundle) {
+						if (!feedback.doVisitClass(classInfo))
+							continue;
 						ClassPathNode classPath = bundleNode
 								.child(classInfo.getPackageName())
 								.child(classInfo);
 						service.submit(() -> {
+							if (feedback.hasRequestedStop())
+								return;
 							androidClassVisitor.visit((path, value) -> results.add(createResult(path, value)), classPath, classInfo);
 						});
 					}
@@ -106,27 +137,21 @@ public class SearchService implements Service {
 
 			// Visit JVM content
 			if (jvmClassVisitor != null) {
-				JvmClassBundle primaryBundle = resource.getJvmClassBundle();
-				BundlePathNode primaryBundleNode = resourceNode.child(primaryBundle);
-				for (JvmClassInfo classInfo : primaryBundle) {
-					ClassPathNode classPath = primaryBundleNode
-							.child(classInfo.getPackageName())
-							.child(classInfo);
-					service.submit(() -> {
-						jvmClassVisitor.visit((path, value) -> results.add(createResult(path, value)), classPath, classInfo);
-					});
-				}
-				for (JvmClassBundle bundle : resource.getVersionedJvmClassBundles().values()) {
-					BundlePathNode bundleNode = resourceNode.child(bundle);
+				resource.jvmClassBundleStream().forEach(bundle -> {
+					BundlePathNode bundlePathNode = resourceNode.child(bundle);
 					for (JvmClassInfo classInfo : bundle) {
-						ClassPathNode classPath = bundleNode
+						if (!feedback.doVisitClass(classInfo))
+							continue;
+						ClassPathNode classPath = bundlePathNode
 								.child(classInfo.getPackageName())
 								.child(classInfo);
 						service.submit(() -> {
+							if (feedback.hasRequestedStop())
+								return;
 							jvmClassVisitor.visit((path, value) -> results.add(createResult(path, value)), classPath, classInfo);
 						});
 					}
-				}
+				});
 			}
 
 			// Visit file content
@@ -134,10 +159,14 @@ public class SearchService implements Service {
 				FileBundle fileBundle = resource.getFileBundle();
 				BundlePathNode bundleNode = resourceNode.child(fileBundle);
 				for (FileInfo fileInfo : fileBundle) {
+					if (!feedback.doVisitFile(fileInfo))
+						continue;
 					FilePathNode filePath = bundleNode
 							.child(fileInfo.getDirectoryName())
 							.child(fileInfo);
 					service.submit(() -> {
+						if (feedback.hasRequestedStop())
+							return;
 						fileVisitor.visit((path, value) -> results.add(createResult(path, value)), filePath, fileInfo);
 					});
 				}

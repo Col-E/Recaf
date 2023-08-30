@@ -21,8 +21,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.search.FileQuery;
 import software.coley.recaf.services.search.JvmClassQuery;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
-
-import java.util.function.BiConsumer;
+import software.coley.recaf.services.search.ResultSink;
 
 /**
  * General value search.
@@ -63,7 +62,7 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		}
 
 		@Override
-		public void visit(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+		public void visit(@Nonnull ResultSink resultSink,
 						  @Nonnull ClassPathNode classPath,
 						  @Nonnull JvmClassInfo classInfo) {
 			if (delegate != null) delegate.visit(resultSink, classPath, classInfo);
@@ -77,11 +76,11 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 	 */
 	private class AsmClassValueVisitor extends ClassVisitor {
 		private final Logger logger = Logging.get(AsmClassValueVisitor.class);
-		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ResultSink resultSink;
 		private final ClassPathNode classPath;
 		private final JvmClassInfo classInfo;
 
-		protected AsmClassValueVisitor(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+		protected AsmClassValueVisitor(@Nonnull ResultSink resultSink,
 									   @Nonnull ClassPathNode classPath,
 									   @Nonnull JvmClassInfo classInfo) {
 			super(RecafConstants.getAsmVersion());
@@ -136,12 +135,12 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 	 * Visits values in fields.
 	 */
 	private class AsmFieldValueVisitor extends FieldVisitor {
-		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ResultSink resultSink;
 		private final ClassMemberPathNode memberPath;
 
 		public AsmFieldValueVisitor(@Nullable FieldVisitor delegate,
 									@Nonnull FieldMember fieldMember,
-									@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+									@Nonnull ResultSink resultSink,
 									@Nonnull ClassPathNode classLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.resultSink = resultSink;
@@ -168,12 +167,12 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 	 * Visits values in methods.
 	 */
 	private class AsmMethodValueVisitor extends MethodVisitor {
-		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ResultSink resultSink;
 		private final ClassMemberPathNode memberPath;
 
 		public AsmMethodValueVisitor(@Nullable MethodVisitor delegate,
 									 @Nonnull MethodMember methodMember,
-									 @Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+									 @Nonnull ResultSink resultSink,
 									 @Nonnull ClassPathNode classLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.resultSink = resultSink;
@@ -277,13 +276,13 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 	 * Visits values in annotations.
 	 */
 	private class AnnotationValueVisitor extends AnnotationVisitor {
-		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ResultSink resultSink;
 		private final PathNode<?> currentAnnoLocation;
 		private final boolean visible;
 
 		public AnnotationValueVisitor(@Nullable AnnotationVisitor delegate,
 									  boolean visible,
-									  @Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+									  @Nonnull ResultSink resultSink,
 									  @Nonnull PathNode<?> currentAnnoLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.visible = visible;

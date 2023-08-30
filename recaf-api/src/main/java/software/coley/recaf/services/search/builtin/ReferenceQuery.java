@@ -18,13 +18,12 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.search.JvmClassQuery;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
+import software.coley.recaf.services.search.ResultSink;
 import software.coley.recaf.services.search.result.ClassReferenceResult;
 import software.coley.recaf.services.search.result.MemberReferenceResult;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TextMatchMode;
 import software.coley.recaf.util.Types;
-
-import java.util.function.BiConsumer;
 
 /**
  * Reference search implementation.
@@ -131,11 +130,11 @@ public class ReferenceQuery implements JvmClassQuery {
 	 */
 	private class AsmReferenceClassVisitor extends ClassVisitor {
 		private final Logger logger = Logging.get(AsmReferenceClassVisitor.class);
-		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ResultSink resultSink;
 		private final ClassPathNode classPath;
 		private final JvmClassInfo classInfo;
 
-		public AsmReferenceClassVisitor(@Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+		public AsmReferenceClassVisitor(@Nonnull ResultSink resultSink,
 										@Nonnull ClassPathNode classPath,
 										@Nonnull JvmClassInfo classInfo) {
 			super(RecafConstants.getAsmVersion());
@@ -169,12 +168,12 @@ public class ReferenceQuery implements JvmClassQuery {
 	 * Visits references in methods.
 	 */
 	private class AsmReferenceMethodVisitor extends MethodVisitor {
-		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ResultSink resultSink;
 		private final ClassMemberPathNode memberPath;
 
 		public AsmReferenceMethodVisitor(@Nullable MethodVisitor delegate,
 										 @Nonnull MethodMember methodMember,
-										 @Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+										 @Nonnull ResultSink resultSink,
 										 @Nonnull ClassPathNode classLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.resultSink = resultSink;
@@ -371,13 +370,13 @@ public class ReferenceQuery implements JvmClassQuery {
 	 * Visits references in annotations.
 	 */
 	private class AnnotationReferenceVisitor extends AnnotationVisitor {
-		private final BiConsumer<PathNode<?>, Object> resultSink;
+		private final ResultSink resultSink;
 		private final PathNode<?> currentAnnoLocation;
 		private final boolean visible;
 
 		public AnnotationReferenceVisitor(@Nullable AnnotationVisitor delegate,
 										  boolean visible,
-										  @Nonnull BiConsumer<PathNode<?>, Object> resultSink,
+										  @Nonnull ResultSink resultSink,
 										  @Nonnull PathNode<?> currentAnnoLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.visible = visible;
