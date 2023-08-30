@@ -86,6 +86,14 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	}
 
 	/**
+	 * @return Observable boolean tracking the state of the call-graph's parsing of the current workspace.
+	 */
+	@Nonnull
+	public ObservableBoolean isReady() {
+		return isReady;
+	}
+
+	/**
 	 * @param classInfo
 	 * 		Class to wrap.
 	 *

@@ -1,6 +1,8 @@
 package software.coley.recaf.services.callgraph;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import software.coley.observables.ObservableBoolean;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.test.TestClassUtils;
@@ -9,6 +11,7 @@ import software.coley.recaf.test.dummy.StringConsumerUser;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class CallGraphTest {
 	@Test
+	@Timeout(10)
 	void testCalleeCallerRelation() throws IOException {
 		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
 				StringConsumer.class,
@@ -31,6 +35,15 @@ class CallGraphTest {
 		JvmClassInfo functionClass = pathFunc.getValue().asJvmClass();
 
 		CallGraph graph = new CallGraph(new CallGraphConfig(), workspace);
+
+		// Need to wait until async population of graph contents is done.
+		ObservableBoolean ready = graph.isReady();
+		assertDoesNotThrow(() ->{
+			while (!ready.getValue()) {
+				Thread.sleep(100);
+			}
+		});
+
 		ClassMethodsContainer containerMain = graph.getClassMethodsContainer(mainClass);
 		ClassMethodsContainer containerFunction = graph.getClassMethodsContainer(functionClass);
 
