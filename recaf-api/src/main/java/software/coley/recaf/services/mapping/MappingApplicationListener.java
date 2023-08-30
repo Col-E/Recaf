@@ -7,7 +7,7 @@ import jakarta.annotation.Nonnull;
  *
  * @author Matt Coley
  * @see MappingResults Can be added to the constuctor to affect a single mapping job.
- * @see MappingApplier Can be added in order to affect all mapping jobs.
+ * @see MappingListeners Can be added in order to affect all mapping jobs.
  */
 public interface MappingApplicationListener {
 	/**

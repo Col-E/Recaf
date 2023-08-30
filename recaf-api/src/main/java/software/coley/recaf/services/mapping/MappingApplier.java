@@ -1,7 +1,6 @@
 package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -19,7 +18,6 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
@@ -35,9 +33,9 @@ import java.util.stream.Stream;
 public class MappingApplier implements Service {
 	public static final String SERVICE_ID = "mapping-applier";
 	private static final ExecutorService applierThreadPool = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID);
-	private final List<MappingApplicationListener> mappingApplicationListeners = new ArrayList<>();
 	private final InheritanceGraph inheritanceGraph;
 	private final AggregateMappingManager aggregateMappingManager;
+	private final MappingListeners listeners;
 	private final Workspace workspace;
 	private final MappingApplierConfig config;
 
@@ -45,68 +43,13 @@ public class MappingApplier implements Service {
 	public MappingApplier(@Nonnull MappingApplierConfig config,
 						  @Nonnull InheritanceGraph inheritanceGraph,
 						  @Nonnull AggregateMappingManager aggregateMappingManager,
+						  @Nonnull MappingListeners listeners,
 						  @Nonnull Workspace workspace) {
 		this.inheritanceGraph = inheritanceGraph;
 		this.aggregateMappingManager = aggregateMappingManager;
+		this.listeners = listeners;
 		this.workspace = workspace;
 		this.config = config;
-	}
-
-	/**
-	 * Adds a listener which is passed to created {@link MappingResults} from {@link #applyToPrimaryResource(Mappings)}
-	 * and {@link #applyToClasses(Mappings, WorkspaceResource, JvmClassBundle, List)}.
-	 * <p>
-	 * This allows you to listen to all mapping operations done via proper API usage, intercepting before they
-	 * execute the task, and after they complete the mapping task.
-	 *
-	 * @param listener
-	 * 		Listener to add.
-	 */
-	public void addMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
-		mappingApplicationListeners.add(listener);
-	}
-
-	/**
-	 * @param listener
-	 * 		Listener to remove.
-	 *
-	 * @return {@code true} when item was removed.
-	 * {@code false} when item was not in the list to begin with.
-	 */
-	public boolean removeMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
-		return mappingApplicationListeners.remove(listener);
-	}
-
-	/**
-	 * @return Application listener encompassing all the current items in {@link #mappingApplicationListeners},
-	 * or {@code null} if there are no listeners.
-	 */
-	@Nullable
-	private MappingApplicationListener createBundledMappingApplicationListener() {
-		final List<MappingApplicationListener> listeners = mappingApplicationListeners;
-
-		// Simple edge cases.
-		if (listeners.isEmpty())
-			return null;
-		else if (listeners.size() == 1)
-			return listeners.get(0);
-
-		// Bundle multiple listeners.
-		return new MappingApplicationListener() {
-			@Override
-			public void onPreApply(@Nonnull MappingResults mappingResults) {
-				for (MappingApplicationListener listener : listeners) {
-					listener.onPreApply(mappingResults);
-				}
-			}
-
-			@Override
-			public void onPostApply(@Nonnull MappingResults mappingResults) {
-				for (MappingApplicationListener listener : listeners) {
-					listener.onPostApply(mappingResults);
-				}
-			}
-		};
 	}
 
 	/**
@@ -129,7 +72,7 @@ public class MappingApplier implements Service {
 										 @Nonnull JvmClassBundle bundle,
 										 @Nonnull List<JvmClassInfo> classes) {
 		enrich(mappings);
-		MappingResults results = new MappingResults(mappings, createBundledMappingApplicationListener())
+		MappingResults results = new MappingResults(mappings, listeners.createBundledMappingApplicationListener())
 				.withAggregateManager(aggregateMappingManager);
 
 		// Apply mappings to the provided classes, collecting into the results model.
@@ -155,7 +98,7 @@ public class MappingApplier implements Service {
 		enrich(mappings);
 		WorkspaceResource resource = workspace.getPrimaryResource();
 
-		MappingResults results = new MappingResults(mappings, createBundledMappingApplicationListener())
+		MappingResults results = new MappingResults(mappings, listeners.createBundledMappingApplicationListener())
 				.withAggregateManager(aggregateMappingManager);
 
 		// Apply mappings to all classes in the primary resource, collecting into the results model.
