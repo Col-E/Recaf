@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.TypePath;
 
+import java.util.Objects;
+
 /**
  * Basic implementation of type annotation info.
  *
@@ -51,14 +53,14 @@ public class BasicTypeAnnotationInfo extends BasicAnnotationInfo implements Type
 		BasicTypeAnnotationInfo that = (BasicTypeAnnotationInfo) o;
 
 		if (typeRef != that.typeRef) return false;
-		return typePath.equals(that.typePath);
+		return Objects.equals(typePath, that.typePath);
 	}
 
 	@Override
 	public int hashCode() {
 		int result = super.hashCode();
 		result = 31 * result + typeRef;
-		result = 31 * result + typePath.hashCode();
+		result = 31 * result + (typePath != null ? typePath.hashCode() : 0);
 		return result;
 	}
 }
