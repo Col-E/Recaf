@@ -2,12 +2,13 @@ package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
-import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.workspace.model.Workspace;
@@ -29,19 +30,24 @@ import java.util.TreeSet;
  * @author Matt Coley
  */
 public class MappingResults {
+	private static final Logger logger = Logging.get(MappingResults.class);
 	private final Map<String, String> mappedClasses = new HashMap<>();
 	private final Map<String, String> mappedClassesReverse = new HashMap<>();
 	private final Map<String, ClassPathNode> preMappingPaths = new HashMap<>();
 	private final Map<String, ClassPathNode> postMappingPaths = new HashMap<>();
+	private final MappingApplicationListener applicationHandler;
 	private final Mappings mappings;
 	private AggregateMappingManager aggregateMappingManager;
 
 	/**
 	 * @param mappings
 	 * 		The mappings implementation used in the operation.
+	 * @param applicationHandler
+	 * 		Optional handler for intercepting post/pre mapping states.
 	 */
-	public MappingResults(@Nonnull Mappings mappings) {
+	public MappingResults(@Nonnull Mappings mappings, @Nullable MappingApplicationListener applicationHandler) {
 		this.mappings = mappings;
+		this.applicationHandler = applicationHandler;
 	}
 
 	/**
@@ -101,6 +107,14 @@ public class MappingResults {
 		if (aggregateMappingManager != null)
 			aggregateMappingManager.updateAggregateMappings(mappings);
 
+		// Pass to handler to notify of application of mappings has started.
+		if (applicationHandler != null)
+			try {
+				applicationHandler.onPreApply(this);
+			} catch (Throwable t) {
+				logger.error("Mapping application handler failed on pre-application", t);
+			}
+
 		// Record mapping application jobs into a sorted set.
 		// We want to apply some changes before others.
 		SortedSet<ApplicationEntry> applicationEntries = new TreeSet<>();
@@ -130,6 +144,14 @@ public class MappingResults {
 		// Apply changes in sorted order.
 		for (ApplicationEntry entry : applicationEntries)
 			entry.applicationRunnable().run();
+
+		// Pass to handler again to notify of application of mappings has completed/
+		if (applicationHandler != null)
+			try {
+				applicationHandler.onPostApply(this);
+			} catch (Throwable t) {
+				logger.error("Mapping application handler failed on post-application", t);
+			}
 	}
 
 	/**
@@ -299,7 +321,7 @@ public class MappingResults {
 				return -1;
 
 			// We want more complex classes to go last.
-			int cmp =  Integer.compare(complexity(), o.complexity());
+			int cmp = Integer.compare(complexity(), o.complexity());
 			if (cmp != 0) return cmp;
 
 			// Always want a unique ordering, so as a last resort we will compare by name.
