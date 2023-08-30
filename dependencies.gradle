@@ -40,7 +40,7 @@ project.ext {
 
     jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2'
 
-    jlinker = 'com.github.xxDark:jlinker:1.0.4'
+    jlinker = 'com.github.xxDark:jlinker:1.0.7'
 
     jphantom = 'com.github.Col-E:jphantom:1.4.3'
 

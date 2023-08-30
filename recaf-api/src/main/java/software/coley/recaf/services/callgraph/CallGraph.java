@@ -8,6 +8,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.objectweb.asm.*;
+import software.coley.observables.ObservableBoolean;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -16,6 +17,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.MultiMap;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -23,6 +25,8 @@ import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 /**
@@ -36,13 +40,16 @@ import java.util.stream.Stream;
 public class CallGraph implements Service, WorkspaceModificationListener, ResourceJvmClassListener {
 	public static final String SERVICE_ID = "graph-calls";
 	private static final DebuggingLogger logger = Logging.get(CallGraph.class);
+	private final ExecutorService threadPool = ThreadPoolFactory.newFixedThreadPool("call-graph", 1, true);
 	private final CachedLinkResolver resolver = new CachedLinkResolver();
 	private final Map<JvmClassInfo, LinkedClass> classToLinkerType = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final Map<JvmClassInfo, ClassMethodsContainer> classToMethodsContainer = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final MultiMap<String, MethodRef, Set<MethodRef>> unresolvedCalls = MultiMap.from(
 			Collections.synchronizedMap(new HashMap<>()),
 			() -> Collections.synchronizedSet(new HashSet<>()));
+	private final ObservableBoolean isReady = new ObservableBoolean(false);
 	private final CallGraphConfig config;
+	private final Workspace workspace;
 	private final ClassLookup lookup;
 
 	/**
@@ -54,13 +61,27 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	@Inject
 	public CallGraph(@Nonnull CallGraphConfig config, @Nonnull Workspace workspace) {
 		this.config = config;
+		this.workspace = workspace;
 		lookup = new ClassLookup(workspace);
 
-		// Only initialize & register listeners if active
-		if (config.getActive().getValue()) {
+		// Only initialize & register listeners if active.
+		// Allow toggling the active config later to activate the service.
+		config.getActive().addChangeListener((ob, old, cur) -> setActive(cur));
+		setActive(config.getActive().getValue());
+	}
+
+	private void setActive(boolean active) {
+		// Always reset ready state.
+		isReady.setValue(false);
+
+		// Add/remove self as listener.
+		if (active) {
 			workspace.addWorkspaceModificationListener(this);
 			workspace.getPrimaryResource().addResourceJvmClassListener(this);
 			initialize(workspace);
+		} else {
+			workspace.removeWorkspaceModificationListener(this);
+			workspace.getPrimaryResource().removeResourceJvmClassListener(this);
 		}
 	}
 
@@ -91,14 +112,24 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	 * 		Workspace to {@link #visit(JvmClassInfo)} all classes of.
 	 */
 	private void initialize(@Nonnull Workspace workspace) {
-		for (WorkspaceResource resource : workspace.getAllResources(false)) {
-			Stream.concat(resource.jvmClassBundleStream(),
-					resource.getVersionedJvmClassBundles().values().stream()).forEach(bundle -> {
-				for (JvmClassInfo jvmClass : bundle.values()) {
-					visit(jvmClass);
-				}
-			});
-		}
+		// Initialize asynchronously, and mark 'isReady' if completed successfully
+		CompletableFuture.runAsync(() -> {
+			for (WorkspaceResource resource : workspace.getAllResources(false)) {
+				Stream.concat(resource.jvmClassBundleStream(),
+						resource.getVersionedJvmClassBundles().values().stream()).forEach(bundle -> {
+					for (JvmClassInfo jvmClass : bundle.values()) {
+						visit(jvmClass);
+					}
+				});
+			}
+		}, threadPool).whenComplete((unused, t) -> {
+			if (t == null) {
+				isReady.setValue(true);
+			} else {
+				logger.error("Call graph initialization failed", t);
+				isReady.setValue(false);
+			}
+		});
 	}
 
 	/**

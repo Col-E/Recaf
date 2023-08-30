@@ -40,11 +40,21 @@ public class CachedLinkResolver implements LinkResolver<JvmClassInfo, MethodMemb
 			staticFieldResolver = MemoizedFunctions.memoize(
 			c -> MemoizedFunctions.memoize((name, descriptor) -> backedResolver.resolveStaticField(c, name, descriptor))
 	);
+	private final Function<dev.xdark.jlinker.ClassInfo<JvmClassInfo>, BiFunction<String, String, Result<Resolution<JvmClassInfo, MethodMember>>>>
+			specialMethodResolver = MemoizedFunctions.memoize(
+			c -> MemoizedFunctions.memoize((name, descriptor) -> backedResolver.resolveSpecialMethod(c, name, descriptor))
+	);
 
 	@Override
 	public Result<Resolution<JvmClassInfo, MethodMember>> resolveStaticMethod(@Nonnull ClassInfo<JvmClassInfo> owner,
 																			  @Nonnull String name, @Nonnull String descriptor, boolean itf) {
 		return staticMethodResolver.apply(owner).apply(name, descriptor);
+	}
+
+	@Override
+	public Result<Resolution<JvmClassInfo, MethodMember>> resolveSpecialMethod(@Nonnull ClassInfo<JvmClassInfo> owner,
+																			   @Nonnull String name, @Nonnull String descriptor, boolean itf) {
+		return specialMethodResolver.apply(owner).apply(name, descriptor);
 	}
 
 	@Override
