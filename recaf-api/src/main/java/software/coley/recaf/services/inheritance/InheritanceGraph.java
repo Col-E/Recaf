@@ -111,6 +111,22 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * 		Child class.
 	 */
 	private void populateParentToChildLookup(@Nonnull ClassInfo info) {
+		populateParentToChildLookup(info, Collections.newSetFromMap(new IdentityHashMap<>()));
+	}
+
+	/**
+	 * Populate all references from the given child class to its parents.
+	 *
+	 * @param info
+	 * 		Child class.
+	 * @param visited
+	 * 		Classes already visited in population.
+	 */
+	private void populateParentToChildLookup(@Nonnull ClassInfo info, @Nonnull Set<ClassInfo> visited) {
+		// Skip if already visited
+		if (!visited.add(info))
+			return;
+
 		// Skip module classes
 		if (info.hasModuleModifier())
 			return;
@@ -124,7 +140,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		// Visit parent
 		InheritanceVertex superVertex = vertexProvider.apply(superName);
 		if (superVertex != null && !superVertex.isJavaLangObject() && superVertex.getValue() != null && !superVertex.isLoop())
-			populateParentToChildLookup(superVertex.getValue());
+			populateParentToChildLookup(superVertex.getValue(), visited);
 
 		// Add direct interfaces
 		for (String itf : info.getInterfaces()) {
@@ -133,7 +149,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 			// Visit interfaces
 			InheritanceVertex interfaceVertex = vertexProvider.apply(itf);
 			if (interfaceVertex != null && interfaceVertex.getValue() != null)
-				populateParentToChildLookup(interfaceVertex.getValue());
+				populateParentToChildLookup(interfaceVertex.getValue(), visited);
 		}
 	}
 
