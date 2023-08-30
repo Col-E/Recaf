@@ -1,7 +1,7 @@
 package software.coley.recaf.ui;
 
 import atlantafx.base.theme.Theme;
-import org.jetbrains.annotations.Nullable;
+import jakarta.annotation.Nullable;
 
 /**
  * AtlantaFX Recaf theme.

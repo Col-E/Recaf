@@ -23,6 +23,7 @@ dependencies {
     api(downgrader) {
         exclude group: 'org.ow2.asm'
         exclude group: 'org.slf4j'
+        exclude group: 'com.github.RaphiMC.JavaDowngrader', module: 'runtime-dep'
     }
     api extra_collections
     api extra_observables

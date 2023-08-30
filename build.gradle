@@ -26,6 +26,22 @@ subprojects {
 
     apply from: rootProject.file('dependencies.gradle')
 
+    configurations.all {
+        // Annoying annotations that replace desired tab completions.
+        exclude group: 'org.checkerframework'
+
+        // Other annotations we don't use which are transitive deps of deps
+        exclude group: 'com.google.code.findbugs'
+        exclude group: 'com.google.errorprone'
+        exclude group: 'com.google.j2objc'
+        exclude group: 'org.jetbrains', module: 'annotations'
+
+        // Used by ANTLR runtime, has a lot of IL8N related files which we don't use.
+        // Removing this dependency doesn't inhibit the behavior of libraries using the
+        // runtime in practice though.
+        exclude group: 'com.ibm.icu'
+    }
+
     // ========================== COMPILE ==========================
 
     // https://docs.gradle.org/current/userguide/toolchains.html
