@@ -114,7 +114,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 
 	@Override
 	public void removeWorkspaceCloseListener(WorkspaceCloseListener listener) {
-		closeListeners.add(listener);
+		closeListeners.remove(listener);
 	}
 
 	@Nonnull
