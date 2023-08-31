@@ -58,15 +58,15 @@ class BootstrapTest extends TestBase {
 	void testGetWorkspaceScopedInstance() {
 		// Get the graph when one workspace is open.
 		workspaceManager.setCurrent(EmptyWorkspace.get());
-		InheritanceGraph graph1 = recaf.getAndCreate(InheritanceGraph.class);
-		InheritanceGraph graph2 = recaf.getAndCreate(InheritanceGraph.class);
+		InheritanceGraph graph1 = unwrapProxy(recaf.get(InheritanceGraph.class));
+		InheritanceGraph graph2 = unwrapProxy(recaf.get(InheritanceGraph.class));
 		assertSame(graph1, graph2, "Graph should be workspace-scoped, but values differ!");
 
 		// Assign a new workspace.
 		// The graph should be different since the prior workspace is closed.
 		workspaceManager.setCurrent(EmptyWorkspace.get());
-		InheritanceGraph graph3 = recaf.getAndCreate(InheritanceGraph.class);
-		InheritanceGraph graph4 = recaf.getAndCreate(InheritanceGraph.class);
+		InheritanceGraph graph3 = unwrapProxy(recaf.get(InheritanceGraph.class));
+		InheritanceGraph graph4 = unwrapProxy(recaf.get(InheritanceGraph.class));
 		assertSame(graph3, graph4, "Graph should be workspace-scoped, but values differ!");
 		assertNotSame(graph1, graph3, "Graph scope from before/after a new workspace yielded the same graph bean!");
 	}

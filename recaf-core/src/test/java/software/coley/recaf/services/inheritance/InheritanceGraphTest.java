@@ -38,7 +38,7 @@ class InheritanceGraphTest extends TestBase {
 		workspaceManager.setCurrent(workspace);
 
 		// Get graph
-		graph = recaf.getAndCreate(InheritanceGraph.class);
+		graph = recaf.get(InheritanceGraph.class);
 	}
 
 	@Test
