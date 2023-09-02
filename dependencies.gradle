@@ -10,7 +10,7 @@ project.ext {
     asm_util = "org.ow2.asm:asm-util:$asmVersion"
 
     // Use our fork of Android's release with fixes and less transitive dependencies
-    binary_resources = 'com.github.Col-E:binary-resources:31.3.0-alpha01.5'
+    binary_resources = 'com.github.Col-E:binary-resources:31.3.0-alpha01.8'
 
     atlantafx = 'io.github.mkpaz:atlantafx-base:2.0.0'
 

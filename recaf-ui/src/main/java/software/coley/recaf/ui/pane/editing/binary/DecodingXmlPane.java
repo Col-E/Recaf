@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.layout.BorderPane;
+import software.coley.android.xml.AndroidResourceProvider;
 import software.coley.android.xml.XmlDecoder;
 import software.coley.recaf.info.ArscFileInfo;
 import software.coley.recaf.info.BinaryXmlFileInfo;
@@ -97,7 +98,7 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 					}
 
 					// Decode XML and update the editor text.
-					AndroidRes arscResources = arscFile == null ? null : arscFile.getResourceInfo();
+					AndroidResourceProvider arscResources = arscFile == null ? null : arscFile.getResourceInfo();
 					String decodedXml = XmlDecoder.decode(binaryXml.getChunkModel(), AndroidRes.getAndroidBase(), arscResources);
 					FxThreadUtil.run(() -> editor.setText(decodedXml));
 				} catch (Exception ex) {

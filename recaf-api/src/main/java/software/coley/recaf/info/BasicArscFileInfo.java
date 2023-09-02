@@ -1,6 +1,10 @@
 package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
+import org.slf4j.Logger;
+import software.coley.android.xml.AndroidResourceProvider;
+import software.coley.android.xml.NoopAndroidResourceProvider;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.builder.ArscFileInfoBuilder;
 import software.coley.recaf.util.android.AndroidRes;
 
@@ -10,7 +14,8 @@ import software.coley.recaf.util.android.AndroidRes;
  * @author Matt Coley
  */
 public class BasicArscFileInfo extends BasicAndroidChunkFileInfo implements ArscFileInfo {
-	private AndroidRes res;
+	private static final Logger logger = Logging.get(BasicArscFileInfo.class);
+	private AndroidResourceProvider res;
 
 	/**
 	 * @param builder
@@ -22,9 +27,14 @@ public class BasicArscFileInfo extends BasicAndroidChunkFileInfo implements Arsc
 
 	@Nonnull
 	@Override
-	public AndroidRes getResourceInfo() {
+	public AndroidResourceProvider getResourceInfo() {
 		if (res == null)
-			res = AndroidRes.fromArsc(getChunkModel());
+			try {
+				res = AndroidRes.fromArsc(getChunkModel());
+			} catch (Throwable t) {
+				logger.error("Failed to decode '{}', will use an empty model instead", getName(), t);
+				res = NoopAndroidResourceProvider.INSTANCE;
+			}
 		return res;
 	}
 }
