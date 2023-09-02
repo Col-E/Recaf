@@ -65,7 +65,7 @@ public class CfrConfig extends BasicConfigContainer implements DecompilerConfig 
 	private final ObservableObject<BooleanOption> decodefinally = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> tidymonitors = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> commentmonitors = new ObservableObject<>(BooleanOption.DEFAULT);
-	private final ObservableObject<BooleanOption> lenient = new ObservableObject<>(BooleanOption.DEFAULT);
+	private final ObservableObject<BooleanOption> lenient = new ObservableObject<>(BooleanOption.TRUE);
 	private final ObservableObject<BooleanOption> comments = new ObservableObject<>(BooleanOption.FALSE);
 	private final ObservableObject<TrooleanOption> forcetopsort = new ObservableObject<>(TrooleanOption.DEFAULT);
 	private final ObservableObject<ClassFileVersion> forceclassfilever = new ObservableObject<>(null);
