@@ -62,7 +62,7 @@ project.ext {
 
     regex = 'com.github.tommyettinger:regexodus:0.1.15'
 
-    richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.0' // TODO: 0.11.1 will fix text wrapping bug once released
+    richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.1'
 
     treemapfx = 'software.coley:treemap-fx:1.1.0'
 }
