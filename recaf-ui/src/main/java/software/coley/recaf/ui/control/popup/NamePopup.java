@@ -1,6 +1,8 @@
 package software.coley.recaf.ui.control.popup;
 
 import jakarta.annotation.Nonnull;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
@@ -20,7 +22,9 @@ import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
 
 import java.awt.*;
 import java.util.function.Consumer;
@@ -39,6 +43,9 @@ public class NamePopup extends RecafStage {
 	private final Label output = new Label();
 	private final TextField nameInput = new TextField();
 	private final Button accept;
+	private String initialText;
+
+	// TODO: We should stop users from ending names with '/'
 
 	/**
 	 * @param nameConsumer
@@ -86,6 +93,46 @@ public class NamePopup extends RecafStage {
 
 	/**
 	 * @param bundle
+	 * 		Target bundle the package will reside in.
+	 * 		Used to check for name overlap.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup forPackageCopy(@Nonnull Bundle<?> bundle) {
+		titleProperty().bind(Lang.getBinding("dialog.title.copy-package"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.rename-package-error"));
+
+		// Bind conflict property
+		nameConflict.bind(nameInput.textProperty().map(dirName -> bundleHasDirectory(bundle, dirName)));
+		BooleanBinding notContainingPackageOrEqualToInitial = nameConflict.or(nameInput.textProperty().isEqualTo(initialText));
+		accept.disableProperty().bind(notContainingPackageOrEqualToInitial);
+		output.visibleProperty().bind(notContainingPackageOrEqualToInitial);
+		return this;
+	}
+
+	/**
+	 * @param bundle
+	 * 		Target bundle the package will reside in.
+	 * 		Used to check for name overlap.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup forPackageRename(@Nonnull Bundle<?> bundle) {
+		titleProperty().bind(Lang.getBinding("dialog.title.rename-package"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.rename-package-error"));
+
+		// Bind conflict property
+		nameConflict.bind(nameInput.textProperty().map(dirName -> bundleHasDirectory(bundle, dirName)));
+		BooleanBinding notContainingPackageOrEqualToInitial = nameConflict.or(nameInput.textProperty().isEqualTo(initialText));
+		accept.disableProperty().bind(notContainingPackageOrEqualToInitial);
+		output.visibleProperty().bind(notContainingPackageOrEqualToInitial);
+		return this;
+	}
+
+	/**
+	 * @param bundle
 	 * 		Target bundle the class will reside in.
 	 * 		Used to check for name overlap.
 	 *
@@ -114,6 +161,25 @@ public class NamePopup extends RecafStage {
 	public NamePopup forClassRename(@Nonnull ClassBundle<?> bundle) {
 		titleProperty().bind(Lang.getBinding("dialog.title.rename-class"));
 		output.textProperty().bind(Lang.getBinding("dialog.header.rename-class-error"));
+
+		// Bind conflict property
+		nameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
+		accept.disableProperty().bind(nameConflict);
+		output.visibleProperty().bind(nameConflict);
+		return this;
+	}
+
+	/**
+	 * @param bundle
+	 * 		Target bundle the file will reside in.
+	 * 		Used to check for name overlap.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup forFileRename(@Nonnull FileBundle bundle) {
+		titleProperty().bind(Lang.getBinding("dialog.title.rename-file"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.rename-file-error"));
 
 		// Bind conflict property
 		nameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
@@ -166,8 +232,58 @@ public class NamePopup extends RecafStage {
 		return this;
 	}
 
+	/**
+	 * @param bundle
+	 * 		Target bundle the directory will reside in.
+	 * 		Used to check for name overlap.
+	 *
+	 * @return Self.
+	 */
 	@Nonnull
-	public NamePopup withInitialClassName(@Nonnull String name) {
+	public NamePopup forDirectoryRename(@Nonnull Bundle<?> bundle) {
+		titleProperty().bind(Lang.getBinding("dialog.title.rename-directory"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.rename-directory-warning"));
+
+		// Bind conflict property, but only as a warning
+		nameConflict.bind(nameInput.textProperty().map(dirName -> bundleHasDirectory(bundle, dirName)));
+		output.visibleProperty().bind(nameConflict);
+		return this;
+	}
+
+	/**
+	 * @param bundle
+	 * 		Target bundle the directory will reside in.
+	 * 		Used to check for name overlap.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup forDirectoryCopy(@Nonnull Bundle<?> bundle) {
+		titleProperty().bind(Lang.getBinding("dialog.title.copy-directory"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.rename-directory-warning"));
+
+		// Bind conflict property, but only as a warning
+		nameConflict.bind(nameInput.textProperty().map(dirName -> bundleHasDirectory(bundle, dirName)));
+		output.visibleProperty().bind(nameConflict);
+		return this;
+	}
+
+	/**
+	 * @param binding
+	 * 		Title binding.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup withTitle(@Nonnull StringBinding binding) {
+		titleProperty().bind(binding);
+		return this;
+	}
+
+	@Nonnull
+	public NamePopup withInitialPathName(@Nonnull String name) {
+		initialText = name;
+
 		// TODO: Need to handle escaping names with newlines and such
 		//  - and handle un-escaping when calling the consumer<string>
 		nameInput.setText(name);
@@ -183,7 +299,9 @@ public class NamePopup extends RecafStage {
 	}
 
 	@Nonnull
-	public NamePopup withInitialMemberName(@Nonnull String name) {
+	public NamePopup withInitialName(@Nonnull String name) {
+		initialText = name;
+
 		// TODO: Need to handle escaping names with newlines and such
 		//  - and handle un-escaping when calling the consumer<string>
 		nameInput.setText(name);
@@ -196,5 +314,10 @@ public class NamePopup extends RecafStage {
 		// Select the name.
 		nameInput.selectAll();
 		return this;
+	}
+
+	private static boolean bundleHasDirectory(@Nonnull Bundle<?> bundle, String dirName) {
+		String dirNameWithSlash = dirName + "/";
+		return bundle.keySet().stream().anyMatch(file -> file.startsWith(dirNameWithSlash));
 	}
 }

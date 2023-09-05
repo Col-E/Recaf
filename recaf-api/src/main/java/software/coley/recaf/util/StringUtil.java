@@ -152,10 +152,30 @@ public class StringUtil {
 	 *
 	 * @return Modified string.
 	 */
-	public static String replaceLast(String string, String toReplace, String replacement) {
+	@Nonnull
+	public static String replaceLast(@Nonnull String string, @Nonnull String toReplace, @Nonnull String replacement) {
 		int i = string.lastIndexOf(toReplace);
 		if (i > -1)
 			return string.substring(0, i) + replacement + string.substring(i + toReplace.length());
+		return string;
+	}
+
+	/**
+	 * @param string
+	 * 		Text containing prefix to replace.
+	 * @param oldPrefix
+	 * 		Old prefix.
+	 * @param newPrefix
+	 * 		New prefix to replace with.
+	 *
+	 * @return Modified string.
+	 */
+	@Nonnull
+	public static String replacePrefix(@Nonnull String string, @Nullable String oldPrefix, @Nonnull String newPrefix) {
+		if (isNullOrEmpty(oldPrefix))
+			return newPrefix + string;
+		if (string.startsWith(oldPrefix))
+			return newPrefix + string.substring(oldPrefix.length());
 		return string;
 	}
 

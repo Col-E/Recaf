@@ -1,6 +1,7 @@
 package software.coley.recaf.services.cell;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.Node;
@@ -23,6 +24,8 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.services.navigation.ClassNavigable;
+import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UnsupportedContent;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.TreeItems;
@@ -130,19 +133,30 @@ public class CellConfigurationService implements Service {
 	/**
 	 * @param item
 	 * 		Item to open.
+	 *
+	 * @return Opened navigable display, or {@code null} if the path could not be opened.
 	 */
-	private void openPath(@Nonnull PathNode<?> item) {
+	@Nullable
+	private Navigable openPath(@Nonnull PathNode<?> item) {
 		try {
 			if (item instanceof ClassPathNode classPathNode) {
-				actions.gotoDeclaration(classPathNode);
+				return actions.gotoDeclaration(classPathNode);
+			} else if (item instanceof ClassMemberPathNode classMemberPathNode) {
+				ClassPathNode parent = classMemberPathNode.getParent();
+				if (parent != null) {
+					ClassNavigable classNavigable = actions.gotoDeclaration(parent);
+					classNavigable.requestFocus(classMemberPathNode.getValue());
+					return classNavigable;
+				}
 			} else if (item instanceof FilePathNode filePathNode) {
-				actions.gotoDeclaration(filePathNode);
+				return actions.gotoDeclaration(filePathNode);
 			}
 		} catch (IncompletePathException ex) {
 			logger.error("Cannot open incomplete path", ex);
 		} catch (UnsupportedContent ex) {
 			logger.warn("Cannot open unsupported content type");
 		}
+		return null;
 	}
 
 	/**
@@ -348,7 +362,7 @@ public class CellConfigurationService implements Service {
 			InnerClassInfo innerClass = innerClassPath.getValue();
 			return iconService.getInnerClassInfoIconProvider(workspace, resource,
 					bundle, outerClass.asJvmClass(), innerClass).makeIcon();
-		}else if (item instanceof AnnotationPathNode annotationPath) {
+		} else if (item instanceof AnnotationPathNode annotationPath) {
 			ClassBundle<? extends ClassInfo> bundle = annotationPath.getValueOfType(ClassBundle.class);
 			if (bundle == null) {
 				logger.error("Annotation path node missing bundle section: {}", item);
@@ -363,7 +377,7 @@ public class CellConfigurationService implements Service {
 
 			AnnotationInfo annotation = annotationPath.getValue();
 			return iconService.getAnnotationIconProvider(workspace, resource, bundle, annotated, annotation).makeIcon();
-		}  else if (item instanceof BundlePathNode bundlePath) {
+		} else if (item instanceof BundlePathNode bundlePath) {
 			return iconService.getBundleIconProvider(workspace, resource, bundlePath.getValue()).makeIcon();
 		} else if (item instanceof ResourcePathNode) {
 			return iconService.getResourceIconProvider(workspace, resource).makeIcon();

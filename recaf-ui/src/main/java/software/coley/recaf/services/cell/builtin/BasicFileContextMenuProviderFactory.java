@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.FileInfo;
@@ -13,6 +14,7 @@ import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.util.ClipboardUtil;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -54,12 +56,13 @@ public class BasicFileContextMenuProviderFactory extends AbstractContextMenuProv
 				items.add(action("menu.goto.file", CarbonIcons.ARROW_RIGHT, runnable(() -> actions.gotoDeclaration(filePath))));
 			} else if (source.isDeclaration()) {
 				items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
+				items.add(action("menu.edit.copy", CarbonIcons.COPY_FILE, () -> actions.copyFile(workspace, resource, bundle, info)));
+				items.add(action("menu.edit.delete", CarbonIcons.TRASH_CAN, () -> actions.deleteFile(workspace,resource,bundle,info)));
+				Menu menuRefactor = new Menu(Lang.get("menu.refactor"));
+				menuRefactor.getItems().add(action("menu.refactor.move", CarbonIcons.STACKED_MOVE, () -> actions.moveFile(workspace, resource, bundle, info)));
+				menuRefactor.getItems().add(action("menu.refactor.rename", CarbonIcons.TAG_EDIT, () -> actions.renameFile(workspace, resource, bundle, info)));
+				items.add(menuRefactor);
 				// TODO: implement operations
-				//  - Copy
-				//  - Delete
-				//  - Refactor
-				//    - Rename
-				//    - Move
 				//  - Search references
 				//  - Override text-view language (FileTypeAssociationService)
 			}

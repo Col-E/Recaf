@@ -27,7 +27,8 @@ import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
-import software.coley.recaf.ui.control.popup.ItemSelectionPopup;
+import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
+import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
@@ -45,10 +46,7 @@ import software.coley.recaf.util.visitors.ClassAnnotationRemovingVisitor;
 import software.coley.recaf.util.visitors.MemberPredicate;
 import software.coley.recaf.util.visitors.MemberRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.ClassBundle;
-import software.coley.recaf.workspace.model.bundle.FileBundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
@@ -59,6 +57,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static software.coley.recaf.util.Menus.*;
+import static software.coley.recaf.util.StringUtil.*;
 
 /**
  * Common actions integration.
@@ -352,12 +351,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
-			items.add(separator());
-			addCloseActions(menu, tab);
-			tab.setContextMenu(menu);
+			setupFileTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -396,12 +390,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
-			items.add(separator());
-			addCloseActions(menu, tab);
-			tab.setContextMenu(menu);
+			setupFileTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -440,12 +429,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
-			items.add(separator());
-			addCloseActions(menu, tab);
-			tab.setContextMenu(menu);
+			setupFileTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -484,12 +468,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
-			items.add(separator());
-			addCloseActions(menu, tab);
-			tab.setContextMenu(menu);
+			setupFileTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -528,12 +507,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
-			items.add(separator());
-			addCloseActions(menu, tab);
-			tab.setContextMenu(menu);
+			setupFileTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -554,16 +528,17 @@ public class Actions implements Service {
 						  @Nonnull WorkspaceResource resource,
 						  @Nonnull JvmClassBundle bundle,
 						  @Nonnull JvmClassInfo info) {
-		// TODO: This should use a tree, not a list popup
-		ItemSelectionPopup.forPackageNames(bundle, packages -> {
+		boolean isRootDirectory = isNullOrEmpty(info.getPackageName());
+		ItemTreeSelectionPopup.forPackageNames(bundle, packages -> {
 					// We only allow a single package, so the list should contain just one item.
-					String oldPackage = info.getPackageName() + "/";
-					String newPackage = packages.get(0) + "/";
+					String oldPackage = isRootDirectory ? "" : info.getPackageName() + "/";
+					String newPackage = packages.get(0);
 					if (Objects.equals(oldPackage, newPackage)) return;
+					if (!newPackage.isEmpty()) newPackage += "/";
 
 					// Create mapping for the class and any inner classes.
 					String originalName = info.getName();
-					String newName = newPackage + info.getName().substring(oldPackage.length());
+					String newName = replacePrefix(originalName, oldPackage, newPackage);
 					IntermediateMappings mappings = new IntermediateMappings();
 					for (InnerClassInfo inner : info.getInnerClasses()) {
 						if (inner.isExternalReference()) continue;
@@ -583,6 +558,156 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Prompts the user to select a directory to move the given file into.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		File to move into a different directory.
+	 */
+	public void moveFile(@Nonnull Workspace workspace,
+						 @Nonnull WorkspaceResource resource,
+						 @Nonnull FileBundle bundle,
+						 @Nonnull FileInfo info) {
+		boolean isRootDirectory = isNullOrEmpty(info.getDirectoryName());
+		ItemTreeSelectionPopup.forDirectoryNames(bundle, chosenDirectories -> {
+					// We only allow a single directory, so the list should contain just one item.
+					if (chosenDirectories.isEmpty()) return;
+					String oldDirectoryName = isRootDirectory ? "" : info.getDirectoryName() + "/";
+					String newDirectoryName = chosenDirectories.get(0);
+					if (Objects.equals(oldDirectoryName, newDirectoryName)) return;
+					if (!newDirectoryName.isEmpty()) newDirectoryName += "/";
+
+					String newName = replacePrefix(info.getName(), oldDirectoryName, newDirectoryName);
+
+					bundle.remove(info.getName());
+					bundle.put(info.toFileBuilder().withName(newName).build());
+				}).withTitle(Lang.getBinding("dialog.title.move-file"))
+				.withTextMapping(name -> textService.getDirectoryTextProvider(workspace, resource, bundle, name).makeText())
+				.withGraphicMapping(name -> iconService.getDirectoryIconProvider(workspace, resource, bundle, name).makeIcon())
+				.show();
+	}
+
+	/**
+	 * Prompts the user to select a package to move the given package into.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param packageName
+	 * 		Package to go move into another package as a sub-package.
+	 */
+	public void movePackage(@Nonnull Workspace workspace,
+							@Nonnull WorkspaceResource resource,
+							@Nonnull JvmClassBundle bundle,
+							@Nonnull String packageName) {
+		boolean isRootDirectory = packageName.isEmpty();
+		ItemTreeSelectionPopup.forPackageNames(bundle, chosenPackages -> {
+					if (chosenPackages.isEmpty()) return;
+					String newPackageName = chosenPackages.get(0);
+					if (packageName.equals(newPackageName)) return;
+
+					// Create mappings for classes in the given package.
+					IntermediateMappings mappings = new IntermediateMappings();
+					String newPrefix = (newPackageName.isEmpty() ? "" : newPackageName + "/") + shortenPath(packageName) + "/";
+					if (isRootDirectory) {
+						// Source is default package
+						for (JvmClassInfo info : bundle.values()) {
+							String name = info.getName();
+							if (name.indexOf('/') != -1) {
+								mappings.addClass(name, newPrefix + name);
+							}
+						}
+					} else {
+						// Source is another package
+						String oldPrefix = packageName + "/";
+						for (JvmClassInfo info : bundle.values()) {
+							String name = info.getName();
+							if (newPackageName.isEmpty() && name.indexOf('/') == -1) {
+								// Target is default package
+								mappings.addClass(name, shortenPath(name));
+							} else if (name.startsWith(oldPrefix)) {
+								// Target is some package, replace prefix
+								mappings.addClass(name, replacePrefix(name, oldPrefix, newPrefix));
+							}
+						}
+					}
+
+					// Apply the mappings.
+					MappingApplier applier = applierProvider.get();
+					MappingResults results = applier.applyToPrimaryResource(mappings);
+					results.apply();
+				}).withTitle(Lang.getBinding("dialog.title.move-package"))
+				.withTextMapping(name -> textService.getPackageTextProvider(workspace, resource, bundle, name).makeText())
+				.withGraphicMapping(name -> iconService.getPackageIconProvider(workspace, resource, bundle, name).makeIcon())
+				.show();
+	}
+
+	/**
+	 * Prompts the user to select a directory to move the given directory into.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param directoryName
+	 * 		Directory to go move into another directory as a sub-directory.
+	 */
+	public void moveDirectory(@Nonnull Workspace workspace,
+							  @Nonnull WorkspaceResource resource,
+							  @Nonnull FileBundle bundle,
+							  @Nonnull String directoryName) {
+		boolean isRootDirectory = directoryName.isEmpty();
+		String localDirectoryName = shortenPath(directoryName);
+		ItemTreeSelectionPopup.forDirectoryNames(bundle, chosenDirectories -> {
+					if (chosenDirectories.isEmpty()) return;
+					String newDirectoryName = chosenDirectories.get(0);
+					if (directoryName.equals(newDirectoryName)) return;
+
+					String prefix = directoryName + "/";
+					for (FileInfo value : bundle.valuesAsCopy()) {
+						String filePath = value.getName();
+						String fileName = shortenPath(filePath);
+
+						// Source is root directory, this file is also in the root directory
+						if (isRootDirectory &&  filePath.indexOf('/') == -1) {
+								String name = newDirectoryName + "/" + fileName;
+								bundle.remove(filePath);
+								bundle.put(value.toFileBuilder().withName(name).build());
+						} else {
+							// Source is another package, this file matches that package
+							if (filePath.startsWith(prefix)) {
+								String name;
+								if (newDirectoryName.isEmpty()) {
+									// Target is root directory
+									name = localDirectoryName + "/" + fileName;
+								} else if (filePath.startsWith(directoryName)) {
+									// Target is another directory
+									name = replacePrefix(filePath, directoryName, newDirectoryName + "/" + localDirectoryName);
+								} else {
+									continue;
+								}
+								bundle.remove(filePath);
+								bundle.put(value.toFileBuilder().withName(name).build());
+							}
+						}
+					}
+				}).withTitle(Lang.getBinding("dialog.title.move-directory"))
+				.withTextMapping(name -> textService.getDirectoryTextProvider(workspace, resource, bundle, name).makeText())
+				.withGraphicMapping(name -> iconService.getDirectoryIconProvider(workspace, resource, bundle, name).makeIcon())
+				.show();
+	}
+
+	/**
 	 * Prompts the user to rename whatever sort of content is contained within the given path.
 	 *
 	 * @param path
@@ -592,12 +717,15 @@ public class Actions implements Service {
 		// Handle renaming based on the different resolved content type.
 		if (path instanceof ClassPathNode classPath)
 			Unchecked.run(() -> renameClass(classPath));
-		else if (path instanceof ClassMemberPathNode memberPathNode) {
+		else if (path instanceof ClassMemberPathNode memberPathNode)
 			if (memberPathNode.isField())
 				Unchecked.run(() -> renameField(memberPathNode));
 			else
 				Unchecked.run(() -> renameMethod(memberPathNode));
-		}
+		else if (path instanceof FilePathNode filePath)
+			Unchecked.run(() -> renameFile(filePath));
+		else if (path instanceof DirectoryPathNode directoryPath)
+			Unchecked.run(() -> renamePackageOrDirectory(directoryPath));
 	}
 
 	/**
@@ -662,7 +790,7 @@ public class Actions implements Service {
 			results.apply();
 		};
 		new NamePopup(renameTask)
-				.withInitialClassName(originalName)
+				.withInitialPathName(originalName)
 				.forClassRename(bundle)
 				.show();
 	}
@@ -731,7 +859,7 @@ public class Actions implements Service {
 			results.apply();
 		};
 		new NamePopup(renameTask)
-				.withInitialMemberName(originalName)
+				.withInitialName(originalName)
 				.forFieldRename(declaringClass, field)
 				.show();
 	}
@@ -800,8 +928,194 @@ public class Actions implements Service {
 			results.apply();
 		};
 		new NamePopup(renameTask)
-				.withInitialMemberName(originalName)
+				.withInitialName(originalName)
 				.forMethodRename(declaringClass, method)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to rename the given field.
+	 *
+	 * @param path
+	 * 		Path to file.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	public void renameFile(@Nonnull FilePathNode path) throws IncompletePathException {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		FileBundle bundle = path.getValueOfType(FileBundle.class);
+		FileInfo info = path.getValue();
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for file '{}', missing workspace in path", info.getName());
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for file '{}', missing resource in path", info.getName());
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for file '{}', missing bundle in path", info.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+		renameFile(workspace, resource, bundle, info);
+	}
+
+	/**
+	 * Prompts the user to rename the given file.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		File to rename.
+	 */
+	public void renameFile(@Nonnull Workspace workspace,
+						   @Nonnull WorkspaceResource resource,
+						   @Nonnull FileBundle bundle,
+						   @Nonnull FileInfo info) {
+		String name = info.getName();
+		new NamePopup(newFileName -> {
+			if (name.equals(newFileName)) return;
+			bundle.remove(name);
+			bundle.put(info.toFileBuilder().withName(newFileName).build());
+		}).withInitialPathName(name)
+				.forFileRename(bundle)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to rename the given directory.
+	 *
+	 * @param path
+	 * 		Path to directory.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	public void renamePackageOrDirectory(@Nonnull DirectoryPathNode path) throws IncompletePathException {
+		String directoryName = path.getValue();
+
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		Bundle<?> bundle = path.getValueOfType(Bundle.class);
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for directory '{}', missing workspace in path", directoryName);
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for directory '{}', missing resource in path", directoryName);
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for directory '{}', missing bundle in path", directoryName);
+			throw new IncompletePathException(ClassBundle.class);
+		}
+
+		if (bundle instanceof FileBundle fileBundle)
+			renameDirectory(workspace, resource, fileBundle, directoryName);
+		else if (bundle instanceof JvmClassBundle classBundle)
+			renamePackage(workspace, resource, classBundle, directoryName);
+	}
+
+	/**
+	 * Prompts the user to rename the given directory.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param directoryName
+	 * 		Name of directory to rename.
+	 */
+	public void renameDirectory(@Nonnull Workspace workspace,
+								@Nonnull WorkspaceResource resource,
+								@Nonnull FileBundle bundle,
+								@Nonnull String directoryName) {
+		boolean isRootDirectory = directoryName.isEmpty();
+		new NamePopup(newDirectoryName -> {
+			if (directoryName.equals(newDirectoryName)) return;
+
+			String prefix = directoryName + "/";
+			for (FileInfo value : bundle.valuesAsCopy()) {
+				String filePath = value.getName();
+				String fileName = shortenPath(filePath);
+
+				// Source is root directory, this file is also in the root directory
+				if (isRootDirectory &&  filePath.indexOf('/') == -1) {
+					String name = newDirectoryName + "/" + fileName;
+					bundle.remove(filePath);
+					bundle.put(value.toFileBuilder().withName(name).build());
+				} else {
+					// Source is another package, this file matches that package
+					if (filePath.startsWith(prefix)) {
+						String name;
+						if (newDirectoryName.isEmpty()) {
+							// Target is root directory
+							name =  fileName;
+						} else if (filePath.startsWith(directoryName)) {
+							// Target is another directory
+							name = replacePrefix(filePath, directoryName, newDirectoryName);
+						} else {
+							continue;
+						}
+						bundle.remove(filePath);
+						bundle.put(value.toFileBuilder().withName(name).build());
+					}
+				}
+			}
+		}).withInitialPathName(directoryName)
+				.forDirectoryRename(bundle)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to give a new name for the copied package.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param packageName
+	 * 		Name of directory to copy.
+	 */
+	public void renamePackage(@Nonnull Workspace workspace,
+							  @Nonnull WorkspaceResource resource,
+							  @Nonnull JvmClassBundle bundle,
+							  @Nonnull String packageName) {
+		boolean isRootDirectory = packageName.isEmpty();
+		new NamePopup(newPackageName -> {
+			// Create mappings.
+			String oldPrefix = isRootDirectory ? "" : packageName + "/";
+			String newPrefix = newPackageName + "/";
+			IntermediateMappings mappings = new IntermediateMappings();
+			for (JvmClassInfo info : bundle.valuesAsCopy()) {
+				String className = info.getName();
+				if (isRootDirectory) {
+					// Source is the default package
+					if (className.indexOf('/') == -1)
+						// Class is in the default package
+						mappings.addClass(className, newPackageName + '/' + className);
+				} else if (className.startsWith(oldPrefix))
+					// Class starts with the package prefix
+					mappings.addClass(className, replacePrefix(className, oldPrefix, newPrefix));
+			}
+
+			// Apply mappings to create copies of the affected classes, using the provided name.
+			// Then dump the mapped classes into bundle.
+			MappingApplier applier = applierProvider.get();
+			MappingResults results = applier.applyToPrimaryResource(mappings);
+			results.apply();
+		}).withInitialPathName(packageName)
+				.forPackageRename(bundle)
 				.show();
 	}
 
@@ -852,8 +1166,119 @@ public class Actions implements Service {
 			}
 		};
 		new NamePopup(copyTask)
-				.withInitialClassName(originalName)
+				.withInitialPathName(originalName)
 				.forClassCopy(bundle)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to give a new name for the copied file.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		File to copy.
+	 */
+	public void copyFile(@Nonnull Workspace workspace,
+						 @Nonnull WorkspaceResource resource,
+						 @Nonnull FileBundle bundle,
+						 @Nonnull FileInfo info) {
+		new NamePopup(newName -> {
+			if (info.getName().equals(newName)) return;
+			bundle.put(info.toFileBuilder().withName(newName).build());
+		}).withInitialPathName(info.getName())
+				.forDirectoryCopy(bundle)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to give a new name for the copied directory.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param directoryName
+	 * 		Name of directory to copy.
+	 */
+	public void copyDirectory(@Nonnull Workspace workspace,
+							  @Nonnull WorkspaceResource resource,
+							  @Nonnull FileBundle bundle,
+							  @Nonnull String directoryName) {
+		boolean isRootDirectory = directoryName.isEmpty();
+		new NamePopup(newDirectoryName -> {
+			if (directoryName.equals(newDirectoryName)) return;
+			for (FileInfo value : bundle.valuesAsCopy()) {
+				String path = value.getName();
+				if (isRootDirectory) {
+					if (path.indexOf('/') == -1) {
+						String name = newDirectoryName + "/" + path;
+						bundle.put(value.toFileBuilder().withName(name).build());
+					}
+				} else {
+					if (path.startsWith(directoryName)) {
+						String name = replacePrefix(path, directoryName, newDirectoryName);
+						bundle.put(value.toFileBuilder().withName(name).build());
+					}
+				}
+			}
+		}).withInitialPathName(directoryName)
+				.forDirectoryCopy(bundle)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to give a new name for the copied package.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param packageName
+	 * 		Name of directory to copy.
+	 */
+	public void copyPackage(@Nonnull Workspace workspace,
+							@Nonnull WorkspaceResource resource,
+							@Nonnull JvmClassBundle bundle,
+							@Nonnull String packageName) {
+		boolean isRootDirectory = packageName.isEmpty();
+		new NamePopup(newPackageName -> {
+			// Create mappings.
+			String oldPrefix = isRootDirectory ? "" : packageName + "/";
+			String newPrefix = newPackageName + "/";
+			IntermediateMappings mappings = new IntermediateMappings();
+			List<JvmClassInfo> classesToCopy = new ArrayList<>();
+			for (JvmClassInfo info : bundle.valuesAsCopy()) {
+				String className = info.getName();
+				if (isRootDirectory) {
+					if (className.indexOf('/') == -1) {
+						mappings.addClass(className, newPrefix + className);
+						classesToCopy.add(info);
+					}
+				} else if (className.startsWith(oldPrefix)) {
+					mappings.addClass(className, replacePrefix(className, oldPrefix, newPrefix));
+					classesToCopy.add(info);
+				}
+			}
+
+			// Apply mappings to create copies of the affected classes, using the provided name.
+			// Then dump the mapped classes into bundle.
+			MappingApplier applier = applierProvider.get();
+			MappingResults results = applier.applyToClasses(mappings, resource, bundle, classesToCopy);
+			for (ClassPathNode mappedClassPath : results.getPostMappingPaths().values()) {
+				JvmClassInfo mappedClass = mappedClassPath.getValue().asJvmClass();
+				bundle.put(mappedClass);
+			}
+		}).withInitialPathName(packageName)
+				.forPackageCopy(bundle)
 				.show();
 	}
 
@@ -878,6 +1303,98 @@ public class Actions implements Service {
 		bundle.remove(info.getName());
 	}
 
+	/**
+	 * Prompts the user <i>(if configured, otherwise prompt is skipped)</i> to delete the file.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		File to delete.
+	 */
+	public void deleteFile(@Nonnull Workspace workspace,
+						   @Nonnull WorkspaceResource resource,
+						   @Nonnull FileBundle bundle,
+						   @Nonnull FileInfo info) {
+		// TODO: Ask user if they are sure
+		//  - Use config to check if "are you sure" prompts should be bypassed
+		bundle.remove(info.getName());
+	}
+
+	/**
+	 * Prompts the user <i>(if configured, otherwise prompt is skipped)</i> to delete the package.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param packageName
+	 * 		Name of package to delete.
+	 */
+	public void deletePackage(@Nonnull Workspace workspace,
+							  @Nonnull WorkspaceResource resource,
+							  @Nonnull ClassBundle<?> bundle,
+							  @Nonnull String packageName) {
+		// TODO: Ask user if they are sure
+		//  - Use config to check if "are you sure" prompts should be bypassed
+		boolean isRootDirectory = packageName.isEmpty();
+		String packageNamePrefix = packageName + "/";
+		for (ClassInfo value : bundle.valuesAsCopy()) {
+			String path = value.getName();
+			if (isRootDirectory) {
+				// Source is in the default package, and the current class is also in the default package.
+				if (path.indexOf('/') == -1) {
+					bundle.remove(path);
+				}
+			} else {
+				// Source is in a package, and the current class is in the same package.
+				if (path.startsWith(packageNamePrefix)) {
+					bundle.remove(path);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Prompts the user <i>(if configured, otherwise prompt is skipped)</i> to delete the directory.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param directoryName
+	 * 		Name of directory to delete.
+	 */
+	public void deleteDirectory(@Nonnull Workspace workspace,
+								@Nonnull WorkspaceResource resource,
+								@Nonnull FileBundle bundle,
+								@Nonnull String directoryName) {
+		// TODO: Ask user if they are sure
+		//  - Use config to check if "are you sure" prompts should be bypassed
+		boolean isRootDirectory = directoryName.isEmpty();
+		String directoryNamePrefix = directoryName + "/";
+		for (FileInfo value : bundle.valuesAsCopy()) {
+			String path = value.getName();
+			if (isRootDirectory) {
+				// Source is in the root directory, and the current file is also in the root directory.
+				if (path.indexOf('/') == -1) {
+					bundle.remove(path);
+				}
+			} else {
+				// Source is in a directory, and the current file is in the same directory.
+				if (path.startsWith(directoryNamePrefix)) {
+					bundle.remove(path);
+				}
+			}
+		}
+	}
 
 	/**
 	 * Prompts the user to select fields within the class to remove.
@@ -895,7 +1412,7 @@ public class Actions implements Service {
 								  @Nonnull WorkspaceResource resource,
 								  @Nonnull JvmClassBundle bundle,
 								  @Nonnull JvmClassInfo info) {
-		ItemSelectionPopup.forFields(info, fields -> {
+		ItemListSelectionPopup.forFields(info, fields -> {
 					ClassWriter writer = new ClassWriter(0);
 					MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, new MemberPredicate() {
 						@Override
@@ -939,7 +1456,7 @@ public class Actions implements Service {
 								   @Nonnull WorkspaceResource resource,
 								   @Nonnull JvmClassBundle bundle,
 								   @Nonnull JvmClassInfo info) {
-		ItemSelectionPopup.forMethods(info, methods -> {
+		ItemListSelectionPopup.forMethods(info, methods -> {
 					ClassWriter writer = new ClassWriter(0);
 					MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, new MemberPredicate() {
 						@Override
@@ -983,7 +1500,7 @@ public class Actions implements Service {
 									   @Nonnull WorkspaceResource resource,
 									   @Nonnull JvmClassBundle bundle,
 									   @Nonnull JvmClassInfo info) {
-		ItemSelectionPopup.forAnnotationRemoval(info, annotations -> {
+		ItemListSelectionPopup.forAnnotationRemoval(info, annotations -> {
 					List<String> names = annotations.stream()
 							.map(AnnotationInfo::getDescriptor)
 							.map(desc -> desc.substring(1, desc.length() - 1))
@@ -1034,6 +1551,15 @@ public class Actions implements Service {
 			navigable.requestFocus();
 			return navigable;
 		}
+	}
+
+	private static void setupFileTabContextMenu(@Nonnull FileInfo info, DockingTab tab) {
+		ContextMenu menu = new ContextMenu();
+		ObservableList<MenuItem> items = menu.getItems();
+		items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
+		items.add(separator());
+		addCloseActions(menu, tab);
+		tab.setContextMenu(menu);
 	}
 
 	/**
