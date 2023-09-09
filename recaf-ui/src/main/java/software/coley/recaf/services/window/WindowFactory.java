@@ -30,6 +30,8 @@ public class WindowFactory implements Service {
 
 	/**
 	 * Create a stage around the scene and register it.
+	 * <p>
+	 * <b>Must be on FX thread when calling.</b>
 	 *
 	 * @param scene
 	 * 		Scene to pass to the created stage.
@@ -52,6 +54,8 @@ public class WindowFactory implements Service {
 
 	/**
 	 * Create a stage around the scene and register it.
+	 * <p>
+	 * <b>Must be on FX thread when calling.</b>
 	 *
 	 * @param scene
 	 * 		Scene to pass to the created stage.
