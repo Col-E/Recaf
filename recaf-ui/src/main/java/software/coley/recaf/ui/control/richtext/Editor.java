@@ -128,6 +128,13 @@ public class Editor extends BorderPane {
 	}
 
 	/**
+	 * @return {@code true} to indicate the contents of this editor are editable. {@code false} for read-only content.
+	 */
+	public boolean isEditable() {
+		return codeArea.isEditable();
+	}
+
+	/**
 	 * The passed inputs for the position will be modified as per
 	 * {@link SyntaxUtil#getRangeForRestyle(String, StyleSpans, SyntaxHighlighter, PlainTextChange)}.
 	 * For this reason, you do not have to be super exact with the given values.

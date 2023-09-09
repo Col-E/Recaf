@@ -20,6 +20,7 @@ import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
+import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
@@ -41,9 +42,10 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 	private final CodeArea codeArea = editor.getCodeArea();
 
 	@Inject
-	public LoggingPane(@Nonnull RecafDirectoriesConfig config) {
+	public LoggingPane(@Nonnull RecafDirectoriesConfig config, @Nonnull SearchBar searchBar) {
 		Logging.addLogConsumer(this);
 		codeArea.setEditable(false);
+		searchBar.install(editor);
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(new LoggingLineFactory());
 		setCenter(editor);
 

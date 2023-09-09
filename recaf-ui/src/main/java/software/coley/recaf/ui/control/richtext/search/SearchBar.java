@@ -107,7 +107,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		private final HBox replaceLine;
 		private final Editor editor;
 
-		private Bar(Editor editor) {
+		private Bar(@Nonnull Editor editor) {
 			this.editor = editor;
 			getStyleClass().add("search-bar");
 
@@ -584,7 +584,8 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		 * Shows the replace-bar segment.
 		 */
 		public void showReplace() {
-			replaceLine.setVisible(true);
+			if (editor.isEditable())
+				replaceLine.setVisible(true);
 		}
 
 		/**
