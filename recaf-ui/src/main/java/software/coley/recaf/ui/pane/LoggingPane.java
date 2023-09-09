@@ -109,12 +109,11 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 		 * @return Message content of log call.
 		 */
 		@Nonnull
-		public synchronized String getAndPruneContent() {
+		public String getAndPruneContent() {
 			String content = messageContent;
 			if (content == null)
-				throw new IllegalStateException();
+				throw new PruneError();
 			messageContent = null;
-			// TODO: Make throwable strip out trace for memory shit
 			return content;
 		}
 	}
@@ -165,6 +164,12 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 		@Override
 		public void uninstall(@Nonnull Editor editor) {
 			// no-op
+		}
+	}
+
+	private static class PruneError extends RuntimeException {
+		private PruneError() {
+			super(null, null, false, false);
 		}
 	}
 }
