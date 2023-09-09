@@ -53,12 +53,100 @@ public class StringUtil {
 	 * @param text
 	 * 		Input text.
 	 * @param cutoff
+	 * 		Character to match up to.
+	 *
+	 * @return Input text, up until the first cutoff sequence.
+	 */
+	@Nonnull
+	public static String cutOffAtFirst(@Nonnull String text, char cutoff) {
+		int i = text.indexOf(cutoff);
+		if (i < 0) return text;
+		return text.substring(0, i);
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param cutoff
 	 * 		Sequence to match up to.
 	 *
 	 * @return Input text, up until the first cutoff sequence.
 	 */
+	@Nonnull
 	public static String cutOffAtFirst(@Nonnull String text, @Nonnull String cutoff) {
 		int i = text.indexOf(cutoff);
+		if (i < 0) return text;
+		return text.substring(0, i);
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param cutoff
+	 * 		Sequence to match up to.
+	 *
+	 * @return Input text, up until the last cutoff sequence.
+	 */
+	@Nonnull
+	public static String cutOffAtLast(@Nonnull String text, @Nonnull String cutoff) {
+		int i = text.lastIndexOf(cutoff);
+		if (i < 0) return text;
+		return text.substring(0, i);
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param cutoff
+	 * 		Character to match up to.
+	 *
+	 * @return Input text, up until the last cutoff sequence.
+	 */
+	@Nonnull
+	public static String cutOffAtLast(@Nonnull String text, char cutoff) {
+		int i = text.lastIndexOf(cutoff);
+		if (i < 0) return text;
+		return text.substring(0, i);
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param cutoff
+	 * 		Character to match up to.
+	 * @param n
+	 * 		Times to match the character.
+	 *
+	 * @return Input text, up until the last cutoff sequence.
+	 */
+	@Nonnull
+	public static String cutOffAtNth(@Nonnull String text, String cutoff, int n) {
+		int i = -1;
+		while (n-- > 0) {
+			if ((i = text.indexOf(cutoff, i + 1)) < 0)
+				return text;
+		}
+		if (i < 0) return text;
+		return text.substring(0, i);
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param cutoff
+	 * 		Character to match up to.
+	 * @param n
+	 * 		Times to match the character.
+	 *
+	 * @return Input text, up until the last cutoff sequence.
+	 */
+	@Nonnull
+	public static String cutOffAtNth(@Nonnull String text, char cutoff, int n) {
+		int i = -1;
+		while (n-- > 0) {
+			if ((i = text.indexOf(cutoff, i + 1)) < 0)
+				return text;
+		}
 		if (i < 0) return text;
 		return text.substring(0, i);
 	}

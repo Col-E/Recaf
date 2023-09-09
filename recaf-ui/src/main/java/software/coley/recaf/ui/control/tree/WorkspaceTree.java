@@ -9,14 +9,13 @@ import jakarta.inject.Inject;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
-import software.coley.recaf.info.AndroidClassInfo;
-import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.*;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.ContextSource;
+import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
@@ -28,7 +27,7 @@ import software.coley.recaf.workspace.model.resource.ResourceFileListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * Tree view for items within a {@link Workspace}.
@@ -39,6 +38,12 @@ import java.util.List;
 public class WorkspaceTree extends TreeView<PathNode<?>> implements
 		WorkspaceModificationListener, WorkspaceCloseListener,
 		ResourceJvmClassListener, ResourceAndroidClassListener, ResourceFileListener {
+	private static final Comparator<Named> PATH_COMPARATOR = (o1, o2) -> {
+		String a = o1.getName();
+		String b = o2.getName();
+		return compareFilePaths(a, b);
+	};
+	private final WorkspaceExplorerConfig explorerConfig;
 	private WorkspaceTreeNode root;
 	private WorkspacePathNode rootPath;
 	private Workspace workspace;
@@ -50,7 +55,8 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	 * 		Service to configure cell content.
 	 */
 	@Inject
-	public WorkspaceTree(@Nonnull CellConfigurationService configurationService) {
+	public WorkspaceTree(@Nonnull CellConfigurationService configurationService, @Nonnull WorkspaceExplorerConfig explorerConfig) {
+		this.explorerConfig = explorerConfig;
 		setShowRoot(false);
 		setCellFactory(param -> new WorkspaceTreeCell(ContextSource.DECLARATION, configurationService));
 		getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
@@ -109,21 +115,35 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	private void createResourceSubTree(WorkspaceResource resource) {
 		ResourcePathNode resourcePath = rootPath.child(resource);
 		resource.classBundleStream().forEach(bundle -> {
+			Map<String, DirectoryPathNode> directories = new HashMap<>();
 			BundlePathNode bundlePath = resourcePath.child(bundle);
-			for (ClassInfo classInfo : bundle.values()) {
-				String packageName = classInfo.getPackageName();
-				DirectoryPathNode packagePath = bundlePath.child(packageName);
+
+			// Pre-sort classes to skip tree-building comparisons/synchronizations.
+			TreeSet<ClassInfo> sortedClasses = new TreeSet<>(PATH_COMPARATOR);
+			sortedClasses.addAll(bundle.values());
+
+			// Add each class in sorted order.
+			for (ClassInfo classInfo : sortedClasses) {
+				String packageName = interceptDirectoryName(classInfo.getPackageName());
+				DirectoryPathNode packagePath = directories.computeIfAbsent(packageName, bundlePath::child);
 				ClassPathNode classPath = packagePath.child(classInfo);
-				root.getOrCreateNodeByPath(classPath);
+				WorkspaceTreeNode.getOrInsertIntoTree(root, classPath, true);
 			}
 		});
 		resource.fileBundleStream().forEach(bundle -> {
+			Map<String, DirectoryPathNode> directories = new HashMap<>();
 			BundlePathNode bundlePath = resourcePath.child(bundle);
-			for (FileInfo fileInfo : bundle.values()) {
-				String directoryName = fileInfo.getDirectoryName();
-				DirectoryPathNode directoryPath = bundlePath.child(directoryName);
+
+			// Pre-sort classes to skip tree-building comparisons/synchronizations.
+			TreeSet<FileInfo> sortedFiles = new TreeSet<>(PATH_COMPARATOR);
+			sortedFiles.addAll(bundle.values());
+
+			// Add each class in sorted order.
+			for (FileInfo fileInfo : sortedFiles) {
+				String directoryName = interceptDirectoryName(fileInfo.getDirectoryName());
+				DirectoryPathNode directoryPath = directories.computeIfAbsent(directoryName, bundlePath::child);
 				FilePathNode filePath = directoryPath.child(fileInfo);
-				root.getOrCreateNodeByPath(filePath);
+				WorkspaceTreeNode.getOrInsertIntoTree(root, filePath, true);
 			}
 		});
 	}
@@ -180,13 +200,20 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	@Override
 	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
 		if (isTargetResource(resource))
-			root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
+			root.getOrCreateNodeByPath(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(cls.getPackageName()))
+					.child(cls));
 	}
 
 	@Override
 	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
 		if (isTargetResource(resource)) {
-			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(oldCls.getPackageName()).child(oldCls));
+			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath
+					.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(oldCls.getPackageName()))
+					.child(oldCls));
 			node.setValue(rootPath.child(resource).child(bundle).child(newCls.getPackageName()).child(newCls));
 		}
 	}
@@ -194,46 +221,113 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	@Override
 	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
 		if (isTargetResource(resource))
-			root.removeNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
+			root.removeNodeByPath(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(cls.getPackageName()))
+					.child(cls));
 	}
 
 	@Override
 	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
 		if (isTargetResource(resource))
-			root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
+			root.getOrCreateNodeByPath(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(cls.getPackageName()))
+					.child(cls));
 	}
 
 	@Override
 	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls) {
 		if (isTargetResource(resource)) {
-			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(oldCls.getPackageName()).child(oldCls));
-			node.setValue(rootPath.child(resource).child(bundle).child(newCls.getPackageName()).child(newCls));
+			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(oldCls.getPackageName()))
+					.child(oldCls));
+			node.setValue(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(newCls.getPackageName()))
+					.child(newCls));
 		}
 	}
 
 	@Override
 	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
 		if (isTargetResource(resource))
-			root.removeNodeByPath(rootPath.child(resource).child(bundle).child(cls.getPackageName()).child(cls));
+			root.removeNodeByPath(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(cls.getPackageName()))
+					.child(cls));
 	}
 
 	@Override
 	public void onNewFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo file) {
 		if (isTargetResource(resource))
-			root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(file.getDirectoryName()).child(file));
+			root.getOrCreateNodeByPath(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(file.getDirectoryName()))
+					.child(file));
 	}
 
 	@Override
 	public void onUpdateFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo oldFile, @Nonnull FileInfo newFile) {
 		if (isTargetResource(resource)) {
-			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource).child(bundle).child(oldFile.getDirectoryName()).child(oldFile));
-			node.setValue(rootPath.child(resource).child(bundle).child(newFile.getDirectoryName()).child(newFile));
+			WorkspaceTreeNode node = root.getOrCreateNodeByPath(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(oldFile.getDirectoryName()))
+					.child(oldFile));
+			node.setValue(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(newFile.getDirectoryName()))
+					.child(newFile));
 		}
 	}
 
 	@Override
 	public void onRemoveFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo file) {
 		if (isTargetResource(resource))
-			root.removeNodeByPath(rootPath.child(resource).child(bundle).child(file.getDirectoryName()).child(file));
+			root.removeNodeByPath(rootPath.child(resource)
+					.child(bundle)
+					.child(interceptDirectoryName(file.getDirectoryName()))
+					.child(file));
+	}
+
+	/**
+	 * @param directory
+	 * 		Input package or directory name.
+	 *
+	 * @return Filtered name to prevent bogus paths with thousands of embedded directories.
+	 */
+	@Nullable
+	private String interceptDirectoryName(@Nullable String directory) {
+		if (directory == null) return null;
+
+		String[] split = directory.split("/");
+		int max = explorerConfig.getMaxTreeDirectoryDepth();
+		if (split.length > max) {
+			return StringUtil.cutOffAtNth(directory, '/', max) + "...";
+		}
+		return directory;
+	}
+
+	@SuppressWarnings("StringEquality")
+	private static int compareFilePaths(@Nonnull String a, @Nonnull String b) {
+		String directoryPathA = StringUtil.cutOffAtLast(a, '/');
+		String directoryPathB = StringUtil.cutOffAtLast(b, '/');
+		if (!Objects.equals(directoryPathA, directoryPathB)) {
+			// The directory path is the input path (same reference) if there is no '/'.
+			// We always want root paths to be shown first since we group them in a container directory anyways.
+			if (directoryPathA == a && directoryPathB != b)
+				return -1;
+			if (directoryPathA != a && directoryPathB == b)
+				return 1;
+
+			// We want subdirectories to be shown first over files in the directory.
+			if (directoryPathB.startsWith(directoryPathA))
+				return 1;
+			else if (directoryPathA.startsWith(directoryPathB))
+				return -1;
+		}
+
+		return a.compareTo(b);
 	}
 }

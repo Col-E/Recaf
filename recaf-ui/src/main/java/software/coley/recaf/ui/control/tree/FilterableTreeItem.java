@@ -127,11 +127,25 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public void addAndSortChild(@Nonnull TreeItem<T> item) {
 		synchronized (sourceChildren) {
-			int index = Collections.binarySearch((List) getChildren(), item);
-			if (index < 0)
-				index = -(index + 1);
-			sourceChildren.add(index, item);
+			if (sourceChildren.isEmpty()) {
+				sourceChildren.add(item);
+			} else {
+				int index = Collections.binarySearch((List) getChildren(), item);
+				if (index < 0)
+					index = -(index + 1);
+				sourceChildren.add(index, item);
+			}
 		}
+	}
+
+	/**
+	 * Add an unfiltered unsorted child to this item.
+	 *
+	 * @param item
+	 * 		Child item to add.
+	 */
+	protected void addPreSortedChild(@Nonnull TreeItem<T> item) {
+		sourceChildren.add(item);
 	}
 
 	/**

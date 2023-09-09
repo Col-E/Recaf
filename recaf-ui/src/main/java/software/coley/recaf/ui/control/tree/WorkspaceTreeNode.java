@@ -132,20 +132,36 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @param node
 	 * 		Tree node to insert into.
 	 * @param path
-	 * 		Path to insert.
+	 * 		Path to insert, relative to the given node.
 	 *
 	 * @return Inserted node.
 	 */
 	@Nonnull
 	@SuppressWarnings("deprecation")
-	public static WorkspaceTreeNode getOrInsertIntoTree(WorkspaceTreeNode node, PathNode<?> path) {
+	public static WorkspaceTreeNode getOrInsertIntoTree(@Nonnull WorkspaceTreeNode node, @Nonnull PathNode<?> path) {
+		return getOrInsertIntoTree(node, path, false);
+	}
+
+	/**
+	 * Get/insert a {@link WorkspaceTreeNode} holding the given {@link PathNode} from/to the tree model.
+	 *
+	 * @param node
+	 * 		Tree node to insert into.
+	 * @param path
+	 * 		Path to insert, relative to the given node.
+	 *
+	 * @return Inserted node.
+	 */
+	@Nonnull
+	@SuppressWarnings("deprecation")
+	public static WorkspaceTreeNode getOrInsertIntoTree(@Nonnull WorkspaceTreeNode node, @Nonnull PathNode<?> path, boolean sorted) {
 		// Edge case handling for directory nodes.
 		if (path instanceof DirectoryPathNode directoryPath) {
 			// If we have parent links in our path, insert those first.
 			// We should generate up to whatever context our parent is.
 			BundlePathNode parent = directoryPath.getParent();
 			if (parent != null)
-				node = getOrInsertIntoTree(node, parent);
+				node = getOrInsertIntoTree(node, parent, sorted);
 
 			// Work off of the first node that does NOT contain a directory value.
 			while (node.getValue() instanceof DirectoryPathNode) {
@@ -175,7 +191,11 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 					}
 				if (childNode == null) {
 					childNode = new WorkspaceTreeNode(localPathNode);
-					node.addAndSortChild(childNode);
+					if (sorted) {
+						node.addPreSortedChild(childNode);
+					} else {
+						node.addAndSortChild(childNode);
+					}
 				}
 
 				// Prepare for next directory path entry.
@@ -188,7 +208,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 		// We should generate up to whatever context our parent is.
 		PathNode<?> parent = path.getParent();
 		if (parent != null)
-			node = getOrInsertIntoTree(node, parent);
+			node = getOrInsertIntoTree(node, parent, sorted);
 		else if (path.idMatch(node.getValue())) {
 			// We are the root link in the path. This check ensures that as the root type we do not
 			// insert a new tree-node of the same value, to the children list of the root tree node.
@@ -202,7 +222,11 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 
 		// Not already inserted, create a new node and insert it.
 		WorkspaceTreeNode inserted = new WorkspaceTreeNode(path);
-		node.addAndSortChild(inserted);
+		if (sorted) {
+			node.addPreSortedChild(inserted);
+		} else {
+			node.addAndSortChild(inserted);
+		}
 		return inserted;
 	}
 }
