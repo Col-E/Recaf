@@ -107,7 +107,7 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 		 * @return Message content of log call.
 		 */
 		@Nonnull
-		public String getAndPruneContent() {
+		public synchronized String getAndPruneContent() {
 			String content = messageContent;
 			if (content == null)
 				throw new IllegalStateException();
