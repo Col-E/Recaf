@@ -1,5 +1,6 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
@@ -343,11 +344,11 @@ public class Types {
 	 * @param signature
 	 * 		Signature text.
 	 * @param isTypeSignature
-	 * 		See {@code org.objectweb.asm.commons.ClassRemapper} for usage.
+	 * 		See {@link org.objectweb.asm.commons.ClassRemapper} for usage.
 	 *
-	 * @return {@code true} for signature being parsing.
+	 * @return {@code true} for a valid signature. Will be {@code false} otherwise, or for {@code null} values.
 	 */
-	public static boolean isValidSignature(String signature, boolean isTypeSignature) {
+	public static boolean isValidSignature(@Nullable String signature, boolean isTypeSignature) {
 		if (signature == null)
 			return false;
 		try {
