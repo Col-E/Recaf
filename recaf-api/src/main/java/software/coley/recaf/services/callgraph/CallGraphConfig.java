@@ -21,7 +21,7 @@ public class CallGraphConfig extends BasicConfigContainer implements ServiceConf
 	public CallGraphConfig() {
 		super(ConfigGroups.SERVICE_ANALYSIS, CallGraph.SERVICE_ID + CONFIG_SUFFIX);
 		// Add values
-		addValue(new BasicConfigValue<>("active", Boolean.class, active));
+		addValue(new BasicConfigValue<>("active", boolean.class, active));
 	}
 
 	/**

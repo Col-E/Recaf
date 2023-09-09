@@ -27,9 +27,9 @@ public class TextFormatConfig extends BasicConfigContainer {
 	public TextFormatConfig() {
 		super(ConfigGroups.SERVICE_UI, ID + CONFIG_SUFFIX);
 		// Add values
-		addValue(new BasicConfigValue<>("escape", Boolean.class, escape));
-		addValue(new BasicConfigValue<>("shorten", Boolean.class, shorten));
-		addValue(new BasicConfigValue<>("max-length", Integer.class, maxLength));
+		addValue(new BasicConfigValue<>("escape", boolean.class, escape));
+		addValue(new BasicConfigValue<>("shorten", boolean.class, shorten));
+		addValue(new BasicConfigValue<>("max-length", int.class, maxLength));
 	}
 
 	/**

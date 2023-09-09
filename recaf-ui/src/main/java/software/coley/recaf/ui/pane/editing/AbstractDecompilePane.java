@@ -264,7 +264,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 								String trace = StringUtil.traceToString(exception);
 								editor.setText("/*\nDecompile failed:\n" + trace + "\n*/");
 							} else
-								editor.setText("/*\nDecompile failed, but no trace was attached:\n*/");
+								editor.setText("/*\nDecompile failed, but no trace was attached.\n*/");
 						}
 					}
 

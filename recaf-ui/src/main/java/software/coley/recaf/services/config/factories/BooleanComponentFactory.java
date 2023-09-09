@@ -11,7 +11,7 @@ import software.coley.recaf.services.config.TypedConfigComponentFactory;
 import software.coley.recaf.util.Lang;
 
 /**
- * Factory for general {@link Boolean} values.
+ * Factory for general {@code boolean} values.
  *
  * @author Matt Coley
  */
@@ -19,7 +19,7 @@ import software.coley.recaf.util.Lang;
 public class BooleanComponentFactory extends TypedConfigComponentFactory<Boolean> {
 	@Inject
 	public BooleanComponentFactory() {
-		super(true, Boolean.class);
+		super(true, boolean.class);
 	}
 
 	@Override

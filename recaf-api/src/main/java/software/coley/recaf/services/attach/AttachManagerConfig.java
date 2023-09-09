@@ -28,8 +28,8 @@ public class AttachManagerConfig extends BasicConfigContainer implements Service
 		super(ConfigGroups.SERVICE_DEBUG, AttachManager.SERVICE_ID + CONFIG_SUFFIX);
 		this.directories = directories;
 		// Add values
-		addValue(new BasicConfigValue<>("passive-scanning", Boolean.class, passiveScanning, true));
-		addValue(new BasicConfigValue<>("attach-jmx-bean-agent", Boolean.class, attachJmxAgent));
+		addValue(new BasicConfigValue<>("passive-scanning", boolean.class, passiveScanning, true));
+		addValue(new BasicConfigValue<>("attach-jmx-bean-agent", boolean.class, attachJmxAgent));
 	}
 
 	/**

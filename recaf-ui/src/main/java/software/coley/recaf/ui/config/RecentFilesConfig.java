@@ -42,7 +42,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	public RecentFilesConfig() {
 		super(ConfigGroups.SERVICE_IO, ID + CONFIG_SUFFIX);
 		// Add values
-		addValue(new BasicConfigValue<>("max-recent-workspaces", Integer.class, maxRecentWorkspaces));
+		addValue(new BasicConfigValue<>("max-recent-workspaces", int.class, maxRecentWorkspaces));
 		addValue(new BasicCollectionConfigValue<>("recent-workspaces", List.class, WorkspaceModel.class, recentWorkspaces));
 		addValue(new BasicConfigValue<>("last-workspace-open-path", String.class, lastWorkspaceOpenDirectory));
 		addValue(new BasicConfigValue<>("last-workspace-export-path", String.class, lastWorkspaceExportDirectory));

@@ -560,6 +560,7 @@ service.ui.file-type-association-config.extensions-to-langs=Extension to languag
 service.ui.window-manager-config=Window manager
 service.ui.workspace-explorer-config=Workspace explorer
 service.ui.workspace-explorer-config.drag-drop-action=Drag & drop behavior
+service.ui.workspace-explorer-config.max-tree-dir-depth=Max tree depth
 
 ##### Config
 # conf.display=Appearance

@@ -46,24 +46,24 @@ public class ProcyonConfig extends BasicConfigContainer implements DecompilerCon
 	@Inject
 	public ProcyonConfig() {
 		super(ConfigGroups.SERVICE_DECOMPILE, "decompiler-procyon" + CONFIG_SUFFIX);
-		addValue(new BasicConfigValue<>("includeLineNumbersInBytecode", Boolean.class, includeLineNumbersInBytecode));
-		addValue(new BasicConfigValue<>("showSyntheticMembers", Boolean.class, showSyntheticMembers));
-		addValue(new BasicConfigValue<>("alwaysGenerateExceptionVariableForCatchBlocks", Boolean.class, alwaysGenerateExceptionVariableForCatchBlocks));
-		addValue(new BasicConfigValue<>("forceFullyQualifiedReferences", Boolean.class, forceFullyQualifiedReferences));
-		addValue(new BasicConfigValue<>("forceExplicitImports", Boolean.class, forceExplicitImports));
-		addValue(new BasicConfigValue<>("forceExplicitTypeArguments", Boolean.class, forceExplicitTypeArguments));
-		addValue(new BasicConfigValue<>("flattenSwitchBlocks", Boolean.class, flattenSwitchBlocks));
-		addValue(new BasicConfigValue<>("excludeNestedTypes", Boolean.class, excludeNestedTypes));
-		addValue(new BasicConfigValue<>("retainRedundantCasts", Boolean.class, retainRedundantCasts));
-		addValue(new BasicConfigValue<>("retainPointlessSwitches", Boolean.class, retainPointlessSwitches));
-		addValue(new BasicConfigValue<>("isUnicodeOutputEnabled", Boolean.class, isUnicodeOutputEnabled));
-		addValue(new BasicConfigValue<>("includeErrorDiagnostics", Boolean.class, includeErrorDiagnostics));
-		addValue(new BasicConfigValue<>("mergeVariables", Boolean.class, mergeVariables));
-		addValue(new BasicConfigValue<>("disableForEachTransforms", Boolean.class, disableForEachTransforms));
-		addValue(new BasicConfigValue<>("showDebugLineNumbers", Boolean.class, showDebugLineNumbers));
-		addValue(new BasicConfigValue<>("simplifyMemberReferences", Boolean.class, simplifyMemberReferences));
-		addValue(new BasicConfigValue<>("arePreviewFeaturesEnabled", Boolean.class, arePreviewFeaturesEnabled));
-		addValue(new BasicConfigValue<>("textBlockLineMinimum", Integer.class, textBlockLineMinimum));
+		addValue(new BasicConfigValue<>("includeLineNumbersInBytecode", boolean.class, includeLineNumbersInBytecode));
+		addValue(new BasicConfigValue<>("showSyntheticMembers", boolean.class, showSyntheticMembers));
+		addValue(new BasicConfigValue<>("alwaysGenerateExceptionVariableForCatchBlocks", boolean.class, alwaysGenerateExceptionVariableForCatchBlocks));
+		addValue(new BasicConfigValue<>("forceFullyQualifiedReferences", boolean.class, forceFullyQualifiedReferences));
+		addValue(new BasicConfigValue<>("forceExplicitImports", boolean.class, forceExplicitImports));
+		addValue(new BasicConfigValue<>("forceExplicitTypeArguments", boolean.class, forceExplicitTypeArguments));
+		addValue(new BasicConfigValue<>("flattenSwitchBlocks", boolean.class, flattenSwitchBlocks));
+		addValue(new BasicConfigValue<>("excludeNestedTypes", boolean.class, excludeNestedTypes));
+		addValue(new BasicConfigValue<>("retainRedundantCasts", boolean.class, retainRedundantCasts));
+		addValue(new BasicConfigValue<>("retainPointlessSwitches", boolean.class, retainPointlessSwitches));
+		addValue(new BasicConfigValue<>("isUnicodeOutputEnabled", boolean.class, isUnicodeOutputEnabled));
+		addValue(new BasicConfigValue<>("includeErrorDiagnostics", boolean.class, includeErrorDiagnostics));
+		addValue(new BasicConfigValue<>("mergeVariables", boolean.class, mergeVariables));
+		addValue(new BasicConfigValue<>("disableForEachTransforms", boolean.class, disableForEachTransforms));
+		addValue(new BasicConfigValue<>("showDebugLineNumbers", boolean.class, showDebugLineNumbers));
+		addValue(new BasicConfigValue<>("simplifyMemberReferences", boolean.class, simplifyMemberReferences));
+		addValue(new BasicConfigValue<>("arePreviewFeaturesEnabled", boolean.class, arePreviewFeaturesEnabled));
+		addValue(new BasicConfigValue<>("textBlockLineMinimum", int.class, textBlockLineMinimum));
 		addValue(new BasicConfigValue<>("forcedCompilerTarget", CompilerTarget.class, forcedCompilerTarget));
 		addValue(new BasicConfigValue<>("bytecodeOutputOptions", BytecodeOutputOptions.class, bytecodeOutputOptions));
 	}

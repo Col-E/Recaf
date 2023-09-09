@@ -26,7 +26,7 @@ public class ScriptManagerConfig extends BasicConfigContainer implements Service
 	public ScriptManagerConfig(RecafDirectoriesConfig directories) {
 		super(ConfigGroups.SERVICE_PLUGIN, ScriptManager.SERVICE_ID + CONFIG_SUFFIX);
 		this.directories = directories;
-		addValue(new BasicConfigValue<>("file-watching", Boolean.class, fileWatching));
+		addValue(new BasicConfigValue<>("file-watching", boolean.class, fileWatching));
 	}
 
 	/**

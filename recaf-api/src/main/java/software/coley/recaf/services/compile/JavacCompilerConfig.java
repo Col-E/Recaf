@@ -30,10 +30,10 @@ public class JavacCompilerConfig extends BasicConfigContainer implements Service
 	@Inject
 	public JavacCompilerConfig() {
 		super(ConfigGroups.SERVICE_COMPILE, JavacCompiler.SERVICE_ID + CONFIG_SUFFIX);
-		addValue(new BasicConfigValue<>("generate-phantoms", Boolean.class, generatePhantoms));
-		addValue(new BasicConfigValue<>("default-emit-debug", Boolean.class, defaultEmitDebug));
-		addValue(new BasicConfigValue<>("default-compile-target-version", Integer.class, defaultTargetVersion));
-		addValue(new BasicConfigValue<>("default-downsample-target-version", Integer.class, defaultDownsampleTargetVersion));
+		addValue(new BasicConfigValue<>("generate-phantoms", boolean.class, generatePhantoms));
+		addValue(new BasicConfigValue<>("default-emit-debug", boolean.class, defaultEmitDebug));
+		addValue(new BasicConfigValue<>("default-compile-target-version", int.class, defaultTargetVersion));
+		addValue(new BasicConfigValue<>("default-downsample-target-version", int.class, defaultDownsampleTargetVersion));
 	}
 
 	/**

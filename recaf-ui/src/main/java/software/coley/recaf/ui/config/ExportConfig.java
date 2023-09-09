@@ -29,8 +29,8 @@ public class ExportConfig extends BasicConfigContainer {
 		super(ConfigGroups.SERVICE_IO, "export" + CONFIG_SUFFIX);
 		// Add values
 		addValue(new BasicConfigValue<>("compression", WorkspaceExportOptions.CompressType.class, compression));
-		addValue(new BasicConfigValue<>("bundle-supporting-resources", Boolean.class, bundleSupportingResources));
-		addValue(new BasicConfigValue<>("create-zip-dir-entries", Boolean.class, createZipDirEntries));
+		addValue(new BasicConfigValue<>("bundle-supporting-resources", boolean.class, bundleSupportingResources));
+		addValue(new BasicConfigValue<>("create-zip-dir-entries", boolean.class, createZipDirEntries));
 	}
 
 	/**

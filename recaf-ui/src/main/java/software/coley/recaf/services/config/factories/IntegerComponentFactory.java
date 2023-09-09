@@ -15,7 +15,7 @@ import software.coley.recaf.services.config.TypedConfigComponentFactory;
 import software.coley.recaf.util.Effects;
 
 /**
- * Factory for general {@link Integer} values.
+ * Factory for general {@code int} values.
  *
  * @author pvpb0t
  */
@@ -24,7 +24,7 @@ public class IntegerComponentFactory extends TypedConfigComponentFactory<Integer
 
     @Inject
     protected IntegerComponentFactory() {
-        super(false, Integer.class);
+        super(false, int.class);
     }
 
     @Override

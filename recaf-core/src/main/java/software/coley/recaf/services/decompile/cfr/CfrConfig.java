@@ -188,8 +188,8 @@ public class CfrConfig extends BasicConfigContainer implements DecompilerConfig 
 		addValue(new BasicConfigValue<>("removedeadconditionals", TrooleanOption.class, removedeadconditionals));
 		addValue(new BasicConfigValue<>("aggressivedoextension", TrooleanOption.class, aggressivedoextension));
 		addValue(new BasicConfigValue<>("aggressiveduff", TrooleanOption.class, aggressiveduff));
-		addValue(new BasicConfigValue<>("aggressivedocopy", Integer.class, aggressivedocopy));
-		addValue(new BasicConfigValue<>("aggressivesizethreshold", Integer.class, aggressivesizethreshold));
+		addValue(new BasicConfigValue<>("aggressivedocopy", int.class, aggressivedocopy));
+		addValue(new BasicConfigValue<>("aggressivesizethreshold", int.class, aggressivesizethreshold));
 		addValue(new BasicConfigValue<>("staticinitreturn", BooleanOption.class, staticinitreturn));
 		addValue(new BasicConfigValue<>("usenametable", BooleanOption.class, usenametable));
 		addValue(new BasicConfigValue<>("pullcodecase", BooleanOption.class, pullcodecase));
