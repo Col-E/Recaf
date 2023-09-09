@@ -39,10 +39,10 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 			root = parentNode;
 
 		// Get node by path.
-		WorkspaceTreeNode nodeByPath = root.getOrCreateNodeByPath(path);
+		WorkspaceTreeNode nodeByPath = root.getNodeByPath(path);
 
 		// Get that node's parent, remove the child.
-		if (nodeByPath.getParent() instanceof WorkspaceTreeNode parentNode) {
+		if (nodeByPath != null && nodeByPath.getParent() instanceof WorkspaceTreeNode parentNode) {
 			boolean removed = parentNode.removeSourceChild(nodeByPath);
 			while (parentNode.isLeaf() && parentNode.getParentNode() != null) {
 				WorkspaceTreeNode parentOfParent = parentNode.getParentNode();
