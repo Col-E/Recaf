@@ -37,12 +37,10 @@ import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
+import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.control.PannableView;
 import software.coley.recaf.ui.window.MappingProgressWindow;
-import software.coley.recaf.util.Colors;
-import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.ToStringConverter;
+import software.coley.recaf.util.*;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
@@ -85,15 +83,18 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 	private final ObservableList<TreeContent> treeContentList;
 	private final WorkspaceManager workspaceManager;
 	private final BooleanProperty active = new SimpleBooleanProperty();
+	private final WorkspaceExplorerConfig explorerConfig;
 	private IntermediateMappings mappings;
 	private Callable<Boolean> pendingUpdate;
 
 	@Inject
 	public MappingProgressPane(@Nonnull CellConfigurationService configurationService,
+							   @Nonnull WorkspaceExplorerConfig explorerConfig,
 							   @Nonnull Instance<AggregateMappingManager> aggregateMappingManagerInstance,
 							   @Nonnull WorkspaceManager workspaceManager) {
 		this.workspaceManager = workspaceManager;
 		this.configurationService = configurationService;
+		this.explorerConfig = explorerConfig;
 
 		// Create the tree-map pane
 		TreeMapPane<TreeContent> treeMapPane = TreeMapPane.forTreeContent();
@@ -249,7 +250,14 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 						return;
 
 					ClassInfo info = classPath.getValue();
-					String[] sections = info.getName().split("/");
+					String name = info.getName();
+					String[] sections = name.split("/");
+					int maxSplit = explorerConfig.getMaxTreeDirectoryDepth();
+					if (sections.length > maxSplit) {
+						name = StringUtil.cutOffAtNth(name, '/', maxSplit) + "/" + StringUtil.shortenPath(name);
+						sections = name.split("/");
+					}
+
 					Tree<String, ClassPathNode> path = tree;
 					for (int i = 0; i < sections.length; i++) {
 						String section = sections[i];
