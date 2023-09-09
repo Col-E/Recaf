@@ -4,12 +4,14 @@ import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
@@ -21,8 +23,16 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
+import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;
+import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.pane.MappingGeneratorPane;
+import software.coley.recaf.ui.window.RecafScene;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
@@ -41,6 +51,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static software.coley.recaf.util.Lang.getBinding;
+
 /**
  * Summarizer that allows patching of common anti-dcompilation tricks.
  *
@@ -50,10 +62,17 @@ import java.util.stream.Collectors;
 public class AntiDecompilationSummarizer implements ResourceSummarizer {
 	private static final int LONG_ANNO = 256;
 	private static final int BUTTON_WIDTH = 210;
+	private static final NameGeneratorFilter ILLEGAL_NAME_FILTER =
+			new IncludeWhitespaceNameFilter(new IncludeNonAsciiNameFilter(new IncludeKeywordNameFilter(null)));
 	private static final Logger logger = Logging.get(AntiDecompilationSummarizer.class);
+	private final Instance<MappingGeneratorPane> generatorPaneProvider;
+	private final WindowFactory windowFactory;
 
 	@Inject
-	public AntiDecompilationSummarizer() {
+	public AntiDecompilationSummarizer(@Nonnull Instance<MappingGeneratorPane> generatorPaneProvider,
+									   @Nonnull WindowFactory windowFactory) {
+		this.generatorPaneProvider = generatorPaneProvider;
+		this.windowFactory = windowFactory;
 	}
 
 	@Override
@@ -63,6 +82,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 							 @Nonnull SummaryConsumer consumer) {
 		Set<JvmClassInfo> classesWithInvalidSignatures = Collections.newSetFromMap(new IdentityHashMap<>());
 		Set<JvmClassInfo> classesWithDuplicateAnnotations = Collections.newSetFromMap(new IdentityHashMap<>());
+		Set<JvmClassInfo> classesWithIllegalNames = Collections.newSetFromMap(new IdentityHashMap<>());
 		Map<JvmClassInfo, Set<String>> classesWithLongAnnotations = new IdentityHashMap<>();
 		resource.jvmClassBundleStream().forEach(bundle -> {
 			bundle.forEach(cls -> {
@@ -155,6 +175,27 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 						}
 					}
 				}
+
+				// Check for illegally declared names.
+				illegalNames:
+				{
+					if (ILLEGAL_NAME_FILTER.shouldMapClass(cls)) {
+						classesWithIllegalNames.add(cls);
+						break illegalNames;
+					}
+					for (FieldMember field : cls.getFields()) {
+						if (ILLEGAL_NAME_FILTER.shouldMapField(cls, field)) {
+							classesWithIllegalNames.add(cls);
+							break illegalNames;
+						}
+					}
+					for (MethodMember method : cls.getMethods()) {
+						if (ILLEGAL_NAME_FILTER.shouldMapMethod(cls, method)) {
+							classesWithIllegalNames.add(cls);
+							break illegalNames;
+						}
+					}
+				}
 			});
 		});
 
@@ -167,6 +208,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 		int invalidSigCount = classesWithInvalidSignatures.size();
 		int dupAnnoCount = classesWithDuplicateAnnotations.size();
 		int longAnnoCount = classesWithLongAnnotations.size();
+		int illegalNameCount = classesWithIllegalNames.size();
 		if (cycleCount > 0 ||
 				invalidSigCount > 0 ||
 				dupAnnoCount > 0 ||
@@ -300,6 +342,29 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 					});
 				}).once().width(BUTTON_WIDTH);
 				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", longAnnoCount));
+				consumer.appendSummary(box(action, label));
+			}
+
+			// Option to open mapping generator
+			if (illegalNameCount > 0) {
+				Button action = new ActionButton(CarbonIcons.LICENSE_MAINTENANCE, Lang.getBinding("service.analysis.anti-decompile.illegal-name"), () -> {
+					CompletableFuture.runAsync(() -> {
+						MappingGeneratorPane mappingGeneratorPane = generatorPaneProvider.get();
+						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeNonAsciiNames());
+						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeKeywordNames());
+						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeWhitespaceNames());
+						RecafScene scene = new RecafScene(mappingGeneratorPane);
+						FxThreadUtil.run(() -> {
+							Stage window = windowFactory.createAnonymousStage(scene, getBinding("mapgen"), 800, 400);
+							window.show();
+							window.requestFocus();
+						});
+					}, service).exceptionally(t -> {
+						logger.error("Failed to open mapping viewer", t);
+						return null;
+					});
+				}).width(BUTTON_WIDTH);
+				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", illegalNameCount));
 				consumer.appendSummary(box(action, label));
 			}
 
