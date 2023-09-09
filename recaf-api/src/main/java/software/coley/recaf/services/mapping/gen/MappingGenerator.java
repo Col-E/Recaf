@@ -158,7 +158,7 @@ public class MappingGenerator implements Service {
 				String methodDesc = method.getDescriptor();
 
 				// Skip if reserved method name.
-				if (methodName.charAt(0) == '<')
+				if (methodName.length() > 0 && methodName.charAt(0) == '<')
 					continue;
 
 				// Skip if filtered.
