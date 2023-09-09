@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping.gen.filter;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -22,7 +23,7 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 	 * @param next
 	 * 		Next filter to link. Chaining filters allows for {@code thisFilter && nextFilter}.
 	 */
-	public IncludeKeywordNameFilter(@Nonnull NameGeneratorFilter next) {
+	public IncludeKeywordNameFilter(@Nullable NameGeneratorFilter next) {
 		super(next, false);
 	}
 

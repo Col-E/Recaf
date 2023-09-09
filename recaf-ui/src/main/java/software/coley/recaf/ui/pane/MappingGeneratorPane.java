@@ -7,6 +7,7 @@ import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -19,6 +20,8 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
@@ -28,13 +31,13 @@ import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.format.EnigmaMappings;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
-import software.coley.recaf.services.mapping.gen.NameGenerator;
 import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.filter.*;
 import software.coley.recaf.services.mapping.gen.generator.IncrementingNameGenerator;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.*;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.util.*;
@@ -43,6 +46,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -55,6 +59,7 @@ import java.util.stream.Collectors;
  */
 @Dependent
 public class MappingGeneratorPane extends StackPane {
+	private static final Logger logger = Logging.get(MappingGenerator.class);
 	private static final ToStringConverter<TextMatchMode> textModeConverter = ToStringConverter.from(MappingGeneratorPane::modeToName);
 	private static final List<TextMatchMode> textModes = TextMatchMode.valuesList();
 	private final ObjectProperty<Mappings> mappingsToApply = new SimpleObjectProperty<>();
@@ -64,13 +69,15 @@ public class MappingGeneratorPane extends StackPane {
 	private final InheritanceGraph graph;
 	private final ModalPane modal = new ModalPane();
 	private final MappingApplier mappingApplier;
+	private final Node previewGroup;
 
 	@Inject
 	public MappingGeneratorPane(@Nonnull Workspace workspace,
 								@Nonnull MappingGenerator mappingGenerator,
 								@Nonnull InheritanceGraph graph,
 								@Nonnull AggregateMappingManager aggregateMappingManager,
-								@Nonnull MappingApplier mappingApplier) {
+								@Nonnull MappingApplier mappingApplier,
+								@Nonnull Instance<SearchBar> searchBarProvider) {
 		this.workspace = workspace;
 		this.mappingGenerator = mappingGenerator;
 		this.graph = graph;
@@ -80,7 +87,7 @@ public class MappingGeneratorPane extends StackPane {
 		Node filterGroup = createFilterDisplay(aggregateMappingManager);
 
 		// Create preview.
-		Node previewGroup = createPreviewDisplay();
+		previewGroup = createPreviewDisplay(searchBarProvider);
 
 		// Layout and wrap up.
 		SplitPane horizontalWrapper = new SplitPane(filterGroup, previewGroup);
@@ -89,20 +96,34 @@ public class MappingGeneratorPane extends StackPane {
 		getChildren().addAll(modal, horizontalWrapper);
 	}
 
+	public boolean addConfiguredFilter(@Nonnull FilterWithConfigNode<?> filterConfig) {
+		return filters.getItems().add(filterConfig);
+	}
+
 	private void generate() {
-		// Initial link in the filter chain, plus linking items in reverse order from the list.
-		NameGeneratorFilter filter = new ExcludeEnumMethodsFilter(null);
+		// Linking items in reverse order from the list.
+		NameGeneratorFilter filter = null;
 		List<FilterWithConfigNode<?>> list = filters.getItems();
 		for (int i = list.size() - 1; i >= 0; i--) {
 			FilterWithConfigNode<?> configurableFilter = list.get(i);
 			filter = configurableFilter.build(filter);
 		}
+		NameGeneratorFilter finalFilter = filter;
 
 		// Generate the mappings
-		IncrementingNameGenerator nameGenerator = new IncrementingNameGenerator();
-		nameGenerator.setWorkspace(workspace);
-		Mappings mappings = mappingGenerator.generate(workspace, workspace.getPrimaryResource(), graph, nameGenerator, filter);
-		mappingsToApply.set(mappings);
+		previewGroup.setDisable(true);
+		CompletableFuture.supplyAsync(() -> {
+			IncrementingNameGenerator nameGenerator = new IncrementingNameGenerator();
+			nameGenerator.setWorkspace(workspace);
+			return mappingGenerator.generate(workspace, workspace.getPrimaryResource(), graph, nameGenerator, finalFilter);
+		}).whenCompleteAsync((mappings, error) -> {
+			previewGroup.setDisable(false);
+			if (mappings != null) {
+				mappingsToApply.set(mappings);
+			} else if (error != null){
+				logger.error("Failed to generate mappings", error);
+			}
+		}, FxThreadUtil.executor());
 	}
 
 	private void apply() {
@@ -116,7 +137,7 @@ public class MappingGeneratorPane extends StackPane {
 	}
 
 	@Nonnull
-	private Node createPreviewDisplay() {
+	private Node createPreviewDisplay(@Nonnull Instance<SearchBar> searchBarProvider) {
 		// Editor to preview the current mappings
 		Editor editor = new Editor();
 		editor.setText("# A preview of your mappings will appear here once generated");
@@ -124,6 +145,7 @@ public class MappingGeneratorPane extends StackPane {
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getLangEngimaMap()));
 		editor.getCodeArea().setEditable(false);
 		editor.disableProperty().bind(mappingsToApply.isNull());
+		searchBarProvider.get().install(editor);
 
 		// Label describing how much of the workspace will be updated by the current mappings.
 		Label stats = new Label();
@@ -196,7 +218,7 @@ public class MappingGeneratorPane extends StackPane {
 		ObjectProperty<Supplier<FilterWithConfigNode<?>>> nodeSupplier = new SimpleObjectProperty<>();
 		Button addFilter = new ActionButton(CarbonIcons.ADD_ALT, Lang.getBinding("mapgen.filters.add"), () -> {
 			FilterWithConfigNode<?> filterConfig = nodeSupplier.get().get();
-			showConfigurator(filterConfig, () -> filters.getItems().add(filterConfig));
+			showConfigurator(filterConfig, () -> addConfiguredFilter(filterConfig));
 		});
 		addFilter.disableProperty().bind(nodeSupplier.isNull());
 
@@ -226,6 +248,7 @@ public class MappingGeneratorPane extends StackPane {
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.excludeclasses", ExcludeClasses::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.excludemodifier", ExcludeModifiers::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includename", IncludeName::new),
+				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includelong", IncludeLongName::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includeclasses", IncludeClasses::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includemodifier", IncludeModifiers::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includewhitespacenames", IncludeWhitespaceNames::new),
@@ -305,7 +328,7 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link ExcludeNameFilter}.
 	 */
-	private static class ExcludeName extends FilterWithConfigNode<ExcludeNameFilter> {
+	public static class ExcludeName extends FilterWithConfigNode<ExcludeNameFilter> {
 		private final ObjectProperty<TextMatchMode> mode = new SimpleObjectProperty<>(TextMatchMode.CONTAINS);
 		private final StringProperty name = new SimpleStringProperty("com/example/Foo");
 		private final BooleanProperty classes = new SimpleBooleanProperty(true);
@@ -337,7 +360,7 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link ExcludeClassesFilter}.
 	 */
-	private static class ExcludeClasses extends FilterWithConfigNode<ExcludeClassesFilter> {
+	public static class ExcludeClasses extends FilterWithConfigNode<ExcludeClassesFilter> {
 		private final ObjectProperty<TextMatchMode> mode = new SimpleObjectProperty<>(TextMatchMode.CONTAINS);
 		private final StringProperty name = new SimpleStringProperty("com/example/Foo");
 
@@ -363,7 +386,7 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link ExcludeExistingMappedFilter}.
 	 */
-	private static class ExcludeExistingMapped extends FilterWithConfigNode<ExcludeExistingMappedFilter> {
+	public static class ExcludeExistingMapped extends FilterWithConfigNode<ExcludeExistingMappedFilter> {
 		private final AggregatedMappings aggregate;
 
 		private ExcludeExistingMapped(@Nonnull AggregatedMappings aggregate) {
@@ -390,7 +413,7 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link ExcludeModifiersNameFilter}.
 	 */
-	private static class ExcludeModifiers extends FilterWithConfigNode<ExcludeModifiersNameFilter> {
+	public static class ExcludeModifiers extends FilterWithConfigNode<ExcludeModifiersNameFilter> {
 		private final StringProperty modifiers = new SimpleStringProperty("public protected");
 		private final BooleanProperty classes = new SimpleBooleanProperty(true);
 		private final BooleanProperty fields = new SimpleBooleanProperty(true);
@@ -431,7 +454,7 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link IncludeNameFilter}.
 	 */
-	private static class IncludeName extends FilterWithConfigNode<IncludeNameFilter> {
+	public static class IncludeName extends FilterWithConfigNode<IncludeNameFilter> {
 		private final ObjectProperty<TextMatchMode> mode = new SimpleObjectProperty<>(TextMatchMode.CONTAINS);
 		private final StringProperty name = new SimpleStringProperty("com/example/Foo");
 		private final BooleanProperty classes = new SimpleBooleanProperty(true);
@@ -463,7 +486,7 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link IncludeClassesFilter}.
 	 */
-	private static class IncludeClasses extends FilterWithConfigNode<IncludeClassesFilter> {
+	public static class IncludeClasses extends FilterWithConfigNode<IncludeClassesFilter> {
 		private final ObjectProperty<TextMatchMode> mode = new SimpleObjectProperty<>(TextMatchMode.CONTAINS);
 		private final StringProperty name = new SimpleStringProperty("com/example/Foo");
 
@@ -489,7 +512,7 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link IncludeModifiersNameFilter}.
 	 */
-	private static class IncludeModifiers extends FilterWithConfigNode<IncludeModifiersNameFilter> {
+	public static class IncludeModifiers extends FilterWithConfigNode<IncludeModifiersNameFilter> {
 		private final StringProperty modifiers = new SimpleStringProperty("public protected");
 		private final BooleanProperty classes = new SimpleBooleanProperty(true);
 		private final BooleanProperty fields = new SimpleBooleanProperty(true);
@@ -528,9 +551,39 @@ public class MappingGeneratorPane extends StackPane {
 	}
 
 	/**
+	 * Config node for {@link IncludeLongNameFilter}.
+	 */
+	public static class IncludeLongName extends FilterWithConfigNode<IncludeLongNameFilter> {
+		private final IntegerProperty length = new SimpleIntegerProperty();
+		private final BooleanProperty classes = new SimpleBooleanProperty(true);
+		private final BooleanProperty fields = new SimpleBooleanProperty(true);
+		private final BooleanProperty methods = new SimpleBooleanProperty(true);
+
+		@Nonnull
+		@Override
+		public ObservableValue<String> display() {
+			return Bindings.concat(Lang.getBinding("mapgen.filter.includelong"), ": ", length.map(i -> Integer.toString(i.intValue())));
+		}
+
+		@Nonnull
+		@Override
+		protected Function<NameGeneratorFilter, IncludeLongNameFilter> makeProvider() {
+			return next -> new IncludeLongNameFilter(next, length.get(), classes.get(), fields.get(), methods.get());
+		}
+
+		@Override
+		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {
+			sink.accept(Lang.getBinding("mapgen.filter.includelong"), new BoundIntSpinner(length));
+			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includeclass"), classes));
+			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includefield"), fields));
+			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includemethod"), methods));
+		}
+	}
+
+	/**
 	 * Config node for {@link IncludeKeywordNameFilter}.
 	 */
-	private static class IncludeKeywordNames extends FilterWithConfigNode<IncludeKeywordNameFilter> {
+	public static class IncludeKeywordNames extends FilterWithConfigNode<IncludeKeywordNameFilter> {
 		@Nonnull
 		@Override
 		public ObservableValue<String> display() {
@@ -551,7 +604,7 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link IncludeNonAsciiNameFilter}.
 	 */
-	private static class IncludeNonAsciiNames extends FilterWithConfigNode<IncludeNonAsciiNameFilter> {
+	public static class IncludeNonAsciiNames extends FilterWithConfigNode<IncludeNonAsciiNameFilter> {
 		@Nonnull
 		@Override
 		public ObservableValue<String> display() {
@@ -572,7 +625,7 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link IncludeNonAsciiNameFilter}.
 	 */
-	private static class IncludeWhitespaceNames extends FilterWithConfigNode<IncludeWhitespaceNameFilter> {
+	public static class IncludeWhitespaceNames extends FilterWithConfigNode<IncludeWhitespaceNameFilter> {
 		@Nonnull
 		@Override
 		public ObservableValue<String> display() {
@@ -596,7 +649,7 @@ public class MappingGeneratorPane extends StackPane {
 	 * @param <F>
 	 * 		Filter type.
 	 */
-	private static abstract class FilterWithConfigNode<F extends NameGeneratorFilter> {
+	public static abstract class FilterWithConfigNode<F extends NameGeneratorFilter> {
 		private final Function<NameGeneratorFilter, F> filterProvider;
 		private Node node;
 		private int inputs;
