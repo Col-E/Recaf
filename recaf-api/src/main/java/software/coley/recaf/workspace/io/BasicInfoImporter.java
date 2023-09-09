@@ -197,7 +197,12 @@ public class BasicInfoImporter implements InfoImporter {
 	 *
 	 * @return {@code true} if ASM can parse the class.
 	 */
-	private static boolean isAsmCompliantClass(byte[] content) {
+	private boolean isAsmCompliantClass(byte[] content) {
+		// Skip validation if configured.
+		if (config.doSkipAsmValidation())
+			return true;
+
+		// ASM should be able to write back the read class.
 		try {
 			CustomAttributeCollectingVisitor visitor = new CustomAttributeCollectingVisitor(new ClassWriter(0));
 			ClassReader reader = new ClassReader(content);
