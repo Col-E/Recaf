@@ -29,6 +29,10 @@ public final class ConfigGroups {
 	 */
 	public static final String SERVICE_DEBUG = SERVICE + PACKAGE_SPLIT + "debug";
 	/**
+	 * Group for deobfuscation components.
+	 */
+	public static final String SERVICE_DEOBFUSCATION = SERVICE + PACKAGE_SPLIT + "deobfuscation";
+	/**
 	 * Group for decompiler components.
 	 */
 	public static final String SERVICE_DECOMPILE = SERVICE + PACKAGE_SPLIT + "decompile";

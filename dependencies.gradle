@@ -1,6 +1,7 @@
 def asmVersion = '9.5'
 def cafeDudeVersion = '1.10.2'
 def junitVersion = '5.9.2'
+def ssvmVersion = '4030675074'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
@@ -63,6 +64,10 @@ project.ext {
     regex = 'com.github.tommyettinger:regexodus:0.1.15'
 
     richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.1'
+
+    ssvm_core = "com.github.xxDark.SSVM:ssvm-core:$ssvmVersion"
+    ssvm_invoke = "com.github.xxDark.SSVM:ssvm-invoke:$ssvmVersion"
+    ssvm_io = "com.github.xxDark.SSVM:ssvm-io:$ssvmVersion"
 
     treemapfx = 'software.coley:treemap-fx:1.1.0'
 }
