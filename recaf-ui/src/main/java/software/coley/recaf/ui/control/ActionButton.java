@@ -7,6 +7,10 @@ import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import org.kordamp.ikonli.Ikon;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Button with an on-click runnable action.
@@ -14,6 +18,8 @@ import org.kordamp.ikonli.Ikon;
  * @author Matt Coley
  */
 public class ActionButton extends Button implements Tooltipable {
+	private static final ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("async-button-action");
+
 	/**
 	 * @param text
 	 * 		Button display text.
@@ -100,6 +106,21 @@ public class ActionButton extends Button implements Tooltipable {
 			setDisable(true);
 			setOnAction(null);
 		});
+		return this;
+	}
+
+	/**
+	 * Run the provided action asynchronously.
+	 * Do note that this will no longer run the action on the FX thread.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public ActionButton async() {
+		EventHandler<ActionEvent> onAction = getOnAction();
+		if (onAction == null)
+			throw new IllegalArgumentException("No action set");
+		setOnAction(e -> CompletableFuture.runAsync(() -> onAction.handle(e), service));
 		return this;
 	}
 
