@@ -1,7 +1,9 @@
 package software.coley.recaf.ui.control;
 
+import jakarta.annotation.Nonnull;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import org.kordamp.ikonli.Ikon;
@@ -81,6 +83,37 @@ public class ActionButton extends Button implements Tooltipable {
 	public ActionButton(ObservableValue<String> text, Runnable action) {
 		textProperty().bind(text);
 		setOnAction(e -> wrap(e, action));
+	}
+
+	/**
+	 * Only allow the action to be run once.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public ActionButton once() {
+		EventHandler<ActionEvent> onAction = getOnAction();
+		if (onAction == null)
+			throw new IllegalArgumentException("No action set");
+		setOnAction(e -> {
+			onAction.handle(e);
+			setDisable(true);
+			setOnAction(null);
+		});
+		return this;
+	}
+
+	/**
+	 * @param width
+	 * 		Width to assign to button.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public ActionButton width(double width) {
+		setMinWidth(width);
+		setPrefWidth(width);
+		return this;
 	}
 
 	private static void wrap(ActionEvent e, Runnable action) {

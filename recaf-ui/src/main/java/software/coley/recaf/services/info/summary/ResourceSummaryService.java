@@ -5,6 +5,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.scene.control.Separator;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.workspace.model.Workspace;
@@ -21,6 +23,7 @@ import java.util.TreeSet;
 @ApplicationScoped
 public class ResourceSummaryService implements Service {
 	public static final String SERVICE_ID = "info-summary";
+	private static final Logger logger = Logging.get(ResourceSummaryService.class);
 	private final ResourceSummaryServiceConfig config;
 	private final SortedSet<ResourceSummarizer> summarizers = new TreeSet<>();
 
@@ -55,7 +58,12 @@ public class ResourceSummaryService implements Service {
 		for (ResourceSummarizer summarizer : summarizers) {
 			if (lastSummarizerAppended)
 				consumer.appendSummary(new Separator());
-			lastSummarizerAppended = summarizer.summarize(workspace, resource, consumer);
+			try {
+				lastSummarizerAppended = summarizer.summarize(workspace, resource, consumer);
+			} catch (Throwable t) {
+				logger.error("Summarizer '{}' encountered an error", summarizer.getClass().getName(), t);
+				lastSummarizerAppended = false;
+			}
 		}
 	}
 
