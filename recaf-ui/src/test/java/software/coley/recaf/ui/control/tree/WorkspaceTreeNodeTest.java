@@ -9,6 +9,7 @@ import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.path.*;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.StringConsumer;
+import software.coley.recaf.test.dummy.StringConsumerUser;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
@@ -32,6 +33,7 @@ class WorkspaceTreeNodeTest {
 	static JvmClassInfo primaryClassInfo;
 	// Normal paths
 	static ClassPathNode p1;
+	static ClassPathNode p1b;
 	static DirectoryPathNode p2;
 	static DirectoryPathNode p2b;
 	static BundlePathNode p3c;
@@ -68,6 +70,7 @@ class WorkspaceTreeNodeTest {
 		p2 = p3c.child(packageName);
 		p2b = p3c.child(parentPackageName);
 		p1 = p2.child(primaryClassInfo);
+		p1b = p2.child(TestClassUtils.fromRuntimeClass(StringConsumerUser.class));
 
 		// Content available in the default package/root directory.
 		default2 = p3f.child(null);
@@ -89,13 +92,13 @@ class WorkspaceTreeNodeTest {
 		assertTrue(root.removeNodeByPath(default1));
 		assertNull(root.getNodeByPath(default1), "Info not removed");
 
-		// Remove the directory
-		assertNotNull(root.getNodeByPath(default2), "Could not get directory of info");
-		assertTrue(root.removeNodeByPath(default2));
+		// The directory should be removed since the tree was linear
+		assertNull(root.getNodeByPath(default2), "Could not get directory of info");
+		assertFalse(root.removeNodeByPath(default2));
 		assertNull(root.getNodeByPath(default2), "Directory of info not removed");
 
-		// Bundle should still exist
-		assertNotNull(root.getNodeByPath(p3f), "Could not get file bundle");
+		// There is no more content in the bundle, so it should be gone too
+		assertNull(root.getNodeByPath(p3f), "Could not get file bundle");
 	}
 
 	@Test
@@ -108,13 +111,39 @@ class WorkspaceTreeNodeTest {
 		assertTrue(root.removeNodeByPath(z1));
 		assertNull(root.getNodeByPath(z1), "Info not removed");
 
-		// Remove the directory
-		assertNotNull(root.getNodeByPath(z2), "Could not get directory of info");
-		assertTrue(root.removeNodeByPath(z2));
+		// The directory should be removed since the tree was linear
+		assertNull(root.getNodeByPath(z2), "Could not get directory of info");
+		assertFalse(root.removeNodeByPath(z2));
 		assertNull(root.getNodeByPath(z2), "Directory of info not removed");
 
-		// Bundle should still exist
-		assertNotNull(root.getNodeByPath(p3f), "Could not get file bundle");
+		// There is no more content in the bundle, so it should be gone too
+		assertNull(root.getNodeByPath(p3f), "Could not get file bundle");
+	}
+
+	@Test
+	void removeOneOfTwoChildrenDoesNotPruneWholeTree() {
+		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
+		root.getOrCreateNodeByPath(p1);
+		root.getOrCreateNodeByPath(p1b);
+
+		// Remove the info
+		assertNotNull(root.getNodeByPath(p1), "Could not get info");
+		assertTrue(root.removeNodeByPath(p1));
+		assertNull(root.getNodeByPath(p1), "Info not removed");
+
+		// The package should be not be removed since the tree still has one class remaining
+		assertNotNull(root.getNodeByPath(p2), "Could not get package of info");
+		assertTrue(root.removeNodeByPath(p1b), "Info not removed");
+
+		// Now the package should be removed
+		assertNull(root.getNodeByPath(p2), "Package of info not removed");
+		assertNull(root.getNodeByPath(p2b), "Parent of that package should not have been removed");
+
+		// There is no more content in the bundle, so it should be gone too
+		assertNull(root.getNodeByPath(p3c), "Could not get jvm class bundle");
+		assertFalse(root.removeNodeByPath(p3c));
+		assertNull(root.getNodeByPath(p3c), "Jvm class bundle not removed");
+		assertNull(root.getNodeByPath(p2b), "Child of jvm class bundle still accessible after bundle removal");
 	}
 
 	@Test
@@ -127,15 +156,15 @@ class WorkspaceTreeNodeTest {
 		assertTrue(root.removeNodeByPath(p1));
 		assertNull(root.getNodeByPath(p1), "Info not removed");
 
-		// Remove the package
-		assertNotNull(root.getNodeByPath(p2), "Could not get package of info");
-		assertTrue(root.removeNodeByPath(p2));
+		// The package should be removed since the tree was linear
+		assertNull(root.getNodeByPath(p2), "Could not get package of info");
+		assertFalse(root.removeNodeByPath(p2));
 		assertNull(root.getNodeByPath(p2), "Package of info not removed");
-		assertNotNull(root.getNodeByPath(p2b), "Parent of that package should not have been removed");
+		assertNull(root.getNodeByPath(p2b), "Parent of that package should not have been removed");
 
-		// Remove the bundle
-		assertNotNull(root.getNodeByPath(p3c), "Could not get jvm class bundle");
-		assertTrue(root.removeNodeByPath(p3c));
+		// There is no more content in the bundle, so it should be gone too
+		assertNull(root.getNodeByPath(p3c), "Could not get jvm class bundle");
+		assertFalse(root.removeNodeByPath(p3c));
 		assertNull(root.getNodeByPath(p3c), "Jvm class bundle not removed");
 		assertNull(root.getNodeByPath(p2b), "Child of jvm class bundle still accessible after bundle removal");
 	}
