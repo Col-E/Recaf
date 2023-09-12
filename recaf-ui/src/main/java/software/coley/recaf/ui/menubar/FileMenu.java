@@ -1,8 +1,12 @@
 package software.coley.recaf.ui.menubar;
 
+import com.panemu.tiwulfx.control.dock.DetachableTab;
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.beans.property.SimpleListProperty;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -14,11 +18,15 @@ import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.ClosableActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.docking.DockingManager;
+import software.coley.recaf.ui.docking.DockingRegion;
+import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.ui.wizard.MultiPathWizardPage;
 import software.coley.recaf.ui.wizard.SinglePathWizardPage;
 import software.coley.recaf.ui.wizard.WizardStage;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.PathExportingManager;
 import software.coley.recaf.workspace.PathLoadingManager;
 import software.coley.recaf.workspace.WorkspaceManager;
@@ -45,20 +53,26 @@ public class FileMenu extends WorkspaceAwareMenu {
 	private final WorkspaceManager workspaceManager;
 	private final PathLoadingManager pathLoadingManager;
 	private final PathExportingManager pathExportingManager;
+	private final Instance<WorkspaceInformationPane> infoPaneProvider;
+	private final DockingManager dockingManager;
 	private final WindowManager windowManager;
 	// config
 	private final RecentFilesConfig recentFilesConfig;
 
 	@Inject
-	public FileMenu(WorkspaceManager workspaceManager,
-					PathLoadingManager pathLoadingManager,
-					PathExportingManager pathExportingManager,
-					WindowManager windowManager,
-					RecentFilesConfig recentFilesConfig) {
+	public FileMenu(@Nonnull WorkspaceManager workspaceManager,
+					@Nonnull PathLoadingManager pathLoadingManager,
+					@Nonnull PathExportingManager pathExportingManager,
+					@Nonnull Instance<WorkspaceInformationPane> infoPaneProvider,
+					@Nonnull DockingManager dockingManager,
+					@Nonnull WindowManager windowManager,
+					@Nonnull RecentFilesConfig recentFilesConfig) {
 		super(workspaceManager);
 		this.workspaceManager = workspaceManager;
 		this.pathLoadingManager = pathLoadingManager;
 		this.pathExportingManager = pathExportingManager;
+		this.infoPaneProvider = infoPaneProvider;
+		this.dockingManager = dockingManager;
 		this.windowManager = windowManager;
 		this.recentFilesConfig = recentFilesConfig;
 
@@ -71,23 +85,27 @@ public class FileMenu extends WorkspaceAwareMenu {
 		MenuItem itemAddToWorkspace = action("menu.file.addtoworkspace", CarbonIcons.WORKSPACE_IMPORT, this::addToWorkspace);
 		MenuItem itemExportPrimary = action("menu.file.exportapp", CarbonIcons.EXPORT, this::exportCurrent);
 		MenuItem itemViewChanges = action("menu.file.modifications", CarbonIcons.COMPARE, this::openChangeViewer);
+		MenuItem itemViewSummary = action("menu.file.summary", CarbonIcons.INFORMATION, this::openSummary);
 		MenuItem itemClose = action("menu.file.close", CarbonIcons.TRASH_CAN, this::closeWorkspace);
 		itemAddToWorkspace.disableProperty().bind(hasWorkspace.not());
 		itemExportPrimary.disableProperty().bind(hasWorkspace.not().and(hasAgentWorkspace.not()));
 		itemViewChanges.disableProperty().bind(hasWorkspace.not());
+		itemViewSummary.disableProperty().bind(hasWorkspace.not());
 		itemClose.disableProperty().bind(hasWorkspace.not());
 
 		MenuItem itemQuit = action("menu.file.quit", CarbonIcons.CLOSE, this::quit);
-		getItems().add(action("menu.file.openworkspace", CarbonIcons.FOLDER_ADD, this::openWorkspace));
-		getItems().add(itemAddToWorkspace);
-		getItems().add(menuRecent);
-		getItems().add(action("menu.file.attach", CarbonIcons.DEBUG, this::openAttach));
-		getItems().add(separator());
-		getItems().add(itemExportPrimary);
-		getItems().add(itemViewChanges);
-		getItems().add(separator());
-		getItems().add(itemClose);
-		getItems().add(itemQuit);
+		ObservableList<MenuItem> items = getItems();
+		items.add(action("menu.file.openworkspace", CarbonIcons.FOLDER_ADD, this::openWorkspace));
+		items.add(itemAddToWorkspace);
+		items.add(menuRecent);
+		items.add(action("menu.file.attach", CarbonIcons.DEBUG, this::openAttach));
+		items.add(separator());
+		items.add(itemExportPrimary);
+		items.add(itemViewChanges);
+		items.add(itemViewSummary);
+		items.add(separator());
+		items.add(itemClose);
+		items.add(itemQuit);
 
 		refreshRecent();
 	}
@@ -220,6 +238,16 @@ public class FileMenu extends WorkspaceAwareMenu {
 		Stage remoteVmWindow = windowManager.getRemoteVmWindow();
 		remoteVmWindow.show();
 		remoteVmWindow.requestFocus();
+	}
+
+	/**
+	 * Display the workspace summary / current information.
+	 */
+	private void openSummary() {
+		WorkspaceInformationPane informationPane = infoPaneProvider.get();
+		DockingRegion dockInfo = dockingManager.getPrimaryRegion();
+		DetachableTab infoTab = dockInfo.createTab(Lang.getBinding("workspace.info"), informationPane);
+		infoTab.setGraphic(new FontIconView(CarbonIcons.INFORMATION));
 	}
 
 	/**

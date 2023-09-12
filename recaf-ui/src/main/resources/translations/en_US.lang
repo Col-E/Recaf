@@ -16,6 +16,7 @@ menu.file.openworkspace=Open workspace
 menu.file.exportapp=Export application
 menu.file.exportworkspace=Export workspace config
 menu.file.modifications=View modifications
+menu.file.summary=View summary
 menu.file.recent=Recent
 menu.file.close=Close
 menu.file.quit=Quit
