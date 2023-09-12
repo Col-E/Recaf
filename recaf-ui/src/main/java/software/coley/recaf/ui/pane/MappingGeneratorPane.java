@@ -2,6 +2,7 @@ package software.coley.recaf.ui.pane;
 
 import atlantafx.base.controls.Card;
 import atlantafx.base.controls.ModalPane;
+import atlantafx.base.controls.Popover;
 import atlantafx.base.layout.InputGroup;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
@@ -14,14 +15,21 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.text.TextAlignment;
+import javafx.util.StringConverter;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.config.ConfigContainer;
+import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.services.config.ConfigComponentFactory;
+import software.coley.recaf.services.config.ConfigComponentManager;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
@@ -30,10 +38,9 @@ import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.format.EnigmaMappings;
-import software.coley.recaf.services.mapping.gen.MappingGenerator;
-import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
+import software.coley.recaf.services.mapping.gen.*;
 import software.coley.recaf.services.mapping.gen.filter.*;
-import software.coley.recaf.services.mapping.gen.generator.IncrementingNameGenerator;
+import software.coley.recaf.services.mapping.gen.generator.IncrementingNameGeneratorProvider;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.*;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -52,6 +59,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static software.coley.recaf.util.Lang.getBinding;
+
 /**
  * Pane for configurable mapping generation.
  *
@@ -62,10 +71,14 @@ public class MappingGeneratorPane extends StackPane {
 	private static final Logger logger = Logging.get(MappingGenerator.class);
 	private static final ToStringConverter<TextMatchMode> textModeConverter = ToStringConverter.from(MappingGeneratorPane::modeToName);
 	private static final List<TextMatchMode> textModes = TextMatchMode.valuesList();
+	private static final NameGeneratorProvider<?> fallbackProvider = new IncrementingNameGeneratorProvider();
+	private final StringProperty currentProvider = new SimpleStringProperty(IncrementingNameGeneratorProvider.ID);
 	private final ObjectProperty<Mappings> mappingsToApply = new SimpleObjectProperty<>();
 	private final ListView<FilterWithConfigNode<?>> filters = new ListView<>();
 	private final Workspace workspace;
+	private final NameGeneratorProviders nameGeneratorProviders;
 	private final MappingGenerator mappingGenerator;
+	private final ConfigComponentManager componentManager;
 	private final InheritanceGraph graph;
 	private final ModalPane modal = new ModalPane();
 	private final MappingApplier mappingApplier;
@@ -73,13 +86,17 @@ public class MappingGeneratorPane extends StackPane {
 
 	@Inject
 	public MappingGeneratorPane(@Nonnull Workspace workspace,
+								@Nonnull NameGeneratorProviders nameGeneratorProviders,
 								@Nonnull MappingGenerator mappingGenerator,
+								@Nonnull ConfigComponentManager componentManager,
 								@Nonnull InheritanceGraph graph,
 								@Nonnull AggregateMappingManager aggregateMappingManager,
 								@Nonnull MappingApplier mappingApplier,
 								@Nonnull Instance<SearchBar> searchBarProvider) {
 		this.workspace = workspace;
+		this.nameGeneratorProviders = nameGeneratorProviders;
 		this.mappingGenerator = mappingGenerator;
+		this.componentManager = componentManager;
 		this.graph = graph;
 		this.mappingApplier = mappingApplier;
 
@@ -96,8 +113,46 @@ public class MappingGeneratorPane extends StackPane {
 		getChildren().addAll(modal, horizontalWrapper);
 	}
 
-	public boolean addConfiguredFilter(@Nonnull FilterWithConfigNode<?> filterConfig) {
-		return filters.getItems().add(filterConfig);
+	public void addConfiguredFilter(@Nonnull FilterWithConfigNode<?> filterConfig) {
+		filters.getItems().add(filterConfig);
+	}
+
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private void configureGenerator() {
+		// Create the configuration card.
+		Card card = new Card();
+		card.maxWidthProperty().bind(widthProperty().multiply(0.70));
+		card.maxHeightProperty().bind(heightProperty().divide(2));
+
+		// Populate it based on available items in the current name provider's config.
+		ConfigContainer container = nameGeneratorProviders.getProviders().get(currentProvider.get());
+		if (container != null && !container.getValues().isEmpty()) {
+			boolean isThirdPartyConfig = ConfigGroups.EXTERNAL.equals(container.getGroup());
+			GridPane grid = createGrid();
+			container.getValues().forEach((id, value) -> {
+				int row = grid.getRowCount();
+				String key = container.getScopedId(value);
+				if (isThirdPartyConfig) {
+					grid.add(new Label(value.getId()), 0, row);
+				} else {
+					grid.add(new BoundLabel(getBinding(key)), 0, row);
+				}
+				ConfigComponentFactory factory = componentManager.getFactory(value);
+				Node node = factory.create(container, value);
+				grid.add(node, 1, row);
+			});
+			card.setBody(grid);
+		} else {
+			BoundLabel label = new BoundLabel(getBinding("mapgen.configure.nothing"));
+			label.setMaxHeight(Integer.MAX_VALUE);
+			label.setMaxWidth(Integer.MAX_VALUE);
+			label.setTextAlignment(TextAlignment.CENTER);
+			label.setAlignment(Pos.CENTER);
+			card.setBody(label);
+		}
+
+		// Show the configuration card.
+		modal.show(card);
 	}
 
 	private void generate() {
@@ -113,9 +168,17 @@ public class MappingGeneratorPane extends StackPane {
 		// Generate the mappings
 		previewGroup.setDisable(true);
 		CompletableFuture.supplyAsync(() -> {
-			IncrementingNameGenerator nameGenerator = new IncrementingNameGenerator();
-			nameGenerator.setWorkspace(workspace);
-			return mappingGenerator.generate(workspace, workspace.getPrimaryResource(), graph, nameGenerator, finalFilter);
+			// Get provider from current chosen option, or fallback if option is unavailable
+			NameGeneratorProvider<?> provider = nameGeneratorProviders.getProviders()
+					.getOrDefault(currentProvider.get(), fallbackProvider);
+			NameGenerator generator = provider.createGenerator();
+
+			// Pass along the workspace for name deconfliction
+			if (generator instanceof DeconflictingNameGenerator deconflictingGenerator)
+				deconflictingGenerator.setWorkspace(workspace);
+
+			// Generate the mappings
+			return mappingGenerator.generate(workspace, workspace.getPrimaryResource(), graph, generator, finalFilter);
 		}).whenCompleteAsync((mappings, error) -> {
 			previewGroup.setDisable(false);
 			if (mappings != null) {
@@ -145,6 +208,7 @@ public class MappingGeneratorPane extends StackPane {
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getLangEngimaMap()));
 		editor.getCodeArea().setEditable(false);
 		editor.disableProperty().bind(mappingsToApply.isNull());
+		editor.getStyleClass().add(Styles.BORDER_DEFAULT);
 		searchBarProvider.get().install(editor);
 
 		// Label describing how much of the workspace will be updated by the current mappings.
@@ -177,16 +241,32 @@ public class MappingGeneratorPane extends StackPane {
 		});
 
 		// Buttons to generate/apply mappings
+		Button configureGenerator = new ActionButton(new FontIconView(CarbonIcons.SETTINGS, 20), this::configureGenerator);
 		Button generateButton = new ActionButton(Lang.getBinding("mapgen.generate"), this::generate);
 		Button applyButton = new ActionButton(Lang.getBinding("mapgen.apply"), this::apply);
+		List<String> providerIds = nameGeneratorProviders.getProviders().keySet().stream().sorted().collect(Collectors.toList());
+		BoundComboBox<String> generatorCombo = new BoundComboBox<>(currentProvider, providerIds, new StringConverter<>() {
+			@Override
+			public String toString(String s) {
+				return StringUtil.uppercaseFirstChar(s).replace('-', ' ');
+			}
+
+			@Override
+			public String fromString(String s) {
+				return s;
+			}
+		});
+		generatorCombo.getStyleClass().add("dark-combo-box");
 		generateButton.setMaxWidth(Double.MAX_VALUE);
 		applyButton.setMaxWidth(Double.MAX_VALUE);
-		HBox.setHgrow(generateButton, Priority.ALWAYS);
 		HBox.setHgrow(applyButton, Priority.ALWAYS);
 		applyButton.disableProperty().bind(mappingsToApply.isNull());
 
 		// Layout
-		HBox buttons = new HBox(generateButton, applyButton);
+		InputGroup inputGroup = new InputGroup(configureGenerator, generateButton, generatorCombo);
+		HBox.setHgrow(generateButton, Priority.ALWAYS);
+		HBox.setHgrow(inputGroup, Priority.ALWAYS);
+		HBox buttons = new HBox(inputGroup, applyButton);
 		buttons.setSpacing(10);
 		VBox layout = new VBox(editor, stats, buttons);
 		VBox.setVgrow(editor, Priority.ALWAYS);
@@ -323,6 +403,16 @@ public class MappingGeneratorPane extends StackPane {
 			case ENDS_WITH -> "misc.text.endswith";
 			case REGEX -> "misc.text.regex";
 		});
+	}
+
+	@Nonnull
+	private static GridPane createGrid() {
+		GridPane grid = new GridPane();
+		grid.setAlignment(Pos.CENTER);
+		grid.setVgap(5);
+		grid.setHgap(5);
+		grid.setPadding(new Insets(5));
+		return grid;
 	}
 
 	/**
@@ -664,11 +754,7 @@ public class MappingGeneratorPane extends StackPane {
 		@Nonnull
 		public Node getConfigurator() {
 			if (node == null) {
-				GridPane grid = new GridPane();
-				grid.setAlignment(Pos.CENTER);
-				grid.setVgap(5);
-				grid.setHgap(5);
-				grid.setPadding(new Insets(5));
+				GridPane grid = createGrid();
 				fillConfigurator((key, editor) -> {
 					inputs++;
 					int row = grid.getRowCount();

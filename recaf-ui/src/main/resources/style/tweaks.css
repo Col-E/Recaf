@@ -27,6 +27,11 @@
     -fx-padding: 2px;
 }
 
+/* AtlantaFX tweaks */
+.dark-combo-box {
+    -fx-background-color: -color-border-default, -color-bg-inset;
+}
+
 /* AtlantaFX tweaks to allow borderless text-fields */
 .text-field.accent {
     -fx-background-insets: 0;
