@@ -2,6 +2,7 @@ package software.coley.recaf.ui.control;
 
 import jakarta.annotation.Nonnull;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.util.StringConverter;
@@ -25,7 +26,7 @@ public class BoundComboBox<T> extends ComboBox<T> implements Tooltipable {
 	 * @param converter
 	 * 		Value to string conversion.
 	 */
-	public BoundComboBox(@Nonnull ObjectProperty<T> value, @Nonnull List<T> values, @Nonnull StringConverter<T> converter) {
+	public BoundComboBox(@Nonnull Property<T> value, @Nonnull List<T> values, @Nonnull StringConverter<T> converter) {
 		getItems().addAll(values);
 		SingleSelectionModel<T> selectionModel = getSelectionModel();
 		selectionModel.select(value.getValue());
