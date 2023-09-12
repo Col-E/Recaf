@@ -52,8 +52,9 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	private final ConfigIconManager iconManager;
 
 	@Inject
-	public ConfigPane(ConfigManager configManager, ConfigComponentManager componentManager,
-					  ConfigIconManager iconManager) {
+	public ConfigPane(@Nonnull ConfigManager configManager,
+					  @Nonnull ConfigComponentManager componentManager,
+					  @Nonnull ConfigIconManager iconManager) {
 		this.componentManager = componentManager;
 		this.iconManager = iconManager;
 		configManager.addManagedConfigListener(this);

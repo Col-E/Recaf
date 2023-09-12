@@ -284,7 +284,7 @@ public class Lang {
 		if (value == null) {
 			// Fallback to English if possible.
 			if (translations.equals(DEFAULT_TRANSLATIONS)) {
-				logger.error("Missing translation for '{}' in language '{}'", translationKey, currentTranslation);
+				logger.error("Missing translation for '{}' in language '{}'", translationKey, currentTranslation.get());
 				value = translationKey;
 			} else {
 				value = get(DEFAULT_TRANSLATIONS, translationKey);
