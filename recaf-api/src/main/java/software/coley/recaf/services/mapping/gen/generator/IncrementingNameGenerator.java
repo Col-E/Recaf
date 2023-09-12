@@ -5,7 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.services.mapping.gen.NameGenerator;
+import software.coley.recaf.services.mapping.gen.DeconflictingNameGenerator;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -14,21 +14,11 @@ import software.coley.recaf.workspace.model.Workspace;
  *
  * @author Matt Coley
  */
-public class IncrementingNameGenerator implements NameGenerator {
+public class IncrementingNameGenerator implements DeconflictingNameGenerator {
 	private Workspace workspace;
 	private long classIndex = 1;
 	private long fieldIndex = 1;
 	private long methodIndex = 1;
-
-	/**
-	 * Enables name deconfliction.
-	 *
-	 * @param workspace
-	 * 		Workspace to assign, to deconflict names.
-	 */
-	public void setWorkspace(@Nullable Workspace workspace) {
-		this.workspace = workspace;
-	}
 
 	@Nonnull
 	private String nextClassName() {
@@ -43,6 +33,11 @@ public class IncrementingNameGenerator implements NameGenerator {
 	@Nonnull
 	private String nextMethodName() {
 		return "method" + methodIndex++;
+	}
+
+	@Override
+	public void setWorkspace(@Nullable Workspace workspace) {
+		this.workspace = workspace;
 	}
 
 	@Nonnull

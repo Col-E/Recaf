@@ -5,8 +5,9 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.services.mapping.gen.NameGenerator;
+import software.coley.recaf.services.mapping.gen.DeconflictingNameGenerator;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.workspace.model.Workspace;
 
 /**
  * Basic name generator using a given alphabet of characters to generate pseudo-random names with.
@@ -14,7 +15,8 @@ import software.coley.recaf.util.StringUtil;
  *
  * @author Matt Coley
  */
-public class AlphabetNameGenerator implements NameGenerator {
+public class AlphabetNameGenerator implements DeconflictingNameGenerator {
+	private Workspace workspace;
 	private final String alphabet;
 	private final int length;
 
@@ -32,7 +34,17 @@ public class AlphabetNameGenerator implements NameGenerator {
 	@Nonnull
 	private String name(@Nullable String original) {
 		int seed = original == null ? alphabet.hashCode() : original.hashCode();
-		return StringUtil.generateName(alphabet, length, seed);
+		String name = StringUtil.generateName(alphabet, length, seed);
+		if (workspace != null) {
+			while (workspace.findClass(name) != null)
+				name = StringUtil.generateName(alphabet, length, seed++);
+		}
+		return name;
+	}
+
+	@Override
+	public void setWorkspace(@Nullable Workspace workspace) {
+		this.workspace = workspace;
 	}
 
 	@Nonnull
