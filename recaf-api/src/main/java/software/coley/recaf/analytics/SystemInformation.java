@@ -1,5 +1,6 @@
 package software.coley.recaf.analytics;
 
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 
 import java.io.StringWriter;
@@ -66,7 +67,7 @@ public class SystemInformation {
 	 * @param logger
 	 * 		Logger to dump into.
 	 */
-	public static void dump(Logger logger) {
+	public static void dump(@Nullable Logger logger) {
 		if (logger != null)
 			ALL_PROPERTIES.forEach((key, value) ->
 					logger.debug("{} = {}", key, value));
@@ -78,7 +79,7 @@ public class SystemInformation {
 	 * @param writer
 	 * 		Writer to dump into.
 	 */
-	public static void dump(StringWriter writer) {
+	public static void dump(@Nullable StringWriter writer) {
 		if (writer != null)
 			ALL_PROPERTIES.forEach((key, value) ->
 					writer.append(String.format("%s = %s\n", key, value)));

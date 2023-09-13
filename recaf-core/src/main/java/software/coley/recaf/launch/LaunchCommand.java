@@ -7,10 +7,12 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import software.coley.recaf.Bootstrap;
 import software.coley.recaf.RecafBuildConfig;
+import software.coley.recaf.analytics.SystemInformation;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.StringUtil;
 
 import java.io.File;
+import java.io.StringWriter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -36,10 +38,13 @@ public class LaunchCommand implements Callable<Boolean> {
 	private boolean version;
 	@Option(names = {"-l", "--listservices"}, description = "Display the version information.")
 	private boolean listServices;
+	@Option(names = {"-p", "--listprops"}, description = "Display system properties.")
+	private boolean dumpProperties;
 
 	@Override
 	public Boolean call() throws Exception {
-		if (version || listServices)
+		boolean ret = false;
+		if (version || listServices || dumpProperties)
 			System.out.println("======================= RECAF =======================");
 		if (version) {
 			System.out.printf("""
@@ -54,7 +59,7 @@ public class LaunchCommand implements Callable<Boolean> {
 					RecafBuildConfig.GIT_DATE,
 					RecafBuildConfig.GIT_BRANCH
 			);
-			return true;
+			ret = true;
 		}
 		if (listServices) {
 			try {
@@ -70,9 +75,16 @@ public class LaunchCommand implements Callable<Boolean> {
 				System.out.println(StringUtil.traceToString(t));
 			}
 			System.out.println("=====================================================");
-			return true;
+			ret = true;
 		}
-		return false;
+		if (dumpProperties) {
+			StringWriter sw = new StringWriter();
+			SystemInformation.dump(sw);
+			System.out.println(sw);
+			System.out.println("=====================================================");
+			ret = true;
+		}
+		return ret;
 	}
 
 	/**
