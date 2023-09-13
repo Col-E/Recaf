@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.chars.CharSet;
 import it.unimi.dsi.fastutil.objects.Object2CharArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2CharMap;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.util.Set;
 import java.util.TreeSet;
@@ -37,7 +38,7 @@ public final class EscapeUtil {
 	 *
 	 * @return {@code true} when text contains any whitespace characters.
 	 */
-	public static boolean containsWhitespace(String text) {
+	public static boolean containsWhitespace(@Nonnull String text) {
 		for (char whitespace : WHITESPACE_CHARS) {
 			if (text.indexOf(whitespace) != -1)
 				return true;
@@ -73,7 +74,7 @@ public final class EscapeUtil {
 	 *
 	 * @return String without escaped characters.
 	 */
-	public static String escapeAll(String input) {
+	public static String escapeAll(@Nullable String input) {
 		return visit(escapeStandard(input), EscapeUtil::computeUnescapeUnicode);
 	}
 
@@ -87,7 +88,7 @@ public final class EscapeUtil {
 	 *
 	 * @return String without common escaped characters.
 	 */
-	public static String escapeStandard(String input) {
+	public static String escapeStandard(@Nullable String input) {
 		return visit(input, EscapeUtil::computeUnescapeStandard);
 	}
 
@@ -101,7 +102,7 @@ public final class EscapeUtil {
 	 *
 	 * @return String without escaped characters.
 	 */
-	public static String escapeComplete(String input) {
+	public static String escapeComplete(@Nullable String input) {
 		return visit(input, EscapeUtil::computeUnescapeUnicodeJasm);
 	}
 
@@ -113,7 +114,7 @@ public final class EscapeUtil {
 	 *
 	 * @return String with escaped characters.
 	 */
-	public static String unescapeAll(String input) {
+	public static String unescapeAll(@Nullable String input) {
 		return unescapeStandard(unescapeUnicode(input));
 	}
 
@@ -127,7 +128,7 @@ public final class EscapeUtil {
 	 *
 	 * @return String with escaped characters.
 	 */
-	public static String unescapeUnicode(String input) {
+	public static String unescapeUnicode(@Nullable String input) {
 		return visit(input, EscapeUtil::computeEscapeUnicode);
 	}
 
@@ -141,11 +142,11 @@ public final class EscapeUtil {
 	 *
 	 * @return String with escaped characters.
 	 */
-	public static String unescapeStandard(String input) {
+	public static String unescapeStandard(@Nullable String input) {
 		return visit(input, EscapeUtil::computeEscapeStandard);
 	}
 
-	private static String visit(String input, TriFunction<String, Integer, StringBuilder, Integer> consumer) {
+	private static String visit(@Nullable String input, @Nonnull TriFunction<String, Integer, StringBuilder, Integer> consumer) {
 		if (input == null)
 			return null;
 		int len = input.length();
@@ -339,7 +340,7 @@ public final class EscapeUtil {
 	}
 
 	static {
-		//Unicode whitespaces
+		//Unicode whitespaces or visually empty characters (like null terminators and such)
 		for (char i = 0; i < 0x20; i++) {
 			addWhitespace(i, "\\u" + String.format("%04X", (int) i));
 		}
@@ -387,9 +388,5 @@ public final class EscapeUtil {
 		WHITESPACE_CHARS = new char[WHITESPACE_STRINGS.size()];
 		for (Char2ObjectMap.Entry<String> entry : WHITESPACE_TO_ESCAPE.char2ObjectEntrySet())
 			WHITESPACE_CHARS[i++] = entry.getCharKey();
-	}
-
-	private interface TriFunction<A, B, C, R> {
-		R apply(A a, B b, C c);
 	}
 }
