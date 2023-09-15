@@ -12,7 +12,7 @@ import software.coley.recaf.test.dummy.TypeAnnotationImpl;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for {@link Annotated}

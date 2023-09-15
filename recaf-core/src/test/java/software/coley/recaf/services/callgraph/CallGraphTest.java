@@ -11,7 +11,6 @@ import software.coley.recaf.test.dummy.StringConsumerUser;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,7 +37,7 @@ class CallGraphTest {
 
 		// Need to wait until async population of graph contents is done.
 		ObservableBoolean ready = graph.isReady();
-		assertDoesNotThrow(() ->{
+		assertDoesNotThrow(() -> {
 			while (!ready.getValue()) {
 				Thread.sleep(100);
 			}

@@ -3,8 +3,8 @@ package software.coley.recaf.services.mapping.aggregate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.TestBase;
 import software.coley.recaf.services.mapping.IntermediateMappings;
+import software.coley.recaf.test.TestBase;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

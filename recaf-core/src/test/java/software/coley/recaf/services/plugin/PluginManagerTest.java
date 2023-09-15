@@ -5,8 +5,8 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.FixedValue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.TestBase;
 import software.coley.recaf.plugin.*;
+import software.coley.recaf.test.TestBase;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSources;
 

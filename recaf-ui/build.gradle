@@ -15,7 +15,6 @@ javafx {
 
 dependencies {
     implementation project(':recaf-core')
-    testImplementation(testFixtures(project(":recaf-api")))
     testImplementation(testFixtures(project(":recaf-core")))
 
     implementation atlantafx

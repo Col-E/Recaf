@@ -2,9 +2,6 @@ package software.coley.recaf.workspace.io;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import static org.mockito.Mockito.*;
-
 import software.coley.recaf.info.*;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.ZipCreationUtils;
@@ -19,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link InfoImporter}

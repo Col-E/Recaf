@@ -1,8 +1,8 @@
 package software.coley.recaf.services.mapping.format;
 
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.TestBase;
 import software.coley.recaf.services.mapping.MappingsAdapter;
+import software.coley.recaf.test.TestBase;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;

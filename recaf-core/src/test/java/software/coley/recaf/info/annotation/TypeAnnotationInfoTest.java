@@ -9,7 +9,8 @@ import software.coley.recaf.test.dummy.ClassWithAnnotation;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Tests for {@link TypeAnnotationInfo}

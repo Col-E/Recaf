@@ -2,7 +2,6 @@ package software.coley.recaf.info.member;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.test.TestClassUtils;
@@ -11,8 +10,8 @@ import software.coley.recaf.test.dummy.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static java.lang.reflect.Modifier.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link MethodMember}

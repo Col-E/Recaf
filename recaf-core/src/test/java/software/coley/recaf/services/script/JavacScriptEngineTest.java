@@ -3,8 +3,8 @@ package software.coley.recaf.services.script;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.TestBase;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
+import software.coley.recaf.test.TestBase;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

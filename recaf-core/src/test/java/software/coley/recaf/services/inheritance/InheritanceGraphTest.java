@@ -2,10 +2,10 @@ package software.coley.recaf.services.inheritance;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.TestBase;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.Inheritance;
 import software.coley.recaf.test.dummy.StringConsumer;

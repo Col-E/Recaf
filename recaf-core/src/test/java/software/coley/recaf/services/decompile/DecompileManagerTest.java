@@ -2,10 +2,10 @@ package software.coley.recaf.services.decompile;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.TestBase;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
 import software.coley.recaf.services.decompile.procyon.ProcyonDecompiler;
+import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.workspace.model.Workspace;

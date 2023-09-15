@@ -1,8 +1,10 @@
-package software.coley.recaf;
+package software.coley.recaf.test;
 
 import org.jboss.weld.proxy.WeldClientProxy;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.parallel.Isolated;
+import software.coley.recaf.Bootstrap;
+import software.coley.recaf.Recaf;
 import software.coley.recaf.services.plugin.PluginManagerConfig;
 import software.coley.recaf.workspace.WorkspaceManager;
 

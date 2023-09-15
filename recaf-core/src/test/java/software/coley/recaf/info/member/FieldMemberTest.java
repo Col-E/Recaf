@@ -9,11 +9,9 @@ import software.coley.recaf.test.dummy.ClassWithInner;
 import software.coley.recaf.test.dummy.VariedModifierFields;
 
 import java.io.IOException;
-
-import static java.lang.reflect.Modifier.*;
-
 import java.util.List;
 
+import static java.lang.reflect.Modifier.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

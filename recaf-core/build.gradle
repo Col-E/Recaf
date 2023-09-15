@@ -1,13 +1,81 @@
+import java.nio.file.Files
+
+plugins {
+    id "com.peterabeles.gversion" version "1.10"
+}
+
 apply plugin: 'java-library'
 apply plugin: 'java-test-fixtures'
 
 dependencies {
-    api project(':recaf-api')
-    testImplementation(testFixtures(project(":recaf-api")))
-
+    api asm
+    api asm_analysis
+    api asm_commons
+    api asm_tree
+    api asm_util
+    api binary_resources
+    api cafedude
+    api cdi_api
     api cdi_impl
-    api picocli
     api cfr
-    api procyon
+    api(dex_translator) {
+        exclude group: 'com.android.tools'
+    }
+    api directories
+    api(downgrader) {
+        exclude group: 'org.ow2.asm'
+        exclude group: 'org.slf4j'
+        exclude group: 'com.github.RaphiMC.JavaDowngrader', module: 'runtime-dep'
+    }
+    api extra_collections
+    api extra_observables
+    api gson // required by R8 (from dex-translator)
+    api instrument_server
     api jphantom
+    api llzip
+    api logging_impl
+    api picocli
+    api procyon
+    api jackson
+    api jlinker
+    api openrewrite
+    api regex
+}
+
+// Force generation of gversion data class when the version information is not up-to-date
+tasks.register('conditionalBuildConfigUpdate') {
+    if (!isBuildConfigUpToDate()) {
+        finalizedBy createVersionFile
+    }
+}
+project.compileJava.dependsOn('conditionalBuildConfigUpdate')
+gversion {
+    srcDir = "src/generated/java/"
+    classPackage = "software.coley.recaf"
+    className = "RecafBuildConfig"
+    dateFormat = "yyyy MM/dd HH:mm"
+    debug = true
+    language = "java"
+    explicitType = false
+    annotate = false
+}
+sourceSets {
+    // Need to add the generated class to the source set
+    main {
+        java {
+            srcDirs 'src/generated/java', 'src/main/java'
+        }
+    }
+}
+
+private boolean isBuildConfigUpToDate() {
+    File buildConfigPath = project.file(gversion.srcDir +
+            gversion.classPackage.replace('.', '/') + '/' +
+            gversion.className + ".java")
+    if (buildConfigPath.exists()) {
+        String text = Files.readString(buildConfigPath.toPath())
+        if (text.contains('VERSION = "' + project.version + '"'))
+            return true
+    }
+    return false
 }
