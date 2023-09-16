@@ -212,7 +212,8 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 		if (cycleCount > 0 ||
 				invalidSigCount > 0 ||
 				dupAnnoCount > 0 ||
-				longAnnoCount > 0) {
+				longAnnoCount > 0 ||
+				illegalNameCount > 0) {
 			ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("anti-decompile-patching");
 			Label title = new BoundLabel(Lang.getBinding("service.analysis.anti-decompile"));
 			title.getStyleClass().add(Styles.TEXT_BOLD);
