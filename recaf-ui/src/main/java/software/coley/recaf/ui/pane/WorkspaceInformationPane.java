@@ -22,6 +22,7 @@ import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.ResourceSummaryService;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -108,14 +109,16 @@ public class WorkspaceInformationPane extends BorderPane implements Navigable {
 
 		@Override
 		public void appendSummary(Node node) {
-			add(node, 0, getRowCount(), 2, 1);
+			FxThreadUtil.run(() -> add(node, 0, getRowCount(), 2, 1));
 		}
 
 		@Override
 		public void appendSummary(Node left, Node right) {
-			int row = getRowCount();
-			add(left, 0, row);
-			add(right, 1, row);
+			FxThreadUtil.run(() -> {
+				int row = getRowCount();
+				add(left, 0, row);
+				add(right, 1, row);
+			});
 		}
 	}
 }

@@ -9,11 +9,14 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Provides {@link ResourceSummarizer} content to the {@link WorkspaceInformationPane}.
@@ -24,6 +27,7 @@ import java.util.TreeSet;
 public class ResourceSummaryService implements Service {
 	public static final String SERVICE_ID = "info-summary";
 	private static final Logger logger = Logging.get(ResourceSummaryService.class);
+	private static final ExecutorService threadPool = ThreadPoolFactory.newSingleThreadExecutor("resource-summary");
 	private final ResourceSummaryServiceConfig config;
 	private final SortedSet<ResourceSummarizer> summarizers = new TreeSet<>();
 
@@ -54,17 +58,20 @@ public class ResourceSummaryService implements Service {
 	public void summarizeTo(@Nonnull Workspace workspace,
 							@Nonnull WorkspaceResource resource,
 							@Nonnull SummaryConsumer consumer) {
-		boolean lastSummarizerAppended = true;
-		for (ResourceSummarizer summarizer : summarizers) {
-			if (lastSummarizerAppended)
-				consumer.appendSummary(new Separator());
-			try {
-				lastSummarizerAppended = summarizer.summarize(workspace, resource, consumer);
-			} catch (Throwable t) {
-				logger.error("Summarizer '{}' encountered an error", summarizer.getClass().getName(), t);
-				lastSummarizerAppended = false;
+		// Run async so we do not block the UI thread
+		CompletableFuture.runAsync(() -> {
+			boolean lastSummarizerAppended = false;
+			for (ResourceSummarizer summarizer : summarizers) {
+				if (lastSummarizerAppended)
+					consumer.appendSummary(new Separator());
+				try {
+					lastSummarizerAppended = summarizer.summarize(workspace, resource, consumer);
+				} catch (Throwable t) {
+					logger.error("Summarizer '{}' encountered an error", summarizer.getClass().getName(), t);
+					lastSummarizerAppended = false;
+				}
 			}
-		}
+		}, threadPool);
 	}
 
 	/**
