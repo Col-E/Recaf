@@ -49,7 +49,7 @@ public class CompilerResult {
 		return compilations != null &&
 				compilations.size() > 0 &&
 				exception == null &&
-				diagnostics.stream().noneMatch(d -> d.getLevel() == CompilerDiagnostic.Level.ERROR);
+				diagnostics.stream().noneMatch(d -> d.level() == CompilerDiagnostic.Level.ERROR);
 	}
 
 	/**

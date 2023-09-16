@@ -43,12 +43,12 @@ public class Problem implements Comparable<Problem> {
 	 * @return Problem from the diagnostic data.
 	 */
 	public static Problem fromDiagnostic(CompilerDiagnostic diagnostic) {
-		ProblemLevel level = switch (diagnostic.getLevel()) {
+		ProblemLevel level = switch (diagnostic.level()) {
 			case WARNING -> ProblemLevel.WARN;
 			case INFO -> ProblemLevel.INFO;
 			default -> ProblemLevel.ERROR;
 		};
-		return new Problem(diagnostic.getLine(), diagnostic.getColumn(), level, ProblemPhase.BUILD, diagnostic.getMessage());
+		return new Problem(diagnostic.line(), diagnostic.column(), level, ProblemPhase.BUILD, diagnostic.message());
 	}
 
 	/**

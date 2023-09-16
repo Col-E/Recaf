@@ -38,7 +38,7 @@ public class BasicInfoImporter implements InfoImporter {
 
 	@Nonnull
 	@Override
-	public Info readInfo(String name, ByteSource source) throws IOException {
+	public Info readInfo(@Nonnull String name, @Nonnull ByteSource source) throws IOException {
 		byte[] data = source.readAll();
 
 		// Check for Java classes

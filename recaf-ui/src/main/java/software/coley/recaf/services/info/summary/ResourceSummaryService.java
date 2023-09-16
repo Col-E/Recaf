@@ -38,7 +38,8 @@ public class ResourceSummaryService implements Service {
 
 		// TODO: Summarizer for android
 		//  - Manifest
-		//  - Permissions
+		//    - Entry points (can update existing entry-point summarizer)
+		//    - Permissions (and their descriptions, level of concern perhaps?)
 
 		// Add discovered summarizers from classpath.
 		for (ResourceSummarizer summarizer : summarizers)

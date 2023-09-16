@@ -94,13 +94,13 @@ public class JavacScriptEngine implements ScriptEngine {
 
 	@Nonnull
 	@Override
-	public CompletableFuture<ScriptResult> run(String script) {
+	public CompletableFuture<ScriptResult> run(@Nonnull String script) {
 		return CompletableFuture.supplyAsync(() -> handleExecute(script), compileAndRunPool);
 	}
 
 	@Nonnull
 	@Override
-	public CompletableFuture<GenerateResult> compile(String scriptSource) {
+	public CompletableFuture<GenerateResult> compile(@Nonnull String scriptSource) {
 		return CompletableFuture.supplyAsync(() -> generate(scriptSource), compileAndRunPool);
 	}
 
@@ -306,7 +306,7 @@ public class JavacScriptEngine implements ScriptEngine {
 
 		int syntheticLineCount = StringUtil.count("\n", StringUtil.cutOffAtFirst(compileSource, originalSource));
 		return diagnostics.stream()
-				.map(d -> d.withLine(d.getLine() - syntheticLineCount))
+				.map(d -> d.withLine(d.line() - syntheticLineCount))
 				.toList();
 	}
 }

@@ -27,5 +27,5 @@ public interface InfoImporter extends Service {
 	 * 		When the content cannot be read.
 	 */
 	@Nonnull
-	Info readInfo(String name, ByteSource source) throws IOException;
+	Info readInfo(@Nonnull String name, @Nonnull ByteSource source) throws IOException;
 }

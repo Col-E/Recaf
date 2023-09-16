@@ -20,7 +20,7 @@ public interface ScriptEngine extends Service {
 	 * @return Future of script execution.
 	 */
 	@Nonnull
-	CompletableFuture<ScriptResult> run(String scriptSource);
+	CompletableFuture<ScriptResult> run(@Nonnull String scriptSource);
 
 	/**
 	 * @param scriptSource
@@ -29,5 +29,5 @@ public interface ScriptEngine extends Service {
 	 * @return Future of script compilation.
 	 */
 	@Nonnull
-	CompletableFuture<GenerateResult> compile(String scriptSource);
+	CompletableFuture<GenerateResult> compile(@Nonnull String scriptSource);
 }
