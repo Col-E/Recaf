@@ -102,9 +102,10 @@ public class MappingsAdapter implements Mappings {
 				ClassPathNode classPath = workspace.findClass(internalName);
 				if (classPath != null) {
 					ClassInfo info = classPath.getValue();
+					String name = info.getName();
 					String outerName = info.getOuterClassName();
-					if (outerName != null) {
-						String inner = info.getName().substring(outerName.length() + 1);
+					if (outerName != null && outerName.length() < name.length()) {
+						String inner = name.substring(outerName.length() + 1);
 						String outerMapped = getMappedClassName(outerName);
 						if (outerMapped != null) {
 							mapped = outerMapped + "$" + inner;
