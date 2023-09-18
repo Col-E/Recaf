@@ -61,6 +61,7 @@ public class CommonVirtualService implements Service {
 	@Inject
 	public CommonVirtualService(@Nonnull CommonVirtualServiceConfig config, @Nonnull WorkspaceManager workspaceManager) {
 		this.config = config;
+		this.currentWorkspace = workspaceManager.getCurrent();
 		addWorkspaceListeners(workspaceManager);
 		addConfigListeners();
 	}
