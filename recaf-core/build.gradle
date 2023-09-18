@@ -40,6 +40,9 @@ dependencies {
     api jlinker
     api openrewrite
     api regex
+    api ssvm_core
+    api ssvm_invoke
+    api ssvm_io
 }
 
 // Force generation of gversion data class when the version information is not up-to-date

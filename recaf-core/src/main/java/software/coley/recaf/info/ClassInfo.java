@@ -3,7 +3,6 @@ package software.coley.recaf.info;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.annotation.Annotated;
-import software.coley.recaf.info.builder.AbstractClassInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -22,6 +21,17 @@ import java.util.stream.Stream;
  * @see AndroidClassInfo For Android classes.
  */
 public interface ClassInfo extends Info, Annotated, Accessed, Named {
+	/**
+	 * Not to be confused with {@link #getName()} which yields the internal name for classes,
+	 * this yields the name you'd use for {@link Class#forName(String)}.
+	 *
+	 * @return The qualified name.
+	 */
+	@Nonnull
+	default String getQualifiedName() {
+		return getName().replace('/', '.');
+	}
+
 	/**
 	 * @return Name of the source file the class was compiled from.
 	 * May be {@code null} when there is no debug data attached to the class.
