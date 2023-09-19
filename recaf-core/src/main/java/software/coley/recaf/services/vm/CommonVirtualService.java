@@ -5,13 +5,9 @@ import dev.xdark.ssvm.api.MethodInvoker;
 import dev.xdark.ssvm.api.VMInterface;
 import dev.xdark.ssvm.classloading.BootClassFinder;
 import dev.xdark.ssvm.classloading.SupplyingClassLoader;
-import dev.xdark.ssvm.execution.ExecutionEngine;
 import dev.xdark.ssvm.execution.Interpreter;
 import dev.xdark.ssvm.execution.Result;
-import dev.xdark.ssvm.filesystem.DelegatingFileManager;
-import dev.xdark.ssvm.filesystem.FileManager;
-import dev.xdark.ssvm.filesystem.HostFileManager;
-import dev.xdark.ssvm.filesystem.SimpleFileManager;
+import dev.xdark.ssvm.filesystem.*;
 import dev.xdark.ssvm.invoke.InvocationUtil;
 import dev.xdark.ssvm.mirror.type.InstanceClass;
 import dev.xdark.ssvm.operation.VMOperations;
@@ -28,6 +24,7 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.ReflectUtil;
+import software.coley.recaf.util.io.BufferDelegatingPrintStream;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -35,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static dev.xdark.ssvm.classloading.SupplyingClassLoaderInstaller.*;
@@ -272,6 +270,8 @@ public class CommonVirtualService implements Service {
 		private final InvocationUtil invocationUtil = InvocationUtil.create(this);
 		private final boolean useAltBootPath = config.useAlternateJdkBootPath().getValue();
 		private final String altBootPath = config.getAlternateJdkPath().getValue();
+		private BufferDelegatingPrintStream out;
+		private BufferDelegatingPrintStream err;
 
 		@Override
 		public void bootstrap() {
@@ -309,6 +309,28 @@ public class CommonVirtualService implements Service {
 		}
 
 		/**
+		 * Cannot be called until after the VM is constructed.
+		 *
+		 * @param outStreamConsumer
+		 * 		Consumer to handle line-by-line text for {@link System#out}
+		 * 		when {@link CommonVirtualServiceConfig#useHostFileManager()} is active.
+		 */
+		public void setOutStreamConsumer(@Nullable Consumer<String> outStreamConsumer) {
+			out.setLineHandler(outStreamConsumer);
+		}
+
+		/**
+		 * Cannot be called until after the VM is constructed.
+		 *
+		 * @param errStreamConsumer
+		 * 		Consumer to handle line-by-line text for {@link System#err}
+		 * 		when {@link CommonVirtualServiceConfig#useHostFileManager()} is active.
+		 */
+		public void setErrStreamConsumer(@Nullable Consumer<String> errStreamConsumer) {
+			err.setLineHandler(errStreamConsumer);
+		}
+
+		/**
 		 * @return Invocation helper.
 		 */
 		@Nonnull
@@ -331,11 +353,12 @@ public class CommonVirtualService implements Service {
 
 		@Override
 		protected FileManager createFileManager() {
-			SimpleFileManager dummyManager = new SimpleFileManager();
-			HostFileManager hostManager = new HostFileManager() {
-				// TODO: Delegate or Override out/err/in streams so the user can interact with them via Recaf
-				//     instead of the native terminal used to run Recaf
+			// Must be initialized here since this is called from the super-type's constructor
+			out = new BufferDelegatingPrintStream();
+			err = new BufferDelegatingPrintStream();
 
+			SimpleFileManager dummyManager = new SimpleFileManager();
+			HostFileManager hostManager = new HostFileManager(System.in, out, err) {
 				private boolean allow(int mode) {
 					return (config.hostAllowRead().getValue() && mode == READ) ||
 							(config.hostAllowWrite().getValue() && mode != READ);

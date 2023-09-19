@@ -50,6 +50,8 @@ public class VmTest extends TestBase {
 		invoker = recaf.get(VirtualInvoker.class);
 		optimizer = recaf.get(VirtualOptimizer.class);
 		helper = commonVirtualService.getCurrentWorkspaceHelper();
+		commonVirtualService.getSharedVm().setOutStreamConsumer(System.out::println);
+		commonVirtualService.getSharedVm().setErrStreamConsumer(System.err::println);
 	}
 
 	@Nested
