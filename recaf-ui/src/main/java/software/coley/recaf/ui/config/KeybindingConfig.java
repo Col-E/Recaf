@@ -11,6 +11,7 @@ import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.pane.editing.ClassPane;
+import software.coley.recaf.ui.pane.editing.FilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
 import software.coley.recaf.util.PlatformType;
 
@@ -77,7 +78,6 @@ public class KeybindingConfig extends BasicConfigContainer {
 	 */
 	@Nonnull
 	public Binding getSave() {
-		// TODO: Update javadocs to @link to FilePane when made
 		return Objects.requireNonNull(bundle.get(ID_SAVE));
 	}
 
