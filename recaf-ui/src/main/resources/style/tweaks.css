@@ -55,6 +55,9 @@
 .background {
     -fx-background-color: -color-bg-default;
 }
+.background-light {
+    -fx-background-color: -color-border-subtle;
+}
 
 /* Rounds the display of a container by its bg/border colors */
 .round-container {
