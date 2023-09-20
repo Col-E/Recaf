@@ -58,6 +58,7 @@ public class ProblemGraphicFactory extends AbstractLineGraphicFactory {
 
 			Tooltip tooltip = new Tooltip(formatTooltipMessage(problem));
 			tooltip.setGraphic(new FontIconView(CarbonIcons.ERROR, Color.RED));
+			tooltip.getStyleClass().add("error-text");
 			Tooltip.install(shape, tooltip);
 			container.addTopLayer(shape);
 		}
@@ -67,10 +68,9 @@ public class ProblemGraphicFactory extends AbstractLineGraphicFactory {
 		StringBuilder sb = new StringBuilder();
 		int line = problem.getLine();
 		if (line > 0) {
-			sb.append("Line ").append(line);
 			int column = problem.getColumn();
 			if (column >= 0) {
-				sb.append(", column ").append(column);
+				sb.append("Column ").append(column);
 			}
 		} else {
 			sb.append("Unknown line");
