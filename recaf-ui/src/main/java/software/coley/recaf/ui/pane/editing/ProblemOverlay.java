@@ -182,6 +182,8 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			Integer prevLineWithError = tracking.getProblems().floorKey(line - 1);
 			if (prevLineWithError == null)
 				prevLineWithError = tracking.getProblems().floorKey(line);
+			if (prevLineWithError == null)
+				prevLineWithError = tracking.getProblems().firstKey();
 			if (prevLineWithError != null) {
 				codeArea.moveTo(prevLineWithError - 1, 0);
 				codeArea.selectLine();
@@ -200,6 +202,8 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			Integer nextLineWithError = tracking.getProblems().ceilingKey(line + 1);
 			if (nextLineWithError == null)
 				nextLineWithError = tracking.getProblems().ceilingKey(line);
+			if (nextLineWithError == null)
+				nextLineWithError = tracking.getProblems().firstKey();
 			if (nextLineWithError != null) {
 				codeArea.moveTo(nextLineWithError - 1, 0);
 				codeArea.selectLine();
