@@ -28,6 +28,7 @@ import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -49,7 +50,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
     private List<ASTElement> lastRoughAst;
     private List<ASTElement> lastPartialAst;
     private List<ASTElement> lastAst;
-    private long lastAstParse = 0;
 
     @Inject
     public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
@@ -67,7 +67,9 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
                 new ProblemGraphicFactory()
         );
 
-        this.editor.getTextChangeEventStream().subscribe(event -> parseAST(ast -> {}));
+        this.editor.getTextChangeEventStream().successionEnds(Duration.ofMillis(timeToWait)).addObserver(e -> {
+            parseAST(ast -> {});
+        });
 
         this.pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().addChangeListener(
                 (observable, oldVal, newVal) -> timeToWait = newVal);
@@ -102,8 +104,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
     private void parseAST(Consumer<List<ASTElement>> acceptor) {
         if(editor.getText().isBlank()) return;
-        if(lastAstParse > System.currentTimeMillis() - timeToWait) return;
-        lastAstParse = System.currentTimeMillis();
+
         CompletableFuture.runAsync(() -> {
             try {
                 problemTracking.removeByPhase(ProblemPhase.LINT);
@@ -137,10 +138,10 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
             return;
         CompletableFuture.runAsync(() -> {
             try {
-                if(lastAst == null || lastAstParse < System.currentTimeMillis() - timeToWait) {
-                    parseAST(ast -> assemble());
+                parseAST(ast -> {});
+
+                if(!problemTracking.getProblems().isEmpty() && lastAst == null)
                     return;
-                }
 
                 problemTracking.removeByPhase(ProblemPhase.BUILD);
 
