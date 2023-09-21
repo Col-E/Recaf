@@ -150,13 +150,15 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			}
 
 			// Record common entry attributes
-			CentralDirectoryFileHeader centralHeader = header.getLinkedDirectoryFileHeader();
 			ZipCompressionProperty.set(info, header.getCompressionMethod());
-			if (centralHeader.getFileCommentLength() > 0)
-				ZipCommentProperty.set(info, centralHeader.getFileCommentAsString());
 			ExtraFieldTime.TimeWrapper extraTimes = ExtraFieldTime.read(header);
-			if (extraTimes == null)
-				extraTimes = ExtraFieldTime.read(centralHeader);
+			CentralDirectoryFileHeader centralHeader = header.getLinkedDirectoryFileHeader();
+			if (centralHeader != null) {
+				if (centralHeader.getFileCommentLength() > 0)
+					ZipCommentProperty.set(info, centralHeader.getFileCommentAsString());
+				if (extraTimes == null)
+					extraTimes = ExtraFieldTime.read(centralHeader);
+			}
 			if (extraTimes != null) {
 				ZipCreationTimeProperty.set(info, extraTimes.getCreationMs());
 				ZipModificationTimeProperty.set(info, extraTimes.getModifyMs());
