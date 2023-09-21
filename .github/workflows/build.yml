@@ -45,14 +45,23 @@ jobs:
         uses: codecov/codecov-action@v3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      - name: Upload build artifacts
+      - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: snapshot-build
+          name: test-artifacts
           retention-days: 21
           path: |
-            recaf-ui/build/libs/recaf-ui-*-all.jar
+            **/TEST-*
+            **/hs_err_pid*
+     # - name: Upload build artifacts
+     #   if: always()
+     #   uses: actions/upload-artifact@v3
+     #   with:
+     #     name: snapshot-build
+     #     retention-days: 21
+     #     path: |
+     #       recaf-ui/build/libs/recaf-ui-*-all.jar
 
   # Publishes the test results of 'test'
   publish-test-results:
