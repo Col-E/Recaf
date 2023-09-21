@@ -39,15 +39,20 @@ jobs:
       # So we have a dummy step here just to initialize it.
       - name: Download Gradle wrapper
         run: ./gradlew --version
-      - name: Run tests
-        run: ./gradlew test
-      - name: Upload test results
+      - name: Run build
+        run: ./gradlew build
+      - name: Upload test coverage to CodeCov.io
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test + build artifacts
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: Test artifacts
           retention-days: 21
           path: |
+            **/recaf-ui-*-all.jar
             **/TEST-*
             **/hs_err_pid*
 

@@ -114,6 +114,7 @@ subprojects {
 // Always emit HTML aggregate report
 jacocoAggregation {
     outputHtml = true
+    outputXml = true
 }
 
 // Build aggregate report when test phase completes
