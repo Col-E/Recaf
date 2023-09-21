@@ -1,14 +1,20 @@
 package software.coley.recaf.ui.control.richtext.source;
 
+import atlantafx.base.controls.Popover;
+import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.VBox;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.openrewrite.ParseError;
 import org.openrewrite.ParseExceptionResult;
 import org.openrewrite.SourceFile;
@@ -16,7 +22,6 @@ import org.openrewrite.Tree;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.marker.Marker;
 import org.openrewrite.marker.Range;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -33,13 +38,16 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.*;
+import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
+import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
-import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -47,7 +55,6 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 /**
  * Enables context actions on an {@link Editor} by parsing the source text as Java and modeling the AST.
@@ -62,6 +69,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private static final long REPARSE_ELAPSED_TIME = 2_000L;
 	private final ExecutorService parseThreadPool = ThreadPoolFactory.newSingleThreadExecutor("java-parse");
 	private final NavigableMap<Integer, Integer> offsetMap = new TreeMap<>();
+	private final AstAvailabilityButton astAvailabilityButton = new AstAvailabilityButton();
 	private final CellConfigurationService cellConfigurationService;
 	private final AstService astService;
 	private final AstContextHelper contextHelper;
@@ -81,6 +89,17 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		this.cellConfigurationService = cellConfigurationService;
 		this.astService = astService;
 		contextHelper = new AstContextHelper(workspace);
+	}
+
+	/**
+	 * This button visually tells user the state of the AST parse, and is clickable for more information.
+	 * It is intended to be added to {@link ToolsContainerComponent}.
+	 *
+	 * @return UI button/label detailing the current availability of the {@link #getUnit() AST unit}.
+	 */
+	@Nonnull
+	public AstAvailabilityButton getAvailabilityButton() {
+		return astAvailabilityButton;
 	}
 
 	/**
@@ -276,6 +295,11 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			}
 			lastSourceHash = textHash;
 
+			// When code changes are made we want to notify users that while an existing unit is available
+			// an up-to-date one is still pending.
+			if (unit != null)
+				astAvailabilityButton.setNewParseInProgress();
+
 			// Clear parser cache
 			parser.reset();
 
@@ -288,6 +312,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			if (results.isEmpty()) {
 				unit = null;
 				logger.warn("Could not create Java AST model from source of: {} after {}ms", classNameEsc, diff);
+				astAvailabilityButton.setUnavailable();
 			} else {
 				SourceFile result = results.get(0);
 				if (result instanceof ParseError parseError) {
@@ -295,9 +320,12 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 					ParseExceptionResult errResult = (ParseExceptionResult) parseError.getMarkers().getMarkers().get(0);
 					logger.warn("Parse error from source of: {} after {}ms, err={}",
 							classNameEsc, diff, errResult.getMessage());
+					astAvailabilityButton.setParserError(errResult);
 				} else if (result instanceof J.CompilationUnit unit) {
 					this.unit = unit;
+
 					logger.debugging(l -> l.info("AST parsed successfully, took {}ms", diff));
+					astAvailabilityButton.setAvailable();
 
 					// Run queued tasks
 					if (queuedSelectionTask != null) queuedSelectionTask.run();
@@ -421,6 +449,88 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			// If we used the existing parser, the newly added types would be unresolvable.
 			ClassInfo classInfo = classPath.getValue();
 			Executors.newSingleThreadExecutor().submit(() -> initialize(classInfo));
+		}
+	}
+
+	/**
+	 * Button/label detailing the current availability of the {@link #unit}.
+	 */
+	private static class AstAvailabilityButton extends Button {
+		private AstAvailabilityButton() {
+			textProperty().bind(Lang.getBinding("java.parse-state.initial"));
+			setGraphic(new FontIconView(CarbonIcons.DOCUMENT_UNKNOWN));
+			getStyleClass().addAll(Styles.ACCENT, Styles.FLAT);
+			setOnAction(e -> {
+				Popover popover = new Popover();
+				popover.setContentNode(new BoundLabel(Lang.getBinding("java.parse-state.initial-details")));
+				popover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);
+				popover.show(this);
+			});
+		}
+
+		/**
+		 * Called when AST unit is good to use.
+		 */
+		private void setAvailable() {
+			setVisible(false);
+		}
+
+		/**
+		 * Called when an AST unit exists, but a new one is being made.
+		 */
+		private void setNewParseInProgress() {
+			setVisible(true);
+			setOnAction(e -> {
+				Popover popover = new Popover();
+				popover.setContentNode(new BoundLabel(Lang.getBinding("java.parse-state.new-progress-details")));
+				popover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);
+				popover.show(this);
+			});
+			FxThreadUtil.run(() -> {
+				textProperty().unbind();
+				textProperty().bind(Lang.getBinding("java.parse-state.new-progress"));
+			});
+		}
+
+		/**
+		 * Called when a new AST unit was requested, but nothing was returned by the parser.
+		 */
+		private void setUnavailable() {
+			setVisible(true);
+			setOnAction(null);
+			FxThreadUtil.run(() -> {
+				textProperty().unbind();
+				textProperty().bind(Lang.getBinding("java.parse-state.error"));
+			});
+		}
+
+		/**
+		 * Called when a new AST unit was requested, but an error occurred in parsing.
+		 *
+		 * @param error
+		 * 		The exception result from the parser.
+		 */
+		private void setParserError(@Nonnull ParseExceptionResult error) {
+			setVisible(true);
+			setOnAction(e -> {
+				BoundLabel title = new BoundLabel(Lang.getBinding("java.parse-state.error-details"));
+
+				String exceptionType = error.getExceptionType();
+				String message = error.getMessage();
+
+				TextArea errorTextArea = new TextArea();
+				errorTextArea.setEditable(false);
+				errorTextArea.setText(exceptionType + "\n" + "=".repeat(exceptionType.length()) + "\n" + message);
+
+				Popover popover = new Popover();
+				popover.setContentNode(new VBox(title, errorTextArea));
+				popover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);
+				popover.show(this);
+			});
+			FxThreadUtil.run(() -> {
+				textProperty().unbind();
+				textProperty().bind(Lang.getBinding("java.parse-state.error"));
+			});
 		}
 	}
 }
