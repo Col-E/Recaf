@@ -1,0 +1,39 @@
+{
+  "name": "Java bytecode Language",
+  "regex": "",
+  "classes": [],
+  "sub-rules": [
+    {
+      "name": "SingleLineComment",
+      "regex": "//[^\\n]*",
+      "classes": [
+        "comment-line"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Constants",
+      "regex": "\\b0(?:[xX][0-9a-fA-F]+|b[01]+|[0-7]+)\\b|\\b(?:[\\d_]+\\.\\d+|[\\d_]+)(?:[eE]-?[\\d_]+)?[fFdDlL]?\\b|\\b(?:true|false|null|NaN|\\+Infinity|\\-Infinity)\\b|'[\\\\]?.'",
+      "classes": [
+        "constant"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Strings",
+      "regex": "(?:\\\"(?:[^\\n\"\\\\]|\\\\.)*?\\\")|(?:\\'(?:[^'\\n\\\\]|\\\\.)*?\\')",
+      "classes": [
+        "string"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Keywords",
+      "regex": "\\b(?:method|field|class|annotation|public|private|native|abstract|interface|synthetic|strict|enum|super|module|synchronizer|bridge|varargs|volatile|transient|static|final|protected|aaload|aastore|aconst_null|aload|aload_0|aload_1|aload_2|aload_3|anewarray|areturn|arraylength|astore|astore_0|astore_1|astore_2|astore_3|athrow|baload|bastore|bipush|caload|castore|checkcast|d2f|d2i|d2l|dadd|daload|dastore|dcmpg|dcmpl|dconst_0|dconst_1|ddiv|dload|dload_0|dload_1|dload_2|dload_3|dmul|dneg|drem|dreturn|dstore|dstore_0|dstore_1|dstore_2|dstore_3|dsub|dup|dup_x1|dup_x2|dup2|dup2_x1|dup2_x2|f2d|f2i|f2l|fadd|faload|fastore|fcmpg|fcmpl|fconst_0|fconst_1|fconst_2|fdiv|fload|fload_0|fload_1|fload_2|fload_3|fmul|fneg|frem|freturn|fstore|fstore_0|fstore_1|fstore_2|fstore_3|fsub|getfield|getstatic|goto|goto_w|i2b|i2c|i2d|i2f|i2l|i2s|iadd|iaload|iand|iastore|iconst_0|iconst_1|iconst_2|iconst_3|iconst_4|iconst_5|iconst_m1|idiv|if_acmpeq|if_acmpne|if_icmple|if_icmpeq|if_icmpne|if_icmplt|if_icmpge|if_icmpgt|if_icmple|ifeq|ifne|iflt|ifge|ifgt|ifle|ifnonnull|ifnull|iinc|iload|iload_0|iload_1|iload_2|iload_3|imul|ineg|instanceof|invokedynamic|invokeinterface|invokespecial|invokestatic|invokevirtual|ior|irem|ireturn|ishl|ishr|istore|istore_0|istore_1|istore_2|istore_3|isub|iushr|ixor|jsr|jsr_w|l2d|l2f|l2i|ladd|laload|land|lastore|lcmp|lconst_0|lconst_1|ldc|ldc_w|ldc2_w|ldiv|lload|lload_0|lload_1|lload_2|lload_3|lmul|lneg|lookupswitch|lor|lrem|lreturn|lshl|lshr|lstore|lstore_0|lstore_1|lstore_2|lstore_3|lsub|lushr|lxor|monitorenter|monitorexit|multianewarray|new|newarray|nop|pop|pop2|putfield|putstatic|ret|return|saload|sastore|sipush|swap|tableswitch|wide)\\b",
+      "classes": [
+        "keyword"
+      ],
+      "sub-rules": []
+    }
+  ]
+}

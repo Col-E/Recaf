@@ -12,6 +12,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.kordamp.ikonli.javafx.FontIcon;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
 import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
@@ -34,6 +36,7 @@ import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
+import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
 import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
@@ -80,6 +83,7 @@ public class Actions implements Service {
 	private final Instance<ImageFilePane> imagePaneProvider;
 	private final Instance<AudioFilePane> audioPaneProvider;
 	private final Instance<VideoFilePane> videoPaneProvider;
+	private final Instance<AssemblerPane> assemblerPaneProvider;
 	private final ActionsConfig config;
 
 	@Inject
@@ -95,7 +99,8 @@ public class Actions implements Service {
 				   @Nonnull Instance<TextFilePane> textPaneProvider,
 				   @Nonnull Instance<ImageFilePane> imagePaneProvider,
 				   @Nonnull Instance<AudioFilePane> audioPaneProvider,
-				   @Nonnull Instance<VideoFilePane> videoPaneProvider) {
+				   @Nonnull Instance<VideoFilePane> videoPaneProvider,
+				   @Nonnull Instance<AssemblerPane> assemblerPaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
@@ -109,6 +114,7 @@ public class Actions implements Service {
 		this.imagePaneProvider = imagePaneProvider;
 		this.audioPaneProvider = audioPaneProvider;
 		this.videoPaneProvider = videoPaneProvider;
+		this.assemblerPaneProvider = assemblerPaneProvider;
 	}
 
 	/**
@@ -1280,6 +1286,59 @@ public class Actions implements Service {
 		}).withInitialPathName(packageName)
 				.forPackageCopy(bundle)
 				.show();
+	}
+
+	/**
+	 * Brings a {@link ClassNavigable} component representing the given class into focus.
+	 * If no such component exists, one is created.
+	 * <br>
+	 * Automatically calls the type-specific goto-declaration handling.
+	 *
+	 * @param path
+	 * 		Path containing a class to open.
+	 *
+	 * @return Navigable content representing class content of the path.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	@Nonnull
+	public Navigable openAssembler(@Nonnull PathNode<?> path) throws IncompletePathException {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
+		ClassInfo info = path.getValueOfType(ClassInfo.class);
+		if(info == null) {
+			logger.error("Cannot resolve required path nodes, missing class in path");
+			throw new IncompletePathException(ClassInfo.class);
+		}
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for class '{}', missing workspace in path", info.getName());
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for class '{}', missing resource in path", info.getName());
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for class '{}', missing bundle in path", info.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+
+		return getOrCreatePathContent(path, () -> {
+			// Create text/graphic for the tab to create.
+			String title = "Hurp"; // TODO: Get title for path node
+			Node graphic = new FontIconView(CarbonIcons.CODE);
+			if (title == null) throw new IllegalStateException("Missing title");
+			if (graphic == null) throw new IllegalStateException("Missing graphic");
+
+			// Create content for the tab.
+			AssemblerPane content = assemblerPaneProvider.get();
+			content.onUpdatePath(path);
+
+			// Build the tab.
+            return createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+		});
 	}
 
 	/**

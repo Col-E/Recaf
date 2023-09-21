@@ -40,6 +40,8 @@ dependencies {
     api jlinker
     api openrewrite
     api regex
+    api jasm_core
+    api jasm_composistion_jvm
 }
 
 // Force generation of gversion data class when the version information is not up-to-date

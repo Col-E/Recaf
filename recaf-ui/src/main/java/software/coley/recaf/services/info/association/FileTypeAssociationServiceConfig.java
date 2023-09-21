@@ -39,6 +39,7 @@ public class FileTypeAssociationServiceConfig extends BasicConfigContainer imple
 
 		extensionsToLangKeys = new ExtensionMapping(List.of(
 				new Pair<>("java", "java"),
+				new Pair<>("jasm", "jasm"),
 				new Pair<>("xml", "xml"),
 				new Pair<>("html", "xml"),
 				new Pair<>("enigma", "enigma")

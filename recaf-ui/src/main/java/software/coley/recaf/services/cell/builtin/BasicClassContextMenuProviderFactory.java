@@ -13,11 +13,13 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.Menus;
+import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -146,8 +148,9 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			ActionMenuItem removeAnnotations = action("menu.edit.remove.annotation", CarbonIcons.CLOSE, () -> actions.deleteClassAnnotations(workspace, resource, bundle, info));
 			// TODO: Implement these operations after assembler is added.
 			//  - For add operations, can use the assembler, using a template for each item
-			ActionMenuItem editClass = action("menu.edit.assemble.class", CarbonIcons.EDIT, () -> {
-			});
+			ActionMenuItem editClass = action("menu.tab.edit", CarbonIcons.EDIT, Unchecked.runnable(() ->
+					actions.openAssembler(PathNodes.classPath(workspace, resource, bundle, info))
+			));
 			ActionMenuItem addField = action("menu.edit.add.field", CarbonIcons.ADD_ALT, () -> {
 			});
 			ActionMenuItem addMethod = action("menu.edit.add.method", CarbonIcons.ADD_ALT, () -> {
@@ -173,7 +176,6 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			removeAnnotations.setDisable(info.getAnnotations().isEmpty());
 
 			// Not implemented yet, so disable
-			editClass.setDisable(true);
 			addField.setDisable(true);
 			addMethod.setDisable(true);
 			addAnnotation.setDisable(true);
