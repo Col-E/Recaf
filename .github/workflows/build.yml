@@ -82,7 +82,7 @@ jobs:
         with:
           check_name: Unit test results
           files: |
-            *.xml
+            **/*.xml
 
   # Builds the projects and attempts to publish a release if the current project version
   # does not match any existing tags in the repository.
