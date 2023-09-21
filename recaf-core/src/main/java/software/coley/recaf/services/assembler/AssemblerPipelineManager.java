@@ -33,7 +33,7 @@ public class AssemblerPipelineManager implements Service {
 
     @Nonnull
     @Override
-    public ServiceConfig getServiceConfig() {
+    public AssemblerPipelineGeneralConfig getServiceConfig() {
         return config;
     }
 

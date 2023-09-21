@@ -23,7 +23,7 @@ import java.util.List;
 
 public interface AssemblerPipeline<C extends ClassInfo, R extends ClassRepresentation> {
 
-    default List<Token> tokenize(String input, String source) {
+    default Result<List<Token>> tokenize(String input, String source) {
           return new Tokenizer().tokenize(source, input);
     }
 
@@ -35,7 +35,7 @@ public interface AssemblerPipeline<C extends ClassInfo, R extends ClassRepresent
 
     Result<List<ASTElement>> pipe(List<Token> tokens, C info);
 
-    Result<C> assemble(List<ASTElement> elements, C info);
+    Result<C> assemble(List<ASTElement> elements, PathNode<?> node);
 
     Result<String> disassemble(ClassPathNode node);
 

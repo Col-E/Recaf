@@ -1,7 +1,12 @@
 package software.coley.recaf.services.assembler;
 
 import com.google.common.reflect.ClassPath;
+import me.darknet.assembler.ast.ASTElement;
+import me.darknet.assembler.ast.ElementType;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.Compiler;
+import me.darknet.assembler.compiler.CompilerOptions;
+import me.darknet.assembler.compiler.InheritanceChecker;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.printer.*;
@@ -14,6 +19,8 @@ import software.coley.recaf.path.AnnotationPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
+
+import java.util.List;
 
 public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassRepresentation>
         implements AssemblerPipeline<C, R> {
@@ -29,6 +36,67 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
     }
 
     protected abstract Result<ClassPrinter> classPrinter(ClassPathNode location);
+    protected abstract CompilerOptions<? extends CompilerOptions<?>> getCompilerOptions();
+    protected abstract Compiler getCompiler();
+    protected abstract InheritanceChecker getInheritanceChecker();
+    protected abstract int getClassVersion(C info);
+
+    protected Result<C> compile(List<ASTElement> elements, PathNode<?> node) {
+        if(elements.isEmpty()) {
+            return Result.err(Error.of("No elements to compile", null));
+        }
+        if(elements.size() != 1) {
+            return Result.err(Error.of("Multiple elements to compile", elements.get(1).location()));
+        }
+        ASTElement element = elements.get(0);
+
+        if(element == null) {
+            return Result.err(Error.of("No element to compile", null));
+        }
+
+        ClassInfo classInfo = node.getValueOfType(ClassInfo.class);
+        if(classInfo == null) {
+            return Result.err(Error.of("Dangling member", null));
+        }
+
+        C info = (C) classInfo;
+
+        CompilerOptions<? extends CompilerOptions<?>> options = getCompilerOptions();
+        options.version(getClassVersion(info))
+                .inheritanceChecker(getInheritanceChecker());
+
+        if(element.type() != ElementType.CLASS) {
+            options.overlay(getRepresentation(info));
+
+            if(element.type() == ElementType.ANNOTATION) {
+                // build annotation path
+                String path = "this";
+                PathNode<?> parent = node.getParent();
+                if(parent instanceof ClassMemberPathNode memberPathNode) {
+                    path += memberPathNode.isMethod() ? ".method." : ".field.";
+                    path += memberPathNode.getValue().getName() + ".";
+                    path += memberPathNode.getValue().getDescriptor();
+                }
+
+                Annotated annotated = node.getValueOfType(Annotated.class);
+
+                if(annotated == null) {
+                    return Result.err(Error.of("Dangling annotation", null));
+                }
+
+                AnnotationInfo annotation = (AnnotationInfo) node.getValue();
+
+                path += annotated.getAnnotations().indexOf(annotation);
+
+                options.annotationPath(path);
+
+            }
+        }
+
+        Compiler compiler = getCompiler();
+
+        return compiler.compile(elements, options).flatMap(res -> Result.ok(getClassInfo((R) res)));
+    }
 
     protected Result<Printer> memberPrinter(ClassMemberPathNode node) {
         ClassPathNode owner = node.getParent();
