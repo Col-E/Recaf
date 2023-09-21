@@ -117,8 +117,8 @@ jacocoAggregation {
     outputXml = true
 }
 
-// Build aggregate report when test phase completes
-tasks.register('test') {
+// Build aggregate report when build completes
+tasks.register('build') {
     dependsOn(subprojects.test)
     doLast {
         buildJacocoAggregate.execute()
