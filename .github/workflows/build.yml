@@ -39,7 +39,7 @@ jobs:
       # So we have a dummy step here just to initialize it.
       - name: Download Gradle wrapper
         run: ./gradlew --version
-      - name: Run build
+      - name: Run test
         run: ./gradlew build
       - name: Upload test coverage to CodeCov.io
         uses: codecov/codecov-action@v3
@@ -76,12 +76,13 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
-          path: artifacts
+          name: test-artifacts
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          check_name: Unit Test results
-          files: artifacts/unit-test-*/**/*.xml
+          check_name: Unit test results
+          files: |
+            *.xml
 
   # Builds the projects and attempts to publish a release if the current project version
   # does not match any existing tags in the repository.
