@@ -64,17 +64,18 @@ public class CombinedPlayer extends Player {
 		// Reset prior content
 		stop();
 		// Attempt to load content from delegates
+		IOException lastError = null;
 		for (Player player : delegates) {
 			try {
 				player.load(path);
 				// Success, use ths player
 				currentPlayer = player;
 				return;
-			} catch (IOException ignored) {
-				ignored.printStackTrace();
+			} catch (IOException ex) {
+				lastError = ex;
 				// ignore to allow other delegated players to attempt loading
 			}
 		}
-		throw new IOException("Failed to load audio file from path: " + path);
+		throw new IOException("Failed to load audio file from path: " + path, lastError);
 	}
 }
