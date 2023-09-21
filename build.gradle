@@ -103,7 +103,7 @@ subprojects {
     // Configure report outputs, and jacoco packages to target.
     tasks.withType(Test).configureEach {
         reports.html.required = false
-        reports.junitXml.required = false
+        reports.junitXml.required = true
 
         jacoco {
             includes = ['software/coley/recaf/**']
