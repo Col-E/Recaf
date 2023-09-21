@@ -553,6 +553,7 @@ service.mapping=Mapping
 service.mapping.mapping-aggregator-config=Mapping aggregation
 service.mapping.mapping-formats-config=Mapping formats
 service.mapping.mapping-generator-config=Mapping generator
+service.mapping.name-gen-provider=Name generators
 service.mapping.name-gen-provider.alphabet=Alphabet
 service.mapping.name-gen-provider.alphabet.alphabet=Alphabet characters
 service.mapping.name-gen-provider.alphabet.length=Minimum length
