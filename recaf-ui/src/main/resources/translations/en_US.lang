@@ -548,6 +548,7 @@ service.io.recent-workspaces-config.max-recent-workspaces=Maximum record of rece
 service.io.recent-workspaces-config.recent-workspaces=Recent workspace
 service.io.resource-importer-config=Archive importing
 service.io.resource-importer-config.zip-strategy=ZIP parsing strategy
+service.io.resource-importer-config.skip-revisited-cen-to-local-links=Skip duplicate CEN-to-LOC entries with JVM strategy
 service.mapping=Mapping
 service.mapping.mapping-aggregator-config=Mapping aggregation
 service.mapping.mapping-formats-config=Mapping formats

@@ -129,7 +129,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 		// Read ZIP entries
 		boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
-		ZipArchive archive = config.getZipStrategy().getValue().mapping().apply(source.readAll());
+		ZipArchive archive = config.mapping().apply(source.readAll());
 		archive.getLocalFiles().forEach(header -> {
 			LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
 			String entryName = header.getFileNameAsString();
