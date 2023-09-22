@@ -61,10 +61,13 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			ProblemTracking problemTracking = editor.getProblemTracking();
 			if (problemTracking == null) return;
 
+			// Skip if no problems
+			Collection<Problem> problems = problemTracking.getProblems().values();
+			if (problems.isEmpty()) return;
+
 			// Create vertical list
 			VBox content = new VBox();
 			ObservableList<Node> children = content.getChildren();
-			Collection<Problem> problems = problemTracking.getProblems().values();
 			for (Problem problem : problems) {
 				// Map level to graphic
 				ProblemLevel level = problem.getLevel();
