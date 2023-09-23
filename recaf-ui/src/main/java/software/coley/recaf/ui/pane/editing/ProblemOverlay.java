@@ -34,6 +34,7 @@ import software.coley.recaf.ui.control.richtext.problem.Problem;
 import software.coley.recaf.ui.control.richtext.problem.ProblemInvalidationListener;
 import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
+import software.coley.recaf.util.PlatformType;
 
 import java.util.Collection;
 
@@ -111,21 +112,26 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 				children.add(problemBox);
 			}
 
-			BooleanProperty isMouseOver = new SimpleBooleanProperty(true);
 			ScrollPane scrollWrapper = new ScrollPane(content);
 			scrollWrapper.maxHeightProperty().bind(editor.heightProperty().multiply(0.8));
 			scrollWrapper.prefViewportWidthProperty().bind(editor.widthProperty().multiply(0.8));
-			scrollWrapper.setOnMouseEntered(me -> isMouseOver.set(true));
-			scrollWrapper.setOnMouseExited(me -> isMouseOver.set(false));
-			scrollWrapper.effectProperty().bind(Bindings.when(isMouseOver.not())
-					.then(new BoxBlur(5, 5, 1))
-					.otherwise((BoxBlur) null));
 			Popover popover = new Popover(scrollWrapper);
 			popover.setArrowLocation(Popover.ArrowLocation.TOP_RIGHT);
-			popover.opacityProperty().bind(Bindings.when(isMouseOver)
-					.then(1.0)
-					.otherwise(0.4));
 			popover.show(indicator);
+
+			// When mousing away from the problems list make it translucent so the text behind it can be read.
+			// Opacity does not seem to work on Linux/Mac, so for now its limited to Windows.
+			if (PlatformType.isWindows()) {
+				BooleanProperty isMouseOver = new SimpleBooleanProperty(true);
+				scrollWrapper.setOnMouseEntered(me -> isMouseOver.set(true));
+				scrollWrapper.setOnMouseExited(me -> isMouseOver.set(false));
+				scrollWrapper.effectProperty().bind(Bindings.when(isMouseOver.not())
+						.then(new BoxBlur(5, 5, 1))
+						.otherwise((BoxBlur) null));
+				popover.opacityProperty().bind(Bindings.when(isMouseOver)
+						.then(1.0)
+						.otherwise(0.4));
+			}
 		});
 
 		// Can recycle the same instance with the indicator graphic
