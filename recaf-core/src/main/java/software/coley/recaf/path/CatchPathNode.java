@@ -5,12 +5,19 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.MethodMember;
 
+import java.util.Set;
+
 /**
  * Path node for {@code catch(Exception)} within {@link MethodMember} instances.
  *
  * @author Matt Coley
  */
 public class CatchPathNode extends AbstractPathNode<ClassMember, String> {
+	/**
+	 * Type identifier for catch nodes.
+	 */
+	public static final String TYPE_ID = "catch";
+
 	/**
 	 * Node without parent.
 	 *
@@ -32,12 +39,18 @@ public class CatchPathNode extends AbstractPathNode<ClassMember, String> {
 	 * @see ClassMemberPathNode#childCatch(String)
 	 */
 	public CatchPathNode(@Nullable ClassMemberPathNode parent, @Nonnull String type) {
-		super("catch", parent, String.class, type);
+		super(TYPE_ID, parent, String.class, type);
 	}
 
 	@Override
 	public ClassMemberPathNode getParent() {
 		return (ClassMemberPathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(ClassMemberPathNode.TYPE_ID);
 	}
 
 	@Override

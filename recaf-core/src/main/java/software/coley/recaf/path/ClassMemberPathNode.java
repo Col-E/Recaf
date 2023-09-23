@@ -10,6 +10,7 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.LocalVariable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Path node for {@link ClassMember} types.
@@ -17,6 +18,11 @@ import java.util.List;
  * @author Matt Coley
  */
 public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember> {
+	/**
+	 * Type identifier for member nodes.
+	 */
+	public static final String TYPE_ID = "member";
+
 	/**
 	 * Node without parent.
 	 *
@@ -38,7 +44,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @see ClassPathNode#child(ClassMember)
 	 */
 	public ClassMemberPathNode(@Nullable ClassPathNode parent, @Nonnull ClassMember member) {
-		super("member", parent, ClassMember.class, member);
+		super(TYPE_ID, parent, ClassMember.class, member);
 	}
 
 	/**
@@ -121,6 +127,12 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	@Override
 	public ClassPathNode getParent() {
 		return (ClassPathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(ClassPathNode.TYPE_ID);
 	}
 
 	@Override

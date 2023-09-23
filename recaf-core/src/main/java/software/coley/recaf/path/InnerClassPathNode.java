@@ -5,12 +5,19 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
 
+import java.util.Set;
+
 /**
  * Path node for {@link InnerClassInfo} types.
  *
  * @author Matt Coley
  */
 public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassInfo> {
+	/**
+	 * Type identifier for inner class nodes.
+	 */
+	public static final String TYPE_ID = "inner-class";
+
 	/**
 	 * Node with parent.
 	 *
@@ -23,12 +30,18 @@ public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassIn
 	 */
 	public InnerClassPathNode(@Nullable ClassPathNode parent,
 							  @Nonnull InnerClassInfo innerClass) {
-		super("inner-class", parent, InnerClassInfo.class, innerClass);
+		super(TYPE_ID, parent, InnerClassInfo.class, innerClass);
 	}
 
 	@Override
 	public ClassPathNode getParent() {
 		return (ClassPathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(ClassPathNode.TYPE_ID);
 	}
 
 	@Override

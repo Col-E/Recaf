@@ -6,12 +6,19 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 
+import java.util.Set;
+
 /**
  * Path node for local variables within {@link MethodMember} instances.
  *
  * @author Matt Coley
  */
 public class LocalVariablePathNode extends AbstractPathNode<ClassMember, LocalVariable> {
+	/**
+	 * Type identifier for local variable nodes.
+	 */
+	public static final String TYPE_ID = "variable";
+
 	/**
 	 * Node without parent.
 	 *
@@ -33,12 +40,18 @@ public class LocalVariablePathNode extends AbstractPathNode<ClassMember, LocalVa
 	 * @see ClassMemberPathNode#childVariable(LocalVariable)
 	 */
 	public LocalVariablePathNode(@Nullable ClassMemberPathNode parent, @Nonnull LocalVariable variable) {
-		super("variable", parent, LocalVariable.class, variable);
+		super(TYPE_ID, parent, LocalVariable.class, variable);
 	}
 
 	@Override
 	public ClassMemberPathNode getParent() {
 		return (ClassMemberPathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(ClassMemberPathNode.TYPE_ID);
 	}
 
 	@Override

@@ -7,12 +7,19 @@ import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 
+import java.util.Set;
+
 /**
  * Path node for {@link ClassInfo} types.
  *
  * @author Matt Coley
  */
 public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
+	/**
+	 * Type identifier for class nodes.
+	 */
+	public static final String TYPE_ID = "class";
+
 	/**
 	 * Node without parent.
 	 *
@@ -34,7 +41,7 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	 * @see DirectoryPathNode#child(ClassInfo)
 	 */
 	public ClassPathNode(@Nullable DirectoryPathNode parent, @Nonnull ClassInfo info) {
-		super("class", parent, ClassInfo.class, info);
+		super(TYPE_ID, parent, ClassInfo.class, info);
 	}
 
 	/**
@@ -73,6 +80,12 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	@Override
 	public DirectoryPathNode getParent() {
 		return (DirectoryPathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(DirectoryPathNode.TYPE_ID);
 	}
 
 	@Override

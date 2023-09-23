@@ -6,12 +6,19 @@ import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 
+import java.util.Set;
+
 /**
  * Path node for annotations on {@link Annotated} types such as classes, fields, and methods..
  *
  * @author Matt Coley
  */
 public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo> {
+	/**
+	 * Type identifier for annotation nodes.
+	 */
+	public static final String TYPE_ID = "annotation";
+
 	/**
 	 * Node without parent.
 	 *
@@ -36,7 +43,7 @@ public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo>
 	 */
 	@SuppressWarnings("unchecked")
 	public AnnotationPathNode(@Nullable PathNode<?> parent, @Nonnull AnnotationInfo annotation) {
-		super("annotation", (PathNode<Object>) parent, AnnotationInfo.class, annotation);
+		super(TYPE_ID, (PathNode<Object>) parent, AnnotationInfo.class, annotation);
 	}
 
 	/**
@@ -48,6 +55,12 @@ public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo>
 	@Nonnull
 	public AnnotationPathNode child(@Nonnull AnnotationInfo annotation) {
 		return new AnnotationPathNode(this, annotation);
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(ClassPathNode.TYPE_ID, ClassMemberPathNode.TYPE_ID, AnnotationPathNode.TYPE_ID);
 	}
 
 	@Override
