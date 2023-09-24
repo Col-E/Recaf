@@ -102,15 +102,23 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 
     @Override
     protected InheritanceChecker getInheritanceChecker() {
-        return (child, parent) -> {
-            InheritanceVertex childVertex = inheritanceGraph.getVertex(child);
-            InheritanceVertex parentVertex = inheritanceGraph.getVertex(parent);
+        return new InheritanceChecker() {
+            @Override
+            public boolean isSubclassOf(String child, String parent) {
+                InheritanceVertex childVertex = inheritanceGraph.getVertex(child);
+                InheritanceVertex parentVertex = inheritanceGraph.getVertex(parent);
 
-            if(childVertex == null || parentVertex == null) {
-                return false;
+                if(childVertex == null || parentVertex == null) {
+                    return false;
+                }
+
+                return childVertex.isChildOf(parentVertex);
             }
 
-            return childVertex.isChildOf(parentVertex);
+            @Override
+            public String getCommonSuperclass(String type1, String type2) {
+                return inheritanceGraph.getCommon(type1, type2);
+            }
         };
     }
 

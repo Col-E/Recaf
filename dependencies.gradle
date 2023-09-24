@@ -1,6 +1,6 @@
 def asmVersion = '9.5'
 def cafeDudeVersion = '1.10.2'
-def jasmVersion = '2.0.0'
+def jasmVersion = '2.0.0.1'
 def junitVersion = '5.9.2'
 
 project.ext {
