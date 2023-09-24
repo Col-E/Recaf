@@ -65,9 +65,12 @@ public class AstUtils {
 					.collect(Collectors.joining()) + ")" + toInternal(method.getReturnType(), true);
 		} else if (type instanceof JavaType.Variable variable) {
 			return toInternal(variable.getType(), desc);
-		} else {
-			throw new UnsupportedOperationException("Unhandled type: " + type);
+		} else if (type instanceof JavaType.GenericTypeVariable typeVariable) {
+			List<JavaType> bounds = typeVariable.getBounds();
+			if (bounds.size() == 1)
+				return toInternal(bounds.get(0));
 		}
+		throw new UnsupportedOperationException("Unhandled type: " + type);
 	}
 
 	/**

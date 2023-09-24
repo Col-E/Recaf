@@ -10,6 +10,7 @@ import software.coley.recaf.info.member.MethodMember;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Set;
 
 /**
  * Path node for instructions within {@link MethodMember} instances.
@@ -17,6 +18,11 @@ import java.io.StringWriter;
  * @author Matt Coley
  */
 public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractInsnNode> {
+	/**
+	 * Type identifier for instruction nodes.
+	 */
+	public static final String TYPE_ID = "instruction";
+
 	/**
 	 * Node without parent.
 	 *
@@ -38,12 +44,18 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 	 * @see ClassMemberPathNode#childInsn(AbstractInsnNode)
 	 */
 	public InstructionPathNode(@Nullable ClassMemberPathNode parent, @Nonnull AbstractInsnNode insn) {
-		super("catch", parent, AbstractInsnNode.class, insn);
+		super(TYPE_ID, parent, AbstractInsnNode.class, insn);
 	}
 
 	@Override
 	public ClassMemberPathNode getParent() {
 		return (ClassMemberPathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(ClassMemberPathNode.TYPE_ID);
 	}
 
 	@Override

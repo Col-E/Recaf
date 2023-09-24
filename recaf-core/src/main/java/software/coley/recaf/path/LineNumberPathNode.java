@@ -1,7 +1,10 @@
 package software.coley.recaf.path;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.FileInfo;
+
+import java.util.Set;
 
 /**
  * Path node for line numbers within text {@link FileInfo} instances.
@@ -9,6 +12,11 @@ import software.coley.recaf.info.FileInfo;
  * @author Matt Coley
  */
 public class LineNumberPathNode extends AbstractPathNode<FileInfo, Integer> {
+	/**
+	 * Type identifier for line number nodes.
+	 */
+	public static final String TYPE_ID = "line";
+
 	/**
 	 * Node without parent.
 	 *
@@ -30,12 +38,18 @@ public class LineNumberPathNode extends AbstractPathNode<FileInfo, Integer> {
 	 * @see FilePathNode#child(int)
 	 */
 	public LineNumberPathNode(@Nullable FilePathNode parent, int line) {
-		super("line", parent, Integer.class, line);
+		super(TYPE_ID, parent, Integer.class, line);
 	}
 
 	@Override
 	public FilePathNode getParent() {
 		return (FilePathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(FilePathNode.TYPE_ID);
 	}
 
 	@Override

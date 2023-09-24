@@ -29,7 +29,7 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 	 * @param value
 	 * 		Value instance.
 	 */
-	protected AbstractPathNode(@Nullable String id, @Nullable PathNode<P> parent, @Nonnull Class<V> valueType, @Nonnull V value) {
+	protected AbstractPathNode(@Nonnull String id, @Nullable PathNode<P> parent, @Nonnull Class<V> valueType, @Nonnull V value) {
 		this.id = id;
 		this.parent = parent;
 		this.valueType = valueType;
@@ -58,15 +58,13 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 	protected int cmpHierarchy(@Nonnull PathNode<?> path) {
 		if (getValueType() != path.getValueType()) {
 			// Check direct parent (quicker validation) and then if that does not pass, a multi-level descendant test.
-			if ((parent != null && parent.idMatch(path)) ||
-					isDescendantOf(path)) {
+			if ((parent != null && parent.typeIdMatch(path)) || isDescendantOf(path)) {
 				// We are the child type, show last.
 				return 1;
 			}
 
 			// Check direct parent (quicker validation) and then if that does not pass, a multi-level descendant test.
-			if ((path.getParent() != null && idMatch(path.getParent())) ||
-					path.isDescendantOf(this)) {
+			if ((path.getParent() != null && typeIdMatch(path.getParent())) || path.isDescendantOf(this)) {
 				// We are the parent type, show first.
 				return -1;
 			}
@@ -105,7 +103,7 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 
 	@Nonnull
 	@Override
-	public String id() {
+	public String typeId() {
 		return id;
 	}
 
@@ -129,22 +127,6 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 	@SuppressWarnings("all")
 	public V getValue() {
 		return value;
-	}
-
-	@Override
-	public boolean isDescendantOf(@Nonnull PathNode<?> other) {
-		if (idMatch(other)) {
-			// Same id as other, so must be same type. Compare local values.
-			return localCompare(other) >= 0;
-		}
-		if (parent != null) {
-			if (parent.idMatch(other)) {
-				// Parent has same id to the other, compare the parent's local values.
-				return parent.localCompare(other) >= 0;
-			}
-			return parent.isDescendantOf(other);
-		}
-		return false;
 	}
 
 	@Override

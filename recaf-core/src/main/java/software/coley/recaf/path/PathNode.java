@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.util.Set;
+
 /**
  * A <i>"modular"</i> value type for representing <i>"paths"</i> to content in a {@link Workspace}.
  * The path must contain all data in a <i>"chain"</i> such that it can have access from most specific portion
@@ -55,22 +57,38 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	V getValue();
 
 	/**
+	 * @param other
+	 * 		Some other path node.
+	 *
+	 * @return {@code true} when the other path has the same {@link #getValue() local value}.
+	 */
+	default boolean hasEqualOrChildValue(@Nonnull PathNode<?> other) {
+		return this == other || getValue().equals(other.getValue());
+	}
+
+	/**
 	 * Used to differentiate path nodes in a chain that have the same {@link #getValueType()}.
 	 *
 	 * @return String unique ID per path-node type.
 	 */
 	@Nonnull
-	String id();
+	String typeId();
 
 	/**
 	 * @param node
 	 * 		Other node to check.
 	 *
-	 * @return {@code true} when the current {@link #id()} is the same as the other's ID.
+	 * @return {@code true} when the current {@link #typeId()} is the same as the other's ID.
 	 */
-	default boolean idMatch(@Nonnull PathNode<?> node) {
-		return id().equals(node.id());
+	default boolean typeIdMatch(@Nonnull PathNode<?> node) {
+		return typeId().equals(node.typeId());
 	}
+
+	/**
+	 * @return Set of expected {@link #typeId()} values for {@link #getParent() parent nodes}.
+	 */
+	@Nonnull
+	Set<String> directParentTypeIds();
 
 	/**
 	 * @return The type of this path node's {@link #getValue() wrapped value}.
@@ -93,13 +111,86 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	<T> T getValueOfType(@Nonnull Class<T> type);
 
 	/**
+	 * Checks for tree alignment. Consider this simple example:
+	 * <pre>
+	 *   Path1   Path2   Path3
+	 *     A       A       A
+	 *     |       |       |
+	 *     B       B       B
+	 *     |       |       |
+	 *     C       C       X
+	 * </pre>
+	 * With this setup:
+	 * <ul>
+	 *     <li>{@code path1C.allParentsMatch(path1C) == true} Self checks are equal</li>
+	 *     <li>{@code path1C.allParentsMatch(path2C) == true} Two identical paths <i>(by value of each node)</i> are equal</li>
+	 *     <li>{@code path1C.allParentsMatch(path2B) == false} Comparing between non-parallel levels are not equal</li>
+	 *     <li>{@code path1C.allParentsMatch(path3X) == false} Paths to different items are not equal</li>
+	 * </ul>
+	 *
+	 * @param other Some other path node.
+	 * @return {@code true} when from this level all parents going up the path match values.
+	 */
+	default boolean allParentsMatch(@Nonnull PathNode<?> other) {
+		// Type identifiers should match for all levels.
+		if (!typeId().equals(other.typeId()))
+			return false;
+
+		// Should both have the same level of tree heights (number of parents).
+		PathNode<?> parent = getParent();
+		PathNode<?> otherParent = other.getParent();
+		if (parent == null && otherParent == null)
+			// Root node edge case
+			return hasEqualOrChildValue(other);
+		else if (parent == null || otherParent == null)
+			// Mismatch in tree structure height
+			return false;
+
+		// Go up the chain if the matching values continue.
+		if (hasEqualOrChildValue(other))
+			return parent.allParentsMatch(otherParent);
+		return false;
+	}
+
+	/**
+	 * @param other
+	 * 		Some other path node.
+	 *
+	 * @return {@code true} when our path represents a more generic path than the given one.
+	 * {@code false} when our path does not belong to parent path of the given item.
+	 */
+	default boolean isParentOf(@Nonnull PathNode<?> other) {
+		return other.isDescendantOf(this);
+	}
+
+	/**
 	 * @param other
 	 * 		Some other path node.
 	 *
 	 * @return {@code true} when our path represents a more specific path than the given one.
 	 * {@code false} when our path does not belong to a potential sub-path of the given item.
 	 */
-	boolean isDescendantOf(@Nonnull PathNode<?> other);
+	default boolean isDescendantOf(@Nonnull PathNode<?> other) {
+		// If our type identifiers are the same everything going up the path should match.
+		String otherTypeId = other.typeId();
+		if (otherTypeId.equals(typeId()))
+			return hasEqualOrChildValue(other) && allParentsMatch(other);
+
+		// Check if the other is an allowed parent.
+		PathNode<?> parent = getParent();
+		if (directParentTypeIds().contains(otherTypeId) && parent != null) {
+			// The parent is an allowed type, check if the parent says it is a descendant of the other path.
+			if (parent == other || (parent.hasEqualOrChildValue(other)))
+				return parent.isDescendantOf(other);
+		}
+
+		// Check in parent.
+		if (parent != null)
+			return parent.isDescendantOf(other);
+
+		// Not a descendant.
+		return false;
+	}
 
 	/**
 	 * @param o

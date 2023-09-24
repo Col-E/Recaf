@@ -7,9 +7,10 @@ import software.coley.recaf.info.BasicFileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.path.*;
-import software.coley.recaf.test.TestClassUtils;
+import software.coley.recaf.test.dummy.AccessibleFields;
+import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.test.dummy.StringConsumer;
-import software.coley.recaf.test.dummy.StringConsumerUser;
+import software.coley.recaf.test.dummy.VariedModifierFields;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
@@ -21,6 +22,8 @@ import java.io.IOException;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static software.coley.recaf.test.TestClassUtils.fromClasses;
+import static software.coley.recaf.test.TestClassUtils.fromRuntimeClass;
 import static software.coley.recaf.ui.control.tree.WorkspaceTreeNode.getOrInsertIntoTree;
 
 /**
@@ -30,10 +33,15 @@ class WorkspaceTreeNodeTest {
 	static Workspace workspace;
 	static WorkspaceResource primaryResource;
 	static JvmClassBundle primaryJvmBundle;
-	static JvmClassInfo primaryClassInfo;
+	static JvmClassInfo classA;
+	static JvmClassInfo classB;
+	static JvmClassInfo classC;
+	static JvmClassInfo classD;
 	// Normal paths
-	static ClassPathNode p1;
+	static ClassPathNode p1a;
 	static ClassPathNode p1b;
+	static ClassPathNode p1c;
+	static ClassPathNode p1d;
 	static DirectoryPathNode p2;
 	static DirectoryPathNode p2b;
 	static BundlePathNode p3c;
@@ -51,8 +59,11 @@ class WorkspaceTreeNodeTest {
 	static void setup() throws IOException {
 		BasicFileBundle fileBundle = new BasicFileBundle();
 
-		primaryClassInfo = TestClassUtils.fromRuntimeClass(StringConsumer.class);
-		primaryJvmBundle = TestClassUtils.fromClasses(primaryClassInfo);
+		primaryJvmBundle = fromClasses(
+				classA = fromRuntimeClass(AccessibleFields.class),
+				classB = fromRuntimeClass(HelloWorld.class),
+				classC = fromRuntimeClass(StringConsumer.class),
+				classD = fromRuntimeClass(VariedModifierFields.class));
 		primaryResource = new WorkspaceResourceBuilder()
 				.withJvmClassBundle(primaryJvmBundle)
 				.withFileBundle(fileBundle)
@@ -60,7 +71,7 @@ class WorkspaceTreeNodeTest {
 
 		workspace = new BasicWorkspace(primaryResource);
 
-		String packageName = Objects.requireNonNull(primaryClassInfo.getPackageName());
+		String packageName = Objects.requireNonNull(classA.getPackageName());
 		String parentPackageName = packageName.substring(0, packageName.lastIndexOf('/'));
 
 		p5 = PathNodes.workspacePath(workspace);
@@ -69,8 +80,10 @@ class WorkspaceTreeNodeTest {
 		p3f = p4.child(fileBundle);
 		p2 = p3c.child(packageName);
 		p2b = p3c.child(parentPackageName);
-		p1 = p2.child(primaryClassInfo);
-		p1b = p2.child(TestClassUtils.fromRuntimeClass(StringConsumerUser.class));
+		p1a = p2.child(classA);
+		p1b = p2.child(classB);
+		p1c = p2.child(classC);
+		p1d = p2.child(classD);
 
 		// Content available in the default package/root directory.
 		default2 = p3f.child(null);
@@ -78,8 +91,45 @@ class WorkspaceTreeNodeTest {
 
 		// The path will visually look like (root)//zero.txt in the workspace tree.
 		// This is not ideal, but there's not really any great alternatives either.
-		z2  = p3f.child("//");
+		z2 = p3f.child("//");
 		z1 = z2.child(new BasicFileInfo("///zero.txt", new byte[0], new BasicPropertyContainer()));
+	}
+
+	@Test
+	void testGetAndRemoveWithDifferentNodesOfEqualValue() {
+		ClassPathNode[] array = new ClassPathNode[]{p1a, p1b, p1c, p1d};
+
+		// Create copies of the path nodes which we will use for the rest of the test.
+		var p5 = PathNodes.workspacePath(workspace);
+		var p4 = p5.child(primaryResource);
+		var p3c = p4.child(primaryJvmBundle);
+		var p2 = p3c.child(classA.getPackageName());
+		var p1a = p2.child(classA);
+		var p1b = p2.child(classB);
+		var p1c = p2.child(classC);
+		var p1d = p2.child(classD);
+
+		// Test for each class path in the array.
+		for (ClassPathNode classPath : array) {
+			// Create a tree model which has each class (using the cloned path nodes). Looks like:
+			//  workspace
+			//   bundle
+			//    dir
+			//     classA
+			//     classB
+			//     classC
+			//     classD
+			WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
+			root.getOrCreateNodeByPath(p1a);
+			root.getOrCreateNodeByPath(p1b);
+			root.getOrCreateNodeByPath(p1c);
+			root.getOrCreateNodeByPath(p1d);
+
+			// Try doing operations with the ORIGINAL path node reference.
+			assertNotNull(root.getNodeByPath(classPath), "Could not get info");
+			assertTrue(root.removeNodeByPath(classPath));
+			assertNull(root.getNodeByPath(classPath), "Info not removed");
+		}
 	}
 
 	@Test
@@ -123,13 +173,13 @@ class WorkspaceTreeNodeTest {
 	@Test
 	void removeOneOfTwoChildrenDoesNotPruneWholeTree() {
 		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
-		root.getOrCreateNodeByPath(p1);
+		root.getOrCreateNodeByPath(p1a);
 		root.getOrCreateNodeByPath(p1b);
 
 		// Remove the info
-		assertNotNull(root.getNodeByPath(p1), "Could not get info");
-		assertTrue(root.removeNodeByPath(p1));
-		assertNull(root.getNodeByPath(p1), "Info not removed");
+		assertNotNull(root.getNodeByPath(p1a), "Could not get info");
+		assertTrue(root.removeNodeByPath(p1a));
+		assertNull(root.getNodeByPath(p1a), "Info not removed");
 
 		// The package should be not be removed since the tree still has one class remaining
 		assertNotNull(root.getNodeByPath(p2), "Could not get package of info");
@@ -149,12 +199,12 @@ class WorkspaceTreeNodeTest {
 	@Test
 	void removeNodeByPath() {
 		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
-		root.getOrCreateNodeByPath(p1);
+		root.getOrCreateNodeByPath(p1a);
 
 		// Remove the info
-		assertNotNull(root.getNodeByPath(p1), "Could not get info");
-		assertTrue(root.removeNodeByPath(p1));
-		assertNull(root.getNodeByPath(p1), "Info not removed");
+		assertNotNull(root.getNodeByPath(p1a), "Could not get info");
+		assertTrue(root.removeNodeByPath(p1a));
+		assertNull(root.getNodeByPath(p1a), "Info not removed");
 
 		// The package should be removed since the tree was linear
 		assertNull(root.getNodeByPath(p2), "Could not get package of info");
@@ -172,10 +222,10 @@ class WorkspaceTreeNodeTest {
 	@Test
 	void getNodeByPath() {
 		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
-		root.getOrCreateNodeByPath(p1);
+		root.getOrCreateNodeByPath(p1a);
 
 		// Get each node, should exist.
-		assertNotNull(root.getNodeByPath(p1), "Could not get info");
+		assertNotNull(root.getNodeByPath(p1a), "Could not get info");
 		assertNotNull(root.getNodeByPath(p2), "Could not get package of info");
 		assertNotNull(root.getNodeByPath(p2b), "Could not get parent package of info");
 		assertNotNull(root.getNodeByPath(p3c), "Could not get bundle");
@@ -187,33 +237,33 @@ class WorkspaceTreeNodeTest {
 		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
 
 		// Get or create the deepest path should create all other parent paths.
-		WorkspaceTreeNode result = root.getOrCreateNodeByPath(p1);
+		WorkspaceTreeNode result = root.getOrCreateNodeByPath(p1a);
 		assertNotNull(result, "No result of get or create operation");
-		assertEquals(result, root.getNodeByPath(p1), "Could not get info");
+		assertEquals(result, root.getNodeByPath(p1a), "Could not get info");
 		assertNotNull(root.getNodeByPath(p2), "Could not get package of info");
 		assertNotNull(root.getNodeByPath(p2b), "Could not get parent package of info");
 		assertNotNull(root.getNodeByPath(p3c), "Could not get bundle");
 		assertNotNull(root.getNodeByPath(p4), "Could not get resource");
 
 		// Try inserting with just the info missing.
-		assertTrue(root.removeNodeByPath(p1));
-		result = root.getOrCreateNodeByPath(p1);
-		assertEquals(result, root.getNodeByPath(p1), "Could not get info");
+		assertTrue(root.removeNodeByPath(p1a));
+		result = root.getOrCreateNodeByPath(p1a);
+		assertEquals(result, root.getNodeByPath(p1a), "Could not get info");
 
 		// Try inserting with parent package missing.
 		assertTrue(root.removeNodeByPath(p2b));
-		result = root.getOrCreateNodeByPath(p1);
-		assertEquals(result, root.getNodeByPath(p1), "Could not get info");
+		result = root.getOrCreateNodeByPath(p1a);
+		assertEquals(result, root.getNodeByPath(p1a), "Could not get info");
 
 		// If we do repeated calls, the reference should always be the same since it acts as a getter.
-		assertSame(result, root.getOrCreateNodeByPath(p1));
+		assertSame(result, root.getOrCreateNodeByPath(p1a));
 		assertSame(root.getOrCreateNodeByPath(p3c), root.getOrCreateNodeByPath(p3c));
 	}
 
 	@Test
 	void matches() {
 		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
-		root.getOrCreateNodeByPath(p1);
+		root.getOrCreateNodeByPath(p1a);
 
 		// Get child-most item following the "top" of the tree.
 		// Should yield the class info node.
@@ -222,7 +272,7 @@ class WorkspaceTreeNodeTest {
 			child = (WorkspaceTreeNode) child.getChildren().get(0);
 
 		// Validate it is the node for the class info.
-		assertTrue(child.matches(p1));
+		assertTrue(child.matches(p1a));
 	}
 
 
@@ -233,7 +283,7 @@ class WorkspaceTreeNodeTest {
 			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
 
 			// Insert the class, which should generate all paths between the class and the workspace node.
-			WorkspaceTreeNode classNode = getOrInsertIntoTree(workspaceNode, p1);
+			WorkspaceTreeNode classNode = getOrInsertIntoTree(workspaceNode, p1a);
 			assertNotNull(classNode, "Class not yielded by original assert");
 
 			// Assert all package entries exist for: software.coley.recaf.test.dummy
@@ -269,8 +319,8 @@ class WorkspaceTreeNodeTest {
 			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
 
 			// Insert operation
-			WorkspaceTreeNode classNode1 = getOrInsertIntoTree(workspaceNode, p1);
-			WorkspaceTreeNode classNode2 = getOrInsertIntoTree(workspaceNode, p1);
+			WorkspaceTreeNode classNode1 = getOrInsertIntoTree(workspaceNode, p1a);
+			WorkspaceTreeNode classNode2 = getOrInsertIntoTree(workspaceNode, p1a);
 			assertSame(classNode1, classNode2);
 		}
 

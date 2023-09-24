@@ -7,6 +7,7 @@ import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Path node for {@link WorkspaceResource} types.
@@ -14,6 +15,11 @@ import java.util.List;
  * @author Matt Coley
  */
 public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResource> {
+	/**
+	 * Type identifier for annotation nodes.
+	 */
+	public static final String TYPE_ID = "resource";
+
 	/**
 	 * Node without parent.
 	 *
@@ -35,7 +41,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 	 * @see WorkspacePathNode#child(WorkspaceResource)
 	 */
 	public ResourcePathNode(@Nullable WorkspacePathNode parent, @Nonnull WorkspaceResource resource) {
-		super("resource", parent, WorkspaceResource.class, resource);
+		super(TYPE_ID, parent, WorkspaceResource.class, resource);
 	}
 
 	/**
@@ -61,6 +67,12 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 	@Override
 	public WorkspacePathNode getParent() {
 		return (WorkspacePathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(WorkspacePathNode.TYPE_ID);
 	}
 
 	@Override

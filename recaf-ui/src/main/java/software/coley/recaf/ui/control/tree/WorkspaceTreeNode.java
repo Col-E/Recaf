@@ -209,7 +209,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 		PathNode<?> parent = path.getParent();
 		if (parent != null)
 			node = getOrInsertIntoTree(node, parent, sorted);
-		else if (path.idMatch(node.getValue())) {
+		else if (path.typeIdMatch(node.getValue())) {
 			// We are the root link in the path. This check ensures that as the root type we do not
 			// insert a new tree-node of the same value, to the children list of the root tree node.
 			return node;

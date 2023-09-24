@@ -12,6 +12,18 @@ public enum PlatformType {
 	MAC,
 	LINUX;
 
+	public static boolean isWindows() {
+		return get() == WINDOWS;
+	}
+
+	public static boolean isMac() {
+		return get() == MAC;
+	}
+
+	public static boolean isLinux() {
+		return get() == LINUX;
+	}
+
 	/**
 	 * @return Operating system type.
 	 */
