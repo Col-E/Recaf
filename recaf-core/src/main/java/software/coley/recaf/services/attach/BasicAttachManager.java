@@ -335,6 +335,12 @@ public class BasicAttachManager implements AttachManager {
 					else
 						agentArgs += ",namelessThreads";
 					virtualMachine.loadAgent(agentAbsolutePath, agentArgs);
+
+					// The agent server will update some properties to indicate its active.
+					// We need to update our map so that we can see this indicator so that we can extract
+					// the port that the server is running on if we want to reconnect.
+					Properties systemProperties = virtualMachine.getSystemProperties();
+					virtualMachinePropertiesMap.put(item, systemProperties);
 				} catch (AgentLoadException ex) {
 					// The agent jar file is written in Java 8. But Recaf uses Java 11+.
 					// This is a problem on OUR side because Java 11+ handles agent interactions differently.
