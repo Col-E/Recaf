@@ -121,6 +121,9 @@ jacocoAggregation {
 tasks.register('build') {
     dependsOn(subprojects.test)
     doLast {
-        buildJacocoAggregate.execute()
+        // We only will run the aggregator if the test tasks did work.
+        // This allows us to skip tests in some cases and not have the aggregator complain about missing inputs.
+        if (subprojects.test.stream().anyMatch(Task::getDidWork))
+            buildJacocoAggregate.execute()
     }
 }
