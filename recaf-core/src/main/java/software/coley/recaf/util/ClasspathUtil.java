@@ -77,7 +77,7 @@ public class ClasspathUtil {
 	}
 
 	/**
-	 * Check if a resourc exists in the current classpath.
+	 * Check if a resource exists in the current classpath.
 	 *
 	 * @param path
 	 * 		Path to resource.
