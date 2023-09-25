@@ -111,7 +111,7 @@ subprojects {
     }
 }
 
-// Always emit HTML aggregate report
+// Always emit HTML & XML aggregate reports
 jacocoAggregation {
     outputHtml = true
     outputXml = true
