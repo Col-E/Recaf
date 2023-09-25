@@ -90,14 +90,17 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 
 	@Override
 	public void close() {
-		super.close();
-		closed = true;
-
-		// Close client connection
 		try {
-			client.close();
-		} catch (IOException ex) {
-			logger.info("Failed to close client connection to remote VM: {}", virtualMachine.id());
+			super.close();
+		} finally {
+			closed = true;
+
+			// Close client connection
+			try {
+				client.close();
+			} catch (IOException ex) {
+				logger.info("Failed to close client connection to remote VM: {}", virtualMachine.id());
+			}
 		}
 	}
 
