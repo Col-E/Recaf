@@ -10,7 +10,9 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
+import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static java.lang.Class.forName;
@@ -30,11 +32,11 @@ public class ClasspathUtil {
 	/**
 	 * Cache of all system classes represented as a tree.
 	 */
-	private static Tree<String, String> tree;
+	private static volatile Tree<String, String> tree;
 	/**
 	 * Cached list of available system packages.
 	 */
-	private static List<String> systemPackages;
+	private static volatile List<String> systemPackages;
 
 	/**
 	 * Returns the class associated with the specified name, using
@@ -109,11 +111,15 @@ public class ClasspathUtil {
 	@Nonnull
 	public static List<String> getSystemPackages() {
 		if (systemPackages == null) {
-			systemPackages = ModuleFinder.ofSystem().findAll().stream()
-					.flatMap(moduleReference -> moduleReference.descriptor().exports().stream())
-					.map(ModuleDescriptor.Exports::source)
-					.distinct()
-					.collect(Collectors.toList());
+			synchronized (ClasspathUtil.class) {
+				if (systemPackages == null) {
+					systemPackages = ModuleFinder.ofSystem().findAll().stream()
+							.flatMap(moduleReference -> moduleReference.descriptor().exports().stream())
+							.map(ModuleDescriptor.Exports::source)
+							.distinct()
+							.collect(Collectors.toList());
+				}
+			}
 		}
 		return systemPackages;
 	}
@@ -124,18 +130,22 @@ public class ClasspathUtil {
 	@Nonnull
 	public static Tree<String, String> getSystemClasses() {
 		if (tree == null) {
-			tree = new SortedTreeImpl<>();
-			ModuleFinder.ofSystem().findAll().stream()
-					.map(Unchecked.function(ModuleReference::open))
-					.flatMap(Unchecked.function(ModuleReader::list))
-					.filter(s -> s.endsWith(".class") && s.indexOf('-') == -1)
-					.map(s -> s.substring(0, s.length() - 6))
-					.forEach(s -> {
-						String[] sections = s.split("/");
-						Tree<String, String> path = tree;
-						for (String section : sections)
-							path = path.computeIfAbsent(section, SortedTreeImpl::new);
-					});
+			synchronized (ClasspathUtil.class) {
+				if (tree == null) {
+					tree = new SortedTreeImpl<>();
+					ModuleFinder.ofSystem().findAll().stream()
+							.map(Unchecked.function(ModuleReference::open))
+							.flatMap(Unchecked.function(ModuleReader::list))
+							.filter(s -> s.endsWith(".class") && s.indexOf('-') == -1)
+							.map(s -> s.substring(0, s.length() - 6))
+							.forEach(s -> {
+								String[] sections = s.split("/");
+								Tree<String, String> path = tree;
+								for (String section : sections)
+									path = path.computeIfAbsent(section, SortedTreeImpl::new);
+							});
+				}
+			}
 		}
 		return tree;
 	}
