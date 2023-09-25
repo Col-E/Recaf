@@ -15,6 +15,7 @@ import software.coley.instrument.message.MessageFactory;
 import software.coley.instrument.sock.SocketAvailability;
 import software.coley.instrument.util.Discovery;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.DevDetection;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.resource.AgentServerRemoteVmResource;
@@ -328,7 +329,12 @@ public class BasicAttachManager implements AttachManager {
 				try {
 					port = SocketAvailability.findAvailable();
 					String agentAbsolutePath = StringUtil.pathToAbsoluteString(getAgentJarPath());
-					virtualMachine.loadAgent(agentAbsolutePath, "port=" + port);
+					String agentArgs = "port=" + port;
+					if (DevDetection.isDevEnv())
+						agentArgs += ",debug";
+					else
+						agentArgs += ",namelessThreads";
+					virtualMachine.loadAgent(agentAbsolutePath, agentArgs);
 				} catch (AgentLoadException ex) {
 					// The agent jar file is written in Java 8. But Recaf uses Java 11+.
 					// This is a problem on OUR side because Java 11+ handles agent interactions differently.

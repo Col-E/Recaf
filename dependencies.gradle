@@ -36,7 +36,7 @@ project.ext {
     ikonli = 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
     ikonli_pack = 'org.kordamp.ikonli:ikonli-carbonicons-pack:12.3.1'
 
-    instrument_server = 'software.coley:instrumentation-server:1.3.6'
+    instrument_server = 'software.coley:instrumentation-server:1.4.0'
 
     jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2'
 
