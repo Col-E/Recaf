@@ -39,19 +39,31 @@ jobs:
       # So we have a dummy step here just to initialize it.
       - name: Download Gradle wrapper
         run: ./gradlew --version
-      - name: Run tests
-        run: ./gradlew test
-      - name: Upload test results
+      - name: Run build
+        run: ./gradlew build
+      - name: Upload test coverage to CodeCov.io
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: Test artifacts
+          name: test-artifacts
           retention-days: 21
           path: |
             **/TEST-*
             **/hs_err_pid*
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: snapshot-build
+          retention-days: 21
+          path: |
+            recaf-ui/build/libs/recaf-ui-*-all.jar
 
-  # Publishes the test results of 'test'
+  # Publishes the test results from prior task work
   publish-test-results:
     name: Publish tests results
     needs: test
@@ -64,12 +76,13 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
-          path: artifacts
+          name: test-artifacts
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          check_name: Unit Test results
-          files: artifacts/unit-test-*/**/*.xml
+          check_name: Unit test results
+          files: |
+            **/*.xml
 
   # Builds the projects and attempts to publish a release if the current project version
   # does not match any existing tags in the repository.

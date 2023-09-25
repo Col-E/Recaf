@@ -47,6 +47,16 @@ public final class EscapeUtil {
 	}
 
 	/**
+	 * @param c
+	 * 		Character to check.
+	 *
+	 * @return {@code true} if it represents a whitespace character.
+	 */
+	public static boolean isWhitespaceChar(char c) {
+		return WHITESPACE_TO_ESCAPE.containsKey(c);
+	}
+
+	/**
 	 * @return Set of strings representing various whitespaces.
 	 *
 	 * @see #getWhitespaceChars() Alternative offering the values as {@code char}

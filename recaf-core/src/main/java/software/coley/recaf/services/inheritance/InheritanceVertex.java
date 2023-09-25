@@ -273,6 +273,7 @@ public class InheritanceVertex {
 	 *
 	 * @return The entire class hierarchy.
 	 */
+	@Nonnull
 	public Set<InheritanceVertex> getFamily(boolean includeObject) {
 		Set<InheritanceVertex> vertices = new LinkedHashSet<>();
 		visitFamily(vertices);
@@ -292,6 +293,7 @@ public class InheritanceVertex {
 	/**
 	 * @return All classes this extends or implements.
 	 */
+	@Nonnull
 	public Set<InheritanceVertex> getAllParents() {
 		return allParents().collect(Collectors.toCollection(LinkedHashSet::new));
 	}
@@ -299,6 +301,7 @@ public class InheritanceVertex {
 	/**
 	 * @return All classes this extends or implements.
 	 */
+	@Nonnull
 	public Stream<InheritanceVertex> allParents() {
 		// Skip 1 to skip ourselves (which we use as the seed vertex)
 		return Streams.recurseWithoutCycles(this, InheritanceVertex::getParents)
@@ -308,6 +311,7 @@ public class InheritanceVertex {
 	/**
 	 * @return Classes this directly extends or implements.
 	 */
+	@Nonnull
 	public Set<InheritanceVertex> getParents() {
 		Set<InheritanceVertex> parents = this.parents;
 		if (parents == null) {
@@ -342,6 +346,7 @@ public class InheritanceVertex {
 	/**
 	 * @return All classes extending or implementing this type.
 	 */
+	@Nonnull
 	public Set<InheritanceVertex> getAllChildren() {
 		return allChildren().collect(Collectors.toCollection(LinkedHashSet::new));
 	}
@@ -349,6 +354,7 @@ public class InheritanceVertex {
 	/**
 	 * @return Stream of all classes extending or implementing this type.
 	 */
+	@Nonnull
 	public Stream<InheritanceVertex> allChildren() {
 		// Skip 1 to skip ourselves (which we use as the seed vertex)
 		return Streams.recurseWithoutCycles(this, InheritanceVertex::getChildren)
@@ -387,6 +393,7 @@ public class InheritanceVertex {
 	/**
 	 * @return All direct parents and child vertices.
 	 */
+	@Nonnull
 	public Set<InheritanceVertex> getAllDirectVertices() {
 		return Sets.combine(getParents(), getChildren());
 	}
@@ -405,6 +412,7 @@ public class InheritanceVertex {
 	/**
 	 * @return {@link #getValue() wrapped class's} name
 	 */
+	@Nonnull
 	public String getName() {
 		return value.getName();
 	}
@@ -412,6 +420,7 @@ public class InheritanceVertex {
 	/**
 	 * @return Wrapped class info.
 	 */
+	@Nonnull
 	public ClassInfo getValue() {
 		return value;
 	}
@@ -420,7 +429,7 @@ public class InheritanceVertex {
 	 * @param value
 	 * 		New wrapped class info.
 	 */
-	public void setValue(ClassInfo value) {
+	public void setValue(@Nonnull ClassInfo value) {
 		this.value = value;
 
 		// Reset children & parent sets

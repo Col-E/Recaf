@@ -90,14 +90,17 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 
 	@Override
 	public void close() {
-		super.close();
-		closed = true;
-
-		// Close client connection
 		try {
-			client.close();
-		} catch (IOException ex) {
-			logger.info("Failed to close client connection to remote VM: {}", virtualMachine.id());
+			super.close();
+		} finally {
+			closed = true;
+
+			// Close client connection
+			try {
+				client.close();
+			} catch (IOException ex) {
+				logger.info("Failed to close client connection to remote VM: {}", virtualMachine.id());
+			}
 		}
 	}
 
@@ -137,8 +140,12 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 
 		// Try to connect
 		logger.info("Connecting to remote JVM '{}' over port {}", virtualMachine.id(), client.getPort());
-		if (!client.connect())
-			throw new IOException("Client connection failed");
+		try {
+			client.connectThrowing();
+		} catch (Exception ex) {
+			throw new IOException("Could not connect to remote JVM " + virtualMachine.id() +
+					" over " + client.getIp() + ":" + client.getPort(), ex);
+		}
 
 		// Request known classloaders
 		logger.info("Sending initial request for classloaders & initial classes...");

@@ -129,7 +129,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 		// Read ZIP entries
 		boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
-		ZipArchive archive = config.getZipStrategy().getValue().mapping().apply(source.readAll());
+		ZipArchive archive = config.mapping().apply(source.readAll());
 		archive.getLocalFiles().forEach(header -> {
 			LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
 			String entryName = header.getFileNameAsString();
@@ -150,13 +150,15 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			}
 
 			// Record common entry attributes
-			CentralDirectoryFileHeader centralHeader = header.getLinkedDirectoryFileHeader();
 			ZipCompressionProperty.set(info, header.getCompressionMethod());
-			if (centralHeader.getFileCommentLength() > 0)
-				ZipCommentProperty.set(info, centralHeader.getFileCommentAsString());
 			ExtraFieldTime.TimeWrapper extraTimes = ExtraFieldTime.read(header);
-			if (extraTimes == null)
-				extraTimes = ExtraFieldTime.read(centralHeader);
+			CentralDirectoryFileHeader centralHeader = header.getLinkedDirectoryFileHeader();
+			if (centralHeader != null) {
+				if (centralHeader.getFileCommentLength() > 0)
+					ZipCommentProperty.set(info, centralHeader.getFileCommentAsString());
+				if (extraTimes == null)
+					extraTimes = ExtraFieldTime.read(centralHeader);
+			}
 			if (extraTimes != null) {
 				ZipCreationTimeProperty.set(info, extraTimes.getCreationMs());
 				ZipModificationTimeProperty.set(info, extraTimes.getModifyMs());

@@ -11,8 +11,7 @@ import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.source.AstMappingVisitor;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.pane.editing.android.AndroidDecompilerPane;
-
-import java.io.File;
+import software.coley.recaf.util.DevDetection;
 
 /**
  * Config for {@link JvmDecompilerPane} and {@link AndroidDecompilerPane}.
@@ -23,7 +22,7 @@ import java.io.File;
 public class DecompilerPaneConfig extends BasicConfigContainer {
 	private final ObservableInteger timeoutSeconds = new ObservableInteger(60);
 	private final ObservableBoolean useMappingAcceleration = new ObservableBoolean(true);
-	private final ObservableBoolean acknowledgedSaveWithErrors = new ObservableBoolean(isDevEnv());
+	private final ObservableBoolean acknowledgedSaveWithErrors = new ObservableBoolean(DevDetection.isDevEnv());
 
 	@Inject
 	public DecompilerPaneConfig() {
@@ -56,12 +55,5 @@ public class DecompilerPaneConfig extends BasicConfigContainer {
 	@Nonnull
 	public ObservableBoolean getUseMappingAcceleration() {
 		return useMappingAcceleration;
-	}
-
-	private static boolean isDevEnv() {
-		// Should only be true when building Recaf from source/build-system.
-		String path = System.getProperty("java.class.path");
-		return path.contains("recaf-ui" + File.separator + "build") ||
-				path.contains("recaf-ui" + File.separator + "out");
 	}
 }

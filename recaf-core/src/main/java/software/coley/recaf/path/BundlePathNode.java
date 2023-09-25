@@ -18,6 +18,11 @@ import java.util.Set;
 @SuppressWarnings("rawtypes")
 public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> {
 	/**
+	 * Type identifier for bundle nodes.
+	 */
+	public static final String TYPE_ID = "bundle";
+
+	/**
 	 * Node without parent.
 	 *
 	 * @param bundle
@@ -38,7 +43,7 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 	 * @see ResourcePathNode#child(Bundle)
 	 */
 	public BundlePathNode(@Nullable ResourcePathNode parent, @Nonnull Bundle<?> bundle) {
-		super("bundle", parent, Bundle.class, bundle);
+		super(TYPE_ID, parent, Bundle.class, bundle);
 	}
 
 	/**
@@ -100,6 +105,12 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 	@Override
 	public ResourcePathNode getParent() {
 		return (ResourcePathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(ResourcePathNode.TYPE_ID);
 	}
 
 	@Override

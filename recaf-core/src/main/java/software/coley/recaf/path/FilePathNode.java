@@ -4,12 +4,19 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.FileInfo;
 
+import java.util.Set;
+
 /**
  * Path node for {@link FileInfo} types.
  *
  * @author Matt Coley
  */
 public class FilePathNode extends AbstractPathNode<String, FileInfo> {
+	/**
+	 * Type identifier for file nodes.
+	 */
+	public static final String TYPE_ID = "file";
+
 	/**
 	 * Node without parent.
 	 *
@@ -31,7 +38,7 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 	 * @see DirectoryPathNode#child(FileInfo)
 	 */
 	public FilePathNode(@Nullable DirectoryPathNode parent, @Nonnull FileInfo info) {
-		super("file", parent, FileInfo.class, info);
+		super(TYPE_ID, parent, FileInfo.class, info);
 	}
 
 	/**
@@ -48,6 +55,12 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 	@Override
 	public DirectoryPathNode getParent() {
 		return (DirectoryPathNode) super.getParent();
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(DirectoryPathNode.TYPE_ID);
 	}
 
 	@Override

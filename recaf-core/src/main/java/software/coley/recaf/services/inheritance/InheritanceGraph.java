@@ -14,8 +14,6 @@ import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.util.MultiMap;
-import software.coley.recaf.util.MultiMapBuilder;
 import software.coley.recaf.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
@@ -44,10 +42,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	public static final String SERVICE_ID = "graph-inheritance";
 	private static final InheritanceVertex STUB = new InheritanceStubVertex();
 	private static final String OBJECT = "java/lang/Object";
-	private final MultiMap<String, String, Set<String>> parentToChild = MultiMapBuilder
-			.<String, String>hashKeys()
-			.hashValues()
-			.build();
+	private final Map<String, Set<String>> parentToChild = new ConcurrentHashMap<>();
 	private final Map<String, InheritanceVertex> vertices = new ConcurrentHashMap<>();
 	private final Function<String, InheritanceVertex> vertexProvider = createVertexProvider();
 	private final InheritanceGraphConfig config;
@@ -101,7 +96,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * 		Parent class name.
 	 */
 	private void populateParentToChildLookup(@Nonnull String name, @Nonnull String parentName) {
-		parentToChild.put(parentName, name);
+		parentToChild.computeIfAbsent(parentName, k -> ConcurrentHashMap.newKeySet()).add(name);
 	}
 
 	/**
@@ -139,7 +134,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 
 		// Visit parent
 		InheritanceVertex superVertex = vertexProvider.apply(superName);
-		if (superVertex != null && !superVertex.isJavaLangObject() && superVertex.getValue() != null && !superVertex.isLoop())
+		if (superVertex != null && !superVertex.isJavaLangObject() && !superVertex.isLoop())
 			populateParentToChildLookup(superVertex.getValue(), visited);
 
 		// Add direct interfaces
@@ -148,7 +143,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 
 			// Visit interfaces
 			InheritanceVertex interfaceVertex = vertexProvider.apply(itf);
-			if (interfaceVertex != null && interfaceVertex.getValue() != null)
+			if (interfaceVertex != null)
 				populateParentToChildLookup(interfaceVertex.getValue(), visited);
 		}
 	}
@@ -176,7 +171,9 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * 		Parent class name.
 	 */
 	private void removeParentToChildLookup(@Nonnull String name, @Nonnull String parentName) {
-		parentToChild.remove(parentName, name);
+		Set<String> children = parentToChild.get(parentName);
+		if (children != null)
+			children.remove(name);
 		InheritanceVertex parentVertex = getVertex(parentName);
 		InheritanceVertex childVertex = getVertex(name);
 		if (parentVertex != null) parentVertex.clearCachedVertices();
@@ -190,8 +187,8 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @return Direct extensions/implementations of the given parent.
 	 */
 	@Nonnull
-	private Collection<String> getDirectChildren(String parent) {
-		return parentToChild.getIfPresent(parent);
+	private Set<String> getDirectChildren(String parent) {
+		return parentToChild.getOrDefault(parent, Collections.emptySet());
 	}
 
 	/**
@@ -430,41 +427,49 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 			return false;
 		}
 
+		@Nonnull
 		@Override
 		public Set<InheritanceVertex> getFamily(boolean includeObject) {
 			return Collections.emptySet();
 		}
 
+		@Nonnull
 		@Override
 		public Set<InheritanceVertex> getAllParents() {
 			return Collections.emptySet();
 		}
 
+		@Nonnull
 		@Override
 		public Stream<InheritanceVertex> allParents() {
 			return Stream.empty();
 		}
 
+		@Nonnull
 		@Override
 		public Set<InheritanceVertex> getParents() {
 			return Collections.emptySet();
 		}
 
+		@Nonnull
 		@Override
 		public Set<InheritanceVertex> getAllChildren() {
 			return Collections.emptySet();
 		}
 
+		@Nonnull
 		@Override
 		public Set<InheritanceVertex> getChildren() {
 			return Collections.emptySet();
 		}
 
+		@Nonnull
 		@Override
 		public Set<InheritanceVertex> getAllDirectVertices() {
 			return Collections.emptySet();
 		}
 
+		@Nonnull
 		@Override
 		public String getName() {
 			return "$$STUB$$";

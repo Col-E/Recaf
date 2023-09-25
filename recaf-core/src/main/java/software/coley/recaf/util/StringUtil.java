@@ -649,71 +649,47 @@ public class StringUtil {
 				.onMalformedInput(CodingErrorAction.REPORT)
 				.onUnmappableCharacter(CodingErrorAction.REPORT);
 		ByteBuffer buffer = ByteBuffer.wrap(data);
+		int totalChars = 0;
+		int totalTextChars = 0;
 		int length = data.length;
-		int entropy = 0;
 		int bufferSize = Math.min(length, 4096);
 		char[] charArray = new char[bufferSize];
 		CharBuffer charBuf = CharBuffer.wrap(charArray);
 		while (true) {
 			try {
+				// Exit when no remaining chars to decode
 				if (!buffer.hasRemaining())
-					return true;
+					break;
+
+				// Decode next chunk into buffer
 				CoderResult result = decoder.decode(buffer, charBuf, true);
 				if (result.isMalformed() || result.isError() || result.isUnmappable())
 					return false;
 				if (result.isUnderflow())
 					decoder.flush(charBuf);
-				entropy = calculateNonText(charArray, entropy, length, charBuf.position());
-				if (entropy == -1)
-					return false;
+
+				// Check each character
+				int arrayEnd = charBuf.position();
+				for (int i = 0; i < arrayEnd; i++) {
+					char c = charArray[i];
+					int type = Character.getType(c);
+					boolean isTextChar = switch (type) {
+						case Character.CONTROL -> (c == '\n' || c == '\r');
+						case Character.FORMAT -> EscapeUtil.isWhitespaceChar(c);
+						case Character.PRIVATE_USE, Character.SURROGATE, Character.UNASSIGNED -> false;
+						default -> true;
+					};
+					if (isTextChar) totalTextChars++;
+				}
+				totalChars += arrayEnd;
 				buffer.position(Math.min(length, buffer.position() + bufferSize));
 			} catch (Exception ex) {
 				return false;
 			}
 		}
-	}
 
-	private static int calculateNonText(char[] charBuf, int entropy, int max, int length) {
-		int index = 0;
-		while (length-- != 0) {
-			char c = charBuf[index++];
-			int codePoint;
-			merge:
-			{
-				if (Character.isHighSurrogate(c)) {
-					if (length != 0) {
-						char c2 = charBuf[index];
-						if (Character.isLowSurrogate(c2)) {
-							index++;
-							length--;
-							codePoint = Character.toCodePoint(c, c2);
-							break merge;
-						}
-					}
-				}
-				codePoint = c;
-			}
-			if (codePoint <= 31) {
-				switch (codePoint) {
-					case 9:
-					case 10:
-					case 13:
-						continue;
-					default:
-						entropy++;
-				}
-			} else if (codePoint >= 57344 && codePoint <= 63743) {
-				entropy++;
-			} else if (codePoint >= 65520 && codePoint <= 65535) {
-				entropy++;
-			} else if (codePoint >= 983040 && codePoint <= 1048573) {
-				entropy++;
-			} else if (codePoint >= 1048576 && codePoint <= 1114109) {
-				entropy++;
-			}
-		}
-		if (entropy / (double) max > 0.01D)
-			return -1;
-		return entropy;
+		// This isn't great but works well enough for now.
+		// Basically, if most of the content is text we'll call it text even if there is some that isn't totally valid.
+		return ((double) totalTextChars / totalChars) > 0.9;
 	}
 }

@@ -285,6 +285,12 @@ public class NavigationManager implements Navigable, Service {
 			super("dummy", null, Object.class, new Object());
 		}
 
+		@Nonnull
+		@Override
+		public Set<String> directParentTypeIds() {
+			return Collections.emptySet();
+		}
+
 		@Override
 		public int localCompare(PathNode<?> o) {
 			return -1;

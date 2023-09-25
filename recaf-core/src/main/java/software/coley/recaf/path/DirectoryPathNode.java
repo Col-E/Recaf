@@ -6,6 +6,8 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
+import java.util.Set;
+
 /**
  * Path node for packages of {@link ClassInfo} and directories of {@link FileInfo} types.
  *
@@ -13,6 +15,11 @@ import software.coley.recaf.workspace.model.bundle.Bundle;
  */
 @SuppressWarnings("rawtypes")
 public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
+	/**
+	 * Type identifier for directory nodes.
+	 */
+	public static final String TYPE_ID = "directory";
+
 	/**
 	 * Node without parent.
 	 *
@@ -34,7 +41,7 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 	 * @see BundlePathNode#child(String)
 	 */
 	public DirectoryPathNode(@Nullable BundlePathNode parent, @Nonnull String directory) {
-		super("directory", parent, String.class, directory);
+		super(TYPE_ID, parent, String.class, directory);
 	}
 
 	/**
@@ -76,11 +83,38 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 		return (BundlePathNode) super.getParent();
 	}
 
+	@Nonnull
+	@Override
+	public Set<String> directParentTypeIds() {
+		return Set.of(BundlePathNode.TYPE_ID, DirectoryPathNode.TYPE_ID);
+	}
+
+	@Override
+	public boolean hasEqualOrChildValue(@Nonnull PathNode<?> other) {
+		if (other instanceof DirectoryPathNode otherDirectory) {
+			String dir = getValue();
+			String maybeParentDir = otherDirectory.getValue();
+			return dir.startsWith(maybeParentDir);
+		}
+
+		return super.hasEqualOrChildValue(other);
+	}
+
+	@Override
+	public boolean isDescendantOf(@Nonnull PathNode<?> other) {
+		// Descendant check comparing between directories will check for containment within the local value's path.
+		// This way 'a/b/c' is seen as a descendant of 'a/b'.
+		if (typeId().equals(other.typeId()))
+			return hasEqualOrChildValue(other) && allParentsMatch(other);
+
+		return super.isDescendantOf(other);
+	}
+
 	@Override
 	public int localCompare(PathNode<?> o) {
-		if (o instanceof DirectoryPathNode classNode) {
+		if (o instanceof DirectoryPathNode pathNode) {
 			String name = getValue();
-			String otherName = classNode.getValue();
+			String otherName = pathNode.getValue();
 			return String.CASE_INSENSITIVE_ORDER.compare(name, otherName);
 		}
 		return 0;

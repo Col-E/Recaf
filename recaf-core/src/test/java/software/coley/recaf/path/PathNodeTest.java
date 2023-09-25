@@ -8,7 +8,6 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
-import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.test.dummy.StringConsumerUser;
 import software.coley.recaf.workspace.model.BasicWorkspace;
@@ -24,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static software.coley.recaf.test.TestClassUtils.*;
 
 /**
  * Tests for {@link PathNode}.
@@ -47,11 +47,15 @@ class PathNodeTest {
 	static BundlePathNode p3;
 	static ResourcePathNode p4;
 	static WorkspacePathNode p5;
+	static ClassPathNode s1;
+	static DirectoryPathNode s2;
+	static BundlePathNode s3;
+	static ResourcePathNode s4;
 
 	@BeforeAll
 	static void setup() throws IOException {
-		primaryClassInfo = TestClassUtils.fromRuntimeClass(StringConsumer.class);
-		primaryJvmBundle = TestClassUtils.fromClasses(primaryClassInfo);
+		primaryClassInfo = fromRuntimeClass(StringConsumer.class);
+		primaryJvmBundle = fromClasses(primaryClassInfo);
 		primaryFileBundle = new BasicFileBundle();
 		primaryFileInfo = new TextFileInfoBuilder().withName("foo").withRawContent("foo".getBytes()).build();
 		primaryFileBundle.put(primaryFileInfo);
@@ -66,8 +70,8 @@ class PathNodeTest {
 				.withAndroidClassBundles(androidClassBundles)
 				.build();
 
-		secondaryClassInfo = TestClassUtils.fromRuntimeClass(StringConsumerUser.class);
-		secondaryJvmBundle = TestClassUtils.fromClasses(secondaryClassInfo);
+		secondaryClassInfo = fromRuntimeClass(StringConsumerUser.class);
+		secondaryJvmBundle = fromClasses(secondaryClassInfo);
 		secondaryResource = new WorkspaceResourceBuilder()
 				.withJvmClassBundle(secondaryJvmBundle)
 				.build();
@@ -83,6 +87,11 @@ class PathNodeTest {
 		p2 = p3.child(packageName);
 		p2b = p3.child(parentPackageName);
 		p1 = p2.child(primaryClassInfo);
+
+		s4 = p5.child(secondaryResource);
+		s3 = s4.child(secondaryJvmBundle);
+		s2 = s3.child(packageName);
+		s1 = s2.child(secondaryClassInfo);
 	}
 
 	@Nested
@@ -133,6 +142,127 @@ class PathNodeTest {
 			assertFalse(p2b.isDescendantOf(p2));
 			assertFalse(p2b.isDescendantOf(p1));
 			assertFalse(p2.isDescendantOf(p1));
+		}
+
+		@Test
+		void sameDirectoryPathsFromDifferentParentAreNotDescendants() {
+			assertFalse(p3.isDescendantOf(s3));
+			assertFalse(p2.isDescendantOf(s2));
+			assertFalse(p1.isDescendantOf(s1));
+		}
+
+		@Test
+		void directoryNodesCanValidateParentChildRelationsFromPathValues() {
+			DirectoryPathNode dirA = new DirectoryPathNode("a");
+			DirectoryPathNode dirB = new DirectoryPathNode("b");
+			DirectoryPathNode dirAA = new DirectoryPathNode("a/a");
+			DirectoryPathNode dirAAA = new DirectoryPathNode("a/a/a");
+			DirectoryPathNode dirAAB = new DirectoryPathNode("a/a/b");
+			DirectoryPathNode dirAB = new DirectoryPathNode("a/b");
+			DirectoryPathNode dirABA = new DirectoryPathNode("a/b/a");
+			DirectoryPathNode dirABB = new DirectoryPathNode("a/b/b");
+
+			// A
+			assertFalse(dirA.isParentOf(dirB));
+			assertTrue(dirA.isParentOf(dirAA));
+			assertTrue(dirA.isParentOf(dirAAA));
+			assertTrue(dirA.isParentOf(dirAAB));
+			assertTrue(dirA.isParentOf(dirAB));
+			assertTrue(dirA.isParentOf(dirABA));
+			assertTrue(dirA.isParentOf(dirABB));
+			// B
+			assertFalse(dirB.isParentOf(dirA));
+			assertFalse(dirB.isParentOf(dirAA));
+			assertFalse(dirB.isParentOf(dirAAA));
+			assertFalse(dirB.isParentOf(dirAAB));
+			assertFalse(dirB.isParentOf(dirAB));
+			assertFalse(dirB.isParentOf(dirABA));
+			assertFalse(dirB.isParentOf(dirABB));
+			// AA
+			assertFalse(dirAA.isParentOf(dirB));
+			assertFalse(dirAA.isParentOf(dirA));
+			assertTrue(dirAA.isParentOf(dirAAA));
+			assertTrue(dirAA.isParentOf(dirAAB));
+			assertFalse(dirAA.isParentOf(dirAB));
+			assertFalse(dirAA.isParentOf(dirABA));
+			assertFalse(dirAA.isParentOf(dirABB));
+			// AB
+			assertFalse(dirAB.isParentOf(dirB));
+			assertFalse(dirAB.isParentOf(dirAA));
+			assertFalse(dirAB.isParentOf(dirAAA));
+			assertFalse(dirAB.isParentOf(dirAAB));
+			assertTrue(dirAB.isParentOf(dirABA));
+			assertTrue(dirAB.isParentOf(dirABB));
+
+			// Classes
+			// A
+			ClassPathNode classA = dirA.child(createEmptyClass(dirA.getValue() + "/TheClass"));
+			assertTrue(classA.isDescendantOf(dirA));
+			assertFalse(classA.isDescendantOf(dirAA));
+			assertFalse(classA.isDescendantOf(dirAB));
+			assertFalse(classA.isDescendantOf(dirAAA));
+			assertFalse(classA.isDescendantOf(dirAAB));
+			assertFalse(classA.isDescendantOf(dirABA));
+			assertFalse(classA.isDescendantOf(dirABB));
+			assertFalse(classA.isDescendantOf(dirB));
+
+			// AA
+			ClassPathNode classAA = dirAA.child(createEmptyClass(dirAA.getValue() + "/TheClass"));
+			assertTrue(classAA.isDescendantOf(dirA));
+			assertTrue(classAA.isDescendantOf(dirAA));
+			assertFalse(classAA.isDescendantOf(dirAB));
+			assertFalse(classAA.isDescendantOf(dirAAA));
+			assertFalse(classAA.isDescendantOf(dirAAB));
+			assertFalse(classAA.isDescendantOf(dirABA));
+			assertFalse(classAA.isDescendantOf(dirABB));
+			assertFalse(classAA.isDescendantOf(dirB));
+
+			// AAA
+			ClassPathNode classAAA = dirAAA.child(createEmptyClass(dirAAA.getValue() + "/TheClass"));
+			assertTrue(classAAA.isDescendantOf(dirA));
+			assertTrue(classAAA.isDescendantOf(dirAA));
+			assertFalse(classAAA.isDescendantOf(dirAB));
+			assertTrue(classAAA.isDescendantOf(dirAAA));
+			assertFalse(classAAA.isDescendantOf(dirAAB));
+			assertFalse(classAAA.isDescendantOf(dirABA));
+			assertFalse(classAAA.isDescendantOf(dirABB));
+			assertFalse(classAAA.isDescendantOf(dirB));
+
+			// B
+			ClassPathNode classB = dirB.child(createEmptyClass(dirB.getValue() + "/TheClass"));
+			assertFalse(classB.isDescendantOf(dirA));
+			assertFalse(classB.isDescendantOf(dirAA));
+			assertFalse(classB.isDescendantOf(dirAB));
+			assertFalse(classB.isDescendantOf(dirAAA));
+			assertFalse(classB.isDescendantOf(dirAAB));
+			assertFalse(classB.isDescendantOf(dirABA));
+			assertFalse(classB.isDescendantOf(dirABB));
+			assertTrue(classB.isDescendantOf(dirB));
+
+			// Class to class
+			// A
+			assertTrue(classA.isDescendantOf(classA));
+			assertFalse(classA.isDescendantOf(classAA));
+			assertFalse(classA.isDescendantOf(classAAA));
+			assertFalse(classA.isDescendantOf(classB));
+
+			// AA
+			assertFalse(classAA.isDescendantOf(classA));
+			assertTrue(classAA.isDescendantOf(classAA));
+			assertFalse(classAA.isDescendantOf(classAAA));
+			assertFalse(classAA.isDescendantOf(classB));
+
+			// AAA
+			assertFalse(classAAA.isDescendantOf(classA));
+			assertFalse(classAAA.isDescendantOf(classAA));
+			assertTrue(classAAA.isDescendantOf(classAAA));
+			assertFalse(classAAA.isDescendantOf(classB));
+
+			// B
+			assertFalse(classB.isDescendantOf(classA));
+			assertFalse(classB.isDescendantOf(classAA));
+			assertFalse(classB.isDescendantOf(classAAA));
+			assertTrue(classB.isDescendantOf(classB));
 		}
 	}
 

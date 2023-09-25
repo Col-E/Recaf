@@ -30,14 +30,14 @@ project.ext {
     downgrader = 'com.github.RaphiMC.JavaDowngrader:core:13e29798a8'
 
     extra_collections = 'software.coley:extra-collections:1.2.3'
-    extra_observables = 'software.coley:extra-observables:1.2.2'
+    extra_observables = 'software.coley:extra-observables:1.3.0'
 
     gson = 'com.google.code.gson:gson:2.10.1'
 
     ikonli = 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
     ikonli_pack = 'org.kordamp.ikonli:ikonli-carbonicons-pack:12.3.1'
 
-    instrument_server = 'software.coley:instrumentation-server:1.3.6'
+    instrument_server = 'software.coley:instrumentation-server:1.4.0'
 
     jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2'
 
@@ -49,7 +49,7 @@ project.ext {
     junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
     junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
 
-    llzip = 'software.coley:lljzip:2.2.0'
+    llzip = 'software.coley:lljzip:2.3.0'
 
     logging_impl = 'ch.qos.logback:logback-classic:1.2.10' // newer releases break in jar releases
 

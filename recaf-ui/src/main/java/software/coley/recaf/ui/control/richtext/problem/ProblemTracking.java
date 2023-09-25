@@ -99,7 +99,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addListener(ProblemInvalidationListener listener) {
+	public void addListener(@Nonnull ProblemInvalidationListener listener) {
 		listeners.add(listener);
 	}
 
@@ -110,7 +110,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * @return {@code true} when listener was removed.
 	 * {@code false} when listener was not present to begin with.
 	 */
-	public boolean removeListener(ProblemInvalidationListener listener) {
+	public boolean removeListener(@Nonnull ProblemInvalidationListener listener) {
 		return listeners.remove(listener);
 	}
 

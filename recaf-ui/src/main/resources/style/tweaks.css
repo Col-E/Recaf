@@ -41,6 +41,11 @@
     -fx-background-color: -color-input-bg;
 }
 
+/* Makes text red, typically for error displays */
+.error-text {
+  -fx-text-fill: red;
+}
+
 /* Clearly separates filter from the workspace tree */
 .workspace-filter-pane {
     -fx-border-color: -color-border-muted;
@@ -54,6 +59,9 @@
 /* Applies background colors */
 .background {
     -fx-background-color: -color-bg-default;
+}
+.background-light {
+    -fx-background-color: -color-border-subtle;
 }
 
 /* Rounds the display of a container by its bg/border colors */

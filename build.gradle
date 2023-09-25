@@ -103,7 +103,7 @@ subprojects {
     // Configure report outputs, and jacoco packages to target.
     tasks.withType(Test).configureEach {
         reports.html.required = false
-        reports.junitXml.required = false
+        reports.junitXml.required = true
 
         jacoco {
             includes = ['software/coley/recaf/**']
@@ -111,13 +111,14 @@ subprojects {
     }
 }
 
-// Always emit HTML aggregate report
+// Always emit HTML & XML aggregate reports
 jacocoAggregation {
     outputHtml = true
+    outputXml = true
 }
 
-// Build aggregate report when test phase completes
-tasks.register('test') {
+// Build aggregate report when build completes
+tasks.register('build') {
     dependsOn(subprojects.test)
     doLast {
         buildJacocoAggregate.execute()

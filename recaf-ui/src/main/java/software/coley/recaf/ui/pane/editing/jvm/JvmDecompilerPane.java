@@ -103,6 +103,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		// Install tools container with configurator
 		new JvmDecompilerPaneConfigurator(toolsContainer, config, decompiler, javacTarget, javacDownsampleTarget, javacDebug, decompilerManager);
 		new JvmClassInfoProvider(toolsContainer, this);
+		toolsContainer.add(contextActionSupport.getAvailabilityButton());
 		toolsContainer.install(editor);
 
 		// Setup keybindings
