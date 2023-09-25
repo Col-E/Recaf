@@ -117,13 +117,19 @@ jacocoAggregation {
     outputXml = true
 }
 
-// Build aggregate report when build completes
-tasks.register('build') {
+// Build aggregate report for test coverage when subproject 'test' tasks complete.
+// But only do so when the 'test' tasks have executed.
+// You can skip tests by specifying '-x test' in your gradle task arguments.
+tasks.register('test') {
     dependsOn(subprojects.test)
     doLast {
-        // We only will run the aggregator if the test tasks did work.
-        // This allows us to skip tests in some cases and not have the aggregator complain about missing inputs.
         if (subprojects.test.stream().anyMatch(Task::getDidWork))
             buildJacocoAggregate.execute()
     }
+}
+tasks.register('build') {
+    // Build will run tests, unless skipped by '-x test'.
+    // Even if skipped, this will still lead to the subproject build tasks being executed, such as:
+    //  - recaf-ui:shadowJar
+    dependsOn(tasks.named('test'))
 }
