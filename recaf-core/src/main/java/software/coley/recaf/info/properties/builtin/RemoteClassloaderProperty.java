@@ -45,7 +45,7 @@ public class RemoteClassloaderProperty extends BasicProperty<Integer> {
 	 * 		Loader ID associated with the class,
 	 * 		used as key for {@link WorkspaceRemoteVmResource#getJvmClassloaderBundles()}.
 	 */
-	public static void set(@Nonnull JvmClassInfo classInfo, int loaderId) {
+	public static synchronized void set(@Nonnull JvmClassInfo classInfo, int loaderId) {
 		classInfo.setProperty(cache.computeIfAbsent(loaderId, RemoteClassloaderProperty::new));
 	}
 
