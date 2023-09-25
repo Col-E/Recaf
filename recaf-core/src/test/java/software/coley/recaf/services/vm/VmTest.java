@@ -98,6 +98,23 @@ public class VmTest extends TestBase {
 			}
 		}
 
-		// TODO: Create example calling a method with arrays to ensure 'ArgumentBuilder' can handle those
+		@Test
+		void testBasicServiceWithArgs() throws VmUnavailableException {
+			JvmClassInfo declaringClass = workspace.getPrimaryResource().getJvmClassBundle()
+					.get(CountTo100.class.getName().replace('.', '/'));
+			MethodMember methodTarget = declaringClass.getDeclaredMethod("main", "([Ljava/lang/String;)V");
+
+			Argument[] arguments = ArgumentBuilder.withinVM(commonVirtualService.getSharedVm())
+					.withClassloader(helper.getClassLoaderInstance())
+					.forMethod(declaringClass, methodTarget)
+					.add(new String[] { "0 1 2 3 4 5 6" })
+					.build();
+
+			try {
+				invoker.invokeVoid(declaringClass, methodTarget, arguments);
+			} catch (IOException | ClassNotFoundException ex) {
+				fail(ex);
+			}
+		}
 	}
 }

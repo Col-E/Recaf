@@ -5,6 +5,8 @@ import dev.xdark.ssvm.invoke.Argument;
 import dev.xdark.ssvm.mirror.member.JavaMethod;
 import dev.xdark.ssvm.mirror.type.InstanceClass;
 import dev.xdark.ssvm.mirror.type.JavaClass;
+import dev.xdark.ssvm.operation.VMOperations;
+import dev.xdark.ssvm.value.ArrayValue;
 import dev.xdark.ssvm.value.InstanceValue;
 import dev.xdark.ssvm.value.ObjectValue;
 import jakarta.annotation.Nonnull;
@@ -51,7 +53,9 @@ public class ArgumentBuilder {
 	 * @return Builder.
 	 */
 	@Nonnull
-	public ArgumentBuilder add(@Nonnull ObjectValue value) {
+	public ArgumentBuilder add(@Nullable ObjectValue value) {
+		if (value == null)
+			return addNull();
 		arguments.add(Argument.reference(value));
 		return this;
 	}
@@ -65,6 +69,152 @@ public class ArgumentBuilder {
 	@Nonnull
 	public ArgumentBuilder add(@Nullable String value) {
 		return value == null ? addNull() : add(vm.getOperations().newUtf8(value));
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull boolean[] value) {
+		return add(vm.getOperations().toVMBooleans(value));
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull byte[] value) {
+		return add(vm.getOperations().toVMBytes(value));
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull short[] value) {
+		return add(vm.getOperations().toVMShorts(value));
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull int[] value) {
+		return add(vm.getOperations().toVMInts(value));
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull float[] value) {
+		return add(vm.getOperations().toVMFloats(value));
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull double[] value) {
+		return add(vm.getOperations().toVMDoubles(value));
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull long[] value) {
+		return add(vm.getOperations().toVMLongs(value));
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull char[] value) {
+		return add(vm.getOperations().toVMChars(value));
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull String[] value) {
+		VMOperations ops = vm.getOperations();
+		ArrayValue array = ops.allocateArray(vm.getSymbols().java_lang_String(), value.length);
+		for (int i = 0; i < value.length; i++) {
+			InstanceValue vmString = ops.newUtf8(value[i]);
+			ops.arrayStoreReference(array, i, vmString);
+		}
+		return add(array);
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull ObjectValue[] value) {
+		return add(vm.getOperations().toVMReferences(value));
+	}
+
+	/**
+	 * @param componentType
+	 * 		Array component type.
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull JavaClass componentType, @Nonnull ObjectValue[] value) {
+		VMOperations ops = vm.getOperations();
+		ArrayValue array = ops.allocateArray(componentType, value.length);
+		for (int i = 0; i < value.length; i++) {
+			ops.arrayStoreReference(array, i, value[i]);
+		}
+		return add(array);
+	}
+
+	/**
+	 * @param value
+	 * 		Value to add as next argument.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public ArgumentBuilder add(@Nonnull ArrayValue value) {
+		arguments.add(Argument.reference(value));
+		return this;
 	}
 
 	/**

@@ -2,6 +2,14 @@ package software.coley.recaf.test.dummy.unoptimized;
 
 @SuppressWarnings("all")
 public class CountTo100 {
+	public static void main(String[] args) {
+		String arg = args.length > 0 ? "01234" : args[0];
+		if (arg.contains("0")) run_0();
+		if (arg.contains("1")) run_1();
+		if (arg.contains("2")) run_2();
+		if (arg.contains("3")) run_3();
+	}
+
 	public static void run_0() {
 		int i = 0;
 		while (i < 100) {
