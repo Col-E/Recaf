@@ -12,14 +12,23 @@ public enum PlatformType {
 	MAC,
 	LINUX;
 
+	/**
+	 * @return {@code true} when the current platform is windows.
+	 */
 	public static boolean isWindows() {
 		return get() == WINDOWS;
 	}
 
+	/**
+	 * @return {@code true} when the current platform is mac.
+	 */
 	public static boolean isMac() {
 		return get() == MAC;
 	}
 
+	/**
+	 * @return {@code true} when the current platform is linux.
+	 */
 	public static boolean isLinux() {
 		return get() == LINUX;
 	}
