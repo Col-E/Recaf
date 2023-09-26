@@ -4,13 +4,17 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
+def javaFxVersion = '19'
+def javaFxIncludeInDist = System.getProperty('skip.jfx.bundle') == null
+
 application {
     mainClass = 'software.coley.recaf.Main'
 }
 
 javafx {
-    version = "19"
+    version = javaFxVersion
     modules = ['javafx.controls', 'javafx.media']
+    configuration = javaFxIncludeInDist ? 'implementation' : 'compileOnly'
 }
 
 dependencies {

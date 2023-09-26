@@ -11,13 +11,19 @@ An easy to use modern Java bytecode editor that abstracts away the complexities 
 
 ## Features
 
+- Edit Java bytecode with ease from a high or low level _(minus the annoying parts)_
+    - Editor features within Recaf abstract away complex details of compiled Java applications like:
+        - The constant pool
+        - Stack frame calculation
+        - Using wide instructions when needed
+        - And more!
 - Easy to use navigable interface with context-sensitive actions
 - Support for standard Java _and_ Android applications
 - Multiple decompilers to switch between, with all of their parameters made fully configurable
 - Built in compiler to allow recompiling decompiled classes, even if some referenced classes are missing *(When supported, support may vary depending on code complexity and obfuscation)*
-- A bytecode assembler with a simple syntax, and supported tooling
+- A bytecode assembler with a simple syntax, and supporting tooling
     - See the state of local variables and stack values at any point in methods
-    - Access variables by names instead of indices for clearer code
+    - Access variables by names instead of indices for clearer disassembled code
     - Convert snippets of Java source code to bytecode sequences automatically
 - Searching for a variety of different content: Strings/numeric constants, classes and member references, instruction patterns
 - Tools for deobfuscating obfuscated code
@@ -52,4 +58,4 @@ Open the project in an IDE or generate the build with gradle.
 
 **Without IDE**:
 1. Run `gradlew build`
-    - Output will  be located at: `recaf-ui/build/recaf-ui-{VERSION}-all.jar`
+    - Output will be located at: `recaf-ui/build/recaf-ui-{VERSION}-all.jar`

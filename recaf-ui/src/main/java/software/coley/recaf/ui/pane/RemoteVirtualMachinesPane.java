@@ -44,6 +44,7 @@ import javax.management.MBeanFeatureInfo;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static software.coley.recaf.util.Lang.getBinding;
@@ -311,7 +312,6 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 						keyColumn.setMaxWidth(1f * Integer.MAX_VALUE * 25);
 						valueColumn.setMaxWidth(1f * Integer.MAX_VALUE * 75);
 
-
 						setCenter(propertyTable);
 					}
 
@@ -376,34 +376,41 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 						@Override
 						void update() {
 							try {
-								// Update attribute table if there are changes
-								NamedMBeanInfo beanInfo = wrapper.beanSupplier().get();
-								MBeanAttributeInfo[] attributes = beanInfo.getAttributes();
-								Map<String, String> attributeMap = Arrays.stream(attributes)
-										.collect(Collectors.toMap(MBeanFeatureInfo::getDescription, attribute -> {
-											try {
-												Object value = beanInfo.getAttributeValue(jmxConnection, attribute);
-												if (value != null) {
-													if (value.getClass().isArray()) {
-														value = Arrays.toString(convertToObjectArray(value));
+								// Update attribute table if there are changes.
+								//
+								// The bean supplier can block, and if the connection has died this block will go until
+								// a timeout period elapses. So we want to do this in the background.
+								CompletableFuture.supplyAsync(() -> {
+									NamedMBeanInfo beanInfo = wrapper.beanSupplier().get();
+									MBeanAttributeInfo[] attributes = beanInfo.getAttributes();
+									return Arrays.stream(attributes)
+											.collect(Collectors.toMap(MBeanFeatureInfo::getDescription, attribute -> {
+												try {
+													Object value = beanInfo.getAttributeValue(jmxConnection, attribute);
+													if (value != null) {
+														if (value.getClass().isArray()) {
+															value = Arrays.toString(convertToObjectArray(value));
+														}
 													}
+													return Objects.toString(value);
+												} catch (Exception ex) {
+													return "?";
 												}
-												return Objects.toString(value);
-											} catch (Exception ex) {
-												return "?";
-											}
-										}));
-								if (Objects.equals(lastAttributeMap, attributeMap)) return;
-								lastAttributeMap = attributeMap;
+											}));
 
-								// Update table
-								ObservableList<String> items = propertyTable.getItems();
-								List<String> keys = attributeMap.keySet().stream().map(Object::toString).sorted().toList();
-								items.clear();
-								items.addAll(keys);
+								}).whenCompleteAsync((attributeMap, error) -> {
+									if (Objects.equals(lastAttributeMap, attributeMap)) return;
+									lastAttributeMap = attributeMap;
 
-								// Enable on success
-								setDisable(false);
+									// Update table
+									ObservableList<String> items = propertyTable.getItems();
+									List<String> keys = attributeMap.keySet().stream().map(Object::toString).sorted().toList();
+									items.clear();
+									items.addAll(keys);
+
+									// Enable on success
+									setDisable(false);
+								}, FxThreadUtil.executor());
 							} catch (Exception ex) {
 								// Disable on failure
 								setDisable(true);

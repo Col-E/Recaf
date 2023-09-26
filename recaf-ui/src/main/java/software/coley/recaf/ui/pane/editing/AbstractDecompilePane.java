@@ -108,11 +108,11 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 
 		// Add overlay for when decompilation is in-progress
 		DecompileProgressOverlay overlay = new DecompileProgressOverlay();
-		decompileInProgress.addChangeListener((ob, old, cur) -> {
+		decompileInProgress.addAsyncChangeListener((ob, old, cur) -> {
 			ObservableList<Node> children = editor.getPrimaryStack().getChildren();
 			if (cur) children.add(overlay);
 			else children.remove(overlay);
-		});
+		}, FxThreadUtil.executor());
 
 		// Layout
 		setCenter(editor);
@@ -323,14 +323,14 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 
 			// Setup transition to play whenever decompilation is in progress.
 			BytecodeTransition transition = new BytecodeTransition(text);
-			decompileInProgress.addChangeListener((ob, old, cur) -> {
+			decompileInProgress.addAsyncChangeListener((ob, old, cur) -> {
 				setVisible(cur);
 				if (cur) {
 					transition.update(path.getValue().asJvmClass());
 					transition.play();
 				} else
 					transition.stop();
-			});
+			}, FxThreadUtil.executor());
 		}
 
 		private class BytecodeTransition extends Transition {
