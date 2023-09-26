@@ -27,6 +27,7 @@ import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 
 import java.awt.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import static atlantafx.base.theme.Styles.*;
@@ -87,7 +88,8 @@ public class NamePopup extends RecafStage {
 			return;
 		}
 
-		nameConsumer.accept(nameInput.getText());
+		String text = nameInput.getText();
+		CompletableFuture.runAsync(() -> nameConsumer.accept(text));
 		hide();
 	}
 

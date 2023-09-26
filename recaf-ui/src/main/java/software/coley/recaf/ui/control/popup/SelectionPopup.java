@@ -16,6 +16,7 @@ import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -70,7 +71,7 @@ public abstract class SelectionPopup<T> extends RecafStage {
 	 * 		Action to run on accept.
 	 */
 	private void accept(@Nonnull List<T> selectedItems, @Nonnull Consumer<List<T>> consumer) {
-		consumer.accept(selectedItems);
+		CompletableFuture.runAsync(() -> consumer.accept(selectedItems));
 		hide();
 	}
 
