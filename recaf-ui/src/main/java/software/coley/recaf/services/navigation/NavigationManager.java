@@ -8,6 +8,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
+import javafx.scene.control.Tab;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
@@ -83,6 +84,9 @@ public class NavigationManager implements Navigable, Service {
 				return;
 			}
 
+			// The tab is closed, remove its spy lookup.
+			tabToSpy.remove(tab);
+
 			// Remove content from navigation tracking.
 			spy.remove(tab.getContent());
 
@@ -98,6 +102,28 @@ public class NavigationManager implements Navigable, Service {
 				if (dockingTab != null)
 					dockingTab.close();
 			}
+
+			// Validate tabs were closed, except un-closable ones.
+			// All the closable ones should have been done so above.
+			if (!tabToSpy.isEmpty()) {
+				if (tabToSpy.keySet().stream().anyMatch(Tab::isClosable))
+					logger.warn("Closable tab reference was not cleared after workspace closure in navigation manager");
+				tabToSpy.clear();
+			}
+
+			// Validate all child references have been removed.
+			if (!children.isEmpty()) {
+				logger.warn("Navigation manager children list was not empty after workspace closure");
+				children.clear();
+			}
+			if (!childrenToTab.isEmpty()) {
+				logger.warn("Navigation manager children-to-tab map was not empty after workspace closure");
+				childrenToTab.clear();
+			}
+
+			// Remove the path reference to the old workspace.
+			forwarding.workspacePath = null;
+			path = null;
 		});
 
 		// Track current workspace so that we are navigable ourselves.
