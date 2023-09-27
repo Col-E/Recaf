@@ -22,6 +22,7 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingTab;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
@@ -78,14 +79,12 @@ public class NavigationManager implements Navigable, Service {
 			spy.changed(contentProperty, null, contentProperty.getValue());
 		});
 		dockingManager.addTabClosureListener(((parent, tab) -> {
-			NavigableSpy spy = tabToSpy.get(tab);
+			// The tab is closed, remove its spy lookup.
+			NavigableSpy spy = tabToSpy.remove(tab);
 			if (spy == null) {
 				logger.warn("Tab {} was closed, but had no associated content spy instance", tab.getText());
 				return;
 			}
-
-			// The tab is closed, remove its spy lookup.
-			tabToSpy.remove(tab);
 
 			// Remove content from navigation tracking.
 			spy.remove(tab.getContent());
@@ -101,14 +100,6 @@ public class NavigationManager implements Navigable, Service {
 				DockingTab dockingTab = childrenToTab.get(child);
 				if (dockingTab != null)
 					dockingTab.close();
-			}
-
-			// Validate tabs were closed, except un-closable ones.
-			// All the closable ones should have been done so above.
-			if (!tabToSpy.isEmpty()) {
-				if (tabToSpy.keySet().stream().anyMatch(Tab::isClosable))
-					logger.warn("Closable tab reference was not cleared after workspace closure in navigation manager");
-				tabToSpy.clear();
 			}
 
 			// Validate all child references have been removed.

@@ -93,12 +93,15 @@ public class DockingManager {
 		if (!allowClosure)
 			return false;
 
-		// Update internal state
+		// Update internal state.
 		regions.remove(region);
 
-		// Needed in case a window containing the region gets closed
+		// Needed in case a window containing the region gets closed.
 		for (DockingTab tab : new ArrayList<>(region.getDockTabs()))
 			tab.close();
+
+		// Tell the region it is closed, removing its reference to this docking manager.
+		region.onClose();
 
 		// Closure allowed.
 		return true;
