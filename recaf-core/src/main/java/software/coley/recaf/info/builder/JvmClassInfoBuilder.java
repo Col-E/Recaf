@@ -64,6 +64,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 	/**
 	 * Copies over values by reading the contents of the class file in the reader.
+	 * Calls {@link #adaptFrom(ClassReader, int)} with {@code flags=0}.
 	 *
 	 * @param reader
 	 * 		ASM class reader to pull data from.
@@ -71,9 +72,24 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	 * @return Builder.
 	 */
 	@Nonnull
-	@SuppressWarnings("deprecation")
 	public JvmClassInfoBuilder adaptFrom(@Nonnull ClassReader reader) {
-		reader.accept(new ClassBuilderAppender(), 0);
+		return adaptFrom(reader, 0);
+	}
+
+	/**
+	 * Copies over values by reading the contents of the class file in the reader.
+	 *
+	 * @param reader
+	 * 		ASM class reader to pull data from.
+	 * @param flags
+	 * 		Reader flags to use when populating information.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	@SuppressWarnings(value = "deprecation")
+	public JvmClassInfoBuilder adaptFrom(@Nonnull ClassReader reader, int flags) {
+		reader.accept(new ClassBuilderAppender(), flags);
 		return withBytecode(reader.b);
 	}
 
