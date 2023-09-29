@@ -94,7 +94,14 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 		if (other instanceof DirectoryPathNode otherDirectory) {
 			String dir = getValue();
 			String maybeParentDir = otherDirectory.getValue();
-			return dir.startsWith(maybeParentDir);
+
+			// We cannot do just a basic 'startsWith' check on the path values since they do not
+			// end with a trailing slash. This could lead to cases where:
+			//  'co' is a parent value of 'com/foo'
+			//
+			// By doing an equals check, we allow for 'co' vs 'com' to fail but 'co' vs 'co' to pass,
+			// and the following startsWith check with a slash allows us to not fall to the suffix issue described above.
+			return dir.equals(maybeParentDir) || dir.startsWith(maybeParentDir + "/");
 		}
 
 		return super.hasEqualOrChildValue(other);
