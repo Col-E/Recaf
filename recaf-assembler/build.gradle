@@ -13,7 +13,7 @@ dependencies {
 
     api asm
     api asm_tree
-
+    api string_escape_utils
     api "com.github.Nowilltolife:Jasm:$jasmVersion"
 
     // Testing

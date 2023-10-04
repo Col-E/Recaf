@@ -17,6 +17,7 @@ import me.coley.recaf.util.EscapeUtil;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -353,7 +354,7 @@ public class AstToMethodTransformer {
 					Object cst = ldc.getValue();
 					// TODO: We need to handle escapes better, but this works for \\u0000 escapes for now
 					if (cst instanceof String)
-						cst = EscapeUtil.unescape((String) cst);
+						cst = StringEscapeUtils.unescapeJava((String) cst);
 					addCode(list, instruction, new LdcInsnNode(cst));
 					break;
 				case TYPE:

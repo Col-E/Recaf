@@ -112,6 +112,8 @@ subprojects {
         ssvm = "com.github.xxdark:ssvm:$ssvmVersion"
         procyon_core = "org.bitbucket.mstrobel:procyon-core:$procyonVersion"
         procyon_compiler_tools = "org.bitbucket.mstrobel:procyon-compilertools:$procyonVersion"
+        string_escape_utils = "org.apache.commons:commons-text:1.10.0"
+
     }
 }
 
