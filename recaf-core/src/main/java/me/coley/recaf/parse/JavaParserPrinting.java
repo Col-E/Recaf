@@ -89,7 +89,7 @@ public class JavaParserPrinting {
 				TypeSolver solver = getTypeSolver(jpParam);
 				Context context = JavaParserFactory.getContext(jpParam.getWrappedNode(), solver);
 				String name = jpParam.getWrappedNode().getType().asClassOrInterfaceType().getNameWithScope();
-				SymbolReference<ResolvedTypeDeclaration> ref = context.solveType(name);
+				SymbolReference<ResolvedTypeDeclaration> ref = context.solveType(name,null);
 				if (ref.isSolved()) {
 					return "L" + getType(ref.getCorrespondingDeclaration()) + ";";
 				}

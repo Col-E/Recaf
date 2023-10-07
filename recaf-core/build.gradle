@@ -40,7 +40,7 @@ dependencies {
     api jphantom
     api logback_classic
     api picocli
-    api quiltflower
+    api vineflower
     api ssvm
     api procyon_core
     api procyon_compiler_tools

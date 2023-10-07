@@ -42,7 +42,7 @@ subprojects {
         finalizedBy jacocoTestReport
     }
 
-    tasks.withType(JavaCompile) {
+    tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
         options.incremental = true
     }
@@ -57,21 +57,22 @@ subprojects {
     }
 
     gradle.projectsEvaluated {
-        tasks.withType(JavaCompile) {
+        tasks.withType(JavaCompile).configureEach {
             options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
         }
     }
 
     project.ext {
-        def asmVersion = '9.5'
+        def asmVersion = '9.6'
         def dexVersion = '2.5.2'
         def dudeVersion = '1.10.2'
         def jadxVersion = '1.4.4' // fails on 1.4.7 (runtime, no logger found)
-        def jpVersion = '3.25.4'
+        def jpVersion = '3.25.5'
         def junitVersion = '5.10.0'
-        def lljzipVersion = '2.1.3'
+        def lljzipVersion = '2.3.0'
         def ssvmVersion = '1.9.0.3'
-        def quiltflowerVersion = '1.9.0'
+        // def quiltflowerVersion = '1.9.0'
+        def vineflowerVersion = '1.9.3' // quiltflower -> vineflower
         def procyonVersion = '0.6.0'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
         asm = "org.ow2.asm:asm:$asmVersion"
@@ -82,7 +83,7 @@ subprojects {
         baksmali = "org.smali:baksmali:$dexVersion"
         cafedude = "com.github.Col-E:CAFED00D:$dudeVersion"
         cfr = 'org.benf:cfr:0.152'
-        common_io = 'commons-io:commons-io:2.13.0'
+        common_io = 'commons-io:commons-io:2.14.0'
         dexlib = "org.smali:dexlib2:$dexVersion"
         diff = 'com.googlecode.java-diff-utils:diffutils:1.3.0'
         directories = 'dev.dirs:directories:26'
@@ -105,7 +106,8 @@ subprojects {
         logback_classic = 'ch.qos.logback:logback-classic:1.2.10' // newer releases break in jar releases
         pe = 'com.github.cademtz:JavaPeParser:1.0.0' // fails on 2.2.3, breaking changes
         picocli = 'info.picocli:picocli:4.7.4'
-        quiltflower = "org.quiltmc:quiltflower:$quiltflowerVersion"
+        // quiltflower = "org.quiltmc:quiltflower:$quiltflowerVersion"
+        vineflower = "org.vineflower:vineflower:$vineflowerVersion"
         regex = 'net.sourceforge.jregex:jregex:1.2_01'
         richtextfx = 'org.fxmisc.richtext:richtextfx:0.10.9' // fails on 0.11.0 (no toolkit found)
         smali = "org.smali:smali:$dexVersion"
