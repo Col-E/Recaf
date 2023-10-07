@@ -23,6 +23,7 @@ import java.util.function.Consumer;
  *
  * @author Matt Coley
  */
+@SuppressWarnings("unchecked")
 public class ItemListSelectionPopup<T> extends SelectionPopup<T> {
 	private final ListView<T> list = new ListView<>();
 
@@ -84,7 +85,6 @@ public class ItemListSelectionPopup<T> extends SelectionPopup<T> {
 
 	@Nonnull
 	@Override
-	@SuppressWarnings("unchecked")
 	public ItemListSelectionPopup<T> withMultipleSelection() {
 		list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		return this;

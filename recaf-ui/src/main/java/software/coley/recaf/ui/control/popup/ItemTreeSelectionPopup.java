@@ -21,6 +21,7 @@ import java.util.function.Consumer;
  *
  * @author Matt Coley
  */
+@SuppressWarnings("unchecked")
 public class ItemTreeSelectionPopup<T> extends SelectionPopup<T> {
 	private final TreeView<T> tree = new TreeView<>();
 
@@ -77,7 +78,6 @@ public class ItemTreeSelectionPopup<T> extends SelectionPopup<T> {
 
 	@Nonnull
 	@Override
-	@SuppressWarnings("unchecked")
 	public ItemTreeSelectionPopup<T> withMultipleSelection() {
 		tree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		return this;
