@@ -1,7 +1,7 @@
 plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 def javaFxVersion = '21'
@@ -29,7 +29,7 @@ application {
     mainClass = 'software.coley.recaf.Main'
 }
 
-shadowJar{
+shadowJar {
     exclude "META-INF/maven/**"
     exclude "META-INF/rewrite/**"
     exclude "META-INF/proguard/*"
