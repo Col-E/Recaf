@@ -17,12 +17,13 @@ import org.slf4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 /**
- * QuiltFlower decompiler implementation.
+ * VineFlower decompiler implementation.
  *
  * @author Matt Coley
  */
@@ -35,9 +36,34 @@ public class QuiltFlowerDecompiler extends Decompiler {
 	private final ThreadLocal<String> result = new ThreadLocal<>();
 
 	public QuiltFlowerDecompiler() {
-		super("QuiltFlower", "1.9.0");
+		super("VineFlower", findQuiltFlowerVersion());
 		fernFlowerProperties.put("ind", "    ");
 	}
+    private static String findQuiltFlowerVersion() {
+        try {
+            ClassLoader classLoader = Fernflower.class.getClassLoader();
+            if (classLoader != null) {
+                Enumeration<URL> resources = classLoader.getResources("META-INF/MANIFEST.MF");
+				while (resources.hasMoreElements()) {
+					URL jarUrl = resources.nextElement();
+					if ("jar".equals(jarUrl.getProtocol()) &&
+							(jarUrl.getFile().contains("vineflower") || jarUrl.getFile().contains("quiltflower"))
+					) {
+						try (InputStream is = jarUrl.openStream()) {
+							Manifest manifest = new Manifest(is);
+							String ver = manifest.getMainAttributes().getValue("Implementation-Version");
+							if (ver != null) {
+								return ver;
+							}
+						}
+					}
+				}
+            }
+        } catch (Exception e) {
+            logger.error("Can't get manifest file", e);
+        }
+        return "UnKnown";
+    }
 
 	@Override
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
@@ -56,7 +82,7 @@ public class QuiltFlowerDecompiler extends Decompiler {
 				return "// Failed to decompile: " + classInfo.getName();
 			return decompiled;
 		} catch (Exception e) {
-			logger.error("QuiltFlower encountered an error when decompiling", e);
+			logger.error("VineFlower encountered an error when decompiling", e);
 			return "// " + StringUtil.traceToString(e).replace("\n", "\n// ");
 		} finally {
 			target.set(null);
@@ -206,7 +232,7 @@ public class QuiltFlowerDecompiler extends Decompiler {
 	private static class QuiltLogger extends IFernflowerLogger {
 		@Override
 		public void writeMessage(String message, Severity severity) {
-			logger.trace("QuiltFlower: {}", message);
+			logger.trace("VineFlower: {}", message);
 		}
 
 		@Override
@@ -216,7 +242,7 @@ public class QuiltFlowerDecompiler extends Decompiler {
 				// We must propagate thread death ourselves
 				ReflectUtil.propagate(t);
 			}
-			logger.error("QuiltFlower: {}", message, t);
+			logger.error("VineFlower: {}", message, t);
 		}
 	}
 }
