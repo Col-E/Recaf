@@ -3,8 +3,10 @@ package me.coley.recaf.ui.pane.pe;
 import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
 import me.coley.recaf.ui.pane.table.TableDisplayMode;
 import me.coley.recaf.ui.pane.table.TableWord;
-import me.martinez.pe.ImageOptionalHeader;
-import me.martinez.pe.ImagePeHeaders;
+// import me.martinez.pe.ImageOptionalHeader;
+// import me.martinez.pe.ImagePeHeaders;
+import me.martinez.pe.PeImage;
+import me.martinez.pe.headers.ImageOptionalHeader;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -14,32 +16,32 @@ import java.util.TreeMap;
  *
  * @author Wolfie / win32kbase
  */
-public class OptionalTableDisplayMode implements TableDisplayMode<ImagePeHeaders> {
+public class OptionalTableDisplayMode implements TableDisplayMode<PeImage> {
 	/**
 	 * @see <a href="https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#dll-characteristics">
 	 * PE Format - DLL Characteristics</a>
 	 */
-	private static final Map<Integer, String> DLL_CHARACTERISTICS_MAP = new TreeMap<Integer, String>() {{
-		put(0x0001, "IMAGE_DLLCHARACTERISTICS_RESERVED_MUST_BE_ZERO");
-		put(0x0002, "IMAGE_DLLCHARACTERISTICS_RESERVED_MUST_BE_ZERO");
-		put(0x0004, "IMAGE_DLLCHARACTERISTICS_RESERVED_MUST_BE_ZERO");
-		put(0x0008, "IMAGE_DLLCHARACTERISTICS_RESERVED_MUST_BE_ZERO");
-		put(0x0020, "IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA");
-		put(0x0040, "IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE");
-		put(0x0080, "IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY");
-		put(0x0100, "IMAGE_DLLCHARACTERISTICS_NX_COMPAT");
-		put(0x0200, "IMAGE_DLLCHARACTERISTICS_NO_ISOLATION");
-		put(0x0400, "IMAGE_DLLCHARACTERISTICS_NO_SEH");
-		put(0x0800, "IMAGE_DLLCHARACTERISTICS_NO_BIND");
-		put(0x1000, "IMAGE_DLLCHARACTERISTICS_APPCONTAINER");
-		put(0x2000, "IMAGE_DLLCHARACTERISTICS_WDM_DRIVER");
-		put(0x4000, "IMAGE_DLLCHARACTERISTICS_GUARD_CF");
-		put(0x8000, "IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
-	}};
+	private static final Map<Integer, String> DLL_CHARACTERISTICS_MAP = new TreeMap<>() {{
+        put(0x0001, "IMAGE_DLLCHARACTERISTICS_RESERVED_MUST_BE_ZERO");
+        put(0x0002, "IMAGE_DLLCHARACTERISTICS_RESERVED_MUST_BE_ZERO");
+        put(0x0004, "IMAGE_DLLCHARACTERISTICS_RESERVED_MUST_BE_ZERO");
+        put(0x0008, "IMAGE_DLLCHARACTERISTICS_RESERVED_MUST_BE_ZERO");
+        put(0x0020, "IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA");
+        put(0x0040, "IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE");
+        put(0x0080, "IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY");
+        put(0x0100, "IMAGE_DLLCHARACTERISTICS_NX_COMPAT");
+        put(0x0200, "IMAGE_DLLCHARACTERISTICS_NO_ISOLATION");
+        put(0x0400, "IMAGE_DLLCHARACTERISTICS_NO_SEH");
+        put(0x0800, "IMAGE_DLLCHARACTERISTICS_NO_BIND");
+        put(0x1000, "IMAGE_DLLCHARACTERISTICS_APPCONTAINER");
+        put(0x2000, "IMAGE_DLLCHARACTERISTICS_WDM_DRIVER");
+        put(0x4000, "IMAGE_DLLCHARACTERISTICS_GUARD_CF");
+        put(0x8000, "IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
+    }};
 
 	@Override
-	public void apply(ImagePeHeaders pe, SizedDataTypeTable table) {
-		ImageOptionalHeader optionalHeader = pe.ntHeader.optionalHeader;
+	public void apply(PeImage pe, SizedDataTypeTable table) {
+		ImageOptionalHeader optionalHeader = pe.ntHeaders.optionalHeader;
 		table.addWord("Magic", optionalHeader.magic, "Magic number");
 		table.addByte("MajorLinkerVersion", optionalHeader.majorLinkerVersion, "Major linker version");
 		table.addByte("MinorLinkerVersion", optionalHeader.minorLinkerVersion, "Minor linker version");

@@ -72,7 +72,7 @@ subprojects {
         def lljzipVersion = '2.3.0'
         def ssvmVersion = '1.9.0.3'
         // def quiltflowerVersion = '1.9.0'
-        def vineflowerVersion = '1.9.3' // quiltflower -> vineflower
+        def vineflowerVersion = '1.9.3'
         def procyonVersion = '0.6.0'
         def slf4jVersion = '2.0.9'
         def logbackVersion = '1.4.11'
@@ -106,8 +106,8 @@ subprojects {
         junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
         llzip = "software.coley:lljzip:$lljzipVersion"
         slf4j = "org.slf4j:slf4j-api:$slf4jVersion"
-        logback_classic = "ch.qos.logback:logback-classic:$logbackVersion"
-        pe = 'com.github.cademtz:JavaPeParser:1.0.0' // fails on 2.2.3, breaking changes
+        logback_classic = "ch.qos.logback:logback-classic:$logbackVersion" // quiltflower -> vineflower
+        pe = 'com.github.cademtz:JavaPeParser:2.2.3'
         picocli = 'info.picocli:picocli:4.7.4'
         // quiltflower = "org.quiltmc:quiltflower:$quiltflowerVersion"
         vineflower = "org.vineflower:vineflower:$vineflowerVersion"
