@@ -38,6 +38,7 @@ dependencies {
     api java_parser
     api javax_annos
     api jphantom
+    api slf4j
     api logback_classic
     api picocli
     api vineflower

@@ -19,6 +19,7 @@ dependencies {
     implementation common_io
     implementation directories
     implementation gson
+    implementation slf4j
     implementation logback_classic
     implementation picocli
 }

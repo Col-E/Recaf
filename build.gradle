@@ -66,7 +66,7 @@ subprojects {
         def asmVersion = '9.6'
         def dexVersion = '2.5.2'
         def dudeVersion = '1.10.2'
-        def jadxVersion = '1.4.7' // fails on 1.4.7 (runtime, no logger found)
+        def jadxVersion = '1.4.7'
         def jpVersion = '3.25.5'
         def junitVersion = '5.10.0'
         def lljzipVersion = '2.3.0'
@@ -74,6 +74,8 @@ subprojects {
         // def quiltflowerVersion = '1.9.0'
         def vineflowerVersion = '1.9.3' // quiltflower -> vineflower
         def procyonVersion = '0.6.0'
+        def slf4jVersion = '2.0.9'
+        def logbackVersion = '1.4.11'
         aapt = 'com.android.tools.build:aapt2-proto:7.1.2-7984345'
         asm = "org.ow2.asm:asm:$asmVersion"
         asm_analysis = "org.ow2.asm:asm-analysis:$asmVersion"
@@ -103,7 +105,8 @@ subprojects {
         junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
         junit_params = "org.junit.jupiter:junit-jupiter-params:$junitVersion"
         llzip = "software.coley:lljzip:$lljzipVersion"
-        logback_classic = 'ch.qos.logback:logback-classic:1.4.11' // newer releases break in jar releases
+        slf4j = "org.slf4j:slf4j-api:$slf4jVersion"
+        logback_classic = "ch.qos.logback:logback-classic:$logbackVersion"
         pe = 'com.github.cademtz:JavaPeParser:1.0.0' // fails on 2.2.3, breaking changes
         picocli = 'info.picocli:picocli:4.7.4'
         // quiltflower = "org.quiltmc:quiltflower:$quiltflowerVersion"
