@@ -3,3 +3,10 @@ rootProject.name = 'Recaf'
 include 'recaf-core'
 include 'recaf-ui'
 
+buildCache {
+    local {
+        enabled = true
+        directory = new File('build/cache')
+        removeUnusedEntriesAfterDays = 30
+    }
+}
