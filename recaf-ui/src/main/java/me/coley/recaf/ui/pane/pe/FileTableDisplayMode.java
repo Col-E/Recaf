@@ -5,8 +5,6 @@ import me.coley.recaf.ui.pane.table.TableDisplayMode;
 import me.coley.recaf.ui.pane.table.TableWord;
 import me.martinez.pe.PeImage;
 import me.martinez.pe.headers.ImageFileHeader;
-// import me.martinez.pe.ImageFileHeader;
-// import me.martinez.pe.ImagePeHeaders;
 
 import java.time.Instant;
 import java.util.Map;

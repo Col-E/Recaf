@@ -4,8 +4,6 @@ import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
 import me.coley.recaf.ui.pane.table.TableDisplayMode;
 import me.martinez.pe.ExportEntry;
 import me.martinez.pe.LibraryExport;
-// import me.martinez.pe.CachedExportEntry;
-// import me.martinez.pe.CachedImageExports;
 
 /**
  * Table display for export directory.
