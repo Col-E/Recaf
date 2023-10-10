@@ -36,34 +36,9 @@ public class QuiltFlowerDecompiler extends Decompiler {
 	private final ThreadLocal<String> result = new ThreadLocal<>();
 
 	public QuiltFlowerDecompiler() {
-		super("VineFlower", findQuiltFlowerVersion());
+		super("VineFlower", "1.9.3");
 		fernFlowerProperties.put("ind", "    ");
 	}
-    private static String findQuiltFlowerVersion() {
-        try {
-            ClassLoader classLoader = Fernflower.class.getClassLoader();
-            if (classLoader != null) {
-                Enumeration<URL> resources = classLoader.getResources("META-INF/MANIFEST.MF");
-				while (resources.hasMoreElements()) {
-					URL jarUrl = resources.nextElement();
-					if ("jar".equals(jarUrl.getProtocol()) &&
-							(jarUrl.getFile().contains("vineflower") || jarUrl.getFile().contains("quiltflower"))
-					) {
-						try (InputStream is = jarUrl.openStream()) {
-							Manifest manifest = new Manifest(is);
-							String ver = manifest.getMainAttributes().getValue("Implementation-Version");
-							if (ver != null) {
-								return ver;
-							}
-						}
-					}
-				}
-            }
-        } catch (Exception e) {
-            logger.error("Can't get manifest file", e);
-        }
-        return "UnKnown";
-    }
 
 	@Override
 	protected String decompileImpl(Map<String, DecompileOption<?>> options, Workspace workspace, ClassInfo classInfo) {
