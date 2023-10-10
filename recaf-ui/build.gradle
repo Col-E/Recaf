@@ -53,6 +53,7 @@ shadowJar {
     // This works, but I'm very confused by it.
     minimize {
         // EXCLUDE contents from dependencies, prevents adding to final shadowJar
+        exclude(dependency("ch.qos.logback:logback-classic:.*") )
         dependencies {
             exclude "com/ibm/icu/impl/data/icudt70b/**"
             exclude "com/ibm/icu/impl/data/icudt69b/**"
