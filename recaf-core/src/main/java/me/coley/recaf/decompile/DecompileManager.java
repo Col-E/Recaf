@@ -4,7 +4,7 @@ import me.coley.recaf.decompile.cfr.CfrDecompiler;
 import me.coley.recaf.decompile.fallback.FallbackDecompiler;
 import me.coley.recaf.decompile.jadx.JadxDecompiler;
 import me.coley.recaf.decompile.procyon.ProcyonDecompiler;
-import me.coley.recaf.decompile.quilt.QuiltFlowerDecompiler;
+import me.coley.recaf.decompile.vine.VineFlowerDecompiler;
 import me.coley.recaf.plugin.tools.ToolManager;
 
 /**
@@ -19,7 +19,7 @@ public class DecompileManager extends ToolManager<Decompiler> {
 	public DecompileManager() {
 		register(new CfrDecompiler());
 		register(new JadxDecompiler());
-		register(new QuiltFlowerDecompiler());
+		register(new VineFlowerDecompiler());
 		register(new ProcyonDecompiler());
 		register(new FallbackDecompiler());
 	}
