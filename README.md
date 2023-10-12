@@ -6,8 +6,16 @@ An easy to use modern Java bytecode editor that abstracts away the complexities 
 
 ## Download
 
-- [Managed launcher](https://github.com/Col-E/Recaf-Launcher) _(Pending)_
-- [Independent releases](https://github.com/Col-E/Recaf/releases)
+- [Managed launcher](https://github.com/Col-E/Recaf-Launcher)
+    - Run the launcher with the following arguments:
+        - `update-ci -b dev4`
+        - `update-jfx`
+        - `compatibility`
+        - `run`
+    - To update all you need to do is run the first command.
+    - To use the `run` command you must have used `update-jfx` command at least once.
+    - To validate your local environment cn run Recaf the `compatibility` command tells you what conflicts exist, if any.
+- [Independent releases](https://github.com/Col-E/Recaf/releases) _(None for 4X currently)_
 
 ## Features
 
