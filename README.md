@@ -12,9 +12,10 @@ An easy to use modern Java bytecode editor that abstracts away the complexities 
         - `update-jfx`
         - `compatibility`
         - `run`
-    - To update all you need to do is run the first command.
-    - To use the `run` command you must have used `update-jfx` command at least once.
-    - To validate your local environment cn run Recaf the `compatibility` command tells you what conflicts exist, if any.
+    - To update Recaf use `update-ci -b dev4`. The `-b <VALUE>` can be used to specify other 4X based branches.
+    - To run Recaf use the `run` command.
+    - To use the `run` command you must use the `update-jfx` command at least once.
+    - To validate your local environment can run Recaf the `compatibility` command tells you what conflicts exist, if any.
 - [Independent releases](https://github.com/Col-E/Recaf/releases) _(None for 4X currently)_
 
 ## Features
