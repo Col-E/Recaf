@@ -32,7 +32,7 @@ public class ImportTableDisplayMode implements TableDisplayMode<LibraryImports> 
 		for (int i = 0; i < imports.entries.size(); i++) {
 			ImportEntry importEntry = imports.entries.get(i);
 			String name = importEntry.name == null ? "" : importEntry.name;
-			int ordinal = importEntry.ordinal;
+			String ordinal = importEntry.ordinal == null ? "": importEntry.ordinal.toString();
 			table.addWord(name, ordinal, "");
 		}
 	}
