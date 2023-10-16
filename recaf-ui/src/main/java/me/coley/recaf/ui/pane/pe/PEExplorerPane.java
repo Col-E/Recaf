@@ -16,6 +16,7 @@ import me.coley.recaf.ui.pane.table.TableGeneric;
 import me.coley.recaf.util.logging.Logging;
 import me.martinez.pe.ExportEntry;
 import me.martinez.pe.LibraryExport;
+import me.martinez.pe.LibraryImports;
 import me.martinez.pe.PeImage;
 import me.martinez.pe.headers.ImageSectionHeader;
 import me.martinez.pe.io.CadesBufferStream;
@@ -24,6 +25,7 @@ import me.martinez.pe.util.ParseResult;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A panel that displays information about an image's PE header.
@@ -114,10 +116,10 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 
 		// Add libraries to import directory
 		if (pe.exports.isOk()) {
-			LibraryExport libraryExport = pe.exports.getOk();
-			for (int i = 0; i < libraryExport.entries.length; i++) {
-				ExportEntry exportEntry = libraryExport.entries[i];
-				TreeItem<String> libraryItem = new TreeItem<>(exportEntry.name);
+			List<LibraryImports> importsList = pe.imports.getOk();
+			for (int i = 0; i < importsList.size(); i++) {
+				LibraryImports imports = importsList.get(i);
+				TreeItem<String> libraryItem = new TreeItem<>(imports.name);
 				itemImportDirectory.getChildren().add(libraryItem);
 			}
 		}
@@ -201,8 +203,9 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 				ImageSectionHeader sectionHeader = pe.sectionHeaders.get(sectionIndex).getOk();
 				SECTION_MODE.apply(sectionHeader, primaryTableView);
 			} else if (importIndex != -1) {
-				LibraryExport libraryExport = pe.exports.getOk();
-				IMPORT_MODE.apply(libraryExport, primaryTableView);
+				List<LibraryImports> importsList = pe.imports.getOk();
+				LibraryImports imports = importsList.get(importIndex);
+				IMPORT_MODE.apply(imports, primaryTableView);
 			} else {
 				primaryTableView.getColumns().clear();
 			}
