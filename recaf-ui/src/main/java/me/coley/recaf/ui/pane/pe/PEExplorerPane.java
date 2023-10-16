@@ -192,7 +192,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 		} else if (newValue == itemOptionalHeaders) {
 			OPT_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemExportDirectory) {
-			EXPORT_MODE.apply(pe.exports.getOk(), primaryTableView);
+			EXPORT_MODE.apply(pe.exports.getOkOrDefault(null), primaryTableView);
 		} else {
 			ObservableList<TreeItem<String>> sectionHeadersChildren = itemSectionHeaders.getChildren();
 			ObservableList<TreeItem<String>> importDirectoryChildren = itemImportDirectory.getChildren();
@@ -203,9 +203,8 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 				ImageSectionHeader sectionHeader = pe.sectionHeaders.get(sectionIndex).getOk();
 				SECTION_MODE.apply(sectionHeader, primaryTableView);
 			} else if (importIndex != -1) {
-				List<LibraryImports> importsList = pe.imports.getOk();
-				LibraryImports imports = importsList.get(importIndex);
-				IMPORT_MODE.apply(imports, primaryTableView);
+				List<LibraryImports> importsList = pe.imports.getOkOrDefault(null);
+				IMPORT_MODE.apply(importsList != null ? importsList.get(importIndex) : null, primaryTableView);
 			} else {
 				primaryTableView.getColumns().clear();
 			}
