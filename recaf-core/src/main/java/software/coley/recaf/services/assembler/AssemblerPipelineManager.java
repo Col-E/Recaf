@@ -11,7 +11,7 @@ import software.coley.recaf.services.ServiceConfig;
 
 @ApplicationScoped
 public class AssemblerPipelineManager implements Service {
-    public static final String SERVICE_ID = "assembler_pipeline";
+    public static final String SERVICE_ID = "assembler-pipeline";
     private final AssemblerPipelineGeneralConfig config;
     private final JvmAssemblerPipeline jvmAssemblerPipeline;
     private final AndroidAssemblerPipeline androidAssemblerPipeline;
