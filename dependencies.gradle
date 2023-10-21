@@ -1,6 +1,6 @@
-def asmVersion = '9.5'
+def asmVersion = '9.6'
 def cafeDudeVersion = '1.10.2'
-def junitVersion = '5.9.2'
+def junitVersion = '5.10.0'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
@@ -12,21 +12,21 @@ project.ext {
     // Use our fork of Android's release with fixes and less transitive dependencies
     binary_resources = 'com.github.Col-E:binary-resources:31.3.0-alpha01.8'
 
-    atlantafx = 'io.github.mkpaz:atlantafx-base:2.0.0'
+    atlantafx = 'io.github.mkpaz:atlantafx-base:2.0.1'
 
     cafedude = "com.github.Col-E:CAFED00D:$cafeDudeVersion"
 
     cfr = 'org.benf:cfr:0.152'
 
     cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
-    cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.0.Final'
+    cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.2.Final'
 
     dex_translator = 'software.coley:dex-translator:1.1.1'
 
     directories = 'dev.dirs:directories:26'
     docking = 'com.github.Col-E:tiwulfx-dock:1.2.3'
 
-    downgrader = 'com.github.RaphiMC.JavaDowngrader:core:13e29798a8'
+    downgrader = 'com.github.RaphiMC.JavaDowngrader:core:1.1.1'
 
     extra_collections = 'software.coley:extra-collections:1.2.3'
     extra_observables = 'software.coley:extra-observables:1.3.0'
@@ -50,15 +50,15 @@ project.ext {
 
     llzip = 'software.coley:lljzip:2.3.0'
 
-    logging_impl = 'ch.qos.logback:logback-classic:1.2.10' // newer releases break in jar releases
+    logging_impl = 'ch.qos.logback:logback-classic:1.4.11' // newer releases break in jar releases
 
-    mockito = 'org.mockito:mockito-core:4.9.0'
+    mockito = 'org.mockito:mockito-core:5.6.0'
 
-    openrewrite = 'org.openrewrite:rewrite-java-17:8.1.3'
+    openrewrite = 'org.openrewrite:rewrite-java-17:8.7.4'
 
     procyon = "org.bitbucket.mstrobel:procyon-compilertools:0.6.0"
 
-    picocli = 'info.picocli:picocli:4.7.1'
+    picocli = 'info.picocli:picocli:4.7.5'
 
     regex = 'com.github.tommyettinger:regexodus:0.1.15'
 
