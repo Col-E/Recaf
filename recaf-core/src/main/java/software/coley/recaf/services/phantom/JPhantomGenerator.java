@@ -162,6 +162,8 @@ public class JPhantomGenerator implements PhantomGenerator {
 					out.put(name, decorate(v));
 			});
 			logger.debug("Phantom analysis complete, generated {} classes", out.size());
+		} catch (Throwable t) {
+			logger.error("Phantom analysis encountered an exception.", t);
 		} finally {
 			// Cleanup
 			Phantoms.refresh();
