@@ -77,7 +77,7 @@ public class BasicAnnotationContextMenuProviderFactory extends AbstractContextMe
 					if (annotated instanceof JvmClassInfo target) {
 						ClassWriter writer = new ClassWriter(0);
 						target.getClassReader().accept(new ClassAnnotationRemovingVisitor(writer, annotationType), 0);
-						JvmClassInfo updatedClass = new JvmClassInfoBuilder(new ClassReader(writer.toByteArray())).build();
+						JvmClassInfo updatedClass = new JvmClassInfoBuilder(writer.toByteArray()).build();
 						bundle.put(cast(updatedClass));
 					} else if (annotated instanceof ClassMember member && member.getDeclaringClass() instanceof JvmClassInfo target) {
 						ClassWriter writer = new ClassWriter(0);
@@ -88,7 +88,7 @@ public class BasicAnnotationContextMenuProviderFactory extends AbstractContextMe
 							MethodMember method = (MethodMember) member;
 							target.getClassReader().accept(MethodAnnotationRemovingVisitor.forClass(writer, annotationType, method), 0);
 						}
-						JvmClassInfo updatedClass = new JvmClassInfoBuilder(new ClassReader(writer.toByteArray())).build();
+						JvmClassInfo updatedClass = new JvmClassInfoBuilder(writer.toByteArray()).build();
 						bundle.put(cast(updatedClass));
 					}
 				} catch (Throwable t) {

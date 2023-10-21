@@ -129,7 +129,7 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 
     @Override
     public JvmClassInfo getClassInfo(JavaClassRepresentation representation) {
-        return new JvmClassInfoBuilder(new ClassReader(representation.data())).build();
+        return new JvmClassInfoBuilder(representation.data()).build();
     }
 
     @Override

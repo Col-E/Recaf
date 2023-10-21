@@ -57,13 +57,13 @@ public class BasicInfoImporter implements InfoImporter {
 								.build();
 					} else {
 						logger.debug("CafeDude patched class: {}", name);
-						return new JvmClassInfoBuilder(new ClassReader(patched))
+						return new JvmClassInfoBuilder(patched)
 								.build();
 					}
 				}
 
 				// Yield class
-				return new JvmClassInfoBuilder(new ClassReader(data)).build();
+				return new JvmClassInfoBuilder(data).build();
 			} catch (Throwable t) {
 				// Invalid class, either some new edge case we need to add to CafeDude, or the file
 				// isn't a class, but the structure models it close enough to look like one at a glance.
