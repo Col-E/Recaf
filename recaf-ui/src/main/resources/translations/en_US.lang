@@ -33,9 +33,9 @@ menu.edit.add.annotation=Add annotation
 menu.edit.remove.field=Remove fields
 menu.edit.remove.method=Remove methods
 menu.edit.remove.annotation=Remove annotations
-menu.edit.assemble.class=Edit class
-menu.edit.assemble.field=Edit field
-menu.edit.assemble.method=Edit method
+menu.edit.assemble.class=Edit class in assembler
+menu.edit.assemble.field=Edit field in assembler
+menu.edit.assemble.method=Edit method in assembler
 menu.edit.remove=Remove
 menu.edit.copy=Copy
 menu.edit.delete=Delete
@@ -154,8 +154,10 @@ dialog.header.copy-class=Provide a new name for the copied class.
 dialog.header.copy-directory=Provide a new name for the copied directory.
 dialog.header.copy-package=Provide a new name for the copied package.
 dialog.header.copy-field=Provide a new name for the copied field.
+dialog.header.copy-field-error=The field name already exists.\nPlease choose a different name.
 dialog.header.copy-file=Provide a new name for the copied file.
 dialog.header.copy-method=Provide a new name for the copied method.
+dialog.header.copy-method-error=The method name already exists.\nPlease choose a different name.
 
 ## Delete class/file
 dialog.title.delete-class=Delete class
