@@ -17,13 +17,13 @@ public class ErrorDialogs {
 	 * 		Header text.
 	 * @param content
 	 * 		Content text.
-	 * @param ex
+	 * @param t
 	 * 		The error to display.
 	 */
-	public static void show(String title, String header, String content, Exception ex) {
+	public static void show(String title, String header, String content, Throwable t) {
 		FxThreadUtil.run(() -> {
 			Alert alert = alert(title, header, content);
-			configure(alert, ex);
+			configure(alert, t);
 		});
 	}
 
@@ -34,19 +34,19 @@ public class ErrorDialogs {
 	 * 		Header text.
 	 * @param content
 	 * 		Content text.
-	 * @param ex
+	 * @param t
 	 * 		The error to display.
 	 */
-	public static void show(StringBinding title, StringBinding header, StringBinding content, Exception ex) {
+	public static void show(StringBinding title, StringBinding header, StringBinding content, Throwable t) {
 		FxThreadUtil.run(() -> {
 			Alert alert = alert(title, header, content);
-			configure(alert, ex);
+			configure(alert, t);
 		});
 	}
 
-	private static void configure(Alert alert, Exception ex) {
+	private static void configure(Alert alert, Throwable t) {
 		// Create expandable Exception.
-		String exceptionText = StringUtil.traceToString(ex);
+		String exceptionText = StringUtil.traceToString(t);
 		TextArea textArea = new TextArea(exceptionText);
 		textArea.setEditable(false);
 		textArea.setWrapText(true);

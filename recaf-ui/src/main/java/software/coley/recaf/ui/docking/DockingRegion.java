@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  */
 public class DockingRegion extends DetachableTabPane {
 	private static final Logger logger = Logging.get(DockingRegion.class);
-	private final DockingManager manager;
+	private DockingManager manager;
 
 	DockingRegion(@Nonnull DockingManager manager) {
 		this.manager = manager;
@@ -42,7 +42,8 @@ public class DockingRegion extends DetachableTabPane {
 	 *
 	 * @return Created tab.
 	 */
-	public DockingTab createTab(String title, Node content) {
+	@Nonnull
+	public DockingTab createTab(@Nonnull String title, @Nonnull Node content) {
 		return createTab(() -> new DockingTab(title, content));
 	}
 
@@ -56,7 +57,8 @@ public class DockingRegion extends DetachableTabPane {
 	 *
 	 * @return Created tab.
 	 */
-	public DockingTab createTab(ObservableValue<String> title, Node content) {
+	@Nonnull
+	public DockingTab createTab(@Nonnull ObservableValue<String> title, @Nonnull Node content) {
 		return createTab(() -> new DockingTab(title, content));
 	}
 
@@ -68,7 +70,8 @@ public class DockingRegion extends DetachableTabPane {
 	 *
 	 * @return Created tab.
 	 */
-	public DockingTab createTab(Supplier<DockingTab> factory) {
+	@Nonnull
+	public DockingTab createTab(@Nonnull Supplier<DockingTab> factory) {
 		DockingTab tab = factory.get();
 
 		// Ensure we record tabs closing (and let them still declare close handlers via the factory)
@@ -77,9 +80,12 @@ public class DockingRegion extends DetachableTabPane {
 			// We use on-close-request so that 'getRegion' still has a reference to the containing tab-pane.
 			// Using on-close, the region reference is removed.
 			if (tab.isClosable()) {
-				if (closeHandler != null)
-					closeHandler.handle(e);
-				manager.onTabClose(tab.getRegion(), tab);
+				DockingRegion region = tab.getRegion();
+				if (region.getDockTabs().contains(tab)) {
+					if (closeHandler != null)
+						closeHandler.handle(e);
+					getAndCheckManager().onTabClose(region, tab);
+				}
 			}
 		});
 
@@ -92,9 +98,9 @@ public class DockingRegion extends DetachableTabPane {
 			if (tab.isSelected()) {
 				// Use the tab's parent, but if none is set then we are likely spawning the tab in 'this' region.
 				if (tab.getTabPane() instanceof DockingRegion parentRegion) {
-					manager.onTabSelection(parentRegion, tab);
+					getAndCheckManager().onTabSelection(parentRegion, tab);
 				} else {
-					manager.onTabSelection(thisRegion, tab);
+					getAndCheckManager().onTabSelection(thisRegion, tab);
 				}
 			}
 		});
@@ -105,7 +111,7 @@ public class DockingRegion extends DetachableTabPane {
 			// It will be null while the tab is being dragged.
 			if (oldValue instanceof DockingRegion oldParent &&
 					newValue instanceof DockingRegion newParent) {
-				manager.onTabMove(oldParent, newParent, tab);
+				getAndCheckManager().onTabMove(oldParent, newParent, tab);
 			}
 		});
 
@@ -117,18 +123,46 @@ public class DockingRegion extends DetachableTabPane {
 			logger.error("Tab was already added to region, prior to 'createTab' call.\n" +
 							"Please ensure tabs are only added via 'createTab' to ensure consistent behavior.",
 					new IllegalStateException("Stack dump"));
-		manager.onTabCreate(this, tab);
+		getAndCheckManager().onTabCreate(this, tab);
 		return tab;
 	}
 
 	/**
 	 * @return List of all docking tabs in the region.
 	 */
+	@Nonnull
 	@SuppressWarnings("unchecked")
 	public List<DockingTab> getDockTabs() {
 		// We do not want to use a 'stream.map()' operation just to satisfy generic contracts.
 		// We know the tab implementations are all dock-tabs so this unsafe operation is OK.
 		return (List<DockingTab>) (Object) super.getTabs();
+	}
+
+	/**
+	 * @return {@code true} when this region has been marked as closed.
+	 */
+	public boolean isClosed() {
+		return manager == null;
+	}
+
+	/**
+	 * Called when this region is closed.
+	 */
+	void onClose() {
+		// We no longer need a reference to the manager that spawned this region.
+		manager = null;
+	}
+
+	/**
+	 * Exists so we don't directly reference the manager, which will NPE after the region is closed.
+	 *
+	 * @return Manager instance.
+	 */
+	@Nonnull
+	private DockingManager getAndCheckManager() {
+		if (manager == null)
+			throw new IllegalStateException("Region has been closed, the manager reference has been cleared");
+		return manager;
 	}
 
 	/**

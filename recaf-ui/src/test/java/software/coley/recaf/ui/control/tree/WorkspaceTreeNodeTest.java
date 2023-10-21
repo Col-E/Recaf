@@ -22,8 +22,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static software.coley.recaf.test.TestClassUtils.fromClasses;
-import static software.coley.recaf.test.TestClassUtils.fromRuntimeClass;
+import static software.coley.recaf.test.TestClassUtils.*;
 import static software.coley.recaf.ui.control.tree.WorkspaceTreeNode.getOrInsertIntoTree;
 
 /**
@@ -93,6 +92,30 @@ class WorkspaceTreeNodeTest {
 		// This is not ideal, but there's not really any great alternatives either.
 		z2 = p3f.child("//");
 		z1 = z2.child(new BasicFileInfo("///zero.txt", new byte[0], new BasicPropertyContainer()));
+	}
+
+	@Test
+	void testPackageDoesNotPreventRemovalOfPackageWithSamePrefix() {
+		DirectoryPathNode firstDir = new DirectoryPathNode("co/fizz");
+		DirectoryPathNode secondDir = new DirectoryPathNode("com/foo");
+		ClassPathNode firstClass = firstDir.child(createEmptyClass(firstDir.getValue() + "/Buzz"));
+		ClassPathNode secondClass = secondDir.child(createEmptyClass(secondDir.getValue() + "/Bar"));
+
+		// Create the tree:
+		//  root:
+		//   co/
+		//    fizz/
+		//     Buzz
+		//   com/
+		//    foo/
+		//     Bar
+		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
+		root.getOrCreateNodeByPath(firstClass);
+		root.getOrCreateNodeByPath(secondClass);
+
+		// Removal of 'com/foo/Bar' should not be blocked by existence of 'co/fizz/Buzz'
+		// This ensures our package parent checks do not regress.
+		assertTrue(root.removeNodeByPath(secondClass));
 	}
 
 	@Test

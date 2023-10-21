@@ -34,6 +34,13 @@ public class DelegatingJavaParser implements JavaParser {
 
 	@Nonnull
 	@Override
+	public SourceFile requirePrintEqualsInput(@Nonnull SourceFile sourceFile, @Nonnull Input input, @Nullable Path relativeTo, @Nonnull ExecutionContext ctx) {
+		// Do not do any idempotent source file checks
+		return sourceFile;
+	}
+
+	@Nonnull
+	@Override
 	public Stream<SourceFile> parseInputs(@Nonnull Iterable<Input> sources,
 										  @Nullable Path relativeTo,
 										  @Nonnull ExecutionContext ctx) {
@@ -41,6 +48,10 @@ public class DelegatingJavaParser implements JavaParser {
 			// The default source-set type generation logic is not well optimized.
 			// We also do not gain significant benefits from it, so we can skip it entirely.
 			ctx.putMessage(SKIP_SOURCE_SET_TYPE_GENERATION, true);
+
+			// Do not do any idempotent source file checks
+			ctx.putMessage(ExecutionContext.REQUIRE_PRINT_EQUALS_INPUT, false);
+
 			return delegate.parseInputs(sources, relativeTo, ctx);
 		} catch (Throwable t) {
 			logger.error("Error while parsing source into AST", t);

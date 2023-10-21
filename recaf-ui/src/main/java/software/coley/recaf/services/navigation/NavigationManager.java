@@ -8,6 +8,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
+import javafx.scene.control.Tab;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
@@ -21,6 +22,7 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingTab;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
@@ -77,7 +79,8 @@ public class NavigationManager implements Navigable, Service {
 			spy.changed(contentProperty, null, contentProperty.getValue());
 		});
 		dockingManager.addTabClosureListener(((parent, tab) -> {
-			NavigableSpy spy = tabToSpy.get(tab);
+			// The tab is closed, remove its spy lookup.
+			NavigableSpy spy = tabToSpy.remove(tab);
 			if (spy == null) {
 				logger.warn("Tab {} was closed, but had no associated content spy instance", tab.getText());
 				return;
@@ -98,6 +101,20 @@ public class NavigationManager implements Navigable, Service {
 				if (dockingTab != null)
 					dockingTab.close();
 			}
+
+			// Validate all child references have been removed.
+			if (!children.isEmpty()) {
+				logger.warn("Navigation manager children list was not empty after workspace closure");
+				children.clear();
+			}
+			if (!childrenToTab.isEmpty()) {
+				logger.warn("Navigation manager children-to-tab map was not empty after workspace closure");
+				childrenToTab.clear();
+			}
+
+			// Remove the path reference to the old workspace.
+			forwarding.workspacePath = null;
+			path = null;
 		});
 
 		// Track current workspace so that we are navigable ourselves.

@@ -1,20 +1,16 @@
 plugins {
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.13'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-def javaFxVersion = '19'
+def javaFxVersion = '21'
 def javaFxIncludeInDist = System.getProperty('skip.jfx.bundle') == null
-
-application {
-    mainClass = 'software.coley.recaf.Main'
-}
 
 javafx {
     version = javaFxVersion
     modules = ['javafx.controls', 'javafx.media']
-    configuration = javaFxIncludeInDist ? 'implementation' : 'compileOnly'
+    configurations = javaFxIncludeInDist ? [ 'implementation' ] : [ 'compileOnly', 'testImplementation' ]
 }
 
 dependencies {
@@ -27,4 +23,16 @@ dependencies {
     implementation ikonli_pack
     implementation richtextfx
     implementation treemapfx
+}
+
+application {
+    mainClass = 'software.coley.recaf.Main'
+}
+
+shadowJar {
+    exclude "META-INF/maven/**"
+    exclude "META-INF/rewrite/**"
+    exclude "META-INF/proguard/*"
+    exclude "META-INF/native-image/*"
+    exclude "META-INF/*.properties"
 }

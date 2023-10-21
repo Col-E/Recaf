@@ -18,6 +18,7 @@ import javafx.scene.control.Label;
 import javafx.scene.effect.Effect;
 import javafx.scene.effect.Glow;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -123,6 +124,18 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 			workspace.getPrimaryResource().addListener(this);
 		});
 
+		workspaceManager.addWorkspaceCloseListener(workspace -> {
+			// The pending update can be cleared once the workspace is closed.
+			pendingUpdate = null;
+
+			// And the tree content can be cleared.
+			treeContentListDelegate.clear();
+
+			// Clear selection, as it holds a path which contains workspace references,
+			// which can prevent GC from freeing it.
+			selectedPath.set(null);
+		});
+
 		// The tree update passes data to this delegate list.
 		// We use ReactFX to merge rapid changes to limit redundant work.
 		EventStreams.changesOf(treeContentListDelegate)
@@ -150,6 +163,10 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 		comboMetric.getSelectionModel().select(0);
 		BorderPane wrapper = new BorderPane();
 		wrapper.centerProperty().bind(selectedPath.map(selection -> {
+			// No selection? Empty region.
+			if (selection == null)
+				return new Region();
+
 			ClassPathNode path = selection.path();
 			Label className = new Label(configurationService.textOf(path));
 

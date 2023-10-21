@@ -2,7 +2,6 @@ package software.coley.recaf;
 
 import jakarta.annotation.Nonnull;
 import javafx.application.Application;
-import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -38,6 +37,8 @@ import software.coley.recaf.workspace.model.Workspace;
 public class RecafApplication extends Application implements WorkspaceOpenListener, WorkspaceCloseListener {
 	private final Recaf recaf = Bootstrap.get();
 	private final BorderPane root = new BorderPane();
+	private WorkspaceRootPane workspaceRootPane;
+	private WelcomePane welcomePane;
 
 	@Override
 	public void start(Stage stage) {
@@ -48,6 +49,8 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 		MainMenu menu = recaf.get(MainMenu.class);
 		WelcomePane pane = recaf.get(WelcomePane.class);
 		Node logging = createLoggingWrapper();
+		workspaceRootPane = recaf.get(WorkspaceRootPane.class);
+		welcomePane = recaf.get(WelcomePane.class);
 
 		// Layout
 		SplitPane splitPane = new SplitPane(root, logging);
@@ -93,17 +96,11 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 
 	@Override
 	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
-		FxThreadUtil.run(() -> {
-			WelcomePane pane = recaf.get(WelcomePane.class);
-			root.setCenter(pane);
-		});
+		FxThreadUtil.run(() -> root.setCenter(welcomePane));
 	}
 
 	@Override
 	public void onWorkspaceOpened(@Nonnull Workspace workspace) {
-		FxThreadUtil.run(() -> {
-			WorkspaceRootPane pane = recaf.get(WorkspaceRootPane.class);
-			root.setCenter(pane);
-		});
+		FxThreadUtil.run(() -> root.setCenter(workspaceRootPane));
 	}
 }

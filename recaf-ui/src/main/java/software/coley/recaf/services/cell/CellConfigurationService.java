@@ -124,6 +124,8 @@ public class CellConfigurationService implements Service {
 								openPath(item);
 							else if (treeItem.isExpanded()) // Looks odd, but results in less rapid re-closures
 								TreeItems.recurseOpen(treeItem);
+							else
+								TreeItems.recurseClose(treeCell.getTreeView(), treeItem);
 					}
 				}
 			}
