@@ -24,7 +24,7 @@ public class MemberRemovingVisitor extends ClassVisitor {
 	 * 		Member to remove.
 	 */
 	public MemberRemovingVisitor(@Nullable ClassVisitor cv, @Nonnull ClassMember member) {
-		this(cv, new SingleMemberPredicate(member));
+		this(cv, MemberPredicate.of(member));
 	}
 
 	/**

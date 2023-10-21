@@ -21,7 +21,7 @@ public class MemberFilteringVisitor extends ClassVisitor {
 	 * 		Target member to visit.
 	 */
 	public MemberFilteringVisitor(@Nullable ClassVisitor cv, @Nonnull ClassMember member) {
-		this(cv, new SingleMemberPredicate(member));
+		this(cv, MemberPredicate.of(member));
 	}
 
 	/**
