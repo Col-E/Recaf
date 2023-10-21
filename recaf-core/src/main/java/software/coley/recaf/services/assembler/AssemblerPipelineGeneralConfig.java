@@ -1,5 +1,6 @@
 package software.coley.recaf.services.assembler;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableInteger;
@@ -9,26 +10,37 @@ import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
+/**
+ * Common config for all assemblers.
+ *
+ * @author Justus Garbe
+ */
 @ApplicationScoped
 public class AssemblerPipelineGeneralConfig extends BasicConfigContainer implements ServiceConfig {
+	private final ObservableString disassemblyIndent = new ObservableString("    ");
+	private final ObservableInteger disassemblyAstParseDelay = new ObservableInteger(100);
 
-    private final ObservableString disassemblyIndent = new ObservableString("    ");
-    private final ObservableInteger disassemblyAstParseDelay = new ObservableInteger(100);
+	@Inject
+	public AssemblerPipelineGeneralConfig() {
+		super(ConfigGroups.SERVICE_ASSEMBLER, AssemblerPipelineManager.SERVICE_ID + ConfigGroups.PACKAGE_SPLIT + "general" + CONFIG_SUFFIX);
 
-    @Inject
-    public AssemblerPipelineGeneralConfig() {
-        super(ConfigGroups.SERVICE_ASSEMBLER, AssemblerPipelineManager.SERVICE_ID + ConfigGroups.PACKAGE_SPLIT
-                + "general" + CONFIG_SUFFIX);
+		addValue(new BasicConfigValue<>("disassembly-indent", String.class, disassemblyIndent));
+		addValue(new BasicConfigValue<>("disassembly-ast-parse-delay", Integer.class, disassemblyAstParseDelay));
+	}
 
-        addValue(new BasicConfigValue<>("disassembly_indent", String.class, disassemblyIndent));
-        addValue(new BasicConfigValue<>("disassembly_ast_parse_delay", Integer.class, disassemblyAstParseDelay));
-    }
+	/**
+	 * @return Indentation string.
+	 */
+	@Nonnull
+	public ObservableString getDisassemblyIndent() {
+		return disassemblyIndent;
+	}
 
-    public ObservableString getDisassemblyIndent() {
-        return disassemblyIndent;
-    }
-
-    public ObservableInteger getDisassemblyAstParseDelay() {
-        return disassemblyAstParseDelay;
-    }
+	/**
+	 * @return Delay between each parse operation.
+	 */
+	@Nonnull
+	public ObservableInteger getDisassemblyAstParseDelay() {
+		return disassemblyAstParseDelay;
+	}
 }

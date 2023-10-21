@@ -1,6 +1,6 @@
 package software.coley.recaf.services.assembler;
 
-import com.google.common.reflect.ClassPath;
+import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.ElementType;
 import me.darknet.assembler.compiler.ClassRepresentation;
@@ -11,7 +11,6 @@ import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.printer.*;
 import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
@@ -22,148 +21,166 @@ import software.coley.recaf.path.PathNode;
 
 import java.util.List;
 
-public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassRepresentation>
-        implements AssemblerPipeline<C, R> {
+/**
+ * Common pipeline implementation details for all class types.
+ *
+ * @param <C>
+ * 		Class type which will be assembled.
+ * @param <R>
+ * 		Class intermediate representation type.
+ *
+ * @author Justus Garbe
+ */
+public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassRepresentation> implements AssemblerPipeline<C, R> {
+	protected final PrintContext<?> context;
+	protected final AssemblerPipelineConfig pipelineConfig;
 
-    protected final PrintContext<?> context;
-    protected final AssemblerPipelineConfig pipelineConfig;
+	public AbstractAssemblerPipeline(@Nonnull AssemblerPipelineGeneralConfig config,
+									 @Nonnull AssemblerPipelineConfig pipelineConfig) {
+		this.context = new PrintContext<>(config.getDisassemblyIndent().getValue());
+		this.pipelineConfig = pipelineConfig;
 
-    public AbstractAssemblerPipeline(AssemblerPipelineGeneralConfig config, AssemblerPipelineConfig pipelineConfig) {
-        this.context = new PrintContext<>(config.getDisassemblyIndent().getValue());
-        this.pipelineConfig = pipelineConfig;
+		config.getDisassemblyIndent().addChangeListener((observable, oldVal, newVal) -> context.setIndentStep(newVal));
+	}
 
-        config.getDisassemblyIndent().addChangeListener((observable, oldVal, newVal) -> context.setIndentStep(newVal));
-    }
+	@Nonnull
+	protected abstract Result<ClassPrinter> classPrinter(@Nonnull ClassPathNode path);
 
-    protected abstract Result<ClassPrinter> classPrinter(ClassPathNode location);
-    protected abstract CompilerOptions<? extends CompilerOptions<?>> getCompilerOptions();
-    protected abstract Compiler getCompiler();
-    protected abstract InheritanceChecker getInheritanceChecker();
-    protected abstract int getClassVersion(C info);
+	@Nonnull
+	protected abstract CompilerOptions<? extends CompilerOptions<?>> getCompilerOptions();
 
-    protected Result<C> compile(List<ASTElement> elements, PathNode<?> node) {
-        if(elements.isEmpty()) {
-            return Result.err(Error.of("No elements to compile", null));
-        }
-        if(elements.size() != 1) {
-            return Result.err(Error.of("Multiple elements to compile", elements.get(1).location()));
-        }
-        ASTElement element = elements.get(0);
+	@Nonnull
+	protected abstract Compiler getCompiler();
 
-        if(element == null) {
-            return Result.err(Error.of("No element to compile", null));
-        }
+	@Nonnull
+	protected abstract InheritanceChecker getInheritanceChecker();
 
-        ClassInfo classInfo = node.getValueOfType(ClassInfo.class);
-        if(classInfo == null) {
-            return Result.err(Error.of("Dangling member", null));
-        }
+	protected abstract int getClassVersion(@Nonnull C info);
 
-        C info = (C) classInfo;
+	@Nonnull
+	protected Result<C> compile(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
+		if (elements.isEmpty()) {
+			return Result.err(Error.of("No elements to compile", null));
+		}
+		if (elements.size() != 1) {
+			return Result.err(Error.of("Multiple elements to compile", elements.get(1).location()));
+		}
+		ASTElement element = elements.get(0);
 
-        CompilerOptions<? extends CompilerOptions<?>> options = getCompilerOptions();
-        options.version(getClassVersion(info))
-                .inheritanceChecker(getInheritanceChecker());
+		if (element == null) {
+			return Result.err(Error.of("No element to compile", null));
+		}
 
-        if(element.type() != ElementType.CLASS) {
-            options.overlay(getRepresentation(info));
+		ClassInfo classInfo = path.getValueOfType(ClassInfo.class);
+		if (classInfo == null) {
+			return Result.err(Error.of("Dangling member", null));
+		}
 
-            if(element.type() == ElementType.ANNOTATION) {
-                // build annotation path
-                String path = "this";
-                PathNode<?> parent = node.getParent();
-                if(parent instanceof ClassMemberPathNode memberPathNode) {
-                    path += memberPathNode.isMethod() ? ".method." : ".field.";
-                    path += memberPathNode.getValue().getName() + ".";
-                    path += memberPathNode.getValue().getDescriptor();
-                }
+		C info = (C) classInfo;
 
-                Annotated annotated = node.getValueOfType(Annotated.class);
+		CompilerOptions<? extends CompilerOptions<?>> options = getCompilerOptions();
+		options.version(getClassVersion(info))
+				.inheritanceChecker(getInheritanceChecker());
 
-                if(annotated == null) {
-                    return Result.err(Error.of("Dangling annotation", null));
-                }
+		if (element.type() != ElementType.CLASS) {
+			options.overlay(getRepresentation(info));
 
-                AnnotationInfo annotation = (AnnotationInfo) node.getValue();
+			if (element.type() == ElementType.ANNOTATION) {
+				// build annotation path
+				String annoPath = "this";
+				PathNode<?> parent = path.getParent();
+				if (parent instanceof ClassMemberPathNode memberPathNode) {
+					annoPath += memberPathNode.isMethod() ? ".method." : ".field.";
+					annoPath += memberPathNode.getValue().getName() + ".";
+					annoPath += memberPathNode.getValue().getDescriptor();
+				}
 
-                path += annotated.getAnnotations().indexOf(annotation);
+				Annotated annotated = path.getValueOfType(Annotated.class);
 
-                options.annotationPath(path);
+				if (annotated == null) {
+					return Result.err(Error.of("Dangling annotation", null));
+				}
 
-            }
-        }
+				AnnotationInfo annotation = (AnnotationInfo) path.getValue();
 
-        Compiler compiler = getCompiler();
+				annoPath += annotated.getAnnotations().indexOf(annotation);
 
-        return compiler.compile(elements, options).flatMap(res -> Result.ok(getClassInfo((R) res)));
-    }
+				options.annotationPath(annoPath);
+			}
+		}
 
-    protected Result<Printer> memberPrinter(ClassMemberPathNode node) {
-        ClassPathNode owner = node.getParent();
-        if(owner == null)
-            return Result.err(Error.of("Dangling member", null));
+		Compiler compiler = getCompiler();
 
-        ClassMember member = node.getValue();
-        return classPrinter(owner).flatMap((printer) -> {
-            Printer memberPrinter = null;
+		return compiler.compile(elements, options).flatMap(res -> Result.ok(getClassInfo((R) res)));
+	}
 
-            if(member.isMethod()) {
-                memberPrinter = printer.method(member.getName(), member.getDescriptor());
-            } else if(member.isField()) {
-                memberPrinter = printer.field(member.getName(), member.getDescriptor());
-            }
+	@Nonnull
+	protected Result<Printer> memberPrinter(@Nonnull ClassMemberPathNode path) {
+		ClassPathNode owner = path.getParent();
+		if (owner == null)
+			return Result.err(Error.of("Dangling member", null));
 
-            if(memberPrinter == null) {
-                return Result.err(Error.of("Failed to find member", null));
-            } else {
-                return Result.ok(memberPrinter);
-            }
-        });
-    }
+		ClassMember member = path.getValue();
+		return classPrinter(owner).flatMap((printer) -> {
+			Printer memberPrinter = null;
 
-    protected Result<AnnotationPrinter> annotationPrinter(AnnotationPathNode node) {
-        if(node.getParent() == null) {
-            return Result.err(Error.of("Dangling annotation", null));
-        }
+			if (member.isMethod()) {
+				memberPrinter = printer.method(member.getName(), member.getDescriptor());
+			} else if (member.isField()) {
+				memberPrinter = printer.field(member.getName(), member.getDescriptor());
+			}
 
-        Object parent = node.getParent().getValue();
-        Result<? extends Printer> parentPrinter;
-        if(parent instanceof ClassPathNode classNode) {
-            parentPrinter = classPrinter(classNode);
-        } else if(parent instanceof ClassMemberPathNode classMember) {
-            parentPrinter = memberPrinter(classMember);
-        } else {
-            return Result.err(Error.of("Invalid parent type", null));
-        }
+			if (memberPrinter == null) {
+				return Result.err(Error.of("Failed to find member", null));
+			} else {
+				return Result.ok(memberPrinter);
+			}
+		});
+	}
 
-        AnnotationInfo annotation = node.getValue();
+	@Nonnull
+	protected Result<AnnotationPrinter> annotationPrinter(@Nonnull AnnotationPathNode path) {
+		if (path.getParent() == null) {
+			return Result.err(Error.of("Dangling annotation", null));
+		}
 
-        if(parent instanceof Annotated annotated) {
+		Object parent = path.getParent().getValue();
+		Result<? extends Printer> parentPrinter;
+		if (parent instanceof ClassPathNode classNode) {
+			parentPrinter = classPrinter(classNode);
+		} else if (parent instanceof ClassMemberPathNode classMember) {
+			parentPrinter = memberPrinter(classMember);
+		} else {
+			return Result.err(Error.of("Invalid parent type", null));
+		}
 
-            return parentPrinter.flatMap((printer) -> {
-                if (printer instanceof AnnotationHolder holder) {
-                    return Result.ok(holder.annotation(annotated.getAnnotations().indexOf(annotation)));
-                } else {
-                    return Result.err(Error.of("Parent is not an annotation holder", null));
-                }
-            });
+		AnnotationInfo annotation = path.getValue();
 
-        } else {
-            return Result.err(Error.of("Parent cannot hold annotations", null));
-        }
-    }
+		if (parent instanceof Annotated annotated) {
 
-    protected String print(Printer printer) {
-        context.clear();
-        printer.print(context);
-        return context.toString();
-    }
+			return parentPrinter.flatMap((printer) -> {
+				if (printer instanceof AnnotationHolder holder) {
+					return Result.ok(holder.annotation(annotated.getAnnotations().indexOf(annotation)));
+				} else {
+					return Result.err(Error.of("Parent is not an annotation holder", null));
+				}
+			});
 
-    @Override
-    public AssemblerPipelineConfig getConfig() {
-        return pipelineConfig;
-    }
+		} else {
+			return Result.err(Error.of("Parent cannot hold annotations", null));
+		}
+	}
 
+	@Nonnull
+	protected String print(@Nonnull Printer printer) {
+		context.clear();
+		printer.print(context);
+		return context.toString();
+	}
 
-
+	@Nonnull
+	@Override
+	public AssemblerPipelineConfig getConfig() {
+		return pipelineConfig;
+	}
 }

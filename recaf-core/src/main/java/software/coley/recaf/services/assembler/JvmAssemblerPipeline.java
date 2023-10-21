@@ -10,21 +10,14 @@ import me.darknet.assembler.compile.JvmCompilerOptions;
 import me.darknet.assembler.compiler.Compiler;
 import me.darknet.assembler.compiler.CompilerOptions;
 import me.darknet.assembler.compiler.InheritanceChecker;
-import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.parser.BytecodeFormat;
 import me.darknet.assembler.parser.Token;
 import me.darknet.assembler.parser.processor.ASTProcessor;
 import me.darknet.assembler.printer.ClassPrinter;
 import me.darknet.assembler.printer.JvmClassPrinter;
-import me.darknet.assembler.printer.MemberPrinter;
-import me.darknet.assembler.printer.Printer;
-import org.objectweb.asm.ClassReader;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.info.annotation.Annotated;
-import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
-import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.AnnotationPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
@@ -36,113 +29,115 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * JVM assembler pipeline implementation.
+ *
+ * @author Justus Garbe
+ */
 @ApplicationScoped
 public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo, JavaClassRepresentation> {
+	public static final String SERVICE_ID = "jvm-assembler";
 
-    private final ASTProcessor processor = new ASTProcessor(BytecodeFormat.JVM);
-    private final InheritanceGraph inheritanceGraph;
-    private final String name = "JVM";
+	private final ASTProcessor processor = new ASTProcessor(BytecodeFormat.JVM);
+	private final InheritanceGraph inheritanceGraph;
 
-    @Inject
-    public JvmAssemblerPipeline(@Nonnull AssemblerPipelineGeneralConfig config,
-                                @Nonnull InheritanceGraph inheritanceGraph) {
-        super(config, null);
-        this.inheritanceGraph = inheritanceGraph;
-    }
+	@Inject
+	public JvmAssemblerPipeline(@Nonnull InheritanceGraph inheritanceGraph,
+								@Nonnull AssemblerPipelineGeneralConfig generalConfig,
+								@Nonnull JvmAssemblerPipelineConfig config) {
+		super(generalConfig, config);
+		this.inheritanceGraph = inheritanceGraph;
+	}
 
-    @Override
-    public Result<List<ASTElement>> concreteParse(List<ASTElement> elements) {
-        return processor.processAST(elements);
-    }
+	@Nonnull
+	@Override
+	public Result<List<ASTElement>> concreteParse(@Nonnull List<ASTElement> elements) {
+		return processor.processAST(elements);
+	}
 
-    @Override
-    public Result<List<ASTElement>> pipe(List<Token> tokens, JvmClassInfo info) {
-        var result = roughParse(tokens);
-        if(result.isOk()) {
-            return concreteParse(result.get());
-        } else {
-            return result;
-        }
-    }
+	@Nonnull
+	@Override
+	public Result<JvmClassInfo> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
+		return compile(elements, path);
+	}
 
-    @Override
-    public Result<JvmClassInfo> assemble(List<ASTElement> elements, PathNode<?> node) {
-        return compile(elements, node);
-    }
+	@Nonnull
+	@Override
+	public Result<String> disassemble(@Nonnull ClassPathNode path) {
+		return classPrinter(path).map(this::print);
+	}
 
-    @Override
-    public Result<String> disassemble(ClassPathNode node) {
-        return classPrinter(node).map(this::print);
-    }
+	@Nonnull
+	@Override
+	public Result<String> disassemble(@Nonnull ClassMemberPathNode path) {
+		return memberPrinter(path).map(this::print);
+	}
 
-    @Override
-    public Result<String> disassemble(ClassMemberPathNode node) {
-        return memberPrinter(node).map(this::print);
-    }
+	@Nonnull
+	@Override
+	public Result<String> disassemble(@Nonnull AnnotationPathNode path) {
+		return annotationPrinter(path).map(this::print);
+	}
 
-    @Override
-    public Result<String> disassemble(AnnotationPathNode node) {
-        return annotationPrinter(node).map(this::print);
-    }
+	@Nonnull
+	@Override
+	public JavaClassRepresentation getRepresentation(@Nonnull JvmClassInfo info) {
+		return new JavaClassRepresentation(info.getBytecode());
+	}
 
-    @Override
-    public JavaClassRepresentation getRepresentation(JvmClassInfo info) {
-        return new JavaClassRepresentation(info.getBytecode());
-    }
+	@Nonnull
+	@Override
+	protected CompilerOptions<? extends CompilerOptions<?>> getCompilerOptions() {
+		return new JvmCompilerOptions();
+	}
 
-    @Override
-    protected CompilerOptions<? extends CompilerOptions<?>> getCompilerOptions() {
-        return new JvmCompilerOptions();
-    }
+	@Nonnull
+	@Override
+	protected Compiler getCompiler() {
+		return new JvmCompiler();
+	}
 
-    @Override
-    protected Compiler getCompiler() {
-        return new JvmCompiler();
-    }
+	@Nonnull
+	@Override
+	protected InheritanceChecker getInheritanceChecker() {
+		return new InheritanceChecker() {
+			@Override
+			public boolean isSubclassOf(String child, String parent) {
+				InheritanceVertex childVertex = inheritanceGraph.getVertex(child);
+				InheritanceVertex parentVertex = inheritanceGraph.getVertex(parent);
 
-    @Override
-    protected InheritanceChecker getInheritanceChecker() {
-        return new InheritanceChecker() {
-            @Override
-            public boolean isSubclassOf(String child, String parent) {
-                InheritanceVertex childVertex = inheritanceGraph.getVertex(child);
-                InheritanceVertex parentVertex = inheritanceGraph.getVertex(parent);
+				if (childVertex == null || parentVertex == null) {
+					return false;
+				}
 
-                if(childVertex == null || parentVertex == null) {
-                    return false;
-                }
+				return childVertex.isChildOf(parentVertex);
+			}
 
-                return childVertex.isChildOf(parentVertex);
-            }
+			@Override
+			public String getCommonSuperclass(String type1, String type2) {
+				return inheritanceGraph.getCommon(type1, type2);
+			}
+		};
+	}
 
-            @Override
-            public String getCommonSuperclass(String type1, String type2) {
-                return inheritanceGraph.getCommon(type1, type2);
-            }
-        };
-    }
+	@Override
+	protected int getClassVersion(@Nonnull JvmClassInfo info) {
+		return info.getVersion();
+	}
 
-    @Override
-    protected int getClassVersion(JvmClassInfo info) {
-        return info.getVersion();
-    }
+	@Nonnull
+	@Override
+	public JvmClassInfo getClassInfo(@Nonnull JavaClassRepresentation representation) {
+		return new JvmClassInfoBuilder(representation.data()).build();
+	}
 
-    @Override
-    public JvmClassInfo getClassInfo(JavaClassRepresentation representation) {
-        return new JvmClassInfoBuilder(representation.data()).build();
-    }
-
-    @Override
-    protected Result<ClassPrinter> classPrinter(ClassPathNode node) {
-        try {
-            return Result.ok(new JvmClassPrinter(new ByteArrayInputStream(node.getValue().asJvmClass().getBytecode())));
-        } catch (IOException e) {
-            return Result.exception(e);
-        }
-    }
-
-    @Override
-    public AssemblerPipelineConfig getConfig() {
-        return null;
-    }
+	@Nonnull
+	@Override
+	protected Result<ClassPrinter> classPrinter(@Nonnull ClassPathNode path) {
+		try {
+			return Result.ok(new JvmClassPrinter(new ByteArrayInputStream(path.getValue().asJvmClass().getBytecode())));
+		} catch (IOException e) {
+			return Result.exception(e);
+		}
+	}
 }
