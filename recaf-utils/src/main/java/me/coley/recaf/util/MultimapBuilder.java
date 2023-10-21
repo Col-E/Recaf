@@ -47,6 +47,7 @@ public final class MultimapBuilder<K, V, C extends Collection<V>> {
 	 *
 	 * @return New builder.
 	 */
+	@SuppressWarnings(value = {"unused"})
 	public static <K extends Comparable<K>, V> MultimapBuilder<K, V, Collection<V>> treeKeys() {
 		return new MultimapBuilder<>(TreeMap::new);
 	}
@@ -150,6 +151,7 @@ public final class MultimapBuilder<K, V, C extends Collection<V>> {
 	/**
 	 * @return Built multimap.
 	 */
+	@SuppressWarnings("unchecked")
 	public Multimap<K, V, C> build() {
 		//noinspection unchecked
 		return Multimap.from((Map<K, C>) mapSupplier.get(), (Supplier<C>) collectionSupplier);

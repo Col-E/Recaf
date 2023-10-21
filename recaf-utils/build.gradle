@@ -14,6 +14,7 @@ dependencies {
     api hppc
     api javassist
     api llzip
+    api slf4j
     api logback_classic
     api regex
 

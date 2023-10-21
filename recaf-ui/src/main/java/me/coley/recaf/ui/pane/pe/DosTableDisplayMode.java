@@ -2,17 +2,17 @@ package me.coley.recaf.ui.pane.pe;
 
 import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
 import me.coley.recaf.ui.pane.table.TableDisplayMode;
-import me.martinez.pe.ImageDosHeader;
-import me.martinez.pe.ImagePeHeaders;
+import me.martinez.pe.PeImage;
+import me.martinez.pe.headers.ImageDosHeader;
 
 /**
  * Table display for DOS headers.
  *
  * @author Wolfie / win32kbase
  */
-public class DosTableDisplayMode implements TableDisplayMode<ImagePeHeaders> {
+public class DosTableDisplayMode implements TableDisplayMode<PeImage> {
 	@Override
-	public void apply(ImagePeHeaders pe, SizedDataTypeTable table) {
+	public void apply(PeImage pe, SizedDataTypeTable table) {
 		ImageDosHeader dos = pe.dosHeader;
 		int[] rw = dos.res;
 		int[] rw2 = dos.res2;

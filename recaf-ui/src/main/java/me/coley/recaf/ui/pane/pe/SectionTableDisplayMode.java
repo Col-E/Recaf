@@ -2,7 +2,7 @@ package me.coley.recaf.ui.pane.pe;
 
 import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
 import me.coley.recaf.ui.pane.table.TableDisplayMode;
-import me.martinez.pe.ImageSectionHeader;
+import me.martinez.pe.headers.ImageSectionHeader;
 
 import java.util.Map;
 import java.util.TreeMap;

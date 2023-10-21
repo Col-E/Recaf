@@ -445,6 +445,7 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 				if (argumentType instanceof LambdaArgumentTypePlaceholder)
 					continue;
 				if (paramType instanceof ResolvedReferenceType) {
+					//noinspection OptionalGetWithoutIsPresent
 					ResolvedReferenceTypeDeclaration typeDeclaration =
 							((ResolvedReferenceType) paramType).getTypeDeclaration().get();
 					if (!typeDeclaration.isAssignableBy(argumentType)) {
@@ -461,7 +462,7 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 				return SymbolReference.solved(methodDeclaration);
 		}
 		// No match
-		return SymbolReference.unsolved(ResolvedMethodDeclaration.class);
+		return SymbolReference.unsolved();
 	}
 
 	@Override
@@ -485,7 +486,7 @@ public abstract class RecafResolvedTypeDeclaration implements ResolvedReferenceT
 				.findFirst();
 		if (first.isPresent())
 			return SymbolReference.solved(first.get());
-		return SymbolReference.unsolved(ResolvedValueDeclaration.class);
+		return SymbolReference.unsolved();
 	}
 
 	@Override

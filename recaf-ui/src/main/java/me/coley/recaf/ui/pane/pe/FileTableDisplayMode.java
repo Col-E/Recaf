@@ -3,8 +3,8 @@ package me.coley.recaf.ui.pane.pe;
 import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
 import me.coley.recaf.ui.pane.table.TableDisplayMode;
 import me.coley.recaf.ui.pane.table.TableWord;
-import me.martinez.pe.ImageFileHeader;
-import me.martinez.pe.ImagePeHeaders;
+import me.martinez.pe.PeImage;
+import me.martinez.pe.headers.ImageFileHeader;
 
 import java.time.Instant;
 import java.util.Map;
@@ -15,7 +15,7 @@ import java.util.TreeMap;
  *
  * @author Wolfie / win32kbase
  */
-public class FileTableDisplayMode implements TableDisplayMode<ImagePeHeaders> {
+public class FileTableDisplayMode implements TableDisplayMode<PeImage> {
 	/**
 	 * @see <a href="https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#characteristics">
 	 * PE Format - Characteristics</a>
@@ -41,8 +41,8 @@ public class FileTableDisplayMode implements TableDisplayMode<ImagePeHeaders> {
 
 
 	@Override
-	public void apply(ImagePeHeaders pe, SizedDataTypeTable table) {
-		ImageFileHeader fileHeader = pe.ntHeader.fileHeader;
+	public void apply(PeImage pe, SizedDataTypeTable table) {
+		ImageFileHeader fileHeader = pe.ntHeaders.fileHeader;
 
 		table.addWord("Machine", fileHeader.machine, getMachineType(fileHeader.machine));
 		table.addWord("NumberOfSections", fileHeader.numberOfSections, "Number of sections");

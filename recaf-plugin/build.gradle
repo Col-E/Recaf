@@ -1,5 +1,6 @@
 dependencies {
     compileOnly asm
+    compileOnly slf4j
     compileOnly logback_classic
     compileOnly project(':recaf-core')
 

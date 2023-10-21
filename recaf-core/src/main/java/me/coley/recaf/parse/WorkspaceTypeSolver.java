@@ -55,7 +55,7 @@ public class WorkspaceTypeSolver implements TypeSolver, WorkspaceListener, Resou
 	public SymbolReference<ResolvedReferenceTypeDeclaration> tryToSolveType(String name) {
 		// Fast fail if the name failed to resolve last time
 		if (failedResolves.contains(name)) {
-			return SymbolReference.unsolved(ResolvedReferenceTypeDeclaration.class);
+			return SymbolReference.unsolved();
 		}
 		try {
 			// JavaParser has no understanding of the difference between

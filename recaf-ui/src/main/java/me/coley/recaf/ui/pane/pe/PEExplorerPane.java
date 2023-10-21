@@ -14,12 +14,18 @@ import me.coley.recaf.ui.behavior.SaveResult;
 import me.coley.recaf.ui.pane.table.SizedDataTypeTable;
 import me.coley.recaf.ui.pane.table.TableGeneric;
 import me.coley.recaf.util.logging.Logging;
-import me.martinez.pe.CachedLibraryImports;
-import me.martinez.pe.ImagePeHeaders;
-import me.martinez.pe.ImageSectionHeader;
+import me.martinez.pe.ExportEntry;
+import me.martinez.pe.LibraryExport;
+import me.martinez.pe.LibraryImports;
+import me.martinez.pe.PeImage;
+import me.martinez.pe.headers.ImageSectionHeader;
 import me.martinez.pe.io.CadesBufferStream;
 import me.martinez.pe.io.LittleEndianReader;
+import me.martinez.pe.util.ParseResult;
 import org.slf4j.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A panel that displays information about an image's PE header.
@@ -53,7 +59,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 	private final TreeItem<String> itemExportDirectory = new TreeItem<>("Export directory");
 
 	private FileInfo fileInfo;
-	private ImagePeHeaders pe;
+	private PeImage pe;
 
 	/**
 	 * Create and setup the PE explorer panel.
@@ -91,27 +97,33 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 		this.fileInfo = newValue;
 		CadesBufferStream stream = new CadesBufferStream(newValue.getValue());
 		LittleEndianReader reader = new LittleEndianReader(stream);
-		pe = ImagePeHeaders.read(reader);
+		pe = PeImage.read(reader).getOk();
 
 		// Remove the export directory option if the file doesn't have one
-		if (dummyRoot.getChildren().contains(itemExportDirectory) && pe.getCachedExports() == null) {
+		if (dummyRoot.getChildren().contains(itemExportDirectory) && pe.exports == null) {
 			dummyRoot.getChildren().remove(itemExportDirectory);
 		}
 
 			// Reset section headers
-		ImageSectionHeader[] sectionTable = pe.sectionHeaders;
+		ArrayList<ParseResult<ImageSectionHeader>> sectionHeaders = pe.sectionHeaders;
 		itemSectionHeaders.getChildren().clear();
-		for (ImageSectionHeader header : sectionTable) {
-			TreeItem<String> sectionItem = new TreeItem<>(header.getName());
-			itemSectionHeaders.getChildren().add(sectionItem);
+		for (ParseResult<ImageSectionHeader> headerResult : sectionHeaders) {
+			if (headerResult.isOk()) {
+				TreeItem<String> sectionItem = new TreeItem<>(headerResult.getOk().getName());
+				itemSectionHeaders.getChildren().add(sectionItem);
+			}
 		}
 
 		// Add libraries to import directory
-		for (int i = 0; i < pe.getNumCachedImports(); i++) {
-			CachedLibraryImports cachedLibraryImport = pe.getCachedLibraryImport(i);
-			TreeItem<String> libraryItem = new TreeItem<>(cachedLibraryImport.getName());
-			itemImportDirectory.getChildren().add(libraryItem);
+		if (pe.exports.isOk()) {
+			List<LibraryImports> importsList = pe.imports.getOk();
+			for (int i = 0; i < importsList.size(); i++) {
+				LibraryImports imports = importsList.get(i);
+				TreeItem<String> libraryItem = new TreeItem<>(imports.name);
+				itemImportDirectory.getChildren().add(libraryItem);
+			}
 		}
+
 
 		itemImportDirectory.setExpanded(true);
 
@@ -180,7 +192,7 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 		} else if (newValue == itemOptionalHeaders) {
 			OPT_MODE.apply(pe, primaryTableView);
 		} else if (newValue == itemExportDirectory) {
-			EXPORT_MODE.apply(pe.getCachedExports(), primaryTableView);
+			EXPORT_MODE.apply(pe.exports.getOkOrDefault(null), primaryTableView);
 		} else {
 			ObservableList<TreeItem<String>> sectionHeadersChildren = itemSectionHeaders.getChildren();
 			ObservableList<TreeItem<String>> importDirectoryChildren = itemImportDirectory.getChildren();
@@ -188,11 +200,11 @@ public class PEExplorerPane extends SplitPane implements FileRepresentation {
 			int importIndex = importDirectoryChildren.indexOf(newValue);
 
 			if (sectionIndex != -1) {
-				ImageSectionHeader sectionHeader = pe.sectionHeaders[sectionIndex];
+				ImageSectionHeader sectionHeader = pe.sectionHeaders.get(sectionIndex).getOk();
 				SECTION_MODE.apply(sectionHeader, primaryTableView);
 			} else if (importIndex != -1) {
-				CachedLibraryImports importEntry = pe.getCachedLibraryImport(importIndex);
-				IMPORT_MODE.apply(importEntry, primaryTableView);
+				List<LibraryImports> importsList = pe.imports.getOkOrDefault(null);
+				IMPORT_MODE.apply(importsList != null ? importsList.get(importIndex) : null, primaryTableView);
 			} else {
 				primaryTableView.getColumns().clear();
 			}

@@ -1,4 +1,4 @@
-package me.coley.recaf.decompile.quilt;
+package me.coley.recaf.decompile.vine;
 
 import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.InnerClassInfo;
@@ -22,20 +22,20 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 /**
- * QuiltFlower decompiler implementation.
+ * VineFlower decompiler implementation.
  *
  * @author Matt Coley
  */
-public class QuiltFlowerDecompiler extends Decompiler {
-	private static final Logger logger = Logging.get(QuiltFlowerDecompiler.class);
-	private final IFernflowerLogger ffLogger = new QuiltLogger();
+public class VineFlowerDecompiler extends Decompiler {
+	private static final Logger logger = Logging.get(VineFlowerDecompiler.class);
+	private final IFernflowerLogger ffLogger = new VineLogger();
 	private final IResultSaver noOpSaver = new NoOpSaver();
 	private final Map<String, Object> fernFlowerProperties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
 	private final ThreadLocal<String> target = new ThreadLocal<>();
 	private final ThreadLocal<String> result = new ThreadLocal<>();
 
-	public QuiltFlowerDecompiler() {
-		super("QuiltFlower", "1.9.0");
+	public VineFlowerDecompiler() {
+		super("VineFlower", "1.9.3");
 		fernFlowerProperties.put("ind", "    ");
 	}
 
@@ -56,7 +56,7 @@ public class QuiltFlowerDecompiler extends Decompiler {
 				return "// Failed to decompile: " + classInfo.getName();
 			return decompiled;
 		} catch (Exception e) {
-			logger.error("QuiltFlower encountered an error when decompiling", e);
+			logger.error("VineFlower encountered an error when decompiling", e);
 			return "// " + StringUtil.traceToString(e).replace("\n", "\n// ");
 		} finally {
 			target.set(null);
@@ -80,9 +80,9 @@ public class QuiltFlowerDecompiler extends Decompiler {
 
 		@Override
 		public Entries getEntries() {
-			// TODO: Bug in QF makes it so that 'addLibrary' doesn't yield inner info for a class provided with 'addSource'
+			// TODO: Bug in QF/VF makes it so that 'addLibrary' doesn't yield inner info for a class provided with 'addSource'
 			//  So for now until this is fixed upstream we will also supply inners here.
-			//  This will make QF decompile each inner class separately as well, but its the best fix for now without
+			//  This will make QF/VF decompile each inner class separately as well, but its the best fix for now without
 			//  too much of a perf hit.
 			List<Entry> entries = new ArrayList<>();
 			entries.add(new Entry(info.getName(), Entry.BASE_VERSION));
@@ -203,20 +203,20 @@ public class QuiltFlowerDecompiler extends Decompiler {
 		}
 	}
 
-	private static class QuiltLogger extends IFernflowerLogger {
+	private static class VineLogger extends IFernflowerLogger {
 		@Override
 		public void writeMessage(String message, Severity severity) {
-			logger.trace("QuiltFlower: {}", message);
+			logger.trace("VineFlower: {}", message);
 		}
 
 		@Override
 		public void writeMessage(String message, Severity severity, Throwable t) {
 			if (t instanceof ThreadDeath) {
-				// QuiltFlower catches all throwable types
+				// VineFlower catches all throwable types
 				// We must propagate thread death ourselves
 				ReflectUtil.propagate(t);
 			}
-			logger.error("QuiltFlower: {}", message, t);
+			logger.error("VineFlower: {}", message, t);
 		}
 	}
 }

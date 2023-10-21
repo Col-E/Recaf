@@ -1,7 +1,7 @@
 package me.coley.recaf.ui.pane.table;
 
 import javafx.scene.control.TableView;
-import me.martinez.pe.ImagePeHeaders;
+import me.martinez.pe.PeImage;
 import net.fornwall.jelf.ElfFile;
 
 /**
@@ -134,7 +134,7 @@ public class SizedDataTypeTable extends TableView<TableGeneric> {
 	 * @param pe
 	 * 		PE image to pull 64-bit flag from.
 	 */
-	public void addAddress(String memberName, long value, String meaning, ImagePeHeaders pe) {
+	public void addAddress(String memberName, long value, String meaning, PeImage pe) {
 		if (pe.is64bit()) {
 			getItems().add(new TableQword(memberName, value, meaning));
 		} else {
