@@ -7,9 +7,12 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.IncompletePathException;
@@ -19,9 +22,14 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.Unchecked;
+import software.coley.recaf.util.visitors.MemberPredicate;
+import software.coley.recaf.util.visitors.MemberRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+
+import java.util.List;
 
 import static software.coley.recaf.util.Menus.action;
 
@@ -69,19 +77,23 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 						}));
 			} else {
 				items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(declaringClass, method)));
-
-				items.add(action("menu.tab.edit", CarbonIcons.EDIT, Unchecked.runnable(() ->
+				items.add(action("menu.edit.assemble.method", CarbonIcons.EDIT, Unchecked.runnable(() ->
 						actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method))
 				)));
 
+				if (declaringClass.isJvmClass()) {
+					JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
+					JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
+
+					items.add(action("menu.edit.noop", CarbonIcons.CIRCLE_DASH, () -> actions.makeMethodsNoop(workspace, resource, jvmBundle, declaringJvmClass, List.of(method))));
+					items.add(action("menu.edit.copy", CarbonIcons.COPY_FILE, () -> actions.copyClass(workspace, resource, jvmBundle,declaringJvmClass)));
+					items.add(action("menu.edit.delete", CarbonIcons.TRASH_CAN, () -> actions.deleteClassMethods(workspace, resource, jvmBundle, declaringJvmClass, List.of(method))));
+				}
+
 				// TODO: implement additional operations
 				//  - Edit
-				//    - (field / method assembler)
 				//    - Add annotation
 				//    - Remove annotations
-				//    - Make no-op
-				//  - Copy
-				//  - Delete
 			}
 
 			// TODO: Implement search UI, and open that when these actions are run

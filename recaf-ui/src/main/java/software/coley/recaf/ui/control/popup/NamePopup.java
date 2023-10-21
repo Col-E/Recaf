@@ -214,6 +214,28 @@ public class NamePopup extends RecafStage {
 
 	/**
 	 * @param declaringClass
+	 * 		Class the field is declared in.
+	 * 		Used to check for name overlap.
+	 * @param member
+	 * 		Current field info.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup forFieldCopy(@Nonnull ClassInfo declaringClass, @Nonnull ClassMember member) {
+		titleProperty().bind(Lang.getBinding("dialog.title.copy-field"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.copy-field-error"));
+
+		// Bind conflict property
+		String descriptor = member.getDescriptor();
+		nameConflict.bind(nameInput.textProperty().map(name -> declaringClass.getDeclaredField(name, descriptor) != null));
+		accept.disableProperty().bind(nameConflict);
+		output.visibleProperty().bind(nameConflict);
+		return this;
+	}
+
+	/**
+	 * @param declaringClass
 	 * 		Class the method is declared in.
 	 * 		Used to check for name overlap.
 	 * @param member
@@ -225,6 +247,28 @@ public class NamePopup extends RecafStage {
 	public NamePopup forMethodRename(@Nonnull ClassInfo declaringClass, @Nonnull ClassMember member) {
 		titleProperty().bind(Lang.getBinding("dialog.title.rename-method"));
 		output.textProperty().bind(Lang.getBinding("dialog.header.rename-method-error"));
+
+		// Bind conflict property
+		String descriptor = member.getDescriptor();
+		nameConflict.bind(nameInput.textProperty().map(name -> declaringClass.getDeclaredMethod(name, descriptor) != null));
+		accept.disableProperty().bind(nameConflict);
+		output.visibleProperty().bind(nameConflict);
+		return this;
+	}
+
+	/**
+	 * @param declaringClass
+	 * 		Class the method is declared in.
+	 * 		Used to check for name overlap.
+	 * @param member
+	 * 		Current method info.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup forMethodCopy(@Nonnull ClassInfo declaringClass, @Nonnull ClassMember member) {
+		titleProperty().bind(Lang.getBinding("dialog.title.copy-method"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.copy-method-error"));
 
 		// Bind conflict property
 		String descriptor = member.getDescriptor();

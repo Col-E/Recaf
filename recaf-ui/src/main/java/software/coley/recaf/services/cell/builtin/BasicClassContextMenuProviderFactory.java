@@ -146,11 +146,10 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			ActionMenuItem removeFields = action("menu.edit.remove.field", CarbonIcons.CLOSE, () -> actions.deleteClassFields(workspace, resource, bundle, info));
 			ActionMenuItem removeMethods = action("menu.edit.remove.method", CarbonIcons.CLOSE, () -> actions.deleteClassMethods(workspace, resource, bundle, info));
 			ActionMenuItem removeAnnotations = action("menu.edit.remove.annotation", CarbonIcons.CLOSE, () -> actions.deleteClassAnnotations(workspace, resource, bundle, info));
-			// TODO: Implement these operations after assembler is added.
-			//  - For add operations, can use the assembler, using a template for each item
-			ActionMenuItem editClass = action("menu.tab.edit", CarbonIcons.EDIT, Unchecked.runnable(() ->
+			ActionMenuItem editClass = action("menu.edit.assemble.class", CarbonIcons.EDIT, Unchecked.runnable(() ->
 					actions.openAssembler(PathNodes.classPath(workspace, resource, bundle, info))
 			));
+			// TODO: Open an dialog which allows the user to create a member, and then open the relevant assembler
 			ActionMenuItem addField = action("menu.edit.add.field", CarbonIcons.ADD_ALT, () -> {
 			});
 			ActionMenuItem addMethod = action("menu.edit.add.method", CarbonIcons.ADD_ALT, () -> {

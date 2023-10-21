@@ -11,6 +11,7 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.IncompletePathException;
@@ -23,7 +24,10 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+
+import java.util.List;
 
 import static software.coley.recaf.util.Menus.action;
 
@@ -72,18 +76,21 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 						}));
 			} else {
 				items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(declaringClass, field)));
-
-				items.add(action("menu.tab.edit", CarbonIcons.EDIT, Unchecked.runnable(() ->
+				items.add(action("menu.edit.assemble.field", CarbonIcons.EDIT, Unchecked.runnable(() ->
 						actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, field))
 				)));
 
+				if (declaringClass.isJvmClass()) {
+					JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
+					JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
+					items.add(action("menu.edit.copy", CarbonIcons.COPY_FILE, () -> actions.copyClass(workspace, resource, jvmBundle, declaringJvmClass)));
+					items.add(action("menu.edit.delete", CarbonIcons.TRASH_CAN, () -> actions.deleteClassFields(workspace, resource, jvmBundle, declaringJvmClass, List.of(field))));
+				}
+
 				// TODO: implement operations
 				//  - Edit
-				//    - (field / method assembler)
 				//    - Add annotation
 				//    - Remove annotations
-				//  - Copy
-				//  - Delete
 			}
 			// TODO: Implement search UI, and open that when these actions are run
 			// Search actions
