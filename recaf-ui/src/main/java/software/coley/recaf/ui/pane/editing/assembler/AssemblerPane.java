@@ -36,169 +36,187 @@ import java.util.function.Consumer;
 
 @Dependent
 public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements UpdatableNavigable {
+	private static final Logger logger = Logging.get(AssemblerPane.class);
 
-    private static final Logger logger = Logging.get(AssemblerPane.class);
+	private final AssemblerPipelineManager pipelineManager;
+	private final ProblemTracking problemTracking = new ProblemTracking();
+	private final Editor editor = new Editor();
+	private AssemblerPipeline<? extends ClassInfo, ? extends ClassRepresentation> pipeline;
+	private ClassInfo lastAssembledClass;
+	private List<Token> lastTokens;
+	private List<ASTElement> lastRoughAst;
+	private List<ASTElement> lastPartialAst;
+	private List<ASTElement> lastConcreteAst;
 
-    private final AssemblerPipelineManager pipelineManager;
-    private final KeybindingConfig keys;
-    private final ProblemTracking problemTracking = new ProblemTracking();
-    private final Editor editor = new Editor();
-    private static int timeToWait = 100;
-    private AssemblerPipeline<? extends ClassInfo, ? extends ClassRepresentation> pipeline;
-    private ClassInfo classInfo;
-    private List<Token> lastTokens;
-    private List<ASTElement> lastRoughAst;
-    private List<ASTElement> lastPartialAst;
-    private List<ASTElement> lastAst;
+	@Inject
+	public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
+						 @Nonnull KeybindingConfig keys) {
+		this.pipelineManager = pipelineManager;
 
-    @Inject
-    public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
-                         @Nonnull KeybindingConfig keys) {
-        this.pipelineManager = pipelineManager;
-        this.keys = keys;
+		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
-        this.editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
+		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
+		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
+		editor.setProblemTracking(problemTracking);
+		editor.getRootLineGraphicFactory().addLineGraphicFactories(
+				new BracketMatchGraphicFactory(),
+				new ProblemGraphicFactory()
+		);
+		editor.getTextChangeEventStream().successionEnds(Duration.ofMillis(timeToWait)).addObserver(e -> parseAST());
 
-        this.editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
-        this.editor.setProblemTracking(problemTracking);
+		setOnKeyPressed(event -> {
+			if (keys.getSave().match(event))
+				assemble();
+		});
+	}
 
-        this.editor.getRootLineGraphicFactory().addLineGraphicFactories(
-                new BracketMatchGraphicFactory(),
-                new ProblemGraphicFactory()
-        );
+	@Override
+	protected void generateDisplay() {
+		disassemble();
+		setDisplay(editor);
+	}
 
-        this.editor.getTextChangeEventStream().successionEnds(Duration.ofMillis(timeToWait)).addObserver(e -> {
-            parseAST(ast -> {});
-        });
+	@Nonnull
+	@Override
+	public PathNode<?> getPath() {
+		return path;
+	}
 
-        this.pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().addChangeListener(
-                (observable, oldVal, newVal) -> timeToWait = newVal);
+	@Override
+	public void onUpdatePath(@Nonnull PathNode<?> path) {
+		this.path = path;
+		this.pipeline = pipelineManager.getPipeline(path);
+		this.lastAssembledClass = path.getValueOfType(ClassInfo.class);
+		refreshDisplay();
+	}
 
-        setOnKeyPressed(event -> {
-            if(this.keys.getSave().match(event))
-                assemble();
-        });
-    }
+	/**
+	 * Disassemble the content of the {@link #path} and set the editor text to the resulting output.
+	 */
+	private void disassemble() {
+		problemTracking.removeByPhase(ProblemPhase.LINT);
+		CompletableFuture.supplyAsync(() -> pipeline.disassemble(path))
+				.whenCompleteAsync((result, unused) ->
+						acceptResult(result, editor::setText, ProblemPhase.LINT), FxThreadUtil.executor());
+	}
 
-    @Nonnull
-    @Override
-    public PathNode<?> getPath() {
-        return path;
-    }
+	/**
+	 * Parse the current editor's text into AST.
+	 *
+	 * @return Future of parse completion.
+	 */
+	@Nonnull
+	private CompletableFuture<Void> parseAST() {
+		// Nothing to parse
+		if (editor.getText().isBlank()) return CompletableFuture.completedFuture(null);
 
-    @Override
-    public void onUpdatePath(@Nonnull PathNode<?> path) {
-        this.path = path;
-        this.pipeline = pipelineManager.getPipeline(path);
-        this.classInfo = path.getValueOfType(ClassInfo.class);
-        refreshDisplay();
-    }
+		// Clear lint errors since we are running the linter again.
+		if (problemTracking.removeByPhase(ProblemPhase.LINT))
+			FxThreadUtil.run(editor::redrawParagraphGraphics);
 
-    private void disassemble() {
-        problemTracking.removeByPhase(ProblemPhase.LINT);
+		return CompletableFuture.runAsync(() -> {
+			try {
+				// Tokenize the current input.
+				Result<List<Token>> tokenResult = pipeline.tokenize(editor.getText(), "<assembler>");
 
-        CompletableFuture.supplyAsync(() -> pipeline.disassemble(path))
-                .whenCompleteAsync((result, unused) ->
-                        acceptResult(result, editor::setText, ProblemPhase.LINT), FxThreadUtil.executor());
-    }
+				// Process any errors and assign the latest token list.
+				if (tokenResult.hasErr())
+					processErrors(tokenResult.errors(), ProblemPhase.LINT);
+				lastTokens = tokenResult.get();
 
-    private void parseAST(Consumer<List<ASTElement>> acceptor) {
-        if(editor.getText().isBlank()) return;
+				// Attempt to parse the token list into 'rough' AST.
+				acceptResult(pipeline.roughParse(lastTokens), roughAst -> {
+					lastRoughAst = roughAst;
 
-        CompletableFuture.runAsync(() -> {
-            try {
-                problemTracking.removeByPhase(ProblemPhase.LINT);
+					// Attempt to complete parsing and transform the 'rough' AST into a 'concrete' AST.
+					acceptResult(pipeline.concreteParse(roughAst), concreteAst -> {
+						lastConcreteAst = concreteAst;
+					}, pAst -> this.lastPartialAst = pAst, ProblemPhase.LINT);
+				}, pAst -> this.lastPartialAst = pAst, ProblemPhase.LINT);
+			} catch (Exception ex) {
+				logger.error("Failed to parse assembler", ex);
+			}
+		});
+	}
 
-                Result<List<Token>> tokenResult = pipeline.tokenize(editor.getText(), "<assembler>");
+	/**
+	 * Build the contents of the editor's text and update the workspace when successful.
+	 *
+	 * @return Future of parse completion.
+	 */
+	@Nonnull
+	@SuppressWarnings("unchecked")
+	private CompletableFuture<Void> assemble() {
+		if (!problemTracking.getProblems().isEmpty())
+			return CompletableFuture.completedFuture(null);
 
-                if(tokenResult.hasErr())
-                    processErrors(tokenResult.errors(), ProblemPhase.LINT);
+		// Ensure the AST is up-to-date before moving onto build stage.
+		return parseAST().whenComplete((unused, error) -> {
+			if (!problemTracking.getProblems().isEmpty() && lastConcreteAst == null)
+				return;
 
-                this.lastTokens = tokenResult.get();
+			// Clear build errors since we are running the build process again.
+			problemTracking.removeByPhase(ProblemPhase.BUILD);
 
-                acceptResult(pipeline.roughParse(this.lastTokens), roughAst -> {
-                    this.lastRoughAst = roughAst;
+			try {
+				pipeline.assemble(lastConcreteAst, path).ifOk(info -> {
+					lastAssembledClass = info;
 
-                    acceptResult(pipeline.concreteParse(roughAst), ast -> {
-                        this.lastAst = ast;
+					Bundle<ClassInfo> bundle = path.getValueOfType(Bundle.class);
+					bundle.put(info);
 
-                        acceptor.accept(ast);
-                    }, pAst -> this.lastPartialAst = pAst, ProblemPhase.LINT);
-                }, pAst -> this.lastPartialAst = pAst, ProblemPhase.LINT);
+					Animations.animateSuccess(editor, 1000);
+				}).ifErr(errors -> {
+					processErrors(errors, ProblemPhase.BUILD);
 
-                this.editor.redrawParagraphGraphics();
-            } catch (Exception ex) {
-                logger.error("Failed to parse assembler", ex);
-            }
-        }, FxThreadUtil.executor());
-    }
+					Animations.animateFailure(editor, 1000);
+				});
+			} catch (Throwable ex) {
+				logger.error("Uncaught exception when assembling contents of {}", path, ex);
+			}
+		});
+	}
 
-    private void assemble() {
-        if(!problemTracking.getProblems().isEmpty())
-            return;
-        CompletableFuture.runAsync(() -> {
-            try {
-                parseAST(ast -> {});
+	/**
+	 * Add the given errors to {@link #problemTracking} and refresh the UI.
+	 *
+	 * @param errors
+	 * 		Problems to add.
+	 * @param phase
+	 * 		Phase the problems belong to.
+	 */
+	private void processErrors(@Nonnull Collection<Error> errors, @Nonnull ProblemPhase phase) {
+		FxThreadUtil.run(() -> {
+			for (Error error : errors) {
+				Location location = error.getLocation();
+				int line = location == null ? 1 : location.getLine();
+				int column = location == null ? 1 : location.getColumn();
+				Problem problem = new Problem(line, column, ProblemLevel.ERROR, phase,
+						error.getMessage());
+				problemTracking.add(problem);
 
-                if(!problemTracking.getProblems().isEmpty() && lastAst == null)
-                    return;
+				// REMOVE IS TRACING PARSER ERRORS
+				/*
+				Throwable trace = new Throwable();
+				trace.setStackTrace(error.getInCodeSource());
+				logger.trace("Assembler error", trace);
+				System.err.println(error);
+				*/
+			}
 
-                problemTracking.removeByPhase(ProblemPhase.BUILD);
+			if (!errors.isEmpty())
+				editor.redrawParagraphGraphics();
+		});
+	}
 
-                pipeline.assemble(lastAst, path).ifOk(info -> {
-                    this.classInfo = info;
+	<T> void acceptResult(Result<T> result, Consumer<T> acceptor, ProblemPhase phase) {
+		result.ifOk(acceptor).ifErr(errors -> processErrors(errors, phase));
+	}
 
-                    Bundle<ClassInfo> bundle = path.getValueOfType(Bundle.class);
-
-                    bundle.put(info);
-
-                    Animations.animateSuccess(editor, 1000);
-                }).ifErr(errors -> {
-                    processErrors(errors, ProblemPhase.BUILD);
-
-                    Animations.animateFailure(editor, 1000);
-                });
-            } catch (Exception ex) {
-                logger.error("Failed to assemble", ex);
-            }
-        }, FxThreadUtil.executor());
-    }
-
-    void processErrors(Collection<Error> errors, ProblemPhase phase) {
-        for (Error error : errors) {
-            Location location = error.getLocation();
-            int line = location == null ? 1 : location.getLine();
-            int column = location == null ? 1 : location.getColumn();
-            Problem problem = new Problem(line, column, ProblemLevel.ERROR, phase,
-                    error.getMessage());
-            problemTracking.add(problem);
-
-            // REMOVE IS TRACING PARSER ERRORS
-            /*Throwable trace = new Throwable();
-            trace.setStackTrace(error.getInCodeSource());
-            logger.trace("Assembler error", trace);
-
-            System.err.println(error);*/
-        }
-        if(!errors.isEmpty())
-            this.editor.redrawParagraphGraphics();
-    }
-
-    <T> void acceptResult(Result<T> result, Consumer<T> acceptor, ProblemPhase phase) {
-        result.ifOk(acceptor).ifErr(errors -> processErrors(errors, phase));
-    }
-
-    <T> void acceptResult(Result<T> result, Consumer<T> acceptor, Consumer<T> pAcceptor, ProblemPhase phase) {
-        result.ifOk(acceptor).ifErr((pOk, errors) -> {
-            pAcceptor.accept(pOk);
-            processErrors(errors, phase);
-        });
-    }
-
-    @Override
-    protected void generateDisplay() {
-        disassemble();
-
-        setDisplay(editor);
-    }
+	<T> void acceptResult(Result<T> result, Consumer<T> acceptor, Consumer<T> pAcceptor, ProblemPhase phase) {
+		result.ifOk(acceptor).ifErr((pOk, errors) -> {
+			pAcceptor.accept(pOk);
+			processErrors(errors, phase);
+		});
+	}
 }
