@@ -66,7 +66,7 @@ project.ext {
 
     regex = 'com.github.tommyettinger:regexodus:0.1.15'
 
-    richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.1'
+    richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.2'
 
     treemapfx = 'software.coley:treemap-fx:1.1.0'
 }

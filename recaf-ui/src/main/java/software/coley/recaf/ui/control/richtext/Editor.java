@@ -4,16 +4,17 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.control.IndexRange;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
-import org.fxmisc.richtext.model.PlainTextChange;
-import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
-import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.*;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
@@ -81,6 +82,12 @@ public class Editor extends BorderPane {
 
 		// Do not want text wrapping in a code editor.
 		codeArea.setWrapText(false);
+
+		// Add event filter to hook tab usage.
+		codeArea.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (e.getCode() == KeyCode.TAB)
+				handleDefaultTab(e);
+		});
 
 		// Set paragraph graphic factory to the user-configurable root graphics factory.
 		codeArea.setParagraphGraphicFactory(rootLineGraphicFactory);
@@ -230,6 +237,44 @@ public class Editor extends BorderPane {
 		} else {
 			codeArea.replaceText(text);
 		}
+	}
+
+	/**
+	 * Adds a tab indentation into the given paragraph.
+	 *
+	 * @param paragraph
+	 * 		Paragraph to indent.
+	 */
+	public void indent(int paragraph) {
+		String paragraphContents = codeArea.getParagraph(paragraph).getText();
+		int column = 0;
+		for (; column < paragraphContents.length(); column++) {
+			char c = paragraphContents.charAt(column);
+			if (c != ' ' && c != '\t') break;
+		}
+		codeArea.insert(paragraph, column, newText("\t"));
+	}
+
+	/**
+	 * Removes indentation from the given paragraph.
+	 *
+	 * @param paragraph
+	 * 		Paragraph to unindent.
+	 *
+	 * @return {@code true} when there was text removed (successful unindentation).
+	 */
+	public boolean unindent(int paragraph) {
+		String paragraphContents = codeArea.getParagraph(paragraph).getText();
+		int column = 0;
+		for (; column < paragraphContents.length(); column++) {
+			char c = paragraphContents.charAt(column);
+			if (c != ' ' && c != '\t') break;
+		}
+		if (column > 0) {
+			codeArea.deleteText(paragraph, column - 1, paragraph, column);
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -385,10 +430,93 @@ public class Editor extends BorderPane {
 	 *
 	 * @return Future of consumer completion.
 	 */
+	@Nonnull
 	public <T> CompletableFuture<Void> schedule(@Nonnull ExecutorService supplierService,
 												@Nonnull Supplier<T> supplier, @Nonnull Consumer<T> consumer) {
 		return CompletableFuture.supplyAsync(supplier, supplierService)
 				.thenAcceptAsync(consumer, FxThreadUtil.executor());
+	}
+
+	/**
+	 * Some RichTextFX methods require styled documents, hence this helper for converting simple strings into those.
+	 *
+	 * @param text
+	 * 		Text to wrap in a styled document with the default values.
+	 *
+	 * @return Text document of the requested text.
+	 */
+	@Nonnull
+	public StyledDocument<Collection<String>, String, Collection<String>> newText(@Nonnull String text) {
+		return ReadOnlyStyledDocument.fromString(text, codeArea.getInitialParagraphStyle(),
+				codeArea.getInitialTextStyle(), codeArea.getSegOps());
+	}
+
+	/**
+	 * Handles tab events.
+	 *
+	 * @param event
+	 * 		Key event where {@link KeyCode#TAB} was pressed.
+	 */
+	private void handleDefaultTab(@Nonnull KeyEvent event) {
+		IndexRange selection = codeArea.getSelection();
+		if (selection.getLength() == 0) {
+			// Skip to handle normal tab insertion
+			return;
+
+			// TODO: tab completion
+			//  - just pressed a letter '\w' -> complete current selection index, if it is shown
+			//    - letters check for scope, then based on the scope, suggest things
+			//    - same for '.' but only when there is '\w+' behind the '.'
+			//    - when completing methods (with args, fill in both the '(' and the ')' but put the caret after the '('
+
+			// TODO:
+			//  - If we do 'event.' ...
+			//    - Can we just 'evaluate' the context and see what the type is?
+			//    - Or do we need to wait on the parse? That's very slow.
+			//    - If we do a tab on 'event.getC' to 'getCode' we should track that the last thing we
+			//      tabbed is now of type 'KeyCode' if re-evaluating is not an option.
+		}
+
+		// Consume the event so the tab key does not get handled (no insertion of \t)
+		event.consume();
+
+		// Detailed selection info.
+		TwoDimensional.Position selectionStart2D = codeArea.offsetToPosition(selection.getStart(), TwoDimensional.Bias.Forward);
+		TwoDimensional.Position selectionEnd2D = codeArea.offsetToPosition(selection.getEnd(), TwoDimensional.Bias.Forward);
+		boolean isMultiLine = selectionStart2D.getMajor() != selectionEnd2D.getMajor();
+
+		// Check if text selection is multi-line
+		boolean doShift = false;
+		if (isMultiLine) {
+			// Insert a '\t' before the first non-whitespace character of all selected paragaphs.
+			int start = selection.getStart();
+			int end = selection.getEnd();
+			int startParagraph = codeArea.offsetToPosition(start, TwoDimensional.Bias.Forward).getMajor();
+			int endParagraph = codeArea.offsetToPosition(end, TwoDimensional.Bias.Backward).getMajor();
+			for (int i = startParagraph; i <= endParagraph; i++) {
+				// Not ideal as it counts as multiple actions (not undo-able in one go) but good enough for now.
+				if (event.isShiftDown()) {
+					doShift = unindent(i);
+				} else {
+					doShift = true;
+					indent(i);
+				}
+			}
+		} else {
+			// Insert a '\t' before the first non-whitespace character of the paragraph.
+			int paragraph = codeArea.getCurrentParagraph();
+			if (event.isShiftDown()) {
+				doShift = unindent(paragraph);
+			} else {
+				doShift = true;
+				indent(paragraph);
+			}
+		}
+
+		// Re-select the original text.
+		if (doShift)
+			codeArea.selectRange(selectionStart2D.getMajor(), selectionStart2D.getMinor() + 1,
+					selectionEnd2D.getMajor(), selectionEnd2D.getMinor() + 1);
 	}
 
 	/**
