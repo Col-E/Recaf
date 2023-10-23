@@ -86,7 +86,9 @@ public class Editor extends BorderPane {
 		// Add event filter to hook tab usage.
 		codeArea.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
 			if (e.getCode() == KeyCode.TAB)
-				handleDefaultTab(e);
+				handleTab(e);
+			else if (e.getCode() == KeyCode.ENTER)
+				handleNewline(e);
 		});
 
 		// Set paragraph graphic factory to the user-configurable root graphics factory.
@@ -452,12 +454,64 @@ public class Editor extends BorderPane {
 	}
 
 	/**
+	 * Handles newline events.
+	 *
+	 * @param event
+	 * 		Key event where {@link KeyCode#ENTER} was pressed.
+	 */
+	private void handleNewline(@Nonnull KeyEvent event) {
+		event.consume();
+
+		// Insert a new line, but match the indentation level of the current line.
+		int paragraph = codeArea.getCurrentParagraph();
+		String paragraphContents = codeArea.getParagraph(paragraph).getText();
+
+		// Compute matching indentation level.
+		int indent = 0;
+		for (; indent < paragraphContents.length(); indent++) {
+			char c = paragraphContents.charAt(indent);
+			if (c != ' ' && c != '\t') break;
+		}
+
+		// Padding to insert in into the next line.
+		String padding = paragraphContents.substring(0, indent);
+
+		// For open brackets we'd like to do an extra level of indentation
+		// and also complete the brace for the user.
+		char closingBrace = '\0';
+		for (int i = paragraphContents.length() - 1; i >= indent; i--) {
+			char c = paragraphContents.charAt(i);
+			if (c == '{') {
+				closingBrace = '}';
+				padding += '\t';
+				break;
+			} else if (c == '[') {
+				closingBrace = ']';
+				padding += '\t';
+				break;
+			} else if (c != ' ' && c != '\t') {
+				break;
+			}
+		}
+
+		// Insert the indented newline + closing brace (if needed)
+		int caret = codeArea.getCaretPosition();
+		if (closingBrace == '\0') {
+			codeArea.insertText(caret, '\n' + padding);
+		} else {
+			// Insert the '}' or ']' and move the caret between
+			codeArea.insertText(caret, '\n' + padding + '\n' + StringUtil.limit(padding, padding.length() - 1) + closingBrace);
+			codeArea.moveTo(caret + padding.length() + 1);
+		}
+	}
+
+	/**
 	 * Handles tab events.
 	 *
 	 * @param event
 	 * 		Key event where {@link KeyCode#TAB} was pressed.
 	 */
-	private void handleDefaultTab(@Nonnull KeyEvent event) {
+	private void handleTab(@Nonnull KeyEvent event) {
 		IndexRange selection = codeArea.getSelection();
 		if (selection.getLength() == 0) {
 			// Skip to handle normal tab insertion

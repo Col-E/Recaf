@@ -389,6 +389,7 @@ public class StringUtil {
 	 * @return Text cut off to max length.
 	 */
 	public static String limit(String text, String cutoffPattern, int max) {
+		if (max <= 0) return "";
 		if (text.length() > max) {
 			String s = text.substring(0, max);
 			if (cutoffPattern != null)
