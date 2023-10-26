@@ -12,9 +12,12 @@ import java.util.List;
 /**
  * Outline of tab completion.
  *
+ * @param <T>
+ * 		Completion value type.
+ *
  * @author Matt Coley
  */
-public interface TabCompleter extends EditorComponent {
+public interface TabCompleter<T> extends EditorComponent {
 	/**
 	 * Attempts to fill in the current completion candidate, if one is selected and the tab-completion overlay is active.
 	 *
@@ -24,6 +27,12 @@ public interface TabCompleter extends EditorComponent {
 	 * @return {@code true} when a completion is made.
 	 */
 	boolean requestCompletion(@Nonnull KeyEvent event);
+
+	/**
+	 * @return List of potential completions based on the current state.
+	 */
+	@Nonnull
+	List<T> computeCurrentCompletions();
 
 	/**
 	 * Called when the linked {@link Editor} has updated its text.

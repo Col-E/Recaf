@@ -60,7 +60,7 @@ public class Editor extends BorderPane {
 	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
 	private final EventStream<Change<Integer>> caretPosEventStream;
 	private ReadOnlyStyledDocument<Collection<String>, String, Collection<String>> lastDocumentSnapshot;
-	private TabCompleter tabCompleter;
+	private TabCompleter<?> tabCompleter;
 	private SyntaxHighlighter syntaxHighlighter;
 	private SelectedBracketTracking selectedBracketTracking;
 	private ProblemTracking problemTracking;
@@ -416,7 +416,7 @@ public class Editor extends BorderPane {
 	 * @return Tab completion implementation.
 	 */
 	@Nullable
-	public TabCompleter getTabCompleter() {
+	public TabCompleter<?> getTabCompleter() {
 		return tabCompleter;
 	}
 
@@ -424,9 +424,9 @@ public class Editor extends BorderPane {
 	 * @param tabCompleter
 	 * 		Tab completion implementation.
 	 */
-	public void setTabCompleter(@Nullable TabCompleter tabCompleter) {
+	public void setTabCompleter(@Nullable TabCompleter<?> tabCompleter) {
 		// Uninstall prior.
-		TabCompleter previousTabCompleter = this.tabCompleter;
+		TabCompleter<?> previousTabCompleter = this.tabCompleter;
 		if (previousTabCompleter != null)
 			previousTabCompleter.uninstall(this);
 

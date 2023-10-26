@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control.richtext.suggest;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.scene.input.KeyEvent;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -8,48 +9,56 @@ import regexodus.Matcher;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.RegexUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 /**
- * Basic tab completer implementation. Completion candidate phrases are just words found in the current document.
+ * A simple completer where completion candidate phrases are just words found in the current document.
  *
  * @author Matt Coley
  */
-public class BasicTabCompleter implements TabCompleter {
+public class ExistingWordTabCompleter implements TabCompleter<String> {
 	private final Set<String> words = ConcurrentHashMap.newKeySet();
+	private final CompletionPopup<String> completionPopup = new StringCompletionPopup(8);
 	private CodeArea area;
 	private String lineContext;
 
 	@Override
 	public boolean requestCompletion(@Nonnull KeyEvent event) {
-		String localContext = lineContext;
+		// Recompute line context to ensure its up-to-date.
+		String localContext = recomputeLineContext();
 
 		// Skip if no text context or empty text context.
-		if (localContext == null || localContext.isBlank())
+		if (localContext.isBlank())
 			return false;
 
-		// TODO: Create a UI that shows the available options and synchronize 'current selection'
-		//  based on arrow keys. The current selection will be filled here instead.
-		//  - This temporary solution just matches the first available word, no UI
+		// Complete if the completion popup is showing.
+		return completionPopup.isShowing() && completeFromContext(localContext, completionPopup::doComplete);
+	}
+
+	@Nonnull
+	@Override
+	public List<String> computeCurrentCompletions() {
+		List<String> items = new ArrayList<>();
+		String localContext = lineContext;
 		String group = null;
 		Matcher matcher = RegexUtil.getMatcher("\\w+", localContext);
 		while (matcher.find())
 			group = matcher.group();
 		if (group != null)
 			for (String word : words)
-				if (word.startsWith(group))
-					return complete(group, word);
-
-		return false;
+				if (word.startsWith(group) && !word.equals(group))
+					items.add(word);
+		return items;
 	}
 
 	@Override
-	public void onFineTextUpdate(@Nonnull PlainTextChange changes) {
-		String line = area.getParagraph(area.getCurrentParagraph()).getText();
-		lineContext = computeCompletionContext(line, area.getCaretColumn());
+	public void onFineTextUpdate(@Nonnull PlainTextChange change) {
+		recomputeLineContext();
 	}
 
 	@Override
@@ -65,18 +74,34 @@ public class BasicTabCompleter implements TabCompleter {
 
 	@Override
 	public void install(@Nonnull Editor editor) {
-		this.area = editor.getCodeArea();
+		area = editor.getCodeArea();
+		completionPopup.install(area, this);
 	}
 
 	@Override
 	public void uninstall(@Nonnull Editor editor) {
+		completionPopup.uninstall();
 		area = null;
 	}
 
-	private boolean complete(@Nonnull String currentWordPart, @Nonnull String fullWord) {
-		String remainingWordText = fullWord.substring(currentWordPart.length());
-		area.insertText(area.getCaretPosition(), remainingWordText);
-		return true;
+	@Nonnull
+	private String recomputeLineContext() {
+		String line = area.getParagraph(area.getCurrentParagraph()).getText();
+		return lineContext = computeCompletionContext(line, area.getCaretColumn());
+	}
+
+	private boolean completeFromCurrentContext(@Nonnull Predicate<String> completionHandler) {
+		return completeFromContext(lineContext, completionHandler);
+	}
+
+	private boolean completeFromContext(@Nullable String context, @Nonnull Predicate<String> completionHandler) {
+		if (context == null)
+			return false;
+		String group = null;
+		Matcher matcher = RegexUtil.getMatcher("\\w+", context);
+		while (matcher.find())
+			group = matcher.group();
+		return group != null && completionHandler.test(group);
 	}
 
 	@Nonnull
@@ -104,5 +129,16 @@ public class BasicTabCompleter implements TabCompleter {
 
 		// Not a valid case.
 		return "";
+	}
+
+	private class StringCompletionPopup extends CompletionPopup<String> {
+		private StringCompletionPopup(int maxItemsToShow) {
+			super(20, maxItemsToShow, t -> t);
+		}
+
+		@Override
+		public void completeCurrentSelection() {
+			completeFromCurrentContext(this::doComplete);
+		}
 	}
 }
