@@ -508,6 +508,13 @@ public class Editor extends BorderPane {
 		if (!event.isShiftDown() && handleTabCompletion(event))
 			return;
 
+		// If there is selected contents, newline should replace it.
+		IndexRange selection = codeArea.getSelection();
+		if (selection.getLength() > 0) {
+			codeArea.replace(selection.getStart(), selection.getEnd(), newText("\n"));
+			return;
+		}
+
 		// Compute matching indentation level.
 		int paragraph = codeArea.getCurrentParagraph();
 		String paragraphContents = codeArea.getParagraph(paragraph).getText();
