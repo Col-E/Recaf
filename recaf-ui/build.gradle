@@ -1,6 +1,6 @@
 plugins {
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'org.openjfx.javafxplugin' version '0.0.14' // Do not update to version 0.1.0, dependency management is broke
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
@@ -10,7 +10,9 @@ def javaFxIncludeInDist = System.getProperty('skip.jfx.bundle') == null
 javafx {
     version = javaFxVersion
     modules = ['javafx.controls', 'javafx.media']
-    configurations = javaFxIncludeInDist ? [ 'implementation' ] : [ 'compileOnly', 'testImplementation' ]
+    configuration = javaFxIncludeInDist ? 'implementation' : 'compileOnly'
+    // TODO: Change to 'configurations' when updating to '0.1.1' or above:
+    //   configurations = javaFxIncludeInDist ? [ 'implementation' ] : [ 'compileOnly', 'testImplementation' ]
 }
 
 dependencies {
