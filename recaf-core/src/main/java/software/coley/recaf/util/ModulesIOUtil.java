@@ -47,14 +47,17 @@ public class ModulesIOUtil {
 			MethodHandle findLocation = lookup.findVirtual(imageReaderClass, "findLocation", MethodType.methodType(imageLocationClass, String.class))
 					.bindTo(reader);
 			return Arrays.stream(entries)
+					.filter(entryName -> entryName.indexOf('/', 1) > 1)
 					.map(entryName -> {
 						// Follows the pattern: /<module-name>/<file-name>
 						int firstSlash = entryName.indexOf('/', 1);
 						String moduleName = entryName.substring(1, firstSlash);
 						String fileName = entryName.substring(entryName.indexOf('/', 1) + 1);
+
 						// Get content source
 						Object imageLocation = Unchecked.bmap((t, u) -> t.invoke(u), findLocation, entryName);
 						ByteBuffer buffer = Unchecked.bmap((t, u) -> (ByteBuffer) t.invoke(u), getResourceBuffer, imageLocation);
+
 						// Wrap into element
 						return new ByteSourceElement<>(new Entry(moduleName, fileName), ByteSources.forBuffer(buffer));
 					}).onClose(() -> IOUtil.closeQuietly((AutoCloseable) reader));
