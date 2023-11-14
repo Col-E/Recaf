@@ -1,5 +1,5 @@
 def asmVersion = '9.6'
-def cafeDudeVersion = '1.10.2'
+def cafeDudeVersion = '2.0.0'
 def junitVersion = '5.10.0'
 def jasmVersion = '2.0.2'
 
@@ -15,7 +15,7 @@ project.ext {
 
     atlantafx = 'io.github.mkpaz:atlantafx-base:2.0.1'
 
-    cafedude = "com.github.Col-E:CAFED00D:$cafeDudeVersion"
+    cafedude = "software.coley:cafedude-core:$cafeDudeVersion"
 
     cfr = 'org.benf:cfr:0.152'
 

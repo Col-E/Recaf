@@ -1,9 +1,9 @@
 package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
-import me.coley.cafedude.classfile.ConstantPoolConstants;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
+import software.coley.cafedude.classfile.ConstantPoolConstants;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.util.Types;
 
