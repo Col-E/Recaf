@@ -44,6 +44,13 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	}
 
 	/**
+	 * @return {@code true} when there is a current displayed node.
+	 */
+	protected boolean hasDisplay() {
+		return getCenter() != null;
+	}
+
+	/**
 	 * @param node
 	 * 		Node to display.
 	 */

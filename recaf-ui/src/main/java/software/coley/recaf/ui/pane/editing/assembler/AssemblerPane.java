@@ -3,7 +3,10 @@ package software.coley.recaf.ui.pane.editing.assembler;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.geometry.Orientation;
+import javafx.scene.control.SplitPane;
 import me.darknet.assembler.ast.ASTElement;
+import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compiler.ClassRepresentation;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
@@ -20,18 +23,23 @@ import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
+import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.problem.*;
+import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Dependent
@@ -39,9 +47,12 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	private static final Logger logger = Logging.get(AssemblerPane.class);
 
 	private final AssemblerPipelineManager pipelineManager;
+	private final AssemblerToolTabs assemblerToolTabs;
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
+	private final AtomicBoolean updateLock = new AtomicBoolean();
 	private AssemblerPipeline<? extends ClassInfo, ? extends ClassRepresentation> pipeline;
+	private ClassRepresentation lastAssembledClassRepresentation;
 	private ClassInfo lastAssembledClass;
 	private List<Token> lastTokens;
 	private List<ASTElement> lastRoughAst;
@@ -50,30 +61,52 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	@Inject
 	public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
-						 @Nonnull KeybindingConfig keys) {
+						 @Nonnull AssemblerToolTabs assemblerToolTabs,
+						 @Nonnull SearchBar searchBar,
+						 @Nonnull KeybindingConfig keys
+	) {
 		this.pipelineManager = pipelineManager;
+		this.assemblerToolTabs = assemblerToolTabs;
 
 		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
 		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
+		editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addLineGraphicFactories(
 				new BracketMatchGraphicFactory(),
 				new ProblemGraphicFactory()
 		);
-		editor.getTextChangeEventStream().successionEnds(Duration.ofMillis(timeToWait)).addObserver(e -> parseAST());
+		editor.getTextChangeEventStream()
+				.successionEnds(Duration.ofMillis(timeToWait))
+				.addObserver(e -> assemble());
+
+		searchBar.install(editor);
 
 		setOnKeyPressed(event -> {
 			if (keys.getSave().match(event))
-				assemble();
+				assembleAndUpdateWorkspace();
 		});
+
+		// TODO: For class level assemblers we need to track the 'editor' caret position and update the tool tabs
+		//  to hold a ClassMemberPathNode to the current member the caret position is over
 	}
 
 	@Override
 	protected void generateDisplay() {
-		disassemble();
-		setDisplay(editor);
+		if (!hasDisplay()) {
+			// TODO: Re-create 'SideTabs' but vertical instead of split-pane
+			//  - The UX should mirror the tab system you see in IDE's and SplitPane isn't like that
+			SplitPane split = new SplitPane(editor, assemblerToolTabs);
+			split.setOrientation(Orientation.VERTICAL);
+			setDisplay(split);
+
+			// Trigger a disassembly so the initial text is set in the editor.
+			disassemble().whenComplete((unused, error) -> {
+				if (error == null) assemble();
+			});
+		}
 	}
 
 	@Nonnull
@@ -85,17 +118,28 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Override
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
 		this.path = path;
-		this.pipeline = pipelineManager.getPipeline(path);
-		this.lastAssembledClass = path.getValueOfType(ClassInfo.class);
-		refreshDisplay();
+		if (!updateLock.get()) {
+			pipeline = pipelineManager.getPipeline(path);
+
+			// Setup from existing class data from the path
+			lastAssembledClass = path.getValueOfType(ClassInfo.class);
+			lastAssembledClassRepresentation = pipeline.getRepresentation(Unchecked.cast(lastAssembledClass));
+			assemblerToolTabs.onUpdatePath(path);
+			assemblerToolTabs.consumeClass(lastAssembledClassRepresentation, lastAssembledClass);
+
+			refreshDisplay();
+		}
 	}
 
 	/**
 	 * Disassemble the content of the {@link #path} and set the editor text to the resulting output.
+	 *
+	 * @return Future of disassembling completion.
 	 */
-	private void disassemble() {
+	@Nonnull
+	private CompletableFuture<Result<String>> disassemble() {
 		problemTracking.removeByPhase(ProblemPhase.LINT);
-		CompletableFuture.supplyAsync(() -> pipeline.disassemble(path))
+		return CompletableFuture.supplyAsync(() -> pipeline.disassemble(path))
 				.whenCompleteAsync((result, unused) ->
 						acceptResult(result, editor::setText, ProblemPhase.LINT), FxThreadUtil.executor());
 	}
@@ -124,15 +168,27 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					processErrors(tokenResult.errors(), ProblemPhase.LINT);
 				lastTokens = tokenResult.get();
 
+				BiConsumer<List<ASTElement>, AstPhase> astConsumer = assemblerToolTabs::consumeAst;
+
 				// Attempt to parse the token list into 'rough' AST.
 				acceptResult(pipeline.roughParse(lastTokens), roughAst -> {
 					lastRoughAst = roughAst;
 
 					// Attempt to complete parsing and transform the 'rough' AST into a 'concrete' AST.
 					acceptResult(pipeline.concreteParse(roughAst), concreteAst -> {
+						// The transform was a success.
 						lastConcreteAst = concreteAst;
-					}, pAst -> this.lastPartialAst = pAst, ProblemPhase.LINT);
-				}, pAst -> this.lastPartialAst = pAst, ProblemPhase.LINT);
+						astConsumer.accept(concreteAst, AstPhase.CONCRETE);
+					}, pAst -> {
+						// The transform failed.
+						lastPartialAst = pAst;
+						astConsumer.accept(pAst, AstPhase.CONCRETE_PARTIAL);
+					}, ProblemPhase.LINT);
+				}, pAst -> {
+					// We failed to parse the token list fully, but may have a partial result.
+					astConsumer.accept(pAst, AstPhase.ROUGH_PARTIAL);
+					lastPartialAst = pAst;
+				}, ProblemPhase.LINT);
 			} catch (Exception ex) {
 				logger.error("Failed to parse assembler", ex);
 			}
@@ -145,11 +201,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * @return Future of parse completion.
 	 */
 	@Nonnull
-	@SuppressWarnings("unchecked")
 	private CompletableFuture<Void> assemble() {
-		if (!problemTracking.getProblems().isEmpty())
-			return CompletableFuture.completedFuture(null);
-
 		// Ensure the AST is up-to-date before moving onto build stage.
 		return parseAST().whenComplete((unused, error) -> {
 			if (!problemTracking.getProblems().isEmpty() && lastConcreteAst == null)
@@ -159,20 +211,45 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			problemTracking.removeByPhase(ProblemPhase.BUILD);
 
 			try {
-				pipeline.assemble(lastConcreteAst, path).ifOk(info -> {
-					lastAssembledClass = info;
+				pipeline.assemble(lastConcreteAst, path).ifOk(representation -> {
+					lastAssembledClassRepresentation = representation;
 
-					Bundle<ClassInfo> bundle = path.getValueOfType(Bundle.class);
-					bundle.put(info);
+					if (representation instanceof JavaClassRepresentation javaClassRep) {
+						lastAssembledClass = pipeline.getClassInfo(Unchecked.cast(javaClassRep));
+					}
+					/*
+					else if (representation instanceof AndroidClassRepresentation androidClassRep) {
+						lastAssembledClass = pipeline.getClassInfo(Unchecked.cast(androidClassRep));
+					}
+					 */
 
-					Animations.animateSuccess(editor, 1000);
-				}).ifErr(errors -> {
-					processErrors(errors, ProblemPhase.BUILD);
-
-					Animations.animateFailure(editor, 1000);
-				});
+					assemblerToolTabs.consumeClass(representation, lastAssembledClass);
+				}).ifErr(errors -> processErrors(errors, ProblemPhase.BUILD));
 			} catch (Throwable ex) {
 				logger.error("Uncaught exception when assembling contents of {}", path, ex);
+				Animations.animateFailure(editor, 1000);
+			}
+		});
+	}
+
+	@Nonnull
+	@SuppressWarnings("unchecked")
+	private CompletableFuture<Void> assembleAndUpdateWorkspace() {
+		return assemble().whenComplete((unused, error) -> {
+			if (lastAssembledClass != null && problemTracking.getProblemsByLevel(ProblemLevel.ERROR).isEmpty()) {
+				updateLock.set(true);
+				try {
+					Bundle<ClassInfo> bundle = path.getValueOfType(Bundle.class);
+					bundle.put(lastAssembledClass);
+					Animations.animateSuccess(editor, 1000);
+				} catch (Throwable t) {
+					logger.error("Uncaught exception when updating class of {}", lastAssembledClass.getName(), t);
+					Animations.animateWarn(editor, 1000);
+				} finally {
+					updateLock.set(false);
+				}
+			} else {
+				Animations.animateFailure(editor, 1000);
 			}
 		});
 	}

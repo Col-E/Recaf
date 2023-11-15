@@ -157,8 +157,8 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			HBox wrapper = new HBox();
 			wrapper.setSpacing(5);
 			int info = tracking.getProblems(p -> p.getLevel().ordinal() <= ProblemLevel.INFO.ordinal()).size();
-			int warn = tracking.getProblems(p -> p.getLevel() == ProblemLevel.WARN).size();
-			int error = tracking.getProblems(p -> p.getLevel() == ProblemLevel.ERROR).size();
+			int warn = tracking.getProblemsByLevel(ProblemLevel.WARN).size();
+			int error = tracking.getProblemsByLevel(ProblemLevel.ERROR).size();
 			if (info > 0) wrapper.getChildren().add(new Label(String.valueOf(info), iconInfo));
 			if (warn > 0) wrapper.getChildren().add(new Label(String.valueOf(warn), iconWarning));
 			if (error > 0) wrapper.getChildren().add(new Label(String.valueOf(error), iconError));
