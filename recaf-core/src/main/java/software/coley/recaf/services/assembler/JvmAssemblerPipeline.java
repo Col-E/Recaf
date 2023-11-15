@@ -123,7 +123,7 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 
 	@Override
 	protected int getClassVersion(@Nonnull JvmClassInfo info) {
-		return info.getVersion();
+		return info.getVersion() - JavaVersion.VERSION_OFFSET;
 	}
 
 	@Nonnull
