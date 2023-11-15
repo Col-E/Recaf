@@ -107,7 +107,24 @@ public interface AssemblerPipeline<C extends ClassInfo, R extends ClassRepresent
 	 * Result wrapping a list of assemble errors otherwise.
 	 */
 	@Nonnull
-	Result<C> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path);
+	Result<R> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path);
+
+	/**
+	 * Takes a list of AST elements, assumed to be fully parsed, and assembles it to the target class type.
+	 *
+	 * @param elements
+	 * 		List of AST elements representing a class to construct into a class.
+	 * @param path
+	 * 		Path to the expected class destination in the workspace.
+	 *
+	 * @return Result wrapping the assembled class on successful assembling.
+	 * Result wrapping a list of assemble errors otherwise.
+	 */
+	@Nonnull
+	default Result<C> assembleAndWrap(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
+		return assemble(elements, path)
+				.flatMap(r -> Result.ok(getClassInfo(r)));
+	}
 
 	/**
 	 * @param path

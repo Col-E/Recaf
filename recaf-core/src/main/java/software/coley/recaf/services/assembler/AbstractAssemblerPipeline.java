@@ -58,7 +58,8 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 	protected abstract int getClassVersion(@Nonnull C info);
 
 	@Nonnull
-	protected Result<C> compile(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
+	@SuppressWarnings("unchecked")
+	protected Result<R> compile(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
 		if (elements.isEmpty()) {
 			return Result.err(Error.of("No elements to compile", null));
 		}
@@ -111,7 +112,7 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 
 		Compiler compiler = getCompiler();
 
-		return compiler.compile(elements, options).flatMap(res -> Result.ok(getClassInfo((R) res)));
+		return (Result<R>) compiler.compile(elements, options);
 	}
 
 	@Nonnull

@@ -117,3 +117,7 @@
     -fx-border-color: -color-base-6;
     -fx-border-width: 0 1px 0 0;
 }
+
+.variable-table .table-row-cell {
+    -fx-cell-size: 24px;
+}

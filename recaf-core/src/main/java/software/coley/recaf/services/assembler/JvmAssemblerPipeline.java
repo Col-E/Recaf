@@ -7,12 +7,12 @@ import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.JvmCompiler;
 import me.darknet.assembler.compile.JvmCompilerOptions;
+import me.darknet.assembler.compile.analysis.EmptyMethodAnalysisLookup;
 import me.darknet.assembler.compiler.Compiler;
 import me.darknet.assembler.compiler.CompilerOptions;
 import me.darknet.assembler.compiler.InheritanceChecker;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.parser.BytecodeFormat;
-import me.darknet.assembler.parser.Token;
 import me.darknet.assembler.parser.processor.ASTProcessor;
 import me.darknet.assembler.printer.ClassPrinter;
 import me.darknet.assembler.printer.JvmClassPrinter;
@@ -24,6 +24,7 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
+import software.coley.recaf.util.JavaVersion;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -57,7 +58,7 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 
 	@Nonnull
 	@Override
-	public Result<JvmClassInfo> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
+	public Result<JavaClassRepresentation> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
 		return compile(elements, path);
 	}
 
@@ -82,7 +83,7 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	@Nonnull
 	@Override
 	public JavaClassRepresentation getRepresentation(@Nonnull JvmClassInfo info) {
-		return new JavaClassRepresentation(info.getBytecode());
+		return new JavaClassRepresentation(info.getBytecode(), EmptyMethodAnalysisLookup.instance());
 	}
 
 	@Nonnull
@@ -128,7 +129,7 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	@Nonnull
 	@Override
 	public JvmClassInfo getClassInfo(@Nonnull JavaClassRepresentation representation) {
-		return new JvmClassInfoBuilder(representation.data()).build();
+		return new JvmClassInfoBuilder(representation.classFile()).build();
 	}
 
 	@Nonnull
