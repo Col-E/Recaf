@@ -3,11 +3,7 @@ package software.coley.recaf.services.cell.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import org.kordamp.ikonli.carbonicons.CarbonIcons;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
@@ -23,6 +19,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
 import software.coley.recaf.util.visitors.ClassAnnotationRemovingVisitor;
 import software.coley.recaf.util.visitors.FieldAnnotationRemovingVisitor;
 import software.coley.recaf.util.visitors.MethodAnnotationRemovingVisitor;
@@ -30,7 +27,8 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import static software.coley.recaf.util.Menus.action;
+import static org.kordamp.ikonli.carbonicons.CarbonIcons.ARROW_RIGHT;
+import static org.kordamp.ikonli.carbonicons.CarbonIcons.TRASH_CAN;
 import static software.coley.recaf.util.Unchecked.cast;
 import static software.coley.recaf.util.Unchecked.runnable;
 
@@ -64,15 +62,15 @@ public class BasicAnnotationContextMenuProviderFactory extends AbstractContextMe
 			IconProvider iconProvider = iconService.getAnnotationIconProvider(workspace, resource, bundle, annotated, annotation);
 			ContextMenu menu = new ContextMenu();
 			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
+			var builder = new ContextMenuBuilder(menu, source).forAnnotation(workspace, resource, bundle, annotated, annotation);
 
 			String annotationType = Type.getType(annotation.getDescriptor()).getInternalName();
 
-			ObservableList<MenuItem> items = menu.getItems();
 			ClassPathNode annotationDecPath = workspace.findClass(annotationType);
 			if (annotationDecPath != null)
-				items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT, runnable(() -> actions.gotoDeclaration(annotationDecPath))));
+				builder.item("menu.goto.class", ARROW_RIGHT, runnable(() -> actions.gotoDeclaration(annotationDecPath)));
 
-			items.add(action("menu.edit.remove.annotation", CarbonIcons.TRASH_CAN, () -> {
+			builder.item("menu.edit.remove.annotation", TRASH_CAN, () -> {
 				try {
 					if (annotated instanceof JvmClassInfo target) {
 						ClassWriter writer = new ClassWriter(0);
@@ -94,7 +92,7 @@ public class BasicAnnotationContextMenuProviderFactory extends AbstractContextMe
 				} catch (Throwable t) {
 					logger.error("Failed removing annotation", t);
 				}
-			}));
+			});
 
 			return menu;
 		};

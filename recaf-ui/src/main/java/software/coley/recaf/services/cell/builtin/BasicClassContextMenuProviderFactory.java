@@ -5,7 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
@@ -16,9 +15,9 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
-import software.coley.recaf.ui.control.ActionMenuItem;
+import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
+import software.coley.recaf.ui.contextmenu.MenuHandler;
 import software.coley.recaf.util.ClipboardUtil;
-import software.coley.recaf.util.Menus;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -26,6 +25,7 @@ import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
 import static software.coley.recaf.util.Menus.action;
 
 /**
@@ -112,6 +112,7 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 		return menu;
 	}
 
+
 	/**
 	 * Append JVM specific operations to the given menu.
 	 *
@@ -134,68 +135,42 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 								 @Nonnull WorkspaceResource resource,
 								 @Nonnull JvmClassBundle bundle,
 								 @Nonnull JvmClassInfo info) {
-		ObservableList<MenuItem> items = menu.getItems();
+		var builder = new ContextMenuBuilder(menu, source).forInfo(workspace, resource, bundle, info);
 		if (source.isReference()) {
-			items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT,
-					() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
+			builder.infoItem("menu.goto.class", ARROW_RIGHT, actions::gotoDeclaration);
 		} else if (source.isDeclaration()) {
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
-			ActionMenuItem copy = action("menu.edit.copy", CarbonIcons.COPY_FILE, () -> actions.copyClass(workspace, resource, bundle, info));
-			ActionMenuItem delete = action("menu.edit.delete", CarbonIcons.DELETE, () -> actions.deleteClass(workspace, resource, bundle, info));
-			Menu edit = Menus.menu("menu.edit", CarbonIcons.EDIT);
-			ActionMenuItem removeFields = action("menu.edit.remove.field", CarbonIcons.CLOSE, () -> actions.deleteClassFields(workspace, resource, bundle, info));
-			ActionMenuItem removeMethods = action("menu.edit.remove.method", CarbonIcons.CLOSE, () -> actions.deleteClassMethods(workspace, resource, bundle, info));
-			ActionMenuItem removeAnnotations = action("menu.edit.remove.annotation", CarbonIcons.CLOSE, () -> actions.deleteClassAnnotations(workspace, resource, bundle, info));
-			ActionMenuItem editClass = action("menu.edit.assemble.class", CarbonIcons.EDIT, Unchecked.runnable(() ->
+			builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(info));
+
+			// Edit menu
+			var edit = builder.submenu("menu.edit", EDIT);
+			edit.item("menu.edit.assemble.class", EDIT, Unchecked.runnable(() ->
 					actions.openAssembler(PathNodes.classPath(workspace, resource, bundle, info))
 			));
 			// TODO: Open an dialog which allows the user to create a member, and then open the relevant assembler
-			ActionMenuItem addField = action("menu.edit.add.field", CarbonIcons.ADD_ALT, () -> {
-			});
-			ActionMenuItem addMethod = action("menu.edit.add.method", CarbonIcons.ADD_ALT, () -> {
-			});
-			ActionMenuItem addAnnotation = action("menu.edit.add.annotation", CarbonIcons.ADD_ALT, () -> {
-			});
-			edit.getItems().addAll(
-					editClass,
-					addField,
-					addMethod,
-					addAnnotation,
-					removeFields,
-					removeMethods,
-					removeAnnotations
-			);
-			items.add(edit);
-			items.add(copy);
-			items.add(delete);
-
-			// Disable items if not applicable
-			removeFields.setDisable(info.getFields().isEmpty());
-			removeMethods.setDisable(info.getMethods().isEmpty());
-			removeAnnotations.setDisable(info.getAnnotations().isEmpty());
-
-			// Not implemented yet, so disable
-			addField.setDisable(true);
-			addMethod.setDisable(true);
-			addAnnotation.setDisable(true);
+			MenuHandler.each(
+					edit.item("menu.edit.add.field", ADD_ALT, () -> {}),
+					edit.item("menu.edit.add.method", ADD_ALT, () -> {}),
+					edit.item("menu.edit.add.annotation", ADD_ALT, () -> {})
+			).disableWhen(true); // Not implemented yet, so disable
+			edit.infoItem("menu.edit.remove.field", CLOSE, actions::deleteClassFields).disableWhen(info.getFields().isEmpty());
+			edit.infoItem("menu.edit.remove.method", CLOSE, actions::deleteClassMethods).disableWhen(info.getMethods().isEmpty());
+			edit.infoItem("menu.edit.remove.annotation", CLOSE, actions::deleteClassAnnotations).disableWhen(info.getAnnotations().isEmpty());
+			builder.infoItem("menu.edit.copy", COPY_FILE, actions::copyClass);
+			builder.infoItem("menu.edit.delete", COPY_FILE, actions::deleteClass);
 		}
+
 		// TODO: Implement search UI, and open that when these actions are run
 		// Search actions
-		Menu search = Menus.menu("menu.search", CarbonIcons.SEARCH);
-		ActionMenuItem searchMemberRefs = action("menu.search.class.member-references", CarbonIcons.CODE, () -> {
-		});
-		ActionMenuItem searchTypeRefs = action("menu.search.class.type-references", CarbonIcons.CODE_REFERENCE, () -> {
-		});
-		searchMemberRefs.setDisable(true);
-		searchTypeRefs.setDisable(true);
-		search.getItems().addAll(searchMemberRefs, searchTypeRefs);
+		var search = builder.submenu("menu.search", SEARCH);
+		MenuHandler.each(
+				search.item("menu.search.class.member-references", CODE, () -> {}),
+				search.item("menu.search.class.type-references", CODE_REFERENCE, () -> {})
+		).disableWhen(true);
 
 		// Refactor actions
-		Menu refactor = Menus.menu("menu.refactor", CarbonIcons.PAINT_BRUSH);
-		ActionMenuItem rename = action("menu.refactor.rename", CarbonIcons.TAG_EDIT, () -> actions.renameClass(workspace, resource, bundle, info));
-		ActionMenuItem move = action("menu.refactor.move", CarbonIcons.STACKED_MOVE, () -> actions.moveClass(workspace, resource, bundle, info));
-		refactor.getItems().addAll(rename, move);
-		items.addAll(search, refactor);
+		var refactor = builder.submenu("menu.refactor", PAINT_BRUSH);
+		refactor.infoItem("menu.refactor.rename", TAG_EDIT, actions::renameClass);
+		refactor.infoItem("menu.refactor.move", STACKED_MOVE, actions::moveClass);
 
 		// TODO: implement operations
 		//  - View

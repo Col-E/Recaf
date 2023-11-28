@@ -2,6 +2,7 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 
+import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
@@ -143,5 +144,45 @@ public class CollectionUtil {
 			else
 				return binarySearch(items, target, middle + 1, last);
 		}
+	}
+
+	/**
+	 * @param <T>
+	 * 		Inferred type.
+	 *
+	 * @return List that does not accept new items.
+	 */
+	public static <T> List<T> noopList() {
+		return new AbstractList<>() {
+			@Override
+			public boolean add(T t) {
+				return false;
+			}
+
+			@Override
+			public T set(int index, T element) {
+				return null;
+			}
+
+			@Override
+			public void add(int index, T element) {
+				// no-op
+			}
+
+			@Override
+			public T remove(int index) {
+				return null;
+			}
+
+			@Override
+			public T get(int index) {
+				return null;
+			}
+
+			@Override
+			public int size() {
+				return 0;
+			}
+		};
 	}
 }
