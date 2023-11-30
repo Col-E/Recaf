@@ -13,32 +13,12 @@ public interface ContextSource {
 	/**
 	 * Constant describing declaration context sources.
 	 */
-	ContextSource DECLARATION = new ContextSource() {
-		@Override
-		public boolean isDeclaration() {
-			return true;
-		}
-
-		@Override
-		public boolean isReference() {
-			return false;
-		}
-	};
+	ContextSource DECLARATION = new BasicContextSource(true);
 
 	/**
 	 * Constant describing reference context sources.
 	 */
-	ContextSource REFERENCE = new ContextSource() {
-		@Override
-		public boolean isDeclaration() {
-			return false;
-		}
-
-		@Override
-		public boolean isReference() {
-			return true;
-		}
-	};
+	ContextSource REFERENCE = new BasicContextSource(false);
 
 	/**
 	 * @return {@code true} if the context is of a declaration.
