@@ -21,10 +21,12 @@ import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.analysis.AnalysisResults;
-import me.darknet.assembler.compile.analysis.Frame;
-import me.darknet.assembler.compile.analysis.LocalInfo;
+import me.darknet.assembler.compile.analysis.Local;
 import me.darknet.assembler.compile.analysis.MethodAnalysisLookup;
+import me.darknet.assembler.compile.analysis.frame.Frame;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.util.Range;
+import org.fxmisc.richtext.CodeArea;
 import org.reactfx.EventStreams;
 import software.coley.collections.Lists;
 import software.coley.recaf.info.ClassInfo;
@@ -32,7 +34,6 @@ import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
-import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.Icons;
@@ -41,6 +42,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 /**
  * Component panel for the assembler which shows the variables of the currently selected method.
@@ -78,7 +80,7 @@ public class JvmVariablesPane extends ContextualAssemblerComponent implements As
 				}
 			}
 
-			private void configureType(ClassType type) {
+			private void configureType(@Nonnull ClassType type) {
 				if (type instanceof PrimitiveType primitiveType) {
 					setGraphic(Icons.getIconView(Icons.PRIMITIVE));
 					setText(primitiveType.name());
@@ -86,9 +88,7 @@ public class JvmVariablesPane extends ContextualAssemblerComponent implements As
 					String typeName = instanceType.internalName();
 					ClassPathNode classPath = workspace.findClass(typeName);
 					if (classPath != null) {
-						// TODO: The 'reference' ctx src still shows the refactor menu, which we'll need to ensure
-						//  updates the disassembled code
-						cellConfigurationService.configure(this, classPath, ContextSource.REFERENCE);
+						cellConfigurationService.configure(this, classPath, CONTEXT_SOURCE);
 					} else {
 						setGraphic(Icons.getIconView(Icons.CLASS));
 						setText(formatConfig.filter(typeName));
@@ -106,23 +106,45 @@ public class JvmVariablesPane extends ContextualAssemblerComponent implements As
 				if (empty || usages == null) {
 					setText(null);
 					setGraphic(null);
+					setOnMousePressed(null);
 				} else {
-					String usageS = "%d reads, %d writes".formatted(usages.readers.size(), usages.writers.size());
-					setText(usageS);
+					String usageFmt = "%d reads, %d writes".formatted(usages.readers.size(), usages.writers.size());
+					setText(usageFmt);
 				}
 			}
 		});
 		table.getColumns().addAll(columnName, columnType, columnUsage);
 		table.getStyleClass().addAll(Styles.STRIPED, Tweaks.EDGE_TO_EDGE, "variable-table");
 		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+		table.setOnMousePressed(e -> {
+			if (e.isPrimaryButtonDown()) {
+				VariableData selectedItem = table.getSelectionModel().getSelectedItem();
+				if (selectedItem == null) return;
+
+				// Collect ranges AST items where the variable is used.
+				NavigableMap<Integer, Range> elementRanges = new TreeMap<>();
+				selectedItem.usage().readersAndWriters().forEach(rw -> {
+					Range range = rw.range();
+					if (range != null)
+						elementRanges.put(range.start(), range);
+				});
+
+				// Select next. Wrap around if nothing is next.
+				CodeArea area = editor.getCodeArea();
+				int caret = area.getCaretPosition();
+				var nextEntry = elementRanges.higherEntry(caret + 1);
+				if (nextEntry == null) nextEntry = elementRanges.firstEntry();
+				Range value = nextEntry.getValue();
+				area.selectRange(value.start(), value.end());
+				area.showParagraphAtCenter(area.getCurrentParagraph());
+			}
+		});
 
 		setCenter(table);
 
 		EventStreams.changesOf(observable)
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS))
-				.addObserver(unused -> {
-					updateTable();
-				});
+				.addObserver(unused -> updateTable());
 	}
 
 	private void clearData() {
@@ -215,11 +237,14 @@ public class JvmVariablesPane extends ContextualAssemblerComponent implements As
 			Map<String, VariableData> variables = new LinkedHashMap<>();
 
 			// In JASM variables are un-scoped, so the last frame will have all entries.
-			Frame endFrame = analysisResults.getLastFrame();
-			for (LocalInfo local : endFrame.getLocals().values()) {
-				String localName = local.name();
-				variables.put(localName, VariableData.adaptFrom(local, variableUsages.getOrDefault(localName, emptyUsage)));
-			}
+			analysisResults.frames().values().stream()
+					.flatMap(Frame::locals)
+					.distinct()
+					.forEach(local -> {
+						String localName = local.name();
+						variables.put(localName, VariableData.adaptFrom(local,
+								variableUsages.getOrDefault(localName, emptyUsage)));
+					});
 
 			// Add all found items to the table.
 			items.addAll(variables.values());
@@ -246,7 +271,7 @@ public class JvmVariablesPane extends ContextualAssemblerComponent implements As
 		 * @return Data from a blw variable, plus AST usage.
 		 */
 		@Nonnull
-		public static VariableData adaptFrom(@Nonnull LocalInfo local, @Nonnull VariableUsages usage) {
+		public static VariableData adaptFrom(@Nonnull Local local, @Nonnull VariableUsages usage) {
 			return new VariableData(local.name(), local.type(), usage);
 		}
 	}
@@ -264,6 +289,14 @@ public class JvmVariablesPane extends ContextualAssemblerComponent implements As
 		 * Empty variable usage.
 		 */
 		private static final VariableUsages EMPTY_USAGE = new VariableUsages(Collections.emptyList(), Collections.emptyList());
+
+		/**
+		 * @return Stream of both readers and writers.
+		 */
+		@Nonnull
+		public Stream<ASTElement> readersAndWriters() {
+			return Stream.concat(readers.stream(), writers.stream());
+		}
 
 		/**
 		 * @param element

@@ -14,6 +14,8 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.util.FxThreadUtil;
 
 import java.util.Arrays;
@@ -28,7 +30,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Coley
  */
 @Dependent
-public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsumer, AssemblerBuildConsumer, Navigable, UpdatableNavigable {
+public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsumer, AssemblerBuildConsumer,
+		Navigable, UpdatableNavigable, EditorComponent {
 	private final Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider;
 	private final Instance<JvmVariablesPane> jvmVariablesPaneProvider;
 	private final List<Navigable> children = new CopyOnWriteArrayList<>();
@@ -56,6 +59,7 @@ public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsume
 			tabs.clear();
 			tabs.add(new Tab("Analysis", stackAnalysisPane));
 			tabs.add(new Tab("Variables", variablesPane));
+			tabs.forEach(t -> t.setClosable(false));
 			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane));
 		} else if (classInPath.isAndroidClass()) {
 			// Create contents for Android classes
@@ -87,7 +91,6 @@ public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsume
 
 		this.path = path;
 
-
 		if (isInitial) {
 			ClassInfo classInPath = path.getValueOfType(ClassInfo.class);
 			if (classInPath != null)
@@ -115,5 +118,21 @@ public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsume
 	public void disable() {
 		for (Navigable navigableChild : getNavigableChildren())
 			navigableChild.disable();
+	}
+
+	@Override
+	public void install(@Nonnull Editor editor) {
+		children.forEach(n -> {
+			if (n instanceof EditorComponent component)
+				component.install(editor);
+		});
+	}
+
+	@Override
+	public void uninstall(@Nonnull Editor editor) {
+		children.forEach(n -> {
+			if (n instanceof EditorComponent component)
+				component.uninstall(editor);
+		});
 	}
 }

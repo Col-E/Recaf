@@ -127,6 +127,9 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			assemblerToolTabs.onUpdatePath(path);
 			assemblerToolTabs.consumeClass(lastAssembledClassRepresentation, lastAssembledClass);
 
+			// Some sub-components in the tabs are not initialized immediately, so we install the component here.
+			assemblerToolTabs.install(editor);
+
 			refreshDisplay();
 		}
 	}
@@ -266,8 +269,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		FxThreadUtil.run(() -> {
 			for (Error error : errors) {
 				Location location = error.getLocation();
-				int line = location == null ? 1 : location.getLine();
-				int column = location == null ? 1 : location.getColumn();
+				int line = location == null ? 1 : location.line();
+				int column = location == null ? 1 : location.column();
 				Problem problem = new Problem(line, column, ProblemLevel.ERROR, phase,
 						error.getMessage());
 				problemTracking.add(problem);

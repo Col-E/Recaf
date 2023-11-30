@@ -9,8 +9,12 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.services.cell.BasicBlacklistingContextSource;
+import software.coley.recaf.services.cell.ContextSource;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.EditorComponent;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,14 +24,28 @@ import java.util.Collections;
  *
  * @author Matt Coley
  */
-public abstract class ContextualAssemblerComponent extends BorderPane implements Navigable, UpdatableNavigable {
+public abstract class ContextualAssemblerComponent extends BorderPane implements Navigable, UpdatableNavigable, EditorComponent {
+	/** Source with 'refactor' entries hidden */
+	protected static final ContextSource CONTEXT_SOURCE = new BasicBlacklistingContextSource(false, s -> s.contains("refactor"));
 	protected PathNode<?> path;
+	protected Editor editor;
 
 	protected abstract void onSelectClass(@Nonnull ClassInfo declared);
 
 	protected abstract void onSelectMethod(@Nonnull ClassInfo declaring, @Nonnull MethodMember method);
 
 	protected abstract void onSelectField(@Nonnull ClassInfo declaring, @Nonnull FieldMember field);
+
+	@Override
+	public void install(@Nonnull Editor editor) {
+		this.editor = editor;
+	}
+
+	@Override
+	public void uninstall(@Nonnull Editor editor) {
+		this.editor = null;
+		setDisable(true);
+	}
 
 	@Override
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
