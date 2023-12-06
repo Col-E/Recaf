@@ -122,11 +122,10 @@ public class JavaParserHelper {
 	 */
 	private String filterGenerics(String code) {
 		// This isn't perfect, but should replace most basic generic type usage
-		Matcher matcher = RegexUtil.getMatcher("(?:<)((?:(?!\\1).)*>)", code);
-		while (matcher.find()) {
-			String temp = code.substring(0, matcher.start());
-			String filler = StringUtil.repeat(" ", matcher.length());
-			code = temp + filler + code.substring(matcher.end());
+		Matcher matcher = RegexUtil.getMatcher("<[^<>]*>", code);
+		if (matcher.find()) {
+			code = code.replaceAll("<[^<>]*>", " ");
+			return filterGenerics(code);
 		}
 		return code;
 	}
