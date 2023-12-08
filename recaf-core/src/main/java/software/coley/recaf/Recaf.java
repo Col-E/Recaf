@@ -1,18 +1,13 @@
 package software.coley.recaf;
 
 import jakarta.annotation.Nonnull;
-import jakarta.enterprise.context.spi.Context;
-import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.se.SeContainer;
-import jakarta.enterprise.inject.spi.Bean;
-import jakarta.enterprise.inject.spi.BeanContainer;
 import software.coley.recaf.cdi.WorkspaceBeanContext;
 import software.coley.recaf.workspace.WorkspaceManager;
 
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
-import java.util.Set;
+import java.util.Locale;
 
 /**
  * Recaf application instance.
@@ -104,5 +99,11 @@ public class Recaf {
 	@Nonnull
 	public <T> T get(@Nonnull Class<T> type, Annotation... qualifiers) {
 		return instance(type, qualifiers).get();
+	}
+
+	static {
+		// Enforce US locale just in case we have some string formatting susceptible to this "feature":
+		//  https://mattryall.net/blog/the-infamous-turkish-locale-bug
+		Locale.setDefault(Locale.US);
 	}
 }
