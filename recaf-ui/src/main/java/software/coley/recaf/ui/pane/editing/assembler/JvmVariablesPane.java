@@ -2,10 +2,7 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import atlantafx.base.theme.Styles;
 import atlantafx.base.theme.Tweaks;
-import dev.xdark.blw.type.ArrayType;
 import dev.xdark.blw.type.ClassType;
-import dev.xdark.blw.type.InstanceType;
-import dev.xdark.blw.type.PrimitiveType;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -15,28 +12,22 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.util.Callback;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTIdentifier;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.specific.ASTMethod;
-import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.analysis.AnalysisResults;
 import me.darknet.assembler.compile.analysis.Local;
-import me.darknet.assembler.compile.analysis.MethodAnalysisLookup;
 import me.darknet.assembler.compile.analysis.frame.Frame;
-import me.darknet.assembler.compiler.ClassRepresentation;
 import me.darknet.assembler.util.Range;
 import org.fxmisc.richtext.CodeArea;
 import org.reactfx.EventStreams;
 import software.coley.collections.Lists;
-import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.member.FieldMember;
-import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.time.Duration;
@@ -50,55 +41,21 @@ import java.util.stream.Stream;
  * @author Matt Coley
  */
 @Dependent
-public class JvmVariablesPane extends ContextualAssemblerComponent implements AssemblerAstConsumer, AssemblerBuildConsumer {
-	private final SimpleObjectProperty<Object> observable = new SimpleObjectProperty<>(new Object());
+public class JvmVariablesPane extends AstBuildConsumerComponent {
+	private final SimpleObjectProperty<Object> notifyQueue = new SimpleObjectProperty<>(new Object());
 	private final TableView<VariableData> table = new TableView<>();
-	private List<ASTElement> astElements = Collections.emptyList();
-	private MethodAnalysisLookup analysisLookup;
-
-	private MethodMember selectedMethod;
 
 	@Inject
 	public JvmVariablesPane(@Nonnull CellConfigurationService cellConfigurationService,
 							@Nonnull TextFormatConfig formatConfig,
 							@Nonnull Workspace workspace) {
-		TableColumn<VariableData, String> columnName = new TableColumn<>("Name");
-		TableColumn<VariableData, ClassType> columnType = new TableColumn<>("Type");
-		TableColumn<VariableData, VariableUsages> columnUsage = new TableColumn<>("Usage");
+		TableColumn<VariableData, String> columnName = new TableColumn<>(Lang.get("assembler.variables.name"));
+		TableColumn<VariableData, ClassType> columnType = new TableColumn<>(Lang.get("assembler.variables.type"));
+		TableColumn<VariableData, VariableUsages> columnUsage = new TableColumn<>(Lang.get("assembler.variables.usage"));
 		columnName.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().name));
 		columnType.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().type));
 		columnUsage.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().usage));
-		columnType.setCellFactory(param -> new TableCell<>() {
-			@Override
-			protected void updateItem(ClassType type, boolean empty) {
-				super.updateItem(type, empty);
-				if (empty || type == null) {
-					setText(null);
-					setGraphic(null);
-				} else {
-					configureType(type);
-				}
-			}
-
-			private void configureType(@Nonnull ClassType type) {
-				if (type instanceof PrimitiveType primitiveType) {
-					setGraphic(Icons.getIconView(Icons.PRIMITIVE));
-					setText(primitiveType.name());
-				} else if (type instanceof InstanceType instanceType) {
-					String typeName = instanceType.internalName();
-					ClassPathNode classPath = workspace.findClass(typeName);
-					if (classPath != null) {
-						cellConfigurationService.configure(this, classPath, CONTEXT_SOURCE);
-					} else {
-						setGraphic(Icons.getIconView(Icons.CLASS));
-						setText(formatConfig.filter(typeName));
-					}
-				} else if (type instanceof ArrayType arrayType) {
-					ClassType componentType = arrayType.componentType();
-					configureType(componentType);
-				}
-			}
-		});
+		columnType.setCellFactory(param -> new TypeTableCell<>(cellConfigurationService, formatConfig, workspace));
 		columnUsage.setCellFactory(param -> new TableCell<>() {
 			@Override
 			protected void updateItem(VariableUsages usages, boolean empty) {
@@ -142,49 +99,34 @@ public class JvmVariablesPane extends ContextualAssemblerComponent implements As
 
 		setCenter(table);
 
-		EventStreams.changesOf(observable)
+		EventStreams.changesOf(notifyQueue)
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS))
 				.addObserver(unused -> updateTable());
 	}
 
-	private void clearData() {
-		table.getItems().clear();
-		selectedMethod = null;
-	}
-
 	@Override
-	protected void onSelectClass(@Nonnull ClassInfo declared) {
+	protected void onClassSelected() {
 		clearData();
 	}
 
 	@Override
-	protected void onSelectMethod(@Nonnull ClassInfo declaring, @Nonnull MethodMember method) {
-		selectedMethod = method;
+	protected void onMethodSelected() {
 		scheduleTableUpdate();
 	}
 
 	@Override
-	protected void onSelectField(@Nonnull ClassInfo declaring, @Nonnull FieldMember field) {
+	protected void onFieldSelected() {
 		clearData();
 	}
 
 	@Override
-	public void consumeAst(@Nonnull List<ASTElement> astElements, @Nonnull AstPhase phase) {
-		this.astElements = Collections.unmodifiableList(astElements);
+	protected void onPipelineOutputUpdate() {
 		scheduleTableUpdate();
-	}
-
-	@Override
-	public void consumeClass(@Nonnull ClassRepresentation classRepresentation, @Nonnull ClassInfo classInfo) {
-		if (classRepresentation instanceof JavaClassRepresentation javaClassRep) {
-			analysisLookup = javaClassRep.analysisLookup();
-			scheduleTableUpdate();
-		}
 	}
 
 	private void scheduleTableUpdate() {
-		if (selectedMethod == null || analysisLookup == null) return;
-		observable.set(new Object());
+		if (currentMethod == null || analysisLookup == null) return;
+		notifyQueue.set(new Object());
 	}
 
 	private void updateTable() {
@@ -231,7 +173,7 @@ public class JvmVariablesPane extends ContextualAssemblerComponent implements As
 		}
 
 		// Populate the variables map from the stack analysis results.
-		AnalysisResults analysisResults = analysisLookup.results(selectedMethod.getName(), selectedMethod.getDescriptor());
+		AnalysisResults analysisResults = analysisLookup.results(currentMethod.getName(), currentMethod.getDescriptor());
 		if (analysisResults != null && !analysisResults.frames().isEmpty()) {
 			// Linked map for ordering
 			Map<String, VariableData> variables = new LinkedHashMap<>();
@@ -249,6 +191,11 @@ public class JvmVariablesPane extends ContextualAssemblerComponent implements As
 			// Add all found items to the table.
 			items.addAll(variables.values());
 		}
+	}
+
+	private void clearData() {
+		table.getItems().clear();
+		currentMethod = null;
 	}
 
 	/**

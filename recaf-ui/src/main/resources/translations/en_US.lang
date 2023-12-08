@@ -327,14 +327,19 @@ logging.title=Logging
 
 ## Assembler
 assembler.title=Assembler
-assembler.analysis.title=Variables & Stack
+assembler.analysis.title=Analysis
 assembler.analysis.stack=Stack
-assembler.analysis.name-column=Name
-assembler.analysis.value-column=Value
+assembler.analysis.variables=Variables
+assembler.analysis.type=Type
+assembler.analysis.value=Value
 assembler.playground.title=Java to Bytecode
 assembler.playground.comment=You can write regular Java in here and have it translated to bytecode
-assembler.vartable.title=Variables
-assembler.vartable.empty=<Requires compiling at least once>
+assembler.variables.title=Declared Variables
+assembler.variables.name=Name
+assembler.variables.type=Type
+assembler.variables.usage=Usages
+assembler.variables.value=Value
+assembler.variables.empty=<Requires compiling at least once>
 assembler.suggestions.none=No suggestions
 
 ## Search
@@ -426,9 +431,14 @@ service.analysis.anti-decompile.illegal-sig=Illegal signatures
 service.analysis.anti-decompile.label-patch=Patch %d affected classes
 service.analysis.anti-decompile.label-remove=Remove %d affected classes
 service.analysis.anti-decompile.long-annos=Long annotations
-service.assembler.assembler-pipeline.general-config=Assembler
+service.assembler=Assembler
+service.assembler.assembler-pipeline.general-config=Common
 service.assembler.assembler-pipeline.general-config.disassembly-ast-parse-delay=AST parse delay
 service.assembler.assembler-pipeline.general-config.disassembly-indent=Indentation
+service.assembler.dalvik-assembler-config=Dalvik
+service.assembler.dalvik-assembler-config.value-analysis=Enable value analysis
+service.assembler.jvm-assembler-config=JVM
+service.assembler.jvm-assembler-config.value-analysis=Enable value analysis
 service.compile=Compilation
 service.compile.java-compiler-config=Javac
 service.compile.java-compiler-config.generate-phantoms=Generate missing classes

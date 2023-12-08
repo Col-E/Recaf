@@ -242,8 +242,7 @@ assembler.analysis.name-column=名称
 assembler.analysis.value-column=值
 assembler.playground.title=Java转Bytecode
 assembler.playground.comment=您可以在这里编写常规的Java，并将其转换为字节码
-assembler.vartable.title=局部变量
-assembler.vartable.empty=<Requires compiling at least once>
+assembler.variables.title=局部变量
 
 ## Search
 search.run=搜索

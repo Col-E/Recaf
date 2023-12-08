@@ -50,6 +50,7 @@ import java.util.function.Supplier;
  * @author Matt Coley
  */
 public class Editor extends BorderPane {
+	public static final int SHORTER_DELAY_MS = 25;
 	public static final int SHORT_DELAY_MS = 150;
 	private final StackPane stackPane = new StackPane();
 	private final CodeArea codeArea = new CodeArea();

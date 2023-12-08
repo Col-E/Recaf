@@ -30,10 +30,32 @@ public abstract class ContextualAssemblerComponent extends BorderPane implements
 	protected PathNode<?> path;
 	protected Editor editor;
 
+	/**
+	 * Called when {@link #path} is set to a {@link ClassPathNode}.
+	 *
+	 * @param declared
+	 * 		Target class.
+	 */
 	protected abstract void onSelectClass(@Nonnull ClassInfo declared);
 
+	/**
+	 * Called when {@link #path} is set to a {@link ClassMemberPathNode} of a method.
+	 *
+	 * @param declaring
+	 * 		Declaring class.
+	 * @param method
+	 * 		Target method.
+	 */
 	protected abstract void onSelectMethod(@Nonnull ClassInfo declaring, @Nonnull MethodMember method);
 
+	/**
+	 * Called when {@link #path} is set to a {@link ClassMemberPathNode} of a field.
+	 *
+	 * @param declaring
+	 * 		Declaring class.
+	 * @param field
+	 * 		Target field.
+	 */
 	protected abstract void onSelectField(@Nonnull ClassInfo declaring, @Nonnull FieldMember field);
 
 	@Override

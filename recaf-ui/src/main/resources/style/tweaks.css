@@ -121,3 +121,6 @@
 .variable-table .table-row-cell {
     -fx-cell-size: 24px;
 }
+.analysis-value-changed {
+    -fx-background-color: -color-accent-muted;
+}

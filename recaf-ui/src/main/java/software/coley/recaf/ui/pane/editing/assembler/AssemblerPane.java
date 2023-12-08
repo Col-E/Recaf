@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
+import dev.xdark.blw.classfile.MemberIdentifier;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -7,6 +8,8 @@ import javafx.geometry.Orientation;
 import javafx.scene.control.SplitPane;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compile.JavaClassRepresentation;
+import me.darknet.assembler.compile.analysis.AnalysisException;
+import me.darknet.assembler.compile.analysis.AnalysisResults;
 import me.darknet.assembler.compiler.ClassRepresentation;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
@@ -37,6 +40,7 @@ import software.coley.recaf.workspace.model.bundle.Bundle;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -219,6 +223,14 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 					if (representation instanceof JavaClassRepresentation javaClassRep) {
 						lastAssembledClass = pipeline.getClassInfo(Unchecked.cast(javaClassRep));
+						for (var methodEntry : javaClassRep.analysisLookup().allResults().entrySet()) {
+							String methodName = methodEntry.getKey().name();
+							AnalysisException failure = methodEntry.getValue().getAnalysisFailure();
+							if (failure != null) {
+								Animations.animateWarn(this, 1000);
+								logger.warn("Method analysis on '{}' found potential problem: {}", methodName, failure.getMessage(), failure);
+							}
+						}
 					}
 					/*
 					else if (representation instanceof AndroidClassRepresentation androidClassRep) {

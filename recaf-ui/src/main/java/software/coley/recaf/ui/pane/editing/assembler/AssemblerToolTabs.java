@@ -10,13 +10,16 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Lang;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,12 +56,10 @@ public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsume
 			// Create contents for JVM classes
 			JvmStackAnalysisPane stackAnalysisPane = jvmStackAnalysisPaneProvider.get();
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
-
-			// TODO: Translation titles / graphicss
 			ObservableList<Tab> tabs = tabPane.getTabs();
 			tabs.clear();
-			tabs.add(new Tab("Analysis", stackAnalysisPane));
-			tabs.add(new Tab("Variables", variablesPane));
+			tabs.add(new BoundTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, stackAnalysisPane));
+			tabs.add(new BoundTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane));
 			tabs.forEach(t -> t.setClosable(false));
 			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane));
 		} else if (classInPath.isAndroidClass()) {

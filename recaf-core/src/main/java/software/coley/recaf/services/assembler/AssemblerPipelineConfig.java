@@ -8,4 +8,5 @@ import software.coley.recaf.config.ConfigContainer;
  * @author Justus Garbe
  */
 public interface AssemblerPipelineConfig extends ConfigContainer {
+	boolean isValueAnalysisEnabled();
 }

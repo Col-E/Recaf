@@ -8,6 +8,7 @@ import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.JvmCompiler;
 import me.darknet.assembler.compile.JvmCompilerOptions;
 import me.darknet.assembler.compile.analysis.EmptyMethodAnalysisLookup;
+import me.darknet.assembler.compile.analysis.jvm.ValuedJvmAnalysisEngine;
 import me.darknet.assembler.compiler.Compiler;
 import me.darknet.assembler.compiler.CompilerOptions;
 import me.darknet.assembler.compiler.InheritanceChecker;
@@ -89,7 +90,10 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	@Nonnull
 	@Override
 	protected CompilerOptions<? extends CompilerOptions<?>> getCompilerOptions() {
-		return new JvmCompilerOptions();
+		JvmCompilerOptions options = new JvmCompilerOptions();
+		if (pipelineConfig.isValueAnalysisEnabled())
+			options.engineProvider(ValuedJvmAnalysisEngine::new);
+		return options;
 	}
 
 	@Nonnull

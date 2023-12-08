@@ -244,8 +244,8 @@ assembler.analysis.name-column=Name
 assembler.analysis.value-column=Wert
 assembler.playground.title=Java zu Bytecode
 assembler.playground.comment=Sie können hier Java-Code schreiben, um es zu Bytecode zu konvertieren.
-assembler.vartable.title=Variablen
-assembler.vartable.empty=<Muss mindestens einmal kompiliert werden>
+assembler.variables.title=Variablen
+assembler.variables.empty=<Muss mindestens einmal kompiliert werden>
 assembler.suggestions.none=Keine Vorschläge
 
 ## Search
