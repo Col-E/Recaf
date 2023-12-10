@@ -125,7 +125,7 @@ public class JavaParserHelper {
 		String initial;
 		do{
 			initial = code;
-			Matcher matcher = RegexUtil.getMatcher("<[^<>+\\-*/%=&|!~^:]+>", code);
+			Matcher matcher = RegexUtil.getMatcher("<(\\s*)[?]?[^<>+\\-*/%=&|!~^:(){}?]*>", code);
 			while (matcher.find()) {
 				String temp = code.substring(0, matcher.start());
 				String filler = StringUtil.repeat(" ", matcher.length());
