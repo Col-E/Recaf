@@ -17,6 +17,7 @@ import me.coley.recaf.parse.evaluation.ExpressionEvaluator;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.StringUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -122,11 +123,16 @@ public class JavaParserHelper {
 	 */
 	private String filterGenerics(String code) {
 		// This isn't perfect, but should replace most basic generic type usage
-		Matcher matcher = RegexUtil.getMatcher("<[^<>]*>", code);
-		if (matcher.find()) {
-			code = code.replaceAll("<[^<>]*>", " ");
-			return filterGenerics(code);
-		}
+		String initial;
+		do{
+			initial = code;
+			Matcher matcher = RegexUtil.getMatcher("<[^<>+\\-*/%=&|!~^:]+>", code);
+			while (matcher.find()) {
+				String temp = code.substring(0, matcher.start());
+				String filler = StringUtil.repeat(" ", matcher.length());
+				code = temp + filler + code.substring(matcher.end());
+			}
+		} while (!initial.equals(code));
 		return code;
 	}
 
