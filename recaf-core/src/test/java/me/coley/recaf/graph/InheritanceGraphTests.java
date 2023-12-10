@@ -1,6 +1,8 @@
 package me.coley.recaf.graph;
 
 import me.coley.recaf.TestUtils;
+import me.coley.recaf.graph.inheritance.InheritanceGraph;
+import me.coley.recaf.graph.inheritance.InheritanceVertex;
 import me.coley.recaf.workspace.Workspace;
 import me.coley.recaf.workspace.resource.Resource;
 import me.coley.recaf.workspace.resource.Resources;

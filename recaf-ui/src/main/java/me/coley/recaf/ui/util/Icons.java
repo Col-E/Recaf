@@ -8,7 +8,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import me.coley.recaf.RecafUI;
 import me.coley.recaf.code.*;
-import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.graph.inheritance.InheritanceGraph;
 import me.coley.recaf.ui.control.IconView;
 import me.coley.recaf.ui.control.code.Languages;
 import me.coley.recaf.util.AccessFlag;
@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Icons {
 	private static final Image EMPTY_IMAGE = new WritableImage(1, 1);
+	public static final String FOCUS = "icons/focus.png";
 	// Class definitions
 	public static final String CLASS = "icons/class/class.png";
 	public static final String CLASS_ANONYMOUS = "icons/class/class_anonymous.png";

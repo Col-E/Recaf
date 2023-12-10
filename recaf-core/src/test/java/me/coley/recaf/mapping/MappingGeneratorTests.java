@@ -5,7 +5,7 @@ import me.coley.recaf.code.ClassInfo;
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.MethodInfo;
-import me.coley.recaf.graph.InheritanceGraph;
+import me.coley.recaf.graph.inheritance.InheritanceGraph;
 import me.coley.recaf.mapping.gen.MappingGenerator;
 import me.coley.recaf.mapping.gen.NameGenerator;
 import me.coley.recaf.mapping.gen.NameGeneratorFilter;

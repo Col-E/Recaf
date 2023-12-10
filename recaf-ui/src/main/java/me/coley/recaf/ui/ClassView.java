@@ -19,8 +19,8 @@ import me.coley.recaf.ui.control.CollapsibleTabPane;
 import me.coley.recaf.ui.control.hex.HexClassView;
 import me.coley.recaf.ui.pane.DecompilePane;
 import me.coley.recaf.ui.pane.HierarchyPane;
-import me.coley.recaf.ui.pane.outline.OutlinePane;
 import me.coley.recaf.ui.pane.SmaliAssemblerPane;
+import me.coley.recaf.ui.pane.outline.OutlinePane;
 import me.coley.recaf.ui.util.Icons;
 import me.coley.recaf.ui.util.Lang;
 import me.coley.recaf.workspace.Workspace;
@@ -33,7 +33,8 @@ import java.util.function.Consumer;
  *
  * @author Matt Coley
  */
-public class ClassView extends BorderPane implements ClassRepresentation, ToolSideTabbed, Cleanable, Undoable, FontSizeChangeable {
+public class ClassView extends BorderPane
+		implements ClassRepresentation, ToolSideTabbed, Cleanable, Undoable, FontSizeChangeable {
 	private final OutlinePane outline;
 	private final HierarchyPane hierarchy;
 	private final BorderPane mainViewWrapper = new BorderPane();
@@ -252,20 +253,20 @@ public class ClassView extends BorderPane implements ClassRepresentation, ToolSi
 		sideTabs.setup();
 	}
 
-	private Tab createOutlineTab() {
+	private static Tab createTab(String translationKey, String iconPath, Node node) {
 		Tab tab = new Tab();
-		tab.textProperty().bind(Lang.getBinding("outline.title"));
-		tab.setGraphic(Icons.getIconView(Icons.T_STRUCTURE));
-		tab.setContent(outline);
+		tab.textProperty().bind(Lang.getBinding(translationKey));
+		tab.setGraphic(Icons.getIconView(iconPath));
+		tab.setContent(node);
 		return tab;
 	}
 
+	private Tab createOutlineTab() {
+		return createTab("outline.title", Icons.T_STRUCTURE, outline);
+	}
+
 	private Tab createHierarchyTab() {
-		Tab tab = new Tab();
-		tab.textProperty().bind(Lang.getBinding("hierarchy.title"));
-		tab.setGraphic(Icons.getIconView(Icons.T_TREE));
-		tab.setContent(hierarchy);
-		return tab;
+		return createTab("hierarchy.title", Icons.T_TREE, hierarchy);
 	}
 
 	private static Resource getPrimary() {

@@ -1,4 +1,4 @@
-package me.coley.recaf.graph;
+package me.coley.recaf.graph.inheritance;
 
 import me.coley.recaf.code.CommonClassInfo;
 import me.coley.recaf.code.FieldInfo;

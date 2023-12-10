@@ -10,6 +10,7 @@ import me.coley.recaf.code.DexClassInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.config.Configs;
 import me.coley.recaf.mapping.MappingsAdapter;
+import me.coley.recaf.scripting.impl.WorkspaceAPI;
 import me.coley.recaf.search.TextMatchMode;
 import me.coley.recaf.ssvm.SsvmIntegration;
 import me.coley.recaf.ui.CommonUX;
@@ -20,6 +21,8 @@ import me.coley.recaf.ui.dialog.TextInputDialog;
 import me.coley.recaf.ui.docking.DockTab;
 import me.coley.recaf.ui.docking.RecafDockingManager;
 import me.coley.recaf.ui.docking.impl.ClassTab;
+import me.coley.recaf.ui.pane.DockingWrapperPane;
+import me.coley.recaf.ui.pane.MethodCallGraphsPane;
 import me.coley.recaf.ui.pane.SearchPane;
 import me.coley.recaf.ui.pane.assembler.AssemblerPane;
 import me.coley.recaf.ui.pane.graph.MethodGraphPane;
@@ -36,7 +39,9 @@ import org.objectweb.asm.ClassWriter;
 
 import java.util.Optional;
 
-import static me.coley.recaf.ui.util.Menus.*;
+import static me.coley.recaf.ui.util.Menus.action;
+import static me.coley.recaf.ui.util.Menus.createHeader;
+import static me.coley.recaf.ui.util.Menus.menu;
 
 /**
  * Context menu builder for methods.
@@ -65,18 +70,21 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		menu.getItems().add(createHeader(methodInfo.getName(), Icons.getMethodIcon(methodInfo)));
 		if (!declaration)
 			menu.getItems().add(action("menu.goto.method", Icons.OPEN, this::openDefinition));
-		if (isPrimary() && isOwnerJvmClass()) {
+		if (isOwnerJvmClass()) {
 			// TODO: When android cases are supported, remove 'isOwnerJvmClass()' check
-			Menu refactor = menu("menu.refactor");
-			if (declaration) {
-				menu.getItems().add(action("menu.edit.assemble.method", Icons.ACTION_EDIT, this::assemble));
-				menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
-				menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+			if (isPrimary()) {
+				Menu refactor = menu("menu.refactor");
+				if (declaration) {
+					menu.getItems().add(action("menu.edit.assemble.method", Icons.ACTION_EDIT, this::assemble));
+					menu.getItems().add(action("menu.edit.copy", Icons.ACTION_COPY, this::copy));
+					menu.getItems().add(action("menu.edit.delete", Icons.ACTION_DELETE, this::delete));
+				}
+				refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
+				menu.getItems().add(refactor);
 			}
-			refactor.getItems().add(action("menu.refactor.rename", Icons.ACTION_EDIT, this::rename));
-			menu.getItems().add(refactor);
 			Menu view = menu("menu.view", Icons.EYE);
 			view.getItems().add(action("menu.view.methodcfg", Icons.CHILDREN, this::graph));
+			view.getItems().add(action("menu.view.methodcallgraph", Icons.CHILDREN, this::callGraph));
 			menu.getItems().add(view);
 		}
 		if (canUseVm()) {
@@ -93,6 +101,15 @@ public class MethodContextBuilder extends MemberContextBuilder {
 		search.getItems().add(action("menu.search.references", Icons.REFERENCE, this::search));
 		menu.getItems().add(search);
 		return menu;
+	}
+
+	private void callGraph() {
+		final MethodCallGraphsPane graphsPane = new MethodCallGraphsPane(WorkspaceAPI.getWorkspace(), methodInfo);
+		new GenericWindow(DockingWrapperPane.builder()
+				.title(graphsPane.currentMethodInfoProperty().map(method -> method.getOwner() + "#" + method.getName() + method.getDescriptor()))
+				.content(graphsPane)
+				.size(600, 300)
+				.build()).show();
 	}
 
 	@Override
