@@ -17,7 +17,6 @@ import me.coley.recaf.parse.evaluation.ExpressionEvaluator;
 import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.StringUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
