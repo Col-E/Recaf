@@ -229,7 +229,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	private CompletableFuture<Void> assemble() {
 		// Ensure the AST is up-to-date before moving onto build stage.
 		return parseAST().whenComplete((unused, error) -> {
-			if (!problemTracking.getProblems().isEmpty() && lastConcreteAst == null)
+			if (!problemTracking.getProblems().isEmpty() || lastConcreteAst == null)
 				return;
 
 			// Clear build errors since we are running the build process again.
