@@ -7,18 +7,18 @@ import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.expr.SimpleName;
-import jregex.Matcher;
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.code.LiteralExpressionInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.parse.evaluation.ExpressionEvaluator;
-import me.coley.recaf.util.RegexUtil;
 import me.coley.recaf.util.StringUtil;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utility for working with JavaParser and pulling contextual information from Java source code.
@@ -26,6 +26,10 @@ import java.util.Optional;
  * @author Matt Coley
  */
 public class JavaParserHelper {
+
+	// This regex cannot be run using Jregex, it will cause OOM
+	private static final Pattern genericsFilterPattern = Pattern.compile("<(,?(((\\?\\s+(extends|super)\\s+)?[^<>+\\-*/%=&|!~^:\\(\\)\\{\\}?'\"]*)))+>|<\\s*\\?\\s*>");
+
 	private final WorkspaceSymbolSolver symbolSolver;
 	private final JavaParser parser;
 
@@ -123,12 +127,12 @@ public class JavaParserHelper {
 	private String filterGenerics(String code) {
 		// This isn't perfect, but should replace most basic generic type usage
 		String initial;
-		do{
+		do {
 			initial = code;
-			Matcher matcher = RegexUtil.getMatcher("<(\\s*)[?]?[^<>+\\-*/%=&|!~^:(){}?]*>", code);
+			Matcher matcher = genericsFilterPattern.matcher(code);
 			while (matcher.find()) {
 				String temp = code.substring(0, matcher.start());
-				String filler = StringUtil.repeat(" ", matcher.length());
+				String filler = StringUtil.repeat(" ", matcher.end() - matcher.start());
 				code = temp + filler + code.substring(matcher.end());
 			}
 		} while (!initial.equals(code));
