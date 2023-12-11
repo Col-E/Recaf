@@ -246,6 +246,12 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		return path;
 	}
 
+	@Nonnull
+	@Override
+	public ClassPathNode getClassPath() {
+		return path;
+	}
+
 	@Override
 	public void requestFocus(@Nonnull ClassMember member) {
 		// Skip if lock is active. Implies we are the source of the request.

@@ -128,6 +128,12 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		return path;
 	}
 
+	@Nonnull
+	@Override
+	public ClassPathNode getClassPath() {
+		return path;
+	}
+
 	@Override
 	public void requestFocus(@Nonnull ClassMember member) {
 		contextActionSupport.select(member);

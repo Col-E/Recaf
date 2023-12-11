@@ -11,9 +11,11 @@ import software.coley.recaf.path.ClassPathNode;
  * @author Matt Coley
  */
 public interface ClassNavigable extends Navigable {
+	/**
+	 * @return Class path of this navigable component.
+	 */
 	@Nonnull
-	@Override
-	ClassPathNode getPath(); // Force child types to implement getter as ClassPathNode
+	ClassPathNode getClassPath();
 
 	/**
 	 * Requests focus of the class member contained within this navigable representation of a class.

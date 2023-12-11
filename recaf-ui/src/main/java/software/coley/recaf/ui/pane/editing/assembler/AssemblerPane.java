@@ -1,6 +1,5 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
-import dev.xdark.blw.classfile.MemberIdentifier;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -9,7 +8,6 @@ import javafx.scene.control.SplitPane;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.analysis.AnalysisException;
-import me.darknet.assembler.compile.analysis.AnalysisResults;
 import me.darknet.assembler.compiler.ClassRepresentation;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
@@ -18,9 +16,12 @@ import me.darknet.assembler.util.Location;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.assembler.AssemblerPipeline;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
+import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.KeybindingConfig;
@@ -40,14 +41,19 @@ import software.coley.recaf.workspace.model.bundle.Bundle;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+/**
+ * Display dissassembled {@link ClassInfo} and {@link ClassMember} content.
+ *
+ * @author Matt Coley
+ */
 @Dependent
-public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements UpdatableNavigable {
+public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements UpdatableNavigable, ClassNavigable {
 	private static final Logger logger = Logging.get(AssemblerPane.class);
 
 	private final AssemblerPipelineManager pipelineManager;
@@ -67,8 +73,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
 						 @Nonnull AssemblerToolTabs assemblerToolTabs,
 						 @Nonnull SearchBar searchBar,
-						 @Nonnull KeybindingConfig keys
-	) {
+						 @Nonnull KeybindingConfig keys) {
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
 
@@ -117,6 +122,19 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Override
 	public PathNode<?> getPath() {
 		return path;
+	}
+
+	@Nonnull
+	@Override
+	public ClassPathNode getClassPath() {
+		return Objects.requireNonNull(path.getParentOfType(ClassInfo.class), "Missing class parent path");
+	}
+
+	@Override
+	public void requestFocus(@Nonnull ClassMember member) {
+		if (lastRoughAst != null) {
+			System.out.println(lastRoughAst);
+		}
 	}
 
 	@Override
@@ -301,11 +319,11 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		});
 	}
 
-	<T> void acceptResult(Result<T> result, Consumer<T> acceptor, ProblemPhase phase) {
+	private <T> void acceptResult(Result<T> result, Consumer<T> acceptor, ProblemPhase phase) {
 		result.ifOk(acceptor).ifErr(errors -> processErrors(errors, phase));
 	}
 
-	<T> void acceptResult(Result<T> result, Consumer<T> acceptor, Consumer<T> pAcceptor, ProblemPhase phase) {
+	private <T> void acceptResult(Result<T> result, Consumer<T> acceptor, Consumer<T> pAcceptor, ProblemPhase phase) {
 		result.ifOk(acceptor).ifErr((pOk, errors) -> {
 			pAcceptor.accept(pOk);
 			processErrors(errors, phase);
