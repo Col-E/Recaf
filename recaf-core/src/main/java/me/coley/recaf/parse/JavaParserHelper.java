@@ -1,21 +1,22 @@
 package me.coley.recaf.parse;
 
 import com.github.javaparser.*;
+import com.github.javaparser.ParserConfiguration.LanguageLevel;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.expr.SimpleName;
-import jregex.Matcher;
+import java.util.Arrays;
 import me.coley.recaf.Controller;
 import me.coley.recaf.code.FieldInfo;
 import me.coley.recaf.code.ItemInfo;
 import me.coley.recaf.code.LiteralExpressionInfo;
 import me.coley.recaf.code.MethodInfo;
 import me.coley.recaf.parse.evaluation.ExpressionEvaluator;
-import me.coley.recaf.util.RegexUtil;
-import me.coley.recaf.util.StringUtil;
+import me.coley.recaf.util.logging.Logging;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,13 +27,16 @@ import java.util.Optional;
  * @author Matt Coley
  */
 public class JavaParserHelper {
+
+	private static final Logger logger = Logging.get(JavaParserHelper.class);
+
 	private final WorkspaceSymbolSolver symbolSolver;
 	private final JavaParser parser;
 
 	private JavaParserHelper(WorkspaceSymbolSolver symbolSolver) {
 		this.symbolSolver = symbolSolver;
 		parser = new JavaParser(new ParserConfiguration()
-				.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_16)
+				.setLanguageLevel(LanguageLevel.JAVA_16)
 				.setSymbolResolver(this.symbolSolver));
 	}
 
@@ -82,12 +86,20 @@ public class JavaParserHelper {
 			// There is a compilation unit, but is it usable?
 			CompilationUnit unit = result.getResult().get();
 			if (tryRecover && isInvalidCompilationUnit(unit)) {
+				logger.info("{} problems found when parsing class", result.getProblems().size());
+					for (Problem problem : result.getProblems()) {
+					logger.info("\t - {}", problem);
+				}
 				// Its not usable at all, attempt to recover
 				return new JavaParserRecovery(this).parseClassWithRecovery(code, problems);
 			} else {
 				// The unit is usable, but may contain some localized problems.
 				// Check if we want to try to resolve any reported problems.
 				if (tryRecover && !result.getProblems().isEmpty()) {
+					logger.info("{} problems found when parsing class", result.getProblems().size());
+					for (Problem problem : result.getProblems()) {
+						logger.info("\t - {}", problem);
+					}
 					return new JavaParserRecovery(this).parseClassWithRecovery(code, problems);
 				}
 				// Update unit and roll with whatever we got.
@@ -104,7 +116,7 @@ public class JavaParserHelper {
 	 * JavaParser {@link com.github.javaparser.resolution.types.ResolvedReferenceType} will fail if there
 	 * is a mismatch in generic type arguments. If we're resolving from workspace references, those do not get
 	 * their type arguments generated, so it expects {@code 0} but our decompiled source may specify {@code 1} or
-	 * more. This regular expression matches an equal number of items between two {@code <>} pairs.
+	 * more. This code will match any generic type declaration (between two {@code <>} pairs).
 	 * <br>
 	 * Examples of valid matches:
 	 * <pre>
@@ -112,6 +124,7 @@ public class JavaParserHelper {
 	 *     <List<Set<String>>>
 	 *     <T extends EntityLivingBase<X> | Foo>
 	 * </pre>
+	 * But will not match if the content is inside a string.
 	 * We then replace the matched content with an equal number of spaces so that none of the text positions
 	 * become offset.
 	 *
@@ -121,14 +134,86 @@ public class JavaParserHelper {
 	 * @return Code with generics content replaced with spaces.
 	 */
 	private String filterGenerics(String code) {
-		// This isn't perfect, but should replace most basic generic type usage
-		Matcher matcher = RegexUtil.getMatcher("(?:<)((?:(?!\\1).)*>)", code);
-		while (matcher.find()) {
-			String temp = code.substring(0, matcher.start());
-			String filler = StringUtil.repeat(" ", matcher.length());
-			code = temp + filler + code.substring(matcher.end());
+        char[] codeAsCharArray = code.toCharArray();
+		int nestedGenericLevel = 0;
+		boolean isEscaped = false;
+		boolean isString = false;
+		boolean isCharEscaped = false;
+
+		char lastChar = Character.MIN_VALUE;
+
+		int beginReplacement = -1;
+		for (int i = 0; i < codeAsCharArray.length; i++) {
+			if (i > 0) lastChar = codeAsCharArray[i - 1];
+			var currentChar = codeAsCharArray[i];
+			if (isEscaped) {
+				isEscaped = false;
+				continue;
+			}
+			if (currentChar == '\\') {
+				isEscaped = true;
+			} else if (currentChar == '\"') {
+				isString = !isString;
+			} else {
+				if (isCharEscaped) {
+					if (currentChar == '\'') {
+						isCharEscaped = false;
+					}
+					continue;
+				}
+				if (isString) {
+					continue;
+				}
+				if (Character.isSpaceChar(currentChar)) continue;
+
+				if (currentChar == '\'') {
+					isCharEscaped = true;
+				} else if (currentChar == '<') {
+					//in generic declaration, two '<' char cannot be consecutive
+					if (lastChar == '<') {
+						beginReplacement = -1;
+						nestedGenericLevel = 0;
+					} else {
+						if (beginReplacement == -1) {
+							beginReplacement = i;
+						}
+						nestedGenericLevel++;
+					}
+				} else if (currentChar == '>') {
+					if (beginReplacement > -1) {
+						nestedGenericLevel--;
+						if (nestedGenericLevel == 0) {
+							Arrays.fill(codeAsCharArray, beginReplacement, i + 1, ' ');
+							beginReplacement = -1;
+						}
+					}
+				} else if (isNotAGenericDeclaration(currentChar, lastChar)) {
+					//we are not a generic type declaration
+					if (nestedGenericLevel > 0) {
+						beginReplacement = -1;
+						nestedGenericLevel = 0;
+					}
+				}
+			}
 		}
-		return code;
+		if (nestedGenericLevel != 0) {
+			System.out.println(" -- nested generic level is not 0 at EOF: " + nestedGenericLevel);
+		}
+		return new String(codeAsCharArray);
+	}
+
+	/**
+	 * @param currentChar 
+	 * 		The current char being read
+	 * @param lastChar 
+	 * 		The last char read
+	 * @return {@code true} if we can be sure that we are not in a generic declaration; {@code false} otherwise
+	 */
+	private boolean isNotAGenericDeclaration(char currentChar, char lastChar) {
+		if (currentChar == '[' || currentChar == ']' || currentChar == ',') return false;
+        if (currentChar == '&') return lastChar == '&';
+		if (currentChar == '|') return lastChar == '|';
+		return ! Character.isJavaIdentifierPart((int)currentChar);
 	}
 
 	/**
