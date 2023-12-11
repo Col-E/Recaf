@@ -4,7 +4,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-def javaFxVersion = '21'
+def javaFxVersion = '22-ea+16'
 def javaFxIncludeInDist = System.getProperty('skip.jfx.bundle') == null
 
 javafx {
