@@ -156,6 +156,12 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		}
 	}
 
+	@Override
+	public boolean isTrackable() {
+		// Disabling tracking allows other panels with the same path-node to be opened.
+		return false;
+	}
+
 	/**
 	 * Disassemble the content of the {@link #path} and set the editor text to the resulting output.
 	 *

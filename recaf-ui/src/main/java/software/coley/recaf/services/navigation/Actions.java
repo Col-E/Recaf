@@ -1357,7 +1357,7 @@ public class Actions implements Service {
 			throw new IncompletePathException(ClassBundle.class);
 		}
 
-		return getOrCreatePathContent(path, () -> {
+		return createContent(() -> {
 			// Create text/graphic for the tab to create.
 			String name = "?";
 			if (path instanceof ClassPathNode classPathNode)
@@ -1642,10 +1642,10 @@ public class Actions implements Service {
 	 * 		Methods to noop.
 	 */
 	public void makeMethodsNoop(@Nonnull Workspace workspace,
-								   @Nonnull WorkspaceResource resource,
-								   @Nonnull JvmClassBundle bundle,
-								   @Nonnull JvmClassInfo declaringClass,
-								   @Nonnull Collection<MethodMember> methods) {
+								@Nonnull WorkspaceResource resource,
+								@Nonnull JvmClassBundle bundle,
+								@Nonnull JvmClassInfo declaringClass,
+								@Nonnull Collection<MethodMember> methods) {
 		ClassWriter writer = new ClassWriter(0);
 		MethodNoopingVisitor visitor = new MethodNoopingVisitor(writer, MethodPredicate.of(methods));
 		declaringClass.getClassReader().accept(visitor, 0);
@@ -1675,10 +1675,7 @@ public class Actions implements Service {
 	public Navigable getOrCreatePathContent(@Nonnull PathNode<?> path, @Nonnull Supplier<DockingTab> factory) {
 		List<Navigable> children = navigationManager.getNavigableChildrenByPath(path);
 		if (children.isEmpty()) {
-			// Create the tab for the content, then display it.
-			DockingTab tab = factory.get();
-			tab.select();
-			return (Navigable) tab.getContent();
+			return createContent(factory);
 		} else {
 			// Content by path is already open.
 			Navigable navigable = children.get(0);
@@ -1686,6 +1683,14 @@ public class Actions implements Service {
 			navigable.requestFocus();
 			return navigable;
 		}
+	}
+
+	@Nonnull
+	private static Navigable createContent(@Nonnull Supplier<DockingTab> factory) {
+		// Create the tab for the content, then display it.
+		DockingTab tab = factory.get();
+		tab.select();
+		return (Navigable) tab.getContent();
 	}
 
 	private static void setupFileTabContextMenu(@Nonnull FileInfo info, DockingTab tab) {
