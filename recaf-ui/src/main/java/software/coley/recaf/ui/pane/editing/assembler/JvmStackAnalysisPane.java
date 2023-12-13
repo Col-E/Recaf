@@ -15,6 +15,7 @@ import javafx.scene.control.TableView;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTEmpty;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
+import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.compile.analysis.*;
 import me.darknet.assembler.compile.analysis.frame.Frame;
@@ -86,28 +87,28 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		stackTable.setDisable(false);
 		varTable.setDisable(false);
 
-		// Compute what instruction index the caret is at
+		// Compute what instruction index the caret is at.
 		int insnIndex = -1;
-		int pos = editor.getCodeArea().getCaretPosition();
-		for (ASTElement element : astElements) {
-			if (element instanceof ASTMethod method && method.range().within(pos)) {
-				List<ASTInstruction> instructions = method.code().instructions();
-				int paragraph = editor.getCodeArea().getCurrentParagraph();
-				int result = Collections.binarySearch(instructions, new ASTEmpty(new Token(
-						new Range(pos, pos + 1),
-						new Location(paragraph, 0, null),
-						TokenType.IDENTIFIER,
-						"."
-				)), (o1, o2) -> {
-					Location l1 = o1.location();
-					Location l2 = o2.location();
-					if (l1 == null) return 1;
-					else if (l2 == null) return -1;
-					return Objects.compare(l1, l2, Comparator.naturalOrder());
-				});
-				if (result < 0) result = -result;
-				insnIndex = Math.min(instructions.size() - 1, result + 1);
-				break;
+		findIndex:
+		{
+			for (ASTElement astElement : astElements) {
+				if (astElement instanceof ASTMethod astMethod) {
+					int index = getSelectedInsnIndexOfMethod(astMethod);
+					if (index >= 0) {
+						insnIndex = index;
+						break;
+					}
+				} else if (astElement instanceof ASTClass astClass) {
+					for (ASTElement child : astClass.children()) {
+						if (child instanceof ASTMethod astMethod) {
+							int index = getSelectedInsnIndexOfMethod(astMethod);
+							if (index >= 0) {
+								insnIndex = index;
+								break findIndex;
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -166,6 +167,28 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		}
 		varTable.getItems().setAll(varItems);
 		stackTable.getItems().setAll(stackItems);
+	}
+
+	private int getSelectedInsnIndexOfMethod(@Nonnull ASTMethod method) {
+		int pos = editor.getCodeArea().getCaretPosition();
+		if (!method.range().within(pos))
+			return -1;
+		List<ASTInstruction> instructions = method.code().instructions();
+		int paragraph = editor.getCodeArea().getCurrentParagraph();
+		int result = Collections.binarySearch(instructions, new ASTEmpty(new Token(
+				new Range(pos, pos + 1),
+				new Location(paragraph, 0, null),
+				TokenType.IDENTIFIER,
+				"."
+		)), (o1, o2) -> {
+			Location l1 = o1.location();
+			Location l2 = o2.location();
+			if (l1 == null) return 1;
+			else if (l2 == null) return -1;
+			return Objects.compare(l1, l2, Comparator.naturalOrder());
+		});
+		if (result < 0) result = -result;
+		return Math.min(instructions.size() - 1, result + 1);
 	}
 
 	private void clearData() {

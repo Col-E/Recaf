@@ -2,10 +2,14 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.geometry.Orientation;
 import javafx.scene.control.SplitPane;
 import me.darknet.assembler.ast.ASTElement;
+import me.darknet.assembler.ast.specific.ASTClass;
+import me.darknet.assembler.ast.specific.ASTField;
+import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.analysis.AnalysisException;
 import me.darknet.assembler.compiler.ClassRepresentation;
@@ -13,6 +17,7 @@ import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.parser.Token;
 import me.darknet.assembler.util.Location;
+import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
@@ -25,6 +30,8 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.KeybindingConfig;
+import software.coley.recaf.ui.control.BoundTab;
+import software.coley.recaf.ui.control.IconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
@@ -33,9 +40,8 @@ import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
-import software.coley.recaf.util.Animations;
-import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.Unchecked;
+import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
+import software.coley.recaf.util.*;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
 import java.time.Duration;
@@ -61,6 +67,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
 	private final AtomicBoolean updateLock = new AtomicBoolean();
+	private final Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider;
 	private AssemblerPipeline<? extends ClassInfo, ? extends ClassRepresentation> pipeline;
 	private ClassRepresentation lastAssembledClassRepresentation;
 	private ClassInfo lastAssembledClass;
@@ -73,9 +80,11 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
 						 @Nonnull AssemblerToolTabs assemblerToolTabs,
 						 @Nonnull SearchBar searchBar,
-						 @Nonnull KeybindingConfig keys) {
+						 @Nonnull KeybindingConfig keys,
+						 @Nonnull Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider) {
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
+		this.fieldsAndMethodsPaneProvider = fieldsAndMethodsPaneProvider;
 
 		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
@@ -97,9 +106,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			if (keys.getSave().match(event))
 				assembleAndUpdateWorkspace();
 		});
-
-		// TODO: For class level assemblers we need to track the 'editor' caret position and update the tool tabs
-		//  to hold a ClassMemberPathNode to the current member the caret position is over
 	}
 
 	@Override
@@ -132,14 +138,86 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	@Override
 	public void requestFocus(@Nonnull ClassMember member) {
-		if (lastRoughAst != null) {
-			System.out.println(lastRoughAst);
+		if (lastConcreteAst != null) {
+			for (ASTElement root : lastConcreteAst) {
+				if (root instanceof ASTClass astClass) {
+					for (ASTElement child : astClass.children()) {
+						String name;
+						String desc;
+						if (member.isMethod() && child instanceof ASTMethod astMethod) {
+							name = astMethod.getName().literal();
+							desc = astMethod.getDescriptor().literal();
+						} else if (member.isField() && child instanceof ASTField astField) {
+							name = astField.getName().literal();
+							desc = astField.getDescriptor().literal();
+						} else {
+							name = desc = null;
+						}
+						if (member.getName().equals(name) && member.getDescriptor().equals(desc)) {
+							CodeArea area = editor.getCodeArea();
+							area.moveTo(child.range().start());
+							area.showParagraphAtCenter(area.getCurrentParagraph());
+							return;
+						}
+					}
+				}
+			}
 		}
 	}
 
 	@Override
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
+		// When we initially set a path, if it's for a class:
+		//  - install the fields/methods navigation side-tab
+		//  - setup handling for what we currently have selected
+		if (this.path == null && path instanceof ClassPathNode classPathNode) {
+			// Show declared fields/methods
+			FieldsAndMethodsPane fieldsAndMethodsPane = fieldsAndMethodsPaneProvider.get();
+			fieldsAndMethodsPane.setupSelectionNavigationListener(this);
+			addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
+					new IconView(Icons.getImage(Icons.FIELD_N_METHOD)),
+					fieldsAndMethodsPane
+			));
+			fieldsAndMethodsPane.onUpdatePath(path);
+
+			// When the caret position updates, notify the tool tabs of the newly selected member.
+			editor.getCaretPosEventStream().addObserver(e -> {
+				if (lastConcreteAst == null)
+					return;
+				ClassInfo declaringClass = classPathNode.getValue();
+				int caret = editor.getCodeArea().getCaretPosition();
+				for (ASTElement root : lastConcreteAst) {
+					if (root instanceof ASTClass astClass) {
+						for (ASTElement child : astClass.children()) {
+							ClassMember classMember;
+							if (child instanceof ASTMethod astMethod && astMethod.range().within(caret)) {
+								String name = astMethod.getName().literal();
+								String desc = astMethod.getDescriptor().literal();
+								classMember = declaringClass.getDeclaredMethod(name, desc);
+							} else if (child instanceof ASTField astField && astField.range().within(caret)) {
+								String name = astField.getName().literal();
+								String desc = astField.getDescriptor().literal();
+								classMember = declaringClass.getDeclaredField(name, desc);
+							} else {
+								continue;
+							}
+
+							if (classMember != null) {
+								assemblerToolTabs.onUpdatePath(classPathNode.child(classMember));
+							} else {
+								assemblerToolTabs.onUpdatePath(path);
+							}
+							assemblerToolTabs.consumeClass(lastAssembledClassRepresentation, lastAssembledClass);
+							return;
+						}
+					}
+				}
+			});
+		}
+
 		this.path = path;
+
+		// Update UI state
 		if (!updateLock.get()) {
 			pipeline = pipelineManager.getPipeline(path);
 

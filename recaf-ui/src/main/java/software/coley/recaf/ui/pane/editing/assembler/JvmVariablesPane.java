@@ -16,6 +16,8 @@ import javafx.util.Callback;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTIdentifier;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
+import me.darknet.assembler.ast.specific.ASTClass;
+import me.darknet.assembler.ast.specific.ASTMember;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.compile.analysis.AnalysisResults;
 import me.darknet.assembler.compile.analysis.Local;
@@ -33,6 +35,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -91,6 +94,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 				int caret = area.getCaretPosition();
 				var nextEntry = elementRanges.higherEntry(caret + 1);
 				if (nextEntry == null) nextEntry = elementRanges.firstEntry();
+				if (nextEntry == null) return;
 				Range value = nextEntry.getValue();
 				area.selectRange(value.start(), value.end());
 				area.showParagraphAtCenter(area.getCurrentParagraph());
@@ -145,27 +149,38 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 			variableUsages.put(name, existing.withNewWrite(element));
 		};
 		if (astElements != null) {
+			Consumer<ASTMethod> methodConsumer = astMethod -> {
+				if (currentMethod != null && !Objects.equals(currentMethod.getName(), astMethod.getName().literal()))
+					return;
+				for (ASTIdentifier parameter : astMethod.parameters()) {
+					String literalName = parameter.literal();
+					variableUsages.putIfAbsent(literalName, emptyUsage);
+				}
+				for (ASTInstruction instruction : astMethod.code().instructions()) {
+					String insnName = instruction.identifier().content();
+					boolean isLoad = insnName.endsWith("load");
+					if (((isLoad || insnName.endsWith("store")) && insnName.charAt(1) != 'a') || insnName.equals("iinc")) {
+						List<ASTElement> arguments = instruction.arguments();
+						if (!arguments.isEmpty()) {
+							ASTElement arg = arguments.get(0);
+							String varName = arg instanceof ASTIdentifier identifierArg ?
+									identifierArg.literal() : arg.content();
+							if (isLoad) {
+								readUpdater.accept(varName, instruction);
+							} else {
+								writeUpdater.accept(varName, instruction);
+							}
+						}
+					}
+				}
+			};
 			for (ASTElement astElement : astElements) {
 				if (astElement instanceof ASTMethod astMethod) {
-					for (ASTIdentifier parameter : astMethod.parameters()) {
-						String literalName = parameter.literal();
-						variableUsages.putIfAbsent(literalName, emptyUsage);
-					}
-					for (ASTInstruction instruction : astMethod.code().instructions()) {
-						String insnName = instruction.identifier().content();
-						boolean isLoad = insnName.endsWith("load");
-						if (((isLoad || insnName.endsWith("store")) && insnName.charAt(1) != 'a') || insnName.equals("iinc")) {
-							List<ASTElement> arguments = instruction.arguments();
-							if (arguments.size() > 0) {
-								ASTElement arg = arguments.get(0);
-								String varName = arg instanceof ASTIdentifier identifierArg ?
-										identifierArg.literal() : arg.content();
-								if (isLoad) {
-									readUpdater.accept(varName, instruction);
-								} else {
-									writeUpdater.accept(varName, instruction);
-								}
-							}
+					methodConsumer.accept(astMethod);
+				} else if (astElement instanceof ASTClass astClass) {
+					for (ASTElement child : astClass.children()) {
+						if (child instanceof ASTMethod astMethod) {
+							methodConsumer.accept(astMethod);
 						}
 					}
 				}
