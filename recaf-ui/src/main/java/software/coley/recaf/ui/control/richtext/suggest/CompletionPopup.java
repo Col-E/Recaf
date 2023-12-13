@@ -85,7 +85,9 @@ public abstract class CompletionPopup<T> {
 			// To prevent an infinite loop, we'll change the target value.
 			if (event.getTarget() == popup.getScene() && code != TAB && code != ENTER) {
 				listView.fireEvent(event.copyFor(popup, listView));
-				event.consume();
+
+				// Multi-key action like 'Control Z' fail if we consume the event.
+				if (!event.isControlDown()) event.consume();
 			}
 		});
 	}
@@ -105,7 +107,6 @@ public abstract class CompletionPopup<T> {
 
 		completionPopupFocuser = new CompletionPopupFocuser(this);
 		completionPopupUpdater = new CompletionPopupUpdater<>(completer, this);
-
 
 		area.addEventFilter(KeyEvent.KEY_RELEASED, completionPopupUpdater);
 		area.addEventFilter(KeyEvent.KEY_TYPED, completionPopupFocuser);
