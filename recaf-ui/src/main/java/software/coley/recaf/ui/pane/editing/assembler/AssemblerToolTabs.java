@@ -5,9 +5,8 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.collections.ObservableList;
+import javafx.geometry.Orientation;
 import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.layout.BorderPane;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compiler.ClassRepresentation;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -18,6 +17,7 @@ import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
+import software.coley.recaf.ui.pane.editing.SideTabs;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 
@@ -33,12 +33,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Coley
  */
 @Dependent
-public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsumer, AssemblerBuildConsumer,
+public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildConsumer,
 		Navigable, UpdatableNavigable, EditorComponent {
 	private final Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider;
 	private final Instance<JvmVariablesPane> jvmVariablesPaneProvider;
 	private final List<Navigable> children = new CopyOnWriteArrayList<>();
-	private final TabPane tabPane = new TabPane();
+	private final SideTabs tabs = new SideTabs(Orientation.HORIZONTAL);
 	private PathNode<?> path;
 
 	@Inject
@@ -46,7 +46,14 @@ public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsume
 							 @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider) {
 		this.jvmStackAnalysisPaneProvider = jvmStackAnalysisPaneProvider;
 		this.jvmVariablesPaneProvider = jvmVariablesPaneProvider;
-		setCenter(tabPane);
+	}
+
+	/**
+	 * @return Side tabs instance.
+	 */
+	@Nonnull
+	public SideTabs getTabs() {
+		return tabs;
 	}
 
 	private void createChildren(@Nonnull ClassInfo classInPath) {
@@ -56,7 +63,7 @@ public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsume
 			// Create contents for JVM classes
 			JvmStackAnalysisPane stackAnalysisPane = jvmStackAnalysisPaneProvider.get();
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
-			ObservableList<Tab> tabs = tabPane.getTabs();
+			ObservableList<Tab> tabs = this.tabs.getTabs();
 			tabs.clear();
 			tabs.add(new BoundTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, stackAnalysisPane));
 			tabs.add(new BoundTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane));
@@ -113,6 +120,11 @@ public class AssemblerToolTabs extends BorderPane implements AssemblerAstConsume
 	@Override
 	public Collection<Navigable> getNavigableChildren() {
 		return Collections.unmodifiableList(children);
+	}
+
+	@Override
+	public void requestFocus() {
+		// no-op
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.pane.editing;
 
 import jakarta.annotation.Nonnull;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
@@ -94,7 +95,7 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	protected void addSideTab(Tab tab) {
 		// Lazily create/add side-tabs to UI.
 		if (sideTabs == null) {
-			sideTabs = new SideTabs();
+			sideTabs = new SideTabs(Orientation.VERTICAL);
 			children.add(sideTabs);
 			setRight(sideTabs);
 		}

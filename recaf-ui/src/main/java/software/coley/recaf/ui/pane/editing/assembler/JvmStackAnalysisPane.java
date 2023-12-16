@@ -30,6 +30,7 @@ import software.coley.collections.Lists;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -201,7 +202,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 
 	private void scheduleTableUpdate() {
 		if (currentMethod == null || analysisLookup == null || editor == null) return;
-		notifyQueue.set(new Object());
+		FxThreadUtil.run(() -> notifyQueue.set(new Object()));
 	}
 
 	@Override

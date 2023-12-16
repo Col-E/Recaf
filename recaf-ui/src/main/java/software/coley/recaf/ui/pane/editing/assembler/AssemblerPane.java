@@ -4,8 +4,6 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import javafx.geometry.Orientation;
-import javafx.scene.control.SplitPane;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTField;
@@ -111,11 +109,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Override
 	protected void generateDisplay() {
 		if (!hasDisplay()) {
-			// TODO: Re-create 'SideTabs' but vertical instead of split-pane
-			//  - The UX should mirror the tab system you see in IDE's and SplitPane isn't like that
-			SplitPane split = new SplitPane(editor, assemblerToolTabs);
-			split.setOrientation(Orientation.VERTICAL);
-			setDisplay(split);
+			setDisplay(editor);
+			setBottom(assemblerToolTabs.getTabs());
 
 			// Trigger a disassembly so the initial text is set in the editor.
 			disassemble().whenComplete((unused, error) -> {
