@@ -181,20 +181,17 @@ public class Recaf {
 	 */
 	public static Path getDirectory() {
 		Path configDir = Recaf.configDir;
-		if (configDir == null) {
-			try {
-				configDir = Recaf.configDir = Paths.get(BaseDirectories.get().configDir)
+
+		if (OSUtil.getOSType() == OSUtil.WINDOWS) {
+			configDir = Paths.get(System.getenv("APPDATA"), "Recaf");
+		} else {
+			if (configDir == null) {
+				configDir = Recaf.configDir = Paths
+						.get(BaseDirectories.get().configDir)
 						.resolve("Recaf");
-			} catch (Throwable t) {
-				// BaseDirectories library has a powershell problem...
-				// This should only affect windows
-				if (OSUtil.getOSType() == OSUtil.WINDOWS) {
-					configDir = Paths.get(System.getenv("APPDATA"), "Recaf");
-				} else {
-					throw new IllegalStateException("Failed to initialize Recaf directory");
-				}
 			}
 		}
+
 		return configDir;
 	}
 
