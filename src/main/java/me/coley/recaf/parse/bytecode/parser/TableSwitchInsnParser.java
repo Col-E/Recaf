@@ -27,7 +27,7 @@ public class TableSwitchInsnParser extends AbstractParser<TableSwitchInsnAST> {
 			// Collect parameters
 			String[] data = RegexUtil.allMatches(line, "(?<=\\[).*?(?=\\])");
 			if (data.length < 3)
-				throw new ASTParseException(lineNo, "Not enough paramters");
+				throw new ASTParseException(lineNo, "Not enough parameters");
 			// min & max
 			String minMaxS = data[0];
 			if (!minMaxS.contains(":"))
