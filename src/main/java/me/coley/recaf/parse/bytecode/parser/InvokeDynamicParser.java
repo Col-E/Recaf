@@ -24,7 +24,7 @@ public class InvokeDynamicParser extends AbstractParser<InvokeDynamicAST> {
 			// INVOKEDYNAMIC name desc handle[...] args[...]
 			String[] trim = line.trim().split("\\s+(?=.*\\[(?=.*\\[))");
 			if (trim.length < 4)
-				throw new ASTParseException(lineNo, "Not enough paramters");
+				throw new ASTParseException(lineNo, "Not enough parameters");
 			// 0 = op
 			// 1 = name
 			// 2 = desc

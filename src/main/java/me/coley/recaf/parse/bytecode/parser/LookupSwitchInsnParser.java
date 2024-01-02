@@ -27,7 +27,7 @@ public class LookupSwitchInsnParser extends AbstractParser<LookupSwitchInsnAST> 
 			// Collect parameters
 			String[] data = RegexUtil.allMatches(line, "(?<=\\[).*?(?=\\])");
 			if (data.length < 2)
-				throw new ASTParseException(lineNo, "Not enough paramters");
+				throw new ASTParseException(lineNo, "Not enough parameters");
 			// mapping
 			String mapS = data[0];
 			Map<NumberAST, NameAST> mapping = new LinkedHashMap<>();

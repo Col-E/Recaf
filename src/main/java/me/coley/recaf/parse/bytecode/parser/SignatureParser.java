@@ -21,7 +21,7 @@ public class SignatureParser extends AbstractParser<SignatureAST> {
 		try {
 			String[] trim = line.trim().split("\\s+");
 			if (trim.length < 2)
-				throw new ASTParseException(lineNo, "Not enough paramters");
+				throw new ASTParseException(lineNo, "Not enough parameters");
 			String sig = trim[1];
 			// TODO: Verify signature?
 			//  - Technically you can put in garbage data in here...

@@ -15,7 +15,7 @@ public class AliasDeclarationParser extends AbstractParser<AliasAST> {
 		try {
 			String[] trim = line.trim().split("\\s+");
 			if (trim.length < 2)
-				throw new ASTParseException(lineNo, "Not enough paramters");
+				throw new ASTParseException(lineNo, "Not enough parameters");
 			int start = line.indexOf(trim[0]);
 			// op
 			OpcodeParser opParser = new OpcodeParser();
