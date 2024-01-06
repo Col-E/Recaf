@@ -33,6 +33,23 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	protected P path;
 
 	/**
+	 * @param targetType
+	 * 		Type of children to filter with.
+	 * @param action
+	 * 		Action to run on children of the target type.
+	 * @param <T>
+	 * 		Target type.
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T> void eachChild(@Nonnull Class<T> targetType, @Nonnull Consumer<T> action) {
+		for (Navigable child : children) {
+			if (targetType.isAssignableFrom(child.getClass())) {
+				action.accept((T) child);
+			}
+		}
+	}
+
+	/**
 	 * Clear the display.
 	 */
 	protected void clearDisplay() {

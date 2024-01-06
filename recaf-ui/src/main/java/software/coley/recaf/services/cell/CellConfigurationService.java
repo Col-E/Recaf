@@ -397,6 +397,7 @@ public class CellConfigurationService implements Service {
 	 *
 	 * @return Context-menu for the item represented by the path.
 	 */
+	@Nullable
 	@SuppressWarnings("unchecked")
 	public ContextMenu contextMenuOf(@Nonnull ContextSource source, @Nonnull PathNode<?> item) {
 		Workspace workspace = item.getValueOfType(Workspace.class);
@@ -497,6 +498,20 @@ public class CellConfigurationService implements Service {
 			return contextMenuService.getBundleContextMenuProvider(source, workspace, resource, bundlePath.getValue()).makeMenu();
 		} else if (item instanceof ResourcePathNode) {
 			return contextMenuService.getResourceContextMenuProvider(source, workspace, resource).makeMenu();
+		} else if (item instanceof AssemblerPathNode assemblerPath) {
+			ClassBundle<?> bundle = assemblerPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Assembler path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo declaring = assemblerPath.getValueOfType(ClassInfo.class);
+			if (declaring == null) {
+				logger.error("Assembler path node missing declaring class section: {}", item);
+				return null;
+			}
+
+			return contextMenuService.getAssemblerContextMenuProvider(source, workspace, resource, bundle, declaring, assemblerPath.getValue()).makeMenu();
 		}
 
 		// No menu

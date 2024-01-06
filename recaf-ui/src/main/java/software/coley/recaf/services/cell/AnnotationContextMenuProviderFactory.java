@@ -29,7 +29,7 @@ public interface AnnotationContextMenuProviderFactory extends ContextMenuProvide
 	 * @param annotation
 	 * 		The annotation to create a menu for.
 	 *
-	 * @return Menu provider for the method.
+	 * @return Menu provider for the annotation.
 	 */
 	@Nonnull
 	default ContextMenuProvider getAnnotationContextMenuProvider(@Nonnull ContextSource source,

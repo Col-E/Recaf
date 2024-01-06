@@ -20,11 +20,13 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.assembler.AssemblerPipeline;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
 import software.coley.recaf.services.navigation.ClassNavigable;
+import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.KeybindingConfig;
@@ -77,6 +79,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Inject
 	public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
 						 @Nonnull AssemblerToolTabs assemblerToolTabs,
+						 @Nonnull AssemblerContextActionSupport contextActionSupport,
 						 @Nonnull SearchBar searchBar,
 						 @Nonnull KeybindingConfig keys,
 						 @Nonnull Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider) {
@@ -98,7 +101,12 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 				.successionEnds(Duration.ofMillis(timeToWait))
 				.addObserver(e -> assemble());
 
+		contextActionSupport.install(editor);
 		searchBar.install(editor);
+
+		// Context action should be passed along path updates
+		children.add(contextActionSupport);
+		children.add(assemblerToolTabs);
 
 		setOnKeyPressed(event -> {
 			if (keys.getSave().match(event))
@@ -198,11 +206,12 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							}
 
 							if (classMember != null) {
-								assemblerToolTabs.onUpdatePath(classPathNode.child(classMember));
+								ClassMemberPathNode memberPath = classPathNode.child(classMember);
+								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
 							} else {
-								assemblerToolTabs.onUpdatePath(path);
+								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));
 							}
-							assemblerToolTabs.consumeClass(lastAssembledClassRepresentation, lastAssembledClass);
+							eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastAssembledClassRepresentation, lastAssembledClass));
 							return;
 						}
 					}
@@ -211,6 +220,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		}
 
 		this.path = path;
+		pathUpdateListeners.forEach(listener -> listener.accept(path));
 
 		// Update UI state
 		if (!updateLock.get()) {
@@ -219,8 +229,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			// Setup from existing class data from the path
 			lastAssembledClass = path.getValueOfType(ClassInfo.class);
 			lastAssembledClassRepresentation = pipeline.getRepresentation(Unchecked.cast(lastAssembledClass));
-			assemblerToolTabs.onUpdatePath(path);
-			assemblerToolTabs.consumeClass(lastAssembledClassRepresentation, lastAssembledClass);
+			eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));
+			eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastAssembledClassRepresentation, lastAssembledClass));
 
 			// Some sub-components in the tabs are not initialized immediately, so we install the component here.
 			assemblerToolTabs.install(editor);
@@ -272,8 +282,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					processErrors(tokenResult.errors(), ProblemPhase.LINT);
 				lastTokens = tokenResult.get();
 
-				BiConsumer<List<ASTElement>, AstPhase> astConsumer = assemblerToolTabs::consumeAst;
-
 				// Attempt to parse the token list into 'rough' AST.
 				acceptResult(pipeline.roughParse(lastTokens), roughAst -> {
 					lastRoughAst = roughAst;
@@ -282,15 +290,15 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					acceptResult(pipeline.concreteParse(roughAst), concreteAst -> {
 						// The transform was a success.
 						lastConcreteAst = concreteAst;
-						astConsumer.accept(concreteAst, AstPhase.CONCRETE);
+						eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(concreteAst, AstPhase.CONCRETE));
 					}, pAst -> {
 						// The transform failed.
 						lastPartialAst = pAst;
-						astConsumer.accept(pAst, AstPhase.CONCRETE_PARTIAL);
+						eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(pAst, AstPhase.CONCRETE_PARTIAL));
 					}, ProblemPhase.LINT);
 				}, pAst -> {
 					// We failed to parse the token list fully, but may have a partial result.
-					astConsumer.accept(pAst, AstPhase.ROUGH_PARTIAL);
+					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(pAst, AstPhase.ROUGH_PARTIAL));
 					lastPartialAst = pAst;
 				}, ProblemPhase.LINT);
 			} catch (Exception ex) {
@@ -335,7 +343,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					}
 					 */
 
-					assemblerToolTabs.consumeClass(representation, lastAssembledClass);
+					eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(representation, lastAssembledClass));
 				}).ifErr(errors -> processErrors(errors, ProblemPhase.BUILD));
 			} catch (Throwable ex) {
 				logger.error("Uncaught exception when assembling contents of {}", path, ex);
