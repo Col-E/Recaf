@@ -32,7 +32,7 @@ public class WorkspacePathNode extends AbstractPathNode<Object, Workspace> {
 	 * @param resource
 	 * 		Resource to wrap into node.
 	 *
-	 * @return Path node of resource, with current workspace as parent.
+	 * @return Path node of resource, with the current workspace as parent.
 	 */
 	@Nonnull
 	public ResourcePathNode child(@Nonnull WorkspaceResource resource) {
