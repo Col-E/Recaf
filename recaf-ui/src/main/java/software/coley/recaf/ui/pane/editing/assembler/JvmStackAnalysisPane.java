@@ -50,6 +50,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 	private int lastInsnIndex;
 
 	@Inject
+	@SuppressWarnings("unchecked")
 	public JvmStackAnalysisPane(@Nonnull CellConfigurationService cellConfigurationService,
 								@Nonnull TextFormatConfig formatConfig,
 								@Nonnull Workspace workspace) {

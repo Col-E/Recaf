@@ -67,7 +67,7 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 						actions.gotoDeclaration(classPath)
 								.requestFocus(field);
 					} catch (IncompletePathException ex) {
-						logger.error("Cannot go to method due to incomplete path", ex);
+						logger.error("Cannot go to field due to incomplete path", ex);
 					}
 				});
 			} else {

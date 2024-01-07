@@ -12,7 +12,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.util.Callback;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTIdentifier;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
@@ -50,6 +49,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	private final TableView<VariableData> table = new TableView<>();
 
 	@Inject
+	@SuppressWarnings("unchecked")
 	public JvmVariablesPane(@Nonnull CellConfigurationService cellConfigurationService,
 							@Nonnull TextFormatConfig formatConfig,
 							@Nonnull Workspace workspace) {
