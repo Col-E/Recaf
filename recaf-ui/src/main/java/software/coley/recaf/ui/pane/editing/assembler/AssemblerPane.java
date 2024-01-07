@@ -332,7 +332,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							String methodName = methodEntry.getKey().name();
 							AnalysisException failure = methodEntry.getValue().getAnalysisFailure();
 							if (failure != null) {
-								Animations.animateWarn(this, 1000);
+								FxThreadUtil.run(() -> Animations.animateWarn(this, 1000));
 								logger.warn("Method analysis on '{}' found potential problem: {}", methodName, failure.getMessage(), failure);
 							}
 						}
