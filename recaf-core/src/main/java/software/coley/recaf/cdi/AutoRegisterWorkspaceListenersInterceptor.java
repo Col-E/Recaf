@@ -63,10 +63,10 @@ public class AutoRegisterWorkspaceListenersInterceptor {
 		if (isApplicationScoped) {
 			// Application scoped beans may want to listen to workspaces opening and closing
 			// for, well, the duration of the application.
-			if (value instanceof WorkspaceOpenListener)
-				workspaceManager.addWorkspaceOpenListener((WorkspaceOpenListener) value);
-			if (value instanceof WorkspaceCloseListener)
-				workspaceManager.addWorkspaceCloseListener((WorkspaceCloseListener) value);
+			if (value instanceof WorkspaceOpenListener openListener)
+				workspaceManager.addWorkspaceOpenListener(openListener);
+			if (value instanceof WorkspaceCloseListener closeListener)
+				workspaceManager.addWorkspaceCloseListener(closeListener);
 		} else {
 			// The bean is likely dependent scoped, or linked to the lifespan of the current workspace.
 			// This it only really makes sense to have the close listener be supported.
@@ -75,16 +75,15 @@ public class AutoRegisterWorkspaceListenersInterceptor {
 			if (value instanceof WorkspaceOpenListener)
 				logger.warn("The class '{}' implements '{}' but is not @ApplicationScoped",
 						valueType.getName(), WorkspaceOpenListener.class.getSimpleName());
-			if (value instanceof WorkspaceCloseListener)
-				workspaceManager.addWorkspaceCloseListener(
-						new AutoUnregisteringCloseListener((WorkspaceCloseListener) value));
+			if (value instanceof WorkspaceCloseListener closeListener)
+				workspaceManager.addWorkspaceCloseListener(new AutoUnregisteringCloseListener(closeListener));
 		}
 
 		// If a current workspace exists (at the time of creation of the instance), add the modification listener too.
 		// We don't need to worry about clearing these because workspaces remove their own listeners on closing.
 		Workspace current = workspaceManager.getCurrent();
-		if (current != null && value instanceof WorkspaceModificationListener)
-			current.addWorkspaceModificationListener((WorkspaceModificationListener) value);
+		if (current != null && value instanceof WorkspaceModificationListener modificationListener)
+			current.addWorkspaceModificationListener(modificationListener);
 
 		return context.proceed();
 	}

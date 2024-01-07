@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.pane.editing;
 
 import jakarta.annotation.Nonnull;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
@@ -32,6 +33,23 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	protected P path;
 
 	/**
+	 * @param targetType
+	 * 		Type of children to filter with.
+	 * @param action
+	 * 		Action to run on children of the target type.
+	 * @param <T>
+	 * 		Target type.
+	 */
+	@SuppressWarnings("unchecked")
+	protected <T> void eachChild(@Nonnull Class<T> targetType, @Nonnull Consumer<T> action) {
+		for (Navigable child : children) {
+			if (targetType.isAssignableFrom(child.getClass())) {
+				action.accept((T) child);
+			}
+		}
+	}
+
+	/**
 	 * Clear the display.
 	 */
 	protected void clearDisplay() {
@@ -41,6 +59,13 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 
 		// Remove display node.
 		setCenter(null);
+	}
+
+	/**
+	 * @return {@code true} when there is a current displayed node.
+	 */
+	protected boolean hasDisplay() {
+		return getCenter() != null;
 	}
 
 	/**
@@ -87,7 +112,7 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	protected void addSideTab(Tab tab) {
 		// Lazily create/add side-tabs to UI.
 		if (sideTabs == null) {
-			sideTabs = new SideTabs();
+			sideTabs = new SideTabs(Orientation.VERTICAL);
 			children.add(sideTabs);
 			setRight(sideTabs);
 		}

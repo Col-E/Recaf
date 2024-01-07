@@ -86,17 +86,29 @@
 .side-tab-pane {
     -fx-background-color: -color-bg-overlay;
     -fx-border-color: -color-base-6;
+}
+.side-tab-pane:vertical {
     -fx-border-width: 0 0 0 1px;
 }
 .side-tab-content {
     -fx-background-color: -color-bg-overlay;
     -fx-border-color: -color-base-6;
+}
+.side-tab-pane:vertical .side-tab-content {
     -fx-border-width: 0 0 0 1px;
+}
+.side-tab-pane:horizontal .side-tab-content {
+    -fx-border-width: 1px 0 0 0;
 }
 .side-tab-grip {
     -fx-background-color: -color-bg-inset;
     -fx-border-color: -color-base-6;
+}
+.side-tab-pane:vertical .side-tab-grip {
     -fx-border-width: 0 0 0 1px;
+}
+.side-tab-pane:horizontal .side-tab-grip {
+    -fx-border-width: 1px 0 0 0;
 }
 .side-tab {
     -fx-background-color: -color-bg-overlay;
@@ -116,4 +128,11 @@
 .search-bar .text-field {
     -fx-border-color: -color-base-6;
     -fx-border-width: 0 1px 0 0;
+}
+
+.variable-table .table-row-cell {
+    -fx-cell-size: 24px;
+}
+.analysis-value-changed {
+    -fx-background-color: -color-accent-muted;
 }

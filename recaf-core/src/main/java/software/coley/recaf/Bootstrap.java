@@ -1,5 +1,7 @@
 package software.coley.recaf;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.inject.se.SeContainer;
 import org.jboss.weld.environment.se.Weld;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ public class Bootstrap {
 	/**
 	 * @return Recaf instance.
 	 */
+	@Nonnull
 	public static Recaf get() {
 		if (instance == null) {
 			logger.info("Initializing Recaf {}", RecafBuildConfig.VERSION);
@@ -42,10 +45,11 @@ public class Bootstrap {
 	 * @param consumer
 	 * 		Consumer to operate on the CDI container producing {@link Weld} instance.
 	 */
-	public static void setWeldConsumer(Consumer<Weld> consumer) {
+	public static void setWeldConsumer(@Nullable Consumer<Weld> consumer) {
 		weldConsumer = consumer;
 	}
 
+	@Nonnull
 	private static SeContainer createContainer() {
 		logger.info("Creating Recaf CDI container...");
 		Weld weld = new Weld("recaf");

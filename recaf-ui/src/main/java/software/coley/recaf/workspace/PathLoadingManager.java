@@ -60,7 +60,7 @@ public class PathLoadingManager {
 	 * 		Error handling for invalid input.
 	 */
 	public void asyncNewWorkspace(@Nonnull Path primaryPath, @Nonnull List<Path> supportingPaths,
-								  @Nonnull Consumer<IOException> errorHandling) {
+								  @Nonnull Consumer<Throwable> errorHandling) {
 		// Invoke listeners, new content is being loaded.
 		for (WorkspacePreLoadListener listener : preLoadListeners)
 			listener.onPreLoad(primaryPath, supportingPaths);
@@ -78,8 +78,8 @@ public class PathLoadingManager {
 				// Wrap into workspace and assign it
 				Workspace workspace = new BasicWorkspace(primaryResource, supportingResources);
 				workspaceManager.setCurrent(workspace);
-			} catch (IOException ex) {
-				errorHandling.accept(ex);
+			} catch (Throwable t) {
+				errorHandling.accept(t);
 			}
 		});
 	}

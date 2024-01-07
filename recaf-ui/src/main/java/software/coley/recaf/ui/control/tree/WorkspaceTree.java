@@ -66,6 +66,10 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 				TreeItem<PathNode<?>> selected = getSelectionModel().getSelectedItem();
 				if (selected != null)
 					TreeItems.recurseOpen(selected);
+			} else if (code == KeyCode.LEFT || code == KeyCode.KP_LEFT) {
+				TreeItem<PathNode<?>> selected = getSelectionModel().getSelectedItem();
+				if (selected != null)
+					TreeItems.recurseClose(this, selected);
 			}
 		});
 	}

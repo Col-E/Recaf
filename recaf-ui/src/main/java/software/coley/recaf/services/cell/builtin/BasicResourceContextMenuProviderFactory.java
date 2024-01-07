@@ -34,6 +34,7 @@ public class BasicResourceContextMenuProviderFactory extends AbstractContextMenu
 			ContextMenu menu = new ContextMenu();
 			addHeader(menu, name, iconProvider.makeIcon());
 			// TODO: Implement operations
+			//   - var builder = new ContextMenuBuilder(menu, source).forResource(workspace, resource);
 			//   - Remove (support only)
 			return menu;
 		};

@@ -3,12 +3,12 @@ package software.coley.recaf.workspace.io;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
-import me.coley.cafedude.InvalidClassException;
-import me.coley.cafedude.classfile.ClassFile;
-import me.coley.cafedude.io.ClassFileReader;
-import me.coley.cafedude.io.ClassFileWriter;
-import me.coley.cafedude.transform.IllegalStrippingTransformer;
 import org.slf4j.Logger;
+import software.coley.cafedude.InvalidClassException;
+import software.coley.cafedude.classfile.ClassFile;
+import software.coley.cafedude.io.ClassFileReader;
+import software.coley.cafedude.io.ClassFileWriter;
+import software.coley.cafedude.transform.IllegalStrippingTransformer;
 import software.coley.recaf.analytics.logging.Logging;
 
 import java.io.IOException;

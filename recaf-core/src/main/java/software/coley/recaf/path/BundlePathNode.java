@@ -50,7 +50,7 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 	 * @param directory
 	 * 		Directory to wrap in path node.
 	 *
-	 * @return Path node of directory, with current bundle as parent.
+	 * @return Path node of directory, with the current bundle as parent.
 	 */
 	@Nonnull
 	public DirectoryPathNode child(@Nullable String directory) {

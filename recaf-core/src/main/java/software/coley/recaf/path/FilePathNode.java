@@ -45,7 +45,7 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 	 * @param lineNo
 	 * 		Line number to wrap into node.
 	 *
-	 * @return Path node of line number, with current file as parent.
+	 * @return Path node of line number, with the current file as parent.
 	 */
 	@Nonnull
 	public LineNumberPathNode child(int lineNo) {

@@ -157,6 +157,6 @@ public class TestClassUtils {
 		node.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null);
 		if (consumer != null) consumer.accept(node);
 		node.accept(cw);
-		return new JvmClassInfoBuilder(new ClassReader(cw.toByteArray())).build();
+		return new JvmClassInfoBuilder(cw.toByteArray()).build();
 	}
 }

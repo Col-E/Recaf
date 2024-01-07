@@ -51,7 +51,7 @@ public class AndroidApiResource implements WorkspaceResource {
 					String name = fileEntry.getFileNameAsString();
 					if (name.endsWith(".class")) {
 						byte[] bytecode = new LocalFileHeaderSource(fileEntry).readAll();
-						JvmClassInfo info = new JvmClassInfoBuilder(new ClassReader(bytecode)).build();
+						JvmClassInfo info = new JvmClassInfoBuilder(bytecode).build();
 						bundle.put(info);
 					}
 				}

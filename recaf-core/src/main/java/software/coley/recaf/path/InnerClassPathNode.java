@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 
 import java.util.Set;
 
@@ -31,6 +32,17 @@ public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassIn
 	public InnerClassPathNode(@Nullable ClassPathNode parent,
 							  @Nonnull InnerClassInfo innerClass) {
 		super(TYPE_ID, parent, InnerClassInfo.class, innerClass);
+	}
+
+	/**
+	 * @param annotation
+	 * 		Annotation to wrap into node.
+	 *
+	 * @return Path node of annotation, with the current inner class as parent.
+	 */
+	@Nonnull
+	public AnnotationPathNode child(@Nonnull AnnotationInfo annotation) {
+		return new AnnotationPathNode(this, annotation);
 	}
 
 	@Override

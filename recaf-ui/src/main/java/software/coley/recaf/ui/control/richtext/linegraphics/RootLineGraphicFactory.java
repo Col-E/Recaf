@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control.richtext.linegraphics;
 
 import jakarta.annotation.Nonnull;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -78,6 +79,7 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory implement
 		// Wrap so the padding of the HBox expands the space of the 'lineno'.
 		BorderPane wrapper = new BorderPane(lineContainer);
 		wrapper.getStyleClass().add("lineno");
+		wrapper.setCursor(Cursor.HAND);
 		return wrapper;
 	}
 

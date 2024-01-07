@@ -39,8 +39,9 @@ jobs:
       # So we have a dummy step here just to initialize it.
       - name: Download Gradle wrapper
         run: ./gradlew --version
-      - name: Run build
-        run: ./gradlew build
+      # Run the tests and upload results/coverage
+      - name: Run tests
+        run: ./gradlew test
       - name: Upload test coverage to CodeCov.io
         uses: codecov/codecov-action@v3
         env:
@@ -54,12 +55,15 @@ jobs:
           path: |
             **/TEST-*
             **/hs_err_pid*
-      - name: Upload build artifacts
+      # Build the distribution jar and upload it, without bundling JavaFX in the jar
+      - name: Create distribution jar
+        run: ./gradlew assemble -x compileTestJava -Dskip.jfx.bundle=true
+      - name: Upload distribution jar
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: snapshot-build
-          retention-days: 21
+          retention-days: 30
           path: |
             recaf-ui/build/libs/recaf-ui-*-all.jar
 

@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.AnnotationInfo;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
@@ -27,6 +29,7 @@ import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
 import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
@@ -34,6 +37,7 @@ import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
+import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
 import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
@@ -42,14 +46,13 @@ import software.coley.recaf.ui.pane.editing.media.ImageFilePane;
 import software.coley.recaf.ui.pane.editing.media.VideoFilePane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
 import software.coley.recaf.util.*;
-import software.coley.recaf.util.visitors.ClassAnnotationRemovingVisitor;
-import software.coley.recaf.util.visitors.MemberPredicate;
-import software.coley.recaf.util.visitors.MemberRemovingVisitor;
+import software.coley.recaf.util.visitors.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -80,6 +83,7 @@ public class Actions implements Service {
 	private final Instance<ImageFilePane> imagePaneProvider;
 	private final Instance<AudioFilePane> audioPaneProvider;
 	private final Instance<VideoFilePane> videoPaneProvider;
+	private final Instance<AssemblerPane> assemblerPaneProvider;
 	private final ActionsConfig config;
 
 	@Inject
@@ -95,7 +99,8 @@ public class Actions implements Service {
 				   @Nonnull Instance<TextFilePane> textPaneProvider,
 				   @Nonnull Instance<ImageFilePane> imagePaneProvider,
 				   @Nonnull Instance<AudioFilePane> audioPaneProvider,
-				   @Nonnull Instance<VideoFilePane> videoPaneProvider) {
+				   @Nonnull Instance<VideoFilePane> videoPaneProvider,
+				   @Nonnull Instance<AssemblerPane> assemblerPaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
@@ -109,6 +114,7 @@ public class Actions implements Service {
 		this.imagePaneProvider = imagePaneProvider;
 		this.audioPaneProvider = audioPaneProvider;
 		this.videoPaneProvider = videoPaneProvider;
+		this.assemblerPaneProvider = assemblerPaneProvider;
 	}
 
 	/**
@@ -679,10 +685,10 @@ public class Actions implements Service {
 						String fileName = shortenPath(filePath);
 
 						// Source is root directory, this file is also in the root directory
-						if (isRootDirectory &&  filePath.indexOf('/') == -1) {
-								String name = newDirectoryName + "/" + fileName;
-								bundle.remove(filePath);
-								bundle.put(value.toFileBuilder().withName(name).build());
+						if (isRootDirectory && filePath.indexOf('/') == -1) {
+							String name = newDirectoryName + "/" + fileName;
+							bundle.remove(filePath);
+							bundle.put(value.toFileBuilder().withName(name).build());
 						} else {
 							// Source is another package, this file matches that package
 							if (filePath.startsWith(prefix)) {
@@ -1048,7 +1054,7 @@ public class Actions implements Service {
 				String fileName = shortenPath(filePath);
 
 				// Source is root directory, this file is also in the root directory
-				if (isRootDirectory &&  filePath.indexOf('/') == -1) {
+				if (isRootDirectory && filePath.indexOf('/') == -1) {
 					String name = newDirectoryName + "/" + fileName;
 					bundle.remove(filePath);
 					bundle.put(value.toFileBuilder().withName(name).build());
@@ -1058,7 +1064,7 @@ public class Actions implements Service {
 						String name;
 						if (newDirectoryName.isEmpty()) {
 							// Target is root directory
-							name =  fileName;
+							name = fileName;
 						} else if (filePath.startsWith(directoryName)) {
 							// Target is another directory
 							name = replacePrefix(filePath, directoryName, newDirectoryName);
@@ -1172,6 +1178,38 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Prompts the user to give a new name for the copied member.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param member
+	 * 		member to copy.
+	 */
+	public void copyMember(@Nonnull Workspace workspace,
+						   @Nonnull WorkspaceResource resource,
+						   @Nonnull JvmClassBundle bundle,
+						   @Nonnull JvmClassInfo declaringClass,
+						   @Nonnull ClassMember member) {
+		String originalName = member.getName();
+		Consumer<String> copyTask = newName -> {
+			ClassWriter cw = new ClassWriter(0);
+			MemberCopyingVisitor cp = new MemberCopyingVisitor(cw, member, newName);
+			declaringClass.getClassReader().accept(cp, 0);
+			bundle.put(new JvmClassInfoBuilder(cw.toByteArray()).build());
+		};
+		new NamePopup(copyTask)
+				.withInitialName(originalName)
+				.forFieldCopy(declaringClass, member)
+				.show();
+	}
+
+	/**
 	 * Prompts the user to give a new name for the copied file.
 	 *
 	 * @param workspace
@@ -1280,6 +1318,62 @@ public class Actions implements Service {
 		}).withInitialPathName(packageName)
 				.forPackageCopy(bundle)
 				.show();
+	}
+
+	/**
+	 * Brings a {@link ClassNavigable} component representing the given class into focus.
+	 * If no such component exists, one is created.
+	 * <br>
+	 * Automatically calls the type-specific goto-declaration handling.
+	 *
+	 * @param path
+	 * 		Path containing a class to open.
+	 *
+	 * @return Navigable content representing class content of the path.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	@Nonnull
+	public Navigable openAssembler(@Nonnull PathNode<?> path) throws IncompletePathException {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
+		ClassInfo info = path.getValueOfType(ClassInfo.class);
+		if (info == null) {
+			logger.error("Cannot resolve required path nodes, missing class in path");
+			throw new IncompletePathException(ClassInfo.class);
+		}
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for class '{}', missing workspace in path", info.getName());
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for class '{}', missing resource in path", info.getName());
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for class '{}', missing bundle in path", info.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+
+		return createContent(() -> {
+			// Create text/graphic for the tab to create.
+			String name = "?";
+			if (path instanceof ClassPathNode classPathNode)
+				name = StringUtil.shortenPath(classPathNode.getValue().getName());
+			else if (path instanceof ClassMemberPathNode classMemberPathNode)
+				name = classMemberPathNode.getValue().getName();
+			String title = "Assembler: " + name;
+			Node graphic = new FontIconView(CarbonIcons.CODE);
+
+			// Create content for the tab.
+			AssemblerPane content = assemblerPaneProvider.get();
+			content.onUpdatePath(path);
+
+			// Build the tab.
+			return createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+		});
 	}
 
 	/**
@@ -1412,32 +1506,39 @@ public class Actions implements Service {
 								  @Nonnull WorkspaceResource resource,
 								  @Nonnull JvmClassBundle bundle,
 								  @Nonnull JvmClassInfo info) {
-		ItemListSelectionPopup.forFields(info, fields -> {
-					ClassWriter writer = new ClassWriter(0);
-					MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, new MemberPredicate() {
-						@Override
-						public boolean matchField(int access, String name, String desc, String sig, Object value) {
-							for (FieldMember field : fields)
-								if (field.getName().equals(name) && field.getDescriptor().equals(desc))
-									return true;
-							return false;
-						}
-
-						@Override
-						public boolean matchMethod(int access, String name, String desc, String sig, String[] exceptions) {
-							return false;
-						}
-					});
-					info.getClassReader().accept(visitor, 0);
-					bundle.put(info.toJvmClassBuilder()
-							.adaptFrom(new ClassReader(writer.toByteArray()))
-							.build());
-				})
+		ItemListSelectionPopup.forFields(info, fields -> deleteClassFields(workspace, resource, bundle, info, fields))
 				.withMultipleSelection()
 				.withTitle(Lang.getBinding("menu.edit.remove.field"))
 				.withTextMapping(field -> textService.getFieldMemberTextProvider(workspace, resource, bundle, info, field).makeText())
 				.withGraphicMapping(field -> iconService.getClassMemberIconProvider(workspace, resource, bundle, info, field).makeIcon())
 				.show();
+	}
+
+	/**
+	 * Removes the given fields from the given class.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Class declaring the methods.
+	 * @param fields
+	 * 		Fields to delete.
+	 */
+	public void deleteClassFields(@Nonnull Workspace workspace,
+								  @Nonnull WorkspaceResource resource,
+								  @Nonnull JvmClassBundle bundle,
+								  @Nonnull JvmClassInfo declaringClass,
+								  @Nonnull Collection<FieldMember> fields) {
+		ClassWriter writer = new ClassWriter(0);
+		MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, FieldPredicate.of(fields));
+		declaringClass.getClassReader().accept(visitor, 0);
+		bundle.put(declaringClass.toJvmClassBuilder()
+				.adaptFrom(new ClassReader(writer.toByteArray()))
+				.build());
 	}
 
 	/**
@@ -1456,32 +1557,39 @@ public class Actions implements Service {
 								   @Nonnull WorkspaceResource resource,
 								   @Nonnull JvmClassBundle bundle,
 								   @Nonnull JvmClassInfo info) {
-		ItemListSelectionPopup.forMethods(info, methods -> {
-					ClassWriter writer = new ClassWriter(0);
-					MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, new MemberPredicate() {
-						@Override
-						public boolean matchField(int access, String name, String desc, String sig, Object value) {
-							return false;
-						}
-
-						@Override
-						public boolean matchMethod(int access, String name, String desc, String sig, String[] exceptions) {
-							for (MethodMember method : methods)
-								if (method.getName().equals(name) && method.getDescriptor().equals(desc))
-									return true;
-							return false;
-						}
-					});
-					info.getClassReader().accept(visitor, 0);
-					bundle.put(info.toJvmClassBuilder()
-							.adaptFrom(new ClassReader(writer.toByteArray()))
-							.build());
-				})
+		ItemListSelectionPopup.forMethods(info, methods -> deleteClassMethods(workspace, resource, bundle, info, methods))
 				.withMultipleSelection()
 				.withTitle(Lang.getBinding("menu.edit.remove.method"))
 				.withTextMapping(method -> textService.getMethodMemberTextProvider(workspace, resource, bundle, info, method).makeText())
 				.withGraphicMapping(method -> iconService.getClassMemberIconProvider(workspace, resource, bundle, info, method).makeIcon())
 				.show();
+	}
+
+	/**
+	 * Removes the given methods from the given class.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Class declaring the methods.
+	 * @param methods
+	 * 		Methods to delete.
+	 */
+	public void deleteClassMethods(@Nonnull Workspace workspace,
+								   @Nonnull WorkspaceResource resource,
+								   @Nonnull JvmClassBundle bundle,
+								   @Nonnull JvmClassInfo declaringClass,
+								   @Nonnull Collection<MethodMember> methods) {
+		ClassWriter writer = new ClassWriter(0);
+		MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, MethodPredicate.of(methods));
+		declaringClass.getClassReader().accept(visitor, 0);
+		bundle.put(declaringClass.toJvmClassBuilder()
+				.adaptFrom(new ClassReader(writer.toByteArray()))
+				.build());
 	}
 
 	/**
@@ -1520,6 +1628,33 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Makes the given methods no-op.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Class declaring the methods.
+	 * @param methods
+	 * 		Methods to noop.
+	 */
+	public void makeMethodsNoop(@Nonnull Workspace workspace,
+								@Nonnull WorkspaceResource resource,
+								@Nonnull JvmClassBundle bundle,
+								@Nonnull JvmClassInfo declaringClass,
+								@Nonnull Collection<MethodMember> methods) {
+		ClassWriter writer = new ClassWriter(0);
+		MethodNoopingVisitor visitor = new MethodNoopingVisitor(writer, MethodPredicate.of(methods));
+		declaringClass.getClassReader().accept(visitor, 0);
+		bundle.put(declaringClass.toJvmClassBuilder()
+				.adaptFrom(new ClassReader(writer.toByteArray()))
+				.build());
+	}
+
+	/**
 	 * Looks for the {@link Navigable} component representing the path and returns it if found.
 	 * If no such component exists, it should be generated by the passed supplier, which then gets returned.
 	 * <br>
@@ -1540,10 +1675,7 @@ public class Actions implements Service {
 	public Navigable getOrCreatePathContent(@Nonnull PathNode<?> path, @Nonnull Supplier<DockingTab> factory) {
 		List<Navigable> children = navigationManager.getNavigableChildrenByPath(path);
 		if (children.isEmpty()) {
-			// Create the tab for the content, then display it.
-			DockingTab tab = factory.get();
-			tab.select();
-			return (Navigable) tab.getContent();
+			return createContent(factory);
 		} else {
 			// Content by path is already open.
 			Navigable navigable = children.get(0);
@@ -1551,6 +1683,14 @@ public class Actions implements Service {
 			navigable.requestFocus();
 			return navigable;
 		}
+	}
+
+	@Nonnull
+	private static Navigable createContent(@Nonnull Supplier<DockingTab> factory) {
+		// Create the tab for the content, then display it.
+		DockingTab tab = factory.get();
+		tab.select();
+		return (Navigable) tab.getContent();
 	}
 
 	private static void setupFileTabContextMenu(@Nonnull FileInfo info, DockingTab tab) {

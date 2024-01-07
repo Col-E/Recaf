@@ -238,7 +238,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 									.build();
 						} else {
 							// Class is new.
-							newInfo = new JvmClassInfoBuilder(new ClassReader(bytecode)).build();
+							newInfo = new JvmClassInfoBuilder(bytecode).build();
 						}
 					}
 

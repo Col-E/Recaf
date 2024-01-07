@@ -19,8 +19,11 @@ import org.openrewrite.Cursor;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.tree.J;
+import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
+import software.coley.recaf.Bootstrap;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -73,6 +76,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see AndroidDecompilerPane
  */
 public class AbstractDecompilePane extends BorderPane implements ClassNavigable, UpdatableNavigable {
+	private static final Logger logger = Logging.get(AbstractDecompilePane.class);
 	protected final ObservableObject<JvmDecompiler> decompiler = new ObservableObject<>(NoopJvmDecompiler.getInstance());
 	protected final ObservableBoolean decompileInProgress = new ObservableBoolean(false);
 	protected final AtomicBoolean updateLock = new AtomicBoolean();
@@ -121,6 +125,12 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	@Nonnull
 	@Override
 	public ClassPathNode getPath() {
+		return path;
+	}
+
+	@Nonnull
+	@Override
+	public ClassPathNode getClassPath() {
 		return path;
 	}
 
@@ -196,7 +206,13 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 				J.CompilationUnit unit = contextActionSupport.getUnit();
 				if (unit != null) {
 					ExecutionContext ctx = new InMemoryExecutionContext();
-					J mappedAst = unit.acceptJava(visitor, ctx);
+					J mappedAst;
+					try {
+						mappedAst = unit.acceptJava(visitor, ctx);
+					} catch (Throwable t) {
+						logger.warn("Failed updating decompilation AST", t);
+						return false;
+					}
 					if (mappedAst != null) {
 						// We want to get the difference between the current and modified text and update only
 						// the areas of the text that are modified. In most situations this will be much faster

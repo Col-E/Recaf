@@ -244,8 +244,8 @@ assembler.analysis.name-column=Name
 assembler.analysis.value-column=Wert
 assembler.playground.title=Java zu Bytecode
 assembler.playground.comment=Sie können hier Java-Code schreiben, um es zu Bytecode zu konvertieren.
-assembler.vartable.title=Variablen
-assembler.vartable.empty=<Muss mindestens einmal kompiliert werden>
+assembler.variables.title=Variablen
+assembler.variables.empty=<Muss mindestens einmal kompiliert werden>
 assembler.suggestions.none=Keine Vorschläge
 
 ## Search
@@ -440,11 +440,11 @@ misc.none=Keine
 misc.casesensitive=Groß- und Kleinschreibung beachten
 misc.member.field=Feld
 misc.member.method=Methode
-misc.member.field_n_method=Feld und Methode
-misc.member.inner_class=Innere Klasse
-misc.member.inner_interface=Inneres Interface
-misc.member.inner_enum=Inneres Enum
-misc.member.inner_annotation=Innere Annotation
+misc.member.field-n-method=Feld und Methode
+misc.member.inner-class=Innere Klasse
+misc.member.inner-interface=Inneres Interface
+misc.member.inner-enum=Inneres Enum
+misc.member.inner-annotation=Innere Annotation
 misc.accessflag.visibility.public=Public
 misc.accessflag.visibility.protected=Protected
 misc.accessflag.visibility.private=Private

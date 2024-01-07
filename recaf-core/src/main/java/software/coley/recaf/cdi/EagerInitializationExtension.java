@@ -1,8 +1,13 @@
 package software.coley.recaf.cdi;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.inject.spi.*;
+import jakarta.enterprise.inject.spi.Annotated;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.Extension;
+import jakarta.enterprise.inject.spi.ProcessBean;
 import jakarta.inject.Inject;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -18,7 +23,7 @@ import java.util.List;
  */
 public class EagerInitializationExtension implements Extension {
 	private static final EagerInitializationExtension INSTANCE = new EagerInitializationExtension();
-	private static final List<Bean<?>> applicationScopedEagerBeansForDeploy = new ArrayList<>();
+	private static final List<Bean<?>> applicationScopedEagerBeans = new ArrayList<>();
 	private static final List<Bean<?>> applicationScopedEagerBeansForUi = new ArrayList<>();
 	private static final List<Bean<?>> workspaceScopedEagerBeans = new ArrayList<>();
 	private static BeanManager beanManager;
@@ -29,6 +34,7 @@ public class EagerInitializationExtension implements Extension {
 	/**
 	 * @return Extension singleton.
 	 */
+	@Nonnull
 	public static EagerInitializationExtension getInstance() {
 		return INSTANCE;
 	}
@@ -36,13 +42,23 @@ public class EagerInitializationExtension implements Extension {
 	/**
 	 * @return Application scoped {@link EagerInitialization} beans.
 	 */
-	public static List<Bean<?>> getApplicationScopedEagerBeansForDeploy() {
-		return applicationScopedEagerBeansForDeploy;
+	@Nonnull
+	public static List<Bean<?>> getApplicationScopedEagerBeans() {
+		return applicationScopedEagerBeans;
+	}
+
+	/**
+	 * @return Application scoped {@link EagerInitialization} beans which will wait for the UI to be initialized before being initialized.
+	 */
+	@Nonnull
+	public static List<Bean<?>> getApplicationScopedEagerBeansForUi() {
+		return applicationScopedEagerBeansForUi;
 	}
 
 	/**
 	 * @return Workspace scoped {@link EagerInitialization} beans.
 	 */
+	@Nonnull
 	public static List<Bean<?>> getWorkspaceScopedEagerBeans() {
 		return workspaceScopedEagerBeans;
 	}
@@ -60,7 +76,7 @@ public class EagerInitializationExtension implements Extension {
 		if (eager != null) {
 			if (annotated.isAnnotationPresent(ApplicationScoped.class)) {
 				if (eager.value() == InitializationStage.IMMEDIATE)
-					applicationScopedEagerBeansForDeploy.add(event.getBean());
+					applicationScopedEagerBeans.add(event.getBean());
 				else if (eager.value() == InitializationStage.AFTER_UI_INIT)
 					applicationScopedEagerBeansForUi.add(event.getBean());
 			} else if (annotated.isAnnotationPresent(WorkspaceScoped.class))
@@ -69,16 +85,16 @@ public class EagerInitializationExtension implements Extension {
 	}
 
 	/**
-	 * Called when the CDI container deploys.
+	 * Called when Recaf initializes the CDI container, and after plugins are loaded.
 	 *
 	 * @param event
-	 * 		CDI deploy event.
+	 * 		Recaf initialization event.
 	 * @param beanManager
 	 * 		CDI bean manager.
 	 */
-	public void onDeploy(@Observes AfterDeploymentValidation event, BeanManager beanManager) {
+	public void onInitialize(@Observes InitializationEvent event, @Nonnull BeanManager beanManager) {
 		EagerInitializationExtension.beanManager = beanManager;
-		for (Bean<?> bean : applicationScopedEagerBeansForDeploy)
+		for (Bean<?> bean : applicationScopedEagerBeans)
 			create(bean);
 	}
 
@@ -91,7 +107,7 @@ public class EagerInitializationExtension implements Extension {
 	 * @param beanManager
 	 * 		CDI bean manager.
 	 */
-	public void onUiInitialize(@Observes UiInitializationEvent event, BeanManager beanManager) {
+	public void onUiInitialize(@Observes UiInitializationEvent event, @Nonnull BeanManager beanManager) {
 		EagerInitializationExtension.beanManager = beanManager;
 		for (Bean<?> bean : applicationScopedEagerBeansForUi)
 			create(bean);

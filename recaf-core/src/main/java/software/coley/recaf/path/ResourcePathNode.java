@@ -48,7 +48,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 	 * @param bundle
 	 * 		Bundle to wrap into node.
 	 *
-	 * @return Path node of bundle, with current resource as parent.
+	 * @return Path node of bundle, with the current resource as parent.
 	 */
 	@Nonnull
 	public BundlePathNode child(@Nonnull Bundle<?> bundle) {

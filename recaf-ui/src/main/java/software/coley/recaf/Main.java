@@ -1,16 +1,21 @@
 package software.coley.recaf;
 
+import jakarta.enterprise.inject.spi.Bean;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.cdi.EagerInitialization;
+import software.coley.recaf.cdi.EagerInitializationExtension;
+import software.coley.recaf.cdi.InitializationEvent;
+import software.coley.recaf.cdi.InitializationStage;
 import software.coley.recaf.launch.LaunchArguments;
 import software.coley.recaf.launch.LaunchCommand;
+import software.coley.recaf.launch.LaunchHandler;
 import software.coley.recaf.plugin.Plugin;
 import software.coley.recaf.plugin.PluginContainer;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginManager;
 import software.coley.recaf.services.script.ScriptEngine;
-import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.JFXValidation;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.WorkspaceManager;
@@ -74,6 +79,17 @@ public class Main {
 		launchArgs = recaf.get(LaunchArguments.class);
 		launchArgs.setCommand(launchArgValues);
 		launchArgs.setRawArgs(args);
+
+		// Setup the launch-handler bean to load inputs if specified by the launch arguments.
+		// It will be executed
+		LaunchHandler.task = Main::initHandleInputs;
+		Bean<?> bean = recaf.getContainer().getBeanContainer().getBeans(LaunchHandler.class).iterator().next();
+		if (launchArgValues.isHeadless()) {
+			EagerInitializationExtension.getApplicationScopedEagerBeans().add(bean);
+		} else {
+			EagerInitializationExtension.getApplicationScopedEagerBeansForUi().add(bean);
+		}
+
 		initialize();
 	}
 
@@ -84,13 +100,21 @@ public class Main {
 		initLogging();
 		if (launchArgs.isHeadless()) {
 			initPlugins();
-			initHandleInputs();
+			fireInitEvent();
 		} else {
 			initTranslations();
 			initPlugins();
-			FxThreadUtil.delayedRun(500, Main::initHandleInputs);
+			fireInitEvent();
 			RecafApplication.launch(RecafApplication.class, launchArgs.getArgs());
 		}
+	}
+
+	/**
+	 * Publishes the {@link InitializationEvent} so that {@link EagerInitialization} annotated services marked to be run
+	 * {@link InitializationStage#IMMEDIATE immediately} are initialized.
+	 */
+	private static void fireInitEvent() {
+		recaf.getContainer().getBeanContainer().getEvent().fire(new InitializationEvent());
 	}
 
 	/**

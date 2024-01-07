@@ -1,7 +1,7 @@
 plugins {
-    id "com.github.ben-manes.versions" version "0.42.0" apply false
+    id 'com.github.ben-manes.versions' version '0.42.0' apply false
     id 'gov.tak.gradle.plugins.coverage-report-aggregator' version '1.3.0'
-    id 'gov.tak.gradle.plugins.checker-processor' version "1.2.7"
+    id 'gov.tak.gradle.plugins.checker-processor' version '2.0.2' apply false
 }
 
 allprojects {
@@ -117,10 +117,19 @@ jacocoAggregation {
     outputXml = true
 }
 
-// Build aggregate report when build completes
-tasks.register('build') {
+// Build aggregate report for test coverage when subproject 'test' tasks complete.
+// But only do so when the 'test' tasks have executed.
+// You can skip tests by specifying '-x test' in your gradle task arguments.
+tasks.register('test') {
     dependsOn(subprojects.test)
     doLast {
-        buildJacocoAggregate.execute()
+        if (subprojects.test.stream().anyMatch(Task::getDidWork))
+            buildJacocoAggregate.execute()
     }
+}
+tasks.register('build') {
+    // Build will run tests, unless skipped by '-x test'.
+    // Even if skipped, this will still lead to the subproject build tasks being executed, such as:
+    //  - recaf-ui:shadowJar
+    dependsOn(tasks.named('test'))
 }
