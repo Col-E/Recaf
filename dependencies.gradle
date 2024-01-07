@@ -1,6 +1,7 @@
 def asmVersion = '9.6'
-def cafeDudeVersion = '1.10.2'
+def cafeDudeVersion = '2.0.1'
 def junitVersion = '5.10.0'
+def jasmVersion = '2.3.0'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
@@ -14,7 +15,7 @@ project.ext {
 
     atlantafx = 'io.github.mkpaz:atlantafx-base:2.0.1'
 
-    cafedude = "com.github.Col-E:CAFED00D:$cafeDudeVersion"
+    cafedude = "software.coley:cafedude-core:$cafeDudeVersion"
 
     cfr = 'org.benf:cfr:0.152'
 
@@ -37,6 +38,9 @@ project.ext {
     ikonli_pack = 'org.kordamp.ikonli:ikonli-carbonicons-pack:12.3.1'
 
     instrument_server = 'software.coley:instrumentation-server:1.4.0'
+
+    jasm_core = "com.github.Nowilltolife.Jasm:jasm-core:$jasmVersion"
+    jasm_composistion_jvm = "com.github.Nowilltolife.Jasm:jasm-composition-jvm:$jasmVersion"
 
     jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2'
 
@@ -62,7 +66,7 @@ project.ext {
 
     regex = 'com.github.tommyettinger:regexodus:0.1.15'
 
-    richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.1'
+    richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.2'
 
     treemapfx = 'software.coley:treemap-fx:1.1.0'
 }

@@ -91,4 +91,10 @@ public abstract class ClassPane extends AbstractContentPane<ClassPathNode> imple
 	public ClassPathNode getPath() {
 		return path;
 	}
+
+	@Nonnull
+	@Override
+	public ClassPathNode getClassPath() {
+		return path;
+	}
 }

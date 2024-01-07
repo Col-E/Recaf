@@ -59,7 +59,7 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 	 * @param classInfo
 	 * 		Class to wrap into node.
 	 *
-	 * @return Path node of class, with current package as parent.
+	 * @return Path node of class, with the current package as parent.
 	 */
 	@Nonnull
 	public ClassPathNode child(@Nonnull ClassInfo classInfo) {
@@ -70,7 +70,7 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 	 * @param fileInfo
 	 * 		File to wrap into node.
 	 *
-	 * @return Path node of file, with current directory as parent.
+	 * @return Path node of file, with the current directory as parent.
 	 */
 	@Nonnull
 	public FilePathNode child(@Nonnull FileInfo fileInfo) {

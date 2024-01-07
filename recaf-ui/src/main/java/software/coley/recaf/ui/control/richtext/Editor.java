@@ -4,16 +4,17 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.control.IndexRange;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
-import org.fxmisc.richtext.model.PlainTextChange;
-import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
-import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.*;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
@@ -21,6 +22,7 @@ import software.coley.collections.Lists;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
+import software.coley.recaf.ui.control.richtext.suggest.TabCompleter;
 import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxHighlighter;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxUtil;
@@ -48,6 +50,7 @@ import java.util.function.Supplier;
  * @author Matt Coley
  */
 public class Editor extends BorderPane {
+	public static final int SHORTER_DELAY_MS = 25;
 	public static final int SHORT_DELAY_MS = 150;
 	private final StackPane stackPane = new StackPane();
 	private final CodeArea codeArea = new CodeArea();
@@ -58,6 +61,7 @@ public class Editor extends BorderPane {
 	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
 	private final EventStream<Change<Integer>> caretPosEventStream;
 	private ReadOnlyStyledDocument<Collection<String>, String, Collection<String>> lastDocumentSnapshot;
+	private TabCompleter<?> tabCompleter;
 	private SyntaxHighlighter syntaxHighlighter;
 	private SelectedBracketTracking selectedBracketTracking;
 	private ProblemTracking problemTracking;
@@ -82,6 +86,14 @@ public class Editor extends BorderPane {
 		// Do not want text wrapping in a code editor.
 		codeArea.setWrapText(false);
 
+		// Add event filter to hook tab usage.
+		codeArea.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (e.getCode() == KeyCode.TAB)
+				handleTab(e);
+			else if (e.getCode() == KeyCode.ENTER)
+				handleNewline(e);
+		});
+
 		// Set paragraph graphic factory to the user-configurable root graphics factory.
 		codeArea.setParagraphGraphicFactory(rootLineGraphicFactory);
 
@@ -92,8 +104,18 @@ public class Editor extends BorderPane {
 		// which would be a huge pain in the ass.
 		codeArea.setUseInitialStyleForInsertion(false);
 
-		// Register a text change listener and use the inserted/removed text content to determine what portions
-		// of the document need to be restyled.
+		// Register a text change listener for recording state used for tab completion.
+		codeArea.plainTextChanges().addObserver(changes -> {
+			// Do fine completion updates.
+			if (tabCompleter != null)
+				tabCompleter.onFineTextUpdate(changes);
+		});
+
+		// Register a text change listener that operates on reduces calls (limit calls to when user stops typing).
+		// Used for:
+		//  - Restyling text near inserted/removed text
+		//  - Updating text problems
+		//  - Taking document snapshots
 		codeArea.plainTextChanges()
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(SHORT_DELAY_MS))
 				.addObserver(changes -> {
@@ -115,6 +137,10 @@ public class Editor extends BorderPane {
 						for (PlainTextChange change : changes)
 							problemTracking.accept(change);
 					}
+
+					// Do rough completion updates.
+					if (tabCompleter != null)
+						tabCompleter.onRoughTextUpdate(changes);
 
 					// Record content of area.
 					lastDocumentSnapshot = codeArea.getContent().snapshot();
@@ -230,6 +256,44 @@ public class Editor extends BorderPane {
 		} else {
 			codeArea.replaceText(text);
 		}
+	}
+
+	/**
+	 * Adds a tab indentation into the given paragraph.
+	 *
+	 * @param paragraph
+	 * 		Paragraph to indent.
+	 */
+	public void indent(int paragraph) {
+		String paragraphContents = codeArea.getParagraph(paragraph).getText();
+		int column = 0;
+		for (; column < paragraphContents.length(); column++) {
+			char c = paragraphContents.charAt(column);
+			if (c != ' ' && c != '\t') break;
+		}
+		codeArea.insert(paragraph, column, newText("\t"));
+	}
+
+	/**
+	 * Removes indentation from the given paragraph.
+	 *
+	 * @param paragraph
+	 * 		Paragraph to unindent.
+	 *
+	 * @return {@code true} when there was text removed (successful unindentation).
+	 */
+	public boolean unindent(int paragraph) {
+		String paragraphContents = codeArea.getParagraph(paragraph).getText();
+		int column = 0;
+		for (; column < paragraphContents.length(); column++) {
+			char c = paragraphContents.charAt(column);
+			if (c != ' ' && c != '\t') break;
+		}
+		if (column > 0) {
+			codeArea.deleteText(paragraph, column - 1, paragraph, column);
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -350,6 +414,30 @@ public class Editor extends BorderPane {
 	}
 
 	/**
+	 * @return Tab completion implementation.
+	 */
+	@Nullable
+	public TabCompleter<?> getTabCompleter() {
+		return tabCompleter;
+	}
+
+	/**
+	 * @param tabCompleter
+	 * 		Tab completion implementation.
+	 */
+	public void setTabCompleter(@Nullable TabCompleter<?> tabCompleter) {
+		// Uninstall prior.
+		TabCompleter<?> previousTabCompleter = this.tabCompleter;
+		if (previousTabCompleter != null)
+			previousTabCompleter.uninstall(this);
+
+		// Set and install new instance.
+		this.tabCompleter = tabCompleter;
+		if (tabCompleter != null)
+			tabCompleter.install(this);
+	}
+
+	/**
 	 * @return Backing text editor component.
 	 */
 	@Nonnull
@@ -385,10 +473,161 @@ public class Editor extends BorderPane {
 	 *
 	 * @return Future of consumer completion.
 	 */
+	@Nonnull
 	public <T> CompletableFuture<Void> schedule(@Nonnull ExecutorService supplierService,
 												@Nonnull Supplier<T> supplier, @Nonnull Consumer<T> consumer) {
 		return CompletableFuture.supplyAsync(supplier, supplierService)
 				.thenAcceptAsync(consumer, FxThreadUtil.executor());
+	}
+
+	/**
+	 * Some RichTextFX methods require styled documents, hence this helper for converting simple strings into those.
+	 *
+	 * @param text
+	 * 		Text to wrap in a styled document with the default values.
+	 *
+	 * @return Text document of the requested text.
+	 */
+	@Nonnull
+	public StyledDocument<Collection<String>, String, Collection<String>> newText(@Nonnull String text) {
+		return ReadOnlyStyledDocument.fromString(text, codeArea.getInitialParagraphStyle(),
+				codeArea.getInitialTextStyle(), codeArea.getSegOps());
+	}
+
+	/**
+	 * Handles newline events. Inserts a new line, but matches the indentation level of the previous line.
+	 *
+	 * @param event
+	 * 		Key event where {@link KeyCode#ENTER} was pressed.
+	 */
+	private void handleNewline(@Nonnull KeyEvent event) {
+		// Consume the event so the normal 'enter' behavior is skipped.
+		event.consume();
+
+		// Abort if handling tab completion.
+		// Holding shift bypasses tab completion.
+		if (!event.isShiftDown() && handleTabCompletion(event))
+			return;
+
+		// If there is selected contents, newline should replace it.
+		IndexRange selection = codeArea.getSelection();
+		if (selection.getLength() > 0) {
+			codeArea.replace(selection.getStart(), selection.getEnd(), newText("\n"));
+			return;
+		}
+
+		// Compute matching indentation level.
+		int paragraph = codeArea.getCurrentParagraph();
+		String paragraphContents = codeArea.getParagraph(paragraph).getText();
+		int indent = 0;
+		for (; indent < paragraphContents.length(); indent++) {
+			char c = paragraphContents.charAt(indent);
+			if (c != ' ' && c != '\t') break;
+		}
+
+		// Padding to insert in into the next line.
+		String padding = paragraphContents.substring(0, indent);
+
+		// For open brackets we'd like to do an extra level of indentation
+		// and also complete the brace for the user.
+		char closingBrace = '\0';
+		for (int i = paragraphContents.length() - 1; i >= indent; i--) {
+			char c = paragraphContents.charAt(i);
+			if (c == '{') {
+				closingBrace = '}';
+				padding += '\t';
+				break;
+			} else if (c == '[') {
+				closingBrace = ']';
+				padding += '\t';
+				break;
+			} else if (c != ' ' && c != '\t') {
+				break;
+			}
+		}
+
+		// Insert the indented newline + closing brace (if needed)
+		int caret = codeArea.getCaretPosition();
+		if (closingBrace == '\0') {
+			codeArea.insertText(caret, '\n' + padding);
+		} else {
+			// Insert the '}' or ']' and move the caret between
+			codeArea.insertText(caret, '\n' + padding + '\n' + StringUtil.limit(padding, padding.length() - 1) + closingBrace);
+			codeArea.moveTo(caret + padding.length() + 1);
+		}
+	}
+
+	/**
+	 * Handles tab events.
+	 *
+	 * @param event
+	 * 		Key event where {@link KeyCode#TAB} was pressed.
+	 */
+	private void handleTab(@Nonnull KeyEvent event) {
+		IndexRange selection = codeArea.getSelection();
+
+		// Skip if selection is empty (unless doing shift-tab for unindentation)
+		if (selection.getLength() == 0 && !event.isShiftDown()) {
+			// Abort if handling tab completion.
+			if (handleTabCompletion(event))
+				event.consume();
+
+			// Skip tab handling below.
+			return;
+		}
+
+		// Consume the event so the tab key does not get handled (no insertion of \t)
+		event.consume();
+
+		// Detailed selection info.
+		TwoDimensional.Position selectionStart2D = codeArea.offsetToPosition(selection.getStart(), TwoDimensional.Bias.Forward);
+		TwoDimensional.Position selectionEnd2D = codeArea.offsetToPosition(selection.getEnd(), TwoDimensional.Bias.Forward);
+		boolean isMultiLine = selectionStart2D.getMajor() != selectionEnd2D.getMajor();
+
+		// Check if text selection is multi-line
+		boolean doShift = false;
+		if (isMultiLine) {
+			// Insert a '\t' before the first non-whitespace character of all selected paragaphs.
+			int start = selection.getStart();
+			int end = selection.getEnd();
+			int startParagraph = codeArea.offsetToPosition(start, TwoDimensional.Bias.Forward).getMajor();
+			int endParagraph = codeArea.offsetToPosition(end, TwoDimensional.Bias.Backward).getMajor();
+			for (int i = startParagraph; i <= endParagraph; i++) {
+				// Not ideal as it counts as multiple actions (not undo-able in one go) but good enough for now.
+				if (event.isShiftDown()) {
+					doShift = unindent(i);
+				} else {
+					doShift = true;
+					indent(i);
+				}
+			}
+		} else {
+			// Insert a '\t' before the first non-whitespace character of the paragraph.
+			int paragraph = codeArea.getCurrentParagraph();
+			if (event.isShiftDown()) {
+				doShift = unindent(paragraph);
+			} else {
+				doShift = true;
+				indent(paragraph);
+			}
+		}
+
+		// Re-select the original text.
+		if (doShift)
+			codeArea.selectRange(selectionStart2D.getMajor(), selectionStart2D.getMinor() + 1,
+					selectionEnd2D.getMajor(), selectionEnd2D.getMinor() + 1);
+	}
+
+	/**
+	 * Handle tab completion <i>(completion also works with enter key)</i>
+	 *
+	 * @param event
+	 * 		Key event where {@link KeyCode#TAB} or {@link KeyCode#ENTER} was pressed.
+	 *
+	 * @return {@code true} when a completion was made.
+	 */
+	private boolean handleTabCompletion(@Nonnull KeyEvent event) {
+		return tabCompleter != null && tabCompleter.requestCompletion(event);
 	}
 
 	/**

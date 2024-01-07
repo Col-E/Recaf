@@ -2,14 +2,13 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 
 import java.util.Set;
 
 /**
- * Path node for annotations on {@link Annotated} types such as classes, fields, and methods..
+ * Path node for annotations on {@link Annotated} types such as classes, fields, and methods.
  *
  * @author Matt Coley
  */
@@ -40,6 +39,7 @@ public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo>
 	 * @see ClassMemberPathNode#childAnnotation(AnnotationInfo)
 	 * @see ClassPathNode#child(AnnotationInfo)
 	 * @see AnnotationPathNode#child(AnnotationInfo)
+	 * @see InnerClassPathNode#child(AnnotationInfo)
 	 */
 	@SuppressWarnings("unchecked")
 	public AnnotationPathNode(@Nullable PathNode<?> parent, @Nonnull AnnotationInfo annotation) {
@@ -50,7 +50,7 @@ public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo>
 	 * @param annotation
 	 * 		Annotation to wrap into node.
 	 *
-	 * @return Path node of annotation, with current annotation as parent.
+	 * @return Path node of annotation, with the current annotation as parent.
 	 */
 	@Nonnull
 	public AnnotationPathNode child(@Nonnull AnnotationInfo annotation) {
@@ -60,7 +60,7 @@ public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo>
 	@Nonnull
 	@Override
 	public Set<String> directParentTypeIds() {
-		return Set.of(ClassPathNode.TYPE_ID, ClassMemberPathNode.TYPE_ID, AnnotationPathNode.TYPE_ID);
+		return Set.of(ClassPathNode.TYPE_ID, ClassMemberPathNode.TYPE_ID, InnerClassPathNode.TYPE_ID, AnnotationPathNode.TYPE_ID);
 	}
 
 	@Override

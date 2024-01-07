@@ -36,8 +36,8 @@ public abstract class AbstractClassInfoProvider<T extends ClassInfo> extends But
 	}
 
 	@SuppressWarnings("unchecked")
-	private void showClassInfoPopover(ActionEvent e) {
-		ClassPathNode path = classProvider.getPath();
+	private void showClassInfoPopover(@Nonnull ActionEvent e) {
+		ClassPathNode path = classProvider.getClassPath();
 		ClassInfo info = path.getValue();
 		Popover popover = new Popover(createInfoContent((T) info));
 		popover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);

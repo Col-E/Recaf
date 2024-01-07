@@ -7,11 +7,12 @@ import javafx.scene.control.ContextMenu;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
-import software.coley.recaf.ui.control.ActionMenuItem;
-import software.coley.recaf.util.Lang;
+import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+
+import static org.kordamp.ikonli.carbonicons.CarbonIcons.TRASH_CAN;
 
 /**
  * Basic implementation for {@link BundleContextMenuProviderFactory}.
@@ -40,7 +41,8 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 			IconProvider iconProvider = iconService.getBundleIconProvider(workspace, resource, bundle);
 			ContextMenu menu = new ContextMenu();
 			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
-			menu.getItems().add(new ActionMenuItem(Lang.getBinding("misc.clear"), bundle::clear));
+			var builder = new ContextMenuBuilder(menu, source).forBundle(workspace, resource, bundle);
+			builder.item("misc.clear", TRASH_CAN, bundle::clear);
 			return menu;
 		};
 	}

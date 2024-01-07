@@ -21,6 +21,10 @@ public final class ConfigGroups {
 	 */
 	public static final String SERVICE_ANALYSIS = SERVICE + PACKAGE_SPLIT + "analysis";
 	/**
+	 * Group for assembler components.
+	 */
+	public static final String SERVICE_ASSEMBLER = SERVICE + PACKAGE_SPLIT + "assembler";
+	/**
 	 * Group for compiler components.
 	 */
 	public static final String SERVICE_COMPILE = SERVICE + PACKAGE_SPLIT + "compile";

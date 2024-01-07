@@ -43,6 +43,7 @@ import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
+import software.coley.recaf.ui.pane.editing.assembler.AssemblerContextActionSupport;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.FxThreadUtil;
@@ -62,6 +63,7 @@ import java.util.concurrent.Executors;
  *
  * @author Matt Coley
  * @see FieldsAndMethodsPane#setupSelectionNavigationListener(ClassNavigable) Originating call for {@link #select(ClassMember)}.
+ * @see AssemblerContextActionSupport Alternative for context actions on assembly sources.
  */
 @Dependent
 public class JavaContextActionSupport implements EditorComponent, UpdatableNavigable {

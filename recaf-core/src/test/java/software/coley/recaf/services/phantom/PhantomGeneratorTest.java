@@ -55,7 +55,7 @@ public class PhantomGeneratorTest extends TestBase implements Opcodes {
 		ClassWriter writer = new ClassWriter(0);
 		node.accept(writer);
 		byte[] dummy = writer.toByteArray();
-		JvmClassInfo dummyInfo = new JvmClassInfoBuilder(new ClassReader(dummy)).build();
+		JvmClassInfo dummyInfo = new JvmClassInfoBuilder(dummy).build();
 		List<JvmClassInfo> dummyWrapped = Collections.singletonList(dummyInfo);
 
 		// Generate phantoms

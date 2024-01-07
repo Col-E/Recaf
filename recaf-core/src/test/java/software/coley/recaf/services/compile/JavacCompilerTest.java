@@ -51,7 +51,7 @@ public class JavacCompilerTest extends TestBase {
 
 		// Assert class validity
 		byte[] classBytecode = result.getCompilations().get("HelloWorld");
-		JvmClassInfo classInfo = new JvmClassInfoBuilder(new ClassReader(classBytecode)).build();
+		JvmClassInfo classInfo = new JvmClassInfoBuilder(classBytecode).build();
 		assertEquals("HelloWorld", classInfo.getName(), "Class name did not match expected value");
 		assertNotNull(classInfo.getDeclaredMethod("main", "([Ljava/lang/String;)V"), "Missing main method");
 	}
@@ -85,7 +85,7 @@ public class JavacCompilerTest extends TestBase {
 		ClassReader reader = classInfo.getClassReader();
 		ClassRemapper mapper = new ClassRemapper(writer, new SimpleRemapper(classInfo.getName(), "dummy/StringConsumer"));
 		reader.accept(mapper, 0);
-		classInfo = new JvmClassInfoBuilder(new ClassReader(writer.toByteArray())).build();
+		classInfo = new JvmClassInfoBuilder(writer.toByteArray()).build();
 
 		// Put it into a workspace and try again. Should work now that it can pull the missing class from the workspace.
 		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(classInfo));

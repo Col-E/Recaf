@@ -31,6 +31,7 @@ public class Icons {
 	public static final String ENUM = "icons/class/enum.png";
 	public static final String NULL = "icons/class/null.png";
 	public static final String PRIMITIVE = "icons/class/prim.png";
+	public static final String UNINITIALIZED = "icons/class/uninitialized.png";
 	public static final String INTERNAL = "icons/class/internal.png";
 	public static final String ARRAY = "icons/class/array.png";
 	// Member definitions

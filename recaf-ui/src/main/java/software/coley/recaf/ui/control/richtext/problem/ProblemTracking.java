@@ -115,6 +115,17 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	}
 
 	/**
+	 * @param level
+	 * 		Problem level to filter problems by.
+	 *
+	 * @return List of problems matching the given level.
+	 */
+	@Nonnull
+	public List<Problem> getProblemsByLevel(ProblemLevel level) {
+		return getProblems(p -> p.getLevel() == level);
+	}
+
+	/**
 	 * @param filter
 	 * 		Filter to pass problems through.
 	 *

@@ -185,7 +185,6 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 			this.start = start;
 			this.end = end;
 		}
-
 		/**
 		 * Splits this node into subregions based on the given rules.
 		 *
@@ -199,6 +198,9 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 
 			// Match within give region
 			String localText = text.substring(start, end);
+			if (localText.isEmpty())
+				return;
+
 			Matcher matcher = getCombinedPattern(rules).matcher(localText);
 			while (matcher.find()) {
 				// Create region from found match

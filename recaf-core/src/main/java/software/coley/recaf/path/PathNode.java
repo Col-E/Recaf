@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * A <i>"modular"</i> value type for representing <i>"paths"</i> to content in a {@link Workspace}.
@@ -48,7 +49,14 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	 * @see #getValueOfType(Class) Get the direct value of the parent node.
 	 */
 	@Nullable
-	<T, I extends PathNode<T>> I getParentOfType(@Nonnull Class<T> type);
+	@SuppressWarnings("unchecked")
+	default <T, I extends PathNode<T>> I getParentOfType(@Nonnull Class<T> type) {
+		if (getValueType().isAssignableFrom(type))
+			return (I) this;
+		PathNode<?> parent = getParent();
+		if (parent == null) return null;
+		return parent.getParentOfType(type);
+	}
 
 	/**
 	 * @return Wrapped value.
@@ -108,7 +116,59 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	 * @see #getParentOfType(Class) Get the containing {@link PathNode} instead of the direct value.
 	 */
 	@Nullable
-	<T> T getValueOfType(@Nonnull Class<T> type);
+	@SuppressWarnings("unchecked")
+	default <T> T getValueOfType(@Nonnull Class<T> type) {
+		if (getValueType().isAssignableFrom(type))
+			return (T) getValue();
+		PathNode<?> parent = getParent();
+		if (parent == null) return null;
+		return parent.getValueOfType(type);
+	}
+
+	/**
+	 * @param type
+	 * 		Some type contained in the full path.
+	 * 		This includes the current {@link PathNode} and any {@link #getParent() parent}.
+	 * @param action
+	 * 		Action to run on the discovered value in the path.
+	 * 		If no value is found, the action is not run.
+	 * @param <T>
+	 * 		Implied value type.
+	 *
+	 * @return {@code true} when a matching value was found and the action was run.
+	 */
+	default <T> boolean onValue(@Nonnull Class<T> type, @Nonnull Consumer<T> action) {
+		T value = getValueOfType(type);
+		if (value != null) {
+			action.accept(value);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @param type
+	 * 		Some {@link PathNode} type.
+	 * @param action
+	 * 		Action to run on the discovered path node.
+	 * 		If no path node is found, the action is not run.
+	 * @param <T>
+	 * 		Implied path type.
+	 *
+	 * @return {@code true} when a matching path node was found and the action was run.
+	 */
+	@SuppressWarnings("unchecked")
+	default <T extends PathNode<?>> boolean onPath(@Nonnull Class<T> type, @Nonnull Consumer<T> action) {
+		if (type == getClass()) {
+			action.accept((T) this);
+			return true;
+		} else {
+			PathNode<?> parent = getParent();
+			if (parent != null)
+				return parent.onPath(type, action);
+			return false;
+		}
+	}
 
 	/**
 	 * Checks for tree alignment. Consider this simple example:
@@ -128,7 +188,9 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	 *     <li>{@code path1C.allParentsMatch(path3X) == false} Paths to different items are not equal</li>
 	 * </ul>
 	 *
-	 * @param other Some other path node.
+	 * @param other
+	 * 		Some other path node.
+	 *
 	 * @return {@code true} when from this level all parents going up the path match values.
 	 */
 	default boolean allParentsMatch(@Nonnull PathNode<?> other) {

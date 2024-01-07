@@ -3,10 +3,10 @@ package software.coley.recaf.workspace.io;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import me.coley.cafedude.classfile.VersionConstants;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
+import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.builder.*;
@@ -57,13 +57,13 @@ public class BasicInfoImporter implements InfoImporter {
 								.build();
 					} else {
 						logger.debug("CafeDude patched class: {}", name);
-						return new JvmClassInfoBuilder(new ClassReader(patched))
+						return new JvmClassInfoBuilder(patched)
 								.build();
 					}
 				}
 
 				// Yield class
-				return new JvmClassInfoBuilder(new ClassReader(data)).build();
+				return new JvmClassInfoBuilder(data).build();
 			} catch (Throwable t) {
 				// Invalid class, either some new edge case we need to add to CafeDude, or the file
 				// isn't a class, but the structure models it close enough to look like one at a glance.

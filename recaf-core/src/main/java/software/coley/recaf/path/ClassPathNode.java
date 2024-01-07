@@ -48,7 +48,7 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	 * @param member
 	 * 		Member to wrap into node.
 	 *
-	 * @return Path node of member, with current class as parent.
+	 * @return Path node of member, with the current class as parent.
 	 */
 	@Nonnull
 	public ClassMemberPathNode child(@Nonnull ClassMember member) {
@@ -59,7 +59,7 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	 * @param innerClass
 	 * 		Inner class to wrap into node.
 	 *
-	 * @return Path node of inner class, with current class as parent.
+	 * @return Path node of inner class, with the current class as parent.
 	 */
 	@Nonnull
 	public InnerClassPathNode child(@Nonnull InnerClassInfo innerClass) {
@@ -70,7 +70,7 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	 * @param annotation
 	 * 		Annotation to wrap into node.
 	 *
-	 * @return Path node of annotation, with current member as parent.
+	 * @return Path node of annotation, with the current member as parent.
 	 */
 	@Nonnull
 	public AnnotationPathNode child(@Nonnull AnnotationInfo annotation) {

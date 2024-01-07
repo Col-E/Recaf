@@ -11,12 +11,22 @@
       <ANNO name="jakarta.annotation.Nullable" />
       <ANNO name="javax.annotation.Nonnull" />
       <ANNO name="javax.annotation.Nullable" />
+      <ANNO name="org.jetbrains.annotations.NotNull" />
+      <ANNO name="org.jetbrains.annotations.Nullable" />
     </REPEAT_ANNOTATIONS>
   </JavaCodeStyleSettings>
   <JetCodeStyleSettings>
     <option name="CODE_STYLE_DEFAULTS" value="KOTLIN_OFFICIAL" />
   </JetCodeStyleSettings>
   <codeStyleSettings language="JAVA">
+    <option name="KEEP_BLANK_LINES_IN_DECLARATIONS" value="1" />
+    <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
+    <option name="KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER" value="1" />
+    <option name="KEEP_BLANK_LINES_BEFORE_RBRACE" value="1" />
+    <option name="KEEP_SIMPLE_BLOCKS_IN_ONE_LINE" value="true" />
+    <option name="KEEP_SIMPLE_METHODS_IN_ONE_LINE" value="true" />
+    <option name="KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE" value="true" />
+    <option name="KEEP_SIMPLE_CLASSES_IN_ONE_LINE" value="true" />
     <indentOptions>
       <option name="USE_TAB_CHARACTER" value="true" />
     </indentOptions>

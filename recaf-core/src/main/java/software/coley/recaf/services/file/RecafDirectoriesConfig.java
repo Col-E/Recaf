@@ -127,6 +127,12 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 			return Paths.get(recafDir);
 		}
 
+		// The directories library can break on some version of windows, but it will always
+		// resolve to '%APPDATA%' at the end of the day. So we'll just do that ourselves here,
+		if (PlatformType.get() == PlatformType.WINDOWS) {
+			return Paths.get(System.getenv("APPDATA"), "Recaf");
+		}
+
 		// Use generic data/config location
 		try {
 			// Windows: %APPDATA%/
@@ -137,13 +143,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 				throw new NullPointerException("BaseDirectories did not yield an initial directory");
 			return Paths.get(dir).resolve("Recaf");
 		} catch (Throwable t) {
-			// The lookup only seems to fail on windows.
-			// And we can look up the APPDATA folder easily.
-			if (PlatformType.get() == PlatformType.WINDOWS) {
-				return Paths.get(System.getenv("APPDATA"), "Recaf");
-			} else {
-				throw new IllegalStateException("Failed to initialize Recaf directory", t);
-			}
+			throw new IllegalStateException("Failed to initialize Recaf directory", t);
 		}
 	}
 }

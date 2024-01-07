@@ -242,8 +242,7 @@ assembler.analysis.name-column=名称
 assembler.analysis.value-column=值
 assembler.playground.title=Java转Bytecode
 assembler.playground.comment=您可以在这里编写常规的Java，并将其转换为字节码
-assembler.vartable.title=局部变量
-assembler.vartable.empty=<Requires compiling at least once>
+assembler.variables.title=局部变量
 
 ## Search
 search.run=搜索
@@ -434,11 +433,11 @@ misc.none=无
 misc.casesensitive=大小写敏感
 misc.member.field=字段
 misc.member.method=方法
-misc.member.field_n_method=字段和方法
-misc.member.inner_class=内部类
-misc.member.inner_interface=内部接口
-misc.member.inner_enum=内部枚举
-misc.member.inner_annotation=内部注解
+misc.member.field-n-method=字段和方法
+misc.member.inner-class=内部类
+misc.member.inner-interface=内部接口
+misc.member.inner-enum=内部枚举
+misc.member.inner-annotation=内部注解
 misc.accessflag.visibility.public=公开的
 misc.accessflag.visibility.protected=受保护的
 misc.accessflag.visibility.private=私有的

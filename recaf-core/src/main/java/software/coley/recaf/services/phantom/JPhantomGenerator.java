@@ -94,7 +94,7 @@ public class JPhantomGenerator implements PhantomGenerator {
 		// Wrap into resource
 		BasicJvmClassBundle bundle = new BasicJvmClassBundle();
 		generated.forEach((name, phantom) -> {
-			JvmClassInfo phantomClassInfo = new JvmClassInfoBuilder(new ClassReader(phantom)).build();
+			JvmClassInfo phantomClassInfo = new JvmClassInfoBuilder(phantom).build();
 			bundle.initialPut(phantomClassInfo);
 		});
 		return new WorkspaceResourceBuilder()
@@ -162,6 +162,8 @@ public class JPhantomGenerator implements PhantomGenerator {
 					out.put(name, decorate(v));
 			});
 			logger.debug("Phantom analysis complete, generated {} classes", out.size());
+		} catch (Throwable t) {
+			logger.error("Phantom analysis encountered an exception.", t);
 		} finally {
 			// Cleanup
 			Phantoms.refresh();

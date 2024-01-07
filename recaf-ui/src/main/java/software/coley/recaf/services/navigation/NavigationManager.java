@@ -195,7 +195,7 @@ public class NavigationManager implements Navigable, Service {
 		}
 
 		void add(Node value) {
-			if (value instanceof Navigable navigable) {
+			if (value instanceof Navigable navigable && navigable.isTrackable()) {
 				children.add(navigable);
 				childrenToTab.put(navigable, tab);
 			}

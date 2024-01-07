@@ -91,8 +91,8 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 			// This is really cringe, but it works.
 			Markers markers = new Markers(UUID.randomUUID(), Collections.emptyList());
 			Space space = Space.format("");
-			J.Identifier packageIdentifier = new J.Identifier(UUID.randomUUID(), space, markers, packageName, null, null);
-			J.Identifier nameIdentifier = new J.Identifier(UUID.randomUUID(), space, markers, simpleMappedName + suffix, null, null);
+			J.Identifier packageIdentifier = new J.Identifier(UUID.randomUUID(), space, markers, Collections.emptyList(), packageName, null, null);
+			J.Identifier nameIdentifier = new J.Identifier(UUID.randomUUID(), space, markers, Collections.emptyList(), simpleMappedName + suffix, null, null);
 			impoort = impoort.withQualid(qualid.withName(nameIdentifier)
 					.withTarget(packageIdentifier)
 					.withType(visitType(qualid.getType(), ctx)));

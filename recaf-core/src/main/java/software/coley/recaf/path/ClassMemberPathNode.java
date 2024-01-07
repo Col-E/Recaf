@@ -65,7 +65,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @param thrownType
 	 * 		Thrown type to wrap into node.
 	 *
-	 * @return Path node of thrown type, with current member as parent.
+	 * @return Path node of thrown type, with the current member as parent.
 	 */
 	@Nonnull
 	public ThrowsPathNode childThrows(@Nonnull String thrownType) {
@@ -78,7 +78,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @param exceptionType
 	 * 		Thrown type to wrap into node.
 	 *
-	 * @return Path node of thrown type, with current member as parent.
+	 * @return Path node of thrown type, with the current member as parent.
 	 */
 	@Nonnull
 	public CatchPathNode childCatch(@Nonnull String exceptionType) {
@@ -91,7 +91,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @param annotation
 	 * 		Annotation to wrap into node.
 	 *
-	 * @return Path node of annotation, with current member as parent.
+	 * @return Path node of annotation, with the current member as parent.
 	 */
 	@Nonnull
 	public AnnotationPathNode childAnnotation(@Nonnull AnnotationInfo annotation) {
@@ -102,7 +102,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @param variable
 	 * 		Variable to wrap into node.
 	 *
-	 * @return Path node of local variable, with current member as parent.
+	 * @return Path node of local variable, with the current member as parent.
 	 */
 	@Nonnull
 	public LocalVariablePathNode childVariable(LocalVariable variable) {
@@ -115,7 +115,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @param insn
 	 * 		Instruction to wrap into node.
 	 *
-	 * @return Path node of instruction, with current member as parent.
+	 * @return Path node of instruction, with the current member as parent.
 	 */
 	@Nonnull
 	public InstructionPathNode childInsn(AbstractInsnNode insn) {

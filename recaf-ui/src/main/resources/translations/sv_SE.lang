@@ -315,8 +315,8 @@ assembler.analysis.name-column=Namn
 assembler.analysis.value-column=Värde
 assembler.playground.title=Java till Bytecode
 assembler.playground.comment=Du kan skriva vanlig Java här och låta den översättas till bytekod
-assembler.vartable.title=Variabler
-assembler.vartable.empty=<Kräver kompilering minst en gång>
+assembler.variables.title=Variabler
+assembler.variables.empty=<Kräver kompilering minst en gång>
 assembler.suggestions.none=Inga förslag
 
 ## Search
@@ -670,11 +670,11 @@ misc.casesensitive=Skiftlägeskänslig
 misc.regex=Regex
 misc.member.field=Fält
 misc.member.method=Metod
-misc.member.field_n_method=Fält och metod
-misc.member.inner_class=Inre klass
-misc.member.inner_interface=Inre gränssnitt
-misc.member.inner_enum=Inre uppräkning
-misc.member.inner_annotation=Inre annotering
+misc.member.field-n-method=Fält och metod
+misc.member.inner-class=Inre klass
+misc.member.inner-interface=Inre gränssnitt
+misc.member.inner-enum=Inre uppräkning
+misc.member.inner-annotation=Inre annotering
 misc.accessflag.visibility.public=Publik
 misc.accessflag.visibility.protected=Skyddad
 misc.accessflag.visibility.private=Privat

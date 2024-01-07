@@ -246,6 +246,12 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		return path;
 	}
 
+	@Nonnull
+	@Override
+	public ClassPathNode getClassPath() {
+		return path;
+	}
+
 	@Override
 	public void requestFocus(@Nonnull ClassMember member) {
 		// Skip if lock is active. Implies we are the source of the request.
@@ -306,8 +312,8 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		ALL(Icons.CLASS_N_FIELD_N_METHOD, "misc.all"),
 		FIELD(Icons.FIELD, "misc.member.field"),
 		METHOD(Icons.METHOD, "misc.member.method"),
-		FIELD_AND_METHOD(Icons.FIELD_N_METHOD, "misc.member.field_n_method"),
-		INNER_CLASS(Icons.CLASS, "misc.member.inner_class");
+		FIELD_AND_METHOD(Icons.FIELD_N_METHOD, "misc.member.field-n-method"),
+		INNER_CLASS(Icons.CLASS, "misc.member.inner-class");
 
 		final String icon;
 		final String key;

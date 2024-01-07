@@ -87,4 +87,11 @@ public interface Navigable {
 
 		return list == null ? Collections.emptyList() : list;
 	}
+
+	/**
+	 * @return {@code true} to enable tracking of this component within {@link NavigationManager}.
+	 */
+	default boolean isTrackable() {
+		return true;
+	}
 }

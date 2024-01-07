@@ -9,15 +9,13 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
@@ -41,22 +39,40 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class SideTabs extends BorderPane implements UpdatableNavigable {
+	private static final PseudoClass PSEUDO_HORIZONTAL = PseudoClass.getPseudoClass("horizontal");
+	private static final PseudoClass PSEUDO_VERTICAL = PseudoClass.getPseudoClass("vertical");
 	private final ObservableList<Tab> tabs = FXCollections.observableArrayList();
 	private final ObservableObject<Tab> selectedTab = new ObservableObject<>(null);
-	private final VBox tabContainer = new VBox();
-	private double lastWidth;
-	private boolean widthIsBound;
+	private final Pane tabContainer;
+	private double lastSize;
+	private boolean sizeIsBound;
 	private PathNode<?> path;
 
 	/**
 	 * New side tabs.
+	 *
+	 * @param orientation
+	 * 		Orientation of tab layout.
 	 */
-	public SideTabs() {
+	public SideTabs(@Nonnull Orientation orientation) {
+		if (orientation == Orientation.VERTICAL) {
+			VBox vBox = new VBox();
+			vBox.setFillWidth(true);
+			tabContainer = vBox;
+		} else {
+			HBox hBox = new HBox();
+			hBox.setFillHeight(true);
+			tabContainer = hBox;
+		}
 		tabContainer.getStyleClass().add("side-tab-pane");
-		tabContainer.setFillWidth(true);
 
-		// Display tabs.
-		setRight(tabContainer);
+		if (orientation == Orientation.VERTICAL) {
+			pseudoClassStateChanged(PSEUDO_VERTICAL, true);
+			setRight(tabContainer);
+		} else {
+			pseudoClassStateChanged(PSEUDO_HORIZONTAL, true);
+			setBottom(tabContainer);
+		}
 
 		// When the tabs list is updated, add or remove tabs as necessary.
 		tabs.addListener((ListChangeListener<Tab>) change -> {
@@ -65,7 +81,7 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 				for (Tab tab : change.getAddedSubList()) {
 					// Add new tab display node.
 					// When it is clicked on, update the selected tab.
-					TabAdapter adapter = new TabAdapter(tab);
+					TabAdapter adapter = new TabAdapter(orientation, tab);
 					adapter.setOnMousePressed(e -> {
 						if (selectedTab.getValue() == tab)
 							selectedTab.setValue(null);
@@ -84,10 +100,20 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 		// We only want to allocate ONE grip element, which will be reused.
 		// Less allocation is good, but we want a single instance so the initial callback to the consumer parameter
 		// is only run ONCE. Not each time we select a new tab.
-		DoubleProperty prefWidth = prefWidthProperty();
-		ResizeGrip grip = new ResizeGrip(this::getWidth,
-				size -> prefWidth.bind(size.map((Function<Number, Number>)
-						number -> lastWidth = Math.min(number.doubleValue(), getMaxWidth()))));
+		DoubleProperty prefSize;
+		ResizeGrip grip;
+		if (orientation == Orientation.VERTICAL) {
+			prefSize = prefWidthProperty();
+			grip = new ResizeGrip(orientation, this::getWidth,
+					size -> prefSize.bind(size.map((Function<Number, Number>)
+							number -> lastSize = Math.min(number.doubleValue(), getMaxWidth()))));
+		} else {
+			prefSize = prefHeightProperty();
+			grip = new ResizeGrip(orientation, this::getHeight,
+					size -> prefSize.bind(size.map((Function<Number, Number>)
+							number -> lastSize = Math.min(number.doubleValue(), getMaxHeight()))));
+		}
+
 
 		// When the selected tab changes display the selected one's content, clear content if no selection.
 		selectedTab.addChangeListener((ob, old, cur) -> {
@@ -96,40 +122,48 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 					adapter.selected.setValue(cur == adapter.tab);
 					if (cur == null) {
 						// We unbind here so that the empty region can collapse.
-						prefWidth.unbind();
-						prefWidth.setValue(0);
+						prefSize.unbind();
+						prefSize.setValue(0);
 						setCenter(null);
 
 						// Mark that we are not bound.
-						// When we go to bind again, we will know we can call the width setter without a binding conflict.
-						widthIsBound = false;
+						// When we go to bind again, we will know we can call the size setter without a binding conflict.
+						sizeIsBound = false;
 					} else {
-						// Set initial pref width to what it was from the last open tab.
-						if (!widthIsBound) {
-							prefWidth.set(lastWidth);
-							widthIsBound = true;
+						// Set initial pref size to what it was from the last open tab.
+						if (!sizeIsBound) {
+							prefSize.set(lastSize);
+							sizeIsBound = true;
 						}
 
 						// We have this wrapper which has a resize bar on the left, and the main content in the center.
-						// The resize bar will allow the main content width to be modified.
+						// The resize bar will allow the main content size to be modified.
 						// With the given binding logic, the main content is not allowed to expand beyond the container bounds.
-						// We also record the bound width to a variable so that when we close a tab and re-open it, we can
-						// restore the prior width.
+						// We also record the bound size to a variable so that when we close a tab and re-open it, we can
+						// restore the prior size.
 						BorderPane wrapper = new BorderPane(cur.getContent());
 						wrapper.getStyleClass().add("side-tab-content");
-						wrapper.setLeft(grip);
+						if (orientation == Orientation.VERTICAL)
+							wrapper.setLeft(grip);
+						else
+							wrapper.setTop(grip);
 						setCenter(wrapper);
 					}
 				}
 			}
 		});
 
-		// When the side-tabs are added to the UI we want to initialize the max-width property so that we can reference
+		// When the side-tabs are added to the UI we want to initialize the max-width/height property so that we can reference
 		// it later in our logic to prevent the resize grip from making content larger than the parent size.
 		NodeEvents.runOnceOnChange(parentProperty(), parent -> {
 			if (parent instanceof Region parentRegion) {
-				ReadOnlyDoubleProperty parentWidthProperty = parentRegion.widthProperty();
-				maxWidthProperty().bind(parentWidthProperty.subtract(35));
+				if (orientation == Orientation.VERTICAL) {
+					ReadOnlyDoubleProperty parentWidthProperty = parentRegion.widthProperty();
+					maxWidthProperty().bind(parentWidthProperty.subtract(35));
+				} else {
+					ReadOnlyDoubleProperty parentHeightProperty = parentRegion.heightProperty();
+					maxHeightProperty().bind(parentHeightProperty.subtract(35));
+				}
 			}
 		});
 	}
@@ -176,7 +210,7 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 	/**
 	 * Node adapter for {@link Tab} to display.
 	 */
-	private static class TabAdapter extends VBox {
+	private static class TabAdapter extends BorderPane {
 		private static final PseudoClass STATE_SELECTED = new PseudoClass() {
 			@Override
 			public String getPseudoClassName() {
@@ -187,24 +221,39 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 		private final Tab tab;
 
 		/**
+		 * @param orientation
+		 * 		Parent side-tabs orientation.
 		 * @param tab
 		 * 		Tab content to represent.
 		 */
-		public TabAdapter(Tab tab) {
+		public TabAdapter(@Nonnull Orientation orientation, @Nonnull Tab tab) {
 			this.tab = tab;
+			Pane box;
+			if (orientation == Orientation.VERTICAL) {
+				VBox vBox = new VBox();
+				vBox.setSpacing(5);
+				box = vBox;
+			} else {
+				HBox hBox = new HBox();
+				hBox.setSpacing(5);
+				box = hBox;
+			}
 			ObservableList<String> styleClasses = getStyleClass();
 			styleClasses.add("side-tab");
 			setPadding(new Insets(5));
-			setSpacing(5);
 
 			// Layout & map content from tab
 			BorderPane graphicWrapper = new BorderPane();
 			graphicWrapper.centerProperty().bind(tab.graphicProperty());
-			graphicWrapper.setRotate(90);
 			Text text = new Text();
 			text.textProperty().bind(tab.textProperty());
-			text.setRotate(90); // must be wrapped in group for this to use proper rotated dimensions
-			getChildren().addAll(graphicWrapper, new Group(text));
+			if (orientation == Orientation.VERTICAL) {
+				// must be wrapped in group for this to use proper rotated dimensions
+				graphicWrapper.setRotate(90);
+				text.setRotate(90);
+			}
+			box.getChildren().addAll(graphicWrapper, new Group(text));
+			setCenter(box);
 
 			// Handle visual state change with selection & hover events.
 			selected.addChangeListener((ob, old, cur) -> {
@@ -216,35 +265,65 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 	/**
 	 * Control for handling resizing the display.
 	 */
-	private static class ResizeGrip extends HBox {
+	private static class ResizeGrip extends BorderPane {
 		private final SimpleDoubleProperty targetSize = new SimpleDoubleProperty();
 
 		/**
-		 * @param widthLookup
-		 * 		Parent container width lookup.
+		 * @param orientation
+		 * 		Parent side-tabs orientation.
+		 * @param sizeLookup
+		 * 		Parent container size lookup.
 		 * @param consumer
-		 * 		Consumer to take in the desired new width, wrapped in a {@link DoubleProperty} in order to
+		 * 		Consumer to take in the desired new size, wrapped in a {@link DoubleProperty} in order to
 		 * 		support mapping operations.
 		 */
-		private ResizeGrip(DoubleSupplier widthLookup, Consumer<DoubleProperty> consumer) {
-			AtomicInteger startX = new AtomicInteger();
-			setFillHeight(true);
+		private ResizeGrip(@Nonnull Orientation orientation,
+						   @Nonnull DoubleSupplier sizeLookup,
+						   @Nonnull Consumer<DoubleProperty> consumer) {
+			AtomicInteger startPos = new AtomicInteger();
+			Pane box;
+			if (orientation == Orientation.VERTICAL) {
+				VBox vBox = new VBox();
+				vBox.setSpacing(5);
+				vBox.setFillWidth(true);
+				box = vBox;
+			} else {
+				HBox hBox = new HBox();
+				hBox.setSpacing(5);
+				hBox.setFillHeight(true);
+				box = hBox;
+			}
+			setCenter(box);
 			getStyleClass().add("side-tab-grip");
-			setMinWidth(5);
-			setCursor(Cursor.H_RESIZE);
-			setOnMousePressed(e -> startX.set((int) e.getX()));
-			setOnMouseDragged(e -> {
-				double x = e.getX();
-				double diffX = (x - startX.get());
-				double width = widthLookup.getAsDouble();
-				double newWidth = width - diffX;
-				targetSize.set(newWidth);
-				consumer.accept(targetSize);
-			});
+			if (orientation == Orientation.VERTICAL) {
+				setCursor(Cursor.H_RESIZE);
+				setMinWidth(5);
+				setOnMousePressed(e -> startPos.set((int) e.getX()));
+				setOnMouseDragged(e -> {
+					double x = e.getX();
+					double diffX = (x - startPos.get());
+					double width = sizeLookup.getAsDouble();
+					double newWidth = width - diffX;
+					targetSize.set(newWidth);
+					consumer.accept(targetSize);
+				});
+			} else {
+				setCursor(Cursor.V_RESIZE);
+				setMinHeight(5);
+				setOnMousePressed(e -> startPos.set((int) e.getY()));
+				setOnMouseDragged(e -> {
+					double y = e.getY();
+					double diffY = (y - startPos.get());
+					double height = sizeLookup.getAsDouble();
+					double newHeight = height - diffY;
+					targetSize.set(newHeight);
+					consumer.accept(targetSize);
+				});
+			}
 
 			// Trigger call to consumer once with existing parent width once initially added to the UI.
 			NodeEvents.runOnceOnChange(parentProperty(), parent -> {
-				targetSize.set(widthLookup.getAsDouble());
+				targetSize.set(sizeLookup.getAsDouble());
 				consumer.accept(targetSize);
 			});
 		}

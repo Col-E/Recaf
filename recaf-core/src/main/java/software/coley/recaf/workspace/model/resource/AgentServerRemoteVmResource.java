@@ -212,7 +212,7 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 			}
 
 			// Add the class
-			JvmClassInfo classInfo = new JvmClassInfoBuilder(new ClassReader(data.getCode())).build();
+			JvmClassInfo classInfo = new JvmClassInfoBuilder(data.getCode()).build();
 			RemoteClassloaderProperty.set(classInfo, loaderId);
 			bundle.put(classInfo);
 		}

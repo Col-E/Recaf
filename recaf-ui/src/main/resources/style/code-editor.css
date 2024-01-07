@@ -47,6 +47,7 @@ complete line, spanning the full width of the text-area.
 }
 .code-area .paragraph-box .paragraph-text {
     -fx-line-spacing: 1;
+    -fx-tab-size: 4;
 }
 
 /*

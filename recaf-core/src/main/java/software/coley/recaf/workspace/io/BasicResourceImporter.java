@@ -514,10 +514,10 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		BasicJvmClassBundle classes = new BasicJvmClassBundle();
 		BasicFileBundle files = new BasicFileBundle();
 
-		// The file-info name should be an absolute path for any non-uri driven import.
+		// The file-info should have the absolute path set as a property.
 		// We have to use a path because unless we implement our own module reader, the internal API
 		// only provides reader access via a path item.
-		Path pathToModuleFile = Paths.get(moduleInfo.asFile().getName());
+		Path pathToModuleFile = InputFilePathProperty.get(moduleInfo);
 		ModulesIOUtil.stream(pathToModuleFile)
 				.forEach(entry -> {
 					// Follows the pattern: /<module-name>/<file-name>

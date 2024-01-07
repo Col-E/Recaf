@@ -10,6 +10,7 @@ import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.AssemblerPathData;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.workspace.model.Workspace;
@@ -51,6 +52,7 @@ public class ContextMenuProviderService implements Service {
 	private final DirectoryContextMenuProviderFactory directoryContextMenuDefault;
 	private final BundleContextMenuProviderFactory bundleContextMenuDefault;
 	private final ResourceContextMenuProviderFactory resourceContextMenuDefault;
+	private final AssemblerContextMenuProviderFactory assemblerContextMenuDefault;
 	// Overrides
 	private ClassContextMenuProviderFactory classContextMenuOverride;
 	private FileContextMenuProviderFactory fileContextMenuOverride;
@@ -62,6 +64,7 @@ public class ContextMenuProviderService implements Service {
 	private DirectoryContextMenuProviderFactory directoryContextMenuOverride;
 	private BundleContextMenuProviderFactory bundleContextMenuOverride;
 	private ResourceContextMenuProviderFactory resourceContextMenuOverride;
+	private AssemblerContextMenuProviderFactory assemblerContextMenuOverride;
 
 	@Inject
 	public ContextMenuProviderService(@Nonnull ContextMenuProviderServiceConfig config,
@@ -74,7 +77,8 @@ public class ContextMenuProviderService implements Service {
 									  @Nonnull PackageContextMenuProviderFactory packageContextMenuDefault,
 									  @Nonnull DirectoryContextMenuProviderFactory directoryContextMenuDefault,
 									  @Nonnull BundleContextMenuProviderFactory bundleContextMenuDefault,
-									  @Nonnull ResourceContextMenuProviderFactory resourceContextMenuDefault) {
+									  @Nonnull ResourceContextMenuProviderFactory resourceContextMenuDefault,
+									  @Nonnull AssemblerContextMenuProviderFactory assemblerContextMenuDefault) {
 		this.config = config;
 
 		// Default factories
@@ -88,6 +92,7 @@ public class ContextMenuProviderService implements Service {
 		this.directoryContextMenuDefault = directoryContextMenuDefault;
 		this.bundleContextMenuDefault = bundleContextMenuDefault;
 		this.resourceContextMenuDefault = resourceContextMenuDefault;
+		this.assemblerContextMenuDefault = assemblerContextMenuDefault;
 	}
 
 	/**
@@ -352,6 +357,35 @@ public class ContextMenuProviderService implements Service {
 	}
 
 	/**
+	 * Delegates to {@link AssemblerContextMenuProviderFactory}.
+	 *
+	 * @param source
+	 * 		Context request origin.
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 *  	Containing class.
+	 * @param assemblerData
+	 * 		The assembler data to create a menu for.
+	 *
+	 * @return Menu provider for the resource.
+	 */
+	@Nonnull
+	public ContextMenuProvider getAssemblerContextMenuProvider(@Nonnull ContextSource source,
+															  @Nonnull Workspace workspace,
+															  @Nonnull WorkspaceResource resource,
+															  @Nonnull ClassBundle<? extends ClassInfo> bundle,
+															  @Nonnull ClassInfo declaringClass,
+															  @Nonnull AssemblerPathData assemblerData) {
+		AssemblerContextMenuProviderFactory factory = assemblerContextMenuOverride != null ? assemblerContextMenuOverride : assemblerContextMenuDefault;
+		return factory.getProvider(source, workspace, resource, bundle, declaringClass, assemblerData);
+	}
+
+	/**
 	 * @return Default menu provider for classes.
 	 */
 	@Nonnull
@@ -557,6 +591,14 @@ public class ContextMenuProviderService implements Service {
 	 */
 	public void setResourceContextMenuProviderOverride(@Nullable ResourceContextMenuProviderFactory resourceContextMenuOverride) {
 		this.resourceContextMenuOverride = resourceContextMenuOverride;
+	}
+
+	/**
+	 * @param assemblerContextMenuOverride
+	 * 		Override factory for supplying assembler menu providers.
+	 */
+	public void setAssemblerContextMenuOverride(@Nullable AssemblerContextMenuProviderFactory assemblerContextMenuOverride) {
+		this.assemblerContextMenuOverride = assemblerContextMenuOverride;
 	}
 
 	@Nonnull

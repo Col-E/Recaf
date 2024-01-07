@@ -13,6 +13,7 @@ import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
@@ -44,20 +45,23 @@ public class WorkspaceRootPane extends BorderPane {
 
 		// Register an open listener to fill the pane's regions when a workspace is loaded.
 		workspaceManager.addWorkspaceOpenListener(workspace -> {
-			DockingRegion dockTree = dockingManager.newRegion();
-			DockingRegion dockPrimary = dockingManager.getPrimaryRegion();
-			createWorkspaceExplorerTab(dockTree, explorerPaneProvider);
-			createPrimaryTab(dockPrimary, informationPaneProvider);
+			// Most of these actions need to be on the UI thread.
+			FxThreadUtil.run(() -> {
+				DockingRegion dockTree = dockingManager.newRegion();
+				DockingRegion dockPrimary = dockingManager.getPrimaryRegion();
+				createWorkspaceExplorerTab(dockTree, explorerPaneProvider);
+				createPrimaryTab(dockPrimary, informationPaneProvider);
 
-			// Layout
-			SplitPane split = new SplitPane(dockTree, dockPrimary);
-			SplitPane.setResizableWithParent(dockTree, false);
-			split.setDividerPositions(0.333);
-			setCenter(split);
+				// Layout
+				SplitPane split = new SplitPane(dockTree, dockPrimary);
+				SplitPane.setResizableWithParent(dockTree, false);
+				split.setDividerPositions(0.333);
+				setCenter(split);
 
-			// Record last regions
-			lastTreeRegion.set(dockTree);
-			lastPrimaryRegion.set(dockPrimary);
+				// Record last regions
+				lastTreeRegion.set(dockTree);
+				lastPrimaryRegion.set(dockPrimary);
+			});
 		});
 
 		// Register a close listener to remove the old workspace's content from the pane's regions.
