@@ -113,8 +113,10 @@ public class EagerInitializationExtension implements Extension {
 			create(bean);
 	}
 
-	static void create(Bean<?> bean) {
+	static void create(@Nonnull Bean<?> bean) {
 		// NOTE: Calling toString() triggers the bean's proxy to the real implementation to initialize it.
-		beanManager.getReference(bean, bean.getBeanClass(), beanManager.createCreationalContext(bean)).toString();
+		// We have a null check here because under some test environments this may trigger without being set (see above)
+		if (beanManager != null)
+			beanManager.getReference(bean, bean.getBeanClass(), beanManager.createCreationalContext(bean)).toString();
 	}
 }
