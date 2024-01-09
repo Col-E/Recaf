@@ -23,20 +23,7 @@ import software.coley.recaf.services.cell.TextProviderService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.AssemblyResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.ClassAnnotationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.ClassImplements;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.FieldAnnotationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.FieldResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.IndependentAnnotationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.InnerClassResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.InstructionResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.LabelDeclarationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.LabelReferenceResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.MethodAnnotationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.MethodResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.TypeReferenceResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.VariableDeclarationResolution;
+import software.coley.recaf.ui.pane.editing.assembler.resolve.*;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -114,7 +101,22 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 			menu.getItems().add(action);
 
 			// TODO:
-			//  - Implement methods (for methods not present in the class)
+			//  - Implement methods (for methods not already present in the ASTClass)
+		});
+		register(ClassExtends.class, (provider, menu, editor, workspace, resolution) -> {
+			ClassPathNode classPath = workspace.findClass(resolution.superName().literal());
+			ActionMenuItem action = action("menu.goto.class", ARROW_RIGHT, () -> {
+				try {
+					provider.actions.gotoDeclaration(Objects.requireNonNull(classPath));
+				} catch (IncompletePathException ex) {
+					logger.error("Cannot go to class due to incomplete path", ex);
+				}
+			});
+			if (classPath == null) action.setDisable(true);
+			menu.getItems().add(action);
+
+			// TODO:
+			//  - Override methods (for methods not already present in the ASTClass)
 		});
 		register(ClassAnnotationResolution.class, (provider, menu, editor, workspace, resolution) -> {
 			// No items
