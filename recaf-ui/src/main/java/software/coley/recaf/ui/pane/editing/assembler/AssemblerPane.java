@@ -347,7 +347,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 				}).ifErr(errors -> processErrors(errors, ProblemPhase.BUILD));
 			} catch (Throwable ex) {
 				logger.error("Uncaught exception when assembling contents of {}", path, ex);
-				Animations.animateFailure(editor, 1000);
+				FxThreadUtil.run(() -> Animations.animateFailure(editor, 1000));
 			}
 		});
 	}
@@ -361,15 +361,15 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 				try {
 					Bundle<ClassInfo> bundle = path.getValueOfType(Bundle.class);
 					bundle.put(lastAssembledClass);
-					Animations.animateSuccess(editor, 1000);
+					FxThreadUtil.run(() -> Animations.animateSuccess(editor, 1000));
 				} catch (Throwable t) {
 					logger.error("Uncaught exception when updating class of {}", lastAssembledClass.getName(), t);
-					Animations.animateWarn(editor, 1000);
+					FxThreadUtil.run(() -> Animations.animateWarn(editor, 1000));
 				} finally {
 					updateLock.set(false);
 				}
 			} else {
-				Animations.animateFailure(editor, 1000);
+				FxThreadUtil.run(() -> Animations.animateFailure(editor, 1000));
 			}
 		});
 	}
