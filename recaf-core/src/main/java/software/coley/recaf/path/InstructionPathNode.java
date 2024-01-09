@@ -22,15 +22,18 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 	 * Type identifier for instruction nodes.
 	 */
 	public static final String TYPE_ID = "instruction";
+	private final int index;
 
 	/**
 	 * Node without parent.
 	 *
 	 * @param insn
 	 * 		Instruction value.
+	 * @param index
+	 * 		Index of the instruction within the method code.
 	 */
-	public InstructionPathNode(@Nonnull AbstractInsnNode insn) {
-		this(null, insn);
+	public InstructionPathNode(@Nonnull AbstractInsnNode insn, int index) {
+		this(null, insn, index);
 	}
 
 	/**
@@ -40,11 +43,21 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 	 * 		Parent node.
 	 * @param insn
 	 * 		Instruction value.
+	 * @param index
+	 * 		Index of the instruction within the method code.
 	 *
-	 * @see ClassMemberPathNode#childInsn(AbstractInsnNode)
+	 * @see ClassMemberPathNode#childInsn(AbstractInsnNode,int)
 	 */
-	public InstructionPathNode(@Nullable ClassMemberPathNode parent, @Nonnull AbstractInsnNode insn) {
+	public InstructionPathNode(@Nullable ClassMemberPathNode parent, @Nonnull AbstractInsnNode insn, int index) {
 		super(TYPE_ID, parent, AbstractInsnNode.class, insn);
+		this.index = index;
+	}
+
+	/**
+	 * @return Index of the instruction within the method code.
+	 */
+	public int getInstructionIndex() {
+		return index;
 	}
 
 	@Override
@@ -61,8 +74,7 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 	@Override
 	public int localCompare(PathNode<?> o) {
 		if (o instanceof InstructionPathNode node) {
-			// TODO: Comparison should be based on index in the method instructions, but we don't track that yet.
-			return toString(getValue()).compareTo(toString(node.getValue()));
+			return Integer.compare(index, node.index);
 		}
 		return 0;
 	}

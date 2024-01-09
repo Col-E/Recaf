@@ -114,13 +114,15 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	/**
 	 * @param insn
 	 * 		Instruction to wrap into node.
+	 * @param index
+	 * 		Index of the instruction within the method code.
 	 *
 	 * @return Path node of instruction, with the current member as parent.
 	 */
 	@Nonnull
-	public InstructionPathNode childInsn(AbstractInsnNode insn) {
+	public InstructionPathNode childInsn(@Nonnull AbstractInsnNode insn, int index) {
 		if (isMethod())
-			return new InstructionPathNode(this, insn);
+			return new InstructionPathNode(this, insn, index);
 		throw new IllegalStateException("Cannot make child for insn on non-method member");
 	}
 

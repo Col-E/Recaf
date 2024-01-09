@@ -22,6 +22,7 @@ import software.coley.recaf.services.search.FileQuery;
 import software.coley.recaf.services.search.JvmClassQuery;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
 import software.coley.recaf.services.search.ResultSink;
+import software.coley.recaf.util.visitors.IndexCountingMethodVisitor;
 
 /**
  * General value search.
@@ -166,7 +167,7 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 	/**
 	 * Visits values in methods.
 	 */
-	private class AsmMethodValueVisitor extends MethodVisitor {
+	private class AsmMethodValueVisitor extends IndexCountingMethodVisitor {
 		private final ResultSink resultSink;
 		private final ClassMemberPathNode memberPath;
 
@@ -174,7 +175,7 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 									 @Nonnull MethodMember methodMember,
 									 @Nonnull ResultSink resultSink,
 									 @Nonnull ClassPathNode classLocation) {
-			super(RecafConstants.getAsmVersion(), delegate);
+			super(delegate);
 			this.resultSink = resultSink;
 			this.memberPath = classLocation.child(methodMember);
 		}
@@ -186,7 +187,7 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 			for (Object bsmArg : bsmArgs) {
 				if (isMatch(bsmArg)) {
 					InvokeDynamicInsnNode indy = new InvokeDynamicInsnNode(name, desc, bsmHandle, bsmArgs);
-					resultSink.accept(memberPath.childInsn(indy), bsmArg);
+					resultSink.accept(memberPath.childInsn(indy, index), bsmArg);
 				}
 			}
 		}
@@ -197,7 +198,7 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 			if (opcode >= Opcodes.ICONST_M1 && opcode <= Opcodes.DCONST_1) {
 				Number value = OP_TO_VALUE[opcode];
 				if (isMatch(value))
-					resultSink.accept(memberPath.childInsn(new InsnNode(opcode)), value);
+					resultSink.accept(memberPath.childInsn(new InsnNode(opcode), index), value);
 			}
 		}
 
@@ -205,14 +206,14 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		public void visitIntInsn(int opcode, int operand) {
 			super.visitIntInsn(opcode, operand);
 			if (opcode != Opcodes.NEWARRAY && isMatch(operand))
-				resultSink.accept(memberPath.childInsn(new IntInsnNode(opcode, operand)), operand);
+				resultSink.accept(memberPath.childInsn(new IntInsnNode(opcode, operand), index), operand);
 		}
 
 		@Override
 		public void visitLdcInsn(Object value) {
 			super.visitLdcInsn(value);
 			if (isMatch(value))
-				resultSink.accept(memberPath.childInsn(new LdcInsnNode(value)), value);
+				resultSink.accept(memberPath.childInsn(new LdcInsnNode(value), index), value);
 		}
 
 		@Override

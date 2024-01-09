@@ -24,6 +24,7 @@ import software.coley.recaf.services.search.result.MemberReferenceResult;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TextMatchMode;
 import software.coley.recaf.util.Types;
+import software.coley.recaf.util.visitors.IndexCountingMethodVisitor;
 
 /**
  * Reference search implementation.
@@ -167,7 +168,7 @@ public class ReferenceQuery implements JvmClassQuery {
 	/**
 	 * Visits references in methods.
 	 */
-	private class AsmReferenceMethodVisitor extends MethodVisitor {
+	private class AsmReferenceMethodVisitor extends IndexCountingMethodVisitor {
 		private final ResultSink resultSink;
 		private final ClassMemberPathNode memberPath;
 
@@ -175,7 +176,7 @@ public class ReferenceQuery implements JvmClassQuery {
 										 @Nonnull MethodMember methodMember,
 										 @Nonnull ResultSink resultSink,
 										 @Nonnull ClassPathNode classLocation) {
-			super(RecafConstants.getAsmVersion(), delegate);
+			super(delegate);
 			this.resultSink = resultSink;
 			this.memberPath = classLocation.child(methodMember);
 		}
@@ -184,7 +185,7 @@ public class ReferenceQuery implements JvmClassQuery {
 		public void visitTypeInsn(int opcode, String type) {
 			if (isClassRefMatch(type)) {
 				TypeInsnNode insn = new TypeInsnNode(opcode, type);
-				resultSink.accept(memberPath.childInsn(insn), cref(type));
+				resultSink.accept(memberPath.childInsn(insn, index), cref(type));
 			}
 			super.visitTypeInsn(opcode, type);
 		}
@@ -195,12 +196,12 @@ public class ReferenceQuery implements JvmClassQuery {
 
 			// Check method ref
 			if (isMemberRefMatch(owner, name, desc))
-				resultSink.accept(memberPath.childInsn(insn), mref(owner, name, desc));
+				resultSink.accept(memberPath.childInsn(insn, index), mref(owner, name, desc));
 
 			// Check types used in ref
 			String fieldType = getInternalName(desc);
 			if (isClassRefMatch(fieldType))
-				resultSink.accept(memberPath.childInsn(insn), cref(fieldType));
+				resultSink.accept(memberPath.childInsn(insn, index), cref(fieldType));
 
 			super.visitFieldInsn(opcode, owner, name, desc);
 		}
@@ -211,16 +212,16 @@ public class ReferenceQuery implements JvmClassQuery {
 
 			// Check method ref
 			if (isMemberRefMatch(owner, name, desc))
-				resultSink.accept(memberPath.childInsn(insn), mref(owner, name, desc));
+				resultSink.accept(memberPath.childInsn(insn, index), mref(owner, name, desc));
 
 			// Check types used in ref
 			Type methodType = Type.getMethodType(desc);
 			String methodRetType = methodType.getReturnType().getInternalName();
 			if (isClassRefMatch(methodRetType))
-				resultSink.accept(memberPath.childInsn(insn), cref(methodRetType));
+				resultSink.accept(memberPath.childInsn(insn, index), cref(methodRetType));
 			for (Type argumentType : methodType.getArgumentTypes()) {
 				if (isClassRefMatch(argumentType.getInternalName()))
-					resultSink.accept(memberPath.childInsn(insn), cref(argumentType.getInternalName()));
+					resultSink.accept(memberPath.childInsn(insn, index), cref(argumentType.getInternalName()));
 			}
 
 			super.visitMethodInsn(opcode, owner, name, desc, isInterface);
@@ -238,7 +239,7 @@ public class ReferenceQuery implements JvmClassQuery {
 			if (value instanceof Handle handle) {
 				// Check handle ref
 				if (isMemberRefMatch(handle.getOwner(), handle.getName(), handle.getDesc())) {
-					resultSink.accept(memberPath.childInsn(insn),
+					resultSink.accept(memberPath.childInsn(insn, index),
 							mref(handle.getOwner(), handle.getName(), handle.getDesc()));
 				}
 
@@ -246,15 +247,15 @@ public class ReferenceQuery implements JvmClassQuery {
 				Type methodType = Type.getMethodType(handle.getDesc());
 				String methodRetType = methodType.getReturnType().getInternalName();
 				if (isClassRefMatch(methodRetType))
-					resultSink.accept(memberPath.childInsn(insn), cref(methodRetType));
+					resultSink.accept(memberPath.childInsn(insn, index), cref(methodRetType));
 				for (Type argumentType : methodType.getArgumentTypes()) {
 					if (isClassRefMatch(argumentType.getInternalName()))
-						resultSink.accept(memberPath.childInsn(insn), cref(argumentType.getInternalName()));
+						resultSink.accept(memberPath.childInsn(insn, index), cref(argumentType.getInternalName()));
 				}
 			} else if (value instanceof Type) {
 				String type = ((Type) value).getInternalName();
 				if (isClassRefMatch(type)) {
-					resultSink.accept(memberPath.childInsn(insn), cref(type));
+					resultSink.accept(memberPath.childInsn(insn, index), cref(type));
 				}
 			}
 			super.visitLdcInsn(value);
@@ -266,7 +267,7 @@ public class ReferenceQuery implements JvmClassQuery {
 				String type = getInternalName(desc);
 				if (isClassRefMatch(type)) {
 					MultiANewArrayInsnNode insn = new MultiANewArrayInsnNode(desc, numDimensions);
-					resultSink.accept(memberPath.childInsn(insn), cref(type));
+					resultSink.accept(memberPath.childInsn(insn, index), cref(type));
 				}
 			}
 			super.visitMultiANewArrayInsn(desc, numDimensions);
