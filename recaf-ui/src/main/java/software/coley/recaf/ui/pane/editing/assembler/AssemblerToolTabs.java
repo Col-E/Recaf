@@ -46,6 +46,11 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 							 @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider) {
 		this.jvmStackAnalysisPaneProvider = jvmStackAnalysisPaneProvider;
 		this.jvmVariablesPaneProvider = jvmVariablesPaneProvider;
+
+		// Without an initial size, the first frame of a method has nothing in it. So the auto-size to fit content
+		// has nothing to fit to, which leads to only table headers being visible. Looks really dumb so giving it
+		// a little bit of default space regardless mostly solves that.
+		tabs.setInitialSize(200);
 	}
 
 	/**
