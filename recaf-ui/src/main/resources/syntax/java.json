@@ -58,7 +58,7 @@
     },
     {
       "name": "Annotations",
-      "regex": "\\B(?:@[\\w]+)\\b",
+      "regex": "\\B(?:@[\\w.$]+)\\b",
       "classes": [
         "annotation"
       ],
