@@ -11,6 +11,7 @@ public interface TextFileInfo extends FileInfo {
 	/**
 	 * @return The {@link #getRawContent()} as text.
 	 */
+	@Nonnull
 	String getText();
 
 	@Nonnull

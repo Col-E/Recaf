@@ -1,5 +1,6 @@
 package software.coley.recaf.info;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.builder.FileInfoBuilder;
 
 import java.nio.charset.StandardCharsets;
@@ -20,6 +21,7 @@ public class BasicTextFileInfo extends BasicFileInfo implements TextFileInfo {
 		super(builder);
 	}
 
+	@Nonnull
 	@Override
 	public String getText() {
 		if (text == null)

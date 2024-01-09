@@ -9,6 +9,7 @@ import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -184,7 +185,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @return Field matching definition, or {@code null} if none were found.
 	 */
 	@Nullable
-	default FieldMember getDeclaredField(String name, String descriptor) {
+	default FieldMember getDeclaredField(@Nonnull String name, @Nonnull String descriptor) {
 		return fieldStream()
 				.filter(f -> f.getName().equals(name) && f.getDescriptor().equals(descriptor))
 				.findFirst().orElse(null);
@@ -199,7 +200,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @return Method matching definition, or {@code null} if none were found.
 	 */
 	@Nullable
-	default MethodMember getDeclaredMethod(String name, String descriptor) {
+	default MethodMember getDeclaredMethod(@Nonnull String name, @Nonnull String descriptor) {
 		return methodStream()
 				.filter(m -> m.getName().equals(name) && m.getDescriptor().equals(descriptor))
 				.findFirst().orElse(null);
@@ -209,19 +210,19 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @param action
 	 * 		Action to run if this is a JVM class.
 	 */
-	void acceptIfJvmClass(Consumer<JvmClassInfo> action);
+	void acceptIfJvmClass(@Nonnull Consumer<JvmClassInfo> action);
 
 	/**
 	 * @param action
 	 * 		Action to run if this is an Android class.
 	 */
-	void acceptIfAndroidClass(Consumer<AndroidClassInfo> action);
+	void acceptIfAndroidClass(@Nonnull Consumer<AndroidClassInfo> action);
 
 	/**
 	 * @param action
 	 * 		Action to run.
 	 */
-	default void acceptClass(Consumer<ClassInfo> action) {
+	default void acceptClass(@Nonnull Consumer<ClassInfo> action) {
 		action.accept(this);
 	}
 
@@ -232,7 +233,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @return {@code true} when the predicate passes.
 	 * {@code false} when it does not, or the class is not a JVM class.
 	 */
-	boolean testIfJvmClass(Predicate<JvmClassInfo> predicate);
+	boolean testIfJvmClass(@Nonnull Predicate<JvmClassInfo> predicate);
 
 	/**
 	 * @param predicate
@@ -241,7 +242,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @return {@code true} when the predicate passes.
 	 * {@code false} when it does not, or the class is not an Android class.
 	 */
-	boolean testIfAndroidClass(Predicate<AndroidClassInfo> predicate);
+	boolean testIfAndroidClass(@Nonnull Predicate<AndroidClassInfo> predicate);
 
 	/**
 	 * @param predicate
@@ -249,7 +250,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 *
 	 * @return Predicate evaluation.
 	 */
-	default boolean testClass(Predicate<ClassInfo> predicate) {
+	default boolean testClass(@Nonnull Predicate<ClassInfo> predicate) {
 		return predicate.test(this);
 	}
 
@@ -261,7 +262,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 *
 	 * @return Mapped value.
 	 */
-	default <R> R mapClass(Function<ClassInfo, R> function) {
+	default <R> R mapClass(@Nonnull Function<ClassInfo, R> function) {
 		return function.apply(this);
 	}
 
