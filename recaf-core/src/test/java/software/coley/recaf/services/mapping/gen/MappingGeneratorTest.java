@@ -11,9 +11,8 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
-import software.coley.recaf.services.mapping.gen.filter.ExcludeClassesFilter;
-import software.coley.recaf.services.mapping.gen.filter.ExcludeModifiersNameFilter;
-import software.coley.recaf.services.mapping.gen.filter.IncludeModifiersNameFilter;
+import software.coley.recaf.services.mapping.data.MethodMapping;
+import software.coley.recaf.services.mapping.gen.filter.*;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.*;
@@ -248,6 +247,47 @@ public class MappingGeneratorTest extends TestBase {
 			assertEquals(0, intermediate.getClasses().size());
 			assertEquals(0, intermediate.getFields().size());
 			assertEquals(1, intermediate.getMethods().size());
+			List<MethodMapping> methodMappings = intermediate.getMethods().get(AccessibleMethods.class.getName().replace('.', '/'));
+			assertEquals(1, methodMappings.size());
+			assertEquals("privateMethod", methodMappings.get(0).getOldName());
+		}
+
+		@Test
+		void testIncludeNameFilter() {
+			IncludeNameFilter filter =
+					new IncludeNameFilter(null, "AccessibleMethods", TextMatchMode.CONTAINS, true, true, true);
+
+			// Generate mappings
+			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
+
+			// There are only two classes that contain the given text, AccessibleMethods and AccessibleMethodsChild
+			IntermediateMappings intermediate = mappings.exportIntermediate();
+			assertEquals(2, intermediate.getClasses().size());
+			assertEquals(0, intermediate.getFields().size());
+			assertEquals(0, intermediate.getMethods().size());
+		}
+
+		/** Similar to {@link #testIncludeNameFilter()} but with a filter that includes members when a class is mapped */
+		@Test
+		void testIncludeClassesFilter() {
+			IncludeClassesFilter filter =
+					new IncludeClassesFilter(null, "AccessibleMethods", TextMatchMode.CONTAINS);
+
+			// Generate mappings
+			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
+
+			// There are only two classes that contain the given text, AccessibleMethods and AccessibleMethodsChild
+			// All of their methods should be remapped. They contain no fields.
+			IntermediateMappings intermediate = mappings.exportIntermediate();
+			assertEquals(2, intermediate.getClasses().size());
+			assertEquals(0, intermediate.getFields().size());
+			assertEquals(2, intermediate.getMethods().size());
+			String key = AccessibleMethods.class.getName().replace('.', '/');
+			String keyChild = AccessibleMethodsChild.class.getName().replace('.', '/');
+			List<MethodMapping> methodMappings = intermediate.getMethods().get(key);
+			List<MethodMapping> methodMappingsChild = intermediate.getMethods().get(keyChild);
+			assertEquals(workspace.findClass(key).getValue().getMethods().size() - 1, methodMappings.size()); // -1 because <init>
+			assertEquals(workspace.findClass(keyChild).getValue().getMethods().size() - 1, methodMappingsChild.size());
 		}
 	}
 }
