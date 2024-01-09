@@ -75,6 +75,7 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 		stage.setScene(value);
 		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		stage.setTitle("Recaf");
+		stage.setOnCloseRequest(e -> System.exit(0));
 		stage.show();
 
 		// Register main window
