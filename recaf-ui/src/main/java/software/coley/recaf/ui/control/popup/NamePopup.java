@@ -21,6 +21,7 @@ import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
+import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -95,7 +96,7 @@ public class NamePopup extends RecafStage {
 			return;
 		}
 
-		String text = nameInput.getText();
+		String text = EscapeUtil.unescapeStandard(nameInput.getText());
 		CompletableFuture.runAsync(() -> nameConsumer.accept(text));
 		hide();
 	}
@@ -339,9 +340,8 @@ public class NamePopup extends RecafStage {
 	public NamePopup withInitialPathName(@Nonnull String name) {
 		initialText = name;
 
-		// TODO: Need to handle escaping names with newlines and such
-		//  - and handle un-escaping when calling the consumer<string>
-		nameInput.setText(name);
+		// Handle escaping names with newlines and such
+		nameInput.setText(EscapeUtil.escapeStandard(name));
 
 		// Need to get focus before selecting range.
 		// When the input gets focus, it resets the selection.
@@ -357,9 +357,8 @@ public class NamePopup extends RecafStage {
 	public NamePopup withInitialName(@Nonnull String name) {
 		initialText = name;
 
-		// TODO: Need to handle escaping names with newlines and such
-		//  - and handle un-escaping when calling the consumer<string>
-		nameInput.setText(name);
+		// Handle escaping names with newlines and such
+		nameInput.setText(EscapeUtil.escapeStandard(name));
 
 		// Need to get focus before selecting range.
 		// When the input gets focus, it resets the selection.
