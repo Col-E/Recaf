@@ -141,11 +141,6 @@ public class BasicInfoImporter implements InfoImporter {
 			};
 		}
 
-		// TODO: Record content-type (for quick recognition of media and other common file types)
-		//  - Don't need a million info-types for every possible content-type, just the edge cases
-		//    that need to be handled by the Recaf API.
-		//  - Everything else can be stored as a property.
-
 		// No special case known for file, treat as generic file
 		// Will be automatically mapped to a text file if the contents are all mappable characters.
 		return new FileInfoBuilder<>()
