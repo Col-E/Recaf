@@ -179,7 +179,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		int paragraph = editor.getCodeArea().getCurrentParagraph();
 		int result = Collections.binarySearch(instructions, new ASTEmpty(new Token(
 				new Range(pos, pos + 1),
-				new Location(paragraph, 0, null),
+				new Location(paragraph, 0, 1, null),
 				TokenType.IDENTIFIER,
 				"."
 		)), (o1, o2) -> {
