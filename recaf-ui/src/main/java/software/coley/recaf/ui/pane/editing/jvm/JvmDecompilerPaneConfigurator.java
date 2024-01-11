@@ -89,7 +89,7 @@ public class JvmDecompilerPaneConfigurator extends AbstractDecompilerPaneConfigu
 	private class JavacVersionComboBox extends ComboBox<Integer> {
 		private JavacVersionComboBox() {
 			int max = JavaVersion.get();
-			for (int i = 7; i <= max; i++)
+			for (int i = JavacCompiler.getMinTargetVersion(); i <= max; i++)
 				getItems().add(i);
 
 			// Edge case for 'automatic'

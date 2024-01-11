@@ -16,7 +16,7 @@ public class JavaVersion {
 	public static final int VERSION_OFFSET = 44;
 	private static final String JAVA_CLASS_VERSION = "java.class.version";
 	private static final String JAVA_VM_SPEC_VERSION = "java.vm.specification.version";
-	private static final int FALLBACK_VERSION = 11;
+	private static final int FALLBACK_VERSION = 17;
 	private static final Logger logger = Logging.get(JavaVersion.class);
 	private static int version = -1;
 
