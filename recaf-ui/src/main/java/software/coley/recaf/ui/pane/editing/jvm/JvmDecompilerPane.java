@@ -38,6 +38,7 @@ import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.ModalPaneComponent;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.problem.Problem;
+import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
@@ -256,6 +257,9 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 			} else {
 				// Handle compile-result failure, or uncaught thrown exception.
 				if (result != null) {
+					if (result.getDiagnostics().isEmpty() && result.getException() != null)
+						problemTracking.add(new Problem(-1, -1, ProblemLevel.ERROR, ProblemPhase.BUILD, result.getException().toString()));
+
 					for (CompilerDiagnostic diagnostic : result.getDiagnostics())
 						problemTracking.add(Problem.fromDiagnostic(diagnostic));
 
