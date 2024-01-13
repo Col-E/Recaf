@@ -207,6 +207,22 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	}
 
 	/**
+	 * Do note that there can be multiple methods with one name if there are different method descriptors for each.
+	 * To differentiate properly, please use {@link #getDeclaredMethod(String, String)}.
+	 *
+	 * @param name
+	 * 		Method name.
+	 *
+	 * @return First matching method definition, or {@code null} if none were found.
+	 */
+	@Nullable
+	default MethodMember getFirstDeclaredMethodByName(@Nonnull String name) {
+		return methodStream()
+				.filter(m -> m.getName().equals(name))
+				.findFirst().orElse(null);
+	}
+
+	/**
 	 * @param action
 	 * 		Action to run if this is a JVM class.
 	 */
