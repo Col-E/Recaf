@@ -1,5 +1,7 @@
 package software.coley.recaf.services.mapping.data;
 
+import jakarta.annotation.Nonnull;
+
 /**
  * Mapping key for classes.
  *
@@ -12,17 +14,19 @@ public class ClassMappingKey extends AbstractMappingKey {
 	 * @param name
 	 * 		Class name.
 	 */
-	public ClassMappingKey(String name) {
+	public ClassMappingKey(@Nonnull String name) {
 		this.name = name;
 	}
 
 	/**
 	 * @return Class name.
 	 */
+	@Nonnull
 	public String getName() {
 		return name;
 	}
 
+	@Nonnull
 	@Override
 	protected String toText() {
 		return name;

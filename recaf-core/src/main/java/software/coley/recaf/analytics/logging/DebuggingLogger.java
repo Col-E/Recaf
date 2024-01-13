@@ -1,5 +1,6 @@
 package software.coley.recaf.analytics.logging;
 
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 
 import java.util.function.Consumer;
@@ -19,7 +20,7 @@ public interface DebuggingLogger extends Logger {
 	 * @param action
 	 * 		Call onto self.
 	 */
-	default void debugging(Consumer<DebuggingLogger> action) {
+	default void debugging(@Nonnull Consumer<DebuggingLogger> action) {
 		if (DEBUG)
 			action.accept(this);
 	}

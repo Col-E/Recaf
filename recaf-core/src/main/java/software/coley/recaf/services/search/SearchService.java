@@ -49,6 +49,7 @@ public class SearchService implements Service {
 	 *
 	 * @return Results of search.
 	 */
+	@Nonnull
 	public Results search(@Nonnull Workspace workspace, @Nonnull Query query) {
 		return search(workspace, Collections.singletonList(query));
 	}
@@ -63,6 +64,7 @@ public class SearchService implements Service {
 	 *
 	 * @return Results of search.
 	 */
+	@Nonnull
 	public Results search(@Nonnull Workspace workspace, @Nonnull Query query, @Nonnull SearchFeedback feedback) {
 		return search(workspace, Collections.singletonList(query), feedback);
 	}
@@ -75,6 +77,7 @@ public class SearchService implements Service {
 	 *
 	 * @return Results of search.
 	 */
+	@Nonnull
 	public Results search(@Nonnull Workspace workspace, @Nonnull List<Query> queries) {
 		return search(workspace, queries, SearchFeedback.NO_OP);
 	}
@@ -89,6 +92,7 @@ public class SearchService implements Service {
 	 *
 	 * @return Results of search.
 	 */
+	@Nonnull
 	public Results search(@Nonnull Workspace workspace, @Nonnull List<Query> queries, @Nonnull SearchFeedback feedback) {
 		Results results = new Results();
 
@@ -177,6 +181,7 @@ public class SearchService implements Service {
 		return results;
 	}
 
+	@Nonnull
 	private static Result<?> createResult(@Nonnull PathNode<?> path, @Nonnull Object value) {
 		if (value instanceof Number)
 			return new NumberResult(path, (Number) value);

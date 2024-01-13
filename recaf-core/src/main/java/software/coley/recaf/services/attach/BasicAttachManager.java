@@ -3,6 +3,7 @@ package software.coley.recaf.services.attach;
 import com.sun.tools.attach.*;
 import com.sun.tools.attach.spi.AttachProvider;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -369,47 +370,51 @@ public class BasicAttachManager implements AttachManager {
 	}
 
 	@Override
-	public VirtualMachine getVirtualMachine(VirtualMachineDescriptor descriptor) {
+	public VirtualMachine getVirtualMachine(@Nonnull VirtualMachineDescriptor descriptor) {
 		return virtualMachineMap.get(descriptor);
 	}
 
 	@Override
-	public Exception getVirtualMachineConnectionFailure(VirtualMachineDescriptor descriptor) {
+	public Exception getVirtualMachineConnectionFailure(@Nonnull VirtualMachineDescriptor descriptor) {
 		return virtualMachineFailureMap.get(descriptor);
 	}
 
 	@Override
-	public int getVirtualMachinePid(VirtualMachineDescriptor descriptor) {
+	public int getVirtualMachinePid(@Nonnull VirtualMachineDescriptor descriptor) {
 		return virtualMachinePidMap.getOrDefault(descriptor, -1);
 	}
 
+	@Nullable
 	@Override
-	public Properties getVirtualMachineProperties(VirtualMachineDescriptor descriptor) {
+	public Properties getVirtualMachineProperties(@Nonnull VirtualMachineDescriptor descriptor) {
 		return virtualMachinePropertiesMap.get(descriptor);
 	}
 
+	@Nullable
 	@Override
-	public String getVirtualMachineMainClass(VirtualMachineDescriptor descriptor) {
+	public String getVirtualMachineMainClass(@Nonnull VirtualMachineDescriptor descriptor) {
 		return virtualMachineMainClassMap.get(descriptor);
 	}
 
+	@Nullable
 	@Override
-	public JmxBeanServerConnection getJmxServerConnection(VirtualMachineDescriptor descriptor) {
+	public JmxBeanServerConnection getJmxServerConnection(@Nonnull VirtualMachineDescriptor descriptor) {
 		return virtualMachineJmxConnMap.get(descriptor);
 	}
 
+	@Nonnull
 	@Override
 	public ObservableList<VirtualMachineDescriptor> getVirtualMachineDescriptors() {
 		return virtualMachineDescriptors;
 	}
 
 	@Override
-	public void addPostScanListener(PostScanListener listener) {
+	public void addPostScanListener(@Nonnull PostScanListener listener) {
 		postScanListeners.add(listener);
 	}
 
 	@Override
-	public void removePostScanListener(PostScanListener listener) {
+	public void removePostScanListener(@Nonnull PostScanListener listener) {
 		postScanListeners.remove(listener);
 	}
 

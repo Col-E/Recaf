@@ -1,6 +1,7 @@
 package software.coley.recaf.services.compile;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import javax.tools.SimpleJavaFileObject;
 import java.io.ByteArrayOutputStream;
@@ -22,7 +23,7 @@ public class VirtualJavaFileObject extends SimpleJavaFileObject {
 	 * @param content
 	 * 		Content of source file to compile.
 	 */
-	public VirtualJavaFileObject(String className, String content) {
+	public VirtualJavaFileObject(@Nonnull String className, @Nullable String content) {
 		super(URI.create("string:///" + className.replace('.', '/') + Kind.SOURCE.extension),
 				Kind.SOURCE);
 		this.content = content;

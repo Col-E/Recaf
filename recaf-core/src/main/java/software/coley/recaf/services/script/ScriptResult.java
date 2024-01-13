@@ -1,5 +1,7 @@
 package software.coley.recaf.services.script;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 
 import java.util.List;
@@ -17,7 +19,7 @@ public class ScriptResult {
 	 * @param diagnostics
 	 * 		Compiler error list.
 	 */
-	public ScriptResult(List<CompilerDiagnostic> diagnostics) {
+	public ScriptResult(@Nonnull List<CompilerDiagnostic> diagnostics) {
 		this(diagnostics, null);
 	}
 
@@ -27,7 +29,7 @@ public class ScriptResult {
 	 * @param throwable
 	 * 		Runtime error value.
 	 */
-	public ScriptResult(List<CompilerDiagnostic> diagnostics, Throwable throwable) {
+	public ScriptResult(@Nonnull List<CompilerDiagnostic> diagnostics, @Nullable Throwable throwable) {
 		this.diagnostics = diagnostics;
 		this.throwable = throwable;
 	}
@@ -43,7 +45,7 @@ public class ScriptResult {
 	 * @return {@code true} when {@link #getCompileDiagnostics()} has content.
 	 */
 	public boolean wasCompileFailure() {
-		return getCompileDiagnostics().size() > 0;
+		return !getCompileDiagnostics().isEmpty();
 	}
 
 	/**
@@ -56,6 +58,7 @@ public class ScriptResult {
 	/**
 	 * @return List of compiler diagnostics.
 	 */
+	@Nonnull
 	public List<CompilerDiagnostic> getCompileDiagnostics() {
 		return diagnostics;
 	}
@@ -63,6 +66,7 @@ public class ScriptResult {
 	/**
 	 * @return Exception thrown when running the generated script method.
 	 */
+	@Nullable
 	public Throwable getRuntimeThrowable() {
 		return throwable;
 	}

@@ -70,8 +70,8 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	 * 		The arguments to the bsm.
 	 *
 	 * @return New name of the method.
-	 */
-	public String mapInvokeDynamicMethodName(String name, String descriptor, Handle bsm, Object[] bsmArguments) {
+	 */ @Nonnull
+	public String mapInvokeDynamicMethodName( @Nonnull String name,  @Nonnull String descriptor,  @Nonnull Handle bsm,  @Nonnull Object[] bsmArguments) {
 		if (bsm.equals(Handles.META_FACTORY)) {
 			// Get the interface from the descriptor return type.
 			String interfaceOwner = Type.getReturnType(descriptor).getInternalName();
@@ -102,8 +102,8 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	 * 		Index of the variable.
 	 *
 	 * @return Mapped name of the variable, or the existing name if no mapping exists.
-	 */
-	public String mapVariableName(String className, String methodName, String methodDesc,
+	 */ @Nonnull
+	public String mapVariableName( @Nonnull String className ,  @Nonnull String methodName,  @Nonnull String methodDesc,
 								  String name, String desc, int index) {
 		String mapped = mappings.getMappedVariableName(className, methodName, methodDesc, name, desc, index);
 		if (mapped != null) {

@@ -1,5 +1,6 @@
 package software.coley.recaf.config;
 
+import jakarta.annotation.Nonnull;
 import software.coley.observables.ObservableCollection;
 
 import java.util.Collection;
@@ -29,21 +30,23 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 	 * 		Observable of value.
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public BasicCollectionConfigValue(String key,
-									  Class<? extends Collection> type,
-									  Class<T> itemType,
-									  ObservableCollection<T, C> observable) {
+	public BasicCollectionConfigValue(@Nonnull String key,
+									  @Nonnull Class<? extends Collection> type,
+									  @Nonnull Class<T> itemType,
+									  @Nonnull ObservableCollection<T, C> observable) {
 		this.key = key;
 		this.collectionType = (Class<C>) type;
 		this.itemType = itemType;
 		this.observable = observable;
 	}
 
+	@Nonnull
 	@Override
 	public String getId() {
 		return key;
 	}
 
+	@Nonnull
 	@Override
 	public Class<C> getType() {
 		return collectionType;
@@ -54,6 +57,7 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 		return itemType;
 	}
 
+	@Nonnull
 	@Override
 	public ObservableCollection<T, C> getObservable() {
 		return observable;

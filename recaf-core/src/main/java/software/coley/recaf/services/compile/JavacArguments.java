@@ -69,7 +69,7 @@ public class JavacArguments {
 			s.append("source");
 
 		// edge case
-		if (s.length() == 0)
+		if (s.isEmpty())
 			return "-g:none";
 
 		// Substring off dangling comma

@@ -3,6 +3,7 @@ package software.coley.recaf.analytics.logging;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.core.FileAppender;
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -106,13 +107,13 @@ public class Logging {
 	private static DebuggingLogger intercept(String name, Logger logger) {
 		return new InterceptingLogger(logger) {
 			@Override
-			public void intercept(Level level, String message) {
+			public void intercept(@Nonnull Level level, String message) {
 				if (interceptLevel.toInt() <= level.toInt())
 					logConsumers.forEach(consumer -> consumer.accept(name, level, message));
 			}
 
 			@Override
-			public void intercept(Level level, String message, Throwable t) {
+			public void intercept(@Nonnull Level level, String message, Throwable t) {
 				if (interceptLevel.toInt() <= level.toInt())
 					logConsumers.forEach(consumer -> consumer.accept(name, level, message, t));
 			}

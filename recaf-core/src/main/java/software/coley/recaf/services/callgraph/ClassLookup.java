@@ -1,5 +1,6 @@
 package software.coley.recaf.services.callgraph;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.workspace.model.Workspace;
@@ -18,7 +19,7 @@ public class ClassLookup implements Function<String, JvmClassInfo> {
 	 * @param workspace
 	 * 		Workspace to pull from.
 	 */
-	public ClassLookup(Workspace workspace) {
+	public ClassLookup(@Nonnull Workspace workspace) {
 		this.workspace = workspace;
 	}
 

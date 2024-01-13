@@ -1,6 +1,7 @@
 package software.coley.recaf.services.script;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -31,6 +32,7 @@ public record ScriptFile(@Nonnull Path path, @Nonnull String source,
 	 *
 	 * @return Script execution future.
 	 */
+	@Nonnull
 	public CompletableFuture<ScriptResult> execute(@Nonnull ScriptEngine engine) {
 		return engine.run(source());
 	}
@@ -38,6 +40,7 @@ public record ScriptFile(@Nonnull Path path, @Nonnull String source,
 	/**
 	 * @return Script name.
 	 */
+	@Nonnull
 	public String name() {
 		return getTagValue(KEY_NAME);
 	}
@@ -45,6 +48,7 @@ public record ScriptFile(@Nonnull Path path, @Nonnull String source,
 	/**
 	 * @return Script description.
 	 */
+	@Nonnull
 	public String description() {
 		return getTagValue(KEY_DESCRIPTION);
 	}
@@ -52,6 +56,7 @@ public record ScriptFile(@Nonnull Path path, @Nonnull String source,
 	/**
 	 * @return Script version.
 	 */
+	@Nonnull
 	public String version() {
 		return getTagValue(KEY_VERSION);
 	}
@@ -59,6 +64,7 @@ public record ScriptFile(@Nonnull Path path, @Nonnull String source,
 	/**
 	 * @return Script author.
 	 */
+	@Nonnull
 	public String author() {
 		return getTagValue(KEY_AUTHOR);
 	}

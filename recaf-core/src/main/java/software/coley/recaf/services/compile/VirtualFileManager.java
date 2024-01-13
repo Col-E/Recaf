@@ -28,15 +28,15 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 	 * @param fallback
 	 * 		Fallback manager.
 	 */
-	public VirtualFileManager(VirtualUnitMap unitMap, List<WorkspaceResource> virtualClasspath, JavaFileManager fallback) {
+	public VirtualFileManager(@Nonnull VirtualUnitMap unitMap, @Nonnull List<WorkspaceResource> virtualClasspath, @Nonnull JavaFileManager fallback) {
 		super(fallback);
 		this.virtualClasspath = virtualClasspath;
 		this.unitMap = unitMap;
 	}
 
 	@Override
-	public Iterable<JavaFileObject> list(Location location, String packageName,
-										 Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
+	public Iterable<JavaFileObject> list(@Nonnull Location location, @Nonnull String packageName,
+										 @Nonnull Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
 		Iterable<JavaFileObject> list = super.list(location, packageName, kinds, recurse);
 		if (StandardLocation.CLASS_PATH.equals(location) && kinds.contains(JavaFileObject.Kind.CLASS)) {
 			String formatted = packageName.isEmpty() ? "" : packageName.replace('.', '/') + '/';
@@ -58,7 +58,7 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 	}
 
 	@Override
-	public String inferBinaryName(Location location, JavaFileObject file) {
+	public String inferBinaryName(@Nonnull Location location, @Nonnull JavaFileObject file) {
 		if (file instanceof ResourceVirtualJavaFileObject virtualObject && file.getKind() == JavaFileObject.Kind.CLASS) {
 			return virtualObject.getResourceName().replace('/', '.');
 		}
@@ -66,7 +66,7 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 	}
 
 	@Override
-	public JavaFileObject getJavaFileForOutput(JavaFileManager.Location location, String name, JavaFileObject.Kind
+	public JavaFileObject getJavaFileForOutput(@Nonnull JavaFileManager.Location location, @Nonnull String name, @Nonnull JavaFileObject.Kind
 			kind, FileObject sibling) {
 		// Name should be like "com.example.MyClass$MyInner"
 		String internal = name.replace('.', '/');

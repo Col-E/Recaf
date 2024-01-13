@@ -14,7 +14,7 @@ public interface JvmDecompiler extends Decompiler {
 	 * @param filter
 	 * 		Filter to add.
 	 */
-	void addJvmInputFilter(@Nonnull JvmInputFilter filter);
+	void addJvmInputFilter(@Nonnull JvmInputFilter filter); // TODO: Make config for common defaults (debug stripping, virtual mapping?)
 
 	/**
 	 * @param workspace

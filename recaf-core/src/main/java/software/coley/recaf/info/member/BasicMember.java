@@ -1,6 +1,7 @@
 package software.coley.recaf.info.member;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.annotation.TypeAnnotationInfo;
@@ -27,7 +28,7 @@ public abstract class BasicMember implements ClassMember {
 	private final int access;
 	private ClassInfo declaringClass;
 
-	protected BasicMember(String name, String desc, String signature, int access) {
+	protected BasicMember(@Nonnull String name, @Nonnull String desc, @Nullable String signature, int access) {
 		this.name = name;
 		this.desc = desc;
 		this.signature = signature;
@@ -41,7 +42,7 @@ public abstract class BasicMember implements ClassMember {
 	 * @param annotation
 	 * 		Annotation to add.
 	 */
-	public void addAnnotation(AnnotationInfo annotation) {
+	public void addAnnotation(@Nonnull AnnotationInfo annotation) {
 		annotations.add(annotation);
 	}
 
@@ -52,7 +53,7 @@ public abstract class BasicMember implements ClassMember {
 	 * @param typeAnnotation
 	 * 		Annotation to add.
 	 */
-	public void addTypeAnnotation(TypeAnnotationInfo typeAnnotation) {
+	public void addTypeAnnotation(@Nonnull TypeAnnotationInfo typeAnnotation) {
 		typeAnnotations.add(typeAnnotation);
 	}
 
@@ -62,7 +63,7 @@ public abstract class BasicMember implements ClassMember {
 	 * @param declaringClass
 	 * 		Declaring class to assign.
 	 */
-	public void setDeclaringClass(ClassInfo declaringClass) {
+	public void setDeclaringClass(@Nonnull ClassInfo declaringClass) {
 		this.declaringClass = declaringClass;
 	}
 

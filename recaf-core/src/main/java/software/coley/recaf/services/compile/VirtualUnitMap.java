@@ -2,6 +2,7 @@ package software.coley.recaf.services.compile;
 
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,7 +25,7 @@ public class VirtualUnitMap {
 	 * @param content
 	 * 		Source code of class.
 	 */
-	public void addSource(String className, String content) {
+	public void addSource(@Nonnull String className, @Nonnull String content) {
 		addFile(className, new VirtualJavaFileObject(className, content));
 	}
 
@@ -36,7 +37,7 @@ public class VirtualUnitMap {
 	 * @param fileObject
 	 * 		File object for source code of class.
 	 */
-	public void addFile(String className, VirtualJavaFileObject fileObject) {
+	public void addFile(@Nonnull String className, @Nonnull VirtualJavaFileObject fileObject) {
 		unitMap.put(className, fileObject);
 	}
 
@@ -46,13 +47,15 @@ public class VirtualUnitMap {
 	 *
 	 * @return File object for source code of class.
 	 */
-	public VirtualJavaFileObject getFile(String className) {
+	@Nullable
+	public VirtualJavaFileObject getFile(@Nonnull String className) {
 		return unitMap.get(className);
 	}
 
 	/**
 	 * @return Collection of file objects for input classes.
 	 */
+	@Nonnull
 	public Collection<VirtualJavaFileObject> getFiles() {
 		return unitMap.values();
 	}

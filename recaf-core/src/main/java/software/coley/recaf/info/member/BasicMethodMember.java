@@ -1,6 +1,7 @@
 package software.coley.recaf.info.member;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,7 +29,7 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 	 * @param variables
 	 * 		Method's local variables.
 	 */
-	public BasicMethodMember(String name, String desc, String signature, int access,
+	public BasicMethodMember(@Nonnull String name, @Nonnull String desc, @Nullable String signature, int access,
 							 @Nonnull List<String> thrownTypes, @Nonnull List<LocalVariable> variables) {
 		super(name, desc, signature, access);
 		this.thrownTypes = thrownTypes;
@@ -39,7 +40,7 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 	 * @param variable
 	 * 		Variable to add.
 	 */
-	public void addLocalVariable(LocalVariable variable) {
+	public void addLocalVariable(@Nonnull LocalVariable variable) {
 		variables.add(variable);
 	}
 

@@ -171,7 +171,7 @@ public class JavacCompiler implements Service {
 												  @Nonnull List<CompilerDiagnostic> diagnostics) {
 		return new ForwardingListener(listener) {
 			@Override
-			public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+			public void report(@Nonnull Diagnostic<? extends JavaFileObject> diagnostic) {
 				// Pass to user defined listener
 				super.report(diagnostic);
 

@@ -205,7 +205,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	 */
 	private class ConfigPage extends GridPane {
 		@SuppressWarnings({"rawtypes", "unchecked"})
-		private ConfigPage(ConfigContainer container) {
+		private ConfigPage(@Nonnull ConfigContainer container) {
 			// Plugin configs are given special treatment.
 			// They are not expected to install additional translations, so their ID's will be used as literal names.
 			boolean isThirdPartyConfig = ConfigGroups.EXTERNAL.equals(container.getGroup());
@@ -253,7 +253,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	 * Page to show child-pages when the group itself does not have content.
 	 */
 	private class MissingPage extends VBox {
-		public MissingPage(String id) {
+		public MissingPage(@Nonnull String id) {
 			// Title
 			ObservableList<Node> children = getChildren();
 			Label title = new BoundLabel(getBinding(id));

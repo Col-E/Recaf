@@ -1,5 +1,6 @@
 package software.coley.recaf.services.compile;
 
+import jakarta.annotation.Nonnull;
 import net.raphimc.javadowngrader.JavaDowngrader;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -23,7 +24,7 @@ public class CompileMap extends TreeMap<String, byte[]> {
 	 * @param map
 	 * 		Map to copy.
 	 */
-	public CompileMap(Map<String, byte[]> map) {
+	public CompileMap(@Nonnull Map<String, byte[]> map) {
 		super(map);
 	}
 

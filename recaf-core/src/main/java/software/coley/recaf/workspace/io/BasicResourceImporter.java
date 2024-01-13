@@ -551,13 +551,15 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				.build();
 	}
 
+	@Nonnull
 	@Override
-	public WorkspaceResource importResource(ByteSource source) throws IOException {
+	public WorkspaceResource importResource(@Nonnull ByteSource source) throws IOException {
 		return handleSingle(new WorkspaceResourceBuilder(), "unknown.dat", source);
 	}
 
+	@Nonnull
 	@Override
-	public WorkspaceResource importResource(Path path) throws IOException {
+	public WorkspaceResource importResource(@Nonnull Path path) throws IOException {
 		// Load name/data from path, parse into resource.
 		String absolutePath = StringUtil.pathToAbsoluteString(path);
 		if (Files.isDirectory(path)) {
@@ -568,8 +570,9 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		}
 	}
 
+	@Nonnull
 	@Override
-	public WorkspaceResource importResource(URL url) throws IOException {
+	public WorkspaceResource importResource(@Nonnull URL url) throws IOException {
 		// Extract name from URL
 		String path = url.getFile();
 		if (path.isEmpty())

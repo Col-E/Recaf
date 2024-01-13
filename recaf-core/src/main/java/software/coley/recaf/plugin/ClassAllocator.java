@@ -1,5 +1,7 @@
 package software.coley.recaf.plugin;
 
+import jakarta.annotation.Nonnull;
+
 /**
  * Responsible for creating new class instances from a {@link Class} reference.
  *
@@ -17,5 +19,6 @@ public interface ClassAllocator {
 	 * @throws AllocationException
 	 * 		When any error prevents a new instance from being provided.
 	 */
-	<T> T instance(Class<T> cls) throws AllocationException;
+	@Nonnull
+	<T> T instance(@Nonnull Class<T> cls) throws AllocationException;
 }

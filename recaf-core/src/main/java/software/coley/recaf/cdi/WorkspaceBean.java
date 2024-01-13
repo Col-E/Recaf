@@ -38,6 +38,7 @@ public class WorkspaceBean<T> {
 	/**
 	 * @return Bean instance.
 	 */
+	@Nonnull
 	public T getBean() {
 		return bean;
 	}
@@ -45,6 +46,7 @@ public class WorkspaceBean<T> {
 	/**
 	 * @return Bean name.
 	 */
+	@Nonnull
 	public String getName() {
 		return beanName;
 	}

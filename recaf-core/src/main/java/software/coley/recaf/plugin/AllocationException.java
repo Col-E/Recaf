@@ -1,5 +1,7 @@
 package software.coley.recaf.plugin;
 
+import jakarta.annotation.Nonnull;
+
 /**
  * Wrapper exception for any potential error thrown by the implementation logic of a {@link ClassAllocator}
  *
@@ -14,7 +16,7 @@ public class AllocationException extends Exception {
 	 * @param cause
 	 * 		Reason for allocation failure.
 	 */
-	public AllocationException(Class<?> type, Throwable cause) {
+	public AllocationException(@Nonnull Class<?> type, @Nonnull Throwable cause) {
 		super(cause);
 		this.type = type;
 	}
@@ -22,6 +24,7 @@ public class AllocationException extends Exception {
 	/**
 	 * @return Type that failed to be allocated.
 	 */
+	@Nonnull
 	public Class<?> getType() {
 		return type;
 	}

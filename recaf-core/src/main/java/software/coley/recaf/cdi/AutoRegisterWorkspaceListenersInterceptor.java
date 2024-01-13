@@ -34,7 +34,7 @@ public class AutoRegisterWorkspaceListenersInterceptor {
 	 * 		Workspace manager instance.
 	 */
 	@Inject
-	public AutoRegisterWorkspaceListenersInterceptor(WorkspaceManager workspaceManager) {
+	public AutoRegisterWorkspaceListenersInterceptor(@Nonnull WorkspaceManager workspaceManager) {
 		this.workspaceManager = workspaceManager;
 	}
 
@@ -50,7 +50,7 @@ public class AutoRegisterWorkspaceListenersInterceptor {
 	 */
 	@PostConstruct
 	@SuppressWarnings("unused")
-	public Object intercept(InvocationContext context) throws Exception {
+	public Object intercept(@Nonnull InvocationContext context) throws Exception {
 		// Instance to intercept
 		Object value = context.getTarget();
 		Class<?> valueType = value.getClass();
@@ -97,7 +97,7 @@ public class AutoRegisterWorkspaceListenersInterceptor {
 	private class AutoUnregisteringCloseListener implements WorkspaceCloseListener {
 		private final WorkspaceCloseListener delegate;
 
-		AutoUnregisteringCloseListener(WorkspaceCloseListener delegate) {
+		AutoUnregisteringCloseListener(@Nonnull WorkspaceCloseListener delegate) {
 			this.delegate = delegate;
 		}
 

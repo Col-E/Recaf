@@ -78,12 +78,12 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 	}
 
 	@Override
-	public void accept(String loggerName, Level level, String messageContent) {
+	public void accept(@Nonnull String loggerName, @Nonnull Level level, String messageContent) {
 		infos.add(new LogCallInfo(loggerName, level, messageContent, null));
 	}
 
 	@Override
-	public void accept(String loggerName, Level level, String messageContent, Throwable throwable) {
+	public void accept(@Nonnull String loggerName, @Nonnull Level level, String messageContent, Throwable throwable) {
 		infos.add(new LogCallInfo(loggerName, level, messageContent, throwable));
 	}
 

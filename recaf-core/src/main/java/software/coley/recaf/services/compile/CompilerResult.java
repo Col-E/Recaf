@@ -47,7 +47,7 @@ public class CompilerResult {
 	 */
 	public boolean wasSuccess() {
 		return compilations != null &&
-				compilations.size() > 0 &&
+				!compilations.isEmpty() &&
 				exception == null &&
 				diagnostics.stream().noneMatch(d -> d.level() == CompilerDiagnostic.Level.ERROR);
 	}

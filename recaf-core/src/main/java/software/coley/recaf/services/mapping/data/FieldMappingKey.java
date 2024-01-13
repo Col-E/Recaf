@@ -1,5 +1,7 @@
 package software.coley.recaf.services.mapping.data;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.Objects;
 
 /**
@@ -47,6 +49,7 @@ public class FieldMappingKey extends AbstractMappingKey {
 		return desc;
 	}
 
+	@Nonnull
 	@Override
 	protected String toText() {
 		String owner = this.owner;

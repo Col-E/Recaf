@@ -39,7 +39,7 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 	}
 
 	@Override
-	public <T> T get(Contextual<T> contextual, CreationalContext<T> creationalContext) {
+	public <T> T get(@Nonnull Contextual<T> contextual, @Nonnull CreationalContext<T> creationalContext) {
 		// Get existing bean
 		Bean<T> bean = (Bean<T>) contextual;
 		String beanName = bean.getBeanClass().getName();
@@ -56,7 +56,7 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> T get(Contextual<T> contextual) {
+	public <T> T get(@Nonnull Contextual<T> contextual) {
 		Bean<T> bean = (Bean<T>) contextual;
 		String beanName = bean.getBeanClass().getName();
 		WorkspaceBean<T> workspaceBean = (WorkspaceBean<T>) map.get(beanName);
@@ -68,7 +68,7 @@ public class WorkspaceBeanContext implements AlterableContext, WorkspaceOpenList
 	}
 
 	@Override
-	public void destroy(Contextual<?> contextual) {
+	public void destroy(@Nonnull Contextual<?> contextual) {
 		Bean<?> bean = (Bean<?>) contextual;
 		String beanName = bean.getBeanClass().getName();
 		WorkspaceBean<?> workspaceBean = map.remove(beanName);

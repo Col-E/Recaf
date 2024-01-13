@@ -1,5 +1,6 @@
 package software.coley.recaf.cdi;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.spi.Context;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.spi.AfterBeanDiscovery;
@@ -21,6 +22,7 @@ public class WorkspaceBeanExtension implements Extension {
 	/**
 	 * @return Extension singleton.
 	 */
+	@Nonnull
 	public static WorkspaceBeanExtension getInstance() {
 		return INSTANCE;
 	}

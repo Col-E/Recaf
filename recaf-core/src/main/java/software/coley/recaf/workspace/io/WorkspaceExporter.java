@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.io;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -22,5 +23,5 @@ public interface WorkspaceExporter {
 	 * @throws IOException
 	 * 		When exporting failed for any IO related reason.
 	 */
-	void export(Workspace workspace) throws IOException;
+	void export(@Nonnull Workspace workspace) throws IOException;
 }

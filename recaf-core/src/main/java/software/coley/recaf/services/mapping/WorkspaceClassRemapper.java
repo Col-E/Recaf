@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
@@ -29,7 +30,7 @@ public class WorkspaceClassRemapper extends ClassRemapper {
 	 * @param mappings
 	 * 		Mappings to apply.
 	 */
-	public WorkspaceClassRemapper(ClassVisitor cv, @Nonnull Workspace workspace, @Nonnull Mappings mappings) {
+	public WorkspaceClassRemapper(@Nullable ClassVisitor cv, @Nonnull Workspace workspace, @Nonnull Mappings mappings) {
 		super(RecafConstants.getAsmVersion(), cv, new WorkspaceBackedRemapper(workspace, mappings));
 		// Shadow the parent type's remapper locally,
 		// allowing us to use our more specific methods with additional context.
