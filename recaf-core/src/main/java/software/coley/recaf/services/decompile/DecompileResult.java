@@ -3,6 +3,7 @@ package software.coley.recaf.services.decompile;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
+import software.coley.recaf.util.StringUtil;
 
 import java.util.Objects;
 
@@ -20,19 +21,52 @@ public class DecompileResult {
 	/**
 	 * @param text
 	 * 		Decompiled text.
-	 * @param exception
-	 * 		Failure reason.
-	 * @param type
-	 * 		Result type.
 	 * @param configHash
-	 * 		Value of {@link DecompilerConfig#getConfigHash()} of associated decompiler.
+	 * 		Value of {@link DecompilerConfig#getHash()} of associated decompiler.
 	 * 		Used to determine if cached value in {@link CachedDecompileProperty} is up-to-date with current config.
 	 */
-	public DecompileResult(@Nullable String text, @Nullable Throwable exception, @Nonnull ResultType type, int configHash) {
+	public DecompileResult(@Nonnull String text, int configHash) {
 		this.text = text;
-		this.exception = exception;
-		this.type = type;
+		this.type = ResultType.SUCCESS;
 		this.configHash = configHash;
+		this.exception = null;
+	}
+
+	/**
+	 * @param exception
+	 * 		Failure reason.
+	 * @param configHash
+	 * 		Value of {@link DecompilerConfig#getHash()} of associated decompiler.
+	 * 		Used to determine if cached value in {@link CachedDecompileProperty} is up-to-date with current config.
+	 */
+	public DecompileResult(@Nonnull Throwable exception, int configHash) {
+		this.text = "// " + StringUtil.traceToString(exception).replace("\n", "\n// ");
+		this.type = ResultType.FAILURE;
+		this.configHash = configHash;
+		this.exception = exception;
+	}
+
+	/**
+	 * @param configHash
+	 * 		Value of {@link DecompilerConfig#getHash()} of associated decompiler.
+	 * 		Used to determine if cached value in {@link CachedDecompileProperty} is up-to-date with current config.
+	 */
+	public DecompileResult(int configHash) {
+		this.text = null;
+		this.type = ResultType.SKIPPED;
+		this.configHash = configHash;
+		this.exception = null;
+	}
+
+	/**
+	 * @param text
+	 * 		Decompiled text.
+	*/
+	public DecompileResult(@Nonnull String text) {
+		this.text = text;
+		this.type = ResultType.SKIPPED;
+		this.configHash = 0;
+		this.exception = null;
 	}
 
 	/**
@@ -62,7 +96,7 @@ public class DecompileResult {
 	}
 
 	/**
-	 * @return Value of {@link DecompilerConfig#getConfigHash()} of associated decompiler.
+	 * @return Value of {@link DecompilerConfig#getHash()} of associated decompiler.
 	 * Used to determine if cached value in {@link CachedDecompileProperty} is up-to-date with current config.
 	 */
 	public int getConfigHash() {

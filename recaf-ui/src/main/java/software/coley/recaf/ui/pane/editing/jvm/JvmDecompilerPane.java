@@ -246,9 +246,9 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 					// Update cached decompile property to current editor text.
 					// If the class is opened later, we can use the code we compiled with.
 					JvmDecompiler currentDecompiler = decompiler.getValue();
-					int configHash = currentDecompiler.getConfig().getConfigHash();
+					int configHash = currentDecompiler.getConfig().getHash();
 					CachedDecompileProperty.set(newInfo, currentDecompiler,
-							new DecompileResult(editor.getText(), null, DecompileResult.ResultType.SUCCESS, configHash));
+							new DecompileResult(editor.getText(), configHash));
 
 					// Update the class in the bundle.
 					bundle.put(newInfo);

@@ -9,10 +9,9 @@ import jakarta.inject.Inject;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableObject;
-import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
-import software.coley.recaf.services.decompile.DecompilerConfig;
+import software.coley.recaf.services.decompile.BaseDecompilerConfig;
 
 /**
  * Config for {@link ProcyonDecompiler}
@@ -20,7 +19,7 @@ import software.coley.recaf.services.decompile.DecompilerConfig;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class ProcyonConfig extends BasicConfigContainer implements DecompilerConfig {
+public class ProcyonConfig extends BaseDecompilerConfig {
 	private final ObservableBoolean includeLineNumbersInBytecode = new ObservableBoolean(true);
 	private final ObservableBoolean showSyntheticMembers = new ObservableBoolean(false);
 	private final ObservableBoolean alwaysGenerateExceptionVariableForCatchBlocks = new ObservableBoolean(true);
@@ -41,8 +40,6 @@ public class ProcyonConfig extends BasicConfigContainer implements DecompilerCon
 	private final ObservableInteger textBlockLineMinimum = new ObservableInteger(3);
 	private final ObservableObject<CompilerTarget> forcedCompilerTarget = new ObservableObject<>(null);
 	private final ObservableObject<BytecodeOutputOptions> bytecodeOutputOptions = new ObservableObject<>(BytecodeOutputOptions.createDefault());
-	private int hash;
-
 	@Inject
 	public ProcyonConfig() {
 		super(ConfigGroups.SERVICE_DECOMPILE, "decompiler-procyon" + CONFIG_SUFFIX);
@@ -195,15 +192,5 @@ public class ProcyonConfig extends BasicConfigContainer implements DecompilerCon
 	@Nonnull
 	public ObservableObject<BytecodeOutputOptions> getBytecodeOutputOptions() {
 		return bytecodeOutputOptions;
-	}
-
-	@Override
-	public int getConfigHash() {
-		return hash;
-	}
-
-	@Override
-	public void setConfigHash(int hash) {
-		this.hash = hash;
 	}
 }

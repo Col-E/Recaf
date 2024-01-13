@@ -10,10 +10,9 @@ import org.benf.cfr.reader.util.getopt.OptionsImpl;
 import org.benf.cfr.reader.util.getopt.PermittedOptionProvider;
 import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableObject;
-import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
-import software.coley.recaf.services.decompile.DecompilerConfig;
+import software.coley.recaf.services.decompile.BaseDecompilerConfig;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.StringUtil;
 
@@ -29,7 +28,7 @@ import java.util.Map;
  */
 @ApplicationScoped
 @SuppressWarnings("all") // ignore unused refs / typos
-public class CfrConfig extends BasicConfigContainer implements DecompilerConfig {
+public class CfrConfig extends BaseDecompilerConfig {
 	private final ObservableObject<BooleanOption> stringbuffer = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> stringbuilder = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> stringconcat = new ObservableObject<>(BooleanOption.DEFAULT);
@@ -110,7 +109,6 @@ public class CfrConfig extends BasicConfigContainer implements DecompilerConfig 
 	private final ObservableObject<TrooleanOption> allowmalformedswitch = new ObservableObject<>(TrooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> elidescala = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> usesignatures = new ObservableObject<>(BooleanOption.DEFAULT);
-	private int hash = 0;
 
 	@Inject
 	public CfrConfig() {
@@ -685,16 +683,6 @@ public class CfrConfig extends BasicConfigContainer implements DecompilerConfig 
 	@Nonnull
 	public ObservableObject<BooleanOption> getUsesignatures() {
 		return usesignatures;
-	}
-
-	@Override
-	public int getConfigHash() {
-		return hash;
-	}
-
-	@Override
-	public void setConfigHash(int hash) {
-		this.hash = hash;
 	}
 
 	/**

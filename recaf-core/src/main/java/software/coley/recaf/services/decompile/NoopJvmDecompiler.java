@@ -1,6 +1,7 @@
 package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -22,8 +23,9 @@ public class NoopJvmDecompiler extends AbstractJvmDecompiler {
 		return INSTANCE;
 	}
 
+	@Nonnull
 	@Override
-	public DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull String name, @Nonnull byte[] bytecode) {
-		return new DecompileResult(null, null, DecompileResult.ResultType.SKIPPED, getConfig().getConfigHash());
+	protected DecompileResult decompileInternal(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
+		return new DecompileResult(getConfig().getHash());
 	}
 }

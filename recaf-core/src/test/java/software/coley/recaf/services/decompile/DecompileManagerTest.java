@@ -67,7 +67,7 @@ public class DecompileManagerTest extends TestBase {
 			assertSame(firstResult, newResult, "Decompiler did not cache results");
 
 			// Change the decompiler hash. The decompiler result should change.
-			decompiler.getConfig().setConfigHash(-1);
+			decompiler.getConfig().setHash(-1);
 			newResult = decompilerManager.decompile(decompiler, workspace, classToDecompile)
 					.get(1, TimeUnit.SECONDS);
 			assertNotSame(firstResult, newResult, "Decompiler used cached result even though config hash changed");

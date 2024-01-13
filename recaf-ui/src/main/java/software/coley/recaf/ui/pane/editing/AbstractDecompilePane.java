@@ -22,7 +22,6 @@ import org.openrewrite.java.tree.J;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
-import software.coley.recaf.Bootstrap;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
@@ -317,7 +316,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 				info.getBytecode().length,
 				jvmDecompiler.getName(), jvmDecompiler.getVersion(),
 				config.getTimeoutSeconds().getValue()
-		), null, DecompileResult.ResultType.SKIPPED, 0);
+		));
 	}
 
 	/**
