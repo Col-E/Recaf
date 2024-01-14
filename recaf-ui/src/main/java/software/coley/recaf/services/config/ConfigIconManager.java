@@ -35,6 +35,7 @@ public class ConfigIconManager implements Service {
 		// Add defaults
 		registerGroup(SERVICE, CarbonIcons.DATA_CLASS);
 		registerGroup(SERVICE_ANALYSIS, CarbonIcons.COGNITIVE);
+		registerGroup(SERVICE_ASSEMBLER, CarbonIcons.CODE);
 		registerGroup(SERVICE_COMPILE, CarbonIcons.CODE);
 		registerGroup(SERVICE_DEBUG, CarbonIcons.DEBUG);
 		registerGroup(SERVICE_DECOMPILE, CarbonIcons.CODE);

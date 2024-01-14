@@ -112,7 +112,7 @@ public class CfrConfig extends BaseDecompilerConfig {
 
 	@Inject
 	public CfrConfig() {
-		super(ConfigGroups.SERVICE_DECOMPILE, "decompiler-cfr" + CONFIG_SUFFIX);
+		super("decompiler-cfr" + CONFIG_SUFFIX);
 		// Add values
 		addValue(new BasicConfigValue<>("stringbuffer", BooleanOption.class, stringbuffer));
 		addValue(new BasicConfigValue<>("stringbuilder", BooleanOption.class, stringbuilder));

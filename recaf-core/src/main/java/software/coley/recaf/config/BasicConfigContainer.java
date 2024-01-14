@@ -15,7 +15,6 @@ public class BasicConfigContainer implements ConfigContainer {
 	private final String group;
 	private final String id;
 
-
 	/**
 	 * @param group
 	 * 		Container group.

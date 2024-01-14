@@ -62,6 +62,16 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 		return result;
 	}
 
+	/**
+	 * Takes on the work of {@link #decompile(Workspace, JvmClassInfo)} after the {@link #inputFilters} have been applied to the class.
+	 *
+	 * @param workspace
+	 * 		Workspace to pull data from.
+	 * @param classInfo
+	 * 		Class to decompile.
+	 *
+	 * @return Decompilation result.
+	 */
 	@Nonnull
 	protected abstract DecompileResult decompileInternal(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo);
 

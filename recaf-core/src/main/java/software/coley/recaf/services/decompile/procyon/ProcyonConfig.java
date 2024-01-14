@@ -42,7 +42,7 @@ public class ProcyonConfig extends BaseDecompilerConfig {
 	private final ObservableObject<BytecodeOutputOptions> bytecodeOutputOptions = new ObservableObject<>(BytecodeOutputOptions.createDefault());
 	@Inject
 	public ProcyonConfig() {
-		super(ConfigGroups.SERVICE_DECOMPILE, "decompiler-procyon" + CONFIG_SUFFIX);
+		super("decompiler-procyon" + CONFIG_SUFFIX);
 		addValue(new BasicConfigValue<>("includeLineNumbersInBytecode", boolean.class, includeLineNumbersInBytecode));
 		addValue(new BasicConfigValue<>("showSyntheticMembers", boolean.class, showSyntheticMembers));
 		addValue(new BasicConfigValue<>("alwaysGenerateExceptionVariableForCatchBlocks", boolean.class, alwaysGenerateExceptionVariableForCatchBlocks));
