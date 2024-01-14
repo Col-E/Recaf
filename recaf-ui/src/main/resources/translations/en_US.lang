@@ -558,6 +558,7 @@ service.decompile.impl.decompiler-procyon-config.showSyntheticMembers=Show synth
 service.decompile.impl.decompiler-procyon-config.simplifyMemberReferences=Simplify member references
 service.decompile.impl.decompiler-procyon-config.textBlockLineMinimum=Text block minimum lines
 service.decompile.impl.decompiler-vineflower-config=Vineflower
+service.decompile.impl.decompiler-vineflower-config.logging-level=Logging level
 service.decompile.impl.decompiler-vineflower-config.rbr=Remove bridge methods
 service.decompile.impl.decompiler-vineflower-config.rsy=Remove synthetic methods and fields
 service.decompile.impl.decompiler-vineflower-config.din=Decompile inner classes

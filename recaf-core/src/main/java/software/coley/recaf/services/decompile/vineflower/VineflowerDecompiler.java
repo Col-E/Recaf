@@ -20,7 +20,7 @@ import software.coley.recaf.workspace.model.Workspace;
 public class VineflowerDecompiler extends AbstractJvmDecompiler {
 	public static final String NAME = "Vineflower";
 	private final VineflowerConfig config;
-	private final IFernflowerLogger logger = new VineflowerLogger();
+	private final IFernflowerLogger logger;
 	private final IResultSaver dummySaver = new DummyResultSaver();
 
 	/**
@@ -34,6 +34,7 @@ public class VineflowerDecompiler extends AbstractJvmDecompiler {
 		// Change this version to be dynamic when / if the Vineflower authors make a function that returns the version...
 		super(NAME, "1.9.3", config);
 		this.config = config;
+		logger = new VineflowerLogger(config);
 	}
 
 	@Nonnull

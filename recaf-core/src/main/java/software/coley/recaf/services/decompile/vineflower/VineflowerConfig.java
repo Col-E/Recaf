@@ -5,7 +5,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.slf4j.event.Level;
 import software.coley.observables.ObservableBoolean;
+import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.decompile.BaseDecompilerConfig;
@@ -21,6 +23,7 @@ import java.util.Map;
 @ApplicationScoped
 @SuppressWarnings("all") // ignore unused refs / typos
 public class VineflowerConfig extends BaseDecompilerConfig {
+	private final ObservableObject<Level> loggingLevel = new ObservableObject<>(Level.WARN);
 	private final ObservableBoolean removeBridge = new ObservableBoolean(true);
 	private final ObservableBoolean removeSynthetic = new ObservableBoolean(true);
 	private final ObservableBoolean decompileInner = new ObservableBoolean(true);
@@ -74,6 +77,7 @@ public class VineflowerConfig extends BaseDecompilerConfig {
 	@Inject
 	public VineflowerConfig() {
 		super("decompiler-vineflower" + CONFIG_SUFFIX);
+		addValue(new BasicConfigValue<>("logging-level", Level.class, loggingLevel));
 		addValue(new BasicConfigValue<>("rbr", boolean.class, removeBridge));
 		addValue(new BasicConfigValue<>("rsy", boolean.class, removeSynthetic));
 		addValue(new BasicConfigValue<>("din", boolean.class, decompileInner));
@@ -137,6 +141,14 @@ public class VineflowerConfig extends BaseDecompilerConfig {
 				properties.put(key, bool ? "1" : "0");
 		});
 		return properties;
+	}
+
+	/**
+	 * @return Level to use for {@link VineflowerLogger}.
+	 */
+	@Nonnull
+	public ObservableObject<Level> getLoggingLevel() {
+		return loggingLevel;
 	}
 
 	@Nonnull

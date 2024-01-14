@@ -19,6 +19,8 @@ public class DecompileResult {
 	private final int configHash;
 
 	/**
+	 * Constructor for a successful decompilation.
+	 *
 	 * @param text
 	 * 		Decompiled text.
 	 * @param configHash
@@ -33,6 +35,8 @@ public class DecompileResult {
 	}
 
 	/**
+	 * Constructor for a failed decompilation.
+	 *
 	 * @param exception
 	 * 		Failure reason.
 	 * @param configHash
@@ -47,6 +51,8 @@ public class DecompileResult {
 	}
 
 	/**
+	 * Constructor for a skipped decompilation.
+	 *
 	 * @param configHash
 	 * 		Value of {@link DecompilerConfig#getHash()} of associated decompiler.
 	 * 		Used to determine if cached value in {@link CachedDecompileProperty} is up-to-date with current config.
@@ -59,6 +65,9 @@ public class DecompileResult {
 	}
 
 	/**
+	 * Constructor for a skipped decompilation, with pre-defined text.
+	 * Typically used for displaying feedback if the decompiler had an issue or timed out.
+	 *
 	 * @param text
 	 * 		Decompiled text.
 	*/
