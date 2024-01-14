@@ -224,7 +224,6 @@ public class JavacCompiler implements Service {
 			Field majorVersion = minTarget.getClass().getDeclaredField("majorVersion");
 			majorVersion.setAccessible(true);
 			minTargetVersion = majorVersion.getInt(minTarget) - JvmClassInfo.BASE_VERSION;
-			System.out.println(minTargetVersion);
 		} catch (Throwable ignored) {
 			// Oh well...
 		}

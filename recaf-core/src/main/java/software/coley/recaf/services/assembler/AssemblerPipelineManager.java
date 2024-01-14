@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.Service;
@@ -13,7 +14,7 @@ import software.coley.recaf.services.Service;
  *
  * @author Justus Garbe
  */
-@ApplicationScoped
+@WorkspaceScoped
 public class AssemblerPipelineManager implements Service {
 	public static final String SERVICE_ID = "assembler-pipeline";
 	private final AssemblerPipelineGeneralConfig config;

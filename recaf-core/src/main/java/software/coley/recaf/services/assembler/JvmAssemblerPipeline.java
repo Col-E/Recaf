@@ -17,6 +17,7 @@ import me.darknet.assembler.parser.BytecodeFormat;
 import me.darknet.assembler.parser.processor.ASTProcessor;
 import me.darknet.assembler.printer.ClassPrinter;
 import me.darknet.assembler.printer.JvmClassPrinter;
+import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.AnnotationPathNode;
@@ -36,7 +37,7 @@ import java.util.List;
  *
  * @author Justus Garbe
  */
-@ApplicationScoped
+@WorkspaceScoped
 public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo, JavaClassRepresentation> {
 	public static final String SERVICE_ID = "jvm-assembler";
 
