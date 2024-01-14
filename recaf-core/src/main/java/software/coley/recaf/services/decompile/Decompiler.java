@@ -1,5 +1,6 @@
 package software.coley.recaf.services.decompile;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
 
 /**
@@ -15,15 +16,18 @@ public interface Decompiler {
 	/**
 	 * @return Decompiler name.
 	 */
+	@Nonnull
 	String getName();
 
 	/**
 	 * @return Decompiler version.
 	 */
+	@Nonnull
 	String getVersion();
 
 	/**
 	 * @return Decompiler config.
 	 */
+	@Nonnull
 	DecompilerConfig getConfig();
 }

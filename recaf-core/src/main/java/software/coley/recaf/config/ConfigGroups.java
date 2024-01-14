@@ -33,9 +33,13 @@ public final class ConfigGroups {
 	 */
 	public static final String SERVICE_DEBUG = SERVICE + PACKAGE_SPLIT + "debug";
 	/**
-	 * Group for decompiler components.
+	 * Group for decompilation components.
 	 */
 	public static final String SERVICE_DECOMPILE = SERVICE + PACKAGE_SPLIT + "decompile";
+	/**
+	 * Group for specific decompiler components.
+	 */
+	public static final String SERVICE_DECOMPILE_IMPL = SERVICE_DECOMPILE + PACKAGE_SPLIT + "impl";
 	/**
 	 * Group for IO components.
 	 */

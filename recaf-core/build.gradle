@@ -42,6 +42,7 @@ dependencies {
     api regex
     api jasm_core
     api jasm_composistion_jvm
+    api vineflower
 }
 
 // Force generation of gversion data class when the version information is not up-to-date

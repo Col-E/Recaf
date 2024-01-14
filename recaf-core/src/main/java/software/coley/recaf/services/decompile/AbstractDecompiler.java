@@ -26,16 +26,19 @@ public class AbstractDecompiler implements Decompiler {
 		this.config = config;
 	}
 
+	@Nonnull
 	@Override
 	public String getName() {
 		return name;
 	}
 
+	@Nonnull
 	@Override
 	public String getVersion() {
 		return version;
 	}
 
+	@Nonnull
 	@Override
 	public DecompilerConfig getConfig() {
 		return config;

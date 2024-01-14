@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.DecompilerComment;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.AbstractJvmDecompiler;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.util.ReflectUtil;
@@ -36,8 +37,11 @@ public class CfrDecompiler extends AbstractJvmDecompiler {
 		this.config = config;
 	}
 
+	@Nonnull
 	@Override
-	public DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull String name, @Nonnull byte[] bytecode) {
+	protected DecompileResult decompileInternal(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
+		String name = classInfo.getName();
+		byte[] bytecode = classInfo.getBytecode();
 		ClassSource source = new ClassSource(workspace, name, bytecode);
 		SinkFactoryImpl sink = new SinkFactoryImpl();
 		CfrDriver driver = new CfrDriver.Builder()
@@ -47,12 +51,13 @@ public class CfrDecompiler extends AbstractJvmDecompiler {
 				.build();
 		driver.analyse(Collections.singletonList(name));
 		String decompile = sink.getDecompilation();
-		int configHash = getConfig().getConfigHash();
+		int configHash = getConfig().getHash();
 		if (decompile == null)
-			return new DecompileResult(null, sink.getException(), DecompileResult.ResultType.FAILURE, configHash);
-		return new DecompileResult(filter(decompile), null, DecompileResult.ResultType.SUCCESS, configHash);
+			return new DecompileResult(sink.getException(), configHash);
+		return new DecompileResult(filter(decompile), configHash);
 	}
 
+	@Nonnull
 	@Override
 	public CfrConfig getConfig() {
 		return (CfrConfig) super.getConfig();

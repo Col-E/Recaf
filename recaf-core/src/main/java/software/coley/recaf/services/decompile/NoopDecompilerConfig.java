@@ -17,12 +17,12 @@ public class NoopDecompilerConfig extends BasicConfigContainer implements Decomp
 	}
 
 	@Override
-	public int getConfigHash() {
+	public int getHash() {
 		return 0;
 	}
 
 	@Override
-	public void setConfigHash(int hash) {
+	public void setHash(int hash) {
 		// no-op
 	}
 }

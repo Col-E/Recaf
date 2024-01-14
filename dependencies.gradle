@@ -69,4 +69,6 @@ project.ext {
     richtextfx = 'org.fxmisc.richtext:richtextfx:0.11.2'
 
     treemapfx = 'software.coley:treemap-fx:1.1.0'
+
+    vineflower = 'org.vineflower:vineflower:1.9.3'
 }

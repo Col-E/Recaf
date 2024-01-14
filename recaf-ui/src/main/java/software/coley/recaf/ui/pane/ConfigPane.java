@@ -166,7 +166,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	 * @return Tree item if it exists. Otherwise {@code null}.
 	 */
 	@Nullable
-	private TreeItem<String> getItem(ConfigContainer container, boolean createIfMissing) {
+	private TreeItem<String> getItem(@Nonnull ConfigContainer container, boolean createIfMissing) {
 		TreeItem<String> currentItem = root;
 		String currentPackage = null;
 		String[] packages = getGroupPackages(container);
