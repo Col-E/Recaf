@@ -1,10 +1,12 @@
 package software.coley.recaf.services.decompile;
 
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
 import software.coley.recaf.services.decompile.procyon.ProcyonDecompiler;
+import software.coley.recaf.services.decompile.vineflower.VineflowerDecompiler;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
@@ -47,7 +49,14 @@ public class DecompileManagerTest extends TestBase {
 		runJvmDecompilation(decompiler);
 	}
 
-	private static void runJvmDecompilation(JvmDecompiler decompiler) {
+	@Test
+	void testVineflower() {
+		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(VineflowerDecompiler.NAME);
+		assertNotNull(decompiler, "Vineflower decompiler was never registered with manager");
+		runJvmDecompilation(decompiler);
+	}
+
+	private static void runJvmDecompilation(@Nonnull JvmDecompiler decompiler) {
 		try {
 			// Generally, you'd handle results like this, with a when-complete.
 			// The blocking 'get' at the end is just so our test works.
