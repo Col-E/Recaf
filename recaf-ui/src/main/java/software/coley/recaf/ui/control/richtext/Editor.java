@@ -255,6 +255,11 @@ public class Editor extends BorderPane {
 			codeArea.appendText(text);
 		} else {
 			codeArea.replaceText(text);
+
+			// Whole text replacement often results in the text not applying a restyle, resulting in all default text.
+			// Scheduling a restyle at the start ensures if this happens it gets fixed in the next FX update cycle.
+			if (!text.isBlank())
+				restyleAtPosition(0, 0);
 		}
 	}
 
