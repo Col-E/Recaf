@@ -2,7 +2,6 @@ package software.coley.recaf.services.assembler;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import me.darknet.assembler.ast.specific.ASTMethod;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 
 import java.util.Collections;

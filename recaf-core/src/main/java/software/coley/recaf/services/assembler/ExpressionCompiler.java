@@ -46,6 +46,7 @@ public class ExpressionCompiler {
 	private final Workspace workspace;
 	private final AssemblerPipelineGeneralConfig assemblerConfig;
 	private String className;
+	private int classAccess;
 	private String superName;
 	private List<String> implementing;
 	private int versionTarget;
@@ -70,6 +71,7 @@ public class ExpressionCompiler {
 	 */
 	public void clearContext() {
 		className = "RecafExpression";
+		classAccess = 0;
 		superName = null;
 		implementing = Collections.emptyList();
 		versionTarget = JavaVersion.get();
@@ -90,6 +92,7 @@ public class ExpressionCompiler {
 	 */
 	public void setClassContext(@Nonnull JvmClassInfo classInfo) {
 		className = classInfo.getName();
+		classAccess = classInfo.getAccess();
 		versionTarget = classInfo.getVersion() - JvmClassInfo.BASE_VERSION;
 		superName = classInfo.getSuperName();
 		implementing = classInfo.getInterfaces();
@@ -129,16 +132,18 @@ public class ExpressionCompiler {
 	 *
 	 * @return Expression compilation result.
 	 *
-	 * @throws ExpressionCompileException
-	 * 		When the expression couldn't be compiled.
-	 * 		Can be due to code generation failures or compilation problems from the Java source within the given expression.
 	 * @see #setClassContext(JvmClassInfo) For allowing access to a class's fields/methods/inheritance.
 	 * @see #setMethodContext(MethodMember) For allowing access to a method's parameters & other local variables.
 	 */
 	@Nonnull
-	public ExpressionResult compile(@Nonnull String expression) throws ExpressionCompileException {
+	public ExpressionResult compile(@Nonnull String expression) {
 		// Generate source of a class to house the expression within
-		String code = generateClass(expression);
+		String code;
+		try {
+			code = generateClass(expression);
+		} catch (ExpressionCompileException ex) {
+			return new ExpressionResult(ex);
+		}
 
 		// Compile the generated class
 		JavacArguments arguments = new JavacArguments(className, code, null, versionTarget, -1, true, false, false);
@@ -166,6 +171,8 @@ public class ExpressionCompiler {
 			return new ExpressionResult(context.toString());
 		} catch (IOException ex) {
 			return new ExpressionResult(new ExpressionCompileException(ex, "Failed to print generated class"));
+		} catch (ExpressionCompileException ex) {
+			return new ExpressionResult(ex);
 		}
 	}
 
@@ -181,6 +188,9 @@ public class ExpressionCompiler {
 	@Nonnull
 	private String generateClass(@Nonnull String expression) throws ExpressionCompileException {
 		StringBuilder code = new StringBuilder();
+
+		// TODO: Different model for enums
+		// TODO: If the method type ends in a return value, we need to have a dummy return at the end
 
 		// Append package
 		if (className.indexOf('/') > 0) {
@@ -392,7 +402,7 @@ public class ExpressionCompiler {
 		int exprStart = code.indexOf(EXPR_MARKER);
 		int lineOffset = StringUtil.count('\n', code.substring(0, exprStart));
 		return diagnostics.stream()
-				.map(d -> new CompilerDiagnostic(d.line() - lineOffset, d.column(), d.message(), d.level()))
+				.map(d -> d.withLine(d.line() - lineOffset))
 				.toList();
 	}
 
