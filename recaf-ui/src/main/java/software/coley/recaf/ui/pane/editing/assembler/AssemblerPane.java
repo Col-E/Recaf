@@ -20,13 +20,13 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.assembler.AssemblerPipeline;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
 import software.coley.recaf.services.navigation.ClassNavigable;
-import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.KeybindingConfig;
@@ -50,7 +50,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -328,6 +327,20 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 					if (representation instanceof JavaClassRepresentation javaClassRep) {
 						lastAssembledClass = pipeline.getClassInfo(Unchecked.cast(javaClassRep));
+
+						// Update the local path value, this will also inform sub-components of the new content.
+						FxThreadUtil.run(() -> {
+							if (path instanceof ClassPathNode classPath) {
+								ClassPathNode newPath = classPath.getParent().child(lastAssembledClass);
+								onUpdatePath(newPath);
+							} else if (path instanceof ClassMemberPathNode memberPath) {
+								ClassMember oldMember = memberPath.getValue();
+								MethodMember newMember = lastAssembledClass.getDeclaredMethod(oldMember.getName(), oldMember.getDescriptor());
+								ClassMemberPathNode newPath = memberPath.getParent().getParent().child(lastAssembledClass).child(newMember);
+								onUpdatePath(newPath);
+							}
+						});
+
 						for (var methodEntry : javaClassRep.analysisLookup().allResults().entrySet()) {
 							String methodName = methodEntry.getKey().name();
 							AnalysisException failure = methodEntry.getValue().getAnalysisFailure();
