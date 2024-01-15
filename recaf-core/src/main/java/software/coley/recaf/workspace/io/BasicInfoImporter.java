@@ -126,9 +126,6 @@ public class BasicInfoImporter implements InfoImporter {
 					.withRawContent(data)
 					.withName(name);
 
-			// Handle by file name if known, otherwise treat as regular ZIP.
-			if (name == null) return builder.build();
-
 			// Record name, handle extension to determine info-type
 			String extension = IOUtil.getExtension(name);
 			if (extension == null) return builder.build();
