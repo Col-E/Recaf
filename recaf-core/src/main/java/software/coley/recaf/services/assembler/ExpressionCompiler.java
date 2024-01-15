@@ -212,13 +212,29 @@ public class ExpressionCompiler {
 		expression = expressionBuffer.toString();
 
 		// Class structure
-		//  - Declared abstract to bypass having to stub methods from super-types and interfaces.
-		code.append("abstract class ").append(StringUtil.shortenPath(className));
-		if (superName != null && !superName.equals("java/lang/Object"))
+		code.append(AccessFlag.isEnum(classAccess) ? "enum " : "abstract class ").append(StringUtil.shortenPath(className));
+		if (superName != null && !superName.equals("java/lang/Object") && !superName.equals("java/lang/Enum"))
 			code.append(" extends ").append(superName.replace('/', '.'));
 		if (implementing != null && !implementing.isEmpty())
 			code.append(" implements ").append(implementing.stream().map(s -> s.replace('/', '.')).collect(Collectors.joining(", "))).append(' ');
 		code.append("{\n");
+
+		// Enum constants must come first if the class is an enum
+		if (AccessFlag.isEnum(classAccess)) {
+			int enumConsts = 0;
+			for (FieldMember field : fields) {
+				if (field.getDescriptor().length() == 1)
+					continue;
+				InstanceType fieldDesc = Types.instanceTypeFromDescriptor(field.getDescriptor());
+				if (fieldDesc.internalName().equals(className) && field.hasFinalModifier() && field.hasStaticModifier()) {
+					if (enumConsts > 0)
+						code.append(", ");
+					code.append(field.getName());
+					enumConsts++;
+				}
+			}
+			code.append(';');
+		}
 
 		// Method structure to house the expression
 		int parameterVarIndex = 0;
@@ -281,6 +297,10 @@ public class ExpressionCompiler {
 			if (!isSafeClassName(fieldInfo.className))
 				continue;
 
+			// Skip enum constants, we added those earlier.
+			if (fieldInfo.className.equals(className.replace('/', '.')) && field.hasFinalModifier() && field.hasStaticModifier())
+				continue;
+
 			if (field.hasStaticModifier())
 				code.append("static ");
 			code.append(fieldInfo.className).append(' ').append(fieldInfo.name).append(";\n");
@@ -294,6 +314,12 @@ public class ExpressionCompiler {
 			// Skip stubbing the method if it is the one we're assembling the expression within.
 			MethodType localMethodType = Types.methodType(method.getDescriptor());
 			if (methodName.equals(name) && methodType.equals(localMethodType))
+				continue;
+
+			// Skip enum's 'valueOf'
+			if (AccessFlag.isEnum(classAccess) &&
+					name.equals("valueOf") &&
+					method.getDescriptor().equals("(Ljava/lang/String;)L" + className + ";"))
 				continue;
 
 			// Skip stubbing of methods with bad return types / bad parameter types.
@@ -312,8 +338,6 @@ public class ExpressionCompiler {
 			// Stub the method
 			if (method.hasStaticModifier())
 				code.append("static ");
-			else
-				code.append("abstract ");
 			code.append(returnInfo.className).append(' ').append(returnInfo.name).append('(');
 			List<ClassType> methodParameterTypes = localMethodType.parameterTypes();
 			parameterCount = methodParameterTypes.size();
@@ -323,13 +347,7 @@ public class ExpressionCompiler {
 				code.append(paramInfo.className).append(' ').append(paramInfo.name);
 				if (i < parameterCount - 1) code.append(", ");
 			}
-			code.append(')');
-
-			// Static methods cannot be abstract, so use an exception to stub the body out.
-			if (method.hasStaticModifier())
-				code.append(" { throw new RuntimeException(); }\n");
-			else
-				code.append(";\n");
+			code.append(") { throw new RuntimeException(); }\n");
 		}
 
 		// Done with the class

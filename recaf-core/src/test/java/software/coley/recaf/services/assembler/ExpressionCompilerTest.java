@@ -9,6 +9,7 @@ import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.ClassWithFieldsAndMethods;
+import software.coley.recaf.test.dummy.DummyEnum;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
@@ -23,12 +24,14 @@ class ExpressionCompilerTest extends TestBase {
 	static ExpressionCompiler assembler;
 	static Workspace workspace;
 	static JvmClassInfo targetClass;
+	static JvmClassInfo targetEnum;
 
 	@BeforeAll
 	static void setup() throws IOException {
 		assembler = recaf.get(ExpressionCompiler.class);
 		targetClass = TestClassUtils.fromRuntimeClass(ClassWithFieldsAndMethods.class);
-		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(targetClass));
+		targetEnum = TestClassUtils.fromRuntimeClass(DummyEnum.class);
+		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(targetClass, targetEnum));
 		workspaceManager.setCurrent(workspace);
 	}
 
@@ -38,7 +41,7 @@ class ExpressionCompilerTest extends TestBase {
 	}
 
 	@Test
-	void importSupport() throws Exception {
+	void importSupport() {
 		ExpressionResult result = compile("""
 				import java.util.Random;
 				    
@@ -55,7 +58,7 @@ class ExpressionCompilerTest extends TestBase {
 	}
 
 	@Test
-	void classContext() throws Exception {
+	void classContext() {
 		assembler.setClassContext(targetClass);
 		ExpressionResult result = compile("""
 				int localConst = CONST_INT;
@@ -67,7 +70,19 @@ class ExpressionCompilerTest extends TestBase {
 	}
 
 	@Test
-	void classAndMethodContextForParameters() throws Exception {
+	void enumContext() {
+		assembler.setClassContext(targetEnum);
+		ExpressionResult result = compile("""
+				int i1 = ONE.ordinal();
+				int i2 = TWO.ordinal();
+				int i3 = THREE.ordinal();
+				int add = i1 + i2 + i3;
+				""");
+		assertSuccess(result);
+	}
+
+	@Test
+	void classAndMethodContextForParameters() {
 		assembler.setClassContext(targetClass);
 		assembler.setMethodContext(targetClass.getFirstDeclaredMethodByName("methodWithParameters"));
 		ExpressionResult result = compile("""
@@ -81,7 +96,7 @@ class ExpressionCompilerTest extends TestBase {
 	}
 
 	@Test
-	void classAndMethodContextForLocals() throws Exception {
+	void classAndMethodContextForLocals() {
 		// Tests that local variables are accessible to the expression compiler
 		assembler.setClassContext(targetClass);
 		assembler.setMethodContext(targetClass.getFirstDeclaredMethodByName("methodWithLocalVariables"));
@@ -98,7 +113,7 @@ class ExpressionCompilerTest extends TestBase {
 	}
 
 	@Nonnull
-	private static ExpressionResult compile(@Nonnull String expressionResult) throws ExpressionCompileException {
+	private static ExpressionResult compile(@Nonnull String expressionResult) {
 		ExpressionResult result = assembler.compile(expressionResult);
 		List<CompilerDiagnostic> diagnostics = result.getDiagnostics();
 		diagnostics.forEach(System.out::println);
