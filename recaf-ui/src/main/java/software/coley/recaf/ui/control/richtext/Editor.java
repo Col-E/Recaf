@@ -52,6 +52,7 @@ import java.util.function.Supplier;
 public class Editor extends BorderPane {
 	public static final int SHORTER_DELAY_MS = 25;
 	public static final int SHORT_DELAY_MS = 150;
+	public static final int MEDIUM_DELAY_MS = 400;
 	private final StackPane stackPane = new StackPane();
 	private final CodeArea codeArea = new SafeCodeArea();
 	private final ScrollBar horizontalScrollbar;

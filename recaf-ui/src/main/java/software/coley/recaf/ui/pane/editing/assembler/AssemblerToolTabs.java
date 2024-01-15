@@ -37,15 +37,18 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 		Navigable, UpdatableNavigable, EditorComponent {
 	private final Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider;
 	private final Instance<JvmVariablesPane> jvmVariablesPaneProvider;
+	private final Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider;
 	private final List<Navigable> children = new CopyOnWriteArrayList<>();
 	private final SideTabs tabs = new SideTabs(Orientation.HORIZONTAL);
 	private PathNode<?> path;
 
 	@Inject
 	public AssemblerToolTabs(@Nonnull Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider,
-							 @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider) {
+							 @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider,
+							 @Nonnull Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider) {
 		this.jvmStackAnalysisPaneProvider = jvmStackAnalysisPaneProvider;
 		this.jvmVariablesPaneProvider = jvmVariablesPaneProvider;
+		this.jvmExpressionCompilerPaneProvider = jvmExpressionCompilerPaneProvider;
 
 		// Without an initial size, the first frame of a method has nothing in it. So the auto-size to fit content
 		// has nothing to fit to, which leads to only table headers being visible. Looks really dumb so giving it
@@ -68,12 +71,14 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			// Create contents for JVM classes
 			JvmStackAnalysisPane stackAnalysisPane = jvmStackAnalysisPaneProvider.get();
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
+			JvmExpressionCompilerPane expressionPane = jvmExpressionCompilerPaneProvider.get();
 			ObservableList<Tab> tabs = this.tabs.getTabs();
 			tabs.clear();
 			tabs.add(new BoundTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, stackAnalysisPane));
 			tabs.add(new BoundTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane));
+			tabs.add(new BoundTab(Lang.getBinding("assembler.playground.title"), CarbonIcons.CODE, expressionPane));
 			tabs.forEach(t -> t.setClosable(false));
-			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane));
+			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane));
 		} else if (classInPath.isAndroidClass()) {
 			// Create contents for Android classes
 		}

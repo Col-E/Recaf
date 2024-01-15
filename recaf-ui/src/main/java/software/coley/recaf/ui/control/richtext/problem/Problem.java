@@ -42,7 +42,8 @@ public class Problem implements Comparable<Problem> {
 	 *
 	 * @return Problem from the diagnostic data.
 	 */
-	public static Problem fromDiagnostic(CompilerDiagnostic diagnostic) {
+	@Nonnull
+	public static Problem fromDiagnostic(@Nonnull CompilerDiagnostic diagnostic) {
 		ProblemLevel level = switch (diagnostic.level()) {
 			case WARNING -> ProblemLevel.WARN;
 			case INFO -> ProblemLevel.INFO;
@@ -57,6 +58,7 @@ public class Problem implements Comparable<Problem> {
 	 *
 	 * @return Copy of the current problem, but with the line number modified.
 	 */
+	@Nonnull
 	public Problem withLine(int newLine) {
 		return new Problem(newLine, column, level, phase, message);
 	}
@@ -67,6 +69,7 @@ public class Problem implements Comparable<Problem> {
 	 *
 	 * @return Copy of the current problem, but with the column number modified.
 	 */
+	@Nonnull
 	public Problem withColumn(int newColumn) {
 		return new Problem(line, newColumn, level, phase, message);
 	}
