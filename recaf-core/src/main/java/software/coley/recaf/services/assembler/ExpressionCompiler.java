@@ -93,7 +93,7 @@ public class ExpressionCompiler {
 	public void setClassContext(@Nonnull JvmClassInfo classInfo) {
 		className = classInfo.getName();
 		classAccess = classInfo.getAccess();
-		versionTarget = classInfo.getVersion() - JvmClassInfo.BASE_VERSION;
+		versionTarget = NumberUtil.intClamp(classInfo.getVersion() - JvmClassInfo.BASE_VERSION, JavacCompiler.getMinTargetVersion(), JavaVersion.get());
 		superName = classInfo.getSuperName();
 		implementing = classInfo.getInterfaces();
 		fields = classInfo.getFields();
