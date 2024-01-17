@@ -277,7 +277,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastAssembledClassRepresentation, lastAssembledClass));
 
 			// Refresh the primary assembler display.
-			refreshDisplay();
+			FxThreadUtil.run(this::refreshDisplay);
 		}
 	}
 
