@@ -30,6 +30,10 @@ public abstract class ClassWithFieldsAndMethods implements Supplier<Integer> {
 		return finalInt + 2;
 	}
 
+	private int minusOne() {
+		return finalInt - 1;
+	}
+
 	public static int getConstInt() {
 		return CONST_INT;
 	}

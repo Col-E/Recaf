@@ -247,6 +247,12 @@ public class ExpressionCompiler {
 
 		// Method structure to house the expression
 		int parameterVarIndex = 0;
+		if (AccessFlag.isPublic(methodFlags))
+			code.append("public ");
+		else if (AccessFlag.isProtected(methodFlags))
+			code.append("protected ");
+		else if (AccessFlag.isPrivate(methodFlags))
+			code.append("private ");
 		if (AccessFlag.isStatic(methodFlags))
 			code.append("static ");
 		else
@@ -317,7 +323,10 @@ public class ExpressionCompiler {
 		for (MethodMember method : methods) {
 			// Skip stubbing of illegally named methods.
 			String name = method.getName();
-			if (!isSafeName(name))
+			boolean isCtor = false;
+			if (name.equals("<init>"))
+				isCtor = true;
+			else if (!isSafeName(name))
 				continue;
 
 			// Skip stubbing the method if it is the one we're assembling the expression within.
@@ -345,9 +354,19 @@ public class ExpressionCompiler {
 				continue;
 
 			// Stub the method
+			if (method.hasPublicModifier())
+				code.append("public ");
+			else if (method.hasProtectedModifier())
+				code.append("protected ");
+			else if (method.hasPrivateModifier())
+				code.append("private ");
 			if (method.hasStaticModifier())
 				code.append("static ");
-			code.append(returnInfo.className).append(' ').append(returnInfo.name).append('(');
+
+			if (isCtor)
+				code.append(StringUtil.shortenPath(className)).append('(');
+			else
+				code.append(returnInfo.className).append(' ').append(returnInfo.name).append('(');
 			List<ClassType> methodParameterTypes = localMethodType.parameterTypes();
 			parameterCount = methodParameterTypes.size();
 			for (int i = 0; i < parameterCount; i++) {
@@ -356,7 +375,18 @@ public class ExpressionCompiler {
 				code.append(paramInfo.className).append(' ').append(paramInfo.name);
 				if (i < parameterCount - 1) code.append(", ");
 			}
-			code.append(") { throw new RuntimeException(); }\n");
+			code.append(") { ");
+			if (isCtor) {
+				code.append("super(");
+				for (int i = 0; i < parameterCount; i++) {
+					code.append('p').append(i);
+					if (i < parameterCount - 1) code.append(", ");
+				}
+				code.append(");");
+			} else {
+				code.append("throw new RuntimeException();");
+			}
+			code.append(" }\n");
 		}
 
 		// Done with the class

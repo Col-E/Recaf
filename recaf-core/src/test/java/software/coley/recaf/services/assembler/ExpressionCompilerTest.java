@@ -9,6 +9,7 @@ import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.ClassWithFieldsAndMethods;
+import software.coley.recaf.test.dummy.ClassWithRequiredConstructor;
 import software.coley.recaf.test.dummy.DummyEnum;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -24,14 +25,16 @@ class ExpressionCompilerTest extends TestBase {
 	static ExpressionCompiler assembler;
 	static Workspace workspace;
 	static JvmClassInfo targetClass;
+	static JvmClassInfo targetCtorClass;
 	static JvmClassInfo targetEnum;
 
 	@BeforeAll
 	static void setup() throws IOException {
 		assembler = recaf.get(ExpressionCompiler.class);
 		targetClass = TestClassUtils.fromRuntimeClass(ClassWithFieldsAndMethods.class);
+		targetCtorClass = TestClassUtils.fromRuntimeClass(ClassWithRequiredConstructor.class);
 		targetEnum = TestClassUtils.fromRuntimeClass(DummyEnum.class);
-		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(targetClass, targetEnum));
+		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(targetClass, targetCtorClass, targetEnum));
 		workspaceManager.setCurrent(workspace);
 	}
 
@@ -66,6 +69,13 @@ class ExpressionCompilerTest extends TestBase {
 				int localMethod = plusTwo();
 				int add = localConst + localField + localMethod;
 				""");
+		assertSuccess(result);
+	}
+
+	@Test
+	void classContextWithRequiredCtor() {
+		assembler.setClassContext(targetCtorClass);
+		ExpressionResult result = compile("");
 		assertSuccess(result);
 	}
 
