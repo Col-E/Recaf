@@ -72,13 +72,15 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			JvmStackAnalysisPane stackAnalysisPane = jvmStackAnalysisPaneProvider.get();
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
 			JvmExpressionCompilerPane expressionPane = jvmExpressionCompilerPaneProvider.get();
-			ObservableList<Tab> tabs = this.tabs.getTabs();
-			tabs.clear();
-			tabs.add(new BoundTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, stackAnalysisPane));
-			tabs.add(new BoundTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane));
-			tabs.add(new BoundTab(Lang.getBinding("assembler.playground.title"), CarbonIcons.CODE, expressionPane));
-			tabs.forEach(t -> t.setClosable(false));
 			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane));
+			FxThreadUtil.run(() -> {
+				ObservableList<Tab> tabs = this.tabs.getTabs();
+				tabs.clear();
+				tabs.add(new BoundTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, stackAnalysisPane));
+				tabs.add(new BoundTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane));
+				tabs.add(new BoundTab(Lang.getBinding("assembler.playground.title"), CarbonIcons.CODE, expressionPane));
+				tabs.forEach(t -> t.setClosable(false));
+			});
 		} else if (classInPath.isAndroidClass()) {
 			// Create contents for Android classes
 		}
@@ -90,7 +92,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			if (navigableChild instanceof AssemblerAstConsumer consumer)
 				consumer.consumeAst(astElements, phase);
 
-		FxThreadUtil.run(() -> onUpdatePath(path));
+		onUpdatePath(path);
 	}
 
 	@Override
@@ -100,7 +102,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			if (navigableChild instanceof AssemblerBuildConsumer consumer)
 				consumer.consumeClass(classRepresentation, classInfo);
 
-		FxThreadUtil.run(() -> onUpdatePath(path));
+		onUpdatePath(path);
 	}
 
 	@Override

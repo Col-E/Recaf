@@ -113,6 +113,89 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		});
 	}
 
+	/**
+	 * Called by {@link #lateInitForClass(ClassPathNode)} or {@link #lateInitForMethod(ClassMemberPathNode)}.
+	 * <p/>
+	 * Does late initialization that couldn't be done in the constructor.
+	 */
+	private void lateInit() {
+		// Some tool tabs are not initialized immediately in the constructor, so we do a late installation of them.
+		assemblerToolTabs.install(editor);
+	}
+
+	/**
+	 * Called by {@link #onUpdatePath(PathNode)} once before the {@link #path} is set for the first time.
+	 * <p/>
+	 * Sets up {@link FieldsAndMethodsPane} as a side-tab and sets up notifications for {@link AssemblerToolTabs}
+	 * and its children when the selected {@link ClassMember} in the {@link #lastConcreteAst} changes.
+	 *
+	 * @param classPathNode
+	 * 		The given path.
+	 */
+	private void lateInitForClass(@Nonnull ClassPathNode classPathNode) {
+		// Show declared fields/methods
+		FieldsAndMethodsPane fieldsAndMethodsPane = fieldsAndMethodsPaneProvider.get();
+		fieldsAndMethodsPane.setupSelectionNavigationListener(this);
+		addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
+				new IconView(Icons.getImage(Icons.FIELD_N_METHOD)),
+				fieldsAndMethodsPane
+		));
+		fieldsAndMethodsPane.onUpdatePath(path);
+
+		// Since the content displayed is for a whole class, and the tool tabs are scoped to a method, we need to
+		// update them when a method is selected. We do so by tracking the caret position for being within the
+		// range of one of the methods in the last AST model.
+		editor.getCaretPosEventStream().addObserver(e -> {
+			if (lastConcreteAst == null)
+				return;
+			ClassInfo declaringClass = classPathNode.getValue();
+			int caret = editor.getCodeArea().getCaretPosition();
+			for (ASTElement root : lastConcreteAst) {
+				if (root instanceof ASTClass astClass) {
+					for (ASTElement child : astClass.children()) {
+						ClassMember classMember;
+						if (child instanceof ASTMethod astMethod && astMethod.range().within(caret)) {
+							String name = astMethod.getName().literal();
+							String desc = astMethod.getDescriptor().literal();
+							classMember = declaringClass.getDeclaredMethod(name, desc);
+						} else if (child instanceof ASTField astField && astField.range().within(caret)) {
+							String name = astField.getName().literal();
+							String desc = astField.getDescriptor().literal();
+							classMember = declaringClass.getDeclaredField(name, desc);
+						} else {
+							continue;
+						}
+
+						if (classMember != null) {
+							ClassMemberPathNode memberPath = classPathNode.child(classMember);
+							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
+						} else {
+							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));
+						}
+						eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastAssembledClassRepresentation, lastAssembledClass));
+						return;
+					}
+				}
+			}
+		});
+
+		// Common init
+		assemblerToolTabs.onUpdatePath(classPathNode);
+		lateInit();
+	}
+
+	/**
+	 * Called by {@link #onUpdatePath(PathNode)} once before the {@link #path} is set for the first time.
+	 *
+	 * @param memberPathNode
+	 * 		The given path.
+	 */
+	private void lateInitForMethod(@Nonnull ClassMemberPathNode memberPathNode) {
+		// Common init
+		assemblerToolTabs.onUpdatePath(memberPathNode);
+		lateInit();
+	}
+
 	@Override
 	protected void generateDisplay() {
 		if (!hasDisplay()) {
@@ -121,7 +204,9 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 			// Trigger a disassembly so the initial text is set in the editor.
 			disassemble().whenComplete((unused, error) -> {
-				if (error == null) assemble();
+				editor.getCodeArea().getUndoManager().forgetHistory();
+				if (error == null && unused.isOk())
+					assemble();
 			});
 		}
 	}
@@ -169,71 +254,29 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	@Override
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
-		// When we initially set a path, if it's for a class:
-		//  - install the fields/methods navigation side-tab
-		//  - setup handling for what we currently have selected
-		if (this.path == null && path instanceof ClassPathNode classPathNode) {
-			// Show declared fields/methods
-			FieldsAndMethodsPane fieldsAndMethodsPane = fieldsAndMethodsPaneProvider.get();
-			fieldsAndMethodsPane.setupSelectionNavigationListener(this);
-			addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
-					new IconView(Icons.getImage(Icons.FIELD_N_METHOD)),
-					fieldsAndMethodsPane
-			));
-			fieldsAndMethodsPane.onUpdatePath(path);
+		// If we've not seen a path before, do late initialization for UI elements
+		// that require path information.
+		if (this.path == null)
+			if (path instanceof ClassPathNode classPathNode)
+				lateInitForClass(classPathNode);
+			else if (path instanceof ClassMemberPathNode memberPathNode)
+				lateInitForMethod(memberPathNode);
 
-			// When the caret position updates, notify the tool tabs of the newly selected member.
-			editor.getCaretPosEventStream().addObserver(e -> {
-				if (lastConcreteAst == null)
-					return;
-				ClassInfo declaringClass = classPathNode.getValue();
-				int caret = editor.getCodeArea().getCaretPosition();
-				for (ASTElement root : lastConcreteAst) {
-					if (root instanceof ASTClass astClass) {
-						for (ASTElement child : astClass.children()) {
-							ClassMember classMember;
-							if (child instanceof ASTMethod astMethod && astMethod.range().within(caret)) {
-								String name = astMethod.getName().literal();
-								String desc = astMethod.getDescriptor().literal();
-								classMember = declaringClass.getDeclaredMethod(name, desc);
-							} else if (child instanceof ASTField astField && astField.range().within(caret)) {
-								String name = astField.getName().literal();
-								String desc = astField.getDescriptor().literal();
-								classMember = declaringClass.getDeclaredField(name, desc);
-							} else {
-								continue;
-							}
-
-							if (classMember != null) {
-								ClassMemberPathNode memberPath = classPathNode.child(classMember);
-								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
-							} else {
-								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));
-							}
-							eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastAssembledClassRepresentation, lastAssembledClass));
-							return;
-						}
-					}
-				}
-			});
-		}
-
+		// Update the path and call any path listeners.
 		this.path = path;
 		pathUpdateListeners.forEach(listener -> listener.accept(path));
 
-		// Update UI state
+		// Update UI state.
 		if (!updateLock.get()) {
 			pipeline = pipelineManager.getPipeline(path);
 
-			// Setup from existing class data from the path
+			// Setup from existing class data from the path.
 			lastAssembledClass = path.getValueOfType(ClassInfo.class);
 			lastAssembledClassRepresentation = pipeline.getRepresentation(Unchecked.cast(lastAssembledClass));
 			eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));
 			eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastAssembledClassRepresentation, lastAssembledClass));
 
-			// Some sub-components in the tabs are not initialized immediately, so we install the component here.
-			assemblerToolTabs.install(editor);
-
+			// Refresh the primary assembler display.
 			refreshDisplay();
 		}
 	}
@@ -329,18 +372,20 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 						lastAssembledClass = pipeline.getClassInfo(Unchecked.cast(javaClassRep));
 
 						// Update the local path value, this will also inform sub-components of the new content.
-						FxThreadUtil.run(() -> {
-							if (path instanceof ClassPathNode classPath) {
-								ClassPathNode newPath = classPath.getParent().child(lastAssembledClass);
-								onUpdatePath(newPath);
-							} else if (path instanceof ClassMemberPathNode memberPath) {
-								ClassMember oldMember = memberPath.getValue();
-								MethodMember newMember = lastAssembledClass.getDeclaredMethod(oldMember.getName(), oldMember.getDescriptor());
-								ClassMemberPathNode newPath = memberPath.getParent().getParent().child(lastAssembledClass).child(newMember);
-								onUpdatePath(newPath);
-							}
-						});
+						// The update-lock must be set so that we don't trigger a disassembly (which would trigger an endless loop)
+						updateLock.set(true);
+						if (path instanceof ClassPathNode classPath) {
+							ClassPathNode newPath = classPath.getParent().child(lastAssembledClass);
+							onUpdatePath(newPath);
+						} else if (path instanceof ClassMemberPathNode memberPath) {
+							ClassMember oldMember = memberPath.getValue();
+							MethodMember newMember = lastAssembledClass.getDeclaredMethod(oldMember.getName(), oldMember.getDescriptor());
+							ClassMemberPathNode newPath = memberPath.getParent().getParent().child(lastAssembledClass).child(newMember);
+							onUpdatePath(newPath);
+						}
+						updateLock.set(false);
 
+						// Check for post-build analysis failures.
 						for (var methodEntry : javaClassRep.analysisLookup().allResults().entrySet()) {
 							String methodName = methodEntry.getKey().name();
 							AnalysisException failure = methodEntry.getValue().getAnalysisFailure();

@@ -41,6 +41,7 @@ import software.coley.recaf.ui.control.BoundToggleIcon;
 import software.coley.recaf.ui.control.tree.TreeFiltering;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.Translatable;
@@ -287,7 +288,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 				ClassMemberPathNode memberNode = classPath.child(method);
 				root.addAndSortChild(new WorkspaceTreeNode(memberNode));
 			}
-			tree.setRoot(root);
+			FxThreadUtil.run(() -> tree.setRoot(root));
 		}
 	}
 
