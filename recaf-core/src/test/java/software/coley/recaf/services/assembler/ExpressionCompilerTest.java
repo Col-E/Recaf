@@ -106,6 +106,24 @@ class ExpressionCompilerTest extends TestBase {
 		assertSuccess(result);
 	}
 
+	@Test
+	void classAndMethodContextForConstructor() {
+		// Tests that the assembler works for constructor method contexts
+		assembler.setClassContext(targetClass);
+		assembler.setMethodContext(targetClass.getFirstDeclaredMethodByName("<init>"));
+		ExpressionResult result = compile("");
+		assertSuccess(result);
+	}
+
+	@Test
+	void classAndMethodContextForStaticInitializer() {
+		// Tests that the assembler works for static initializer method contexts
+		assembler.setClassContext(targetEnum);
+		assembler.setMethodContext(targetEnum.getFirstDeclaredMethodByName("<clinit>"));
+		ExpressionResult result = compile("");
+		assertSuccess(result);
+	}
+
 	private static void assertSuccess(@Nonnull ExpressionResult result) {
 		assertNull(result.getException(), "Exception thrown when compiling: " + result.getException());
 		assertTrue(result.getDiagnostics().isEmpty(), "There were " + result.getDiagnostics().size() + " compiler messages");

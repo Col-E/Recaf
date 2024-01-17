@@ -118,7 +118,16 @@ public class ExpressionCompiler {
 	 * 		Method to pull info from.
 	 */
 	public void setMethodContext(@Nonnull MethodMember method) {
-		methodName = method.getName();
+		// Map edge cases for disallowed names.
+		String name = method.getName();
+		if (name.equals("<init>"))
+			name = "instance_ctor";
+		else if (name.equals("<clinit>"))
+			name = "static_ctor";
+		else if (!isSafeName(name))
+			name = "obfuscated_method";
+
+		methodName = name;
 		methodType = Types.methodType(method.getDescriptor());
 		methodFlags = method.getAccess();
 		methodVariables = method.getLocalVariables();
