@@ -3,6 +3,8 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.ClassResult;
+import me.darknet.assembler.compiler.Compiler;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.parser.DeclarationParser;
@@ -23,11 +25,13 @@ import java.util.List;
  * @param <C>
  * 		Class type which will be assembled.
  * @param <R>
+ * 		Compile return value for JASM {@link Compiler}.
+ * @param <I>
  * 		Class intermediate representation type.
  *
  * @author Justus Garbe
  */
-public interface AssemblerPipeline<C extends ClassInfo, R extends ClassRepresentation> {
+public interface AssemblerPipeline<C extends ClassInfo, R extends ClassResult, I extends ClassRepresentation> {
 	/**
 	 * @param input
 	 * 		The text to tokenize.
@@ -123,7 +127,7 @@ public interface AssemblerPipeline<C extends ClassInfo, R extends ClassRepresent
 	@Nonnull
 	default Result<C> assembleAndWrap(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
 		return assemble(elements, path)
-				.flatMap(r -> Result.ok(getClassInfo(r)));
+				.flatMap(r -> Result.ok(getClassInfo((I) r.representation())));
 	}
 
 	/**
@@ -181,7 +185,7 @@ public interface AssemblerPipeline<C extends ClassInfo, R extends ClassRepresent
 	 * @return IR.
 	 */
 	@Nonnull
-	R getRepresentation(@Nonnull C info);
+	I getRepresentation(@Nonnull C info);
 
 	/**
 	 * @param representation
@@ -190,7 +194,7 @@ public interface AssemblerPipeline<C extends ClassInfo, R extends ClassRepresent
 	 * @return Class info.
 	 */
 	@Nonnull
-	C getClassInfo(@Nonnull R representation);
+	C getClassInfo(@Nonnull I representation);
 
 	/**
 	 * @return Pipeline's specific config.

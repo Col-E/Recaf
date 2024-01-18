@@ -3,10 +3,8 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.ElementType;
-import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.*;
 import me.darknet.assembler.compiler.Compiler;
-import me.darknet.assembler.compiler.CompilerOptions;
-import me.darknet.assembler.compiler.InheritanceChecker;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.printer.*;
@@ -27,11 +25,13 @@ import java.util.List;
  * @param <C>
  * 		Class type which will be assembled.
  * @param <R>
+ * 		Compile return value for JASM {@link Compiler}.
+ * @param <I>
  * 		Class intermediate representation type.
  *
  * @author Justus Garbe
  */
-public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassRepresentation> implements AssemblerPipeline<C, R> {
+public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassResult, I extends ClassRepresentation> implements AssemblerPipeline<C, R, I> {
 	protected final PrintContext<?> context;
 	protected final AssemblerPipelineConfig pipelineConfig;
 

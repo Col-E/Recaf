@@ -9,6 +9,7 @@ import me.darknet.assembler.compile.JvmCompiler;
 import me.darknet.assembler.compile.JvmCompilerOptions;
 import me.darknet.assembler.compile.analysis.EmptyMethodAnalysisLookup;
 import me.darknet.assembler.compile.analysis.jvm.ValuedJvmAnalysisEngine;
+import me.darknet.assembler.compile.visitor.JavaCompileResult;
 import me.darknet.assembler.compiler.Compiler;
 import me.darknet.assembler.compiler.CompilerOptions;
 import me.darknet.assembler.compiler.InheritanceChecker;
@@ -38,7 +39,7 @@ import java.util.List;
  * @author Justus Garbe
  */
 @WorkspaceScoped
-public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo, JavaClassRepresentation> {
+public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo, JavaCompileResult, JavaClassRepresentation> {
 	public static final String SERVICE_ID = "jvm-assembler";
 
 	private final ASTProcessor processor = new ASTProcessor(BytecodeFormat.JVM);
@@ -60,7 +61,7 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 
 	@Nonnull
 	@Override
-	public Result<JavaClassRepresentation> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
+	public Result<JavaCompileResult> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
 		return compile(elements, path);
 	}
 
@@ -85,7 +86,7 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	@Nonnull
 	@Override
 	public JavaClassRepresentation getRepresentation(@Nonnull JvmClassInfo info) {
-		return new JavaClassRepresentation(info.getBytecode(), EmptyMethodAnalysisLookup.instance());
+		return new JavaClassRepresentation(info.getBytecode());
 	}
 
 	@Nonnull

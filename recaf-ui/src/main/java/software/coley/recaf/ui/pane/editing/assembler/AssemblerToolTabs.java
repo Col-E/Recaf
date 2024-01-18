@@ -9,6 +9,7 @@ import javafx.geometry.Orientation;
 import javafx.scene.control.Tab;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.ClassResult;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
@@ -96,11 +97,11 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	}
 
 	@Override
-	public void consumeClass(@Nonnull ClassRepresentation classRepresentation,
+	public void consumeClass(@Nonnull ClassResult result,
 							 @Nonnull ClassInfo classInfo) {
 		for (Navigable navigableChild : getNavigableChildren())
 			if (navigableChild instanceof AssemblerBuildConsumer consumer)
-				consumer.consumeClass(classRepresentation, classInfo);
+				consumer.consumeClass(result, classInfo);
 
 		onUpdatePath(path);
 	}

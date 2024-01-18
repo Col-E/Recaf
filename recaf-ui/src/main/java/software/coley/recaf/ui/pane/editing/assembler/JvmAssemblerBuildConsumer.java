@@ -2,7 +2,9 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.compile.JavaClassRepresentation;
+import me.darknet.assembler.compile.visitor.JavaCompileResult;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.ClassResult;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.assembler.AssemblerPipeline;
@@ -14,18 +16,18 @@ import software.coley.recaf.services.assembler.AssemblerPipeline;
  */
 public interface JvmAssemblerBuildConsumer extends AssemblerBuildConsumer {
 	@Override
-	default void consumeClass(@Nonnull ClassRepresentation classRepresentation, @Nonnull ClassInfo classInfo) {
-		if (classRepresentation instanceof JavaClassRepresentation jcr && classInfo.isJvmClass())
+	default void consumeClass(@Nonnull ClassResult result, @Nonnull ClassInfo classInfo) {
+		if (result instanceof JavaCompileResult jcr && classInfo.isJvmClass())
 			onClassAssembled(jcr, classInfo.asJvmClass());
 	}
 
 	/**
 	 * Called when {@link AssemblerPane} builds a JVM class.
 	 *
-	 * @param classRepresentation
-	 * 		Assembler JVM output representation model.
+	 * @param result
+	 * 		Assembler JVM output model.
 	 * @param classInfo
 	 * 		Recaf JVM class model.
 	 */
-	void onClassAssembled(@Nonnull JavaClassRepresentation classRepresentation, @Nonnull JvmClassInfo classInfo);
+	void onClassAssembled(@Nonnull JavaCompileResult result, @Nonnull JvmClassInfo classInfo);
 }

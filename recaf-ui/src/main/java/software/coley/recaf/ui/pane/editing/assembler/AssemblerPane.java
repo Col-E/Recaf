@@ -9,8 +9,8 @@ import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTField;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.compile.JavaClassRepresentation;
-import me.darknet.assembler.compile.analysis.AnalysisException;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.ClassResult;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.parser.Token;
@@ -67,7 +67,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	private final Editor editor = new Editor();
 	private final AtomicBoolean updateLock = new AtomicBoolean();
 	private final Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider;
-	private AssemblerPipeline<? extends ClassInfo, ? extends ClassRepresentation> pipeline;
+	private AssemblerPipeline<? extends ClassInfo, ? extends ClassResult, ? extends ClassRepresentation> pipeline;
+	private ClassResult lastResult;
 	private ClassRepresentation lastAssembledClassRepresentation;
 	private ClassInfo lastAssembledClass;
 	private List<Token> lastTokens;
@@ -172,7 +173,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 						} else {
 							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));
 						}
-						eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastAssembledClassRepresentation, lastAssembledClass));
+						eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
 						return;
 					}
 				}
@@ -273,8 +274,9 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			// Setup from existing class data from the path.
 			lastAssembledClass = path.getValueOfType(ClassInfo.class);
 			lastAssembledClassRepresentation = pipeline.getRepresentation(Unchecked.cast(lastAssembledClass));
+			lastResult = () -> lastAssembledClassRepresentation;
 			eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));
-			eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastAssembledClassRepresentation, lastAssembledClass));
+			eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
 
 			// Refresh the primary assembler display.
 			FxThreadUtil.run(this::refreshDisplay);
@@ -365,7 +367,10 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			problemTracking.removeByPhase(ProblemPhase.BUILD);
 
 			try {
-				pipeline.assemble(lastConcreteAst, path).ifOk(representation -> {
+				pipeline.assemble(lastConcreteAst, path).ifOk(result -> {
+					ClassRepresentation representation = result.representation();
+
+					lastResult = result;
 					lastAssembledClassRepresentation = representation;
 
 					if (representation instanceof JavaClassRepresentation javaClassRep) {
@@ -384,16 +389,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							onUpdatePath(newPath);
 						}
 						updateLock.set(false);
-
-						// Check for post-build analysis failures.
-						for (var methodEntry : javaClassRep.analysisLookup().allResults().entrySet()) {
-							String methodName = methodEntry.getKey().name();
-							AnalysisException failure = methodEntry.getValue().getAnalysisFailure();
-							if (failure != null) {
-								FxThreadUtil.run(() -> Animations.animateWarn(this, 1000));
-								logger.warn("Method analysis on '{}' found potential problem: {}", methodName, failure.getMessage(), failure);
-							}
-						}
 					}
 					/*
 					else if (representation instanceof AndroidClassRepresentation androidClassRep) {
@@ -401,7 +396,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					}
 					 */
 
-					eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(representation, lastAssembledClass));
+					eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(result, lastAssembledClass));
 				}).ifErr(errors -> processErrors(errors, ProblemPhase.BUILD));
 			} catch (Throwable ex) {
 				logger.error("Uncaught exception when assembling contents of {}", path, ex);
