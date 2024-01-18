@@ -1,6 +1,7 @@
 package software.coley.recaf.info.builder;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.*;
 import software.coley.recaf.info.BasicInnerClassInfo;
 import software.coley.recaf.info.BasicJvmClassInfo;
@@ -24,6 +25,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	private byte[] bytecode;
 	private int version = JvmClassInfo.BASE_VERSION + 8; // Java 8
 	private boolean skipASMValidation;
+	@Nullable
 	private ClassBuilderAppender classVisitor;
 
 	/**
@@ -137,7 +139,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			throw new IllegalStateException("Bytecode required");
 		if (version < JvmClassInfo.BASE_VERSION)
 			throw new IllegalStateException("Version cannot be lower than 44 (v1)");
-		if (!this.skipASMValidation && classVisitor.hasCustomAttributes()) {
+		if (!this.skipASMValidation && classVisitor != null && classVisitor.hasCustomAttributes()) {
 			throw new IllegalStateException("Unknown attributes found in class: " + this.getName() + "[" +
 				String.join(", ", classVisitor.getCustomAttributeNames()) + "]");
 		}
