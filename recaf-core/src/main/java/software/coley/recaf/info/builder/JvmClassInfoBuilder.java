@@ -8,6 +8,7 @@ import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.*;
 import software.coley.recaf.info.member.*;
+import software.coley.recaf.util.MultiMap;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -22,6 +23,8 @@ import static software.coley.recaf.RecafConstants.getAsmVersion;
 public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBuilder> {
 	private byte[] bytecode;
 	private int version = JvmClassInfo.BASE_VERSION + 8; // Java 8
+	private boolean skipASMValidation;
+	private ClassBuilderAppender classVisitor;
 
 	/**
 	 * Create empty builder.
@@ -85,11 +88,13 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	 * 		Reader flags to use when populating information.
 	 *
 	 * @return Builder.
+	 * @throws IllegalStateException if using asm validation and the class has custom attributes
 	 */
 	@Nonnull
 	@SuppressWarnings(value = "deprecation")
 	public JvmClassInfoBuilder adaptFrom(@Nonnull ClassReader reader, int flags) {
-		reader.accept(new ClassBuilderAppender(), flags);
+		this.classVisitor = new ClassBuilderAppender();
+		reader.accept(classVisitor, flags);
 		return withBytecode(reader.b);
 	}
 
@@ -102,6 +107,12 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	@Nonnull
 	public JvmClassInfoBuilder withVersion(int version) {
 		this.version = version;
+		return this;
+	}
+
+	@Nonnull
+	public JvmClassInfoBuilder skipASMValidation(boolean skipASMValidation) {
+		this.skipASMValidation = skipASMValidation;
 		return this;
 	}
 
@@ -126,6 +137,10 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			throw new IllegalStateException("Bytecode required");
 		if (version < JvmClassInfo.BASE_VERSION)
 			throw new IllegalStateException("Version cannot be lower than 44 (v1)");
+		if (!this.skipASMValidation && classVisitor.hasCustomAttributes()) {
+			throw new IllegalStateException("Unknown attributes found in class: " + this.getName() + "[" +
+				String.join(", ", classVisitor.getCustomAttributeNames()) + "]");
+		}
 	}
 
 	private class ClassBuilderAppender extends ClassVisitor {
@@ -134,9 +149,20 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		private final List<InnerClassInfo> innerClasses = new ArrayList<>();
 		private final List<FieldMember> fields = new ArrayList<>();
 		private final List<MethodMember> methods = new ArrayList<>();
+		/**
+		 * Collects custom attributes in a class.
+		 */
+		private final List<Attribute> classCustomAttributes = new ArrayList<>();
+		private final MultiMap<String, Attribute, List<Attribute>> fieldCustomAttributes;
+		private final MultiMap<String, Attribute, List<Attribute>> methodCustomAttributes;
+
 
 		protected ClassBuilderAppender() {
 			super(getAsmVersion());
+			fieldCustomAttributes
+				= MultiMap.from(new HashMap<>(), ArrayList::new);
+			methodCustomAttributes
+				= MultiMap.from(new HashMap<>(), ArrayList::new);
 		}
 
 		@Override
@@ -201,8 +227,21 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		}
 
 		@Override
+		public void visitAttribute(Attribute attribute) {
+			classCustomAttributes.add(attribute);
+			super.visitAttribute(attribute);
+		}
+
+		@Override
 		public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
 			return new FieldBuilderAppender(access, name, descriptor, signature, value) {
+
+				@Override
+				public void visitAttribute(Attribute attribute) {
+					fieldCustomAttributes.get(name).add(attribute);
+					super.visitAttribute(attribute);
+				}
+
 				@Override
 				public void visitEnd() {
 					fields.add(getFieldMember());
@@ -213,6 +252,13 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		@Override
 		public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 			return new MethodBuilderAppender(access, name, descriptor, signature, exceptions) {
+
+				@Override
+				public void visitAttribute(Attribute attribute) {
+					methodCustomAttributes.get(name).add(attribute);
+					super.visitAttribute(attribute);
+				}
+
 				@Override
 				public void visitEnd() {
 					methods.add(getMethodMember());
@@ -231,6 +277,32 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			withInnerClasses(innerClasses);
 			withAnnotations(annotations);
 			withTypeAnnotations(typeAnnotations);
+		}
+
+		/**
+		 * @return {@code true} when any custom attributes were found.
+		 */
+		public boolean hasCustomAttributes() {
+			return !classCustomAttributes.isEmpty() ||
+				!fieldCustomAttributes.isEmpty() ||
+				!methodCustomAttributes.isEmpty();
+		}
+
+		/**
+		 * @return Unique names of attributes found.
+		 */
+		public Collection<String> getCustomAttributeNames() {
+			Set<String> names = new TreeSet<>();
+			classCustomAttributes.stream()
+				.map(a -> a.type)
+				.forEach(names::add);
+			fieldCustomAttributes.values()
+				.map(a -> a.type)
+				.forEach(names::add);
+			methodCustomAttributes.values()
+				.map(a -> a.type)
+				.forEach(names::add);
+			return names;
 		}
 	}
 

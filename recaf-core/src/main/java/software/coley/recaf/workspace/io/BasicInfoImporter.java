@@ -15,7 +15,6 @@ import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
 import software.coley.recaf.util.io.ByteSource;
-import software.coley.recaf.util.visitors.CustomAttributeCollectingVisitor;
 
 import java.io.IOException;
 
@@ -44,26 +43,26 @@ public class BasicInfoImporter implements InfoImporter {
 		// Check for Java classes
 		if (matchesClass(data)) {
 			try {
-				// Patch if not compatible with ASM
-				if (!isAsmCompliantClass(data)) {
+				try {
+					return new JvmClassInfoBuilder(data)
+						.skipASMValidation(config.doSkipAsmValidation())
+						.build();
+				} catch (Throwable t) {
+					// Patch if not compatible with ASM
 					byte[] patched = classPatcher.patch(name, data);
-
-					// Ensure the patch was successful
-					if (!isAsmCompliantClass(patched)) {
+					logger.debug("CafeDude patched class: {}", name);
+					try {
+						return new JvmClassInfoBuilder(patched)
+							.skipASMValidation(config.doSkipAsmValidation())
+							.build();
+					} catch (Throwable t1) {
 						logger.error("CafeDude patching output is still non-compliant with ASM for file: {}", name);
 						return new FileInfoBuilder<>()
-								.withRawContent(data)
-								.withName(name)
-								.build();
-					} else {
-						logger.debug("CafeDude patched class: {}", name);
-						return new JvmClassInfoBuilder(patched)
-								.build();
+							.withRawContent(data)
+							.withName(name)
+							.build();
 					}
 				}
-
-				// Yield class
-				return new JvmClassInfoBuilder(data).build();
 			} catch (Throwable t) {
 				// Invalid class, either some new edge case we need to add to CafeDude, or the file
 				// isn't a class, but the structure models it close enough to look like one at a glance.
@@ -179,34 +178,6 @@ public class BasicInfoImporter implements InfoImporter {
 		//  - class - wrapper of prior`
 		int cpSize = ((content[8] & 0xFF) << 8) + (content[9] & 0xFF);
 		return cpSize >= 4;
-	}
-
-	/**
-	 * Check if the class can be parsed by ASM.
-	 *
-	 * @param content
-	 * 		The class file content.
-	 *
-	 * @return {@code true} if ASM can parse the class.
-	 */
-	private boolean isAsmCompliantClass(byte[] content) {
-		// Skip validation if configured.
-		if (config.doSkipAsmValidation())
-			return true;
-
-		// ASM should be able to write back the read class.
-		try {
-			CustomAttributeCollectingVisitor visitor = new CustomAttributeCollectingVisitor(new ClassWriter(0));
-			ClassReader reader = new ClassReader(content);
-			reader.accept(visitor, 0);
-			if (visitor.hasCustomAttributes()) {
-				throw new IllegalStateException("Unknown attributes found in class: " + reader.getClassName() + "[" +
-						String.join(", ", visitor.getCustomAttributeNames()) + "]");
-			}
-			return true;
-		} catch (Throwable t) {
-			return false;
-		}
 	}
 
 	@Nonnull
