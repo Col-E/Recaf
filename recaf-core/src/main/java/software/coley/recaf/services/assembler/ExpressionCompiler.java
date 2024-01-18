@@ -1,12 +1,12 @@
 package software.coley.recaf.services.assembler;
 
-import dev.xdark.blw.type.*;
 import dev.xdark.blw.type.Types;
+import dev.xdark.blw.type.*;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import me.darknet.assembler.printer.JvmClassPrinter;
-import me.darknet.assembler.printer.MethodPrinter;
+import me.darknet.assembler.printer.JvmMethodPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import org.objectweb.asm.Opcodes;
 import regexodus.Matcher;
@@ -16,6 +16,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.compile.CompilerResult;
 import software.coley.recaf.services.compile.JavacArguments;
@@ -25,10 +26,7 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -173,9 +171,10 @@ public class ExpressionCompiler {
 		try {
 			PrintContext<?> context = new PrintContext<>(assemblerConfig.getDisassemblyIndent().getValue());
 			JvmClassPrinter printer = new JvmClassPrinter(new ByteArrayInputStream(klass));
-			MethodPrinter method = printer.method(methodName, methodDescriptorWithVariables());
+			JvmMethodPrinter method = (JvmMethodPrinter) printer.method(methodName, methodDescriptorWithVariables());
 			if (method == null)
 				return new ExpressionResult(new ExpressionCompileException("Target method was not in generated class"));
+			method.setLabelPrefix("g");
 			method.print(context);
 			return new ExpressionResult(context.toString());
 		} catch (IOException ex) {
@@ -221,7 +220,8 @@ public class ExpressionCompiler {
 		expression = expressionBuffer.toString();
 
 		// Class structure
-		code.append(AccessFlag.isEnum(classAccess) ? "enum " : "abstract class ").append(StringUtil.shortenPath(className));
+		boolean isEnum = AccessFlag.isEnum(classAccess);
+		code.append(isEnum ? "enum " : "abstract class ").append(StringUtil.shortenPath(className));
 		if (superName != null && !superName.equals("java/lang/Object") && !superName.equals("java/lang/Enum"))
 			code.append(" extends ").append(superName.replace('/', '.'));
 		if (implementing != null && !implementing.isEmpty())
@@ -229,7 +229,7 @@ public class ExpressionCompiler {
 		code.append("{\n");
 
 		// Enum constants must come first if the class is an enum
-		if (AccessFlag.isEnum(classAccess)) {
+		if (isEnum) {
 			int enumConsts = 0;
 			for (FieldMember field : fields) {
 				if (field.getDescriptor().length() == 1)
@@ -324,20 +324,23 @@ public class ExpressionCompiler {
 			// Skip stubbing of illegally named methods.
 			String name = method.getName();
 			boolean isCtor = false;
-			if (name.equals("<init>"))
+			if (name.equals("<init>")) {
+				if (isEnum) // Skip constructors for enum classes since we always drop enum const parameters.
+					continue;
 				isCtor = true;
-			else if (!isSafeName(name))
+			} else if (!isSafeName(name))
 				continue;
 
 			// Skip stubbing the method if it is the one we're assembling the expression within.
-			MethodType localMethodType = Types.methodType(method.getDescriptor());
+			String descriptor = method.getDescriptor();
+			MethodType localMethodType = Types.methodType(descriptor);
 			if (methodName.equals(name) && methodType.equals(localMethodType))
 				continue;
 
 			// Skip enum's 'valueOf'
-			if (AccessFlag.isEnum(classAccess) &&
+			if (isEnum &&
 					name.equals("valueOf") &&
-					method.getDescriptor().equals("(Ljava/lang/String;)L" + className + ";"))
+					descriptor.equals("(Ljava/lang/String;)L" + className + ";"))
 				continue;
 
 			// Skip stubbing of methods with bad return types / bad parameter types.
@@ -377,12 +380,38 @@ public class ExpressionCompiler {
 			}
 			code.append(") { ");
 			if (isCtor) {
-				code.append("super(");
-				for (int i = 0; i < parameterCount; i++) {
-					code.append('p').append(i);
-					if (i < parameterCount - 1) code.append(", ");
+				// If we know the parent type, we need to properly implement the constructor.
+				// If we don't know the parent type, we cannot generate a valid constructor.
+				ClassPathNode superPath = superName == null ? null : workspace.findJvmClass(superName);
+				if (superPath == null && superName != null)
+					throw new ExpressionCompileException("Cannot generate 'super(...)' for constructor, " +
+							"missing type information for: " + superName);
+				if (superPath != null) {
+					// To make it easy, we'll find the simplest constructor in the parent class and pass dummy values.
+					MethodType parentConstructor = superPath.getValue().methodStream()
+							.filter(m -> m.getName().equals("<init>"))
+							.map(m -> Types.methodType(m.getDescriptor()))
+							.min(Comparator.comparingInt(a -> a.parameterTypes().size()))
+							.orElse(null);
+					if (parentConstructor != null) {
+						code.append("super(");
+						parameterCount = parentConstructor.parameterTypes().size();
+						for (int i = 0; i < parameterCount; i++) {
+							ClassType type = parentConstructor.parameterTypes().get(i);
+							if (type instanceof ObjectType) {
+								code.append("null");
+							} else {
+								char prim = type.descriptor().charAt(0);
+								if (prim == 'Z')
+									code.append("false");
+								else
+									code.append('0');
+							}
+							if (i < parameterCount - 1) code.append(", ");
+						}
+						code.append(");");
+					}
 				}
-				code.append(");");
 			} else {
 				code.append("throw new RuntimeException();");
 			}
