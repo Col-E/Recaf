@@ -24,9 +24,9 @@ import static software.coley.recaf.RecafConstants.getAsmVersion;
 public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBuilder> {
 	private byte[] bytecode;
 	private int version = JvmClassInfo.BASE_VERSION + 8; // Java 8
-	private boolean skipCustomAttributeChecks = true;
+	private boolean skipValidationChecks = true;
 	@Nullable
-	private ClassBuilderAppender classVisitor;
+	private ClassBuilderAdapter adapter;
 
 	/**
 	 * Create empty builder.
@@ -70,6 +70,18 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	/**
 	 * Copies over values by reading the contents of the class file in the reader.
 	 * Calls {@link #adaptFrom(ClassReader, int)} with {@code flags=0}.
+	 * <p/>
+	 * <b>IMPORTANT:</b> If {@link #skipValidationChecks(boolean)} is {@code false} and validation checks are active
+	 * extra steps are taken to ensure the class is fully ASM compliant. You will want to wrap this call in a try-catch
+	 * block handling {@link Throwable} to cover any potential ASM failure.
+	 * <br>
+	 * Validation is disabled by default.
+	 * <br>
+	 * If you wish to validate the input, you must use the one of the given constructors:
+	 * <ul>
+	 *     <li>{@link #JvmClassInfoBuilder()}</li>
+	 *     <li>{@link #JvmClassInfoBuilder(JvmClassInfo)}</li>
+	 * </ul>
 	 *
 	 * @param reader
 	 * 		ASM class reader to pull data from.
@@ -83,6 +95,18 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 	/**
 	 * Copies over values by reading the contents of the class file in the reader.
+	 * <p/>
+	 * <b>IMPORTANT:</b> If {@link #skipValidationChecks(boolean)} is {@code false} and validation checks are active
+	 * extra steps are taken to ensure the class is fully ASM compliant. You will want to wrap this call in a try-catch
+	 * block handling {@link Throwable} to cover any potential ASM failure.
+	 * <br>
+	 * Validation is disabled by default.
+	 * <br>
+	 * If you wish to validate the input, you must use the one of the given constructors:
+	 * <ul>
+	 *     <li>{@link #JvmClassInfoBuilder()}</li>
+	 *     <li>{@link #JvmClassInfoBuilder(JvmClassInfo)}</li>
+	 * </ul>
 	 *
 	 * @param reader
 	 * 		ASM class reader to pull data from.
@@ -94,8 +118,11 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	@Nonnull
 	@SuppressWarnings(value = "deprecation")
 	public JvmClassInfoBuilder adaptFrom(@Nonnull ClassReader reader, int flags) {
-		this.classVisitor = new ClassBuilderAppender();
-		reader.accept(classVisitor, flags);
+		// If we are doing validation checks, delegating the reader to a writer should catch most issues
+		// that would normally crash ASM. It is the caller's responsibility to error handle ASM failing
+		// if such failures occur.
+		adapter = new ClassBuilderAdapter(skipValidationChecks ? null : new ClassWriter(reader, 0));
+		reader.accept(adapter, flags);
 		return withBytecode(reader.b);
 	}
 
@@ -112,14 +139,17 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	}
 
 	/**
-	 * The default value is true. When {@code verify} is run it will check if there are any custom attributes.
+	 * The default value is {@code true}. Setting to {@code false} enables class validation steps.
+	 * When {@link #verify()} is run it will check if there are any custom attributes.
 	 *
-	 * @param skipCustomAttributeChecks {@code false} if we want to verify the classes custom attribute
+	 * @param skipValidationChecks
+	 *        {@code false} if we want to verify the classes custom attribute
+	 *
 	 * @return {@code JvmClassInfoBuilder}
 	 */
 	@Nonnull
-	public JvmClassInfoBuilder skipCustomAttributeChecks(boolean skipCustomAttributeChecks) {
-		this.skipCustomAttributeChecks = skipCustomAttributeChecks;
+	public JvmClassInfoBuilder skipValidationChecks(boolean skipValidationChecks) {
+		this.skipValidationChecks = skipValidationChecks;
 		return this;
 	}
 
@@ -144,32 +174,33 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			throw new IllegalStateException("Bytecode required");
 		if (version < JvmClassInfo.BASE_VERSION)
 			throw new IllegalStateException("Version cannot be lower than 44 (v1)");
-		if (!this.skipCustomAttributeChecks && classVisitor != null && classVisitor.hasCustomAttributes()) {
+		if (!skipValidationChecks && adapter != null && adapter.hasCustomAttributes()) {
 			throw new IllegalStateException("Unknown attributes found in class: " + this.getName() + "[" +
-				String.join(", ", classVisitor.getCustomAttributeNames()) + "]");
+					String.join(", ", adapter.getCustomAttributeNames()) + "]");
 		}
 	}
 
-	private class ClassBuilderAppender extends ClassVisitor {
+	/**
+	 * Converts ASM visitor actions to 'with' actions in the class builder.
+	 * Results in a fully reconstructed class model.
+	 *
+	 * @see FieldBuilderAdapter
+	 * @see MethodBuilderAdapter
+	 */
+	private class ClassBuilderAdapter extends ClassVisitor {
 		private final List<AnnotationInfo> annotations = new ArrayList<>();
 		private final List<TypeAnnotationInfo> typeAnnotations = new ArrayList<>();
 		private final List<InnerClassInfo> innerClasses = new ArrayList<>();
 		private final List<FieldMember> fields = new ArrayList<>();
 		private final List<MethodMember> methods = new ArrayList<>();
-		/**
-		 * Collects custom attributes in a class.
-		 */
 		private final List<Attribute> classCustomAttributes = new ArrayList<>();
 		private final MultiMap<String, Attribute, List<Attribute>> fieldCustomAttributes;
 		private final MultiMap<String, Attribute, List<Attribute>> methodCustomAttributes;
 
-
-		protected ClassBuilderAppender() {
-			super(getAsmVersion());
-			fieldCustomAttributes
-				= MultiMap.from(new HashMap<>(), ArrayList::new);
-			methodCustomAttributes
-				= MultiMap.from(new HashMap<>(), ArrayList::new);
+		protected ClassBuilderAdapter(@Nullable ClassVisitor cv) {
+			super(getAsmVersion(), cv);
+			fieldCustomAttributes = MultiMap.from(new HashMap<>(), ArrayList::new);
+			methodCustomAttributes = MultiMap.from(new HashMap<>(), ArrayList::new);
 		}
 
 		@Override
@@ -199,12 +230,12 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			return new AnnotationBuilderAppender(visible, descriptor, annotations::add);
+			return new AnnotationBuilderAdapter(visible, descriptor, annotations::add);
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			return new AnnotationBuilderAppender(visible, descriptor,
+			return new AnnotationBuilderAdapter(visible, descriptor,
 					anno -> typeAnnotations.add(anno.withTypeInfo(typeRef, typePath)));
 		}
 
@@ -230,7 +261,6 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 					withOuterClassName(outerName);
 				}
 			}
-
 		}
 
 		@Override
@@ -241,7 +271,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-			return new FieldBuilderAppender(access, name, descriptor, signature, value) {
+			return new FieldBuilderAdapter(access, name, descriptor, signature, value) {
 
 				@Override
 				public void visitAttribute(Attribute attribute) {
@@ -258,7 +288,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-			return new MethodBuilderAppender(access, name, descriptor, signature, exceptions) {
+			return new MethodBuilderAdapter(access, name, descriptor, signature, exceptions) {
 
 				@Override
 				public void visitAttribute(Attribute attribute) {
@@ -291,8 +321,8 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		 */
 		public boolean hasCustomAttributes() {
 			return !classCustomAttributes.isEmpty() ||
-				!fieldCustomAttributes.isEmpty() ||
-				!methodCustomAttributes.isEmpty();
+					!fieldCustomAttributes.isEmpty() ||
+					!methodCustomAttributes.isEmpty();
 		}
 
 		/**
@@ -301,35 +331,35 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		public Collection<String> getCustomAttributeNames() {
 			Set<String> names = new TreeSet<>();
 			classCustomAttributes.stream()
-				.map(a -> a.type)
-				.forEach(names::add);
+					.map(a -> a.type)
+					.forEach(names::add);
 			fieldCustomAttributes.values()
-				.map(a -> a.type)
-				.forEach(names::add);
+					.map(a -> a.type)
+					.forEach(names::add);
 			methodCustomAttributes.values()
-				.map(a -> a.type)
-				.forEach(names::add);
+					.map(a -> a.type)
+					.forEach(names::add);
 			return names;
 		}
 	}
 
-	private static class FieldBuilderAppender extends FieldVisitor {
+	private static class FieldBuilderAdapter extends FieldVisitor {
 		private final BasicFieldMember fieldMember;
 
-		public FieldBuilderAppender(int access, String name, String descriptor,
-									String signature, Object value) {
+		public FieldBuilderAdapter(int access, String name, String descriptor,
+								   String signature, Object value) {
 			super(getAsmVersion());
 			fieldMember = new BasicFieldMember(name, descriptor, signature, access, value);
 		}
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			return new AnnotationBuilderAppender(visible, descriptor, fieldMember::addAnnotation);
+			return new AnnotationBuilderAdapter(visible, descriptor, fieldMember::addAnnotation);
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			return new AnnotationBuilderAppender(visible, descriptor,
+			return new AnnotationBuilderAdapter(visible, descriptor,
 					anno -> fieldMember.addTypeAnnotation(anno.withTypeInfo(typeRef, typePath)));
 		}
 
@@ -339,11 +369,11 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		}
 	}
 
-	private static class MethodBuilderAppender extends MethodVisitor {
+	private static class MethodBuilderAdapter extends MethodVisitor {
 		private final BasicMethodMember methodMember;
 
-		public MethodBuilderAppender(int access, String name, String descriptor,
-									 String signature, String[] exceptions) {
+		public MethodBuilderAdapter(int access, String name, String descriptor,
+									String signature, String[] exceptions) {
 			super(getAsmVersion());
 			List<String> exceptionList = exceptions == null ? Collections.emptyList() : Arrays.asList(exceptions);
 			methodMember = new BasicMethodMember(name, descriptor, signature, access, exceptionList, new ArrayList<>());
@@ -351,12 +381,12 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			return new AnnotationBuilderAppender(visible, descriptor, methodMember::addAnnotation);
+			return new AnnotationBuilderAdapter(visible, descriptor, methodMember::addAnnotation);
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			return new AnnotationBuilderAppender(visible, descriptor,
+			return new AnnotationBuilderAdapter(visible, descriptor,
 					anno -> methodMember.addTypeAnnotation(anno.withTypeInfo(typeRef, typePath)));
 		}
 
@@ -372,15 +402,15 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		}
 	}
 
-	private static class AnnotationBuilderAppender extends AnnotationVisitor {
+	private static class AnnotationBuilderAdapter extends AnnotationVisitor {
 		private final Consumer<BasicAnnotationInfo> annotationConsumer;
 		private final Map<String, AnnotationElement> elements = new HashMap<>();
 		private final List<Object> arrayValues = new ArrayList<>();
 		private final boolean visible;
 		private final String descriptor;
 
-		protected AnnotationBuilderAppender(boolean visible, String descriptor,
-											Consumer<BasicAnnotationInfo> annotationConsumer) {
+		protected AnnotationBuilderAdapter(boolean visible, String descriptor,
+										   Consumer<BasicAnnotationInfo> annotationConsumer) {
 			super(getAsmVersion());
 			this.visible = visible;
 			this.descriptor = descriptor;
@@ -412,7 +442,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-			return new AnnotationBuilderAppender(true, descriptor, anno -> {
+			return new AnnotationBuilderAdapter(true, descriptor, anno -> {
 				if (name == null) {
 					arrayValues.add(anno);
 				} else {
@@ -423,11 +453,11 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public AnnotationVisitor visitArray(String name) {
-			AnnotationBuilderAppender outer = this;
-			return new AnnotationBuilderAppender(true, "", null) {
+			AnnotationBuilderAdapter outer = this;
+			return new AnnotationBuilderAdapter(true, "", null) {
 				@Override
 				public void visitEnd() {
-					AnnotationBuilderAppender inner = this;
+					AnnotationBuilderAdapter inner = this;
 					outer.elements.put(name, new BasicAnnotationElement(name, inner.arrayValues));
 				}
 			};

@@ -3,6 +3,7 @@ package software.coley.recaf.workspace.io;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.analytics.logging.Logging;
@@ -41,21 +42,24 @@ public class BasicInfoImporter implements InfoImporter {
 		// Check for Java classes
 		if (matchesClass(data)) {
 			try {
-				if (config.doSkipAsmValidation()) {
+				// If we're skipping validation, any ASM parse failures will result in the class
+				// being treated as a file instead (see catch block)
+				if (config.doSkipAsmValidation())
 					return new JvmClassInfoBuilder(data).build();
-				}
 
+				// If we are doing validation, disable skipping ASM checks.
 				try {
-					return new JvmClassInfoBuilder(data)
-						.skipCustomAttributeChecks(false)
-						.build();
+					return new JvmClassInfoBuilder()
+							.skipValidationChecks(false)
+							.adaptFrom(new ClassReader(data))
+							.build();
 				} catch (Throwable t) {
 					// Patch if not compatible with ASM
 					byte[] patched = classPatcher.patch(name, data);
 					logger.debug("CafeDude patched class: {}", name);
 					try {
 						return new JvmClassInfoBuilder(patched)
-							.skipCustomAttributeChecks(false)
+							.skipValidationChecks(false)
 							.build();
 					} catch (Throwable t1) {
 						logger.error("CafeDude patching output is still non-compliant with ASM for file: {}", name);
