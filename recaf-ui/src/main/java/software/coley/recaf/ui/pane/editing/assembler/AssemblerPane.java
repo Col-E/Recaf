@@ -141,7 +141,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 				new IconView(Icons.getImage(Icons.FIELD_N_METHOD)),
 				fieldsAndMethodsPane
 		));
-		fieldsAndMethodsPane.onUpdatePath(path);
+		fieldsAndMethodsPane.onUpdatePath(classPathNode);
 
 		// Since the content displayed is for a whole class, and the tool tabs are scoped to a method, we need to
 		// update them when a method is selected. We do so by tracking the caret position for being within the
@@ -171,7 +171,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							ClassMemberPathNode memberPath = classPathNode.child(classMember);
 							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
 						} else {
-							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));
+							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(classPathNode));
 						}
 						eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
 						return;
