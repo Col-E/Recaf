@@ -3,8 +3,6 @@ package software.coley.recaf.workspace.io;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.analytics.logging.Logging;
@@ -43,9 +41,13 @@ public class BasicInfoImporter implements InfoImporter {
 		// Check for Java classes
 		if (matchesClass(data)) {
 			try {
+				if (config.doSkipAsmValidation()) {
+					return new JvmClassInfoBuilder(data).build();
+				}
+
 				try {
 					return new JvmClassInfoBuilder(data)
-						.skipASMValidation(config.doSkipAsmValidation())
+						.skipCustomAttributeChecks(false)
 						.build();
 				} catch (Throwable t) {
 					// Patch if not compatible with ASM
@@ -53,7 +55,7 @@ public class BasicInfoImporter implements InfoImporter {
 					logger.debug("CafeDude patched class: {}", name);
 					try {
 						return new JvmClassInfoBuilder(patched)
-							.skipASMValidation(config.doSkipAsmValidation())
+							.skipCustomAttributeChecks(false)
 							.build();
 					} catch (Throwable t1) {
 						logger.error("CafeDude patching output is still non-compliant with ASM for file: {}", name);

@@ -24,7 +24,7 @@ import static software.coley.recaf.RecafConstants.getAsmVersion;
 public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBuilder> {
 	private byte[] bytecode;
 	private int version = JvmClassInfo.BASE_VERSION + 8; // Java 8
-	private boolean skipASMValidation;
+	private boolean skipCustomAttributeChecks = true;
 	@Nullable
 	private ClassBuilderAppender classVisitor;
 
@@ -90,7 +90,6 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	 * 		Reader flags to use when populating information.
 	 *
 	 * @return Builder.
-	 * @throws IllegalStateException if using asm validation and the class has custom attributes
 	 */
 	@Nonnull
 	@SuppressWarnings(value = "deprecation")
@@ -112,9 +111,15 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		return this;
 	}
 
+	/**
+	 * The default value is true. When {@code verify} is run it will check if there are any custom attributes.
+	 *
+	 * @param skipCustomAttributeChecks {@code false} if we want to verify the classes custom attribute
+	 * @return {@code JvmClassInfoBuilder}
+	 */
 	@Nonnull
-	public JvmClassInfoBuilder skipASMValidation(boolean skipASMValidation) {
-		this.skipASMValidation = skipASMValidation;
+	public JvmClassInfoBuilder skipCustomAttributeChecks(boolean skipCustomAttributeChecks) {
+		this.skipCustomAttributeChecks = skipCustomAttributeChecks;
 		return this;
 	}
 
@@ -139,7 +144,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			throw new IllegalStateException("Bytecode required");
 		if (version < JvmClassInfo.BASE_VERSION)
 			throw new IllegalStateException("Version cannot be lower than 44 (v1)");
-		if (!this.skipASMValidation && classVisitor != null && classVisitor.hasCustomAttributes()) {
+		if (!this.skipCustomAttributeChecks && classVisitor != null && classVisitor.hasCustomAttributes()) {
 			throw new IllegalStateException("Unknown attributes found in class: " + this.getName() + "[" +
 				String.join(", ", classVisitor.getCustomAttributeNames()) + "]");
 		}
