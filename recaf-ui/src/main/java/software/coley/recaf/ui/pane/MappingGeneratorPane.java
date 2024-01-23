@@ -104,7 +104,9 @@ public class MappingGeneratorPane extends StackPane {
 		Node filterGroup = createFilterDisplay(aggregateMappingManager);
 
 		// Create preview.
-		previewGroup = createPreviewDisplay(searchBarProvider);
+		BorderPane wrapper = new BorderPane();
+		previewGroup = wrapper;
+		FxThreadUtil.run(() -> wrapper.setCenter(createPreviewDisplay(searchBarProvider)));
 
 		// Layout and wrap up.
 		SplitPane horizontalWrapper = new SplitPane(filterGroup, previewGroup);
