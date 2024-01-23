@@ -49,11 +49,12 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 	}
 
 	static {
+		// Commented out items are 'keywords' but can be used as names.
 		keywords.addAll(Arrays.asList("abstract",
 				"assert",
 				"boolean",
 				"break",
-				"bridge",
+				// "bridge",
 				"byte",
 				"case",
 				"catch",
@@ -77,10 +78,10 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 				"import",
 				"instanceof",
 				"interface",
-				"mandated",
+				// "mandated",
 				"module",
 				"native",
-				"open",
+				// "open",
 				"private",
 				"protected",
 				"public",
@@ -88,11 +89,11 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 				"strictfp",
 				"super",
 				"synchronized",
-				"synthetic",
+				// "synthetic",
 				"transient",
 				"transitive",
 				"var",
-				"varargs",
+				// "varargs",
 				"volatile"));
 	}
 }
