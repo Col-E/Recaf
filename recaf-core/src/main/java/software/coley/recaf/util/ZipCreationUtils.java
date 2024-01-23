@@ -140,6 +140,7 @@ public class ZipCreationUtils {
 		 *
 		 * @return Builder.
 		 */
+		@Nonnull
 		public ZipBuilder createDirectories() {
 			createDirectories = true;
 			return this;
@@ -153,7 +154,8 @@ public class ZipCreationUtils {
 		 *
 		 * @return Builder.
 		 */
-		public ZipBuilder add(String name, byte[] content) {
+		@Nonnull
+		public ZipBuilder add(@Nonnull String name, @Nonnull byte[] content) {
 			return add(name, content, true, null, -1, -1, -1);
 		}
 
@@ -175,8 +177,9 @@ public class ZipCreationUtils {
 		 *
 		 * @return Builder.
 		 */
-		public ZipBuilder add(String name, byte[] content, boolean compression,
-							  String comment, long createTime, long modifyTime, long accessTime) {
+		@Nonnull
+		public ZipBuilder add(@Nonnull String name, @Nonnull byte[] content, boolean compression,
+							  @Nullable String comment, long createTime, long modifyTime, long accessTime) {
 			return add(new Entry(name, content, compression, comment, null, createTime, modifyTime, accessTime));
 		}
 
@@ -186,7 +189,8 @@ public class ZipCreationUtils {
 		 *
 		 * @return Builder.
 		 */
-		private ZipBuilder add(Entry entry) {
+		@Nonnull
+		private ZipBuilder add(@Nonnull Entry entry) {
 			entries.add(entry);
 			return this;
 		}
@@ -197,6 +201,7 @@ public class ZipCreationUtils {
 		 * @throws IOException
 		 * 		When the content cannot be written.
 		 */
+		@Nonnull
 		public byte[] bytes() throws IOException {
 			return createZip(zos -> {
 				Set<String> dirsVisited = new HashSet<>();
