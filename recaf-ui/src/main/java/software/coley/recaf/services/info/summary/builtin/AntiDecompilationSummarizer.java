@@ -354,6 +354,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeNonAsciiNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeKeywordNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeWhitespaceNames());
+						mappingGeneratorPane.generate();
 						RecafScene scene = new RecafScene(mappingGeneratorPane);
 						FxThreadUtil.run(() -> {
 							Stage window = windowFactory.createAnonymousStage(scene, getBinding("mapgen"), 800, 400);

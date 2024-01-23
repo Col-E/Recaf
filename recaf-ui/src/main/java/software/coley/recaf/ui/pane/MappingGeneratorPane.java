@@ -157,7 +157,10 @@ public class MappingGeneratorPane extends StackPane {
 		modal.show(card);
 	}
 
-	private void generate() {
+	/**
+	 * Generates the mappings for the current settings. The result is displayed in the {@link #previewGroup}.
+	 */
+	public void generate() {
 		// Linking items in reverse order from the list.
 		NameGeneratorFilter filter = null;
 		List<FilterWithConfigNode<?>> list = filters.getItems();
