@@ -32,6 +32,7 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,13 +55,14 @@ public class DecompileAllPopup extends RecafStage {
 	private final ObjectProperty<Path> pathProperty = new SimpleObjectProperty<>();
 	private final ObservableObject<JvmDecompiler> decompilerProperty;
 	private final BooleanProperty inProgressProperty = new SimpleBooleanProperty();
+	private JvmClassBundle targetBundle;
 
 	@Inject
 	public DecompileAllPopup(@Nonnull DecompilerManager decompilerManager,
 							 @Nonnull RecentFilesConfig recentFilesConfig,
 							 @Nonnull DecompilerPaneConfig decompilerPaneConfig,
 							 @Nonnull Workspace workspace) {
-
+		targetBundle = workspace.getPrimaryResource().getJvmClassBundle();
 		decompilerProperty = new ObservableObject<>(decompilerManager.getTargetJvmDecompiler());
 		pathProperty.setValue(Paths.get(recentFilesConfig.getLastWorkspaceExportDirectory().getValue()).resolve("decompiled.zip"));
 
@@ -87,7 +89,7 @@ public class DecompileAllPopup extends RecafStage {
 				progress.setProgress(0);
 
 				// Determine which classes to decompile
-				List<JvmClassInfo> targetClasses = workspace.getPrimaryResource().getJvmClassBundle().stream().filter(cls -> {
+				List<JvmClassInfo> targetClasses = targetBundle.stream().filter(cls -> {
 					// Skip inner classes
 					if (cls.isInnerClass())
 						return false;
@@ -167,5 +169,12 @@ public class DecompileAllPopup extends RecafStage {
 		setMinHeight(200);
 		setTitle(Lang.get("menu.file.decompileall"));
 		setScene(new RecafScene(layout, 400, 150));
+	}
+
+	/**
+	 * @param targetBundle Bundle to target for decompilation.
+	 */
+	public void setTargetBundle(@Nonnull JvmClassBundle targetBundle) {
+		this.targetBundle = targetBundle;
 	}
 }

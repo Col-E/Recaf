@@ -52,10 +52,11 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 			var edit = builder.submenu("menu.edit", EDIT);
 			edit.item("misc.clear", TRASH_CAN, bundle::clear);
 
-			if (bundle instanceof JvmClassBundle) {
+			if (bundle instanceof JvmClassBundle jvmBundle) {
 				builder.item("menu.file.decompileall", DOCUMENT_EXPORT, () -> {
-					DecompileAllPopup pane = decompileAllPaneProvider.get();
-					pane.show();
+					DecompileAllPopup popup = decompileAllPaneProvider.get();
+					popup.setTargetBundle(jvmBundle);
+					popup.show();
 				});
 			}
 			return menu;
