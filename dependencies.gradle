@@ -1,7 +1,7 @@
 def asmVersion = '9.6'
 def cafeDudeVersion = '2.0.1'
 def junitVersion = '5.10.0'
-def jasmVersion = 'b4b268eafd'
+def jasmVersion = '5c8356bad2'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
