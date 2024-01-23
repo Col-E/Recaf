@@ -3,13 +3,11 @@ package software.coley.recaf.info;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.annotation.Annotated;
-import software.coley.recaf.info.builder.AbstractClassInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -131,9 +129,16 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	List<InnerClassInfo> getInnerClasses();
 
 	/**
-	 * @return {@code true} when this class is an anonymous inner class.
+	 * @return {@code true} when this class is an inner class of another class.
 	 */
-	default boolean isAnonymousInner() {
+	default boolean isInnerClass() {
+		return getOuterClassName() != null || getOuterMethodName() != null;
+	}
+
+	/**
+	 * @return {@code true} when this class is an anonymous inner class of another class.
+	 */
+	default boolean isAnonymousInnerClass() {
 		// Check if the 'full' name of the inner 'InnerClassName' is the current class (entry representing ourselves)
 		// Then if the 'OuterClassName' is null, this means our class does not expose a name because it is anonymous.
 		return getInnerClasses().stream()

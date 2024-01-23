@@ -64,7 +64,7 @@ public class BasicInnerClassIconProviderFactory implements InnerClassIconProvide
 			} else {
 				return EXCEPTION.makeIcon();
 			}
-		} else if (info.isAnonymousInner()) {
+		} else if (info.isAnonymousInnerClass()) {
 			return ANONYMOUS.makeIcon();
 		} else if (info.hasAbstractModifier()) {
 			return ABSTRACT.makeIcon();

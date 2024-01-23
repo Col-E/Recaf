@@ -243,8 +243,8 @@ class ClassInfoTest {
 
 	@Test
 	void isAnonymousInner() {
-		assertFalse(classWithAnonymousInner.isAnonymousInner());
-		assertTrue(classWithAnonymousInner$Inner.isAnonymousInner());
+		assertFalse(classWithAnonymousInner.isAnonymousInnerClass());
+		assertTrue(classWithAnonymousInner$Inner.isAnonymousInnerClass());
 	}
 
 	@Test
