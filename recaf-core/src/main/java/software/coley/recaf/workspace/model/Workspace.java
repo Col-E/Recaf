@@ -18,7 +18,10 @@ import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Models a collection of user inputs, represented as {@link WorkspaceResource} instances.
@@ -67,21 +70,28 @@ public interface Workspace extends Closing {
 	 * @return List of all resources in the workspace. Includes primary, supporting, and internal support resources.
 	 */
 	@Nonnull
-	default List<WorkspaceResource> getAllResources(boolean includeInternal) {
+	default Stream<WorkspaceResource> allResourcesStream(boolean includeInternal) {
 		List<WorkspaceResource> supportingResources = getSupportingResources();
-		int supportingSize = supportingResources.size();
 		if (includeInternal) {
 			List<WorkspaceResource> internalSupportingResources = getInternalSupportingResources();
-			List<WorkspaceResource> list = new ArrayList<>(1 + supportingSize + internalSupportingResources.size());
-			list.add(getPrimaryResource());
-			list.addAll(supportingResources);
-			list.addAll(internalSupportingResources);
-			return list;
+			return Stream.of(
+					Stream.of(getPrimaryResource()),
+					supportingResources.stream(),
+					internalSupportingResources.stream()
+			).flatMap(Function.identity());
 		}
-		List<WorkspaceResource> list = new ArrayList<>(1 + supportingSize);
-		list.add(getPrimaryResource());
-		list.addAll(supportingResources);
-		return list;
+		return Stream.concat(Stream.of(getPrimaryResource()), supportingResources.stream());
+	}
+
+	/**
+	 * @param includeInternal
+	 * 		Flag to include internal supporting resources.
+	 *
+	 * @return List of all resources in the workspace. Includes primary, supporting, and internal support resources.
+	 */
+	@Nonnull
+	default List<WorkspaceResource> getAllResources(boolean includeInternal) {
+		return allResourcesStream(includeInternal).toList();
 	}
 
 	/**
@@ -237,6 +247,42 @@ public interface Workspace extends Closing {
 	}
 
 	/**
+	 * @return Stream of JVM classes.
+	 */
+	@Nonnull
+	default Stream<ClassPathNode> jvmClassesStream() {
+		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
+		return allResourcesStream(true)
+				.flatMap(resource -> {
+					JvmClassBundle bundle = resource.getJvmClassBundle();
+					BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
+					return bundle.values()
+							.stream()
+							.map(cls -> bundlePath.child(cls.getPackageName()).child(cls));
+				});
+	}
+
+	/**
+	 * @return Stream of Android classes.
+	 */
+	@Nonnull
+	default Stream<ClassPathNode> androidClassesStream() {
+		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
+		return allResourcesStream(true)
+				.flatMap(resource -> {
+					Stream<ClassPathNode> stream = null;
+					for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
+						BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
+						Stream<ClassPathNode> classStream = bundle.values()
+								.stream()
+								.map(cls -> bundlePath.child(cls.getPackageName()).child(cls));
+						stream = stream == null ? classStream : Stream.concat(stream, classStream);
+					}
+					return stream;
+				});
+	}
+
+	/**
 	 * @param filter
 	 * 		JVM class filter.
 	 *
@@ -244,20 +290,8 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default SortedSet<ClassPathNode> findJvmClasses(@Nonnull Predicate<JvmClassInfo> filter) {
-		SortedSet<ClassPathNode> results = new TreeSet<>();
-		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-		for (WorkspaceResource resource : getAllResources(true)) {
-			JvmClassBundle bundle = resource.getJvmClassBundle();
-			BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
-			for (JvmClassInfo classInfo : bundle.values()) {
-				if (filter.test(classInfo)) {
-					results.add(bundlePath
-							.child(classInfo.getPackageName())
-							.child(classInfo));
-				}
-			}
-		}
-		return results;
+		return jvmClassesStream().filter(node -> filter.test((JvmClassInfo) node.getValue()))
+				.collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
