@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -298,8 +299,13 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	private CompletableFuture<Result<String>> disassemble() {
 		problemTracking.removeByPhase(ProblemPhase.LINT);
 		return CompletableFuture.supplyAsync(() -> pipeline.disassemble(path))
-				.whenCompleteAsync((result, unused) ->
-						acceptResult(result, editor::setText, ProblemPhase.LINT), FxThreadUtil.executor());
+				.orTimeout(10, TimeUnit.SECONDS)
+				.whenCompleteAsync((result, error) -> {
+					if (result != null)
+						acceptResult(result, editor::setText, ProblemPhase.LINT);
+					else
+						logger.error("Disassemble encountered an unexpected error", error);
+				}, FxThreadUtil.executor());
 	}
 
 	/**
