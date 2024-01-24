@@ -143,8 +143,8 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	protected Result<ClassPrinter> classPrinter(@Nonnull ClassPathNode path) {
 		try {
 			return Result.ok(new JvmClassPrinter(new ByteArrayInputStream(path.getValue().asJvmClass().getBytecode())));
-		} catch (IOException e) {
-			return Result.exception(e);
+		} catch (Throwable t) {
+			return Result.exception(t);
 		}
 	}
 }
