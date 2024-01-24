@@ -30,9 +30,11 @@ import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,9 +64,11 @@ public class DecompileAllPopup extends RecafStage {
 							 @Nonnull RecentFilesConfig recentFilesConfig,
 							 @Nonnull DecompilerPaneConfig decompilerPaneConfig,
 							 @Nonnull Workspace workspace) {
+		String defaultName = buildName(workspace);
+
 		targetBundle = workspace.getPrimaryResource().getJvmClassBundle();
 		decompilerProperty = new ObservableObject<>(decompilerManager.getTargetJvmDecompiler());
-		pathProperty.setValue(Paths.get(recentFilesConfig.getLastWorkspaceExportDirectory().getValue()).resolve("decompiled.zip"));
+		pathProperty.setValue(Paths.get(recentFilesConfig.getLastWorkspaceExportDirectory().getValue()).resolve(defaultName));
 
 		Label decompilerLabel = new BoundLabel(Lang.getBinding("java.decompiler"));
 		Label pathLabel = new BoundLabel(Lang.getBinding("menu.file.decompileall.path"));
@@ -72,7 +76,7 @@ public class DecompileAllPopup extends RecafStage {
 		ProgressBar progress = new ProgressBar(0);
 		Button pathButton = new ActionButton(CarbonIcons.EDIT, pathProperty.map(Path::toString), () -> {
 			FileChooser chooser = new FileChooser();
-			chooser.setInitialFileName("decompiled.zip");
+			chooser.setInitialFileName(defaultName);
 			chooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("Archives", "zip", "jar"));
 			chooser.setInitialDirectory(recentFilesConfig.getLastWorkspaceExportDirectory().unboxingMap(File::new));
 			chooser.setTitle(Lang.get("dialog.file.open"));
@@ -171,8 +175,17 @@ public class DecompileAllPopup extends RecafStage {
 		setScene(new RecafScene(layout, 400, 150));
 	}
 
+	@Nonnull
+	private static String buildName(@Nonnull Workspace workspace) {
+		String prefix = "";
+		if (workspace.getPrimaryResource() instanceof WorkspaceFileResource fileResource)
+			prefix = StringUtil.removeExtension(StringUtil.shortenPath(fileResource.getFileInfo().getName())) + "-";
+		return prefix + "decompiled.zip";
+	}
+
 	/**
-	 * @param targetBundle Bundle to target for decompilation.
+	 * @param targetBundle
+	 * 		Bundle to target for decompilation.
 	 */
 	public void setTargetBundle(@Nonnull JvmClassBundle targetBundle) {
 		this.targetBundle = targetBundle;

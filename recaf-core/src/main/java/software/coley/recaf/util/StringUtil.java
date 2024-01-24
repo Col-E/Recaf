@@ -359,10 +359,25 @@ public class StringUtil {
 	 *
 	 * @return Shortened name.
 	 */
-	public static String shortenPath(String name) {
+	@Nonnull
+	public static String shortenPath(@Nonnull String name) {
 		int separatorIndex = name.lastIndexOf('/');
 		if (separatorIndex > 0)
 			name = name.substring(separatorIndex + 1);
+		return name;
+	}
+
+	/**
+	 * @param name
+	 * 		Path name.
+	 *
+	 * @return Path name without file extension.
+	 */
+	@Nonnull
+	public static String removeExtension(@Nonnull String name) {
+		int dotIndex = name.lastIndexOf('.');
+		if (dotIndex >= 0)
+			return name.substring(0, dotIndex);
 		return name;
 	}
 
