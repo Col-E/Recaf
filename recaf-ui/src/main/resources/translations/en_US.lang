@@ -428,6 +428,7 @@ service.analysis.entry-points.none=No entries found
 service.analysis.anti-decompile=Anti-Decompilation
 service.analysis.anti-decompile.cyclic=Cyclic inheritance classes
 service.analysis.anti-decompile.duplicate-annos=Duplicate annotations
+service.analysis.anti-decompile.illegal-annos=Illegal annotations
 service.analysis.anti-decompile.illegal-name=Illegal names
 service.analysis.anti-decompile.illegal-sig=Illegal signatures
 service.analysis.anti-decompile.label-patch=Patch %d affected classes

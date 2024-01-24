@@ -136,7 +136,7 @@ public class Types {
 			} catch (Throwable t) {
 				return false;
 			}
-		} else {
+		} else if (first == 'L' || first == '['){
 			try {
 				Type type = Type.getType(desc);
 				if (type.getSort() == Type.OBJECT && !desc.endsWith(";"))
@@ -146,6 +146,7 @@ public class Types {
 				return false;
 			}
 		}
+		return false;
 	}
 
 	/**

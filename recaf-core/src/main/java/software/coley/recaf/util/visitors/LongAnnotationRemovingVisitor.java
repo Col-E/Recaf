@@ -15,6 +15,8 @@ public class LongAnnotationRemovingVisitor extends ClassVisitor {
 	/**
 	 * @param cv
 	 * 		Parent visitor.
+	 * @param maxAllowedLength
+	 * 		Max length of allowed annotation descriptors.
 	 */
 	public LongAnnotationRemovingVisitor(@Nullable ClassVisitor cv, int maxAllowedLength) {
 		super(RecafConstants.getAsmVersion(), cv);
@@ -36,15 +38,33 @@ public class LongAnnotationRemovingVisitor extends ClassVisitor {
 	@Override
 	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
 		if (descriptor.length() < maxAllowedLength)
-			return super.visitAnnotation(descriptor, visible);
+			return new LongSubAnnoRemover(super.visitAnnotation(descriptor, visible));
 		return null;
 	}
 
 	@Override
 	public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 		if (descriptor.length() < maxAllowedLength)
-			return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
+			return new LongSubAnnoRemover(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible));
 		return null;
+	}
+
+	private class LongSubAnnoRemover extends AnnotationVisitor {
+		public LongSubAnnoRemover(@Nullable AnnotationVisitor av) {
+			super(RecafConstants.getAsmVersion(), av);
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+			if (descriptor.length() < maxAllowedLength)
+				return null;
+			return new LongSubAnnoRemover(super.visitAnnotation(name, descriptor));
+		}
+
+		@Override
+		public AnnotationVisitor visitArray(String name) {
+			return new LongSubAnnoRemover(super.visitArray(name));
+		}
 	}
 
 	private class FieldDupAnnoRemover extends FieldVisitor {
@@ -54,14 +74,15 @@ public class LongAnnotationRemovingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			if (descriptor.length() < maxAllowedLength) return super.visitAnnotation(descriptor, visible);
+			if (descriptor.length() < maxAllowedLength)
+				return new LongSubAnnoRemover(super.visitAnnotation(descriptor, visible));
 			return null;
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 			if (descriptor.length() < maxAllowedLength)
-				return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
+				return new LongSubAnnoRemover(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible));
 			return null;
 		}
 	}
@@ -73,42 +94,43 @@ public class LongAnnotationRemovingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			if (descriptor.length() < maxAllowedLength) return super.visitAnnotation(descriptor, visible);
+			if (descriptor.length() < maxAllowedLength)
+				return new LongSubAnnoRemover(super.visitAnnotation(descriptor, visible));
 			return null;
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 			if (descriptor.length() < maxAllowedLength)
-				return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
+				return new LongSubAnnoRemover(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible));
 			return null;
 		}
 
 		@Override
 		public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
 			if (descriptor.length() < maxAllowedLength)
-				return super.visitParameterAnnotation(parameter, descriptor, visible);
+				return new LongSubAnnoRemover(super.visitParameterAnnotation(parameter, descriptor, visible));
 			return null;
 		}
 
 		@Override
 		public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 			if (descriptor.length() < maxAllowedLength)
-				return super.visitInsnAnnotation(typeRef, typePath, descriptor, visible);
+				return new LongSubAnnoRemover(super.visitInsnAnnotation(typeRef, typePath, descriptor, visible));
 			return null;
 		}
 
 		@Override
 		public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 			if (descriptor.length() < maxAllowedLength)
-				return super.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible);
+				return new LongSubAnnoRemover(super.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible));
 			return null;
 		}
 
 		@Override
 		public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start, Label[] end, int[] index, String descriptor, boolean visible) {
 			if (descriptor.length() < maxAllowedLength)
-				return super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, descriptor, visible);
+				return new LongSubAnnoRemover(super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, descriptor, visible));
 			return null;
 		}
 	}
