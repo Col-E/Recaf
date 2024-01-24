@@ -259,14 +259,13 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		if (navigationLock) return;
 
 		// Select the given member.
-		for (TreeItem<PathNode<?>> child : tree.getRoot().getChildren()) {
-			if (member.equals(child.getValue().getValue())) {
-				var selectionModel = tree.getSelectionModel();
-				selectionModel.select(child);
-				tree.getFocusModel().focus(selectionModel.getSelectedIndex());
-				return;
-			}
-		}
+		TreeItem<PathNode<?>> root = tree.getRoot();
+		if (root == null)
+			// If the value is null, it's probably waiting on the initialization from the path update handling.
+			// Request focus with a small delay.
+			FxThreadUtil.delayedRun(100, () -> requestFocusInternal(member));
+		else
+			requestFocusInternal(member);
 	}
 
 	@Override
@@ -302,6 +301,17 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	public void disable() {
 		setDisable(true);
 		tree.setRoot(null);
+	}
+
+	private void requestFocusInternal(@Nonnull ClassMember member) {
+		for (TreeItem<PathNode<?>> child : tree.getRoot().getChildren()) {
+			if (member.equals(child.getValue().getValue())) {
+				var selectionModel = tree.getSelectionModel();
+				selectionModel.select(child);
+				tree.getFocusModel().focus(selectionModel.getSelectedIndex());
+				return;
+			}
+		}
 	}
 
 	/**
