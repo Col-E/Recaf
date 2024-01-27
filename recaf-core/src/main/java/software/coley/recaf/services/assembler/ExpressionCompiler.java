@@ -13,6 +13,7 @@ import regexodus.Matcher;
 import regexodus.Pattern;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.member.BasicLocalVariable;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
@@ -197,9 +198,6 @@ public class ExpressionCompiler {
 	private String generateClass(@Nonnull String expression) throws ExpressionCompileException {
 		StringBuilder code = new StringBuilder();
 
-		// TODO: Different model for enums
-		// TODO: If the method type ends in a return value, we need to have a dummy return at the end
-
 		// Append package
 		if (className.indexOf('/') > 0) {
 			String packageName = className.replace('/', '.').substring(0, className.lastIndexOf('/'));
@@ -275,9 +273,7 @@ public class ExpressionCompiler {
 		int parameterCount = methodType.parameterTypes().size();
 		Set<String> usedVariables = new HashSet<>();
 		for (int i = 0; i < parameterCount; i++) {
-			LocalVariable parameterVariable = findVar(parameterVarIndex);
-			if (parameterVariable == null)
-				throw new ExpressionCompileException("Missing variable at index " + parameterVarIndex);
+			LocalVariable parameterVariable = getParameterVariable(parameterVarIndex, i);
 			String parameterName = parameterVariable.getName();
 			usedVariables.add(parameterName);
 			NameType varInfo = getInfo(parameterName, parameterVariable.getDescriptor());
@@ -476,6 +472,24 @@ public class ExpressionCompiler {
 	}
 
 	/**
+	 * @param parameterVarIndex
+	 * 		Local variable index of the parameter.
+	 * @param parameterIndex
+	 * 		Parameter index.
+	 *
+	 * @return Local variable info of the parameter.
+	 */
+	@Nonnull
+	private LocalVariable getParameterVariable(int parameterVarIndex, int parameterIndex) {
+		LocalVariable parameterVariable = findVar(parameterVarIndex);
+		if (parameterVariable == null) {
+			ClassType parameterType = methodType.parameterTypes().get(parameterIndex);
+			parameterVariable = new BasicLocalVariable(parameterVarIndex, "p" + parameterIndex, parameterType.descriptor(), null);
+		}
+		return parameterVariable;
+	}
+
+	/**
 	 * @param code
 	 * 		Generateed code to work with.
 	 * @param diagnostics
@@ -507,9 +521,7 @@ public class ExpressionCompiler {
 		int parameterCount = methodType.parameterTypes().size();
 		Set<String> usedVariables = new HashSet<>();
 		for (int i = 0; i < parameterCount; i++) {
-			LocalVariable parameterVariable = findVar(parameterVarIndex);
-			if (parameterVariable == null)
-				throw new ExpressionCompileException("Missing variable at index " + parameterVarIndex);
+			LocalVariable parameterVariable = getParameterVariable(parameterVarIndex, i);
 			String parameterName = parameterVariable.getName();
 			usedVariables.add(parameterName);
 			NameType varInfo = getInfo(parameterName, parameterVariable.getDescriptor());

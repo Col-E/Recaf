@@ -4,10 +4,10 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.SplitPane;
-import org.reactfx.EventStreams;
 import software.coley.collections.Lists;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.services.assembler.ExpressionCompileException;
 import software.coley.recaf.services.assembler.ExpressionCompiler;
 import software.coley.recaf.services.assembler.ExpressionResult;
@@ -57,7 +57,7 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 				new BracketMatchGraphicFactory(),
 				new ProblemGraphicFactory()
 		);
-		javaEditor.setText(Lang.get("assembler.playground.comment").replace("\\n", "\n"));
+		javaEditor.setText(Lang.get("assembler.playground.comment").replace("\\n", "\n")); // TODO: The comment should reflect what contexts are allowed
 		jasmEditor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
 		jasmEditor.setSelectedBracketTracking(new SelectedBracketTracking());
 		jasmEditor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
@@ -78,28 +78,59 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 	@Override
 	protected void onClassSelected() {
 		expressionCompiler.clearContext();
-		expressionCompiler.setClassContext(currentClass.asJvmClass());
+		if (canAssignClassContext())
+			expressionCompiler.setClassContext(currentClass.asJvmClass());
 		scheduleCompile();
 	}
 
 	@Override
 	protected void onMethodSelected() {
 		expressionCompiler.clearContext();
-		expressionCompiler.setClassContext(currentClass.asJvmClass());
-		expressionCompiler.setMethodContext(currentMethod);
+		if (canAssignClassContext()) {
+			expressionCompiler.setClassContext(currentClass.asJvmClass());
+			if (canAssignMethodContext()) {
+				expressionCompiler.setMethodContext(currentMethod);
+			}
+		}
 		scheduleCompile();
 	}
 
 	@Override
 	protected void onFieldSelected() {
 		expressionCompiler.clearContext();
-		expressionCompiler.setClassContext(currentClass.asJvmClass());
+		if (canAssignClassContext())
+			expressionCompiler.setClassContext(currentClass.asJvmClass());
 		scheduleCompile();
 	}
 
 	@Override
 	protected void onPipelineOutputUpdate() {
 		// no-op
+	}
+
+	/**
+	 * Checks for things in the {@link #currentClass} which would prevent its use in the expression compiler as context.
+	 *
+	 * @return {@code true} when the current class can be used as context in the expression compiler.
+	 */
+	private boolean canAssignClassContext() {
+		// We cannot have duplicate field names.
+		Set<String> names = new HashSet<>();
+		for (FieldMember field : currentClass.getFields()) {
+			if (!names.add(field.getName()))
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Checks for things in the {@link #currentMethod} which would prevent its use in the expression compiler as context.
+	 *
+	 * @return {@code true} when the current method can be used as context in the expression compiler.
+	 */
+	private boolean canAssignMethodContext() {
+		// If we find things that cannot be allowed as method context, add the checks here
+		return true;
 	}
 
 	private void scheduleCompile() {
