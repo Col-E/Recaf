@@ -105,17 +105,20 @@ public class Editor extends BorderPane {
 		// which would be a huge pain in the ass.
 		codeArea.setUseInitialStyleForInsertion(false);
 
-		// Register a text change listener for recording state used for tab completion.
-		codeArea.plainTextChanges().addObserver(changes -> {
+		// Register a text change listener for recording state used for tab completion and updating problem locations.
+		codeArea.plainTextChanges().addObserver(change -> {
 			// Do fine completion updates.
 			if (tabCompleter != null)
-				tabCompleter.onFineTextUpdate(changes);
+				tabCompleter.onFineTextUpdate(change);
+
+			// Pass to problem tracking.
+			if (problemTracking != null)
+				problemTracking.accept(change);
 		});
 
 		// Register a text change listener that operates on reduces calls (limit calls to when user stops typing).
 		// Used for:
 		//  - Restyling text near inserted/removed text
-		//  - Updating text problems
 		//  - Taking document snapshots
 		codeArea.plainTextChanges()
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(SHORT_DELAY_MS))
@@ -131,12 +134,6 @@ public class Editor extends BorderPane {
 								return new StyleResult(syntaxHighlighter.createStyleSpans(text, start, end), start);
 							}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
 						}
-					}
-
-					// Pass to problem tracking.
-					if (problemTracking != null) {
-						for (PlainTextChange change : changes)
-							problemTracking.accept(change);
 					}
 
 					// Do rough completion updates.
