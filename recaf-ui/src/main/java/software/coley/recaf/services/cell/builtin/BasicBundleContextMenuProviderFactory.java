@@ -9,6 +9,7 @@ import software.coley.recaf.info.Info;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
+import software.coley.recaf.ui.control.popup.ChangeClassVersionForAllPopup;
 import software.coley.recaf.ui.control.popup.DecompileAllPopup;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
@@ -25,16 +26,18 @@ import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
 @ApplicationScoped
 public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuProviderFactory
 		implements BundleContextMenuProviderFactory {
-
 	private final Instance<DecompileAllPopup> decompileAllPaneProvider;
+	private final Instance<ChangeClassVersionForAllPopup> changeClassVersionProvider;
 
 	@Inject
 	public BasicBundleContextMenuProviderFactory(@Nonnull TextProviderService textService,
 												 @Nonnull IconProviderService iconService,
 												 @Nonnull Instance<DecompileAllPopup> decompileAllPaneProvider,
+												 @Nonnull Instance<ChangeClassVersionForAllPopup> changeClassVersionProvider,
 												 @Nonnull Actions actions) {
 		super(textService, iconService, actions);
 		this.decompileAllPaneProvider = decompileAllPaneProvider;
+		this.changeClassVersionProvider = changeClassVersionProvider;
 	}
 
 	@Nonnull
@@ -55,6 +58,11 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 			if (bundle instanceof JvmClassBundle jvmBundle) {
 				builder.item("menu.file.decompileall", DOCUMENT_EXPORT, () -> {
 					DecompileAllPopup popup = decompileAllPaneProvider.get();
+					popup.setTargetBundle(jvmBundle);
+					popup.show();
+				});
+				builder.item("menu.edit.changeversion", ARROWS_VERTICAL, () -> {
+					ChangeClassVersionForAllPopup popup = changeClassVersionProvider.get();
 					popup.setTargetBundle(jvmBundle);
 					popup.show();
 				});
