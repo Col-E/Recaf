@@ -6,7 +6,7 @@ import software.coley.recaf.RecafConstants;
 import software.coley.recaf.util.Types;
 
 /**
- * A visitor that strips empty named annotations from classes.
+ * A visitor that strips illegally named annotations from classes.
  *
  * @author Matt Coley
  */

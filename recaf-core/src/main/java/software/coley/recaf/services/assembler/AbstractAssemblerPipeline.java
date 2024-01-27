@@ -32,15 +32,20 @@ import java.util.List;
  * @author Justus Garbe
  */
 public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassResult, I extends ClassRepresentation> implements AssemblerPipeline<C, R, I> {
-	protected final PrintContext<?> context;
 	protected final AssemblerPipelineConfig pipelineConfig;
+	private final AssemblerPipelineGeneralConfig generalConfig;
+	protected PrintContext<?> context;
 
-	public AbstractAssemblerPipeline(@Nonnull AssemblerPipelineGeneralConfig config,
+	public AbstractAssemblerPipeline(@Nonnull AssemblerPipelineGeneralConfig generalConfig,
 									 @Nonnull AssemblerPipelineConfig pipelineConfig) {
-		this.context = new PrintContext<>(config.getDisassemblyIndent().getValue());
+		this.generalConfig = generalConfig;
 		this.pipelineConfig = pipelineConfig;
 
-		config.getDisassemblyIndent().addChangeListener((observable, oldVal, newVal) -> context.setIndentStep(newVal));
+		generalConfig.getDisassemblyIndent().addChangeListener((ob, old, current) -> refreshContext());
+	}
+
+	private void refreshContext() {
+		context = new PrintContext<>(generalConfig.getDisassemblyIndent().getValue());
 	}
 
 	@Nonnull
@@ -174,7 +179,7 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 
 	@Nonnull
 	protected String print(@Nonnull Printer printer) {
-		context.clear();
+		refreshContext(); // new context
 		printer.print(context);
 		return context.toString();
 	}
