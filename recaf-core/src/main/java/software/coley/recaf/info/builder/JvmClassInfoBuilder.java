@@ -9,6 +9,7 @@ import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.*;
 import software.coley.recaf.info.member.*;
+import software.coley.recaf.info.properties.builtin.UnknownAttributesProperty;
 import software.coley.recaf.util.MultiMap;
 
 import java.util.*;
@@ -163,6 +164,8 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 	@Override
 	public JvmClassInfo build() {
+		if (adapter != null && adapter.hasCustomAttributes())
+			getPropertyContainer().setProperty(new UnknownAttributesProperty(adapter.getCustomAttributeNames()));
 		verify();
 		return new BasicJvmClassInfo(this);
 	}
@@ -174,10 +177,6 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			throw new IllegalStateException("Bytecode required");
 		if (version < JvmClassInfo.BASE_VERSION)
 			throw new IllegalStateException("Version cannot be lower than 44 (v1)");
-		if (!skipValidationChecks && adapter != null && adapter.hasCustomAttributes()) {
-			throw new IllegalStateException("Unknown attributes found in class: " + this.getName() + "[" +
-					String.join(", ", adapter.getCustomAttributeNames()) + "]");
-		}
 	}
 
 	/**
@@ -328,6 +327,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		/**
 		 * @return Unique names of attributes found.
 		 */
+		@Nonnull
 		public Collection<String> getCustomAttributeNames() {
 			Set<String> names = new TreeSet<>();
 			classCustomAttributes.stream()
