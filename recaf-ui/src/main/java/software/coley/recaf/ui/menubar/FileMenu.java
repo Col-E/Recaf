@@ -18,6 +18,7 @@ import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.ClosableActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.popup.OpenUrlPopup;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
@@ -54,6 +55,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 	private final PathLoadingManager pathLoadingManager;
 	private final PathExportingManager pathExportingManager;
 	private final Instance<WorkspaceInformationPane> infoPaneProvider;
+	private final Instance<OpenUrlPopup> openUrlProvider;
 	private final DockingManager dockingManager;
 	private final WindowManager windowManager;
 	// config
@@ -64,6 +66,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 					@Nonnull PathLoadingManager pathLoadingManager,
 					@Nonnull PathExportingManager pathExportingManager,
 					@Nonnull Instance<WorkspaceInformationPane> infoPaneProvider,
+					@Nonnull Instance<OpenUrlPopup> openUrlProvider,
 					@Nonnull DockingManager dockingManager,
 					@Nonnull WindowManager windowManager,
 					@Nonnull RecentFilesConfig recentFilesConfig) {
@@ -72,6 +75,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 		this.pathLoadingManager = pathLoadingManager;
 		this.pathExportingManager = pathExportingManager;
 		this.infoPaneProvider = infoPaneProvider;
+		this.openUrlProvider=openUrlProvider;
 		this.dockingManager = dockingManager;
 		this.windowManager = windowManager;
 		this.recentFilesConfig = recentFilesConfig;
@@ -99,6 +103,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 		items.add(itemAddToWorkspace);
 		items.add(menuRecent);
 		items.add(action("menu.file.attach", CarbonIcons.DEBUG, this::openAttach));
+		items.add(action("menu.file.openurl", CarbonIcons.ATTACHMENT, this::openUrl));
 		items.add(separator());
 		items.add(itemExportPrimary);
 		items.add(itemViewChanges);
@@ -238,6 +243,15 @@ public class FileMenu extends WorkspaceAwareMenu {
 		Stage remoteVmWindow = windowManager.getRemoteVmWindow();
 		remoteVmWindow.show();
 		remoteVmWindow.requestFocus();
+	}
+
+	/**
+	 * Display the open-url window.
+	 */
+	private void openUrl() {
+		OpenUrlPopup popup = openUrlProvider.get();
+		popup.show();
+		popup.requestInputFocus();
 	}
 
 	/**
