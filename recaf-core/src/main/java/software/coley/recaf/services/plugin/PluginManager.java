@@ -1,6 +1,8 @@
 package software.coley.recaf.services.plugin;
 
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.plugin.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.io.ByteSource;
@@ -20,6 +22,7 @@ public interface PluginManager extends Service {
 	/**
 	 * @return Allocator to use for creating plugin instances.
 	 */
+	@Nonnull
 	ClassAllocator getAllocator();
 
 	/**
@@ -32,7 +35,8 @@ public interface PluginManager extends Service {
 	 * 		When any I/O error occurs.
 	 * @see PluginLoader#isSupported(ByteSource)
 	 */
-	PluginLoader getLoader(ByteSource source) throws IOException;
+	@Nullable
+	PluginLoader getLoader(@Nonnull ByteSource source) throws IOException;
 
 	/**
 	 * @param source
@@ -44,7 +48,7 @@ public interface PluginManager extends Service {
 	 * 		When any I/O error occurs.
 	 * @see PluginLoader#isSupported(ByteSource)
 	 */
-	boolean isSupported(ByteSource source) throws IOException;
+	boolean isSupported(@Nonnull ByteSource source) throws IOException;
 
 	/**
 	 * @param name
@@ -54,16 +58,19 @@ public interface PluginManager extends Service {
 	 *
 	 * @return Plugin by its name or {@code null}, if not found.
 	 */
-	<T extends Plugin> PluginContainer<T> getPlugin(String name);
+	@Nullable
+	<T extends Plugin> PluginContainer<T> getPlugin(@Nonnull String name);
 
 	/**
 	 * @return Collection of loaders.
 	 */
+	@Nonnull
 	Collection<PluginLoader> getLoaders();
 
 	/**
 	 * @return Collection of plugins.
 	 */
+	@Nonnull
 	Collection<PluginContainer<? extends Plugin>> getPlugins();
 
 	/**
@@ -74,8 +81,9 @@ public interface PluginManager extends Service {
 	 *
 	 * @return Collection of plugins of the given type.
 	 */
+	@Nonnull
 	@SuppressWarnings("unchecked")
-	default <T> Collection<T> getPluginsOfType(Class<T> type) {
+	default <T> Collection<T> getPluginsOfType(@Nonnull Class<T> type) {
 		return (Collection<T>) getPlugins().stream()
 				.map(PluginContainer::getPlugin)
 				.filter(plugin -> type.isAssignableFrom(plugin.getClass()))
@@ -88,7 +96,7 @@ public interface PluginManager extends Service {
 	 * @param loader
 	 *        {@link PluginLoader} to register.
 	 */
-	void registerLoader(PluginLoader loader);
+	void registerLoader(@Nonnull PluginLoader loader);
 
 	/**
 	 * Removes loader.
@@ -96,7 +104,7 @@ public interface PluginManager extends Service {
 	 * @param loader
 	 *        {@link PluginLoader} to remove.
 	 */
-	void removeLoader(PluginLoader loader);
+	void removeLoader(@Nonnull PluginLoader loader);
 
 	/**
 	 * Loads and registers a plugin.
@@ -111,7 +119,8 @@ public interface PluginManager extends Service {
 	 * @throws PluginLoadException
 	 * 		When there was no loader for the given source, or the plugin failed to load.
 	 */
-	default <T extends Plugin> PluginContainer<T> loadPlugin(ByteSource source) throws PluginLoadException {
+	@Nonnull
+	default <T extends Plugin> PluginContainer<T> loadPlugin(@Nonnull ByteSource source) throws PluginLoadException {
 		for (PluginLoader loader : getLoaders()) {
 			try {
 				// Skip unsupported sources
@@ -144,7 +153,8 @@ public interface PluginManager extends Service {
 	 * @throws PluginLoadException
 	 * 		Plugin failed to load.
 	 */
-	<T extends Plugin> PluginContainer<T> loadPlugin(PluginContainer<T> container) throws PluginLoadException;
+	@Nonnull
+	<T extends Plugin> PluginContainer<T> loadPlugin(@Nonnull PluginContainer<T> container) throws PluginLoadException;
 
 	/**
 	 * Unloads a plugin.
@@ -152,7 +162,7 @@ public interface PluginManager extends Service {
 	 * @param name
 	 * 		Name of the plugin.
 	 */
-	void unloadPlugin(String name);
+	void unloadPlugin(@Nonnull String name);
 
 	/**
 	 * Unloads a plugin.
@@ -160,7 +170,7 @@ public interface PluginManager extends Service {
 	 * @param plugin
 	 * 		Instance of the plugin.
 	 */
-	void unloadPlugin(Plugin plugin);
+	void unloadPlugin(@Nonnull Plugin plugin);
 
 	/**
 	 * Unloads a plugin.
@@ -168,7 +178,7 @@ public interface PluginManager extends Service {
 	 * @param container
 	 * 		Container of the plugin.
 	 */
-	void unloadPlugin(PluginContainer<?> container);
+	void unloadPlugin(@Nonnull PluginContainer<?> container);
 
 	/**
 	 * @param container
@@ -178,5 +188,5 @@ public interface PluginManager extends Service {
 	 *
 	 * @return {@code true} to enable the plugin once it is loaded.
 	 */
-	<T extends Plugin> boolean shouldEnablePluginOnLoad(PluginContainer<T> container);
+	<T extends Plugin> boolean shouldEnablePluginOnLoad(@Nonnull PluginContainer<T> container);
 }

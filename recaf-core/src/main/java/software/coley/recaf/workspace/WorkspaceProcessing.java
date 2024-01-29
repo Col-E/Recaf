@@ -40,7 +40,7 @@ public class WorkspaceProcessing {
 	@Inject
 	public WorkspaceProcessing(@Nonnull Workspace workspace, @Nonnull Instance<WorkspaceProcessor> processors) {
 		for (WorkspaceProcessor processor : processors) {
-			logger.info("Applying workspace processor: {}", processor.name());
+			logger.trace("Applying workspace processor: {}", processor.name());
 			processor.onWorkspaceOpened(workspace);
 		}
 	}

@@ -1,6 +1,7 @@
 package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -76,13 +77,15 @@ public class BasicPluginManager implements PluginManager {
 		}
 	}
 
+	@Nonnull
 	@Override
 	public ClassAllocator getAllocator() {
 		return classAllocator;
 	}
 
 	@Override
-	public PluginLoader getLoader(ByteSource source) throws IOException {
+	@Nullable
+	public PluginLoader getLoader(@Nonnull ByteSource source) throws IOException {
 		List<PluginLoader> loaders = this.loaders;
 		for (PluginLoader loader : loaders) {
 			if (loader.isSupported(source)) {
@@ -93,7 +96,7 @@ public class BasicPluginManager implements PluginManager {
 	}
 
 	@Override
-	public boolean isSupported(ByteSource source) throws IOException {
+	public boolean isSupported(@Nonnull ByteSource source) throws IOException {
 		List<PluginLoader> loaders = this.loaders;
 		for (PluginLoader loader : loaders) {
 			if (loader.isSupported(source)) {
@@ -104,33 +107,37 @@ public class BasicPluginManager implements PluginManager {
 	}
 
 	@Override
+	@Nullable
 	@SuppressWarnings("unchecked")
-	public <T extends Plugin> PluginContainer<T> getPlugin(String name) {
+	public <T extends Plugin> PluginContainer<T> getPlugin(@Nonnull String name) {
 		return (PluginContainer<T>) nameMap.get(name.toLowerCase(Locale.ROOT));
 	}
 
+	@Nonnull
 	@Override
 	public Collection<PluginLoader> getLoaders() {
 		return Collections.unmodifiableList(loaders);
 	}
 
+	@Nonnull
 	@Override
 	public Collection<PluginContainer<? extends Plugin>> getPlugins() {
 		return Collections.unmodifiableCollection(nameMap.values());
 	}
 
 	@Override
-	public void registerLoader(PluginLoader loader) {
+	public void registerLoader(@Nonnull PluginLoader loader) {
 		loaders.add(loader);
 	}
 
 	@Override
-	public void removeLoader(PluginLoader loader) {
+	public void removeLoader(@Nonnull PluginLoader loader) {
 		loaders.remove(loader);
 	}
 
+	@Nonnull
 	@Override
-	public <T extends Plugin> PluginContainer<T> loadPlugin(PluginContainer<T> container) throws PluginLoadException {
+	public <T extends Plugin> PluginContainer<T> loadPlugin(@Nonnull PluginContainer<T> container) throws PluginLoadException {
 		String name = container.getInformation().getName();
 		if (nameMap.putIfAbsent(name.toLowerCase(Locale.ROOT), container) != null) {
 			// Plugin already exists, we do not allow
@@ -146,7 +153,7 @@ public class BasicPluginManager implements PluginManager {
 	}
 
 	@Override
-	public void unloadPlugin(String name) {
+	public void unloadPlugin(@Nonnull String name) {
 		PluginContainer<?> container = nameMap.get(name.toLowerCase(Locale.ROOT));
 		if (container == null) {
 			throw new IllegalStateException("Unknown plugin: " + name);
@@ -155,7 +162,7 @@ public class BasicPluginManager implements PluginManager {
 	}
 
 	@Override
-	public void unloadPlugin(Plugin plugin) {
+	public void unloadPlugin(@Nonnull Plugin plugin) {
 		PluginContainer<?> container = instanceMap.get(plugin);
 		if (container == null) {
 			throw new IllegalStateException("Unknown plugin: " + plugin);
@@ -164,7 +171,7 @@ public class BasicPluginManager implements PluginManager {
 	}
 
 	@Override
-	public void unloadPlugin(PluginContainer<?> container) {
+	public void unloadPlugin(@Nonnull PluginContainer<?> container) {
 		String name = container.getInformation().getName();
 		if (!nameMap.remove(name.toLowerCase(Locale.ROOT), container)
 				|| !instanceMap.remove(container.getPlugin(), container)) {
@@ -174,7 +181,7 @@ public class BasicPluginManager implements PluginManager {
 	}
 
 	@Override
-	public <T extends Plugin> boolean shouldEnablePluginOnLoad(PluginContainer<T> container) {
+	public <T extends Plugin> boolean shouldEnablePluginOnLoad(@Nonnull PluginContainer<T> container) {
 		// TODO: We should maintain a state (from config) which plugins the user wants to load on startup
 		//  and only allow those to be initialized on startup.
 		return true;
