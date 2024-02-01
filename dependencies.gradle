@@ -1,7 +1,7 @@
 def asmVersion = '9.6'
 def cafeDudeVersion = '2.0.1'
 def junitVersion = '5.10.0'
-def jasmVersion = '4daaeefc6e'
+def jasmVersion = '518b763f37'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
@@ -58,9 +58,9 @@ project.ext {
 
     mockito = 'org.mockito:mockito-core:5.6.0'
 
-     openrewrite = 'org.openrewrite:rewrite-java-17:8.13.3'
+    openrewrite = 'org.openrewrite:rewrite-java-17:8.13.3'
 
-    procyon = "org.bitbucket.mstrobel:procyon-compilertools:0.6.0"
+    procyon = 'org.bitbucket.mstrobel:procyon-compilertools:0.6.0'
 
     picocli = 'info.picocli:picocli:4.7.5'
 

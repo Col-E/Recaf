@@ -7,7 +7,8 @@ import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.JvmCompiler;
 import me.darknet.assembler.compile.JvmCompilerOptions;
-import me.darknet.assembler.compile.analysis.EmptyMethodAnalysisLookup;
+import me.darknet.assembler.compile.analysis.BasicFieldValueLookup;
+import me.darknet.assembler.compile.analysis.BasicMethodValueLookup;
 import me.darknet.assembler.compile.analysis.jvm.ValuedJvmAnalysisEngine;
 import me.darknet.assembler.compile.visitor.JavaCompileResult;
 import me.darknet.assembler.compiler.Compiler;
@@ -28,6 +29,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.util.JavaVersion;
+import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,12 +46,15 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 
 	private final ASTProcessor processor = new ASTProcessor(BytecodeFormat.JVM);
 	private final InheritanceGraph inheritanceGraph;
+	private final Workspace workspace;
 
 	@Inject
-	public JvmAssemblerPipeline(@Nonnull InheritanceGraph inheritanceGraph,
+	public JvmAssemblerPipeline(@Nonnull Workspace workspace,
+								@Nonnull InheritanceGraph inheritanceGraph,
 								@Nonnull AssemblerPipelineGeneralConfig generalConfig,
 								@Nonnull JvmAssemblerPipelineConfig config) {
 		super(generalConfig, config);
+		this.workspace = workspace;
 		this.inheritanceGraph = inheritanceGraph;
 	}
 
@@ -94,7 +99,14 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	protected CompilerOptions<? extends CompilerOptions<?>> getCompilerOptions() {
 		JvmCompilerOptions options = new JvmCompilerOptions();
 		if (pipelineConfig.isValueAnalysisEnabled())
-			options.engineProvider(ValuedJvmAnalysisEngine::new);
+			options.engineProvider(vars -> {
+				ValuedJvmAnalysisEngine engine = new ValuedJvmAnalysisEngine(vars);
+				if (pipelineConfig.isSimulatingCommonJvmCalls()) {
+					engine.setFieldValueLookup(new WorkspaceFieldValueLookup(workspace, new BasicFieldValueLookup()));
+					engine.setMethodValueLookup(new BasicMethodValueLookup());
+				}
+				return engine;
+			});
 		return options;
 	}
 
