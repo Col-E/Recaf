@@ -4,20 +4,29 @@ import dev.xdark.ssvm.VirtualMachine;
 import dev.xdark.ssvm.api.MethodInvoker;
 import dev.xdark.ssvm.api.VMInterface;
 import dev.xdark.ssvm.classloading.BootClassFinder;
+import dev.xdark.ssvm.classloading.ParsedClassData;
 import dev.xdark.ssvm.classloading.SupplyingClassLoader;
 import dev.xdark.ssvm.execution.Interpreter;
 import dev.xdark.ssvm.execution.Result;
-import dev.xdark.ssvm.filesystem.*;
+import dev.xdark.ssvm.filesystem.DelegatingFileManager;
+import dev.xdark.ssvm.filesystem.FileManager;
+import dev.xdark.ssvm.filesystem.HostFileManager;
+import dev.xdark.ssvm.filesystem.SimpleFileManager;
 import dev.xdark.ssvm.invoke.InvocationUtil;
 import dev.xdark.ssvm.mirror.type.InstanceClass;
 import dev.xdark.ssvm.operation.VMOperations;
 import dev.xdark.ssvm.timezone.SimpleTimeManager;
 import dev.xdark.ssvm.timezone.TimeManager;
+import dev.xdark.ssvm.util.ClassUtil;
 import dev.xdark.ssvm.value.InstanceValue;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.ClassNode;
+import software.coley.classserver.JdkProperties;
+import software.coley.classserver.JdkResourcesServer;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.path.ClassPathNode;
@@ -30,7 +39,10 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
 import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -200,7 +212,7 @@ public class CommonVirtualService implements Service {
 		} catch (Throwable t) {
 			cvm = null;
 			cvmInitFail = t;
-			logger.warn("Failed to initialize VM. Current ");
+			logger.warn("Failed to initialize VM. VM based abilities will be unavailable.");
 		}
 		vm = cvm;
 		vmInitFailure = cvmInitFail;
@@ -340,14 +352,36 @@ public class CommonVirtualService implements Service {
 
 		@Override
 		protected BootClassFinder createBootClassFinder() {
-			if (config.useHostFileManager().getValue()) {
-				String jdkPath = config.getAlternateJdkPath().getValue();
-				// TODO: If path exists, create a remote boot-class finder
-				//  - Should spin up a JVM of that version, and then we contact it over a socket
-				//  - This is done in 3x with SSVM 1.X and needs to be ported over
-				//  - Can be handled similar to how our instrumentation server works (self-extracting stub)
-				logger.warn("Alternative boot path not yet supported");
+			if (config.useAlternateJdkBootPath().getValue()) {
+				Path jdkPath = Paths.get(config.getAlternateJdkPath().getValue());
+				try {
+					// SSVM uses the VM properties to detect what version it is targeting.
+					// We must fetch the properties and update our values to match.
+					JdkProperties remoteProperties = JdkProperties.getProperties(jdkPath);
+					var env = getenv();
+					var properties = getProperties();
+					env.clear();
+					env.putAll(remoteProperties.getEnvironment());
+					properties.clear();
+					properties.putAll(remoteProperties.getSystemProperties());
+
+					// Initialize the resource server and create a class finder with it.
+					JdkResourcesServer server = JdkResourcesServer.start(jdkPath);
+					return name -> {
+						try {
+							byte[] bytes = server.requestResource(name + ".class");
+							ClassReader cr = new ClassReader(bytes);
+							ClassNode node = ClassUtil.readNode(cr);
+							return new ParsedClassData(cr, node);
+						} catch (Throwable t) {
+							return null;
+						}
+					};
+				} catch (IOException ex) {
+					logger.error("Failed to create remote server for JDK classes using '{}'", jdkPath, ex);
+				}
 			}
+
 			return super.createBootClassFinder();
 		}
 

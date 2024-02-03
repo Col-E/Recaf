@@ -12,7 +12,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.dummy.ArrayStuff;
-import software.coley.recaf.test.dummy.unoptimized.CountTo100;
+import software.coley.recaf.test.dummy.CountTo100;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -107,7 +107,7 @@ public class VmTest extends TestBase {
 			Argument[] arguments = ArgumentBuilder.withinVM(commonVirtualService.getSharedVm())
 					.withClassloader(helper.getClassLoaderInstance())
 					.forMethod(declaringClass, methodTarget)
-					.add(new String[] { "0 1 2 3 4 5 6" })
+					.add(new String[]{"0 1 2 3 4 5 6"})
 					.build();
 
 			try {

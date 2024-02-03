@@ -306,7 +306,6 @@ public class ArgumentBuilder {
 		return new BuilderStage0(vm);
 	}
 
-
 	/**
 	 * Initial stage for configuring classloader options within the VM.
 	 */
@@ -354,6 +353,9 @@ public class ArgumentBuilder {
 		}
 	}
 
+	/**
+	 * Second stage for configuring initialization behavior and which method is to be invoked.
+	 */
 	public static class BuilderStage1 {
 		private final VirtualMachine vm;
 		private final JavaClass classWithinLoader;

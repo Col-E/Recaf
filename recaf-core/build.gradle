@@ -45,6 +45,7 @@ dependencies {
     api ssvm_core
     api ssvm_invoke
     api ssvm_io
+    api ssvm_server
     api vineflower
 }
 

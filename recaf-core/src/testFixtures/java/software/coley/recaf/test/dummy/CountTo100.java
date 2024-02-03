@@ -1,4 +1,4 @@
-package software.coley.recaf.test.dummy.unoptimized;
+package software.coley.recaf.test.dummy;
 
 @SuppressWarnings("all")
 public class CountTo100 {
