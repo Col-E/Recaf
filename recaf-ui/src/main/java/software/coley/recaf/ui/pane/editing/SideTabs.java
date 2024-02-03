@@ -43,7 +43,10 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 	private static final PseudoClass PSEUDO_VERTICAL = PseudoClass.getPseudoClass("vertical");
 	private final ObservableList<Tab> tabs = FXCollections.observableArrayList();
 	private final ObservableObject<Tab> selectedTab = new ObservableObject<>(null);
+	private final DoubleProperty initialSize = new SimpleDoubleProperty();
 	private final Pane tabContainer;
+	private final ResizeGrip grip;
+	private final DoubleProperty prefSize;
 	private double lastSize;
 	private boolean sizeIsBound;
 	private PathNode<?> path;
@@ -104,15 +107,17 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 		ResizeGrip grip;
 		if (orientation == Orientation.VERTICAL) {
 			prefSize = prefWidthProperty();
-			grip = new ResizeGrip(orientation, this::getWidth,
+			grip = new ResizeGrip(initialSize, orientation, this::getWidth,
 					size -> prefSize.bind(size.map((Function<Number, Number>)
 							number -> lastSize = Math.min(number.doubleValue(), getMaxWidth()))));
 		} else {
 			prefSize = prefHeightProperty();
-			grip = new ResizeGrip(orientation, this::getHeight,
+			grip = new ResizeGrip(initialSize, orientation, this::getHeight,
 					size -> prefSize.bind(size.map((Function<Number, Number>)
 							number -> lastSize = Math.min(number.doubleValue(), getMaxHeight()))));
 		}
+		this.grip = grip;
+		this.prefSize = prefSize;
 
 
 		// When the selected tab changes display the selected one's content, clear content if no selection.
@@ -143,10 +148,13 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 						// restore the prior size.
 						BorderPane wrapper = new BorderPane(cur.getContent());
 						wrapper.getStyleClass().add("side-tab-content");
-						if (orientation == Orientation.VERTICAL)
+						if (orientation == Orientation.VERTICAL) {
 							wrapper.setLeft(grip);
-						else
+							wrapper.setPrefWidth(lastSize);
+						} else {
 							wrapper.setTop(grip);
+							wrapper.setPrefHeight(lastSize);
+						}
 						setCenter(wrapper);
 					}
 				}
@@ -173,6 +181,19 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 	 */
 	public ObservableList<Tab> getTabs() {
 		return tabs;
+	}
+
+
+	/**
+	 * Sets the size of content that will be shown when a tab is selected.
+	 * By default, the tab content auto-sizes to the content shown.
+	 * In some cases when the auto-size is 0 you may want to use this.
+	 *
+	 * @param initialSize
+	 * 		Initial size of the tab content.
+	 */
+	public void setInitialSize(double initialSize) {
+		this.initialSize.setValue(initialSize);
 	}
 
 	@Nonnull
@@ -269,6 +290,8 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 		private final SimpleDoubleProperty targetSize = new SimpleDoubleProperty();
 
 		/**
+		 * @param initialSize
+		 * 		Initial desired size of the side-tab content.
 		 * @param orientation
 		 * 		Parent side-tabs orientation.
 		 * @param sizeLookup
@@ -277,7 +300,8 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 		 * 		Consumer to take in the desired new size, wrapped in a {@link DoubleProperty} in order to
 		 * 		support mapping operations.
 		 */
-		private ResizeGrip(@Nonnull Orientation orientation,
+		private ResizeGrip(@Nonnull DoubleProperty initialSize,
+						   @Nonnull Orientation orientation,
 						   @Nonnull DoubleSupplier sizeLookup,
 						   @Nonnull Consumer<DoubleProperty> consumer) {
 			AtomicInteger startPos = new AtomicInteger();
@@ -323,7 +347,7 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 
 			// Trigger call to consumer once with existing parent width once initially added to the UI.
 			NodeEvents.runOnceOnChange(parentProperty(), parent -> {
-				targetSize.set(sizeLookup.getAsDouble());
+				targetSize.set(Math.max(sizeLookup.getAsDouble(), initialSize.doubleValue()));
 				consumer.accept(targetSize);
 			});
 		}

@@ -119,7 +119,7 @@ public interface Mappings {
 	 */
 	@Nullable
 	String getMappedVariableName(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
-								 String name, String desc, int index);
+								 @Nullable String name, @Nullable String desc, int index);
 
 	/**
 	 * Generally this is implemented under the assumption that {@link Mappings} is used to model data explicitly.

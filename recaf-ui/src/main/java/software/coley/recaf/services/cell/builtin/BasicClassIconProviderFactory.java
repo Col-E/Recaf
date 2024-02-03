@@ -61,7 +61,7 @@ public class BasicClassIconProviderFactory implements ClassIconProviderFactory {
 			} else {
 				return EXCEPTION;
 			}
-		} else if (info.isAnonymousInner()) {
+		} else if (info.isAnonymousInnerClass()) {
 			return ANONYMOUS;
 		} else if (info.hasAbstractModifier()) {
 			return ABSTRACT;

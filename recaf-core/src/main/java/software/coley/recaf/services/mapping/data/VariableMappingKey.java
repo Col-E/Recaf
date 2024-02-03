@@ -1,5 +1,7 @@
 package software.coley.recaf.services.mapping.data;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.Objects;
 
 /**
@@ -34,6 +36,7 @@ public class VariableMappingKey extends AbstractMappingKey {
 		this.variableDesc = variableDesc;
 	}
 
+	@Nonnull
 	@Override
 	protected String toText() {
 		String owner = this.owner;

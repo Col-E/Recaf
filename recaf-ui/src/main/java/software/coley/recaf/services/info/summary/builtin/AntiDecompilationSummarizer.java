@@ -37,6 +37,7 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.visitors.DuplicateAnnotationRemovingVisitor;
+import software.coley.recaf.util.visitors.IllegalAnnotationRemovingVisitor;
 import software.coley.recaf.util.visitors.IllegalSignatureRemovingVisitor;
 import software.coley.recaf.util.visitors.LongAnnotationRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
@@ -84,6 +85,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 		Set<JvmClassInfo> classesWithDuplicateAnnotations = Collections.newSetFromMap(new IdentityHashMap<>());
 		Set<JvmClassInfo> classesWithIllegalNames = Collections.newSetFromMap(new IdentityHashMap<>());
 		Map<JvmClassInfo, Set<String>> classesWithLongAnnotations = new IdentityHashMap<>();
+		Set<JvmClassInfo> classesWithIllegalAnnos = Collections.newSetFromMap(new IdentityHashMap<>());
 		resource.jvmClassBundleStream().forEach(bundle -> {
 			bundle.forEach(cls -> {
 				// Check for invalid signatures in the class.
@@ -176,6 +178,39 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 					}
 				}
 
+				// Check for annotation names with empty names. These are used to attempt triggering OOBE errors
+				// in analysis and editing features.
+				bogusAnnoName:
+				{
+					for (AnnotationInfo annotation : cls.getAnnotations()) {
+						String descriptor = annotation.getDescriptor();
+						if (!Types.isValidDesc(descriptor)) {
+							classesWithIllegalAnnos.add(cls);
+							break bogusAnnoName;
+						}
+					}
+
+					for (FieldMember field : cls.getFields()) {
+						for (AnnotationInfo annotation : field.getAnnotations()) {
+							String descriptor = annotation.getDescriptor();
+							if (!Types.isValidDesc(descriptor)) {
+								classesWithIllegalAnnos.add(cls);
+								break bogusAnnoName;
+							}
+						}
+					}
+
+					for (MethodMember method : cls.getMethods()) {
+						for (AnnotationInfo annotation : method.getAnnotations()) {
+							String descriptor = annotation.getDescriptor();
+							if (!Types.isValidDesc(descriptor)) {
+								classesWithIllegalAnnos.add(cls);
+								break bogusAnnoName;
+							}
+						}
+					}
+				}
+
 				// Check for illegally declared names.
 				illegalNames:
 				{
@@ -208,11 +243,13 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 		int invalidSigCount = classesWithInvalidSignatures.size();
 		int dupAnnoCount = classesWithDuplicateAnnotations.size();
 		int longAnnoCount = classesWithLongAnnotations.size();
+		int illegalAnnoCount = classesWithIllegalAnnos.size();
 		int illegalNameCount = classesWithIllegalNames.size();
 		if (cycleCount > 0 ||
 				invalidSigCount > 0 ||
 				dupAnnoCount > 0 ||
 				longAnnoCount > 0 ||
+				illegalAnnoCount > 0 ||
 				illegalNameCount > 0) {
 			ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("anti-decompile-patching");
 			Label title = new BoundLabel(Lang.getBinding("service.analysis.anti-decompile"));
@@ -314,7 +351,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 			}
 
 			// Option to remove long named annotations
-			if (dupAnnoCount > 0) {
+			if (longAnnoCount > 0) {
 				Button action = new ActionButton(CarbonIcons.CLEAN, Lang.getBinding("service.analysis.anti-decompile.long-annos"), () -> {
 					CompletableFuture.supplyAsync(() -> {
 						int patched = 0;
@@ -346,6 +383,39 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 				consumer.appendSummary(box(action, label));
 			}
 
+			// Option to remove empty named annotations
+			if (illegalAnnoCount > 0) {
+				Button action = new ActionButton(CarbonIcons.CLEAN, Lang.getBinding("service.analysis.anti-decompile.illegal-annos"), () -> {
+					CompletableFuture.supplyAsync(() -> {
+						int patched = 0;
+						for (JvmClassInfo classInfo : classesWithIllegalAnnos) {
+							ClassPathNode path = workspace.findClass(classInfo.getName());
+							if (path != null) {
+								var bundle = path.getValueOfType(ClassBundle.class);
+								if (bundle != null) {
+									// Patch class to remove illegal annotations.
+									ClassWriter writer = new ClassWriter(0);
+									classInfo.getClassReader().accept(new IllegalAnnotationRemovingVisitor(writer), 0);
+									JvmClassInfo patchedInfo = classInfo.toJvmClassBuilder().withBytecode(writer.toByteArray()).build();
+
+									// Replace class
+									bundle.put(patchedInfo);
+									patched++;
+								}
+							}
+						}
+						return patched;
+					}, service).whenComplete((count, error) -> {
+						if (error == null)
+							logger.info("Patched {} classes with illegal annotations", count);
+						else
+							logger.error("Failed patching classes with illegal annotations", error);
+					});
+				}).once().width(BUTTON_WIDTH);
+				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", illegalAnnoCount));
+				consumer.appendSummary(box(action, label));
+			}
+
 			// Option to open mapping generator
 			if (illegalNameCount > 0) {
 				Button action = new ActionButton(CarbonIcons.LICENSE_MAINTENANCE, Lang.getBinding("service.analysis.anti-decompile.illegal-name"), () -> {
@@ -354,6 +424,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeNonAsciiNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeKeywordNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeWhitespaceNames());
+						mappingGeneratorPane.generate();
 						RecafScene scene = new RecafScene(mappingGeneratorPane);
 						FxThreadUtil.run(() -> {
 							Stage window = windowFactory.createAnonymousStage(scene, getBinding("mapgen"), 800, 400);

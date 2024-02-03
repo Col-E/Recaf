@@ -1,5 +1,6 @@
 package software.coley.recaf.config;
 
+import jakarta.annotation.Nonnull;
 import software.coley.observables.Observable;
 
 /**
@@ -45,16 +46,19 @@ public class BasicConfigValue<T> implements ConfigValue<T> {
 		this.hidden = hidden;
 	}
 
+	@Nonnull
 	@Override
 	public String getId() {
 		return key;
 	}
 
+	@Nonnull
 	@Override
 	public Class<T> getType() {
 		return type;
 	}
 
+	@Nonnull
 	@Override
 	public Observable<T> getObservable() {
 		return observable;

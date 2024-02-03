@@ -210,7 +210,7 @@ public class IntermediateMappings implements Mappings {
 	@Nullable
 	@Override
 	public String getMappedVariableName(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
-										String name, String desc, int index) {
+										@Nullable String name, @Nullable String desc, int index) {
 		List<VariableMapping> variablesInMethod = getMethodVariableMappings(className, methodName, methodDesc);
 		for (VariableMapping variable : variablesInMethod) {
 			if (equalsOrNull(desc, variable.getDesc()) && equalsOrNull(name, variable.getOldName())

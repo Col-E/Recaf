@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.io;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -26,7 +27,8 @@ public interface ResourceImporter {
 	 * @throws IOException
 	 * 		When the content cannot be read from.
 	 */
-	WorkspaceResource importResource(ByteSource source) throws IOException;
+	@Nonnull
+	WorkspaceResource importResource(@Nonnull ByteSource source) throws IOException;
 
 	/**
 	 * @param file
@@ -37,7 +39,8 @@ public interface ResourceImporter {
 	 * @throws IOException
 	 * 		When the content at the file path cannot be read from.
 	 */
-	default WorkspaceResource importResource(File file) throws IOException {
+	@Nonnull
+	default WorkspaceResource importResource(@Nonnull File file) throws IOException {
 		return importResource(file.toPath());
 	}
 
@@ -50,7 +53,8 @@ public interface ResourceImporter {
 	 * @throws IOException
 	 * 		When the content at the file path cannot be read from.
 	 */
-	WorkspaceResource importResource(Path path) throws IOException;
+	@Nonnull
+	WorkspaceResource importResource(@Nonnull Path path) throws IOException;
 
 	/**
 	 * @param url
@@ -61,7 +65,8 @@ public interface ResourceImporter {
 	 * @throws IOException
 	 * 		When content from the URL cannot be accessed.
 	 */
-	WorkspaceResource importResource(URL url) throws IOException;
+	@Nonnull
+	WorkspaceResource importResource(@Nonnull URL url) throws IOException;
 
 	/**
 	 * @param uri
@@ -73,7 +78,8 @@ public interface ResourceImporter {
 	 * 		When reading from the URI fails either due to a malformed URI,
 	 * 		or the content being inaccessible.
 	 */
-	default WorkspaceResource importResource(URI uri) throws IOException {
+	@Nonnull
+	default WorkspaceResource importResource(@Nonnull URI uri) throws IOException {
 		return importResource(uri.toURL());
 	}
 }

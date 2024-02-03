@@ -23,7 +23,7 @@ public class ConfigManager implements Service {
 	private final ConfigManagerConfig config;
 
 	@Inject
-	public ConfigManager(ConfigManagerConfig config, Instance<ConfigContainer> containers) {
+	public ConfigManager(@Nonnull ConfigManagerConfig config, @Nonnull Instance<ConfigContainer> containers) {
 		this.config = config;
 		for (ConfigContainer container : containers)
 			registerContainer(container);
@@ -70,7 +70,7 @@ public class ConfigManager implements Service {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addManagedConfigListener(ManagedConfigListener listener) {
+	public void addManagedConfigListener(@Nonnull ManagedConfigListener listener) {
 		listeners.add(listener);
 	}
 
@@ -81,7 +81,7 @@ public class ConfigManager implements Service {
 	 * @return {@code true} when the listener was removed.
 	 * {@code false} when it wasn't added in the first place.
 	 */
-	public boolean removeManagedConfigListener(ManagedConfigListener listener) {
+	public boolean removeManagedConfigListener(@Nonnull ManagedConfigListener listener) {
 		return listeners.remove(listener);
 	}
 

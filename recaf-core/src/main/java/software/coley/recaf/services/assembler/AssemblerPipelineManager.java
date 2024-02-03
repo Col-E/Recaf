@@ -1,9 +1,10 @@
 package software.coley.recaf.services.assembler;
 
 import jakarta.annotation.Nonnull;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.ClassResult;
+import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.Service;
@@ -13,7 +14,7 @@ import software.coley.recaf.services.Service;
  *
  * @author Justus Garbe
  */
-@ApplicationScoped
+@WorkspaceScoped
 public class AssemblerPipelineManager implements Service {
 	public static final String SERVICE_ID = "assembler-pipeline";
 	private final AssemblerPipelineGeneralConfig config;
@@ -38,7 +39,7 @@ public class AssemblerPipelineManager implements Service {
 	 * @return Either a {@link JvmAssemblerPipeline} or {@link AndroidAssemblerPipeline} based on the path contents.
 	 */
 	@Nonnull
-	public AssemblerPipeline<? extends ClassInfo, ? extends ClassRepresentation> getPipeline(@Nonnull PathNode<?> path) {
+	public AssemblerPipeline<? extends ClassInfo, ? extends ClassResult, ? extends ClassRepresentation> getPipeline(@Nonnull PathNode<?> path) {
 		ClassInfo info = path.getValueOfType(ClassInfo.class);
 		if (info == null)
 			throw new IllegalStateException("Failed to find class info for node: " + path);

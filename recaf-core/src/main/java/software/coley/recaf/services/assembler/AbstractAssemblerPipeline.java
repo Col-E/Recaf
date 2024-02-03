@@ -3,10 +3,8 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.ElementType;
-import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.*;
 import me.darknet.assembler.compiler.Compiler;
-import me.darknet.assembler.compiler.CompilerOptions;
-import me.darknet.assembler.compiler.InheritanceChecker;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.printer.*;
@@ -27,20 +25,27 @@ import java.util.List;
  * @param <C>
  * 		Class type which will be assembled.
  * @param <R>
+ * 		Compile return value for JASM {@link Compiler}.
+ * @param <I>
  * 		Class intermediate representation type.
  *
  * @author Justus Garbe
  */
-public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassRepresentation> implements AssemblerPipeline<C, R> {
-	protected final PrintContext<?> context;
+public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassResult, I extends ClassRepresentation> implements AssemblerPipeline<C, R, I> {
 	protected final AssemblerPipelineConfig pipelineConfig;
+	private final AssemblerPipelineGeneralConfig generalConfig;
+	protected PrintContext<?> context;
 
-	public AbstractAssemblerPipeline(@Nonnull AssemblerPipelineGeneralConfig config,
+	public AbstractAssemblerPipeline(@Nonnull AssemblerPipelineGeneralConfig generalConfig,
 									 @Nonnull AssemblerPipelineConfig pipelineConfig) {
-		this.context = new PrintContext<>(config.getDisassemblyIndent().getValue());
+		this.generalConfig = generalConfig;
 		this.pipelineConfig = pipelineConfig;
 
-		config.getDisassemblyIndent().addChangeListener((observable, oldVal, newVal) -> context.setIndentStep(newVal));
+		generalConfig.getDisassemblyIndent().addChangeListener((ob, old, current) -> refreshContext());
+	}
+
+	private void refreshContext() {
+		context = new PrintContext<>(generalConfig.getDisassemblyIndent().getValue());
 	}
 
 	@Nonnull
@@ -174,7 +179,7 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 
 	@Nonnull
 	protected String print(@Nonnull Printer printer) {
-		context.clear();
+		refreshContext(); // new context
 		printer.print(context);
 		return context.toString();
 	}

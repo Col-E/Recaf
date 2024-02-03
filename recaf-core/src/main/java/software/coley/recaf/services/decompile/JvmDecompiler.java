@@ -14,7 +14,7 @@ public interface JvmDecompiler extends Decompiler {
 	 * @param filter
 	 * 		Filter to add.
 	 */
-	void addJvmInputFilter(@Nonnull JvmInputFilter filter);
+	void addJvmInputFilter(@Nonnull JvmInputFilter filter); // TODO: Make config for common defaults (debug stripping, virtual mapping?)
 
 	/**
 	 * @param workspace
@@ -24,17 +24,6 @@ public interface JvmDecompiler extends Decompiler {
 	 *
 	 * @return Decompilation result.
 	 */
+	@Nonnull
 	DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo);
-
-	/**
-	 * @param workspace
-	 * 		Workspace to pull data from.
-	 * @param name
-	 * 		Class name.
-	 * @param bytecode
-	 * 		Class bytecode.
-	 *
-	 * @return Decompilation result.
-	 */
-	DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull String name, @Nonnull byte[] bytecode);
 }

@@ -8,6 +8,7 @@ import com.strobel.decompiler.PlainTextOutput;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.AbstractJvmDecompiler;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.workspace.model.Workspace;
@@ -36,8 +37,11 @@ public class ProcyonDecompiler extends AbstractJvmDecompiler {
 		this.config = config;
 	}
 
+	@Nonnull
 	@Override
-	public DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull String name, @Nonnull byte[] bytecode) {
+	protected DecompileResult decompileInternal(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
+		String name = classInfo.getName();
+		byte[] bytecode = classInfo.getBytecode();
 		ITypeLoader loader = new CompositeTypeLoader(
 				new TargetedTypeLoader(name, bytecode),
 				new WorkspaceTypeLoader(workspace)
@@ -51,10 +55,10 @@ public class ProcyonDecompiler extends AbstractJvmDecompiler {
 		StringWriter writer = new StringWriter();
 		settings.getLanguage().decompileType(ref.resolve(), new PlainTextOutput(writer), decompilationOptions);
 		String decompile = writer.toString();
-		int configHash = getConfig().getConfigHash();
+		int configHash = getConfig().getHash();
 		if (decompile == null)
-			return new DecompileResult(null, new IllegalStateException("Missing decompilation output"), DecompileResult.ResultType.FAILURE, configHash);
-		return new DecompileResult(decompile, null, DecompileResult.ResultType.SUCCESS, configHash);
+			return new DecompileResult(new IllegalStateException("Missing decompilation output"), configHash);
+		return new DecompileResult(decompile, configHash);
 	}
 
 	/**

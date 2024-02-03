@@ -6,7 +6,7 @@ import javafx.scene.control.SingleSelectionModel;
 import software.coley.observables.Observable;
 import software.coley.observables.ObservableObject;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Combo box with binding to a {@link ObservableObject}.
@@ -23,7 +23,7 @@ public class ObservableComboBox<T> extends ComboBox<T> implements Tooltipable {
 	 * @param values
 	 * 		Available options.
 	 */
-	public ObservableComboBox(@Nonnull Observable<T> value, @Nonnull List<T> values) {
+	public ObservableComboBox(@Nonnull Observable<T> value, @Nonnull Collection<? extends T> values) {
 		getItems().addAll(values);
 		getSelectionModel().select(value.getValue());
 		SingleSelectionModel<T> model = getSelectionModel();

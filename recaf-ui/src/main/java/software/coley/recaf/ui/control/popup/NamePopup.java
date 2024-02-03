@@ -21,6 +21,7 @@ import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
+import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -41,12 +42,11 @@ import static org.kordamp.ikonli.carbonicons.CarbonIcons.CLOSE;
  */
 public class NamePopup extends RecafStage {
 	private final BooleanProperty nameConflict = new SimpleBooleanProperty(false);
+	private final BooleanProperty isIllegalValue = new SimpleBooleanProperty(false);
 	private final Label output = new Label();
 	private final TextField nameInput = new TextField();
 	private final Button accept;
 	private String initialText;
-
-	// TODO: We should stop users from ending names with '/'
 
 	/**
 	 * @param nameConsumer
@@ -54,6 +54,14 @@ public class NamePopup extends RecafStage {
 	 */
 	public NamePopup(@Nonnull Consumer<String> nameConsumer) {
 		// Handle user accepting input
+		isIllegalValue.bind(nameInput.textProperty().map(text -> {
+			// Cannot be blank/empty
+			if (text.isBlank()) return true;
+
+			// Cannot end with a slash
+			char last = text.charAt(text.length() - 1);
+			return last == '/';
+		}));
 		nameInput.setOnKeyPressed(e -> {
 			if (e.getCode() == KeyCode.ENTER) {
 				accept(nameConsumer);
@@ -88,7 +96,7 @@ public class NamePopup extends RecafStage {
 			return;
 		}
 
-		String text = nameInput.getText();
+		String text = EscapeUtil.unescapeStandard(nameInput.getText());
 		CompletableFuture.runAsync(() -> nameConsumer.accept(text));
 		hide();
 	}
@@ -108,7 +116,7 @@ public class NamePopup extends RecafStage {
 		// Bind conflict property
 		nameConflict.bind(nameInput.textProperty().map(dirName -> bundleHasDirectory(bundle, dirName)));
 		BooleanBinding notContainingPackageOrEqualToInitial = nameConflict.or(nameInput.textProperty().isEqualTo(initialText));
-		accept.disableProperty().bind(notContainingPackageOrEqualToInitial);
+		accept.disableProperty().bind(isIllegalValue.or(notContainingPackageOrEqualToInitial));
 		output.visibleProperty().bind(notContainingPackageOrEqualToInitial);
 		return this;
 	}
@@ -128,7 +136,7 @@ public class NamePopup extends RecafStage {
 		// Bind conflict property
 		nameConflict.bind(nameInput.textProperty().map(dirName -> bundleHasDirectory(bundle, dirName)));
 		BooleanBinding notContainingPackageOrEqualToInitial = nameConflict.or(nameInput.textProperty().isEqualTo(initialText));
-		accept.disableProperty().bind(notContainingPackageOrEqualToInitial);
+		accept.disableProperty().bind(isIllegalValue.or(notContainingPackageOrEqualToInitial));
 		output.visibleProperty().bind(notContainingPackageOrEqualToInitial);
 		return this;
 	}
@@ -147,7 +155,7 @@ public class NamePopup extends RecafStage {
 
 		// Bind conflict property
 		nameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
-		accept.disableProperty().bind(nameConflict);
+		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
 		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
@@ -166,7 +174,7 @@ public class NamePopup extends RecafStage {
 
 		// Bind conflict property
 		nameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
-		accept.disableProperty().bind(nameConflict);
+		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
 		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
@@ -185,7 +193,7 @@ public class NamePopup extends RecafStage {
 
 		// Bind conflict property
 		nameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
-		accept.disableProperty().bind(nameConflict);
+		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
 		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
@@ -207,7 +215,7 @@ public class NamePopup extends RecafStage {
 		// Bind conflict property
 		String descriptor = member.getDescriptor();
 		nameConflict.bind(nameInput.textProperty().map(name -> declaringClass.getDeclaredField(name, descriptor) != null));
-		accept.disableProperty().bind(nameConflict);
+		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
 		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
@@ -229,7 +237,7 @@ public class NamePopup extends RecafStage {
 		// Bind conflict property
 		String descriptor = member.getDescriptor();
 		nameConflict.bind(nameInput.textProperty().map(name -> declaringClass.getDeclaredField(name, descriptor) != null));
-		accept.disableProperty().bind(nameConflict);
+		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
 		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
@@ -251,7 +259,7 @@ public class NamePopup extends RecafStage {
 		// Bind conflict property
 		String descriptor = member.getDescriptor();
 		nameConflict.bind(nameInput.textProperty().map(name -> declaringClass.getDeclaredMethod(name, descriptor) != null));
-		accept.disableProperty().bind(nameConflict);
+		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
 		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
@@ -273,7 +281,7 @@ public class NamePopup extends RecafStage {
 		// Bind conflict property
 		String descriptor = member.getDescriptor();
 		nameConflict.bind(nameInput.textProperty().map(name -> declaringClass.getDeclaredMethod(name, descriptor) != null));
-		accept.disableProperty().bind(nameConflict);
+		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
 		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
@@ -290,8 +298,9 @@ public class NamePopup extends RecafStage {
 		titleProperty().bind(Lang.getBinding("dialog.title.rename-directory"));
 		output.textProperty().bind(Lang.getBinding("dialog.header.rename-directory-warning"));
 
-		// Bind conflict property, but only as a warning
+		// Bind conflict property, but only as a warning since merging is allowed.
 		nameConflict.bind(nameInput.textProperty().map(dirName -> bundleHasDirectory(bundle, dirName)));
+		accept.disableProperty().bind(isIllegalValue);
 		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
@@ -308,8 +317,9 @@ public class NamePopup extends RecafStage {
 		titleProperty().bind(Lang.getBinding("dialog.title.copy-directory"));
 		output.textProperty().bind(Lang.getBinding("dialog.header.rename-directory-warning"));
 
-		// Bind conflict property, but only as a warning
+		// Bind conflict property, but only as a warning since merging is allowed.
 		nameConflict.bind(nameInput.textProperty().map(dirName -> bundleHasDirectory(bundle, dirName)));
+		accept.disableProperty().bind(isIllegalValue);
 		output.visibleProperty().bind(nameConflict);
 		return this;
 	}
@@ -330,9 +340,8 @@ public class NamePopup extends RecafStage {
 	public NamePopup withInitialPathName(@Nonnull String name) {
 		initialText = name;
 
-		// TODO: Need to handle escaping names with newlines and such
-		//  - and handle un-escaping when calling the consumer<string>
-		nameInput.setText(name);
+		// Handle escaping names with newlines and such
+		nameInput.setText(EscapeUtil.escapeStandard(name));
 
 		// Need to get focus before selecting range.
 		// When the input gets focus, it resets the selection.
@@ -348,9 +357,8 @@ public class NamePopup extends RecafStage {
 	public NamePopup withInitialName(@Nonnull String name) {
 		initialText = name;
 
-		// TODO: Need to handle escaping names with newlines and such
-		//  - and handle un-escaping when calling the consumer<string>
-		nameInput.setText(name);
+		// Handle escaping names with newlines and such
+		nameInput.setText(EscapeUtil.escapeStandard(name));
 
 		// Need to get focus before selecting range.
 		// When the input gets focus, it resets the selection.

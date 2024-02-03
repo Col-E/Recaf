@@ -1,7 +1,7 @@
 def asmVersion = '9.6'
 def cafeDudeVersion = '2.0.1'
 def junitVersion = '5.10.0'
-def jasmVersion = '2.3.0'
+def jasmVersion = '518b763f37'
 def ssvmVersion = 'vm-copying-scopes-SNAPSHOT'
 
 project.ext {
@@ -59,9 +59,9 @@ project.ext {
 
     mockito = 'org.mockito:mockito-core:5.6.0'
 
-    openrewrite = 'org.openrewrite:rewrite-java-17:8.7.4'
+    openrewrite = 'org.openrewrite:rewrite-java-17:8.13.3'
 
-    procyon = "org.bitbucket.mstrobel:procyon-compilertools:0.6.0"
+    procyon = 'org.bitbucket.mstrobel:procyon-compilertools:0.6.0'
 
     picocli = 'info.picocli:picocli:4.7.5'
 
@@ -74,4 +74,6 @@ project.ext {
     ssvm_io = "com.github.xxDark.SSVM:ssvm-io:$ssvmVersion"
 
     treemapfx = 'software.coley:treemap-fx:1.1.0'
+
+    vineflower = 'org.vineflower:vineflower:1.9.3'
 }

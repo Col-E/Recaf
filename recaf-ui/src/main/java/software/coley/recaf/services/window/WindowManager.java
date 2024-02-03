@@ -39,8 +39,6 @@ public class WindowManager implements Service {
 	private final ObservableList<Stage> activeWindows = new ObservableList<>();
 	private final Map<String, Stage> windowMappings = new HashMap<>();
 
-	// TODO: When a 2nd window is open, Recaf won't close when the main window closes
-
 	@Inject
 	public WindowManager(WindowManagerConfig config, Instance<IdentifiableStage> stages) {
 		this.config = config;

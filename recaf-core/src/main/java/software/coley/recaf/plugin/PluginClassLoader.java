@@ -1,5 +1,7 @@
 package software.coley.recaf.plugin;
 
+import jakarta.annotation.Nonnull;
+
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -21,7 +23,7 @@ public final class PluginClassLoader extends URLClassLoader {
 	 * @param parent
 	 * 		Parent {@link ClassLoader}.
 	 */
-	public PluginClassLoader(URL[] urls, ClassLoader parent) {
+	public PluginClassLoader(@Nonnull URL[] urls, @Nonnull ClassLoader parent) {
 		super(urls, null);
 		this.parent = parent;
 	}

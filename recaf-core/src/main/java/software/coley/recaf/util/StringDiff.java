@@ -78,8 +78,10 @@ public class StringDiff {
 			if (cutEnd > 0) {
 				posEndA -= cutEnd;
 				posEndB -= cutEnd;
-				contentA = contentA.substring(0, contentA.length() - cutEnd);
-				contentB = contentB.substring(0, contentB.length() - cutEnd);
+				int cutEndA = contentA.length() - cutEnd;
+				int cutEndB = contentB.length() - cutEnd; // Negative check is a quick fix, should diagnose properly later
+				contentA = cutEndA < 0 ? "" : contentA.substring(0, cutEndA);
+				contentB = cutEndB < 0 ? "" : contentB.substring(0, cutEndB);
 			}
 
 			// Check if shrinking changed type

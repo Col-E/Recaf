@@ -13,7 +13,8 @@ public interface FieldMember extends ClassMember {
 	 * Fields can declare default values.
 	 * Only acknowledged by the JVM when {@link #hasStaticModifier()} is {@code true}.
 	 *
-	 * @return Default value of the field. May be {@code null}.
+	 * @return Default value of the field. Must be an {@code Integer}, a {@code Float}, a {@code Long},
+	 * a {@code Double} or a {@code String}. May be {@code null}.
 	 */
 	@Nullable
 	Object getDefaultValue();

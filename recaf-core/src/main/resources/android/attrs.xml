@@ -8565,14 +8565,12 @@
     <!-- =============================== -->
     <eat-comment />
 
-    <!-- TODO: remove this deprecated styleable. -->
     <eat-comment />
     <declare-styleable name="Icon">
         <attr name="icon" />
         <attr name="mimeType" />
     </declare-styleable>
 
-    <!-- TODO: remove this deprecated styleable -->
     <eat-comment />
     <declare-styleable name="IconDefault">
         <attr name="icon" />

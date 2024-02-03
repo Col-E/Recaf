@@ -36,7 +36,7 @@ public class ScriptManager implements Service {
 	private final WatchTask watchTask;
 
 	@Inject
-	public ScriptManager(ScriptManagerConfig config) {
+	public ScriptManager(@Nonnull ScriptManagerConfig config) {
 		this.config = config;
 		watchTask = new WatchTask();
 
@@ -131,6 +131,7 @@ public class ScriptManager implements Service {
 	/**
 	 * @return Collection of local available script files.
 	 */
+	@Nonnull
 	public ObservableCollection<ScriptFile, List<ScriptFile>> getScriptFiles() {
 		return scriptFiles;
 	}

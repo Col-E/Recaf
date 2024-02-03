@@ -1,5 +1,7 @@
 package software.coley.recaf.analytics.logging;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.slf4j.event.Level;
 
 /**
@@ -19,7 +21,7 @@ public interface LogConsumer<T> {
 	 * @param messageContent
 	 * 		Content of message.
 	 */
-	void accept(String loggerName, Level level, T messageContent);
+	void accept(@Nonnull String loggerName, @Nonnull Level level, @Nullable T messageContent);
 
 	/**
 	 * @param loggerName
@@ -31,5 +33,5 @@ public interface LogConsumer<T> {
 	 * @param throwable
 	 * 		Associated thrown exception.
 	 */
-	void accept(String loggerName, Level level, T messageContent, Throwable throwable);
+	void accept(@Nonnull String loggerName, @Nonnull Level level, @Nullable T messageContent, @Nullable Throwable throwable);
 }

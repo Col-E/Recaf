@@ -1,6 +1,7 @@
 package software.coley.recaf.info.member;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 
 import java.util.List;
@@ -22,6 +23,19 @@ public interface MethodMember extends ClassMember {
 	 */
 	@Nonnull
 	List<LocalVariable> getLocalVariables();
+
+	/**
+	 * @param index
+	 * 		Local variable index.
+	 *
+	 * @return Local variable at the index, or {@code null} if not known.
+	 */
+	@Nullable
+	default LocalVariable getLocalVariable(int index) {
+		return getLocalVariables().stream()
+				.filter(v -> index == v.getIndex())
+				.findFirst().orElse(null);
+	}
 
 	@Override
 	default boolean isField() {

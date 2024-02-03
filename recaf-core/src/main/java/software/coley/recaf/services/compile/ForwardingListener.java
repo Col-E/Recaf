@@ -1,5 +1,6 @@
 package software.coley.recaf.services.compile;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
 import javax.tools.Diagnostic;
@@ -18,7 +19,7 @@ public class ForwardingListener implements JavacListener {
 	}
 
 	@Override
-	public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+	public void report(@Nonnull Diagnostic<? extends JavaFileObject> diagnostic) {
 		if (delegate != null)
 			delegate.report(diagnostic);
 	}

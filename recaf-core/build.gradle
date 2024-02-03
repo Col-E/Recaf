@@ -45,6 +45,7 @@ dependencies {
     api ssvm_core
     api ssvm_invoke
     api ssvm_io
+    api vineflower
 }
 
 // Force generation of gversion data class when the version information is not up-to-date

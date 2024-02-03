@@ -6,12 +6,14 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Shape;
+import javafx.util.Duration;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.event.Level;
 import software.coley.recaf.analytics.logging.LogConsumer;
@@ -78,12 +80,12 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 	}
 
 	@Override
-	public void accept(String loggerName, Level level, String messageContent) {
+	public void accept(@Nonnull String loggerName, @Nonnull Level level, String messageContent) {
 		infos.add(new LogCallInfo(loggerName, level, messageContent, null));
 	}
 
 	@Override
-	public void accept(String loggerName, Level level, String messageContent, Throwable throwable) {
+	public void accept(@Nonnull String loggerName, @Nonnull Level level, String messageContent, Throwable throwable) {
 		infos.add(new LogCallInfo(loggerName, level, messageContent, throwable));
 	}
 
@@ -122,9 +124,9 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 		private static final Insets PADDING = new Insets(0, 5, 0, 0);
 		private static final double SIZE = 4;
 		private static final double[] TRIANGLE = {
-				SIZE / 2, 0,
-				SIZE, SIZE,
-				0, SIZE
+				SIZE, 0, // Size used for circles is radius, so for triangles we want to double positions based on it.
+				SIZE * 2, SIZE * 2,
+				0, SIZE * 2
 		};
 
 		@Override
@@ -139,8 +141,14 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 			LogCallInfo info = infos.get(paragraph);
 			Shape shape;
 			switch (info.level) {
-				case ERROR -> shape = info.throwable == null ?
-						new Circle(SIZE, Color.RED) : new Polygon(TRIANGLE);
+				case ERROR -> {
+					if (info.throwable == null)
+						shape = new Circle(SIZE, Color.RED);
+					else {
+						shape = new Polygon(TRIANGLE);
+						shape.setFill(Color.RED);
+					}
+				}
 				case WARN -> shape = new Circle(SIZE, Color.YELLOW);
 				case INFO -> shape = new Circle(SIZE, Color.LIGHTBLUE);
 				case DEBUG -> shape = new Circle(SIZE, Color.CORNFLOWERBLUE);
@@ -153,6 +161,11 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 			HBox wrapper = new HBox(shape);
 			wrapper.setAlignment(Pos.CENTER);
 			wrapper.setPadding(PADDING);
+			if (info.throwable != null) {
+				Tooltip tooltip = new Tooltip(StringUtil.traceToString(info.throwable));
+				tooltip.setShowDelay(Duration.ZERO);
+				Tooltip.install(wrapper, tooltip);
+			}
 			container.addHorizontal(wrapper);
 		}
 

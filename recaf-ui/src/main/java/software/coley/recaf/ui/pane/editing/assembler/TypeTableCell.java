@@ -2,10 +2,13 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import dev.xdark.blw.type.*;
 import jakarta.annotation.Nonnull;
+import javafx.scene.Node;
 import javafx.scene.control.TableCell;
+import javafx.scene.input.MouseButton;
 import me.darknet.assembler.compile.analysis.AnalysisUtils;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
+import software.coley.recaf.services.cell.ContextMenuProvider;
 import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;
@@ -43,31 +46,57 @@ public class TypeTableCell<S> extends TableCell<S, ClassType> {
 	}
 
 	private void configureType(@Nonnull ClassType type) {
+		CellData data = getTypeData(type);
+		setGraphic(data.graphic);
+		setText(data.text);
+		setOnMouseClicked(e -> {
+			if (e.getButton() == MouseButton.SECONDARY) {
+				// Lazily populate context menus when secondary click is prompted.
+				if (getContextMenu() == null) setContextMenu(data.contextSupplier.makeMenu());
+			}
+		});
+		setOpacity(data.disabled ? 0.35 : 1);
+	}
+
+	@Nonnull
+	private CellData getTypeData(@Nonnull ClassType type) {
+		Node graphic;
+		String text;
+		ContextMenuProvider contextSupplier = null;
 		boolean disabled = false;
 		if (type == AnalysisUtils.NULL) {
-			setGraphic(Icons.getIconView(Icons.UNINITIALIZED));
-			setText("null");
+			graphic = Icons.getIconView(Icons.UNINITIALIZED);
+			text = "null";
 		} else if (type == Types.VOID || type == Types.BOX_VOID) {
 			disabled = true;
-			setGraphic(Icons.getIconView(Icons.UNINITIALIZED));
-			setText("void");
+			graphic = Icons.getIconView(Icons.UNINITIALIZED);
+			text = "void";
 		} else if (type instanceof PrimitiveType primitiveType) {
 			disabled = primitiveType.kind() == PrimitiveKind.T_VOID;
-			setGraphic(Icons.getIconView(Icons.PRIMITIVE));
-			setText(primitiveType.name());
+			graphic = Icons.getIconView(Icons.PRIMITIVE);
+			text = primitiveType.name();
 		} else if (type instanceof InstanceType instanceType) {
 			String typeName = instanceType.internalName();
 			ClassPathNode classPath = workspace.findClass(typeName);
 			if (classPath != null) {
-				cellConfigurationService.configure(this, classPath, ContextualAssemblerComponent.CONTEXT_SOURCE);
+				graphic = cellConfigurationService.graphicOf(classPath);
+				text = cellConfigurationService.textOf(classPath);
+				contextSupplier = () -> cellConfigurationService.contextMenuOf(ContextualAssemblerComponent.CONTEXT_SOURCE, classPath);
 			} else {
-				setGraphic(Icons.getIconView(Icons.CLASS));
-				setText(formatConfig.filter(typeName));
+				graphic = Icons.getIconView(Icons.CLASS);
+				text = formatConfig.filter(typeName);
 			}
 		} else if (type instanceof ArrayType arrayType) {
-			ClassType componentType = arrayType.componentType();
-			configureType(componentType);
+			CellData componentModel = getTypeData(arrayType.componentType());
+			graphic = Icons.getIconView(Icons.ARRAY);
+			text = componentModel.text + "[]".repeat(arrayType.dimensions());
+			contextSupplier = componentModel.contextSupplier;
+		} else {
+			text = null;
+			graphic = null;
 		}
-		setOpacity(disabled ? 0.35 : 1);
+		return new CellData(text, graphic, contextSupplier, disabled);
 	}
+
+	private record CellData(String text, Node graphic, ContextMenuProvider contextSupplier, boolean disabled) {}
 }

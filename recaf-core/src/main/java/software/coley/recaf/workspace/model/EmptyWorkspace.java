@@ -28,6 +28,7 @@ public class EmptyWorkspace extends BasicWorkspace {
 	/**
 	 * @return Singleton of empty workspace.
 	 */
+	@Nonnull
 	public static EmptyWorkspace get() {
 		return INSTANCE;
 	}

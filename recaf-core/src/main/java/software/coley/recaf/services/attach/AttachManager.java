@@ -3,6 +3,7 @@ package software.coley.recaf.services.attach;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.collections.observable.ObservableList;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
@@ -49,17 +50,19 @@ public interface AttachManager extends Service {
 	 * @param descriptor
 	 * 		Lookup descriptor.
 	 *
-	 * @return Remote VM.
+	 * @return Remote VM, if known. Otherwise {@code null}.
 	 */
-	VirtualMachine getVirtualMachine(VirtualMachineDescriptor descriptor);
+	@Nullable
+	VirtualMachine getVirtualMachine(@Nonnull VirtualMachineDescriptor descriptor);
 
 	/**
 	 * @param descriptor
 	 * 		Lookup descriptor.
 	 *
-	 * @return Exception when attempting to connect to remote VM.
+	 * @return Exception when attempting to connect to remote VM, if there was one. Otherwise {@code null}.
 	 */
-	Exception getVirtualMachineConnectionFailure(VirtualMachineDescriptor descriptor);
+	@Nullable
+	Exception getVirtualMachineConnectionFailure(@Nonnull VirtualMachineDescriptor descriptor);
 
 	/**
 	 * @param descriptor
@@ -67,15 +70,16 @@ public interface AttachManager extends Service {
 	 *
 	 * @return Remote VM PID, or {@code -1} if no PID is known for the remote VM.
 	 */
-	int getVirtualMachinePid(VirtualMachineDescriptor descriptor);
+	int getVirtualMachinePid(@Nonnull VirtualMachineDescriptor descriptor);
 
 	/**
 	 * @param descriptor
 	 * 		Lookup descriptor.
 	 *
-	 * @return Remote VM {@link System#getProperties()}.
+	 * @return Remote VM {@link System#getProperties()} if known, otherwise {@code null}.
 	 */
-	Properties getVirtualMachineProperties(VirtualMachineDescriptor descriptor);
+	@Nullable
+	Properties getVirtualMachineProperties(@Nonnull VirtualMachineDescriptor descriptor);
 
 	/**
 	 * @param descriptor
@@ -83,7 +87,8 @@ public interface AttachManager extends Service {
 	 *
 	 * @return Remote main class of VM.
 	 */
-	String getVirtualMachineMainClass(VirtualMachineDescriptor descriptor);
+	@Nullable
+	String getVirtualMachineMainClass(@Nonnull VirtualMachineDescriptor descriptor);
 
 	/**
 	 * @param descriptor
@@ -91,22 +96,24 @@ public interface AttachManager extends Service {
 	 *
 	 * @return JMX bean server connection to remote VM.
 	 */
-	JmxBeanServerConnection getJmxServerConnection(VirtualMachineDescriptor descriptor);
+	@Nullable
+	JmxBeanServerConnection getJmxServerConnection(@Nonnull VirtualMachineDescriptor descriptor);
 
 	/**
 	 * @return Observable list of virtual machine descriptors.
 	 */
+	@Nonnull
 	ObservableList<VirtualMachineDescriptor> getVirtualMachineDescriptors();
 
 	/**
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	void addPostScanListener(PostScanListener listener);
+	void addPostScanListener(@Nonnull PostScanListener listener);
 
 	/**
 	 * @param listener
 	 * 		Listener to remove.
 	 */
-	void removePostScanListener(PostScanListener listener);
+	void removePostScanListener(@Nonnull PostScanListener listener);
 }

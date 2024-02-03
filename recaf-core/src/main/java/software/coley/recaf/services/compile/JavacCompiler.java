@@ -7,11 +7,16 @@ import jakarta.inject.Inject;
 import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.util.LookupUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import javax.tools.*;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +38,7 @@ public class JavacCompiler implements Service {
 	public static final int MIN_DOWNSAMPLE_VER = 8;
 	private static final DebuggingLogger logger = Logging.get(JavacCompiler.class);
 	private static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+	private static int minTargetVersion = 7;
 	private final JavacCompilerConfig config;
 
 	@Inject
@@ -147,6 +153,13 @@ public class JavacCompiler implements Service {
 	}
 
 	/**
+	 * @return Minimum target version supported by the compiler.
+	 */
+	public static int getMinTargetVersion() {
+		return minTargetVersion;
+	}
+
+	/**
 	 * @param listener
 	 * 		Optional listener to wrap.
 	 * @param diagnostics
@@ -158,7 +171,7 @@ public class JavacCompiler implements Service {
 												  @Nonnull List<CompilerDiagnostic> diagnostics) {
 		return new ForwardingListener(listener) {
 			@Override
-			public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+			public void report(@Nonnull Diagnostic<? extends JavaFileObject> diagnostic) {
 				// Pass to user defined listener
 				super.report(diagnostic);
 
@@ -199,5 +212,20 @@ public class JavacCompiler implements Service {
 	@Override
 	public JavacCompilerConfig getServiceConfig() {
 		return config;
+	}
+
+	static {
+		// Lookup oldest supported version
+		try {
+			MethodHandles.Lookup lookup = LookupUtil.lookup();
+			Class<?> target = Class.forName("com.sun.tools.javac.jvm.Target");
+			MethodHandle min = lookup.findStaticGetter(target, "MIN", target);
+			Object minTarget = min.invoke();
+			Field majorVersion = minTarget.getClass().getDeclaredField("majorVersion");
+			majorVersion.setAccessible(true);
+			minTargetVersion = majorVersion.getInt(minTarget) - JvmClassInfo.BASE_VERSION;
+		} catch (Throwable ignored) {
+			// Oh well...
+		}
 	}
 }

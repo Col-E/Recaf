@@ -1,5 +1,7 @@
 package software.coley.recaf.ui.media;
 
+import jakarta.annotation.Nonnull;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -16,7 +18,7 @@ public class CombinedPlayer extends Player {
 	 * @param delegates
 	 * 		Backing players.
 	 */
-	public CombinedPlayer(List<Player> delegates) {
+	public CombinedPlayer(@Nonnull List<Player> delegates) {
 		this.delegates = delegates;
 	}
 

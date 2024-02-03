@@ -1,5 +1,6 @@
 package software.coley.recaf.services.plugin;
 
+import jakarta.annotation.Nonnull;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -44,9 +45,10 @@ public final class ZipPluginLoader implements PluginLoader {
 		this.primaryClassLoader = primaryClassLoader;
 	}
 
+	@Nonnull
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Plugin> PluginContainer<T> load(ClassAllocator allocator, ByteSource source) throws IOException, PluginLoadException, UnsupportedSourceException {
+	public <T extends Plugin> PluginContainer<T> load(@Nonnull ClassAllocator allocator, @Nonnull ByteSource source) throws IOException, PluginLoadException, UnsupportedSourceException {
 		// Read whole zip archive into memory.
 		Map<String, byte[]> content = new HashMap<>();
 		try (ZipInputStream zis = new ZipInputStream(source.openStream())) {
@@ -139,13 +141,13 @@ public final class ZipPluginLoader implements PluginLoader {
 	}
 
 	@Override
-	public boolean isSupported(ByteSource source) throws IOException {
+	public boolean isSupported(@Nonnull ByteSource source) throws IOException {
 		byte[] header = source.peek(4);
 		return header.length == 4 && ByteHeaderUtil.match(header, ByteHeaderUtil.ZIP);
 	}
 
 	@Override
-	public void enablePlugin(PluginContainer<?> container) {
+	public void enablePlugin(@Nonnull PluginContainer<?> container) {
 		Plugin plugin = container.getPlugin();
 		ClassLoader classLoader = plugin.getClass().getClassLoader();
 		if (!(classLoader instanceof PluginClassLoader))
@@ -156,7 +158,7 @@ public final class ZipPluginLoader implements PluginLoader {
 	}
 
 	@Override
-	public void disablePlugin(PluginContainer<?> container) {
+	public void disablePlugin(@Nonnull PluginContainer<?> container) {
 		Plugin plugin = container.getPlugin();
 		ClassLoader classLoader = plugin.getClass().getClassLoader();
 		if (!(classLoader instanceof PluginClassLoader))

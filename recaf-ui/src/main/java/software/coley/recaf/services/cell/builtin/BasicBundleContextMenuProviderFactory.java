@@ -2,17 +2,21 @@ package software.coley.recaf.services.cell.builtin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
+import software.coley.recaf.ui.control.popup.ChangeClassVersionForAllPopup;
+import software.coley.recaf.ui.control.popup.DecompileAllPopup;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import static org.kordamp.ikonli.carbonicons.CarbonIcons.TRASH_CAN;
+import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
 
 /**
  * Basic implementation for {@link BundleContextMenuProviderFactory}.
@@ -22,12 +26,18 @@ import static org.kordamp.ikonli.carbonicons.CarbonIcons.TRASH_CAN;
 @ApplicationScoped
 public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuProviderFactory
 		implements BundleContextMenuProviderFactory {
+	private final Instance<DecompileAllPopup> decompileAllPaneProvider;
+	private final Instance<ChangeClassVersionForAllPopup> changeClassVersionProvider;
 
 	@Inject
 	public BasicBundleContextMenuProviderFactory(@Nonnull TextProviderService textService,
 												 @Nonnull IconProviderService iconService,
+												 @Nonnull Instance<DecompileAllPopup> decompileAllPaneProvider,
+												 @Nonnull Instance<ChangeClassVersionForAllPopup> changeClassVersionProvider,
 												 @Nonnull Actions actions) {
 		super(textService, iconService, actions);
+		this.decompileAllPaneProvider = decompileAllPaneProvider;
+		this.changeClassVersionProvider = changeClassVersionProvider;
 	}
 
 	@Nonnull
@@ -42,7 +52,21 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 			ContextMenu menu = new ContextMenu();
 			addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
 			var builder = new ContextMenuBuilder(menu, source).forBundle(workspace, resource, bundle);
-			builder.item("misc.clear", TRASH_CAN, bundle::clear);
+			var edit = builder.submenu("menu.edit", EDIT);
+			edit.item("misc.clear", TRASH_CAN, bundle::clear);
+
+			if (bundle instanceof JvmClassBundle jvmBundle) {
+				builder.item("menu.file.decompileall", DOCUMENT_EXPORT, () -> {
+					DecompileAllPopup popup = decompileAllPaneProvider.get();
+					popup.setTargetBundle(jvmBundle);
+					popup.show();
+				});
+				builder.item("menu.edit.changeversion", ARROWS_VERTICAL, () -> {
+					ChangeClassVersionForAllPopup popup = changeClassVersionProvider.get();
+					popup.setTargetBundle(jvmBundle);
+					popup.show();
+				});
+			}
 			return menu;
 		};
 	}

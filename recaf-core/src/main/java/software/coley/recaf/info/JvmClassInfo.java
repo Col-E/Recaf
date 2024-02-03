@@ -129,22 +129,22 @@ public interface JvmClassInfo extends ClassInfo {
 	}
 
 	@Override
-	default void acceptIfJvmClass(Consumer<JvmClassInfo> action) {
+	default void acceptIfJvmClass(@Nonnull Consumer<JvmClassInfo> action) {
 		action.accept(this);
 	}
 
 	@Override
-	default void acceptIfAndroidClass(Consumer<AndroidClassInfo> action) {
+	default void acceptIfAndroidClass(@Nonnull Consumer<AndroidClassInfo> action) {
 		// no-op
 	}
 
 	@Override
-	default boolean testIfJvmClass(Predicate<JvmClassInfo> predicate) {
+	default boolean testIfJvmClass(@Nonnull Predicate<JvmClassInfo> predicate) {
 		return predicate.test(this);
 	}
 
 	@Override
-	default boolean testIfAndroidClass(Predicate<AndroidClassInfo> predicate) {
+	default boolean testIfAndroidClass(@Nonnull Predicate<AndroidClassInfo> predicate) {
 		return false;
 	}
 

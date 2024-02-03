@@ -97,7 +97,8 @@ public class DecompilerManager implements Service {
 	 *
 	 * @return Future of decompilation result.
 	 */
-	public CompletableFuture<DecompileResult> decompile(Workspace workspace, JvmClassInfo classInfo) {
+	@Nonnull
+	public CompletableFuture<DecompileResult> decompile(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
 		return decompile(getTargetJvmDecompiler(), workspace, classInfo);
 	}
 
@@ -113,7 +114,8 @@ public class DecompilerManager implements Service {
 	 *
 	 * @return Future of decompilation result.
 	 */
-	public CompletableFuture<DecompileResult> decompile(JvmDecompiler decompiler, Workspace workspace, JvmClassInfo classInfo) {
+	@Nonnull
+	public CompletableFuture<DecompileResult> decompile(@Nonnull JvmDecompiler decompiler, @Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
 		return CompletableFuture.supplyAsync(() -> decompiler.decompile(workspace, classInfo), decompileThreadPool);
 	}
 
@@ -127,7 +129,8 @@ public class DecompilerManager implements Service {
 	 *
 	 * @return Future of decompilation result.
 	 */
-	public CompletableFuture<DecompileResult> decompile(Workspace workspace, AndroidClassInfo classInfo) {
+	@Nonnull
+	public CompletableFuture<DecompileResult> decompile(@Nonnull Workspace workspace, @Nonnull AndroidClassInfo classInfo) {
 		return decompile(getTargetAndroidDecompiler(), workspace, classInfo);
 	}
 
@@ -143,13 +146,15 @@ public class DecompilerManager implements Service {
 	 *
 	 * @return Future of decompilation result.
 	 */
-	public CompletableFuture<DecompileResult> decompile(AndroidDecompiler decompiler, Workspace workspace, AndroidClassInfo classInfo) {
+	@Nonnull
+	public CompletableFuture<DecompileResult> decompile(@Nonnull AndroidDecompiler decompiler, @Nonnull Workspace workspace, @Nonnull AndroidClassInfo classInfo) {
 		return CompletableFuture.supplyAsync(() -> decompiler.decompile(workspace, classInfo), decompileThreadPool);
 	}
 
 	/**
 	 * @return Preferred JVM decompiler.
 	 */
+	@Nonnull
 	public JvmDecompiler getTargetJvmDecompiler() {
 		return targetJvmDecompiler.getValue();
 	}
@@ -157,6 +162,7 @@ public class DecompilerManager implements Service {
 	/**
 	 * @return Preferred Android decompiler.
 	 */
+	@Nonnull
 	public AndroidDecompiler getTargetAndroidDecompiler() {
 		return targetAndroidDecompiler.getValue();
 	}
@@ -165,7 +171,7 @@ public class DecompilerManager implements Service {
 	 * @param decompiler
 	 * 		JVM decompiler to add.
 	 */
-	public void register(JvmDecompiler decompiler) {
+	public void register(@Nonnull JvmDecompiler decompiler) {
 		jvmDecompilers.put(decompiler.getName(), decompiler);
 	}
 
@@ -173,7 +179,7 @@ public class DecompilerManager implements Service {
 	 * @param decompiler
 	 * 		Android decompiler to add.
 	 */
-	public void register(AndroidDecompiler decompiler) {
+	public void register(@Nonnull AndroidDecompiler decompiler) {
 		androidDecompilers.put(decompiler.getName(), decompiler);
 	}
 
@@ -184,7 +190,7 @@ public class DecompilerManager implements Service {
 	 * @return Decompiler instance, or {@code null} if nothing by the ID was found.
 	 */
 	@Nullable
-	public JvmDecompiler getJvmDecompiler(String name) {
+	public JvmDecompiler getJvmDecompiler(@Nonnull String name) {
 		return jvmDecompilers.get(name);
 	}
 
@@ -195,13 +201,14 @@ public class DecompilerManager implements Service {
 	 * @return Decompiler instance, or {@code null} if nothing by the ID was found.
 	 */
 	@Nullable
-	public AndroidDecompiler getAndroidDecompiler(String name) {
+	public AndroidDecompiler getAndroidDecompiler(@Nonnull String name) {
 		return androidDecompilers.get(name);
 	}
 
 	/**
 	 * @return Available JVM class decompilers.
 	 */
+	@Nonnull
 	public Collection<JvmDecompiler> getJvmDecompilers() {
 		return jvmDecompilers.values();
 	}
@@ -209,6 +216,7 @@ public class DecompilerManager implements Service {
 	/**
 	 * @return Available android class decompilers.
 	 */
+	@Nonnull
 	public Collection<AndroidDecompiler> getAndroidDecompilers() {
 		return androidDecompilers.values();
 	}

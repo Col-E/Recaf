@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.io;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.builtin.*;
 import software.coley.recaf.util.Unchecked;
@@ -137,7 +138,7 @@ public class WorkspaceExportOptions {
 		private final Map<String, Long> accessTimes = new HashMap<>();
 
 		@Override
-		public void export(Workspace workspace) throws IOException {
+		public void export(@Nonnull Workspace workspace) throws IOException {
 			populate(workspace);
 			switch (outputType) {
 				case FILE:
@@ -184,7 +185,7 @@ public class WorkspaceExportOptions {
 		 * @param workspace
 		 * 		Workspace to pull data from.
 		 */
-		private void populate(Workspace workspace) {
+		private void populate(@Nonnull Workspace workspace) {
 			if (bundleSupporting) {
 				for (WorkspaceResource supportingResource : workspace.getSupportingResources()) {
 					mapInto(contents, supportingResource);
@@ -201,7 +202,7 @@ public class WorkspaceExportOptions {
 		 * @param resource
 		 * 		Resource to pull values from.
 		 */
-		private void mapInto(Map<String, byte[]> map, WorkspaceResource resource) {
+		private void mapInto(@Nonnull Map<String, byte[]> map, @Nonnull WorkspaceResource resource) {
 			// Place classes into map
 			resource.jvmClassBundleStream().forEach(bundle -> {
 				for (JvmClassInfo classInfo : bundle) {
@@ -252,7 +253,7 @@ public class WorkspaceExportOptions {
 		 * @param info
 		 * 		Info to pull properties from.
 		 */
-		private void updateProperties(String name, Info info) {
+		private void updateProperties(@Nonnull String name, @Nonnull Info info) {
 			compression.put(name, getCompression(info));
 
 			Long createTime = ZipCreationTimeProperty.get(info);
@@ -278,7 +279,7 @@ public class WorkspaceExportOptions {
 		 *
 		 * @return Compression type for into value.
 		 */
-		private int getCompression(Info info) {
+		private int getCompression(@Nonnull Info info) {
 			switch (compressType) {
 				case ALWAYS:
 					return DEFLATED;

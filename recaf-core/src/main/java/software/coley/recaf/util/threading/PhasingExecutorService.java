@@ -23,7 +23,7 @@ public final class PhasingExecutorService implements ExecutorService {
 	 * @param delegate
 	 * 		Backing executor service.
 	 */
-	public PhasingExecutorService(ExecutorService delegate) {
+	public PhasingExecutorService(@Nonnull ExecutorService delegate) {
 		this.delegate = delegate;
 	}
 

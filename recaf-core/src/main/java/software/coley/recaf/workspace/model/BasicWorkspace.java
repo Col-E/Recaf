@@ -28,7 +28,7 @@ public class BasicWorkspace implements Workspace {
 	 * @param primary
 	 * 		Primary resource.
 	 */
-	public BasicWorkspace(WorkspaceResource primary) {
+	public BasicWorkspace(@Nonnull WorkspaceResource primary) {
 		this(primary, Collections.emptyList());
 	}
 
@@ -38,7 +38,7 @@ public class BasicWorkspace implements Workspace {
 	 * @param supporting
 	 * 		Provided supporting resources.
 	 */
-	public BasicWorkspace(WorkspaceResource primary, Collection<WorkspaceResource> supporting) {
+	public BasicWorkspace(@Nonnull WorkspaceResource primary, @Nonnull Collection<WorkspaceResource> supporting) {
 		this.primary = primary;
 		this.supporting.addAll(supporting);
 

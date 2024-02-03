@@ -30,7 +30,7 @@ public record CompilerDiagnostic(int line, int column, @Nonnull String message, 
 
 	@Override
 	public String toString() {
-		return level.name() + " - " + line + ":" + message;
+		return level.name() + " on line " + line + ": " + message;
 	}
 
 	/**

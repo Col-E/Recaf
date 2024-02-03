@@ -10,7 +10,7 @@ import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
  * <br>
  * Tracks the hash of all contained {@link ConfigValue} so that when decompilers check for
  * {@link CachedDecompileProperty} they can see if the {@link DecompileResult#getConfigHash()}
- * matches the current one of {@link #getConfigHash()}.
+ * matches the current one of {@link #getHash()}.
  *
  * @author Matt Coley
  */
@@ -24,20 +24,20 @@ public interface DecompilerConfig extends ConfigContainer {
 	 *
 	 * @return Unique hash of all contained {@link ConfigValue}.
 	 */
-	int getConfigHash();
+	int getHash();
 
 	/**
 	 * @param hash
 	 * 		New hash value.
 	 *
-	 * @see #getConfigHash() For more detail.
+	 * @see #getHash() For more detail.
 	 */
-	void setConfigHash(int hash);
+	void setHash(int hash);
 
 	/**
 	 * Called by implementations after they add all their values to the container.
 	 *
-	 * @see #getConfigHash() For more detail.
+	 * @see #getHash() For more detail.
 	 */
 	default void registerConfigValuesHashUpdates() {
 		// Initial value computation.
@@ -53,6 +53,6 @@ public interface DecompilerConfig extends ConfigContainer {
 				.map(ConfigValue::getValue)
 				.mapToInt(value -> value == null ? 0 : value.hashCode())
 				.reduce((a, b) -> (31 * a) + b)
-				.ifPresent(this::setConfigHash);
+				.ifPresent(this::setHash);
 	}
 }

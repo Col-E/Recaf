@@ -137,6 +137,10 @@ public class AssemblyResolver {
 					if (selectedAnno != null)
 						return new ClassAnnotationResolution(klass, (ASTAnnotation) selectedAnno);
 
+					ASTIdentifier superName = klass.getSuperName();
+					if (superName != null && superName.range().within(position))
+						return new ClassExtends(klass, superName);
+
 					// Recurse for declared fields/methods
 					return resolveAt(position, klass, klass.contents());
 				} else if (child instanceof ASTAnnotation anno) {

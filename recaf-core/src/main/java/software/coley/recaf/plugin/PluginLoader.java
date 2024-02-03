@@ -1,5 +1,6 @@
 package software.coley.recaf.plugin;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.io.ByteSource;
 
 import java.io.IOException;
@@ -28,7 +29,8 @@ public interface PluginLoader {
 	 * @throws UnsupportedSourceException
 	 * 		If loader does not support this type of source.
 	 */
-	<T extends Plugin> PluginContainer<T> load(ClassAllocator allocator, ByteSource in)
+	@Nonnull
+	<T extends Plugin> PluginContainer<T> load(@Nonnull ClassAllocator allocator, @Nonnull ByteSource in)
 			throws IOException, PluginLoadException, UnsupportedSourceException;
 
 	/**
@@ -40,7 +42,7 @@ public interface PluginLoader {
 	 * @throws IOException
 	 * 		When the source cannot be read from.
 	 */
-	boolean isSupported(ByteSource source) throws IOException;
+	boolean isSupported(@Nonnull ByteSource source) throws IOException;
 
 	/**
 	 * Enables a plugin.
@@ -48,7 +50,7 @@ public interface PluginLoader {
 	 * @param container
 	 * 		The container containing {@link Plugin} instance.
 	 */
-	void enablePlugin(PluginContainer<?> container);
+	void enablePlugin(@Nonnull PluginContainer<?> container);
 
 	/**
 	 * Disables a plugin.
@@ -56,5 +58,5 @@ public interface PluginLoader {
 	 * @param container
 	 * 		The container containing {@link Plugin} instance.
 	 */
-	void disablePlugin(PluginContainer<?> container);
+	void disablePlugin(@Nonnull PluginContainer<?> container);
 }

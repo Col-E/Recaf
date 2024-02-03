@@ -1,5 +1,7 @@
 package software.coley.recaf.services.compile;
 
+import jakarta.annotation.Nonnull;
+
 import javax.tools.SimpleJavaFileObject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -31,6 +33,7 @@ public class ResourceVirtualJavaFileObject extends SimpleJavaFileObject {
 	/**
 	 * @return Resource name.
 	 */
+	@Nonnull
 	public String getResourceName() {
 		return resourceName;
 	}

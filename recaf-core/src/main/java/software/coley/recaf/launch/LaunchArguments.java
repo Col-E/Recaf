@@ -17,7 +17,7 @@ import java.io.File;
 public class LaunchArguments {
 	private final RecafDirectoriesConfig directoriesConfig;
 	private LaunchCommand command;
-	private String[] args;
+	private String[] args = new String[0];
 
 	@Inject
 	public LaunchArguments(@Nonnull RecafDirectoriesConfig directoriesConfig) {
@@ -47,6 +47,7 @@ public class LaunchArguments {
 	/**
 	 * @return Literal args used to launch recaf.
 	 */
+	@Nonnull
 	public String[] getArgs() {
 		return args;
 	}

@@ -39,7 +39,7 @@ public class PathLoadingManager {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addPreLoadListener(WorkspacePreLoadListener listener) {
+	public void addPreLoadListener(@Nonnull WorkspacePreLoadListener listener) {
 		preLoadListeners.add(listener);
 	}
 
@@ -47,7 +47,7 @@ public class PathLoadingManager {
 	 * @param listener
 	 * 		Listener to remove.
 	 */
-	public void removePreLoadListener(WorkspacePreLoadListener listener) {
+	public void removePreLoadListener(@Nonnull WorkspacePreLoadListener listener) {
 		preLoadListeners.remove(listener);
 	}
 

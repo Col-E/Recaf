@@ -1,6 +1,7 @@
 package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
+import org.objectweb.asm.ClassReader;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
 import software.coley.recaf.workspace.model.Workspace;
@@ -33,13 +34,14 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 		inputFilters.add(filter);
 	}
 
+	@Nonnull
 	@Override
 	public final DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
 		// Check for cached result, returning the cached result if found
 		// and only if the current config matches the one that yielded the cached result.
 		DecompileResult cachedResult = CachedDecompileProperty.get(classInfo, this);
 		if (cachedResult != null) {
-			if (cachedResult.getConfigHash() == getConfig().getConfigHash())
+			if (cachedResult.getConfigHash() == getConfig().getHash())
 				return cachedResult;
 
 			// Config changed, void the cache.
@@ -50,14 +52,28 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 		byte[] bytecode = classInfo.getBytecode();
 		for (JvmInputFilter filter : inputFilters)
 			bytecode = filter.filter(bytecode);
+		JvmClassInfo filteredBytecode = classInfo.toJvmClassBuilder().adaptFrom(new ClassReader(bytecode)).build();
 
 		// Pass to implementation.
-		DecompileResult result = decompile(workspace, classInfo.getName(), bytecode);
+		DecompileResult result = decompileInternal(workspace, filteredBytecode);
 
 		// Cache result.
 		CachedDecompileProperty.set(classInfo, this, result);
 		return result;
 	}
+
+	/**
+	 * Takes on the work of {@link #decompile(Workspace, JvmClassInfo)} after the {@link #inputFilters} have been applied to the class.
+	 *
+	 * @param workspace
+	 * 		Workspace to pull data from.
+	 * @param classInfo
+	 * 		Class to decompile.
+	 *
+	 * @return Decompilation result.
+	 */
+	@Nonnull
+	protected abstract DecompileResult decompileInternal(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo);
 
 	@Override
 	public boolean equals(Object o) {

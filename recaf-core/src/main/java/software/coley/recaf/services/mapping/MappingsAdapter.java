@@ -151,7 +151,7 @@ public class MappingsAdapter implements Mappings {
 	@Nullable
 	@Override
 	public String getMappedVariableName(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
-										String name, String desc, int index) {
+										@Nullable String name, @Nullable String desc, int index) {
 		MappingKey key = getVariableKey(className, methodName, methodDesc, name, desc, index);
 		return mappings.get(key);
 	}
@@ -226,7 +226,7 @@ public class MappingsAdapter implements Mappings {
 	 * @param graph
 	 * 		Inheritance graph to use.
 	 */
-	public void enableHierarchyLookup(InheritanceGraph graph) {
+	public void enableHierarchyLookup(@Nonnull InheritanceGraph graph) {
 		this.graph = graph;
 	}
 
@@ -237,7 +237,7 @@ public class MappingsAdapter implements Mappings {
 	 * @param workspace
 	 * 		Workspace to pull from.
 	 */
-	public void enableClassLookup(Workspace workspace) {
+	public void enableClassLookup(@Nonnull Workspace workspace) {
 		this.workspace = workspace;
 	}
 
@@ -271,7 +271,7 @@ public class MappingsAdapter implements Mappings {
 	 * @param renamedName
 	 * 		New name.
 	 */
-	public void addClass(String originalName, String renamedName) {
+	public void addClass(@Nonnull String originalName, @Nonnull String renamedName) {
 		mappings.put(getClassKey(originalName), renamedName);
 	}
 
@@ -288,7 +288,7 @@ public class MappingsAdapter implements Mappings {
 	 * @param renamedName
 	 * 		New name of the method.
 	 */
-	public void addField(String owner, String originalName, String desc, String renamedName) {
+	public void addField(@Nonnull String owner, @Nonnull String originalName, @Nonnull String desc, @Nonnull String renamedName) {
 		if (doesSupportFieldTypeDifferentiation()) {
 			mappings.put(getFieldKey(owner, originalName, desc), renamedName);
 		} else {
@@ -308,7 +308,7 @@ public class MappingsAdapter implements Mappings {
 	 * @param renamedName
 	 * 		New name of the field.
 	 */
-	public void addField(String owner, String originalName, String renamedName) {
+	public void addField(@Nonnull String owner, @Nonnull String originalName, @Nonnull String renamedName) {
 		if (doesSupportFieldTypeDifferentiation()) {
 			throw new IllegalStateException("The current mapping implementation requires " +
 					"specifying field descriptors");
@@ -329,7 +329,7 @@ public class MappingsAdapter implements Mappings {
 	 * @param renamedName
 	 * 		New name of the method.
 	 */
-	public void addMethod(String owner, String originalName, String desc, String renamedName) {
+	public void addMethod(@Nonnull String owner, @Nonnull String originalName, @Nonnull String desc, @Nonnull String renamedName) {
 		mappings.put(getMethodKey(owner, originalName, desc), renamedName);
 	}
 
@@ -351,8 +351,8 @@ public class MappingsAdapter implements Mappings {
 	 * @param renamedName
 	 * 		New name of the variable.
 	 */
-	public void addVariable(String className, String methodName, String methodDesc,
-							String originalName, String desc, int index, String renamedName) {
+	public void addVariable(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
+							@Nonnull String originalName, @Nullable String desc, int index, @Nonnull String renamedName) {
 		MappingKey key = getVariableKey(className, methodName, methodDesc, originalName, desc, index);
 		mappings.put(key, renamedName);
 	}
@@ -363,7 +363,8 @@ public class MappingsAdapter implements Mappings {
 	 *
 	 * @return Key format for class.
 	 */
-	protected MappingKey getClassKey(String name) {
+	@Nonnull
+	protected MappingKey getClassKey(@Nonnull String name) {
 		return new ClassMappingKey(name);
 	}
 
@@ -377,7 +378,8 @@ public class MappingsAdapter implements Mappings {
 	 *
 	 * @return Key format for field.
 	 */
-	protected MappingKey getFieldKey(String ownerName, String fieldName, String fieldDesc) {
+	@Nonnull
+	protected MappingKey getFieldKey(@Nonnull String ownerName, @Nonnull String fieldName, @Nullable String fieldDesc) {
 		return new FieldMappingKey(ownerName, fieldName, supportFieldTypeDifferentiation ? fieldDesc : null);
 	}
 
@@ -391,7 +393,8 @@ public class MappingsAdapter implements Mappings {
 	 *
 	 * @return Key format for method.
 	 */
-	protected MappingKey getMethodKey(String ownerName, String methodName, String methodDesc) {
+	@Nonnull
+	protected MappingKey getMethodKey(@Nonnull String ownerName, @Nonnull String methodName, @Nonnull String methodDesc) {
 		return new MethodMappingKey(ownerName, methodName, methodDesc);
 	}
 
@@ -411,8 +414,9 @@ public class MappingsAdapter implements Mappings {
 	 *
 	 * @return Key format for variable.
 	 */
-	protected MappingKey getVariableKey(String className, String methodName, String methodDesc,
-										String name, String desc, int index) {
+	@Nonnull
+	protected MappingKey getVariableKey(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
+										@Nullable String name, @Nullable String desc, int index) {
 		return new VariableMappingKey(className, methodName, methodDesc, name, desc);
 	}
 }

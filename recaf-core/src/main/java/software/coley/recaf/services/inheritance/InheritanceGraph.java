@@ -187,7 +187,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @return Direct extensions/implementations of the given parent.
 	 */
 	@Nonnull
-	private Set<String> getDirectChildren(String parent) {
+	private Set<String> getDirectChildren(@Nonnull String parent) {
 		return parentToChild.getOrDefault(parent, Collections.emptySet());
 	}
 
@@ -198,7 +198,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @return Vertex in graph of class. {@code null} if no such class was found in the inputs.
 	 */
 	@Nullable
-	public InheritanceVertex getVertex(String name) {
+	public InheritanceVertex getVertex(@Nonnull String name) {
 		InheritanceVertex vertex = vertices.computeIfAbsent(name, vertexProvider);
 		return vertex == STUB ? null : vertex;
 	}
@@ -212,7 +212,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @return Complete inheritance family of the class.
 	 */
 	@Nonnull
-	public Set<InheritanceVertex> getVertexFamily(String name, boolean includeObject) {
+	public Set<InheritanceVertex> getVertexFamily(@Nonnull String name, boolean includeObject) {
 		InheritanceVertex vertex = getVertex(name);
 		if (vertex == null)
 			return Collections.emptySet();

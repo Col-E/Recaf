@@ -9,6 +9,7 @@ import javafx.geometry.Orientation;
 import javafx.scene.control.Tab;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.ClassResult;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
@@ -37,15 +38,23 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 		Navigable, UpdatableNavigable, EditorComponent {
 	private final Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider;
 	private final Instance<JvmVariablesPane> jvmVariablesPaneProvider;
+	private final Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider;
 	private final List<Navigable> children = new CopyOnWriteArrayList<>();
 	private final SideTabs tabs = new SideTabs(Orientation.HORIZONTAL);
 	private PathNode<?> path;
 
 	@Inject
 	public AssemblerToolTabs(@Nonnull Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider,
-							 @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider) {
+							 @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider,
+							 @Nonnull Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider) {
 		this.jvmStackAnalysisPaneProvider = jvmStackAnalysisPaneProvider;
 		this.jvmVariablesPaneProvider = jvmVariablesPaneProvider;
+		this.jvmExpressionCompilerPaneProvider = jvmExpressionCompilerPaneProvider;
+
+		// Without an initial size, the first frame of a method has nothing in it. So the auto-size to fit content
+		// has nothing to fit to, which leads to only table headers being visible. Looks really dumb so giving it
+		// a little bit of default space regardless mostly solves that.
+		tabs.setInitialSize(200);
 	}
 
 	/**
@@ -63,12 +72,16 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			// Create contents for JVM classes
 			JvmStackAnalysisPane stackAnalysisPane = jvmStackAnalysisPaneProvider.get();
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
-			ObservableList<Tab> tabs = this.tabs.getTabs();
-			tabs.clear();
-			tabs.add(new BoundTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, stackAnalysisPane));
-			tabs.add(new BoundTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane));
-			tabs.forEach(t -> t.setClosable(false));
-			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane));
+			JvmExpressionCompilerPane expressionPane = jvmExpressionCompilerPaneProvider.get();
+			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane));
+			FxThreadUtil.run(() -> {
+				ObservableList<Tab> tabs = this.tabs.getTabs();
+				tabs.clear();
+				tabs.add(new BoundTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, stackAnalysisPane));
+				tabs.add(new BoundTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane));
+				tabs.add(new BoundTab(Lang.getBinding("assembler.playground.title"), CarbonIcons.CODE, expressionPane));
+				tabs.forEach(t -> t.setClosable(false));
+			});
 		} else if (classInPath.isAndroidClass()) {
 			// Create contents for Android classes
 		}
@@ -80,17 +93,17 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			if (navigableChild instanceof AssemblerAstConsumer consumer)
 				consumer.consumeAst(astElements, phase);
 
-		FxThreadUtil.run(() -> onUpdatePath(path));
+		onUpdatePath(path);
 	}
 
 	@Override
-	public void consumeClass(@Nonnull ClassRepresentation classRepresentation,
+	public void consumeClass(@Nonnull ClassResult result,
 							 @Nonnull ClassInfo classInfo) {
 		for (Navigable navigableChild : getNavigableChildren())
 			if (navigableChild instanceof AssemblerBuildConsumer consumer)
-				consumer.consumeClass(classRepresentation, classInfo);
+				consumer.consumeClass(result, classInfo);
 
-		FxThreadUtil.run(() -> onUpdatePath(path));
+		onUpdatePath(path);
 	}
 
 	@Override

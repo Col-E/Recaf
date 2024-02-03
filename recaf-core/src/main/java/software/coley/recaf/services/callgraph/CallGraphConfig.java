@@ -1,5 +1,6 @@
 package software.coley.recaf.services.callgraph;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableBoolean;
@@ -27,6 +28,7 @@ public class CallGraphConfig extends BasicConfigContainer implements ServiceConf
 	/**
 	 * @return Active state of call graph service.
 	 */
+	@Nonnull
 	public ObservableBoolean getActive() {
 		return active;
 	}

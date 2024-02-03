@@ -1,5 +1,6 @@
 package software.coley.recaf.analytics.logging;
 
+import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 import org.slf4j.event.Level;
@@ -18,7 +19,7 @@ public abstract class InterceptingLogger implements DebuggingLogger {
 	 * @param backing
 	 * 		Backing logger to send info to.
 	 */
-	protected InterceptingLogger(Logger backing) {
+	protected InterceptingLogger(@Nonnull Logger backing) {
 		this.backing = backing;
 	}
 

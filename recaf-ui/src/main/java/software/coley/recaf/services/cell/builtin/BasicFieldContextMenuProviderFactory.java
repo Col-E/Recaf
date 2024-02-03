@@ -74,7 +74,7 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 				builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(declaringClass, field));
 				builder.item("menu.edit.assemble.field", EDIT, () -> Unchecked.runnable(() ->
 						actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, field))
-				));
+				).run());
 
 				if (declaringClass.isJvmClass()) {
 					JvmClassBundle jvmBundle = (JvmClassBundle) bundle;

@@ -140,9 +140,16 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	List<InnerClassInfo> getInnerClasses();
 
 	/**
-	 * @return {@code true} when this class is an anonymous inner class.
+	 * @return {@code true} when this class is an inner class of another class.
 	 */
-	default boolean isAnonymousInner() {
+	default boolean isInnerClass() {
+		return getOuterClassName() != null || getOuterMethodName() != null;
+	}
+
+	/**
+	 * @return {@code true} when this class is an anonymous inner class of another class.
+	 */
+	default boolean isAnonymousInnerClass() {
 		// Check if the 'full' name of the inner 'InnerClassName' is the current class (entry representing ourselves)
 		// Then if the 'OuterClassName' is null, this means our class does not expose a name because it is anonymous.
 		return getInnerClasses().stream()
@@ -194,7 +201,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @return Field matching definition, or {@code null} if none were found.
 	 */
 	@Nullable
-	default FieldMember getDeclaredField(String name, String descriptor) {
+	default FieldMember getDeclaredField(@Nonnull String name, @Nonnull String descriptor) {
 		return fieldStream()
 				.filter(f -> f.getName().equals(name) && f.getDescriptor().equals(descriptor))
 				.findFirst().orElse(null);
@@ -209,9 +216,25 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @return Method matching definition, or {@code null} if none were found.
 	 */
 	@Nullable
-	default MethodMember getDeclaredMethod(String name, String descriptor) {
+	default MethodMember getDeclaredMethod(@Nonnull String name, @Nonnull String descriptor) {
 		return methodStream()
 				.filter(m -> m.getName().equals(name) && m.getDescriptor().equals(descriptor))
+				.findFirst().orElse(null);
+	}
+
+	/**
+	 * Do note that there can be multiple methods with one name if there are different method descriptors for each.
+	 * To differentiate properly, please use {@link #getDeclaredMethod(String, String)}.
+	 *
+	 * @param name
+	 * 		Method name.
+	 *
+	 * @return First matching method definition, or {@code null} if none were found.
+	 */
+	@Nullable
+	default MethodMember getFirstDeclaredMethodByName(@Nonnull String name) {
+		return methodStream()
+				.filter(m -> m.getName().equals(name))
 				.findFirst().orElse(null);
 	}
 
@@ -219,19 +242,19 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @param action
 	 * 		Action to run if this is a JVM class.
 	 */
-	void acceptIfJvmClass(Consumer<JvmClassInfo> action);
+	void acceptIfJvmClass(@Nonnull Consumer<JvmClassInfo> action);
 
 	/**
 	 * @param action
 	 * 		Action to run if this is an Android class.
 	 */
-	void acceptIfAndroidClass(Consumer<AndroidClassInfo> action);
+	void acceptIfAndroidClass(@Nonnull Consumer<AndroidClassInfo> action);
 
 	/**
 	 * @param action
 	 * 		Action to run.
 	 */
-	default void acceptClass(Consumer<ClassInfo> action) {
+	default void acceptClass(@Nonnull Consumer<ClassInfo> action) {
 		action.accept(this);
 	}
 
@@ -242,7 +265,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @return {@code true} when the predicate passes.
 	 * {@code false} when it does not, or the class is not a JVM class.
 	 */
-	boolean testIfJvmClass(Predicate<JvmClassInfo> predicate);
+	boolean testIfJvmClass(@Nonnull Predicate<JvmClassInfo> predicate);
 
 	/**
 	 * @param predicate
@@ -251,7 +274,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * @return {@code true} when the predicate passes.
 	 * {@code false} when it does not, or the class is not an Android class.
 	 */
-	boolean testIfAndroidClass(Predicate<AndroidClassInfo> predicate);
+	boolean testIfAndroidClass(@Nonnull Predicate<AndroidClassInfo> predicate);
 
 	/**
 	 * @param predicate
@@ -259,7 +282,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 *
 	 * @return Predicate evaluation.
 	 */
-	default boolean testClass(Predicate<ClassInfo> predicate) {
+	default boolean testClass(@Nonnull Predicate<ClassInfo> predicate) {
 		return predicate.test(this);
 	}
 
@@ -271,7 +294,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 *
 	 * @return Mapped value.
 	 */
-	default <R> R mapClass(Function<ClassInfo, R> function) {
+	default <R> R mapClass(@Nonnull Function<ClassInfo, R> function) {
 		return function.apply(this);
 	}
 

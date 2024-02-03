@@ -1,6 +1,7 @@
 package software.coley.recaf.services.file;
 
 import dev.dirs.BaseDirectories;
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	 * @param currentLog
 	 * 		Path to current log-file.
 	 */
-	public void initCurrentLogPath(Path currentLog) {
+	public void initCurrentLogPath(@Nonnull Path currentLog) {
 		if (this.currentLog == null) {
 			this.currentLog = currentLog;
 		}
@@ -50,6 +51,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	/**
 	 * @return Path to current log-file.
 	 */
+	@Nonnull
 	public Path getCurrentLogPath() {
 		return currentLog;
 	}
@@ -57,6 +59,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	/**
 	 * @return Base Recaf directory.
 	 */
+	@Nonnull
 	public Path getBaseDirectory() {
 		return baseDirectory;
 	}
@@ -64,6 +67,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	/**
 	 * @return Directory where agent jars are stored.
 	 */
+	@Nonnull
 	public Path getAgentDirectory() {
 		return agentDirectory;
 	}
@@ -71,6 +75,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	/**
 	 * @return Directory where configuration is stored.
 	 */
+	@Nonnull
 	public Path getConfigDirectory() {
 		return configDirectory;
 	}
@@ -78,6 +83,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	/**
 	 * @return Directory where old logs are stored.
 	 */
+	@Nonnull
 	public Path getLogsDirectory() {
 		return logsDirectory;
 	}
@@ -85,6 +91,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	/**
 	 * @return Directory where plugins are stored.
 	 */
+	@Nonnull
 	public Path getPluginDirectory() {
 		return pluginDirectory;
 	}
@@ -92,6 +99,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	/**
 	 * @return Directory where disabled plugins are stored.
 	 */
+	@Nonnull
 	public Path getDisabledPluginDirectory() {
 		return getPluginDirectory().resolve("disabled");
 	}
@@ -99,6 +107,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	/**
 	 * @return Directory where additional stylesheets are stored.
 	 */
+	@Nonnull
 	public Path getStyleDirectory() {
 		return styleDirectory;
 	}
@@ -106,11 +115,13 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	/**
 	 * @return Directory where scripts are stored.
 	 */
+	@Nonnull
 	public Path getScriptsDirectory() {
 		return scriptsDirectory;
 	}
 
-	private Path resolveDirectory(String dir) {
+	@Nonnull
+	private Path resolveDirectory(@Nonnull String dir) {
 		Path path = baseDirectory.resolve(dir);
 		try {
 			Files.createDirectories(path);
@@ -120,6 +131,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 		return path;
 	}
 
+	@Nonnull
 	private static Path createBaseDirectory() {
 		// Try environment variable first
 		String recafDir = System.getenv("RECAF");

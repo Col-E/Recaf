@@ -2,9 +2,9 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
-import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.analysis.MethodAnalysisLookup;
-import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compile.visitor.JavaCompileResult;
+import me.darknet.assembler.compiler.ClassResult;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -53,9 +53,9 @@ public abstract class AstBuildConsumerComponent extends ContextualAssemblerCompo
 	}
 
 	@Override
-	public void consumeClass(@Nonnull ClassRepresentation classRepresentation, @Nonnull ClassInfo classInfo) {
-		if (classRepresentation instanceof JavaClassRepresentation javaClassRep) {
-			analysisLookup = javaClassRep.analysisLookup();
+	public void consumeClass(@Nonnull ClassResult result, @Nonnull ClassInfo classInfo) {
+		if (result instanceof JavaCompileResult javaCompileResult) {
+			analysisLookup = javaCompileResult.analysisLookup();
 			onPipelineOutputUpdate();
 		}
 	}

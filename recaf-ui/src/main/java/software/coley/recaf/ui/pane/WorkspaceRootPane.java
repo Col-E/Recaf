@@ -18,6 +18,7 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -82,7 +83,7 @@ public class WorkspaceRootPane extends BorderPane {
 			DockingRegion dockPrimary = lastPrimaryRegion.get();
 			if (dockPrimary != null) {
 				// Only close closable tabs.
-				for (DockingTab tab : dockPrimary.getDockTabs()) {
+				for (DockingTab tab : new ArrayList<>(dockPrimary.getDockTabs())) {
 					tab.close();
 				}
 			}

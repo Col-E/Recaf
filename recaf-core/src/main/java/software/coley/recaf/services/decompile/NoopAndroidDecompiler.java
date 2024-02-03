@@ -25,6 +25,6 @@ public class NoopAndroidDecompiler extends AbstractAndroidDecompiler {
 
 	@Override
 	public DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull AndroidClassInfo classInfo) {
-		return new DecompileResult(null, null, DecompileResult.ResultType.SKIPPED, getConfig().getConfigHash());
+		return new DecompileResult(getConfig().getHash());
 	}
 }

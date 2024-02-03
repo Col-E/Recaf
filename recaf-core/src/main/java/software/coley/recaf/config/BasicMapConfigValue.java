@@ -1,5 +1,6 @@
 package software.coley.recaf.config;
 
+import jakarta.annotation.Nonnull;
 import software.coley.observables.ObservableMap;
 
 import java.util.Collection;
@@ -45,11 +46,13 @@ public class BasicMapConfigValue<K, V, M extends Map<K, V>> implements ConfigMap
 		this.observable = observable;
 	}
 
+	@Nonnull
 	@Override
 	public String getId() {
 		return key;
 	}
 
+	@Nonnull
 	@Override
 	public Class<M> getType() {
 		return mapType;
@@ -65,6 +68,7 @@ public class BasicMapConfigValue<K, V, M extends Map<K, V>> implements ConfigMap
 		return valueType;
 	}
 
+	@Nonnull
 	@Override
 	public ObservableMap<K, V, M> getObservable() {
 		return observable;

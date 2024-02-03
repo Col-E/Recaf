@@ -9,7 +9,7 @@ import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
 import software.coley.recaf.util.TextMatchMode;
 
 /**
- * Filter that excludes classes, fields, and methods by their names.
+ * Filter that includes classes, fields, and methods by their names.
  *
  * @author Matt Coley
  * @see ExcludeNameFilter
@@ -48,19 +48,22 @@ public class IncludeNameFilter extends NameGeneratorFilter {
 
 	@Override
 	public boolean shouldMapClass(@Nonnull ClassInfo info) {
-		return super.shouldMapClass(info) &&
-				(!targetClasses || matchMode.match(this.name, info.getName()));
+		if (targetClasses && matchMode.match(this.name, info.getName()))
+			return true;
+		return super.shouldMapClass(info);
 	}
 
 	@Override
 	public boolean shouldMapField(@Nonnull ClassInfo owner, @Nonnull FieldMember field) {
-		return super.shouldMapField(owner, field) &&
-				(!targetFields || matchMode.match(this.name, field.getName()));
+		if (targetFields && matchMode.match(this.name, field.getName()))
+			return true;
+		return super.shouldMapField(owner, field);
 	}
 
 	@Override
 	public boolean shouldMapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember method) {
-		return super.shouldMapMethod(owner, method) &&
-				(!targetMethods || matchMode.match(this.name, method.getName()));
+		if (targetMethods && matchMode.match(this.name, method.getName()))
+			return true;
+		return super.shouldMapMethod(owner, method);
 	}
 }

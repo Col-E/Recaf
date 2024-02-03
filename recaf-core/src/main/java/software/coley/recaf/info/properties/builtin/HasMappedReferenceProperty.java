@@ -12,7 +12,7 @@ import software.coley.recaf.info.properties.BasicProperty;
  */
 public class HasMappedReferenceProperty extends BasicProperty<Void> {
 	public static final String KEY = "has-mapped-ref";
-	private static final HasMappedReferenceProperty instance = new HasMappedReferenceProperty();
+	private static final HasMappedReferenceProperty INSTANCE = new HasMappedReferenceProperty();
 
 	private HasMappedReferenceProperty() {
 		super(KEY, null);
@@ -23,14 +23,14 @@ public class HasMappedReferenceProperty extends BasicProperty<Void> {
 	 * 		Class to mark as having a mapped reference.
 	 */
 	public static void set(@Nonnull ClassInfo info) {
-		info.setProperty(instance);
+		info.setProperty(INSTANCE);
 	}
 
 	/**
 	 * @param info
 	 * 		Class to strip this marker from.
 	 */
-	public static void remove(ClassInfo info) {
+	public static void remove(@Nonnull ClassInfo info) {
 		info.removeProperty(KEY);
 	}
 
@@ -40,7 +40,7 @@ public class HasMappedReferenceProperty extends BasicProperty<Void> {
 	 *
 	 * @return {@code true} when the property is set on the class.
 	 */
-	public static boolean get(ClassInfo info) {
+	public static boolean get(@Nonnull ClassInfo info) {
 		return info.getProperties().containsKey(KEY);
 	}
 }

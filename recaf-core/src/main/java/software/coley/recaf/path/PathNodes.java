@@ -202,6 +202,8 @@ public class PathNodes {
 	 * 		Method to wrap into path.
 	 * @param insn
 	 * 		Instruction in method to wrap into path.
+	 * @param index
+	 * 		Index of the instruction within the method code.
 	 *
 	 * @return Path to instruction in the method.
 	 */
@@ -211,8 +213,9 @@ public class PathNodes {
 													  @Nonnull Bundle<?> bundle,
 													  @Nonnull ClassInfo cls,
 													  @Nonnull MethodMember method,
-													  @Nonnull AbstractInsnNode insn) {
-		return memberPath(workspace, resource, bundle, cls, method).childInsn(insn);
+													  @Nonnull AbstractInsnNode insn,
+													  int index) {
+		return memberPath(workspace, resource, bundle, cls, method).childInsn(insn, index);
 	}
 
 	/**
