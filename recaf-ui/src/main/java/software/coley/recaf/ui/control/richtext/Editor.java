@@ -110,10 +110,6 @@ public class Editor extends BorderPane {
 			// Do fine completion updates.
 			if (tabCompleter != null)
 				tabCompleter.onFineTextUpdate(change);
-
-			// Pass to problem tracking.
-			if (problemTracking != null)
-				problemTracking.accept(change);
 		});
 
 		// Register a text change listener that operates on reduces calls (limit calls to when user stops typing).
