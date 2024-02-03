@@ -45,7 +45,7 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory implement
 	 * @param factory
 	 * 		Graphic factory to add.
 	 */
-	public void addLineGraphicFactory(LineGraphicFactory factory) {
+	public void addLineGraphicFactory(@Nonnull LineGraphicFactory factory) {
 		factories.add(factory);
 		factory.install(editor);
 	}
@@ -56,7 +56,7 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory implement
 	 *
 	 * @return {@code true} when removed. {@code false} when did not exist.
 	 */
-	public boolean removeLineGraphicFactory(LineGraphicFactory factory) {
+	public boolean removeLineGraphicFactory(@Nonnull LineGraphicFactory factory) {
 		if (factories.remove(factory)) {
 			factory.uninstall(editor);
 			return true;
@@ -79,7 +79,7 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory implement
 		// Wrap so the padding of the HBox expands the space of the 'lineno'.
 		BorderPane wrapper = new BorderPane(lineContainer);
 		wrapper.getStyleClass().add("lineno");
-		wrapper.setCursor(Cursor.HAND);
+		wrapper.setCursor(Cursor.DEFAULT);
 		return wrapper;
 	}
 

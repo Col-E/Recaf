@@ -392,8 +392,10 @@ public class Editor extends BorderPane {
 		ProblemTracking previousProblemTracking = this.problemTracking;
 		if (previousProblemTracking != null)
 			previousProblemTracking.uninstall(this);
-		if (problemOverlay != null)
+		if (problemOverlay != null) {
+			problemOverlay.uninstall(this);
 			problemOverlay = null;
+		}
 
 		// Set and install new instance.
 		this.problemTracking = problemTracking;

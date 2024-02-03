@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.richtext.linegraphics;
 
+import jakarta.annotation.Nonnull;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -32,7 +33,7 @@ public class LineContainer extends StackPane {
 	 * 		Child to add spanning horizontally in the container.
 	 * 		Appends to the left.
 	 */
-	public void addHorizontal(Node child) {
+	public void addHorizontal(@Nonnull Node child) {
 		box.getChildren().add(child);
 	}
 
@@ -41,7 +42,7 @@ public class LineContainer extends StackPane {
 	 * 		Child to add on top of the container.
 	 * 		This refers to Z-indexing, not north-south verticality.
 	 */
-	public void addTopLayer(Node child) {
+	public void addTopLayer(@Nonnull Node child) {
 		getChildren().add(child);
 	}
 }
