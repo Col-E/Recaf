@@ -17,10 +17,7 @@ import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
 import software.coley.recaf.workspace.model.bundle.*;
-import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceResource;
-import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
+import software.coley.recaf.workspace.model.resource.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,13 +57,10 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	 *
 	 * @return Read resource.
 	 */
-	private WorkspaceResource handleSingle(WorkspaceResourceBuilder builder,
+	private WorkspaceResource handleSingle(WorkspaceFileResourceBuilder builder,
 										   String pathName, ByteSource source) throws IOException {
 		// Read input as raw info in order to determine file-type.
 		Info readInfo = infoImporter.readInfo(pathName.substring(pathName.lastIndexOf('/') + 1), source);
-
-		// Associate input path with the read value.
-		InputFilePathProperty.set(readInfo, Paths.get(pathName));
 
 		// Check if it is a single class.
 		if (readInfo.isClass()) {
@@ -82,10 +76,14 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					.withName(readAsJvmClass.getName() + ".class")
 					.withRawContent(readAsJvmClass.getBytecode())
 					.build();
+			InputFilePathProperty.set(fileInfo, Paths.get(pathName)); // Associate input path with the read value.
 			return builder.withFileInfo(fileInfo)
 					.withJvmClassBundle(bundle)
 					.build();
 		}
+
+		// Associate input path with the read value.
+		InputFilePathProperty.set(readInfo, Paths.get(pathName));
 
 		// Must be some non-class type of file.
 		FileInfo readInfoAsFile = readInfo.asFile();
@@ -118,7 +116,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				.build();
 	}
 
-	private WorkspaceFileResource handleZip(WorkspaceResourceBuilder builder, ZipFileInfo zipInfo, ByteSource source) throws IOException {
+	private WorkspaceFileResource handleZip(WorkspaceFileResourceBuilder builder, ZipFileInfo zipInfo, ByteSource source) throws IOException {
 		logger.info("Reading input from ZIP container '{}'", zipInfo.getName());
 		builder.withFileInfo(zipInfo);
 		BasicJvmClassBundle classes = new BasicJvmClassBundle();
@@ -360,7 +358,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			// Check for container file cases (Any ZIP type, JAR/WAR/etc)
 			if (fileInfo.isZipFile()) {
 				try {
-					WorkspaceResourceBuilder embeddedResourceBuilder = new WorkspaceResourceBuilder()
+					WorkspaceFileResourceBuilder embeddedResourceBuilder = new WorkspaceFileResourceBuilder()
 							.withFileInfo(fileInfo);
 					WorkspaceFileResource embeddedResource = handleZip(embeddedResourceBuilder,
 							fileInfo.asZipFile(), infoSource);
@@ -554,7 +552,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	@Nonnull
 	@Override
 	public WorkspaceResource importResource(@Nonnull ByteSource source) throws IOException {
-		return handleSingle(new WorkspaceResourceBuilder(), "unknown.dat", source);
+		return handleSingle(new WorkspaceFileResourceBuilder(), "unknown.dat", source);
 	}
 
 	@Nonnull
@@ -563,10 +561,10 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Load name/data from path, parse into resource.
 		String absolutePath = StringUtil.pathToAbsoluteString(path);
 		if (Files.isDirectory(path)) {
-			return handleDirectory(new WorkspaceResourceBuilder(), path);
+			return handleDirectory(new WorkspaceFileResourceBuilder(), path);
 		} else {
 			ByteSource byteSource = ByteSources.forPath(path);
-			return handleSingle(new WorkspaceResourceBuilder(), absolutePath, byteSource);
+			return handleSingle(new WorkspaceFileResourceBuilder(), absolutePath, byteSource);
 		}
 	}
 
@@ -583,7 +581,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Load content, parse into resource.
 		byte[] bytes = IOUtil.toByteArray(url.openStream());
 		ByteSource byteSource = ByteSources.wrap(bytes);
-		return handleSingle(new WorkspaceResourceBuilder(), path, byteSource);
+		return handleSingle(new WorkspaceFileResourceBuilder(), path, byteSource);
 	}
 
 	@Nonnull
