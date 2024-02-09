@@ -49,10 +49,21 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 		}
 
 		// Get bytecode and run through filters.
-		byte[] bytecode = classInfo.getBytecode();
-		for (JvmInputFilter filter : inputFilters)
-			bytecode = filter.filter(bytecode);
-		JvmClassInfo filteredBytecode = classInfo.toJvmClassBuilder().adaptFrom(new ClassReader(bytecode)).build();
+		JvmClassInfo filteredBytecode;
+		if (inputFilters.isEmpty()) {
+			filteredBytecode = classInfo;
+		} else {
+			boolean dirty = false;
+			byte[] bytecode = classInfo.getBytecode();
+			for (JvmInputFilter filter : inputFilters) {
+				byte[] filtered = filter.filter(bytecode);
+				if (filtered != bytecode) {
+					bytecode = filtered;
+					dirty = true;
+				}
+			}
+			filteredBytecode = dirty ? classInfo.toJvmClassBuilder().adaptFrom(new ClassReader(bytecode)).build() : classInfo;
+		}
 
 		// Pass to implementation.
 		DecompileResult result = decompileInternal(workspace, filteredBytecode);
