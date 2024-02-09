@@ -6,12 +6,14 @@ import org.junit.jupiter.api.parallel.Isolated;
 import software.coley.recaf.Bootstrap;
 import software.coley.recaf.Recaf;
 import software.coley.recaf.services.plugin.PluginManagerConfig;
+import software.coley.recaf.util.TestEnvironment;
 import software.coley.recaf.workspace.WorkspaceManager;
 
 import java.lang.annotation.Annotation;
 
 /**
- * Common base for test classes using the recaf application.
+ * Common base for test classes using the recaf application and ensures child classes
+ * are marked as test env via {@link TestEnvironment#isTestEnv()}.
  */
 @Isolated
 public class TestBase {
@@ -20,6 +22,8 @@ public class TestBase {
 
 	@BeforeAll
 	public static void setupWorkspaceManager() {
+		TestEnvironment.initTestEnv();
+
 		// We'll use this a lot so may as well grab it
 		workspaceManager = recaf.get(WorkspaceManager.class);
 		workspaceManager.setCurrent(null);

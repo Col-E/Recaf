@@ -1,14 +1,14 @@
 package software.coley.recaf.util;
 
 /**
- * Util for FX testing.
+ * Util for testing.
  * <br>
  * Some behaviors may be omitted when under a test environment.
  *
  * @author Matt Coley
  */
-public class FxTest {
-	private static final String KEY = "FX-TEST-ENV";
+public class TestEnvironment {
+	private static final String KEY = "TEST-ENV";
 	private static boolean isTest;
 	private static boolean checked;
 
