@@ -2,12 +2,16 @@ package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Base for {@link Decompiler}.
  *
  * @author Matt Coley
  */
-public class AbstractDecompiler implements Decompiler {
+public abstract class AbstractDecompiler implements Decompiler {
+	protected final Set<OutputTextFilter> textFilters = new HashSet<>();
 	private final String name;
 	private final String version;
 	private final DecompilerConfig config;
@@ -42,6 +46,16 @@ public class AbstractDecompiler implements Decompiler {
 	@Override
 	public DecompilerConfig getConfig() {
 		return config;
+	}
+
+	@Override
+	public boolean addOutputTextFilter(@Nonnull OutputTextFilter filter) {
+		return textFilters.add(filter);
+	}
+
+	@Override
+	public boolean removeOutputTextFilter(@Nonnull OutputTextFilter filter) {
+		return textFilters.remove(filter);
 	}
 
 	@Override

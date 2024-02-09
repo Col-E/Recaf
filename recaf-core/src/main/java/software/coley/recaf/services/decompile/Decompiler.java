@@ -30,4 +30,26 @@ public interface Decompiler {
 	 */
 	@Nonnull
 	DecompilerConfig getConfig();
+
+	/**
+	 * Adds a filter which operates on the decompiler output, before the contents are returned to the user.
+	 *
+	 * @param filter
+	 * 		Filter to add.
+	 *
+	 * @return {@code true} on successful addition.
+	 * {@code false} if the filter has already been added.
+	 */
+	boolean addOutputTextFilter(@Nonnull OutputTextFilter filter);
+
+	/**
+	 * Removes a filter which operates on the decompiler output, before the contents are returned to the user.
+	 *
+	 * @param filter
+	 * 		Filter to remove.
+	 *
+	 * @return {@code true} on successful removal.
+	 * {@code false} if the filter was not already registered.
+	 */
+	boolean removeOutputTextFilter(@Nonnull OutputTextFilter filter);
 }

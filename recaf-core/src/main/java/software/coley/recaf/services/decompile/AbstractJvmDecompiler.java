@@ -15,7 +15,7 @@ import java.util.Set;
  * @author Matt Coley
  */
 public abstract class AbstractJvmDecompiler extends AbstractDecompiler implements JvmDecompiler {
-	private final Set<JvmInputFilter> inputFilters = new HashSet<>();
+	private final Set<JvmBytecodeFilter> bytecodeFilters = new HashSet<>();
 
 	/**
 	 * @param name
@@ -30,8 +30,13 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 	}
 
 	@Override
-	public void addJvmInputFilter(@Nonnull JvmInputFilter filter) {
-		inputFilters.add(filter);
+	public boolean addJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter) {
+		return bytecodeFilters.add(filter);
+	}
+
+	@Override
+	public boolean removeJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter) {
+		return bytecodeFilters.add(filter);
 	}
 
 	@Nonnull
@@ -50,13 +55,13 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 
 		// Get bytecode and run through filters.
 		JvmClassInfo filteredBytecode;
-		if (inputFilters.isEmpty()) {
+		if (bytecodeFilters.isEmpty()) {
 			filteredBytecode = classInfo;
 		} else {
 			boolean dirty = false;
 			byte[] bytecode = classInfo.getBytecode();
-			for (JvmInputFilter filter : inputFilters) {
-				byte[] filtered = filter.filter(bytecode);
+			for (JvmBytecodeFilter filter : bytecodeFilters) {
+				byte[] filtered = filter.filter(workspace, classInfo, bytecode);
 				if (filtered != bytecode) {
 					bytecode = filtered;
 					dirty = true;
@@ -68,13 +73,21 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 		// Pass to implementation.
 		DecompileResult result = decompileInternal(workspace, filteredBytecode);
 
+		// Adapt output decompilation if output filters are registered.
+		if (result.getType() == DecompileResult.ResultType.SUCCESS && result.getText() != null && !textFilters.isEmpty()) {
+			String text = result.getText();
+			for (OutputTextFilter filter : textFilters)
+				text = filter.filter(workspace, classInfo, text);
+			result = result.withText(text);
+		}
+
 		// Cache result.
 		CachedDecompileProperty.set(classInfo, this, result);
 		return result;
 	}
 
 	/**
-	 * Takes on the work of {@link #decompile(Workspace, JvmClassInfo)} after the {@link #inputFilters} have been applied to the class.
+	 * Takes on the work of {@link #decompile(Workspace, JvmClassInfo)} after the {@link #bytecodeFilters} have been applied to the class.
 	 *
 	 * @param workspace
 	 * 		Workspace to pull data from.
@@ -94,13 +107,13 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 
 		AbstractJvmDecompiler other = (AbstractJvmDecompiler) o;
 
-		return inputFilters.equals(other.inputFilters);
+		return bytecodeFilters.equals(other.bytecodeFilters);
 	}
 
 	@Override
 	public int hashCode() {
 		int result = super.hashCode();
-		result = 31 * result + inputFilters.hashCode();
+		result = 31 * result + bytecodeFilters.hashCode();
 		return result;
 	}
 }

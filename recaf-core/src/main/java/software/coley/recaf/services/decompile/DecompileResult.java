@@ -70,12 +70,42 @@ public class DecompileResult {
 	 *
 	 * @param text
 	 * 		Decompiled text.
-	*/
+	 */
 	public DecompileResult(@Nonnull String text) {
 		this.text = text;
 		this.type = ResultType.SKIPPED;
 		this.configHash = 0;
 		this.exception = null;
+	}
+
+	/**
+	 * Private constructor for wither operations.
+	 *
+	 * @param text
+	 * 		Decompiled text.
+	 * @param exception
+	 * 		Failure reason.
+	 * @param type
+	 * 		Result type.
+	 * @param configHash
+	 * 		Hash of config used to decompile the code.
+	 */
+	private DecompileResult(String text, Throwable exception, ResultType type, int configHash) {
+		this.text = text;
+		this.exception = exception;
+		this.type = type;
+		this.configHash = configHash;
+	}
+
+	/**
+	 * @param text
+	 * 		New text content.
+	 *
+	 * @return Copy of result, with new text content.
+	 */
+	@Nonnull
+	public DecompileResult withText(@Nonnull String text) {
+		return new DecompileResult(text, exception, type, configHash);
 	}
 
 	/**
