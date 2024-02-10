@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
+import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
@@ -38,6 +39,26 @@ public class TextProviderService implements Service {
 		this.formatConfig = formatConfig;
 		// Unlike the other services for graphics/menus, I don't see a use-case for text customization...
 		// Will keep the model similar to them though just in case so that it is easy to add in the future.
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		The class to create a text for.
+	 *
+	 * @return Text provider for the class.
+	 */
+	@Nonnull
+	public TextProvider getClassInfoTextProvider(@Nonnull Workspace workspace,
+												 @Nonnull WorkspaceResource resource,
+												 @Nonnull ClassBundle<? extends ClassInfo> bundle,
+												 @Nonnull ClassInfo info) {
+		return () -> formatConfig.filter(info.getName());
 	}
 
 	/**
@@ -101,6 +122,31 @@ public class TextProviderService implements Service {
 													  @Nonnull ClassInfo outerClass,
 													  @Nonnull InnerClassInfo inner) {
 		return () -> formatConfig.filter(inner.getSimpleName());
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param fieldOrMethod
+	 * 		The field or method to create text for.
+	 *
+	 * @return Text provider for the field or method.
+	 */
+	@Nonnull
+	public TextProvider getMemberTextProvider(@Nonnull Workspace workspace,
+											  @Nonnull WorkspaceResource resource,
+											  @Nonnull ClassBundle<? extends ClassInfo> bundle,
+											  @Nonnull ClassInfo declaringClass,
+											  @Nonnull ClassMember fieldOrMethod) {
+		return fieldOrMethod.isField() ?
+				getFieldMemberTextProvider(workspace, resource, bundle, declaringClass, (FieldMember) fieldOrMethod) :
+				getMethodMemberTextProvider(workspace, resource, bundle, declaringClass, (MethodMember) fieldOrMethod);
 	}
 
 	/**

@@ -3,9 +3,7 @@ package software.coley.recaf.services.cell.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
@@ -80,7 +78,7 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 					JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
 					JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
 
-					builder.item("menu.edit.copy", COPY_FILE, () -> actions.copyClass(workspace, resource, jvmBundle, declaringJvmClass));
+					builder.item("menu.edit.copy", COPY_FILE, () -> actions.copyMember(workspace, resource, jvmBundle, declaringJvmClass, field));
 					builder.item("menu.edit.delete", TRASH_CAN, () -> actions.deleteClassFields(workspace, resource, jvmBundle, declaringJvmClass, List.of(field)));
 				}
 
@@ -90,8 +88,12 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 				//    - Remove annotations
 			}
 			// TODO: Implement search UI, and open that when these actions are run
+
 			// Search actions
 			builder.item("menu.search.field-references", CODE, () -> {}).disableWhen(true);
+
+			// Documentation actions
+			builder.memberItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
 
 			// Refactor actions
 			builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameField);

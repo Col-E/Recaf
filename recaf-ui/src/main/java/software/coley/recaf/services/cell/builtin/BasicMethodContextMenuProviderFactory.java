@@ -3,12 +3,10 @@ package software.coley.recaf.services.cell.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
+
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
+
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
@@ -20,11 +18,8 @@ import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
-import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.Unchecked;
-import software.coley.recaf.util.visitors.MemberPredicate;
-import software.coley.recaf.util.visitors.MemberRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -85,8 +80,8 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 					JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
 					JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
 
+					builder.item("menu.edit.copy", COPY_FILE, () -> actions.copyMember(workspace, resource, jvmBundle,declaringJvmClass, method));
 					builder.item("menu.edit.noop", CIRCLE_DASH, () -> actions.makeMethodsNoop(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
-					builder.item("menu.edit.copy", COPY_FILE, () -> actions.copyClass(workspace, resource, jvmBundle,declaringJvmClass));
 					builder.item("menu.edit.delete", TRASH_CAN, () -> actions.deleteClassMethods(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
 				}
 
@@ -99,6 +94,9 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			// TODO: Implement search UI, and open that when these actions are run
 			// Search actions
 			builder.item("menu.search.field-references", CODE, () -> {}).disableWhen(true);
+
+			// Documentation actions
+			builder.memberItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
 
 			// Refactor actions
 			builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameMethod);

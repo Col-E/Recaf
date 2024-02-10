@@ -95,8 +95,7 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 		TextProvider nameProvider;
 		IconProvider iconProvider;
 		if (info.isJvmClass()) {
-			nameProvider = textService.getJvmClassInfoTextProvider(workspace, resource,
-					(JvmClassBundle) bundle, info.asJvmClass());
+			nameProvider = textService.getClassInfoTextProvider(workspace, resource, bundle, info.asJvmClass());
 			iconProvider = iconService.getJvmClassInfoIconProvider(workspace, resource,
 					(JvmClassBundle) bundle, info.asJvmClass());
 		} else if (info.isAndroidClass()) {
@@ -166,6 +165,9 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 				search.item("menu.search.class.member-references", CODE, () -> {}),
 				search.item("menu.search.class.type-references", CODE_REFERENCE, () -> {})
 		).disableWhen(true);
+
+		// Documentation actions
+		builder.infoItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
 
 		// Refactor actions
 		var refactor = builder.submenu("menu.refactor", PAINT_BRUSH);

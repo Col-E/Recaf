@@ -71,4 +71,6 @@ project.ext {
     treemapfx = 'software.coley:treemap-fx:1.1.0'
 
     vineflower = 'org.vineflower:vineflower:1.9.3'
+
+    wordwrap = 'com.github.davidmoten:word-wrap:0.1.12'
 }

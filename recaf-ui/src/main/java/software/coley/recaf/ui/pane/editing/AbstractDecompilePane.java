@@ -34,13 +34,13 @@ import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.NoopJvmDecompiler;
+import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.AstMappingVisitor;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
@@ -246,7 +246,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	 * Decompiles the class contained by the current {@link #path} and updates the {@link #editor}'s text
 	 * with the decompilation results.
 	 */
-	private void decompile() {
+	public void decompile() {
 		Workspace workspace = path.getValueOfType(Workspace.class);
 		JvmClassInfo classInfo = path.getValue().asJvmClass();
 

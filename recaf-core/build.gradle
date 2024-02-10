@@ -43,6 +43,7 @@ dependencies {
     api jasm_core
     api jasm_composistion_jvm
     api vineflower
+    api wordwrap
 }
 
 // Force generation of gversion data class when the version information is not up-to-date
