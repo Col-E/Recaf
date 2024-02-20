@@ -70,7 +70,7 @@ public class WorkspaceRootPane extends BorderPane {
 			DockingRegion dockTree = lastTreeRegion.get();
 			if (dockTree != null) {
 				// Close all tabs.
-				for (DockingTab tab : dockTree.getDockTabs()) {
+				for (DockingTab tab : new ArrayList<>(dockTree.getDockTabs())) {
 					// Mark as closable so they can be closed.
 					tab.setClosable(true);
 

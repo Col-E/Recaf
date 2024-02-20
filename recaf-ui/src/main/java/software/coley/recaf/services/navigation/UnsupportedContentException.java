@@ -7,12 +7,12 @@ import software.coley.recaf.info.Info;
  *
  * @author Matt Coley
  */
-public class UnsupportedContent extends RuntimeException {
+public class UnsupportedContentException extends RuntimeException {
 	/**
 	 * @param message
 	 * 		Exception message.
 	 */
-	public UnsupportedContent(String message) {
+	public UnsupportedContentException(String message) {
 		super(message);
 	}
 }

@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.menubar;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.control.Menu;
@@ -28,7 +29,7 @@ public class HelpMenu extends Menu {
 	private final WindowManager windowManager;
 
 	@Inject
-	public HelpMenu(WindowManager windowManager) {
+	public HelpMenu(@Nonnull WindowManager windowManager) {
 		this.windowManager = windowManager;
 
 		textProperty().bind(getBinding("menu.help"));
@@ -43,7 +44,7 @@ public class HelpMenu extends Menu {
 	}
 
 	/**
-	 * Display the config window.
+	 * Display the system information window.
 	 */
 	private void openSystem() {
 		Stage systemWindow = windowManager.getSystemInfoWindow();

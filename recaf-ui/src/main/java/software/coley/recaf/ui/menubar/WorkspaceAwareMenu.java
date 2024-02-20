@@ -22,7 +22,7 @@ public abstract class WorkspaceAwareMenu extends Menu implements WorkspaceOpenLi
 	protected final BooleanProperty hasWorkspace = new SimpleBooleanProperty(false);
 	protected final BooleanProperty hasAgentWorkspace = new SimpleBooleanProperty(false);
 
-	protected WorkspaceAwareMenu(WorkspaceManager workspaceManager) {
+	protected WorkspaceAwareMenu(@Nonnull WorkspaceManager workspaceManager) {
 		workspaceManager.addWorkspaceOpenListener(this);
 		workspaceManager.addWorkspaceCloseListener(this);
 	}
