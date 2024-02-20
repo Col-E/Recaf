@@ -115,6 +115,15 @@ public class NavigationManager implements Navigable, Service {
 			// Remove the path reference to the old workspace.
 			forwarding.workspacePath = null;
 			path = null;
+
+			// Force close any remaining tabs that hold navigable content.
+			for (DockingTab tab : dockingManager.getDockTabs()) {
+				if (tab.getContent() instanceof Navigable navigable) {
+					navigable.disable();
+					tab.setClosable(true);
+					tab.close();
+				}
+			}
 		});
 
 		// Track current workspace so that we are navigable ourselves.
