@@ -13,6 +13,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.shape.*;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.Unchecked;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -30,6 +31,9 @@ public class DockingRegion extends DetachableTabPane {
 		this.manager = manager;
 		setDropHint(new RecafDropHint());
 		getStyleClass().add(Styles.DENSE);
+
+		// It's easier to hook region creation like this than to try and ensure registration is handled by the caller.
+		manager.registerRegion(this);
 	}
 
 	/**
@@ -131,11 +135,10 @@ public class DockingRegion extends DetachableTabPane {
 	 * @return List of all docking tabs in the region.
 	 */
 	@Nonnull
-	@SuppressWarnings("unchecked")
 	public List<DockingTab> getDockTabs() {
 		// We do not want to use a 'stream.map()' operation just to satisfy generic contracts.
 		// We know the tab implementations are all dock-tabs so this unsafe operation is OK.
-		return (List<DockingTab>) (Object) super.getTabs();
+		return Unchecked.cast(super.getTabs());
 	}
 
 	/**
