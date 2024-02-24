@@ -33,36 +33,69 @@ public class TinyV1Mappings extends AbstractMappingFileFormat {
 	public IntermediateMappings parse(@Nonnull String mappingText) {
 		IntermediateMappings mappings = new IntermediateMappings();
 		String[] lines = StringUtil.splitNewline(mappingText);
+		boolean hasTwoInputs = false;
 		int lineNum = 0;
 		for (String line : lines) {
 			lineNum++;
-			// Skip initial header
-			if (line.startsWith("v1\t"))
+
+			// Initial header outlines columns.
+			// You should only really see:
+			//  intermediary -> named
+			//  official -> named
+			//  official, intermediary -> named
+			// In the case where we have both official and intermediary columns, we'll want to register both
+			// to the named column.
+			if (line.startsWith("v1\t")) {
+				if (line.contains("official") && line.contains("intermediary"))
+					hasTwoInputs = true;
 				continue;
+			}
+
 			String[] args = line.trim().split("\t");
 			String type = args[0];
 			try {
 				switch (type) {
 					case "CLASS": {
 						String oldClass = args[1];
-						String newClass = args[2];
-						mappings.addClass(oldClass, newClass);
+						if (hasTwoInputs) {
+							String interClass = args[2];
+							String newClass = args[3];
+							mappings.addClass(interClass, newClass);
+							mappings.addClass(oldClass, newClass);
+						} else {
+							String newClass = args[2];
+							mappings.addClass(oldClass, newClass);
+						}
 						break;
 					}
 					case "FIELD": {
 						String oldOwner = args[1];
 						String oldDesc = args[2];
 						String oldName = args[3];
-						String newName = args[4];
-						mappings.addField(oldOwner, oldDesc, oldName, newName);
+						if (hasTwoInputs) {
+							String interName = args[4];
+							String newName = args[5];
+							mappings.addField(oldOwner, oldDesc, interName, newName);
+							mappings.addField(oldOwner, oldDesc, oldName, newName);
+						} else {
+							String newName = args[4];
+							mappings.addField(oldOwner, oldDesc, oldName, newName);
+						}
 						break;
 					}
 					case "METHOD": {
 						String oldOwner = args[1];
 						String oldDesc = args[2];
 						String oldName = args[3];
-						String newName = args[4];
-						mappings.addMethod(oldOwner, oldDesc, oldName, newName);
+						if (hasTwoInputs) {
+							String interName = args[4];
+							String newName = args[5];
+							mappings.addMethod(oldOwner, oldDesc, interName, newName);
+							mappings.addMethod(oldOwner, oldDesc, oldName, newName);
+						} else {
+							String newName = args[4];
+							mappings.addMethod(oldOwner, oldDesc, oldName, newName);
+						}
 						break;
 					}
 					default: {
