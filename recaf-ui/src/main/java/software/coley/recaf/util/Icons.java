@@ -4,7 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
-import software.coley.recaf.services.cell.IconProvider;
+import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.ui.control.IconView;
 
 import java.io.InputStream;

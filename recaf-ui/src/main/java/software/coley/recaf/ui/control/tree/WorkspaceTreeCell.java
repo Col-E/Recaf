@@ -3,7 +3,7 @@ package software.coley.recaf.ui.control.tree;
 import jakarta.annotation.Nonnull;
 import javafx.scene.control.TreeCell;
 import software.coley.recaf.services.cell.CellConfigurationService;
-import software.coley.recaf.services.cell.ContextSource;
+import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.path.PathNode;
 
 import java.util.function.Function;

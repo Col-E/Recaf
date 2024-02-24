@@ -7,7 +7,7 @@ import software.coley.recaf.info.Info;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
-import software.coley.recaf.services.cell.ContextSource;
+import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;

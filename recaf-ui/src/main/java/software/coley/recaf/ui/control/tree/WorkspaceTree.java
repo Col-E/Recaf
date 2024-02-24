@@ -12,7 +12,7 @@ import javafx.scene.input.KeyCode;
 import software.coley.recaf.info.*;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.cell.CellConfigurationService;
-import software.coley.recaf.services.cell.ContextSource;
+import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;

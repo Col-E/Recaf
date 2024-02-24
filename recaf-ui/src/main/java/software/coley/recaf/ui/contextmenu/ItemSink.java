@@ -4,7 +4,7 @@ import jakarta.annotation.Nonnull;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.Ikon;
-import software.coley.recaf.services.cell.ContextSource;
+import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.Lang;
 

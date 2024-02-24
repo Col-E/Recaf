@@ -8,7 +8,7 @@ import javafx.scene.input.MouseButton;
 import me.darknet.assembler.compile.analysis.AnalysisUtils;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
-import software.coley.recaf.services.cell.ContextMenuProvider;
+import software.coley.recaf.services.cell.context.ContextMenuProvider;
 import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;

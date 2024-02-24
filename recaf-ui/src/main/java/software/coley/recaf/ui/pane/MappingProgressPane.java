@@ -34,7 +34,7 @@ import software.coley.recaf.info.properties.builtin.HasMappedReferenceProperty;
 import software.coley.recaf.info.properties.builtin.OriginalClassNameProperty;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
-import software.coley.recaf.services.cell.ContextSource;
+import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
