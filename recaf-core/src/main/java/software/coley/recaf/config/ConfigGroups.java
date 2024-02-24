@@ -41,6 +41,10 @@ public final class ConfigGroups {
 	 */
 	public static final String SERVICE_DECOMPILE_IMPL = SERVICE_DECOMPILE + PACKAGE_SPLIT + "impl";
 	/**
+	 * Group for deobfuscation components.
+	 */
+	public static final String SERVICE_DEOBFUSCATION = SERVICE + PACKAGE_SPLIT + "deobfuscation";
+	/**
 	 * Group for IO components.
 	 */
 	public static final String SERVICE_IO = SERVICE + PACKAGE_SPLIT + "io";

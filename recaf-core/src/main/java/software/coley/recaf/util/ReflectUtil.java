@@ -31,6 +31,13 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Triggers static initialization which calls {@link AccessPatcher#patch()}.
+	 */
+	public static void patchAccess() {
+		// no-op
+	}
+
+	/**
 	 * @param declaringClass
 	 * 		Class that declares the field.
 	 * @param name
