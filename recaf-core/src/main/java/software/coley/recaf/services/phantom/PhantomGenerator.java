@@ -4,7 +4,6 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collection;
 
@@ -30,7 +29,7 @@ public interface PhantomGenerator extends Service {
 	 * 		When generating phantoms failed.
 	 */
 	@Nonnull
-	WorkspaceResource createPhantomsForWorkspace(@Nonnull Workspace workspace)
+	GeneratedPhantomWorkspaceResource createPhantomsForWorkspace(@Nonnull Workspace workspace)
 			throws PhantomGenerationException;
 
 	/**
@@ -49,6 +48,6 @@ public interface PhantomGenerator extends Service {
 	 * 		When generating phantoms failed.
 	 */
 	@Nonnull
-	WorkspaceResource createPhantomsForClasses(@Nonnull Workspace workspace, @Nonnull Collection<JvmClassInfo> classes)
+	GeneratedPhantomWorkspaceResource createPhantomsForClasses(@Nonnull Workspace workspace, @Nonnull Collection<JvmClassInfo> classes)
 			throws PhantomGenerationException;
 }

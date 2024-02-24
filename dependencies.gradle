@@ -46,7 +46,7 @@ project.ext {
 
     jlinker = 'com.github.xxDark:jlinker:1.0.7'
 
-    jphantom = 'com.github.Col-E:jphantom:1.4.3'
+    jphantom = 'com.github.Col-E:jphantom:1.4.4'
 
     junit_api = "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"

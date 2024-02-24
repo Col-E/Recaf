@@ -10,6 +10,7 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.util.Lang;
@@ -354,6 +355,8 @@ public class TextProviderService implements Service {
 				return StringUtil.pathToNameString(directoryResource.getDirectoryPath());
 			} else if (resource instanceof WorkspaceRemoteVmResource remoteVmResource) {
 				return remoteVmResource.getVirtualMachine().id();
+			} else if (resource instanceof GeneratedPhantomWorkspaceResource) {
+				return Lang.get("tree.phantoms");
 			}
 			return resource.getClass().getSimpleName();
 		};

@@ -425,6 +425,7 @@ tree.defaultpackage=(Default package)
 tree.defaultdirectory=(Root directory)
 tree.prompt=Drag your files here
 tree.hidelibs=Hide libraries
+tree.phantoms=Generated phantoms
 
 ##### Services
 service=All services
@@ -435,6 +436,8 @@ service.analysis.comments-config.word-wrapping-limit=Word wrap limit
 service.analysis.graph-calls-config=Call graph
 service.analysis.graph-calls-config.active=Enable on workspaces open
 service.analysis.graph-inheritance-config=Inheritance graph
+service.analysis.jphantom-generator-config=JPhantom
+service.analysis.jphantom-generator-config.generate-workspace-phantoms=Generate and append phantoms to workspaces
 service.analysis.search-config=Search
 service.analysis.entry-points=Entry points
 service.analysis.entry-points.none=No entries found

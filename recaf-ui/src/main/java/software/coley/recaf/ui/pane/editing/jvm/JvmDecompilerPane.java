@@ -28,6 +28,7 @@ import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.services.phantom.PhantomGenerationException;
 import software.coley.recaf.services.phantom.PhantomGenerator;
 import software.coley.recaf.services.source.AstResolveResult;
@@ -146,10 +147,12 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		// Invoke compiler with data.
 		String infoName = info.getName();
 		CompletableFuture.supplyAsync(() -> {
-			// Generate phantoms for missing references in this class, if enabled.
+			// Generate phantoms for missing references in this class, if enabled and only if
+			// there are no generated phantom resources already in the workspace.
 			// This should be time-capped by 'completeOnTimeout' to prevent lock-ups.
 			List<WorkspaceResource> phantomResources;
-			if (javacConfig.getGeneratePhantoms().getValue()) {
+			if (javacConfig.getGeneratePhantoms().getValue() && workspace.getSupportingResources().stream()
+					.noneMatch(resource -> resource instanceof GeneratedPhantomWorkspaceResource)) {
 				ClassInfo currentInfo = path.getValue();
 				Collection<JvmClassInfo> classesToScan;
 				if (currentInfo.getInnerClasses().isEmpty()) {

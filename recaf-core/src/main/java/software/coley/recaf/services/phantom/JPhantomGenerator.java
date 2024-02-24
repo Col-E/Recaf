@@ -18,18 +18,20 @@ import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.util.ReflectUtil;
+import software.coley.recaf.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
-import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,19 +41,37 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 @ApplicationScoped
+@EagerInitialization
 public class JPhantomGenerator implements PhantomGenerator {
 	public static final String SERVICE_ID = "jphantom-generator";
 	private static final Logger logger = Logging.get(JPhantomGenerator.class);
 	private final JPhantomGeneratorConfig config;
 
 	@Inject
-	public JPhantomGenerator(@Nonnull JPhantomGeneratorConfig config) {
+	public JPhantomGenerator(@Nonnull JPhantomGeneratorConfig config, @Nonnull WorkspaceManager workspaceManager) {
 		this.config = config;
+
+		// When new workspaces are opened, generate & append the generated phantoms if the config is enabled.
+		workspaceManager.addWorkspaceOpenListener(workspace -> {
+			if (!config.getGenerateWorkspacePhantoms().getValue())
+				return;
+			CompletableFuture.supplyAsync(() -> {
+				try {
+					return createPhantomsForWorkspace(workspace);
+				} catch (Throwable t) {
+					logger.error("Failed to generate phantoms for workspace");
+					return null;
+				}
+			}).thenAccept(generatedResource -> {
+				if (generatedResource != null)
+					workspace.addSupportingResource(generatedResource);
+			});
+		});
 	}
 
 	@Nonnull
 	@Override
-	public WorkspaceResource createPhantomsForWorkspace(@Nonnull Workspace workspace) throws PhantomGenerationException {
+	public GeneratedPhantomWorkspaceResource createPhantomsForWorkspace(@Nonnull Workspace workspace) throws PhantomGenerationException {
 		// Extract all JVM classes from workspace
 		Map<String, JvmClassInfo> classMap = workspace.getPrimaryResource().jvmClassBundleStream()
 				.flatMap(Bundle::stream)
@@ -68,7 +88,7 @@ public class JPhantomGenerator implements PhantomGenerator {
 
 	@Nonnull
 	@Override
-	public WorkspaceResource createPhantomsForClasses(@Nonnull Workspace workspace, @Nonnull Collection<JvmClassInfo> classes)
+	public GeneratedPhantomWorkspaceResource createPhantomsForClasses(@Nonnull Workspace workspace, @Nonnull Collection<JvmClassInfo> classes)
 			throws PhantomGenerationException {
 		// Convert collection to map
 		Map<String, JvmClassInfo> classMap = classes.stream()
@@ -90,16 +110,15 @@ public class JPhantomGenerator implements PhantomGenerator {
 	 * @return Wrapping resource.
 	 */
 	@Nonnull
-	public static WorkspaceResource wrap(@Nonnull Map<String, byte[]> generated) {
+	public static GeneratedPhantomWorkspaceResource wrap(@Nonnull Map<String, byte[]> generated) {
 		// Wrap into resource
 		BasicJvmClassBundle bundle = new BasicJvmClassBundle();
 		generated.forEach((name, phantom) -> {
 			JvmClassInfo phantomClassInfo = new JvmClassInfoBuilder(phantom).build();
 			bundle.initialPut(phantomClassInfo);
 		});
-		return new WorkspaceResourceBuilder()
-				.withJvmClassBundle(bundle)
-				.build();
+		return new GeneratedPhantomWorkspaceResource(new WorkspaceResourceBuilder()
+				.withJvmClassBundle(bundle));
 	}
 
 	/**

@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.config;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableCollection;
@@ -15,6 +16,7 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.properties.builtin.InputFilePathProperty;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -24,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Config for tracking recent file interactions.
@@ -62,6 +65,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		ResourceModel primary = ResourceModel.from(primaryResource);
 		List<ResourceModel> libraries = workspace.getSupportingResources().stream()
 				.map(ResourceModel::from)
+				.filter(Objects::nonNull)
 				.toList();
 		WorkspaceModel workspaceModel = new WorkspaceModel(primary, libraries);
 
@@ -165,6 +169,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		 *
 		 * @return Representation of the content source.
 		 */
+		@Nullable
 		public static ResourceModel from(@Nonnull WorkspaceResource resource) {
 			if (resource instanceof WorkspaceFileResource fileResource) {
 				FileInfo fileInfo = fileResource.getFileInfo();
@@ -174,6 +179,9 @@ public class RecentFilesConfig extends BasicConfigContainer {
 				return new ResourceModel(fileInfo.getName());
 			} else if (resource instanceof WorkspaceDirectoryResource fileResource) {
 				return new ResourceModel(StringUtil.pathToAbsoluteString(fileResource.getDirectoryPath()));
+			} else if (resource instanceof GeneratedPhantomWorkspaceResource) {
+				// Intentionally left out
+				return null;
 			}
 			throw new UnsupportedOperationException("Cannot serialize content source of type: " +
 					resource.getClass().getName());

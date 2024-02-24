@@ -6,8 +6,10 @@ import software.coley.recaf.info.*;
 import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.services.cell.icon.PackageIconProviderFactory;
 import software.coley.recaf.services.cell.icon.ResourceIconProviderFactory;
+import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -29,6 +31,7 @@ public class BasicResourceIconProviderFactory implements ResourceIconProviderFac
 	private static final IconProvider PROVIDER_IMAGE = Icons.createProvider(Icons.FILE_IMAGE);
 	private static final IconProvider PROVIDER_AUDIO = Icons.createProvider(Icons.FILE_AUDIO);
 	private static final IconProvider PROVIDER_PROGRAM = Icons.createProvider(Icons.FILE_PROGRAM);
+	private static final IconProvider PROVIDER_PHANTOM = Icons.createProvider(Icons.PHANTOM);
 
 	@Nonnull
 	@Override
@@ -53,6 +56,8 @@ public class BasicResourceIconProviderFactory implements ResourceIconProviderFac
 			if (ByteHeaderUtil.matchAny(file.getRawContent(), ByteHeaderUtil.AUDIO_HEADERS))
 				return PROVIDER_AUDIO;
 		}
+		if (resource instanceof GeneratedPhantomWorkspaceResource)
+			return PROVIDER_PHANTOM;
 		return PROVIDER_ZIP;
 	}
 }
