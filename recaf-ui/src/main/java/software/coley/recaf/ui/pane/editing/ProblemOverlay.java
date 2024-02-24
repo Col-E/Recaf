@@ -34,6 +34,7 @@ import software.coley.recaf.ui.control.richtext.problem.Problem;
 import software.coley.recaf.ui.control.richtext.problem.ProblemInvalidationListener;
 import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.PlatformType;
 
 import java.util.Collection;
@@ -272,6 +273,6 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 	public void onProblemInvalidation() {
 		ProblemTracking tracking = editor.getProblemTracking();
 		if (tracking != null)
-			problemCount.set(tracking.getProblems().size());
+			FxThreadUtil.run(() -> problemCount.set(tracking.getProblems().size()));
 	}
 }
