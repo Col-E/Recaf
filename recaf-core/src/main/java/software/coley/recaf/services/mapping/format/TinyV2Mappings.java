@@ -11,6 +11,7 @@ import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 
 import java.io.StringWriter;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -37,6 +38,6 @@ public class TinyV2Mappings extends AbstractMappingFileFormat {
 
 	@Override
 	public String exportText(@Nonnull Mappings mappings) throws InvalidMappingException {
-		return MappingFileFormat.export(mappings, writer -> new Tiny2FileWriter(writer, true));
+		return MappingFileFormat.export(mappings, "intermediary", List.of("named"), writer -> new Tiny2FileWriter(writer, true));
 	}
 }

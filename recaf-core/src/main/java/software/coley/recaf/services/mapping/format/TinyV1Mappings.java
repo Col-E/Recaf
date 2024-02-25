@@ -10,6 +10,7 @@ import software.coley.recaf.services.mapping.Mappings;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.List;
 
 /**
  * Tiny-V1 mappings file implementation.
@@ -36,6 +37,6 @@ public class TinyV1Mappings extends AbstractMappingFileFormat {
 
 	@Override
 	public String exportText(@Nonnull Mappings mappings) throws InvalidMappingException {
-		return MappingFileFormat.export(mappings, Tiny1FileWriter::new);
+		return MappingFileFormat.export(mappings, "intermediary", List.of("named"), Tiny1FileWriter::new);
 	}
 }

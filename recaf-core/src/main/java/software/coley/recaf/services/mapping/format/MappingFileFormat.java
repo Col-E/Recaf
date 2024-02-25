@@ -158,9 +158,33 @@ public interface MappingFileFormat {
 	 */
 	@Nonnull
 	static String export(@Nonnull Mappings mappings, @Nonnull Function<StringWriter, MappingVisitor> writerFactory) throws InvalidMappingException {
+		return export(mappings, "in", List.of("out"), writerFactory);
+	}
+
+	/**
+	 * A utility for utilizing mapping-io to write mapping text formats.
+	 *
+	 * @param mappings
+	 * 		Mappings to export to text.
+	 * @param inputNamespace
+	 * 		Input column name.
+	 * @param outputNamespaces
+	 * 		Output column names.
+	 * @param writerFactory
+	 * 		Factory to create a mapping-io format writer.
+	 *
+	 * @return Text representation of mappings in the format provided by the writer factory.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When writing the mappings encounters any failure.
+	 */
+	@Nonnull
+	static String export(@Nonnull Mappings mappings, @Nonnull String inputNamespace,
+						 @Nonnull List<String> outputNamespaces, @Nonnull Function<StringWriter, MappingVisitor> writerFactory) throws InvalidMappingException {
 		MemoryMappingTree tree = new MemoryMappingTree();
 		IntermediateMappings intermediate = mappings.exportIntermediate();
 		try {
+			tree.visitNamespaces(inputNamespace, outputNamespaces);
 			for (ClassMapping classMapping : intermediate.getClasses().values()) {
 				String classOriginalName = classMapping.getOldName();
 				tree.visitClass(classOriginalName);
@@ -174,7 +198,7 @@ public interface MappingFileFormat {
 
 				List<MethodMapping> methodMappings = intermediate.getClassMethodMappings(classOriginalName);
 				for (MethodMapping methodMapping : methodMappings) {
-					tree.visitField(methodMapping.getOldName(), methodMapping.getDesc());
+					tree.visitMethod(methodMapping.getOldName(), methodMapping.getDesc());
 					tree.visitDstName(MappedElementKind.METHOD, 0, methodMapping.getNewName());
 				}
 			}
