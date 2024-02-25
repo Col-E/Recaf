@@ -56,6 +56,8 @@ project.ext {
 
     logging_impl = 'ch.qos.logback:logback-classic:1.4.11' // newer releases break in jar releases
 
+    mapping_io = 'net.fabricmc:mapping-io:0.5.1'
+
     mockito = 'org.mockito:mockito-core:5.6.0'
 
     openrewrite = 'org.openrewrite:rewrite-java-17:8.13.3'

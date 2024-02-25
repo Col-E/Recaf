@@ -5,37 +5,38 @@ import jakarta.enterprise.context.Dependent;
 import net.fabricmc.mappingio.MappingVisitor;
 import net.fabricmc.mappingio.format.tiny.Tiny1FileReader;
 import net.fabricmc.mappingio.format.tiny.Tiny1FileWriter;
+import net.fabricmc.mappingio.format.tiny.Tiny2FileReader;
+import net.fabricmc.mappingio.format.tiny.Tiny2FileWriter;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 
-import java.io.IOException;
-import java.io.Reader;
+import java.io.StringWriter;
+import java.util.function.Function;
 
 /**
- * Tiny-V1 mappings file implementation.
+ * Tiny-V2 mappings file implementation.
  *
  * @author Matt Coley
- * @author Wolfie / win32kbase
  */
 @Dependent
-public class TinyV1Mappings extends AbstractMappingFileFormat {
-	public static final String NAME = "Tiny-V1";
+public class TinyV2Mappings extends AbstractMappingFileFormat {
+	public static final String NAME = "Tiny-V2";
 
 	/**
-	 * New tiny v1 instance.
+	 * New tiny v2 instance.
 	 */
-	public TinyV1Mappings() {
+	public TinyV2Mappings() {
 		super(NAME, true, true);
 	}
 
 	@Nonnull
 	@Override
 	public IntermediateMappings parse(@Nonnull String mappingText) throws InvalidMappingException {
-		return MappingFileFormat.parse(mappingText, Tiny1FileReader::read);
+		return MappingFileFormat.parse(mappingText, Tiny2FileReader::read);
 	}
 
 	@Override
 	public String exportText(@Nonnull Mappings mappings) throws InvalidMappingException {
-		return MappingFileFormat.export(mappings, Tiny1FileWriter::new);
+		return MappingFileFormat.export(mappings, writer -> new Tiny2FileWriter(writer, true));
 	}
 }

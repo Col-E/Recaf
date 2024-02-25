@@ -34,6 +34,7 @@ dependencies {
     api jphantom
     api llzip
     api logging_impl
+    api mapping_io
     api picocli
     api procyon
     api jackson

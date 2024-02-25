@@ -4,8 +4,7 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.mapping.MappingsAdapter;
 import software.coley.recaf.test.TestBase;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests {@link MappingFileFormat} implementation support for importing from intermediate mappings.
@@ -37,7 +36,7 @@ public class MappingIntermediateTests extends TestBase {
 
 			// Export and print
 			if (format.supportsExportText())
-				System.out.println(format.exportText(adapter));
+				System.out.println(assertDoesNotThrow(() -> format.exportText(adapter)));
 			else
 				System.out.println("Mappings does not support text export: " + format.implementationName() + "\n");
 		}

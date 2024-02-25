@@ -4,15 +4,13 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests various {@link MappingFileFormat} implementation's ability to parse input texts.
  */
 public class MappingImplementationTests {
-	private static final String NAME_SAMPLE = "Sample";
-	private static final String NAME_RENAMED = "Renamed";
-
 	@Test
 	void testTinyV1() {
 		String mappingsText = """
@@ -21,7 +19,32 @@ public class MappingImplementationTests {
 				FIELD\ttest/Greetings\tLjava/lang/String;\toldField\tnewField
 				METHOD\ttest/Greetings\t()V\tsay\tspeak""";
 		MappingFileFormat format = new TinyV1Mappings();
-		IntermediateMappings mappings = format.parse(mappingsText);
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertInheritMap(mappings);
+	}
+
+	@Test
+	void testTinyV1WithTwoOutputs() {
+		String mappingsText = """
+				v1\tintermediary\tobfuscated\tnamed
+				CLASS\ttest/Greetings\ta\trename/Hello
+				FIELD\ttest/Greetings\tLjava/lang/String;\toldField\tb\tnewField
+				METHOD\ttest/Greetings\t()V\tsay\tc\tspeak""";
+		MappingFileFormat format = new TinyV1Mappings();
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertInheritMap(mappings);
+	}
+
+	@Test
+	void testTinyV2() {
+		String mappingsText = """
+				tiny\t2\t0\tofficial\tobfuscated\tnamed
+				c\ttest/Greetings\ta\trename/Hello
+				\tf\tLjava/lang/String;\toldField\tb\tnewField
+				\tm\t()V\tsay\tc\tspeak
+				""";
+		MappingFileFormat format = new TinyV2Mappings();
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertInheritMap(mappings);
 	}
 
@@ -32,7 +55,7 @@ public class MappingImplementationTests {
 				test/Greetings.oldField Ljava/lang/String; newField
 				test/Greetings.say()V speak""";
 		MappingFileFormat format = new SimpleMappings();
-		IntermediateMappings mappings = format.parse(mappingsText);
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertInheritMap(mappings);
 	}
 
@@ -43,7 +66,7 @@ public class MappingImplementationTests {
 				FD: test/Greetings/oldField newField
 				MD: test/Greetings/say ()V speak""";
 		MappingFileFormat format = new SrgMappings();
-		IntermediateMappings mappings = format.parse(mappingsText);
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertInheritMap(mappings);
 	}
 
@@ -53,7 +76,7 @@ public class MappingImplementationTests {
 				PK: test rename
 				""";
 		MappingFileFormat format = new SrgMappings();
-		IntermediateMappings mappings = format.parse(mappingsText);
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertEquals("rename/Greetings", mappings.getMappedClassName("test/Greetings"));
 	}
 
@@ -65,7 +88,7 @@ public class MappingImplementationTests {
 				    java.lang.String newField -> oldField
 				    void speak() -> say""";
 		MappingFileFormat format = new ProguardMappings();
-		IntermediateMappings mappings = format.parse(mappingsText);
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertInheritMap(mappings);
 	}
 
@@ -76,7 +99,7 @@ public class MappingImplementationTests {
 				\tFIELD oldField newField Ljava/lang/String;
 				\tMETHOD say speak ()V""";
 		MappingFileFormat format = new EnigmaMappings();
-		IntermediateMappings mappings = format.parse(mappingsText);
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertInheritMap(mappings);
 	}
 
@@ -87,7 +110,7 @@ public class MappingImplementationTests {
 				f test.Greetings.oldField:Ljava/lang/String; = newField
 				m test.Greetings.say()V = speak""";
 		MappingFileFormat format = new JadxMappings();
-		IntermediateMappings mappings = format.parse(mappingsText);
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 
 		// Cannot use same 'assertInheritMap(...)' because Jadx format doesn't allow package renaming
 		assertEquals("test/Hello", mappings.getMappedClassName("test/Greetings"));
