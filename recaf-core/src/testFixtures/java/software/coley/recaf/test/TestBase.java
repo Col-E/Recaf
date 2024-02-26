@@ -27,10 +27,6 @@ public class TestBase {
 		// We'll use this a lot so may as well grab it
 		workspaceManager = recaf.get(WorkspaceManager.class);
 		workspaceManager.setCurrent(null);
-
-		// Disable plugin scanning in tests
-		PluginManagerConfig pluginConfig = recaf.get(PluginManagerConfig.class);
-		pluginConfig.setAllowLocalScan(false);
 	}
 
 	/**

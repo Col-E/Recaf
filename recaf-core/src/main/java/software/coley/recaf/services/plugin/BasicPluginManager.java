@@ -7,8 +7,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.plugin.*;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
+import software.coley.recaf.util.TestEnvironment;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 
@@ -24,6 +26,7 @@ import java.util.*;
  * @author xDark
  */
 @ApplicationScoped
+@EagerInitialization
 public class BasicPluginManager implements PluginManager {
 	private static final Logger logger = Logging.get(BasicPluginManager.class);
 	private final List<PluginLoader> loaders = new ArrayList<>();
@@ -45,7 +48,11 @@ public class BasicPluginManager implements PluginManager {
 	@PostConstruct
 	@SuppressWarnings("unused")
 	private void setup(RecafDirectoriesConfig directoriesConfig) {
-		if (config.isAllowLocalScan())
+		// Do not load plugins in a test environment
+		if (TestEnvironment.isTestEnv())
+			return;
+
+		if (config.doScanOnStartup())
 			scanPlugins(directoriesConfig.getPluginDirectory());
 	}
 
@@ -135,14 +142,20 @@ public class BasicPluginManager implements PluginManager {
 		loaders.remove(loader);
 	}
 
+	@Override
+	public boolean isPluginLoaded(@Nonnull String name) {
+		return nameMap.get(name) != null;
+	}
+
 	@Nonnull
 	@Override
 	public <T extends Plugin> PluginContainer<T> loadPlugin(@Nonnull PluginContainer<T> container) throws PluginLoadException {
 		String name = container.getInformation().getName();
 		if (nameMap.putIfAbsent(name.toLowerCase(Locale.ROOT), container) != null) {
-			// Plugin already exists, we do not allow
-			// multiple plugins with the same name.
+			// Plugin already exists, we do not allow multiple plugins with the same name.
+			// The passed in plugin container will be disabled since it shouldn't be used.
 			try {
+				logger.warn("Attempted to load duplicate instance of plugin '{}'", name);
 				container.getLoader().disablePlugin(container);
 			} catch (Exception ignored) {
 			}

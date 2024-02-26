@@ -129,6 +129,8 @@ public interface PluginManager extends Service {
 
 				// Load and record plugin container
 				PluginContainer<T> container = loader.load(getAllocator(), source);
+				PluginContainer<Plugin> existingPlugin = getPlugin(container.getInformation().getName());
+
 				PluginContainer<T> loadedContainer = loadPlugin(container);
 				if (shouldEnablePluginOnLoad(loadedContainer))
 					loader.enablePlugin(loadedContainer);
@@ -139,6 +141,16 @@ public interface PluginManager extends Service {
 		}
 		throw new PluginLoadException("Plugin manager was unable to locate suitable loader for the source.");
 	}
+
+	/**
+	 * Checks if a plugin is loaded.
+	 *
+	 * @param name
+	 * 		Name of plugin to check for.
+	 *
+	 * @return {@code true} if the plugin has been registered/loaded by this manager.
+	 */
+	boolean isPluginLoaded(@Nonnull String name);
 
 	/**
 	 * Loads and registers a plugin.
