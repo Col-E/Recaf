@@ -1,5 +1,6 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -8,6 +9,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * A wrapper around {@link org.objectweb.asm.Type}.
@@ -17,7 +19,7 @@ import java.util.Collection;
 public class Types {
 	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
 	public static final Type STRING_TYPE = Type.getObjectType("java/lang/String");
-	private static final Type[] PRIMITIVES = new Type[]{
+	public static final Type[] PRIMITIVES = new Type[]{
 			Type.VOID_TYPE,
 			Type.BOOLEAN_TYPE,
 			Type.BYTE_TYPE,
@@ -28,7 +30,7 @@ public class Types {
 			Type.DOUBLE_TYPE,
 			Type.LONG_TYPE
 	};
-	private static final Collection<String> PRIMITIVE_BOXES = Arrays.asList(
+	public static final Collection<String> PRIMITIVE_BOXES = Arrays.asList(
 			"Ljava/lang/Boolean;",
 			"Ljava/lang/Byte;",
 			"Ljava/lang/Character;",
@@ -45,18 +47,8 @@ public class Types {
 	 *
 	 * @return {@code true} if it matches a primitive type.
 	 */
-	public static boolean isPrimitive(Type type) {
+	public static boolean isPrimitive(@Nullable Type type) {
 		return type != null && type.getSort() <= Type.DOUBLE;
-	}
-
-	/**
-	 * @param type
-	 * 		Some type to check.
-	 *
-	 * @return {@code true} if type is a void type.
-	 */
-	public static boolean isVoid(Type type) {
-		return type != null && type.getSort() == Type.VOID;
 	}
 
 	/**
@@ -65,8 +57,8 @@ public class Types {
 	 *
 	 * @return {@code true} if it matches a reserved primitive type.
 	 */
-	public static boolean isPrimitive(String desc) {
-		if (desc.length() != 1)
+	public static boolean isPrimitive(@Nullable String desc) {
+		if (desc == null || desc.length() != 1)
 			return false;
 		char c = desc.charAt(0);
 		switch (c) {
@@ -86,6 +78,60 @@ public class Types {
 	}
 
 	/**
+	 * @param name
+	 * 		Must be a primitive class name. See {@link #isPrimitiveClassName(String)}.
+	 *
+	 * @return Internal name of primitive.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the descriptor was not a primitive.
+	 */
+	@Nonnull
+	public static String classToPrimitive(@Nonnull String name) {
+		for (Type prim : PRIMITIVES) {
+			String className = prim.getClassName();
+			if (className.equals(name))
+				return prim.getInternalName();
+		}
+		throw new IllegalArgumentException("Descriptor was not a primitive class name!");
+	}
+
+	/**
+	 * @param desc
+	 * 		Some class name.
+	 *
+	 * @return {@code true} if it matches the class name of a primitive type.
+	 */
+	public static boolean isPrimitiveClassName(@Nullable String desc) {
+		if (desc == null)
+			return false;
+		for (Type prim : PRIMITIVES)
+			if (prim.getClassName().equals(desc))
+				return true;
+		return false;
+	}
+
+	/**
+	 * @param desc
+	 * 		Class descriptor.
+	 *
+	 * @return {@code true} if it is one of the children of {@link Number}.
+	 */
+	public static boolean isBoxedPrimitive(@Nullable String desc) {
+		return PRIMITIVE_BOXES.contains(desc);
+	}
+
+	/**
+	 * @param type
+	 * 		Some type to check.
+	 *
+	 * @return {@code true} if type is a void type.
+	 */
+	public static boolean isVoid(@Nullable Type type) {
+		return type != null && type.getSort() == Type.VOID;
+	}
+
+	/**
 	 * @param type
 	 * 		Base type.
 	 * @param dimensions
@@ -93,8 +139,9 @@ public class Types {
 	 *
 	 * @return Array type of dimension size.
 	 */
-	public static Type array(Type type, int dimensions) {
-		return Type.getType(StringUtil.repeat("[", dimensions) + type.getDescriptor());
+	@Nonnull
+	public static Type array(@Nonnull Type type, int dimensions) {
+		return Type.getType("[".repeat(dimensions) + type.getDescriptor());
 	}
 
 	/**
@@ -103,7 +150,7 @@ public class Types {
 	 *
 	 * @return Number of variable slots occupied by the parameters.
 	 */
-	public static int countParameterSlots(Type methodType) {
+	public static int countParameterSlots(@Nonnull Type methodType) {
 		int size = 0;
 		Type[] methodArgs = methodType.getArgumentTypes();
 		for (Type arg : methodArgs)
@@ -121,7 +168,7 @@ public class Types {
 	 * @return {@code true} when its parsable.
 	 */
 	@SuppressWarnings("all")
-	public static boolean isValidDesc(String desc) {
+	public static boolean isValidDesc(@Nullable String desc) {
 		if (desc == null)
 			return false;
 		if (desc.length() == 0)
@@ -136,10 +183,12 @@ public class Types {
 			} catch (Throwable t) {
 				return false;
 			}
-		} else if (first == 'L' || first == '['){
+		} else if (first == 'L' || first == '[') {
 			try {
 				Type type = Type.getType(desc);
 				if (type.getSort() == Type.OBJECT && !desc.endsWith(";"))
+					return false;
+				else if (type.getSort() == Type.ARRAY && type.getElementType() == null)
 					return false;
 				return true;
 			} catch (Throwable t) {
@@ -155,7 +204,8 @@ public class Types {
 	 *
 	 * @return {@code true} if it is a wide type.
 	 */
-	public static boolean isWide(Type type) {
+	public static boolean isWide(@Nullable Type type) {
+		if (type == null) return false;
 		return Type.DOUBLE_TYPE.equals(type) || Type.LONG_TYPE.equals(type);
 	}
 
@@ -165,27 +215,16 @@ public class Types {
 	 *
 	 * @return The implied variable type, or {@code null} if the passed opcode does not imply a type.
 	 */
+	@Nullable
 	public static Type fromVarOpcode(int opcode) {
-		switch (opcode) {
-			case Opcodes.IINC:
-			case Opcodes.ILOAD:
-			case Opcodes.ISTORE:
-				return Type.INT_TYPE;
-			case Opcodes.ALOAD:
-			case Opcodes.ASTORE:
-				return Types.OBJECT_TYPE;
-			case Opcodes.FLOAD:
-			case Opcodes.FSTORE:
-				return Type.FLOAT_TYPE;
-			case Opcodes.DLOAD:
-			case Opcodes.DSTORE:
-				return Type.DOUBLE_TYPE;
-			case Opcodes.LLOAD:
-			case Opcodes.LSTORE:
-				return Type.LONG_TYPE;
-			default:
-				return null;
-		}
+		return switch (opcode) {
+			case Opcodes.IINC, Opcodes.ILOAD, Opcodes.ISTORE -> Type.INT_TYPE;
+			case Opcodes.ALOAD, Opcodes.ASTORE -> Types.OBJECT_TYPE;
+			case Opcodes.FLOAD, Opcodes.FSTORE -> Type.FLOAT_TYPE;
+			case Opcodes.DLOAD, Opcodes.DSTORE -> Type.DOUBLE_TYPE;
+			case Opcodes.LLOAD, Opcodes.LSTORE -> Type.LONG_TYPE;
+			default -> null;
+		};
 	}
 
 	/**
@@ -194,33 +233,17 @@ public class Types {
 	 *
 	 * @return The implied variable type, or {@code null} if the passed opcode does not imply a type.
 	 */
+	@Nullable
 	public static Type fromArrayOpcode(int opcode) {
-		switch (opcode) {
-			case Opcodes.ARRAYLENGTH:
-			case Opcodes.BALOAD:
-			case Opcodes.CALOAD:
-			case Opcodes.SALOAD:
-			case Opcodes.IALOAD:
-			case Opcodes.BASTORE:
-			case Opcodes.CASTORE:
-			case Opcodes.SASTORE:
-			case Opcodes.IASTORE:
-				return Type.INT_TYPE;
-			case Opcodes.AALOAD:
-			case Opcodes.AASTORE:
-				return Types.OBJECT_TYPE;
-			case Opcodes.FALOAD:
-			case Opcodes.FASTORE:
-				return Type.FLOAT_TYPE;
-			case Opcodes.DALOAD:
-			case Opcodes.DASTORE:
-				return Type.DOUBLE_TYPE;
-			case Opcodes.LALOAD:
-			case Opcodes.LASTORE:
-				return Type.LONG_TYPE;
-			default:
-				return null;
-		}
+		return switch (opcode) {
+			case Opcodes.ARRAYLENGTH, Opcodes.BALOAD, Opcodes.CALOAD, Opcodes.SALOAD, Opcodes.IALOAD,
+					Opcodes.BASTORE, Opcodes.CASTORE, Opcodes.SASTORE, Opcodes.IASTORE -> Type.INT_TYPE;
+			case Opcodes.AALOAD, Opcodes.AASTORE -> Types.OBJECT_TYPE;
+			case Opcodes.FALOAD, Opcodes.FASTORE -> Type.FLOAT_TYPE;
+			case Opcodes.DALOAD, Opcodes.DASTORE -> Type.DOUBLE_TYPE;
+			case Opcodes.LALOAD, Opcodes.LASTORE -> Type.LONG_TYPE;
+			default -> null;
+		};
 	}
 
 	/**
@@ -234,7 +257,7 @@ public class Types {
 	public static int getNormalizedSort(int sort) {
 		if (sort == Type.ARRAY)
 			sort = Type.OBJECT;
-		else if (sort < Type.INT)
+		else if (sort > 0 && sort < Type.INT)
 			sort = Type.INT;
 		return sort;
 	}
@@ -245,37 +268,24 @@ public class Types {
 	 *
 	 * @return Name of sort.
 	 */
+	@Nonnull
 	public static String getSortName(int sort) {
-		switch (sort) {
-			case Type.VOID:
-				return "void";
-			case Type.BOOLEAN:
-				return "boolean";
-			case Type.CHAR:
-				return "char";
-			case Type.BYTE:
-				return "byte";
-			case Type.SHORT:
-				return "short";
-			case Type.INT:
-				return "int";
-			case Type.FLOAT:
-				return "float";
-			case Type.LONG:
-				return "long";
-			case Type.DOUBLE:
-				return "double";
-			case Type.ARRAY:
-				return "array";
-			case Type.OBJECT:
-				return "object";
-			case Type.METHOD:
-				return "method";
-			case -1:
-				return "<undefined>";
-			default:
-				return "<UNKNOWN>";
-		}
+		return switch (sort) {
+			case Type.VOID -> "void";
+			case Type.BOOLEAN -> "boolean";
+			case Type.CHAR -> "char";
+			case Type.BYTE -> "byte";
+			case Type.SHORT -> "short";
+			case Type.INT -> "int";
+			case Type.FLOAT -> "float";
+			case Type.LONG -> "long";
+			case Type.DOUBLE -> "double";
+			case Type.ARRAY -> "array";
+			case Type.OBJECT -> "object";
+			case Type.METHOD -> "method";
+			case -1 -> "<undefined>";
+			default -> "<unknown>";
+		};
 	}
 
 	/**
@@ -284,14 +294,20 @@ public class Types {
 	 *
 	 * @return Pretty-printed type.
 	 */
-	public static String pretty(Type type) {
+	@Nonnull
+	public static String pretty(@Nonnull Type type) {
 		int sort = type.getSort();
 		String suffix = null;
 		String name;
 		if (sort == Type.ARRAY) {
-			suffix = StringUtil.repeat("[]", type.getDimensions());
+			suffix = "[]".repeat(type.getDimensions());
 			type = type.getElementType();
 			sort = type.getSort();
+		} else if (sort == Type.METHOD) {
+			List<String> args = Arrays.stream(type.getArgumentTypes())
+					.map(Types::pretty)
+					.toList();
+			return "(" + String.join(", ", args) + ") " + pretty(type.getReturnType());
 		}
 		if (sort <= Type.DOUBLE) {
 			name = getSortName(sort);
@@ -303,42 +319,6 @@ public class Types {
 			pretty += suffix;
 		}
 		return pretty;
-	}
-
-	/**
-	 * @param desc
-	 * 		Some class name.
-	 *
-	 * @return {@code true} if it matches the class name of a primitive type.
-	 */
-	public static boolean isPrimitiveClassName(String desc) {
-		for (Type prim : PRIMITIVES)
-			if (prim.getClassName().equals(desc))
-				return true;
-		return false;
-	}
-
-	/**
-	 * @param desc
-	 * 		Must be a primitive class name. See {@link #isPrimitiveClassName(String)}.
-	 *
-	 * @return Internal name of primitive.
-	 */
-	public static String classToPrimitive(String desc) {
-		for (Type prim : PRIMITIVES)
-			if (prim.getClassName().equals(desc))
-				return prim.getInternalName();
-		throw new IllegalArgumentException("Descriptor was not a primitive class name!");
-	}
-
-	/**
-	 * @param desc
-	 * 		Class descriptor.
-	 *
-	 * @return {@code true} if it is one of the children of {@link Number}.
-	 */
-	public static boolean isBoxedPrimitive(String desc) {
-		return PRIMITIVE_BOXES.contains(desc);
 	}
 
 	/**

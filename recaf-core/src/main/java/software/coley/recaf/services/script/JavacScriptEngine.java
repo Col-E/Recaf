@@ -243,7 +243,7 @@ public class JavacScriptEngine implements ScriptEngine {
 
 			// Replace text with spaces to maintain script character offsets
 			String importMatch = script.substring(matcher.start(), matcher.end());
-			script = script.replace(importMatch, StringUtil.repeat(" ", importMatch.length()));
+			script = script.replace(importMatch, " ".repeat(importMatch.length()));
 		}
 
 		// Create code (just a basic class with a static 'run' method)

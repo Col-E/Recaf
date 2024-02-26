@@ -468,9 +468,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			cmpCurrentName = cmpCurrentName.substring(i);
 		} else if (!commonPrefix.isEmpty()) {
 			// Class names should start at the common prefix minus the intersection of the class name
-			String intersection = StringUtil.getIntersection(commonPrefix, className);
-			cmpExistingName = intersection + cmpExistingName.substring(commonPrefix.length());
-			cmpCurrentName = intersection + cmpCurrentName.substring(commonPrefix.length());
+			cmpExistingName = commonPrefix + cmpExistingName.substring(commonPrefix.length());
+			cmpCurrentName = commonPrefix + cmpCurrentName.substring(commonPrefix.length());
 		}
 
 		// Best fit checking

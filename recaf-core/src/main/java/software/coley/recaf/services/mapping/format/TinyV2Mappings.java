@@ -2,17 +2,12 @@ package software.coley.recaf.services.mapping.format;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
-import net.fabricmc.mappingio.MappingVisitor;
-import net.fabricmc.mappingio.format.tiny.Tiny1FileReader;
-import net.fabricmc.mappingio.format.tiny.Tiny1FileWriter;
 import net.fabricmc.mappingio.format.tiny.Tiny2FileReader;
 import net.fabricmc.mappingio.format.tiny.Tiny2FileWriter;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 
-import java.io.StringWriter;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * Tiny-V2 mappings file implementation.

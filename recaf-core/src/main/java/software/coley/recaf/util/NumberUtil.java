@@ -56,11 +56,17 @@ public class NumberUtil {
 	 */
 	@Nonnull
 	private static Number parseDecimal(@Nonnull String text) {
-		if (text.endsWith("F"))
-			return Float.parseFloat(text.substring(0, text.indexOf("F")));
-		else if (text.endsWith("D") || text.contains("."))
-			return Double.parseDouble(text.substring(0, text.indexOf("D")));
-		else
+		if (text.endsWith("F")) {
+			int end = text.indexOf("F");
+			if (end > 0)
+				text = text.substring(0, end);
+			return Float.parseFloat(text.substring(0, end));
+		} else if (text.endsWith("D") || text.contains(".")) {
+			int end = text.indexOf("D");
+			if (end > 0)
+				text = text.substring(0, end);
+			return Double.parseDouble(text);
+		} else
 			return Double.parseDouble(text);
 	}
 

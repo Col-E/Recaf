@@ -170,7 +170,7 @@ public class Editor extends BorderPane {
 		if (syntaxHighlighter != null) {
 			return schedule(syntaxPool, () -> {
 				IntRange range = SyntaxUtil.getRangeForRestyle(getText(), getStyleSpans(),
-						syntaxHighlighter, new PlainTextChange(position, "", StringUtil.repeat(".", length)));
+						syntaxHighlighter, new PlainTextChange(position, "", ".".repeat(length)));
 				int start = range.start();
 				int end = range.end();
 				return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);
