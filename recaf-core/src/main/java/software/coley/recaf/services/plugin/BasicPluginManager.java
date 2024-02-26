@@ -151,17 +151,27 @@ public class BasicPluginManager implements PluginManager {
 	@Override
 	public <T extends Plugin> PluginContainer<T> loadPlugin(@Nonnull PluginContainer<T> container) throws PluginLoadException {
 		String name = container.getInformation().getName();
+
+		// Throw if a plugin with the same name is already loaded.
+		PluginLoader loader = container.getLoader();
 		if (nameMap.putIfAbsent(name.toLowerCase(Locale.ROOT), container) != null) {
 			// Plugin already exists, we do not allow multiple plugins with the same name.
 			// The passed in plugin container will be disabled since it shouldn't be used.
 			try {
 				logger.warn("Attempted to load duplicate instance of plugin '{}'", name);
-				container.getLoader().disablePlugin(container);
+				loader.disablePlugin(container);
 			} catch (Exception ignored) {
 			}
 			throw new PluginLoadException("Duplicate plugin: " + name);
 		}
+
+		// Update the instance registry.
 		instanceMap.put(container.getPlugin(), container);
+
+		// If configured, we'll want to load the plugin immediately.
+		if (shouldEnablePluginOnLoad(container))
+			loader.enablePlugin(container);
+
 		return container;
 	}
 

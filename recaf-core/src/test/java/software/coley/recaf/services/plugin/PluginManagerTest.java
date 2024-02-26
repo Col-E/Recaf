@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.plugin.*;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 
 import java.io.IOException;
@@ -70,7 +71,8 @@ public class PluginManagerTest extends TestBase {
 
 		try {
 			// Load the plugin
-			PluginContainer<Plugin> container = pluginManager.loadPlugin(ByteSources.wrap(zip));
+			ByteSource pluginSource = ByteSources.wrap(zip);
+			PluginContainer<Plugin> container = pluginManager.loadPlugin(pluginSource);
 
 			// Assert the information stuck
 			PluginInfo information = container.getInformation();
@@ -80,6 +82,13 @@ public class PluginManagerTest extends TestBase {
 			assertEquals(description, information.getDescription());
 
 			// Assert the plugin is active
+			assertEquals(1, pluginManager.getPlugins().size());
+			assertSame(container, pluginManager.getPlugin(name));
+
+			// Assert that loading the same plugin twice throws an exception, and does
+			// not actually register a 2nd instance of the plugin.
+			assertThrows(PluginLoadException.class, () -> pluginManager.loadPlugin(pluginSource),
+					"Duplicate plugin loading should fail");
 			assertEquals(1, pluginManager.getPlugins().size());
 			assertSame(container, pluginManager.getPlugin(name));
 

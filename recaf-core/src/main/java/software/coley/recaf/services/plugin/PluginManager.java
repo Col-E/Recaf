@@ -121,20 +121,18 @@ public interface PluginManager extends Service {
 	 */
 	@Nonnull
 	default <T extends Plugin> PluginContainer<T> loadPlugin(@Nonnull ByteSource source) throws PluginLoadException {
+		ClassAllocator allocator = getAllocator();
 		for (PluginLoader loader : getLoaders()) {
 			try {
 				// Skip unsupported sources
 				if (!loader.isSupported(source))
 					continue;
 
-				// Load and record plugin container
-				PluginContainer<T> container = loader.load(getAllocator(), source);
-				PluginContainer<Plugin> existingPlugin = getPlugin(container.getInformation().getName());
+				// Load the plugin container from the source with the current allocator.
+				PluginContainer<T> container = loader.load(allocator, source);
 
-				PluginContainer<T> loadedContainer = loadPlugin(container);
-				if (shouldEnablePluginOnLoad(loadedContainer))
-					loader.enablePlugin(loadedContainer);
-				return loadedContainer;
+				// Register the plugin with the manager.
+				return loadPlugin(container);
 			} catch (IOException | UnsupportedSourceException ex) {
 				throw new PluginLoadException("Could not load plugin due to an error", ex);
 			}
