@@ -1,11 +1,11 @@
-package software.coley.recaf.workspace.io;
+package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.builtin.*;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.ZipCreationUtils;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;

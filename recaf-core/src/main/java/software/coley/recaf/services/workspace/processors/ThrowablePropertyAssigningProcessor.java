@@ -1,4 +1,4 @@
-package software.coley.recaf.workspace.processors;
+package software.coley.recaf.services.workspace.processors;
 
 import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
@@ -9,8 +9,8 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.ThrowableProperty;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
-import software.coley.recaf.workspace.WorkspaceModificationListener;
-import software.coley.recaf.workspace.WorkspaceProcessor;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
+import software.coley.recaf.services.workspace.WorkspaceProcessor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;

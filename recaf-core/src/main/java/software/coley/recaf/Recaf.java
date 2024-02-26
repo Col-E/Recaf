@@ -4,7 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.se.SeContainer;
 import software.coley.recaf.cdi.WorkspaceBeanContext;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 
 import java.lang.annotation.Annotation;
 import java.util.Locale;

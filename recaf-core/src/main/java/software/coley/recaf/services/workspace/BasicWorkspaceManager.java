@@ -1,4 +1,4 @@
-package software.coley.recaf.workspace;
+package software.coley.recaf.services.workspace;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -7,6 +7,7 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 

@@ -30,7 +30,7 @@ import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.PathExportingManager;
 import software.coley.recaf.workspace.PathLoadingManager;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.awt.*;

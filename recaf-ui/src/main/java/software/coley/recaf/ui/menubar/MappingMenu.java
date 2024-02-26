@@ -26,7 +26,7 @@ import software.coley.recaf.ui.pane.MappingGeneratorPane;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 
 import java.io.File;
 import java.nio.file.Files;

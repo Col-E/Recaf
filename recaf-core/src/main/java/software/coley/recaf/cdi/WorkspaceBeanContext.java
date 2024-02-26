@@ -7,8 +7,8 @@ import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.spi.Bean;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.workspace.WorkspaceCloseListener;
-import software.coley.recaf.workspace.WorkspaceOpenListener;
+import software.coley.recaf.services.workspace.WorkspaceCloseListener;
+import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.lang.annotation.Annotation;

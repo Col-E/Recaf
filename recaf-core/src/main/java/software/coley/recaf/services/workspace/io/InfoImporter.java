@@ -1,4 +1,4 @@
-package software.coley.recaf.workspace.io;
+package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.Info;

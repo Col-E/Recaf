@@ -17,8 +17,8 @@ import software.coley.recaf.ui.window.RecafStage;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.workspace.WorkspaceManager;
-import software.coley.recaf.workspace.io.ResourceImporter;
+import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.io.ResourceImporter;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 

@@ -6,7 +6,7 @@ import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.Mappings;
-import software.coley.recaf.workspace.WorkspaceCloseListener;
+import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;

@@ -15,7 +15,7 @@ import software.coley.recaf.ui.pane.CommentListPane;
 import software.coley.recaf.ui.pane.DocumentationPane;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 
 import java.util.Optional;
 

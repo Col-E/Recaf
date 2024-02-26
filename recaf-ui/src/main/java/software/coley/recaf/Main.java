@@ -18,8 +18,8 @@ import software.coley.recaf.services.plugin.PluginManager;
 import software.coley.recaf.services.script.ScriptEngine;
 import software.coley.recaf.util.JFXValidation;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.workspace.WorkspaceManager;
-import software.coley.recaf.workspace.io.ResourceImporter;
+import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.io.ResourceImporter;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 
 import java.io.File;

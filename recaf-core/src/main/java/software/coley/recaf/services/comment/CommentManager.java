@@ -30,7 +30,7 @@ import software.coley.recaf.services.decompile.OutputTextFilter;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TestEnvironment;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;

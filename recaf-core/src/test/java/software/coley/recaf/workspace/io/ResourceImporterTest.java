@@ -9,6 +9,7 @@ import software.coley.recaf.info.properties.builtin.ZipAccessTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipCommentProperty;
 import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
+import software.coley.recaf.services.workspace.io.*;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.util.ZipCreationUtils;

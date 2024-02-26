@@ -7,7 +7,7 @@ import software.coley.recaf.Bootstrap;
 import software.coley.recaf.Recaf;
 import software.coley.recaf.services.plugin.PluginManagerConfig;
 import software.coley.recaf.util.TestEnvironment;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 
 import java.lang.annotation.Annotation;
 

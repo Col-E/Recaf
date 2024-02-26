@@ -27,7 +27,7 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 
 import java.util.Collection;
 import java.util.Collections;

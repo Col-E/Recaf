@@ -1,4 +1,4 @@
-package software.coley.recaf.workspace;
+package software.coley.recaf.workspace.model;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;

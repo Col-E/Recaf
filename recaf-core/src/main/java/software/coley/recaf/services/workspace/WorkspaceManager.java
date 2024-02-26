@@ -1,4 +1,4 @@
-package software.coley.recaf.workspace;
+package software.coley.recaf.services.workspace;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -6,8 +6,9 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.workspace.io.WorkspaceExportOptions;
-import software.coley.recaf.workspace.io.WorkspaceExporter;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
+import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
+import software.coley.recaf.services.workspace.io.WorkspaceExporter;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;

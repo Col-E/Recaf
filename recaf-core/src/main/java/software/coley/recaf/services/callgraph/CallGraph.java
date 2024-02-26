@@ -18,7 +18,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.MultiMap;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
-import software.coley.recaf.workspace.WorkspaceModificationListener;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
