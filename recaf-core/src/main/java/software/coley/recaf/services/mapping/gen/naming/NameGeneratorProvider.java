@@ -1,4 +1,4 @@
-package software.coley.recaf.services.mapping.gen;
+package software.coley.recaf.services.mapping.gen.naming;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.config.ConfigContainer;

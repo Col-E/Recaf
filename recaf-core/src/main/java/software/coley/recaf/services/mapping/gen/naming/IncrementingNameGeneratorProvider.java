@@ -1,10 +1,9 @@
-package software.coley.recaf.services.mapping.gen.generator;
+package software.coley.recaf.services.mapping.gen.naming;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.config.BasicConfigContainer;
-import software.coley.recaf.services.mapping.gen.NameGeneratorProvider;
 
 /**
  * Name generator provider for {@link IncrementingNameGenerator}.

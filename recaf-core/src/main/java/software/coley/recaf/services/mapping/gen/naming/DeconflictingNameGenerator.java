@@ -1,4 +1,4 @@
-package software.coley.recaf.services.mapping.gen;
+package software.coley.recaf.services.mapping.gen.naming;
 
 import jakarta.annotation.Nullable;
 import software.coley.recaf.workspace.model.Workspace;

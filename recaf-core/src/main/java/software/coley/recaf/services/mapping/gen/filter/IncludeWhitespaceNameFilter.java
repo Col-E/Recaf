@@ -6,7 +6,6 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
 import software.coley.recaf.util.EscapeUtil;
 
 /**

@@ -1,11 +1,10 @@
-package software.coley.recaf.services.mapping.gen.generator;
+package software.coley.recaf.services.mapping.gen.naming;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.services.mapping.gen.DeconflictingNameGenerator;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 

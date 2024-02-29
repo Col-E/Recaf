@@ -5,7 +5,6 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
 
 import java.util.Collection;
 

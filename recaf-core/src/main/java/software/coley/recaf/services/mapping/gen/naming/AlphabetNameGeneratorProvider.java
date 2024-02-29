@@ -1,4 +1,4 @@
-package software.coley.recaf.services.mapping.gen.generator;
+package software.coley.recaf.services.mapping.gen.naming;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -7,8 +7,6 @@ import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
-import software.coley.recaf.config.ConfigGroups;
-import software.coley.recaf.services.mapping.gen.NameGeneratorProvider;
 
 /**
  * Name generator provider for {@link AlphabetNameGenerator}.

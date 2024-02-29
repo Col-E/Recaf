@@ -1,4 +1,4 @@
-package software.coley.recaf.services.mapping.gen;
+package software.coley.recaf.services.mapping.gen.filter;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;

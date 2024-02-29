@@ -1,4 +1,4 @@
-package software.coley.recaf.services.mapping.gen;
+package software.coley.recaf.services.mapping.gen.naming;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
