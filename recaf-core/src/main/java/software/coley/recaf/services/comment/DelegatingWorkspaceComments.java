@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DelegatingWorkspaceComments implements WorkspaceComments {
 	private final Map<String, DelegatingClassComments> classCommentsMap = new ConcurrentHashMap<>();
-	private final CommentUpdateListener listenerCallback;
+	private final CommentManager listenerCallback;
 	private final PersistWorkspaceComments delegate;
 
 	/**
@@ -28,7 +28,7 @@ public class DelegatingWorkspaceComments implements WorkspaceComments {
 	 * @param delegate
 	 * 		The {@link WorkspaceComments} implementation we actually want to store data in.
 	 */
-	public DelegatingWorkspaceComments(@Nonnull CommentUpdateListener listenerCallback, @Nonnull PersistWorkspaceComments delegate) {
+	public DelegatingWorkspaceComments(@Nonnull CommentManager listenerCallback, @Nonnull PersistWorkspaceComments delegate) {
 		this.listenerCallback = listenerCallback;
 		this.delegate = delegate;
 	}
@@ -39,7 +39,11 @@ public class DelegatingWorkspaceComments implements WorkspaceComments {
 		// We will be delegating to the persist model when we lazily create our own delegating class comments here.
 		// If the data does not exist upstream in the persist model, it will be made.
 		return classCommentsMap.computeIfAbsent(classPath.getValue().getName(),
-				name -> new DelegatingClassComments(classPath, listenerCallback, delegate.getOrCreateClassComments(classPath)));
+				name -> {
+					DelegatingClassComments newComments = new DelegatingClassComments(classPath, listenerCallback, delegate.getOrCreateClassComments(classPath));
+					listenerCallback.onClassContainerCreated(classPath, newComments);
+					return newComments;
+				});
 	}
 
 	@Nullable
@@ -52,13 +56,20 @@ public class DelegatingWorkspaceComments implements WorkspaceComments {
 
 		// Create a wrapper if one does not exist for the persist class comments model.
 		return classCommentsMap.computeIfAbsent(classPath.getValue().getName(),
-				name -> new DelegatingClassComments(classPath, listenerCallback, delegateClassComments));
+				name -> {
+					DelegatingClassComments newComments = new DelegatingClassComments(classPath, listenerCallback, delegateClassComments);
+					listenerCallback.onClassContainerCreated(classPath, newComments);
+					return newComments;
+				});
 	}
 
 	@Nullable
 	@Override
 	public ClassComments deleteClassComments(@Nonnull ClassPathNode classPath) {
-		return delegate.deleteClassComments(classPath);
+		ClassComments container = delegate.deleteClassComments(classPath);
+		if (container != null)
+			listenerCallback.onClassContainerRemoved(classPath, container);
+		return container;
 	}
 
 	@Nonnull

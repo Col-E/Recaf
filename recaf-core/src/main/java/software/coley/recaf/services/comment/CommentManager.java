@@ -49,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @EagerInitialization // We need to eagerly init so that we can register hooks in decompilation
 @ApplicationScoped
-public class CommentManager implements Service, CommentUpdateListener {
+public class CommentManager implements Service, CommentUpdateListener, CommentContainerListener {
 	public static final String SERVICE_ID = "comments";
 	private static final Logger logger = Logging.get(CommentManager.class);
 	private static final Gson gson = new GsonBuilder()
@@ -71,6 +71,7 @@ public class CommentManager implements Service, CommentUpdateListener {
 	/** Map of workspace comment impls modeling only data. Used for persistence. */
 	private final Map<String, PersistWorkspaceComments> persistMap = new ConcurrentHashMap<>();
 	private final Set<CommentUpdateListener> commentUpdateListeners = new HashSet<>();
+	private final Set<CommentContainerListener> commentContainerListeners = new HashSet<>();
 	private final WorkspaceManager workspaceManager;
 	private final RecafDirectoriesConfig directoriesConfig;
 	private final CommentManagerConfig config;
@@ -240,12 +241,15 @@ public class CommentManager implements Service, CommentUpdateListener {
 					ClassInfo preClassInfo = preMapped.getValue();
 					String preClassName = preClassInfo.getName();
 					ClassComments targetComments;
+					boolean isNewClassContainer;
 					if (!preClassName.equals(postMapped.getValue().getName())) {
 						comments.deleteClassComments(preMapped);
 						targetComments = comments.getOrCreateClassComments(postMapped);
 						targetComments.setClassComment(classComments.getClassComment());
+						isNewClassContainer = true;
 					} else {
 						targetComments = classComments;
+						isNewClassContainer = false;
 					}
 
 					// Migrate field comments.
@@ -255,14 +259,14 @@ public class CommentManager implements Service, CommentUpdateListener {
 
 						// If the field is mapped, or the class is mapped, migrate to the new definition.
 						String targetFieldName = mappings.getMappedFieldName(preClassName, fieldName, fieldDesc);
-						if (targetFieldName == null && targetComments != classComments)
+						if (targetFieldName == null && isNewClassContainer)
 							targetFieldName = fieldName;
 						if (targetFieldName == null)
 							continue;
 						String comment = classComments.getFieldComment(fieldName, fieldDesc);
 						if (comment != null) {
 							// Clear old comment, set in target container with up-to-date field declaration.
-							classComments.setFieldComment(fieldName, fieldDesc, null);
+							if (!isNewClassContainer) classComments.setFieldComment(fieldName, fieldDesc, null);
 							targetComments.setFieldComment(targetFieldName, remapper.mapDesc(fieldDesc), comment);
 						}
 					}
@@ -274,14 +278,14 @@ public class CommentManager implements Service, CommentUpdateListener {
 
 						// If the method mapped, or the class is mapped, migrate to the new definition.
 						String targetMethodName = mappings.getMappedMethodName(preClassName, methodName, methodDesc);
-						if (targetMethodName == null && targetComments != classComments)
+						if (targetMethodName == null && isNewClassContainer)
 							targetMethodName = methodName;
 						if (targetMethodName == null)
 							continue;
 						String comment = classComments.getMethodComment(methodName, methodDesc);
 						if (comment != null) {
 							// Clear old comment, set in target container with up-to-date method declaration.
-							classComments.setMethodComment(methodName, methodDesc, null);
+							if (!isNewClassContainer) classComments.setMethodComment(methodName, methodDesc, null);
 							targetComments.setMethodComment(targetMethodName, remapper.mapMethodDesc(methodDesc), comment);
 						}
 					}
@@ -369,6 +373,26 @@ public class CommentManager implements Service, CommentUpdateListener {
 			}
 	}
 
+	@Override
+	public void onClassContainerCreated(@Nonnull ClassPathNode path, @Nullable ClassComments comments) {
+		for (CommentContainerListener listener : commentContainerListeners)
+			try {
+				listener.onClassContainerCreated(path, comments);
+			} catch (Throwable t) {
+				logger.error("Uncaught exception in handling of comment container creation for '{}'", path.getValue().getName(), t);
+			}
+	}
+
+	@Override
+	public void onClassContainerRemoved(@Nonnull ClassPathNode path, @Nullable ClassComments comments) {
+		for (CommentContainerListener listener : commentContainerListeners)
+			try {
+				listener.onClassContainerRemoved(path, comments);
+			} catch (Throwable t) {
+				logger.error("Uncaught exception in handling of comment container removal for '{}'", path.getValue().getName(), t);
+			}
+	}
+
 	/**
 	 * @param workspace
 	 * 		Workspace to check for comments.
@@ -438,6 +462,22 @@ public class CommentManager implements Service, CommentUpdateListener {
 	 */
 	public void removeCommentListener(@Nonnull CommentUpdateListener listener) {
 		commentUpdateListeners.remove(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	public void addCommentContainerListener(@Nonnull CommentContainerListener listener) {
+		commentContainerListeners.add(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	public void removeCommentContainerListener(@Nonnull CommentContainerListener listener) {
+		commentContainerListeners.remove(listener);
 	}
 
 	@Nonnull

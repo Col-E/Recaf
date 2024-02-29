@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 @Dependent
-public class CommentListPane extends BorderPane implements Navigable, DocumentationPane, CommentUpdateListener {
+public class CommentListPane extends BorderPane implements Navigable, DocumentationPane, CommentUpdateListener, CommentContainerListener {
 	private static final Logger logger = Logging.get(CommentListPane.class);
 	private final Map<String, ClassCommentPane> classToPane = new ConcurrentHashMap<>();
 	private final CommentSearchPane searchPane = new CommentSearchPane();
@@ -74,6 +74,7 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 
 		// Register self as a listener so that when comment updates are made we can change the display.
 		commentManager.addCommentListener(this);
+		commentManager.addCommentContainerListener(this);
 
 		// Listener won't cover items that already exist.
 		populateInitialComments();
@@ -105,7 +106,15 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 		ClassPathNode classPath = Objects.requireNonNull(path.getParent());
 		ClassCommentPane pane = getOrCreateCommentPane(classPath);
 		if (pane != null)
-			pane.onFieldCommentUpdated(path, comment);
+			pane.onMethodCommentUpdated(path, comment);
+	}
+
+	@Override
+	public void onClassContainerRemoved(@Nonnull ClassPathNode path, @Nullable ClassComments comments) {
+		ClassCommentPane pane = classToPane.get(path.getValue().getName());
+		if (pane != null) {
+			FxThreadUtil.run(() -> commentsList.getChildren().remove(pane));
+		}
 	}
 
 	/**
@@ -158,6 +167,7 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 	public void disable() {
 		// Important that we unregister ourselves to prevent leakage.
 		commentManager.removeCommentListener(this);
+		commentManager.removeCommentContainerListener(this);
 
 		// Clear out the UI.
 		for (ClassCommentPane value : classToPane.values())
