@@ -39,6 +39,12 @@ public class PersistWorkspaceComments implements WorkspaceComments {
 		return classCommentsMap.get(classPath.getValue().getName());
 	}
 
+	@Nullable
+	@Override
+	public ClassComments deleteClassComments(@Nonnull ClassPathNode classPath) {
+		return classCommentsMap.remove(classPath.getValue().getName());
+	}
+
 	@Nonnull
 	@Override
 	public Iterator<ClassComments> iterator() {

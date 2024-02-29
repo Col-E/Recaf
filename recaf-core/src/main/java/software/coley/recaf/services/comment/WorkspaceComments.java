@@ -27,4 +27,13 @@ public interface WorkspaceComments extends Iterable<ClassComments> {
 	 */
 	@Nullable
 	ClassComments getClassComments(@Nonnull ClassPathNode classPath);
+
+	/**
+	 * @param classPath
+	 * 		Class path within a workspace.
+	 *
+	 * @return The removed comments container for the class, or {@code null} if no comments previously existed.
+	 */
+	@Nullable
+	ClassComments deleteClassComments(@Nonnull ClassPathNode classPath);
 }

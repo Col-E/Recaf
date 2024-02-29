@@ -55,6 +55,12 @@ public class DelegatingWorkspaceComments implements WorkspaceComments {
 				name -> new DelegatingClassComments(classPath, listenerCallback, delegateClassComments));
 	}
 
+	@Nullable
+	@Override
+	public ClassComments deleteClassComments(@Nonnull ClassPathNode classPath) {
+		return delegate.deleteClassComments(classPath);
+	}
+
 	@Nonnull
 	@Override
 	public Iterator<ClassComments> iterator() {
