@@ -133,11 +133,12 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 
 	@Nonnull
 	private static Path createBaseDirectory() {
-		// Try environment variable first
-		String recafDir = System.getenv("RECAF");
-		if (recafDir != null) {
+		// Try system property first
+		String recafDir = System.getProperty("RECAF_DIR");
+		if (recafDir == null) // Next try looking for an environment variable
+			recafDir = System.getenv("RECAF");
+		if (recafDir != null)
 			return Paths.get(recafDir);
-		}
 
 		// The directories library can break on some version of windows, but it will always
 		// resolve to '%APPDATA%' at the end of the day. So we'll just do that ourselves here,
