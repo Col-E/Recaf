@@ -28,6 +28,7 @@ import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmBytecodeFilter;
 import software.coley.recaf.services.decompile.OutputTextFilter;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
+import software.coley.recaf.services.mapping.*;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TestEnvironment;
 import software.coley.recaf.services.workspace.WorkspaceManager;
@@ -76,6 +77,7 @@ public class CommentManager implements Service, CommentUpdateListener {
 
 	@Inject
 	public CommentManager(@Nonnull DecompilerManager decompilerManager, @Nonnull WorkspaceManager workspaceManager,
+						  @Nonnull MappingListeners mappingListeners,
 						  @Nonnull RecafDirectoriesConfig directoriesConfig, @Nonnull CommentManagerConfig config) {
 		this.workspaceManager = workspaceManager;
 		this.directoriesConfig = directoriesConfig;
@@ -214,8 +216,83 @@ public class CommentManager implements Service, CommentUpdateListener {
 		// Restore any saved comments from disk.
 		loadComments();
 
-		// TODO: Register mapping listeners so that when types are renamed the comments are migrated.
-		//  - Need to notify comment-listeners that stuff got moved.
+		// Register mapping listeners so that when types & members are renamed the comments are migrated.
+		mappingListeners.addMappingApplicationListener(new MappingApplicationListener() {
+			@Override
+			public void onPreApply(@Nonnull MappingResults mappingResults) {
+				WorkspaceComments comments = getCurrentWorkspaceComments();
+				if (comments == null)
+					return;
+
+				// There are comments that may need to be updated.
+				Mappings mappings = mappingResults.getMappings();
+				BasicMappingsRemapper remapper = new BasicMappingsRemapper(mappings);
+				mappingResults.streamPreToPostMappingPaths().forEach(pair -> {
+					ClassPathNode preMapped = pair.getLeft();
+					ClassPathNode postMapped = pair.getRight();
+
+					// Skip if class has no comments.
+					ClassComments classComments = comments.getClassComments(preMapped);
+					if (classComments == null)
+						return;
+
+					// If the class name changed, we will want to migrate the comment to a new target container.
+					ClassInfo preClassInfo = preMapped.getValue();
+					String preClassName = preClassInfo.getName();
+					ClassComments targetComments;
+					if (!preClassName.equals(postMapped.getValue().getName())) {
+						comments.deleteClassComments(preMapped);
+						targetComments = comments.getOrCreateClassComments(postMapped);
+						targetComments.setClassComment(classComments.getClassComment());
+					} else {
+						targetComments = classComments;
+					}
+
+					// Migrate field comments.
+					for (FieldMember field : preClassInfo.getFields()) {
+						String fieldName = field.getName();
+						String fieldDesc = field.getDescriptor();
+
+						// If the field is mapped, or the class is mapped, migrate to the new definition.
+						String targetFieldName = mappings.getMappedFieldName(preClassName, fieldName, fieldDesc);
+						if (targetFieldName == null && targetComments != classComments)
+							targetFieldName = fieldName;
+						if (targetFieldName == null)
+							continue;
+						String comment = classComments.getFieldComment(fieldName, fieldDesc);
+						if (comment != null) {
+							// Clear old comment, set in target container with up-to-date field declaration.
+							classComments.setFieldComment(fieldName, fieldDesc, null);
+							targetComments.setFieldComment(targetFieldName, remapper.mapDesc(fieldDesc), comment);
+						}
+					}
+
+					// Migrate method comments.
+					for (MethodMember method : preClassInfo.getMethods()) {
+						String methodName = method.getName();
+						String methodDesc = method.getDescriptor();
+
+						// If the method mapped, or the class is mapped, migrate to the new definition.
+						String targetMethodName = mappings.getMappedMethodName(preClassName, methodName, methodDesc);
+						if (targetMethodName == null && targetComments != classComments)
+							targetMethodName = methodName;
+						if (targetMethodName == null)
+							continue;
+						String comment = classComments.getMethodComment(methodName, methodDesc);
+						if (comment != null) {
+							// Clear old comment, set in target container with up-to-date method declaration.
+							classComments.setMethodComment(methodName, methodDesc, null);
+							targetComments.setMethodComment(targetMethodName, remapper.mapMethodDesc(methodDesc), comment);
+						}
+					}
+				});
+			}
+
+			@Override
+			public void onPostApply(@Nonnull MappingResults mappingResults) {
+				// no-op
+			}
+		});
 	}
 
 	/**
