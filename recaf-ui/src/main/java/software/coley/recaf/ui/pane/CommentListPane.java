@@ -217,6 +217,9 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 		 * Full re-population of comment data.
 		 */
 		private void refresh() {
+			// Clear out old comment mappings
+			memberComments.clear();
+
 			// Create labels for class + class-comment
 			Label classPreview = new Label();
 			Node graphic = cellConfigurationService.graphicOf(classPath);
@@ -299,10 +302,11 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 			if (isApplicableClass(path.getParent())) {
 				ClassMember member = path.getValue();
 				Label memberComment = memberComments.get(memberKey(member));
-				if (memberComment != null)
+				if (comment != null && memberComment != null)
 					FxThreadUtil.run(() -> memberComment.setText(comment));
 				else
-					FxThreadUtil.run(this::refresh); // Newly commented members trigger a refresh so things are in order.
+					// Newly commented members and removed comments, trigger a refresh so things are in order.
+					FxThreadUtil.run(this::refresh);
 			}
 		}
 
