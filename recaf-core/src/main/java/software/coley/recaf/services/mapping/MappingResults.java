@@ -3,6 +3,7 @@ package software.coley.recaf.services.mapping;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
+import software.coley.collections.tuple.Pair;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 
 /**
  * Result wrapper for {@link MappingApplier} operations.
@@ -237,6 +239,17 @@ public class MappingResults {
 	public ClassPathNode getPreMappingPath(@Nonnull String postMappingName) {
 		String preMappedName = getPreMappingName(postMappingName);
 		return preMappedName == null ? null : preMappingPaths.get(preMappedName);
+	}
+
+	/**
+	 * @return Stream of mapped path pairs.
+	 * The {@link Pair#getLeft()} holds the pre-mapped path.
+	 * The {@link Pair#getRight()} holds the post-mapped path, which may be {@code null} in some cases.
+	 */
+	@Nonnull
+	public Stream<Pair<ClassPathNode, ClassPathNode>> streamPreToPostMappingPaths() {
+		return getPreMappingPaths().values().stream()
+				.map(p -> new Pair<>(p, getPostMappingPath(p.getValue().getName())));
 	}
 
 	/**

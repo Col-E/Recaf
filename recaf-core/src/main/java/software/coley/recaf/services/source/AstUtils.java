@@ -70,7 +70,7 @@ public class AstUtils {
 			if (bounds.size() == 1)
 				return toInternal(bounds.get(0));
 		}
-		throw new UnsupportedOperationException("Unhandled type: " + type);
+		throw new UnsupportedOperationException("Unhandled type: " + type + "(" + type.getClass().getName() + ")");
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package software.coley.recaf.services.mapping;
 
+import jakarta.annotation.Nonnull;
 import org.objectweb.asm.commons.Remapper;
 
 /**
@@ -15,7 +16,7 @@ public class BasicMappingsRemapper extends Remapper {
 	 * @param mappings
 	 * 		Mappings to pull from.
 	 */
-	public BasicMappingsRemapper(Mappings mappings) {
+	public BasicMappingsRemapper(@Nonnull Mappings mappings) {
 		this.mappings = mappings;
 	}
 
