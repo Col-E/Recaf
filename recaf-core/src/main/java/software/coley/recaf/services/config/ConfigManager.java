@@ -74,10 +74,8 @@ public class ConfigManager implements Service {
 				}
 			}
 
-			try {
-				BufferedWriter writer = Files.newBufferedWriter(containerPath);
+			try(JsonWriter writer = new JsonWriter(Files.newBufferedWriter(containerPath))) {
 				gson.toJson(json, writer);
-				writer.close();
 			} catch (IOException e) {
 				logger.error("Failed to save config container: {}", key, e);
 			}
@@ -103,8 +101,7 @@ public class ConfigManager implements Service {
 			}
 
 			JsonObject json;
-			try {
-				JsonReader reader = new JsonReader(Files.newBufferedReader(containerPath));
+			try (JsonReader reader = new JsonReader(Files.newBufferedReader(containerPath))) {
 				json = gson.fromJson(reader, JsonObject.class);
 			} catch (IOException e) {
 				logger.error("Failed to load config container: {}", key, e);
