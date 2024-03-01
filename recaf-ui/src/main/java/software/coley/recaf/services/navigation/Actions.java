@@ -50,6 +50,7 @@ import software.coley.recaf.ui.pane.editing.media.VideoFilePane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
 import software.coley.recaf.util.*;
 import software.coley.recaf.util.visitors.*;
+import software.coley.recaf.workspace.PathExportingManager;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -78,6 +79,7 @@ public class Actions implements Service {
 	private final DockingManager dockingManager;
 	private final TextProviderService textService;
 	private final IconProviderService iconService;
+	private final PathExportingManager pathExportingManager;
 	private final Instance<MappingApplier> applierProvider;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
@@ -96,6 +98,7 @@ public class Actions implements Service {
 				   @Nonnull DockingManager dockingManager,
 				   @Nonnull TextProviderService textService,
 				   @Nonnull IconProviderService iconService,
+				   @Nonnull PathExportingManager pathExportingManager,
 				   @Nonnull Instance<MappingApplier> applierProvider,
 				   @Nonnull Instance<JvmClassPane> jvmPaneProvider,
 				   @Nonnull Instance<AndroidClassPane> androidPaneProvider,
@@ -111,6 +114,7 @@ public class Actions implements Service {
 		this.dockingManager = dockingManager;
 		this.textService = textService;
 		this.iconService = iconService;
+		this.pathExportingManager = pathExportingManager;
 		this.applierProvider = applierProvider;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
@@ -1452,6 +1456,25 @@ public class Actions implements Service {
 			// Build the tab.
 			return createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
 		});
+	}
+
+	/**
+	 * Exports a class, prompting the user to select a location to save the class to.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to delete.
+	 */
+	public void exportClass(@Nonnull Workspace workspace,
+							@Nonnull WorkspaceResource resource,
+							@Nonnull JvmClassBundle bundle,
+							@Nonnull JvmClassInfo info) {
+		pathExportingManager.export(info);
 	}
 
 	/**

@@ -177,6 +177,9 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 		refactor.infoItem("menu.refactor.rename", TAG_EDIT, actions::renameClass);
 		refactor.infoItem("menu.refactor.move", STACKED_MOVE, actions::moveClass);
 
+		// Export actions
+		builder.infoItem("menu.export.class", EXPORT, actions::exportClass);
+
 		// TODO: implement operations
 		//  - View
 		//    - Class hierarchy

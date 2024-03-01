@@ -40,6 +40,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	private final ObservableCollection<WorkspaceModel, List<WorkspaceModel>> recentWorkspaces = new ObservableCollection<>(ArrayList::new);
 	private final ObservableString lastWorkspaceOpenDirectory = new ObservableString(System.getProperty("user.dir"));
 	private final ObservableString lastWorkspaceExportDirectory = new ObservableString(System.getProperty("user.dir"));
+	private final ObservableString lastClassExportDirectory = new ObservableString(System.getProperty("user.dir"));
 
 	@Inject
 	public RecentFilesConfig() {
@@ -49,6 +50,7 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		addValue(new BasicCollectionConfigValue<>("recent-workspaces", List.class, WorkspaceModel.class, recentWorkspaces));
 		addValue(new BasicConfigValue<>("last-workspace-open-path", String.class, lastWorkspaceOpenDirectory));
 		addValue(new BasicConfigValue<>("last-workspace-export-path", String.class, lastWorkspaceExportDirectory));
+		addValue(new BasicConfigValue<>("last-class-export-path", String.class, lastClassExportDirectory));
 	}
 
 	/**
@@ -124,6 +126,14 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	@Nonnull
 	public ObservableString getLastWorkspaceExportDirectory() {
 		return lastWorkspaceExportDirectory;
+	}
+
+	/**
+	 * @return Last path used to export a class to.
+	 */
+	@Nonnull
+	public ObservableString getLastClassExportDirectory() {
+		return lastClassExportDirectory;
 	}
 
 	/**
