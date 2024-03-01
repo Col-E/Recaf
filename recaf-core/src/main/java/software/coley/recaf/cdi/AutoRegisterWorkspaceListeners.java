@@ -1,9 +1,9 @@
 package software.coley.recaf.cdi;
 
 import jakarta.interceptor.InterceptorBinding;
-import software.coley.recaf.workspace.WorkspaceCloseListener;
-import software.coley.recaf.workspace.WorkspaceModificationListener;
-import software.coley.recaf.workspace.WorkspaceOpenListener;
+import software.coley.recaf.services.workspace.WorkspaceCloseListener;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
+import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 
 import java.lang.annotation.*;
 

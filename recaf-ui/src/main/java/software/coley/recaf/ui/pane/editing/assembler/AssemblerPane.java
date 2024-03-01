@@ -442,24 +442,22 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * 		Phase the problems belong to.
 	 */
 	private void processErrors(@Nonnull Collection<Error> errors, @Nonnull ProblemPhase phase) {
+		for (Error error : errors) {
+			Location location = error.getLocation();
+			int line = location == null ? 1 : location.line();
+			int column = location == null ? 1 : location.column();
+			Problem problem = new Problem(line, column, ProblemLevel.ERROR, phase, error.getMessage());
+			problemTracking.add(problem);
+
+			// REMOVE IS TRACING PARSER ERRORS
+			/*
+			Throwable trace = new Throwable();
+			trace.setStackTrace(error.getInCodeSource());
+			logger.trace("Assembler error", trace);
+			System.err.println(error);
+			*/
+		}
 		FxThreadUtil.run(() -> {
-			for (Error error : errors) {
-				Location location = error.getLocation();
-				int line = location == null ? 1 : location.line();
-				int column = location == null ? 1 : location.column();
-				Problem problem = new Problem(line, column, ProblemLevel.ERROR, phase,
-						error.getMessage());
-				problemTracking.add(problem);
-
-				// REMOVE IS TRACING PARSER ERRORS
-				/*
-				Throwable trace = new Throwable();
-				trace.setStackTrace(error.getInCodeSource());
-				logger.trace("Assembler error", trace);
-				System.err.println(error);
-				*/
-			}
-
 			if (!errors.isEmpty())
 				editor.redrawParagraphGraphics();
 		});

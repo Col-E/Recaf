@@ -13,6 +13,7 @@ import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.MethodMapping;
 import software.coley.recaf.services.mapping.gen.filter.*;
+import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.*;

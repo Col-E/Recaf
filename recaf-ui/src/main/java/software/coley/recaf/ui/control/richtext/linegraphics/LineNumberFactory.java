@@ -43,6 +43,7 @@ public class LineNumberFactory extends AbstractLineGraphicFactory {
 		container.addHorizontal(label);
 	}
 
+	@Nonnull
 	private static String format(int line, int digits) {
 		return String.format(StringUtil.fillLeft(digits, " ", String.valueOf(line)));
 	}

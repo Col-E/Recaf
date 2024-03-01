@@ -25,7 +25,7 @@ public class FxThreadUtil {
 	 */
 	public static void run(Runnable action) {
 		// Skip under test environment.
-		if (FxTest.isTestEnv()) return;
+		if (TestEnvironment.isTestEnv()) return;
 
 		// I know "Platform.isFxApplicationThread()" exists.
 		// That results in some wonky behavior in various use cases though.

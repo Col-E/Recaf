@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -24,8 +25,8 @@ import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.services.cell.IconProviderService;
-import software.coley.recaf.services.cell.TextProviderService;
+import software.coley.recaf.services.cell.icon.IconProviderService;
+import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
@@ -36,6 +37,8 @@ import software.coley.recaf.ui.control.popup.NamePopup;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
+import software.coley.recaf.ui.pane.CommentEditPane;
+import software.coley.recaf.ui.pane.DocumentationPane;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
 import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
@@ -84,6 +87,7 @@ public class Actions implements Service {
 	private final Instance<AudioFilePane> audioPaneProvider;
 	private final Instance<VideoFilePane> videoPaneProvider;
 	private final Instance<AssemblerPane> assemblerPaneProvider;
+	private final Instance<CommentEditPane> documentationPaneProvider;
 	private final ActionsConfig config;
 
 	@Inject
@@ -100,7 +104,8 @@ public class Actions implements Service {
 				   @Nonnull Instance<ImageFilePane> imagePaneProvider,
 				   @Nonnull Instance<AudioFilePane> audioPaneProvider,
 				   @Nonnull Instance<VideoFilePane> videoPaneProvider,
-				   @Nonnull Instance<AssemblerPane> assemblerPaneProvider) {
+				   @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
+				   @Nonnull Instance<CommentEditPane> documentationPaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
@@ -115,6 +120,7 @@ public class Actions implements Service {
 		this.audioPaneProvider = audioPaneProvider;
 		this.videoPaneProvider = videoPaneProvider;
 		this.assemblerPaneProvider = assemblerPaneProvider;
+		this.documentationPaneProvider = documentationPaneProvider;
 	}
 
 	/**
@@ -156,7 +162,7 @@ public class Actions implements Service {
 		} else if (info.isAndroidClass()) {
 			return gotoDeclaration(workspace, resource, (AndroidClassBundle) bundle, info.asAndroidClass());
 		}
-		throw new UnsupportedContent("Unsupported class type: " + info.getClass().getName());
+		throw new UnsupportedContentException("Unsupported class type: " + info.getClass().getName());
 	}
 
 	/**
@@ -265,12 +271,7 @@ public class Actions implements Service {
 					tab.setGraphic(updatedGraphic);
 				});
 			});
-			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
-			items.add(separator());
-			addCloseActions(menu, tab);
-			tab.setContextMenu(menu);
+			setupInfoTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -320,7 +321,7 @@ public class Actions implements Service {
 		} else if (info.isVideoFile()) {
 			return gotoDeclaration(workspace, resource, bundle, info.asVideoFile());
 		}
-		throw new UnsupportedContent("Unsupported file type: " + info.getClass().getName());
+		throw new UnsupportedContentException("Unsupported file type: " + info.getClass().getName());
 	}
 
 	/**
@@ -357,7 +358,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupFileTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -396,7 +397,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupFileTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -435,7 +436,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupFileTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -474,7 +475,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupFileTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, tab);
 			return tab;
 		});
 	}
@@ -513,9 +514,86 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupFileTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, tab);
 			return tab;
 		});
+	}
+
+	/**
+	 * Prompts the user to document the given class into.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to document.
+	 */
+	public void openCommentEditing(@Nonnull Workspace workspace,
+								   @Nonnull WorkspaceResource resource,
+								   @Nonnull ClassBundle<? extends ClassInfo> bundle,
+								   @Nonnull ClassInfo info) {
+		createContent(() -> {
+			ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, info);
+
+			// Create text/graphic for the tab to create.
+			String title = textService.getClassInfoTextProvider(workspace, resource, bundle, info).makeText();
+			Node graphic = new FontIconView(CarbonIcons.BOOKMARK_FILLED);
+			if (title == null) throw new IllegalStateException("Missing title");
+			return createCommentEditTab(path, title, graphic, info);
+		});
+	}
+
+	/**
+	 * Prompts the user to document the given class into.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param member
+	 * 		Member to document.
+	 */
+	public void openCommentEditing(@Nonnull Workspace workspace,
+								   @Nonnull WorkspaceResource resource,
+								   @Nonnull ClassBundle<? extends ClassInfo> bundle,
+								   @Nonnull ClassInfo declaringClass,
+								   @Nonnull ClassMember member) {
+		createContent(() -> {
+			ClassMemberPathNode path = PathNodes.memberPath(workspace, resource, bundle, declaringClass, member);
+
+			// Create text/graphic for the tab to create.
+			ClassInfo classInfo = path.getParent().getValue();
+			String title = textService.getMemberTextProvider(workspace, resource, bundle, classInfo, member).makeText();
+			Node graphic = new FontIconView(CarbonIcons.BOOKMARK_FILLED);
+			if (title == null) throw new IllegalStateException("Missing title");
+			return createCommentEditTab(path, title, graphic, classInfo);
+		});
+	}
+
+	@Nonnull
+	private DockingTab createCommentEditTab(@Nonnull PathNode<?> path, @Nonnull String title,
+											@Nonnull Node graphic, @Nonnull ClassInfo classInfo) {
+		// Create content for the tab.
+		CommentEditPane content = documentationPaneProvider.get();
+		content.onUpdatePath(path);
+
+		// Place the tab in a region with other comments if possible.
+		DockingRegion targetRegion = dockingManager.getDockTabs().stream()
+				.filter(t -> t.getContent() instanceof DocumentationPane)
+				.map(DockingTab::getRegion)
+				.findFirst().orElse(dockingManager.getPrimaryRegion());
+
+		// Build the tab.
+		DockingTab tab = createTab(targetRegion, title, graphic, content);
+		setupInfoTabContextMenu(classInfo, tab);
+		return tab;
 	}
 
 	/**
@@ -528,7 +606,7 @@ public class Actions implements Service {
 	 * @param bundle
 	 * 		Containing bundle.
 	 * @param info
-	 * 		Class to go move into a different package.
+	 * 		Class to move into a different package.
 	 */
 	public void moveClass(@Nonnull Workspace workspace,
 						  @Nonnull WorkspaceResource resource,
@@ -1693,7 +1771,7 @@ public class Actions implements Service {
 		return (Navigable) tab.getContent();
 	}
 
-	private static void setupFileTabContextMenu(@Nonnull FileInfo info, DockingTab tab) {
+	private static void setupInfoTabContextMenu(@Nonnull Info info, @Nonnull DockingTab tab) {
 		ContextMenu menu = new ContextMenu();
 		ObservableList<MenuItem> items = menu.getItems();
 		items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
@@ -1746,6 +1824,29 @@ public class Actions implements Service {
 	 */
 	private static DockingTab createTab(@Nonnull DockingRegion region,
 										@Nonnull String title,
+										@Nonnull Node graphic,
+										@Nonnull Node content) {
+		DockingTab tab = region.createTab(title, content);
+		tab.setGraphic(graphic);
+		return tab;
+	}
+
+	/**
+	 * Shorthand for tab-creation + graphic setting.
+	 *
+	 * @param region
+	 * 		Parent region to spawn in.
+	 * @param title
+	 * 		Tab title.
+	 * @param graphic
+	 * 		Tab graphic.
+	 * @param content
+	 * 		Tab content.
+	 *
+	 * @return Created tab.
+	 */
+	private static DockingTab createTab(@Nonnull DockingRegion region,
+										@Nonnull ObservableValue<String> title,
 										@Nonnull Node graphic,
 										@Nonnull Node content) {
 		DockingTab tab = region.createTab(title, content);

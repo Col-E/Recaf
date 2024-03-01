@@ -56,8 +56,8 @@ public class JavacScriptEngine implements ScriptEngine {
 			"software.coley.recaf.services.plugin.*",
 			"software.coley.recaf.services.script.*",
 			"software.coley.recaf.services.search.*",
-			"software.coley.recaf.workspace.*",
-			"software.coley.recaf.workspace.io.*",
+			"software.coley.recaf.services.workspace.*",
+			"software.coley.recaf.services.workspace.io.*",
 			"software.coley.recaf.workspace.model.*",
 			"software.coley.recaf.workspace.model.bundle.*",
 			// "software.coley.recaf.services.ssvm.*",
@@ -243,7 +243,7 @@ public class JavacScriptEngine implements ScriptEngine {
 
 			// Replace text with spaces to maintain script character offsets
 			String importMatch = script.substring(matcher.start(), matcher.end());
-			script = script.replace(importMatch, StringUtil.repeat(" ", importMatch.length()));
+			script = script.replace(importMatch, " ".repeat(importMatch.length()));
 		}
 
 		// Create code (just a basic class with a static 'run' method)

@@ -6,7 +6,6 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
 
 /**
  * Filter that includes names that are outside the standard ASCII range used for normal class/member names.

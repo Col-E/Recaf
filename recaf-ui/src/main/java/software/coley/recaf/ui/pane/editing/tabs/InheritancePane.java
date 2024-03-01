@@ -17,7 +17,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
-import software.coley.recaf.services.cell.ContextSource;
+import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.navigation.Navigable;

@@ -8,7 +8,7 @@ import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.workspace.PathExportingManager;
-import software.coley.recaf.workspace.io.WorkspaceExportOptions;
+import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**

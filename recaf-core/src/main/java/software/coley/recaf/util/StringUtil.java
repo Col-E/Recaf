@@ -23,13 +23,16 @@ import java.util.Random;
  * @author Matt Coley
  */
 public class StringUtil {
+	public static final String[] EMPTY_STRING_ARRAY = new String[0];
+
 	/**
 	 * @param input
 	 * 		Some text containing newlines.
 	 *
 	 * @return Input split by newline.
 	 */
-	public static String[] splitNewline(String input) {
+	@Nonnull
+	public static String[] splitNewline(@Nonnull String input) {
 		return input.split("\n\r|\r\n|\n");
 	}
 
@@ -40,11 +43,12 @@ public class StringUtil {
 	 * @return Input split by newline.
 	 * Empty lines <i>(Containing only the newline split)</i> are omitted.
 	 */
-	public static String[] splitNewlineSkipEmpty(String input) {
+	@Nonnull
+	public static String[] splitNewlineSkipEmpty(@Nonnull String input) {
 		String[] split = input.split("[\r\n]+");
 		// If the first line of the file is a newline split will still have
 		// one blank entry at the start.
-		if (split[0].isEmpty())
+		if (split.length > 1 && split[0].isEmpty())
 			return Arrays.copyOfRange(split, 1, split.length);
 		return split;
 	}
@@ -83,21 +87,6 @@ public class StringUtil {
 	 * @param text
 	 * 		Input text.
 	 * @param cutoff
-	 * 		Sequence to match up to.
-	 *
-	 * @return Input text, up until the last cutoff sequence.
-	 */
-	@Nonnull
-	public static String cutOffAtLast(@Nonnull String text, @Nonnull String cutoff) {
-		int i = text.lastIndexOf(cutoff);
-		if (i < 0) return text;
-		return text.substring(0, i);
-	}
-
-	/**
-	 * @param text
-	 * 		Input text.
-	 * @param cutoff
 	 * 		Character to match up to.
 	 *
 	 * @return Input text, up until the last cutoff sequence.
@@ -113,19 +102,13 @@ public class StringUtil {
 	 * @param text
 	 * 		Input text.
 	 * @param cutoff
-	 * 		Character to match up to.
-	 * @param n
-	 * 		Times to match the character.
+	 * 		Sequence to match up to.
 	 *
 	 * @return Input text, up until the last cutoff sequence.
 	 */
 	@Nonnull
-	public static String cutOffAtNth(@Nonnull String text, String cutoff, int n) {
-		int i = -1;
-		while (n-- > 0) {
-			if ((i = text.indexOf(cutoff, i + 1)) < 0)
-				return text;
-		}
+	public static String cutOffAtLast(@Nonnull String text, @Nonnull String cutoff) {
+		int i = text.lastIndexOf(cutoff);
 		if (i < 0) return text;
 		return text.substring(0, i);
 	}
@@ -154,11 +137,33 @@ public class StringUtil {
 	/**
 	 * @param text
 	 * 		Input text.
+	 * @param cutoff
+	 * 		Character to match up to.
+	 * @param n
+	 * 		Times to match the character.
+	 *
+	 * @return Input text, up until the last cutoff sequence.
+	 */
+	@Nonnull
+	public static String cutOffAtNth(@Nonnull String text, String cutoff, int n) {
+		int i = -1;
+		while (n-- > 0) {
+			if ((i = text.indexOf(cutoff, i + 1)) < 0)
+				return text;
+		}
+		if (i < 0) return text;
+		return text.substring(0, i);
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
 	 * @param after
 	 * 		Sequence to find and use as a cut-off point.
 	 *
 	 * @return Input text, after the occurrence of the given pattern.
 	 */
+	@Nonnull
 	public static String getAfter(@Nonnull String text, @Nonnull String after) {
 		int i = text.lastIndexOf(after);
 		if (i < 0) return text;
@@ -175,8 +180,9 @@ public class StringUtil {
 	 *
 	 * @return Modified text.
 	 */
+	@Nonnull
 	public static String insert(@Nonnull String text, int insertIndex, @Nullable String insertion) {
-		if (insertion == null || insertion.isEmpty() || insertIndex < 0 || insertIndex >= text.length()) return text;
+		if (insertion == null || insertion.isEmpty() || insertIndex < 0 || insertIndex > text.length()) return text;
 		String pre = text.substring(0, insertIndex);
 		String post = text.substring(insertIndex);
 		return pre + insertion + post;
@@ -192,10 +198,11 @@ public class StringUtil {
 	 *
 	 * @return Modified text.
 	 */
+	@Nonnull
 	public static String remove(@Nonnull String text, int removeIndex, int removeLength) {
 		if (removeIndex < 0 || removeIndex >= text.length()) return text;
 		String pre = text.substring(0, removeIndex);
-		String post = text.substring(removeIndex + removeLength);
+		String post = text.substring(Math.min(removeIndex + removeLength, text.length()));
 		return pre + post;
 	}
 
@@ -207,7 +214,8 @@ public class StringUtil {
 	 *
 	 * @return Text or fallback if text is empty.
 	 */
-	public static String withEmptyFallback(String defaultText, String fallback) {
+	@Nonnull
+	public static String withEmptyFallback(@Nullable String defaultText, @Nonnull String fallback) {
 		if (defaultText == null || defaultText.trim().isBlank())
 			return fallback;
 		return defaultText;
@@ -219,10 +227,12 @@ public class StringUtil {
 	 *
 	 * @return {@code true} when the given text represents a decimal number.
 	 */
-	public static boolean isDecimal(String text) {
+	public static boolean isDecimal(@Nullable String text) {
+		if (text == null || text.isEmpty())
+			return false;
 		try {
 			Double.parseDouble(text);
-			return false;
+			return true;
 		} catch (NumberFormatException ex) {
 			return false;
 		}
@@ -279,7 +289,8 @@ public class StringUtil {
 	 *
 	 * @return Modified string.
 	 */
-	public static String replaceRange(String string, int start, int end, String replacement) {
+	@Nonnull
+	public static String replaceRange(@Nonnull String string, int start, int end, String replacement) {
 		String temp = string.substring(0, start);
 		temp += replacement;
 		temp += string.substring(end);
@@ -294,7 +305,9 @@ public class StringUtil {
 	 *
 	 * @return Number of times the given pattern appears in the text.
 	 */
-	public static int count(String pattern, String text) {
+	public static int count(@Nonnull String pattern, @Nullable String text) {
+		if (text == null || text.isEmpty())
+			return 0;
 		int count = 0;
 		while (text.contains(pattern)) {
 			text = text.replaceFirst(pattern, "");
@@ -311,7 +324,9 @@ public class StringUtil {
 	 *
 	 * @return Number of times the given pattern appears in the text.
 	 */
-	public static int count(char pattern, String text) {
+	public static int count(char pattern, @Nullable String text) {
+		if (text == null || text.isEmpty())
+			return 0;
 		int count = 0;
 		int length = text.length();
 		for (int i = 0; i < length; i++) {
@@ -326,7 +341,8 @@ public class StringUtil {
 	 *
 	 * @return String of path.
 	 */
-	public static String pathToString(Path path) {
+	@Nonnull
+	public static String pathToString(@Nonnull Path path) {
 		return path.toString();
 	}
 
@@ -336,7 +352,8 @@ public class StringUtil {
 	 *
 	 * @return String of file name at path.
 	 */
-	public static String pathToNameString(Path path) {
+	@Nonnull
+	public static String pathToNameString(@Nonnull Path path) {
 		return path.getFileName().toString();
 	}
 
@@ -346,7 +363,8 @@ public class StringUtil {
 	 *
 	 * @return String of absolute path.
 	 */
-	public static String pathToAbsoluteString(Path path) {
+	@Nonnull
+	public static String pathToAbsoluteString(@Nonnull Path path) {
 		String absolutePath = path.toAbsolutePath().toString();
 		if (absolutePath.indexOf('\\') > 0) // Translate windows-specific path to platform independent path name
 			absolutePath = absolutePath.replace('\\', '/');
@@ -389,7 +407,8 @@ public class StringUtil {
 	 *
 	 * @return Text cut off to max length.
 	 */
-	public static String limit(String text, int max) {
+	@Nonnull
+	public static String limit(@Nonnull String text, int max) {
 		return limit(text, null, max);
 	}
 
@@ -403,7 +422,8 @@ public class StringUtil {
 	 *
 	 * @return Text cut off to max length.
 	 */
-	public static String limit(String text, String cutoffPattern, int max) {
+	@Nonnull
+	public static String limit(@Nonnull String text, @Nullable String cutoffPattern, int max) {
 		if (max <= 0) return "";
 		if (text.length() > max) {
 			String s = text.substring(0, max);
@@ -420,7 +440,8 @@ public class StringUtil {
 	 *
 	 * @return Text with first letter lower-cased.
 	 */
-	public static String lowercaseFirstChar(String name) {
+	@Nonnull
+	public static String lowercaseFirstChar(@Nonnull String name) {
 		int len = name.length();
 		if (len == 1)
 			return name.toLowerCase();
@@ -436,7 +457,8 @@ public class StringUtil {
 	 *
 	 * @return Text with first letter upper-cased.
 	 */
-	public static String uppercaseFirstChar(String name) {
+	@Nonnull
+	public static String uppercaseFirstChar(@Nonnull String name) {
 		int len = name.length();
 		if (len == 1)
 			return name.toUpperCase();
@@ -454,7 +476,8 @@ public class StringUtil {
 	 *
 	 * @return The common prefix between the two strings.
 	 */
-	public static String getCommonPrefix(String a, String b) {
+	@Nonnull
+	public static String getCommonPrefix(@Nonnull String a, @Nonnull String b) {
 		int len = Math.min(a.length(), b.length());
 		for (int i = 0; i < len; i++) {
 			if (a.charAt(i) != b.charAt(i)) {
@@ -462,30 +485,6 @@ public class StringUtil {
 			}
 		}
 		return a.substring(0, len);
-	}
-
-	/**
-	 * @param left
-	 * 		Some string with the ending to focus on.
-	 * @param right
-	 * 		Some string with the beginning to focus on.
-	 *
-	 * @return The common text between the two.
-	 */
-	public static String getIntersection(String left, String right) {
-		int aLength = left.length();
-		int len = Math.min(aLength, right.length());
-		String match = "";
-		StringBuilder sba = new StringBuilder();
-		StringBuilder sbb = new StringBuilder();
-		for (int i = 0; i < len; i++) {
-			String aa = sba.insert(0, left.charAt(aLength - i - 1)).toString();
-			String bb = sbb.append(right.charAt(i)).toString();
-			if (aa.equals(bb)) {
-				match = bb;
-			}
-		}
-		return match;
 	}
 
 	/**
@@ -498,11 +497,10 @@ public class StringUtil {
 	 *
 	 * @return String with pattern filling up to the desired length on the left.
 	 */
-	public static String fillLeft(int len, String pattern, String string) {
-		StringBuilder sb = new StringBuilder(string);
-		while (sb.length() < len) {
+	public static String fillLeft(int len, @Nonnull String pattern, @Nullable String string) {
+		StringBuilder sb = new StringBuilder(string == null ? "" : string);
+		while (sb.length() < len)
 			sb.insert(0, pattern);
-		}
 		return sb.toString();
 	}
 
@@ -516,25 +514,11 @@ public class StringUtil {
 	 *
 	 * @return String with pattern filling up to the desired length on the right.
 	 */
-	public static String fillRight(int len, String pattern, String string) {
-		StringBuilder sb = new StringBuilder(string);
-		while (sb.length() < len) {
+	@Nonnull
+	public static String fillRight(int len, @Nonnull String pattern, @Nullable String string) {
+		StringBuilder sb = new StringBuilder(string == null ? "" : string);
+		while (sb.length() < len)
 			sb.append(pattern);
-		}
-		return sb.toString();
-	}
-
-	/**
-	 * @param text
-	 * 		Text to repeat.
-	 * @param times
-	 * 		Number of repetitions.
-	 *
-	 * @return Repeated text.
-	 */
-	public static String repeat(String text, int times) {
-		StringBuilder sb = new StringBuilder(text.length() * times);
-		sb.append(text.repeat(Math.max(0, times)));
 		return sb.toString();
 	}
 
@@ -567,7 +551,9 @@ public class StringUtil {
 	 *
 	 * @return Entropy of the characters in the text.
 	 */
-	public static double getEntropy(String text) {
+	public static double getEntropy(@Nullable String text) {
+		if (text == null || text.isEmpty())
+			return 0;
 		Char2IntMap charCountMap = new Char2IntArrayMap(64);
 		for (char c : text.toCharArray())
 			charCountMap.mergeInt(c, 1, Integer::sum);
@@ -586,7 +572,8 @@ public class StringUtil {
 	 *
 	 * @return Stacktrace as string.
 	 */
-	public static String traceToString(Throwable t) {
+	@Nonnull
+	public static String traceToString(@Nonnull Throwable t) {
 		StringWriter trace = new StringWriter();
 		t.printStackTrace(new PrintWriter(trace));
 		return trace.toString();
@@ -600,8 +587,41 @@ public class StringUtil {
 	 *
 	 * @return Hex printed value.
 	 */
+	@Nonnull
 	public static String toHexString(int value) {
-		return StringUtil.fillLeft(2, "0", Integer.toHexString(value & 0xff));
+		return toHexString(value, -1, 1);
+	}
+
+	/**
+	 * Wrapper for {@link Integer#toHexString(int)} that pads zeros when needed.
+	 *
+	 * @param value
+	 * 		Value to print.
+	 * @param mask
+	 * 		Mask to apply to the value.
+	 *
+	 * @return Hex printed value.
+	 */
+	@Nonnull
+	public static String toHexString(int value, int mask) {
+		return toHexString(value, mask, 1);
+	}
+
+	/**
+	 * Wrapper for {@link Integer#toHexString(int)} that pads zeros when needed.
+	 *
+	 * @param value
+	 * 		Value to print.
+	 * @param mask
+	 * 		Mask to apply to the value.
+	 * @param minLength
+	 * 		Minimum length of hex output. Left-padded with zeros to match.
+	 *
+	 * @return Hex printed value.
+	 */
+	@Nonnull
+	public static String toHexString(int value, int mask, int minLength) {
+		return StringUtil.fillLeft(minLength, "0", Integer.toHexString(value & mask));
 	}
 
 	/**
@@ -615,7 +635,8 @@ public class StringUtil {
 	 *
 	 * @return Generated String
 	 */
-	public static String generateIncrementingName(String alphabet, int index) {
+	@Nonnull
+	public static String generateIncrementingName(@Nonnull String alphabet, int index) {
 		char[] charz = alphabet.toCharArray();
 		int alphabetLength = charz.length;
 		int length = 8;
@@ -644,7 +665,8 @@ public class StringUtil {
 	 *
 	 * @return Generated name.
 	 */
-	public static String generateName(String alphabet, int length, int seed) {
+	@Nonnull
+	public static String generateName(@Nonnull String alphabet, int length, int seed) {
 		Random r = new Random(seed);
 		StringBuilder sb = new StringBuilder();
 		while (sb.length() < length)

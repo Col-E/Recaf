@@ -15,7 +15,7 @@ import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;
@@ -70,7 +70,7 @@ public class WorkspaceRootPane extends BorderPane {
 			DockingRegion dockTree = lastTreeRegion.get();
 			if (dockTree != null) {
 				// Close all tabs.
-				for (DockingTab tab : dockTree.getDockTabs()) {
+				for (DockingTab tab : new ArrayList<>(dockTree.getDockTabs())) {
 					// Mark as closable so they can be closed.
 					tab.setClosable(true);
 

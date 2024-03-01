@@ -11,10 +11,26 @@ import software.coley.recaf.workspace.model.Workspace;
  */
 public interface JvmDecompiler extends Decompiler {
 	/**
+	 * Adds a filter which operates on the bytecode of classes before passing it along to the decompiler.
+	 *
 	 * @param filter
 	 * 		Filter to add.
+	 *
+	 * @return {@code true} on successful addition.
+	 * {@code false} if the filter has already been added.
 	 */
-	void addJvmInputFilter(@Nonnull JvmInputFilter filter); // TODO: Make config for common defaults (debug stripping, virtual mapping?)
+	boolean addJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter); // TODO: Make config for common defaults (debug stripping, virtual mapping?)
+
+	/**
+	 * Removes a filter which operates on the bytecode of classes before passing it along to the decompiler.
+	 *
+	 * @param filter
+	 * 		Filter to remove.
+	 *
+	 * @return {@code true} on successful removal.
+	 * {@code false} if the filter was not already registered.
+	 */
+	boolean removeJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter);
 
 	/**
 	 * @param workspace

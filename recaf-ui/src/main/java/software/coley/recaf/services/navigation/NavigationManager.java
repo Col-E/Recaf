@@ -8,7 +8,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
-import javafx.scene.control.Tab;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
@@ -22,9 +21,8 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingTab;
-import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.workspace.WorkspaceManager;
-import software.coley.recaf.workspace.WorkspaceModificationListener;
+import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
@@ -115,6 +113,15 @@ public class NavigationManager implements Navigable, Service {
 			// Remove the path reference to the old workspace.
 			forwarding.workspacePath = null;
 			path = null;
+
+			// Force close any remaining tabs that hold navigable content.
+			for (DockingTab tab : dockingManager.getDockTabs()) {
+				if (tab.getContent() instanceof Navigable navigable) {
+					navigable.disable();
+					tab.setClosable(true);
+					tab.close();
+				}
+			}
 		});
 
 		// Track current workspace so that we are navigable ourselves.

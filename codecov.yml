@@ -8,3 +8,7 @@ coverage:
     patch:
       default:
         informational: true
+
+ignore:
+  - "**/src/test/"
+  - "**/src/testFixtures"

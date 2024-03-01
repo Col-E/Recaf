@@ -71,14 +71,16 @@ public class MappingApplier implements Service {
 										 @Nonnull WorkspaceResource resource,
 										 @Nonnull JvmClassBundle bundle,
 										 @Nonnull List<JvmClassInfo> classes) {
-		enrich(mappings);
+		mappings = enrich(mappings);
 		MappingResults results = new MappingResults(mappings, listeners.createBundledMappingApplicationListener())
 				.withAggregateManager(aggregateMappingManager);
 
 		// Apply mappings to the provided classes, collecting into the results model.
+		Mappings finalMappings = mappings;
 		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
-		for (JvmClassInfo classInfo : classes)
-			service.execute(() -> dumpIntoResults(results, workspace, resource, bundle, classInfo, mappings));
+		for (JvmClassInfo classInfo : classes) {
+			service.execute(() -> dumpIntoResults(results, workspace, resource, bundle, classInfo, finalMappings));
+		}
 		ThreadUtil.blockUntilComplete(service);
 
 		// Yield results
@@ -95,17 +97,18 @@ public class MappingApplier implements Service {
 	 */
 	@Nonnull
 	public MappingResults applyToPrimaryResource(@Nonnull Mappings mappings) {
-		enrich(mappings);
+		mappings = enrich(mappings);
 		WorkspaceResource resource = workspace.getPrimaryResource();
 
 		MappingResults results = new MappingResults(mappings, listeners.createBundledMappingApplicationListener())
 				.withAggregateManager(aggregateMappingManager);
 
 		// Apply mappings to all classes in the primary resource, collecting into the results model.
+		Mappings finalMappings = mappings;
 		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
 		Stream.concat(resource.jvmClassBundleStream(), resource.versionedJvmClassBundleStream()).forEach(bundle -> {
 			bundle.forEach(classInfo -> {
-				service.execute(() -> dumpIntoResults(results, workspace, resource, bundle, classInfo, mappings));
+				service.execute(() -> dumpIntoResults(results, workspace, resource, bundle, classInfo, finalMappings));
 			});
 		});
 		ThreadUtil.blockUntilComplete(service);
@@ -114,13 +117,24 @@ public class MappingApplier implements Service {
 		return results;
 	}
 
-	private void enrich(Mappings mappings) {
+	@Nonnull
+	private Mappings enrich(@Nonnull Mappings mappings) {
+		// Map intermediate mappings to the adapter so that we can pass in the inheritance graph for better coverage
+		// of cases inherited field/method references.
+		if (mappings instanceof IntermediateMappings intermediateMappings) {
+			MappingsAdapter adapter = new MappingsAdapter(true, true);
+			adapter.importIntermediate(intermediateMappings);
+			mappings = adapter;
+		}
+
 		// Check if mappings can be enriched with type look-ups
 		if (mappings instanceof MappingsAdapter adapter) {
 			// If we have "Dog extends Animal" and both define "jump" this lets "Dog.jump()" see "Animal.jump()"
 			// allowing mappings that aren't complete for their type hierarchies to be filled in.
 			adapter.enableHierarchyLookup(inheritanceGraph);
 		}
+
+		return mappings;
 	}
 
 	/**

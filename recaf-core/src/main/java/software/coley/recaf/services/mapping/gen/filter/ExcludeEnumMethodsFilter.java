@@ -4,7 +4,6 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
 
 /**
  * Filter to prevent renaming of {@code Enum.values()} and {@code Enum.valueOf(String)} implementations.

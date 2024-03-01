@@ -3,7 +3,7 @@ package software.coley.recaf.ui.contextmenu.actions;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
-import software.coley.recaf.services.cell.ContextMenuProviderFactory;
+import software.coley.recaf.services.cell.context.ContextMenuProviderFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;

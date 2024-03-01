@@ -32,6 +32,8 @@ public class LaunchCommand implements Callable<Boolean> {
 	private File input;
 	@Option(names = {"-s", "--script"}, description = "Script to run on startup.")
 	private File script;
+	@Option(names = {"-d", "--datadir"}, description = "Override the directory to store recaf info within.")
+	private File dataDir;
 	@Option(names = {"-h", "--headless"}, description = "Flag to skip over initializing the UI. Should be paired with -i or -s.")
 	private boolean headless;
 	@Option(names = {"-v", "--version"}, description = "Display the version information.")
@@ -44,6 +46,8 @@ public class LaunchCommand implements Callable<Boolean> {
 	@Override
 	public Boolean call() throws Exception {
 		boolean ret = false;
+		if (dataDir != null)
+			System.setProperty("RECAF_DIR", dataDir.getAbsolutePath());
 		if (version || listServices || dumpProperties)
 			System.out.println("======================= RECAF =======================");
 		if (version) {

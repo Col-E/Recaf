@@ -65,6 +65,7 @@ public class TestClassUtils {
 	 *
 	 * @return Class bundle of classes.
 	 */
+	@Nonnull
 	public static BasicJvmClassBundle fromClasses(JvmClassInfo... classes) {
 		BasicJvmClassBundle bundle = new BasicJvmClassBundle();
 		for (JvmClassInfo cls : classes)

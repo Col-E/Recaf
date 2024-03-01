@@ -221,7 +221,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 					removeByLine(line);
 
 					// Don't add problem back if it's in the removed range
-					if (line > startLine + shift) {
+					if (line >= startLine + shift) {
 						logger.debugging(l -> l.trace("Move problem '{}' up {} lines", problem.getMessage(), shift));
 						add(problem.withLine(line - shift));
 					} else {

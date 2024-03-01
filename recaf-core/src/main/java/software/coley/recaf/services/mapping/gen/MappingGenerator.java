@@ -13,6 +13,8 @@ import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.MappingsAdapter;
 import software.coley.recaf.services.mapping.gen.filter.ExcludeEnumMethodsFilter;
+import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
+import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;

@@ -23,10 +23,14 @@ import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.cell.context.ContextMenuProviderService;
+import software.coley.recaf.services.cell.context.ContextSource;
+import software.coley.recaf.services.cell.icon.IconProviderService;
+import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
-import software.coley.recaf.services.navigation.UnsupportedContent;
+import software.coley.recaf.services.navigation.UnsupportedContentException;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.TreeItems;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
@@ -155,7 +159,7 @@ public class CellConfigurationService implements Service {
 			}
 		} catch (IncompletePathException ex) {
 			logger.error("Cannot open incomplete path", ex);
-		} catch (UnsupportedContent ex) {
+		} catch (UnsupportedContentException ex) {
 			logger.warn("Cannot open unsupported content type");
 		}
 		return null;

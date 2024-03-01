@@ -66,10 +66,20 @@ public class DockingManager {
 	 */
 	@Nonnull
 	public DockingRegion newRegion() {
+		// The docking region constructor should handle registration in the regions list.
 		DockingRegion region = factory.create();
 		factory.init(region);
-		regions.add(region);
 		return region;
+	}
+
+	/**
+	 * Package-private so {@link DockingRegion#DockingRegion(DockingManager)} has access.
+	 *
+	 * @param region Region to register.
+	 */
+	void registerRegion(@Nonnull DockingRegion region) {
+		if (!regions.contains(region))
+			regions.add(region);
 	}
 
 	/**

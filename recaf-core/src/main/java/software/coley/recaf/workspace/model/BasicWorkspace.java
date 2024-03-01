@@ -2,8 +2,7 @@ package software.coley.recaf.workspace.model;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.behavior.Closing;
-import software.coley.recaf.workspace.WorkspaceManager;
-import software.coley.recaf.workspace.WorkspaceModificationListener;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;

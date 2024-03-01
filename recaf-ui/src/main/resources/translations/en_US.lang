@@ -3,6 +3,9 @@ lang.name=English
 
 ##### General items
 ## Main and context menus
+menu.analysis=Analysis
+menu.analysis.list-comments=View comments
+menu.analysis.comment=Comment
 menu.association.override=Override language
 menu.association.none=No associations configured
 menu.config=Config
@@ -348,6 +351,9 @@ assembler.variables.value=Value
 assembler.variables.empty=<Requires compiling at least once>
 assembler.suggestions.none=No suggestions
 
+## Comments
+comments.search.prompt=Search for comment...
+
 ## Search
 search.run=Search
 search.results=Results
@@ -419,13 +425,19 @@ tree.defaultpackage=(Default package)
 tree.defaultdirectory=(Root directory)
 tree.prompt=Drag your files here
 tree.hidelibs=Hide libraries
+tree.phantoms=Generated phantoms
 
 ##### Services
 service=All services
 service.analysis=Analysis
+service.analysis.comments-config=Comments
+service.analysis.comments-config.enable-display=Display comments in decompilation
+service.analysis.comments-config.word-wrapping-limit=Word wrap limit
 service.analysis.graph-calls-config=Call graph
 service.analysis.graph-calls-config.active=Enable on workspaces open
 service.analysis.graph-inheritance-config=Inheritance graph
+service.analysis.jphantom-generator-config=JPhantom
+service.analysis.jphantom-generator-config.generate-workspace-phantoms=Generate and append phantoms to workspaces
 service.analysis.search-config=Search
 service.analysis.entry-points=Entry points
 service.analysis.entry-points.none=No entries found
@@ -655,6 +667,7 @@ service.mapping.name-gen-provider.alphabet.alphabet=Alphabet characters
 service.mapping.name-gen-provider.alphabet.length=Minimum length
 service.plugin=Plugins
 service.plugin.plugin-manager-config=Plugin manager
+service.plugin.plugin-manager-config.scan-on-start=Load on startup
 service.plugin.script-manager-config=Script manager
 service.plugin.script-manager-config.file-watching=Passively scan scripts directory for changes
 service.ui=User interface

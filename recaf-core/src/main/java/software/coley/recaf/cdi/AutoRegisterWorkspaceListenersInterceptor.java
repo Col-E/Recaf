@@ -10,10 +10,10 @@ import jakarta.interceptor.InvocationContext;
 import org.slf4j.Logger;
 import software.coley.recaf.Recaf;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.workspace.WorkspaceCloseListener;
-import software.coley.recaf.workspace.WorkspaceManager;
-import software.coley.recaf.workspace.WorkspaceModificationListener;
-import software.coley.recaf.workspace.WorkspaceOpenListener;
+import software.coley.recaf.services.workspace.WorkspaceCloseListener;
+import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
+import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**

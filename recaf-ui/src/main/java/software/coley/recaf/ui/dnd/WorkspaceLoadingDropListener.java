@@ -11,7 +11,7 @@ import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.pane.WelcomePane;
 import software.coley.recaf.ui.pane.WorkspaceExplorerPane;
 import software.coley.recaf.workspace.PathLoadingManager;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 
 import java.io.IOException;
 import java.nio.file.Path;

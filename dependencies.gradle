@@ -1,7 +1,7 @@
 def asmVersion = '9.6'
 def cafeDudeVersion = '2.0.1'
 def junitVersion = '5.10.0'
-def jasmVersion = '518b763f37'
+def jasmVersion = '1a4a7df195'
 def ssvmVersion = 'aba637d196'
 
 project.ext {
@@ -47,7 +47,7 @@ project.ext {
 
     jlinker = 'com.github.xxDark:jlinker:1.0.7'
 
-    jphantom = 'com.github.Col-E:jphantom:1.4.3'
+    jphantom = 'com.github.Col-E:jphantom:1.4.4'
 
     junit_api = "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     junit_engine = "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
@@ -56,6 +56,8 @@ project.ext {
     llzip = 'software.coley:lljzip:2.3.0'
 
     logging_impl = 'ch.qos.logback:logback-classic:1.4.11' // newer releases break in jar releases
+
+    mapping_io = 'net.fabricmc:mapping-io:0.5.1'
 
     mockito = 'org.mockito:mockito-core:5.6.0'
 
@@ -77,4 +79,6 @@ project.ext {
     treemapfx = 'software.coley:treemap-fx:1.1.0'
 
     vineflower = 'org.vineflower:vineflower:1.9.3'
+
+    wordwrap = 'com.github.davidmoten:word-wrap:0.1.12'
 }

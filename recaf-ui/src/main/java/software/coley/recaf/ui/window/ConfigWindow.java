@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.window;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.layout.BorderPane;
@@ -16,7 +17,7 @@ import software.coley.recaf.util.Lang;
 @Dependent
 public class ConfigWindow extends AbstractIdentifiableStage {
 	@Inject
-	public ConfigWindow(ConfigPane configPane) {
+	public ConfigWindow(@Nonnull ConfigPane configPane) {
 		super(WindowManager.WIN_CONFIG);
 
 		// Layout

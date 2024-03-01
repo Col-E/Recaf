@@ -24,9 +24,9 @@ import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.workspace.WorkspaceCloseListener;
-import software.coley.recaf.workspace.WorkspaceManager;
-import software.coley.recaf.workspace.WorkspaceOpenListener;
+import software.coley.recaf.services.workspace.WorkspaceCloseListener;
+import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**

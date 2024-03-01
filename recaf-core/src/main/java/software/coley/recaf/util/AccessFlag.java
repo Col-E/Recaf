@@ -3,6 +3,8 @@ package software.coley.recaf.util;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.Opcodes;
 
 import java.util.*;
@@ -67,8 +69,9 @@ public enum AccessFlag {
 	 * @param mask
 	 * 		Access flags mask.
 	 *
-	 * @return Set of applicable flags.
+	 * @return Set of applicable flags. Some flags can have different meanings in different contexts.
 	 */
+	@Nonnull
 	public static Collection<AccessFlag> getFlags(int mask) {
 		return maskToFlagsMap.get(mask);
 	}
@@ -79,7 +82,8 @@ public enum AccessFlag {
 	 *
 	 * @return Set of flags that belong to the type group.
 	 */
-	public static Collection<AccessFlag> getApplicableFlags(Type type) {
+	@Nonnull
+	public static Collection<AccessFlag> getApplicableFlags(@Nonnull Type type) {
 		return typeToFlagsMap.get(type);
 	}
 
@@ -91,7 +95,8 @@ public enum AccessFlag {
 	 *
 	 * @return Set of flags that belong to the type group in the access flag mask.
 	 */
-	public static Set<AccessFlag> getApplicableFlags(Type type, int acc) {
+	@Nonnull
+	public static Set<AccessFlag> getApplicableFlags(@Nonnull Type type, int acc) {
 		Set<AccessFlag> flags = EnumSet.noneOf(AccessFlag.class);
 		for (AccessFlag applicableFlag : getApplicableFlags(type))
 			if (applicableFlag.has(acc))
@@ -107,9 +112,11 @@ public enum AccessFlag {
 	 *
 	 * @return Sorted order of flags.
 	 */
-	public static List<AccessFlag> sort(Type type, Collection<AccessFlag> flags) {
+	@Nonnull
+	public static List<AccessFlag> sort(@Nonnull Type type,
+										@Nonnull Collection<AccessFlag> flags) {
 		List<AccessFlag> list;
-		if (flags instanceof List) {
+		if (flags instanceof ArrayList<AccessFlag>) {
 			list = (List<AccessFlag>) flags;
 		} else {
 			list = new ArrayList<>(flags);
@@ -124,7 +131,8 @@ public enum AccessFlag {
 	 *
 	 * @return Flag from name.
 	 */
-	public static AccessFlag getFlag(String name) {
+	@Nullable
+	public static AccessFlag getFlag(@Nullable String name) {
 		return nameToFlagMap.get(name);
 	}
 
@@ -134,7 +142,8 @@ public enum AccessFlag {
 	 *
 	 * @return Flags from text.
 	 */
-	public static List<AccessFlag> getFlags(String text) {
+	@Nonnull
+	public static List<AccessFlag> getFlags(@Nonnull String text) {
 		String[] parts = text.split("\\s+");
 		List<AccessFlag> flags = new ArrayList<>();
 		for (String part : parts) {
@@ -210,7 +219,7 @@ public enum AccessFlag {
 	 *
 	 * @return {@code true} if none of the specified flags exist in the mask.
 	 */
-	public static boolean hasNone(int acc, Collection<AccessFlag> flags) {
+	public static boolean hasNone(int acc, @Nonnull Collection<AccessFlag> flags) {
 		for (AccessFlag flag : flags) {
 			if (flag.has(acc)) return false;
 		}
@@ -240,7 +249,7 @@ public enum AccessFlag {
 	 *
 	 * @return {@code true} if any of the specified flags exist in the mask.
 	 */
-	public static boolean hasAny(int acc, Collection<AccessFlag> flags) {
+	public static boolean hasAny(int acc, @Nonnull Collection<AccessFlag> flags) {
 		for (AccessFlag flag : flags) {
 			if (flag.has(acc)) return true;
 		}
@@ -319,6 +328,7 @@ public enum AccessFlag {
 	/**
 	 * @return Applicable targets for the current flag.
 	 */
+	@Nonnull
 	public Set<Type> getTypes() {
 		return types;
 	}
@@ -326,6 +336,7 @@ public enum AccessFlag {
 	/**
 	 * @return Flag identifier.
 	 */
+	@Nonnull
 	public String getName() {
 		return name;
 	}
@@ -341,7 +352,8 @@ public enum AccessFlag {
 	 *
 	 * @return String representation of flags.
 	 */
-	public static String toString(Iterable<AccessFlag> flags) {
+	@Nonnull
+	public static String toString(@Nonnull Iterable<AccessFlag> flags) {
 		// Don't include ACC_SUPER, is meaningless
 		return StreamSupport.stream(flags.spliterator(), false)
 				.filter(Objects::nonNull)
@@ -358,13 +370,9 @@ public enum AccessFlag {
 	 *
 	 * @return String representation of flags in sorted order.
 	 */
-	public static String sortAndToString(Type type, Collection<AccessFlag> flags) {
-		List<AccessFlag> list;
-		try {
-			list = sort(type, flags);
-		} catch (UnsupportedOperationException ex) { // Collection is unmodifiable
-			list = sort(type, new ArrayList<>(flags));
-		}
+	@Nonnull
+	public static String sortAndToString(@Nonnull Type type, @Nonnull Collection<AccessFlag> flags) {
+		List<AccessFlag> list = sort(type, flags);
 		return toString(list);
 	}
 
@@ -376,13 +384,15 @@ public enum AccessFlag {
 	 *
 	 * @return String representation of flags in sorted order.
 	 */
-	public static String sortAndToString(Type type, int acc) {
+	@Nonnull
+	public static String sortAndToString(@Nonnull Type type, int acc) {
 		return sortAndToString(type, getApplicableFlags(type, acc));
 	}
 
 	/**
 	 * @return Flag identifier with surrounding comments if the identifier is not a Java keyword.
 	 */
+	@Nonnull
 	public String getCodeFriendlyName() {
 		return isKeyword ? this.name : "/* " + name + " */"; // comment out non-keyword
 	}

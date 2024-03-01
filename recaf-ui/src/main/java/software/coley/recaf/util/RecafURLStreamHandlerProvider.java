@@ -12,7 +12,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.FilePathNode;
-import software.coley.recaf.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.ByteArrayInputStream;

@@ -23,7 +23,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
-import software.coley.recaf.services.mapping.gen.NameGeneratorFilter;
+import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;

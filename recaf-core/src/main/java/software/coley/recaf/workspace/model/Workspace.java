@@ -9,7 +9,6 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.*;
 import software.coley.recaf.util.Unchecked;
-import software.coley.recaf.workspace.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
@@ -244,6 +243,14 @@ public interface Workspace extends Closing {
 		result.addAll(findVersionedJvmClasses(Unchecked.cast(filter)));
 		result.addAll(findAndroidClasses(Unchecked.cast(filter)));
 		return result;
+	}
+
+	/**
+	 * @return Stream of all classes.
+	 */
+	@Nonnull
+	default Stream<ClassPathNode> classesStream() {
+		return Stream.concat(jvmClassesStream(), androidClassesStream());
 	}
 
 	/**

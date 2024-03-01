@@ -4,7 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
-import software.coley.recaf.services.cell.IconProvider;
+import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.ui.control.IconView;
 
 import java.io.InputStream;
@@ -124,6 +124,7 @@ public class Icons {
 	public static final String SORT_ALPHABETICAL = "icons/sort-alphabetical.png";
 	public static final String SORT_VISIBILITY = "icons/sort-visibility.png";
 	public static final String UP_FOR_ICON = "icons/up-for-icon.png";
+	public static final String PHANTOM = "icons/phantom.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();

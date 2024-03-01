@@ -18,9 +18,10 @@ public class MainMenu extends MenuBar {
 	public MainMenu(@Nonnull FileMenu fileMenu,
 					@Nonnull ConfigMenu configMenu,
 					@Nonnull MappingMenu mappingMenu,
+					@Nonnull AnalysisMenu analysisMenu,
 					@Nonnull ScriptMenu scriptMenu,
 					@Nonnull HelpMenu helpMenu) {
-		getMenus().addAll(fileMenu, configMenu, mappingMenu, scriptMenu, helpMenu);
+		getMenus().addAll(fileMenu, configMenu, mappingMenu, analysisMenu, scriptMenu, helpMenu);
 		setPadding(new Insets(0, 0, 2, 0));
 	}
 }

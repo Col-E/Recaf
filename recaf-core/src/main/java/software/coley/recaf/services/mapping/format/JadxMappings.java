@@ -28,6 +28,7 @@ public class JadxMappings extends AbstractMappingFileFormat {
 		super(NAME, true, true);
 	}
 
+	@Nonnull
 	@Override
 	public IntermediateMappings parse(@Nonnull String mappingText) {
 		IntermediateMappings mappings = new IntermediateMappings();
@@ -88,7 +89,7 @@ public class JadxMappings extends AbstractMappingFileFormat {
 	}
 
 	@Override
-	public String exportText(Mappings mappings) {
+	public String exportText(@Nonnull Mappings mappings) {
 		StringBuilder sb = new StringBuilder();
 		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {

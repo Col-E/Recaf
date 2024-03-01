@@ -36,7 +36,7 @@ public class DecompilerManager implements Service {
 	private final ObservableObject<JvmDecompiler> targetJvmDecompiler;
 	private final ObservableObject<AndroidDecompiler> targetAndroidDecompiler;
 
-	// TODO: Maintain a list of JvmInputFilters
+	// TODO: Maintain a list of JvmBytecodeFilters
 	//  - Add to existing decompilers
 	//  - Add to anything that gets added later
 	//  - Support removal
@@ -149,6 +149,56 @@ public class DecompilerManager implements Service {
 	@Nonnull
 	public CompletableFuture<DecompileResult> decompile(@Nonnull AndroidDecompiler decompiler, @Nonnull Workspace workspace, @Nonnull AndroidClassInfo classInfo) {
 		return CompletableFuture.supplyAsync(() -> decompiler.decompile(workspace, classInfo), decompileThreadPool);
+	}
+
+	/**
+	 * Adds an input bytecode filter to all {@link JvmDecompiler} instances.
+	 *
+	 * @param filter
+	 * 		Filter to add.
+	 */
+	public void addJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter) {
+		for (JvmDecompiler decompiler : jvmDecompilers.values()) {
+			decompiler.addJvmBytecodeFilter(filter);
+		}
+	}
+
+	/**
+	 * Removes an input bytecode filter from all {@link JvmDecompiler} instances.
+	 *
+	 * @param filter
+	 * 		Filter to remove.
+	 */
+	public void removeJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter) {
+		for (JvmDecompiler decompiler : jvmDecompilers.values()) {
+			decompiler.removeJvmBytecodeFilter(filter);
+		}
+	}
+
+	/**
+	 * Adds an output text filter to all {@link Decompiler} instances.
+	 *
+	 * @param filter
+	 * 		Filter to add.
+	 */
+	public void addOutputTextFilter(@Nonnull OutputTextFilter filter) {
+		for (JvmDecompiler decompiler : jvmDecompilers.values())
+			decompiler.addOutputTextFilter(filter);
+		for (AndroidDecompiler decompiler : androidDecompilers.values())
+			decompiler.addOutputTextFilter(filter);
+	}
+
+	/**
+	 * Removes an output text filter from all {@link Decompiler} instances.
+	 *
+	 * @param filter
+	 * 		Filter to remove.
+	 */
+	public void removeOutputTextFilter(@Nonnull OutputTextFilter filter) {
+		for (JvmDecompiler decompiler : jvmDecompilers.values())
+			decompiler.removeOutputTextFilter(filter);
+		for (AndroidDecompiler decompiler : androidDecompilers.values())
+			decompiler.removeOutputTextFilter(filter);
 	}
 
 	/**

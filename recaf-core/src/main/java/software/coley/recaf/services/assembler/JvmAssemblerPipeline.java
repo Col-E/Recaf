@@ -19,7 +19,10 @@ import me.darknet.assembler.parser.BytecodeFormat;
 import me.darknet.assembler.parser.processor.ASTProcessor;
 import me.darknet.assembler.printer.ClassPrinter;
 import me.darknet.assembler.printer.JvmClassPrinter;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.WorkspaceScoped;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.AnnotationPathNode;
@@ -43,7 +46,7 @@ import java.util.List;
 @WorkspaceScoped
 public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo, JavaCompileResult, JavaClassRepresentation> {
 	public static final String SERVICE_ID = "jvm-assembler";
-
+	private static final Logger logger = Logging.get(JvmAssemblerPipeline.class);
 	private final ASTProcessor processor = new ASTProcessor(BytecodeFormat.JVM);
 	private final InheritanceGraph inheritanceGraph;
 	private final Workspace workspace;
@@ -153,9 +156,11 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	@Nonnull
 	@Override
 	protected Result<ClassPrinter> classPrinter(@Nonnull ClassPathNode path) {
+		ClassInfo classInfo = path.getValue();
 		try {
-			return Result.ok(new JvmClassPrinter(new ByteArrayInputStream(path.getValue().asJvmClass().getBytecode())));
+			return Result.ok(new JvmClassPrinter(new ByteArrayInputStream(classInfo.asJvmClass().getBytecode())));
 		} catch (Throwable t) {
+			logger.error("Uncaught error creating class printer for: {}", classInfo.getName(), t);
 			return Result.exception(t);
 		}
 	}

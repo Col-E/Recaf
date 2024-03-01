@@ -1,8 +1,12 @@
 package software.coley.recaf.services.mapping.format;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
+import net.fabricmc.mappingio.format.proguard.ProGuardFileWriter;
+import net.fabricmc.mappingio.format.tiny.Tiny2FileWriter;
 import software.coley.recaf.services.mapping.IntermediateMappings;
+import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.Arrays;
@@ -27,6 +31,7 @@ public class ProguardMappings extends AbstractMappingFileFormat {
 		super(NAME, true, false);
 	}
 
+	@Nonnull
 	@Override
 	public IntermediateMappings parse(@Nonnull String mappingsText) {
 		IntermediateMappings mappings = new IntermediateMappings();
@@ -169,11 +174,10 @@ public class ProguardMappings extends AbstractMappingFileFormat {
 		return type;
 	}
 
+	@Nullable
 	@Override
-	public boolean supportsExportText() {
-		// You see how cringe the file parsing is?
-		// Surely you understand why this is 'false'...
-		return false;
+	public String exportText(@Nonnull Mappings mappings) throws InvalidMappingException {
+		return MappingFileFormat.export(mappings, ProGuardFileWriter::new);
 	}
 
 	private static final class ProguardClassInfo {

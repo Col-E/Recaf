@@ -3,6 +3,7 @@ package software.coley.recaf.services.decompile;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
 import software.coley.recaf.services.decompile.procyon.ProcyonDecompiler;
@@ -18,11 +19,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link DecompilerManager}.
  */
 public class DecompileManagerTest extends TestBase {
+	static final TestJvmBytecodeFilter bytecodeFilter = new TestJvmBytecodeFilter();
+	static final TestOutputTextFilter textFilter = new TestOutputTextFilter();
 	static DecompilerManager decompilerManager;
 	static Workspace workspace;
 	static JvmClassInfo classToDecompile;
@@ -54,6 +58,30 @@ public class DecompileManagerTest extends TestBase {
 		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(VineflowerDecompiler.NAME);
 		assertNotNull(decompiler, "Vineflower decompiler was never registered with manager");
 		runJvmDecompilation(decompiler);
+	}
+
+	@Test
+	void testFiltersUsed() {
+		JvmDecompiler decompiler = decompilerManager.getTargetJvmDecompiler();
+		TestJvmBytecodeFilter bytecodeFilterSpy = spy(bytecodeFilter);
+		TestOutputTextFilter textFilterSpy = spy(textFilter);
+		try {
+			// Add input/output filters
+			decompilerManager.addJvmBytecodeFilter(bytecodeFilterSpy);
+			decompilerManager.addOutputTextFilter(textFilterSpy);
+
+			// Decompile
+			decompilerManager.decompile(decompiler, workspace, classToDecompile).get();
+
+			// Verify each filter was called once
+			verify(bytecodeFilterSpy, times(1)).filter(any(), any(), any());
+			verify(textFilterSpy, times(1)).filter(any(), any(), anyString());
+		} catch (Exception ex) {
+			fail(ex);
+		} finally {
+			decompilerManager.removeJvmBytecodeFilter(bytecodeFilterSpy);
+			decompilerManager.removeOutputTextFilter(textFilterSpy);
+		}
 	}
 
 	private static void runJvmDecompilation(@Nonnull JvmDecompiler decompiler) {
@@ -88,4 +116,21 @@ public class DecompileManagerTest extends TestBase {
 			fail("Decompile timed out", e);
 		}
 	}
+
+	static class TestJvmBytecodeFilter implements JvmBytecodeFilter {
+		@Nonnull
+		@Override
+		public byte[] filter(@Nonnull Workspace workspace, @Nonnull JvmClassInfo initialClassInfo, @Nonnull byte[] bytecode) {
+			return bytecode;
+		}
+	}
+
+	static class TestOutputTextFilter implements OutputTextFilter {
+		@Nonnull
+		@Override
+		public String filter(@Nonnull Workspace workspace, @Nonnull ClassInfo classInfo, @Nonnull String code) {
+			return code;
+		}
+	}
+
 }

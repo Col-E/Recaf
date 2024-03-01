@@ -110,10 +110,6 @@ public class Editor extends BorderPane {
 			// Do fine completion updates.
 			if (tabCompleter != null)
 				tabCompleter.onFineTextUpdate(change);
-
-			// Pass to problem tracking.
-			if (problemTracking != null)
-				problemTracking.accept(change);
 		});
 
 		// Register a text change listener that operates on reduces calls (limit calls to when user stops typing).
@@ -174,7 +170,7 @@ public class Editor extends BorderPane {
 		if (syntaxHighlighter != null) {
 			return schedule(syntaxPool, () -> {
 				IntRange range = SyntaxUtil.getRangeForRestyle(getText(), getStyleSpans(),
-						syntaxHighlighter, new PlainTextChange(position, "", StringUtil.repeat(".", length)));
+						syntaxHighlighter, new PlainTextChange(position, "", ".".repeat(length)));
 				int start = range.start();
 				int end = range.end();
 				return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);
@@ -396,8 +392,10 @@ public class Editor extends BorderPane {
 		ProblemTracking previousProblemTracking = this.problemTracking;
 		if (previousProblemTracking != null)
 			previousProblemTracking.uninstall(this);
-		if (problemOverlay != null)
+		if (problemOverlay != null) {
+			problemOverlay.uninstall(this);
 			problemOverlay = null;
+		}
 
 		// Set and install new instance.
 		this.problemTracking = problemTracking;

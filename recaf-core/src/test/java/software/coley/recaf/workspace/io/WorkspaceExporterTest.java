@@ -3,6 +3,7 @@ package software.coley.recaf.workspace.io;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JarFileInfo;
+import software.coley.recaf.services.workspace.io.*;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.util.ZipCreationUtils;

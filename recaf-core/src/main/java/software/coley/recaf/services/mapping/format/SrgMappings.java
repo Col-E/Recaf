@@ -35,6 +35,7 @@ public class SrgMappings extends AbstractMappingFileFormat {
 		super(NAME, false, false);
 	}
 
+	@Nonnull
 	@Override
 	public IntermediateMappings parse(@Nonnull String mappingText) {
 		List<Pair<String, String>> packages = new ArrayList<>();
@@ -88,7 +89,7 @@ public class SrgMappings extends AbstractMappingFileFormat {
 	}
 
 	@Override
-	public String exportText(Mappings mappings) {
+	public String exportText(@Nonnull Mappings mappings) {
 		StringBuilder sb = new StringBuilder();
 		Remapper remapper = new BasicMappingsRemapper(mappings);
 		IntermediateMappings intermediate = mappings.exportIntermediate();
