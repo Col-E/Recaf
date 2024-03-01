@@ -11,7 +11,6 @@ public class GsonProvider {
 
     private static Gson gson = new GsonBuilder()
             .setPrettyPrinting()
-            .disableJdkUnsafe()
             .serializeNulls()
             .create();
 
