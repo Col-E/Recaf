@@ -80,6 +80,8 @@ public class FileMenu extends WorkspaceAwareMenu {
 		this.windowManager = windowManager;
 		this.recentFilesConfig = recentFilesConfig;
 
+		this.recentFilesConfig.getRecentWorkspaces().addChangeListener((obs, oldVal, newVal) -> refreshRecent());
+
 		textProperty().bind(getBinding("menu.file"));
 		setGraphic(new FontIconView(CarbonIcons.WORKSPACE));
 
