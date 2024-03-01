@@ -15,10 +15,12 @@ import static software.coley.recaf.util.JigsawUtil.*;
 
 /**
  * Utility to patch away access restrictions.
+ * <p/>
+ * <b>You must initialize {@link ReflectUtil} first!</b>
  *
  * @author xDark
  */
-public class AccessPatcher {
+class AccessPatcher {
 	private static final Logger logger = Logging.get(AccessPatcher.class);
 	private static boolean patched;
 

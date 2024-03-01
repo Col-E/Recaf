@@ -31,6 +31,14 @@ public final class ReflectUtil {
 	}
 
 	/**
+	 * Initialize reflection access patching.
+	 */
+	public static void patch() {
+		// Intentionally empty. The patching happens in the static initializer, which the caller will trigger
+		// by calling this method.
+	}
+
+	/**
 	 * @param declaringClass
 	 * 		Class that declares the field.
 	 * @param name
