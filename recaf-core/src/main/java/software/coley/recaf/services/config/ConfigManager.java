@@ -2,16 +2,19 @@ package software.coley.recaf.services.config;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import org.benf.cfr.reader.util.ClassFileVersion;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.config.ConfigCollectionValue;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
+import software.coley.recaf.gson.GsonProvider;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
@@ -32,18 +35,19 @@ import java.util.*;
 public class ConfigManager implements Service {
 	public static final String SERVICE_ID = "config-manager";
 	private static final Logger logger = Logging.get(ConfigManager.class);
-	private static final Gson gson = createGson();
 	private final Map<String, ConfigContainer> containers = new TreeMap<>();
 	private final List<ManagedConfigListener> listeners = new ArrayList<>();
 	private final ConfigManagerConfig config;
 	private final RecafDirectoriesConfig fileConfig;
+	private final Gson gson;
 	private boolean triedSaving = false;
 
 	@Inject
 	public ConfigManager(@Nonnull ConfigManagerConfig config, @Nonnull RecafDirectoriesConfig fileConfig,
-						 @Nonnull Instance<ConfigContainer> containers) {
+						 @Nonnull Instance<ConfigContainer> containers, @Nonnull GsonProvider provider) {
 		this.config = config;
 		this.fileConfig = fileConfig;
+		this.gson = provider.getGson();
 		for (ConfigContainer container : containers)
 			registerContainer(container);
 
@@ -115,7 +119,7 @@ public class ConfigManager implements Service {
 			for (ConfigValue value : container.getValues().values()) {
 				String id = value.getId();
 				if (!json.has(id)) {
-					logger.warn("Config value not found: {}", id);
+					logger.warn("Config value not found: {} [{}]", key + "." + id, value.getType());
 					continue;
 				}
 
@@ -131,7 +135,7 @@ public class ConfigManager implements Service {
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private static void loadValue(ConfigValue value, JsonElement element) {
+	private void loadValue(ConfigValue value, JsonElement element) {
 		if (value instanceof ConfigCollectionValue ccv) {
 			List<Object> list = new ArrayList<>();
 			JsonArray array = element.getAsJsonArray();
@@ -212,10 +216,4 @@ public class ConfigManager implements Service {
 		return config;
 	}
 
-	private static Gson createGson() {
-		GsonBuilder builder = new GsonBuilder();
-		builder.setPrettyPrinting();
-
-		return builder.create();
-	}
 }
