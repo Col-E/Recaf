@@ -7,6 +7,7 @@ import javafx.stage.FileChooser;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.ExportConfig;
 import software.coley.recaf.ui.config.RecentFilesConfig;
@@ -21,6 +22,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -120,4 +122,39 @@ public class PathExportingManager {
 			);
 		}
 	}
+
+	public void export(JvmClassInfo info) {
+		ObservableString lastClassExportDir = recentFilesConfig.getLastClassExportDirectory();
+		File lastExportDir = lastClassExportDir.unboxingMap(File::new);
+
+		FileChooser chooser = new FileChooser();
+		chooser.setInitialDirectory(lastExportDir);
+		chooser.setTitle(Lang.get("dialog.file.export"));
+		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java Class", "*.class"));
+
+		File selectedPath = chooser.showSaveDialog(null);
+
+		if (selectedPath == null) {
+			return;
+		}
+
+		Path exportPath = selectedPath.toPath();
+		if (!exportPath.endsWith(".class")) {
+			exportPath = exportPath.resolveSibling(exportPath.getFileName() + ".class");
+		}
+
+		lastClassExportDir.setValue(selectedPath.getParent());
+
+        try {
+            Files.write(exportPath, info.getBytecode());
+        } catch (IOException ex) {
+            logger.error("Failed to export class to path '{}'", selectedPath, ex);
+            ErrorDialogs.show(
+                    Lang.getBinding("dialog.error.exportclass.title"),
+                    Lang.getBinding("dialog.error.exportclass.header"),
+                    Lang.getBinding("dialog.error.exportclass.content"),
+                    ex
+            );
+        }
+    }
 }
