@@ -149,11 +149,9 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 					actions.openAssembler(PathNodes.classPath(workspace, resource, bundle, info))
 			));
 			// TODO: Open an dialog which allows the user to create a member, and then open the relevant assembler
-			MenuHandler.each(
-					edit.item("menu.edit.add.field", ADD_ALT, () -> {}),
-					edit.item("menu.edit.add.method", ADD_ALT, () -> {}),
-					edit.item("menu.edit.add.annotation", ADD_ALT, () -> {})
-			).disableWhen(true); // Not implemented yet, so disable
+			edit.infoItem("menu.edit.add.field", ADD_ALT, actions::addClassField);
+			edit.infoItem("menu.edit.add.method", ADD_ALT, actions::addClassMethod);
+			edit.item("menu.edit.add.annotation", ADD_ALT, () -> {}).disableWhen(true);
 			edit.infoItem("menu.edit.remove.field", CLOSE, actions::deleteClassFields).disableWhen(info.getFields().isEmpty());
 			edit.infoItem("menu.edit.remove.method", CLOSE, actions::deleteClassMethods).disableWhen(info.getMethods().isEmpty());
 			edit.infoItem("menu.edit.remove.annotation", CLOSE, actions::deleteClassAnnotations).disableWhen(info.getAnnotations().isEmpty());

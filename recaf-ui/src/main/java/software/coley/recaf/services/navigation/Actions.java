@@ -31,6 +31,7 @@ import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.popup.AddMemberPopup;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
 import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
@@ -1726,6 +1727,52 @@ public class Actions implements Service {
 				.withTextMapping(anno -> textService.getAnnotationTextProvider(workspace, resource, bundle, info, anno).makeText())
 				.withGraphicMapping(anno -> iconService.getAnnotationIconProvider(workspace, resource, bundle, info, anno).makeIcon())
 				.show();
+	}
+
+	public void addClassMethod(@Nonnull Workspace workspace,
+							  @Nonnull WorkspaceResource resource,
+							  @Nonnull JvmClassBundle bundle,
+							  @Nonnull JvmClassInfo info) {
+		new AddMemberPopup(member -> {
+			ClassWriter writer = new ClassWriter(0);
+			MemberAddingVisitor visitor = new MemberAddingVisitor(writer, member);
+			info.getClassReader().accept(visitor, 0);
+			bundle.put(info.toJvmClassBuilder()
+					.adaptFrom(new ClassReader(writer.toByteArray()))
+					.build());
+
+			// open the assembler with the new method
+			FxThreadUtil.delayedRun(100, () -> {
+				try {
+					openAssembler(PathNodes.memberPath(workspace, resource, bundle, info, member));
+				} catch (IncompletePathException e) {
+					logger.error("Failed to open assembler for new method", e);
+				}
+			});
+		}).forMethod(info).show();
+	}
+
+	public void addClassField(@Nonnull Workspace workspace,
+							  @Nonnull WorkspaceResource resource,
+							  @Nonnull JvmClassBundle bundle,
+							  @Nonnull JvmClassInfo info) {
+		new AddMemberPopup(member -> {
+			ClassWriter writer = new ClassWriter(0);
+			MemberAddingVisitor visitor = new MemberAddingVisitor(writer, member);
+			info.getClassReader().accept(visitor, 0);
+			bundle.put(info.toJvmClassBuilder()
+					.adaptFrom(new ClassReader(writer.toByteArray()))
+					.build());
+
+			// open the assembler with the new field
+			FxThreadUtil.delayedRun(100, () -> {
+				try {
+					openAssembler(PathNodes.memberPath(workspace, resource, bundle, info, member));
+				} catch (IncompletePathException e) {
+					logger.error("Failed to open assembler for new field", e);
+				}
+			});
+        }).forField(info).show();
 	}
 
 	/**
