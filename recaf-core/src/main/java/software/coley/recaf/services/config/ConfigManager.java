@@ -8,19 +8,18 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import org.benf.cfr.reader.util.ClassFileVersion;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.config.ConfigCollectionValue;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
-import software.coley.recaf.gson.GsonProvider;
+import software.coley.recaf.services.json.GsonProvider;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.util.TestEnvironment;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +31,7 @@ import java.util.*;
  * @author Matt Coley
  */
 @ApplicationScoped
+@EagerInitialization // Eager so that all config containers will be up-to-date when injected
 public class ConfigManager implements Service {
 	public static final String SERVICE_ID = "config-manager";
 	private static final Logger logger = Logging.get(ConfigManager.class);
@@ -39,32 +39,34 @@ public class ConfigManager implements Service {
 	private final List<ManagedConfigListener> listeners = new ArrayList<>();
 	private final ConfigManagerConfig config;
 	private final RecafDirectoriesConfig fileConfig;
-	private final Gson gson;
-	private boolean triedSaving = false;
+	private final GsonProvider gsonProvider;
 
 	@Inject
 	public ConfigManager(@Nonnull ConfigManagerConfig config, @Nonnull RecafDirectoriesConfig fileConfig,
-						 @Nonnull Instance<ConfigContainer> containers, @Nonnull GsonProvider provider) {
+						 @Nonnull GsonProvider gsonProvider, @Nonnull Instance<ConfigContainer> containers) {
 		this.config = config;
 		this.fileConfig = fileConfig;
-		this.gson = provider.getGson();
+		this.gsonProvider = gsonProvider;
 		for (ConfigContainer container : containers)
 			registerContainer(container);
-
-		this.load();
+		load();
 	}
 
 	@PreDestroy
 	private void save() {
-		if(TestEnvironment.isTestEnv())
+		// Skip persisting in test environments
+		if (TestEnvironment.isTestEnv())
 			return;
 
-		for (ConfigContainer value : containers.values()) {
-			String key = value.getGroupAndId();
-			Path containerPath = fileConfig.getConfigDirectory().resolve(key + ".json");
+		Gson gson = gsonProvider.getGson();
+		for (ConfigContainer container : containers.values()) {
+			// Skip writing empty containers
+			if (container.getValues().isEmpty())
+				continue;
 
+			// Model the vales into a single object.
 			JsonObject json = new JsonObject();
-			for (ConfigValue<?> configValue : value.getValues().values()) {
+			for (ConfigValue<?> configValue : container.getValues().values()) {
 				try {
 					json.add(configValue.getId(), gson.toJsonTree(configValue.getValue()));
 				} catch (IllegalArgumentException e) {
@@ -74,7 +76,10 @@ public class ConfigManager implements Service {
 				}
 			}
 
-			try(JsonWriter writer = new JsonWriter(Files.newBufferedWriter(containerPath))) {
+			// Write the appropriate path based on the container id.
+			String key = container.getGroupAndId();
+			Path containerPath = fileConfig.getConfigDirectory().resolve(key + ".json");
+			try (JsonWriter writer = gson.newJsonWriter(Files.newBufferedWriter(containerPath))) {
 				gson.toJson(json, writer);
 			} catch (IOException e) {
 				logger.error("Failed to save config container: {}", key, e);
@@ -83,45 +88,35 @@ public class ConfigManager implements Service {
 	}
 
 	@SuppressWarnings({"raw", "rawtypes"})
-    private void load() {
+	private void load() {
+		// Skip loading in test environments
 		if (TestEnvironment.isTestEnv())
 			return;
 
+		Gson gson = gsonProvider.getGson();
 		for (ConfigContainer container : containers.values()) {
 			String key = container.getGroupAndId();
 			Path containerPath = fileConfig.getConfigDirectory().resolve(key + ".json");
-			if (!Files.exists(containerPath)) {
-				if(triedSaving) {
-					logger.warn("Config container not found: {}", key);
-					continue;
-				}
-
-				triedSaving = true;
-				save();
-			}
+			if (!Files.exists(containerPath))
+				continue;
 
 			JsonObject json;
-			try (JsonReader reader = new JsonReader(Files.newBufferedReader(containerPath))) {
-				json = gson.fromJson(reader, JsonObject.class);
-			} catch (IOException e) {
-				logger.error("Failed to load config container: {}", key, e);
-				continue;
-			}
-
-			if (json == null) {
-				logger.warn("Config container is empty: {}", key);
+			try (JsonReader reader = gson.newJsonReader(Files.newBufferedReader(containerPath))) {
+				json = Objects.requireNonNull(gson.fromJson(reader, JsonObject.class));
+			} catch (Exception ex) {
+				logger.error("Failed to load config container: {}", key, ex);
 				continue;
 			}
 
 			for (ConfigValue value : container.getValues().values()) {
 				String id = value.getId();
-				if (!json.has(id)) {
-					logger.warn("Config value not found: {} [{}]", key + "." + id, value.getType());
+
+				// Skip loading if the file doesn't list the entry.
+				if (!json.has(id))
 					continue;
-				}
 
 				try {
-					loadValue(value, json.get(id));
+					loadValue(gson, value, json.get(id));
 				} catch (IllegalArgumentException e) {
 					logger.error("Could not find adapter for type: {}", value.getType(), e);
 				} catch (Exception e) {
@@ -132,7 +127,7 @@ public class ConfigManager implements Service {
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private void loadValue(ConfigValue value, JsonElement element) {
+	private void loadValue(Gson gson, ConfigValue value, JsonElement element) {
 		if (value instanceof ConfigCollectionValue ccv) {
 			List<Object> list = new ArrayList<>();
 			JsonArray array = element.getAsJsonArray();
@@ -212,5 +207,4 @@ public class ConfigManager implements Service {
 	public ServiceConfig getServiceConfig() {
 		return config;
 	}
-
 }

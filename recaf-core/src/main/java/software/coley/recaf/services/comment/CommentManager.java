@@ -1,9 +1,6 @@
 package software.coley.recaf.services.comment;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -28,10 +25,11 @@ import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmBytecodeFilter;
 import software.coley.recaf.services.decompile.OutputTextFilter;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
+import software.coley.recaf.services.json.GsonProvider;
 import software.coley.recaf.services.mapping.*;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TestEnvironment;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
@@ -52,20 +50,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CommentManager implements Service, CommentUpdateListener, CommentContainerListener {
 	public static final String SERVICE_ID = "comments";
 	private static final Logger logger = Logging.get(CommentManager.class);
-	private static final Gson gson = new GsonBuilder()
-			.setPrettyPrinting()
-			.registerTypeAdapterFactory(new TypeAdapterFactory() {
-				@Override
-				@SuppressWarnings("unchecked")
-				public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-					if (WorkspaceComments.class.equals(type.getRawType()))
-						return (TypeAdapter<T>) gson.getAdapter(PersistWorkspaceComments.class);
-					else if (ClassComments.class.equals(type.getRawType()))
-						return (TypeAdapter<T>) gson.getAdapter(PersistClassComments.class);
-					return null;
-				}
-			})
-			.create();
 	/** Map of workspace comment impls used to fire off listener calls, delegates to persist map entries */
 	private final Map<String, DelegatingWorkspaceComments> delegatingMap = new ConcurrentHashMap<>();
 	/** Map of workspace comment impls modeling only data. Used for persistence. */
@@ -75,12 +59,14 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	private final WorkspaceManager workspaceManager;
 	private final RecafDirectoriesConfig directoriesConfig;
 	private final CommentManagerConfig config;
+	private final GsonProvider gsonProvider;
 
 	@Inject
 	public CommentManager(@Nonnull DecompilerManager decompilerManager, @Nonnull WorkspaceManager workspaceManager,
-						  @Nonnull MappingListeners mappingListeners,
+						  @Nonnull MappingListeners mappingListeners, @Nonnull GsonProvider gsonProvider,
 						  @Nonnull RecafDirectoriesConfig directoriesConfig, @Nonnull CommentManagerConfig config) {
 		this.workspaceManager = workspaceManager;
+		this.gsonProvider = gsonProvider;
 		this.directoriesConfig = directoriesConfig;
 		this.config = config;
 
@@ -310,6 +296,7 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 		try {
 			// TODO: Its not ideal having all comments across all workspaces loaded at once
 			//  - Not a big deal right now since I doubt most users will utilize this feature much
+			Gson gson = gsonProvider.getGson();
 			Path commentsDirectory = getCommentsDirectory();
 			Path store = commentsDirectory.resolve("comments.json");
 			if (Files.exists(store)) {
@@ -332,6 +319,7 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 			return;
 
 		try {
+			Gson gson = gsonProvider.getGson();
 			String serialized = gson.toJson(persistMap);
 			Path commentsDirectory = getCommentsDirectory();
 			if (!Files.isDirectory(commentsDirectory))

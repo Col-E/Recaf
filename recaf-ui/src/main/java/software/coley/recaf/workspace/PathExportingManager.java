@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.stage.DirectoryChooser;
@@ -64,7 +65,7 @@ public class PathExportingManager {
 	 * @param workspace
 	 * 		Workspace to export.
 	 */
-	public void export(Workspace workspace) {
+	public void export(@Nonnull Workspace workspace) {
 		// Prompt a path for the user to write to.
 		WorkspaceResource primaryResource = workspace.getPrimaryResource();
 		ObservableString lastWorkspaceExportDir = recentFilesConfig.getLastWorkspaceExportDirectory();
@@ -123,38 +124,46 @@ public class PathExportingManager {
 		}
 	}
 
-	public void export(JvmClassInfo info) {
+	/**
+	 * Export the given class.
+	 *
+	 * @param classInfo
+	 * 		Workspace to export.
+	 */
+	public void export(@Nonnull JvmClassInfo classInfo) {
+		// Prompt a path for the user to write to.
 		ObservableString lastClassExportDir = recentFilesConfig.getLastClassExportDirectory();
 		File lastExportDir = lastClassExportDir.unboxingMap(File::new);
-
 		FileChooser chooser = new FileChooser();
 		chooser.setInitialDirectory(lastExportDir);
 		chooser.setTitle(Lang.get("dialog.file.export"));
 		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java Class", "*.class"));
-
 		File selectedPath = chooser.showSaveDialog(null);
 
-		if (selectedPath == null) {
+		// Selected path is null, meaning user closed out of file chooser.
+		// Cancel export.
+		if (selectedPath == null)
 			return;
-		}
 
+		// Ensure path ends with '.class'
 		Path exportPath = selectedPath.toPath();
-		if (!exportPath.endsWith(".class")) {
+		if (!exportPath.endsWith(".class"))
 			exportPath = exportPath.resolveSibling(exportPath.getFileName() + ".class");
-		}
 
+		// Update last export dir for classes.
 		lastClassExportDir.setValue(selectedPath.getParent());
 
-        try {
-            Files.write(exportPath, info.getBytecode());
-        } catch (IOException ex) {
-            logger.error("Failed to export class to path '{}'", selectedPath, ex);
-            ErrorDialogs.show(
-                    Lang.getBinding("dialog.error.exportclass.title"),
-                    Lang.getBinding("dialog.error.exportclass.header"),
-                    Lang.getBinding("dialog.error.exportclass.content"),
-                    ex
-            );
-        }
-    }
+		// Write to path.
+		try {
+			Files.write(exportPath, classInfo.getBytecode());
+		} catch (IOException ex) {
+			logger.error("Failed to export class to path '{}'", selectedPath, ex);
+			ErrorDialogs.show(
+					Lang.getBinding("dialog.error.exportclass.title"),
+					Lang.getBinding("dialog.error.exportclass.header"),
+					Lang.getBinding("dialog.error.exportclass.content"),
+					ex
+			);
+		}
+	}
 }

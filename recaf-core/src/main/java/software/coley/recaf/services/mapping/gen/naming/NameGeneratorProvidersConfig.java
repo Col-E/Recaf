@@ -15,6 +15,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class NameGeneratorProvidersConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public NameGeneratorProvidersConfig() {
-		super(ConfigGroups.SERVICE_MAPPING, NameGeneratorProviders.SERVICE_ID);
+		super(ConfigGroups.SERVICE_MAPPING, NameGeneratorProviders.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }
