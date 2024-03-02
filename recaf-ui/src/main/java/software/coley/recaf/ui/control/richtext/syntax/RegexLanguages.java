@@ -1,7 +1,7 @@
 package software.coley.recaf.ui.control.richtext.syntax;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.ui.LanguageStylesheets;
@@ -25,7 +25,10 @@ import static software.coley.recaf.util.StringUtil.shortenPath;
  * @see LanguageStylesheets For retrieving stylesheets of the supported languages.
  */
 public class RegexLanguages {
-	private static final JsonMapper MAPPER = new JsonMapper();
+	/* Don't need to use the managed 'Gson' instance from 'GsonProvider' since we only want to read data
+	 * without any custom adapters. Using it would require some larger scale refactoring anyways.
+	 */
+	private static final Gson GSON = new GsonBuilder().create();
 	private static final Map<String, RegexRule> NAME_TO_LANG = new HashMap<>();
 	private static final RegexRule LANG_JAVA;
 	private static final RegexRule LANG_JASM;
@@ -88,10 +91,14 @@ public class RegexLanguages {
 	 */
 	@Nonnull
 	public static RegexRule addLanguage(@Nonnull String name, @Nonnull InputStream stream) throws IOException {
-		JsonParser parser = MAPPER.createParser(new InputStreamReader(stream));
-		RegexRule lang = parser.readValueAs(RegexRule.class);
-		NAME_TO_LANG.put(name, lang);
-		return lang;
+		try {
+			RegexRule lang = GSON.fromJson(new InputStreamReader(stream), RegexRule.class);
+			NAME_TO_LANG.put(name, lang);
+			return lang;
+		} catch (Exception ex) {
+			// Gson's exceptions are unchecked, so rethrow as checked.
+			throw new IOException(ex.getMessage(), ex);
+		}
 	}
 
 	/**

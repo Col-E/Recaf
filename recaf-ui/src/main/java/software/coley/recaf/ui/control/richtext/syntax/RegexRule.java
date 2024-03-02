@@ -1,6 +1,6 @@
 package software.coley.recaf.ui.control.richtext.syntax;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
@@ -25,10 +25,10 @@ import java.util.List;
  * @author Matt Coley
  * @see RegexSyntaxHighlighter
  */
-public record RegexRule(@JsonProperty("name") String name,
-						@JsonProperty("regex") String regex,
-						@JsonProperty("classes") List<String> classes,
-						@JsonProperty("sub-rules") List<RegexRule> subRules,
-						@JsonProperty("backtrack-mark") String backtrackMark,
-						@JsonProperty("advance-mark") String advanceMark) {
+public record RegexRule(@SerializedName("name") String name,
+						@SerializedName("regex") String regex,
+						@SerializedName("classes") List<String> classes,
+						@SerializedName("sub-rules") List<RegexRule> subRules,
+						@SerializedName("backtrack-mark") String backtrackMark,
+						@SerializedName("advance-mark") String advanceMark) {
 }
