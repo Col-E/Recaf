@@ -1,5 +1,7 @@
 package software.coley.recaf.ui.config;
 
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -8,6 +10,7 @@ import software.coley.observables.ObservableMap;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicMapConfigValue;
 import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.services.json.GsonProvider;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.pane.editing.ClassPane;
@@ -40,8 +43,21 @@ public class KeybindingConfig extends BasicConfigContainer {
 	private final BindingBundle bundle;
 
 	@Inject
-	public KeybindingConfig() {
+	public KeybindingConfig(@Nonnull GsonProvider gsonProvider) {
 		super(ConfigGroups.SERVICE_UI, ID + CONFIG_SUFFIX);
+
+		// Register custom json adapter for the binding bundle type.
+		gsonProvider.addTypeAdapter(BindingBundle.class, (JsonDeserializer<BindingBundle>) (json, typeOfT, context) -> {
+			Map<String, JsonElement> map = json.getAsJsonObject().asMap();
+			List<Binding> bindings = new ArrayList<>(map.size());
+			map.forEach((id, keysElement) -> {
+				List<String> keyNames = keysElement.getAsJsonArray().asList().stream()
+						.map(JsonElement::getAsString)
+						.toList();
+				bindings.add(newBind(id, keyNames));
+			});
+			return new BindingBundle(bindings);
+		});
 
 		// We will only be storing one 'value' so that the UI can treat it as a singular element.
 		bundle = new BindingBundle(Arrays.asList(
@@ -50,7 +66,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 				createBindForPlatform(ID_SAVE, CONTROL, S),
 				createBindForPlatform(ID_RENAME, ALT, R)
 		));
-		addValue(new BasicMapConfigValue<>("bundle", Map.class, String.class, Binding.class, bundle));
+		addValue(new BasicMapConfigValue<>("bundle", BindingBundle.class, String.class, Binding.class, bundle));
 	}
 
 	/**
