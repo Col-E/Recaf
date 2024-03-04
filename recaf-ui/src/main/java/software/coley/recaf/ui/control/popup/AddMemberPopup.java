@@ -142,8 +142,8 @@ public class AddMemberPopup extends RecafStage {
 		layout.setAlignment(Pos.TOP_CENTER);
 		layout.setPadding(new Insets(10));
 		setMinWidth(500);
-		setMinHeight(200);
-		setScene(new RecafScene(layout, 500, 200));
+		setMinHeight(230);
+		setScene(new RecafScene(layout, 500, 230));
 	}
 
 	private void accept(@Nonnull Consumer<ClassMember> memberConsumer) {
