@@ -285,7 +285,6 @@ java.info.sourcefile=Källfilsnamn
 ## Search bar
 find.replace=Ersätt
 find.replaceall=Ersätt alla
-find.regexinvalid=Text att ersätta med
 find.regexreplace=Text att ersätta med
 
 ## Fields and methods

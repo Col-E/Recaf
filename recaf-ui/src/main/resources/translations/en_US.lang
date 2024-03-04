@@ -326,7 +326,7 @@ java.info.sourcefile=Source file name
 ## Search bar
 find.replace=Replace
 find.replaceall=Replace all
-find.regexinvalid=Replacement text
+find.regexinvalid=Invalid Regex
 find.regexreplace=Replacement text
 
 ## Fields and methods

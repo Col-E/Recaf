@@ -8,8 +8,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -18,21 +18,17 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.TextAlignment;
-import regexodus.Matcher;
 import org.fxmisc.richtext.CodeArea;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import regexodus.Matcher;
 import software.coley.recaf.ui.config.KeybindingConfig;
+import software.coley.recaf.ui.control.AbstractSearchBar;
 import software.coley.recaf.ui.control.ActionButton;
-import software.coley.recaf.ui.control.ActionMenuItem;
-import software.coley.recaf.ui.control.BoundToggleIcon;
-import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.util.*;
@@ -90,93 +86,40 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		}
 	}
 
+
 	/**
 	 * The actual search bar.
 	 */
-	private static class Bar extends VBox {
-		private static final int MAX_HISTORY = 10;
+	private static class Bar extends AbstractSearchBar {
 		private final SimpleIntegerProperty lastResultIndex = new SimpleIntegerProperty(-1);
-		private final SimpleBooleanProperty hasResults = new SimpleBooleanProperty();
-		private final SimpleBooleanProperty caseSensitivity = new SimpleBooleanProperty();
-		private final SimpleBooleanProperty regex = new SimpleBooleanProperty();
-		private final CustomTextField searchInput = new CustomTextField();
-		private final CustomTextField replaceInput = new CustomTextField();
-		private final ObservableList<String> pastSearches = FXCollections.observableArrayList();
 		private final ObservableList<String> pastReplaces = FXCollections.observableArrayList();
 		private final ObservableList<Match> resultRanges = FXCollections.observableArrayList();
-		private final HBox replaceLine;
+		private final CustomTextField replaceInput = new CustomTextField();
+		private final Button oldReplaces = new Button();
+		private final HBox replaceLine = new HBox();
 		private final Editor editor;
+		private Button prev;
+		private Button next;
+		private Button close;
+		private Button replace;
+		private Button replaceAll;
 
 		private Bar(@Nonnull Editor editor) {
 			this.editor = editor;
-			getStyleClass().add("search-bar");
 
-			// Initially hidden.
-			hide();
+			setup();
+		}
 
+		@Override
+		public void setup() {
 			// Refresh results when text changes.
 			editor.getTextChangeEventStream()
 					.successionEnds(Duration.ofMillis(150))
 					.addObserver(changes -> refreshResults());
 
-			// Remove border from search/replace text fields.
-			searchInput.getStyleClass().addAll(Styles.ACCENT);
-			replaceInput.getStyleClass().addAll(Styles.ACCENT);
-
-			// Create menu for search input left graphic (like IntelliJ) to display prior searches/replaces when clicked.
-			Button oldSearches = new Button();
-			oldSearches.setFocusTraversable(false);
-			oldSearches.setDisable(true); // re-enabled when searches are populated.
-			oldSearches.setGraphic(new FontIconView(CarbonIcons.SEARCH));
-			oldSearches.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
-			searchInput.setLeft(oldSearches);
-			Button oldReplaces = new Button();
-			oldReplaces.setFocusTraversable(false);
-			oldReplaces.setDisable(true); // re-enabled when replaces are populated.
-			oldReplaces.setGraphic(new FontIconView(CarbonIcons.SEARCH));
-			oldReplaces.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
-			replaceInput.setLeft(oldReplaces);
-
-			// Create toggles for search input query modes.
-			BoundToggleIcon toggleSensitivity = new BoundToggleIcon(Icons.CASE_SENSITIVITY, caseSensitivity).withTooltip("misc.casesensitive");
-			BoundToggleIcon toggleRegex = new BoundToggleIcon(Icons.REGEX, regex).withTooltip("misc.regex");
-			toggleSensitivity.setFocusTraversable(false);
-			toggleRegex.setFocusTraversable(false);
-			toggleSensitivity.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
-			toggleRegex.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
-			HBox inputToggles = new HBox(
-					toggleSensitivity,
-					toggleRegex
-			);
-			inputToggles.setAlignment(Pos.CENTER_RIGHT);
-			searchInput.setRight(inputToggles);
-			caseSensitivity.addListener((ob, old, cur) -> refreshResults());
-			regex.addListener((ob, old, cur) -> refreshResults());
-
-			// Create label to display number of results.
-			Label resultCount = new Label();
-			resultCount.setMinWidth(70);
-			resultCount.setAlignment(Pos.CENTER);
-			resultCount.setTextAlignment(TextAlignment.CENTER);
-			resultCount.textProperty().bind(lastResultIndex.map(n -> {
-				int i = n.intValue();
-				if (i < 0) {
-					return Lang.get("menu.search.noresults");
-				} else {
-					return (i + 1) + "/" + resultRanges.size();
-				}
-			}));
-			resultRanges.addListener((ListChangeListener<Match>) c -> {
-				if (resultRanges.isEmpty()) {
-					resultCount.setStyle("-fx-text-fill: red;");
-				} else {
-					resultCount.setStyle("-fx-text-fill: -color-fg-default;");
-				}
-			});
-
 			// Create buttons to iterate through results.
-			Button prev = new ActionButton(CarbonIcons.ARROW_UP, this::prev);
-			Button next = new ActionButton(CarbonIcons.ARROW_DOWN, this::next);
+			prev = new ActionButton(CarbonIcons.ARROW_UP, this::prev);
+			next = new ActionButton(CarbonIcons.ARROW_DOWN, this::next);
 			prev.setFocusTraversable(false);
 			next.setFocusTraversable(false);
 			prev.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.SMALL);
@@ -185,13 +128,13 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			next.disableProperty().bind(hasResults.not());
 
 			// Button to close the search bar.
-			Button close = new ActionButton(CarbonIcons.CLOSE, this::hide);
+			close = new ActionButton(CarbonIcons.CLOSE, this::hide);
 			close.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.SMALL);
 			close.setFocusTraversable(false);
 
 			// Replace buttons.
-			Button replace = new ActionButton(Lang.getBinding("find.replace"), this::replace);
-			Button replaceAll = new ActionButton(Lang.getBinding("find.replaceall"), this::replaceAll);
+			replace = new ActionButton(Lang.getBinding("find.replace"), this::replace);
+			replaceAll = new ActionButton(Lang.getBinding("find.replaceall"), this::replaceAll);
 			replace.getStyleClass().addAll(Styles.SMALL);
 			replaceAll.getStyleClass().addAll(Styles.SMALL);
 			replace.setFocusTraversable(false);
@@ -199,92 +142,20 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			replace.disableProperty().bind(hasResults.not());
 			replaceAll.disableProperty().bind(hasResults.not());
 
-			// Add to past searches/replaces when enter is pressed.
-			// Close when escape is pressed.
-			searchInput.setOnKeyPressed(e -> {
-				KeyCode code = e.getCode();
-				if (code == KeyCode.ENTER) {
-					next();
-				} else if (code == KeyCode.ESCAPE) {
-					hide();
-				}
-				while (pastSearches.size() > MAX_HISTORY)
-					pastSearches.remove(pastSearches.size() - 1);
-			});
-			searchInput.setOnKeyReleased(e -> refreshResults());
-			replaceInput.setOnKeyPressed(e -> {
-				KeyCode code = e.getCode();
-				if (code == KeyCode.ENTER) {
-					replace();
-				} else if (code == KeyCode.ESCAPE) {
-					hide();
-				}
-				while (pastReplaces.size() > MAX_HISTORY)
-					pastReplaces.remove(pastReplaces.size() - 1);
-			});
-			replaceInput.setOnKeyReleased(e -> {
-				// We do this in on-release so the replacement input text value is up-to-date in this event processing.
-				// Show a preview of the replacement for regex matches when it has regex group replacement.
-				// For non-regex or simple replacements, we don't need to show anything.
-				if (isVisible() && regex.get()) {
-					int resultIndex = lastResultIndex.get();
-					Popover popoverPreview;
-					if (resultIndex == -1) {
-						popoverPreview = null;
-					} else {
-						String replacement = getReplacement(resultIndex);
-						if (!replacement.equals(replaceInput.getText())) {
-							popoverPreview = new Popover(new Label(replacement));
-							popoverPreview.setHeaderAlwaysVisible(true);
-							popoverPreview.titleProperty().bind(Lang.getBinding("find.regexreplace"));
-							popoverPreview.show(replaceInput);
-						} else {
-							popoverPreview = null;
-						}
-					}
+			// Add to past replaces when enter is pressed.
+			replaceInput.setLeft(oldReplaces);
+			replaceInput.setOnKeyPressed(this::onReplaceInputKeyPress);
+			replaceInput.setOnKeyReleased(e -> updateReplacePreview());
 
-					// Hide the prior popover if any exists.
-					Object old = searchInput.getProperties().put("regex-preview", popoverPreview);
-					if (old instanceof Popover oldPopover)
-						oldPopover.hide();
-				}
-			});
+			// Initially hidden.
+			hide();
 
-			// When past searches list is modified, update old search menu.
-			pastSearches.addListener((ListChangeListener<String>) c -> {
-				List<ActionMenuItem> items = pastSearches.stream()
-						.map(text -> new ActionMenuItem(text, () -> {
-							searchInput.setText(text);
-							requestSearchFocus();
-						}))
-						.toList();
-				if (items.isEmpty()) {
-					oldSearches.setDisable(true);
-				} else {
-					oldSearches.setDisable(false);
-					ContextMenu contextMenu = new ContextMenu();
-					contextMenu.getItems().setAll(items);
-					oldSearches.setOnMousePressed(e -> contextMenu.show(oldSearches, e.getScreenX(), e.getScreenY()));
-				}
-			});
-			pastReplaces.addListener((ListChangeListener<String>) c -> {
-				List<ActionMenuItem> items = pastReplaces.stream()
-						.map(text -> new ActionMenuItem(text, () -> {
-							replaceInput.setText(text);
-							requestSearchFocus();
-						}))
-						.toList();
-				if (items.isEmpty()) {
-					oldReplaces.setDisable(true);
-				} else {
-					oldReplaces.setDisable(false);
-					ContextMenu contextMenu = new ContextMenu();
-					contextMenu.getItems().setAll(items);
-					oldReplaces.setOnMousePressed(e -> contextMenu.show(oldReplaces, e.getScreenX(), e.getScreenY()));
-				}
-			});
+			// Parent setup done last since we initialize some controls it will depend on above.
+			super.setup();
+		}
 
-			// Layout
+		@Override
+		protected void setupLayout() {
 			replaceInput.prefWidthProperty().bind(searchInput.widthProperty());
 			HBox prevAndNext = new HBox(prev, next);
 			prevAndNext.setAlignment(Pos.CENTER);
@@ -293,7 +164,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			searchLine.setAlignment(Pos.CENTER_LEFT);
 			searchLine.setSpacing(10);
 			searchLine.setPadding(new Insets(0, 5, 0, 0));
-			replaceLine = new HBox(replaceInput, new Spacer(0), replace, replaceAll);
+			replaceLine.getChildren().addAll(replaceInput, new Spacer(0), replace, replaceAll);
 			replaceLine.setAlignment(Pos.CENTER_LEFT);
 			replaceLine.setSpacing(10);
 			replaceLine.setPadding(new Insets(0, 5, 0, 0));
@@ -301,10 +172,47 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			getChildren().addAll(searchLine, new Group(replaceLine));
 		}
 
-		/**
-		 * Refresh the results by scanning for what text ranges match
-		 */
-		private void refreshResults() {
+		@Override
+		protected void onSearchInputKeyPress(@Nonnull KeyEvent e) {
+			// Handle navigating to next entry and closing
+			KeyCode code = e.getCode();
+			if (code == KeyCode.ENTER) {
+				next();
+			} else if (code == KeyCode.ESCAPE) {
+				hide();
+			}
+
+			super.onSearchInputKeyPress(e);
+		}
+
+		protected void onReplaceInputKeyPress(@Nonnull KeyEvent e) {
+			// Handle replacing the next entry and closing
+			KeyCode code = e.getCode();
+			if (code == KeyCode.ENTER) {
+				replace();
+			} else if (code == KeyCode.ESCAPE) {
+				hide();
+			}
+
+			// Update past replacements
+			while (pastReplaces.size() > MAX_HISTORY)
+				pastReplaces.remove(pastReplaces.size() - 1);
+		}
+
+		@Override
+		protected void bindResultCountDisplay(@Nonnull StringProperty resultTextProperty) {
+			resultTextProperty.bind(lastResultIndex.map(n -> {
+				int i = n.intValue();
+				if (i < 0) {
+					return Lang.get("menu.search.noresults");
+				} else {
+					return (i + 1) + "/" + resultRanges.size();
+				}
+			}));
+		}
+
+		@Override
+		protected void refreshResults() {
 			// Reset index before any results are found.
 			lastResultIndex.set(-1);
 
@@ -385,6 +293,46 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 					area.showParagraphAtCenter(area.getCurrentParagraph());
 				}
 			}
+		}
+
+		private void updateReplacePreview() {
+			// We do this in on-release so the replacement input text value is up-to-date in this event processing.
+			// Show a preview of the replacement for regex matches when it has regex group replacement.
+			// For non-regex or simple replacements, we don't need to show anything.
+			if (isVisible() && regex.get()) {
+				int resultIndex = lastResultIndex.get();
+				Popover popoverPreview;
+				if (resultIndex == -1) {
+					popoverPreview = null;
+				} else {
+					String replacement = getReplacement(resultIndex);
+					if (!replacement.equals(replaceInput.getText())) {
+						popoverPreview = new Popover(new Label(replacement));
+						popoverPreview.setHeaderAlwaysVisible(true);
+						popoverPreview.titleProperty().bind(Lang.getBinding("find.regexreplace"));
+						popoverPreview.show(replaceInput);
+					} else {
+						popoverPreview = null;
+					}
+				}
+
+				// Hide the prior popover if any exists.
+				Object old = searchInput.getProperties().put("regex-preview", popoverPreview);
+				if (old instanceof Popover oldPopover)
+					oldPopover.hide();
+			}
+		}
+
+		@Nonnull
+		@Override
+		protected List<TextField> getInputFields() {
+			return List.of(searchInput, replaceInput);
+		}
+
+		@Nonnull
+		@Override
+		protected List<Button> getInputButtons() {
+			return List.of(oldSearches, oldReplaces);
 		}
 
 		/**
@@ -502,6 +450,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		 *
 		 * @return Replacement for the given range.
 		 */
+		@Nonnull
 		private String getReplacement(int index) {
 			String replacement = replaceInput.getText();
 			Match match = resultRanges.get(index);
@@ -594,21 +543,14 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		public void hideReplace() {
 			replaceLine.setVisible(false);
 		}
-
-		/**
-		 * Focus the search input field, and select the text so users can quickly retype something new if desired.
-		 */
-		private void requestSearchFocus() {
-			searchInput.requestFocus();
-			searchInput.selectAll();
-		}
 	}
 
 	/**
 	 * @param range
 	 * 		Range of the match.
 	 * @param groups
-	 * 		Regex groups of the match, if the match is done with {@link Bar#regex} enabled.
+	 * 		Regex groups of the match, if the match is done with
+	 *        {@link AbstractSearchBar#regexProperty()} enabled.
 	 */
 	private record Match(@Nonnull IntRange range, @Nullable String[] groups) implements Comparable<Match> {
 		@Nonnull
