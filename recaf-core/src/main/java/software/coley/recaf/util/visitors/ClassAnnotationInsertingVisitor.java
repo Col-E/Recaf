@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.AnnotationNode;
 import software.coley.recaf.RecafConstants;
 
 /**
- * Simple visitor for inserting a annotation.
+ * Simple visitor for inserting an annotation.
  *
  * @author Matt Coley
  */

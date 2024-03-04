@@ -219,6 +219,16 @@ dialog.header.move-directory=Move the directory into to a new parent directory.
 dialog.header.move-file=Move the file to a new directory.
 dialog.header.move-package=Move the package into to a new parent package.
 
+## Add members
+dialog.title.add-field=Add field
+dialog.title.add-method=Add method
+dialog.input.name=Name
+dialog.input.desc=Descriptor
+dialog.warn.illegal-name=Illegal name
+dialog.warn.illegal-desc=Illegal descriptor format
+dialog.warn.field-conflict=The field name already exists.\nPlease choose a different name.
+dialog.warn.method-conflict=The method name already exists.\nPlease choose a different name.
+
 ## VM actions
 dialog.title.vm-invoke-args=Virtualize method call
 dialog.title.vm-peephole-invoke-args=Virtualized peephole optimization
@@ -348,7 +358,7 @@ assembler.analysis.value=Value
 assembler.playground.title=Java to Bytecode
 assembler.playground.comment=// Write some Java code here to convert it to bytecode automatically\n// You can access the current class's fields/methods,\n// and the current method's parameters/variables.
 assembler.variables.title=Declared Variables
-assembler.variables.name=Name
+assembler.variables.name=Variable name
 assembler.variables.type=Type
 assembler.variables.usage=Usages
 assembler.variables.value=Value

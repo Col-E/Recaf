@@ -1729,50 +1729,70 @@ public class Actions implements Service {
 				.show();
 	}
 
-	public void addClassMethod(@Nonnull Workspace workspace,
-							  @Nonnull WorkspaceResource resource,
-							  @Nonnull JvmClassBundle bundle,
-							  @Nonnull JvmClassInfo info) {
-		new AddMemberPopup(member -> {
-			ClassWriter writer = new ClassWriter(0);
-			MemberAddingVisitor visitor = new MemberAddingVisitor(writer, member);
-			info.getClassReader().accept(visitor, 0);
-			bundle.put(info.toJvmClassBuilder()
-					.adaptFrom(new ClassReader(writer.toByteArray()))
-					.build());
-
-			// open the assembler with the new method
-			FxThreadUtil.delayedRun(100, () -> {
-				try {
-					openAssembler(PathNodes.memberPath(workspace, resource, bundle, info, member));
-				} catch (IncompletePathException e) {
-					logger.error("Failed to open assembler for new method", e);
-				}
-			});
-		}).forMethod(info).show();
-	}
-
+	/**
+	 * Prompts the user for field declaration info, to add it to the given class.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to update.
+	 */
 	public void addClassField(@Nonnull Workspace workspace,
 							  @Nonnull WorkspaceResource resource,
 							  @Nonnull JvmClassBundle bundle,
 							  @Nonnull JvmClassInfo info) {
 		new AddMemberPopup(member -> {
 			ClassWriter writer = new ClassWriter(0);
-			MemberAddingVisitor visitor = new MemberAddingVisitor(writer, member);
-			info.getClassReader().accept(visitor, 0);
-			bundle.put(info.toJvmClassBuilder()
+			info.getClassReader().accept(new MemberStubAddingVisitor(writer, member), 0);
+			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
 					.adaptFrom(new ClassReader(writer.toByteArray()))
-					.build());
+					.build();
+			bundle.put(updatedInfo);
 
-			// open the assembler with the new field
-			FxThreadUtil.delayedRun(100, () -> {
-				try {
-					openAssembler(PathNodes.memberPath(workspace, resource, bundle, info, member));
-				} catch (IncompletePathException e) {
-					logger.error("Failed to open assembler for new field", e);
-				}
-			});
-        }).forField(info).show();
+			// Open the assembler with the new field
+			try {
+				openAssembler(PathNodes.memberPath(workspace, resource, bundle, updatedInfo, member));
+			} catch (IncompletePathException e) {
+				logger.error("Failed to open assembler for new field", e);
+			}
+		}).forField(info).show();
+	}
+
+	/**
+	 * Prompts the user for method declaration info, to add it to the given class.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to update.
+	 */
+	public void addClassMethod(@Nonnull Workspace workspace,
+							   @Nonnull WorkspaceResource resource,
+							   @Nonnull JvmClassBundle bundle,
+							   @Nonnull JvmClassInfo info) {
+		new AddMemberPopup(member -> {
+			ClassWriter writer = new ClassWriter(0);
+			info.getClassReader().accept(new MemberStubAddingVisitor(writer, member), 0);
+			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
+					.adaptFrom(new ClassReader(writer.toByteArray()))
+					.build();
+			bundle.put(updatedInfo);
+
+			// Open the assembler with the new method
+			try {
+				openAssembler(PathNodes.memberPath(workspace, resource, bundle, updatedInfo, member));
+			} catch (IncompletePathException e) {
+				logger.error("Failed to open assembler for new method", e);
+			}
+		}).forMethod(info).show();
 	}
 
 	/**

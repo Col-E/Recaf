@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Simple visitor for inserting a annotation.
+ * Simple visitor for removing an annotation.
  *
  * @author Matt Coley
  */
