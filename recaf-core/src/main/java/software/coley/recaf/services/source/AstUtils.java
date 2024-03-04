@@ -6,6 +6,7 @@ import org.openrewrite.Tree;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.marker.Range;
+import software.coley.recaf.util.Types;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,8 @@ public class AstUtils {
 			return toInternal(variable.getType(), desc);
 		} else if (type instanceof JavaType.GenericTypeVariable typeVariable) {
 			List<JavaType> bounds = typeVariable.getBounds();
+			if (bounds.isEmpty())
+				return Types.OBJECT_TYPE.getDescriptor();
 			if (bounds.size() == 1)
 				return toInternal(bounds.get(0));
 		}
