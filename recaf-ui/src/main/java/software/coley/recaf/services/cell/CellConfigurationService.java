@@ -4,12 +4,14 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Cell;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -112,28 +114,7 @@ public class CellConfigurationService implements Service {
 	public void configure(@Nonnull Cell<?> cell, @Nonnull PathNode<?> item, @Nonnull ContextSource source) {
 		cell.setText(textOf(item));
 		cell.setGraphic(graphicOf(item));
-		cell.setOnMouseClicked(e -> {
-			if (e.getButton() == MouseButton.SECONDARY) {
-				// Lazily populate context menus when secondary click is prompted.
-				if (cell.getContextMenu() == null) cell.setContextMenu(contextMenuOf(source, item));
-			} else {
-				// Handle primary mouse actions.
-				if (cell instanceof TreeCell<?> treeCell) {
-					if (e.getButton() == MouseButton.PRIMARY) {
-						// Double-clicking leafs should 'open' their content.
-						// Branches should recursively open.
-						TreeItem<?> treeItem = treeCell.getTreeItem();
-						if (e.getClickCount() == 2 && treeItem != null)
-							if (treeItem.isLeaf())
-								openPath(item);
-							else if (treeItem.isExpanded()) // Looks odd, but results in less rapid re-closures
-								TreeItems.recurseOpen(treeItem);
-							else
-								TreeItems.recurseClose(treeCell.getTreeView(), treeItem);
-					}
-				}
-			}
-		});
+		cell.setOnMouseClicked(contextMenuHandlerOf(cell, item, source));
 	}
 
 	/**
@@ -391,6 +372,42 @@ public class CellConfigurationService implements Service {
 
 		// No graphic
 		return null;
+	}
+
+	/**
+	 * @param cell
+	 * 		Cell to apply created context menus to.
+	 * @param item
+	 * 		Content within the cell.
+	 * @param source
+	 * 		Origin source of the cell, for context menu specialization.
+	 *
+	 * @return An event handler for {@link Node#setOnMouseClicked(EventHandler)} that handles creating context menus.
+	 */
+	@Nonnull
+	public EventHandler<? super MouseEvent> contextMenuHandlerOf(@Nonnull Cell<?> cell, @Nonnull PathNode<?> item, @Nonnull ContextSource source) {
+		return e -> {
+			if (e.getButton() == MouseButton.SECONDARY) {
+				// Lazily populate context menus when secondary click is prompted.
+				if (cell.getContextMenu() == null) cell.setContextMenu(contextMenuOf(source, item));
+			} else {
+				// Handle primary mouse actions.
+				if (cell instanceof TreeCell<?> treeCell) {
+					if (e.getButton() == MouseButton.PRIMARY) {
+						// Double-clicking leafs should 'open' their content.
+						// Branches should recursively open.
+						TreeItem<?> treeItem = treeCell.getTreeItem();
+						if (e.getClickCount() == 2 && treeItem != null)
+							if (treeItem.isLeaf())
+								openPath(item);
+							else if (treeItem.isExpanded()) // Looks odd, but results in less rapid re-closures
+								TreeItems.recurseOpen(treeItem);
+							else
+								TreeItems.recurseClose(treeCell.getTreeView(), treeItem);
+					}
+				}
+			}
+		};
 	}
 
 	/**
