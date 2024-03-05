@@ -46,19 +46,6 @@ public class KeybindingConfig extends BasicConfigContainer {
 	public KeybindingConfig(@Nonnull GsonProvider gsonProvider) {
 		super(ConfigGroups.SERVICE_UI, ID + CONFIG_SUFFIX);
 
-		// Register custom json adapter for the binding bundle type.
-		gsonProvider.addTypeAdapter(BindingBundle.class, (JsonDeserializer<BindingBundle>) (json, typeOfT, context) -> {
-			Map<String, JsonElement> map = json.getAsJsonObject().asMap();
-			List<Binding> bindings = new ArrayList<>(map.size());
-			map.forEach((id, keysElement) -> {
-				List<String> keyNames = keysElement.getAsJsonArray().asList().stream()
-						.map(JsonElement::getAsString)
-						.toList();
-				bindings.add(newBind(id, keyNames));
-			});
-			return new BindingBundle(bindings);
-		});
-
 		// We will only be storing one 'value' so that the UI can treat it as a singular element.
 		bundle = new BindingBundle(Arrays.asList(
 				createBindForPlatform(ID_FIND, CONTROL, F),
@@ -67,6 +54,27 @@ public class KeybindingConfig extends BasicConfigContainer {
 				createBindForPlatform(ID_RENAME, ALT, R)
 		));
 		addValue(new BasicMapConfigValue<>("bundle", BindingBundle.class, String.class, Binding.class, bundle));
+
+		// Register custom json adapter for the binding bundle type.
+		gsonProvider.addTypeAdapter(BindingBundle.class, (JsonDeserializer<BindingBundle>) (json, typeOfT, context) -> {
+			Set<String> expected = new HashSet<>(bundle.keySet());
+			Map<String, JsonElement> map = json.getAsJsonObject().asMap();
+			List<Binding> bindings = new ArrayList<>(map.size());
+			map.forEach((id, keysElement) -> {
+				List<String> keyNames = keysElement.getAsJsonArray().asList().stream()
+						.map(JsonElement::getAsString)
+						.toList();
+				bindings.add(newBind(id, keyNames));
+				expected.remove(id);
+			});
+
+			// Fill in values from default config that do not exist in the serialized model
+			expected.forEach(missingId -> bindings.add(bundle.get(missingId)));
+
+			return new BindingBundle(bindings);
+		});
+	}
+
 	}
 
 	/**
