@@ -290,6 +290,22 @@ public interface Workspace extends Closing {
 	}
 
 	/**
+	 * @return Stream of all files.
+	 */
+	@Nonnull
+	default Stream<FilePathNode> filesStream() {
+		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
+		return allResourcesStream(true)
+				.flatMap(resource -> {
+					FileBundle bundle = resource.getFileBundle();
+					BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
+					return bundle.values()
+							.stream()
+							.map(cls -> bundlePath.child(cls.getDirectoryName()).child(cls));
+				});
+	}
+
+	/**
 	 * @param filter
 	 * 		JVM class filter.
 	 *
