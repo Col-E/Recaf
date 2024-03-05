@@ -150,19 +150,28 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 				return 1;
 			}
 
+			int cmp;
 			ClassPathNode parent = getParent();
 			if (parent != null) {
+				ClassPathNode otherParent = classMemberNode.getParent();
+				if (otherParent != null) {
+					cmp = parent.compareTo(otherParent);
+					if (cmp != 0)
+						return cmp;
+				}
+
 				// Sort by appearance order in parent.
 				ClassInfo classInfo = parent.getValue();
 				List<? extends ClassMember> list = member.isField() ?
 						classInfo.getFields() : classInfo.getMethods();
-				return Integer.compare(list.indexOf(member), list.indexOf(otherMember));
+				cmp = Integer.compare(list.indexOf(member), list.indexOf(otherMember));
 			} else {
 				// Just sort alphabetically if parent not known.
 				String key = member.getName() + member.getDescriptor();
 				String otherKey = otherMember.getName() + member.getDescriptor();
-				return String.CASE_INSENSITIVE_ORDER.compare(key, otherKey);
+				cmp = String.CASE_INSENSITIVE_ORDER.compare(key, otherKey);
 			}
+			return cmp;
 		}
 
 		// Show after inner classes & annotations
