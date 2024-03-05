@@ -8,6 +8,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -1919,12 +1920,15 @@ public class Actions implements Service {
 					parent = parent.getParent();
 
 				// If the tab content is the node, select it and return.
-				if (parent instanceof DockingRegion tabParent)
+				if (parent instanceof DockingRegion tabParent) {
+					Scene scene = parent.getScene();
 					for (DockingTab tab : tabParent.getDockTabs())
 						if (tab.getContent() == node) {
 							tab.select();
+							scene.getWindow().requestFocus();
 							return;
 						}
+				}
 
 				// Next parent.
 				node = parent;
