@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.config;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -33,6 +34,30 @@ public class TextFormatConfig extends BasicConfigContainer {
 	}
 
 	/**
+	 * @return {@code true} to escape text with {@link #filter(String)}.
+	 */
+	@Nonnull
+	public ObservableBoolean getDoEscape() {
+		return escape;
+	}
+
+	/**
+	 * @return {@code true} to shorten path text with {@link #filter(String)}.
+	 */
+	@Nonnull
+	public ObservableBoolean getDoShorten() {
+		return shorten;
+	}
+
+	/**
+	 * @return {@code true} to limit the length of text with {@link #filter(String)}.
+	 */
+	@Nonnull
+	public ObservableInteger getMaxLength() {
+		return maxLength;
+	}
+
+	/**
 	 * @param string
 	 * 		Some text to filter.
 	 *
@@ -40,19 +65,48 @@ public class TextFormatConfig extends BasicConfigContainer {
 	 */
 	public String filter(@Nullable String string) {
 		if (string == null) return null;
+		string = filterShorten(string);
+		string = filterEscape(string);
+		string = filterMaxLength(string);
+		return string;
+	}
 
-		if (shorten.getValue())
-			string = StringUtil.shortenPath(string);
+	/**
+	 * @param string
+	 * 		Some text to filter.
+	 *
+	 * @return Filtered text based on current config.
+	 */
+	public String filterShorten(@Nullable String string) {
+		if (string != null && shorten.getValue())
+			return StringUtil.shortenPath(string);
+		return string;
+	}
 
-		if (escape.getValue())
-			string = EscapeUtil.escapeAll(string);
+	/**
+	 * @param string
+	 * 		Some text to filter.
+	 *
+	 * @return Filtered text based on current config.
+	 */
+	public String filterEscape(@Nullable String string) {
+		if (string != null && escape.getValue())
+			return EscapeUtil.escapeAll(string);
+		return string;
+	}
 
-		if (maxLength.getValue() != null) {
+	/**
+	 * @param string
+	 * 		Some text to filter.
+	 *
+	 * @return Filtered text based on current config.
+	 */
+	public String filterMaxLength(@Nullable String string) {
+		if (string != null && maxLength.getValue() != null) {
 			int maxLengthPrim = maxLength.getValue();
 			if (string.length() > maxLengthPrim)
 				string = string.substring(0, maxLengthPrim) + "…";
 		}
-
 		return string;
 	}
 }
