@@ -31,7 +31,6 @@ import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundTab;
-import software.coley.recaf.ui.control.IconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
@@ -139,7 +138,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		FieldsAndMethodsPane fieldsAndMethodsPane = fieldsAndMethodsPaneProvider.get();
 		fieldsAndMethodsPane.setupSelectionNavigationListener(this);
 		addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
-				new IconView(Icons.getImage(Icons.FIELD_N_METHOD)),
+				Icons.getIconView(Icons.FIELD_N_METHOD),
 				fieldsAndMethodsPane
 		));
 		fieldsAndMethodsPane.onUpdatePath(classPathNode);

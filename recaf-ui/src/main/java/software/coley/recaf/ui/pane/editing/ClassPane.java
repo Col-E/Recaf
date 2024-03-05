@@ -12,7 +12,6 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.BoundTab;
-import software.coley.recaf.ui.control.IconView;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
@@ -43,7 +42,7 @@ public abstract class ClassPane extends AbstractContentPane<ClassPathNode> imple
 
 		// Setup side-tabs
 		addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
-				new IconView(Icons.getImage(Icons.FIELD_N_METHOD)),
+				Icons.getIconView(Icons.FIELD_N_METHOD),
 				fieldsAndMethodsPane
 		));
 		addSideTab(new BoundTab(Lang.getBinding("hierarchy.title"),

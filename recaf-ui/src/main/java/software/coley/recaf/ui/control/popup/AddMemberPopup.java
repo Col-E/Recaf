@@ -71,11 +71,11 @@ public class AddMemberPopup extends RecafStage {
 
 		add.disableProperty().bind(isIllegalName.or(isIllegalDescriptor).or(nameConflict));
 
-		publicCheck.setGraphic(new IconView(Icons.getImage(Icons.ACCESS_PUBLIC)));
-		privateCheck.setGraphic(new IconView(Icons.getImage(Icons.ACCESS_PRIVATE)));
-		protectedCheck.setGraphic(new IconView(Icons.getImage(Icons.ACCESS_PROTECTED)));
-		staticCheck.setGraphic(new IconView(Icons.getImage(Icons.ACCESS_STATIC)));
-		finalCheck.setGraphic(new IconView(Icons.getImage(Icons.ACCESS_FINAL)));
+		publicCheck.setGraphic(Icons.getIconView(Icons.ACCESS_PUBLIC));
+		privateCheck.setGraphic(Icons.getIconView(Icons.ACCESS_PRIVATE));
+		protectedCheck.setGraphic(Icons.getIconView(Icons.ACCESS_PROTECTED));
+		staticCheck.setGraphic(Icons.getIconView(Icons.ACCESS_STATIC));
+		finalCheck.setGraphic(Icons.getIconView(Icons.ACCESS_FINAL));
 
 		BooleanBinding shouldShowOutput = isIllegalName.or(isIllegalDescriptor).or(nameConflict);
 		output.visibleProperty().bind(shouldShowOutput);
