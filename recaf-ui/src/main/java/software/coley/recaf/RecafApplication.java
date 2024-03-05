@@ -6,12 +6,14 @@ import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.cdi.UiInitializationEvent;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.RecafTheme;
+import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
@@ -51,6 +53,8 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 		Node logging = createLoggingWrapper();
 		workspaceRootPane = recaf.get(WorkspaceRootPane.class);
 		welcomePane = recaf.get(WelcomePane.class);
+		KeybindingConfig keybindingConfig = recaf.get(KeybindingConfig.class);
+		WindowManager windowManager = recaf.get(WindowManager.class);
 
 		// Layout
 		SplitPane splitPane = new SplitPane(root, logging);
@@ -69,23 +73,31 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 		workspaceManager.addWorkspaceCloseListener(this);
 
 		// Display
+		Scene scene = new RecafScene(wrapper);
+		scene.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent event) -> {
+			// Global keybind handling
+			if (keybindingConfig.getQuickNav().match(event)) {
+				Stage quickNav = windowManager.getQuickNav();
+				quickNav.show();
+				quickNav.requestFocus();
+			}
+		});
 		stage.setMinWidth(900);
 		stage.setMinHeight(600);
-		Scene value = new RecafScene(wrapper);
-		stage.setScene(value);
+		stage.setScene(scene);
 		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		stage.setTitle("Recaf");
 		stage.setOnCloseRequest(e -> System.exit(0));
 		stage.show();
 
 		// Register main window
-		WindowManager windowManager = recaf.get(WindowManager.class);
 		windowManager.register(WindowManager.WIN_MAIN, stage);
 
 		// Publish UI init event
 		recaf.getContainer().getBeanContainer().getEvent().fire(new UiInitializationEvent());
 	}
 
+	@Nonnull
 	private Node createLoggingWrapper() {
 		LoggingPane logging = recaf.get(LoggingPane.class);
 		DockingRegion dockingPane = recaf.get(DockingManager.class).newRegion();

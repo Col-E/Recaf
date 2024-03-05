@@ -16,6 +16,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -48,6 +49,14 @@ public abstract class AbstractSearchBar extends VBox {
 	@Nonnull
 	public ObservableList<String> getPastSearches() {
 		return pastSearches;
+	}
+
+	/**
+	 * @return Property of the current search text.
+	 */
+	@Nonnull
+	public StringProperty getSearchTextProperty() {
+		return searchInput.textProperty();
 	}
 
 	/**
@@ -116,8 +125,8 @@ public abstract class AbstractSearchBar extends VBox {
 		resultCount.setAlignment(Pos.CENTER);
 		resultCount.setTextAlignment(TextAlignment.CENTER);
 		bindResultCountDisplay(resultCount.textProperty());
-		resultCount.styleProperty().bind(hasResults.map(b -> {
-			if (b) {
+		resultCount.styleProperty().bind(hasResults.map(has -> {
+			if (has) {
 				return "-fx-text-fill: -color-fg-default;";
 			} else {
 				return "-fx-text-fill: red;";
@@ -141,6 +150,7 @@ public abstract class AbstractSearchBar extends VBox {
 	 * Called at the end of {@link #setup()}.
 	 */
 	protected void setupLayout() {
+		HBox.setHgrow(searchInput, Priority.ALWAYS);
 		HBox searchLine = new HBox(searchInput, resultCount);
 		searchLine.setAlignment(Pos.CENTER_LEFT);
 		searchLine.setSpacing(10);

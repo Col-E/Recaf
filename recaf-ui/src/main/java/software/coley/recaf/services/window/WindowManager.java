@@ -34,6 +34,7 @@ public class WindowManager implements Service {
 	public static final String WIN_INFO = "system-information";
 	public static final String WIN_SCRIPTS = "script-manager";
 	public static final String WIN_MAP_PROGRESS = "mapping-progress";
+	public static final String WIN_QUICK_NAV = "quick-nav";
 	// Manager instance data
 	private final WindowManagerConfig config;
 	private final ObservableList<Stage> activeWindows = new ObservableList<>();
@@ -180,6 +181,14 @@ public class WindowManager implements Service {
 	@Nonnull
 	public Stage getMappingPreviewWindow() {
 		return Objects.requireNonNull(getWindow(WIN_MAP_PROGRESS));
+	}
+
+	/**
+	 * @return Window for quick navigation display.
+	 */
+	@Nonnull
+	public Stage getQuickNav() {
+		return Objects.requireNonNull(getWindow(WIN_QUICK_NAV));
 	}
 
 	@Nonnull

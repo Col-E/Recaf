@@ -11,7 +11,6 @@ import jakarta.inject.Inject;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -23,6 +22,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import org.fxmisc.richtext.CodeArea;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import regexodus.Matcher;
@@ -45,7 +45,7 @@ import java.util.List;
 @Dependent
 public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 	private final KeybindingConfig keys;
-	private Bar bar;
+	private FindAndReplaceSearchBar bar;
 
 	@Inject
 	public SearchBar(@Nonnull KeybindingConfig keys) {
@@ -54,7 +54,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 
 	@Override
 	public void install(@Nonnull Editor editor) {
-		bar = new Bar(editor);
+		bar = new FindAndReplaceSearchBar(editor);
 		NodeEvents.addKeyPressHandler(editor, this);
 	}
 
@@ -90,7 +90,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 	/**
 	 * The actual search bar.
 	 */
-	private static class Bar extends AbstractSearchBar {
+	private static class FindAndReplaceSearchBar extends AbstractSearchBar {
 		private final SimpleIntegerProperty lastResultIndex = new SimpleIntegerProperty(-1);
 		private final ObservableList<String> pastReplaces = FXCollections.observableArrayList();
 		private final ObservableList<Match> resultRanges = FXCollections.observableArrayList();
@@ -104,7 +104,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		private Button replace;
 		private Button replaceAll;
 
-		private Bar(@Nonnull Editor editor) {
+		private FindAndReplaceSearchBar(@Nonnull Editor editor) {
 			this.editor = editor;
 
 			setup();
@@ -160,10 +160,12 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			HBox prevAndNext = new HBox(prev, next);
 			prevAndNext.setAlignment(Pos.CENTER);
 			prevAndNext.setFillHeight(false);
+			HBox.setHgrow(searchInput, Priority.ALWAYS);
 			HBox searchLine = new HBox(searchInput, resultCount, prevAndNext, new Spacer(), close);
 			searchLine.setAlignment(Pos.CENTER_LEFT);
 			searchLine.setSpacing(10);
 			searchLine.setPadding(new Insets(0, 5, 0, 0));
+			HBox.setHgrow(replaceInput, Priority.ALWAYS);
 			replaceLine.getChildren().addAll(replaceInput, new Spacer(0), replace, replaceAll);
 			replaceLine.setAlignment(Pos.CENTER_LEFT);
 			replaceLine.setSpacing(10);

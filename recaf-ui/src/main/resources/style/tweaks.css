@@ -129,6 +129,13 @@
     -fx-border-color: -color-base-6;
     -fx-border-width: 0 1px 0 0;
 }
+.search-result-list-cell {
+    -fx-text-fill: -color-fg-default;
+    -fx-padding: 4 4 4 4;
+}
+.search-result-list-cell:hover {
+    -fx-background-color: -color-base-7;
+}
 
 .variable-table .table-row-cell {
     -fx-cell-size: 24px;

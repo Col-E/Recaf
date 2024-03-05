@@ -247,6 +247,10 @@ dialog.conv.title.expression=Number expression
 
 ## Quick nav
 dialog.quicknav=Quick navigation
+dialog.quicknav.tab.classes=Classes
+dialog.quicknav.tab.members=Members
+dialog.quicknav.tab.files=Files
+dialog.quicknav.tab.text=Text
 
 ## Error dialog
 dialog.error.exportclass.title=Failed to export class

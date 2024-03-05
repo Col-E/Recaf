@@ -36,6 +36,7 @@ import static software.coley.recaf.ui.config.BindingCreator.bindings;
 @ApplicationScoped
 public class KeybindingConfig extends BasicConfigContainer {
 	public static final String ID = "bind";
+	private static final String ID_QUICK_NAV = "quicknav";
 	private static final String ID_FIND = "editor.find";
 	private static final String ID_REPLACE = "editor.replace";
 	private static final String ID_SAVE = "editor.save";
@@ -48,6 +49,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 
 		// We will only be storing one 'value' so that the UI can treat it as a singular element.
 		bundle = new BindingBundle(Arrays.asList(
+				createBindForPlatform(ID_QUICK_NAV, CONTROL, G),
 				createBindForPlatform(ID_FIND, CONTROL, F),
 				createBindForPlatform(ID_REPLACE, CONTROL, R),
 				createBindForPlatform(ID_SAVE, CONTROL, S),
@@ -75,6 +77,12 @@ public class KeybindingConfig extends BasicConfigContainer {
 		});
 	}
 
+	/**
+	 * @return Keybinding for opening the quick-nav stage.
+	 */
+	@Nonnull
+	public Binding getQuickNav() {
+		return Objects.requireNonNull(bundle.get(ID_QUICK_NAV));
 	}
 
 	/**
