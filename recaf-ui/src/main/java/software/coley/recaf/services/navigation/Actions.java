@@ -129,6 +129,40 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Brings a {@link Navigable} component representing a class/file into focus.
+	 * If no such component exists, one is created.
+	 * <br>
+	 * Automatically calls the type-specific goto-declaration handling.
+	 *
+	 * @param path
+	 * 		Path to class or file to open.
+	 *
+	 * @return Navigable content representing content of the path.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	@Nonnull
+	public Navigable gotoDeclaration(@Nonnull PathNode<?> path) throws IncompletePathException {
+		if (path instanceof ClassPathNode classPath) return gotoDeclaration(classPath);
+		else if (path instanceof FilePathNode filePath) return gotoDeclaration(filePath);
+		else if (path instanceof ClassMemberPathNode classMemberPath) {
+			ClassPathNode parent = classMemberPath.getParent();
+			if (parent == null)
+				throw new IncompletePathException(ClassInfo.class);
+			ClassNavigable navigable = gotoDeclaration(parent);
+			navigable.requestFocus(classMemberPath.getValue());
+			return navigable;
+		} else if (path instanceof LineNumberPathNode lineNumberPath) {
+			FilePathNode parent = lineNumberPath.getParent();
+			if (parent == null)
+				throw new IncompletePathException(FileInfo.class);
+			return gotoDeclaration(parent);
+		}
+		throw new IncompletePathException(path.getValueType());
+	}
+
+	/**
 	 * Brings a {@link ClassNavigable} component representing the given class into focus.
 	 * If no such component exists, one is created.
 	 * <br>
