@@ -1,6 +1,7 @@
 package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -1895,6 +1896,7 @@ public class Actions implements Service {
 		// Create the tab for the content, then display it.
 		DockingTab tab = factory.get();
 		tab.select();
+		focus(tab.getRegion().getScene());
 		return (Navigable) tab.getContent();
 	}
 
@@ -1927,18 +1929,7 @@ public class Actions implements Service {
 					for (DockingTab tab : tabParent.getDockTabs())
 						if (tab.getContent() == node) {
 							tab.select();
-							Window window = scene.getWindow();
-							if (window instanceof Stage stage){
-								// If minified, unminify it.
-								stage.setIconified(false);
-								stage.show();
-
-								// The method 'stage.toFront()' does not work as you'd expect so this hack is how we
-								// force the window to the front.
-								stage.setAlwaysOnTop(true);
-								stage.setAlwaysOnTop(false);
-							}
-							window.requestFocus();
+							focus(scene);
 							return;
 						}
 				}
@@ -2022,6 +2013,28 @@ public class Actions implements Service {
 						regionTab.close();
 				})
 		);
+	}
+
+	/**
+	 * @param scene
+	 * 		Scene to bring to front/focus.
+	 */
+	private static void focus(@Nullable Scene scene) {
+		if (scene == null)
+			return;
+
+		Window window = scene.getWindow();
+		if (window instanceof Stage stage) {
+			// If minified, unminify it.
+			stage.setIconified(false);
+			stage.show();
+
+			// The method 'stage.toFront()' does not work as you'd expect so this hack is how we
+			// force the window to the front.
+			stage.setAlwaysOnTop(true);
+			stage.setAlwaysOnTop(false);
+		}
+		window.requestFocus();
 	}
 
 	/**
