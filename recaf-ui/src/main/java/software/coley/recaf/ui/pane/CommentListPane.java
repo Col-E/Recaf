@@ -243,11 +243,11 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 			body.setPadding(new Insets(10));
 			ClassInfo classInfo = classPath.getValue();
 			for (FieldMember field : classInfo.getFields()) {
-				String comment = comments.getFieldComment(field.getName(), field.getDescriptor());
+				String comment = comments.getFieldComment(field);
 				addMemberComment(comment, classPath.child(field), body);
 			}
 			for (MethodMember method : classInfo.getMethods()) {
-				String comment = comments.getMethodComment(method.getName(), method.getDescriptor());
+				String comment = comments.getMethodComment(method);
 				addMemberComment(comment, classPath.child(method), body);
 			}
 			setCenter(body);

@@ -150,15 +150,15 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 							for (FieldMember field : classInfo.getFields()) {
 								pathHash = CommentKey.hashPath(classPath.child(field));
 								if (pathHash == pathKey) {
-									comment = classComments.getFieldComment(field.getName(), field.getDescriptor());
+									comment = classComments.getFieldComment(field);
 									break;
 								}
 							}
 							if (comment == null) {
-								for (MethodMember field : classInfo.getMethods()) {
-									pathHash = CommentKey.hashPath(classPath.child(field));
+								for (MethodMember method : classInfo.getMethods()) {
+									pathHash = CommentKey.hashPath(classPath.child(method));
 									if (pathHash == pathKey) {
-										comment = classComments.getMethodComment(field.getName(), field.getDescriptor());
+										comment = classComments.getMethodComment(method);
 										break;
 									}
 								}

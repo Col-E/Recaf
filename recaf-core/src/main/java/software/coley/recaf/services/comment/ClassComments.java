@@ -2,6 +2,8 @@ package software.coley.recaf.services.comment;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
 
 import java.time.Instant;
 
@@ -36,6 +38,17 @@ public interface ClassComments {
 	void setClassComment(@Nullable String comment);
 
 	/**
+	 * @param member
+	 * 		Field to look up.
+	 *
+	 * @return Field comment, if any.
+	 */
+	@Nullable
+	default String getFieldComment(@Nonnull FieldMember member) {
+		return getFieldComment(member.getName(), member.getDescriptor());
+	}
+
+	/**
 	 * @param name
 	 * 		Field name.
 	 * @param descriptor
@@ -45,6 +58,17 @@ public interface ClassComments {
 	 */
 	@Nullable
 	String getFieldComment(@Nonnull String name, @Nonnull String descriptor);
+
+	/**
+	 * @param member
+	 * 		Method to look up.
+	 *
+	 * @return Method comment, if any.
+	 */
+	@Nullable
+	default String getMethodComment(@Nonnull MethodMember member) {
+		return getMethodComment(member.getName(), member.getDescriptor());
+	}
 
 	/**
 	 * @param name
@@ -58,6 +82,16 @@ public interface ClassComments {
 	String getMethodComment(@Nonnull String name, @Nonnull String descriptor);
 
 	/**
+	 * @param member
+	 * 		Field to assign comment to.
+	 * @param comment
+	 * 		New field comment, or {@code null} to remove an existing comment.
+	 */
+	default void setFieldComment(@Nonnull FieldMember member, @Nullable String comment) {
+		setFieldComment(member.getName(), member.getDescriptor(), comment);
+	}
+
+	/**
 	 * @param name
 	 * 		Field name.
 	 * @param descriptor
@@ -66,6 +100,16 @@ public interface ClassComments {
 	 * 		New field comment, or {@code null} to remove an existing comment.
 	 */
 	void setFieldComment(@Nonnull String name, @Nonnull String descriptor, @Nullable String comment);
+
+	/**
+	 * @param member
+	 * 		Method to assign comment to.
+	 * @param comment
+	 * 		New method comment, or {@code null} to remove an existing comment.
+	 */
+	default void setMethodComment(@Nonnull MethodMember member, @Nullable String comment) {
+		setMethodComment(member.getName(), member.getDescriptor(), comment);
+	}
 
 	/**
 	 * @param name
