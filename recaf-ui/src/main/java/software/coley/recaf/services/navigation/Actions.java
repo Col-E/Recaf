@@ -1929,6 +1929,10 @@ public class Actions implements Service {
 							tab.select();
 							Window window = scene.getWindow();
 							if (window instanceof Stage stage){
+								// If minified, unminify it.
+								stage.setIconified(false);
+								stage.show();
+
 								// The method 'stage.toFront()' does not work as you'd expect so this hack is how we
 								// force the window to the front.
 								stage.setAlwaysOnTop(true);
