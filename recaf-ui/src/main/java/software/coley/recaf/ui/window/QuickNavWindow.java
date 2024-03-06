@@ -11,6 +11,8 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
+import javafx.geometry.BoundingBox;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
@@ -376,8 +378,10 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		private PathResultsPane(@Nonnull Actions actions, @Nonnull Stage stage,
 								@Nonnull Consumer<ListCell<T>> renderCell) {
 			flow = VirtualFlow.createVertical(list, initial -> new ResultCell(initial, actions, stage, renderCell));
-			flow.setFocusTraversable(true);
 			setCenter(new VirtualizedScrollPane<>(flow));
+			list.addListener((InvalidationListener) e -> {
+				flow.setFocusTraversable(!list.isEmpty());
+			});
 		}
 
 		/**
@@ -466,27 +470,32 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				cell.setFocusTraversable(true);
 				cell.setOnKeyPressed(e -> {
 					KeyCode code = e.getCode();
+					int size = list.size();
+					int bigInc = Math.max(1, size / 25);
+					double cellHeight = cell.getHeight();
 					if (code == KeyCode.DOWN) {
-						if (index < list.size() - 1) {
-							int nextIndex = index + 1;
-
-							flow.show(nextIndex);
+						int nextIndex = Math.min(size - 1, index + (e.isShiftDown() ? bigInc : 1));
+						if (nextIndex != index) {
+							if (nextIndex >= flow.getLastVisibleIndex()) {
+								flow.scrollYBy(cellHeight);
+								flow.showAtOffset(nextIndex, flow.getHeight() - cellHeight * 2);
+							}
 							Cell<T, Node> nextCell = flow.getCell(nextIndex);
 							if (nextCell instanceof ResultCell resultCell)
 								resultCell.cell.requestFocus();
 						}
-
 						e.consume();
 					} else if (code == KeyCode.UP) {
-						if (index > 0) {
-							int prevIndex = index - 1;
-
-							flow.show(prevIndex);
+						int prevIndex = Math.max(0, index - (e.isShiftDown() ? bigInc : 1));
+						if (prevIndex != index) {
+							if (prevIndex <= flow.getFirstVisibleIndex()) {
+								flow.scrollYBy(-cellHeight);
+								flow.showAtOffset(prevIndex, cellHeight);
+							}
 							Cell<T, Node> nextCell = flow.getCell(prevIndex);
 							if (nextCell instanceof ResultCell resultCell)
 								resultCell.cell.requestFocus();
 						}
-
 						e.consume();
 					} else if (code == KeyCode.ENTER) {
 						select.run();
@@ -498,7 +507,6 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				cell.setOnKeyPressed(null);
 				cell.setFocusTraversable(false);
 			}
-
 		}
 	}
 

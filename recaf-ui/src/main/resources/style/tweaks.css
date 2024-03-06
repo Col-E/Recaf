@@ -86,6 +86,10 @@
     -fx-background-color: -color-border-muted, -color-bg-inset;
     -fx-background-insets: 0, 0 0 1px 0;
 }
+.tab-pane:focused > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: -color-accent-4, -color-base-9;
+    -fx-background-insets: 0, 0 0 2px 0;
+}
 
 /* Custom tab-pane for display in editor views */
 .side-tab-pane {
