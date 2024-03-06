@@ -32,6 +32,11 @@
     -fx-background-color: -color-border-default, -color-bg-inset;
 }
 
+/* AtlantaFX flat-accent buttons do not have clear focus display */
+.button.accent.flat:focused {
+    -fx-background-color: -color-border-default;
+}
+
 /* AtlantaFX tweaks to allow borderless text-fields */
 .text-field.accent {
     -fx-background-insets: 0;
@@ -133,6 +138,7 @@
     -fx-text-fill: -color-fg-default;
     -fx-padding: 4 4 4 4;
 }
+.search-result-list-cell:focused,
 .search-result-list-cell:hover {
     -fx-background-color: -color-base-7;
 }

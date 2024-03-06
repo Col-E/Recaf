@@ -14,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -98,7 +99,6 @@ public abstract class AbstractSearchBar extends VBox {
 		// Create menu for search input left graphic (like IntelliJ) to display prior searches when clicked.
 		searchInput.setLeft(oldSearches);
 		getInputButtons().forEach(button -> {
-			button.setFocusTraversable(false);
 			button.setDisable(true); // re-enabled when searches are populated.
 			button.setGraphic(new FontIconView(CarbonIcons.SEARCH));
 			button.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
@@ -107,8 +107,6 @@ public abstract class AbstractSearchBar extends VBox {
 		// Create toggles for search input query modes.
 		BoundToggleIcon toggleSensitivity = new BoundToggleIcon(Icons.CASE_SENSITIVITY, caseSensitivity).withTooltip("misc.casesensitive");
 		BoundToggleIcon toggleRegex = new BoundToggleIcon(Icons.REGEX, regex).withTooltip("misc.regex");
-		toggleSensitivity.setFocusTraversable(false);
-		toggleRegex.setFocusTraversable(false);
 		toggleSensitivity.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
 		toggleRegex.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
 		HBox inputToggles = new HBox(
@@ -136,6 +134,13 @@ public abstract class AbstractSearchBar extends VBox {
 		// Add to past searches when enter is pressed.
 		searchInput.setOnKeyPressed(this::onSearchInputKeyPress);
 		searchInput.setOnKeyReleased(e -> refreshResults());
+
+		// Ensure typed keys are only handled when the input is focused.
+		// If the user is tab-navigating to toggle the input buttons then we want to cancel the event.
+		searchInput.addEventFilter(KeyEvent.KEY_TYPED, e -> {
+			if (!searchInput.isFocused() && e.getCode() != KeyCode.TAB)
+				e.consume();
+		});
 
 		// When past searches list is modified, update old search menu.
 		updatePastListing(oldSearches, pastSearches, searchInput);

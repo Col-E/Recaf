@@ -12,10 +12,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.TabPane;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -47,6 +50,7 @@ import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.AbstractSearchBar;
 import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.*;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -275,11 +279,18 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		tabs.getTabs().addAll(tabClasses, tabMembers, tabFiles, tabText, tabCommented);
 		tabs.getTabs().forEach(tab -> tab.setClosable(false));
 
+		// Add event filter to handle closing the window when escape is pressed.
+		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (e.getCode() == KeyCode.ESCAPE)
+				hide();
+		});
+
 		// Layout
 		titleProperty().bind(Lang.getBinding("dialog.quicknav"));
 		setMinWidth(300);
 		setMinHeight(300);
 		setScene(new RecafScene(tabs, 750, 550));
+
 	}
 
 	/**
@@ -290,6 +301,20 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 		protected ContentPaneBase(@Nonnull PathResultsPane<?> results) {
 			this.results = results;
+		}
+
+		protected void setSearchBar(@Nonnull AbstractSearchBar searchBar) {
+			setTop(searchBar);
+
+			// Register event filter which will allow jumping from the search bar to other controls.
+			// - UP ----> Select the containing tab-pane so users can switch tabs.
+			// - DOWN --> Select the results so the user can navigate through results.
+			searchBar.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+				if (e.getCode() == KeyCode.UP)
+					getParent().requestFocus();
+				else if (e.getCode() == KeyCode.DOWN)
+					results.selectCell();
+			});
 		}
 
 		@Override
@@ -311,7 +336,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 									@Nonnull Function<T, String> valueTextMapper,
 									@Nonnull Consumer<ListCell<T>> renderCell) {
 			super(new PathResultsPane<>(actions, stage, renderCell));
-			setTop(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, valueTextMapper));
+			setSearchBar(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, valueTextMapper));
 			setCenter(results);
 		}
 	}
@@ -332,7 +357,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 									 @Nonnull Function<R, String> valueTextMapper,
 									 @Nonnull Consumer<ListCell<R>> renderCell) {
 			super(new PathResultsPane<>(actions, stage, renderCell));
-			setTop(new OneToManyNavSearchBar<>(Unchecked.cast(results), valueProvider, valueUnroller, valueTextMapper));
+			setSearchBar(new OneToManyNavSearchBar<>(Unchecked.cast(results), valueProvider, valueUnroller, valueTextMapper));
 			setCenter(results);
 		}
 	}
@@ -346,21 +371,46 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	private static class PathResultsPane<T extends PathNode<?>> extends BorderPane {
 		private static final PseudoClass PSEUDO_HOVER = PseudoClass.getPseudoClass("hover");
 		private final ObservableList<T> list = FXCollections.observableArrayList();
+		private final VirtualFlow<T, Cell<T, Node>> flow;
 
 		private PathResultsPane(@Nonnull Actions actions, @Nonnull Stage stage,
 								@Nonnull Consumer<ListCell<T>> renderCell) {
-			VirtualFlow<T, Cell<T, ?>> flow = VirtualFlow.createVertical(list,
-					initial -> new ResultCell(initial, actions, stage, renderCell));
+			flow = VirtualFlow.createVertical(list, initial -> new ResultCell(initial, actions, stage, renderCell));
+			flow.setFocusTraversable(true);
 			setCenter(new VirtualizedScrollPane<>(flow));
+		}
+
+		/**
+		 * Select the first visible cell.
+		 */
+		private void selectCell() {
+			if (!list.isEmpty()) {
+				int index = flow.getFirstVisibleIndex();
+				flow.getCell(index).getNode().requestFocus();
+			}
 		}
 
 		private class ResultCell implements Cell<T, Node> {
 			private final ListCell<T> cell = new ListCell<>();
 			private final Consumer<ListCell<T>> renderCell;
+			private final Runnable select;
+			private int index;
 
 			private ResultCell(@Nullable T initial, @Nonnull Actions actions, @Nonnull Stage stage,
 							   @Nonnull Consumer<ListCell<T>> renderCell) {
 				this.renderCell = renderCell;
+
+				select = () -> {
+					try {
+						T item = cell.getItem();
+						if (item != null) {
+							actions.gotoDeclaration(item);
+							stage.hide();
+						}
+					} catch (IncompletePathException ex) {
+						logger.error("Failed to open path", ex);
+					}
+				};
 
 				updateItem(initial);
 				cell.getStyleClass().add("search-result-list-cell");
@@ -370,18 +420,14 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				});
 				cell.setOnMouseExited(e -> cell.pseudoClassStateChanged(PSEUDO_HOVER, false));
 				cell.setOnMousePressed(e -> {
-					if (e.isPrimaryButtonDown() && e.getClickCount() == 2) {
-						try {
-							T item = cell.getItem();
-							if (item != null) {
-								actions.gotoDeclaration(item);
-								stage.hide();
-							}
-						} catch (IncompletePathException ex) {
-							logger.error("Failed to open path", ex);
-						}
-					}
+					if (e.isPrimaryButtonDown() && e.getClickCount() == 2)
+						select.run();
 				});
+			}
+
+			@Override
+			public void updateIndex(int index) {
+				this.index = index;
 			}
 
 			@Override
@@ -389,6 +435,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				if (item == null) {
 					reset();
 				} else {
+					setupNavigation(cell);
 					cell.setItem(item);
 					renderCell.accept(cell);
 				}
@@ -402,6 +449,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				cell.setOnMouseClicked(null);
 				cell.setOnMouseEntered(null);
 				cell.setOnMouseExited(null);
+				clearNavigation(cell);
 			}
 
 			@Override
@@ -413,6 +461,44 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			public Node getNode() {
 				return cell;
 			}
+
+			private void setupNavigation(ListCell<T> cell) {
+				cell.setFocusTraversable(true);
+				cell.setOnKeyPressed(e -> {
+					KeyCode code = e.getCode();
+					if (code == KeyCode.DOWN) {
+						if (index < list.size() - 1) {
+							int nextIndex = index + 1;
+
+							flow.show(nextIndex);
+							Cell<T, Node> nextCell = flow.getCell(nextIndex);
+							if (nextCell instanceof ResultCell resultCell)
+								resultCell.cell.requestFocus();
+						}
+
+						e.consume();
+					} else if (code == KeyCode.UP) {
+						if (index > 0) {
+							int prevIndex = index - 1;
+
+							flow.show(prevIndex);
+							Cell<T, Node> nextCell = flow.getCell(prevIndex);
+							if (nextCell instanceof ResultCell resultCell)
+								resultCell.cell.requestFocus();
+						}
+
+						e.consume();
+					} else if (code == KeyCode.ENTER) {
+						select.run();
+					}
+				});
+			}
+
+			private void clearNavigation(ListCell<T> cell) {
+				cell.setOnKeyPressed(null);
+				cell.setFocusTraversable(false);
+			}
+
 		}
 	}
 

@@ -120,8 +120,6 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			// Create buttons to iterate through results.
 			prev = new ActionButton(CarbonIcons.ARROW_UP, this::prev);
 			next = new ActionButton(CarbonIcons.ARROW_DOWN, this::next);
-			prev.setFocusTraversable(false);
-			next.setFocusTraversable(false);
 			prev.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.SMALL);
 			next.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.SMALL);
 			prev.disableProperty().bind(hasResults.not());
@@ -130,15 +128,12 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			// Button to close the search bar.
 			close = new ActionButton(CarbonIcons.CLOSE, this::hide);
 			close.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.SMALL);
-			close.setFocusTraversable(false);
 
 			// Replace buttons.
 			replace = new ActionButton(Lang.getBinding("find.replace"), this::replace);
 			replaceAll = new ActionButton(Lang.getBinding("find.replaceall"), this::replaceAll);
 			replace.getStyleClass().addAll(Styles.SMALL);
 			replaceAll.getStyleClass().addAll(Styles.SMALL);
-			replace.setFocusTraversable(false);
-			replaceAll.setFocusTraversable(false);
 			replace.disableProperty().bind(hasResults.not());
 			replaceAll.disableProperty().bind(hasResults.not());
 
