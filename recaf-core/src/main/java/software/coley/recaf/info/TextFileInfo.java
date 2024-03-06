@@ -14,6 +14,12 @@ public interface TextFileInfo extends FileInfo {
 	@Nonnull
 	String getText();
 
+	/**
+	 * @return The {@link #getText() text content} split into lines.
+	 */
+	@Nonnull
+	String[] getTextLines();
+
 	@Nonnull
 	@Override
 	default TextFileInfo asTextFile() {

@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class BasicTextFileInfo extends BasicFileInfo implements TextFileInfo {
 	private String text;
+	private String[] lines;
 
 	/**
 	 * @param builder
@@ -27,5 +28,13 @@ public class BasicTextFileInfo extends BasicFileInfo implements TextFileInfo {
 		if (text == null)
 			text = new String(getRawContent(), StandardCharsets.UTF_8);
 		return text;
+	}
+
+	@Nonnull
+	@Override
+	public String[] getTextLines() {
+		if (lines == null)
+			lines = getText().lines().toArray(String[]::new);
+		return lines;
 	}
 }
