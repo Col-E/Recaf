@@ -29,7 +29,7 @@ import regexodus.Matcher;
 import regexodus.Pattern;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.TextFileInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
@@ -47,9 +47,7 @@ import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.AbstractSearchBar;
 import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.RegexUtil;
+import software.coley.recaf.util.*;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;
@@ -59,6 +57,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -76,12 +75,12 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 						  @Nonnull CellConfigurationService configurationService) {
 		super(WindowManager.WIN_QUICK_NAV);
 
-		ContentPane<ClassPathNode> classContent = new ContentPane<>(actions, this, () -> {
+		OneToOneContentPane<ClassPathNode> classContent = new OneToOneContentPane<>(actions, this, () -> {
 			Workspace current = workspaceManager.getCurrent();
 			if (current == null)
 				return Stream.empty();
 			return current.classesStream();
-		}, path -> path.getValue().getName(), cell -> {
+		}, classPath -> classPath.getValue().getName(), cell -> {
 			ClassPathNode classPath = cell.getItem();
 			DirectoryPathNode packagePath = Objects.requireNonNull(classPath.getParent());
 			String packageName = packagePath.getValue();
@@ -106,7 +105,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, classPath, ContextSource.REFERENCE));
 		});
-		ContentPane<ClassMemberPathNode> memberContent = new ContentPane<>(actions, this, () -> {
+		OneToOneContentPane<ClassMemberPathNode> memberContent = new OneToOneContentPane<>(actions, this, () -> {
 			Workspace current = workspaceManager.getCurrent();
 			if (current == null)
 				return Stream.empty();
@@ -116,7 +115,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				Stream<ClassMemberPathNode> methods = classInfo.getMethods().stream().map(p::child);
 				return Stream.concat(fields, methods);
 			});
-		}, path -> path.getValue().getName(), cell -> {
+		}, classMemberPath -> classMemberPath.getValue().getName(), cell -> {
 			ClassMemberPathNode memberPath = cell.getItem();
 			ClassPathNode classPath = Objects.requireNonNull(memberPath.getParent());
 
@@ -137,12 +136,12 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, memberPath, ContextSource.REFERENCE));
 		});
-		ContentPane<FilePathNode> fileContent = new ContentPane<>(actions, this, () -> {
+		OneToOneContentPane<FilePathNode> fileContent = new OneToOneContentPane<>(actions, this, () -> {
 			Workspace current = workspaceManager.getCurrent();
 			if (current == null)
 				return Stream.empty();
 			return current.filesStream();
-		}, path -> path.getValue().getName(), cell -> {
+		}, filePath -> filePath.getValue().getName(), cell -> {
 			FilePathNode filePath = cell.getItem();
 			DirectoryPathNode directoryPath = Objects.requireNonNull(filePath.getParent());
 			String directoryName = directoryPath.getValue();
@@ -167,23 +166,32 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, filePath, ContextSource.REFERENCE));
 		});
-		// TODO: Need to rework internals to support differentiating the result type and the type scanned
-		//  - Need to *efficiently* search text line by line, not as one blob
-		ContentPane<FilePathNode> textContent = new ContentPane<>(actions, this, () -> {
+		OneToManyContentPane<FilePathNode, LineNumberPathNode> textContent = new OneToManyContentPane<>(actions, this, () -> {
 			Workspace current = workspaceManager.getCurrent();
 			if (current == null)
 				return Stream.empty();
 			return current.filesStream()
 					.filter(f -> f.getValue().isTextFile());
-		}, path -> path.getValue().asTextFile().getText(), cell -> {
-			FilePathNode filePath = cell.getItem();
+		}, filePath -> {
+			TextFileInfo textFile = filePath.getValue().asTextFile();
+			int lineCount = StringUtil.count('\n', textFile.getText());
+			return IntStream.rangeClosed(1, lineCount).mapToObj(filePath::child);
+		}, lineNumberPath -> {
+			int index = lineNumberPath.getValue().intValue() - 1;
+			String[] lines = lineNumberPath.getParent().getValue().asTextFile().getTextLines();
+			return lines[index];
+		}, cell -> {
+			LineNumberPathNode linePath = cell.getItem();
+			FilePathNode filePath = linePath.getParent();
+			TextFileInfo textFile = filePath.getValue().asTextFile();
+			int line = linePath.getValue().intValue();
 
 			Label fileDisplay = new Label();
-			fileDisplay.setText(configurationService.textOf(filePath));
+			fileDisplay.setText(configurationService.textOf(filePath) + ":" + line);
 			fileDisplay.setGraphic(configurationService.graphicOf(filePath));
 
 			Label textDisplay = new Label();
-			textDisplay.setText("TODO: show multiple lines of matched text + line number");
+			textDisplay.setText(textFile.getTextLines()[line - 1]);
 			textDisplay.setOpacity(0.5);
 			textDisplay.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);
 
@@ -195,7 +203,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, filePath, ContextSource.REFERENCE));
 		});
-		ContentPane<? extends PathNode<?>> commentContent = new ContentPane<>(actions, this, () -> {
+		OneToOneContentPane<? extends PathNode<?>> commentContent = new OneToOneContentPane<>(actions, this, () -> {
 			Workspace current = workspaceManager.getCurrent();
 			if (current == null)
 				return Stream.empty();
@@ -254,17 +262,17 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, path, ContextSource.REFERENCE));
 		});
-		List<ContentPane<?>> contentPanes = List.of(classContent, memberContent, fileContent/*, textContent*/, commentContent);
+		List<ContentPaneBase> contentPanes = List.of(classContent, memberContent, fileContent, textContent, commentContent);
 		contentPanes.forEach(workspaceManager::addWorkspaceCloseListener);
 
 		BoundTab tabClasses = new BoundTab(Lang.getBinding("dialog.quicknav.tab.classes"), Icons.getIconView(Icons.CLASS), classContent);
 		BoundTab tabMembers = new BoundTab(Lang.getBinding("dialog.quicknav.tab.members"), Icons.getIconView(Icons.FIELD_N_METHOD), memberContent);
 		BoundTab tabFiles = new BoundTab(Lang.getBinding("dialog.quicknav.tab.files"), new FontIconView(CarbonIcons.DOCUMENT), fileContent);
-		//BoundTab tabText = new BoundTab(Lang.getBinding("dialog.quicknav.tab.text"), new FontIconView(CarbonIcons.STRING_TEXT), textContent);
+		BoundTab tabText = new BoundTab(Lang.getBinding("dialog.quicknav.tab.text"), new FontIconView(CarbonIcons.STRING_TEXT), textContent);
 		BoundTab tabCommented = new BoundTab(Lang.getBinding("dialog.quicknav.tab.commented"), new FontIconView(CarbonIcons.CHAT), commentContent);
 
 		TabPane tabs = new TabPane();
-		tabs.getTabs().addAll(tabClasses, tabMembers, tabFiles/*, tabText*/, tabCommented);
+		tabs.getTabs().addAll(tabClasses, tabMembers, tabFiles, tabText, tabCommented);
 		tabs.getTabs().forEach(tab -> tab.setClosable(false));
 
 		// Layout
@@ -275,27 +283,57 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	}
 
 	/**
-	 * Pane for displaying the search bar + results pane for some content type.
-	 *
-	 * @param <T>
-	 * 		Content / result type.
+	 * Base for displaying the search bar + results pane for some content type.
 	 */
-	private static class ContentPane<T extends PathNode<?>> extends BorderPane implements WorkspaceCloseListener {
-		private final PathResultsPane<T> results;
+	private static class ContentPaneBase extends BorderPane implements WorkspaceCloseListener {
+		protected final PathResultsPane<?> results;
 
-		private ContentPane(@Nonnull Actions actions,
-							@Nonnull Stage stage,
-							@Nonnull Supplier<Stream<T>> valueProvider,
-							@Nonnull Function<T, String> valueTextMapper,
-							@Nonnull Consumer<ListCell<T>> renderCell) {
-			results = new PathResultsPane<>(actions, stage, renderCell);
-			setTop(new NavSearchBar<>(results, valueProvider, valueTextMapper));
-			setCenter(results);
+		protected ContentPaneBase(@Nonnull PathResultsPane<?> results) {
+			this.results = results;
 		}
 
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 			results.list.clear();
+		}
+	}
+
+	/**
+	 * Pane for displaying results that come from a one-to-one lookup.
+	 *
+	 * @param <T>
+	 * 		Input/Result type.
+	 */
+	private static class OneToOneContentPane<T extends PathNode<?>> extends ContentPaneBase {
+		private OneToOneContentPane(@Nonnull Actions actions,
+									@Nonnull Stage stage,
+									@Nonnull Supplier<Stream<T>> valueProvider,
+									@Nonnull Function<T, String> valueTextMapper,
+									@Nonnull Consumer<ListCell<T>> renderCell) {
+			super(new PathResultsPane<>(actions, stage, renderCell));
+			setTop(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, valueTextMapper));
+			setCenter(results);
+		}
+	}
+
+	/**
+	 * Pane for displaying results that come from a one-to-many lookup.
+	 *
+	 * @param <T>
+	 * 		Input type.
+	 * @param <R>
+	 * 		Result type.
+	 */
+	private static class OneToManyContentPane<T extends PathNode<?>, R extends PathNode<?>> extends ContentPaneBase {
+		private OneToManyContentPane(@Nonnull Actions actions,
+									 @Nonnull Stage stage,
+									 @Nonnull Supplier<Stream<T>> valueProvider,
+									 @Nonnull Function<T, Stream<R>> valueUnroller,
+									 @Nonnull Function<R, String> valueTextMapper,
+									 @Nonnull Consumer<ListCell<R>> renderCell) {
+			super(new PathResultsPane<>(actions, stage, renderCell));
+			setTop(new OneToManyNavSearchBar<>(Unchecked.cast(results), valueProvider, valueUnroller, valueTextMapper));
+			setCenter(results);
 		}
 	}
 
@@ -379,22 +417,20 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	}
 
 	/**
-	 * Search bar implementation, tied to a {@link PathResultsPane}.
+	 * Search bar base implementation, tied to a {@link PathResultsPane}.
 	 *
 	 * @param <T>
+	 * 		Input type.
+	 * @param <R>
 	 * 		Result type.
 	 */
-	private static class NavSearchBar<T extends PathNode<?>> extends AbstractSearchBar {
-		private final PathResultsPane<T> results;
-		private final Supplier<Stream<T>> valueProvider;
-		private final Function<T, String> valueTextMapper;
+	private abstract static class NavSearchBarBase<T extends PathNode<?>, R extends PathNode<?>> extends AbstractSearchBar {
+		protected final PathResultsPane<R> results;
+		protected final Supplier<Stream<T>> valueProvider;
 
-		private NavSearchBar(@Nonnull PathResultsPane<T> results,
-							 @Nonnull Supplier<Stream<T>> valueProvider,
-							 @Nonnull Function<T, String> valueTextMapper) {
+		private NavSearchBarBase(@Nonnull PathResultsPane<R> results, @Nonnull Supplier<Stream<T>> valueProvider) {
 			this.results = results;
 			this.valueProvider = valueProvider;
-			this.valueTextMapper = valueTextMapper;
 
 			setup();
 		}
@@ -413,6 +449,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			});
 		}
 
+
 		@Override
 		protected void refreshResults() {
 			// Skip when there is nothing
@@ -423,7 +460,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				return;
 			}
 
-			List<T> tempResultsList = new ArrayList<>();
+			List<R> tempResultsList = new ArrayList<>();
 			if (regex.get()) {
 				// Validate the regex.
 				RegexUtil.RegexValidation validation = RegexUtil.validate(search);
@@ -431,14 +468,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				if (validation.valid()) {
 					// It's valid, match against values
 					Pattern pattern = RegexUtil.pattern(search);
-					valueProvider.get().forEach(item -> {
-						String text = valueTextMapper.apply(item);
-						if (text == null)
-							return;
-						Matcher matcher = pattern.matcher(text);
-						if (matcher.find())
-							tempResultsList.add(item);
-					});
+					regexSearch(pattern, tempResultsList);
 				} else {
 					// It's not valid. Tell the user what went wrong.
 					popoverValidation = new Popover(new Label(validation.message()));
@@ -452,27 +482,130 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				if (old instanceof Popover oldPopover)
 					oldPopover.hide();
 			} else {
-				// Modify the text/search for case-insensitive searches.
-				Function<T, String> localValueTextMapper;
-				if (!caseSensitivity.get()) {
-					search = search.toLowerCase();
-					localValueTextMapper = valueTextMapper.andThen(String::toLowerCase);
-				} else {
-					localValueTextMapper = valueTextMapper;
-				}
-
-				// Match against values
-				String finalSearch = search;
-				valueProvider.get().forEach(item -> {
-					String text = localValueTextMapper.apply(item);
-					if (text == null)
-						return;
-					if (text.contains(finalSearch))
-						tempResultsList.add(item);
-				});
+				containmentSearch(search, tempResultsList);
 			}
 			tempResultsList.sort(Comparator.naturalOrder());
 			results.list.setAll(tempResultsList);
+		}
+
+		/**
+		 * @param pattern
+		 * 		Pattern to search with.
+		 * @param results
+		 * 		Results sink to add to.
+		 */
+		protected abstract void regexSearch(@Nonnull Pattern pattern, @Nonnull List<R> results);
+
+		/**
+		 * @param search
+		 * 		The {@link #searchInput}'s text content to search with.
+		 * @param results
+		 * 		Results sink to add to.
+		 */
+		protected abstract void containmentSearch(@Nonnull String search, @Nonnull List<R> results);
+	}
+
+	/**
+	 * Search bar implementation where we match against the content of {@code <T>} directly.
+	 *
+	 * @param <T>
+	 * 		Input/result type.
+	 */
+	private static class OneToOneNavSearchBar<T extends PathNode<?>> extends NavSearchBarBase<T, T> {
+		private final Function<T, String> valueTextMapper;
+
+		private OneToOneNavSearchBar(@Nonnull PathResultsPane<T> results,
+									 @Nonnull Supplier<Stream<T>> valueProvider,
+									 @Nonnull Function<T, String> valueTextMapper) {
+			super(results, valueProvider);
+			this.valueTextMapper = valueTextMapper;
+		}
+
+		@Override
+		protected void regexSearch(@Nonnull Pattern pattern, @Nonnull List<T> results) {
+			valueProvider.get().forEach(item -> {
+				String text = valueTextMapper.apply(item);
+				if (text == null)
+					return;
+				Matcher matcher = pattern.matcher(text);
+				if (matcher.find())
+					results.add(item);
+			});
+		}
+
+		@Override
+		protected void containmentSearch(@Nonnull String search, @Nonnull List<T> results) {
+			// Modify the text/search for case-insensitive searches.
+			Function<T, String> localValueTextMapper;
+			if (!caseSensitivity.get()) {
+				search = search.toLowerCase();
+				localValueTextMapper = valueTextMapper.andThen(String::toLowerCase);
+			} else {
+				localValueTextMapper = valueTextMapper;
+			}
+
+			String finalSearch = search;
+			valueProvider.get().forEach(item -> {
+				String text = localValueTextMapper.apply(item);
+				if (text == null)
+					return;
+				if (text.contains(finalSearch))
+					results.add(item);
+			});
+		}
+	}
+
+	/**
+	 * Search bar implementation where we match against multiple string values within a {@code <T>} value.
+	 *
+	 * @param <T>
+	 * 		Input type.
+	 * @param <R>
+	 * 		Result type.
+	 */
+	private static class OneToManyNavSearchBar<T extends PathNode<?>, R extends PathNode<?>> extends NavSearchBarBase<T, R> {
+		private final Function<T, Stream<R>> valueUnroller;
+		private final Function<R, String> valueTextMapper;
+
+		private OneToManyNavSearchBar(@Nonnull PathResultsPane<R> results,
+									  @Nonnull Supplier<Stream<T>> valueProvider,
+									  @Nonnull Function<T, Stream<R>> valueUnroller,
+									  @Nonnull Function<R, String> valueTextMapper) {
+			super(results, valueProvider);
+			this.valueUnroller = valueUnroller;
+			this.valueTextMapper = valueTextMapper;
+		}
+
+		@Override
+		protected void regexSearch(@Nonnull Pattern pattern, @Nonnull List<R> results) {
+			valueProvider.get().forEach(item -> {
+				valueUnroller.apply(item).forEach(mappedItem -> {
+					String text = valueTextMapper.apply(mappedItem);
+					if (text == null)
+						return;
+					Matcher matcher = pattern.matcher(text);
+					if (matcher.find())
+						results.add(mappedItem);
+				});
+			});
+		}
+
+		@Override
+		protected void containmentSearch(@Nonnull String search, @Nonnull List<R> results) {
+			valueProvider.get().forEach(item -> {
+				valueUnroller.apply(item).forEach(mappedItem -> {
+					String text = valueTextMapper.apply(mappedItem);
+					if (text == null)
+						return;
+					String localSearch = search;
+					if (!caseSensitivity.get()) {
+						text = text.toLowerCase();
+						localSearch = localSearch.toLowerCase();
+					}
+					if (text.contains(localSearch))
+						results.add(mappedItem);
+				});
+			});
 		}
 	}
 }
