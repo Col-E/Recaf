@@ -13,6 +13,8 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -1925,7 +1927,14 @@ public class Actions implements Service {
 					for (DockingTab tab : tabParent.getDockTabs())
 						if (tab.getContent() == node) {
 							tab.select();
-							scene.getWindow().requestFocus();
+							Window window = scene.getWindow();
+							if (window instanceof Stage stage){
+								// The method 'stage.toFront()' does not work as you'd expect so this hack is how we
+								// force the window to the front.
+								stage.setAlwaysOnTop(true);
+								stage.setAlwaysOnTop(false);
+							}
+							window.requestFocus();
 							return;
 						}
 				}
