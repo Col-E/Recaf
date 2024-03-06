@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.window;
 
+import jakarta.annotation.Nonnull;
 import javafx.stage.Stage;
 
 /**
@@ -14,15 +15,17 @@ public class AbstractIdentifiableStage extends RecafStage implements Identifiabl
 	 * @param id
 	 * 		Unique stage identifier.
 	 */
-	public AbstractIdentifiableStage(String id) {
+	public AbstractIdentifiableStage(@Nonnull String id) {
 		this.id = id;
 	}
 
+	@Nonnull
 	@Override
 	public String getId() {
 		return id;
 	}
 
+	@Nonnull
 	@Override
 	public Stage asStage() {
 		return this;

@@ -80,13 +80,13 @@ public class ReferenceQuery implements JvmClassQuery {
 		classRefOnly = false;
 	}
 
-	private boolean isClassRefMatch(String className) {
+	private boolean isClassRefMatch(@Nullable String className) {
 		if (!classRefOnly) return false;
 		if (className == null && targetName != null) return false;
 		return StringUtil.isAnyNullOrEmpty(targetOwner, className) || matchMode.match(targetOwner, className);
 	}
 
-	private boolean isMemberRefMatch(String owner, String name, String desc) {
+	private boolean isMemberRefMatch(@Nullable String owner, @Nullable String name, @Nullable String desc) {
 		if (classRefOnly) return false;
 
 		// The parameters are null if we only are searching against a type.
@@ -104,15 +104,18 @@ public class ReferenceQuery implements JvmClassQuery {
 		return false;
 	}
 
-	private static String getInternalName(String classDesc) {
+	@Nonnull
+	private static String getInternalName(@Nonnull String classDesc) {
 		return Type.getType(classDesc).getInternalName();
 	}
 
-	private static ClassReferenceResult.ClassReference cref(String name) {
+	@Nonnull
+	private static ClassReferenceResult.ClassReference cref(@Nonnull String name) {
 		return new ClassReferenceResult.ClassReference(name);
 	}
 
-	private static MemberReferenceResult.MemberReference mref(String owner, String name, String desc) {
+	@Nonnull
+	private static MemberReferenceResult.MemberReference mref(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
 		return new MemberReferenceResult.MemberReference(owner, name, desc);
 	}
 

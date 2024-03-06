@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.window;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.stage.Stage;
@@ -20,10 +21,12 @@ public interface IdentifiableStage {
 	/**
 	 * @return Unique stage ID.
 	 */
+	@Nonnull
 	String getId();
 
 	/**
 	 * @return Self as stage.
 	 */
+	@Nonnull
 	Stage asStage();
 }
