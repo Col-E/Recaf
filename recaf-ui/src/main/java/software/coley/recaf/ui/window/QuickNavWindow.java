@@ -29,9 +29,16 @@ import regexodus.Matcher;
 import regexodus.Pattern;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.context.ContextSource;
+import software.coley.recaf.services.comment.ClassComments;
+import software.coley.recaf.services.comment.CommentManager;
+import software.coley.recaf.services.comment.DelegatingClassComments;
+import software.coley.recaf.services.comment.WorkspaceComments;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
@@ -64,7 +71,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	private static final Logger logger = Logging.get(QuickNavWindow.class);
 
 	@Inject
-	public QuickNavWindow(@Nonnull WorkspaceManager workspaceManager,
+	public QuickNavWindow(@Nonnull WorkspaceManager workspaceManager, @Nonnull CommentManager commentManager,
 						  @Nonnull Actions actions, @Nonnull TextFormatConfig formatConfig,
 						  @Nonnull CellConfigurationService configurationService) {
 		super(WindowManager.WIN_QUICK_NAV);
@@ -188,16 +195,76 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, filePath, ContextSource.REFERENCE));
 		});
-		List<ContentPane<?>> contentPanes = List.of(classContent, memberContent, fileContent/*, textContent*/);
+		ContentPane<? extends PathNode<?>> commentContent = new ContentPane<>(actions, this, () -> {
+			Workspace current = workspaceManager.getCurrent();
+			if (current == null)
+				return Stream.empty();
+
+			WorkspaceComments comments = commentManager.getCurrentWorkspaceComments();
+			if (comments == null)
+				return Stream.empty();
+
+			List<PathNode<?>> paths = new ArrayList<>();
+			for (ClassComments classComments : comments) {
+				if (classComments instanceof DelegatingClassComments delegatingClassComments) {
+					// Add class comment
+					ClassPathNode classPath = delegatingClassComments.getPath();
+					if (classComments.getClassComment() != null)
+						paths.add(classPath);
+
+					// Add field/method comments
+					ClassInfo classInfo = classPath.getValue();
+					for (FieldMember field : classInfo.getFields())
+						if (classComments.getFieldComment(field) != null)
+							paths.add(classPath.child(field));
+					for (MethodMember method : classInfo.getMethods())
+						if (classComments.getMethodComment(method) != null)
+							paths.add(classPath.child(method));
+				}
+			}
+
+			return paths.stream();
+		}, path -> {
+			WorkspaceComments comments = commentManager.getCurrentWorkspaceComments();
+			if (comments == null)
+				return null;
+			return comments.getComment(path);
+		}, cell -> {
+			PathNode<?> path = cell.getItem();
+			WorkspaceComments comments = commentManager.getCurrentWorkspaceComments();
+			String comment = (comments == null ? "" : comments.getComment(path));
+			if (comment == null)
+				comment = "";
+			else
+				comment = formatConfig.filterMaxLength(comment.replace('\n', ' '));
+
+			Label pathDisplay = new Label();
+			pathDisplay.setText(configurationService.textOf(path));
+			pathDisplay.setGraphic(configurationService.graphicOf(path));
+
+			Label commentDisplay = new Label();
+			commentDisplay.setText(comment);
+			commentDisplay.setOpacity(0.7);
+
+			Spacer spacer = new Spacer();
+			HBox box = new HBox(pathDisplay, spacer, commentDisplay);
+			HBox.setHgrow(spacer, Priority.ALWAYS);
+			cell.setText(null);
+			cell.setGraphic(box);
+
+			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, path, ContextSource.REFERENCE));
+		});
+		List<ContentPane<?>> contentPanes = List.of(classContent, memberContent, fileContent/*, textContent*/, commentContent);
 		contentPanes.forEach(workspaceManager::addWorkspaceCloseListener);
 
 		BoundTab tabClasses = new BoundTab(Lang.getBinding("dialog.quicknav.tab.classes"), Icons.getIconView(Icons.CLASS), classContent);
 		BoundTab tabMembers = new BoundTab(Lang.getBinding("dialog.quicknav.tab.members"), Icons.getIconView(Icons.FIELD_N_METHOD), memberContent);
 		BoundTab tabFiles = new BoundTab(Lang.getBinding("dialog.quicknav.tab.files"), new FontIconView(CarbonIcons.DOCUMENT), fileContent);
 		//BoundTab tabText = new BoundTab(Lang.getBinding("dialog.quicknav.tab.text"), new FontIconView(CarbonIcons.STRING_TEXT), textContent);
+		BoundTab tabCommented = new BoundTab(Lang.getBinding("dialog.quicknav.tab.commented"), new FontIconView(CarbonIcons.CHAT), commentContent);
 
 		TabPane tabs = new TabPane();
-		tabs.getTabs().addAll(tabClasses, tabMembers, tabFiles/*, tabText*/);
+		tabs.getTabs().addAll(tabClasses, tabMembers, tabFiles/*, tabText*/, tabCommented);
 		tabs.getTabs().forEach(tab -> tab.setClosable(false));
 
 		// Layout
@@ -323,8 +390,8 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		private final Function<T, String> valueTextMapper;
 
 		private NavSearchBar(@Nonnull PathResultsPane<T> results,
-							@Nonnull Supplier<Stream<T>> valueProvider,
-							@Nonnull Function<T, String> valueTextMapper) {
+							 @Nonnull Supplier<Stream<T>> valueProvider,
+							 @Nonnull Function<T, String> valueTextMapper) {
 			this.results = results;
 			this.valueProvider = valueProvider;
 			this.valueTextMapper = valueTextMapper;
@@ -366,6 +433,8 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 					Pattern pattern = RegexUtil.pattern(search);
 					valueProvider.get().forEach(item -> {
 						String text = valueTextMapper.apply(item);
+						if (text == null)
+							return;
 						Matcher matcher = pattern.matcher(text);
 						if (matcher.find())
 							tempResultsList.add(item);
@@ -396,6 +465,8 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				String finalSearch = search;
 				valueProvider.get().forEach(item -> {
 					String text = localValueTextMapper.apply(item);
+					if (text == null)
+						return;
 					if (text.contains(finalSearch))
 						tempResultsList.add(item);
 				});

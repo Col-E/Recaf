@@ -251,6 +251,7 @@ dialog.quicknav.tab.classes=Classes
 dialog.quicknav.tab.members=Members
 dialog.quicknav.tab.files=Files
 dialog.quicknav.tab.text=Text
+dialog.quicknav.tab.commented=Comments
 
 ## Error dialog
 dialog.error.exportclass.title=Failed to export class
