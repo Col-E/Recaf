@@ -5,10 +5,13 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
 import software.coley.cafedude.classfile.ConstantPoolConstants;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.properties.builtin.ReferencedClassesProperty;
+import software.coley.recaf.info.properties.builtin.StringDefinitionsProperty;
 import software.coley.recaf.util.Types;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -59,6 +62,10 @@ public interface JvmClassInfo extends ClassInfo {
 	 */
 	@Nonnull
 	default Set<String> getReferencedClasses() {
+		SortedSet<String> classes = ReferencedClassesProperty.get(this);
+		if (classes != null)
+			return classes;
+
 		Set<String> classNames = new HashSet<>();
 		Consumer<String> nameHandler = className -> {
 			if (className.indexOf(0) == '[')
@@ -103,6 +110,7 @@ public interface JvmClassInfo extends ClassInfo {
 				}
 			}
 		}
+		ReferencedClassesProperty.set(this, classNames);
 		return classNames;
 	}
 
@@ -111,7 +119,11 @@ public interface JvmClassInfo extends ClassInfo {
 	 */
 	@Nonnull
 	default Set<String> getStringConstants() {
-		Set<String> classNames = new HashSet<>();
+		SortedSet<String> strings = StringDefinitionsProperty.get(this);
+		if (strings != null)
+			return strings;
+
+		Set<String> stringSet = new HashSet<>();
 		ClassReader reader = getClassReader();
 		int itemCount = reader.getItemCount();
 		char[] buffer = new char[reader.getMaxStringLength()];
@@ -121,11 +133,12 @@ public interface JvmClassInfo extends ClassInfo {
 				int itemTag = reader.readByte(offset - 1);
 				if (itemTag == ConstantPoolConstants.STRING) {
 					String string = reader.readUTF8(offset, buffer);
-					classNames.add(string);
+					stringSet.add(string);
 				}
 			}
 		}
-		return classNames;
+		StringDefinitionsProperty.set(this, stringSet);
+		return stringSet;
 	}
 
 	@Override
