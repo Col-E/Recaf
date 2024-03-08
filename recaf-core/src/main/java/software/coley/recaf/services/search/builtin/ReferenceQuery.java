@@ -10,6 +10,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.BasicAnnotationInfo;
 import software.coley.recaf.info.member.BasicLocalVariable;
+import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.AnnotationPathNode;
@@ -152,18 +153,50 @@ public class ReferenceQuery implements JvmClassQuery {
 			MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 			MethodMember methodMember = classInfo.getDeclaredMethod(name, desc);
 			if (methodMember != null) {
+				ClassMemberPathNode memberPath = classPath.child(methodMember);
+
 				// Check exceptions
-				if (exceptions != null) {
-					ClassMemberPathNode member = classPath.child(methodMember);
+				if (exceptions != null)
 					for (String exception : exceptions)
-						resultSink.accept(member.childThrows(exception), cref(exception));
-				}
+						resultSink.accept(memberPath.childThrows(exception), cref(exception));
+
+				// Check descriptor components
+				// - Only yield one match even if there are multiple class-refs in the desc
+				Type methodType = Type.getMethodType(desc);
+				String methodRetType = methodType.getReturnType().getInternalName();
+				if (isClassRefMatch(methodRetType))
+					resultSink.accept(memberPath, cref(methodRetType));
+				else for (Type argumentType : methodType.getArgumentTypes())
+					if (isClassRefMatch(argumentType.getInternalName())) {
+						resultSink.accept(memberPath, cref(argumentType.getInternalName()));
+						break;
+					}
 
 				// Visit method
 				return new AsmReferenceMethodVisitor(mv, methodMember, resultSink, classPath);
 			} else {
 				logger.error("Failed to lookup method for query: {}.{}{}", classInfo.getName(), name, desc);
 				return mv;
+			}
+		}
+
+		@Override
+		public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+			FieldVisitor fv = super.visitField(access, name, desc, signature, value);
+			FieldMember fieldMember = classInfo.getDeclaredField(name, desc);
+			if (fieldMember != null) {
+				ClassMemberPathNode memberPath = classPath.child(fieldMember);
+
+				// Check descriptor
+				String fieldType = getInternalName(desc);
+				if (isClassRefMatch(fieldType))
+					resultSink.accept(memberPath, cref(fieldType));
+
+				// Visit field
+				return new AsmReferenceFieldVisitor(fv, resultSink, memberPath);
+			} else {
+				logger.error("Failed to lookup field for query: {}.{}{}", classInfo.getName(), name, desc);
+				return fv;
 			}
 		}
 	}
@@ -311,7 +344,6 @@ public class ReferenceQuery implements JvmClassQuery {
 
 			AnnotationVisitor av = super.visitAnnotation(desc, visible);
 			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
-
 		}
 
 		@Override
@@ -366,6 +398,44 @@ public class ReferenceQuery implements JvmClassQuery {
 				resultSink.accept(memberPath, cref(type));
 
 			AnnotationVisitor av = super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, desc, visible);
+			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
+		}
+	}
+
+	/**
+	 * Visits references in fields.
+	 */
+	private class AsmReferenceFieldVisitor extends FieldVisitor {
+		private final ResultSink resultSink;
+		private final ClassMemberPathNode memberPath;
+
+		public AsmReferenceFieldVisitor(@Nullable FieldVisitor delegate,
+										@Nonnull ResultSink resultSink,
+										@Nonnull ClassMemberPathNode memberPath) {
+			super(RecafConstants.getAsmVersion(), delegate);
+			this.resultSink = resultSink;
+			this.memberPath = memberPath;
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+			// Match annotation
+			String type = getInternalName(desc);
+			if (isClassRefMatch(type))
+				resultSink.accept(memberPath, cref(type));
+
+			AnnotationVisitor av = super.visitAnnotation(desc, visible);
+			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
+		}
+
+		@Override
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			// Match annotation
+			String type = getInternalName(desc);
+			if (isClassRefMatch(type))
+				resultSink.accept(memberPath, cref(type));
+
+			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
 			return new AnnotationReferenceVisitor(av, visible, resultSink, memberPath);
 		}
 	}
