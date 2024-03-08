@@ -3,8 +3,12 @@ package software.coley.recaf.workspace;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.analytics.logging.Logging;
@@ -12,7 +16,9 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.ExportConfig;
 import software.coley.recaf.ui.config.RecentFilesConfig;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.ErrorDialogs;
+import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.services.workspace.io.WorkspaceExporter;
@@ -66,8 +72,21 @@ public class PathExportingManager {
 	 * 		Workspace to export.
 	 */
 	public void export(@Nonnull Workspace workspace) {
-		// Prompt a path for the user to write to.
+		// Check if the user hasn't made any changes. Plenty of people have not understood that their changes weren't
+		// saved for one reason or another (the amount of people seeing a red flash thinking that is fine is crazy)
 		WorkspaceResource primaryResource = workspace.getPrimaryResource();
+		boolean noChangesFound = exportConfig.getWarnNoChanges().getValue() && primaryResource.bundleStream()
+				.allMatch(b -> b.getDirtyKeys().isEmpty());
+		if (noChangesFound) {
+			Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Lang.get("dialog.file.nochanges"), ButtonType.YES, ButtonType.NO);
+			alert.setTitle(Lang.get("dialog.title.nochanges"));
+			Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+			stage.getIcons().add(Icons.getImage(Icons.LOGO));
+			if (alert.showAndWait().orElse(ButtonType.NO) != ButtonType.YES)
+				return;
+		}
+
+		// Prompt a path for the user to write to.
 		ObservableString lastWorkspaceExportDir = recentFilesConfig.getLastWorkspaceExportDirectory();
 		File lastExportDir = lastWorkspaceExportDir.unboxingMap(File::new);
 		File selectedPath;

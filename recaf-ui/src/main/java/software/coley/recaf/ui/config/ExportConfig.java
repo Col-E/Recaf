@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.config;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableBoolean;
@@ -23,6 +24,7 @@ public class ExportConfig extends BasicConfigContainer {
 			= new ObservableObject<>(WorkspaceExportOptions.CompressType.MATCH_ORIGINAL);
 	private final ObservableBoolean bundleSupportingResources = new ObservableBoolean(false);
 	private final ObservableBoolean createZipDirEntries = new ObservableBoolean(true);
+	private final ObservableBoolean warnNoChanges = new ObservableBoolean(true);
 
 	@Inject
 	public ExportConfig() {
@@ -31,11 +33,13 @@ public class ExportConfig extends BasicConfigContainer {
 		addValue(new BasicConfigValue<>("compression", WorkspaceExportOptions.CompressType.class, compression));
 		addValue(new BasicConfigValue<>("bundle-supporting-resources", boolean.class, bundleSupportingResources));
 		addValue(new BasicConfigValue<>("create-zip-dir-entries", boolean.class, createZipDirEntries));
+		addValue(new BasicConfigValue<>("warn-no-changes", boolean.class, warnNoChanges));
 	}
 
 	/**
 	 * @return Compression type to use when exporting workspaces.
 	 */
+	@Nonnull
 	public ObservableObject<WorkspaceExportOptions.CompressType> getCompression() {
 		return compression;
 	}
@@ -43,6 +47,7 @@ public class ExportConfig extends BasicConfigContainer {
 	/**
 	 * @return {@code true} to include {@link Workspace#getSupportingResources()} in the output.
 	 */
+	@Nonnull
 	public ObservableBoolean getBundleSupportingResources() {
 		return bundleSupportingResources;
 	}
@@ -55,7 +60,16 @@ public class ExportConfig extends BasicConfigContainer {
 	 *
 	 * @return {@code true} to create ZIP entries for directory paths.
 	 */
+	@Nonnull
 	public ObservableBoolean getCreateZipDirEntries() {
 		return createZipDirEntries;
+	}
+
+	/**
+	 * @return {@code true} to warn users when no changes were made prior to exporting.
+	 */
+	@Nonnull
+	public ObservableBoolean getWarnNoChanges() {
+		return warnNoChanges;
 	}
 }
