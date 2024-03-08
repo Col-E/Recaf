@@ -1,6 +1,6 @@
 def asmVersion = '9.6'
 def cafeDudeVersion = '2.0.1'
-def junitVersion = '5.10.0'
+def junitVersion = '5.10.2'
 def jasmVersion = '1a4a7df195'
 
 project.ext {
@@ -19,8 +19,8 @@ project.ext {
 
     cfr = 'org.benf:cfr:0.152'
 
-    cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
-    cdi_impl = 'org.jboss.weld.se:weld-se-core:5.1.2.Final'
+    cdi_api = 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0.RC1'
+    cdi_impl = 'org.jboss.weld.se:weld-se-core:6.0.0.Beta1'
 
     dex_translator = 'software.coley:dex-translator:1.1.1'
 
@@ -42,7 +42,7 @@ project.ext {
     jasm_core = "com.github.Nowilltolife.Jasm:jasm-core:$jasmVersion"
     jasm_composistion_jvm = "com.github.Nowilltolife.Jasm:jasm-composition-jvm:$jasmVersion"
 
-    jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2'
+    jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.16.1'
 
     jlinker = 'com.github.xxDark:jlinker:1.0.7'
 
@@ -58,9 +58,9 @@ project.ext {
 
     mapping_io = 'net.fabricmc:mapping-io:0.5.1'
 
-    mockito = 'org.mockito:mockito-core:5.6.0'
+    mockito = 'org.mockito:mockito-core:5.11.0'
 
-    openrewrite = 'org.openrewrite:rewrite-java-17:8.13.3'
+    openrewrite = 'org.openrewrite:rewrite-java-17:8.19.0'
 
     procyon = 'org.bitbucket.mstrobel:procyon-compilertools:0.6.0'
 

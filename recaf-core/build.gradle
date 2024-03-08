@@ -1,7 +1,7 @@
 import java.nio.file.Files
 
 plugins {
-    id "com.peterabeles.gversion" version "1.10"
+    id "com.peterabeles.gversion" version "1.10.2"
 }
 
 apply plugin: 'java-library'
