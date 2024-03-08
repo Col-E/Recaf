@@ -11,10 +11,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
-import javafx.geometry.BoundingBox;
-import javafx.geometry.Bounds;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.OverrunStyle;
@@ -52,7 +49,6 @@ import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.AbstractSearchBar;
 import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.*;
 import software.coley.recaf.workspace.model.Workspace;
 
