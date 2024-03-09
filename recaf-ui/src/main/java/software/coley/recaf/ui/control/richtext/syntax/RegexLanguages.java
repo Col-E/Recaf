@@ -32,6 +32,7 @@ public class RegexLanguages {
 	private static final Map<String, RegexRule> NAME_TO_LANG = new HashMap<>();
 	private static final RegexRule LANG_JAVA;
 	private static final RegexRule LANG_JASM;
+	private static final RegexRule LANG_JSON;
 	private static final RegexRule LANG_XML;
 	private static final RegexRule LANG_ENGIMA_MAP;
 
@@ -43,6 +44,7 @@ public class RegexLanguages {
 		try {
 			LANG_JAVA = addLanguage("/syntax/java.json");
 			LANG_JASM = addLanguage("/syntax/jasm.json");
+			LANG_JSON = addLanguage("/syntax/json.json");
 			LANG_XML = addLanguage("/syntax/xml.json");
 			LANG_ENGIMA_MAP = addLanguage("/syntax/enigma.json");
 		} catch (Exception ex) {
@@ -141,6 +143,16 @@ public class RegexLanguages {
 	@Nonnull
 	public static RegexRule getJasmLanguage() {
 		return LANG_JASM;
+	}
+
+	/**
+	 * @return Root rule for JSON regex matching.
+	 *
+	 * @see LanguageStylesheets#getJsonStylesheet()
+	 */
+	@Nonnull
+	public static RegexRule getJsonLanguage() {
+		return LANG_JSON;
 	}
 
 	/**
