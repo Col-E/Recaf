@@ -56,6 +56,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Enables context actions on an {@link Editor} by parsing the source text as Java and modeling the AST.
@@ -75,6 +76,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private final CellConfigurationService cellConfigurationService;
 	private final AstService astService;
 	private final AstContextHelper contextHelper;
+	private Future<?> lastFuture;
 	private int lastSourceHash;
 	private ClassPathNode path;
 	private Runnable queuedSelectionTask;
@@ -284,8 +286,12 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		if (parser == null)
 			return;
 
+		// Cancel last parse future if not complete
+		if (lastFuture != null && !lastFuture.isDone())
+			lastFuture.cancel(true);
+
 		// Do parsing on BG thread, it can be slower on complex inputs.
-		parseThreadPool.submit(() -> {
+		lastFuture = parseThreadPool.submit(() -> {
 			String text = editor.getText();
 
 			// Skip if the source hasn't changed since the last time.
