@@ -1,4 +1,4 @@
-package software.coley.recaf.services.search.builtin;
+package software.coley.recaf.services.search.query;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -7,7 +7,7 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.services.search.FileSearchVisitor;
 import software.coley.recaf.services.search.ResultSink;
-import software.coley.recaf.util.NumberMatchMode;
+import software.coley.recaf.services.search.match.NumberPredicate;
 import software.coley.recaf.util.NumberUtil;
 
 import static software.coley.recaf.util.RegexUtil.getMatcher;
@@ -18,24 +18,20 @@ import static software.coley.recaf.util.RegexUtil.getMatcher;
  * @author Matt Coley
  */
 public class NumberQuery extends AbstractValueQuery {
-	private final NumberMatchMode matchMode;
-	private final Number target;
+	private final NumberPredicate predicate;
 
 	/**
-	 * @param matchMode
-	 * 		Number matching mode.
-	 * @param target
-	 * 		Number to match against.
+	 * @param predicate
+	 * 		Number matching predicate.
 	 */
-	public NumberQuery(@Nonnull NumberMatchMode matchMode, @Nonnull Number target) {
-		this.matchMode = matchMode;
-		this.target = target;
+	public NumberQuery(@Nonnull NumberPredicate predicate) {
+		this.predicate = predicate;
 	}
 
 	@Override
 	protected boolean isMatch(Object value) {
 		if (value instanceof Number number)
-			return matchMode.match(target, number);
+			return predicate.match(number);
 		return false;
 	}
 

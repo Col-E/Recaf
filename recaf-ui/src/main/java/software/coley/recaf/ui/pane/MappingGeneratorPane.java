@@ -23,6 +23,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.util.StringConverter;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
+import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigGroups;
@@ -36,9 +37,11 @@ import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.format.EnigmaMappings;
-import software.coley.recaf.services.mapping.gen.*;
+import software.coley.recaf.services.mapping.gen.MappingGenerator;
 import software.coley.recaf.services.mapping.gen.filter.*;
 import software.coley.recaf.services.mapping.gen.naming.*;
+import software.coley.recaf.services.search.match.StringPredicate;
+import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.*;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -67,14 +70,16 @@ import static software.coley.recaf.util.Lang.getBinding;
 @Dependent
 public class MappingGeneratorPane extends StackPane {
 	private static final Logger logger = Logging.get(MappingGenerator.class);
-	private static final ToStringConverter<TextMatchMode> textModeConverter = ToStringConverter.from(MappingGeneratorPane::modeToName);
-	private static final List<TextMatchMode> textModes = TextMatchMode.valuesList();
+	private static final ToStringConverter<String> textPredicateConverter = ToStringConverter.from(MappingGeneratorPane::predicateIdToTranslation);
 	private static final NameGeneratorProvider<?> fallbackProvider = new IncrementingNameGeneratorProvider();
 	private final StringProperty currentProvider = new SimpleStringProperty(IncrementingNameGeneratorProvider.ID);
 	private final ObjectProperty<Mappings> mappingsToApply = new SimpleObjectProperty<>();
 	private final ListView<FilterWithConfigNode<?>> filters = new ListView<>();
+	private final List<String> stringPredicates;
+	private final List<String> stringPredicatesWithNull;
 	private final Workspace workspace;
 	private final NameGeneratorProviders nameGeneratorProviders;
+	private final StringPredicateProvider stringPredicateProvider;
 	private final MappingGenerator mappingGenerator;
 	private final ConfigComponentManager componentManager;
 	private final InheritanceGraph graph;
@@ -85,18 +90,25 @@ public class MappingGeneratorPane extends StackPane {
 	@Inject
 	public MappingGeneratorPane(@Nonnull Workspace workspace,
 								@Nonnull NameGeneratorProviders nameGeneratorProviders,
+								@Nonnull StringPredicateProvider stringPredicateProvider,
 								@Nonnull MappingGenerator mappingGenerator,
 								@Nonnull ConfigComponentManager componentManager,
 								@Nonnull InheritanceGraph graph,
 								@Nonnull AggregateMappingManager aggregateMappingManager,
 								@Nonnull MappingApplier mappingApplier,
 								@Nonnull Instance<SearchBar> searchBarProvider) {
+
 		this.workspace = workspace;
 		this.nameGeneratorProviders = nameGeneratorProviders;
+		this.stringPredicateProvider = stringPredicateProvider;
 		this.mappingGenerator = mappingGenerator;
 		this.componentManager = componentManager;
 		this.graph = graph;
 		this.mappingApplier = mappingApplier;
+
+		// Cache text matchers.
+		stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream().sorted().toList();
+		stringPredicatesWithNull = Lists.add(stringPredicates, null);
 
 		// Create filter list and editor controls.
 		Node filterGroup = createFilterDisplay(aggregateMappingManager);
@@ -108,6 +120,7 @@ public class MappingGeneratorPane extends StackPane {
 
 		// Layout and wrap up.
 		SplitPane horizontalWrapper = new SplitPane(filterGroup, previewGroup);
+		horizontalWrapper.setDividerPositions(1); // Counter-intuitive, this correctly places the divider to not suffocate the filter-group
 		SplitPane.setResizableWithParent(filterGroup, false);
 
 		getChildren().addAll(modal, horizontalWrapper);
@@ -186,7 +199,7 @@ public class MappingGeneratorPane extends StackPane {
 			previewGroup.setDisable(false);
 			if (mappings != null) {
 				mappingsToApply.set(mappings);
-			} else if (error != null){
+			} else if (error != null) {
 				logger.error("Failed to generate mappings", error);
 			}
 		}, FxThreadUtil.executor());
@@ -398,14 +411,9 @@ public class MappingGeneratorPane extends StackPane {
 	}
 
 	@Nonnull
-	private static String modeToName(@Nonnull TextMatchMode mode) {
-		return Lang.get(switch (mode) {
-			case EQUALS -> "misc.text.equals";
-			case CONTAINS -> "misc.text.contains";
-			case STARTS_WITH -> "misc.text.startswith";
-			case ENDS_WITH -> "misc.text.endswith";
-			case REGEX -> "misc.text.regex";
-		});
+	private static String predicateIdToTranslation(@Nullable String id) {
+		if (id == null) return Lang.get("misc.ignored");
+		return Lang.get(StringPredicate.TRANSLATION_PREFIX + id);
 	}
 
 	@Nonnull
@@ -421,58 +429,77 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link ExcludeNameFilter}.
 	 */
-	public static class ExcludeName extends FilterWithConfigNode<ExcludeNameFilter> {
-		private final ObjectProperty<TextMatchMode> mode = new SimpleObjectProperty<>(TextMatchMode.CONTAINS);
-		private final StringProperty name = new SimpleStringProperty("com/example/Foo");
-		private final BooleanProperty classes = new SimpleBooleanProperty(true);
-		private final BooleanProperty fields = new SimpleBooleanProperty(true);
-		private final BooleanProperty methods = new SimpleBooleanProperty(true);
+	public class ExcludeName extends FilterWithConfigNode<ExcludeNameFilter> {
+		private final StringProperty classPredicateId = new SimpleStringProperty();
+		private final StringProperty fieldPredicateId = new SimpleStringProperty();
+		private final StringProperty methodPredicateId = new SimpleStringProperty();
+		private final StringProperty className = new SimpleStringProperty("com/example/Foo");
+		private final StringProperty fieldName = new SimpleStringProperty("foo");
+		private final StringProperty methodName = new SimpleStringProperty("getFoo");
 
 		@Nonnull
 		@Override
 		public ObservableValue<String> display() {
-			return Bindings.concat(Lang.getBinding("mapgen.filter.excludename"), ": ", name);
+			return Bindings.concat(Lang.getBinding("mapgen.filter.excludename"), ": ", className);
 		}
 
 		@Nonnull
 		@Override
 		protected Function<NameGeneratorFilter, ExcludeNameFilter> makeProvider() {
-			return next -> new ExcludeNameFilter(next, name.get(), mode.get(), classes.get(), fields.get(), methods.get());
+			return next -> new ExcludeNameFilter(next,
+					classPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()) : null,
+					fieldPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(fieldPredicateId.get(), fieldName.get()) : null,
+					methodPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null
+			);
 		}
 
 		@Override
 		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {
-			sink.accept(Lang.getBinding("search.textmode"), new BoundComboBox<>(mode, textModes, textModeConverter));
-			sink.accept(Lang.getBinding("mapgen.filter.name"), new BoundTextField(name));
-			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.excludeclass"), classes));
-			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.excludefield"), fields));
-			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.excludemethod"), methods));
+			BoundTextField txtClass = new BoundTextField(className);
+			BoundTextField txtField = new BoundTextField(fieldName);
+			BoundTextField txtMethod = new BoundTextField(methodName);
+			txtClass.disableProperty().bind(classPredicateId.isNull());
+			txtField.disableProperty().bind(fieldPredicateId.isNull());
+			txtMethod.disableProperty().bind(methodPredicateId.isNull());
+
+			GridPane grid = new GridPane();
+			grid.setVgap(5);
+			grid.setHgap(5);
+			grid.addRow(0, new BoundLabel(Lang.getBinding("mapgen.filter.owner-name")),
+					txtClass, new BoundComboBox<>(classPredicateId, stringPredicatesWithNull, textPredicateConverter));
+			grid.addRow(1, new BoundLabel(Lang.getBinding("mapgen.filter.field-name")),
+					txtField, new BoundComboBox<>(fieldPredicateId, stringPredicatesWithNull, textPredicateConverter));
+			grid.addRow(2, new BoundLabel(Lang.getBinding("mapgen.filter.method-name")),
+					txtMethod, new BoundComboBox<>(methodPredicateId, stringPredicatesWithNull, textPredicateConverter));
+			sink.accept(null, grid);
 		}
 	}
 
 	/**
 	 * Config node for {@link ExcludeClassesFilter}.
 	 */
-	public static class ExcludeClasses extends FilterWithConfigNode<ExcludeClassesFilter> {
-		private final ObjectProperty<TextMatchMode> mode = new SimpleObjectProperty<>(TextMatchMode.CONTAINS);
-		private final StringProperty name = new SimpleStringProperty("com/example/Foo");
+	public class ExcludeClasses extends FilterWithConfigNode<ExcludeClassesFilter> {
+		private final StringProperty classPredicateId = new SimpleStringProperty();
+		private final StringProperty className = new SimpleStringProperty("com/example/Foo");
 
 		@Nonnull
 		@Override
 		public ObservableValue<String> display() {
-			return Bindings.concat(Lang.getBinding("mapgen.filter.excludeclasses"), ": ", name);
+			return Bindings.concat(Lang.getBinding("mapgen.filter.excludeclasses"), ": ", className);
 		}
 
 		@Nonnull
 		@Override
+		@SuppressWarnings("DataFlowIssue")
 		protected Function<NameGeneratorFilter, ExcludeClassesFilter> makeProvider() {
-			return next -> new ExcludeClassesFilter(next, name.get(), mode.get());
+			return next -> new ExcludeClassesFilter(next, stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()));
 		}
 
 		@Override
 		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {
-			sink.accept(Lang.getBinding("search.textmode"), new BoundComboBox<>(mode, textModes, textModeConverter));
-			sink.accept(Lang.getBinding("mapgen.filter.name"), new BoundTextField(name));
+			BoundTextField txtClass = new BoundTextField(className);
+			sink.accept(Lang.getBinding("search.textmode"), new BoundComboBox<>(classPredicateId, stringPredicates, textPredicateConverter));
+			sink.accept(Lang.getBinding("mapgen.filter.class-name"), txtClass);
 		}
 	}
 
@@ -547,58 +574,76 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * Config node for {@link IncludeNameFilter}.
 	 */
-	public static class IncludeName extends FilterWithConfigNode<IncludeNameFilter> {
-		private final ObjectProperty<TextMatchMode> mode = new SimpleObjectProperty<>(TextMatchMode.CONTAINS);
-		private final StringProperty name = new SimpleStringProperty("com/example/Foo");
-		private final BooleanProperty classes = new SimpleBooleanProperty(true);
-		private final BooleanProperty fields = new SimpleBooleanProperty(true);
-		private final BooleanProperty methods = new SimpleBooleanProperty(true);
+	public class IncludeName extends FilterWithConfigNode<IncludeNameFilter> {
+		private final StringProperty classPredicateId = new SimpleStringProperty();
+		private final StringProperty fieldPredicateId = new SimpleStringProperty();
+		private final StringProperty methodPredicateId = new SimpleStringProperty();
+		private final StringProperty className = new SimpleStringProperty("com/example/Foo");
+		private final StringProperty fieldName = new SimpleStringProperty("foo");
+		private final StringProperty methodName = new SimpleStringProperty("getFoo");
 
 		@Nonnull
 		@Override
 		public ObservableValue<String> display() {
-			return Bindings.concat(Lang.getBinding("mapgen.filter.includename"), ": ", name);
+			return Bindings.concat(Lang.getBinding("mapgen.filter.includename"), ": ", className);
 		}
 
 		@Nonnull
 		@Override
 		protected Function<NameGeneratorFilter, IncludeNameFilter> makeProvider() {
-			return next -> new IncludeNameFilter(next, name.get(), mode.get(), classes.get(), fields.get(), methods.get());
+			return next -> new IncludeNameFilter(next,
+					classPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()) : null,
+					fieldPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(fieldPredicateId.get(), fieldName.get()) : null,
+					methodPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null
+			);
 		}
 
 		@Override
 		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {
-			sink.accept(Lang.getBinding("search.textmode"), new BoundComboBox<>(mode, textModes, textModeConverter));
-			sink.accept(Lang.getBinding("mapgen.filter.name"), new BoundTextField(name));
-			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includeclass"), classes));
-			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includefield"), fields));
-			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includemethod"), methods));
+			BoundTextField txtClass = new BoundTextField(className);
+			BoundTextField txtField = new BoundTextField(fieldName);
+			BoundTextField txtMethod = new BoundTextField(methodName);
+			txtClass.disableProperty().bind(classPredicateId.isNull());
+			txtField.disableProperty().bind(fieldPredicateId.isNull());
+			txtMethod.disableProperty().bind(methodPredicateId.isNull());
+			GridPane grid = new GridPane();
+			grid.setVgap(5);
+			grid.setHgap(5);
+			grid.addRow(0, new BoundLabel(Lang.getBinding("mapgen.filter.owner-name")),
+					txtClass, new BoundComboBox<>(classPredicateId, stringPredicatesWithNull, textPredicateConverter));
+			grid.addRow(1, new BoundLabel(Lang.getBinding("mapgen.filter.field-name")),
+					txtField, new BoundComboBox<>(fieldPredicateId, stringPredicatesWithNull, textPredicateConverter));
+			grid.addRow(2, new BoundLabel(Lang.getBinding("mapgen.filter.method-name")),
+					txtMethod, new BoundComboBox<>(methodPredicateId, stringPredicatesWithNull, textPredicateConverter));
+			sink.accept(null, grid);
 		}
 	}
 
 	/**
 	 * Config node for {@link IncludeClassesFilter}.
 	 */
-	public static class IncludeClasses extends FilterWithConfigNode<IncludeClassesFilter> {
-		private final ObjectProperty<TextMatchMode> mode = new SimpleObjectProperty<>(TextMatchMode.CONTAINS);
-		private final StringProperty name = new SimpleStringProperty("com/example/Foo");
+	public class IncludeClasses extends FilterWithConfigNode<IncludeClassesFilter> {
+		private final StringProperty classPredicateId = new SimpleStringProperty();
+		private final StringProperty className = new SimpleStringProperty("com/example/Foo");
 
 		@Nonnull
 		@Override
 		public ObservableValue<String> display() {
-			return Bindings.concat(Lang.getBinding("mapgen.filter.includeclasses"), ": ", name);
+			return Bindings.concat(Lang.getBinding("mapgen.filter.includeclasses"), ": ", className);
 		}
 
 		@Nonnull
 		@Override
+		@SuppressWarnings("DataFlowIssue")
 		protected Function<NameGeneratorFilter, IncludeClassesFilter> makeProvider() {
-			return next -> new IncludeClassesFilter(next, name.get(), mode.get());
+			return next -> new IncludeClassesFilter(next, stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()));
 		}
 
 		@Override
 		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {
-			sink.accept(Lang.getBinding("search.textmode"), new BoundComboBox<>(mode, textModes, textModeConverter));
-			sink.accept(Lang.getBinding("mapgen.filter.name"), new BoundTextField(name));
+			BoundTextField txtClass = new BoundTextField(className);
+			sink.accept(Lang.getBinding("search.textmode"), new BoundComboBox<>(classPredicateId, stringPredicates, textPredicateConverter));
+			sink.accept(Lang.getBinding("mapgen.filter.class-name"), txtClass);
 		}
 	}
 

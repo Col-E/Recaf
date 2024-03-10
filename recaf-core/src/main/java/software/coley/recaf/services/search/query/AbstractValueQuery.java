@@ -1,4 +1,4 @@
-package software.coley.recaf.services.search.builtin;
+package software.coley.recaf.services.search.query;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -18,8 +18,6 @@ import software.coley.recaf.path.AnnotationPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
-import software.coley.recaf.services.search.FileQuery;
-import software.coley.recaf.services.search.JvmClassQuery;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
 import software.coley.recaf.services.search.ResultSink;
 import software.coley.recaf.util.visitors.IndexCountingMethodVisitor;

@@ -1,4 +1,4 @@
-package software.coley.recaf.services.search.builtin;
+package software.coley.recaf.services.search.query;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -6,7 +6,7 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.services.search.FileSearchVisitor;
 import software.coley.recaf.services.search.ResultSink;
-import software.coley.recaf.util.TextMatchMode;
+import software.coley.recaf.services.search.match.StringPredicate;
 
 /**
  * String search implementation.
@@ -14,24 +14,20 @@ import software.coley.recaf.util.TextMatchMode;
  * @author Matt Coley
  */
 public class StringQuery extends AbstractValueQuery {
-	private final TextMatchMode matchMode;
-	private final String target;
+	private final StringPredicate predicate;
 
 	/**
-	 * @param matchMode
-	 * 		Text matching mode.
-	 * @param target
-	 * 		Text to match against.
+	 * @param predicate
+	 * 		String matching predicate.
 	 */
-	public StringQuery(@Nonnull TextMatchMode matchMode, @Nonnull String target) {
-		this.matchMode = matchMode;
-		this.target = target;
+	public StringQuery(@Nonnull StringPredicate predicate) {
+		this.predicate = predicate;
 	}
 
 	@Override
 	protected boolean isMatch(Object value) {
 		if (value instanceof String text)
-			return matchMode.match(target, text);
+			return predicate.match(text);
 		return false;
 	}
 
@@ -59,10 +55,9 @@ public class StringQuery extends AbstractValueQuery {
 
 			// Search text files text content on a line by line basis
 			if (fileInfo.isTextFile()) {
-				String text = fileInfo.asTextFile().getText();
+				String[] lines = fileInfo.asTextFile().getTextLines();
 
 				// Split by single newline (including goofy carriage returns)
-				String[] lines = text.split("\\r?\\n\\r?");
 				for (int i = 0; i < lines.length; i++) {
 					String lineText = lines[i];
 					if (isMatch(lineText))

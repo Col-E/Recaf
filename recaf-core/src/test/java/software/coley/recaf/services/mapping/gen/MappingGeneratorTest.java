@@ -14,11 +14,12 @@ import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.MethodMapping;
 import software.coley.recaf.services.mapping.gen.filter.*;
 import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
+import software.coley.recaf.services.search.match.StringPredicate;
+import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.*;
 import software.coley.recaf.util.StringUtil;
-import software.coley.recaf.util.TextMatchMode;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -36,6 +37,7 @@ public class MappingGeneratorTest extends TestBase {
 	static NameGenerator nameGenerator;
 	static InheritanceGraph inheritanceGraph;
 	static MappingGenerator mappingGenerator;
+	static StringPredicateProvider strMatchProvider;
 
 	@BeforeAll
 	static void setup() throws IOException {
@@ -69,6 +71,7 @@ public class MappingGeneratorTest extends TestBase {
 		workspaceManager.setCurrent(workspace);
 		inheritanceGraph = recaf.get(InheritanceGraph.class);
 		mappingGenerator = recaf.get(MappingGenerator.class);
+		strMatchProvider = recaf.get(StringPredicateProvider.class);
 	}
 
 	@Test
@@ -149,7 +152,7 @@ public class MappingGeneratorTest extends TestBase {
 			// The default action of naming this not affect the methods declared in the child class since
 			// those methods are overrides of an affected class.
 			ExcludeClassesFilter filter =
-					new ExcludeClassesFilter(null, "AccessibleMethods", TextMatchMode.ENDS_WITH);
+					new ExcludeClassesFilter(null, strMatchProvider.newEndsWithPredicate("AccessibleMethods"));
 
 			// Apply and assert all items are mapped except the base classes types
 			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
@@ -255,8 +258,9 @@ public class MappingGeneratorTest extends TestBase {
 
 		@Test
 		void testIncludeNameFilter() {
+			StringPredicate predicate = strMatchProvider.newContainsPredicate("AccessibleMethods");
 			IncludeNameFilter filter =
-					new IncludeNameFilter(null, "AccessibleMethods", TextMatchMode.CONTAINS, true, true, true);
+					new IncludeNameFilter(null, predicate, predicate, predicate);
 
 			// Generate mappings
 			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
@@ -272,7 +276,7 @@ public class MappingGeneratorTest extends TestBase {
 		@Test
 		void testIncludeClassesFilter() {
 			IncludeClassesFilter filter =
-					new IncludeClassesFilter(null, "AccessibleMethods", TextMatchMode.CONTAINS);
+					new IncludeClassesFilter(null, strMatchProvider.newContainsPredicate("AccessibleMethods"));
 
 			// Generate mappings
 			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);

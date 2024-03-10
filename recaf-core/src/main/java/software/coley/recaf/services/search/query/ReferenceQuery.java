@@ -1,4 +1,4 @@
-package software.coley.recaf.services.search.builtin;
+package software.coley.recaf.services.search.query;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -17,13 +17,12 @@ import software.coley.recaf.path.AnnotationPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
-import software.coley.recaf.services.search.JvmClassQuery;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
 import software.coley.recaf.services.search.ResultSink;
+import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.services.search.result.ClassReferenceResult;
 import software.coley.recaf.services.search.result.MemberReferenceResult;
 import software.coley.recaf.util.StringUtil;
-import software.coley.recaf.util.TextMatchMode;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.visitors.IndexCountingMethodVisitor;
 
@@ -33,31 +32,22 @@ import software.coley.recaf.util.visitors.IndexCountingMethodVisitor;
  * @author Matt Coley
  */
 public class ReferenceQuery implements JvmClassQuery {
-	private final TextMatchMode ownerMatchMode;
-	private final TextMatchMode nameMatchMode;
-	private final TextMatchMode descriptorMatchMode;
-	private final String targetOwner;
-	private final String targetName;
-	private final String targetDesc;
+	private final StringPredicate ownerPredicate;
+	private final StringPredicate namePredicate;
+	private final StringPredicate descriptorPredicate;
 	private final boolean classRefOnly;
 
 
 	/**
 	 * Class reference query.
 	 *
-	 * @param matchMode
-	 * 		Match mode for text comparison.
-	 * @param targetOwner
-	 * 		Name to search for.
+	 * @param ownerPredicate
+	 * 		String matching predicate for comparison against reference owners.
 	 */
-	public ReferenceQuery(@Nonnull TextMatchMode matchMode,
-						  @Nullable String targetOwner) {
-		this.ownerMatchMode = matchMode;
-		this.nameMatchMode = null;
-		this.descriptorMatchMode = null;
-		this.targetOwner = targetOwner;
-		this.targetName = null;
-		this.targetDesc = null;
+	public ReferenceQuery(@Nonnull StringPredicate ownerPredicate) {
+		this.ownerPredicate = ownerPredicate;
+		this.namePredicate = null;
+		this.descriptorPredicate = null;
 		classRefOnly = true;
 	}
 
@@ -68,73 +58,45 @@ public class ReferenceQuery implements JvmClassQuery {
 	 * Including only the owner and {@code null} for the name/desc will yield references to all members in the class.
 	 * Including only the desc will yield references to all members of that desc in all classes.
 	 *
-	 * @param matchMode
-	 * 		Match mode for text comparison. Used against owner, name, and descriptors.
-	 * @param targetOwner
-	 * 		Declaring class of target reference.
-	 * @param targetName
-	 * 		Member name of target reference.
-	 * @param targetDesc
-	 * 		Member descriptor of target reference.
+	 * @param ownerPredicate
+	 * 		String matching predicate for comparison against reference owners.
+	 *        {@code null} to ignore matching against reference owner names.
+	 * @param namePredicate
+	 * 		String matching predicate for comparison against reference names.
+	 *        {@code null} to ignore matching against reference names.
+	 * @param descriptorPredicate
+	 * 		String matching predicate for comparison against reference descriptors.
+	 *        {@code null} to ignore matching against reference owner descriptors.
 	 */
-	public ReferenceQuery(@Nonnull TextMatchMode matchMode,
-						  @Nullable String targetOwner, @Nullable String targetName, @Nullable String targetDesc) {
-		this(matchMode, matchMode, matchMode, targetOwner, targetName, targetDesc);
-	}
-
-	/**
-	 * Member reference query.
-	 * <p/>
-	 * Do note that each target value is nullable/optional.
-	 * Including only the owner and {@code null} for the name/desc will yield references to all members in the class.
-	 * Including only the desc will yield references to all members of that desc in all classes.
-	 *
-	 * @param ownerMatchMode
-	 * 		Match mode for text comparison against the owner.
-	 * @param nameMatchMode
-	 * 		Match mode for text comparison against the member name.
-	 * @param descriptorMatchMode
-	 * 		Match mode for text comparison against the member descriptor.
-	 * @param targetOwner
-	 * 		Declaring class of target reference.
-	 * @param targetName
-	 * 		Member name of target reference.
-	 * @param targetDesc
-	 * 		Member descriptor of target reference.
-	 */
-	public ReferenceQuery(@Nonnull TextMatchMode ownerMatchMode, @Nonnull TextMatchMode nameMatchMode,
-						  @Nonnull TextMatchMode descriptorMatchMode, @Nullable String targetOwner,
-						  @Nullable String targetName, @Nullable String targetDesc) {
-		this.ownerMatchMode = ownerMatchMode;
-		this.nameMatchMode = nameMatchMode;
-		this.descriptorMatchMode = descriptorMatchMode;
-		this.targetOwner = targetOwner;
-		this.targetName = targetName;
-		this.targetDesc = targetDesc;
+	public ReferenceQuery(@Nullable StringPredicate ownerPredicate,
+						  @Nullable StringPredicate namePredicate,
+						  @Nullable StringPredicate descriptorPredicate) {
+		this.ownerPredicate = ownerPredicate;
+		this.namePredicate = namePredicate;
+		this.descriptorPredicate = descriptorPredicate;
 		classRefOnly = false;
 	}
 
 	private boolean isClassRefMatch(@Nullable String className) {
-		if (!classRefOnly) return false;
-		if (className == null && targetName != null) return false;
-		return StringUtil.isAnyNullOrEmpty(targetOwner, className) || ownerMatchMode.match(targetOwner, className);
+		if (!classRefOnly || className == null || ownerPredicate == null) return false;
+		return StringUtil.isNullOrEmpty(className) || ownerPredicate.match(className);
 	}
 
-	@SuppressWarnings("DataFlowIssue") // The class-ref check addresses this
+	//@SuppressWarnings("DataFlowIssue") // The class-ref check addresses this
 	private boolean isMemberRefMatch(@Nullable String owner, @Nullable String name, @Nullable String desc) {
 		if (classRefOnly) return false;
 
 		// The parameters are null if we only are searching against a type.
 		// In these cases since we're comparing to a type, then any name/desc comparison should be ignored.
-		if (name == null && targetName != null) return false;
-		if (desc == null && targetDesc != null) return false;
+		if (name == null && namePredicate != null) return false;
+		if (desc == null && descriptorPredicate != null) return false;
 
 		// Check if match modes succeed.
-		// If our query arguments are null, that field can skip comparison, and we move on to the next.
+		// If our query predicates are null, that field can skip comparison, and we move on to the next.
 		// If all of our non-null query arguments match the given parameters, we have a match.
-		if (StringUtil.isAnyNullOrEmpty(targetOwner, owner) || ownerMatchMode.match(targetOwner, owner))
-			if (StringUtil.isAnyNullOrEmpty(targetName, name) || nameMatchMode.match(targetName, name))
-				return StringUtil.isAnyNullOrEmpty(targetDesc, desc) || descriptorMatchMode.match(targetDesc, desc);
+		if (ownerPredicate == null || StringUtil.isNullOrEmpty(owner) || ownerPredicate.match(owner))
+			if (namePredicate == null || StringUtil.isNullOrEmpty(name) || namePredicate.match(name))
+				return descriptorPredicate == null || StringUtil.isNullOrEmpty(desc) || descriptorPredicate.match(desc);
 
 		return false;
 	}

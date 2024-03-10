@@ -5,7 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.util.TextMatchMode;
+import software.coley.recaf.services.search.match.StringPredicate;
 
 /**
  * Filter that includes classes <i>(and their members)</i>.
@@ -14,28 +14,23 @@ import software.coley.recaf.util.TextMatchMode;
  * @see ExcludeClassesFilter
  */
 public class IncludeClassesFilter extends NameGeneratorFilter {
-	private final String name;
-	private final TextMatchMode matchMode;
+	private final StringPredicate namePredicate;
 
 	/**
 	 * @param next
 	 * 		Next filter to link. Chaining filters allows for {@code thisFilter && nextFilter}.
-	 * @param name
-	 * 		Name pattern to exclude.
-	 * @param matchMode
-	 * 		Text match mode.
+	 * @param namePredicate
+	 * 		Class name predicate for included names.
 	 */
-	public IncludeClassesFilter(@Nullable NameGeneratorFilter next,
-								@Nonnull String name, @Nonnull TextMatchMode matchMode) {
+	public IncludeClassesFilter(@Nullable NameGeneratorFilter next, @Nonnull StringPredicate namePredicate) {
 		super(next, true);
-		this.name = name;
-		this.matchMode = matchMode;
+		this.namePredicate = namePredicate;
 	}
 
 	@Override
 	public boolean shouldMapClass(@Nonnull ClassInfo info) {
 		return super.shouldMapClass(info) &&
-				(matchMode.match(this.name, info.getName()));
+				(namePredicate.match(info.getName()));
 	}
 
 	@Override

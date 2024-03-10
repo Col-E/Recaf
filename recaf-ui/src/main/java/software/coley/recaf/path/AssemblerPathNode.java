@@ -43,6 +43,8 @@ public class AssemblerPathNode extends AbstractPathNode<Object, AssemblerPathDat
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		if (this == o) return 0;
+
 		PathNode<?> otherParent = o.getParent();
 		if (otherParent == null)
 			return 1;

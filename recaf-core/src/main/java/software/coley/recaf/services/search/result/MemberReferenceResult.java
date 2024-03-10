@@ -46,12 +46,12 @@ public class MemberReferenceResult extends Result<MemberReferenceResult.MemberRe
 	public static class MemberReference {
 		private final String owner;
 		private final String name;
-		private final String descr;
+		private final String desc;
 
-		public MemberReference(@Nonnull String owner, @Nonnull String name, @Nonnull String descr) {
+		public MemberReference(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
 			this.owner = owner;
 			this.name = name;
-			this.descr = descr;
+			this.desc = desc;
 		}
 
 		/**
@@ -65,7 +65,7 @@ public class MemberReferenceResult extends Result<MemberReferenceResult.MemberRe
 		 * @return {@code true} when this is a reference to a method member.
 		 */
 		public boolean isMethodReference() {
-			return descr.charAt(0) == '(';
+			return desc.charAt(0) == '(';
 		}
 
 		/**
@@ -88,8 +88,8 @@ public class MemberReferenceResult extends Result<MemberReferenceResult.MemberRe
 		 * @return Member descriptor.
 		 */
 		@Nonnull
-		public String getDescr() {
-			return descr;
+		public String getDesc() {
+			return desc;
 		}
 
 		@Override
@@ -97,7 +97,7 @@ public class MemberReferenceResult extends Result<MemberReferenceResult.MemberRe
 			return "MemberReference{" +
 					"owner='" + owner + '\'' +
 					", name='" + name + '\'' +
-					", descr='" + descr + '\'' +
+					", descr='" + desc + '\'' +
 					'}';
 		}
 
@@ -110,14 +110,14 @@ public class MemberReferenceResult extends Result<MemberReferenceResult.MemberRe
 
 			if (!owner.equals(that.owner)) return false;
 			if (!name.equals(that.name)) return false;
-			return descr.equals(that.descr);
+			return desc.equals(that.desc);
 		}
 
 		@Override
 		public int hashCode() {
 			int result = owner.hashCode();
 			result = 31 * result + name.hashCode();
-			result = 31 * result + descr.hashCode();
+			result = 31 * result + desc.hashCode();
 			return result;
 		}
 	}

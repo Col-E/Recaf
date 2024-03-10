@@ -78,7 +78,7 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 				"instanceof",
 				"interface",
 				// "mandated",
-				"module",
+				// "module",
 				"native",
 				// "open",
 				"private",
@@ -90,8 +90,8 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 				"synchronized",
 				// "synthetic",
 				"transient",
-				"transitive",
-				"var",
+				// "transitive",
+				// "var",
 				// "varargs",
 				"volatile"));
 	}
