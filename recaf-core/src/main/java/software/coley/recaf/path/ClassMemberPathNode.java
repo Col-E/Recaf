@@ -139,6 +139,8 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		if (this == o) return 0;
+
 		if (o instanceof ClassMemberPathNode classMemberNode) {
 			ClassMember member = getValue();
 			ClassMember otherMember = classMemberNode.getValue();

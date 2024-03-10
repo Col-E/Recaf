@@ -54,9 +54,11 @@ public class LineNumberPathNode extends AbstractPathNode<FileInfo, Integer> {
 
 	@Override
 	public int localCompare(PathNode<?> o) {
-		if (o instanceof LineNumberPathNode lineNode) {
+		if (this == o) return 0;
+
+		if (o instanceof LineNumberPathNode lineNode)
 			return getValue().compareTo(lineNode.getValue());
-		}
+
 		return 0;
 	}
 }

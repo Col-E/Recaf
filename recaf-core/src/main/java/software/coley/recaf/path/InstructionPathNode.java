@@ -73,9 +73,11 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 
 	@Override
 	public int localCompare(PathNode<?> o) {
-		if (o instanceof InstructionPathNode node) {
+		if (this == o) return 0;
+
+		if (o instanceof InstructionPathNode node)
 			return Integer.compare(index, node.index);
-		}
+
 		return 0;
 	}
 

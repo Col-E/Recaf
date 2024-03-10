@@ -65,6 +65,8 @@ public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo>
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		if (this == o) return 0;
+
 		if (o instanceof AnnotationPathNode node) {
 			return getValue().getDescriptor().compareTo(node.getValue().getDescriptor());
 		}

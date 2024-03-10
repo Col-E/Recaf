@@ -65,6 +65,8 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		if (this == o) return 0;
+
 		if (o instanceof FilePathNode fileNode) {
 			String name = getValue().getName();
 			String otherName = fileNode.getValue().getName();

@@ -58,6 +58,8 @@ public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassIn
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		if (this == o) return 0;
+
 		if (o instanceof InnerClassPathNode innerClassPathNode) {
 			String name = getValue().getInnerClassName();
 			String otherName = innerClassPathNode.getValue().getInnerClassName();

@@ -115,6 +115,8 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		if (this == o) return 0;
+
 		if (o instanceof BundlePathNode bundlePathNode) {
 			int cmp = -Integer.compare(bundleMask(), bundlePathNode.bundleMask());
 

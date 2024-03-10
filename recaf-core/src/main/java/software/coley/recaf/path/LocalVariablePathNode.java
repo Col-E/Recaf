@@ -56,6 +56,8 @@ public class LocalVariablePathNode extends AbstractPathNode<ClassMember, LocalVa
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		if (this == o) return 0;
+
 		if (o instanceof LocalVariablePathNode node) {
 			LocalVariable value = getValue();
 			LocalVariable otherValue = node.getValue();

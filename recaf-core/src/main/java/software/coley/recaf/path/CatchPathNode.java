@@ -55,9 +55,11 @@ public class CatchPathNode extends AbstractPathNode<ClassMember, String> {
 
 	@Override
 	public int localCompare(PathNode<?> o) {
-		if (o instanceof CatchPathNode node) {
+		if (this == o) return 0;
+
+		if (o instanceof CatchPathNode node)
 			return getValue().compareTo(node.getValue());
-		}
+
 		return 0;
 	}
 }

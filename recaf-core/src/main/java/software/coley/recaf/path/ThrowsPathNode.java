@@ -55,9 +55,11 @@ public class ThrowsPathNode extends AbstractPathNode<ClassMember, String> {
 
 	@Override
 	public int localCompare(PathNode<?> o) {
-		if (o instanceof ThrowsPathNode node) {
+		if (this == o) return 0;
+
+		if (o instanceof ThrowsPathNode node)
 			return getValue().compareTo(node.getValue());
-		}
+
 		return 0;
 	}
 }

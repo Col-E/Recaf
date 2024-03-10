@@ -90,6 +90,8 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		if (this == o) return 0;
+
 		if (o instanceof ClassPathNode classPathNode) {
 			String name = getValue().getName();
 			String otherName = classPathNode.getValue().getName();

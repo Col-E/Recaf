@@ -119,6 +119,8 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		if (this == o) return 0;
+
 		if (o instanceof DirectoryPathNode pathNode) {
 			String name = getValue();
 			String otherName = pathNode.getValue();
