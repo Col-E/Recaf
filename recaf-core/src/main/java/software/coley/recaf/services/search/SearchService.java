@@ -1,6 +1,7 @@
 package software.coley.recaf.services.search;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.AndroidClassInfo;
@@ -131,7 +132,7 @@ public class SearchService implements Service {
 						service.submit(() -> {
 							if (feedback.hasRequestedStop())
 								return;
-							androidClassVisitor.visit((path, value) -> results.add(createResult(path, value)), classPath, classInfo);
+							androidClassVisitor.visit(getResultSink(results, feedback), classPath, classInfo);
 						});
 					}
 				}
@@ -150,7 +151,7 @@ public class SearchService implements Service {
 						service.submit(() -> {
 							if (feedback.hasRequestedStop())
 								return;
-							jvmClassVisitor.visit((path, value) -> results.add(createResult(path, value)), classPath, classInfo);
+							jvmClassVisitor.visit(getResultSink(results, feedback), classPath, classInfo);
 						});
 					}
 				});
@@ -169,7 +170,7 @@ public class SearchService implements Service {
 					service.submit(() -> {
 						if (feedback.hasRequestedStop())
 							return;
-						fileVisitor.visit((path, value) -> results.add(createResult(path, value)), filePath, fileInfo);
+						fileVisitor.visit(getResultSink(results, feedback), filePath, fileInfo);
 					});
 				}
 			}
@@ -177,6 +178,15 @@ public class SearchService implements Service {
 
 		ThreadUtil.blockUntilComplete(service);
 		return results;
+	}
+
+	@Nonnull
+	private static ResultSink getResultSink(@Nonnull Results results, @Nullable SearchFeedback feedback) {
+		return (path, value) -> {
+			Result<?> result = createResult(path, value);
+			if (feedback == null || feedback.doAcceptResult(result))
+				results.add(result);
+		};
 	}
 
 	@Nonnull

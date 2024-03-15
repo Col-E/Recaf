@@ -3,6 +3,8 @@ package software.coley.recaf.services.search;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.services.search.result.Result;
+import software.coley.recaf.services.search.result.Results;
 
 /**
  * Outline of search feedback capabilities. Allows for:
@@ -47,6 +49,17 @@ public interface SearchFeedback {
 	 * {@code false} to skip.
 	 */
 	default boolean doVisitFile(@Nonnull FileInfo file) {
+		return true;
+	}
+
+	/**
+	 * @param result
+	 * 		Result to consider.
+	 *
+	 * @return {@code true} to accept the result into the final {@link Results} collection.
+	 * {@code false} to drop it.
+	 */
+	default boolean doAcceptResult(@Nonnull Result<?> result) {
 		return true;
 	}
 }
