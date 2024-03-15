@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.annotation.Annotated;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.annotation.BasicAnnotationInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -117,15 +119,23 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		@Override
 		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 			AnnotationVisitor av = super.visitAnnotation(desc, visible);
+			AnnotationInfo annotationInfo = classInfo.getAnnotations().stream()
+					.filter(ai -> ai.getDescriptor().equals(desc))
+					.findFirst()
+					.orElseGet(() -> new BasicAnnotationInfo(visible, desc));
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					classPath.child(new BasicAnnotationInfo(visible, desc)));
+					classPath.child(annotationInfo));
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
 			AnnotationVisitor av = super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+			AnnotationInfo annotationInfo = classInfo.getAnnotations().stream()
+					.filter(ai -> ai.getDescriptor().equals(desc))
+					.findFirst()
+					.orElseGet(() -> new BasicAnnotationInfo(visible, desc));
 			return new AnnotationValueVisitor(av, visible, resultSink,
-					classPath.child(new BasicAnnotationInfo(visible, desc)
+					classPath.child(annotationInfo
 							.withTypeInfo(typeRef, typePath)));
 		}
 	}
@@ -292,18 +302,23 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		@Override
 		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
 			AnnotationVisitor av = super.visitAnnotation(name, descriptor);
-			if (currentAnnoLocation instanceof ClassPathNode classPath) {
-				return new AnnotationValueVisitor(av, visible, resultSink,
-						classPath.child(new BasicAnnotationInfo(visible, descriptor)));
-			} else if (currentAnnoLocation instanceof ClassMemberPathNode memberPath) {
-				return new AnnotationValueVisitor(av, visible, resultSink,
-						memberPath.childAnnotation(new BasicAnnotationInfo(visible, descriptor)));
-			} else if (currentAnnoLocation instanceof AnnotationPathNode annotationPath) {
-				return new AnnotationValueVisitor(av, visible, resultSink,
-						annotationPath.child(new BasicAnnotationInfo(visible, descriptor)));
-			} else {
-				throw new IllegalStateException("Unsupported non-annotatable path: " + currentAnnoLocation);
+			if (currentAnnoLocation.getValue() instanceof Annotated annotated) {
+				AnnotationInfo annotationInfo = annotated.getAnnotations().stream()
+						.filter(ai -> ai.getDescriptor().equals(descriptor))
+						.findFirst()
+						.orElseGet(() -> new BasicAnnotationInfo(visible, descriptor));
+				if (currentAnnoLocation instanceof ClassPathNode classPath) {
+					return new AnnotationValueVisitor(av, visible, resultSink,
+							classPath.child(annotationInfo));
+				} else if (currentAnnoLocation instanceof ClassMemberPathNode memberPath) {
+					return new AnnotationValueVisitor(av, visible, resultSink,
+							memberPath.childAnnotation(annotationInfo));
+				} else if (currentAnnoLocation instanceof AnnotationPathNode annotationPath) {
+					return new AnnotationValueVisitor(av, visible, resultSink,
+							annotationPath.child(annotationInfo));
+				}
 			}
+			throw new IllegalStateException("Unsupported non-annotatable path: " + currentAnnoLocation);
 		}
 
 		@Override

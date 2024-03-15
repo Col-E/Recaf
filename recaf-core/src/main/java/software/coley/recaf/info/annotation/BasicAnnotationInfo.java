@@ -39,14 +39,8 @@ public class BasicAnnotationInfo implements AnnotationInfo {
 		elements.put(element.getElementName(), element);
 	}
 
-	/**
-	 * @param typeRef
-	 * 		Constant denoting where the annotation is applied.
-	 * @param typePath
-	 * 		Path to a type argument.
-	 *
-	 * @return Type annotation from this annotation.
-	 */
+	@Nonnull
+	@Override
 	public BasicTypeAnnotationInfo withTypeInfo(int typeRef, @Nullable TypePath typePath) {
 		return new BasicTypeAnnotationInfo(typeRef, typePath, isVisible(), getDescriptor());
 	}

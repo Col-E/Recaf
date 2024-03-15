@@ -2,6 +2,8 @@ package software.coley.recaf.info.annotation;
 
 import jakarta.annotation.Nonnull;
 
+import java.util.List;
+
 /**
  * Outline of an annotation member.
  *
@@ -15,7 +17,7 @@ public interface AnnotationElement {
 	String getElementName();
 
 	/**
-	 * @return Element value.
+	 * @return Element value. Can be a primitive, {@link String}, a {@link AnnotationElement}, or a {@link List} of any of the prior values.
 	 */
 	@Nonnull
 	Object getElementValue();

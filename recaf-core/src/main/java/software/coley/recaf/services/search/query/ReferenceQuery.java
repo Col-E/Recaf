@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.annotation.Annotated;
+import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.annotation.BasicAnnotationInfo;
 import software.coley.recaf.info.member.BasicLocalVariable;
 import software.coley.recaf.info.member.FieldMember;
@@ -464,18 +466,24 @@ public class ReferenceQuery implements JvmClassQuery {
 				resultSink.accept(currentAnnoLocation, cref(type));
 
 			// Visit sub-annotation
-			if (currentAnnoLocation instanceof ClassPathNode classPath) {
-				return new AnnotationReferenceVisitor(av, visible, resultSink,
-						classPath.child(new BasicAnnotationInfo(visible, descriptor)));
-			} else if (currentAnnoLocation instanceof ClassMemberPathNode memberPath) {
-				return new AnnotationReferenceVisitor(av, visible, resultSink,
-						memberPath.childAnnotation(new BasicAnnotationInfo(visible, descriptor)));
-			} else if (currentAnnoLocation instanceof AnnotationPathNode annotationPath) {
-				return new AnnotationReferenceVisitor(av, visible, resultSink,
-						annotationPath.child(new BasicAnnotationInfo(visible, descriptor)));
-			} else {
-				throw new IllegalStateException("Unsupported non-annotatable path: " + currentAnnoLocation);
+			if (currentAnnoLocation.getValue() instanceof Annotated annotated) {
+				AnnotationInfo annotationInfo = annotated.getAnnotations().stream()
+						.filter(ai -> ai.getDescriptor().equals(descriptor))
+						.findFirst()
+						.orElseGet(() -> new BasicAnnotationInfo(visible, descriptor));
+				if (currentAnnoLocation instanceof ClassPathNode classPath) {
+					return new AnnotationReferenceVisitor(av, visible, resultSink,
+							classPath.child(annotationInfo));
+				} else if (currentAnnoLocation instanceof ClassMemberPathNode memberPath) {
+					return new AnnotationReferenceVisitor(av, visible, resultSink,
+							memberPath.childAnnotation(annotationInfo));
+				} else if (currentAnnoLocation instanceof AnnotationPathNode annotationPath) {
+					return new AnnotationReferenceVisitor(av, visible, resultSink,
+							annotationPath.child(annotationInfo));
+				}
 			}
+
+			throw new IllegalStateException("Unsupported non-annotatable path: " + currentAnnoLocation);
 		}
 
 		@Override
