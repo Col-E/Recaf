@@ -38,7 +38,7 @@ public class LineNumberPathNode extends AbstractPathNode<FileInfo, Integer> {
 	 * @see FilePathNode#child(int)
 	 */
 	public LineNumberPathNode(@Nullable FilePathNode parent, int line) {
-		super(TYPE_ID, parent, Integer.class, line);
+		super(TYPE_ID, parent, line);
 	}
 
 	@Override

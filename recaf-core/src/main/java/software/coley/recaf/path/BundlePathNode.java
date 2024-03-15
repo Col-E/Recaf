@@ -43,7 +43,7 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 	 * @see ResourcePathNode#child(Bundle)
 	 */
 	public BundlePathNode(@Nullable ResourcePathNode parent, @Nonnull Bundle<?> bundle) {
-		super(TYPE_ID, parent, Bundle.class, bundle);
+		super(TYPE_ID, parent, bundle);
 	}
 
 	/**

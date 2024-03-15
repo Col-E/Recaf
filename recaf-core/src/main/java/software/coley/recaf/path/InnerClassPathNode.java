@@ -31,7 +31,7 @@ public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassIn
 	 */
 	public InnerClassPathNode(@Nullable ClassPathNode parent,
 							  @Nonnull InnerClassInfo innerClass) {
-		super(TYPE_ID, parent, InnerClassInfo.class, innerClass);
+		super(TYPE_ID, parent, innerClass);
 	}
 
 	/**

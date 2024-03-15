@@ -306,7 +306,7 @@ public class NavigationManager implements Navigable, Service {
 	 */
 	private static class DummyInitialNode extends AbstractPathNode<Object, Object> {
 		private DummyInitialNode() {
-			super("dummy", null, Object.class, new Object());
+			super("dummy", null, new Object());
 		}
 
 		@Nonnull

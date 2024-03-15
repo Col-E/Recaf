@@ -39,7 +39,7 @@ public class CatchPathNode extends AbstractPathNode<ClassMember, String> {
 	 * @see ClassMemberPathNode#childCatch(String)
 	 */
 	public CatchPathNode(@Nullable ClassMemberPathNode parent, @Nonnull String type) {
-		super(TYPE_ID, parent, String.class, type);
+		super(TYPE_ID, parent, type);
 	}
 
 	@Override

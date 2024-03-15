@@ -25,7 +25,7 @@ public class WorkspacePathNode extends AbstractPathNode<Object, Workspace> {
 	 * 		Workspace value.
 	 */
 	public WorkspacePathNode(@Nonnull Workspace value) {
-		super(TYPE_ID, null, Workspace.class, value);
+		super(TYPE_ID, null, value);
 	}
 
 	/**

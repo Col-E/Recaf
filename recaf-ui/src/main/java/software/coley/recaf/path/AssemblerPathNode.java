@@ -26,7 +26,7 @@ public class AssemblerPathNode extends AbstractPathNode<Object, AssemblerPathDat
 	 */
 	@SuppressWarnings("unchecked")
 	public AssemblerPathNode(@Nonnull PathNode<?> parent, @Nonnull AssemblerPathData data) {
-		super(TYPE_ID, (PathNode<Object>) parent, AssemblerPathData.class, data);
+		super(TYPE_ID, (PathNode<Object>) parent, data);
 	}
 
 	@Nonnull

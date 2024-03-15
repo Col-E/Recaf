@@ -43,7 +43,7 @@ public class AnnotationPathNode extends AbstractPathNode<Object, AnnotationInfo>
 	 */
 	@SuppressWarnings("unchecked")
 	public AnnotationPathNode(@Nullable PathNode<?> parent, @Nonnull AnnotationInfo annotation) {
-		super(TYPE_ID, (PathNode<Object>) parent, AnnotationInfo.class, annotation);
+		super(TYPE_ID, (PathNode<Object>) parent, annotation);
 	}
 
 	/**

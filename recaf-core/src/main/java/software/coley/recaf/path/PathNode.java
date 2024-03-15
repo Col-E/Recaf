@@ -2,6 +2,8 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Set;
@@ -51,7 +53,7 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	@Nullable
 	@SuppressWarnings("unchecked")
 	default <T, I extends PathNode<T>> I getParentOfType(@Nonnull Class<T> type) {
-		if (getValueType().isAssignableFrom(type))
+		if (type.isAssignableFrom(getValueType()))
 			return (I) this;
 		PathNode<?> parent = getParent();
 		if (parent == null) return null;
@@ -118,7 +120,7 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	@Nullable
 	@SuppressWarnings("unchecked")
 	default <T> T getValueOfType(@Nonnull Class<T> type) {
-		if (getValueType().isAssignableFrom(type))
+		if (type.isAssignableFrom(getValueType()))
 			return (T) getValue();
 		PathNode<?> parent = getParent();
 		if (parent == null) return null;

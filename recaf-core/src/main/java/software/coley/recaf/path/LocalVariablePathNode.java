@@ -40,7 +40,7 @@ public class LocalVariablePathNode extends AbstractPathNode<ClassMember, LocalVa
 	 * @see ClassMemberPathNode#childVariable(LocalVariable)
 	 */
 	public LocalVariablePathNode(@Nullable ClassMemberPathNode parent, @Nonnull LocalVariable variable) {
-		super(TYPE_ID, parent, LocalVariable.class, variable);
+		super(TYPE_ID, parent, variable);
 	}
 
 	@Override

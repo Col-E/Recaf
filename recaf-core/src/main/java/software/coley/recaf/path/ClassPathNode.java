@@ -41,7 +41,7 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	 * @see DirectoryPathNode#child(ClassInfo)
 	 */
 	public ClassPathNode(@Nullable DirectoryPathNode parent, @Nonnull ClassInfo info) {
-		super(TYPE_ID, parent, ClassInfo.class, info);
+		super(TYPE_ID, parent, info);
 	}
 
 	/**

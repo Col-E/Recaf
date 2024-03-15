@@ -2,6 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.util.Unchecked;
 
 /**
  * Base implementation of {@link PathNode}.
@@ -24,16 +25,14 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 	 * 		Unique node type ID.
 	 * @param parent
 	 * 		Optional parent node.
-	 * @param valueType
-	 * 		Type of value.
 	 * @param value
 	 * 		Value instance.
 	 */
-	protected AbstractPathNode(@Nonnull String id, @Nullable PathNode<P> parent, @Nonnull Class<V> valueType, @Nonnull V value) {
+	protected AbstractPathNode(@Nonnull String id, @Nullable PathNode<P> parent, @Nonnull V value) {
 		this.id = id;
 		this.parent = parent;
-		this.valueType = valueType;
 		this.value = value;
+		this.valueType = Unchecked.cast(value.getClass());
 	}
 
 	/**

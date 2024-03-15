@@ -41,7 +41,7 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 	 * @see BundlePathNode#child(String)
 	 */
 	public DirectoryPathNode(@Nullable BundlePathNode parent, @Nonnull String directory) {
-		super(TYPE_ID, parent, String.class, directory);
+		super(TYPE_ID, parent, directory);
 	}
 
 	/**

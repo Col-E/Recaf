@@ -41,7 +41,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 	 * @see WorkspacePathNode#child(WorkspaceResource)
 	 */
 	public ResourcePathNode(@Nullable WorkspacePathNode parent, @Nonnull WorkspaceResource resource) {
-		super(TYPE_ID, parent, WorkspaceResource.class, resource);
+		super(TYPE_ID, parent, resource);
 	}
 
 	/**

@@ -3,9 +3,8 @@ package software.coley.recaf.path;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.info.AndroidClassInfo;
-import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.*;
+import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
 import software.coley.recaf.test.dummy.StringConsumer;
@@ -92,6 +91,40 @@ class PathNodeTest {
 		s3 = s4.child(secondaryJvmBundle);
 		s2 = s3.child(packageName);
 		s1 = s2.child(secondaryClassInfo);
+	}
+
+	@Nested
+	class Value {
+		@Test
+		void getValueOfTypeForParentTypes() {
+			ClassInfo v1 = p1.getValueOfType(ClassInfo.class);
+			Accessed v2 = p1.getValueOfType(Accessed.class);
+			Annotated v3 = p1.getValueOfType(Annotated.class);
+			assertSame(v1, v2);
+			assertSame(v2, v3);
+		}
+
+		@Test
+		void getValueOfTypeForParentTypes2() {
+			// Same test as the prior
+			ClassMemberPathNode memberPath = p1.child(primaryClassInfo.getMethods().get(0));
+
+			ClassPathNode v1 = memberPath.getParentOfType(ClassInfo.class);       // intended
+			Accessed v2 = memberPath.getParentOfType(ClassInfo.class);            // intended
+			CharSequence v3 = memberPath.getParentOfType(ClassInfo.class); // runtime error
+
+
+
+
+
+
+
+
+			// String v2 = memberPath.getParentOfType(Accessed.class);
+			// Annotated v3 = memberPath.getParentOfType(Annotated.class);
+			assertSame(v1, v2);
+			assertSame(v2, v3);
+		}
 	}
 
 	@Nested

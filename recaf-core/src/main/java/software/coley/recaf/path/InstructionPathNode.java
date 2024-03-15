@@ -49,7 +49,7 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 	 * @see ClassMemberPathNode#childInsn(AbstractInsnNode,int)
 	 */
 	public InstructionPathNode(@Nullable ClassMemberPathNode parent, @Nonnull AbstractInsnNode insn, int index) {
-		super(TYPE_ID, parent, AbstractInsnNode.class, insn);
+		super(TYPE_ID, parent, insn);
 		this.index = index;
 	}
 

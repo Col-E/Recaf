@@ -44,7 +44,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @see ClassPathNode#child(ClassMember)
 	 */
 	public ClassMemberPathNode(@Nullable ClassPathNode parent, @Nonnull ClassMember member) {
-		super(TYPE_ID, parent, ClassMember.class, member);
+		super(TYPE_ID, parent, member);
 	}
 
 	/**

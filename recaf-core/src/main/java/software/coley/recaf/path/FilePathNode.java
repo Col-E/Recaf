@@ -38,7 +38,7 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 	 * @see DirectoryPathNode#child(FileInfo)
 	 */
 	public FilePathNode(@Nullable DirectoryPathNode parent, @Nonnull FileInfo info) {
-		super(TYPE_ID, parent, FileInfo.class, info);
+		super(TYPE_ID, parent, info);
 	}
 
 	/**

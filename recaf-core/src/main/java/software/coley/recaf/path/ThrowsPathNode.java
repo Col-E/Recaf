@@ -39,7 +39,7 @@ public class ThrowsPathNode extends AbstractPathNode<ClassMember, String> {
 	 * @see ClassMemberPathNode#childThrows(String)
 	 */
 	public ThrowsPathNode(@Nullable ClassMemberPathNode parent, @Nonnull String type) {
-		super(TYPE_ID, parent, String.class, type);
+		super(TYPE_ID, parent, type);
 	}
 
 	@Override
