@@ -107,12 +107,16 @@ class PathNodeTest {
 
 		@Test
 		void getParentOfTypeForParentTypes() {
-			// Same test as the prior, but it gets the PathNode<T> and coming from a child path node.
 			ClassMemberPathNode memberPath = p1.child(primaryClassInfo.getMethods().get(0));
-			ClassPathNode v1 = memberPath.getParentOfType(ClassInfo.class);
-			ClassPathNode v2 = memberPath.getParentOfType(Accessed.class);
-			ClassPathNode v3 = memberPath.getParentOfType(Annotated.class);
-			assertSame(v1, v2);
+
+			// Member path is not a class-info, so this will be the parent.
+			ClassPathNode v1 = memberPath.getPathOfType(ClassInfo.class);
+			assertSame(v1, p1);
+
+			// The member itself is accessed/annotated
+			ClassMemberPathNode v2 = memberPath.getPathOfType(Accessed.class);
+			ClassMemberPathNode v3 = memberPath.getPathOfType(Annotated.class);
+			assertSame(memberPath, v2);
 			assertSame(v2, v3);
 		}
 	}

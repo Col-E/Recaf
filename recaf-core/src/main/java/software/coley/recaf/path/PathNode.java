@@ -2,8 +2,6 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Set;
@@ -36,29 +34,6 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	@Nullable
 	@SuppressWarnings("rawtypes")
 	PathNode getParent();
-
-	/**
-	 * @param type
-	 * 		Some type contained in the full path.
-	 * 		This includes the current {@link PathNode} and any {@link #getParent() parent}.
-	 * @param <T>
-	 * 		Implied value type.
-	 * @param <I>
-	 * 		Implied path node implementation type.
-	 *
-	 * @return Node in the path holding a value of the given type.
-	 *
-	 * @see #getValueOfType(Class) Get the direct value of the parent node.
-	 */
-	@Nullable
-	@SuppressWarnings("unchecked")
-	default <T, I extends PathNode<? extends T>> I getParentOfType(@Nonnull Class<T> type) {
-		if (type.isAssignableFrom(getValueType()))
-			return (I) this;
-		PathNode<?> parent = getParent();
-		if (parent == null) return null;
-		return parent.getParentOfType(type);
-	}
 
 	/**
 	 * @return Wrapped value.
@@ -112,10 +87,33 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	 * 		This includes the current {@link PathNode} and any {@link #getParent() parent}.
 	 * @param <T>
 	 * 		Implied value type.
+	 * @param <I>
+	 * 		Implied path node implementation type.
+	 *
+	 * @return Node in the path holding a value of the given type.
+	 *
+	 * @see #getValueOfType(Class) Get the direct value of the parent node.
+	 */
+	@Nullable
+	@SuppressWarnings("unchecked")
+	default <T, I extends PathNode<? extends T>> I getPathOfType(@Nonnull Class<T> type) {
+		if (type.isAssignableFrom(getValueType()))
+			return (I) this;
+		PathNode<?> parent = getParent();
+		if (parent == null) return null;
+		return parent.getPathOfType(type);
+	}
+
+	/**
+	 * @param type
+	 * 		Some type contained in the full path.
+	 * 		This includes the current {@link PathNode} and any {@link #getParent() parent}.
+	 * @param <T>
+	 * 		Implied value type.
 	 *
 	 * @return Instance of value from the path, or {@code null} if not found in this path.
 	 *
-	 * @see #getParentOfType(Class) Get the containing {@link PathNode} instead of the direct value.
+	 * @see #getPathOfType(Class) Get the containing {@link PathNode} instead of the direct value.
 	 */
 	@Nullable
 	@SuppressWarnings("unchecked")

@@ -141,9 +141,9 @@ public class SearchServiceTest extends TestBase {
 				if (result.getPath() instanceof InstructionPathNode instructionPath) {
 					assertEquals(BIPUSH, instructionPath.getValue().getOpcode());
 
-					ClassMemberPathNode parentOfType = instructionPath.getParentOfType(ClassMember.class);
-					assertNotNull(parentOfType);
-					ClassMember declaredMember = parentOfType.getValue();
+					ClassMemberPathNode memberPath = instructionPath.getPathOfType(ClassMember.class);
+					assertNotNull(memberPath);
+					ClassMember declaredMember = memberPath.getValue();
 					assertTrue(declaredMember.isMethod());
 					assertEquals("hashCode", declaredMember.getName());
 					assertEquals("()I", declaredMember.getDescriptor());

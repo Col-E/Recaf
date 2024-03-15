@@ -221,7 +221,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Nonnull
 	@Override
 	public ClassPathNode getClassPath() {
-		return Objects.requireNonNull(path.getParentOfType(ClassInfo.class), "Missing class parent path");
+		return Objects.requireNonNull(path.getPathOfType(ClassInfo.class), "Missing class parent path");
 	}
 
 	@Override

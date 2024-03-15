@@ -289,8 +289,8 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 				return STUB;
 
 			// Map class to vertex.
-			ResourcePathNode resourceParent = result.getParentOfType(WorkspaceResource.class);
-			boolean isPrimary = resourceParent != null && resourceParent.isPrimary();
+			ResourcePathNode resourcePath = result.getPathOfType(WorkspaceResource.class);
+			boolean isPrimary = resourcePath != null && resourcePath.isPrimary();
 			ClassInfo info = result.getValue();
 			return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, isPrimary);
 		};
