@@ -97,6 +97,7 @@ class PathNodeTest {
 	class Value {
 		@Test
 		void getValueOfTypeForParentTypes() {
+			// We should be able to get the current value by any of its interfaces.
 			ClassInfo v1 = p1.getValueOfType(ClassInfo.class);
 			Accessed v2 = p1.getValueOfType(Accessed.class);
 			Annotated v3 = p1.getValueOfType(Annotated.class);
@@ -105,23 +106,12 @@ class PathNodeTest {
 		}
 
 		@Test
-		void getValueOfTypeForParentTypes2() {
-			// Same test as the prior
+		void getParentOfTypeForParentTypes() {
+			// Same test as the prior, but it gets the PathNode<T> and coming from a child path node.
 			ClassMemberPathNode memberPath = p1.child(primaryClassInfo.getMethods().get(0));
-
-			ClassPathNode v1 = memberPath.getParentOfType(ClassInfo.class);       // intended
-			Accessed v2 = memberPath.getParentOfType(ClassInfo.class);            // intended
-			CharSequence v3 = memberPath.getParentOfType(ClassInfo.class); // runtime error
-
-
-
-
-
-
-
-
-			// String v2 = memberPath.getParentOfType(Accessed.class);
-			// Annotated v3 = memberPath.getParentOfType(Annotated.class);
+			ClassPathNode v1 = memberPath.getParentOfType(ClassInfo.class);
+			ClassPathNode v2 = memberPath.getParentOfType(Accessed.class);
+			ClassPathNode v3 = memberPath.getParentOfType(Annotated.class);
 			assertSame(v1, v2);
 			assertSame(v2, v3);
 		}

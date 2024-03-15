@@ -52,7 +52,7 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	 */
 	@Nullable
 	@SuppressWarnings("unchecked")
-	default <T, I extends PathNode<T>> I getParentOfType(@Nonnull Class<T> type) {
+	default <T, I extends PathNode<? extends T>> I getParentOfType(@Nonnull Class<T> type) {
 		if (type.isAssignableFrom(getValueType()))
 			return (I) this;
 		PathNode<?> parent = getParent();
