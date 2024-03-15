@@ -1,24 +1,20 @@
 package software.coley.recaf.ui.control.tree;
 
-import atlantafx.base.theme.Styles;
-import atlantafx.base.theme.Tweaks;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
-import javafx.scene.input.KeyCode;
 import software.coley.recaf.info.*;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.cell.CellConfigurationService;
-import software.coley.recaf.services.cell.context.ContextSource;
+import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
+import software.coley.recaf.ui.control.PathNodeTree;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;
-import software.coley.recaf.services.workspace.WorkspaceCloseListener;
-import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -27,22 +23,20 @@ import software.coley.recaf.workspace.model.resource.ResourceFileListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 
 /**
- * Tree view for items within a {@link Workspace}.
+ * Tree view for navigating a {@link Workspace}.
  *
  * @author Matt Coley
  */
 @Dependent
-public class WorkspaceTree extends TreeView<PathNode<?>> implements
+public class WorkspaceTree extends PathNodeTree implements
 		WorkspaceModificationListener, WorkspaceCloseListener,
 		ResourceJvmClassListener, ResourceAndroidClassListener, ResourceFileListener {
-	private static final Comparator<Named> PATH_COMPARATOR = (o1, o2) -> {
-		String a = o1.getName();
-		String b = o2.getName();
-		return compareFilePaths(a, b);
-	};
 	private final WorkspaceExplorerConfig explorerConfig;
 	private WorkspaceTreeNode root;
 	private WorkspacePathNode rootPath;
@@ -55,23 +49,11 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 	 * 		Service to configure cell content.
 	 */
 	@Inject
-	public WorkspaceTree(@Nonnull CellConfigurationService configurationService, @Nonnull WorkspaceExplorerConfig explorerConfig) {
+	public WorkspaceTree(@Nonnull CellConfigurationService configurationService, @Nonnull Actions actions,
+						 @Nonnull WorkspaceExplorerConfig explorerConfig) {
+		super(configurationService, actions);
+
 		this.explorerConfig = explorerConfig;
-		setShowRoot(false);
-		setCellFactory(param -> new WorkspaceTreeCell(ContextSource.DECLARATION, configurationService));
-		getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
-		setOnKeyPressed(e -> {
-			KeyCode code = e.getCode();
-			if (code == KeyCode.RIGHT || code == KeyCode.KP_RIGHT) {
-				TreeItem<PathNode<?>> selected = getSelectionModel().getSelectedItem();
-				if (selected != null)
-					TreeItems.recurseOpen(selected);
-			} else if (code == KeyCode.LEFT || code == KeyCode.KP_LEFT) {
-				TreeItem<PathNode<?>> selected = getSelectionModel().getSelectedItem();
-				if (selected != null)
-					TreeItems.recurseClose(this, selected);
-			}
-		});
 	}
 
 	/**
@@ -123,7 +105,7 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 			BundlePathNode bundlePath = resourcePath.child(bundle);
 
 			// Pre-sort classes to skip tree-building comparisons/synchronizations.
-			TreeSet<ClassInfo> sortedClasses = new TreeSet<>(PATH_COMPARATOR);
+			TreeSet<ClassInfo> sortedClasses = new TreeSet<>(Named.NAME_PATH_COMPARATOR);
 			sortedClasses.addAll(bundle.values());
 
 			// Add each class in sorted order.
@@ -139,7 +121,7 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 			BundlePathNode bundlePath = resourcePath.child(bundle);
 
 			// Pre-sort classes to skip tree-building comparisons/synchronizations.
-			TreeSet<FileInfo> sortedFiles = new TreeSet<>(PATH_COMPARATOR);
+			TreeSet<FileInfo> sortedFiles = new TreeSet<>(Named.NAME_PATH_COMPARATOR);
 			sortedFiles.addAll(bundle.values());
 
 			// Add each class in sorted order.
@@ -311,27 +293,5 @@ public class WorkspaceTree extends TreeView<PathNode<?>> implements
 			return StringUtil.cutOffAtNth(directory, '/', max) + "...";
 		}
 		return directory;
-	}
-
-	@SuppressWarnings("StringEquality")
-	private static int compareFilePaths(@Nonnull String a, @Nonnull String b) {
-		String directoryPathA = StringUtil.cutOffAtLast(a, '/');
-		String directoryPathB = StringUtil.cutOffAtLast(b, '/');
-		if (!Objects.equals(directoryPathA, directoryPathB)) {
-			// The directory path is the input path (same reference) if there is no '/'.
-			// We always want root paths to be shown first since we group them in a container directory anyways.
-			if (directoryPathA == a && directoryPathB != b)
-				return -1;
-			if (directoryPathA != a && directoryPathB == b)
-				return 1;
-
-			// We want subdirectories to be shown first over files in the directory.
-			if (directoryPathB.startsWith(directoryPathA))
-				return 1;
-			else if (directoryPathA.startsWith(directoryPathB))
-				return -1;
-		}
-
-		return a.compareTo(b);
 	}
 }

@@ -149,6 +149,9 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * 		Tree node to insert into.
 	 * @param path
 	 * 		Path to insert, relative to the given node.
+	 * @param sorted
+	 *        {@code true} if the path insertion is being done in a pre-sorted manner, typically in the case of building an initial tree.
+	 *        {@code false} if the path being inserted is not guaranteed to be in order relative to the last path inserted into the tree.
 	 *
 	 * @return Inserted node.
 	 */
