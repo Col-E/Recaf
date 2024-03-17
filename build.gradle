@@ -1,7 +1,7 @@
 plugins {
-    id 'com.github.ben-manes.versions' version '0.42.0' apply false
-    id 'gov.tak.gradle.plugins.coverage-report-aggregator' version '1.3.0'
-    id 'gov.tak.gradle.plugins.checker-processor' version '2.0.2' apply false
+    alias(libs.plugins.benmanes.versions) apply false
+    alias(libs.plugins.gradle.coverage.report.aggregator)
+    alias(libs.plugins.gradle.checker.processor) apply false
 }
 
 allprojects {
@@ -18,15 +18,17 @@ subprojects {
         mavenLocal()
         mavenCentral()
         google()
-        maven { url 'https://jitpack.io' }
         maven { url 'https://maven.quiltmc.org/repository/release/' }
+        maven { url 'https://jitpack.io' }
     }
 
     // ======================= DEPENDENCIES ========================
+    dependencies {
+        // to enforce it everywhere as standard
+        implementation(libs.jakarta.annotation)
+    }
 
-    apply from: rootProject.file('dependencies.gradle')
-
-    configurations.all {
+    configurations.configureEach {
         // Annoying annotations that replace desired tab completions.
         exclude group: 'org.checkerframework'
 
@@ -83,10 +85,10 @@ subprojects {
     // All modules with Java components should share the same test dependencies.
     plugins.withType(JavaPlugin).configureEach {
         dependencies {
-            testImplementation junit_api
-            testImplementation junit_params
-            testImplementation mockito
-            testRuntimeOnly junit_engine
+            testImplementation(libs.junit.api)
+            testImplementation(libs.junit.params)
+            testImplementation(libs.mockito)
+            testRuntimeOnly(libs.junit.engine)
         }
     }
 
@@ -94,9 +96,9 @@ subprojects {
     // in its own configuration. Otherwise it can get confused.
     plugins.withType(JavaTestFixturesPlugin).configureEach {
         dependencies {
-            testFixturesApi junit_api
-            testFixturesApi junit_params
-            testFixturesApi mockito
+            testFixturesApi(libs.junit.api)
+            testFixturesApi(libs.junit.params)
+            testFixturesApi(libs.mockito)
         }
     }
 
@@ -127,6 +129,7 @@ tasks.register('test') {
             buildJacocoAggregate.execute()
     }
 }
+
 tasks.register('build') {
     // Build will run tests, unless skipped by '-x test'.
     // Even if skipped, this will still lead to the subproject build tasks being executed, such as:
