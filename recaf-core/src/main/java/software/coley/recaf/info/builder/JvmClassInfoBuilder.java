@@ -406,6 +406,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		private final Consumer<BasicAnnotationInfo> annotationConsumer;
 		private final Map<String, AnnotationElement> elements = new HashMap<>();
 		private final List<Object> arrayValues = new ArrayList<>();
+		private final List<BasicAnnotationInfo> subAnnotations = new ArrayList<>();
 		private final boolean visible;
 		private final String descriptor;
 
@@ -442,13 +443,20 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-			return new AnnotationBuilderAdapter(true, descriptor, anno -> {
+			AnnotationBuilderAdapter adapter = new AnnotationBuilderAdapter(true, descriptor, anno -> {
 				if (name == null) {
 					arrayValues.add(anno);
 				} else {
 					elements.put(name, new BasicAnnotationElement(name, anno));
 				}
-			});
+			}) {
+				@Override
+				protected void populate(@Nonnull BasicAnnotationInfo anno) {
+					super.populate(anno);
+					subAnnotations.add(anno);
+				}
+			};
+			return adapter;
 		}
 
 		@Override
@@ -466,8 +474,12 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		@Override
 		public void visitEnd() {
 			super.visitEnd();
-			BasicAnnotationInfo anno = new BasicAnnotationInfo(visible, descriptor);
+			populate(new BasicAnnotationInfo(visible, descriptor));
+		}
+
+		protected void populate(@Nonnull BasicAnnotationInfo anno) {
 			elements.forEach((name, value) -> anno.addElement(value));
+			subAnnotations.forEach(anno::addAnnotation);
 			if (annotationConsumer != null) annotationConsumer.accept(anno);
 		}
 	}

@@ -12,7 +12,7 @@ import java.util.Map;
  *
  * @author Matt Coley
  */
-public interface AnnotationInfo {
+public interface AnnotationInfo extends Annotated {
 	/**
 	 * @param typeRef
 	 * 		Constant denoting where the annotation is applied.

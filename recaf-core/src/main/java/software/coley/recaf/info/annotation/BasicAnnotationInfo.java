@@ -4,7 +4,9 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.TypePath;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,6 +16,8 @@ import java.util.Map;
  */
 public class BasicAnnotationInfo implements AnnotationInfo {
 	private final Map<String, AnnotationElement> elements = new LinkedHashMap<>(); // preserve order on iter
+	private final List<AnnotationInfo> annotations = new ArrayList<>();
+	private final List<TypeAnnotationInfo> typeAnnotations = new ArrayList<>();
 	private final boolean visible;
 	private final String descriptor;
 
@@ -39,6 +43,28 @@ public class BasicAnnotationInfo implements AnnotationInfo {
 		elements.put(element.getElementName(), element);
 	}
 
+	/**
+	 * For internal use when populating the model.
+	 * Adding an annotation here does not change the bytecode of the class.
+	 *
+	 * @param annotation
+	 * 		Annotation to add.
+	 */
+	public void addAnnotation(@Nonnull AnnotationInfo annotation) {
+		annotations.add(annotation);
+	}
+
+	/**
+	 * For internal use when populating the model.
+	 * Adding an annotation here does not change the bytecode of the class.
+	 *
+	 * @param typeAnnotation
+	 * 		Annotation to add.
+	 */
+	public void addTypeAnnotation(@Nonnull TypeAnnotationInfo typeAnnotation) {
+		typeAnnotations.add(typeAnnotation);
+	}
+
 	@Nonnull
 	@Override
 	public BasicTypeAnnotationInfo withTypeInfo(int typeRef, @Nullable TypePath typePath) {
@@ -60,6 +86,18 @@ public class BasicAnnotationInfo implements AnnotationInfo {
 	@Override
 	public Map<String, AnnotationElement> getElements() {
 		return elements;
+	}
+
+	@Nonnull
+	@Override
+	public List<AnnotationInfo> getAnnotations() {
+		return annotations;
+	}
+
+	@Nonnull
+	@Override
+	public List<TypeAnnotationInfo> getTypeAnnotations() {
+		return typeAnnotations;
 	}
 
 	@Override
