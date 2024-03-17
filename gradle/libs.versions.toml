@@ -17,7 +17,7 @@ ikonli = "12.3.1"
 instrument-server = "1.4.0"
 jackson = "2.16.1"
 jakarta-annotation = "3.0.0-M1"
-jasm = "1a4a7df195"
+jasm = "29504574e2"
 jlinker = "1.0.7"
 jphantom = "1.4.4"
 junit = "5.10.2"
@@ -84,8 +84,8 @@ jackson = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml", 
 
 jakarta-annotation = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation" }
 
-jasm-composistion-jvm = { module = "com.github.Nowilltolife.Jasm:jasm-composition-jvm", version.ref = "jasm" }
-jasm-core = { module = "com.github.Nowilltolife.Jasm:jasm-core", version.ref = "jasm" }
+jasm-composistion-jvm = { module = "com.github.jumanji144.Jasm:jasm-composition-jvm", version.ref = "jasm" }
+jasm-core = { module = "com.github.jumanji144.Jasm:jasm-core", version.ref = "jasm" }
 
 jlinker = { module = "com.github.xxDark:jlinker", version.ref = "jlinker" }
 
