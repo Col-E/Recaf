@@ -14,6 +14,7 @@ import software.coley.recaf.services.search.result.Results;
  * </ul>
  *
  * @author Matt Coley
+ * @see CancellableSearchFeedback Basic cancellable implementation.
  */
 public interface SearchFeedback {
 	/**
@@ -26,7 +27,7 @@ public interface SearchFeedback {
 	 * @return {@code true} to request {@link SearchService} stops handling input to end the search early.
 	 * {@code false} to continue the search.
 	 */
-	default boolean hasRequestedStop() {
+	default boolean hasRequestedCancellation() {
 		return false;
 	}
 

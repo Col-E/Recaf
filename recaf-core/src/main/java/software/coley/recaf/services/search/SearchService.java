@@ -100,15 +100,12 @@ public class SearchService implements Service {
 		JvmClassSearchVisitor jvmClassVisitorTemp = null;
 		FileSearchVisitor fileVisitorTemp = null;
 		for (Query query : queries) {
-			if (query instanceof AndroidClassQuery androidClassQuery) {
+			if (query instanceof AndroidClassQuery androidClassQuery)
 				androidClassVisitorTemp = androidClassQuery.visitor(androidClassVisitorTemp);
-			}
-			if (query instanceof JvmClassQuery jvmClassQuery) {
+			if (query instanceof JvmClassQuery jvmClassQuery)
 				jvmClassVisitorTemp = jvmClassQuery.visitor(jvmClassVisitorTemp);
-			}
-			if (query instanceof FileQuery fileQuery) {
+			if (query instanceof FileQuery fileQuery)
 				fileVisitorTemp = fileQuery.visitor(fileVisitorTemp);
-			}
 		}
 		AndroidClassSearchVisitor androidClassVisitor = androidClassVisitorTemp;
 		JvmClassSearchVisitor jvmClassVisitor = jvmClassVisitorTemp;
@@ -124,13 +121,15 @@ public class SearchService implements Service {
 				for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
 					BundlePathNode bundleNode = resourceNode.child(bundle);
 					for (AndroidClassInfo classInfo : bundle) {
+						if (feedback.hasRequestedCancellation())
+							break;
 						if (!feedback.doVisitClass(classInfo))
 							continue;
 						ClassPathNode classPath = bundleNode
 								.child(classInfo.getPackageName())
 								.child(classInfo);
 						service.submit(() -> {
-							if (feedback.hasRequestedStop())
+							if (feedback.hasRequestedCancellation())
 								return;
 							androidClassVisitor.visit(getResultSink(results, feedback), classPath, classInfo);
 						});
@@ -143,13 +142,15 @@ public class SearchService implements Service {
 				resource.jvmClassBundleStream().forEach(bundle -> {
 					BundlePathNode bundlePathNode = resourceNode.child(bundle);
 					for (JvmClassInfo classInfo : bundle) {
+						if (feedback.hasRequestedCancellation())
+							break;
 						if (!feedback.doVisitClass(classInfo))
 							continue;
 						ClassPathNode classPath = bundlePathNode
 								.child(classInfo.getPackageName())
 								.child(classInfo);
 						service.submit(() -> {
-							if (feedback.hasRequestedStop())
+							if (feedback.hasRequestedCancellation())
 								return;
 							jvmClassVisitor.visit(getResultSink(results, feedback), classPath, classInfo);
 						});
@@ -162,13 +163,15 @@ public class SearchService implements Service {
 				FileBundle fileBundle = resource.getFileBundle();
 				BundlePathNode bundleNode = resourceNode.child(fileBundle);
 				for (FileInfo fileInfo : fileBundle) {
+					if (feedback.hasRequestedCancellation())
+						break;
 					if (!feedback.doVisitFile(fileInfo))
 						continue;
 					FilePathNode filePath = bundleNode
 							.child(fileInfo.getDirectoryName())
 							.child(fileInfo);
 					service.submit(() -> {
-						if (feedback.hasRequestedStop())
+						if (feedback.hasRequestedCancellation())
 							return;
 						fileVisitor.visit(getResultSink(results, feedback), filePath, fileInfo);
 					});
