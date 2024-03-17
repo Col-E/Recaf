@@ -1,21 +1,16 @@
 package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
-import javafx.stage.Stage;
-import javafx.stage.Window;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -1896,7 +1891,7 @@ public class Actions implements Service {
 		// Create the tab for the content, then display it.
 		DockingTab tab = factory.get();
 		tab.select();
-		focus(tab.getRegion().getScene());
+		SceneUtils.focus(tab.getRegion().getScene());
 		return (Navigable) tab.getContent();
 	}
 
@@ -1916,28 +1911,8 @@ public class Actions implements Service {
 	 * 		Navigable content to select in its containing {@link DockingRegion}.
 	 */
 	private static void selectTab(Navigable navigable) {
-		if (navigable instanceof Node node) {
-			while (node != null) {
-				// Get the parent of the node, skip the intermediate 'content area' from tab-pane default skin.
-				Parent parent = node.getParent();
-				if (parent.getStyleClass().contains("tab-content-area"))
-					parent = parent.getParent();
-
-				// If the tab content is the node, select it and return.
-				if (parent instanceof DockingRegion tabParent) {
-					Scene scene = parent.getScene();
-					for (DockingTab tab : tabParent.getDockTabs())
-						if (tab.getContent() == node) {
-							tab.select();
-							focus(scene);
-							return;
-						}
-				}
-
-				// Next parent.
-				node = parent;
-			}
-		}
+		if (navigable instanceof Node node)
+			SceneUtils.focus(node);
 	}
 
 	/**
@@ -2013,28 +1988,6 @@ public class Actions implements Service {
 						regionTab.close();
 				})
 		);
-	}
-
-	/**
-	 * @param scene
-	 * 		Scene to bring to front/focus.
-	 */
-	private static void focus(@Nullable Scene scene) {
-		if (scene == null)
-			return;
-
-		Window window = scene.getWindow();
-		if (window instanceof Stage stage) {
-			// If minified, unminify it.
-			stage.setIconified(false);
-			stage.show();
-
-			// The method 'stage.toFront()' does not work as you'd expect so this hack is how we
-			// force the window to the front.
-			stage.setAlwaysOnTop(true);
-			stage.setAlwaysOnTop(false);
-		}
-		window.requestFocus();
 	}
 
 	/**
