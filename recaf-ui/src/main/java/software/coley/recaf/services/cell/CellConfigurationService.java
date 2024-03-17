@@ -18,6 +18,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.info.TextFileInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
@@ -256,6 +257,43 @@ public class CellConfigurationService implements Service {
 			return textService.getBundleTextProvider(workspace, resource, bundlePath.getValue()).makeText();
 		} else if (item instanceof ResourcePathNode) {
 			return textService.getResourceTextProvider(workspace, resource).makeText();
+		} else if (item instanceof InstructionPathNode instructionPath) {
+			ClassBundle<? extends ClassInfo> bundle = instructionPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Instruction path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			ClassInfo declaringClass = instructionPath.getValueOfType(ClassInfo.class);
+			if (declaringClass == null) {
+				logger.error("Instruction path node missing class section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			MethodMember declaringMethod = instructionPath.getValueOfType(MethodMember.class);
+			if (declaringMethod == null) {
+				logger.error("Instruction path node missing method section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			return textService.getInstructionTextProvider(workspace, resource, bundle,
+					declaringClass, declaringMethod, instructionPath.getValue(),
+					instructionPath.getInstructionIndex()).makeText();
+		} else if (item instanceof LineNumberPathNode lineNumberPath) {
+			FileBundle bundle = lineNumberPath.getValueOfType(FileBundle.class);
+			if (bundle == null) {
+				logger.error("Line number path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			FileInfo declaringTextFile = lineNumberPath.getValueOfType(FileInfo.class);
+			if (declaringTextFile == null) {
+				logger.error("Line number path node missing file section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			int line = lineNumberPath.getValue();
+			return textService.getLineNumberTextProvider(workspace, resource, bundle, declaringTextFile, line).makeText();
 		}
 
 		// No text

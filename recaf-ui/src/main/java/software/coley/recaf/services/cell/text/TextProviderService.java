@@ -1,10 +1,17 @@
 package software.coley.recaf.services.cell.text;
 
+import dev.xdark.blw.asm.internal.Util;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import me.darknet.assembler.helper.Names;
+import me.darknet.assembler.printer.InstructionPrinter;
+import me.darknet.assembler.printer.PrintContext;
+import org.benf.cfr.reader.entities.annotations.ElementValue;
+import org.objectweb.asm.tree.*;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.Annotated;
+import software.coley.recaf.info.annotation.AnnotationElement;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
@@ -19,6 +26,8 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.*;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -210,6 +219,92 @@ public class TextProviderService implements Service {
 	 * 		Containing resource.
 	 * @param bundle
 	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 *
+	 * @return Text provider for the instruction.
+	 */
+	@Nonnull
+	public TextProvider getInstructionTextProvider(@Nonnull Workspace workspace,
+												   @Nonnull WorkspaceResource resource,
+												   @Nonnull ClassBundle<? extends ClassInfo> bundle,
+												   @Nonnull ClassInfo declaringClass,
+												   @Nonnull MethodMember declaringMethod,
+												   @Nonnull AbstractInsnNode insn,
+												   int index) {
+		return () -> {
+			PrintContext<?> ctx = new PrintContext<>("");
+			InstructionPrinter printer = new InstructionPrinter(ctx.code(),
+					null, new Names(Collections.emptyMap(), Collections.emptyList()),
+					Collections.emptyMap()
+			);
+
+			// Map ASM insn model to BLW which is used by JASM
+			if (insn instanceof LdcInsnNode ldc) {
+				printer.execute(Util.wrapLdcInsn(ldc.cst));
+			} else if (insn instanceof MethodInsnNode min) {
+				printer.execute(Util.wrapMethodInsn(min.getOpcode(), min.owner, min.name, min.desc, false));
+			} else if (insn instanceof FieldInsnNode fin) {
+				printer.execute(Util.wrapFieldInsn(fin.getOpcode(), fin.owner, fin.name, fin.desc));
+			} else if (insn instanceof TypeInsnNode tin) {
+				printer.execute(Util.wrapTypeInsn(tin.getOpcode(), tin.desc));
+			} else if (insn instanceof IntInsnNode iin) {
+				printer.execute(Util.wrapIntInsn(iin.getOpcode(), iin.operand));
+			} else if (insn instanceof InsnNode in) {
+				printer.execute(Util.wrapInsn(in.getOpcode()));
+			} else if (insn instanceof InvokeDynamicInsnNode indy) {
+				printer.execute(Util.wrapInvokeDynamicInsn(indy.name, indy.desc, indy.bsm, indy.bsmArgs));
+			} else {
+				// The current search models shouldn't yield anything aside from the above types.
+				return "<missing text mapper: " + insn.getClass().getSimpleName() + ">";
+			}
+
+			// Cut off first 2 chars of unused indentation then cap off the max length.
+			String text = ctx.toString().substring(2);
+			return formatConfig.filterMaxLength(text);
+		};
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringFile
+	 * 		Containing file.
+	 * @param line
+	 * 		The line in the file to get the text of.
+	 *
+	 * @return Text provider for the line number.
+	 */
+	@Nonnull
+	public TextProvider getLineNumberTextProvider(@Nonnull Workspace workspace,
+												  @Nonnull WorkspaceResource resource,
+												  @Nonnull FileBundle bundle,
+												  @Nonnull FileInfo declaringFile,
+												  int line) {
+		return () -> {
+			if (declaringFile.isTextFile()) {
+				int index = line - 1;
+				String[] lines = declaringFile.asTextFile().getTextLines();
+				if (index >= 0 && index < lines.length)
+					return lines[index];
+			}
+			return "???";
+		};
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
 	 * @param annotated
 	 * 		The annotated item.
 	 * @param annotation
@@ -224,11 +319,31 @@ public class TextProviderService implements Service {
 												  @Nonnull Annotated annotated,
 												  @Nonnull AnnotationInfo annotation) {
 		return () -> {
-			// TODO: Will want to provide config option for showing elements
-			//  - type name
-			//  - type name + elements
 			String desc = annotation.getDescriptor();
-			return formatConfig.filter(desc.substring(1, desc.length() - 1));
+			String type = formatConfig.filter(desc.substring(1, desc.length() - 1));
+
+			StringBuilder sb = new StringBuilder(type);
+			Map<String, AnnotationElement> elements = annotation.getElements();
+			if (!elements.isEmpty()) {
+				sb.append('(');
+				elements.forEach((key, element) -> {
+					Object value = element.getElementValue();
+					sb.append(key).append(" = ");
+					if (value instanceof String s)
+						sb.append('"').append(formatConfig.filter(s)).append('"');
+					else if (value instanceof ElementValue)
+						sb.append("{...}");
+					else if (value instanceof List)
+						sb.append("[...]");
+					else
+						sb.append('"').append(formatConfig.filter(String.valueOf(value))).append('"');
+					sb.append(", ");
+				});
+				sb.setLength(sb.length() - 2);
+				sb.append(')');
+			}
+
+			return formatConfig.filterMaxLength(sb.toString());
 		};
 	}
 
