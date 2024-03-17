@@ -1,7 +1,7 @@
 def asmVersion = '9.6'
 def cafeDudeVersion = '2.0.1'
 def junitVersion = '5.10.2'
-def jasmVersion = '1a4a7df195'
+def jasmVersion = '29504574e2'
 
 project.ext {
     asm = "org.ow2.asm:asm:$asmVersion"
@@ -39,8 +39,8 @@ project.ext {
 
     instrument_server = 'software.coley:instrumentation-server:1.4.0'
 
-    jasm_core = "com.github.Nowilltolife.Jasm:jasm-core:$jasmVersion"
-    jasm_composistion_jvm = "com.github.Nowilltolife.Jasm:jasm-composition-jvm:$jasmVersion"
+    jasm_core = "com.github.jumanji144.Jasm:jasm-core:$jasmVersion"
+    jasm_composistion_jvm = "com.github.jumanji144.Jasm:jasm-composition-jvm:$jasmVersion"
 
     jackson = 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.16.1'
 
