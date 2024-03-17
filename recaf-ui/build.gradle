@@ -1,7 +1,7 @@
 plugins {
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.1.0'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    alias(libs.plugins.javafx)
+    alias(libs.plugins.shadow)
 }
 
 def javaFxVersion = '22-ea+28'
@@ -16,12 +16,12 @@ dependencies {
     implementation project(':recaf-core')
     testImplementation(testFixtures(project(":recaf-core")))
 
-    implementation atlantafx
-    implementation docking
-    implementation ikonli
-    implementation ikonli_pack
-    implementation richtextfx
-    implementation treemapfx
+    implementation(libs.atlantafx)
+    implementation(libs.docking)
+    implementation(libs.bundles.ikonli)
+    implementation(libs.reactfx)
+    implementation(libs.richtextfx)
+    implementation(libs.treemapfx)
 }
 
 application {
