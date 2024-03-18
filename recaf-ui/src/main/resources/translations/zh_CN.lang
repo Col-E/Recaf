@@ -80,7 +80,7 @@ menu.scripting.list=脚本
 menu.scripting.none-found=未找到脚本
 menu.scripting.manage=管理脚本
 menu.scripting.new=新建脚本
-menu.scripting.edit=修改
+menu.scripting.edit=编辑
 menu.scripting.browse=浏览脚本
 menu.scripting.save=保存脚本
 menu.scripting.execute=执行
@@ -117,7 +117,7 @@ menu.plugin.remote=远程
 menu.plugin.browse=浏览插件
 menu.plugin.enabled=启用
 menu.plugin.uninstall=卸载
-menu.plugin.uninstall.warning=你确定要删除改插件吗?
+menu.plugin.uninstall.warning=你确定要删除该插件吗?
 
 ##### Dialog texts
 dialog.cancel=取消
@@ -356,7 +356,7 @@ hierarchy.parents=父类
 logging.title=日志
 
 ## Assembler
-assembler.title=汇编
+assembler.title=汇编器
 assembler.analysis.title=分析
 assembler.analysis.stack=堆栈
 assembler.analysis.variables=变量
