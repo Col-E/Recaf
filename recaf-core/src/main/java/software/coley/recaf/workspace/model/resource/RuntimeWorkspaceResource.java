@@ -70,7 +70,7 @@ public class RuntimeWorkspaceResource implements WorkspaceResource {
 					return null;
 				}
 				JvmClassInfo info = new JvmClassInfoBuilder()
-						.adaptFrom(new ClassReader(value), ClassReader.SKIP_CODE)
+						.adaptFrom(value, ClassReader.SKIP_CODE)
 						.build();
 				cache.put(key, info);
 				return info;

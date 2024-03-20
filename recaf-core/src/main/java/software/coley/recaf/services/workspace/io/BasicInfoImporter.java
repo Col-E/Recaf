@@ -51,7 +51,7 @@ public class BasicInfoImporter implements InfoImporter {
 				try {
 					return new JvmClassInfoBuilder()
 							.skipValidationChecks(false)
-							.adaptFrom(new ClassReader(data))
+							.adaptFrom(data)
 							.build();
 				} catch (Throwable t) {
 					// Patch if not compatible with ASM

@@ -67,7 +67,7 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 					dirty = true;
 				}
 			}
-			filteredBytecode = dirty ? classInfo.toJvmClassBuilder().adaptFrom(new ClassReader(bytecode)).build() : classInfo;
+			filteredBytecode = dirty ? classInfo.toJvmClassBuilder().adaptFrom(bytecode).build() : classInfo;
 		}
 
 		// Pass to implementation.

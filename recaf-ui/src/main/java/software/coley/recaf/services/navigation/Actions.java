@@ -1672,7 +1672,7 @@ public class Actions implements Service {
 		MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, FieldPredicate.of(fields));
 		declaringClass.getClassReader().accept(visitor, 0);
 		bundle.put(declaringClass.toJvmClassBuilder()
-				.adaptFrom(new ClassReader(writer.toByteArray()))
+				.adaptFrom(writer.toByteArray())
 				.build());
 	}
 
@@ -1723,7 +1723,7 @@ public class Actions implements Service {
 		MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, MethodPredicate.of(methods));
 		declaringClass.getClassReader().accept(visitor, 0);
 		bundle.put(declaringClass.toJvmClassBuilder()
-				.adaptFrom(new ClassReader(writer.toByteArray()))
+				.adaptFrom(writer.toByteArray())
 				.build());
 	}
 
@@ -1752,7 +1752,7 @@ public class Actions implements Service {
 					ClassAnnotationRemovingVisitor visitor = new ClassAnnotationRemovingVisitor(writer, names);
 					info.getClassReader().accept(visitor, 0);
 					bundle.put(info.toJvmClassBuilder()
-							.adaptFrom(new ClassReader(writer.toByteArray()))
+							.adaptFrom(writer.toByteArray())
 							.build());
 				})
 				.withMultipleSelection()
@@ -1782,7 +1782,7 @@ public class Actions implements Service {
 			ClassWriter writer = new ClassWriter(0);
 			info.getClassReader().accept(new MemberStubAddingVisitor(writer, member), 0);
 			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
-					.adaptFrom(new ClassReader(writer.toByteArray()))
+					.adaptFrom(writer.toByteArray())
 					.build();
 			bundle.put(updatedInfo);
 
@@ -1815,7 +1815,7 @@ public class Actions implements Service {
 			ClassWriter writer = new ClassWriter(0);
 			info.getClassReader().accept(new MemberStubAddingVisitor(writer, member), 0);
 			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
-					.adaptFrom(new ClassReader(writer.toByteArray()))
+					.adaptFrom(writer.toByteArray())
 					.build();
 			bundle.put(updatedInfo);
 
@@ -1851,7 +1851,7 @@ public class Actions implements Service {
 		MethodNoopingVisitor visitor = new MethodNoopingVisitor(writer, MethodPredicate.of(methods));
 		declaringClass.getClassReader().accept(visitor, 0);
 		bundle.put(declaringClass.toJvmClassBuilder()
-				.adaptFrom(new ClassReader(writer.toByteArray()))
+				.adaptFrom(writer.toByteArray())
 				.build());
 	}
 

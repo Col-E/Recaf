@@ -65,7 +65,61 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	 * 		Class bytecode to read values from.
 	 */
 	public JvmClassInfoBuilder(@Nonnull byte[] bytecode) {
-		adaptFrom(new ClassReader(bytecode));
+		adaptFrom(bytecode);
+	}
+
+	/**
+	 * Copies over values by reading the contents of the class file in the reader.
+	 * Calls {@link #adaptFrom(byte[], int)} with {@code flags=0}.
+	 * <p/>
+	 * <b>IMPORTANT:</b> If {@link #skipValidationChecks(boolean)} is {@code false} and validation checks are active
+	 * extra steps are taken to ensure the class is fully ASM compliant. You will want to wrap this call in a try-catch
+	 * block handling {@link Throwable} to cover any potential ASM failure.
+	 * <br>
+	 * Validation is disabled by default.
+	 * <br>
+	 * If you wish to validate the input, you must use the one of the given constructors:
+	 * <ul>
+	 *     <li>{@link #JvmClassInfoBuilder()}</li>
+	 *     <li>{@link #JvmClassInfoBuilder(JvmClassInfo)}</li>
+	 * </ul>
+	 *
+	 * @param code
+	 * 		Class bytecode to pull data from.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public JvmClassInfoBuilder adaptFrom(@Nonnull byte[] code) {
+		return adaptFrom(code, 0);
+	}
+
+	/**
+	 * Copies over values by reading the contents of the class file in the reader.
+	 * Calls {@link #adaptFrom(ClassReader, int)} with {@code flags}.
+	 * <p/>
+	 * <b>IMPORTANT:</b> If {@link #skipValidationChecks(boolean)} is {@code false} and validation checks are active
+	 * extra steps are taken to ensure the class is fully ASM compliant. You will want to wrap this call in a try-catch
+	 * block handling {@link Throwable} to cover any potential ASM failure.
+	 * <br>
+	 * Validation is disabled by default.
+	 * <br>
+	 * If you wish to validate the input, you must use the one of the given constructors:
+	 * <ul>
+	 *     <li>{@link #JvmClassInfoBuilder()}</li>
+	 *     <li>{@link #JvmClassInfoBuilder(JvmClassInfo)}</li>
+	 * </ul>
+	 *
+	 * @param code
+	 * 		Class bytecode to pull data from.
+	 * @param flags
+	 * 		Reader flags to use when populating information.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public JvmClassInfoBuilder adaptFrom(@Nonnull byte[] code, int flags) {
+		return adaptFrom(new ClassReader(code), flags);
 	}
 
 	/**

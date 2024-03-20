@@ -172,7 +172,7 @@ public class MappingApplier implements Service {
 		// Update class if it has any modified references
 		if (remapVisitor.hasMappingBeenApplied()) {
 			JvmClassInfo updatedInfo = classInfo.toJvmClassBuilder()
-					.adaptFrom(new ClassReader(cw.toByteArray()))
+					.adaptFrom(cw.toByteArray())
 					.build();
 
 			// Mark has referencing something mapped.

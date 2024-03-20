@@ -229,7 +229,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 					if (infoName.equals(name)) {
 						// Adapt from existing.
 						newInfo = info.toJvmClassBuilder()
-								.adaptFrom(new ClassReader(bytecode))
+								.adaptFrom(bytecode)
 								.build();
 					} else {
 						// Handle inner classes.
@@ -238,7 +238,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 							// Adapt from existing.
 							newInfo = originalClass
 									.toJvmClassBuilder()
-									.adaptFrom(new ClassReader(bytecode))
+									.adaptFrom(bytecode)
 									.build();
 						} else {
 							// Class is new.
