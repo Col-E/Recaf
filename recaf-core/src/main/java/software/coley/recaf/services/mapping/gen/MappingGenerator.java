@@ -82,7 +82,10 @@ public class MappingGenerator implements Service {
 			generateFamilyMappings(mappings, family, generator, filter);
 
 			// Remove all family members from the class map.
-			family.forEach(vertex -> classMap.remove(vertex.getName()));
+			if (family.isEmpty())
+				classMap.remove(className);
+			else
+				family.forEach(vertex -> classMap.remove(vertex.getName()));
 		}
 		return mappings;
 	}
