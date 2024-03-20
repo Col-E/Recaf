@@ -214,8 +214,10 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	@Nonnull
 	public Set<InheritanceVertex> getVertexFamily(@Nonnull String name, boolean includeObject) {
 		InheritanceVertex vertex = getVertex(name);
-		if (vertex == null || vertex.isModule())
+		if (vertex == null)
 			return Collections.emptySet();
+		if (vertex.isModule())
+			return Collections.singleton(vertex);
 		return vertex.getFamily(includeObject);
 	}
 

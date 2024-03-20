@@ -101,6 +101,10 @@ public class MappingGenerator implements Service {
 		Set<MethodMember> inheritableMethods = new HashSet<>();
 		Set<MethodMember> libraryMethods = new HashSet<>();
 		family.forEach(vertex -> {
+			// Skip module-info classes
+			if (vertex.isModule())
+				return;
+
 			// Record fields/methods, skipping private items since they cannot span the hierarchy.
 			for (FieldMember field : vertex.getValue().getFields()) {
 				if (field.hasPrivateModifier())
@@ -122,6 +126,9 @@ public class MappingGenerator implements Service {
 		family.forEach(vertex -> {
 			// Skip libraries in the family.
 			if (vertex.isLibraryVertex())
+				return;
+			// Skip module-info classes
+			if (vertex.isModule())
 				return;
 
 			ClassInfo owner = vertex.getValue();
@@ -212,6 +219,9 @@ public class MappingGenerator implements Service {
 		family.forEach(vertex -> {
 			// Skip libraries in the family.
 			if (vertex.isLibraryVertex())
+				return;
+			// Skip module-info classes
+			if (vertex.isModule())
 				return;
 
 			// Skip if filtered.
