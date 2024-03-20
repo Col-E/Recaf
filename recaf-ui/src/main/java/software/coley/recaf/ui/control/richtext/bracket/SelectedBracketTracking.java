@@ -139,8 +139,12 @@ public class SelectedBracketTracking implements EditorComponent, Consumer<Change
 		return found;
 	}
 
+	@Nullable
 	private IntRange scanAt(int pos) {
 		String text = codeArea.getText();
+		if (pos < 0 || pos >= text.length())
+			return null;
+
 		char c = text.charAt(pos);
 		char openChar;
 		char closeChar;
