@@ -2,6 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 
 import java.util.Set;
@@ -50,6 +51,22 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 	@Nonnull
 	public LineNumberPathNode child(int lineNo) {
 		return new LineNumberPathNode(this, lineNo);
+	}
+
+	@Override
+	public boolean hasEqualOrChildValue(@Nonnull PathNode<?> other) {
+		if (other instanceof FilePathNode otherClassPathNode) {
+			FileInfo cls = getValue();
+			FileInfo otherCls = otherClassPathNode.getValue();
+
+			// We'll determine equality just by the name of the contained file.
+			// Path equality should match by location, so comparing just by name
+			// allows this path and the other path to have different versions of
+			// the same file.
+			return cls.getName().equals(otherCls.getName());
+		}
+
+		return false;
 	}
 
 	@Override

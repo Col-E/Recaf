@@ -127,6 +127,23 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	}
 
 	@Override
+	public boolean hasEqualOrChildValue(@Nonnull PathNode<?> other) {
+		if (other instanceof ClassMemberPathNode otherMemberPath) {
+			ClassMember member = getValue();
+			ClassMember otherMember = otherMemberPath.getValue();
+
+			// We'll determine equality just by the name+type of the contained member.
+			// Path equality should match by location, so comparing just by name+type
+			// allows this path and the other path to have different versions of
+			// the same member.
+			return member.getName().equals(otherMember.getName()) &&
+					member.getDescriptor().equals(otherMember.getDescriptor());
+		}
+
+		return false;
+	}
+
+	@Override
 	public ClassPathNode getParent() {
 		return (ClassPathNode) super.getParent();
 	}

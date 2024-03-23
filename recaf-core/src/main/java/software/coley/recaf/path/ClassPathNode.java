@@ -78,6 +78,22 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	}
 
 	@Override
+	public boolean hasEqualOrChildValue(@Nonnull PathNode<?> other) {
+		if (other instanceof ClassPathNode otherClassPath) {
+			ClassInfo cls = getValue();
+			ClassInfo otherCls = otherClassPath.getValue();
+
+			// We'll determine equality just by the name of the contained class.
+			// Path equality should match by location, so comparing just by name
+			// allows this path and the other path to have different versions of
+			// the same class.
+			return cls.getName().equals(otherCls.getName());
+		}
+
+		return false;
+	}
+
+	@Override
 	public DirectoryPathNode getParent() {
 		return (DirectoryPathNode) super.getParent();
 	}
