@@ -7,6 +7,7 @@ import software.coley.recaf.info.properties.builtin.InputFilePathProperty;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -120,7 +121,9 @@ public record CommentKey(int workspaceHash, int pathHash) {
 	 */
 	@Nonnull
 	public String annotationDescriptor() {
-		return "LRecafComment_" + Integer.toHexString(workspaceHash) + '_' + Integer.toHexString(pathHash) + ';';
+		String paddedWorkspaceHash = StringUtil.fillLeft(8, "0", Integer.toHexString(workspaceHash));
+		String paddedPathHash = StringUtil.fillLeft(8, "0", Integer.toHexString(pathHash));
+		return "LRecafComment_" + paddedWorkspaceHash + '_' + paddedPathHash + ';';
 	}
 
 	@Override
