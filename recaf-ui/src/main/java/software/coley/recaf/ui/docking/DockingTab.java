@@ -1,8 +1,7 @@
 package software.coley.recaf.ui.docking;
 
 import com.panemu.tiwulfx.control.dock.DetachableTab;
-import com.panemu.tiwulfx.control.dock.DetachableTabPane;
-import com.sun.javafx.collections.ObservableListWrapper;
+import jakarta.annotation.Nullable;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
@@ -10,11 +9,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.ReflectUtil;
-
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * {@link Tab} extension to track additional information required for {@link DockingManager} operations.
@@ -23,6 +17,8 @@ import java.util.function.Consumer;
  */
 public class DockingTab extends DetachableTab {
 	private volatile boolean firedClose;
+	/** Last known associated region */
+	private DockingRegion priorRegion;
 
 	/**
 	 * @param title
@@ -50,8 +46,25 @@ public class DockingTab extends DetachableTab {
 	/**
 	 * @return Parent docking region that contains the tab.
 	 */
+	@Nullable
 	public DockingRegion getRegion() {
 		return (DockingRegion) getTabPane();
+	}
+
+	/**
+	 * @return Prior region.
+	 */
+	@Nullable
+	public DockingRegion getPriorRegion() {
+		return priorRegion;
+	}
+
+	/**
+	 * @param priorRegion
+	 * 		Prior region.
+	 */
+	void setPriorRegion(@Nullable DockingRegion priorRegion) {
+		this.priorRegion = priorRegion;
 	}
 
 	/**
@@ -62,16 +75,26 @@ public class DockingTab extends DetachableTab {
 			// Fire the close event if we've not done so yet.
 			// The event should only be fired once, even if 'close()' is called multiple times.
 			// We double-lock this to ensure the event really is only ever called once if 'close()' is ran across threads.
+			boolean alreadyRequested = false;
 			if (!firedClose) {
 				synchronized (this) {
 					if (!firedClose) {
+						firedClose = true;
+
 						// It is important that this event is the same as the one that the containing DockingRegion
 						// registers a listener for. We use close requests instead of direct closes.
 						Event.fireEvent(this, new Event(Tab.TAB_CLOSE_REQUEST_EVENT));
-						firedClose = true;
+					} else {
+						alreadyRequested = true;
 					}
 				}
+			} else {
+				alreadyRequested = true;
 			}
+
+			// We already triggered a close. No need to handle anything else below twice.
+			if (alreadyRequested)
+				return;
 
 			// Remove from containing tab-pane.
 			TabPane tabPane = getTabPane();
@@ -83,6 +106,7 @@ public class DockingTab extends DetachableTab {
 					ObservableList<Tab> tabList = tabPane.getTabs();
 					if (tabPane.getScene() != null) {
 						tabList.remove(this);
+						priorRegion = null;
 					}
 				});
 		}

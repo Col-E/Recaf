@@ -4,15 +4,18 @@ import atlantafx.base.theme.Styles;
 import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import com.panemu.tiwulfx.control.dock.TabDropHint;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.shape.*;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Unchecked;
 
 import java.util.List;
@@ -25,11 +28,20 @@ import java.util.function.Supplier;
  */
 public class DockingRegion extends DetachableTabPane {
 	private static final Logger logger = Logging.get(DockingRegion.class);
+	private static int counter = 0;
+	private final int id = counter++;
 	private DockingManager manager;
 
 	DockingRegion(@Nonnull DockingManager manager) {
 		this.manager = manager;
 		setDropHint(new RecafDropHint());
+		setStageFactory((priorParent, tab) -> {
+			// Factory must yield a tab-stage, so we can't use 'RecafStage' here.
+			// Setting an icon is all we really need though.
+			TabStage stage = new TabStage(priorParent, tab);
+			stage.getIcons().add(Icons.getImage(Icons.LOGO));
+			return stage;
+		});
 		getStyleClass().add(Styles.DENSE);
 
 		// It's easier to hook region creation like this than to try and ensure registration is handled by the caller.
@@ -85,37 +97,38 @@ public class DockingRegion extends DetachableTabPane {
 			// Using on-close, the region reference is removed.
 			if (tab.isClosable()) {
 				DockingRegion region = tab.getRegion();
-				if (region.getDockTabs().contains(tab)) {
+				if (region != null && region.getDockTabs().contains(tab)) {
 					if (closeHandler != null)
 						closeHandler.handle(e);
-					getAndCheckManager().onTabClose(region, tab);
+					region.getAndCheckManager().onTabClose(region, tab);
 				}
 			}
 		});
 
 		// Ensure the manager is aware of which tabs per region are selected.
 		DockingRegion thisRegion = this;
-		EventHandler<Event> selectionHandler = tab.getOnSelectionChanged();
-		tab.setOnSelectionChanged(e -> {
-			if (selectionHandler != null)
-				selectionHandler.handle(e);
-			if (tab.isSelected()) {
-				// Use the tab's parent, but if none is set then we are likely spawning the tab in 'this' region.
-				if (tab.getTabPane() instanceof DockingRegion parentRegion) {
-					getAndCheckManager().onTabSelection(parentRegion, tab);
-				} else {
-					getAndCheckManager().onTabSelection(thisRegion, tab);
-				}
-			}
-		});
+		EventHandler<Event> defaultSelectionHandler = tab.getOnSelectionChanged();
+		registerSelectionCallbacks(tab, defaultSelectionHandler, thisRegion);
 
 		// Ensure we record tabs moving between regions.
 		tab.tabPaneProperty().addListener((observable, oldValue, newValue) -> {
-			// Do not mark the tab as 'closed' if the new parent is 'null'.
+			// Always record the last non-null parent region.
+			if (oldValue instanceof DockingRegion oldParent)
+				tab.setPriorRegion(oldParent);
+
+			// Handle moving to a new region.
+			//
+			// Note: Do not mark the tab as 'closed' if the new parent is 'null'.
 			// It will be null while the tab is being dragged.
-			if (oldValue instanceof DockingRegion oldParent &&
-					newValue instanceof DockingRegion newParent) {
-				getAndCheckManager().onTabMove(oldParent, newParent, tab);
+			if (newValue instanceof DockingRegion newParent) {
+				// Re-register the selection callbacks with the new parent.
+				registerSelectionCallbacks(tab, defaultSelectionHandler, newParent);
+
+				// Call tab-move listener if a past region has been recorded.
+				DockingRegion priorRegion = tab.getPriorRegion();
+				if (priorRegion != null)
+					// Use the new parent to get the manager, as the old region could be closed.
+					newParent.getAndCheckManager().onTabMove(priorRegion, newParent, tab);
 			}
 		});
 
@@ -129,6 +142,42 @@ public class DockingRegion extends DetachableTabPane {
 					new IllegalStateException("Stack dump"));
 		getAndCheckManager().onTabCreate(this, tab);
 		return tab;
+	}
+
+	/**
+	 * Sets the tab-selection listener to fire off {@link DockingManager#onTabSelection(DockingRegion, DockingTab)}.
+	 * Must be called when a tab's parent changes to ensure the parent region it looks up <i>(in fallback cases)</i>
+	 * is not out of date.
+	 *
+	 * @param tab
+	 * 		Tab to set the selection change handler of.
+	 * @param defaultSelectionHandler
+	 * 		Default tab selection change handler.
+	 * @param fallbackRegion
+	 * 		Region context to use if the current tab-pane parent is not found/viable.
+	 */
+	private static void registerSelectionCallbacks(@Nonnull DockingTab tab, @Nullable EventHandler<Event> defaultSelectionHandler,
+												   @Nonnull DockingRegion fallbackRegion) {
+		tab.setOnSelectionChanged(e -> {
+			if (defaultSelectionHandler != null)
+				defaultSelectionHandler.handle(e);
+
+			if (tab.isSelected()) {
+				// Use the tab's parent, but if none is set then we are likely spawning the tab in 'this' region.
+				TabPane parentPane = tab.getTabPane();
+				if (parentPane instanceof DockingRegion parentRegion) {
+					// Update with the tab's most up-to-date parent region isntance if possible
+					parentRegion.getAndCheckManager().onTabSelection(parentRegion, tab);
+				} else if (parentPane == null) {
+					// If the parent is null, we're likely in the initialization of a given tab.
+					// We'll assume it'll be added to 'this' region.
+					fallbackRegion.getAndCheckManager().onTabSelection(fallbackRegion, tab);
+				} else {
+					logger.error("Could not update tab selection state for tab '{}'" +
+							", parent pane was not docking region.", tab.getText());
+				}
+			}
+		});
 	}
 
 	/**
@@ -206,5 +255,13 @@ public class DockingRegion extends DetachableTabPane {
 				path.getElements().add(new VLineTo(tabHeight + 5));
 			}
 		}
+	}
+
+	@Override
+	public String toString() {
+		// Incremental ID's makes debugging docking problems way easier.
+		return "DockingRegion[" + id + "]" +
+				(manager == null ? "(DEAD)" : "") +
+				" - Children[" + getTabs().size() + "]";
 	}
 }

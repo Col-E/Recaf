@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.window;
 
+import com.panemu.tiwulfx.control.dock.TabStageAccessor;
 import jakarta.annotation.Nonnull;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -10,7 +11,7 @@ import software.coley.recaf.util.Icons;
  *
  * @author Matt Coley
  */
-public class RecafStage extends Stage {
+public class RecafStage extends Stage implements TabStageAccessor {
 	/**
 	 * Decorated stage.
 	 */
@@ -27,5 +28,10 @@ public class RecafStage extends Stage {
 	public RecafStage(@Nonnull StageStyle style) {
 		super(style);
 		getIcons().add(Icons.getImage(Icons.LOGO));
+	}
+
+	@Override
+	public Stage getStage() {
+		return this;
 	}
 }

@@ -4,7 +4,10 @@ import com.panemu.tiwulfx.control.dock.DetachableTabPane;
 import com.panemu.tiwulfx.control.dock.DetachableTabPaneFactory;
 import jakarta.annotation.Nonnull;
 import javafx.scene.control.TabPane;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.stage.WindowEvent;
+import javafx.util.Callback;
 import software.coley.recaf.ui.window.RecafScene;
 
 /**
@@ -33,6 +36,11 @@ public class DockingRegionFactory extends DetachableTabPaneFactory {
 
 	@Override
 	protected void init(DetachableTabPane newTabPane) {
+		// IMPORTANT: All stages are owned by the primary region's window (the main window)
+		// Not doing this results in odd behavior when trying to pull tabs out of a region into a blank space.
+		newTabPane.setStageOwnerFactory(stage -> manager.getPrimaryRegion().getScene().getWindow());
+
+		// Rest of the pane setup.
 		newTabPane.setSceneFactory(param -> new RecafScene(param, SCENE_WIDTH, SCENE_HEIGHT));
 		newTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
 		newTabPane.setCloseIfEmpty(true);

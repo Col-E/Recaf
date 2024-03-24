@@ -108,7 +108,7 @@ public class WindowManager implements Service {
 
 		// Register id --> stage
 		windowMappings.put(id, stage);
-		logger.debug("Register stage: {}", id);
+		logger.trace("Register stage: {}", id);
 	}
 
 	/**
