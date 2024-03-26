@@ -16,13 +16,13 @@ import static software.coley.recaf.util.NumberUtil.cmp;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class NumericPredicateProvider {
+public class NumberPredicateProvider {
 	private final Map<String, BiNumberMatcher> biNumberMatchers = new ConcurrentHashMap<>();
 	private final Map<String, RangeNumberMatcher> rangeNumberMatchers = new ConcurrentHashMap<>();
 	private final Map<String, MultiNumberMatcher> multiNumberMatchers = new ConcurrentHashMap<>();
 
 	@Inject
-	public NumericPredicateProvider() {
+	public NumberPredicateProvider() {
 		registerBiMatcher("equal", (key, value) -> cmp(key, value) == 0);
 		registerBiMatcher("not", (key, value) -> cmp(key, value) != 0);
 		registerBiMatcher("gt", (key, value) -> cmp(key, value) < 0);

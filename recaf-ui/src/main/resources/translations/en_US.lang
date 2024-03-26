@@ -720,6 +720,17 @@ service.ui.workspace-explorer-config.drag-drop-action=Drag & drop behavior
 service.ui.workspace-explorer-config.max-tree-dir-depth=Max tree depth
 
 ### Matcher translations
+number.match.equal=value == n
+number.match.not=value != n
+number.match.gt=value > n
+number.match.gte=value >= n
+number.match.lt=value < n
+number.match.lte=value <= n
+number.match.gt-lt=min < value < max
+number.match.gte-lt=min <= value < max
+number.match.gt-lte=min < value <= max
+number.match.gte-lte=min < value <= max
+number.match.any-of=numbers.contains(value)
 string.match.contains=str.contains(value)
 string.match.contains-ic=str.containsIgnoreCase(value)
 string.match.ends=str.endsWith(value)

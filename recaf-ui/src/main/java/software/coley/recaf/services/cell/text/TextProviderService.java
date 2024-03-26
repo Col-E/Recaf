@@ -1,6 +1,10 @@
 package software.coley.recaf.services.cell.text;
 
 import dev.xdark.blw.asm.internal.Util;
+import dev.xdark.blw.code.Instruction;
+import dev.xdark.blw.code.instruction.AllocateInstruction;
+import dev.xdark.blw.code.instruction.ConstantInstruction;
+import dev.xdark.blw.code.instruction.PrimitiveConversionInstruction;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -251,9 +255,21 @@ public class TextProviderService implements Service {
 			} else if (insn instanceof TypeInsnNode tin) {
 				printer.execute(Util.wrapTypeInsn(tin.getOpcode(), tin.desc));
 			} else if (insn instanceof IntInsnNode iin) {
-				printer.execute(Util.wrapIntInsn(iin.getOpcode(), iin.operand));
+				Instruction wrapped = Util.wrapIntInsn(iin.getOpcode(), iin.operand);
+				if (wrapped instanceof ConstantInstruction<?> constWrapped)
+					printer.execute(constWrapped);
+				else if (wrapped instanceof AllocateInstruction allocateWrapped)
+					printer.execute(allocateWrapped);
+				else
+					printer.execute(wrapped);
 			} else if (insn instanceof InsnNode in) {
-				printer.execute(Util.wrapInsn(in.getOpcode()));
+				Instruction wrapped = Util.wrapInsn(in.getOpcode());
+				if (wrapped instanceof ConstantInstruction<?> constWrapped)
+					printer.execute(constWrapped);
+				else if (wrapped instanceof PrimitiveConversionInstruction convWrapped)
+					printer.execute(convWrapped);
+				else
+					printer.execute(wrapped);
 			} else if (insn instanceof InvokeDynamicInsnNode indy) {
 				printer.execute(Util.wrapInvokeDynamicInsn(indy.name, indy.desc, indy.bsm, indy.bsmArgs));
 			} else {

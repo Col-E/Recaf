@@ -8,7 +8,7 @@ import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.*;
-import software.coley.recaf.services.search.match.NumericPredicateProvider;
+import software.coley.recaf.services.search.match.NumberPredicateProvider;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.services.search.query.NumberQuery;
 import software.coley.recaf.services.search.query.Query;
@@ -34,7 +34,7 @@ import static org.objectweb.asm.Opcodes.BIPUSH;
  * Tests for {@link SearchService}
  */
 public class SearchServiceTest extends TestBase {
-	static NumericPredicateProvider numMatchProvider;
+	static NumberPredicateProvider numMatchProvider;
 	static StringPredicateProvider strMatchProvider;
 	static SearchService searchService;
 	static Workspace classesWorkspace;
@@ -42,7 +42,7 @@ public class SearchServiceTest extends TestBase {
 
 	@BeforeAll
 	static void setup() throws IOException {
-		numMatchProvider = recaf.get(NumericPredicateProvider.class);
+		numMatchProvider = recaf.get(NumberPredicateProvider.class);
 		strMatchProvider = recaf.get(StringPredicateProvider.class);
 		searchService = recaf.get(SearchService.class);
 
