@@ -1,6 +1,7 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.Type;
 
 /**
@@ -9,6 +10,27 @@ import org.objectweb.asm.Type;
  * @author Matt Coley
  */
 public class NumberUtil {
+	/**
+	 * @param number Value to convert to string.
+	 * @return String representation of value.
+	 */
+	@Nonnull
+	public static String toString(@Nullable Number number) {
+		if (number == null) return "0";
+
+		if (number instanceof Integer || number instanceof Byte || number instanceof Short) {
+			return Integer.toString(number.intValue());
+		} else if (number instanceof Double) {
+			return Double.toString(number.doubleValue());
+		} else if (number instanceof Long) {
+			return number.longValue() + "L";
+		} else if (number instanceof Float) {
+			return number.floatValue() + "F";
+		}
+
+		throw new IllegalArgumentException("Unsupported number type: " + number.getClass().getName());
+	}
+
 	/**
 	 * @param input
 	 * 		Text input that represents a number.
@@ -32,13 +54,17 @@ public class NumberUtil {
 		if (text.indexOf('.') > 0) {
 			value = parseDecimal(text);
 		} else {
-			if (text.endsWith("L") && text.startsWith("0X"))
-				value = Long.parseLong(text.substring(2, text.indexOf("L")), 16);
-			else if (text.endsWith("L"))
+			if (text.endsWith("L") && text.startsWith("0X")) {
+				String substring = text.substring(2, text.indexOf("L"));
+				if (substring.isEmpty()) return 0L;
+				value = Long.parseLong(substring, 16);
+			} else if (text.endsWith("L"))
 				value = Long.parseLong(text.substring(0, text.indexOf("L")));
-			else if (text.startsWith("0X"))
-				value = Integer.parseInt(text.substring(2), 16);
-			else if (text.endsWith("F"))
+			else if (text.startsWith("0X")) {
+				String substring = text.substring(2);
+				if (substring.isEmpty()) return 0;
+				value = Integer.parseInt(substring, 16);
+			} else if (text.endsWith("F"))
 				value = Float.parseFloat(text.substring(0, text.indexOf("F")));
 			else if (text.endsWith("D") || text.contains("."))
 				value = Double.parseDouble(text.substring(0, text.indexOf("D")));

@@ -10,6 +10,16 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class NumberUtilTest {
 	@Test
+	void testToString() {
+		assertEquals("0", NumberUtil.toString(0));
+		assertEquals("0.0", NumberUtil.toString(0.0));
+		assertEquals("0.0", NumberUtil.toString(0D));
+		assertEquals("0.0F", NumberUtil.toString(0F));
+		assertEquals("1.0F", NumberUtil.toString(1F));
+		assertEquals("0L", NumberUtil.toString(0L));
+	}
+
+	@Test
 	void testParse() {
 		assertEquals(0, NumberUtil.parse("0"));
 		assertEquals(0L, NumberUtil.parse("0L"));
@@ -18,6 +28,10 @@ class NumberUtilTest {
 		assertEquals(0D, NumberUtil.parse("0.0D"));
 		assertEquals(0F, NumberUtil.parse("0.0f"));
 		assertEquals(0F, NumberUtil.parse("0.0F"));
+		assertEquals(0D, NumberUtil.parse("0."));
+		assertEquals(0F, NumberUtil.parse("0.F"));
+		assertEquals(0, NumberUtil.parse("0x"));
+		assertEquals(0L, NumberUtil.parse("0xL"));
 		assertEquals(0, NumberUtil.parse("0x0"));
 		assertEquals(0L, NumberUtil.parse("0x0L"));
 	}
