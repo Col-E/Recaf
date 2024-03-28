@@ -156,7 +156,8 @@ public class ReferenceQuery implements JvmClassQuery {
 				// Check exceptions
 				if (exceptions != null)
 					for (String exception : exceptions)
-						resultSink.accept(memberPath.childThrows(exception), cref(exception));
+						if (isClassRefMatch(exception))
+							resultSink.accept(memberPath.childThrows(exception), cref(exception));
 
 				// Check descriptor components
 				// - Only yield one match even if there are multiple class-refs in the desc
@@ -205,6 +206,8 @@ public class ReferenceQuery implements JvmClassQuery {
 	private class AsmReferenceMethodVisitor extends IndexCountingMethodVisitor {
 		private final ResultSink resultSink;
 		private final ClassMemberPathNode memberPath;
+		private final String ownerType;
+
 
 		public AsmReferenceMethodVisitor(@Nullable MethodVisitor delegate,
 										 @Nonnull MethodMember methodMember,
@@ -213,6 +216,8 @@ public class ReferenceQuery implements JvmClassQuery {
 			super(delegate);
 			this.resultSink = resultSink;
 			this.memberPath = classLocation.child(methodMember);
+
+			ownerType = classLocation.getValue().getName();
 		}
 
 		@Override
@@ -317,15 +322,25 @@ public class ReferenceQuery implements JvmClassQuery {
 
 		@Override
 		public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-			if (Types.isValidDesc(desc) && !Types.isPrimitive(desc)) {
-				String type = getInternalName(desc);
-				if (isClassRefMatch(type)) {
-					LocalVariable variable = new BasicLocalVariable(index, name, desc, signature);
-					resultSink.accept(memberPath.childVariable(variable), cref(type));
-				}
+			if (!Types.isValidDesc(desc) || Types.isPrimitive(desc)) {
+				super.visitLocalVariable(name, desc, signature, start, end, index);
+				return;
 			}
-			super.visitLocalVariable(name, desc, signature, start, end, index);
 
+			String type = getInternalName(desc);
+
+			// Skip 'this' variables. Nobody cares that virtual methods have a type reference to themselves...
+			if (index == 0 && name.equals("this") && type.equals(ownerType)) {
+				super.visitLocalVariable(name, desc, signature, start, end, index);
+				return;
+			}
+
+			if (isClassRefMatch(type)) {
+				LocalVariable variable = new BasicLocalVariable(index, name, desc, signature);
+				resultSink.accept(memberPath.childVariable(variable), cref(type));
+			}
+
+			super.visitLocalVariable(name, desc, signature, start, end, index);
 		}
 
 		@Override
