@@ -5,8 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
-import software.coley.recaf.services.cell.icon.AnnotationIconProviderFactory;
-import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;

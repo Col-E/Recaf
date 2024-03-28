@@ -13,6 +13,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
@@ -22,6 +23,7 @@ import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
@@ -276,8 +278,7 @@ public class CellConfigurationService implements Service {
 			}
 
 			return textService.getInstructionTextProvider(workspace, resource, bundle,
-					declaringClass, declaringMethod, instructionPath.getValue(),
-					instructionPath.getInstructionIndex()).makeText();
+					declaringClass, declaringMethod, instructionPath.getValue()).makeText();
 		} else if (item instanceof LineNumberPathNode lineNumberPath) {
 			FileBundle bundle = lineNumberPath.getValueOfType(FileBundle.class);
 			if (bundle == null) {
@@ -293,6 +294,69 @@ public class CellConfigurationService implements Service {
 
 			int line = lineNumberPath.getValue();
 			return textService.getLineNumberTextProvider(workspace, resource, bundle, declaringTextFile, line).makeText();
+		} else if (item instanceof LocalVariablePathNode localVariablePath) {
+			ClassBundle<? extends ClassInfo> bundle = localVariablePath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Local var path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			ClassInfo declaringClass = localVariablePath.getValueOfType(ClassInfo.class);
+			if (declaringClass == null) {
+				logger.error("Local var path node missing class section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			MethodMember declaringMethod = localVariablePath.getValueOfType(MethodMember.class);
+			if (declaringMethod == null) {
+				logger.error("Local var path node missing method section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			return textService.getVariableTextProvider(workspace, resource, bundle,
+					declaringClass, declaringMethod, localVariablePath.getValue()).makeText();
+		} else if (item instanceof ThrowsPathNode throwsPath) {
+			ClassBundle<? extends ClassInfo> bundle = throwsPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Throws path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			ClassInfo declaringClass = throwsPath.getValueOfType(ClassInfo.class);
+			if (declaringClass == null) {
+				logger.error("Throws path node missing class section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			MethodMember declaringMethod = throwsPath.getValueOfType(MethodMember.class);
+			if (declaringMethod == null) {
+				logger.error("Throws path node missing method section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			return textService.getThrowsTextProvider(workspace, resource, bundle,
+					declaringClass, declaringMethod, throwsPath.getValue()).makeText();
+		} else if (item instanceof CatchPathNode catchPath) {
+			ClassBundle<? extends ClassInfo> bundle = catchPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Catch path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			ClassInfo declaringClass = catchPath.getValueOfType(ClassInfo.class);
+			if (declaringClass == null) {
+				logger.error("Catch path node missing class section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			MethodMember declaringMethod = catchPath.getValueOfType(MethodMember.class);
+			if (declaringMethod == null) {
+				logger.error("Catch path node missing method section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			return textService.getCatchTextProvider(workspace, resource, bundle,
+					declaringClass, declaringMethod, catchPath.getValue()).makeText();
 		}
 
 		// No text
@@ -405,6 +469,90 @@ public class CellConfigurationService implements Service {
 			return iconService.getBundleIconProvider(workspace, resource, bundlePath.getValue()).makeIcon();
 		} else if (item instanceof ResourcePathNode) {
 			return iconService.getResourceIconProvider(workspace, resource).makeIcon();
+		} else if (item instanceof InstructionPathNode insnPath) {
+			ClassBundle<?> bundle = insnPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Instruction path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo classInfo = insnPath.getValueOfType(ClassInfo.class);
+			if (classInfo == null) {
+				logger.error("Instruction path node missing class section: {}", item);
+				return null;
+			}
+
+			MethodMember method = insnPath.getValueOfType(MethodMember.class);
+			if (method == null) {
+				logger.error("Instruction path node missing method section: {}", item);
+				return null;
+			}
+
+			AbstractInsnNode insn = insnPath.getValue();
+			return iconService.getInstructionIconProvider(workspace, resource, bundle, classInfo, method, insn).makeIcon();
+		} else if (item instanceof LocalVariablePathNode varPath) {
+			ClassBundle<?> bundle = varPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Local var path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo classInfo = varPath.getValueOfType(ClassInfo.class);
+			if (classInfo == null) {
+				logger.error("Local var path node missing class section: {}", item);
+				return null;
+			}
+
+			MethodMember method = varPath.getValueOfType(MethodMember.class);
+			if (method == null) {
+				logger.error("Local var path node missing method section: {}", item);
+				return null;
+			}
+
+			LocalVariable local = varPath.getValue();
+			return iconService.getVariableIconProvider(workspace, resource, bundle, classInfo, method, local).makeIcon();
+		} else if (item instanceof ThrowsPathNode throwsPath) {
+			ClassBundle<?> bundle = throwsPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Throws path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo classInfo = throwsPath.getValueOfType(ClassInfo.class);
+			if (classInfo == null) {
+				logger.error("Throws path node missing class section: {}", item);
+				return null;
+			}
+
+			MethodMember method = throwsPath.getValueOfType(MethodMember.class);
+			if (method == null) {
+				logger.error("Throws path node missing method section: {}", item);
+				return null;
+			}
+
+			String thrown = throwsPath.getValue();
+			return iconService.getThrowsIconProvider(workspace, resource, bundle, classInfo, method, thrown).makeIcon();
+		} else if (item instanceof CatchPathNode catchPath) {
+			ClassBundle<?> bundle = catchPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Catch path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo classInfo = catchPath.getValueOfType(ClassInfo.class);
+			if (classInfo == null) {
+				logger.error("Catch path node missing class section: {}", item);
+				return null;
+			}
+
+			MethodMember method = catchPath.getValueOfType(MethodMember.class);
+			if (method == null) {
+				logger.error("Catch path node missing method section: {}", item);
+				return null;
+			}
+
+			String caught = catchPath.getValue();
+			return iconService.getCatchIconProvider(workspace, resource, bundle, classInfo, method, caught).makeIcon();
 		}
 
 		// No graphic

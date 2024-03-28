@@ -6,8 +6,6 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.ThrowableProperty;
-import software.coley.recaf.services.cell.icon.ClassIconProviderFactory;
-import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;

@@ -2,9 +2,7 @@ package software.coley.recaf.services.cell.text;
 
 import dev.xdark.blw.asm.internal.Util;
 import dev.xdark.blw.code.Instruction;
-import dev.xdark.blw.code.instruction.AllocateInstruction;
-import dev.xdark.blw.code.instruction.ConstantInstruction;
-import dev.xdark.blw.code.instruction.PrimitiveConversionInstruction;
+import dev.xdark.blw.code.instruction.*;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -12,6 +10,7 @@ import me.darknet.assembler.helper.Names;
 import me.darknet.assembler.printer.InstructionPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import org.benf.cfr.reader.entities.annotations.ElementValue;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.Annotated;
@@ -19,13 +18,16 @@ import software.coley.recaf.info.annotation.AnnotationElement;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
+import software.coley.recaf.util.BlwUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.*;
@@ -227,6 +229,8 @@ public class TextProviderService implements Service {
 	 * 		Containing class.
 	 * @param declaringMethod
 	 * 		Containing method.
+	 * @param insn
+	 * 		Variable to get the text of.
 	 *
 	 * @return Text provider for the instruction.
 	 */
@@ -236,51 +240,99 @@ public class TextProviderService implements Service {
 												   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 												   @Nonnull ClassInfo declaringClass,
 												   @Nonnull MethodMember declaringMethod,
-												   @Nonnull AbstractInsnNode insn,
-												   int index) {
+												   @Nonnull AbstractInsnNode insn) {
 		return () -> {
-			PrintContext<?> ctx = new PrintContext<>("");
-			InstructionPrinter printer = new InstructionPrinter(ctx.code(),
-					null, new Names(Collections.emptyMap(), Collections.emptyList()),
-					Collections.emptyMap()
-			);
 
-			// Map ASM insn model to BLW which is used by JASM
-			if (insn instanceof LdcInsnNode ldc) {
-				printer.execute(Util.wrapLdcInsn(ldc.cst));
-			} else if (insn instanceof MethodInsnNode min) {
-				printer.execute(Util.wrapMethodInsn(min.getOpcode(), min.owner, min.name, min.desc, false));
-			} else if (insn instanceof FieldInsnNode fin) {
-				printer.execute(Util.wrapFieldInsn(fin.getOpcode(), fin.owner, fin.name, fin.desc));
-			} else if (insn instanceof TypeInsnNode tin) {
-				printer.execute(Util.wrapTypeInsn(tin.getOpcode(), tin.desc));
-			} else if (insn instanceof IntInsnNode iin) {
-				Instruction wrapped = Util.wrapIntInsn(iin.getOpcode(), iin.operand);
-				if (wrapped instanceof ConstantInstruction<?> constWrapped)
-					printer.execute(constWrapped);
-				else if (wrapped instanceof AllocateInstruction allocateWrapped)
-					printer.execute(allocateWrapped);
-				else
-					printer.execute(wrapped);
-			} else if (insn instanceof InsnNode in) {
-				Instruction wrapped = Util.wrapInsn(in.getOpcode());
-				if (wrapped instanceof ConstantInstruction<?> constWrapped)
-					printer.execute(constWrapped);
-				else if (wrapped instanceof PrimitiveConversionInstruction convWrapped)
-					printer.execute(convWrapped);
-				else
-					printer.execute(wrapped);
-			} else if (insn instanceof InvokeDynamicInsnNode indy) {
-				printer.execute(Util.wrapInvokeDynamicInsn(indy.name, indy.desc, indy.bsm, indy.bsmArgs));
+			return formatConfig.filterMaxLength(BlwUtil.toString(insn));
+		};
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param variable
+	 * 		Variable to get the text of.
+	 *
+	 * @return Text provider for the instruction.
+	 */
+	@Nonnull
+	public TextProvider getVariableTextProvider(@Nonnull Workspace workspace,
+												@Nonnull WorkspaceResource resource,
+												@Nonnull ClassBundle<? extends ClassInfo> bundle,
+												@Nonnull ClassInfo declaringClass,
+												@Nonnull MethodMember declaringMethod,
+												@Nonnull LocalVariable variable) {
+		return () -> {
+			String text;
+			Type type = Type.getType(variable.getDescriptor());
+			String name = formatConfig.filter(variable.getName());
+			if (Types.isPrimitive(type)) {
+				text = type.getClassName() + " " + name;
 			} else {
-				// The current search models shouldn't yield anything aside from the above types.
-				return "<missing text mapper: " + insn.getClass().getSimpleName() + ">";
+				text = formatConfig.filterShorten(type.getClassName()) + " " + name;
 			}
-
-			// Cut off first 2 chars of unused indentation then cap off the max length.
-			String text = ctx.toString().substring(2);
 			return formatConfig.filterMaxLength(text);
 		};
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param thrownType
+	 * 		Thrown type to get the text of.
+	 *
+	 * @return Text provider for the instruction.
+	 */
+	@Nonnull
+	public TextProvider getThrowsTextProvider(@Nonnull Workspace workspace,
+											  @Nonnull WorkspaceResource resource,
+											  @Nonnull ClassBundle<? extends ClassInfo> bundle,
+											  @Nonnull ClassInfo declaringClass,
+											  @Nonnull MethodMember declaringMethod,
+											  @Nonnull String thrownType) {
+		return () -> formatConfig.filter(thrownType);
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param caughtType
+	 * 		Caught type to get the text of.
+	 *
+	 * @return Text provider for the instruction.
+	 */
+	@Nonnull
+	public TextProvider getCatchTextProvider(@Nonnull Workspace workspace,
+											 @Nonnull WorkspaceResource resource,
+											 @Nonnull ClassBundle<? extends ClassInfo> bundle,
+											 @Nonnull ClassInfo declaringClass,
+											 @Nonnull MethodMember declaringMethod,
+											 @Nonnull String caughtType) {
+		return () -> formatConfig.filter(caughtType);
 	}
 
 	/**
@@ -308,7 +360,7 @@ public class TextProviderService implements Service {
 				int index = line - 1;
 				String[] lines = declaringFile.asTextFile().getTextLines();
 				if (index >= 0 && index < lines.length)
-					return lines[index];
+					return formatConfig.filterMaxLength(lines[index]);
 			}
 			return "???";
 		};

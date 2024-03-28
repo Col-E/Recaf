@@ -3,8 +3,6 @@ package software.coley.recaf.services.cell.icon;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.services.cell.icon.FileIconProviderFactory;
-import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;

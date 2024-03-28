@@ -7,8 +7,6 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.properties.builtin.ThrowableProperty;
-import software.coley.recaf.services.cell.icon.IconProvider;
-import software.coley.recaf.services.cell.icon.InnerClassIconProviderFactory;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;

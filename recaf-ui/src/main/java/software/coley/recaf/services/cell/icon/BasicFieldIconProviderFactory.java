@@ -8,8 +8,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
-import software.coley.recaf.services.cell.icon.FieldIconProviderFactory;
-import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;

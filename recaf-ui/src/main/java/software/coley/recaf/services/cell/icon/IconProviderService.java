@@ -1,19 +1,23 @@
 package software.coley.recaf.services.cell.icon;
 
+import dev.xdark.blw.code.Instruction;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.cell.context.FieldContextMenuProviderFactory;
 import software.coley.recaf.services.cell.context.MethodContextMenuProviderFactory;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
+import software.coley.recaf.util.BlwUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -48,6 +52,10 @@ public class IconProviderService implements Service {
 	private final InnerClassIconProviderFactory innerClassIconDefault;
 	private final FieldIconProviderFactory fieldIconDefault;
 	private final MethodIconProviderFactory methodIconDefault;
+	private final InstructionIconProviderFactory instructionIconDefault;
+	private final ThrowsIconProviderFactory throwsIconDefault;
+	private final CatchIconProviderFactory catchIconDefault;
+	private final VariableIconProviderFactory variableIconDefault;
 	private final AnnotationIconProviderFactory annotationIconDefault;
 	private final PackageIconProviderFactory packageIconDefault;
 	private final DirectoryIconProviderFactory directoryIconDefault;
@@ -59,6 +67,10 @@ public class IconProviderService implements Service {
 	private InnerClassIconProviderFactory innerClassIconOverride;
 	private FieldIconProviderFactory fieldIconOverride;
 	private MethodIconProviderFactory methodIconOverride;
+	private InstructionIconProviderFactory instructionIconOverride;
+	private ThrowsIconProviderFactory throwsIconOverride;
+	private CatchIconProviderFactory catchIconOverride;
+	private VariableIconProviderFactory variableIconOverride;
 	private AnnotationIconProviderFactory annotationIconOverride;
 	private PackageIconProviderFactory packageIconOverride;
 	private DirectoryIconProviderFactory directoryIconOverride;
@@ -72,6 +84,10 @@ public class IconProviderService implements Service {
 							   @Nonnull InnerClassIconProviderFactory innerClassIconDefault,
 							   @Nonnull FieldIconProviderFactory fieldIconDefault,
 							   @Nonnull MethodIconProviderFactory methodIconDefault,
+							   @Nonnull InstructionIconProviderFactory instructionIconDefault,
+							   @Nonnull ThrowsIconProviderFactory throwsIconDefault,
+							   @Nonnull CatchIconProviderFactory catchIconDefault,
+							   @Nonnull VariableIconProviderFactory variableIconDefault,
 							   @Nonnull AnnotationIconProviderFactory annotationIconDefault,
 							   @Nonnull PackageIconProviderFactory packageIconDefault,
 							   @Nonnull DirectoryIconProviderFactory directoryIconDefault,
@@ -85,6 +101,10 @@ public class IconProviderService implements Service {
 		this.innerClassIconDefault = innerClassIconDefault;
 		this.fieldIconDefault = fieldIconDefault;
 		this.methodIconDefault = methodIconDefault;
+		this.instructionIconDefault = instructionIconDefault;
+		this.throwsIconDefault = throwsIconDefault;
+		this.catchIconDefault = catchIconDefault;
+		this.variableIconDefault = variableIconDefault;
 		this.annotationIconDefault = annotationIconDefault;
 		this.packageIconDefault = packageIconDefault;
 		this.directoryIconDefault = directoryIconDefault;
@@ -221,6 +241,150 @@ public class IconProviderService implements Service {
 	}
 
 	/**
+	 * Delegates to {@link InstructionIconProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param instruction
+	 * 		The instruction to create an icon for.
+	 *
+	 * @return Icon provider for the class member.
+	 */
+	@Nonnull
+	public IconProvider getInstructionIconProvider(@Nonnull Workspace workspace,
+												   @Nonnull WorkspaceResource resource,
+												   @Nonnull ClassBundle<?> bundle,
+												   @Nonnull ClassInfo declaringClass,
+												   @Nonnull MethodMember declaringMethod,
+												   @Nonnull AbstractInsnNode instruction) {
+		return getInstructionIconProvider(workspace, resource, bundle, declaringClass, declaringMethod, BlwUtil.convert(instruction));
+	}
+
+	/**
+	 * Delegates to {@link InstructionIconProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param instruction
+	 * 		The instruction to create an icon for.
+	 *
+	 * @return Icon provider for the instruction.
+	 */
+	@Nonnull
+	public IconProvider getInstructionIconProvider(@Nonnull Workspace workspace,
+												   @Nonnull WorkspaceResource resource,
+												   @Nonnull ClassBundle<?> bundle,
+												   @Nonnull ClassInfo declaringClass,
+												   @Nonnull MethodMember declaringMethod,
+												   @Nonnull Instruction instruction) {
+		InstructionIconProviderFactory factory = instructionIconOverride != null ? instructionIconOverride : instructionIconDefault;
+		return factory.getInstructionIconProvider(workspace, resource, bundle, declaringClass, declaringMethod, instruction);
+	}
+
+	/**
+	 * Delegates to {@link VariableIconProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param variable
+	 * 		The local variable to create an icon for.
+	 *
+	 * @return Icon provider for the local variable.
+	 */
+	@Nonnull
+	public IconProvider getVariableIconProvider(@Nonnull Workspace workspace,
+												@Nonnull WorkspaceResource resource,
+												@Nonnull ClassBundle<?> bundle,
+												@Nonnull ClassInfo declaringClass,
+												@Nonnull MethodMember declaringMethod,
+												@Nonnull LocalVariable variable) {
+		VariableIconProviderFactory factory = variableIconOverride != null ? variableIconOverride : variableIconDefault;
+		return factory.getVariableIconProvider(workspace, resource, bundle, declaringClass, declaringMethod, variable);
+	}
+
+	/**
+	 * Delegates to {@link InstructionIconProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param thrown
+	 * 		The thrown type to create an icon for.
+	 *
+	 * @return Icon provider for the thrown type.
+	 */
+	@Nonnull
+	public IconProvider getThrowsIconProvider(@Nonnull Workspace workspace,
+											  @Nonnull WorkspaceResource resource,
+											  @Nonnull ClassBundle<?> bundle,
+											  @Nonnull ClassInfo declaringClass,
+											  @Nonnull MethodMember declaringMethod,
+											  @Nonnull String thrown) {
+		ThrowsIconProviderFactory factory = throwsIconOverride != null ? throwsIconOverride : throwsIconDefault;
+		return factory.getThrowsIconProvider(workspace, resource, bundle, declaringClass, declaringMethod, thrown);
+	}
+
+	/**
+	 * Delegates to {@link InstructionIconProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param caught
+	 * 		The caught type to create an icon for.
+	 *
+	 * @return Icon provider for the caught type.
+	 */
+	@Nonnull
+	public IconProvider getCatchIconProvider(@Nonnull Workspace workspace,
+											 @Nonnull WorkspaceResource resource,
+											 @Nonnull ClassBundle<?> bundle,
+											 @Nonnull ClassInfo declaringClass,
+											 @Nonnull MethodMember declaringMethod,
+											 @Nonnull String caught) {
+		CatchIconProviderFactory factory = catchIconOverride != null ? catchIconOverride : catchIconDefault;
+		return factory.getCatchIconProvider(workspace, resource, bundle, declaringClass, declaringMethod, caught);
+	}
+
+	/**
 	 * Delegates to {@link AnnotationIconProviderFactory}.
 	 *
 	 * @param workspace
@@ -338,6 +502,70 @@ public class IconProviderService implements Service {
 	}
 
 	/**
+	 * @return Default icon provider for methods.
+	 */
+	@Nonnull
+	public MethodIconProviderFactory getMethodIconDefault() {
+		return methodIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for fields.
+	 */
+	@Nonnull
+	public FieldIconProviderFactory getFieldIconDefault() {
+		return fieldIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for annotations.
+	 */
+	@Nonnull
+	public AnnotationIconProviderFactory getAnnotationIconDefault() {
+		return annotationIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for inner classes.
+	 */
+	@Nonnull
+	public InnerClassIconProviderFactory getInnerClassIconDefault() {
+		return innerClassIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for instructions.
+	 */
+	@Nonnull
+	public InstructionIconProviderFactory getInstructionIconDefault() {
+		return instructionIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for thrown types.
+	 */
+	@Nonnull
+	public ThrowsIconProviderFactory getThrowsIconDefault() {
+		return throwsIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for catch blocks.
+	 */
+	@Nonnull
+	public CatchIconProviderFactory getCatchIconDefault() {
+		return catchIconDefault;
+	}
+
+	/**
+	 * @return Default icon provider for variables.
+	 */
+	@Nonnull
+	public VariableIconProviderFactory getVariableIconDefault() {
+		return variableIconDefault;
+	}
+
+	/**
 	 * @return Default icon provider for files.
 	 */
 	@Nonnull
@@ -428,7 +656,7 @@ public class IconProviderService implements Service {
 	/**
 	 * @return Override factory for supplying field icon providers.
 	 */
-	@Nonnull
+	@Nullable
 	public FieldIconProviderFactory getFieldIconProviderOverride() {
 		return fieldIconOverride;
 	}
@@ -437,14 +665,14 @@ public class IconProviderService implements Service {
 	 * @param fieldIconOverride
 	 * 		Override factory for supplying field icon providers.
 	 */
-	public void setFieldIconProviderOverride(@Nonnull FieldIconProviderFactory fieldIconOverride) {
+	public void setFieldIconProviderOverride(@Nullable FieldIconProviderFactory fieldIconOverride) {
 		this.fieldIconOverride = fieldIconOverride;
 	}
 
 	/**
 	 * @return Override factory for supplying method icon providers.
 	 */
-	@Nonnull
+	@Nullable
 	public MethodIconProviderFactory getMethodIconProviderOverride() {
 		return methodIconOverride;
 	}
@@ -453,14 +681,78 @@ public class IconProviderService implements Service {
 	 * @param methodIconOverride
 	 * 		Override factory for supplying method icon providers.
 	 */
-	public void setMethodIconProviderOverride(@Nonnull MethodIconProviderFactory methodIconOverride) {
+	public void setMethodIconProviderOverride(@Nullable MethodIconProviderFactory methodIconOverride) {
 		this.methodIconOverride = methodIconOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying instruction icon providers.
+	 */
+	@Nullable
+	public InstructionIconProviderFactory getInstructionIconOverride() {
+		return instructionIconOverride;
+	}
+
+	/**
+	 * @param instructionIconOverride
+	 * 		Override factory for supplying instruction icon providers.
+	 */
+	public void setInstructionIconOverride(@Nullable InstructionIconProviderFactory instructionIconOverride) {
+		this.instructionIconOverride = instructionIconOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying {@code throws} icon providers.
+	 */
+	@Nullable
+	public ThrowsIconProviderFactory getThrowsIconOverride() {
+		return throwsIconOverride;
+	}
+
+	/**
+	 * @param throwsIconOverride
+	 * 		Override factory for supplying {@code throws} icon providers.
+	 */
+	public void setThrowsIconOverride(@Nullable ThrowsIconProviderFactory throwsIconOverride) {
+		this.throwsIconOverride = throwsIconOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying {@code catch} icon providers.
+	 */
+	@Nullable
+	public CatchIconProviderFactory getCatchIconOverride() {
+		return catchIconOverride;
+	}
+
+	/**
+	 * @param catchIconOverride
+	 * 		Override factory for supplying {@code catch} icon providers.
+	 */
+	public void setCatchIconOverride(@Nullable CatchIconProviderFactory catchIconOverride) {
+		this.catchIconOverride = catchIconOverride;
+	}
+
+	/**
+	 * @return Override factory for supplying {@code var} icon providers.
+	 */
+	@Nullable
+	public VariableIconProviderFactory getVariableIconOverride() {
+		return variableIconOverride;
+	}
+
+	/**
+	 * @param variableIconOverride
+	 * 		Override factory for supplying {@code var} icon providers.
+	 */
+	public void setVariableIconOverride(@Nullable VariableIconProviderFactory variableIconOverride) {
+		this.variableIconOverride = variableIconOverride;
 	}
 
 	/**
 	 * @return Override factory for supplying annotation icon providers.
 	 */
-	@Nonnull
+	@Nullable
 	public AnnotationIconProviderFactory getAnnotationIconProviderOverride() {
 		return annotationIconOverride;
 	}
@@ -469,7 +761,7 @@ public class IconProviderService implements Service {
 	 * @param annotationIconOverride
 	 * 		Override factory for supplying annotation icon providers.
 	 */
-	public void setAnnotationIconProviderOverride(@Nonnull AnnotationIconProviderFactory annotationIconOverride) {
+	public void setAnnotationIconProviderOverride(@Nullable AnnotationIconProviderFactory annotationIconOverride) {
 		this.annotationIconOverride = annotationIconOverride;
 	}
 
