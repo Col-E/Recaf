@@ -67,7 +67,11 @@ public class LocalVariablePathNode extends AbstractPathNode<ClassMember, LocalVa
 			if (cmp == 0)
 				cmp = value.getDescriptor().compareTo(otherValue.getDescriptor());
 			return cmp;
-		}
+		} else if (o instanceof ThrowsPathNode || o instanceof CatchPathNode)
+			return 1;
+		else if (o instanceof InstructionPathNode)
+			return -1;
+
 		return 0;
 	}
 }

@@ -59,6 +59,8 @@ public class ThrowsPathNode extends AbstractPathNode<ClassMember, String> {
 
 		if (o instanceof ThrowsPathNode node)
 			return getValue().compareTo(node.getValue());
+		else if (o instanceof LocalVariablePathNode || o instanceof InstructionPathNode || o instanceof CatchPathNode)
+			return -1;
 
 		return 0;
 	}

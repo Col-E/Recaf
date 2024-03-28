@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 
 import java.util.Set;
@@ -73,6 +74,8 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 
 		if (o instanceof InstructionPathNode node)
 			return Integer.compare(index, node.index);
+		else if (o instanceof ThrowsPathNode || o instanceof CatchPathNode || o instanceof LocalVariablePathNode)
+			return 1;
 
 		return 0;
 	}

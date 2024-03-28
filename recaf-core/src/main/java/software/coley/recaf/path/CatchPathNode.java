@@ -59,6 +59,10 @@ public class CatchPathNode extends AbstractPathNode<ClassMember, String> {
 
 		if (o instanceof CatchPathNode node)
 			return getValue().compareTo(node.getValue());
+		else if (o instanceof LocalVariablePathNode || o instanceof InstructionPathNode)
+			return -1;
+		else if (o instanceof ThrowsPathNode)
+			return 1;
 
 		return 0;
 	}
