@@ -58,7 +58,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 		addValue(new BasicMapConfigValue<>("bundle", BindingBundle.class, String.class, Binding.class, bundle));
 
 		// Register custom json adapter for the binding bundle type.
-		gsonProvider.addTypeAdapter(BindingBundle.class, (JsonDeserializer<BindingBundle>) (json, typeOfT, context) -> {
+		gsonProvider.addTypeDeserializer(BindingBundle.class, (json, typeOfT, context) -> {
 			Set<String> expected = new HashSet<>(bundle.keySet());
 			Map<String, JsonElement> map = json.getAsJsonObject().asMap();
 			List<Binding> bindings = new ArrayList<>(map.size());

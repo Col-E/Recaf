@@ -69,21 +69,6 @@ public class GsonProvider implements Service {
 	 * @param type
 	 * 		Type definition for the type adapter being registered.
 	 * @param adapter
-	 * 		Adapter implementation for the given type. Must be a {@link TypeAdapter},
-	 *        {@link InstanceCreator}, {@link JsonSerializer},or {@link JsonDeserializer}.
-	 *
-	 * @see GsonBuilder#registerTypeAdapter(Type, Object)
-	 */
-	public void addTypeAdapter(@Nonnull Class<?> type, @Nonnull Object adapter) {
-		updateBuilder(builder -> builder.registerTypeAdapter(type, adapter));
-	}
-
-	/**
-	 * Register a type adapter for application-wide serialization support.
-	 *
-	 * @param type
-	 * 		Type definition for the type adapter being registered.
-	 * @param adapter
 	 * 		Adapter implementation for the given type.
 	 * @param <T>
 	 * 		Type to adapt.
@@ -91,6 +76,70 @@ public class GsonProvider implements Service {
 	 * @see GsonBuilder#registerTypeAdapter(Type, Object)
 	 */
 	public <T> void addTypeAdapter(@Nonnull Class<T> type, @Nonnull TypeAdapter<T> adapter) {
+		register(type, adapter);
+	}
+
+	/**
+	 * Register an instance creator for application-wide support.
+	 *
+	 * @param type
+	 * 		Type definition for the instance creator being registered.
+	 * @param creator
+	 * 		Instance creator implementation for the given type.
+	 * @param <T>
+	 * 		Type to adapt.
+	 *
+	 * @see GsonBuilder#registerTypeAdapter(Type, Object)
+	 */
+	public <T> void addTypeInstanceCreator(@Nonnull Class<T> type, @Nonnull InstanceCreator<T> creator) {
+		register(type, creator);
+	}
+
+	/**
+	 * Register a type deserializer for application-wide support.
+	 *
+	 * @param type
+	 * 		Type definition for the type deserializer being registered.
+	 * @param deserializer
+	 * 		Deserializer implementation for the given type.
+	 * @param <T>
+	 * 		Type to adapt.
+	 *
+	 * @see GsonBuilder#registerTypeAdapter(Type, Object)
+	 */
+	public <T> void addTypeDeserializer(@Nonnull Class<T> type, @Nonnull JsonDeserializer<T> deserializer) {
+		register(type, deserializer);
+	}
+
+	/**
+	 * Register a type serializer for application-wide support.
+	 *
+	 * @param type
+	 * 		Type definition for the type serializer being registered.
+	 * @param serializer
+	 * 		Serializer implementation for the given type.
+	 * @param <T>
+	 * 		Type to adapt.
+	 *
+	 * @see GsonBuilder#registerTypeAdapter(Type, Object)
+	 */
+	public <T> void addTypeSerializer(@Nonnull Class<T> type, @Nonnull JsonSerializer<T> serializer) {
+		register(type, serializer);
+	}
+
+	/**
+	 * Register a type adapter <i>(Loose terminology, multiple types are supported)</i>
+	 * for application-wide serialization support.
+	 *
+	 * @param type
+	 * 		Type definition for the type adapter being registered.
+	 * @param adapter
+	 * 		Adapter implementation for the given type. Must be a {@link TypeAdapter},
+	 *        {@link InstanceCreator}, {@link JsonSerializer},or {@link JsonDeserializer}.
+	 *
+	 * @see GsonBuilder#registerTypeAdapter(Type, Object)
+	 */
+	private void register(@Nonnull Class<?> type, @Nonnull Object adapter) {
 		updateBuilder(builder -> builder.registerTypeAdapter(type, adapter));
 	}
 
