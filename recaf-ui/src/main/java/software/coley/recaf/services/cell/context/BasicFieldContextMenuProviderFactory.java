@@ -17,7 +17,9 @@ import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProvider;
 import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
+import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
@@ -90,10 +92,17 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 				//    - Add annotation
 				//    - Remove annotations
 			}
-			// TODO: Implement search UI, and open that when these actions are run
 
 			// Search actions
-			builder.item("menu.search.field-references", CODE, () -> {}).disableWhen(true);
+			builder.item("menu.search.field-references", CODE, () -> {
+				MemberReferenceSearchPane pane = actions.openNewMemberReferenceSearch();
+				pane.ownerPredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
+				pane.namePredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
+				pane.descPredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
+				pane.ownerValueProperty().setValue(declaringClass.getName());
+				pane.nameValueProperty().setValue(field.getName());
+				pane.descPredicateIdProperty().setValue(field.getDescriptor());
+			});
 
 			// Documentation actions
 			builder.memberItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);

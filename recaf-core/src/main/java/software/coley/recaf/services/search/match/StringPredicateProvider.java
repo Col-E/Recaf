@@ -16,20 +16,60 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @ApplicationScoped
 public class StringPredicateProvider {
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for equality matching.
+	 */
+	public static final String KEY_EQUALS = "equal";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for case-insensitive equality matching.
+	 */
+	public static final String KEY_EQUALS_IGNORE_CASE = "equal-ic";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for containment matching.
+	 */
+	public static final String KEY_CONTAINS = "contains";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for case-insensitive containment matching.
+	 */
+	public static final String KEY_CONTAINS_IGNORE_CASE = "contains-ic";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for prefix matching.
+	 */
+	public static final String KEY_STARTS_WITH = "starts";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for case-insensitive prefix matching.
+	 */
+	public static final String KEY_STARTS_WITH_IGNORE_CASE = "starts-ic";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for suffix matching.
+	 */
+	public static final String KEY_ENDS_WITH = "ends";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for case-insensitive suffix matching.
+	 */
+	public static final String KEY_ENDS_WITH_IGNORE_CASE = "ends-ic";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for partial regex matching.
+	 */
+	public static final String KEY_REGEX_PARTIAL = "regex-partial";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for full regex matching.
+	 */
+	public static final String KEY_REFEX_FULL = "regex-full";
 	private final Map<String, BiStringMatcher> biStringMatchers = new ConcurrentHashMap<>();
 	private final Map<String, MultiStringMatcher> multiStringMatchers = new ConcurrentHashMap<>();
 
 	@Inject
 	public StringPredicateProvider() {
-		registerBiMatcher("equal", String::equals);
-		registerBiMatcher("equal-ic", String::equalsIgnoreCase);
-		registerBiMatcher("contains", (key, value) -> value.contains(key));
-		registerBiMatcher("contains-ic", (key, value) -> value.toLowerCase().contains(key.toLowerCase()));
-		registerBiMatcher("starts", (key, value) -> value.startsWith(key));
-		registerBiMatcher("starts-ic", (key, value) -> value.toLowerCase().startsWith(key.toLowerCase()));
-		registerBiMatcher("ends", (key, value) -> value.endsWith(key));
-		registerBiMatcher("ends-ic", (key, value) -> value.toLowerCase().endsWith(key.toLowerCase()));
-		registerBiMatcher("regex-partial", (key, value) -> {
+		registerBiMatcher(KEY_EQUALS, String::equals);
+		registerBiMatcher(KEY_EQUALS_IGNORE_CASE, String::equalsIgnoreCase);
+		registerBiMatcher(KEY_CONTAINS, (key, value) -> value.contains(key));
+		registerBiMatcher(KEY_CONTAINS_IGNORE_CASE, (key, value) -> value.toLowerCase().contains(key.toLowerCase()));
+		registerBiMatcher(KEY_STARTS_WITH, (key, value) -> value.startsWith(key));
+		registerBiMatcher(KEY_STARTS_WITH_IGNORE_CASE, (key, value) -> value.toLowerCase().startsWith(key.toLowerCase()));
+		registerBiMatcher(KEY_ENDS_WITH, (key, value) -> value.endsWith(key));
+		registerBiMatcher(KEY_ENDS_WITH_IGNORE_CASE, (key, value) -> value.toLowerCase().endsWith(key.toLowerCase()));
+		registerBiMatcher(KEY_REGEX_PARTIAL, (key, value) -> {
 			try {
 				return RegexUtil.getMatcher(key, value).find();
 			} catch (Throwable t) {
@@ -37,7 +77,7 @@ public class StringPredicateProvider {
 				return false;
 			}
 		});
-		registerBiMatcher("regex-full", (key, value) -> {
+		registerBiMatcher(KEY_REFEX_FULL, (key, value) -> {
 			try {
 				return RegexUtil.getMatcher(key, value).matches();
 			} catch (Throwable t) {

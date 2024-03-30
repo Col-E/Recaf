@@ -8,6 +8,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -22,7 +23,7 @@ import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.ui.control.BoundComboBox;
+import software.coley.recaf.ui.control.BoundBiDiComboBox;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.RegexUtil;
@@ -61,13 +62,13 @@ public class MemberReferenceSearchPane extends AbstractSearchPane {
 		TextField textOwner = new TextField();
 		TextField textName = new TextField();
 		TextField textDesc = new TextField();
-		BoundComboBox<String> modeComboOwner = new BoundComboBox<>(ownerPredicateId, stringPredicates,
+		ComboBox<String> modeComboOwner = new BoundBiDiComboBox<>(ownerPredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
 		modeComboOwner.getSelectionModel().select(0);
-		BoundComboBox<String> modeComboName = new BoundComboBox<>(namePredicateId, stringPredicates,
+		ComboBox<String> modeComboName = new BoundBiDiComboBox<>(namePredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
 		modeComboName.getSelectionModel().select(0);
-		BoundComboBox<String> modeComboDesc = new BoundComboBox<>(descPredicateId, stringPredicates,
+		ComboBox<String> modeComboDesc = new BoundBiDiComboBox<>(descPredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
 		modeComboDesc.getSelectionModel().select(0);
 

@@ -8,6 +8,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -21,9 +22,8 @@ import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
-import software.coley.recaf.services.search.query.StringQuery;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.ui.control.BoundComboBox;
+import software.coley.recaf.ui.control.BoundBiDiComboBox;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.RegexUtil;
@@ -56,7 +56,7 @@ public class ClassReferenceSearchPane extends AbstractSearchPane {
 
 		List<String> stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream().sorted().toList();
 		TextField textField = new TextField();
-		BoundComboBox<String> modeCombo = new BoundComboBox<>(typePredicateId, stringPredicates,
+		ComboBox<String> modeCombo = new BoundBiDiComboBox<>(typePredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
 		modeCombo.getSelectionModel().select(0);
 

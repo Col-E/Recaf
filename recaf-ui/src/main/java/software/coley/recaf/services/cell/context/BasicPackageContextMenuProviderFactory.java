@@ -10,7 +10,10 @@ import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProvider;
 import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
+import software.coley.recaf.ui.pane.search.ClassReferenceSearchPane;
+import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -61,8 +64,19 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 					refactor.directoryItem("menu.refactor.move", STACKED_MOVE, actions::movePackage);
 					refactor.directoryItem("menu.refactor.rename", TAG_EDIT, actions::renamePackage);
 				}
-				// TODO: implement operations
-				//  - Search references
+
+				// Search actions
+				var search = builder.submenu("menu.search", SEARCH);
+				search.item("menu.search.class.member-references", CODE_REFERENCE, () -> {
+					MemberReferenceSearchPane pane = actions.openNewMemberReferenceSearch();
+					pane.ownerPredicateIdProperty().setValue(StringPredicateProvider.KEY_STARTS_WITH);
+					pane.ownerValueProperty().setValue(packageName + "/");
+				});
+				search.item("menu.search.class.type-references", CODE_REFERENCE, () -> {
+					ClassReferenceSearchPane pane = actions.openNewClassReferenceSearch();
+					pane.typePredicateIdProperty().setValue(StringPredicateProvider.KEY_STARTS_WITH);
+					pane.typeValueProperty().setValue(packageName + "/");
+				});
 			}
 
 			return menu;

@@ -18,8 +18,10 @@ import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProvider;
 import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
-import software.coley.recaf.ui.contextmenu.MenuHandler;
+import software.coley.recaf.ui.pane.search.ClassReferenceSearchPane;
+import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
@@ -159,13 +161,18 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			builder.infoItem("menu.edit.delete", COPY_FILE, actions::deleteClass);
 		}
 
-		// TODO: Implement search UI, and open that when these actions are run
 		// Search actions
 		var search = builder.submenu("menu.search", SEARCH);
-		MenuHandler.each(
-				search.item("menu.search.class.member-references", CODE, () -> {}),
-				search.item("menu.search.class.type-references", CODE_REFERENCE, () -> {})
-		).disableWhen(true);
+		search.item("menu.search.class.member-references", CODE_REFERENCE, () -> {
+			MemberReferenceSearchPane pane = actions.openNewMemberReferenceSearch();
+			pane.ownerPredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
+			pane.ownerValueProperty().setValue(info.getName());
+		});
+		search.item("menu.search.class.type-references", CODE_REFERENCE, () -> {
+			ClassReferenceSearchPane pane = actions.openNewClassReferenceSearch();
+			pane.typePredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
+			pane.typeValueProperty().setValue(info.getName());
+		});
 
 		// Documentation actions
 		builder.infoItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);

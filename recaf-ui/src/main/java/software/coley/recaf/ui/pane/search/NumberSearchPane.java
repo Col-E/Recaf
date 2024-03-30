@@ -4,10 +4,14 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.ComboBox;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -21,7 +25,7 @@ import software.coley.recaf.services.search.match.NumberPredicateProvider;
 import software.coley.recaf.services.search.query.NumberQuery;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.ui.control.BoundComboBox;
+import software.coley.recaf.ui.control.BoundBiDiComboBox;
 import software.coley.recaf.ui.control.DynamicNumericTextField;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.Lang;
@@ -56,7 +60,7 @@ public class NumberSearchPane extends AbstractSearchPane {
 
 		List<String> biPredicates = numberPredicateProvider.getBiNumberMatchers().keySet().stream().sorted().toList();
 		DynamicNumericTextField textField = new DynamicNumericTextField(numericValueProperty, numericTypeProperty);
-		BoundComboBox<String> modeCombo = new BoundComboBox<>(numericPredicateId, biPredicates,
+		ComboBox<String> modeCombo = new BoundBiDiComboBox<>(numericPredicateId, biPredicates,
 				ToStringConverter.from(s -> Lang.get(NumberPredicate.TRANSLATION_PREFIX + s)));
 		modeCombo.getSelectionModel().select(0);
 		isBlank = textField.textProperty().isEmpty();

@@ -11,8 +11,9 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
+import javafx.stage.Stage;
+import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -29,6 +30,7 @@ import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
+import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.popup.AddMemberPopup;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
@@ -48,6 +50,8 @@ import software.coley.recaf.ui.pane.editing.media.AudioFilePane;
 import software.coley.recaf.ui.pane.editing.media.ImageFilePane;
 import software.coley.recaf.ui.pane.editing.media.VideoFilePane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
+import software.coley.recaf.ui.pane.search.*;
+import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.*;
 import software.coley.recaf.util.visitors.*;
 import software.coley.recaf.workspace.PathExportingManager;
@@ -63,6 +67,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static software.coley.recaf.util.Lang.getBinding;
 import static software.coley.recaf.util.Menus.*;
 import static software.coley.recaf.util.StringUtil.*;
 
@@ -77,6 +82,7 @@ public class Actions implements Service {
 	private static final Logger logger = Logging.get(Actions.class);
 	private final NavigationManager navigationManager;
 	private final DockingManager dockingManager;
+	private final WindowFactory windowFactory;
 	private final TextProviderService textService;
 	private final IconProviderService iconService;
 	private final PathExportingManager pathExportingManager;
@@ -91,11 +97,16 @@ public class Actions implements Service {
 	private final Instance<AssemblerPane> assemblerPaneProvider;
 	private final Instance<CommentEditPane> documentationPaneProvider;
 	private final ActionsConfig config;
+	private final Instance<StringSearchPane> stringSearchPaneProvider;
+	private final Instance<NumberSearchPane> numberSearchPaneProvider;
+	private final Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider;
+	private final Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider;
 
 	@Inject
 	public Actions(@Nonnull ActionsConfig config,
 				   @Nonnull NavigationManager navigationManager,
 				   @Nonnull DockingManager dockingManager,
+				   @Nonnull WindowFactory windowFactory,
 				   @Nonnull TextProviderService textService,
 				   @Nonnull IconProviderService iconService,
 				   @Nonnull PathExportingManager pathExportingManager,
@@ -108,10 +119,15 @@ public class Actions implements Service {
 				   @Nonnull Instance<AudioFilePane> audioPaneProvider,
 				   @Nonnull Instance<VideoFilePane> videoPaneProvider,
 				   @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
-				   @Nonnull Instance<CommentEditPane> documentationPaneProvider) {
+				   @Nonnull Instance<CommentEditPane> documentationPaneProvider,
+				   @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
+				   @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
+				   @Nonnull Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider,
+				   @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
+		this.windowFactory = windowFactory;
 		this.textService = textService;
 		this.iconService = iconService;
 		this.pathExportingManager = pathExportingManager;
@@ -125,6 +141,10 @@ public class Actions implements Service {
 		this.videoPaneProvider = videoPaneProvider;
 		this.assemblerPaneProvider = assemblerPaneProvider;
 		this.documentationPaneProvider = documentationPaneProvider;
+		this.stringSearchPaneProvider = stringSearchPaneProvider;
+		this.numberSearchPaneProvider = numberSearchPaneProvider;
+		this.classReferenceSearchPaneProvider = classReferenceSearchPaneProvider;
+		this.memberReferenceSearchPaneProvider = memberReferenceSearchPaneProvider;
 	}
 
 	/**
@@ -1853,6 +1873,61 @@ public class Actions implements Service {
 		bundle.put(declaringClass.toJvmClassBuilder()
 				.adaptFrom(writer.toByteArray())
 				.build());
+	}
+
+	/**
+	 * @return New string search pane, opened in a new docking tab.
+	 */
+	@Nonnull
+	public StringSearchPane openNewStringSearch() {
+		return openSearchPane("menu.search.string", CarbonIcons.QUOTES, stringSearchPaneProvider);
+	}
+
+	/**
+	 * @return New number search pane, opened in a new docking tab.
+	 */
+	@Nonnull
+	public NumberSearchPane openNewNumberSearch() {
+		return openSearchPane("menu.search.number", CarbonIcons.NUMBER_0, numberSearchPaneProvider);
+	}
+
+	/**
+	 * @return New class-reference search pane, opened in a new docking tab.
+	 */
+	@Nonnull
+	public ClassReferenceSearchPane openNewClassReferenceSearch() {
+		return openSearchPane("menu.search.class.type-references", CarbonIcons.CODE_REFERENCE, classReferenceSearchPaneProvider);
+	}
+
+	/**
+	 * @return New member-reference search pane, opened in a new docking tab.
+	 */
+	@Nonnull
+	public MemberReferenceSearchPane openNewMemberReferenceSearch() {
+		return openSearchPane("menu.search.class.member-references", CarbonIcons.CODE_REFERENCE, memberReferenceSearchPaneProvider);
+	}
+
+	@Nonnull
+	private <T extends AbstractSearchPane> T openSearchPane(@Nonnull String titleId, @Nonnull Ikon icon, @Nonnull Instance<T> paneProvider) {
+		DockingRegion region = dockingManager.getRegions().stream()
+				.filter(r -> r.getDockTabs().stream().anyMatch(t -> t.getContent() instanceof AbstractSearchPane))
+				.findFirst().orElse(null);
+		T content = paneProvider.get();
+		if (region != null) {
+			DockingTab tab = region.createTab(getBinding(titleId), content);
+			tab.setGraphic(new FontIconView(icon));
+			tab.select();
+			FxThreadUtil.run(() -> SceneUtils.focus(content));
+		} else {
+			region = dockingManager.newRegion();
+			DockingTab tab = region.createTab(getBinding(titleId), content);
+			tab.setGraphic(new FontIconView(icon));
+			RecafScene scene = new RecafScene((region));
+			Stage window = windowFactory.createAnonymousStage(scene, getBinding("menu.search"), 800, 400);
+			window.show();
+			window.requestFocus();
+		}
+		return content;
 	}
 
 	/**
