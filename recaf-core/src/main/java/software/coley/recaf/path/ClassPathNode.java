@@ -45,6 +45,29 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	}
 
 	/**
+	 * @param name
+	 * 		Field or method name in the current class.
+	 * @param desc
+	 * 		Field or method descriptor in the current class.
+	 *
+	 * @return Path node of member, with the current class as parent.
+	 * {@code null} if a field or method with the given name/descriptor could not be found.
+	 */
+	@Nullable
+	public ClassMemberPathNode child(@Nonnull String name, @Nonnull String desc) {
+		ClassInfo classInfo = getValue();
+		ClassMember member;
+		if (!desc.isEmpty() && desc.charAt(0) == '(')
+			member = classInfo.getDeclaredMethod(name, desc);
+		else
+			member = classInfo.getDeclaredField(name, desc);
+
+		if (member != null) return child(member);
+
+		return null;
+	}
+
+	/**
 	 * @param member
 	 * 		Member to wrap into node.
 	 *
