@@ -59,7 +59,10 @@ public class JPhantomGenerator implements PhantomGenerator {
 				try {
 					return createPhantomsForWorkspace(workspace);
 				} catch (Throwable t) {
-					logger.error("Failed to generate phantoms for workspace");
+					// Workspace-level phantoms are useful for some graphing operations and can be used to enhance compile tasks.
+					// Though, if workspace-level phantoms are not made the compiler will create class-level phantoms anyways,
+					// so this failing is not a big deal. Happens fairly regularly in obfuscated inputs.
+					logger.warn("Failed to generate phantoms for workspace. Some graphing operations may be slightly less effective.");
 					return null;
 				}
 			}).thenAccept(generatedResource -> {
