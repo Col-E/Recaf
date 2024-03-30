@@ -9,6 +9,7 @@ import javafx.scene.control.SingleSelectionModel;
 import javafx.util.StringConverter;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Combo box with two-way binding to a {@link ObjectProperty}.
@@ -37,7 +38,12 @@ public class BoundBiDiComboBox<T> extends ComboBox<T> implements Tooltipable {
 		// Bind the property to the given selected item. We have this intermediate wrapper to mimic two-way binding
 		// on the selected item property, which is declared as read-only.
 		ObjectProperty<T> currentItemWrapper = new SimpleObjectProperty<>();
-		selectionModel.selectedItemProperty().addListener((ob, old, cur) -> currentItemWrapper.setValue(cur));
+		selectionModel.selectedItemProperty().addListener((ob, old, cur) -> {
+			if (!Objects.equals(currentItemWrapper.getValue(), cur)) {
+				currentItemWrapper.setValue(cur);
+				value.setValue(cur);
+			}
+		});
 		value.addListener((ob, old, cur) -> selectionModel.select(cur));
 
 		// Allow horizontal expansion.
