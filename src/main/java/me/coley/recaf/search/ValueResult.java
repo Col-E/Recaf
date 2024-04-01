@@ -41,4 +41,10 @@ public class ValueResult extends SearchResult {
 		}
 		return ret;
 	}
+
+	@Override
+	public String getText() {
+		// TODO Auto-generated method stub
+		return value.toString();
+	}
 }

@@ -66,4 +66,9 @@ public class InsnResult extends SearchResult {
 		}
 		return ret;
 	}
+	
+	@Override
+	public String getText() {
+		return String.join("\n", lines);
+	}
 }

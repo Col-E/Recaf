@@ -66,4 +66,9 @@ public class ClassResult extends SearchResult {
 		}
 		return ret;
 	}
+	
+	@Override
+	public String getText() {
+		return "";
+	}
 }

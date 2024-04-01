@@ -46,4 +46,6 @@ public abstract class SearchResult implements Comparable<SearchResult> {
 	public String toString() {
 		throw new UnsupportedOperationException("Unimplemented result string representation");
 	}
+	
+	public abstract String getText();
 }

@@ -110,4 +110,9 @@ public class MemberResult extends SearchResult {
 		}
 		return ret;
 	}
+	
+	@Override
+	public String getText() {
+		return "";
+	}
 }

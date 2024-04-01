@@ -78,16 +78,8 @@ public class SearchRootItem extends DirectoryItem {
 		if(ctx instanceof Context.MemberContext){
 			Context.MemberContext mctx = (Context.MemberContext) ctx;
 			item = addMember(item, mctx);
-			if (mctx.isField()) {
-				if(result instanceof StringResult) {
-					String text = ((StringResult) result).getText();
-					item.addChild(text, new MiscItem(resource(), text), true);
-				} else if(result instanceof ValueResult) {
-					String text = ((ValueResult) result).getValue().toString();
-					item.addChild(text, new MiscItem(resource(), text), true);
-				}
-			} else if(result instanceof InsnResult) {
-				String text = String.join("\n", ((InsnResult) result).getLines());
+			if(isValidFieldContextOrInsnResult(mctx, result)) {
+				String text = result.getText();
 				item.addChild(text, new MiscItem(resource(), text), true);
 			}
 		}
@@ -107,6 +99,13 @@ public class SearchRootItem extends DirectoryItem {
 				item.addChild(text, new MiscItem(resource(), text), true);
 			}
 		}
+	}
+	
+	private boolean isValidFieldContextOrInsnResult(Context.MemberContext context, SearchResult result) {
+		if(context.isField())
+			return result instanceof StringResult|| result instanceof ValueResult;
+		
+		return result instanceof InsnResult;
 	}
 
 	private DirectoryItem addMember(DirectoryItem item, Context.MemberContext ctx) {
