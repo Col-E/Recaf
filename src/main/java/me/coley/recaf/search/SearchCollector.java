@@ -127,7 +127,7 @@ public class SearchCollector {
 	// Looking this up in hundreds of cases where we don't need it would just waste time.
 
 	IntSupplier getAccess(String owner, String name, String desc) {
-		return () -> acc(owner, name, desc, ACC_NOT_FOUND);
+		return () -> getAccessModifierForMethod(owner, name, desc, ACC_NOT_FOUND);
 	}
 
 	IntSupplier getAccess(String name, int defaultAcc) {
@@ -145,7 +145,7 @@ public class SearchCollector {
 		return defaultAcc;
 	}
 
-	private int acc(String owner, String name, String desc, int defaultAcc) {
+	private int getAccessModifierForMethod(String owner, String name, String desc, int defaultAcc) {
 		if(workspace.hasClass(owner))
 			if(desc.contains("(")) {
 				ClassReader reader = workspace.getClassReader(owner);
@@ -154,11 +154,11 @@ public class SearchCollector {
 				if(node != null)
 					return node.access;
 				// Try and look in parent classes for the method definition
-				int ret = acc(reader.getSuperName(), name, desc, defaultAcc);
+				int ret = getAccessModifierForMethod(reader.getSuperName(), name, desc, defaultAcc);
 				if(ret != defaultAcc)
 					return ret;
 				for(String itf : reader.getInterfaces()) {
-					ret = acc(itf, name, desc, defaultAcc);
+					ret = getAccessModifierForMethod(itf, name, desc, defaultAcc);
 					if(ret != defaultAcc)
 						return ret;
 				}
