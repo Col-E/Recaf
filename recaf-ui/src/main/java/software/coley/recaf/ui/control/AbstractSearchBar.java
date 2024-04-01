@@ -105,7 +105,7 @@ public abstract class AbstractSearchBar extends VBox {
 		});
 
 		// Create toggles for search input query modes.
-		BoundToggleIcon toggleSensitivity = new BoundToggleIcon(Icons.CASE_SENSITIVITY, caseSensitivity).withTooltip("misc.casesensitive");
+		BoundToggleIcon toggleSensitivity = new BoundToggleIcon(new FontIconView(CarbonIcons.LETTER_CC), caseSensitivity).withTooltip("misc.casesensitive");
 		BoundToggleIcon toggleRegex = new BoundToggleIcon(Icons.REGEX, regex).withTooltip("misc.regex");
 		toggleSensitivity.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
 		toggleRegex.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);

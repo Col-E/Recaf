@@ -18,6 +18,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.Accessed;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
@@ -38,6 +39,7 @@ import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundMultiToggleIcon;
 import software.coley.recaf.ui.control.BoundToggleIcon;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.TreeFiltering;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
@@ -200,7 +202,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		});
 		HBox box = new HBox(
 				filter,
-				new BoundToggleIcon(Icons.CASE_SENSITIVITY, nameFilterCaseSensitivity).withTooltip("misc.casesensitive")
+				new BoundToggleIcon(new FontIconView(CarbonIcons.LETTER_CC), nameFilterCaseSensitivity).withTooltip("misc.casesensitive")
 		);
 		HBox.setHgrow(filter, Priority.ALWAYS);
 		box.setMaxWidth(Integer.MAX_VALUE);
