@@ -91,7 +91,7 @@ public class AutoCompleteUtil {
 			keyBuilder.append(c);
 		}
 		// No tokens to complete or no valid prefix found.
-		if (prefixBuilder.length() == 0 || prefixBuilder.indexOf("L") == -1 || keyBuilder.length() == 0)
+		if (isInvalidPrefixOrEmptyTokens(prefixBuilder,keyBuilder))
 			return Collections.emptyList();
 		//
 		String prefix = prefixBuilder.toString();
@@ -101,6 +101,11 @@ public class AutoCompleteUtil {
 				// .sorted()                       // Input stream is already sorted
 				.map(name -> prefix + name + ";")  // Re-adds the prefix and the suffix to the suggestions
 				.collect(Collectors.toList());
+	}
+	
+	
+	private static boolean isInvalidPrefixOrEmptyTokens(StringBuilder prefixBuilder,StringBuilder keyBuilder) {
+		return prefixBuilder.length() == 0 || prefixBuilder.indexOf("L") == -1 || keyBuilder.length() == 0;
 	}
 
 	// =================================================================== //
