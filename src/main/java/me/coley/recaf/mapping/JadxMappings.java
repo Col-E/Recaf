@@ -15,6 +15,7 @@ import java.util.Map;
  */
 public class JadxMappings extends FileMappings {
 	private static final String FAIL = "Invalid JADX mappings, ";
+	private static final String REPLACE_ALL_PERIODS_EXCEPT_LAST = "\\.(?=.+\\..+$)";
 
 	/**
 	 * Constructs mappings from a given file.
@@ -60,13 +61,13 @@ public class JadxMappings extends FileMappings {
 						// 2: field-type
 						// 3: renamed
 						// Replace all "." except last one
-						map.put(args[1].replaceAll("\\.(?=.+\\..+$)", "/"), args[3]);
+						map.put(args[1].replaceAll(REPLACE_ALL_PERIODS_EXCEPT_LAST, "/"), args[3]);
 						break;
 					case "m":
 						// 1: class-name.method-name + method-desc
 						// 2: renamed
 						// Replace all "." except last one
-						map.put(args[1].replaceAll("\\.(?=.+\\..+$)", "/"), args[2]);
+						map.put(args[1].replaceAll(REPLACE_ALL_PERIODS_EXCEPT_LAST, "/"), args[2]);
 						break;
 					default:
 						break;
