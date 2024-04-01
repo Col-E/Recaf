@@ -21,6 +21,7 @@ jasm = "29504574e2"
 jlinker = "1.0.7"
 jphantom = "1.4.4"
 junit = "5.10.2"
+jsvg = "1.4.0"
 llzip = "2.3.0"
 logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.5.1"
@@ -94,6 +95,8 @@ jphantom = { module = "com.github.Col-E:jphantom", version.ref = "jphantom" }
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
 junit-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit" }
+
+jsvg = { module = "com.github.weisj:jsvg", version.ref = "jsvg" }
 
 llzip = { module = "software.coley:lljzip", version.ref = "llzip" }
 

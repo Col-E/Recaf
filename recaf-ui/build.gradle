@@ -19,6 +19,7 @@ dependencies {
     implementation(libs.atlantafx)
     implementation(libs.docking)
     implementation(libs.bundles.ikonli)
+    implementation(libs.jsvg)
     implementation(libs.reactfx)
     implementation(libs.richtextfx)
     implementation(libs.treemapfx)
