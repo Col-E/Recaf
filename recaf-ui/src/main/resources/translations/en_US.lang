@@ -132,6 +132,12 @@ dialog.warning=Warning
 dialog.restart=To change this configuration option, a restart is recommended.\nAre you sure you want to apply?
 dialog.unknownextension=Unknown file extension. Do you want to configure a language association?
 
+## Search
+dialog.search.type=Type name
+dialog.search.member-owner=Member owner type
+dialog.search.member-name=Member name
+dialog.search.member-descriptor=Member descriptor
+
 ## File chooser
 dialog.title.primary=Primary resource
 dialog.title.supporting=Supporting resources

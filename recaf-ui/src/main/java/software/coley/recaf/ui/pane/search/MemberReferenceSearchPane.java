@@ -24,6 +24,7 @@ import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.BoundBiDiComboBox;
+import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.RegexUtil;
@@ -79,9 +80,14 @@ public class MemberReferenceSearchPane extends AbstractSearchPane {
 		input.setAlignment(Pos.CENTER);
 		input.getColumnConstraints().addAll(colTexts, colCombos);
 		input.setHgap(10);
+		input.setVgap(10);
 		input.setPadding(new Insets(10));
-		input.addRow(0, textOwner, modeComboOwner);
+		input.addRow(0, new BoundLabel(Lang.getBinding("dialog.search.member-owner")), textOwner, modeComboOwner);
+		input.addRow(1, new BoundLabel(Lang.getBinding("dialog.search.member-name")), textName, modeComboName);
+		input.addRow(2, new BoundLabel(Lang.getBinding("dialog.search.member-descriptor")), textDesc, modeComboDesc);
 		GridPane.setHgrow(textOwner, Priority.ALWAYS);
+		GridPane.setHgrow(textName, Priority.ALWAYS);
+		GridPane.setHgrow(textDesc, Priority.ALWAYS);
 
 		ownerValue = textOwner.textProperty();
 		nameValue = textName.textProperty();
