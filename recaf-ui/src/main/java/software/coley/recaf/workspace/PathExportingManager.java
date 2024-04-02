@@ -166,8 +166,6 @@ public class PathExportingManager {
 
 		// Ensure path ends with '.class'
 		Path exportPath = selectedPath.toPath();
-		if (!exportPath.endsWith(".class"))
-			exportPath = exportPath.resolveSibling(exportPath.getFileName() + ".class");
 
 		// Update last export dir for classes.
 		lastClassExportDir.setValue(selectedPath.getParent());
