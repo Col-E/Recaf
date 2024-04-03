@@ -43,7 +43,7 @@ import static software.coley.recaf.util.Lang.getBinding;
  */
 @Dependent
 public class ConfigPane extends SplitPane implements ManagedConfigListener {
-	private final Map<String, ConfigPage> idToPage = new TreeMap<>();
+	private final Map<String, ContainerPane> idToPage = new TreeMap<>();
 	private final Map<String, TreeItem<String>> idToTree = new TreeMap<>();
 	private final TreeItem<String> root = new TreeItem<>("root");
 	private final TreeView<String> tree = new TreeView<>();
@@ -96,7 +96,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 		});
 		tree.getSelectionModel().selectedItemProperty().addListener((ob, old, cur) -> {
 			if (cur != null) {
-				ConfigPage page = idToPage.get(cur.getValue());
+				ContainerPane page = idToPage.get(cur.getValue());
 				if (page != null) content.setContent(page);
 				else content.setContent(new MissingPage(cur.getValue()));
 			}
@@ -122,7 +122,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 			item.getChildren().add(treeItem);
 
 			// Register page.
-			idToPage.put(pageKey, new ConfigPage(container));
+			idToPage.put(pageKey, new ContainerPane(container));
 			idToTree.put(pageKey, treeItem);
 		}
 	}
@@ -203,9 +203,9 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 	/**
 	 * Page for a single {@link ConfigContainer}.
 	 */
-	private class ConfigPage extends GridPane {
+	private class ContainerPane extends GridPane {
 		@SuppressWarnings({"rawtypes", "unchecked"})
-		private ConfigPage(@Nonnull ConfigContainer container) {
+		private ContainerPane(@Nonnull ConfigContainer container) {
 			// Plugin configs are given special treatment.
 			// They are not expected to install additional translations, so their ID's will be used as literal names.
 			boolean isThirdPartyConfig = ConfigGroups.EXTERNAL.equals(container.getGroup());

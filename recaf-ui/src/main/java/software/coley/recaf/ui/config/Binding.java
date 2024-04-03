@@ -43,6 +43,7 @@ public class Binding extends ArrayList<String> {
 	 *
 	 * @return Binding from keys + mask.
 	 */
+	@Nonnull
 	public static Binding newBind(@Nonnull String id, @Nonnull String codesString, @Nullable KeyCode mask) {
 		String[] codes = codesString.split("\\+");
 		Stream<String> stream = Arrays.stream(codes);
@@ -59,6 +60,7 @@ public class Binding extends ArrayList<String> {
 	 *
 	 * @return Binding from keys of the event.
 	 */
+	@Nonnull
 	public static Binding newBind(@Nonnull String id, @Nonnull KeyEvent event) {
 		return newBind(id, namesOf(event));
 	}
@@ -72,9 +74,26 @@ public class Binding extends ArrayList<String> {
 	 *
 	 * @return Binding from keys.
 	 */
+	@Nonnull
 	public static Binding newBind(@Nonnull String id, @Nonnull KeyCode... codes) {
 		return Arrays.stream(codes).map(KeyCode::getName)
 				.map(String::toLowerCase)
+				.collect(Collectors.toCollection(() -> new Binding(id)));
+	}
+
+	/**
+	 * @param id
+	 * 		Unique identifier of the binding.
+	 * @param codes
+	 * 		Series of keys for a keybind, in string representation.
+	 *
+	 * @return Binding from keys.
+	 */
+	@Nonnull
+	public static Binding from(@Nonnull String id, @Nonnull Collection<String> codes) {
+		return codes.stream()
+				.map(String::toLowerCase)
+				.sorted((a, b) -> (a.length() > b.length()) ? -1 : a.compareTo(b))
 				.collect(Collectors.toCollection(() -> new Binding(id)));
 	}
 
@@ -86,6 +105,7 @@ public class Binding extends ArrayList<String> {
 	 *
 	 * @return Binding from keys.
 	 */
+	@Nonnull
 	public static Binding newBind(@Nonnull String id, @Nonnull Collection<String> codes) {
 		return codes.stream()
 				.map(String::toLowerCase)
@@ -95,7 +115,7 @@ public class Binding extends ArrayList<String> {
 
 	@Override
 	public String toString() {
-		return String.join("+", this);
+		return String.join(" + ", this);
 	}
 
 	/**

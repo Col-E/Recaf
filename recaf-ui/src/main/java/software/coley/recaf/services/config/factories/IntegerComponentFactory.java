@@ -1,5 +1,6 @@
 package software.coley.recaf.services.config.factories;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.beans.value.ChangeListener;
@@ -27,8 +28,9 @@ public class IntegerComponentFactory extends TypedConfigComponentFactory<Integer
         super(false, int.class);
     }
 
+    @Nonnull
     @Override
-    public Node create(ConfigContainer container, ConfigValue<Integer> value) {
+    public Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<Integer> value) {
         Observable<Integer> observable = value.getObservable();
         TextField textField = new TextField();
         textField.setText(Integer.toString(observable.getValue()));

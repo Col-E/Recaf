@@ -1,21 +1,27 @@
 package software.coley.recaf.ui.config;
 
-import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import javafx.event.Event;
+import javafx.scene.Node;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.GridPane;
+import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableMap;
-import software.coley.recaf.config.BasicConfigContainer;
-import software.coley.recaf.config.BasicMapConfigValue;
-import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.config.*;
+import software.coley.recaf.services.config.ConfigComponentManager;
+import software.coley.recaf.services.config.TypedConfigComponentFactory;
 import software.coley.recaf.services.json.GsonProvider;
+import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.pane.editing.ClassPane;
 import software.coley.recaf.ui.pane.editing.FilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.PlatformType;
 
 import java.util.*;
@@ -44,7 +50,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 	private final BindingBundle bundle;
 
 	@Inject
-	public KeybindingConfig(@Nonnull GsonProvider gsonProvider) {
+	public KeybindingConfig(@Nonnull GsonProvider gsonProvider, @Nonnull ConfigComponentManager componentManager) {
 		super(ConfigGroups.SERVICE_UI, ID + CONFIG_SUFFIX);
 
 		// We will only be storing one 'value' so that the UI can treat it as a singular element.
@@ -74,6 +80,26 @@ public class KeybindingConfig extends BasicConfigContainer {
 			expected.forEach(missingId -> bindings.add(bundle.get(missingId)));
 
 			return new BindingBundle(bindings);
+		});
+
+		// Register custom config component display for the binding bundle.
+		componentManager.register(BindingBundle.class, new TypedConfigComponentFactory<>(true, BindingBundle.class) {
+			@Nonnull
+			@Override
+			public Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<BindingBundle> value) {
+				GridPane grid = new GridPane();
+				grid.setVgap(10);
+				grid.setHgap(10);
+
+				// Tree-map should show the items in grouped order by key.
+				new TreeMap<>(bundle).forEach((key, bind) -> {
+					BoundLabel label = new BoundLabel(Lang.getBinding("bind." + key));
+					BindingInputField inputField = new BindingInputField(bundle, key, bind);
+					grid.addRow(grid.getRowCount(), label, inputField);
+				});
+
+				return grid;
+			}
 		});
 	}
 
@@ -147,8 +173,72 @@ public class KeybindingConfig extends BasicConfigContainer {
 	 * Binding bundle containing all keys.
 	 */
 	public static class BindingBundle extends ObservableMap<String, Binding, Map<String, Binding>> {
+		private final ObservableBoolean isEditing = new ObservableBoolean(false);
+
 		public BindingBundle(@Nonnull List<Binding> binds) {
 			super(binds.stream().collect(Collectors.toMap(Binding::getId, Function.identity())), HashMap::new);
+		}
+
+		/**
+		 * Marks the bundle as being live-edited or not. Global key-binds should not be handled when editing.
+		 *
+		 * @param editing
+		 *        {@code true} to indicate the bundle is being edited by the user.
+		 *        {@code false} to indicate the user is not editing.
+		 */
+		public void setIsEditing(boolean editing) {
+			isEditing.setValue(editing);
+		}
+	}
+
+	/**
+	 * Text field that updates a {@link Binding}.
+	 */
+	private static class BindingInputField extends TextField {
+		private Binding lastState;
+
+		private BindingInputField(@Nonnull BindingBundle bundle, @Nonnull String id, @Nonnull Binding bind) {
+			getStyleClass().add("key-field");
+			setText(bind.toString());
+			setPromptText(Lang.get("bind.inputprompt.initial"));
+
+			// Show prompt when focused, otherwise show current target binding text.
+			focusedProperty().addListener((v, old, focus) -> setText(focus ? Lang.get("bind.inputprompt.finish") : bind.toString()));
+			setFocusTraversable(false);
+
+			// Track binding state while typing (will remember last pressed key combo, before pressing enter)
+			setOnKeyPressed(e -> {
+				e.consume();
+
+				// Skip if no-name support for the character
+				if (e.getCode().getName().equalsIgnoreCase("undefined"))
+					return;
+
+				// Set target to last key-press combo
+				if (e.getCode() == ENTER) {
+					bundle.setIsEditing(false);
+
+					bind.clear();
+					bind.addAll(lastState);
+					lastState = null;
+
+					// Drop focus so the listener will update the display text.
+					getParent().requestFocus();
+					return;
+				} else if (e.getCode() == ESCAPE) {
+					// Drop focus so the listener will update the display text.
+					lastState = null;
+					getParent().requestFocus();
+					return;
+				}
+
+				// Update key-press combo.
+				lastState = newBind(id, e);
+				bundle.setIsEditing(true);
+			});
+
+			// Disable text updating
+			setOnKeyTyped(Event::consume);
 		}
 	}
 }

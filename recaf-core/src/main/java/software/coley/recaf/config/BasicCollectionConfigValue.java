@@ -20,6 +20,7 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 	private final Class<C> collectionType;
 	private final Class<T> itemType;
 	private final ObservableCollection<T, C> observable;
+	private final boolean hidden;
 
 	/**
 	 * @param key
@@ -29,15 +30,39 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 	 * @param observable
 	 * 		Observable of value.
 	 */
+	public BasicCollectionConfigValue(@Nonnull String key,
+	                                  @Nonnull Class<? extends Collection> type,
+	                                  @Nonnull Class<T> itemType,
+	                                  @Nonnull ObservableCollection<T, C> observable) {
+		this(key, type, itemType, observable, false);
+	}
+
+	/**
+	 * @param key
+	 * 		Value key.
+	 * @param type
+	 * 		Value type class.
+	 * @param observable
+	 * 		Observable of value.
+	 * @param hidden
+	 * 		Hidden flag.
+	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public BasicCollectionConfigValue(@Nonnull String key,
-									  @Nonnull Class<? extends Collection> type,
-									  @Nonnull Class<T> itemType,
-									  @Nonnull ObservableCollection<T, C> observable) {
+	                                  @Nonnull Class<? extends Collection> type,
+	                                  @Nonnull Class<T> itemType,
+	                                  @Nonnull ObservableCollection<T, C> observable,
+	                                  boolean hidden) {
 		this.key = key;
 		this.collectionType = (Class<C>) type;
 		this.itemType = itemType;
 		this.observable = observable;
+		this.hidden = hidden;
+	}
+
+	@Override
+	public boolean isHidden() {
+		return hidden;
 	}
 
 	@Nonnull

@@ -1,5 +1,6 @@
 package software.coley.recaf.services.config.factories;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.Node;
@@ -30,8 +31,9 @@ public class AndroidDecompilerComponentFactory extends KeyedConfigComponentFacto
 				.toList();
 	}
 
+	@Nonnull
 	@Override
-	public Node create(ConfigContainer container, ConfigValue<String> value) {
+	public Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<String> value) {
 		return new ObservableComboBox<>(value.getObservable(), decompilers);
 	}
 }

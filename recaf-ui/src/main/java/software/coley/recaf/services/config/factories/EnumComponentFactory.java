@@ -1,5 +1,6 @@
 package software.coley.recaf.services.config.factories;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.Node;
@@ -23,8 +24,9 @@ public class EnumComponentFactory extends TypedConfigComponentFactory<Enum> {
 		super(false, Enum.class);
 	}
 
+	@Nonnull
 	@Override
-	public Node create(ConfigContainer container, ConfigValue<Enum> value) {
+	public Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<Enum> value) {
 		Enum[] enumConstants = value.getType().getEnumConstants();
 		return new ObservableComboBox<>(value.getObservable(), Arrays.asList(enumConstants));
 	}

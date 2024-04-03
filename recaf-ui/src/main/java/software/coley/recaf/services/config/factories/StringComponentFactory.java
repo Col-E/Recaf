@@ -1,5 +1,6 @@
 package software.coley.recaf.services.config.factories;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.Node;
@@ -21,8 +22,9 @@ public class StringComponentFactory extends TypedConfigComponentFactory<String> 
         super(false, String.class);
     }
 
+    @Nonnull
     @Override
-    public Node create(ConfigContainer container, ConfigValue<String> value) {
+    public Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<String> value) {
         Observable<String> observable = value.getObservable();
         TextField textField = new TextField();
         textField.setText(observable.getValue());

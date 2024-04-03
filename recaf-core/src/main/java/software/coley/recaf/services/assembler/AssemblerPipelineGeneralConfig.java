@@ -25,7 +25,7 @@ public class AssemblerPipelineGeneralConfig extends BasicConfigContainer impleme
 		super(ConfigGroups.SERVICE_ASSEMBLER, AssemblerPipelineManager.SERVICE_ID + ConfigGroups.PACKAGE_SPLIT + "general" + CONFIG_SUFFIX);
 
 		addValue(new BasicConfigValue<>("disassembly-indent", String.class, disassemblyIndent));
-		addValue(new BasicConfigValue<>("disassembly-ast-parse-delay", Integer.class, disassemblyAstParseDelay));
+		addValue(new BasicConfigValue<>("disassembly-ast-parse-delay", int.class, disassemblyAstParseDelay));
 	}
 
 	/**

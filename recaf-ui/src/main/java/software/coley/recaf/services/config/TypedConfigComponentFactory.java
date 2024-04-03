@@ -14,13 +14,13 @@ public abstract class TypedConfigComponentFactory<T> extends ConfigComponentFact
 	private final Class<T> type;
 
 	/**
-	 * @param createLabel
-	 * 		See {@link #isStandAlone()}. Determines if label is automatically added.
+	 * @param isStandAlone
+	 * 		See {@link #isStandAlone()}. Creates an adjacent label for the config value name if {@code true}.
 	 * @param type
 	 * 		The {@link ConfigValue#getType()} to support.
 	 */
-	protected TypedConfigComponentFactory(boolean createLabel, Class<T> type) {
-		super(createLabel);
+	protected TypedConfigComponentFactory(boolean isStandAlone, Class<T> type) {
+		super(isStandAlone);
 		this.type = type;
 	}
 

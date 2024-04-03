@@ -1,5 +1,6 @@
 package software.coley.recaf.services.config;
 
+import jakarta.annotation.Nonnull;
 import javafx.scene.Node;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
@@ -45,5 +46,6 @@ public abstract class ConfigComponentFactory<T> {
 	 *
 	 * @return Control to represent the value.
 	 */
-	public abstract Node create(ConfigContainer container, ConfigValue<T> value);
+	@Nonnull
+	public abstract Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<T> value);
 }

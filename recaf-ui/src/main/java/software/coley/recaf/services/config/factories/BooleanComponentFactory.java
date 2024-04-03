@@ -1,5 +1,6 @@
 package software.coley.recaf.services.config.factories;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.Node;
@@ -22,8 +23,9 @@ public class BooleanComponentFactory extends TypedConfigComponentFactory<Boolean
 		super(true, boolean.class);
 	}
 
+	@Nonnull
 	@Override
-	public Node create(ConfigContainer container, ConfigValue<Boolean> value) {
+	public Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<Boolean> value) {
 		Observable<Boolean> observable = value.getObservable();
 		String translationKey = container.getScopedId(value);
 

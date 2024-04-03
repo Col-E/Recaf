@@ -27,8 +27,9 @@ import java.util.Map;
 public class ConfigComponentManager implements Service {
 	public static final String ID = "config-components";
 	private final ConfigComponentFactory<Object> DEFAULT_FACTORY = new ConfigComponentFactory<>(false) {
+		@Nonnull
 		@Override
-		public Node create(ConfigContainer container, ConfigValue<Object> value) {
+		public Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<Object> value) {
 			Label label = new Label("Unsupported: " + value.getType().getName());
 			label.getStyleClass().add(Styles.WARNING);
 			return label;
