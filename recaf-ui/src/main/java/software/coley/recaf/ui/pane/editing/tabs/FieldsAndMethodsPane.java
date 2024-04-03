@@ -74,8 +74,8 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 
 	@Inject
 	public FieldsAndMethodsPane(@Nonnull CellConfigurationService configurationService,
-								@Nonnull KeybindingConfig keys,
-								@Nonnull Actions actions) {
+	                            @Nonnull KeybindingConfig keys,
+	                            @Nonnull Actions actions) {
 		// Configure tree.
 		tree.setShowRoot(false);
 		tree.setCellFactory(param -> new WorkspaceTreeCell(ContextSource.DECLARATION, configurationService));
@@ -96,18 +96,21 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	}
 
 	/**
-	 * Sets up the selection listener on the tree that will call {@link ClassNavigable#requestFocus(ClassMember)}
+	 * Sets up a double click listener on the tree that will call {@link ClassNavigable#requestFocus(ClassMember)}
 	 * with the current selected item.
 	 *
 	 * @param navigableClass
 	 * 		Parent class navigable component.
 	 */
 	public void setupSelectionNavigationListener(@Nonnull ClassNavigable navigableClass) {
-		tree.getSelectionModel().selectedItemProperty().addListener((ob, old, current) -> {
-			if (!navigationLock && current != null && current.getValue() instanceof ClassMemberPathNode memberPathNode) {
-				navigationLock = true;
-				navigableClass.requestFocus(memberPathNode.getValue());
-				navigationLock = false;
+		tree.setOnMouseClicked(mouseEvent -> {
+			if (mouseEvent.getClickCount() == 2) {
+				TreeItem<PathNode<?>> selectedItem = tree.getSelectionModel().getSelectedItem();
+				if (!navigationLock && selectedItem != null && selectedItem.getValue() instanceof ClassMemberPathNode memberPathNode) {
+					navigationLock = true;
+					navigableClass.requestFocus(memberPathNode.getValue());
+					navigationLock = false;
+				}
 			}
 		});
 	}
