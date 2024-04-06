@@ -20,9 +20,9 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
-import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.assembler.AssemblerPipeline;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
@@ -50,7 +50,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 /**
  * Display dissassembled {@link ClassInfo} and {@link ClassMember} content.
@@ -78,11 +77,11 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	@Inject
 	public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
-						 @Nonnull AssemblerToolTabs assemblerToolTabs,
-						 @Nonnull AssemblerContextActionSupport contextActionSupport,
-						 @Nonnull SearchBar searchBar,
-						 @Nonnull KeybindingConfig keys,
-						 @Nonnull Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider) {
+	                     @Nonnull AssemblerToolTabs assemblerToolTabs,
+	                     @Nonnull AssemblerContextActionSupport contextActionSupport,
+	                     @Nonnull SearchBar searchBar,
+	                     @Nonnull KeybindingConfig keys,
+	                     @Nonnull Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider) {
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
 		this.fieldsAndMethodsPaneProvider = fieldsAndMethodsPaneProvider;
@@ -301,7 +300,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 				.orTimeout(10, TimeUnit.SECONDS)
 				.whenCompleteAsync((result, error) -> {
 					if (result != null)
-						acceptResult(result, editor::setText, ProblemPhase.LINT);
+						result.ifOk(editor::setText).ifErr(errors -> processErrors(errors, ProblemPhase.LINT));
 					else
 						logger.error("Disassemble encountered an unexpected error", error);
 				}, FxThreadUtil.executor());
@@ -313,7 +312,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * @return Future of parse completion.
 	 */
 	@Nonnull
-	private CompletableFuture<Void> parseAST() {
+	private CompletableFuture<Result<List<ASTElement>>> parseAST() {
 		// Nothing to parse
 		if (editor.getText().isBlank()) return CompletableFuture.completedFuture(null);
 
@@ -321,37 +320,44 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		if (problemTracking.removeByPhase(ProblemPhase.LINT))
 			FxThreadUtil.run(editor::redrawParagraphGraphics);
 
-		return CompletableFuture.runAsync(() -> {
-			try {
-				// Tokenize the current input.
-				Result<List<Token>> tokenResult = pipeline.tokenize(editor.getText(), "<assembler>");
+		return CompletableFuture.supplyAsync(() -> {
+			// Tokenize the current input.
+			Result<List<Token>> tokenResult = pipeline.tokenize(editor.getText(), "<assembler>");
 
-				// Process any errors and assign the latest token list.
-				if (tokenResult.hasErr())
-					processErrors(tokenResult.errors(), ProblemPhase.LINT);
-				lastTokens = tokenResult.get();
+			// Process any errors and assign the latest token list.
+			if (tokenResult.hasErr())
+				processErrors(tokenResult.errors(), ProblemPhase.LINT);
+			lastTokens = tokenResult.get();
 
-				// Attempt to parse the token list into 'rough' AST.
-				acceptResult(pipeline.roughParse(lastTokens), roughAst -> {
-					lastRoughAst = roughAst;
+			// Attempt to parse the token list into 'rough' AST.
+			Result<List<ASTElement>> roughResult = pipeline.roughParse(lastTokens).ifOk(roughAst -> {
+				lastRoughAst = roughAst;
+			}).ifErr((partialAst, errors) -> {
+				// We failed to parse the token list fully, but may have a partial result.
+				eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(partialAst, AstPhase.ROUGH_PARTIAL));
+				lastPartialAst = partialAst;
+				processErrors(errors, ProblemPhase.LINT);
+			});
 
-					// Attempt to complete parsing and transform the 'rough' AST into a 'concrete' AST.
-					acceptResult(pipeline.concreteParse(roughAst), concreteAst -> {
-						// The transform was a success.
-						lastConcreteAst = concreteAst;
-						eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(concreteAst, AstPhase.CONCRETE));
-					}, pAst -> {
-						// The transform failed.
-						lastPartialAst = pAst;
-						eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(pAst, AstPhase.CONCRETE_PARTIAL));
-					}, ProblemPhase.LINT);
-				}, pAst -> {
-					// We failed to parse the token list fully, but may have a partial result.
-					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(pAst, AstPhase.ROUGH_PARTIAL));
-					lastPartialAst = pAst;
-				}, ProblemPhase.LINT);
-			} catch (Exception ex) {
-				logger.error("Failed to parse assembler", ex);
+			// Attempt to complete parsing and transform the 'rough' AST into a 'concrete' AST.
+			if (roughResult.isOk()) {
+				return pipeline.concreteParse(roughResult.get()).ifOk(concreteAst -> {
+					// The transform was a success.
+					lastConcreteAst = concreteAst;
+					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(concreteAst, AstPhase.CONCRETE));
+				}).ifErr((partialAst, errors) -> {
+					// The transform failed.
+					lastPartialAst = partialAst;
+					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(partialAst, AstPhase.CONCRETE_PARTIAL));
+				});
+			}
+
+			// Fall-back to rough AST.
+			return roughResult;
+		}).whenComplete((res, err) -> {
+			if (err != null) {
+				logger.error("Failed to parse assembler content", err);
+				FxThreadUtil.run(() -> Animations.animateFailure(editor, 1000));
 			}
 		});
 	}
@@ -364,8 +370,13 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Nonnull
 	private CompletableFuture<Void> assemble() {
 		// Ensure the AST is up-to-date before moving onto build stage.
-		return parseAST().whenComplete((unused, error) -> {
-			if (!problemTracking.getProblems().isEmpty() || lastConcreteAst == null)
+		return parseAST().thenAccept(astResult -> {
+			// If the parse finished, clear old build errors.
+			if (problemTracking.removeByPhase(ProblemPhase.BUILD))
+				FxThreadUtil.run(editor::redrawParagraphGraphics);
+
+			// Skip if any problems remain in the AST
+			if (!problemTracking.getProblemsByPhase(ProblemPhase.LINT).isEmpty() || lastConcreteAst == null)
 				return;
 
 			// Clear build errors since we are running the build process again.
@@ -379,19 +390,62 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					lastAssembledClassRepresentation = representation;
 
 					if (representation instanceof JavaClassRepresentation javaClassRep) {
-						lastAssembledClass = pipeline.getClassInfo(Unchecked.cast(javaClassRep));
+						// Get last class's field/method count for ensuring no duplication happened.
+						// If the user changes the definition of a field/method it inserts a new one
+						// instead of changing the existing declaration.
+						int fieldCount = lastAssembledClass.getFields().size();
+						int methodCount = lastAssembledClass.getMethods().size();
+
+						// Update last class.
+						ClassInfo assembledClass = pipeline.getClassInfo(Unchecked.cast(javaClassRep));
 
 						// Update the local path value, this will also inform sub-components of the new content.
 						// The update-lock must be set so that we don't trigger a disassembly (which would trigger an endless loop)
 						updateLock.set(true);
 						if (path instanceof ClassPathNode classPath) {
-							ClassPathNode newPath = classPath.getParent().child(lastAssembledClass);
-							onUpdatePath(newPath);
+							// Only update if the class name was untouched.
+							if (assembledClass.getName().equals(classPath.getValue().getName())) {
+								ClassPathNode newPath = classPath.getParent().child(assembledClass);
+								onUpdatePath(newPath);
+								lastAssembledClass = assembledClass;
+							} else {
+								ASTElement sourceAst = lastConcreteAst.get(0);
+								Error err = new Error("Changing the class name is not allowed in the assembler.\n" +
+										"Use Recaf's refactoring capabilities to rename classes.", sourceAst.location());
+								processErrors(List.of(err), ProblemPhase.BUILD);
+							}
 						} else if (path instanceof ClassMemberPathNode memberPath) {
 							ClassMember oldMember = memberPath.getValue();
-							MethodMember newMember = lastAssembledClass.getDeclaredMethod(oldMember.getName(), oldMember.getDescriptor());
-							ClassMemberPathNode newPath = memberPath.getParent().getParent().child(lastAssembledClass).child(newMember);
-							onUpdatePath(newPath);
+							ClassMember newMember;
+							String memberType;
+							if (oldMember.isMethod()) {
+								memberType = "method";
+								if (assembledClass.getMethods().size() == methodCount) {
+									newMember = assembledClass.getDeclaredMethod(oldMember.getName(), oldMember.getDescriptor());
+								} else {
+									newMember = null;
+								}
+							} else {
+								memberType = "field";
+								if (assembledClass.getFields().size() == fieldCount) {
+									newMember = assembledClass.getDeclaredField(oldMember.getName(), oldMember.getDescriptor());
+								} else {
+									newMember = null;
+								}
+							}
+
+							// Only update if the member name/type was untouched.
+							if (newMember != null) {
+								lastAssembledClass = assembledClass;
+								DirectoryPathNode packagePath = memberPath.getParent().getParent();
+								ClassMemberPathNode newPath = packagePath.child(lastAssembledClass).child(newMember);
+								onUpdatePath(newPath);
+							} else {
+								ASTElement sourceAst = lastConcreteAst.get(0);
+								Error err = new Error("Changing the " + memberType + " name/type is not allowed in the assembler.\n" +
+										"Use Recaf's refactoring capabilities to rename fields & methods.", sourceAst.location());
+								processErrors(List.of(err), ProblemPhase.BUILD);
+							}
 						}
 						updateLock.set(false);
 					}
@@ -459,17 +513,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		FxThreadUtil.run(() -> {
 			if (!errors.isEmpty())
 				editor.redrawParagraphGraphics();
-		});
-	}
-
-	private <T> void acceptResult(Result<T> result, Consumer<T> acceptor, ProblemPhase phase) {
-		result.ifOk(acceptor).ifErr(errors -> processErrors(errors, phase));
-	}
-
-	private <T> void acceptResult(Result<T> result, Consumer<T> acceptor, Consumer<T> pAcceptor, ProblemPhase phase) {
-		result.ifOk(acceptor).ifErr((pOk, errors) -> {
-			pAcceptor.accept(pOk);
-			processErrors(errors, phase);
 		});
 	}
 }

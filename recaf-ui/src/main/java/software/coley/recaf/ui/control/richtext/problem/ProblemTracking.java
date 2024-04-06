@@ -126,6 +126,17 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	}
 
 	/**
+	 * @param phase
+	 * 		Problem phase to filter problems by.
+	 *
+	 * @return List of problems matching the given phase.
+	 */
+	@Nonnull
+	public List<Problem> getProblemsByPhase(ProblemPhase phase) {
+		return getProblems(p -> p.getPhase() == phase);
+	}
+
+	/**
 	 * @param filter
 	 * 		Filter to pass problems through.
 	 *
