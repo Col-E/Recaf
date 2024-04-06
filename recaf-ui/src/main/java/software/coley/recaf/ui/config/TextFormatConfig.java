@@ -45,7 +45,7 @@ public class TextFormatConfig extends BasicConfigContainer {
 	 * @return {@code true} to shorten path text with {@link #filter(String)}.
 	 */
 	@Nonnull
-	public ObservableBoolean getDoShorten() {
+	public ObservableBoolean getDoShortenPaths() {
 		return shorten;
 	}
 
@@ -64,10 +64,26 @@ public class TextFormatConfig extends BasicConfigContainer {
 	 * @return Filtered text based on current config.
 	 */
 	public String filter(@Nullable String string) {
+		return filter(string, true, true, true);
+	}
+
+	/**
+	 * @param string
+	 * 		Some text to filter.
+	 * @param shortenPath
+	 * 		Apply path shortening filtering.
+	 * @param escape
+	 * 		Apply escaping.
+	 * @param maxLength
+	 * 		Apply max length cap.
+	 *
+	 * @return Filtered text based on current config.
+	 */
+	public String filter(@Nullable String string, boolean shortenPath, boolean escape, boolean maxLength) {
 		if (string == null) return null;
-		string = filterShorten(string);
-		string = filterEscape(string);
-		string = filterMaxLength(string);
+		if (shortenPath) string = filterShorten(string);
+		if (escape) string = filterEscape(string);
+		if (maxLength) string = filterMaxLength(string);
 		return string;
 	}
 

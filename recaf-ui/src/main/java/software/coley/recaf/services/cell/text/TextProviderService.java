@@ -1,17 +1,11 @@
 package software.coley.recaf.services.cell.text;
 
-import dev.xdark.blw.asm.internal.Util;
-import dev.xdark.blw.code.Instruction;
-import dev.xdark.blw.code.instruction.*;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import me.darknet.assembler.helper.Names;
-import me.darknet.assembler.printer.InstructionPrinter;
-import me.darknet.assembler.printer.PrintContext;
 import org.benf.cfr.reader.entities.annotations.ElementValue;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationElement;
@@ -22,6 +16,7 @@ import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
+import software.coley.recaf.ui.config.MemberDisplayFormatConfig;
 import software.coley.recaf.ui.config.TextFormatConfig;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.util.BlwUtil;
@@ -32,7 +27,6 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -47,12 +41,15 @@ public class TextProviderService implements Service {
 	public static final String SERVICE_ID = "cell-text";
 	private final TextProviderServiceConfig config;
 	private final TextFormatConfig formatConfig;
+	private final MemberDisplayFormatConfig memberFormatConfig;
 
 	@Inject
 	public TextProviderService(@Nonnull TextProviderServiceConfig config,
-							   @Nonnull TextFormatConfig formatConfig) {
+	                           @Nonnull TextFormatConfig formatConfig,
+	                           @Nonnull MemberDisplayFormatConfig memberFormatConfig) {
 		this.config = config;
 		this.formatConfig = formatConfig;
+		this.memberFormatConfig = memberFormatConfig;
 		// Unlike the other services for graphics/menus, I don't see a use-case for text customization...
 		// Will keep the model similar to them though just in case so that it is easy to add in the future.
 	}
@@ -185,10 +182,7 @@ public class TextProviderService implements Service {
 												   @Nonnull ClassBundle<? extends ClassInfo> bundle,
 												   @Nonnull ClassInfo declaringClass,
 												   @Nonnull FieldMember field) {
-		// TODO: Will want to provide config option for showing the type
-		//  - name (default)
-		//  - type + name
-		return () -> formatConfig.filter(field.getName());
+		return () -> formatConfig.filter(memberFormatConfig.getDisplay(field), false, true, true);
 	}
 
 	/**
@@ -211,11 +205,7 @@ public class TextProviderService implements Service {
 													@Nonnull ClassBundle<? extends ClassInfo> bundle,
 													@Nonnull ClassInfo declaringClass,
 													@Nonnull MethodMember method) {
-		// TODO: Will want to provide config option for showing the descriptor
-		//  - hidden (default)
-		//  - raw
-		//  - simple names
-		return () -> formatConfig.filter(method.getName());
+		return () -> formatConfig.filter(memberFormatConfig.getDisplay(method), false, true, true);
 	}
 
 	/**
