@@ -8,7 +8,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -28,6 +28,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,22 +44,23 @@ public class WorkspaceInformationPane extends BorderPane implements Navigable {
 
 	@Inject
 	public WorkspaceInformationPane(@Nonnull TextProviderService textService,
-									@Nonnull IconProviderService iconService,
-									@Nonnull ResourceSummaryService summaryService,
-									@Nonnull Workspace workspace) {
+	                                @Nonnull IconProviderService iconService,
+	                                @Nonnull ResourceSummaryService summaryService,
+	                                @Nonnull Workspace workspace) {
 		path = PathNodes.workspacePath(workspace);
 
 		// Adding content
 		Grid content = new Grid();
-		content.setPadding(new Insets(5));
-		content.prefWidthProperty().bind(widthProperty());
+		content.setPadding(new Insets(10));
+		content.prefWidthProperty().bind(widthProperty().subtract(10));
 		ScrollPane scroll = new ScrollPane(content);
 		setCenter(scroll);
 		getStyleClass().add("background");
 
 		// Populate summary data for each resource.
-		for (WorkspaceResource resource : workspace.getAllResources(false)) {
-			// Add header
+		List<WorkspaceResource> resources = workspace.getAllResources(false);
+		for (WorkspaceResource resource : resources) {
+			// Create header.
 			Node graphic = iconService.getResourceIconProvider(workspace, resource).makeIcon();
 			Label title = new Label(textService.getResourceTextProvider(workspace, resource).makeText());
 			Label subtitle = new Label(String.format("%d classes, %d files",
@@ -68,14 +70,21 @@ public class WorkspaceInformationPane extends BorderPane implements Navigable {
 			title.getStyleClass().add(Styles.TITLE_4);
 			title.setGraphic(graphic);
 			subtitle.getStyleClass().add(Styles.TEXT_SUBTLE);
-			VBox wrapper = new VBox(title, subtitle);
-			content.add(wrapper, 0, content.getRowCount(), 2, 2);
 
-			// Add summaries
-			summaryService.summarizeTo(workspace, resource, content);
-
-			// Break each summary by newline
-			content.add(new Separator(), 0, content.getRowCount(), 2, 1);
+			if (resources.size() > 1) {
+				// Add summaries for this resource into a collapsible panel.
+				Grid section = content.newSection();
+				TitledPane resourcePane = new TitledPane();
+				resourcePane.setContent(section);
+				resourcePane.setGraphic(new VBox(title, subtitle));
+				content.add(resourcePane, 0, content.getRowCount(), 2, 1);
+				summaryService.summarizeTo(workspace, resource, section);
+			} else {
+				// Single resource, no need to box it.
+				VBox wrapper = new VBox(title, subtitle);
+				content.add(wrapper, 0, content.getRowCount(), 2, 1);
+				summaryService.summarizeTo(workspace, resource, content.newSection());
+			}
 		}
 	}
 
@@ -105,6 +114,13 @@ public class WorkspaceInformationPane extends BorderPane implements Navigable {
 			column1.setPercentWidth(25);
 			column2.setPercentWidth(75);
 			getColumnConstraints().addAll(column1, column2);
+		}
+
+		@Nonnull
+		public Grid newSection() {
+			Grid section = new Grid();
+			add(section, 0, getRowCount(), 2, 1);
+			return section;
 		}
 
 		@Override
