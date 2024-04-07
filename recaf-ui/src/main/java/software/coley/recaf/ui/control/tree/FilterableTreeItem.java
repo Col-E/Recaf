@@ -12,6 +12,7 @@ import javafx.scene.control.TreeItem;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.util.ReflectUtil;
+import software.coley.recaf.util.Unchecked;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -33,6 +34,7 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	private static final Field CHILDREN_FIELD;
 	private static final Logger logger = Logging.get(FilterableTreeItem.class);
 	private final ObservableList<TreeItem<T>> sourceChildren = FXCollections.observableArrayList();
+	private final ObjectProperty<TreeItem<T>> sourceParent = new SimpleObjectProperty<>();
 	private final ObjectProperty<Predicate<TreeItem<T>>> predicate = new SimpleObjectProperty<>();
 
 	protected FilterableTreeItem() {
@@ -60,6 +62,14 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	@Deprecated(since = "Use FilterableTreeItem dedicated methods for interacting with children")
 	public ObservableList<TreeItem<T>> getChildren() {
 		return super.getChildren();
+	}
+
+	/**
+	 * @return Source parent, ignoring filtering.
+	 */
+	@Nonnull
+	public ObjectProperty<TreeItem<T>> sourceParentProperty() {
+		return sourceParent;
 	}
 
 	/**
@@ -135,6 +145,8 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 					index = -(index + 1);
 				sourceChildren.add(index, item);
 			}
+			if (item instanceof FilterableTreeItem<?> filterableItem)
+				filterableItem.sourceParent.set(Unchecked.cast(this));
 		}
 	}
 
@@ -146,6 +158,8 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 */
 	protected void addPreSortedChild(@Nonnull TreeItem<T> item) {
 		sourceChildren.add(item);
+		if (item instanceof FilterableTreeItem<?> filterableItem)
+			filterableItem.sourceParent.set(Unchecked.cast(this));
 	}
 
 	/**
@@ -159,6 +173,8 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 */
 	public boolean removeSourceChild(@Nonnull TreeItem<T> child) {
 		synchronized (sourceChildren) {
+			if (child instanceof FilterableTreeItem<?> filterableItem)
+				filterableItem.sourceParent.set(null);
 			return sourceChildren.remove(child);
 		}
 	}

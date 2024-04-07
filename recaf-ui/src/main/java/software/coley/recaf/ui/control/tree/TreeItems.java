@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control.tree;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -16,7 +17,7 @@ public class TreeItems {
 	 * Expand all parents to this item.
 	 */
 	public static void expandParents(@Nonnull TreeItem<?> item) {
-		while ((item = item.getParent()) != null)
+		while ((item = getParent(item)) != null)
 			item.setExpanded(true);
 	}
 
@@ -61,5 +62,19 @@ public class TreeItems {
 			item.setExpanded(false);
 			item.getChildren().forEach(TreeItems::recurseClose);
 		}
+	}
+
+	/**
+	 * @param item
+	 * 		Tree item to get parent of.
+	 *
+	 * @return Parent tree item.
+	 */
+	@Nullable
+	private static TreeItem<?> getParent(@Nonnull TreeItem<?> item) {
+		TreeItem<?> parent = item.getParent();
+		if (parent == null && item instanceof FilterableTreeItem<?> filterableItem)
+			parent = filterableItem.sourceParentProperty().get();
+		return parent;
 	}
 }

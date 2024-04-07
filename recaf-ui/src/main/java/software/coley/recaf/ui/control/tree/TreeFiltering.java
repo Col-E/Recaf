@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.tree;
 
+import jakarta.annotation.Nonnull;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -24,7 +25,7 @@ public class TreeFiltering {
 	 * 		Assumed that tree contents are {@link FilterableTreeItem}.
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static void install(TextField filter, TreeView<?> tree) {
+	public static void install(@Nonnull TextField filter, @Nonnull TreeView<?> tree) {
 		NodeEvents.addKeyPressHandler(filter, e -> {
 			if (e.getCode() == KeyCode.ESCAPE) {
 				filter.clear();
