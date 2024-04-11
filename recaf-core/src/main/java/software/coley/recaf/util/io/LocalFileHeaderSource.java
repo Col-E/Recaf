@@ -3,11 +3,12 @@ package software.coley.recaf.util.io;
 import jakarta.annotation.Nonnull;
 import software.coley.lljzip.format.compression.ZipCompressions;
 import software.coley.lljzip.format.model.LocalFileHeader;
-import software.coley.lljzip.util.ByteData;
-import software.coley.lljzip.util.ByteDataUtil;
+import software.coley.lljzip.util.MemorySegmentUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 
 /**
  * Byte source from {@link LocalFileHeader}.
@@ -17,7 +18,7 @@ import java.io.InputStream;
 public final class LocalFileHeaderSource implements ByteSource {
 	private final LocalFileHeader fileHeader;
 	private final boolean isAndroid;
-	private ByteData decompressed;
+	private MemorySegment decompressed;
 
 	public LocalFileHeaderSource(LocalFileHeader fileHeader) {
 		this(fileHeader, false);
@@ -31,26 +32,24 @@ public final class LocalFileHeaderSource implements ByteSource {
 	@Nonnull
 	@Override
 	public byte[] readAll() throws IOException {
-		return ByteDataUtil.toByteArray(decompress());
+		return MemorySegmentUtil.toByteArray(decompress());
 	}
 
 	@Nonnull
 	@Override
 	public byte[] peek(int count) throws IOException {
-		ByteData data = decompress();
-		long length = data.length();
+		MemorySegment data = decompress();
+		long length = data.byteSize();
 		if (length < count)
 			count = (int) length;
-		byte[] bytes = new byte[count];
-		data.get(0L, bytes, 0, count);
-		return bytes;
+		return data.asSlice(0, count).toArray(ValueLayout.JAVA_BYTE);
 	}
 
 	@Nonnull
 	@Override
 	public InputStream openStream() throws IOException {
 		// Delegate to byte source
-		return ByteSources.forZip(decompress()).openStream();
+		return ByteSources.forMemorySegment(decompress()).openStream();
 	}
 
 	/**
@@ -61,12 +60,12 @@ public final class LocalFileHeaderSource implements ByteSource {
 	 */
 	public boolean isEmpty() throws IOException {
 		if (fileHeader.getCompressionMethod() == ZipCompressions.STORED)
-			return fileHeader.getFileData().length() == 0;
-		return decompress().length() == 0;
+			return fileHeader.getFileData().byteSize() == 0;
+		return decompress().byteSize() == 0;
 	}
 
-	private ByteData decompress() throws IOException {
-		ByteData decompressed = this.decompressed;
+	private MemorySegment decompress() throws IOException {
+		MemorySegment decompressed = this.decompressed;
 		if (decompressed == null) {
 			// From: https://cs.android.com/android/_/android/platform/frameworks/base/+/b3559643b946829933a76ed45750d13edfefad30:tools/aapt/ZipFile.cpp;l=436
 			//  - If the compression mode given fails, it will get treated as STORED as a fallback

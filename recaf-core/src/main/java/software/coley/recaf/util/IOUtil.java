@@ -2,15 +2,28 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.util.threading.ThreadLocals;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 
@@ -126,7 +139,7 @@ public final class IOUtil {
 	 */
 	@Nonnull
 	public static byte[] toByteArray(InputStream in) throws IOException {
-		return toByteArray(in, ThreadLocals.getByteBuffer());
+		return toByteArray(in, newByteBuffer());
 	}
 
 	/**
@@ -445,7 +458,7 @@ public final class IOUtil {
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static void copy(InputStream in, OutputStream out) throws IOException {
-		copy(in, out, ThreadLocals.getByteBuffer());
+		copy(in, out, newByteBuffer());
 	}
 
 	/**
@@ -616,7 +629,7 @@ public final class IOUtil {
 							int connectionTimeoutMillis,
 							int readTimeoutMillis)
 			throws IOException {
-		copy(url, out, ThreadLocals.getByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
+		copy(url, out, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
 	}
 
 	/**
@@ -669,7 +682,7 @@ public final class IOUtil {
 							int connectionTimeoutMillis,
 							int readTimeoutMillis)
 			throws IOException {
-		copy(url, path, ThreadLocals.getByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
+		copy(url, path, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
 	}
 
 	/**

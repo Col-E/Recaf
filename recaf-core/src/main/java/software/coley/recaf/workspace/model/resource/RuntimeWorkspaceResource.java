@@ -7,8 +7,11 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.util.IOUtil;
-import software.coley.recaf.util.threading.ThreadLocals;
-import software.coley.recaf.workspace.model.bundle.*;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
+import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,12 +45,9 @@ public class RuntimeWorkspaceResource implements WorkspaceResource {
 	}
 
 	private RuntimeWorkspaceResource() {
-		RuntimeWorkspaceResource resource = this;
 		classes = new BasicJvmClassBundle() {
 			@Override
 			public JvmClassInfo get(@Nonnull Object name) {
-				if (name == null)
-					return null;
 				String key = name.toString();
 				if (key.indexOf('.') >= 0)
 					key = key.replace('.', '/');
@@ -60,7 +60,7 @@ public class RuntimeWorkspaceResource implements WorkspaceResource {
 				byte[] value = null;
 				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
 					if (in != null) {
-						value = IOUtil.toByteArray(in, ThreadLocals.getByteBuffer());
+						value = IOUtil.toByteArray(in);
 					}
 				} catch (IOException ex) {
 					logger.error("Failed to fetch runtime bytecode of class: " + key, ex);

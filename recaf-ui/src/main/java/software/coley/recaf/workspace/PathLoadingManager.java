@@ -78,7 +78,7 @@ public class PathLoadingManager {
 
 				// Wrap into workspace and assign it
 				Workspace workspace = new BasicWorkspace(primaryResource, supportingResources);
-				workspaceManager.setCurrent(workspace);
+					workspaceManager.setCurrent(workspace);
 			} catch (Throwable t) {
 				errorHandling.accept(t);
 			}

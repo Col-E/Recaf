@@ -1,5 +1,6 @@
 package software.coley.recaf.info.member;
 
+import jakarta.annotation.Nullable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
@@ -30,6 +31,7 @@ class FieldMemberTest {
 	static FieldMember var_volatileField;
 	static FieldMember var_transientField;
 	static JvmClassInfo classWithInner$Inner;
+	@Nullable
 	static FieldMember inner_outerRefField;
 
 
@@ -49,7 +51,9 @@ class FieldMemberTest {
 		var_transientField = variousFields.getDeclaredField("transientField", "I");
 
 		classWithInner$Inner = TestClassUtils.fromRuntimeClass(ClassWithInner.TheInner.class);
-		inner_outerRefField = classWithInner$Inner.getFields().get(0);
+		if (!classWithInner$Inner.getFields().isEmpty()) {
+			inner_outerRefField = classWithInner$Inner.getFields().get(0);
+		}
 	}
 
 	@Test
@@ -203,7 +207,9 @@ class FieldMemberTest {
 	@Test
 	void hasBridgeModifier() {
 		// Bridge is for methods, only similar mod is synthetic, but they are not the same.
-		assertFalse(inner_outerRefField.hasBridgeModifier());
+		if (inner_outerRefField != null) {
+			assertFalse(inner_outerRefField.hasBridgeModifier());
+		}
 		for (FieldMember field : acc_fields) {
 			assertFalse(field.hasBridgeModifier());
 		}
@@ -214,7 +220,9 @@ class FieldMemberTest {
 		for (FieldMember field : acc_fields) {
 			assertFalse(field.hasSyntheticModifier());
 		}
-		assertTrue(inner_outerRefField.hasSyntheticModifier());
+		if (inner_outerRefField != null) {
+			assertTrue(inner_outerRefField.hasSyntheticModifier());
+		}
 	}
 
 	@Test
@@ -223,7 +231,9 @@ class FieldMemberTest {
 		for (FieldMember field : acc_fields) {
 			assertFalse(field.isCompilerGenerated());
 		}
-		assertTrue(inner_outerRefField.isCompilerGenerated());
+		if (inner_outerRefField != null) {
+			assertTrue(inner_outerRefField.isCompilerGenerated());
+		}
 	}
 
 	@Test

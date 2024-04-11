@@ -1,9 +1,9 @@
 package software.coley.recaf.util.io;
 
-import software.coley.lljzip.util.ByteData;
 import software.coley.recaf.util.ReflectUtil;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -101,7 +101,7 @@ public class ByteSources {
 	 *
 	 * @return New byte source.
 	 */
-	public static ByteSource forZip(ByteData data) {
-		return new ByteDataSource(data);
+	public static ByteSource forMemorySegment(MemorySegment data) {
+		return new MemorySegmentDataSource(data);
 	}
 }
