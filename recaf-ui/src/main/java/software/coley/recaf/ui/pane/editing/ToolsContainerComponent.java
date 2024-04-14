@@ -39,7 +39,16 @@ public class ToolsContainerComponent implements EditorComponent {
 	 */
 	public void add(@Nonnull Node node) {
 		// Add at index 0 so new items are added to the left side.
-		container.getChildren().add(0, node);
+		container.getChildren().add(0, new Group(node));
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to this container.
+	 */
+	public void addLast(@Nonnull Node node) {
+		// Add at end so new items are added to the right side.
+		container.getChildren().add(new Group(node));
 	}
 
 	@Override

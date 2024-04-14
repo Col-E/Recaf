@@ -77,6 +77,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AbstractDecompilePane extends BorderPane implements ClassNavigable, UpdatableNavigable {
 	private static final Logger logger = Logging.get(AbstractDecompilePane.class);
 	protected final ObservableObject<JvmDecompiler> decompiler = new ObservableObject<>(NoopJvmDecompiler.getInstance());
+	protected final ObservableBoolean decompileOutputErrored = new ObservableBoolean(false);
 	protected final ObservableBoolean decompileInProgress = new ObservableBoolean(false);
 	protected final AtomicBoolean updateLock = new AtomicBoolean();
 	protected final ProblemTracking problemTracking = new ProblemTracking();
@@ -87,10 +88,10 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	protected ClassPathNode path;
 
 	protected AbstractDecompilePane(@Nonnull DecompilerPaneConfig config,
-									@Nonnull SearchBar searchBar,
-									@Nonnull JavaContextActionSupport contextActionSupport,
-									@Nonnull FileTypeAssociationService languageAssociation,
-									@Nonnull DecompilerManager decompilerManager) {
+	                                @Nonnull SearchBar searchBar,
+	                                @Nonnull JavaContextActionSupport contextActionSupport,
+	                                @Nonnull FileTypeAssociationService languageAssociation,
+	                                @Nonnull DecompilerManager decompilerManager) {
 		this.config = config;
 		this.contextActionSupport = contextActionSupport;
 		this.decompilerManager = decompilerManager;
@@ -176,6 +177,24 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 			if (!config.getUseMappingAcceleration().getValue() || !handleRemapUpdate(classInfo))
 				decompile();
 		}
+	}
+
+	/**
+	 * Associates the given {@link ToolsContainerComponent} with this decompile pane's {@link #editor}.
+	 *
+	 * @param toolsContainer
+	 * 		Tool container to install.
+	 */
+	protected void installToolsContainer(@Nonnull ToolsContainerComponent toolsContainer) {
+		DecompileFailureButton failureButton = new DecompileFailureButton();
+		decompileOutputErrored.addChangeListener((ob, old, cur) -> {
+			failureButton.setVisible(cur);
+			if (cur) failureButton.animate();
+		});
+
+		toolsContainer.install(editor);
+		toolsContainer.add(contextActionSupport.getAvailabilityButton());
+		toolsContainer.addLast(failureButton);
 	}
 
 	/**
@@ -270,7 +289,9 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 					String text = result.getText();
 					if (Objects.equals(text, editor.getText()))
 						return; // Skip if existing text is the same
-					switch (result.getType()) {
+					DecompileResult.ResultType resultType = result.getType();
+					decompileOutputErrored.setValue(resultType == DecompileResult.ResultType.FAILURE);
+					switch (resultType) {
 						case SUCCESS -> editor.setText(text);
 						case SKIPPED -> editor.setText(text == null ? "// Decompilation skipped" : text);
 						case FAILURE -> {
@@ -278,8 +299,9 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 							if (exception != null) {
 								String trace = StringUtil.traceToString(exception);
 								editor.setText("/*\nDecompile failed:\n" + trace + "\n*/");
-							} else
+							} else {
 								editor.setText("/*\nDecompile failed, but no trace was attached.\n*/");
+							}
 						}
 					}
 

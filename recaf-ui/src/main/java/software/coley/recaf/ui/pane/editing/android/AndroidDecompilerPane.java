@@ -37,8 +37,7 @@ public class AndroidDecompilerPane extends AbstractDecompilePane {
 		// Install tools container with configurator
 		new AndroidDecompilerPaneConfigurator(toolsContainer, config, decompiler, decompilerManager);
 		new AndroidClassInfoProvider(toolsContainer, this);
-		toolsContainer.add(contextActionSupport.getAvailabilityButton());
-		toolsContainer.install(editor);
+		installToolsContainer(toolsContainer);
 
 		// Setup keybindings
 		setOnKeyPressed(e -> {

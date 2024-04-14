@@ -13,7 +13,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
-import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
@@ -105,8 +104,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		// Install tools container with configurator
 		new JvmDecompilerPaneConfigurator(toolsContainer, config, decompiler, javacTarget, javacDownsampleTarget, javacDebug, decompilerManager);
 		new JvmClassInfoProvider(toolsContainer, this);
-		toolsContainer.add(contextActionSupport.getAvailabilityButton());
-		toolsContainer.install(editor);
+		installToolsContainer(toolsContainer);
 
 		// Setup keybindings
 		setOnKeyPressed(e -> {
