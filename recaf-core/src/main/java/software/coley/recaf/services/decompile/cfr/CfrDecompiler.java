@@ -14,6 +14,7 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * CFR decompiler implementation.
@@ -52,8 +53,14 @@ public class CfrDecompiler extends AbstractJvmDecompiler {
 		driver.analyse(Collections.singletonList(name));
 		String decompile = sink.getDecompilation();
 		int configHash = getConfig().getHash();
-		if (decompile == null)
-			return new DecompileResult(sink.getException(), configHash);
+		if (decompile == null) {
+			Throwable exception = Objects.requireNonNullElseGet(sink.getException(), () -> {
+				Throwable err = new IllegalStateException("CFR did not provide any output:\n- No decompilation output\n- No error message / trace");
+				err.setStackTrace(new StackTraceElement[0]);
+				return err;
+			});
+			return new DecompileResult(exception, configHash);
+		}
 		return new DecompileResult(filter(decompile), configHash);
 	}
 
