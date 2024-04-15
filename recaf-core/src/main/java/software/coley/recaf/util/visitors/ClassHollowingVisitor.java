@@ -1,10 +1,12 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.*;
 import software.coley.recaf.RecafConstants;
 
 import java.lang.reflect.Modifier;
+import java.util.EnumSet;
 
 /**
  * Visitor that removes most information from a class not needed for compiling against.
@@ -12,12 +14,25 @@ import java.lang.reflect.Modifier;
  * @author Matt Coley
  */
 public class ClassHollowingVisitor extends ClassVisitor {
+	private final EnumSet<Item> keptItems;
+
 	/**
 	 * @param cv
 	 * 		Parent visitor.
 	 */
 	public ClassHollowingVisitor(@Nullable ClassVisitor cv) {
+		this(cv, EnumSet.noneOf(Item.class));
+	}
+
+	/**
+	 * @param cv
+	 * 		Parent visitor.
+	 * @param keptItems
+	 * 		Types of content to keep when hollowing out the class. Method bodies are always hollowed.
+	 */
+	public ClassHollowingVisitor(@Nullable ClassVisitor cv, @Nonnull EnumSet<Item> keptItems) {
 		super(RecafConstants.getAsmVersion(), cv);
+		this.keptItems = keptItems;
 	}
 
 	@Override
@@ -27,20 +42,22 @@ public class ClassHollowingVisitor extends ClassVisitor {
 
 	@Override
 	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-		// Skip
+		if (keptItems.contains(Item.ANNOTATIONS))
+			return super.visitAnnotation(descriptor, visible);
 		return null;
 	}
 
 	@Override
 	public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-		// Skip
+		if (keptItems.contains(Item.ANNOTATIONS))
+			return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
 		return null;
 	}
 
 	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
 		// Skip private fields
-		if (Modifier.isPrivate(access))
+		if (!keptItems.contains(Item.PRIVATE_FIELDS) && Modifier.isPrivate(access))
 			return null;
 		FieldVisitor fv = super.visitField(access, name, descriptor, signature, value);
 		return new FieldHollower(fv);
@@ -49,7 +66,7 @@ public class ClassHollowingVisitor extends ClassVisitor {
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		// Skip private methods
-		if (Modifier.isPrivate(access))
+		if (!keptItems.contains(Item.PRIVATE_METHODS) && Modifier.isPrivate(access))
 			return null;
 		boolean isAbstract = Modifier.isAbstract(access);
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
@@ -57,9 +74,18 @@ public class ClassHollowingVisitor extends ClassVisitor {
 	}
 
 	/**
+	 * Content to keep.
+	 */
+	public enum Item {
+		PRIVATE_FIELDS,
+		PRIVATE_METHODS,
+		ANNOTATIONS
+	}
+
+	/**
 	 * Visitor that removes most information from a field not needed for compiling against.
 	 */
-	public static class FieldHollower extends FieldVisitor {
+	public class FieldHollower extends FieldVisitor {
 		/**
 		 * @param fv
 		 * 		Parent field visitor.
@@ -70,13 +96,15 @@ public class ClassHollowingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			// Skip
+			if (keptItems.contains(Item.ANNOTATIONS))
+				return super.visitAnnotation(descriptor, visible);
 			return null;
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-			// Skip
+			if (keptItems.contains(Item.ANNOTATIONS))
+				return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
 			return null;
 		}
 	}
@@ -84,7 +112,7 @@ public class ClassHollowingVisitor extends ClassVisitor {
 	/**
 	 * Visitor that removes most information from a method not needed for compiling against.
 	 */
-	public static class MethodHollower extends MethodVisitor {
+	public class MethodHollower extends MethodVisitor {
 		private final Type retType;
 		private final boolean isAbstract;
 
@@ -142,13 +170,15 @@ public class ClassHollowingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			// Skip
+			if (keptItems.contains(Item.ANNOTATIONS))
+				return super.visitAnnotation(descriptor, visible);
 			return null;
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-			// Skip
+			if (keptItems.contains(Item.ANNOTATIONS))
+				return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
 			return null;
 		}
 
@@ -189,7 +219,7 @@ public class ClassHollowingVisitor extends ClassVisitor {
 
 		@Override
 		public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle,
-										   Object... bootstrapMethodArguments) {
+		                                   Object... bootstrapMethodArguments) {
 			// Skip
 		}
 
@@ -230,21 +260,21 @@ public class ClassHollowingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath,
-													 String desc, boolean visible) {
+		                                             String desc, boolean visible) {
 			// Skip
 			return null;
 		}
 
 		@Override
 		public void visitLocalVariable(String name, String descriptor, String signature,
-									   Label start, Label end, int index) {
+		                               Label start, Label end, int index) {
 			// Skip
 		}
 
 		@Override
 		public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start,
-															  Label[] end, int[] index, String desc,
-															  boolean visible) {
+		                                                      Label[] end, int[] index, String desc,
+		                                                      boolean visible) {
 			// Skip
 			return null;
 		}
@@ -261,7 +291,7 @@ public class ClassHollowingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc,
-														 boolean visible) {
+		                                                 boolean visible) {
 			// Skip
 			return null;
 		}
