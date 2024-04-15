@@ -102,14 +102,20 @@ public class DecompileManagerTest extends TestBase {
 					.get(1, TimeUnit.DAYS);
 
 			// Assert that repeated decompiles use the same result (caching, should be handled by abstract base)
-			DecompileResult newResult = decompiler.decompile(workspace, classToDecompile);
+			// Only the manager will cache results. Using decompilers direcrly will not cache.
+			assertTrue(decompilerManager.getServiceConfig().getCacheDecompilations().getValue(), "Default cache config not 'true'");
+			DecompileResult newResult = decompilerManager.decompile(decompiler, workspace, classToDecompile).get(1, TimeUnit.SECONDS);
 			assertSame(firstResult, newResult, "Decompiler did not cache results");
 
 			// Change the decompiler hash. The decompiler result should change.
 			decompiler.getConfig().setHash(-1);
-			newResult = decompilerManager.decompile(decompiler, workspace, classToDecompile)
-					.get(1, TimeUnit.SECONDS);
+			newResult = decompilerManager.decompile(decompiler, workspace, classToDecompile).get(1, TimeUnit.SECONDS);
 			assertNotSame(firstResult, newResult, "Decompiler used cached result even though config hash changed");
+
+			// Verify direct decompiler usage does not cache
+			DecompileResult direct1 = decompiler.decompile(workspace, classToDecompile);
+			DecompileResult direct2 = decompiler.decompile(workspace, classToDecompile);
+			assertNotSame(direct1, direct2, "Direct decompiler use cached results unexpectedly");
 		} catch (InterruptedException e) {
 			fail("Decompile was interrupted", e);
 		} catch (ExecutionException e) {
