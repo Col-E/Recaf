@@ -7,7 +7,9 @@ import software.coley.recaf.services.decompile.filter.JvmBytecodeFilter;
 import software.coley.recaf.services.decompile.filter.OutputTextFilter;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,7 +18,7 @@ import java.util.Set;
  * @author Matt Coley
  */
 public abstract class AbstractJvmDecompiler extends AbstractDecompiler implements JvmDecompiler {
-	private final Set<JvmBytecodeFilter> bytecodeFilters = new HashSet<>();
+	private final List<JvmBytecodeFilter> bytecodeFilters = new ArrayList<>();
 
 	/**
 	 * @param name
@@ -44,21 +46,7 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 	@Override
 	public final DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
 		// Get bytecode and run through filters.
-		JvmClassInfo filteredBytecode;
-		if (bytecodeFilters.isEmpty()) {
-			filteredBytecode = classInfo;
-		} else {
-			boolean dirty = false;
-			byte[] bytecode = classInfo.getBytecode();
-			for (JvmBytecodeFilter filter : bytecodeFilters) {
-				byte[] filtered = filter.filter(workspace, classInfo, bytecode);
-				if (filtered != bytecode) {
-					bytecode = filtered;
-					dirty = true;
-				}
-			}
-			filteredBytecode = dirty ? classInfo.toJvmClassBuilder().adaptFrom(bytecode).build() : classInfo;
-		}
+		JvmClassInfo filteredBytecode = JvmBytecodeFilter.applyFilters(workspace, classInfo, bytecodeFilters);
 
 		// Pass to implementation.
 		DecompileResult result = decompileInternal(workspace, filteredBytecode);

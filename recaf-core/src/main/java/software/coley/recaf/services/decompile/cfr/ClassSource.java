@@ -1,5 +1,6 @@
 package software.coley.recaf.services.decompile.cfr;
 
+import jakarta.annotation.Nonnull;
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.objectweb.asm.ClassReader;
@@ -14,7 +15,7 @@ import java.util.Collections;
 /**
  * CFR class source. Provides access to workspace clases.
  *
- * @author Matt
+ * @author Matt Coley
  */
 public class ClassSource implements ClassFileSource {
 	private final Workspace workspace;
@@ -31,7 +32,8 @@ public class ClassSource implements ClassFileSource {
 	 * @param targetClassBytecode
 	 * 		Bytecode to override.
 	 */
-	public ClassSource(Workspace workspace, String targetClassName, byte[] targetClassBytecode) {
+	public ClassSource(@Nonnull Workspace workspace, @Nonnull String targetClassName,
+	                   @Nonnull byte[] targetClassBytecode) {
 		this.workspace = workspace;
 		this.targetClassName = targetClassName;
 		this.targetClassBytecode = targetClassBytecode;
