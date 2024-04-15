@@ -10,6 +10,7 @@ import software.coley.recaf.ui.docking.listener.TabSelectionListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 /**
@@ -21,7 +22,7 @@ import java.util.function.Supplier;
 public class DockingManager {
 	private final DockingRegionFactory factory = new DockingRegionFactory(this);
 	private final DockingRegion primaryRegion;
-	private final List<DockingRegion> regions = new ArrayList<>();
+	private final List<DockingRegion> regions = new CopyOnWriteArrayList<>();
 	private final List<TabSelectionListener> tabSelectionListeners = new ArrayList<>();
 	private final List<TabCreationListener> tabCreationListeners = new ArrayList<>();
 	private final List<TabClosureListener> tabClosureListeners = new ArrayList<>();
