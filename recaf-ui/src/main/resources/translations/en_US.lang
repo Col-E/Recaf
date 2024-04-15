@@ -746,6 +746,8 @@ service.ui.window-manager-config=Window manager
 service.ui.workspace-explorer-config=Workspace explorer
 service.ui.workspace-explorer-config.drag-drop-action=Drag & drop behavior
 service.ui.workspace-explorer-config.max-tree-dir-depth=Max tree depth
+service.ui.language-config=Language
+service.ui.language-config.current=Current language
 
 ### Matcher translations
 number.match.equal=value == n
