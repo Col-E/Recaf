@@ -10,6 +10,8 @@ import software.coley.observables.ObservableString;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.decompile.filter.JvmBytecodeFilter;
+import software.coley.recaf.services.decompile.filter.OutputTextFilter;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 

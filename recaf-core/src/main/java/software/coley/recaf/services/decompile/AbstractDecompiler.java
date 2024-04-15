@@ -1,6 +1,7 @@
 package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.services.decompile.filter.OutputTextFilter;
 
 import java.util.HashSet;
 import java.util.Set;

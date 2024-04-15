@@ -1,4 +1,4 @@
-package software.coley.recaf.services.decompile;
+package software.coley.recaf.services.decompile.filter;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;

@@ -5,9 +5,11 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.util.StringUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,7 +18,7 @@ import java.util.Set;
  * @author Matt Coley
  */
 public class IncludeKeywordNameFilter extends NameGeneratorFilter {
-	private static final Set<String> keywords = new HashSet<>();
+	public static final Set<String> keywords = new HashSet<>();
 
 	/**
 	 * @param next
@@ -28,8 +30,11 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 
 	@Override
 	public boolean shouldMapClass(@Nonnull ClassInfo info) {
-		if (keywords.contains(info.getName()))
-			return true;
+		String name = info.getName();
+		List<String> parts = StringUtil.fastSplit(name, true, '/');
+		for (String part : parts)
+			if (keywords.contains(part))
+				return true;
 		return super.shouldMapClass(info);
 	}
 
@@ -90,9 +95,22 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 				"synchronized",
 				// "synthetic",
 				"transient",
+				"throws",
 				// "transitive",
 				// "var",
 				// "varargs",
-				"volatile"));
+				"volatile",
+				// primitives
+				"boolean",
+				"byte",
+				"char",
+				"short",
+				"int",
+				"long",
+				"float",
+				"double",
+				"void",
+				"null"
+		));
 	}
 }

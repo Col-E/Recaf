@@ -40,9 +40,11 @@ public class SinkFactoryImpl implements OutputSinkFactory {
 	}
 
 	private <T> void handleException(T value) {
-		logger.error("CFR Error: {}", value);
 		if (value instanceof Throwable) {
+			logger.error("CFR Error: {}", value);
 			exception = (Throwable) value;
+		} else {
+			logger.error("CFR encountered an error but provided no additional information");
 		}
 	}
 

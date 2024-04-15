@@ -2,6 +2,7 @@ package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
+import software.coley.recaf.services.decompile.filter.OutputTextFilter;
 
 /**
  * Common decompiler operations.

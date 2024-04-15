@@ -1,9 +1,10 @@
 package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
-import org.objectweb.asm.ClassReader;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
+import software.coley.recaf.services.decompile.filter.JvmBytecodeFilter;
+import software.coley.recaf.services.decompile.filter.OutputTextFilter;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.HashSet;

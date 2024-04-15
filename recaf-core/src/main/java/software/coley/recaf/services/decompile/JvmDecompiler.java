@@ -2,6 +2,7 @@ package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.services.decompile.filter.JvmBytecodeFilter;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**

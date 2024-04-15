@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
+import software.coley.recaf.services.decompile.filter.JvmBytecodeFilter;
+import software.coley.recaf.services.decompile.filter.OutputTextFilter;
 import software.coley.recaf.services.decompile.procyon.ProcyonDecompiler;
 import software.coley.recaf.services.decompile.vineflower.VineflowerDecompiler;
 import software.coley.recaf.test.TestBase;
