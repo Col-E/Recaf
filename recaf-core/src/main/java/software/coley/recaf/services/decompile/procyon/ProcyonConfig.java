@@ -63,6 +63,7 @@ public class ProcyonConfig extends BaseDecompilerConfig {
 		addValue(new BasicConfigValue<>("textBlockLineMinimum", int.class, textBlockLineMinimum));
 		addValue(new BasicConfigValue<>("forcedCompilerTarget", CompilerTarget.class, forcedCompilerTarget));
 		addValue(new BasicConfigValue<>("bytecodeOutputOptions", BytecodeOutputOptions.class, bytecodeOutputOptions));
+		registerConfigValuesHashUpdates();
 	}
 
 	/**
