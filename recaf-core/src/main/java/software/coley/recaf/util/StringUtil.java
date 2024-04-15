@@ -14,7 +14,9 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -24,6 +26,34 @@ import java.util.Random;
  */
 public class StringUtil {
 	public static final String[] EMPTY_STRING_ARRAY = new String[0];
+
+	/**
+	 * @param input
+	 * 		Some text to split.
+	 * @param includeEmpty
+	 *        {@code true} to include empty strings.
+	 * @param split
+	 * 		Split character.
+	 *
+	 * @return List of strings between the split characters.
+	 */
+	@Nonnull
+	public static List<String> fastSplit(@Nonnull String input, boolean includeEmpty, char split) {
+		StringBuilder sb = new StringBuilder();
+		ArrayList<String> words = new ArrayList<>();
+		words.ensureCapacity(input.length() / 5);
+		char[] strArray = input.toCharArray();
+		for (char c : strArray) {
+			if (c == split) {
+				if ((includeEmpty || !sb.isEmpty())) words.add(sb.toString());
+				sb.setLength(0);
+			} else {
+				sb.append(c);
+			}
+		}
+		if ((includeEmpty || !sb.isEmpty())) words.add(sb.toString());
+		return words;
+	}
 
 	/**
 	 * @param input

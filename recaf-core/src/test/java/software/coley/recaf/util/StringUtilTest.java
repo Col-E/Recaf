@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,6 +14,24 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for {@link StringUtil}
  */
 class StringUtilTest {
+	@Test
+	void testFastSplit() {
+		// Empty discarded
+		assertEquals(List.of("a", "b", "c", "d"), StringUtil.fastSplit("a/b/c/d", false, '/'));
+		assertEquals(List.of("a", "b", "c"), StringUtil.fastSplit("a/b/c/", false, '/'));
+		assertEquals(List.of("b", "c", "d"), StringUtil.fastSplit("/b/c/d", false, '/'));
+		assertEquals(Collections.emptyList(), StringUtil.fastSplit("/", false, '/'));
+		assertEquals(Collections.emptyList(), StringUtil.fastSplit("//", false, '/'));
+		assertEquals(Collections.emptyList(), StringUtil.fastSplit("///", false, '/'));
+
+		// Empty included
+		assertEquals(List.of("a", "b", "c", ""), StringUtil.fastSplit("a/b/c/", true, '/'));
+		assertEquals(List.of("", "b", "c", "d"), StringUtil.fastSplit("/b/c/d", true, '/'));
+		assertEquals(List.of("", ""), StringUtil.fastSplit("/", true, '/'));
+		assertEquals(List.of("", "", ""), StringUtil.fastSplit("//", true, '/'));
+		assertEquals(List.of("", "", "", ""), StringUtil.fastSplit("///", true, '/'));
+	}
+
 	@Test
 	void testSplitNewline() {
 		assertEquals(1, StringUtil.splitNewline("").length);
