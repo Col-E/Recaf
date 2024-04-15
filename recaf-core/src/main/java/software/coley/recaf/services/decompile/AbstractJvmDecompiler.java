@@ -43,17 +43,6 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 	@Nonnull
 	@Override
 	public final DecompileResult decompile(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
-		// Check for cached result, returning the cached result if found
-		// and only if the current config matches the one that yielded the cached result.
-		DecompileResult cachedResult = CachedDecompileProperty.get(classInfo, this);
-		if (cachedResult != null) {
-			if (cachedResult.getConfigHash() == getConfig().getHash())
-				return cachedResult;
-
-			// Config changed, void the cache.
-			CachedDecompileProperty.remove(classInfo);
-		}
-
 		// Get bytecode and run through filters.
 		JvmClassInfo filteredBytecode;
 		if (bytecodeFilters.isEmpty()) {
@@ -82,8 +71,6 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 			result = result.withText(text);
 		}
 
-		// Cache result.
-		CachedDecompileProperty.set(classInfo, this, result);
 		return result;
 	}
 

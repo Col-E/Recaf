@@ -9,6 +9,7 @@ import software.coley.observables.ObservableObject;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.decompile.filter.JvmBytecodeFilter;
 import software.coley.recaf.services.decompile.filter.OutputTextFilter;
@@ -118,7 +119,27 @@ public class DecompilerManager implements Service {
 	 */
 	@Nonnull
 	public CompletableFuture<DecompileResult> decompile(@Nonnull JvmDecompiler decompiler, @Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo) {
-		return CompletableFuture.supplyAsync(() -> decompiler.decompile(workspace, classInfo), decompileThreadPool);
+		return CompletableFuture.supplyAsync(() -> {
+			boolean doCache = config.getCacheDecompilations().getValue();
+			if (doCache) {
+				// Check for cached result, returning the cached result if found
+				// and only if the current config matches the one that yielded the cached result.
+				DecompileResult cachedResult = CachedDecompileProperty.get(classInfo, decompiler);
+				if (cachedResult != null) {
+					if (cachedResult.getConfigHash() == decompiler.getConfig().getHash())
+						return cachedResult;
+
+					// Config changed, void the cache.
+					CachedDecompileProperty.remove(classInfo);
+				}
+			}
+
+			// Decompile the class and cache the result if configured.
+			DecompileResult result = decompiler.decompile(workspace, classInfo);
+			if (doCache)
+				CachedDecompileProperty.set(classInfo, decompiler, result);
+			return result;
+		}, decompileThreadPool);
 	}
 
 	/**
