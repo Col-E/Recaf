@@ -3,8 +3,15 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
@@ -17,6 +24,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * Tests for {@link ExpressionCompiler}
@@ -132,6 +140,70 @@ class ExpressionCompilerTest extends TestBase {
 		assembler.setMethodContext(targetEnum.getFirstDeclaredMethodByName("<clinit>"));
 		ExpressionResult result = compile("");
 		assertSuccess(result);
+	}
+
+	@Nested
+	class ObfuscatedContexts {
+		@ParameterizedTest
+		@ValueSource(strings = {"void", "null", "int", "private", "throws", "", "\0", " ", "-10", "100", "<lol>"})
+		void ignoreIllegalFieldName(String illegalFieldName) {
+			ClassWriter cw = new ClassWriter(0);
+			cw.visit(V1_8, ACC_PUBLIC, "ExampleClass", null, "java/lang/Object", null);
+			cw.visitField(ACC_PRIVATE, illegalFieldName, "I", null, null);
+			cw.visitMethod(ACC_PRIVATE, "methodName", "()V", null, null);
+			JvmClassInfo classInfo = new JvmClassInfoBuilder(cw.toByteArray()).build();
+
+			// The expression compiler should skip the field since it has an illegal name.
+			assembler.setClassContext(classInfo);
+			assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("methodName"));
+			ExpressionResult result = compile("");
+			assertSuccess(result);
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = {"void", "null", "int", "private", "throws", "", "\0", " ", "-10", "100", "<lol>"})
+		void ignoreIllegalMethodName(String illegalMethodName) {
+			ClassWriter cw = new ClassWriter(0);
+			cw.visit(V1_8, ACC_PUBLIC, "ExampleClass", null, "java/lang/Object", null);
+			cw.visitMethod(ACC_PRIVATE, illegalMethodName, "()I", null, null);
+			cw.visitMethod(ACC_PRIVATE, "methodName", "()V", null, null);
+			JvmClassInfo classInfo = new JvmClassInfoBuilder(cw.toByteArray()).build();
+
+			// The expression compiler should skip the method since it has an illegal name.
+			assembler.setClassContext(classInfo);
+			assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("methodName"));
+			ExpressionResult result = compile("");
+			assertSuccess(result);
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = {"void", "null", "int", "private", "throws", "", "\0", " ", "-10", "100", "<lol>"})
+		void ignoreIllegalMethodContextName(String illegalMethodName) {
+			ClassWriter cw = new ClassWriter(0);
+			cw.visit(V1_8, ACC_PUBLIC, "ExampleClass", null, "java/lang/Object", null);
+			Label start = new Label();
+			Label end = new Label();
+
+			MethodVisitor mv = cw.visitMethod(ACC_PRIVATE, illegalMethodName, "(IIII)V", null, null);
+			mv.visitCode();
+			mv.visitLabel(start);
+			mv.visitInsn(ICONST_0);
+			mv.visitInsn(IRETURN);
+			mv.visitLabel(end);
+			mv.visitEnd();
+			mv.visitLocalVariable("one", "I", null, start, end, 1);
+			mv.visitLocalVariable("two", "I", null, start, end, 2);
+			mv.visitLocalVariable("three", "I", null, start, end, 3);
+			mv.visitLocalVariable(illegalMethodName, "I", null, start, end, 4); // Add an illegal named parameter
+			JvmClassInfo classInfo = new JvmClassInfoBuilder(cw.toByteArray()).build();
+
+			// The expression compiler should rename the obfuscated method specified as the context.
+			// Variables passed in (that are not illegally named) and such should still be accessible.
+			assembler.setClassContext(classInfo);
+			assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName(illegalMethodName));
+			ExpressionResult result = compile("int result = one + two + three;");
+			assertSuccess(result);
+		}
 	}
 
 	private static void assertSuccess(@Nonnull ExpressionResult result) {

@@ -97,16 +97,16 @@ public class Types {
 	}
 
 	/**
-	 * @param desc
+	 * @param name
 	 * 		Some class name.
 	 *
 	 * @return {@code true} if it matches the class name of a primitive type.
 	 */
-	public static boolean isPrimitiveClassName(@Nullable String desc) {
-		if (desc == null)
+	public static boolean isPrimitiveClassName(@Nullable String name) {
+		if (name == null)
 			return false;
 		for (Type prim : PRIMITIVES)
-			if (prim.getClassName().equals(desc))
+			if (prim.getClassName().equals(name))
 				return true;
 		return false;
 	}
