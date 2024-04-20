@@ -33,6 +33,7 @@ shadowJar {
     exclude "META-INF/maven/**"
     exclude "META-INF/rewrite/**"
     exclude "META-INF/proguard/*"
+    exclude "META-INF/plugins/*"
     exclude "META-INF/native-image/*"
     exclude "META-INF/*.properties"
 

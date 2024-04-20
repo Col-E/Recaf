@@ -7,6 +7,8 @@ import jakarta.inject.Inject;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProviderService;
@@ -19,6 +21,8 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 import static java.lang.reflect.Modifier.PUBLIC;
 import static java.lang.reflect.Modifier.STATIC;
@@ -58,16 +62,16 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 				List<MethodMember> entryMethods = cls.getMethods().stream()
 						.filter(this::isJvmEntry)
 						.toList();
-				// TODO: The 'gotoDeclaration' usage here will always hold the original reference
-				//  - If a user makes a change to the class, these links will not point to the updated class
 				if (!entryMethods.isEmpty()) {
+					Supplier<JvmClassInfo> classLookup = () -> Objects.requireNonNullElse(bundle.get(cls.getName()), cls);
+
 					// Add entry for class
 					String classDisplay = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, cls).makeText();
 					Node classIcon = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, cls).makeIcon();
 					Label classLabel = new Label(classDisplay, classIcon);
 					classLabel.setOnMouseEntered(e -> classLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
 					classLabel.setOnMouseExited(e -> classLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
-					classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, resource, bundle, cls));
+					classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, resource, bundle, classLookup.get()));
 					consumer.appendSummary(classLabel);
 
 					// Add entries for methods
@@ -80,7 +84,7 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 						methodLabel.setOnMouseEntered(e -> methodLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
 						methodLabel.setOnMouseExited(e -> methodLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
 						methodLabel.setOnMouseClicked(e -> {
-							actions.gotoDeclaration(workspace, resource, bundle, cls)
+							actions.gotoDeclaration(workspace, resource, bundle, classLookup.get())
 									.requestFocus(method);
 						});
 						consumer.appendSummary(methodLabel);

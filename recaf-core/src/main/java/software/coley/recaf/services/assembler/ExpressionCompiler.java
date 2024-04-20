@@ -38,14 +38,12 @@ import java.util.stream.Collectors;
 @WorkspaceScoped
 public class ExpressionCompiler {
 	private static final Pattern IMPORT_EXTRACT_PATTERN = RegexUtil.pattern("^\\s*(import \\w.+;)");
-	private static final Pattern WORD_PATTERN = RegexUtil.pattern("\\w+");
-	private static final Pattern WORD_DOT_PATTERN = RegexUtil.pattern("[\\w.]+");
 	private static final String EXPR_MARKER = "/* EXPR_START */";
 	private final JavacCompiler javac;
 	private final Workspace workspace;
 	private final AssemblerPipelineGeneralConfig assemblerConfig;
-	private String className;
 	private int classAccess;
+	private String className;
 	private String superName;
 	private List<String> implementing;
 	private int versionTarget;
@@ -58,7 +56,7 @@ public class ExpressionCompiler {
 
 	@Inject
 	public ExpressionCompiler(@Nonnull Workspace workspace, @Nonnull JavacCompiler javac,
-							  @Nonnull AssemblerPipelineGeneralConfig assemblerConfig) {
+	                          @Nonnull AssemblerPipelineGeneralConfig assemblerConfig) {
 		this.workspace = workspace;
 		this.javac = javac;
 		this.assemblerConfig = assemblerConfig;
@@ -90,11 +88,15 @@ public class ExpressionCompiler {
 	 * 		Class to pull info from.
 	 */
 	public void setClassContext(@Nonnull JvmClassInfo classInfo) {
-		className = classInfo.getName();
+		String type = classInfo.getName();
+		String superType = classInfo.getSuperName();
+		className = isSafeInternalClassName(type) ? type : "obfuscated_class";
 		classAccess = classInfo.getAccess();
 		versionTarget = NumberUtil.intClamp(classInfo.getVersion() - JvmClassInfo.BASE_VERSION, JavacCompiler.getMinTargetVersion(), JavaVersion.get());
-		superName = classInfo.getSuperName();
-		implementing = classInfo.getInterfaces();
+		superName = superType != null && isSafeInternalClassName(superType) ? superType : null;
+		implementing = classInfo.getInterfaces().stream()
+				.filter(ExpressionCompiler::isSafeInternalClassName)
+				.toList();
 		fields = classInfo.getFields();
 		methods = classInfo.getMethods();
 
@@ -226,7 +228,7 @@ public class ExpressionCompiler {
 			code.append(" implements ").append(implementing.stream().map(s -> s.replace('/', '.')).collect(Collectors.joining(", "))).append(' ');
 		code.append("{\n");
 
-		// Enum constants must come first if the class is an enum
+		// Enum constants must come first if the class is an enum.
 		if (isEnum) {
 			int enumConsts = 0;
 			for (FieldMember field : fields) {
@@ -243,7 +245,8 @@ public class ExpressionCompiler {
 			code.append(';');
 		}
 
-		// Method structure to house the expression
+		// Need to build the method structure to house the expression.
+		// We'll start off with the access level.
 		int parameterVarIndex = 0;
 		if (AccessFlag.isPublic(methodFlags))
 			code.append("public ");
@@ -255,6 +258,8 @@ public class ExpressionCompiler {
 			code.append("static ");
 		else
 			parameterVarIndex++;
+
+		// Add the return type.
 		ClassType returnType = methodType.returnType();
 		if (returnType instanceof PrimitiveType primitiveReturn) {
 			code.append(primitiveReturn.name()).append(' ');
@@ -269,31 +274,56 @@ public class ExpressionCompiler {
 			}
 			code.append("[]".repeat(arrayReturn.dimensions()));
 		}
+
+		// Now the method name.
 		code.append(' ').append(methodName).append('(');
+
+		// And now the parameters.
 		int parameterCount = methodType.parameterTypes().size();
 		Set<String> usedVariables = new HashSet<>();
 		for (int i = 0; i < parameterCount; i++) {
+			// Lookup the parameter variable
 			LocalVariable parameterVariable = getParameterVariable(parameterVarIndex, i);
 			String parameterName = parameterVariable.getName();
+
+			// Record the parameter as being used
 			usedVariables.add(parameterName);
+
+			// Skip if the parameter is illegally named.
+			if (!isSafeName(parameterName))
+				continue;
+
+			// Append the parameter.
 			NameType varInfo = getInfo(parameterName, parameterVariable.getDescriptor());
 			parameterVarIndex += varInfo.size;
 			code.append(varInfo.className).append(' ').append(varInfo.name);
 			if (i < parameterCount - 1) code.append(", ");
-
 		}
 		for (LocalVariable variable : methodVariables) {
 			String name = variable.getName();
+
+			// Skip illegal named variables and the implicit 'this'
 			if (!isSafeName(name) || name.equals("this"))
 				continue;
+
+			// Skip if we already included the parameter in the loop above.
 			boolean hasPriorParameters = !usedVariables.isEmpty();
 			if (!usedVariables.add(name))
 				continue;
+
+			// Append the parameter.
 			NameType varInfo = getInfo(name, variable.getDescriptor());
 			if (hasPriorParameters)
 				code.append(", ");
 			code.append(varInfo.className).append(' ').append(varInfo.name);
 		}
+
+		// If we skipped the last parameter for some reason we need to remove the trailing ', ' before closing
+		// off the parameters section.
+		if (code.substring(code.length() - 2).endsWith(", "))
+			code.setLength(code.length() - 2);
+
+		// Close off declaration and add a throws so the user doesn't need to specify try-catch.
 		code.append(") throws Throwable { " + EXPR_MARKER + " \n");
 		code.append(expression);
 		code.append("}\n");
@@ -312,6 +342,7 @@ public class ExpressionCompiler {
 			if (fieldInfo.className.equals(className.replace('/', '.')) && field.hasFinalModifier() && field.hasStaticModifier())
 				continue;
 
+			// Append the field. The only modifier that we care about here is if it is static or not.
 			if (field.hasStaticModifier())
 				code.append("static ");
 			code.append(fieldInfo.className).append(' ').append(fieldInfo.name).append(";\n");
@@ -352,7 +383,7 @@ public class ExpressionCompiler {
 			}).allMatch(ExpressionCompiler::isSafeClassName))
 				continue;
 
-			// Stub the method
+			// Stub the method. Start with the access modifiers.
 			if (method.hasPublicModifier())
 				code.append("public ");
 			else if (method.hasProtectedModifier())
@@ -362,10 +393,13 @@ public class ExpressionCompiler {
 			if (method.hasStaticModifier())
 				code.append("static ");
 
+			// Method name. Consider edge case for constructors.
 			if (isCtor)
 				code.append(StringUtil.shortenPath(className)).append('(');
 			else
 				code.append(returnInfo.className).append(' ').append(returnInfo.name).append('(');
+
+			// Add the parameters. We only care about the types, names don't really matter.
 			List<ClassType> methodParameterTypes = localMethodType.parameterTypes();
 			parameterCount = methodParameterTypes.size();
 			for (int i = 0; i < parameterCount; i++) {
@@ -384,6 +418,8 @@ public class ExpressionCompiler {
 							"missing type information for: " + superName);
 				if (superPath != null) {
 					// To make it easy, we'll find the simplest constructor in the parent class and pass dummy values.
+					// Unlike regular methods we cannot just say 'throw new RuntimeException();' since calling
+					// the 'super(...)' is required.
 					MethodType parentConstructor = superPath.getValue().methodStream()
 							.filter(m -> m.getName().equals("<init>"))
 							.map(m -> Types.methodType(m.getDescriptor()))
@@ -524,6 +560,8 @@ public class ExpressionCompiler {
 			LocalVariable parameterVariable = getParameterVariable(parameterVarIndex, i);
 			String parameterName = parameterVariable.getName();
 			usedVariables.add(parameterName);
+			if (!isSafeName(parameterName))
+				continue;
 			NameType varInfo = getInfo(parameterName, parameterVariable.getDescriptor());
 			parameterVarIndex += varInfo.size;
 			sb.append(parameterVariable.getDescriptor());
@@ -547,17 +585,58 @@ public class ExpressionCompiler {
 	 * @return {@code true} when it can be used as a variable name safely.
 	 */
 	private static boolean isSafeName(@Nonnull String name) {
-		return WORD_PATTERN.matches(name);
+		// Name must not be empty.
+		if (name.isEmpty())
+			return false;
+
+		// Must be comprised of valid identifier characters.
+		char first = name.charAt(0);
+		if (!Character.isJavaIdentifierStart(first))
+			return false;
+		char[] chars = name.toCharArray();
+		for (int i = 1; i < chars.length; i++) {
+			if (!Character.isJavaIdentifierPart(chars[i]))
+				return false;
+		}
+
+		// Cannot be a reserved keyword.
+		return !Keywords.getKeywords().contains(name);
+	}
+
+	/**
+	 * @param internalName
+	 * 		Name to check. Expected to be in the internal format. IE {@code java/lang/String}.
+	 *
+	 * @return {@code true} when it can be used as a class name safely.
+	 */
+	private static boolean isSafeInternalClassName(@Nonnull String internalName) {
+		// Sanity check input
+		if (internalName.indexOf('.') >= 0)
+			throw new IllegalStateException("Saw source name format, expected internal name format");
+
+		// All package name portions and the class name must be valid names.
+		return StringUtil.fastSplit(internalName, true, '/').stream()
+				.allMatch(ExpressionCompiler::isSafeName);
 	}
 
 	/**
 	 * @param name
-	 * 		Name to check.
+	 * 		Name to check. Expected to be in the source format. IE {@code java.lang.String}.
 	 *
 	 * @return {@code true} when it can be used as a class name safely.
 	 */
 	private static boolean isSafeClassName(@Nonnull String name) {
-		return WORD_DOT_PATTERN.matches(name);
+		// Sanity check input
+		if (name.indexOf('/') >= 0)
+			throw new IllegalStateException("Saw internal name format, expected source name format");
+
+		// Allow primitives
+		if (software.coley.recaf.util.Types.isPrimitiveClassName(name))
+			return true;
+
+		// All package name portions and the class name must be valid names.
+		return StringUtil.fastSplit(name, true, '.').stream()
+				.allMatch(ExpressionCompiler::isSafeName);
 	}
 
 	/**
