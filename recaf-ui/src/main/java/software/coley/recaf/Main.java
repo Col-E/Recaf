@@ -11,7 +11,6 @@ import software.coley.recaf.cdi.InitializationStage;
 import software.coley.recaf.launch.LaunchArguments;
 import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.launch.LaunchHandler;
-import software.coley.recaf.plugin.Plugin;
 import software.coley.recaf.plugin.PluginContainer;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginManager;
@@ -181,7 +180,7 @@ public class Main {
 		PluginManager pluginManager = recaf.get(PluginManager.class);
 
 		// Log the discovered plugins
-		Collection<PluginContainer<? extends Plugin>> plugins = pluginManager.getPlugins();
+		Collection<PluginContainer<?>> plugins = pluginManager.getPlugins();
 		if (plugins.isEmpty()) {
 			logger.info("Initialization: No plugins found");
 		} else {
