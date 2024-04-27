@@ -3,17 +3,28 @@
  * =========================
  */
 .h1 {
-	-fx-font-size: 18px;
+	-fx-font-size: 24px;
 	-fx-font-weight: bold;
 }
 .h2 {
-	-fx-font-size: 15px;
+	-fx-font-size: 20px;
 	-fx-font-weight: bold;
+}
+.h3 {
+	-fx-font-size: 17px;
+	-fx-font-weight: bold;
+}
+.text {
+	-fx-fill: rgb(240, 245, 255);
 }
 .a {
     -fx-underline: true;
-    -fx-text-fill: rgb(24, 101, 217);
-    -fx-fill: rgb(24, 101, 217);
+    -fx-text-fill: rgb(70, 129, 255);
+    -fx-fill: rgb(70, 129, 255);
+}
+.a:hover {
+	-fx-text-fill: rgb(121, 204, 255);
+	-fx-fill: rgb(121, 204, 255);
 }
 .bold {
 	-fx-font-weight: bold;
@@ -21,8 +32,22 @@
 .underlined {
 	-fx-underline: true;
 }
+.italic {
+	-fx-font-style: italic;
+}
+
 .faint {
 	-fx-fill: rgb(116, 116, 116);
+}
+.code {
+	-fx-fill: rgb(166, 166, 166);
+	-fx-text-fill: rgb(166, 166, 166);
+
+	-fx-background-color: rgb(22, 25, 30);
+	-fx-background-radius: 2;
+	-fx-border-width: 1;
+	-fx-border-radius: 2;
+	-fx-border-color: rgb(116, 116, 116);
 }
 .no-border {
 	-fx-border-width: 0;

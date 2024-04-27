@@ -1,11 +1,11 @@
 package me.coley.recaf.util;
 
-import me.coley.cafedude.classfile.ClassFile;
-import me.coley.cafedude.io.ClassFileReader;
-import me.coley.cafedude.io.ClassFileWriter;
+import software.coley.cafedude.classfile.ClassFile;
+import software.coley.cafedude.io.ClassFileReader;
+import software.coley.cafedude.io.ClassFileWriter;
 
 import java.util.Map;
-import me.coley.cafedude.transform.IllegalStrippingTransformer;
+import software.coley.cafedude.transform.IllegalStrippingTransformer;
 
 /**
  * Utility to attempt basic recovery of classes that crash ASM.

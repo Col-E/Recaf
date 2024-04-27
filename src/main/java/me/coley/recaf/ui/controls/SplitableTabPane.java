@@ -36,6 +36,7 @@ public class SplitableTabPane extends TabPane {
 	 */
 	public SplitableTabPane() {
 		TabPane selfPane = this;
+		/* Disabled in the 2.21.14 update because the splitting logic is garbage. 4x docking is leagues better.
 		// Allow this pane to accept transfers
 		setOnDragOver(dragEvent -> {
 			Dragboard dragboard = dragEvent.getDragboard();
@@ -112,7 +113,7 @@ public class SplitableTabPane extends TabPane {
 					&& draggedTab.get().getTabPane() != selfPane) {
 				removeStyle();
 			}
-		});
+		});*/
 	}
 
 	/**

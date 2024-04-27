@@ -266,7 +266,7 @@ public class JavaParserUtil {
 	 * @return Descriptor of the resolved method.
 	 */
 	public static String getDescriptor(ResolvedMethodDeclaration type) {
-		Optional<MethodDeclaration> ast = type.toAst();
+		Optional<MethodDeclaration> ast = type.toAst(MethodDeclaration.class);
 		String desc = null;
 		if (ast.isPresent()) {
 			desc = getDescriptor(ast.get());

@@ -12,12 +12,14 @@ import org.clyze.jphantom.access.ClassAccessStateMachine;
 import org.clyze.jphantom.access.FieldAccessStateMachine;
 import org.clyze.jphantom.access.MethodAccessStateMachine;
 import org.clyze.jphantom.adapters.ClassPhantomExtractor;
+import org.clyze.jphantom.exc.IllegalBytecodeException;
 import org.clyze.jphantom.hier.ClassHierarchy;
 import org.clyze.jphantom.hier.IncrementalClassHierarchy;
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -95,14 +97,51 @@ public class PhantomResource extends JavaResource {
 		});
 		// Execute and populate the current resource with generated classes
 		JPhantom phantom = new JPhantom(nodes, hierarchy, members);
-		phantom.run();
-		phantom.getGenerated().forEach((k, v) -> getClasses().put(k.getInternalName(), decorate(v)));
-		Log.debug("Phantom analysis complete, generated {} classes", classes.size());
-		// Cleanup
-		Phantoms.refresh();
-		ClassAccessStateMachine.refresh();
-		FieldAccessStateMachine.refresh();
-		MethodAccessStateMachine.refresh();
+		try {
+			int attempts = 10;
+			do {
+				attempts--;
+				try {
+					phantom.run();
+				} catch (IllegalBytecodeException ex) {
+					try {
+						// Get type with the unhandled bytecode
+						Field offendingTypeField = IllegalBytecodeException.class.getDeclaredField("clazz");
+						offendingTypeField.setAccessible(true);
+						Type type = (Type) offendingTypeField.get(ex);
+
+						// Remove it from the input map
+						Log.warn("Failed handling {}", ex.getLocalizedMessage());
+						nodes.remove(type);
+
+						// Cleanup
+						Phantoms.refresh();
+						ClassAccessStateMachine.refresh();
+						FieldAccessStateMachine.refresh();
+						MethodAccessStateMachine.refresh();
+
+						// And try again
+						continue;
+					} catch (Throwable t) {
+						// Cannot reflect offending type, do not try again.
+						attempts = 0;
+					}
+
+					// If we got partial
+					Map<Type, byte[]> generated = phantom.getGenerated();
+					if (generated == null || generated.isEmpty())
+						continue;
+				}
+				phantom.getGenerated().forEach((k, v) -> getClasses().put(k.getInternalName(), decorate(v)));
+				Log.debug("Phantom analysis complete, generated {} classes", classes.size());
+			} while (attempts > 0);
+		} finally {
+			// Cleanup
+			Phantoms.refresh();
+			ClassAccessStateMachine.refresh();
+			FieldAccessStateMachine.refresh();
+			MethodAccessStateMachine.refresh();
+		}
 	}
 
 	/**

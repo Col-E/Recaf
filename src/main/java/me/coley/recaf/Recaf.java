@@ -31,7 +31,7 @@ import static me.coley.recaf.util.Log.*;
  * @author Matt
  */
 public class Recaf {
-	public static final String VERSION = "2.21.13";
+	public static final String VERSION = "2.21.14";
 	public static final String DOC_URL = "https://col-e.github.io/Recaf-documentation/";
 	public static final int ASM_VERSION = Opcodes.ASM9;
 	private static Controller currentController;
@@ -108,7 +108,6 @@ public class Recaf {
 		loadPlugins();
 		// Do version check
 		SelfUpdater.setController(initializer.getController());
-		SelfUpdater.setArgs(args);
 		SelfUpdater.checkForUpdates();
 		// Start the initializer's controller, starting Recaf
 		initializer.startController();

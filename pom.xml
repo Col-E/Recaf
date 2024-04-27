@@ -3,22 +3,22 @@
 	<groupId>me.coley</groupId>
 	<artifactId>recaf</artifactId>
 	<url>https://github.com/Col-E/Recaf/</url>
-	<version>2.21.13</version>
+	<version>2.21.14</version>
 	<name>Recaf</name>
 	<description>A modern java bytecode editor</description>
 	<!-- Variables -->
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<asm.version>9.2</asm.version>
+		<asm.version>9.7</asm.version>
 		<analysis.version>1.6.0</analysis.version>
-		<dude.version>1.9.6</dude.version>
+		<dude.version>2.0.1</dude.version>
 		<cfr.version>0.152</cfr.version>
 		<ff.version>1.5.498.29</ff.version>
 		<procyon.version>0.6.0</procyon.version>
 		<junit.version>5.8.2</junit.version>
 		<pico.version>4.6.3</pico.version>
 		<jline.version>3.21.0</jline.version>
-		<jp.version>3.24.2</jp.version>
+		<jp.version>3.25.9</jp.version>
 		<jfx.version>18</jfx.version>
 		<spotbugs.version>4.0.0</spotbugs.version>
 		<spotbugs-mvn.version>3.1.12.2</spotbugs-mvn.version>
@@ -93,7 +93,7 @@
 		<dependency>
 			<groupId>com.github.Col-E</groupId>
 			<artifactId>jphantom</artifactId>
-			<version>1.4.3</version>
+			<version>1.4.4</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.javaparser/javaparser-core -->
 		<dependency>
@@ -135,7 +135,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>32.0.0-jre</version>
+			<version>33.1.0-jre</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.eclipsesource.minimal-json/minimal-json -->
 		<dependency>
@@ -327,7 +327,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.9.0</version>
+				<version>3.13.0</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -348,7 +348,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>3.0.0-M3</version>
+				<version>3.4.1</version>
 				<executions>
 					<execution>
 					<id>enforce-maven</id>
@@ -465,10 +465,11 @@
 			</plugin>
 			-->
 			<!-- Style enforcement -->
+			<!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.1.1</version>
+				<version>3.3.1</version>
 				<executions>
 					<execution>
 						<phase>process-sources</phase>
@@ -487,7 +488,7 @@
 					<violationSeverity>warning</violationSeverity>
 					<linkXRef>false</linkXRef>
 				</configuration>
-			</plugin>
+			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>

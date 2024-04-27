@@ -32,23 +32,6 @@ public class SelfUpdater {
 	private static Instant latestVersionDate;
 	private static int latestArtifactSize;
 	private static Controller controller;
-	private static String[] args;
-
-	/**
-	 * Start the update process.
-	 *
-	 * @throws IOException
-	 * 		When starting the update task fails.
-	 */
-	public static void updateRecaf() throws IOException {
-		// Skip if no updates
-		if (!hasUpdate())
-			return;
-		String path = SelfReferenceUtil.get().getPath().replace(currentVersion, latestVersion);
-		Log.info("Start update: '{}' ==> '{}'", latestVersion, path);
-		UpdateTaskStarter starter = new UpdateTaskStarter(path, latestArtifact, UPDATER_START_DELAY_MS, args);
-		starter.start();
-	}
 
 	/**
 	 * Fetch latest update information.
@@ -161,15 +144,6 @@ public class SelfUpdater {
 	 */
 	public static void setController(Controller controller) {
 		SelfUpdater.controller = controller;
-	}
-
-	/**
-	 * @param args
-	 * 		Launch arguments to pass to Recaf instance.
-	 */
-	public static void setArgs(String[] args) {
-		// Copy arguments
-		SelfUpdater.args = args;
 	}
 
 	/**

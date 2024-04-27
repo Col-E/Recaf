@@ -11,9 +11,26 @@
     <link rel="stylesheet" href="css/pure/pure-min.css">
     <link rel="stylesheet" href="css/pure/grids-responsive-min.css">
     <link rel="stylesheet" href="css/scroll.css">
+    <link rel="stylesheet" href="css/code.css">
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/menu.css">
     <link rel="stylesheet" href="css/banner.css">
+    <style>
+        #announce {
+            color: white;
+            background: rgba(50, 110, 145, 0.7);
+            border: 1px solid rgb(0, 0, 0, 0.6);
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.6);
+            padding: 10pt;
+
+            max-width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #announce-title {
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 <header class="pure-menu pure-menu-horizontal">
@@ -62,6 +79,13 @@
 </div>
 <article>
     <div id="content">
+        <div id="announce">
+            <h3 id="announce-title">Recaf 4.0.0</h3>
+            <p>Recaf has been rewritten from the ground up and is almost ready for an official release.<br>
+                The new release is designed to facilitate extensive plugin and scripting support, new features and improvements to existing ones.</p>
+            <p>Pre-releases will be available on the project's <span class="code"><a href="https://github.com/Col-E/Recaf/releases">releases</a></span> page</p>
+            <p>You can track the progress on the 4.X development branch: <span class="code"><a href="https://github.com/Col-E/Recaf/tree/dev4">dev4</a></span> </p>
+        </div>
         <h3>What is Recaf?</h3>
         <p>Recaf is an open-source Java bytecode editor that simplifies the process of editing compiled Java applications. To make things easier Recaf abstracts away much of the internal class file format. Difficult tasks such as updating stack-frames are done automatically. Along with additional features to assist in the process of editing classes, Recaf is the most feature-rich free bytecode editor available.</p>
         

@@ -128,11 +128,6 @@ public class MainMenu extends MenuBar {
 			mHistory.getItems().add(new ActionMenuItem(translate("misc.open"), this::showHistory));
 		}
 		mHelp = new Menu(translate("ui.menubar.help"));
-		if (SelfUpdater.hasUpdate()) {
-			mHelp.getItems().add(0,
-					new ActionMenuItem(translate("ui.menubar.help.update") + SelfUpdater.getLatestVersion(),
-							this::showUpdatePrompt));
-		}
 		mHelp.getItems().addAll(
 				new ActionMenuItem(translate("ui.menubar.help.documentation"), this::showDocumentation),
 				new ActionMenuItem(translate("ui.menubar.help.info"), this::showInformation),
@@ -406,17 +401,6 @@ public class MainMenu extends MenuBar {
 				ExceptionAlert.show(ex, "Failed to apply mappings: " + file.getName());
 			}
 		}
-	}
-
-	/**
-	 * Show update prompt.
-	 */
-	public void showUpdatePrompt() {
-		Stage stage = controller.windows()
-				.window(translate("ui.menubar.help.update") + SelfUpdater.getLatestVersion(),
-						new UpdatePane(controller));
-		stage.show();
-		stage.toFront();
 	}
 
 	/**

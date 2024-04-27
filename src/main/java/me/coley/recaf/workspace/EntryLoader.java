@@ -1,7 +1,5 @@
 package me.coley.recaf.workspace;
 
-import me.coley.cafedude.InvalidClassException;
-import me.coley.cafedude.io.ClassFileReader;
 import me.coley.recaf.plugin.PluginsManager;
 import me.coley.recaf.plugin.api.LoadInterceptorPlugin;
 import me.coley.recaf.util.ClassUtil;
@@ -9,6 +7,8 @@ import me.coley.recaf.util.IOUtil;
 import me.coley.recaf.util.IllegalBytecodePatcherUtil;
 import me.coley.recaf.util.Log;
 import org.objectweb.asm.ClassReader;
+import software.coley.cafedude.InvalidClassException;
+import software.coley.cafedude.io.ClassFileReader;
 
 import java.io.IOException;
 import java.io.InputStream;
