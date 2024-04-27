@@ -125,9 +125,17 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
 		Map<String, WorkspaceFileResource> embeddedResources = new HashMap<>();
 
-		// Read ZIP entries
+		// Read ZIP
 		boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
 		ZipArchive archive = config.mapping().apply(source.readAll());
+
+		// Sanity check, if there's data at the head of the file AND its otherwise empty its probably junk.
+		if (archive.getPrefixData() != null && archive.getEnd() != null && archive.getParts().size() == 1) {
+			// We'll throw as the caller should catch this case and handle it based on their needs.
+			throw new IOException("Content matched ZIP header but had no file entries");
+		}
+
+		// Build model from the contained files in the ZIP
 		archive.getLocalFiles().forEach(header -> {
 			LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
 			String entryName = header.getFileNameAsString();
