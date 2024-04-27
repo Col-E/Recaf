@@ -45,6 +45,7 @@ import java.util.List;
 @Dependent
 public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 	private final KeybindingConfig keys;
+	private Editor editor;
 	private FindAndReplaceSearchBar bar;
 
 	@Inject
@@ -54,6 +55,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 
 	@Override
 	public void install(@Nonnull Editor editor) {
+		this.editor = editor;
 		bar = new FindAndReplaceSearchBar(editor);
 		NodeEvents.addKeyPressHandler(editor, this);
 	}
@@ -63,6 +65,7 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 		editor.setTop(null);
 		NodeEvents.removeKeyPressHandler(editor, this);
 		bar = null;
+		this.editor = null;
 	}
 
 	@Override
@@ -72,6 +75,12 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			if (!bar.isVisible())
 				bar.show();
 
+			// Update input text based on current selection
+			if (editor != null) {
+				String selectedText = editor.getCodeArea().getSelectedText();
+				if (!selectedText.isEmpty()) bar.getSearchTextProperty().setValue(selectedText);
+			}
+
 			// Grab focus
 			bar.requestSearchFocus();
 			bar.hideReplace();
@@ -79,6 +88,12 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			// Show if not visible
 			if (!bar.isVisible())
 				bar.show();
+
+			// Update input text based on current selection
+			if (editor != null) {
+				String selectedText = editor.getCodeArea().getSelectedText();
+				if (!selectedText.isEmpty()) bar.getSearchTextProperty().setValue(selectedText);
+			}
 
 			// Grab focus
 			bar.requestSearchFocus();
