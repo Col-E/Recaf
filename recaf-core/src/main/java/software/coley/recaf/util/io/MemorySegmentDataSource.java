@@ -53,7 +53,13 @@ public final class MemorySegmentDataSource implements ByteSource, AutoCloseable 
 		return new MemorySegmentInputStream(data);
 	}
 
-	private static final class MemorySegmentInputStream extends InputStream {
+	@Nonnull
+	@Override
+	public MemorySegment mmap() throws IOException {
+		return data;
+	}
+
+	static final class MemorySegmentInputStream extends InputStream {
 		private final MemorySegment data;
 		private long read;
 		private long markedOffset = -1;

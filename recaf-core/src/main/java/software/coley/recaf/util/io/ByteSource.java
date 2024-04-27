@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
 
 /**
  * Lazily provides byte array form a source.
@@ -11,6 +12,7 @@ import java.io.InputStream;
  * @author xDark
  */
 public interface ByteSource {
+
 	/**
 	 * @return All bytes.
 	 *
@@ -46,4 +48,14 @@ public interface ByteSource {
 	 */
 	@Nonnull
 	InputStream openStream() throws IOException;
+
+	/**
+	 * Maps this source into memory.
+	 * @return Memory-mapped view.
+	 *
+	 * @throws IOException
+	 * 		If any I/O error occurs.
+	 */
+	@Nonnull
+	MemorySegment mmap() throws IOException;;
 }

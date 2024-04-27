@@ -189,7 +189,7 @@ public class Main {
 			logger.info("Initialization: {} plugins found:" + split + "{}",
 					plugins.size(),
 					plugins.stream().map(PluginContainer::getInformation)
-							.map(info -> info.getName() + " - " + info.getVersion())
+							.map(info -> info.name() + " - " + info.version())
 							.collect(Collectors.joining(split)));
 		}
 	}

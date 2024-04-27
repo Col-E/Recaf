@@ -6,6 +6,7 @@ package software.coley.recaf.plugin;
  * @author xDark
  */
 public interface Plugin {
+
 	/**
 	 * Called when plugin is being enabled.
 	 */

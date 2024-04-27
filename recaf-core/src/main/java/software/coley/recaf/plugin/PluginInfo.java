@@ -2,97 +2,68 @@ package software.coley.recaf.plugin;
 
 import jakarta.annotation.Nonnull;
 
+import java.util.Set;
+
 /**
  * Object containing necessary information about a plugin.
  *
+ * @param id               ID of the plugin.
+ * @param name             Name of the plugin.
+ * @param version          Plugin version.
+ * @param author           Author of the plugin.
+ * @param description      Plugin description.
+ * @param dependencies     Plugin dependencies.
+ * @param softDependencies Plugin soft dependencies.
  * @author xDark
  * @see PluginInformation Annotation containing this information applied to {@link Plugin} implementations.
  */
-public final class PluginInfo {
-	private final String name;
-	private final String version;
-	private final String author;
-	private final String description;
+public record PluginInfo(
+		@Nonnull String id,
+		@Nonnull String name,
+		@Nonnull String version,
+		@Nonnull String author,
+		@Nonnull String description,
+		@Nonnull Set<String> dependencies,
+		@Nonnull Set<String> softDependencies
+) {
 
-	/**
-	 * @param name
-	 * 		Name of the plugin.
-	 * @param version
-	 * 		Plugin version.
-	 * @param author
-	 * 		Author of the plugin.
-	 * @param description
-	 * 		Plugin description.
-	 */
-	public PluginInfo(@Nonnull String name, @Nonnull String version,
-					  @Nonnull String author, @Nonnull String description) {
-		this.name = name;
-		this.version = version;
-		this.author = author;
-		this.description = description;
-	}
-
-	/**
-	 * @return Plugin name.
-	 */
 	@Nonnull
-	public String getName() {
-		return name;
+	public static PluginInfo empty() {
+		return new PluginInfo("", "", "", "", "", Set.of(), Set.of());
 	}
 
-	/**
-	 * @return Plugin version.
-	 */
 	@Nonnull
-	public String getVersion() {
-		return version;
+	public PluginInfo withId(@Nonnull String id) {
+		return new PluginInfo(id, name, version, author, description, dependencies, softDependencies);
 	}
 
-	/**
-	 * @return Author of the plugin.
-	 */
 	@Nonnull
-	public String getAuthor() {
-		return author;
+	public PluginInfo withName(@Nonnull String name) {
+		return new PluginInfo(id, name, version, author, description, dependencies, softDependencies);
 	}
 
-	/**
-	 * @return Plugin description.
-	 */
 	@Nonnull
-	public String getDescription() {
-		return description;
+	public PluginInfo withVersion(@Nonnull String version) {
+		return new PluginInfo(id, name, version, author, description, dependencies, softDependencies);
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		PluginInfo info = (PluginInfo) o;
-
-		if (!name.equals(info.name)) return false;
-		if (!version.equals(info.version)) return false;
-		if (!author.equals(info.author)) return false;
-		return description.equals(info.description);
+	@Nonnull
+	public PluginInfo withAuthor(@Nonnull String author) {
+		return new PluginInfo(id, name, version, author, description, dependencies, softDependencies);
 	}
 
-	@Override
-	public int hashCode() {
-		int result = name.hashCode();
-		result = 31 * result + version.hashCode();
-		result = 31 * result + author.hashCode();
-		result = 31 * result + description.hashCode();
-		return result;
+	@Nonnull
+	public PluginInfo withDescription(@Nonnull String description) {
+		return new PluginInfo(id, name, version, author, description, dependencies, softDependencies);
 	}
 
-	@Override
-	public String toString() {
-		return "PluginInfo{" +
-				"name='" + name + '\'' +
-				", version='" + version + '\'' +
-				", author='" + author + '\'' +
-				", description='" + description + '\'' +
-				'}';
+	@Nonnull
+	public PluginInfo withDependencies(@Nonnull Set<String> dependencies) {
+		return new PluginInfo(id, name, version, author, description, dependencies, softDependencies);
+	}
+
+	@Nonnull
+	public PluginInfo withSoftDependencies(@Nonnull Set<String> softDependencies) {
+		return new PluginInfo(id, name, version, author, description, dependencies, softDependencies);
 	}
 }
