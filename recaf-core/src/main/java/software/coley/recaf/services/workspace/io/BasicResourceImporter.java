@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import software.coley.lljzip.format.model.CentralDirectoryFileHeader;
 import software.coley.lljzip.format.model.ZipArchive;
 import software.coley.lljzip.util.ExtraFieldTime;
+import software.coley.lljzip.util.MemorySegmentUtil;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.builder.FileInfoBuilder;
@@ -21,6 +22,7 @@ import software.coley.recaf.workspace.model.resource.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -130,9 +132,15 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		ZipArchive archive = config.mapping().apply(source.readAll());
 
 		// Sanity check, if there's data at the head of the file AND its otherwise empty its probably junk.
-		if (archive.getPrefixData() != null && archive.getEnd() != null && archive.getParts().size() == 1) {
+		MemorySegment prefixData = archive.getPrefixData();
+		if (prefixData != null && archive.getEnd() != null && archive.getParts().size() == 1) {
 			// We'll throw as the caller should catch this case and handle it based on their needs.
 			throw new IOException("Content matched ZIP header but had no file entries");
+		}
+
+		// Record prefix data to attribute held by the zip file info.
+		if (prefixData != null) {
+			ZipPrefixDataProperty.set(zipInfo, MemorySegmentUtil.toByteArray(prefixData));
 		}
 
 		// Build model from the contained files in the ZIP

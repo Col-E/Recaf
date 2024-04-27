@@ -3,9 +3,9 @@ package software.coley.recaf.services.workspace.io;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.builtin.*;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.ZipCreationUtils;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -136,6 +137,7 @@ public class WorkspaceExportOptions {
 		private final Map<String, Long> modifyTimes = new HashMap<>();
 		private final Map<String, Long> createTimes = new HashMap<>();
 		private final Map<String, Long> accessTimes = new HashMap<>();
+		private byte[] prefix;
 
 		@Override
 		public void export(@Nonnull Workspace workspace) throws IOException {
@@ -163,7 +165,12 @@ public class WorkspaceExportOptions {
 					});
 
 					// Write buffer to path
-					Files.write(path, zipBuilder.bytes());
+					if (prefix != null) {
+						Files.write(path, prefix);
+						Files.write(path, zipBuilder.bytes(), StandardOpenOption.APPEND);
+					} else {
+						Files.write(path, zipBuilder.bytes());
+					}
 					break;
 				case DIRECTORY:
 					for (Map.Entry<String, byte[]> entry : contents.entrySet()) {
@@ -186,12 +193,19 @@ public class WorkspaceExportOptions {
 		 * 		Workspace to pull data from.
 		 */
 		private void populate(@Nonnull Workspace workspace) {
+			// If shading libs, they go first so the primary content will be the authoritative copy for
+			// any duplicate paths held by both resources.
 			if (bundleSupporting) {
 				for (WorkspaceResource supportingResource : workspace.getSupportingResources()) {
 					mapInto(contents, supportingResource);
 				}
 			}
-			mapInto(contents, workspace.getPrimaryResource());
+			WorkspaceResource primary = workspace.getPrimaryResource();
+			mapInto(contents, primary);
+
+			// If the resource had prefix data, get it here so that we can write it back later.
+			if (primary instanceof WorkspaceFileResource resource)
+				prefix = ZipPrefixDataProperty.get(resource.getFileInfo());
 		}
 
 		/**
