@@ -104,7 +104,7 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 				pane.descPredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
 				pane.ownerValueProperty().setValue(declaringClass.getName());
 				pane.nameValueProperty().setValue(method.getName());
-				pane.descPredicateIdProperty().setValue(method.getDescriptor());
+				pane.descValueProperty().setValue(method.getDescriptor());
 			});
 
 			// Documentation actions

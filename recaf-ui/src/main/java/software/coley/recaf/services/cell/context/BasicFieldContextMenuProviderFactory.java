@@ -101,7 +101,7 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 				pane.descPredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
 				pane.ownerValueProperty().setValue(declaringClass.getName());
 				pane.nameValueProperty().setValue(field.getName());
-				pane.descPredicateIdProperty().setValue(field.getDescriptor());
+				pane.descValueProperty().setValue(field.getDescriptor());
 			});
 
 			// Documentation actions
