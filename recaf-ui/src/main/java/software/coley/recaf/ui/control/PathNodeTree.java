@@ -33,7 +33,7 @@ public class PathNodeTree extends TreeView<PathNode<?>> {
 	 */
 	public PathNodeTree(@Nonnull CellConfigurationService configurationService, @Nonnull Actions actions) {
 		setShowRoot(false);
-		setCellFactory(param -> new WorkspaceTreeCell(ContextSource.DECLARATION, configurationService));
+		setCellFactory(param -> new WorkspaceTreeCell(ContextSource.REFERENCE, configurationService));
 		getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 		setOnKeyPressed(e -> {
 			KeyCode code = e.getCode();
