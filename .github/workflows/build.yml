@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        java-version: [ 17 ]
+        java-version: [ 22 ]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -33,7 +33,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 22
           check-latest: true
       # The project version extract NEEDS to have the gradle wrapper already downloaded.
       # So we have a dummy step here just to initialize it.
@@ -107,7 +107,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 22
       # The project version extract NEEDS to have the gradle wrapper already downloaded.
       # So we have a dummy step here just to initialize it.
       - name: Download Gradle wrapper
