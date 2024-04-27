@@ -67,13 +67,18 @@ final class PluginGraph {
 				enable(loadedPlugin);
 			} catch (PluginException ex) {
 				for (LoadedPlugin pl : temp.values()) {
-					Plugin maybeEnabled = pl.container.plugin;
-					if (maybeEnabled != null) {
+					PluginContainerImpl<?> container = pl.container;
+					try {
 						try {
-							maybeEnabled.onDisable();
-						} catch (Exception ex1) {
-							ex.addSuppressed(ex1);
+							Plugin maybeEnabled = container.plugin;
+							if (maybeEnabled != null) {
+								maybeEnabled.onDisable();
+							}
+						} finally {
+							container.preparedPlugin.reject();
 						}
+					} catch (Exception ex1) {
+						ex.addSuppressed(ex1);
 					}
 				}
 				throw ex;

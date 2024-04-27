@@ -188,7 +188,7 @@ public class Main {
 			String split = "\n - ";
 			logger.info("Initialization: {} plugins found:" + split + "{}",
 					plugins.size(),
-					plugins.stream().map(PluginContainer::getInformation)
+					plugins.stream().map(PluginContainer::info)
 							.map(info -> info.name() + " - " + info.version())
 							.collect(Collectors.joining(split)));
 		}
