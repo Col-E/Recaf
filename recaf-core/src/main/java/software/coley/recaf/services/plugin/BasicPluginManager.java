@@ -82,6 +82,12 @@ public class BasicPluginManager implements PluginManager {
 		return mainGraph.apply(prepared);
 	}
 
+	@Nonnull
+	@Override
+	public PluginUnloader unloadPlugin(@Nonnull String id) {
+		return mainGraph.unload(id);
+	}
+
 	@Override
 	public boolean isPluginLoaded(@Nonnull String id) {
 		return mainGraph.getContainer(id) != null;

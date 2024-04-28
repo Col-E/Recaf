@@ -13,10 +13,13 @@ import software.coley.recaf.plugin.PluginInfo;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 
 final class PluginGraph {
 	final Map<String, LoadedPlugin> plugins = HashMap.newHashMap(16);
@@ -26,8 +29,8 @@ final class PluginGraph {
 		this.classAllocator = classAllocator;
 	}
 
-	// FIXME pull in jgrapht (or make a small alternative). This is a mess.
-	Collection<PluginContainer<?>> apply(List<PreparedPlugin> preparedPlugins) throws PluginException {
+	@Nonnull
+	Collection<PluginContainer<?>> apply(@Nonnull List<PreparedPlugin> preparedPlugins) throws PluginException {
 		Map<String, LoadedPlugin> temp = LinkedHashMap.newLinkedHashMap(preparedPlugins.size());
 		var plugins = this.plugins;
 		for (var preparedPlugin : preparedPlugins) {
@@ -88,6 +91,86 @@ final class PluginGraph {
 		return Collections2.transform(temp.values(), input -> input.container);
 	}
 
+	@Nonnull
+	PluginUnloader unload(@Nonnull String id) {
+		LoadedPlugin plugin = plugins.get(id);
+		if (plugin == null) {
+			throw new IllegalStateException("Plugin %s is not loaded".formatted(id));
+		}
+		Map<LoadedPlugin, Set<LoadedPlugin>> dependants = HashMap.newHashMap(8);
+		collectDependants(plugin, dependants);
+		return new PluginUnloader() {
+			@Override
+			public void commit() throws PluginException {
+				PluginException ex = unload(plugin, dependants);
+				if (ex != null)
+					throw ex;
+			}
+
+			@Nonnull
+			@Override
+			public PluginInfo unloadingPlugin() {
+				return plugin.container.info();
+			}
+
+			@Nonnull
+			@Override
+			public Stream<PluginInfo> dependants() {
+				return dependants.values()
+						.stream()
+						.flatMap(Collection::stream)
+						.map(plugin -> plugin.container.info());
+			}
+		};
+	}
+
+	private PluginException unload(LoadedPlugin plugin, Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
+		String id = plugin.container.info().id();
+		if (!plugins.remove(id, plugin)) {
+			throw new IllegalStateException("Plugin %s was already removed, recursion?".formatted(id));
+		}
+		PluginException exception = null;
+		for (LoadedPlugin dependant : dependants.get(plugin)) {
+			PluginException inner = unload(dependant, dependants);
+			if (inner != null) {
+				if (exception == null) {
+					exception = inner;
+				} else  {
+					exception.addSuppressed(inner);
+				}
+			}
+		}
+		try {
+			PluginContainerImpl<?> container = plugin.container;
+			try {
+				container.plugin().onDisable();
+			} finally {
+				if (container.classLoader instanceof AutoCloseable ac) {
+					ac.close();
+				}
+			}
+		} catch (Exception ex) {
+			PluginException pex = new PluginException(ex);
+			if (exception == null) {
+				exception = pex;
+			} else {
+				exception.addSuppressed(pex);
+			}
+		}
+		return exception;
+	}
+
+	private void collectDependants(LoadedPlugin plugin, Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
+		Set<LoadedPlugin> dependantsSet = dependants.computeIfAbsent(plugin, __ -> HashSet.newHashSet(4));
+		for (LoadedPlugin pl : plugins.values()) {
+			if (plugin == pl) continue;
+			if (pl.dependencies.contains(plugin)) {
+				dependantsSet.add(pl);
+				collectDependants(pl, dependants);
+			}
+		}
+	}
+
 	@Nullable
 	PluginContainer<?> getContainer(@Nonnull String id) {
 		LoadedPlugin plugin = plugins.get(id);
@@ -97,6 +180,7 @@ final class PluginGraph {
 		return plugin.container;
 	}
 
+	@Nonnull
 	Collection<PluginContainer<?>> plugins() {
 		return Collections2.transform(plugins.values(), plugin -> plugin.container);
 	}

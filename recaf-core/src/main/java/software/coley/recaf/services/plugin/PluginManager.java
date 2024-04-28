@@ -88,4 +88,15 @@ public interface PluginManager extends Service {
 	 */
 	@Nonnull
 	Collection<PluginContainer<?>> loadPlugins(@Nonnull PluginDiscoverer discoverer) throws PluginException;
+
+
+	/**
+	 * @param id ID of the plugin to be unloaded.
+	 * @return Plugin unload action.
+	 * @see PluginUnloader
+	 * @throws IllegalStateException
+	 *      If plugin to be unloaded was not found.
+	 */
+	@Nonnull
+	PluginUnloader unloadPlugin(@Nonnull String id);
 }

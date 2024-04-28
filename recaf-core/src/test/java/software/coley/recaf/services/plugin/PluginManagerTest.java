@@ -119,12 +119,12 @@ public class PluginManagerTest extends TestBase {
 			assertEquals(1, pluginManager.getPlugins().size());
 			assertSame(container, pluginManager.getPlugin(id));
 
-/*			// Now unload it
-			pluginManager.unloadPlugin(container);
+			// Now unload it
+			pluginManager.unloadPlugin(id).commit();
 
 			// Assert the plugin is no longer active
 			assertEquals(0, pluginManager.getPlugins().size());
-			assertNull(pluginManager.getPlugin(id));*/
+			assertNull(pluginManager.getPlugin(id));
 		} catch (PluginException ex) {
 			fail("Failed to load plugin", ex);
 		}

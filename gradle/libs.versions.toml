@@ -41,9 +41,9 @@ gradle-checker-processor = "2.0.2"
 javafx-plugin = "0.1.0"
 shadow = "8.1.1"
 peterabeles-gversion = "1.10.2"
+jgrapht = "1.5.2"
 
 [libraries]
-
 
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
 asm-analysis = { module = "org.ow2.asm:asm-analysis", version.ref = "asm" }
@@ -123,6 +123,8 @@ treemapfx = { module = "software.coley:treemap-fx", version.ref = "treemapfx" }
 vineflower = { module = "org.vineflower:vineflower", version.ref = "vineflower" }
 
 wordwrap = { module = "com.github.davidmoten:word-wrap", version.ref = "wordwrap" }
+
+jgrapht = { module = "org.jgrapht:jgrapht-core", version.ref = "jgrapht" }
 
 [bundles]
 asm = [
