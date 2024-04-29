@@ -511,6 +511,7 @@
 	"display.usesystemmenubar.desc": "Use system menubar on macOS.",
 
 	"binding": "Keybinds",
+	"binding.undo.warning.ctrl-z": "This is not the traditional text-editor undo. This will undo all recent changes. Are you sure you want to rebind?",
 	"binding.inputprompt.initial": " <waiting>",
 	"binding.inputprompt.finish": " <ENTER to finish>",
 	"binding.close.window.name": "Close window",

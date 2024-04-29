@@ -6,6 +6,7 @@ import javafx.scene.input.KeyCode;
 import me.coley.recaf.Recaf;
 import me.coley.recaf.config.ConfKeybinding;
 import me.coley.recaf.config.FieldWrapper;
+import me.coley.recaf.ui.controls.popup.YesNoWindow;
 import me.coley.recaf.util.LangUtil;
 import me.coley.recaf.util.Log;
 
@@ -55,13 +56,38 @@ public class KeybindField extends TextField {
 	}
 
 	private void update() {
-		conf().setIsUpdating(false);
-		target.clear();
-		target.addAll(lastest);
-		getParent().requestFocus();
 
-		setText(target.toString());
-		Log.info("Updating keybind '{}' to '{}'", name, target.toString());
+		// Warn a user if the undo hotkey is set to 'ctrl+z'
+		Log.debug(name + " -- "  + lastest.toString());
+		if(name.equals("Undo change") && lastest.toString().equals("ctrl+z")){
+			YesNoWindow.prompt(LangUtil.translate("binding.undo.warning.ctrl-z"), () -> {
+				// If the user pressed yes execute the change
+				target.clear();
+				target.addAll(lastest);
+				getParent().requestFocus();
+
+				setText(target.toString());
+				Log.info("Updating keybind '{}' to '{}'", name, target.toString());
+			}, () ->{
+				// If the user pressed no; log but don't change hotkey
+				getParent().requestFocus();
+				setText(target.toString());
+				Log.info("Keybind update canceled by user.");
+			}).show(getParent());
+
+			conf().setIsUpdating(false);
+		}
+		// If this change isn't adding control z proceed without prompt
+		else{
+			conf().setIsUpdating(false);
+			target.clear();
+			target.addAll(lastest);
+			getParent().requestFocus();
+
+			setText(target.toString());
+			Log.info("Updating keybind '{}' to '{}'", name, target.toString());
+		}
+
 	}
 
 	private ConfKeybinding conf() {
