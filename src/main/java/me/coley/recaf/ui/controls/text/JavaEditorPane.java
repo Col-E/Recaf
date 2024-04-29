@@ -59,6 +59,11 @@ public class JavaEditorPane extends EditorPane<JavaErrorHandling, JavaContextHan
 				contextHandler.gotoSelectedDef();
 			else if(controller.config().keys().rename.match(e))
 				contextHandler.openRenameInput();
+			else if(controller.config().keys().renameWFN.match(e))
+				contextHandler.openRenameInput();
+
+
+
 		});
 	}
 

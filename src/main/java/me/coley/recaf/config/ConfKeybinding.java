@@ -81,6 +81,14 @@ public class ConfKeybinding extends Config {
 			BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.META, KeyCode.R))
 	).buildKeyBindingForCurrentOS();
 	/**
+	 * Goto the selected item's definition.
+	 */
+	@Conf("binding.renameWFN")
+	public Binding renameWFN = BindingCreator.from(
+		Binding.from(KeyCode.F2),
+		BindingCreator.OSBinding.from(OSUtil.MAC, Binding.from(KeyCode.F2))
+	).buildKeyBindingForCurrentOS();
+	/**
 	 * Swap to the next view mode for the class viewport
 	 */
 	@Conf("binding.swapview")

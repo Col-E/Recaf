@@ -527,6 +527,8 @@
 	"binding.find.desc": "Open find search menu.",
 	"binding.rename.name": "Rename",
 	"binding.rename.desc": "Rename the selected class/member.",
+	"binding.renameWFN.name": "Rename with Function",
+	"binding.renameWFN.desc": "Rename the selected class/member with a function (or any alternate) key.",
 	"binding.gotodef.name": "Goto definition",
 	"binding.gotodef.desc": "Jump to the definition of the selected item.",
 	"binding.swapview.name": "Swap view",
