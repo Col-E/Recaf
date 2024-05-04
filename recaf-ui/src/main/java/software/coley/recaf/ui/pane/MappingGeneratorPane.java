@@ -447,9 +447,9 @@ public class MappingGeneratorPane extends StackPane {
 		@Override
 		protected Function<NameGeneratorFilter, ExcludeNameFilter> makeProvider() {
 			return next -> new ExcludeNameFilter(next,
-					classPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()) : null,
-					fieldPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(fieldPredicateId.get(), fieldName.get()) : null,
-					methodPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null
+					classPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()) : null,
+					fieldPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(fieldPredicateId.get(), fieldName.get()) : null,
+					methodPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null
 			);
 		}
 
@@ -592,9 +592,9 @@ public class MappingGeneratorPane extends StackPane {
 		@Override
 		protected Function<NameGeneratorFilter, IncludeNameFilter> makeProvider() {
 			return next -> new IncludeNameFilter(next,
-					classPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()) : null,
-					fieldPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(fieldPredicateId.get(), fieldName.get()) : null,
-					methodPredicateId.isNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null
+					classPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()) : null,
+					fieldPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(fieldPredicateId.get(), fieldName.get()) : null,
+					methodPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null
 			);
 		}
 
