@@ -8,20 +8,18 @@ import javafx.scene.control.ButtonType;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
+import software.coley.recaf.services.workspace.io.WorkspaceExporter;
 import software.coley.recaf.ui.config.ExportConfig;
 import software.coley.recaf.ui.config.RecentFilesConfig;
-import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
-import software.coley.recaf.services.workspace.io.WorkspaceExporter;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -46,8 +44,8 @@ public class PathExportingManager {
 
 	@Inject
 	public PathExportingManager(WorkspaceManager workspaceManager,
-								ExportConfig exportConfig,
-								RecentFilesConfig recentFilesConfig) {
+	                            ExportConfig exportConfig,
+	                            RecentFilesConfig recentFilesConfig) {
 		this.workspaceManager = workspaceManager;
 		this.exportConfig = exportConfig;
 		this.recentFilesConfig = recentFilesConfig;
@@ -114,21 +112,8 @@ public class PathExportingManager {
 			return;
 		}
 
-		// Create export options from the resource type.
-		WorkspaceExportOptions.CompressType compression = exportConfig.getCompression().getValue();
-		WorkspaceExportOptions options;
-		if (primaryResource instanceof WorkspaceDirectoryResource) {
-			options = new WorkspaceExportOptions(WorkspaceExportOptions.OutputType.DIRECTORY, exportPath);
-		} else if (primaryResource instanceof WorkspaceFileResource) {
-			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, exportPath);
-		} else {
-			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, exportPath);
-		}
-		options.setBundleSupporting(exportConfig.getBundleSupportingResources().getValue());
-		options.setCreateZipDirEntries(exportConfig.getCreateZipDirEntries().getValue());
-
-		// Export the workspace to the selected path.
-		WorkspaceExporter exporter = workspaceManager.createExporter(options);
+		// Create export options from the resource type and export the workspace to the selected path.
+		WorkspaceExporter exporter = createExporter(primaryResource, exportPath);
 		try {
 			exporter.export(workspace);
 			logger.info("Exported workspace to path '{}'", exportPath);
@@ -182,5 +167,21 @@ public class PathExportingManager {
 					ex
 			);
 		}
+	}
+
+	@Nonnull
+	private WorkspaceExporter createExporter(@Nonnull WorkspaceResource resource, @Nonnull Path path) {
+		WorkspaceExportOptions.CompressType compression = exportConfig.getCompression().getValue();
+		WorkspaceExportOptions options;
+		if (resource instanceof WorkspaceDirectoryResource) {
+			options = new WorkspaceExportOptions(WorkspaceExportOptions.OutputType.DIRECTORY, path);
+		} else if (resource instanceof WorkspaceFileResource) {
+			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, path);
+		} else {
+			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, path);
+		}
+		options.setBundleSupporting(exportConfig.getBundleSupportingResources().getValue());
+		options.setCreateZipDirEntries(exportConfig.getCreateZipDirEntries().getValue());
+		return options.create();
 	}
 }

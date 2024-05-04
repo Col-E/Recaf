@@ -28,8 +28,7 @@ import static software.coley.lljzip.format.compression.ZipCompressions.DEFLATED;
 import static software.coley.lljzip.format.compression.ZipCompressions.STORED;
 
 /**
- * Options for configuring / preparing a {@link WorkspaceExporter} when calling
- * {@link WorkspaceManager#createExporter(WorkspaceExportOptions)}.
+ * Options for configuring / preparing a {@link WorkspaceExporter}.
  *
  * @author Matt Coley
  */
@@ -46,7 +45,7 @@ public class WorkspaceExportOptions {
 	 * @param path
 	 * 		Path to write to.
 	 */
-	public WorkspaceExportOptions(OutputType outputType, Path path) {
+	public WorkspaceExportOptions(@Nonnull OutputType outputType, @Nonnull Path path) {
 		this(CompressType.MATCH_ORIGINAL, outputType, path);
 	}
 
@@ -58,7 +57,7 @@ public class WorkspaceExportOptions {
 	 * @param path
 	 * 		Path to write to.
 	 */
-	public WorkspaceExportOptions(CompressType compressType, OutputType outputType, Path path) {
+	public WorkspaceExportOptions(@Nonnull CompressType compressType, @Nonnull OutputType outputType, @Nonnull Path path) {
 		this.compressType = compressType;
 		this.outputType = outputType;
 		this.path = path;
@@ -84,6 +83,7 @@ public class WorkspaceExportOptions {
 	/**
 	 * @return New exporter from current options.
 	 */
+	@Nonnull
 	public WorkspaceExporter create() {
 		return new WorkspaceExporterImpl();
 	}

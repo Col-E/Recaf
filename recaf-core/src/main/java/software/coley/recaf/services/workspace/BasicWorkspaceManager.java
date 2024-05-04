@@ -7,9 +7,10 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,12 +78,12 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 	@Override
-	public void addWorkspaceCloseCondition(WorkspaceCloseCondition condition) {
+	public void addWorkspaceCloseCondition(@Nonnull WorkspaceCloseCondition condition) {
 		closeConditions.add(condition);
 	}
 
 	@Override
-	public void removeWorkspaceCloseCondition(WorkspaceCloseCondition condition) {
+	public void removeWorkspaceCloseCondition(@Nonnull WorkspaceCloseCondition condition) {
 		closeConditions.remove(condition);
 	}
 
@@ -93,12 +94,12 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 	@Override
-	public void addWorkspaceOpenListener(WorkspaceOpenListener listener) {
+	public void addWorkspaceOpenListener(@Nonnull WorkspaceOpenListener listener) {
 		openListeners.add(listener);
 	}
 
 	@Override
-	public void removeWorkspaceOpenListener(WorkspaceOpenListener listener) {
+	public void removeWorkspaceOpenListener(@Nonnull WorkspaceOpenListener listener) {
 		openListeners.remove(listener);
 	}
 
@@ -109,12 +110,12 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 	@Override
-	public void addWorkspaceCloseListener(WorkspaceCloseListener listener) {
+	public void addWorkspaceCloseListener(@Nonnull WorkspaceCloseListener listener) {
 		closeListeners.add(listener);
 	}
 
 	@Override
-	public void removeWorkspaceCloseListener(WorkspaceCloseListener listener) {
+	public void removeWorkspaceCloseListener(@Nonnull WorkspaceCloseListener listener) {
 		closeListeners.remove(listener);
 	}
 
@@ -125,13 +126,25 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 	@Override
-	public void addDefaultWorkspaceModificationListeners(WorkspaceModificationListener listener) {
+	public void addDefaultWorkspaceModificationListeners(@Nonnull WorkspaceModificationListener listener) {
 		defaultModificationListeners.add(listener);
 	}
 
 	@Override
-	public void removeDefaultWorkspaceModificationListeners(WorkspaceModificationListener listener) {
+	public void removeDefaultWorkspaceModificationListeners(@Nonnull WorkspaceModificationListener listener) {
 		defaultModificationListeners.remove(listener);
+
+		addDefaultWorkspaceModificationListeners(new WorkspaceModificationListener() {
+			@Override
+			public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+				// Supporting library added to workspace
+			}
+
+			@Override
+			public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+				// Supporting library removed from workspace
+			}
+		});
 	}
 
 	@Nonnull

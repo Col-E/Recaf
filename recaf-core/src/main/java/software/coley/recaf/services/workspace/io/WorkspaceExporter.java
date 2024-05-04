@@ -11,7 +11,6 @@ import java.io.IOException;
  *
  * @author Matt Coley
  * @see WorkspaceExportOptions
- * @see WorkspaceManager#createExporter(WorkspaceExportOptions)
  */
 public interface WorkspaceExporter {
 	/**
