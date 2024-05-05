@@ -53,6 +53,8 @@ public class SceneUtils {
 			return;
 
 		Window window = scene.getWindow();
+		if (window.isFocused()) return;
+
 		if (window instanceof Stage stage) {
 			// If minified, unminify it.
 			stage.setIconified(false);
