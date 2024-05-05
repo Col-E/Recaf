@@ -518,6 +518,70 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param text
+	 * 		Text to compute length of.
+	 *
+	 * @return Length of text, considering tabs.
+	 */
+	public static int getTabAdjustedLength(@Nonnull String text) {
+		return getTabAdjustedLength(text, 4);
+	}
+
+	/**
+	 * @param text
+	 * 		Text to compute length of.
+	 * @param tabWidth
+	 * 		Tab width.
+	 *
+	 * @return Length of text, considering tabs.
+	 */
+	public static int getTabAdjustedLength(@Nonnull String text, int tabWidth) {
+		int tabIndex = text.indexOf('\t');
+		while (tabIndex >= 0) {
+			if (tabIndex == 0) {
+				text = " ".repeat(tabWidth) + text.substring(1);
+			} else {
+				// Assuming tab width is four: Having two spaces then a tab still yields a length of 4 visually
+				// Thus, we must consider such alignment in our length adjustments.
+				String pre = text.substring(0, tabIndex);
+				String post = text.substring(tabIndex + 1);
+				int alignedLengthExtra = tabWidth - (tabIndex % tabWidth);
+				text = pre + " ".repeat(alignedLengthExtra) + post;
+			}
+			tabIndex = text.indexOf('\t');
+		}
+		return text.length();
+	}
+
+	/**
+	 * @param text
+	 * 		Text to scan prefix of.
+	 *
+	 * @return Number of blank spaces until some non-whitespace char is found.
+	 */
+	public static int getWhitespacePrefixLength(@Nonnull String text) {
+		return getWhitespacePrefixLength(text, 4);
+	}
+
+	/**
+	 * @param text
+	 * 		Text to scan prefix of.
+	 * @param tabWidth
+	 * 		Width of spaces to translate tab characters to.
+	 *
+	 * @return Number of blank spaces until some non-whitespace char is found.
+	 */
+	public static int getWhitespacePrefixLength(@Nonnull String text, int tabWidth) {
+		char[] chars = text.toCharArray();
+		int offset = 0;
+		for (char c : chars) {
+			if (c == ' ' || c == '\t') offset++;
+			else break;
+		}
+		return getTabAdjustedLength(text.substring(0, offset), tabWidth);
+	}
+
+	/**
 	 * @param len
 	 * 		Target string length.
 	 * @param pattern
@@ -527,6 +591,7 @@ public class StringUtil {
 	 *
 	 * @return String with pattern filling up to the desired length on the left.
 	 */
+	@Nonnull
 	public static String fillLeft(int len, @Nonnull String pattern, @Nullable String string) {
 		StringBuilder sb = new StringBuilder(string == null ? "" : string);
 		while (sb.length() < len)
