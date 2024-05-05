@@ -9,8 +9,11 @@ import me.darknet.assembler.printer.JvmClassPrinter;
 import me.darknet.assembler.printer.JvmMethodPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import org.objectweb.asm.Opcodes;
+import org.slf4j.Logger;
 import regexodus.Matcher;
 import regexodus.Pattern;
+import software.coley.recaf.Bootstrap;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.BasicLocalVariable;
@@ -37,6 +40,7 @@ import java.util.stream.Collectors;
  */
 @WorkspaceScoped
 public class ExpressionCompiler {
+	private static final Logger logger = Logging.get(ExpressionCompiler.class);
 	private static final Pattern IMPORT_EXTRACT_PATTERN = RegexUtil.pattern("^\\s*(import \\w.+;)");
 	private static final String EXPR_MARKER = "/* EXPR_START */";
 	private final JavacCompiler javac;
@@ -519,8 +523,16 @@ public class ExpressionCompiler {
 	private LocalVariable getParameterVariable(int parameterVarIndex, int parameterIndex) {
 		LocalVariable parameterVariable = findVar(parameterVarIndex);
 		if (parameterVariable == null) {
-			ClassType parameterType = methodType.parameterTypes().get(parameterIndex);
+			List<ClassType> parameterTypes = methodType.parameterTypes();
+			ClassType parameterType;
+			if (parameterIndex < parameterTypes.size()) {
+				parameterType = parameterTypes.get(parameterIndex);
+			} else {
+				logger.warn("Could not resolve parameter variable (pVar={}, pIndex={}) in {}", parameterVarIndex, parameterIndex, methodName);
+				parameterType = Types.OBJECT;
+			}
 			parameterVariable = new BasicLocalVariable(parameterVarIndex, "p" + parameterIndex, parameterType.descriptor(), null);
+
 		}
 		return parameterVariable;
 	}
