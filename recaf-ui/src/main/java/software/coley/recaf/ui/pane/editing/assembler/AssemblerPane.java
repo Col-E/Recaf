@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import javafx.scene.Node;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTField;
@@ -182,6 +183,13 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		// Common init
 		assemblerToolTabs.onUpdatePath(classPathNode);
 		lateInit();
+	}
+
+	@Override
+	public void requestFocus() {
+		// The editor is not the first thing focused when added to the scene, so when it is added to the scene
+		// we'll want to manually focus it so that you can immediately use keybinds and navigate around.
+		SceneUtils.whenAddedToSceneConsume(editor.getCodeArea(), Node::requestFocus);
 	}
 
 	/**
