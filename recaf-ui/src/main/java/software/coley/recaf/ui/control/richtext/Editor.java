@@ -4,12 +4,17 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.Text;
+import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
@@ -18,7 +23,9 @@ import org.fxmisc.richtext.model.*;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
+import org.reactfx.collection.MemoizationList;
 import software.coley.collections.Lists;
+import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
@@ -33,6 +40,7 @@ import software.coley.recaf.util.threading.ThreadPoolFactory;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -58,6 +66,7 @@ public class Editor extends BorderPane {
 	private final ScrollBar horizontalScrollbar;
 	private final ScrollBar verticalScrollbar;
 	private final VirtualFlow<?, ?> virtualFlow;
+	private final MemoizationList<Cell<?, ?>> virtualCellList;
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
 	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
 	private final EventStream<Change<Integer>> caretPosEventStream;
@@ -74,10 +83,12 @@ public class Editor extends BorderPane {
 	public Editor() {
 		// Get the reflection hacks out of the way first.
 		//  - Want to have access to scrollbars & the internal 'virtualFlow'
-		VirtualizedScrollPane<CodeArea> scrollPane = new VirtualizedScrollPane<>(codeArea);
+		VirtualizedScrollPaneWrapper<CodeArea> scrollPane = new VirtualizedScrollPaneWrapper<>(codeArea);
 		horizontalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(scrollPane, VirtualizedScrollPane.class.getDeclaredField("hbar")));
 		verticalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(scrollPane, VirtualizedScrollPane.class.getDeclaredField("vbar")));
 		virtualFlow = Unchecked.get(() -> ReflectUtil.quietGet(codeArea, GenericStyledArea.class.getDeclaredField("virtualFlow")));
+		Object virtualCellManager = Unchecked.get(() -> ReflectUtil.quietGet(virtualFlow, VirtualFlow.class.getDeclaredField("cellListManager")));
+		virtualCellList = ReflectUtil.quietInvoke(virtualCellManager.getClass(), virtualCellManager, "getLazyCellList", new Class[0], new Object[0]);
 
 		// Initial layout / style.
 		getStylesheets().add("/style/code-editor.css");
@@ -447,6 +458,101 @@ public class Editor extends BorderPane {
 	}
 
 	/**
+	 * @return Virtual flow backing the {@link #getCodeArea() code area}.
+	 */
+	@Nonnull
+	public VirtualFlow<?, ?> getVirtualFlow() {
+		return virtualFlow;
+	}
+
+	/**
+	 * @return Virtualized cell list within the {@link #getVirtualFlow() virtual flow}.
+	 */
+	@Nonnull
+	public MemoizationList<Cell<?, ?>> getVirtualCellList() {
+		return virtualCellList;
+	}
+
+
+	/**
+	 * Be <b>very aware</b> of when you call this. You may encounter unexpected values if invoked during early
+	 * layout of your node / scene.
+	 * <p/>
+	 * This method is why we have to do the {@link FxThreadUtil#delayedRun(long, Runnable)} call above.
+	 * Normally when you use {@code virtualFlow.getCellIfVisible(paragraph)} it lays out the nodes for
+	 * you so that you don't run into this problem. The problem is it lays out the whole {@code ParagraphBox}
+	 * class, which includes the graphic factory we're currently populating the content of.
+	 * This means using that method will cause a {@link StackOverflowError}.
+	 * Thus, we have the hacky delayed run instead.
+	 *
+	 * @param paragraph
+	 * 		Paragraph index to compute empty space (in pixels) to the first non-whitespace character.
+	 *
+	 * @return Pixels to first non-whitespace character.
+	 */
+	public double computeWhitespacePrefixWidth(int paragraph) {
+		// Get the cell from the given paragraph. It should exist since we're
+		// initializing a paragraph graphic for it.
+		Cell<?, ?> cell = virtualCellList.get(paragraph);
+		if (cell == null) return 0;
+
+		// ParagraphBox is private in RichTextFX, but we just need to get the children so
+		// casting to region suffices.
+		Region paragraphBox = (Region) cell.getNode();
+		ObservableList<Node> paragraphBoxChildren = paragraphBox.getChildrenUnmodifiable();
+		if (!paragraphBoxChildren.isEmpty()) {
+			// The text flow is always the first child of the box.
+			Region textFlow = (Region) paragraphBoxChildren.getFirst();
+
+			// In the text flow, we want the first 'Text' child. This should be the first one with empty spaces.
+			ObservableList<Node> flowChildren = textFlow.getChildrenUnmodifiable();
+			List<Text> textNodes = Unchecked.cast(flowChildren.stream()
+					.filter(c -> c instanceof Text)
+					.toList());
+
+			// If we found the node, and it is only whitespace (blank) then we can use its width.
+			double width = 0;
+			for (Text textNode : textNodes) {
+				String text = textNode.getText();
+				double boundWidth = textNode.getBoundsInLocal().getWidth();
+				if (text.isBlank()) {
+					// Texts that are blank are all whitespace, add it up.
+					width += boundWidth;
+				} else {
+					// Some texts have leading whitespace that we want to consider.
+					int whitespacePrefix = StringUtil.getWhitespacePrefixLength(text);
+					if (whitespacePrefix > 0) {
+						double charWidth = boundWidth / StringUtil.getTabAdjustedLength(text);
+						width += charWidth * whitespacePrefix;
+					}
+					break;
+				}
+			}
+			return width;
+		}
+
+		return 0;
+	}
+
+	/**
+	 * @param line
+	 * 		Paragraph index, 0-based.
+	 *
+	 * @return {@code true} when the paragraph is visible.
+	 */
+	public boolean isParagraphVisible(int line) {
+		// TODO: If we ever add paragraph folding back, we need to check those cases here and return false
+
+		// We use the internal virtual flow because the provided methods call 'layout()' unnecessarily
+		//  - firstVisibleParToAllParIndex()
+		//  - lastVisibleParToAllParIndex()
+		// It is very likely by the time of calling this that our text is already populated and laid out.
+		// This gets called rather frequently so the constant layout requests contribute a massive waste of time.
+		// If we use these methods from the internal 'VirtualFlow' we skip all that and the result is almost instant.
+		return line >= virtualFlow.getFirstVisibleIndex() && line <= virtualFlow.getLastVisibleIndex();
+	}
+
+	/**
 	 * @return {@link #getCodeArea() Code area's} horizontal scrollbar.
 	 */
 	@Nonnull
@@ -476,7 +582,7 @@ public class Editor extends BorderPane {
 	 */
 	@Nonnull
 	public <T> CompletableFuture<Void> schedule(@Nonnull ExecutorService supplierService,
-												@Nonnull Supplier<T> supplier, @Nonnull Consumer<T> consumer) {
+	                                            @Nonnull Supplier<T> supplier, @Nonnull Consumer<T> consumer) {
 		return CompletableFuture.supplyAsync(supplier, supplierService)
 				.thenAcceptAsync(consumer, FxThreadUtil.executor());
 	}

@@ -1,6 +1,9 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
