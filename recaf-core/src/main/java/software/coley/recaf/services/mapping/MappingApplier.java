@@ -122,7 +122,11 @@ public class MappingApplier implements Service {
 		// Map intermediate mappings to the adapter so that we can pass in the inheritance graph for better coverage
 		// of cases inherited field/method references.
 		if (mappings instanceof IntermediateMappings intermediateMappings) {
-			MappingsAdapter adapter = new MappingsAdapter(true, true);
+			// Mapping formats that export to intermediate should mark whether they support
+			// differentiation of field and variable types.
+			boolean fieldDifferentiation = mappings.doesSupportFieldTypeDifferentiation();
+			boolean varDifferentiation = mappings.doesSupportVariableTypeDifferentiation();
+			MappingsAdapter adapter = new MappingsAdapter(fieldDifferentiation, varDifferentiation);
 			adapter.importIntermediate(intermediateMappings);
 			mappings = adapter;
 		}

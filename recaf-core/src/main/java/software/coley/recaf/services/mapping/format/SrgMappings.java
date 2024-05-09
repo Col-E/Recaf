@@ -141,6 +141,18 @@ public class SrgMappings extends AbstractMappingFileFormat {
 			this.packageMappings = packageMappings;
 		}
 
+		@Override
+		public boolean doesSupportFieldTypeDifferentiation() {
+			// SRG fields do not include type info.
+			return false;
+		}
+
+		@Override
+		public boolean doesSupportVariableTypeDifferentiation() {
+			// See above.
+			return false;
+		}
+
 		@Nullable
 		@Override
 		public ClassMapping getClassMapping(String name) {

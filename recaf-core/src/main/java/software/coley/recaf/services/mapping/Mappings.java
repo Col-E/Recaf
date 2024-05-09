@@ -22,6 +22,30 @@ import software.coley.recaf.services.mapping.format.MappingFileFormat;
  */
 public interface Mappings {
 	/**
+	 * Some mapping formats do not include field types since name overloading is illegal at the source level of Java.
+	 * It's valid in the bytecode but the mapping omits this info since it isn't necessary information for mapping
+	 * that does not support name overloading.
+	 * <p/>
+	 * This is mostly only relevant for usage of {@link MappingsAdapter} which
+	 *
+	 * @return {@code true} when field mappings include the type descriptor in their lookup information.
+	 */
+	default boolean doesSupportFieldTypeDifferentiation() {
+		return true;
+	}
+
+	/**
+	 * Some mapping formats do not include variable types since name overloading is illegal at the source level of Java.
+	 * Variable names are not used by the JVM at all so their names can be anything at the bytecode level. So including
+	 * the type makes it easier to reverse mappings.
+	 *
+	 * @return {@code true} when variable mappings include the type descriptor in their lookup information.
+	 */
+	default boolean doesSupportVariableTypeDifferentiation() {
+		return true;
+	}
+
+	/**
 	 * @param classInfo
 	 * 		Class to lookup.
 	 *
