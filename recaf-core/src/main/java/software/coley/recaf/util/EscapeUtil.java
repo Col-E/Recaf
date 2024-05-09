@@ -1,5 +1,6 @@
 package software.coley.recaf.util;
 
+import com.android.tools.r8.utils.TriFunction;
 import it.unimi.dsi.fastutil.chars.Char2ObjectArrayMap;
 import it.unimi.dsi.fastutil.chars.Char2ObjectMap;
 import it.unimi.dsi.fastutil.chars.CharSet;

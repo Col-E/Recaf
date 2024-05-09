@@ -18,6 +18,7 @@ import me.darknet.assembler.parser.Token;
 import me.darknet.assembler.util.Location;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;

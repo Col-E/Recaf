@@ -16,6 +16,7 @@ import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.annotation.AnnotationInfo;

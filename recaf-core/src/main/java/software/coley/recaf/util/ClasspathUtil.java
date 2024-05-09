@@ -2,6 +2,7 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.collections.Unchecked;
 import software.coley.collections.tree.SortedTreeImpl;
 import software.coley.collections.tree.Tree;
 

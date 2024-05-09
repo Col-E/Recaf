@@ -3,6 +3,7 @@ package software.coley.recaf.util;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
+import software.coley.collections.func.UncheckedConsumer;
 import software.coley.recaf.analytics.logging.Logging;
 
 import java.io.ByteArrayOutputStream;

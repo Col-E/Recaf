@@ -8,6 +8,7 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.input.KeyEvent;
+import software.coley.collections.Unchecked;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;

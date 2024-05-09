@@ -2,7 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.util.Unchecked;
+import software.coley.collections.Unchecked;
 
 /**
  * Base implementation of {@link PathNode}.

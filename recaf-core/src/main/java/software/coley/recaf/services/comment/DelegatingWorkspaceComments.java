@@ -2,8 +2,8 @@ package software.coley.recaf.services.comment;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.util.Unchecked;
 
 import java.util.Iterator;
 import java.util.Map;

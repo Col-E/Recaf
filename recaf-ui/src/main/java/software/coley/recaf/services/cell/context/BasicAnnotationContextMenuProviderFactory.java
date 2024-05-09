@@ -32,8 +32,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.ARROW_RIGHT;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.TRASH_CAN;
-import static software.coley.recaf.util.Unchecked.cast;
-import static software.coley.recaf.util.Unchecked.runnable;
+import static software.coley.collections.Unchecked.cast;
+import static software.coley.collections.Unchecked.runnable;
 
 /**
  * Basic implementation for {@link AnnotationContextMenuProviderFactory}.
@@ -47,19 +47,19 @@ public class BasicAnnotationContextMenuProviderFactory extends AbstractContextMe
 
 	@Inject
 	public BasicAnnotationContextMenuProviderFactory(@Nonnull TextProviderService textService,
-													 @Nonnull IconProviderService iconService,
-													 @Nonnull Actions actions) {
+	                                                 @Nonnull IconProviderService iconService,
+	                                                 @Nonnull Actions actions) {
 		super(textService, iconService, actions);
 	}
 
 	@Nonnull
 	@Override
 	public ContextMenuProvider getAnnotationContextMenuProvider(@Nonnull ContextSource source,
-																@Nonnull Workspace workspace,
-																@Nonnull WorkspaceResource resource,
-																@Nonnull ClassBundle<? extends ClassInfo> bundle,
-																@Nonnull Annotated annotated,
-																@Nonnull AnnotationInfo annotation) {
+	                                                            @Nonnull Workspace workspace,
+	                                                            @Nonnull WorkspaceResource resource,
+	                                                            @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                                            @Nonnull Annotated annotated,
+	                                                            @Nonnull AnnotationInfo annotation) {
 		return () -> {
 			TextProvider nameProvider = textService.getAnnotationTextProvider(workspace, resource, bundle, annotated, annotation);
 			IconProvider iconProvider = iconService.getAnnotationIconProvider(workspace, resource, bundle, annotated, annotation);

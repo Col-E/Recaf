@@ -29,6 +29,7 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import regexodus.Matcher;
 import regexodus.Pattern;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.TextFileInfo;

@@ -25,6 +25,7 @@ import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
 import org.reactfx.collection.MemoizationList;
 import software.coley.collections.Lists;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;

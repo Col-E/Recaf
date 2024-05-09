@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNodes;
@@ -19,7 +20,6 @@ import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
-import static software.coley.recaf.util.Unchecked.runnable;
 
 /**
  * Basic implementation for {@link FileContextMenuProviderFactory}.
@@ -52,7 +52,7 @@ public class BasicFileContextMenuProviderFactory extends AbstractContextMenuProv
 
 			FilePathNode filePath = PathNodes.filePath(workspace, resource, bundle, info);
 			if (source.isReference()) {
-				builder.item("menu.goto.file", ARROW_RIGHT, runnable(() -> actions.gotoDeclaration(filePath)));
+				builder.item("menu.goto.file", ARROW_RIGHT, Unchecked.runnable(() -> actions.gotoDeclaration(filePath)));
 			} else if (source.isDeclaration()) {
 				builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(info));
 				builder.infoItem("menu.edit.copy", COPY_FILE, actions::copyFile);

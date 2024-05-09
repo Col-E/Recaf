@@ -8,6 +8,7 @@ import javafx.scene.control.ContextMenu;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
 
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -24,15 +25,12 @@ import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.util.ClipboardUtil;
-import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.List;
-
-import static software.coley.recaf.util.Menus.action;
 
 /**
  * Basic implementation for {@link MethodContextMenuProviderFactory}.

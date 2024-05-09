@@ -14,9 +14,9 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.shape.*;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Unchecked;
 
 import java.util.List;
 import java.util.function.Supplier;
