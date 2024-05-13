@@ -1,0 +1,787 @@
+menu.analysis=Analizy
+menu.analysis.list-comments=Podejrzyj komentarze
+menu.analysis.comment=Komentarz
+menu.association.override=Nadpisz język
+menu.association.none=Brak skonfigurowanych związków
+menu.config=Konfiguracja
+menu.config.edit=Edytuj
+menu.config.export=Eksportuj
+menu.config.import=Importuj
+menu.file=Plik
+menu.file.attach=Połącz z hostem zdalnym
+menu.file.addtoworkspace=Dodaj do obszaru roboczego
+menu.file.decompileall=Zdekompiluj wszystkie klasy
+menu.file.decompileall.path=Ścieżka wyjściowa
+menu.file.openworkspace=Otwórz obszar roboczy
+menu.file.openurl=Otwórz z URL
+menu.file.exportapp=Eksportuj aplikację
+menu.file.exportworkspace=Eksportuj konfigurację obszaru roboczego
+menu.file.modifications=Pokaż modyfikacje
+menu.file.summary=Pokaż podsumowanie
+menu.file.recent=Ostatnie
+menu.file.close=Zamknij
+menu.file.quit=Zakończ
+menu.goto.class=Przejdź do klasy
+menu.goto.field=Przejdź do pola
+menu.goto.method=Przejdź do metody
+menu.goto.instruction=Przejdź do instrukcji
+menu.goto.file=Przejdź do pliku
+menu.goto.label=Przejdź do etykiety
+menu.edit=Edytuj
+menu.edit.add.field=Dodaj pole
+menu.edit.add.method=Dodaj metodę
+menu.edit.add.annotation=Dodaj adnotację
+menu.edit.remove.field=Usuń pola
+menu.edit.remove.method=Usuń metody
+menu.edit.remove.annotation=Usuń adnotacje
+menu.edit.assemble.class=Edytuj klasę w asemblerze
+menu.edit.assemble.field=Edytuj pole w asemblerze
+menu.edit.assemble.method=Edytuj metodę w asemblerze
+menu.edit.remove=Usuń
+menu.edit.copy=Kopiuj
+menu.edit.delete=Usuń
+menu.edit.noop=Utwórz no-op
+menu.edit.changeversion=Zmień wersję klasy
+menu.edit.changeversion.up=Uaktualnij
+menu.edit.changeversion.down=Wsteczna kompatybilność
+menu.export.class=Eksportuj klasę
+menu.help=Pomoc
+menu.help.discord=Discord
+menu.help.docs=Dokumentacja użytkownika online
+menu.help.docsdev=Dokumentacja programisty online
+menu.help.github=Github
+menu.help.issues=Zgłoś problem
+menu.help.sysinfo=Informacje o systemie
+menu.refactor=Refaktoryzacja
+menu.refactor.move=Przenieś
+menu.refactor.rename=Zmień nazwę
+menu.search=Szukaj
+menu.search.string=Ciągi znaków
+menu.search.number=Liczby
+menu.search.class.member-references=Odwołania do członków
+menu.search.class.type-references=Odwołania do typów
+menu.search.method-overrides=Nadpisania metod
+menu.search.method-references=Odwołania do metod
+menu.search.field-references=Odwołania do pól
+menu.search.noresults=Brak wyników
+menu.mappings=Mapowania
+menu.mappings.apply=Zastosuj
+menu.mappings.export=Eksportuj
+menu.mappings.export.unsupported=%s (Nieobsługiwane)
+menu.mappings.generate=Generuj
+menu.mappings.view=Aktualne mapowania
+menu.scripting=Skrypty
+menu.scripting.list=Lista skryptów
+menu.scripting.none-found=Nie znaleziono skryptów
+menu.scripting.manage=Zarządzaj skryptami
+menu.scripting.new=Nowy skrypt
+menu.scripting.edit=Edytuj
+menu.scripting.browse=Przeglądaj skrypty
+menu.scripting.save=Zapisz skrypt
+menu.scripting.execute=Wykonaj
+menu.scripting.editor=Edytor skryptów
+menu.scripting.author=Autor
+menu.scripting.version=Wersja
+menu.view=Widok
+menu.view.hierarchy=Hierarchia klas
+menu.view.hierarchy.children=Potomne
+menu.view.hierarchy.parents=Nadrzędne
+menu.view.methodcfg=Graf przepływu sterowania
+menu.tab.close=Zamknij
+menu.tab.closeothers=Zamknij pozostałe
+menu.tab.closeall=Zamknij wszystkie
+menu.tab.copypath=Kopiuj ścieżkę
+menu.image.resetscale=Resetuj skalę
+menu.image.center=Wyśrodkuj obraz
+menu.hex.copyas=Kopiuj jako...
+menu.mode=Zmień widok
+menu.mode.class.auto=Automatyczny
+menu.mode.class.decompile=Dekompiluj
+menu.mode.file.auto=Automatyczny
+menu.mode.file.text=Tekst
+menu.mode.file.hex=Heksadecymalny
+menu.mode.diff.decompile=Dekompiluj
+menu.mode.diff.disassemble=Dezassembluj
+menu.vm=Wirtualizuj
+menu.vm.optimize=Optymalizuj
+menu.vm.run=Uruchom
+menu.plugin=Wtyczki
+menu.plugin.manage=Zarządzaj wtyczkami
+menu.plugin.installed=Zainstalowane
+menu.plugin.remote=Zdalne
+menu.plugin.browse=Przeglądaj wtyczki
+menu.plugin.enabled=Włączone
+menu.plugin.uninstall=Odinstaluj
+menu.plugin.uninstall.warning=Czy na pewno chcesz usunąć tę wtyczkę?
+
+# Skróty klawiszowe
+bind.inputprompt.initial=<oczekiwanie>
+bind.inputprompt.finish=<ENTER aby zakończyć>
+bind.editor.find=Znajdź
+bind.editor.rename=Zmień nazwę
+bind.editor.replace=Zamień
+bind.editor.save=Zapisz
+bind.quicknav=Szybka nawigacja
+
+# Teksty dialogów
+dialog.cancel=Anuluj
+dialog.close=Zamknij
+dialog.confirm=Potwierdź
+dialog.finish=Zakończ
+dialog.next=Dalej
+dialog.previous=Wstecz
+dialog.dismiss=Odrzuć
+dialog.configure=Konfiguruj
+dialog.warning=Ostrzeżenie
+dialog.restart=Aby zmienić tę opcję konfiguracji, zaleca się ponowne uruchomienie.\nCzy na pewno chcesz zastosować?
+dialog.unknownextension=Nieznane rozszerzenie pliku. Czy chcesz skonfigurować powiązanie języka?
+
+## Szukaj
+dialog.search.type=Wpisz nazwę
+dialog.search.member-owner=Typ właściciela elementu
+dialog.search.member-name=Nazwa elementu
+dialog.search.member-descriptor=Deskryptor elementu
+
+## Wybór pliku
+dialog.title.primary=Podstawowy zasób
+dialog.title.supporting=Zasoby pomocnicze
+dialog.title.nochanges=Czy eksportować bez zmian?
+dialog.file.open=Otwórz
+dialog.file.open.directory=Katalogi
+dialog.file.open.file=Pliki
+dialog.file.export=Eksportuj
+dialog.file.save=Zapisz
+dialog.file.nothing=Nic nie wybrano
+dialog.file.nochanges=Czy chcesz eksportować aplikację, mimo że nie wprowadzono żadnych zmian?
+dialog.filefilter.any=Dowolny typ
+dialog.filefilter.mapping=Mapowania
+dialog.filefilter.input=Aplikacje
+dialog.filefilter.workspace=Obszary robocze
+
+## Przenoszenie pliku
+dialog.title.create-workspace=Utwórz obszar roboczy
+dialog.title.update-workspace=Obsłuż dane wejściowe obszaru roboczego
+dialog.title.close-workspace=Zamknąć obszar roboczy?
+dialog.option.create-workspace=Utwórz nowy obszar roboczy
+dialog.option.update-workspace=Dodaj do obszaru roboczego
+
+## Kopiuj klasę/plik
+dialog.title.copy-class=Kopiuj klasę
+dialog.title.copy-directory=Kopiuj katalog
+dialog.title.copy-package=Kopiuj pakiet
+dialog.title.copy-field=Kopiuj pole
+dialog.title.copy-file=Kopiuj plik
+dialog.title.copy-method=Kopiuj metodę
+dialog.header.copy-class=Podaj nową nazwę dla skskopiowanej klasy.
+dialog.header.copy-directory=Podaj nową nazwę dla skopiowanego katalogu.
+dialog.header.copy-package=Podaj nową nazwę dla skopiowanego pakietu.
+dialog.header.copy-field=Podaj nową nazwę dla skopiowanego pola.
+dialog.header.copy-field-error=Nazwa pola już istnieje.\nProszę wybrać inną nazwę.
+dialog.header.copy-file=Podaj nową nazwę dla skopiowanego pliku.
+dialog.header.copy-method=Podaj nową nazwę dla skopiowanej metody.
+dialog.header.copy-method-error=Nazwa metody już istnieje.\nProszę wybrać inną nazwę.
+
+## Usuń klasę/plik
+dialog.title.delete-class=Usuń klasę
+dialog.title.delete-directory=Usuń katalog
+dialog.title.delete-field=Usuń pole
+dialog.title.delete-file=Usuń plik
+dialog.title.delete-method=Usuń metodę
+dialog.title.delete-package=Usuń pakiet
+dialog.title.delete-resource=Usuń zasób
+dialog.header.delete-class=Czy na pewno chcesz usunąć: %s?
+dialog.header.delete-directory=Czy na pewno chcesz usunąć: %s?
+dialog.header.delete-field=Czy na pewno chcesz usunąć: %s?
+dialog.header.delete-file=Czy na pewno chcesz usunąć: %s?
+dialog.header.delete-method=Czy na pewno chcesz usunąć: %s?
+dialog.header.delete-package=Czy na pewno chcesz usunąć: %s?
+dialog.header.delete-resource=Czy na pewno chcesz usunąć: %s?
+
+## Zmień nazwę klasy/pliku
+dialog.title.rename-class=Zmień nazwę klasy
+dialog.title.rename-class-warning=Ostrzeżenie
+dialog.title.rename-directory=Zmień nazwę katalogu
+dialog.title.rename-field=Zmień nazwę pola
+dialog.title.rename-file=Zmień nazwę pliku
+dialog.title.rename-file-warning=Ostrzeżenie
+dialog.title.rename-method=Zmień nazwę metody
+dialog.title.rename-package=Zmień nazwę pakietu
+dialog.header.rename-class=Podaj nową nazwę dla klasy.
+dialog.header.rename-class-error=Nazwa klasy już istnieje.\nProszę wybrać inną nazwę.
+dialog.header.rename-package=Podaj nową nazwę dla pakietu.
+dialog.header.rename-package-error=Nazwa pakietu już istnieje.\nProszę wybrać inną nazwę.
+dialog.header.rename-package-warning=Nazwa pakietu już istnieje.\nMoże to spowodować nadpisanie niektórych klas.
+dialog.header.rename-directory=Podaj nową nazwę dla katalogu.
+dialog.header.rename-directory-error=Nazwa katalogu już istnieje.\nProszę wybrać inną nazwę.
+dialog.header.rename-directory-warning=Nazwa katalogu już istnieje.\nMoże to spowodować nadpisanie niektórych plików.
+dialog.header.rename-field=Podaj nową nazwę dla pola.
+dialog.header.rename-field-error=Nazwa pola już istnieje.\nProszę wybrać inną nazwę.
+dialog.header.rename-file=Podaj nową nazwę dla pliku.
+dialog.header.rename-file-error=Nazwa pliku już istnieje.\nProszę wybrać inną nazwę.
+dialog.header.rename-method=Podaj nową nazwę dla metody.
+dialog.header.rename-method-error=Nazwa metody już istnieje.\nProszę wybrać inną nazwę.
+
+## Przenieś klasę/plik
+dialog.title.move-class=Wybierz pakiet docelowy
+dialog.title.move-directory=Wybierz katalog docelowy (nadrzędny)
+dialog.title.move-file=Wybierz katalog docelowy
+dialog.title.move-package=Wybierz pakiet docelowy (nadrzędny)
+dialog.header.move-class=Przenieś klasę do nowego pakietu.
+dialog.header.move-directory=Przenieś katalog do nowego katalogu nadrzędnego.
+dialog.header.move-file=Przenieś plik do nowego katalogu.
+dialog.header.move-package=Przenieś pakiet do nowego pakietu nadrzędnego.
+
+## Dodaj elementy
+dialog.title.add-field=Dodaj pole
+dialog.title.add-method=Dodaj metodę
+dialog.input.name=Nazwa
+dialog.input.desc=Deskryptor
+dialog.warn.illegal-name=Nieprawidłowa nazwa
+dialog.warn.illegal-desc=Nieprawidłowy format deskryptora
+dialog.warn.field-conflict=Nazwa pola już istnieje.\nProszę wybrać inną nazwę.
+dialog.warn.method-conflict=Nazwa metody już istnieje.\nProszę wybrać inną nazwę.
+
+## Akcje VM
+dialog.title.vm-invoke-args=Wirtualizuj wywołanie metody
+dialog.title.vm-peephole-invoke-args=Zoptymalizuj wirtualizowane wywołanie
+dialog.vm.execute=Wykonaj
+dialog.vm.optimize=Optymalizuj
+dialog.vm.create-dummy=Użyj atrapy
+dialog.vm.create-null=Użyj null
+
+## Dialogi heksadecymalne
+dialog.hex.title.insertcount=Wstaw
+dialog.hex.header.insertcount=Ile bajtów wstawić?
+
+# Dialog konwertera podstaw
+dialog.conv.title.literal=Literał liczbowy
+dialog.conv.title.expression=Wyrażenie liczbowe
+
+## Szybka nawigacja
+dialog.quicknav=Szybka nawigacja
+dialog.quicknav.tab.classes=Klasy
+dialog.quicknav.tab.members=Elementy
+dialog.quicknav.tab.files=Pliki
+dialog.quicknav.tab.text=Tekst
+dialog.quicknav.tab.commented=Komentarze
+
+## Dialog błędu
+dialog.error.exportclass.title=Nie udało się wyeksportować klasy
+dialog.error.exportclass.header=Wystąpił błąd podczas zapisu do miejsca docelowego
+dialog.error.exportclass.content=Błąd:
+dialog.error.exportworkspace.title=Nie udało się wyeksportować obszaru roboczego
+dialog.error.exportworkspace.header=Wystąpił błąd podczas zapisu do miejsca docelowego
+dialog.error.exportworkspace.content=Błąd:
+dialog.error.loadworkspace.title=Nie udało się załadować obszaru roboczego
+dialog.error.loadworkspace.header=Wystąpił błąd podczas odczytu z wybranych plików
+dialog.error.loadworkspace.content=Błąd:
+dialog.error.loadsupport.title=Nie udało się załadować zasobów pomocniczych
+dialog.error.loadsupport.header=Wystąpił błąd podczas odczytu z wybranych plików
+dialog.error.loadsupport.content=Błąd:
+dialog.error.attach.title=Nie udało się dołączyć do JVM
+dialog.error.attach.header=Wystąpił błąd podczas łączenia ze zdalną maszyną wirtualną Java
+dialog.error.attach.content=Błąd:
+
+## Kreator
+wizard.chooseaction=Wybierz akcję
+wizard.selectprimary=Wybierz podstawowy zasób
+wizard.currentworkspace=Aktualny obszar roboczy
+
+
+# Panele
+## Powitanie
+welcome.title=Witaj
+welcome.discord.title=Dołącz do Discorda
+welcome.discord.description=Recaf ma grupę na Discordzie do szybszych dyskusji i rozmów o programowaniu
+welcome.documentation.title=Dokumentacja
+welcome.documentation.description=Przeczytaj dokumentację, aby dowiedzieć się, jak korzystać z różnych funkcji Recafa
+welcome.github.title=Recaf na Githubie
+welcome.github.description=Sprawdź stronę projektu na GitHubie: kod źródłowy, otwarte problemy i więcej
+
+## Obszar roboczy
+workspace.title=Obszar roboczy
+workspace.filter-prompt=Filtruj: Nazwa klasy/pliku...
+workspace.info=Informacje
+
+## Dołącz
+attach.unsupported=Dołączanie nie powiodło się
+attach.unsupported.detail=Agent dołączania nie mógł się samodzielnie wyodrębnić.
+attach.connect=Połącz
+attach.tab.properties=Właściwości
+attach.tab.classloading=Klasy
+attach.tab.compilation=Kompilacja
+attach.tab.system=System
+attach.tab.runtime=Runtime
+attach.tab.thread=Wątki
+
+## Widok zmian
+modifications.none=Brak historii modyfikacji dla elementu
+modifications.title=Modyfikacje
+
+## Obszar Javy
+java.decompiling=Dekompilowanie klasy...
+java.unparsable=OpenRewrite nie zinterpretował źródła, akcje kontekstowe dostępne tylko na karcie bocznej "Pola i metody"
+java.parse-state.error=Błąd parsowania
+java.parse-state.error-details=Akcje kontekstowe (prawy przycisk myszy) nie są dostępne, ponieważ parsowanie nie powiodło się.\nMożesz w międzyczasie użyć karty bocznej "Pola i metody".
+java.parse-state.initial=Trwa parsowanie...
+java.parse-state.initial-details=Akcje kontekstowe (prawy przycisk myszy) nie są dostępne, dopóki parsowanie nie zostanie zakończone.\nMożesz w międzyczasie użyć karty bocznej "Pola i metody".
+java.parse-state.new-progress=Ponowne parsowanie...
+java.parse-state.new-progress-details=Wprowadzono zmiany, więc trwa nowe parsowanie.\nPodczas konstruowania nowego modelu będzie używany stary model.\nMożesz też użyć karty bocznej "Pola i metody".
+java.parse-state.none=Brak treści do parsowania
+java.decompile-failure=Nie udało się zdekompilować klasy. Kilka opcji:\n- Zmień dekompilatory\n- Otwórz klasę w asemblerze lub innym widoku\n- Spróbuj zdeobfuskowac klasę i spróbować ponownie
+java.decompile-failure.brief=Nie udało się zdekompilować klasy
+java.savewitherrors=Wygląda na to, że po raz pierwszy wprowadzasz zmiany, które spowodowały błędy.\nZazwyczaj są one wynikiem tego, że zdekompilowany kod nie jest semantycznie poprawnym kodem Java.\nMusisz rozwiązać te błędy, zanim zmiany zostaną zapisane.\n\nKilka sugestii:\n - Zmień dekompilatory\n - Najedź kursorem na czerwone pola błędów lub kliknij pole błędu u góry, aby zobaczyć, jakie są błędy\n - Użyj asemblera zamiast rekompilacji, aby wprowadzić zmiany
+java.savewitherrors.title=Dotyczące błędów rekompilacji
+java.decompiler=Dekompilator
+java.targetversion=Docelowa wersja kompilacji
+java.targetversion.auto=Dopasuj do wersji pliku klasy
+java.targetdownsampleversion=Obniż wersję docelową
+java.targetdownsampleversion.disabled=Wyłączone
+java.targetdebug=Kompiluj z informacjami debugowania
+java.info=Informacje o klasie
+java.info.version=Wersja klasy
+java.info.sourcefile=Nazwa pliku źródłowego
+
+## Pasek wyszukiwania
+find.replace=Zamień
+find.replaceall=Zamień wszystkie
+find.regexinvalid=Nieprawidłowe wyrażenie regularne
+find.regexreplace=Tekst zastępczy
+
+## Pola i metody
+fieldsandmethods.title=Pola i metody
+fieldsandmethods.showoutlinedtypes=Pokaż typy elementów
+fieldsandmethods.showoutlinedsynths=Pokaż elementy syntetyczne (wygenerowane przez kompilator)
+fieldsandmethods.showoutlinedvisibility=Filtruj według widoczności elementu
+fieldsandmethods.showoutlinedmembertype=Filtruj według typu elementu
+fieldsandmethods.outlinedvisibilityiconposition=Pozycja ikony widoczności
+fieldsandmethods.sortalphabetically=Sortuj alfabetycznie
+fieldsandmethods.sortbyvisibility=Sortuj według widoczności
+fieldsandmethods.filter.prompt=Filtruj: Nazwa pola/metody...
+
+## Hierarchia
+hierarchy.title=Dziedziczenie
+hierarchy.children=Potomne
+hierarchy.parents=Nadrzędne
+
+## Logowanie
+logging.title=Logowanie
+
+## Asembler
+assembler.title=Asembler
+assembler.analysis.title=Analiza
+assembler.analysis.stack=Stos
+assembler.analysis.variables=Zmienne
+assembler.analysis.type=Typ
+assembler.analysis.value=Wartość
+assembler.playground.title=Java do Bytecode
+assembler.playground.comment=// Napisz tutaj kod Java, aby automatycznie przekonwertować go na bytecode\n// Możesz uzyskać dostęp do pól/metod bieżącej klasy,\n// oraz parametrów/zmiennych bieżącej metody.
+assembler.variables.title=Zadeklarowane zmienne
+assembler.variables.name=Nazwa zmiennej
+assembler.variables.type=Typ
+assembler.variables.usage=Użycia
+assembler.variables.value=Wartość
+assembler.variables.empty=<Wymaga co najmniej jednokrotnej kompilacji>
+assembler.suggestions.none=Brak sugestii
+
+## Komentarze
+comments.search.prompt=Szukaj komentarza...
+
+## Wyszukiwanie
+search.run=Szukaj
+search.results=Wyniki
+search.text=Zawartość tekstu
+search.textmode=Tryb dopasowania tekstu
+search.number=Wartość liczbowa
+search.numbermode=Tryb dopasowania liczby
+search.refowner=Właściciel elementu
+search.refname=Nazwa elementu
+search.refdesc=Deskryptor typu elementu
+
+## Pomoc
+help.system=System
+help.system.sub=Informacje o systemie operacyjnym
+help.java=Java
+help.java.sub=Informacje o JVM
+help.javafx=JavaFX
+help.javafx.sub=Informacje o interfejsie użytkownika JavaFX
+help.recaf=Recaf
+help.recaf.sub=Informacje o Recafie
+help.copy=Kopiuj informacje do schowka
+help.opendir=Otwórz katalog Recafa
+
+## Generator mapowania
+mapgen=Generator mapowania
+mapgen.genimpl=Konwencja nazewnictwa
+mapgen.filter.name=Nazwa
+mapgen.filter.class-name=Nazwa klasy
+mapgen.filter.owner-name=Nazwa właściciela
+mapgen.filter.field-name=Nazwa pola
+mapgen.filter.method-name=Nazwa metody
+mapgen.filters=Filtry
+mapgen.filters.add=Dodaj filtr
+mapgen.filters.edit=Edytuj zaznaczone
+mapgen.filters.editdone=Gotowe
+mapgen.filters.delete=Usuń zaznaczone
+mapgen.filters.type=Typ filtra
+mapgen.filter.modifiers.tooltip=Modyfikatory są oddzielone spacjami
+mapgen.filter.excludealreadymapped=Wyklucz już zmapowane
+mapgen.filter.excludemodifier=Wyklucz modyfikatory
+mapgen.filter.excludeclasses=Wyklucz klasy
+mapgen.filter.excludename=Wyklucz nazwy
+mapgen.filter.excludeclass=Wyklucz w klasach
+mapgen.filter.excludefield=Wyklucz w polach
+mapgen.filter.excludemethod=Wyklucz w metodach
+mapgen.filter.includemodifier=Uwzględnij modyfikatory
+mapgen.filter.includeclass=Uwzględnij w klasach
+mapgen.filter.includefield=Uwzględnij w polach
+mapgen.filter.includemethod=Uwzględnij w metodach
+mapgen.filter.includewhitespacenames=Uwzględnij spacje
+mapgen.filter.includenonasciinames=Uwzględnij znaki spoza ASCII
+mapgen.filter.includekeywords=Uwzględnij słowa kluczowe
+mapgen.filter.includelong=Uwzględnij długie nazwy
+mapgen.filter.includename=Uwzględnij nazwy
+mapgen.filter.includeclasses=Uwzględnij klasy
+mapgen.title.newfilter=Nowy filtr
+mapgen.header.newfilter=Wprowadź zawartość filtra
+mapgen.preview.empty=Statystyki wygenerowanych mapowań pojawią się tutaj\n\n\n
+mapgen.configure=Konfiguruj
+mapgen.configure.nothing=Nic do skonfigurowania
+mapgen.generate=Generuj
+mapgen.apply=Zastosuj
+
+## Widok mapowania
+mapprog=Postęp mapowania
+mapprog.metric.size=Rozmiar pliku klasy
+mapprog.metric.membercount=Pola i metody klasy
+
+# Drzewo
+tree.classes=Klasy
+tree.files=Pliki
+tree.defaultpackage=(Pakiet domyślny)
+tree.defaultdirectory=(Katalog główny)
+tree.prompt=Przeciągnij tutaj swoje pliki
+tree.hidelibs=Ukryj biblioteki
+tree.phantoms=Wygenerowane fantomy
+
+# Usługi
+service=Wszystkie usługi
+service.analysis=Analiza
+service.analysis.comments-config=Komentarze
+service.analysis.comments-config.enable-display=Wyświetlaj komentarze w dekompilacji
+service.analysis.comments-config.word-wrapping-limit=Limit zawijania słów
+service.analysis.graph-calls-config=Graf wywołań
+service.analysis.graph-calls-config.active=Włącz przy otwieraniu obszarów roboczych
+service.analysis.graph-inheritance-config=Graf dziedziczenia
+service.analysis.jphantom-generator-config=JPhantom
+service.analysis.jphantom-generator-config.generate-workspace-phantoms=Generuj i dołącz fantomy do obszarów roboczych
+service.analysis.search-config=Wyszukiwanie
+service.analysis.entry-points=Punkty wejścia
+service.analysis.entry-points.none=Nie znaleziono wpisów
+service.analysis.anti-decompile=Antydekompilacja
+service.analysis.anti-decompile.cyclic=Cykliczne klasy dziedziczenia
+service.analysis.anti-decompile.duplicate-annos=Zduplikowane adnotacje
+service.analysis.anti-decompile.illegal-annos=Nieprawidłowe adnotacje
+service.analysis.anti-decompile.illegal-name=Nieprawidłowe nazwy
+service.analysis.anti-decompile.illegal-sig=Nieprawidłowe sygnatury
+service.analysis.anti-decompile.label-patch=Popraw %d klas
+service.analysis.anti-decompile.label-remove=Usuń %d klas
+service.analysis.anti-decompile.long-annos=Długie adnotacje
+service.assembler=Asembler
+service.assembler.assembler-pipeline.general-config=Ogólne
+service.assembler.assembler-pipeline.general-config.disassembly-ast-parse-delay=Opóźnienie parsowania AST
+service.assembler.assembler-pipeline.general-config.disassembly-indent=Wcięcia
+service.assembler.dalvik-assembler-config=Dalvik
+service.assembler.dalvik-assembler-config.value-analysis=Włącz analizę wartości
+service.assembler.dalvik-assembler-config.simulate-jvm-calls=Symuluj typowe wywołania JVM
+service.assembler.jvm-assembler-config=JVM
+service.assembler.jvm-assembler-config.value-analysis=Włącz analizę wartości
+service.assembler.jvm-assembler-config.simulate-jvm-calls=Symuluj typowe wywołania JVM
+service.compile=Kompilacja
+service.compile.java-compiler-config=Javac
+service.compile.java-compiler-config.generate-phantoms=Generuj brakujące klasy
+service.compile.java-compiler-config.default-emit-debug=Domyślnie dołączaj debugowanie
+service.compile.java-compiler-config.default-compile-target-version=Domyślna docelowa wersja klasy
+service.compile.java-compiler-config.default-downsample-target-version=Domyślna obniżona wersja klasy
+service.debug=Dołącz/Debuguj
+service.debug.attach-config=Konfiguracja dołączania
+service.debug.attach-config.attach-jmx-bean-agent=Dołącz agenta JMX bean
+service.debug.attach-config.passive-scanning=Stan skanowania pasywnego
+service.config-manager-config=Menedżer konfiguracji
+service.decompile=Dekompilacja
+service.decompile.decompilers-config=Menedżer dekompilacji
+service.decompile.decompilers-config.pref-android-decompiler=Preferowany dekompilator Androida
+service.decompile.decompilers-config.pref-jvm-decompiler=Preferowany dekompilator Javy
+service.decompile.decompilers-config.cache-decompilations=Buforuj dekompilacje
+service.decompile.decompilers-config.filter-annotations-duplicate=Filtruj zduplikowane adnotacje
+service.decompile.decompilers-config.filter-annotations-illegal=Filtruj nieprawidłowe adnotacje
+service.decompile.decompilers-config.filter-annotations-long=Filtruj długie adnotacje
+service.decompile.decompilers-config.filter-annotations-long-limit=Limit długości adnotacji
+service.decompile.decompilers-config.filter-hollow=Filtruj zawartość klasy (wydrążona)
+service.decompile.decompilers-config.filter-illegal-signatures=Filtruj nieprawidłowe sygnatury
+service.decompile.decompilers-config.filter-names-ascii=Filtruj nazwy spoza ASCII
+service.decompile.decompilers-config.filter-strip-debug=Filtruj dane debugowania (zmienne, generyki)
+service.decompile.impl=Implementacje
+service.decompile.impl.decompiler-cfr-config=CFR
+service.decompile.impl.decompiler-cfr-config.aexagg=Próbuj bardziej agresywnie rozszerzać i łączyć wyjątki
+service.decompile.impl.decompiler-cfr-config.aexagg2=Próbuj bardziej agresywnie rozszerzać i łączyć wyjątki (może zmienić semantykę)
+service.decompile.impl.decompiler-cfr-config.aggressivedocopy=Klonuj kod z niemożliwych skoków do pętli z testem 'first'
+service.decompile.impl.decompiler-cfr-config.aggressivedoextension=Zwiń niemożliwe skoki do pętli do-while z testem 'first'
+service.decompile.impl.decompiler-cfr-config.aggressiveduff=Zwiń przełączniki w stylu urządzenia duff z dodatkową kontrolą.
+service.decompile.impl.decompiler-cfr-config.aggressivesizethreshold=Liczba rozkazów, przy której uruchamiane są agresywne redukcje
+service.decompile.impl.decompiler-cfr-config.allowmalformedswitch=Zezwalaj na potencjalnie nieprawidłowe instrukcje switch
+service.decompile.impl.decompiler-cfr-config.antiobf=Cofnij różne zaciemnienia
+service.decompile.impl.decompiler-cfr-config.arrayiter=Przekształć iterację opartą na tablicach
+service.decompile.impl.decompiler-cfr-config.collectioniter=Przekształć iterację opartą na kolekcjach
+service.decompile.impl.decompiler-cfr-config.commentmonitors=Zastąp monitory komentarzami - przydatne, jeśli jesteśmy całkowicie zdezorientowani
+service.decompile.impl.decompiler-cfr-config.comments=Wypisz komentarze opisujące stan dekompilatora, flagi fallback itp.
+service.decompile.impl.decompiler-cfr-config.constobf=Cofnij zaciemnianie stałych
+service.decompile.impl.decompiler-cfr-config.decodeenumswitch=Przekształć switch na enum
+service.decompile.impl.decompiler-cfr-config.decodefinally=Przekształć instrukcje finally
+service.decompile.impl.decompiler-cfr-config.decodelambdas=Odtwórz funkcje lambda
+service.decompile.impl.decompiler-cfr-config.decodestringswitch=Przekształć switch na String
+service.decompile.impl.decompiler-cfr-config.eclipse=Włącz transformacje, aby lepiej obsługiwać kod Eclipse
+service.decompile.impl.decompiler-cfr-config.elidescala=Usuń rzeczy, które nie są pomocne w wyjściu scala (serialVersionUID, @ScalaSignature)
+service.decompile.impl.decompiler-cfr-config.forbidanonymousclasses=Nie zezwalaj na anonimowe klasy.
+service.decompile.impl.decompiler-cfr-config.forbidmethodscopedclasses=Nie zezwalaj na klasy o zasięgu metody.
+service.decompile.impl.decompiler-cfr-config.forceclassfilever=Wymuś wersję pliku klasy (a tym samym Java), jako którą klasy są dekompilowane.
+service.decompile.impl.decompiler-cfr-config.forcecondpropagate=Przenieś wyniki deterministycznych skoków z powrotem przez niektóre przypisania stałych
+service.decompile.impl.decompiler-cfr-config.forceexceptionprune=Usuń zagnieżdżone programy obsługi wyjątków, jeśli nie zmieniają semantyki
+service.decompile.impl.decompiler-cfr-config.forcereturningifs=Przenieś return do miejsca skoku
+service.decompile.impl.decompiler-cfr-config.forcetopsort=Wymuś sortowanie bloków podstawowych. Zwykle przydatne tylko w przypadku zaciemnienia.
+service.decompile.impl.decompiler-cfr-config.forcetopsortaggress=Wymuś dodatkowe agresywne opcje sortowania
+service.decompile.impl.decompiler-cfr-config.forcetopsortnopull=Wymuś, aby sortowanie nie wyciągało bloków try
+service.decompile.impl.decompiler-cfr-config.forloopaggcapture=Pozwól pętlom for na agresywne przenoszenie mutacji do sekcji aktualizacji, nawet jeśli nie wydają się być związane z predykatem
+service.decompile.impl.decompiler-cfr-config.hidebridgemethods=Ukryj metody pomostowe
+service.decompile.impl.decompiler-cfr-config.hidelangimports=Ukryj importy z java.lang.
+service.decompile.impl.decompiler-cfr-config.hidelongstrings=Ukryj bardzo długie ciągi znaków - przydatne, jeśli zaciemniacze umieścili fałszywy kod w ciągach znaków
+service.decompile.impl.decompiler-cfr-config.hideutf=Ukryj znaki UTF8 - umieść je w cudzysłowie zamiast pokazywać surowe znaki
+service.decompile.impl.decompiler-cfr-config.ignoreexceptions=Upuść informacje o wyjątku, jeśli całkowicie utkniesz (UWAGA: zmienia semantykę, niebezpieczne!)
+service.decompile.impl.decompiler-cfr-config.ignoreexceptionsalways=Upuść informacje o wyjątku (UWAGA: zmienia semantykę, niebezpieczne!)
+service.decompile.impl.decompiler-cfr-config.innerclasses=Dekompiluj klasy wewnętrzne
+service.decompile.impl.decompiler-cfr-config.instanceofpattern=Przekształć dopasowania wzorców instanceof
+service.decompile.impl.decompiler-cfr-config.j14classobj=Odwróć konstrukcję obiektu klasy Java 1.4
+service.decompile.impl.decompiler-cfr-config.labelledblocks=Zezwalaj na emitowanie kodu, który używa oznaczonych bloków (obsługa dziwnych skoków do przodu)
+service.decompile.impl.decompiler-cfr-config.lenient=Bądź trochę bardziej pobłażliwy w sytuacjach, w których normalnie wyrzucilibyśmy wyjątek
+service.decompile.impl.decompiler-cfr-config.liftconstructorinit=Podnieś kod inicjalizacji wspólny dla wszystkich konstruktorów do inicjalizacji elementów
+service.decompile.impl.decompiler-cfr-config.obfattr=Cofnij zaciemnianie atrybutów
+service.decompile.impl.decompiler-cfr-config.obfcontrol=Cofnij zaciemnianie przepływu sterowania
+service.decompile.impl.decompiler-cfr-config.override=Generuj adnotacje @Override (jeśli metoda implementuje metodę interfejsu lub przesłania metodę klasy bazowej)
+service.decompile.impl.decompiler-cfr-config.previewfeatures=Dekompiluj funkcje podglądu, jeśli klasa została skompilowana z 'javac --enable-preview'
+service.decompile.impl.decompiler-cfr-config.pullcodecase=Agresywnie wciągaj kod do instrukcji case
+service.decompile.impl.decompiler-cfr-config.recordtypes=Przekształć typy rekordów
+service.decompile.impl.decompiler-cfr-config.recover=Pozwól na ustawienie coraz bardziej agresywnych opcji, jeśli dekompilacja się nie powiedzie
+service.decompile.impl.decompiler-cfr-config.recovertypeclash=Podziel okresy istnienia, w których analiza spowodowała konflikt typów
+service.decompile.impl.decompiler-cfr-config.recovertypehints=Odzyskaj wskazówki dotyczące typów dla iteratorów z pierwszego przejścia
+service.decompile.impl.decompiler-cfr-config.reducecondscope=Zmniejsz zakres warunków, ewentualnie generując więcej anonimowych bloków
+service.decompile.impl.decompiler-cfr-config.relinkconst=Połącz ponownie stałe - jeśli istnieje wbudowane odwołanie do pola, spróbuj je usunąć.
+service.decompile.impl.decompiler-cfr-config.relinkconststring=Połącz ponownie stałe ciągi znaków - jeśli istnieje lokalne odwołanie do ciągu znaków, który pasuje do static final, użyj static final.
+service.decompile.impl.decompiler-cfr-config.removebadgenerics=Ukryj generyki, w których ewidentnie się pomyliliśmy i wróć do niegenerycznych
+service.decompile.impl.decompiler-cfr-config.removeboilerplate=Usuń sztampowe funkcje - sztampowy konstruktor, deserializacja lambda itp.
+service.decompile.impl.decompiler-cfr-config.removedeadconditionals=Usuń kod, którego nie można wykonać.
+service.decompile.impl.decompiler-cfr-config.removedeadmethods=Usuń bezsensowne metody - domyślny konstruktor itp.
+service.decompile.impl.decompiler-cfr-config.removeinnerclasssynthetics=Usuń (jeśli to możliwe) niejawne odwołania do klas zewnętrznych w klasach wewnętrznych
+service.decompile.impl.decompiler-cfr-config.renamedupmembers=Zmień nazwę niejednoznacznych/duplikatów pól.
+service.decompile.impl.decompiler-cfr-config.renameenumidents=Zmień nazwę identyfikatorów ENUM, które nie pasują do ich "oczekiwanych" nazw ciągów.
+service.decompile.impl.decompiler-cfr-config.renameillegalidents=Zmień nazwę identyfikatorów, które nie są prawidłowymi identyfikatorami Java.
+service.decompile.impl.decompiler-cfr-config.renamesmallmembers=Zmień nazwę małych elementów. Uwaga - spowoduje to przerwanie dostępu opartego na odbiciu, więc nie jest automatycznie włączone.
+service.decompile.impl.decompiler-cfr-config.sealed=Dekompiluj konstrukcje 'sealed'
+service.decompile.impl.decompiler-cfr-config.showinferrable=Udekoruj metody jawnymi typami, jeśli nie są one sugerowane przez argumenty
+service.decompile.impl.decompiler-cfr-config.showversion=Pokaż używaną wersję CFR w nagłówku (przydatne do wyłączenia podczas testowania regresji)
+service.decompile.impl.decompiler-cfr-config.skipbatchinnerclasses=Podczas przetwarzania wielu plików pomiń klasy wewnętrzne, ponieważ i tak będą przetwarzane jako część klas zewnętrznych.
+service.decompile.impl.decompiler-cfr-config.staticinitreturn=Spróbuj usunąć return ze statycznej inicjalizacji
+service.decompile.impl.decompiler-cfr-config.stringbuffer=Konwertuj new StringBuffer().append.append.append na string + string + string
+service.decompile.impl.decompiler-cfr-config.stringbuilder=Konwertuj new StringBuilder().append.append.append na string + string + string
+service.decompile.impl.decompiler-cfr-config.stringconcat=Konwertuj użycia StringConcatFactor na string + string + string
+service.decompile.impl.decompiler-cfr-config.sugarasserts=Przekształć wywołania assert
+service.decompile.impl.decompiler-cfr-config.sugarboxing=W miarę możliwości usuń bezsensowne opakowania boxing
+service.decompile.impl.decompiler-cfr-config.sugarenums=Przekształć enumy
+service.decompile.impl.decompiler-cfr-config.sugarretrolambda=W miarę możliwości przekształć użycia retro lambda
+service.decompile.impl.decompiler-cfr-config.switchexpression=Przekształć wyrażenie switch
+service.decompile.impl.decompiler-cfr-config.tidymonitors=Usuń kod pomocniczy dla monitorów - np. bloki catch tylko po to, aby wyjść z monitora
+service.decompile.impl.decompiler-cfr-config.tryresources=Rekonstruuj try-with-resources
+service.decompile.impl.decompiler-cfr-config.usenametable=Użyj tabeli nazw zmiennych lokalnych, jeśli istnieje
+service.decompile.impl.decompiler-cfr-config.usesignatures=Używaj sygnatur oprócz deskryptorów (gdy nie są one ewidentnie niepoprawne)
+service.decompile.impl.decompiler-cfr-config.version=Pokaż aktualną wersję CFR
+service.decompile.impl.decompiler-procyon-config=Procyon
+service.decompile.impl.decompiler-procyon-config.alwaysGenerateExceptionVariableForCatchBlocks=Zawsze generuj blok catch
+service.decompile.impl.decompiler-procyon-config.arePreviewFeaturesEnabled=Włącz funkcje podglądu języka
+service.decompile.impl.decompiler-vineflower-config=Vineflower
+service.decompile.impl.decompiler-vineflower-config.logging-level=Poziom logowania
+service.decompile.impl.decompiler-vineflower-config.rbr=Usuń metody pomostowe
+service.decompile.impl.decompiler-vineflower-config.rsy=Usuń metody i pola syntetyczne
+service.decompile.impl.decompiler-vineflower-config.din=Dekompiluj klasy wewnętrzne
+service.decompile.impl.decompiler-vineflower-config.dc4=Dekompiluj odwołania do klas Java 4
+service.decompile.impl.decompiler-vineflower-config.das=Dekompiluj asercje
+service.decompile.impl.decompiler-vineflower-config.hes=Ukryj puste super()
+service.decompile.impl.decompiler-vineflower-config.hdc=Ukryj domyślny konstruktor
+service.decompile.impl.decompiler-vineflower-config.dgs=Dekompiluj generyki
+service.decompile.impl.decompiler-vineflower-config.ner=Brak wyjątków w return
+service.decompile.impl.decompiler-vineflower-config.esm=Upewnij się, że zakresy synchronizowane są kompletne
+service.decompile.impl.decompiler-vineflower-config.den=Dekompiluj wyliczenia
+service.decompile.impl.decompiler-vineflower-config.dpr=Dekompiluj funkcje podglądu
+service.decompile.impl.decompiler-vineflower-config.rgn=Usuń odwołanie getClass()
+service.decompile.impl.decompiler-vineflower-config.lit=Zachowaj literały bez zmian
+service.decompile.impl.decompiler-vineflower-config.bto=Reprezentuj boolean jako 0/1
+service.decompile.impl.decompiler-vineflower-config.asc=Znaki ASCII w ciągach
+service.decompile.impl.decompiler-vineflower-config.nns=Syntetyczne nie ustawione
+service.decompile.impl.decompiler-vineflower-config.uto=Traktuj niezdefiniowany typ parametru jako obiekt
+service.decompile.impl.decompiler-vineflower-config.udv=Używaj nazw LVT
+service.decompile.impl.decompiler-vineflower-config.ump=Używaj parametrów metody
+service.decompile.impl.decompiler-vineflower-config.rer=Usuń puste bloki try-catch
+service.decompile.impl.decompiler-vineflower-config.fdi=Dekompiluj bloki finally
+service.decompile.impl.decompiler-vineflower-config.inn=Przekształć IntelliJ IDEA @NotNull
+service.decompile.impl.decompiler-vineflower-config.lac=Dekompiluj lambdy jako klasy anonimowe
+service.decompile.impl.decompiler-vineflower-config.bsm=Mapowanie bytecode na źródło
+service.decompile.impl.decompiler-vineflower-config.dcl=Zrzuć linie kodu
+service.decompile.impl.decompiler-vineflower-config.iib=Ignoruj nieprawidłowy bytecode
+service.decompile.impl.decompiler-vineflower-config.vac=Weryfikuj klasy anonimowe
+service.decompile.impl.decompiler-vineflower-config.tcs=Uproszczenie stałych trójskładnikowych
+service.decompile.impl.decompiler-vineflower-config.pam=Dopasowywanie wzorców
+service.decompile.impl.decompiler-vineflower-config.tlf=Naprawianie pętli try
+service.decompile.impl.decompiler-vineflower-config.tco=Trójskładnikowe w warunkach if (eksperymentalne)
+service.decompile.impl.decompiler-vineflower-config.swe=Dekompiluj wyrażenia switch
+service.decompile.impl.decompiler-vineflower-config.shs=Pokaż ukryte instrukcje (debugowanie)
+service.decompile.impl.decompiler-vineflower-config.ovr=Adnotacja Override
+service.decompile.impl.decompiler-vineflower-config.ssp=Uproszczenie stosu w drugim przebiegu
+service.decompile.impl.decompiler-vineflower-config.vvm=Weryfikuj scalanie zmiennych (eksperymentalne)
+service.decompile.impl.decompiler-vineflower-config.iec=Uwzględnij całą ścieżkę klasy
+service.decompile.impl.decompiler-vineflower-config.jrt=Uwzględnij środowisko wykonawcze Java
+service.decompile.impl.decompiler-vineflower-config.ega=Jawne argumenty generyczne
+service.decompile.impl.decompiler-vineflower-config.isl=Wstaw proste lambdy
+service.decompile.impl.decompiler-vineflower-config.log=Poziom logowania
+service.decompile.impl.decompiler-vineflower-config.mpm=Maksymalna liczba przetwarzanych metod
+service.decompile.impl.decompiler-vineflower-config.ren=Zmień nazwy jednostek / elementów
+service.decompile.impl.decompiler-vineflower-config.urc=Klasa zmiany nazw użytkownika
+service.decompile.impl.decompiler-vineflower-config.nls=Separator nowej linii
+service.decompile.impl.decompiler-vineflower-config.ind=Ciąg wcięcia
+service.decompile.impl.decompiler-vineflower-config.pll=Preferowana długość linii
+service.decompile.impl.decompiler-vineflower-config.ban=Klasa zmiany nazw użytkownika
+service.decompile.impl.decompiler-vineflower-config.erm=Komunikat o błędzie
+service.decompile.impl.decompiler-vineflower-config.thr=Liczba wątków
+service.decompile.impl.decompiler-vineflower-config.jvn=Używaj nazewnictwa zmiennych w stylu JAD
+service.decompile.impl.decompiler-vineflower-config.jpr=Używaj nazewnictwa parametrów w stylu JAD
+service.decompile.impl.decompiler-vineflower-config.sef=Pomiń dodatkowe pliki
+service.decompile.impl.decompiler-vineflower-config.win=Ostrzegaj o niespójnych atrybutach wewnętrznych
+service.decompile.impl.decompiler-vineflower-config.dbe=Zrzuć bytecode w przypadku błędu
+service.decompile.impl.decompiler-vineflower-config.dee=Zrzuć wyjątki w przypadku błędu
+service.decompile.impl.decompiler-vineflower-config.dec=Komentarze dekompilatora
+service.decompile.impl.decompiler-vineflower-config.sfc=Komentarze do pliku źródłowego
+service.decompile.impl.decompiler-vineflower-config.dcc=Dekompiluj złożone wyrażenia stało-dynamiczne
+service.decompile.impl.decompiler-vineflower-config.fji=Wymuś wstawienie JSR
+service.io=We/Wy
+service.io.directories-config=Katalogi
+service.io.export-config=Eksportowanie
+service.io.export-config.bundle-supporting-resources=Dołącz zasoby pomocnicze do wyjścia
+service.io.export-config.compression=Strategia kompresji dla zawartości wyjścia
+service.io.export-config.create-zip-dir-entries=Utwórz wpisy katalogów ZIP w wyjściu
+service.io.export-config.warn-no-changes=Ostrzegaj o eksporcie bez wprowadzonych zmian
+service.io.gson-provider-config=Json
+service.io.gson-provider-config.pretty-print=Ładne drukowanie
+service.io.info-importer-config=Importowanie zawartości
+service.io.info-importer-config.skip-class-asm-validation=Pomiń poprawki i walidację klasy
+service.io.recent-workspaces-config=Ostatnie obszary robocze
+service.io.recent-workspaces-config.last-workspace-export-path=Ostatnia ścieżka eksportu obszaru roboczego
+service.io.recent-workspaces-config.last-workspace-open-path=Ostatnia ścieżka otwierania obszaru roboczego
+service.io.recent-workspaces-config.max-recent-workspaces=Maksymalna liczba ostatnich ścieżek
+service.io.recent-workspaces-config.recent-workspaces=Ostatni obszar roboczy
+service.io.recent-workspaces-config.last-class-export-path=Ostatnia ścieżka eksportu klasy
+service.io.resource-importer-config=Importowanie archiwum
+service.io.resource-importer-config.zip-strategy=Strategia parsowania ZIP
+service.io.resource-importer-config.skip-revisited-cen-to-local-links=Pomiń duplikaty wpisów CEN-to-LOC ze strategią JVM
+service.mapping=Mapowanie
+service.mapping.mapping-aggregator-config=Agregacja mapowania
+service.mapping.mapping-formats-config=Formaty mapowania
+service.mapping.mapping-generator-config=Generator mapowania
+service.mapping.name-gen-provider=Generatory nazw
+service.mapping.name-gen-provider.alphabet=Alfabet
+service.mapping.name-gen-provider.alphabet.alphabet=Znaki alfabetu
+service.mapping.name-gen-provider.alphabet.length=Minimalna długość
+service.plugin=Wtyczki
+service.plugin.plugin-manager-config=Menedżer wtyczek
+service.plugin.plugin-manager-config.scan-on-start=Ładuj przy uruchomieniu
+service.plugin.script-manager-config=Menedżer skryptów
+service.plugin.script-manager-config.file-watching=Pasywnie skanuj katalog skryptów w poszukiwaniu zmian
+service.ui=Interfejs użytkownika
+service.ui.bind-config=Skróty klawiszowe
+service.ui.bind-config.bundle=Pakiet mapy skrótów klawiszowych
+service.ui.class-editing-config=Edycja klasy
+service.ui.class-editing-config.default-android-editor=Domyślny edytor dla klas Androida
+service.ui.class-editing-config.default-jvm-editor=Domyślny edytor dla klas JVM
+service.ui.decompile-pane-config=Panel dekompilacji
+service.ui.decompile-pane-config.timeout-seconds=Limit czasu dekompilatora (sekundy)
+service.ui.decompile-pane-config.mapping-acceleration=Przyspiesz operacje remapowania
+service.ui.member-format-config=Format pola i metody
+service.ui.member-format-config.name-type-display=Wyświetlanie nazwy i typu
+service.ui.text-format-config=Format tekstu
+service.ui.text-format-config.escape=Włącz escape'y tekstu
+service.ui.text-format-config.max-length=Maksymalna długość wyświetlanego tekstu
+service.ui.text-format-config.shorten=Włącz skracanie tekstu
+service.ui.file-type-association-config=Powiązania typów plików
+service.ui.file-type-association-config.extensions-to-langs=Mapa rozszerzenia do języka
+service.ui.window-manager-config=Menedżer okien
+service.ui.workspace-explorer-config=Eksplorator obszaru roboczego
+service.ui.workspace-explorer-config.drag-drop-action=Zachowanie przeciągnij i upuść
+service.ui.workspace-explorer-config.max-tree-dir-depth=Maksymalna głębokość drzewa
+service.ui.language-config=Język
+service.ui.language-config.current=Aktualny język
+
+# Tłumaczenia dopasowań
+number.match.equal=wartość == n
+number.match.not=wartość != n
+number.match.gt=wartość > n
+number.match.gte=wartość >= n
+number.match.lt=wartość < n
+number.match.lte=wartość <= n
+number.match.gt-lt=min < wartość < max
+number.match.gte-lt=min <= wartość < max
+number.match.gt-lte=min < wartość <= max
+number.match.gte-lte=min < wartość <= max
+number.match.any-of=numbers.contains(wartość)
+string.match.contains=str.contains(wartość)
+string.match.contains-ic=str.containsIgnoreCase(wartość)
+string.match.ends=str.endsWith(wartość)
+string.match.ends-ic=str.endsWithIgnoreCase(wartość)
+string.match.equal=str.equals(wartość)
+string.match.equal-ic=str.equalsIgnoreCase(wartość)
+string.match.regex-full=str.matches(wartość)
+string.match.regex-partial=str.matchesPartially(wartość)
+string.match.starts=str.startsWith(wartość)
+string.match.starts-ic=str.startsWithIgnoreCase(wartość)
+
+# Różne
+misc.acknowledge=Potwierdź
+misc.all=Wszystkie
+misc.none=Brak
+misc.ignored=Ignorowane
+misc.enabled=Włączone
+misc.disabled=Wyłączone
+misc.download=Pobierz
+misc.clear=Wyczyść
+misc.export=Eksportuj
+misc.casesensitive=Rozróżnianie wielkości liter
+misc.path=Ścieżka
+misc.regex=Wyrażenie regularne
+misc.member.field=Pole
+misc.member.method=Metoda
+misc.member.field-n-method=Pole i metoda
+misc.member.inner-class=Klasa wewnętrzna
+misc.member.inner-interface=Interfejs wewnętrzny
+misc.member.inner-enum=Wyliczenie wewnętrzne
+misc.member.inner-annotation=Adnotacja wewnętrzna
+misc.accessflag.visibility.public=Publiczny
+misc.accessflag.visibility.protected=Chroniony
+misc.accessflag.visibility.private=Prywatny
+misc.accessflag.visibility.package=Pakiet
+misc.direction.up=W górę
+misc.direction.down=W dół
+misc.direction.left=W lewo
+misc.direction.right=W prawo
+misc.direction.top=Góra
+misc.direction.bottom=Dół
+misc.position.top=Góra
+misc.position.bottom=Dół
+misc.position.left=Lewo
+misc.position.right=Prawo
+misc.position.center=Środek
+misc.position.middle=Środe
