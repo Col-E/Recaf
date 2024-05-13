@@ -69,4 +69,4 @@ Open the project in an IDE or generate the build with gradle.
 
 **Without IDE**:
 1. Run `gradlew build`
-    - Output will be located at: `recaf-ui/build/recaf-ui-{VERSION}-all.jar`
+    - Output will be located at: `recaf-ui/build/libs/recaf-ui-{VERSION}-all.jar`
