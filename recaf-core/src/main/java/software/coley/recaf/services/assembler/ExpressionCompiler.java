@@ -4,6 +4,7 @@ import dev.xdark.blw.type.Types;
 import dev.xdark.blw.type.*;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import me.darknet.assembler.printer.JvmClassPrinter;
 import me.darknet.assembler.printer.JvmMethodPrinter;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-@WorkspaceScoped
+@Dependent
 public class ExpressionCompiler {
 	private static final Logger logger = Logging.get(ExpressionCompiler.class);
 	private static final Pattern IMPORT_EXTRACT_PATTERN = RegexUtil.pattern("^\\s*(import \\w.+;)");
