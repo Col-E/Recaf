@@ -75,8 +75,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			JvmStackAnalysisPane stackAnalysisPane = jvmStackAnalysisPaneProvider.get();
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
 			JvmExpressionCompilerPane expressionPane = jvmExpressionCompilerPaneProvider.get();
-			JumpArrowPane jumpArrowPane = jumpArrowPaneProvider.get();
-			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane, jumpArrowPane));
+			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane));
 			FxThreadUtil.run(() -> {
 				ObservableList<Tab> tabs = this.tabs.getTabs();
 				tabs.clear();
