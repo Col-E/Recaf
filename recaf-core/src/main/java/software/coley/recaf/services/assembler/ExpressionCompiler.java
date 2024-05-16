@@ -334,6 +334,10 @@ public class ExpressionCompiler {
 
 		// Stub out fields / methods
 		for (FieldMember field : fields) {
+			// Skip stubbing compiler-generated fields.
+			if (field.hasBridgeModifier() || field.hasSyntheticModifier())
+				continue;
+
 			// Skip stubbing of illegally named fields.
 			String name = field.getName();
 			if (!isSafeName(name))
@@ -352,6 +356,10 @@ public class ExpressionCompiler {
 			code.append(fieldInfo.className).append(' ').append(fieldInfo.name).append(";\n");
 		}
 		for (MethodMember method : methods) {
+			// Skip stubbing compiler-generated methods.
+			if (method.hasBridgeModifier() || method.hasSyntheticModifier())
+				continue;
+
 			// Skip stubbing of illegally named methods.
 			String name = method.getName();
 			boolean isCtor = false;
