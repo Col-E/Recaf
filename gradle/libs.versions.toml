@@ -17,7 +17,7 @@ ikonli = "12.3.1"
 instrument-server = "1.4.0"
 jackson = "2.16.1"
 jakarta-annotation = "3.0.0-M1"
-jasm = "913f24ec92"
+jasm = "6f48d958dc"
 jlinker = "1.0.7"
 jphantom = "1.4.4"
 junit = "5.10.2"
@@ -43,8 +43,6 @@ shadow = "8.1.1"
 peterabeles-gversion = "1.10.2"
 
 [libraries]
-
-
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
 asm-analysis = { module = "org.ow2.asm:asm-analysis", version.ref = "asm" }
 asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
