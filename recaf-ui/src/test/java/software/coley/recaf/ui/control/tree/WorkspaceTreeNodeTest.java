@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.BasicFileInfo;
+import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.path.*;
@@ -14,11 +15,15 @@ import software.coley.recaf.test.dummy.VariedModifierFields;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
+import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResourceBuilder;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,6 +36,9 @@ import static software.coley.recaf.ui.control.tree.WorkspaceTreeNode.getOrInsert
 class WorkspaceTreeNodeTest {
 	static Workspace workspace;
 	static WorkspaceResource primaryResource;
+	static WorkspaceResource resourceWithEmbedded;
+	static WorkspaceFileResource embeddedResource;
+	static String embeddedResourcePath = "embedded.jar";
 	static JvmClassBundle primaryJvmBundle;
 	static JvmClassInfo classA;
 	static JvmClassInfo classB;
@@ -92,6 +100,56 @@ class WorkspaceTreeNodeTest {
 		// This is not ideal, but there's not really any great alternatives either.
 		z2 = p3f.child("//");
 		z1 = z2.child(new BasicFileInfo("///zero.txt", new byte[0], new BasicPropertyContainer()));
+
+		// Embedded resource containing just 'root.txt'
+		embeddedResource = new WorkspaceFileResourceBuilder(new BasicJvmClassBundle(), fromFiles(default1.getValue())).build();
+		resourceWithEmbedded = new WorkspaceResourceBuilder(new BasicJvmClassBundle(), new BasicFileBundle())
+				.withEmbeddedResources(Map.of(embeddedResourcePath, embeddedResource))
+				.build();
+	}
+
+	@Test
+	void testPathCreationOfFileInEmbeddedResource() {
+		Workspace workspace = new BasicWorkspace(resourceWithEmbedded);
+		WorkspacePathNode workspacePath = PathNodes.workspacePath(workspace);
+		FilePathNode embeddedFilePath = workspacePath.child(resourceWithEmbedded)
+				.embeddedChildContainer()
+				.child(embeddedResource)
+				.child(embeddedResource.getFileBundle())
+				.child(null)
+				.child(default1.getValue());
+
+		WorkspaceTreeNode root = new WorkspaceTreeNode(workspacePath);
+		root.getOrCreateNodeByPath(embeddedFilePath);
+
+		// workspace
+		WorkspaceTreeNode child = root.getFirstChild();
+		assertNotNull(child, "Workspace did not have child");
+
+		// workspace > resourceWithEmbedded
+		child = child.getFirstChild();
+		assertNotNull(child, "Primary resource did not have child");
+
+		// workspace > resourceWithEmbedded > embedded-container
+		child = child.getFirstChild();
+		assertNotNull(child, "Embedded container did not have child");
+
+		// workspace > resourceWithEmbedded > embedded-container > embeddedResource
+		child = child.getFirstChild();
+		assertNotNull(child, "Embedded resource did not have child");
+
+		// workspace > resourceWithEmbedded > embedded-container > embeddedResource > bundle
+		child = child.getFirstChild();
+		assertNotNull(child, "Embedded bundle did not have child");
+
+		// workspace > resourceWithEmbedded > embedded-container > embeddedResource > bundle > directory
+		child = child.getFirstChild();
+		assertNotNull(child, "Embedded directory did not have child");
+
+		// workspace > resourceWithEmbedded > embedded-container > embeddedResource > bundle > directory > file
+		Object createdPathFile = child.getValue().getValue();
+		FileInfo file = default1.getValue();
+		assertEquals(file, createdPathFile, "File at end of path not the same");
 	}
 
 	@Test

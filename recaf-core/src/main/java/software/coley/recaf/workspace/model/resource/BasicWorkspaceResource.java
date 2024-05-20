@@ -61,11 +61,11 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	 * 		Parent resource <i>(If we are the JAR within a JAR)</i>.
 	 */
 	public BasicWorkspaceResource(JvmClassBundle jvmClassBundle,
-								  FileBundle fileBundle,
-								  NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
-								  Map<String, AndroidClassBundle> androidClassBundles,
-								  Map<String, WorkspaceFileResource> embeddedResources,
-								  WorkspaceResource containingResource) {
+	                              FileBundle fileBundle,
+	                              NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
+	                              Map<String, AndroidClassBundle> androidClassBundles,
+	                              Map<String, WorkspaceFileResource> embeddedResources,
+	                              WorkspaceResource containingResource) {
 		this.jvmClassBundle = jvmClassBundle;
 		this.fileBundle = fileBundle;
 		this.versionedJvmClassBundles = versionedJvmClassBundles;
@@ -92,6 +92,13 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		jvmClassBundleStream().forEach(bundle -> delegateJvmClassBundle(resource, bundle));
 		androidClassBundleStream().forEach(bundle -> delegateAndroidClassBundle(resource, bundle));
 		fileBundleStream().forEach(bundle -> delegateFileBundle(resource, bundle));
+
+		// Embedded resources will notify listeners of their containing resource when they are updated.
+		embeddedResources.values().forEach(embeddedResource -> {
+			embeddedResource.jvmClassBundleStream().forEach(bundle -> delegateJvmClassBundle(embeddedResource, bundle));
+			embeddedResource.androidClassBundleStream().forEach(bundle -> delegateAndroidClassBundle(embeddedResource, bundle));
+			embeddedResource.fileBundleStream().forEach(bundle -> delegateFileBundle(embeddedResource, bundle));
+		});
 	}
 
 	/**

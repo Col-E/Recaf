@@ -468,6 +468,7 @@ tree.defaultdirectory=(Root directory)
 tree.prompt=Drag your files here
 tree.hidelibs=Hide libraries
 tree.phantoms=Generated phantoms
+tree.embedded-resources=Embedded
 
 ##### Services
 service=All services

@@ -98,6 +98,17 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	}
 
 	/**
+	 * @return First child tree node. {@code null} if no child is found.
+	 */
+	@Nullable
+	@SuppressWarnings("deprecation")
+	public WorkspaceTreeNode getFirstChild() {
+		return getChildren().isEmpty()
+				? null : getChildren().getFirst() instanceof WorkspaceTreeNode node
+				? node : null;
+	}
+
+	/**
 	 * @param path
 	 * 		Path to check against.
 	 *
