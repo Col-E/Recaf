@@ -73,7 +73,7 @@ public class PathExportingManager {
 		// Check if the user hasn't made any changes. Plenty of people have not understood that their changes weren't
 		// saved for one reason or another (the amount of people seeing a red flash thinking that is fine is crazy)
 		WorkspaceResource primaryResource = workspace.getPrimaryResource();
-		boolean noChangesFound = exportConfig.getWarnNoChanges().getValue() && primaryResource.bundleStream()
+		boolean noChangesFound = exportConfig.getWarnNoChanges().getValue() && primaryResource.bundleStreamRecursive()
 				.allMatch(b -> b.getDirtyKeys().isEmpty());
 		if (noChangesFound) {
 			Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Lang.get("dialog.file.nochanges"), ButtonType.YES, ButtonType.NO);
