@@ -4,19 +4,17 @@ import atlantafx.base.controls.Spacer;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.animation.Interpolator;
+import javafx.animation.Transition;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.effect.Blend;
-import javafx.scene.effect.BlendMode;
-import javafx.scene.effect.Bloom;
-import javafx.scene.effect.Glow;
+import javafx.scene.effect.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTArray;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
@@ -28,6 +26,8 @@ import me.darknet.assembler.util.Location;
 import org.reactfx.Change;
 import software.coley.collections.box.Box;
 import software.coley.collections.box.IntBox;
+import software.coley.observables.ObservableBoolean;
+import software.coley.observables.ObservableObject;
 import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphicFactory;
@@ -39,23 +39,33 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+/**
+ * Controller for displaying control flow jump lines.
+ *
+ * @author Matt Coley
+ */
 @Dependent
-public class JumpArrowPane extends AstBuildConsumerComponent {
+public class ControlFlowLines extends AstBuildConsumerComponent {
 	private static final Set<String> INSN_SET = Set.of("goto", "ifnull", "ifnonnull", "ifeq", "ifne", "ifle", "ifge", "iflt", "ifgt",
 			"if_acmpeq", "if_acmpne", "if_icmpeq", "if_icmpge", "if_icmpgt", "if_icmple", "if_icmplt", "if_icmpne");
-
+	private static final Set<String> SWITCH_INSNS = Set.of("tableswitch", "lookupswitch");
 	private final Consumer<Change<Integer>> onCaretMove = this::onCaretMove;
-	private final JumpArrowFactory arrowFactory = new JumpArrowFactory();
+	private final ObservableObject<ASTInstruction> currentInstructionSelection = new ObservableObject<>(null);
+	private final ObservableBoolean drawLines = new ObservableBoolean(false);
+	private final ControlFlowLineFactory arrowFactory = new ControlFlowLineFactory();
+	private final ControlFlowLinesConfig config;
 	private List<LabelData> model = Collections.emptyList();
 
-	// TODO: Make config for switching between all labels and just selected labels being targeted
 
 	@Inject
-	public JumpArrowPane() {
-		arrowFactory.active.addListener((ob, old, cur) -> {
-			if (editor != null)
-				editor.redrawParagraphGraphics();
-		});
+	public ControlFlowLines(@Nonnull ControlFlowLinesConfig config) {
+		this.config = config;
+
+		Runnable redraw = () -> {if (editor != null) editor.redrawParagraphGraphics();};
+		drawLines.addChangeListener((ob, old, cur) -> redraw.run());
+		currentInstructionSelection.addChangeListener((ob, old, cur) -> redraw.run());
+		config.getConnectionMode().addChangeListener((ob, old, cur) -> redraw.run());
+		config.getRenderMode().addChangeListener((ob, old, cur) -> redraw.run());
 	}
 
 	@Override
@@ -106,7 +116,7 @@ public class JumpArrowPane extends AstBuildConsumerComponent {
 	}
 
 	/**
-	 * Handles updating the {@link JumpArrowFactory}.
+	 * Handles updating the {@link ControlFlowLineFactory}.
 	 * <p/>
 	 * This logic is shoe-horned into here <i>(for now)</i> because
 	 * the variable tracking logic is internal to this class only.
@@ -118,18 +128,19 @@ public class JumpArrowPane extends AstBuildConsumerComponent {
 		int pos = editor.getCodeArea().getCaretPosition();
 		int line = editor.getCodeArea().getCurrentParagraph() + 1;
 
-		Box<ASTElement> selected = new Box<>();
+		// Find selected instruction (can be null)
+		Box<ASTInstruction> selected = new Box<>();
 		for (ASTElement element : astElements) {
 			if (element.range().within(pos)) {
 				element.walk(ast -> {
 					if (ast instanceof ASTInstruction instruction) {
 						Location location = ast.location();
 						if (location != null && location.line() == line)
-							selected.set(ast);
+							selected.set(instruction);
 						else {
 							String identifier = instruction.identifier().content();
 							if (("tableswitch".equals(identifier) || "lookupswitch".equals(identifier)) && ast.range().within(pos)) {
-								selected.set(ast);
+								selected.set(instruction);
 							}
 						}
 					}
@@ -138,19 +149,20 @@ public class JumpArrowPane extends AstBuildConsumerComponent {
 			}
 		}
 
-		ASTElement current = selected.get();
-		boolean active = false;
+		// Check if the selection was a label or supported instruction.
+		ASTInstruction current = selected.get();
+		boolean hasSelection = false;
 		if (current instanceof ASTLabel) {
-			active = true;
-		} else if (current instanceof ASTInstruction instruction) {
-			String insnName = instruction.identifier().content();
-			List<ASTElement> arguments = instruction.arguments();
-			if (!arguments.isEmpty() && INSN_SET.contains(insnName) ||
-					"tableswitch".equals(insnName) || "lookupswitch".equals(insnName)) {
-				active = true;
+			hasSelection = true;
+		} else if (current != null) {
+			String insnName = current.identifier().content();
+			List<ASTElement> arguments = current.arguments();
+			if (!arguments.isEmpty() && INSN_SET.contains(insnName) || SWITCH_INSNS.contains(insnName)) {
+				hasSelection = true;
 			}
 		}
-		arrowFactory.active.setValue(active);
+		currentInstructionSelection.setValue(current);
+		drawLines.setValue(hasSelection);
 	}
 
 	private void updateModel() {
@@ -243,14 +255,23 @@ public class JumpArrowPane extends AstBuildConsumerComponent {
 	/**
 	 * Highlighter which shows read and write access of a {@link LabelData}.
 	 */
-	private class JumpArrowFactory extends AbstractLineGraphicFactory {
+	private class ControlFlowLineFactory extends AbstractLineGraphicFactory {
 		private static final int MASK_NORTH = 0;
 		private static final int MASK_SOUTH = 1;
 		private static final int MASK_EAST = 2;
-		private final BooleanProperty active = new SimpleBooleanProperty(false);
+		private final int containerHeight = 16; // Each line graphic region is only 16px tall
+		private final int containerWidth = 16;
+		private final int[] offsets = new int[containerWidth];
+		private final long rainbowHueRotationDurationMillis = 3000;
 
-		private JumpArrowFactory() {
+		private ControlFlowLineFactory() {
 			super(AbstractLineGraphicFactory.P_BRACKET_MATCH - 1);
+
+			// Populate offsets
+			int j = 0;
+			for (int i = 0; i < offsets.length; i++) {
+				offsets[i] = 1 + (i * 3);
+			}
 		}
 
 		@Override
@@ -265,13 +286,10 @@ public class JumpArrowPane extends AstBuildConsumerComponent {
 
 		@Override
 		public void apply(@Nonnull LineContainer container, int paragraph) {
-			int containerHeight = 16; // Each line graphic region is only 16px tall
-			int containerWidth = 16;
-
 			List<LabelData> localModel = model;
 
-			if (!active.get() || localModel.isEmpty()) {
-				container.addHorizontal(new Spacer(containerWidth));
+			if (!drawLines.getValue() || localModel.isEmpty()) {
+				container.addHorizontal(new Spacer(0));
 				return;
 			}
 
@@ -311,22 +329,28 @@ public class JumpArrowPane extends AstBuildConsumerComponent {
 				double indent = editor.computeWhitespacePrefixWidth(paragraph) - 3 /* padding so lines aren't right up against text */;
 				double width = containerWidth + indent;
 				double height = containerHeight + 2;
-				int[] offsets = new int[containerWidth];
-				int j = 0;
-				for (int i = 0; i < offsets.length; i++) {
-					offsets[i] = 1 + (i * 3);
-				}
 				Canvas canvas = new Canvas(width, height);
 				canvas.setManaged(false);
 				canvas.setMouseTransparent(true);
 				canvas.setTranslateY(-1);
 
+				// Setup canvas styling for the render mode.
+				var renderMode = config.getRenderMode().getValue();
 				Blend blend = new Blend(BlendMode.HARD_LIGHT);
-				Bloom bloom = new Bloom(0.2);
-				Glow glow = new Glow(1.0);
-				bloom.setInput(blend);
-				glow.setInput(bloom);
-				canvas.setEffect(glow);
+				Effect effect = switch (renderMode) {
+					case FLAT -> blend;
+					case RAINBOW_GLOWING, FLAT_GLOWING -> {
+						Bloom bloom = new Bloom(0.2);
+						Glow glow = new Glow(0.7);
+						bloom.setInput(blend);
+						glow.setInput(bloom);
+						yield glow;
+					}
+				};
+				canvas.setEffect(effect);
+				if (renderMode == ControlFlowLinesConfig.LineRenderMode.RAINBOW_GLOWING) {
+					setupRainbowAnimation(effect, canvas).play();
+				}
 
 				GraphicsContext gc = canvas.getGraphicsContext2D();
 				gc.setLineWidth(1);
@@ -339,6 +363,32 @@ public class JumpArrowPane extends AstBuildConsumerComponent {
 
 					// Skip if line is not inside a jump range.
 					if (!labelData.isInRange(paragraph + 1)) continue;
+
+					// Handle skipping over cases if we only want to draw lines for what is currently selected.
+					if (config.getConnectionMode().getValue() == ControlFlowLinesConfig.ConnectionMode.CURRENT_CONNECTION) {
+						ASTInstruction value = currentInstructionSelection.getValue();
+						if (value == null) {
+							// No current selection?  We can skip everything. Just return.
+							return;
+						} else if (SWITCH_INSNS.contains(value.identifier().literal())) {
+							// If the selected item is a switch we want to draw all the lines to all destinations.
+							//
+							// The label data writers will be targeting the label identifier children in the AST
+							// so if we walk the switch instruction's children we can see if the current label data
+							// references one of those elements.
+							List<ASTElement> elements = new ArrayList<>();
+							value.walk(e -> {
+								elements.add(e);
+								return true;
+							});
+							if (labelData.usage().readersAndWriters().noneMatch(elements::contains))
+								continue;
+						} else if (labelData.usage().readersAndWriters().noneMatch(m -> m.equals(value))) {
+							// Anything else like a label declaration or a jump instruction mentioning a label
+							// can be handled with a basic equality check against all the usage readers/writers.
+							continue;
+						}
+					}
 
 					// There is always one 'reader' AKA the label itself.
 					// We will use this to figure out which direction to draw lines in below.
@@ -479,11 +529,27 @@ public class JumpArrowPane extends AstBuildConsumerComponent {
 			return color;
 		}
 
-		private static int hash(int x) {
-			x = ((x >> 16) ^ x) * 0x45d9f3b;
-			x = ((x >> 16) ^ x) * 0x45d9f3b;
-			x = (x >> 16) ^ x;
-			return x;
+		@Nonnull
+		private Transition setupRainbowAnimation(@Nonnull Effect effect, @Nonnull Canvas canvas) {
+			return new Transition() {
+				{
+					setInterpolator(Interpolator.LINEAR);
+					setCycleDuration(Duration.millis(rainbowHueRotationDurationMillis));
+					setCycleCount(Integer.MAX_VALUE);
+				}
+
+				@Override
+				protected void interpolate(double frac) {
+					long now = System.currentTimeMillis();
+					float diff = now % rainbowHueRotationDurationMillis;
+
+					float halfMillis = (float) rainbowHueRotationDurationMillis / 2;
+					float hue = Math.abs((4 * diff / rainbowHueRotationDurationMillis) - 2) - 1;
+					ColorAdjust adjust = new ColorAdjust(hue, 0.0, 0.0, 0.0);
+					adjust.setInput(effect);
+					canvas.setEffect(adjust);
+				}
+			};
 		}
 	}
 }
