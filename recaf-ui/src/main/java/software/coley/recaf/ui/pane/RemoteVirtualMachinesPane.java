@@ -341,6 +341,10 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 
 				// JMX tiles
 				JmxBeanServerConnection jmxConnection = attachManager.getJmxServerConnection(descriptor);
+				if (jmxConnection == null) {
+					logger.warn("Failed to get JMX connection for descriptor: {}", descriptor);
+					return;
+				}
 				List<JmxWrapper> beanSuppliers = List.of(
 						new JmxWrapper(CarbonIcons.OBJECT_STORAGE, "attach.tab.classloading", jmxConnection::getClassloadingBeanInfo),
 						new JmxWrapper(CarbonIcons.QUERY_QUEUE, "attach.tab.compilation", jmxConnection::getCompilationBeanInfo),
