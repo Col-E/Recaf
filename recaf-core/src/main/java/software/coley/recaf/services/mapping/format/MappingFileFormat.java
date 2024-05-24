@@ -110,7 +110,7 @@ public interface MappingFileFormat {
 	@Nonnull
 	static IntermediateMappings parse(@Nonnull String mappingText, @Nonnull MappingTreeReader visitor) throws InvalidMappingException {
 		// Populate the mapping-io model
-		MemoryMappingTree tree = new MemoryMappingTree(true);
+		MemoryMappingTree tree = new MemoryMappingTree();
 		StringReader reader = new StringReader(mappingText);
 		try {
 			visitor.read(reader, tree);
