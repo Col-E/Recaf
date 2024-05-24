@@ -22,16 +22,17 @@ import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.compile.*;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
+import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.services.phantom.PhantomGenerationException;
 import software.coley.recaf.services.phantom.PhantomGenerator;
 import software.coley.recaf.services.source.AstResolveResult;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
@@ -54,10 +55,7 @@ import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -83,16 +81,16 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 
 	@Inject
 	public JvmDecompilerPane(@Nonnull DecompilerPaneConfig config,
-							 @Nonnull KeybindingConfig keys,
-							 @Nonnull SearchBar searchBar,
-							 @Nonnull ToolsContainerComponent toolsContainer,
-							 @Nonnull JavaContextActionSupport contextActionSupport,
-							 @Nonnull FileTypeAssociationService languageAssociation,
-							 @Nonnull DecompilerManager decompilerManager,
-							 @Nonnull JavacCompiler javac,
-							 @Nonnull JavacCompilerConfig javacConfig,
-							 @Nonnull PhantomGenerator phantomGenerator,
-							 @Nonnull Actions actions) {
+	                         @Nonnull KeybindingConfig keys,
+	                         @Nonnull SearchBar searchBar,
+	                         @Nonnull ToolsContainerComponent toolsContainer,
+	                         @Nonnull JavaContextActionSupport contextActionSupport,
+	                         @Nonnull FileTypeAssociationService languageAssociation,
+	                         @Nonnull DecompilerManager decompilerManager,
+	                         @Nonnull JavacCompiler javac,
+	                         @Nonnull JavacCompilerConfig javacConfig,
+	                         @Nonnull PhantomGenerator phantomGenerator,
+	                         @Nonnull Actions actions) {
 		super(config, searchBar, contextActionSupport, languageAssociation, decompilerManager);
 		this.phantomGenerator = phantomGenerator;
 		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
@@ -208,12 +206,35 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 
 				// Check if any non-external-reference inner class entry no longer exists.
 				//  - Removal/updating/insertion is OK, renaming is not.
+				//  - Because inners may have other inners we need to recursively collect inner classes
 				Map<String, InnerClassInfo> realInners = info.getInnerClasses().stream()
 						.filter(inner -> !inner.isExternalReference())
 						.collect(Collectors.toMap(InnerClassInfo::getInnerClassName, Function.identity()));
+				Set<String> names = new HashSet<>();
+				boolean recurseAddInners;
+				do {
+					// Reset the recurse flag each iteration. We'll enable it only if we need to.
+					recurseAddInners = false;
+					for (String type : new HashSet<>(realInners.keySet())) {
+						// Skip if we already checked this type for further inner classes.
+						if (!names.add(type)) continue;
+
+						// Lookup inner class in workspace and add its inner classes to the map.
+						ClassPathNode typePath = workspace.findClass(type);
+						if (typePath != null) {
+							List<InnerClassInfo> innerClasses = typePath.getValue().getInnerClasses();
+							for (InnerClassInfo inner : innerClasses) {
+								if (inner.isExternalReference()) continue;
+
+								// Enable another recursive pass if a new inner class was found.
+								recurseAddInners |= realInners.putIfAbsent(inner.getInnerClassName(), inner) == null;
+							}
+						}
+					}
+				} while (recurseAddInners);
 
 				// Ensure all names in the compilation exist in the previous inner classes info
-				if (!realInners.isEmpty() && compilations.keySet().stream().anyMatch(name -> !realInners.containsKey(name))) {
+				if (!realInners.isEmpty() && compilations.keySet().stream().anyMatch(name -> !name.equals(infoName) && !realInners.containsKey(name))) {
 					logger.warn("Please only rename inner classes via mapping operations.");
 					Animations.animateWarn(this, 1000);
 					return;
