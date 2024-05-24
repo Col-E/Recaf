@@ -28,6 +28,7 @@ import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.json.GsonProvider;
 import software.coley.recaf.services.mapping.*;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TestEnvironment;
 import software.coley.recaf.workspace.model.Workspace;
@@ -63,8 +64,8 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 
 	@Inject
 	public CommentManager(@Nonnull DecompilerManager decompilerManager, @Nonnull WorkspaceManager workspaceManager,
-						  @Nonnull MappingListeners mappingListeners, @Nonnull GsonProvider gsonProvider,
-						  @Nonnull RecafDirectoriesConfig directoriesConfig, @Nonnull CommentManagerConfig config) {
+	                      @Nonnull MappingListeners mappingListeners, @Nonnull GsonProvider gsonProvider,
+	                      @Nonnull RecafDirectoriesConfig directoriesConfig, @Nonnull CommentManagerConfig config) {
 		this.workspaceManager = workspaceManager;
 		this.gsonProvider = gsonProvider;
 		this.directoriesConfig = directoriesConfig;
@@ -333,52 +334,32 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 
 	@Override
 	public void onClassCommentUpdated(@Nonnull ClassPathNode path, @Nullable String comment) {
-		for (CommentUpdateListener listener : commentUpdateListeners)
-			try {
-				listener.onClassCommentUpdated(path, comment);
-			} catch (Throwable t) {
-				logger.error("Uncaught exception in handling of comment update for '{}'", path.getValue().getName(), t);
-			}
+		CollectionUtil.safeForEach(commentUpdateListeners, listener -> listener.onClassCommentUpdated(path, comment),
+				(listener, t) -> logger.error("Exception thrown when updating class comment", t));
 	}
 
 	@Override
 	public void onFieldCommentUpdated(@Nonnull ClassMemberPathNode path, @Nullable String comment) {
-		for (CommentUpdateListener listener : commentUpdateListeners)
-			try {
-				listener.onFieldCommentUpdated(path, comment);
-			} catch (Throwable t) {
-				logger.error("Uncaught exception in handling of comment update for '{}'", path.getValue().getName(), t);
-			}
+		CollectionUtil.safeForEach(commentUpdateListeners, listener -> listener.onFieldCommentUpdated(path, comment),
+				(listener, t) -> logger.error("Exception thrown when updating field comment", t));
 	}
 
 	@Override
 	public void onMethodCommentUpdated(@Nonnull ClassMemberPathNode path, @Nullable String comment) {
-		for (CommentUpdateListener listener : commentUpdateListeners)
-			try {
-				listener.onMethodCommentUpdated(path, comment);
-			} catch (Throwable t) {
-				logger.error("Uncaught exception in handling of comment update for '{}'", path.getValue().getName(), t);
-			}
+		CollectionUtil.safeForEach(commentUpdateListeners, listener -> listener.onMethodCommentUpdated(path, comment),
+				(listener, t) -> logger.error("Exception thrown when updating method comment", t));
 	}
 
 	@Override
 	public void onClassContainerCreated(@Nonnull ClassPathNode path, @Nullable ClassComments comments) {
-		for (CommentContainerListener listener : commentContainerListeners)
-			try {
-				listener.onClassContainerCreated(path, comments);
-			} catch (Throwable t) {
-				logger.error("Uncaught exception in handling of comment container creation for '{}'", path.getValue().getName(), t);
-			}
+		CollectionUtil.safeForEach(commentContainerListeners, listener -> listener.onClassContainerCreated(path, comments),
+				(listener, t) -> logger.error("Exception thrown when creating class comment container", t));
 	}
 
 	@Override
 	public void onClassContainerRemoved(@Nonnull ClassPathNode path, @Nullable ClassComments comments) {
-		for (CommentContainerListener listener : commentContainerListeners)
-			try {
-				listener.onClassContainerRemoved(path, comments);
-			} catch (Throwable t) {
-				logger.error("Uncaught exception in handling of comment container removal for '{}'", path.getValue().getName(), t);
-			}
+		CollectionUtil.safeForEach(commentContainerListeners, listener -> listener.onClassContainerRemoved(path, comments),
+				(listener, t) -> logger.error("Exception thrown when removing class comment container", t));
 	}
 
 	/**
@@ -487,7 +468,7 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 
 	@Nonnull
 	private DelegatingWorkspaceComments newDelegatingWorkspaceComments(@Nonnull Workspace workspace,
-																	   @Nonnull PersistWorkspaceComments persistComments) {
+	                                                                   @Nonnull PersistWorkspaceComments persistComments) {
 		DelegatingWorkspaceComments delegatingComments = new DelegatingWorkspaceComments(this, persistComments);
 
 		// Initialize delegate class comment models for entries in the persist model.

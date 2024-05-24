@@ -1,6 +1,9 @@
 package software.coley.recaf.services.config;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import jakarta.annotation.Nonnull;
@@ -14,10 +17,11 @@ import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.config.ConfigCollectionValue;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
-import software.coley.recaf.services.json.GsonProvider;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
+import software.coley.recaf.services.json.GsonProvider;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.TestEnvironment;
 
 import java.io.IOException;
@@ -43,7 +47,7 @@ public class ConfigManager implements Service {
 
 	@Inject
 	public ConfigManager(@Nonnull ConfigManagerConfig config, @Nonnull RecafDirectoriesConfig fileConfig,
-						 @Nonnull GsonProvider gsonProvider, @Nonnull Instance<ConfigContainer> containers) {
+	                     @Nonnull GsonProvider gsonProvider, @Nonnull Instance<ConfigContainer> containers) {
 		this.config = config;
 		this.fileConfig = fileConfig;
 		this.gsonProvider = gsonProvider;
@@ -159,8 +163,8 @@ public class ConfigManager implements Service {
 		containers.put(id, container);
 
 		// Alert listeners when content added
-		for (ManagedConfigListener listener : listeners)
-			listener.onRegister(container);
+		CollectionUtil.safeForEach(listeners, listener -> listener.onRegister(container),
+				(listener, t) -> logger.error("Exception thrown when registering container '{}'", container.getId(), t));
 	}
 
 	/**
@@ -172,8 +176,8 @@ public class ConfigManager implements Service {
 
 		// Alert listeners when content removed
 		if (removed != null) {
-			for (ManagedConfigListener listener : listeners)
-				listener.onUnregister(removed);
+			CollectionUtil.safeForEach(listeners, listener -> listener.onUnregister(container),
+					(listener, t) -> logger.error("Exception thrown when unregistering container '{}'", container.getId(), t));
 		}
 	}
 

@@ -16,6 +16,7 @@ import software.coley.instrument.message.MessageFactory;
 import software.coley.instrument.sock.SocketAvailability;
 import software.coley.instrument.util.Discovery;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.DevDetection;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
@@ -311,8 +312,8 @@ public class BasicAttachManager implements AttachManager {
 			}
 
 			// Call listeners
-			for (PostScanListener listener : postScanListeners)
-				listener.onScanCompleted(toAdd, toRemove);
+			CollectionUtil.safeForEach(postScanListeners, listener -> listener.onScanCompleted(toAdd, toRemove),
+					(listener, t) -> logger.error("Exception thrown after scan completion", t));
 		});
 	}
 

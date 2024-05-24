@@ -3,10 +3,7 @@ package software.coley.recaf.util;
 import jakarta.annotation.Nonnull;
 import org.openrewrite.internal.ThrowingConsumer;
 
-import java.util.AbstractList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 /**
@@ -17,6 +14,10 @@ import java.util.function.BiConsumer;
  */
 public class CollectionUtil {
 	/**
+	 * Runs an action via a consumer on each item of the collection. If an error occurs for a given item,
+	 * it is passed along to the error consumer along with the error before moving onto the next item in
+	 * collection.
+	 *
 	 * @param collection
 	 * 		Collection to iterate over.
 	 * @param consumer
@@ -29,7 +30,8 @@ public class CollectionUtil {
 	public static <T> void safeForEach(@Nonnull Collection<T> collection,
 	                                   @Nonnull ThrowingConsumer<T> consumer,
 	                                   @Nonnull BiConsumer<T, Throwable> errorConsumer) {
-		for (T item : collection) {
+		// Iterate over a shallow-copy in case the consumer updates the original collection.
+		for (T item : new ArrayList<>(collection)) {
 			try {
 				consumer.accept(item);
 			} catch (Throwable t) {

@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
+import software.coley.recaf.util.CollectionUtil;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -110,6 +111,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 			throw new IllegalStateException("Failed history decrement, no prior history to read from for: " + key);
 		}
 		int size = itemHistory.size();
+
 		// Update map with prior entry
 		I currentItem = get(key);
 		I priorItem;
@@ -119,14 +121,10 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 			priorItem = itemHistory.peek();
 		}
 		backing.put(key, priorItem);
-		// Notify listener
-		for (BundleListener<I> listener : listeners) {
-			try {
-				listener.onUpdateItem(key, currentItem, priorItem);
-			} catch (Throwable t) {
-				logger.error("Uncaught error in bundle listener (revert)", t);
-			}
-		}
+
+		// Notify listeners
+		CollectionUtil.safeForEach(listeners, listener -> listener.onUpdateItem(key, currentItem, priorItem),
+				(listener, t) -> logger.error("Exception thrown when decrementing bundle history", t));
 	}
 
 	@Override
@@ -172,18 +170,15 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	@Override
 	public I put(@Nonnull String key, @Nonnull I newValue) {
 		I oldValue = backing.put(key, newValue);
-		// Notify listener
-		for (BundleListener<I> listener : listeners) {
-			try {
-				if (oldValue == null) {
-					listener.onNewItem(key, newValue);
-				} else {
-					listener.onUpdateItem(key, oldValue, newValue);
-				}
-			} catch (Throwable t) {
-				logger.error("Uncaught error in resource listener (put)", t);
+		// Notify listeners
+		CollectionUtil.safeForEach(listeners, listener -> {
+			if (oldValue == null) {
+				listener.onNewItem(key, newValue);
+			} else {
+				listener.onUpdateItem(key, oldValue, newValue);
 			}
-		}
+		}, (listener, t) -> logger.error("Exception thrown when putting bundle item", t));
+
 		// Update history
 		if (oldValue == null) {
 			initHistory(newValue);
@@ -197,14 +192,10 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	public I remove(@Nonnull Object key) {
 		I info = backing.remove(key);
 		if (info != null) {
-			// Notify listener
-			for (BundleListener<I> listener : listeners) {
-				try {
-					listener.onRemoveItem((String) key, info);
-				} catch (Throwable t) {
-					logger.error("Uncaught error in resource listener (remove)", t);
-				}
-			}
+			// Notify listeners
+			CollectionUtil.safeForEach(listeners, listener -> listener.onRemoveItem((String) key, info),
+					(listener, t) -> logger.error("Exception thrown when removing bundle item", t));
+
 			// Update history
 			history.remove(key);
 		}

@@ -2,12 +2,16 @@ package software.coley.recaf.services.mapping.aggregate;
 
 import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.BasicBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +26,7 @@ import java.util.List;
 @AutoRegisterWorkspaceListeners
 public class AggregateMappingManager implements Service, WorkspaceCloseListener {
 	public static final String SERVICE_ID = "mapping-aggregator";
+	private static final Logger logger = Logging.get(AggregateMappingManager.class);
 	private final List<AggregatedMappingsListener> aggregateListeners = new ArrayList<>();
 	private final AggregatedMappings aggregatedMappings;
 	private final AggregateMappingManagerConfig config;
@@ -47,7 +52,8 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	 */
 	public void updateAggregateMappings(Mappings newMappings) {
 		aggregatedMappings.update(newMappings);
-		aggregateListeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
+		CollectionUtil.safeForEach(aggregateListeners, listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()),
+				(listener, t) -> logger.error("Exception thrown when updating aggregate mappings", t));
 	}
 
 	/**
@@ -55,7 +61,8 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	 */
 	private void clearAggregated() {
 		aggregatedMappings.clear();
-		aggregateListeners.forEach(listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()));
+		CollectionUtil.safeForEach(aggregateListeners, listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()),
+				(listener, t) -> logger.error("Exception thrown when updating aggregate mappings", t));
 	}
 
 	/**

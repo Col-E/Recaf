@@ -1,8 +1,11 @@
 package software.coley.recaf.workspace.model;
 
 import jakarta.annotation.Nonnull;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -18,6 +21,7 @@ import java.util.List;
  * @author Matt Coley
  */
 public class BasicWorkspace implements Workspace {
+	private static final Logger logger = Logging.get(BasicWorkspace.class);
 	private final List<WorkspaceModificationListener> modificationListeners = new ArrayList<>();
 	private final WorkspaceResource primary;
 	private final List<WorkspaceResource> supporting = new ArrayList<>();
@@ -71,18 +75,16 @@ public class BasicWorkspace implements Workspace {
 	@Override
 	public void addSupportingResource(@Nonnull WorkspaceResource resource) {
 		supporting.add(resource);
-		for (WorkspaceModificationListener listener : modificationListeners) {
-			listener.onAddLibrary(this, resource);
-		}
+		CollectionUtil.safeForEach(modificationListeners, listener -> listener.onAddLibrary(this, resource),
+				(listener, t) -> logger.error("Exception thrown when adding supporting resource", t));
 	}
 
 	@Override
 	public boolean removeSupportingResource(@Nonnull WorkspaceResource resource) {
 		boolean remove = supporting.remove(resource);
 		if (remove) {
-			for (WorkspaceModificationListener listener : modificationListeners) {
-				listener.onRemoveLibrary(this, resource);
-			}
+			CollectionUtil.safeForEach(modificationListeners, listener -> listener.onRemoveLibrary(this, resource),
+					(listener, t) -> logger.error("Exception thrown when removing supporting resource", t));
 		}
 		return remove;
 	}

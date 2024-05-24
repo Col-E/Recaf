@@ -73,7 +73,7 @@ public class PathLoadingManager {
 		// Invoke listeners, new content is being loaded.
 		CollectionUtil.safeForEach(preLoadListeners,
 				listener -> listener.onPreLoad(primaryPath, supportingPaths),
-				(listener, t) -> logger.error("Error handling async workspace load", t));
+				(listener, t) -> logger.error("Exception thrown opening workspace from '{}'", primaryPath, t));
 
 		// Load resources from paths.
 		CompletableFuture<Workspace> future = new CompletableFuture<>();
