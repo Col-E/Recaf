@@ -28,6 +28,7 @@ public class IntermediateMappings implements Mappings {
 	 * 		Post-mapping name.
 	 */
 	public void addClass(String oldName, String newName) {
+		if (Objects.equals(oldName, newName)) return; // Skip identity mappings
 		classes.put(oldName, new ClassMapping(oldName, newName));
 	}
 
@@ -42,6 +43,7 @@ public class IntermediateMappings implements Mappings {
 	 * 		Post-mapping field name.
 	 */
 	public void addField(String ownerName, String desc, String oldName, String newName) {
+		if (Objects.equals(oldName, newName)) return; // Skip identity mappings
 		fields.computeIfAbsent(ownerName, n -> new ArrayList<>())
 				.add(new FieldMapping(ownerName, oldName, desc, newName));
 	}
@@ -57,6 +59,7 @@ public class IntermediateMappings implements Mappings {
 	 * 		Post-mapping method name.
 	 */
 	public void addMethod(String ownerName, String desc, String oldName, String newName) {
+		if (Objects.equals(oldName, newName)) return; // Skip identity mappings
 		methods.computeIfAbsent(ownerName, n -> new ArrayList<>())
 				.add(new MethodMapping(ownerName, oldName, desc, newName));
 	}
@@ -80,6 +83,7 @@ public class IntermediateMappings implements Mappings {
 	public void addVariable(String ownerName, String methodName, String methodDesc,
 							String desc, String oldName, int index,
 							String newName) {
+		if (Objects.equals(oldName, newName)) return; // Skip identity mappings
 		String key = varKey(ownerName, methodName, methodDesc);
 		variables.computeIfAbsent(key, n -> new ArrayList<>())
 				.add(new VariableMapping(ownerName, methodName, methodDesc, desc, oldName, index, newName));
