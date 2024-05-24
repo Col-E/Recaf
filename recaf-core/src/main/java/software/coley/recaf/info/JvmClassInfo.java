@@ -9,9 +9,7 @@ import software.coley.recaf.info.properties.builtin.ReferencedClassesProperty;
 import software.coley.recaf.info.properties.builtin.StringDefinitionsProperty;
 import software.coley.recaf.util.Types;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -61,8 +59,8 @@ public interface JvmClassInfo extends ClassInfo {
 	 * @return Set of all classes referenced in the constant pool.
 	 */
 	@Nonnull
-	default Set<String> getReferencedClasses() {
-		SortedSet<String> classes = ReferencedClassesProperty.get(this);
+	default NavigableSet<String> getReferencedClasses() {
+		NavigableSet<String> classes = ReferencedClassesProperty.get(this);
 		if (classes != null)
 			return classes;
 
@@ -111,7 +109,7 @@ public interface JvmClassInfo extends ClassInfo {
 			}
 		}
 		ReferencedClassesProperty.set(this, classNames);
-		return classNames;
+		return Objects.requireNonNull(ReferencedClassesProperty.get(this));
 	}
 
 	/**
