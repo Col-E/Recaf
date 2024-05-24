@@ -88,7 +88,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 
 							MappingResults results = mappingApplier.applyToPrimaryResource(parsedMappings);
 							results.apply();
-							logger.info("Applied mappings from {}", file.getName());
+							logger.info("Applied mappings from {} - Updated {} classes", file.getName(), results.getPostMappingPaths().size());
 						} catch (Exception ex) {
 							logger.error("Failed to read mappings from {}", file.getName(), ex);
 						}
