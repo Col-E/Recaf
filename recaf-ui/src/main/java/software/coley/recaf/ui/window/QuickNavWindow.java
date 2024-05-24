@@ -46,7 +46,7 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.ui.config.TextFormatConfig;
+import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.ui.control.AbstractSearchBar;
 import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.control.FontIconView;
