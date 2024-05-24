@@ -3,9 +3,12 @@ package software.coley.recaf.workspace;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.services.workspace.io.ResourceImporter;
+import software.coley.recaf.util.CollectionUtil;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -14,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
@@ -25,6 +29,7 @@ import java.util.function.Consumer;
  */
 @ApplicationScoped
 public class PathLoadingManager {
+	private static final Logger logger = Logging.get(PathLoadingManager.class);
 	private final ExecutorService loadPool = ThreadPoolFactory.newSingleThreadExecutor("path-loader");
 	private final List<WorkspacePreLoadListener> preLoadListeners = new ArrayList<>();
 	private final WorkspaceManager workspaceManager;
@@ -59,14 +64,19 @@ public class PathLoadingManager {
 	 * 		Paths to the supporting resource files.
 	 * @param errorHandling
 	 * 		Error handling for invalid input.
+	 *
+	 * @return Future of the created workspace.
 	 */
-	public void asyncNewWorkspace(@Nonnull Path primaryPath, @Nonnull List<Path> supportingPaths,
-								  @Nonnull Consumer<Throwable> errorHandling) {
+	@Nonnull
+	public CompletableFuture<Workspace> asyncNewWorkspace(@Nonnull Path primaryPath, @Nonnull List<Path> supportingPaths,
+	                                                      @Nonnull Consumer<Throwable> errorHandling) {
 		// Invoke listeners, new content is being loaded.
-		for (WorkspacePreLoadListener listener : preLoadListeners)
-			listener.onPreLoad(primaryPath, supportingPaths);
+		CollectionUtil.safeForEach(preLoadListeners,
+				listener -> listener.onPreLoad(primaryPath, supportingPaths),
+				(listener, t) -> logger.error("Error handling async workspace load", t));
 
 		// Load resources from paths.
+		CompletableFuture<Workspace> future = new CompletableFuture<>();
 		loadPool.submit(() -> {
 			try {
 				List<WorkspaceResource> supportingResources = new ArrayList<>();
@@ -78,11 +88,14 @@ public class PathLoadingManager {
 
 				// Wrap into workspace and assign it
 				Workspace workspace = new BasicWorkspace(primaryResource, supportingResources);
+				future.complete(workspace);
 				workspaceManager.setCurrent(workspace);
 			} catch (Throwable t) {
+				future.completeExceptionally(t);
 				errorHandling.accept(t);
 			}
 		});
+		return future;
 	}
 
 	/**
@@ -92,20 +105,29 @@ public class PathLoadingManager {
 	 * 		Paths to the supporting resource files.
 	 * @param errorHandling
 	 * 		Error handling for invalid input.
+	 *
+	 * @return Future of added supporting resources.
 	 */
-	public void asyncAddSupportingResourcesToWorkspace(@Nonnull Workspace workspace,
-													   @Nonnull List<Path> supportingPaths,
-													   @Nonnull Consumer<IOException> errorHandling) {
+	@Nonnull
+	public CompletableFuture<List<WorkspaceResource>> asyncAddSupportingResourcesToWorkspace(@Nonnull Workspace workspace,
+	                                                                                         @Nonnull List<Path> supportingPaths,
+	                                                                                         @Nonnull Consumer<IOException> errorHandling) {
 		// Load resources from paths.
+		CompletableFuture<List<WorkspaceResource>> future = new CompletableFuture<>();
 		loadPool.submit(() -> {
 			try {
+				List<WorkspaceResource> loadedResources = new ArrayList<>(supportingPaths.size());
 				for (Path supportingPath : supportingPaths) {
 					WorkspaceResource supportResource = resourceImporter.importResource(supportingPath);
+					loadedResources.add(supportResource);
 					workspace.addSupportingResource(supportResource);
 				}
+				future.complete(loadedResources);
 			} catch (IOException ex) {
+				future.completeExceptionally(ex);
 				errorHandling.accept(ex);
 			}
 		});
+		return future;
 	}
 }

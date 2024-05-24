@@ -1,10 +1,13 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
+import org.openrewrite.internal.ThrowingConsumer;
 
 import java.util.AbstractList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * Various collection utils.
@@ -13,6 +16,28 @@ import java.util.List;
  * @author <a href="https://stackoverflow.com/a/29356678/8071915">Paul Boddington</a> - Binary search.
  */
 public class CollectionUtil {
+	/**
+	 * @param collection
+	 * 		Collection to iterate over.
+	 * @param consumer
+	 * 		Action to run on each item.
+	 * @param errorConsumer
+	 * 		Error handling taking in the item that the consumer failed on, and the error thrown.
+	 * @param <T>
+	 * 		Item type.
+	 */
+	public static <T> void safeForEach(@Nonnull Collection<T> collection,
+	                                   @Nonnull ThrowingConsumer<T> consumer,
+	                                   @Nonnull BiConsumer<T, Throwable> errorConsumer) {
+		for (T item : collection) {
+			try {
+				consumer.accept(item);
+			} catch (Throwable t) {
+				errorConsumer.accept(item, t);
+			}
+		}
+	}
+
 	/**
 	 * @param list
 	 * 		List to insert into.
