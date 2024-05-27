@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
+import software.coley.recaf.services.decompile.fallback.FallbackDecompiler;
 import software.coley.recaf.services.decompile.filter.JvmBytecodeFilter;
 import software.coley.recaf.services.decompile.filter.OutputTextFilter;
 import software.coley.recaf.services.decompile.procyon.ProcyonDecompiler;
@@ -59,6 +60,13 @@ public class DecompileManagerTest extends TestBase {
 	void testVineflower() {
 		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(VineflowerDecompiler.NAME);
 		assertNotNull(decompiler, "Vineflower decompiler was never registered with manager");
+		runJvmDecompilation(decompiler);
+	}
+
+	@Test
+	void testFallback() {
+		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(FallbackDecompiler.NAME);
+		assertNotNull(decompiler, "Fallback decompiler was never registered with manager");
 		runJvmDecompilation(decompiler);
 	}
 
