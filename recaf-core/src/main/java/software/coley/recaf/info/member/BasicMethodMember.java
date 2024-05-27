@@ -2,6 +2,7 @@ package software.coley.recaf.info.member;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.info.annotation.AnnotationElement;
 
 import java.util.List;
 import java.util.Objects;
@@ -14,6 +15,7 @@ import java.util.Objects;
 public class BasicMethodMember extends BasicMember implements MethodMember {
 	private final List<String> thrownTypes;
 	private final List<LocalVariable> variables;
+	private AnnotationElement annotationDefault;
 
 	/**
 	 * @param name
@@ -44,6 +46,13 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 		variables.add(variable);
 	}
 
+	/**
+	 * @param annotationDefault Element value to set.
+	 */
+	public void setAnnotationDefault(@Nonnull AnnotationElement annotationDefault) {
+		this.annotationDefault = annotationDefault;
+	}
+
 	@Nonnull
 	@Override
 	public List<String> getThrownTypes() {
@@ -54,6 +63,12 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 	@Override
 	public List<LocalVariable> getLocalVariables() {
 		return variables;
+	}
+
+	@Nullable
+	@Override
+	public AnnotationElement getAnnotationDefault() {
+		return annotationDefault;
 	}
 
 	@Override
