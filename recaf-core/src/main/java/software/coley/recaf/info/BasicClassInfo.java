@@ -10,10 +10,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -153,16 +150,19 @@ public abstract class BasicClassInfo implements ClassInfo {
 	@Override
 	public List<String> getOuterClassBreadcrumbs() {
 		if (breadcrumbs == null) {
+			String currentOuter = getOuterClassName();
+			if (currentOuter == null)
+				return breadcrumbs = Collections.emptyList();
+
 			int maxOuterDepth = 10;
 			breadcrumbs = new ArrayList<>();
-			String currentOuter = getOuterClassName();
 			int counter = 0;
 			while (currentOuter != null) {
 				if (++counter > maxOuterDepth) {
 					breadcrumbs.clear(); // assuming some obfuscator is at work, so breadcrumbs might be invalid.
 					break;
 				}
-				breadcrumbs.add(0, currentOuter);
+				breadcrumbs.addFirst(currentOuter);
 				String targetOuter = currentOuter;
 				currentOuter = innerClasses.stream()
 						.filter(i -> i.getInnerClassName().equals(targetOuter))
