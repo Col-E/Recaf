@@ -25,14 +25,14 @@ public interface MemberPredicate {
 			@Override
 			public boolean matchField(int access, String name, String desc, String sig, Object value) {
 				if (member.isField())
-					return name.equals(member.getName()) && desc.equals(member.getName());
+					return name.equals(member.getName()) && desc.equals(member.getDescriptor());
 				return false;
 			}
 
 			@Override
 			public boolean matchMethod(int access, String name, String desc, String sig, String[] exceptions) {
 				if (member.isMethod())
-					return name.equals(member.getName()) && desc.equals(member.getName());
+					return name.equals(member.getName()) && desc.equals(member.getDescriptor());
 				return false;
 			}
 		};
@@ -51,7 +51,7 @@ public interface MemberPredicate {
 			public boolean matchField(int access, String name, String desc, String sig, Object value) {
 				for (ClassMember member : members)
 					if (member.isField())
-						return name.equals(member.getName()) && desc.equals(member.getName());
+						return name.equals(member.getName()) && desc.equals(member.getDescriptor());
 				return false;
 			}
 
@@ -59,7 +59,7 @@ public interface MemberPredicate {
 			public boolean matchMethod(int access, String name, String desc, String sig, String[] exceptions) {
 				for (ClassMember member : members)
 					if (member.isMethod())
-						return name.equals(member.getName()) && desc.equals(member.getName());
+						return name.equals(member.getName()) && desc.equals(member.getDescriptor());
 				return false;
 			}
 		};
