@@ -6,9 +6,11 @@ import software.coley.recaf.info.annotation.TypeAnnotationInfo;
 import software.coley.recaf.info.builder.AbstractClassInfoBuilder;
 import software.coley.recaf.info.member.BasicMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
+import software.coley.recaf.util.Types;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -21,6 +23,9 @@ import java.util.stream.Stream;
  * @see BasicAndroidClassInfo
  */
 public abstract class BasicClassInfo implements ClassInfo {
+	private static final int SIGS_VALID = 1;
+	private static final int SIGS_INVALID = 0;
+	private static final int SIGS_UNKNOWN = -1;
 	private final PropertyContainer properties;
 	private final String name;
 	private final String superName;
@@ -37,6 +42,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 	private final List<FieldMember> fields;
 	private final List<MethodMember> methods;
 	private List<String> breadcrumbs;
+	private int sigCheck = SIGS_UNKNOWN;
 
 	protected BasicClassInfo(AbstractClassInfoBuilder<?> builder) {
 		this(builder.getName(),
@@ -57,14 +63,14 @@ public abstract class BasicClassInfo implements ClassInfo {
 	}
 
 	protected BasicClassInfo(@Nonnull String name, String superName, @Nonnull List<String> interfaces, int access,
-							 String signature, String sourceFileName,
-							 @Nonnull List<AnnotationInfo> annotations,
-							 @Nonnull List<TypeAnnotationInfo> typeAnnotations,
-							 String outerClassName, String outerMethodName,
-							 String outerMethodDescriptor,
-							 @Nonnull List<InnerClassInfo> innerClasses,
-							 @Nonnull List<FieldMember> fields, @Nonnull List<MethodMember> methods,
-							 @Nonnull PropertyContainer properties) {
+	                         String signature, String sourceFileName,
+	                         @Nonnull List<AnnotationInfo> annotations,
+	                         @Nonnull List<TypeAnnotationInfo> typeAnnotations,
+	                         String outerClassName, String outerMethodName,
+	                         String outerMethodDescriptor,
+	                         @Nonnull List<InnerClassInfo> innerClasses,
+	                         @Nonnull List<FieldMember> fields, @Nonnull List<MethodMember> methods,
+	                         @Nonnull PropertyContainer properties) {
 		this.name = name;
 		this.superName = superName;
 		this.interfaces = interfaces;
@@ -112,6 +118,49 @@ public abstract class BasicClassInfo implements ClassInfo {
 	@Override
 	public String getSignature() {
 		return signature;
+	}
+
+	@Override
+	public boolean hasValidSignatures() {
+		// Check cached value.
+		if (sigCheck != SIGS_UNKNOWN) return sigCheck == SIGS_VALID;
+
+		// Check class level signature.
+		String classSignature = getSignature();
+		if (classSignature != null && !Types.isValidSignature(classSignature, false)) {
+			sigCheck = SIGS_INVALID;
+			return false;
+		}
+
+		// Check field signatures.
+		for (FieldMember field : getFields()) {
+			String fieldSignature = field.getSignature();
+			if (fieldSignature != null && !Types.isValidSignature(field.getSignature(), true)) {
+				sigCheck = SIGS_INVALID;
+				return false;
+			}
+		}
+
+		// Check method signatures.
+		for (MethodMember method : getMethods()) {
+			String methodSignature = method.getSignature();
+			if (methodSignature != null && !Types.isValidSignature(methodSignature, false)) {
+				sigCheck = SIGS_INVALID;
+				return false;
+			}
+
+			// And local variables.
+			for (LocalVariable variable : method.getLocalVariables()) {
+				String localSignature = variable.getSignature();
+				if (localSignature != null && !Types.isValidSignature(localSignature, true)) {
+					sigCheck = SIGS_INVALID;
+					return false;
+				}
+			}
+		}
+
+		sigCheck = SIGS_VALID;
+		return true;
 	}
 
 	@Override
@@ -236,7 +285,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 	public int hashCode() {
 		// NOTE: Do NOT consider the properties since contents of the map can point back to this instance
 		//       or our containing resource, causing a cycle.
-		int result =  name.hashCode();
+		int result = name.hashCode();
 		result = 31 * result + (superName != null ? superName.hashCode() : 0);
 		result = 31 * result + interfaces.hashCode();
 		result = 31 * result + access;
