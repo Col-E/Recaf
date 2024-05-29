@@ -248,9 +248,11 @@ public class ScriptManagerPane extends BorderPane {
 
 				// Write to disk regardless, if path is given. If not given, prompt user for it.
 				if (scriptPath == null) {
-					FileChooser chooser = new FileChooser();
-					chooser.setInitialDirectory(directories.getScriptsDirectory().toFile());
-					chooser.setTitle(Lang.get("dialog.file.save"));
+					FileChooser chooser = new FileChooserBuilder()
+							.setInitialDirectory(directories.getScriptsDirectory())
+							.setTitle(Lang.get("dialog.file.save"))
+							.build();
+
 					File selected = chooser.showSaveDialog(getScene().getWindow());
 					if (selected != null)
 						scriptPath = selected.toPath();

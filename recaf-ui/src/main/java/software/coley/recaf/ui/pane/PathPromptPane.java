@@ -21,6 +21,8 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.util.DirectoryChooserBuilder;
+import software.coley.recaf.util.FileChooserBuilder;
 import software.coley.recaf.util.Lang;
 
 import java.io.File;
@@ -61,9 +63,10 @@ public class PathPromptPane extends BorderPane {
 		Button openButton = new ActionButton(openText, () -> {
 			File recentOpenDir = recentFilesConfig.getLastWorkspaceOpenDirectory().unboxingMap(File::new);
 			if (isFile.get()) {
-				FileChooser chooser = new FileChooser();
-				chooser.setInitialDirectory(recentOpenDir);
-				chooser.setTitle(Lang.get("dialog.file.open"));
+				FileChooser chooser = new FileChooserBuilder()
+						.setInitialDirectory(recentOpenDir)
+						.setTitle(Lang.get("dialog.file.open"))
+						.build();
 
 				// Show the prompt, update the path when complete
 				File file = chooser.showOpenDialog(getScene().getWindow());
@@ -73,9 +76,10 @@ public class PathPromptPane extends BorderPane {
 					path.set(file.toPath());
 				}
 			} else {
-				DirectoryChooser chooser = new DirectoryChooser();
-				chooser.setInitialDirectory(recentOpenDir);
-				chooser.setTitle(Lang.get("dialog.file.open"));
+				DirectoryChooser chooser = new DirectoryChooserBuilder()
+						.setInitialDirectory(recentOpenDir)
+						.setTitle(Lang.get("dialog.file.open"))
+						.build();
 
 				// Show the prompt, update the path when complete
 				File file = chooser.showDialog(getScene().getWindow());

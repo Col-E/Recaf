@@ -17,9 +17,7 @@ import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.services.workspace.io.WorkspaceExporter;
 import software.coley.recaf.ui.config.ExportConfig;
 import software.coley.recaf.ui.config.RecentFilesConfig;
-import software.coley.recaf.util.ErrorDialogs;
-import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -89,14 +87,16 @@ public class PathExportingManager {
 		File lastExportDir = lastWorkspaceExportDir.unboxingMap(File::new);
 		File selectedPath;
 		if (primaryResource instanceof WorkspaceDirectoryResource) {
-			DirectoryChooser chooser = new DirectoryChooser();
-			chooser.setInitialDirectory(lastExportDir);
-			chooser.setTitle(Lang.get("dialog.file.export"));
+			DirectoryChooser chooser = new DirectoryChooserBuilder()
+					.setInitialDirectory(lastExportDir)
+					.setTitle(Lang.get("dialog.file.export"))
+					.build();
 			selectedPath = chooser.showDialog(null);
 		} else {
-			FileChooser chooser = new FileChooser();
-			chooser.setInitialDirectory(lastExportDir);
-			chooser.setTitle(Lang.get("dialog.file.export"));
+			FileChooser chooser = new FileChooserBuilder()
+					.setInitialDirectory(lastExportDir)
+					.setTitle(Lang.get("dialog.file.export"))
+					.build();
 			selectedPath = chooser.showSaveDialog(null);
 		}
 
@@ -138,10 +138,12 @@ public class PathExportingManager {
 		// Prompt a path for the user to write to.
 		ObservableString lastClassExportDir = recentFilesConfig.getLastClassExportDirectory();
 		File lastExportDir = lastClassExportDir.unboxingMap(File::new);
-		FileChooser chooser = new FileChooser();
-		chooser.setInitialDirectory(lastExportDir);
-		chooser.setTitle(Lang.get("dialog.file.export"));
-		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java Class", "*.class"));
+		FileChooser chooser = new FileChooserBuilder()
+				.setInitialFileName(StringUtil.shortenPath(classInfo.getName()) + ".class")
+				.setInitialDirectory(lastExportDir)
+				.setFileExtensionFilter("Java Class", "*.class")
+				.setTitle(Lang.get("dialog.file.export"))
+				.build();
 		File selectedPath = chooser.showSaveDialog(null);
 
 		// Selected path is null, meaning user closed out of file chooser.

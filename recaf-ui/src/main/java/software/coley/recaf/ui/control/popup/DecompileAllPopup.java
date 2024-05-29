@@ -28,10 +28,7 @@ import software.coley.recaf.ui.control.ObservableComboBox;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
-import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.StringUtil;
-import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -61,9 +58,9 @@ public class DecompileAllPopup extends RecafStage {
 
 	@Inject
 	public DecompileAllPopup(@Nonnull DecompilerManager decompilerManager,
-							 @Nonnull RecentFilesConfig recentFilesConfig,
-							 @Nonnull DecompilerPaneConfig decompilerPaneConfig,
-							 @Nonnull Workspace workspace) {
+	                         @Nonnull RecentFilesConfig recentFilesConfig,
+	                         @Nonnull DecompilerPaneConfig decompilerPaneConfig,
+	                         @Nonnull Workspace workspace) {
 		String defaultName = buildName(workspace);
 
 		targetBundle = workspace.getPrimaryResource().getJvmClassBundle();
@@ -75,11 +72,12 @@ public class DecompileAllPopup extends RecafStage {
 		ObservableComboBox<JvmDecompiler> decompilerCombo = new ObservableComboBox<>(decompilerProperty, decompilerManager.getJvmDecompilers());
 		ProgressBar progress = new ProgressBar(0);
 		Button pathButton = new ActionButton(CarbonIcons.EDIT, pathProperty.map(Path::toString), () -> {
-			FileChooser chooser = new FileChooser();
-			chooser.setInitialFileName(defaultName);
-			chooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("Archives", "zip", "jar"));
-			chooser.setInitialDirectory(recentFilesConfig.getLastWorkspaceExportDirectory().unboxingMap(File::new));
-			chooser.setTitle(Lang.get("dialog.file.open"));
+			FileChooser chooser = new FileChooserBuilder()
+					.setInitialFileName(defaultName)
+					.setInitialDirectory(recentFilesConfig.getLastWorkspaceExportDirectory())
+					.setFileExtensionFilter("Archives", "*.zip", "*.jar")
+					.setTitle(Lang.get("dialog.file.open"))
+					.build();
 			File file = chooser.showSaveDialog(getScene().getWindow());
 			if (file != null) {
 				String parent = file.getParent();

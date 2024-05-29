@@ -24,6 +24,7 @@ import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.pane.MappingGeneratorPane;
 import software.coley.recaf.ui.window.RecafScene;
+import software.coley.recaf.util.FileChooserBuilder;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.services.workspace.WorkspaceManager;
@@ -70,9 +71,10 @@ public class MappingMenu extends WorkspaceAwareMenu {
 
 		// Use a shared file-chooser for mapping menu actions.
 		// That way there is some continuity when working with mappings.
-		FileChooser chooser = new FileChooser();
-		chooser.setInitialDirectory(recentFiles.getLastWorkspaceOpenDirectory().unboxingMap(File::new));
-		chooser.setTitle(Lang.get("dialog.file.open"));
+		FileChooser chooser = new FileChooserBuilder()
+				.setInitialDirectory(recentFiles.getLastWorkspaceOpenDirectory())
+				.setTitle(Lang.get("dialog.file.open"))
+				.build();
 
 		for (String formatName : formatManager.getMappingFileFormats()) {
 			apply.getItems().add(actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
