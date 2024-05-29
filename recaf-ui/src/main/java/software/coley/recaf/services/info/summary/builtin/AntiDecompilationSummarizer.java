@@ -23,10 +23,10 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
-import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.BoundLabel;
@@ -71,7 +71,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 
 	@Inject
 	public AntiDecompilationSummarizer(@Nonnull Instance<MappingGeneratorPane> generatorPaneProvider,
-									   @Nonnull WindowFactory windowFactory) {
+	                                   @Nonnull WindowFactory windowFactory) {
 		this.generatorPaneProvider = generatorPaneProvider;
 		this.windowFactory = windowFactory;
 	}
@@ -79,8 +79,8 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean summarize(@Nonnull Workspace workspace,
-							 @Nonnull WorkspaceResource resource,
-							 @Nonnull SummaryConsumer consumer) {
+	                         @Nonnull WorkspaceResource resource,
+	                         @Nonnull SummaryConsumer consumer) {
 		Set<JvmClassInfo> classesWithInvalidSignatures = Collections.newSetFromMap(new IdentityHashMap<>());
 		Set<JvmClassInfo> classesWithDuplicateAnnotations = Collections.newSetFromMap(new IdentityHashMap<>());
 		Set<JvmClassInfo> classesWithIllegalNames = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -89,25 +89,8 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 		resource.jvmClassBundleStream().forEach(bundle -> {
 			bundle.forEach(cls -> {
 				// Check for invalid signatures in the class.
-				signature:
-				{
-					if (isInvalidSignature(cls.getSignature(), false)) {
-						classesWithInvalidSignatures.add(cls);
-						break signature;
-					}
-					for (FieldMember field : cls.getFields()) {
-						if (isInvalidSignature(field.getSignature(), true)) {
-							classesWithInvalidSignatures.add(cls);
-							break signature;
-						}
-					}
-					for (MethodMember method : cls.getMethods()) {
-						if (isInvalidSignature(method.getSignature(), false)) {
-							classesWithInvalidSignatures.add(cls);
-							break signature;
-						}
-					}
-				}
+				if (!cls.hasValidSignatures())
+					classesWithInvalidSignatures.add(cls);
 
 				// Check for duplicate annotations, which is not allowed at source level.
 				// Commonly paired with bogus long annotation names.
@@ -258,6 +241,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 
 			// Option to remove cycles
 			if (cycleCount > 0) {
+				BoundLabel label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-remove", cycleCount));
 				Button action = new ActionButton(CarbonIcons.TRASH_CAN, Lang.getBinding("service.analysis.anti-decompile.cyclic"), () -> {
 					CompletableFuture.supplyAsync(() -> {
 						int patched = 0;
@@ -272,19 +256,21 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 							}
 						}
 						return patched;
-					}, service).whenComplete((count, error) -> {
-						if (error == null)
+					}, service).whenCompleteAsync((count, error) -> {
+						if (error == null) {
+							label.rebind(Lang.format("service.analysis.anti-decompile.label-remove", cycleCount - count));
 							logger.info("Removed {} illegal cyclic classes", count);
-						else
+						} else {
 							logger.error("Failed removing cyclic classes", error);
-					});
+						}
+					}, FxThreadUtil.executor());
 				}).once().width(BUTTON_WIDTH);
-				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-remove", cycleCount));
 				consumer.appendSummary(box(action, label));
 			}
 
 			// Option to remove invalid signatures
 			if (invalidSigCount > 0) {
+				BoundLabel label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", invalidSigCount));
 				Button action = new ActionButton(CarbonIcons.CLEAN, Lang.getBinding("service.analysis.anti-decompile.illegal-sig"), () -> {
 					CompletableFuture.supplyAsync(() -> {
 						int patched = 0;
@@ -305,20 +291,22 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 							}
 						}
 						return patched;
-					}, service).whenComplete((count, error) -> {
-						if (error == null)
+					}, service).whenCompleteAsync((count, error) -> {
+						if (error == null) {
+							label.rebind(Lang.format("service.analysis.anti-decompile.label-patch", invalidSigCount - count));
 							logger.info("Patched {} classes with illegal signatures", count);
-						else
+						} else {
 							logger.error("Failed patching illegal signatures", error);
-					});
+						}
+					}, FxThreadUtil.executor());
 
 				}).once().width(BUTTON_WIDTH);
-				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", invalidSigCount));
 				consumer.appendSummary(box(action, label));
 			}
 
 			// Option to remove duplicate annotations
 			if (dupAnnoCount > 0) {
+				BoundLabel label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", dupAnnoCount));
 				Button action = new ActionButton(CarbonIcons.CLEAN, Lang.getBinding("service.analysis.anti-decompile.duplicate-annos"), () -> {
 					CompletableFuture.supplyAsync(() -> {
 						int patched = 0;
@@ -339,19 +327,21 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 							}
 						}
 						return patched;
-					}, service).whenComplete((count, error) -> {
-						if (error == null)
+					}, service).whenCompleteAsync((count, error) -> {
+						if (error == null) {
+							label.rebind(Lang.format("service.analysis.anti-decompile.label-patch", dupAnnoCount - count));
 							logger.info("Patched {} classes with duplicate annotations", count);
-						else
+						} else {
 							logger.error("Failed patching classes with duplicate annotations", error);
-					});
+						}
+					}, FxThreadUtil.executor());
 				}).once().width(BUTTON_WIDTH);
-				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", dupAnnoCount));
 				consumer.appendSummary(box(action, label));
 			}
 
 			// Option to remove long named annotations
 			if (longAnnoCount > 0) {
+				BoundLabel label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", longAnnoCount));
 				Button action = new ActionButton(CarbonIcons.CLEAN, Lang.getBinding("service.analysis.anti-decompile.long-annos"), () -> {
 					CompletableFuture.supplyAsync(() -> {
 						int patched = 0;
@@ -372,19 +362,21 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 							}
 						}
 						return patched;
-					}, service).whenComplete((count, error) -> {
-						if (error == null)
+					}, service).whenCompleteAsync((count, error) -> {
+						if (error == null) {
+							label.rebind(Lang.format("service.analysis.anti-decompile.label-patch", longAnnoCount - count));
 							logger.info("Patched {} classes with long annotations", count);
-						else
+						} else {
 							logger.error("Failed patching classes with long annotations", error);
-					});
+						}
+					}, FxThreadUtil.executor());
 				}).once().width(BUTTON_WIDTH);
-				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", longAnnoCount));
 				consumer.appendSummary(box(action, label));
 			}
 
 			// Option to remove empty named annotations
 			if (illegalAnnoCount > 0) {
+				BoundLabel label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", illegalAnnoCount));
 				Button action = new ActionButton(CarbonIcons.CLEAN, Lang.getBinding("service.analysis.anti-decompile.illegal-annos"), () -> {
 					CompletableFuture.supplyAsync(() -> {
 						int patched = 0;
@@ -405,14 +397,15 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 							}
 						}
 						return patched;
-					}, service).whenComplete((count, error) -> {
-						if (error == null)
+					}, service).whenCompleteAsync((count, error) -> {
+						if (error == null) {
+							label.rebind(Lang.format("service.analysis.anti-decompile.label-patch", illegalAnnoCount - count));
 							logger.info("Patched {} classes with illegal annotations", count);
-						else
+						} else {
 							logger.error("Failed patching classes with illegal annotations", error);
-					});
+						}
+					}, FxThreadUtil.executor());
 				}).once().width(BUTTON_WIDTH);
-				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", illegalAnnoCount));
 				consumer.appendSummary(box(action, label));
 			}
 
@@ -454,15 +447,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 		return box;
 	}
 
-	private static boolean isInvalidSignature(@Nullable String signature, boolean isType) {
-		if (signature == null)
-			return false;
-		try {
-			return !Types.isValidSignature(signature, isType);
-		} catch (Throwable t) {
-			return true;
-		}
-	}
+
 
 	/**
 	 * Simple class hierarchy graph for detecting cycles.
@@ -478,7 +463,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 			// Initiate graph vertices.
 			vertices = workspace.getPrimaryResource().jvmClassBundleStream()
 					.flatMap(Bundle::stream)
-					.collect(Collectors.toMap(Function.identity(), ClassVertex::new));
+					.collect(Collectors.toMap(Function.identity(), ClassVertex::new, (a, b) -> a, IdentityHashMap::new));
 
 			// Link edges together.
 			vertices.forEach((key, vertex) -> {
