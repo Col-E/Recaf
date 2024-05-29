@@ -343,18 +343,18 @@ public class ExpressionCompiler {
 			String name = field.getName();
 			if (!isSafeName(name))
 				continue;
-			NameType fieldInfo = getInfo(name, field.getDescriptor());
-			if (!isSafeClassName(fieldInfo.className))
+			NameType fieldNameType = getInfo(name, field.getDescriptor());
+			if (!isSafeClassName(fieldNameType.className))
 				continue;
 
 			// Skip enum constants, we added those earlier.
-			if (fieldInfo.className.equals(className.replace('/', '.')) && field.hasFinalModifier() && field.hasStaticModifier())
+			if (fieldNameType.className.equals(className.replace('/', '.')) && field.hasFinalModifier() && field.hasStaticModifier())
 				continue;
 
 			// Append the field. The only modifier that we care about here is if it is static or not.
 			if (field.hasStaticModifier())
 				code.append("static ");
-			code.append(fieldInfo.className).append(' ').append(fieldInfo.name).append(";\n");
+			code.append(fieldNameType.className).append(' ').append(fieldNameType.name).append(";\n");
 		}
 		for (MethodMember method : methods) {
 			// Skip stubbing compiler-generated methods.
@@ -493,7 +493,7 @@ public class ExpressionCompiler {
 			if (componentReturnType instanceof PrimitiveType primitiveParameter) {
 				className = primitiveParameter.name();
 			} else if (componentReturnType instanceof InstanceType instanceType) {
-				className = instanceType.internalName().replace('/', '.');
+				className = instanceType.internalName().replace('/', '.').replace('$', '.');
 			} else {
 				throw new ExpressionCompileException("Illegal component type: " + componentReturnType);
 			}
@@ -501,7 +501,7 @@ public class ExpressionCompiler {
 			size = 1;
 		} else {
 			size = 1;
-			className = Types.instanceTypeFromDescriptor(descriptor).internalName().replace('/', '.');
+			className = Types.instanceTypeFromDescriptor(descriptor).internalName().replace('/', '.').replace('$', '.');
 		}
 		return new NameType(size, name, className);
 	}
