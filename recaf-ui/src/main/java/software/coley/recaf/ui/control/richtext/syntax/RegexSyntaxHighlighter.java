@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Coley
  * @see RegexLanguages Predefined languages to pass to {@link RegexSyntaxHighlighter#RegexSyntaxHighlighter(RegexRule)}.
  */
-public class RegexSyntaxHighlighter implements SyntaxHighlighter {
+public class RegexSyntaxHighlighter extends AbstractSyntaxHighlighter {
 	private static final Logger logger = Logging.get(RegexSyntaxHighlighter.class);
 	private static final Map<List<RegexRule>, Pattern> patternCache = new ConcurrentHashMap<>();
 	private final RegexRule rootRule;
@@ -35,11 +35,12 @@ public class RegexSyntaxHighlighter implements SyntaxHighlighter {
 
 	@Nonnull
 	@Override
-	public StyleSpans<Collection<String>> createStyleSpans(@Nonnull String text, int start, int end) {
+	protected StyleSpans<Collection<String>> createStyleSpansImpl(@Nonnull String text, int start, int end) {
 		try {
-			StyleSpansBuilder<Collection<String>> builder = new StyleSpansBuilder<>();
 			Region region = new Region(text, null, rootRule, start, end);
 			region.split(rootRule.subRules());
+
+			StyleSpansBuilder<Collection<String>> builder = new StyleSpansBuilder<>();
 			region.visitBuilder(builder);
 			return builder.create();
 		} catch (RuntimeException ex) {
