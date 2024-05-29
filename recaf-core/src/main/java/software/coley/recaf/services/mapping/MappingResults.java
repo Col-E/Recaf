@@ -147,6 +147,9 @@ public class MappingResults {
 		for (ApplicationEntry entry : applicationEntries)
 			entry.applicationRunnable().run();
 
+		// Log in console how many classes got mapped.
+		logger.info("Applied mapping to {} classes", preMappingPaths.size());
+
 		// Pass to handler again to notify of application of mappings has completed/
 		if (applicationHandler != null)
 			try {
