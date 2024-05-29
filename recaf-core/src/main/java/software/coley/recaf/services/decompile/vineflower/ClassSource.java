@@ -48,8 +48,11 @@ public class ClassSource extends BaseSource {
 		//  too much of a perf hit.
 		List<Entry> entries = new ArrayList<>();
 		entries.add(new Entry(info.getName(), Entry.BASE_VERSION));
-		for (InnerClassInfo innerClass : info.getInnerClasses())
-			entries.add(new Entry(innerClass.getName(), Entry.BASE_VERSION));
+		for (InnerClassInfo innerClass : info.getInnerClasses()) {
+			// Only add entry if it exists in the workspace.
+			if (workspace.findClass(innerClass.getInnerClassName()) != null)
+				entries.add(new Entry(innerClass.getName(), Entry.BASE_VERSION));
+		}
 		return new Entries(entries, Collections.emptyList(), Collections.emptyList());
 	}
 

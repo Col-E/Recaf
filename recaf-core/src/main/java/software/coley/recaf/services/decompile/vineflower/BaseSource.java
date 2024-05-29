@@ -6,6 +6,7 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -33,7 +34,7 @@ public abstract class BaseSource implements IContextSource {
 	public InputStream getInputStream(String resource) {
 		String name = resource.substring(0, resource.length() - IContextSource.CLASS_SUFFIX.length());
 		ClassPathNode node = workspace.findClass(name);
-		if (node == null) return InputStream.nullInputStream();
+		if (node == null) return null; // VF wants missing data to be null here, not an IOException or empty stream.
 		return new ByteArrayInputStream(node.getValue().asJvmClass().getBytecode());
 	}
 }
