@@ -15,6 +15,7 @@ import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.*;
+import software.coley.recaf.util.android.DexIOUtil;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
