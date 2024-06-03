@@ -423,6 +423,12 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 							Stage window = windowFactory.createAnonymousStage(scene, getBinding("mapgen"), 800, 400);
 							window.show();
 							window.requestFocus();
+
+							// Because our service is application scoped, the injected mapping generator panes won't
+							// be automatically destroyed until all of Recaf is closed. Thus, for optimal GC usage we
+							// need to manually invoke the destruction of our injected mapping generator panes.
+							// We can do this when the stage is closed.
+							window.setOnHidden(e -> generatorPaneProvider.destroy(mappingGeneratorPane));
 						});
 					}, service).exceptionally(t -> {
 						logger.error("Failed to open mapping viewer", t);

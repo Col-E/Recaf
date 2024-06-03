@@ -6,6 +6,7 @@ import atlantafx.base.layout.InputGroup;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -85,18 +86,18 @@ public class MappingGeneratorPane extends StackPane {
 	private final InheritanceGraph graph;
 	private final ModalPane modal = new ModalPane();
 	private final MappingApplier mappingApplier;
-	private final Node previewGroup;
+	private final Pane previewGroup;
 
 	@Inject
 	public MappingGeneratorPane(@Nonnull Workspace workspace,
-								@Nonnull NameGeneratorProviders nameGeneratorProviders,
-								@Nonnull StringPredicateProvider stringPredicateProvider,
-								@Nonnull MappingGenerator mappingGenerator,
-								@Nonnull ConfigComponentManager componentManager,
-								@Nonnull InheritanceGraph graph,
-								@Nonnull AggregateMappingManager aggregateMappingManager,
-								@Nonnull MappingApplier mappingApplier,
-								@Nonnull Instance<SearchBar> searchBarProvider) {
+	                            @Nonnull NameGeneratorProviders nameGeneratorProviders,
+	                            @Nonnull StringPredicateProvider stringPredicateProvider,
+	                            @Nonnull MappingGenerator mappingGenerator,
+	                            @Nonnull ConfigComponentManager componentManager,
+	                            @Nonnull InheritanceGraph graph,
+	                            @Nonnull AggregateMappingManager aggregateMappingManager,
+	                            @Nonnull MappingApplier mappingApplier,
+	                            @Nonnull Instance<SearchBar> searchBarProvider) {
 
 		this.workspace = workspace;
 		this.nameGeneratorProviders = nameGeneratorProviders;
@@ -124,6 +125,16 @@ public class MappingGeneratorPane extends StackPane {
 		SplitPane.setResizableWithParent(filterGroup, false);
 
 		getChildren().addAll(modal, horizontalWrapper);
+	}
+
+	@PreDestroy
+	private void destroy() {
+		// We want to clear out a number of things here to assist in proper GC cleanup.
+		//  - Mappings (which can hold a workspace/graph reference)
+		//  - UI components (which can hold large virtualized text models for the mapping text representation)
+		mappingsToApply.setValue(null);
+		previewGroup.getChildren().clear();
+		getChildren().clear();
 	}
 
 	public void addConfiguredFilter(@Nonnull FilterWithConfigNode<?> filterConfig) {
@@ -212,6 +223,9 @@ public class MappingGeneratorPane extends StackPane {
 		if (mappings != null) {
 			MappingResults results = mappingApplier.applyToPrimaryResource(mappings);
 			results.apply();
+
+			// Clear property now that the mappings have been applied
+			mappingsToApply.set(null);
 		}
 	}
 
@@ -293,18 +307,7 @@ public class MappingGeneratorPane extends StackPane {
 	@Nonnull
 	private Node createFilterDisplay(@Nonnull AggregateMappingManager aggregateMappingManager) {
 		// List to house current filters.
-		filters.setCellFactory(param -> new ListCell<>() {
-			@Override
-			protected void updateItem(FilterWithConfigNode<?> item, boolean empty) {
-				super.updateItem(item, empty);
-				if (empty || item == null) {
-					textProperty().unbind();
-					setText(null);
-				} else {
-					textProperty().bind(item.display().map(display -> (getIndex() + 1) + ". " + display));
-				}
-			}
-		});
+		filters.setCellFactory(param -> new ConfiguredFilterCell());
 		filters.getItems().add(new ExcludeExistingMapped(aggregateMappingManager.getAggregatedMappings()));
 		ReadOnlyObjectProperty<FilterWithConfigNode<?>> selectedItem = filters.getSelectionModel().selectedItemProperty();
 		BooleanBinding hasItemSelection = selectedItem.isNull();
@@ -370,9 +373,9 @@ public class MappingGeneratorPane extends StackPane {
 
 	@Nonnull
 	private ActionMenuItem typeSetAction(@Nonnull ObjectProperty<Supplier<FilterWithConfigNode<?>>> nodeSupplier,
-										 @Nonnull StringProperty parentText,
-										 @Nonnull String translationKey,
-										 @Nonnull Supplier<FilterWithConfigNode<?>> supplier) {
+	                                     @Nonnull StringProperty parentText,
+	                                     @Nonnull String translationKey,
+	                                     @Nonnull Supplier<FilterWithConfigNode<?>> supplier) {
 		StringBinding nameBinding = Lang.getBinding(translationKey);
 		return new ActionMenuItem(nameBinding,
 				() -> {
@@ -778,6 +781,23 @@ public class MappingGeneratorPane extends StackPane {
 
 		@Override
 		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {
+		}
+	}
+
+	/**
+	 * List cell to render {@link FilterWithConfigNode}.
+	 */
+	private static class ConfiguredFilterCell extends ListCell<FilterWithConfigNode<?>> {
+		@Override
+		protected void updateItem(FilterWithConfigNode<?> item, boolean empty) {
+			super.updateItem(item, empty);
+			StringProperty property = textProperty();
+			if (empty || item == null) {
+				property.unbind();
+				setText(null);
+			} else {
+				property.bind(item.display().map(display -> (getIndex() + 1) + ". " + display));
+			}
 		}
 	}
 

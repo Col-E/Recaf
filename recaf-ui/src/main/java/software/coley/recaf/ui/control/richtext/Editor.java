@@ -197,6 +197,7 @@ public class Editor extends BorderPane {
 	 *
 	 * @return The {@link StackPane} present in the {@link #getCenter() center} of the editor.
 	 */
+	@Nonnull
 	public StackPane getPrimaryStack() {
 		return stackPane;
 	}
@@ -216,6 +217,7 @@ public class Editor extends BorderPane {
 	/**
 	 * @return Current style spans for the entire document.
 	 */
+	@Nonnull
 	public StyleSpans<Collection<String>> getStyleSpans() {
 		return codeArea.getStyleSpans(0, getTextLength());
 	}

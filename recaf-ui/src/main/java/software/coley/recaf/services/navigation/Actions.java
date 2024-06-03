@@ -1923,7 +1923,7 @@ public class Actions implements Service {
 			region = dockingManager.newRegion();
 			DockingTab tab = region.createTab(getBinding(titleId), content);
 			tab.setGraphic(new FontIconView(icon));
-			RecafScene scene = new RecafScene((region));
+			RecafScene scene = new RecafScene(region);
 			Stage window = windowFactory.createAnonymousStage(scene, getBinding("menu.search"), 800, 400);
 			window.show();
 			window.requestFocus();

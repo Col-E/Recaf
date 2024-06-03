@@ -50,7 +50,7 @@ public class Logging {
 	 * @param consumer
 	 * 		New log message consumer.
 	 */
-	public static void addLogConsumer(LogConsumer<String> consumer) {
+	public static void addLogConsumer(@Nonnull LogConsumer<String> consumer) {
 		logConsumers.add(consumer);
 	}
 
@@ -58,7 +58,7 @@ public class Logging {
 	 * @param consumer
 	 * 		Log message consumer to remove.
 	 */
-	public static void removeLogConsumer(LogConsumer<String> consumer) {
+	public static void removeLogConsumer(@Nonnull LogConsumer<String> consumer) {
 		logConsumers.remove(consumer);
 	}
 
