@@ -43,7 +43,7 @@ public class MappingListeners implements Service {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
+	public synchronized void addMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
 		mappingApplicationListeners.add(listener);
 	}
 
@@ -54,7 +54,7 @@ public class MappingListeners implements Service {
 	 * @return {@code true} when item was removed.
 	 * {@code false} when item was not in the list to begin with.
 	 */
-	public boolean removeMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
+	public synchronized boolean removeMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
 		return mappingApplicationListeners.remove(listener);
 	}
 
@@ -64,7 +64,7 @@ public class MappingListeners implements Service {
 	 */
 	@Nullable
 	public MappingApplicationListener createBundledMappingApplicationListener() {
-		final List<MappingApplicationListener> listeners = mappingApplicationListeners;
+		final List<MappingApplicationListener> listeners = new ArrayList<>(mappingApplicationListeners);
 
 		// Simple edge cases.
 		if (listeners.isEmpty())

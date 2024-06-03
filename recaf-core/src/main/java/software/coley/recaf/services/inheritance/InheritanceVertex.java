@@ -185,11 +185,13 @@ public class InheritanceVertex {
 		// Check against this definition
 		if (!isPrimary && hasMethod(name, desc))
 			return true;
+
 		// Check parents.
 		// If we extend a class with a library definition then it should be considered a library method.
 		for (InheritanceVertex parent : getParents())
 			if (parent.isLibraryMethod(name, desc))
 				return true;
+
 		// No library definition found, so its safe to rename.
 		return false;
 	}
