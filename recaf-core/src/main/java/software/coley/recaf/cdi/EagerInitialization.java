@@ -10,6 +10,8 @@ import java.lang.annotation.Target;
 /**
  * Applied to beans to enable eager initialization, which is to say they and their dependencies get created as soon as
  * possible depending on the {@link #value() value of the intended} {@link InitializationStage}.
+ * <p/>
+ * Beans are not eagerly initialized while in a test environment.
  *
  * @author Matt Coley
  */
