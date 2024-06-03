@@ -65,18 +65,6 @@ public interface JvmClassInfo extends ClassInfo {
 			return classes;
 
 		Set<String> classNames = new HashSet<>();
-		Consumer<String> nameHandler = className -> {
-			if (className.indexOf(0) == '[')
-				className = className.substring(className.lastIndexOf('[') + 1, className.indexOf(';'));
-			classNames.add(className);
-		};
-		Consumer<Type> typeConsumer = t -> {
-			if (t.getSort() == Type.ARRAY)
-				t = t.getElementType();
-			if (!Types.isPrimitive(t))
-				nameHandler.accept(t.getInternalName());
-		};
-
 		ClassReader reader = getClassReader();
 		int itemCount = reader.getItemCount();
 		char[] buffer = new char[reader.getMaxStringLength()];
@@ -88,9 +76,7 @@ public interface JvmClassInfo extends ClassInfo {
 					String className = reader.readUTF8(offset, buffer);
 					if (className.isEmpty())
 						continue;
-					if (className.indexOf(0) == '[')
-						className = className.substring(className.lastIndexOf('[') + 1, className.indexOf(';'));
-					classNames.add(className);
+					addName(className, classNames);
 				} else if (itemTag == ConstantPoolConstants.NAME_TYPE) {
 					String desc = reader.readUTF8(offset + 2, buffer);
 					if (desc.isEmpty())
@@ -98,18 +84,34 @@ public interface JvmClassInfo extends ClassInfo {
 					if (desc.charAt(0) == '(') {
 						Type methodType = Type.getMethodType(desc);
 						for (Type argumentType : methodType.getArgumentTypes())
-							typeConsumer.accept(argumentType);
+							addType(argumentType, classNames);
 						Type returnType = methodType.getReturnType();
-						typeConsumer.accept(returnType);
+						addType(returnType, classNames);
 					} else {
 						Type type = Type.getType(desc);
-						typeConsumer.accept(type);
+						addType(type, classNames);
 					}
 				}
 			}
 		}
 		ReferencedClassesProperty.set(this, classNames);
 		return Objects.requireNonNull(ReferencedClassesProperty.get(this));
+	}
+
+	private static void addType(@Nonnull Type type, @Nonnull Set<String> classNames) {
+		if (type.getSort() == Type.ARRAY)
+			type = type.getElementType();
+		if (!Types.isPrimitive(type))
+			addName(type.getInternalName(), classNames);
+	}
+
+	private static void addName(@Nonnull String className, @Nonnull Set<String> classNames) {
+		if (className.isEmpty())
+			return;
+		if (className.indexOf(0) == '[' || className.charAt(className.length() - 1) == ';')
+			addType(Type.getType(className), classNames);
+		else
+			classNames.add(className);
 	}
 
 	/**
