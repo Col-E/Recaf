@@ -1,6 +1,5 @@
 package software.coley.recaf.services.decompile.fallback;
 
-import com.strobel.Procyon;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -19,6 +18,7 @@ import software.coley.recaf.workspace.model.Workspace;
 @ApplicationScoped
 public class FallbackDecompiler extends AbstractJvmDecompiler {
 	public static final String NAME = "Fallback";
+	private static final String VERSION = "1.0.0";
 	private final TextFormatConfig formatConfig;
 
 	/**
@@ -29,7 +29,7 @@ public class FallbackDecompiler extends AbstractJvmDecompiler {
 	 */
 	@Inject
 	public FallbackDecompiler(@Nonnull FallbackConfig config, @Nonnull TextFormatConfig formatConfig) {
-		super(NAME, Procyon.version(), config);
+		super(NAME, VERSION, config);
 		this.formatConfig = formatConfig;
 	}
 
