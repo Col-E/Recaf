@@ -464,7 +464,11 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			Type[] argumentTypes = methodDescriptor.getArgumentTypes();
 			if (parameterIndex < argumentTypes.length) {
 				Type argumentType = argumentTypes[parameterIndex];
-				parameters.add(new BasicLocalVariable(parameterSlot, name, argumentType.getDescriptor(), null));
+
+				// Only add when we have a name for the parameter.
+				if (name != null)
+					parameters.add(new BasicLocalVariable(parameterSlot, name, argumentType.getDescriptor(), null));
+
 				parameterIndex++;
 				parameterSlot += argumentType.getSize();
 			}
