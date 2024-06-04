@@ -432,6 +432,8 @@ public class ClassPrinter {
 	 */
 	private boolean isEnumConst(@Nonnull FieldMember field) {
 		String descriptor = field.getDescriptor();
+		if (descriptor.length() < 3) return false;
+
 		String type = descriptor.substring(1, descriptor.length() - 1);
 
 		// Must be same type as declaring class.
