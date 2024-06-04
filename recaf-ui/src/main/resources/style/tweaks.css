@@ -13,6 +13,10 @@
    -fx-background-color: -color-bg-inset;
 }
 
+.closable-menu-item {
+    -fx-padding: 0;
+}
+
 /* AtlantaFX tweaks to split-pane default behavior/style to fit the docking UI style more. */
 .split-pane {
     -fx-background-color: transparent;
