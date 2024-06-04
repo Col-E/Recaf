@@ -91,7 +91,7 @@ public class NamePopup extends RecafStage {
 	 */
 	private void accept(@Nonnull Consumer<String> nameConsumer) {
 		// Do nothing if conflict detected
-		if (nameConflict.get()) {
+		if (nameConflict.get() || isIllegalValue.get()) {
 			Toolkit.getDefaultToolkit().beep();
 			return;
 		}
