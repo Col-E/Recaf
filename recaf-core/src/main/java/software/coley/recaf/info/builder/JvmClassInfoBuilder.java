@@ -3,7 +3,10 @@ package software.coley.recaf.info.builder;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.*;
-import software.coley.recaf.info.*;
+import software.coley.recaf.info.BasicInnerClassInfo;
+import software.coley.recaf.info.BasicJvmClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.*;
 import software.coley.recaf.info.member.*;
 import software.coley.recaf.info.properties.builtin.UnknownAttributesProperty;
@@ -422,12 +425,19 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 	private static class MethodBuilderAdapter extends MethodVisitor {
 		private final BasicMethodMember methodMember;
+		private final Type methodDescriptor;
+		private final List<LocalVariable> parameters;
+		private int parameterIndex;
+		private int parameterSlot;
 
 		public MethodBuilderAdapter(int access, String name, String descriptor,
 		                            String signature, String[] exceptions) {
 			super(getAsmVersion());
 			List<String> exceptionList = exceptions == null ? Collections.emptyList() : Arrays.asList(exceptions);
 			methodMember = new BasicMethodMember(name, descriptor, signature, access, exceptionList, new ArrayList<>());
+			methodDescriptor = Type.getMethodType(descriptor);
+			parameterSlot = methodMember.hasStaticModifier() ? 0 : 1;
+			parameters = new ArrayList<>(methodDescriptor.getArgumentCount());
 		}
 
 		@Override
@@ -448,11 +458,37 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		}
 
 		@Override
+		public void visitParameter(String name, int access) {
+			super.visitParameter(name, access);
+
+			Type[] argumentTypes = methodDescriptor.getArgumentTypes();
+			if (parameterIndex < argumentTypes.length) {
+				Type argumentType = argumentTypes[parameterIndex];
+				parameters.add(new BasicLocalVariable(parameterSlot, name, argumentType.getDescriptor(), null));
+				parameterIndex++;
+				parameterSlot += argumentType.getSize();
+			}
+		}
+
+		@Override
 		public AnnotationVisitor visitAnnotationDefault() {
 			return new DefaultAnnotationAdapter(anno -> {
 				AnnotationElement element = anno.getElements().get(DefaultAnnotationAdapter.KEY);
 				if (element != null) methodMember.setAnnotationDefault(element);
 			});
+		}
+
+		@Override
+		public void visitEnd() {
+			super.visitEnd();
+
+			// Add local variables generated from the visited parameters if the local variable table hasn't already
+			// provided variables for those indices. This assists in providing variable models for abstract methods.
+			// This only works when a 'MethodParameters' attribute is present on the method. The javac compiler
+			// emits this when passing '-parameters'.
+			for (LocalVariable parameter : parameters)
+				if (methodMember.getLocalVariable(parameter.getIndex()) == null)
+					methodMember.addLocalVariable(parameter);
 		}
 
 		@Nonnull
