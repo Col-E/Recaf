@@ -15,6 +15,7 @@ buildGradleApplication {
   nativeBuildInputs = [
     pkgs.autoPatchelfHook
     pkgs.wrapGAppsHook
+    pkgs.git
   ];
   repositories = ["https://plugins.gradle.org/m2/" "https://repo1.maven.org/maven2/" "https://maven.google.com" "https://maven.quiltmc.org/repository/release/" "https://jitpack.io"];
   buildTask = "build";
