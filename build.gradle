@@ -14,18 +14,11 @@ subprojects {
     apply plugin: 'jacoco'
     apply plugin: 'com.github.ben-manes.versions'
 
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        google()
-        maven { url 'https://maven.quiltmc.org/repository/release/' }
-        maven { url 'https://jitpack.io' }
-    }
-
     // ======================= DEPENDENCIES ========================
     dependencies {
         // to enforce it everywhere as standard
         implementation(libs.jakarta.annotation)
+        implementation('org.codehaus.groovy:groovy-bom:3.0.14@pom')
     }
 
     configurations.configureEach {
@@ -111,6 +104,16 @@ subprojects {
             includes = ['software/coley/recaf/**']
         }
     }
+
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
 }
 
 // Always emit HTML & XML aggregate reports
