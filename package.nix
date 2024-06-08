@@ -13,16 +13,16 @@ buildGradleApplication {
   gradle = gradle;
   jdk = jdk;
   nativeBuildInputs = [
-    pkgs.autoPatchelfHook
     pkgs.wrapGAppsHook
     pkgs.git
   ];
   repositories = ["https://plugins.gradle.org/m2/" "https://repo1.maven.org/maven2/" "https://maven.google.com" "https://maven.quiltmc.org/repository/release/" "https://jitpack.io"];
-  buildTask = "build";
+  buildTask = ":recaf-ui:installDist";
+  installLocation = "recaf-ui/build/install/*/";
   meta = with lib; {
-    description = "Spring Boot Example Application";
+    description = "A Java Bytecode editor";
     longDescription = ''
-      Will start a server at Port 8080
+      Recaf is a Java Bytecode editor
     '';
     sourceProvenance = with sourceTypes; [
       fromSource

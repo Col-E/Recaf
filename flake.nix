@@ -18,6 +18,7 @@
         pkgs = import nixpkgs {inherit system overlays;};
         version = self.shortRev or "dirty";
         jdk = pkgs.jdk22;
+        update_action = "build";
         gradle = (pkgs.callPackage pkgs.gradle-packages.gradle_8 { 
 	           java = jdk;
          });
@@ -41,7 +42,7 @@
 
         devShell = with pkgs;
           mkShellNoCC {
-            buildInputs = [jdk openjfx22 gradle xorg.libxcb updateVerificationMetadata updateGradleVersion];
+            buildInputs = [jdk openjfx22 gradle xorg.libxcb (updateVerificationMetadata { update_action = update_action; }) updateGradleVersion];
             LD_LIBRARY_PATH = libPath;
           };
       });
