@@ -15,6 +15,7 @@ import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Basic workspace resource implementation.
@@ -24,9 +25,9 @@ import java.util.*;
  */
 public class BasicWorkspaceResource implements WorkspaceResource {
 	private static final Logger logger = Logging.get(BasicWorkspaceResource.class);
-	private final List<ResourceJvmClassListener> jvmClassListeners = new ArrayList<>();
-	private final List<ResourceAndroidClassListener> androidClassListeners = new ArrayList<>();
-	private final List<ResourceFileListener> fileListeners = new ArrayList<>();
+	private final List<ResourceJvmClassListener> jvmClassListeners = new CopyOnWriteArrayList<>();
+	private final List<ResourceAndroidClassListener> androidClassListeners = new CopyOnWriteArrayList<>();
+	private final List<ResourceFileListener> fileListeners = new CopyOnWriteArrayList<>();
 	private final JvmClassBundle jvmClassBundle;
 	private final NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles;
 	private final Map<String, AndroidClassBundle> androidClassBundles;

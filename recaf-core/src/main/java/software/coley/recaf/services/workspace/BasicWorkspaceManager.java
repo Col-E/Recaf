@@ -15,6 +15,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Basic workspace manager implementation.
@@ -24,10 +25,10 @@ import java.util.List;
 @ApplicationScoped
 public class BasicWorkspaceManager implements WorkspaceManager {
 	private static final Logger logger = Logging.get(BasicWorkspaceManager.class);
-	private final List<WorkspaceCloseCondition> closeConditions = new ArrayList<>();
-	private final List<WorkspaceOpenListener> openListeners = new ArrayList<>();
-	private final List<WorkspaceCloseListener> closeListeners = new ArrayList<>();
-	private final List<WorkspaceModificationListener> defaultModificationListeners = new ArrayList<>();
+	private final List<WorkspaceCloseCondition> closeConditions = new CopyOnWriteArrayList<>();
+	private final List<WorkspaceOpenListener> openListeners = new CopyOnWriteArrayList<>();
+	private final List<WorkspaceCloseListener> closeListeners = new CopyOnWriteArrayList<>();
+	private final List<WorkspaceModificationListener> defaultModificationListeners = new CopyOnWriteArrayList<>();
 	private final WorkspaceManagerConfig config;
 	private Workspace current;
 

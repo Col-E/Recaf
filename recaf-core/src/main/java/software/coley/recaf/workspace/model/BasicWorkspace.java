@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Basic workspace implementation.
@@ -22,7 +23,7 @@ import java.util.List;
  */
 public class BasicWorkspace implements Workspace {
 	private static final Logger logger = Logging.get(BasicWorkspace.class);
-	private final List<WorkspaceModificationListener> modificationListeners = new ArrayList<>();
+	private final List<WorkspaceModificationListener> modificationListeners = new CopyOnWriteArrayList<>();
 	private final WorkspaceResource primary;
 	private final List<WorkspaceResource> supporting = new ArrayList<>();
 	private final List<WorkspaceResource> internal;

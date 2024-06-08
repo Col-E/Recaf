@@ -15,6 +15,7 @@ import software.coley.recaf.workspace.model.bundle.BasicBundle;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages tracking the state of mappings over time.
@@ -27,7 +28,7 @@ import java.util.List;
 public class AggregateMappingManager implements Service, WorkspaceCloseListener {
 	public static final String SERVICE_ID = "mapping-aggregator";
 	private static final Logger logger = Logging.get(AggregateMappingManager.class);
-	private final List<AggregatedMappingsListener> aggregateListeners = new ArrayList<>();
+	private final List<AggregatedMappingsListener> aggregateListeners = new CopyOnWriteArrayList<>();
 	private final AggregatedMappings aggregatedMappings;
 	private final AggregateMappingManagerConfig config;
 

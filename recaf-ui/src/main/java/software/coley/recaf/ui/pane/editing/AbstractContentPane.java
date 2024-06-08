@@ -15,6 +15,7 @@ import software.coley.recaf.services.navigation.UpdatableNavigable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
@@ -27,7 +28,7 @@ import java.util.function.Consumer;
  * @see ClassPane For {@link ClassInfo}
  */
 public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderPane implements UpdatableNavigable {
-	protected final List<Consumer<P>> pathUpdateListeners = new ArrayList<>();
+	protected final List<Consumer<P>> pathUpdateListeners = new CopyOnWriteArrayList<>();
 	protected final List<Navigable> children = new ArrayList<>();
 	protected SideTabs sideTabs;
 	protected P path;

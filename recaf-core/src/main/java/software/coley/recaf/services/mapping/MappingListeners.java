@@ -13,6 +13,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages listeners for things like {@link MappingResults} application in an application-scoped, as opposed to
@@ -24,7 +25,7 @@ import java.util.List;
 public class MappingListeners implements Service {
 	public static final String SERVICE_ID = "mapping-listeners";
 	private static final Logger logger = Logging.get(MappingListeners.class);
-	private final List<MappingApplicationListener> mappingApplicationListeners = new ArrayList<>();
+	private final List<MappingApplicationListener> mappingApplicationListeners = new CopyOnWriteArrayList<>();
 	private final MappingListenersConfig config;
 
 	@Inject
@@ -64,7 +65,7 @@ public class MappingListeners implements Service {
 	 */
 	@Nullable
 	public MappingApplicationListener createBundledMappingApplicationListener() {
-		final List<MappingApplicationListener> listeners = new ArrayList<>(mappingApplicationListeners);
+		final List<MappingApplicationListener> listeners = mappingApplicationListeners;
 
 		// Simple edge cases.
 		if (listeners.isEmpty())

@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
@@ -31,7 +32,7 @@ import java.util.function.Consumer;
 public class PathLoadingManager {
 	private static final Logger logger = Logging.get(PathLoadingManager.class);
 	private final ExecutorService loadPool = ThreadPoolFactory.newSingleThreadExecutor("path-loader");
-	private final List<WorkspacePreLoadListener> preLoadListeners = new ArrayList<>();
+	private final List<WorkspacePreLoadListener> preLoadListeners = new CopyOnWriteArrayList<>();
 	private final WorkspaceManager workspaceManager;
 	private final ResourceImporter resourceImporter;
 

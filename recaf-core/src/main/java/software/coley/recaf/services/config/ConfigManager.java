@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Tracker for all {@link ConfigContainer} instances.
@@ -40,7 +41,7 @@ public class ConfigManager implements Service {
 	public static final String SERVICE_ID = "config-manager";
 	private static final Logger logger = Logging.get(ConfigManager.class);
 	private final Map<String, ConfigContainer> containers = new TreeMap<>();
-	private final List<ManagedConfigListener> listeners = new ArrayList<>();
+	private final List<ManagedConfigListener> listeners = new CopyOnWriteArrayList<>();
 	private final ConfigManagerConfig config;
 	private final RecafDirectoriesConfig fileConfig;
 	private final GsonProvider gsonProvider;

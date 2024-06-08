@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarFile;
 
@@ -56,7 +57,7 @@ public class BasicAttachManager implements AttachManager {
 	private final Map<VirtualMachineDescriptor, String> virtualMachineMainClassMap = new ConcurrentHashMap<>();
 	private final Map<VirtualMachineDescriptor, JmxBeanServerConnection> virtualMachineJmxConnMap = new ConcurrentHashMap<>();
 	private final ObservableList<VirtualMachineDescriptor> virtualMachineDescriptors = new ObservableList<>();
-	private final List<PostScanListener> postScanListeners = new ArrayList<>();
+	private final List<PostScanListener> postScanListeners = new CopyOnWriteArrayList<>();
 	private final AttachManagerConfig config;
 	private static ExtractState extractState = ExtractState.DEFAULT;
 
