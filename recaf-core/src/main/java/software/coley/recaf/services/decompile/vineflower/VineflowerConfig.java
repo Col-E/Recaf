@@ -9,9 +9,9 @@ import org.slf4j.event.Level;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigValue;
-import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.decompile.BaseDecompilerConfig;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +19,7 @@ import java.util.Map;
  * Config for {@link VineflowerDecompiler}
  *
  * @author therathatter
+ * @see IFernflowerPreferences Source of value definitions.
  */
 @ApplicationScoped
 @SuppressWarnings("all") // ignore unused refs / typos
@@ -74,59 +75,68 @@ public class VineflowerConfig extends BaseDecompilerConfig {
 	private final ObservableBoolean decompileComplexCondys = new ObservableBoolean(false);
 	private final ObservableBoolean forceJsrInline = new ObservableBoolean(false);
 
+	public static void main(String[] args) {
+		for (Field field : IFernflowerPreferences.class.getDeclaredFields()) {
+			try {
+				IFernflowerPreferences.Name name = field.getDeclaredAnnotation(IFernflowerPreferences.Name.class);
+				String key = (String) field.get(null);
+				System.out.println("service.decompile.impl.decompiler-vineflower-config." + key + "=" + name.value());
+			} catch (Throwable t) {}
+		}
+	}
+
 	@Inject
 	public VineflowerConfig() {
 		super("decompiler-vineflower" + CONFIG_SUFFIX);
+
 		addValue(new BasicConfigValue<>("logging-level", Level.class, loggingLevel));
-		addValue(new BasicConfigValue<>("rbr", boolean.class, removeBridge));
-		addValue(new BasicConfigValue<>("rsy", boolean.class, removeSynthetic));
-		addValue(new BasicConfigValue<>("din", boolean.class, decompileInner));
-		addValue(new BasicConfigValue<>("dc4", boolean.class, decompileClass_1_4));
-		addValue(new BasicConfigValue<>("das", boolean.class, decompileAssertions));
-		addValue(new BasicConfigValue<>("hes", boolean.class, hideEmptySuper));
-		addValue(new BasicConfigValue<>("hdc", boolean.class, hideDefaultConstructor));
-		addValue(new BasicConfigValue<>("dgs", boolean.class, decompileGenericSignatures));
-		addValue(new BasicConfigValue<>("ner", boolean.class, noExceptionsReturn));
-		addValue(new BasicConfigValue<>("esm", boolean.class, ensureSynchronizedMonitor));
-		addValue(new BasicConfigValue<>("den", boolean.class, decompileEnum));
-		addValue(new BasicConfigValue<>("dpr", boolean.class, decompilePreview));
-		addValue(new BasicConfigValue<>("rgn", boolean.class, removeGetClassNew));
-		addValue(new BasicConfigValue<>("lit", boolean.class, literalsAsIs));
-		addValue(new BasicConfigValue<>("bto", boolean.class, booleanTrueOne));
-		addValue(new BasicConfigValue<>("asc", boolean.class, asciiStringCharacters));
-		addValue(new BasicConfigValue<>("nns", boolean.class, syntheticNotSet));
-		addValue(new BasicConfigValue<>("uto", boolean.class, undefinedParamTypeObject));
-		addValue(new BasicConfigValue<>("udv", boolean.class, useDebugVarNames));
-		addValue(new BasicConfigValue<>("ump", boolean.class, useMethodParameters));
-		addValue(new BasicConfigValue<>("rer", boolean.class, removeEmptyRanges));
-		addValue(new BasicConfigValue<>("fdi", boolean.class, finallyDeinline));
-		addValue(new BasicConfigValue<>("inn", boolean.class, ideaNotNullAnnotation));
-		addValue(new BasicConfigValue<>("lac", boolean.class, lambdaToAnonymousClass));
-		addValue(new BasicConfigValue<>("bsm", boolean.class, bytecodeSourceMapping));
-		addValue(new BasicConfigValue<>("dcl", boolean.class, dumpCodeLines));
-		addValue(new BasicConfigValue<>("iib", boolean.class, ignoreInvalidBytecode));
-		addValue(new BasicConfigValue<>("vac", boolean.class, verifyAnonymousClasses));
-		addValue(new BasicConfigValue<>("tcs", boolean.class, ternaryConstantSimplification));
-		addValue(new BasicConfigValue<>("pam", boolean.class, patternMatching));
-		addValue(new BasicConfigValue<>("tlf", boolean.class, tryLoopFix));
-		addValue(new BasicConfigValue<>("tco", boolean.class, ternaryConditions));
-		addValue(new BasicConfigValue<>("swe", boolean.class, switchExpressions));
-		addValue(new BasicConfigValue<>("shs", boolean.class, showHiddenStatements));
-		addValue(new BasicConfigValue<>("ovr", boolean.class, overrideAnnotation));
-		addValue(new BasicConfigValue<>("ssp", boolean.class, simplifyStackSecondPass));
-		addValue(new BasicConfigValue<>("vvm", boolean.class, verifyVariableMerges));
-		addValue(new BasicConfigValue<>("ega", boolean.class, explicitGenericArguments));
-		addValue(new BasicConfigValue<>("isl", boolean.class, inlineSimpleLambdas));
-		addValue(new BasicConfigValue<>("jvn", boolean.class, useJadVarNaming));
-		addValue(new BasicConfigValue<>("jpr", boolean.class, useJadParameterNaming));
-		addValue(new BasicConfigValue<>("sef", boolean.class, skipExtraFiles));
-		addValue(new BasicConfigValue<>("win", boolean.class, warnInconsistentInnerClasses));
-		addValue(new BasicConfigValue<>("dbe", boolean.class, dumpBytecodeOnError));
-		addValue(new BasicConfigValue<>("dee", boolean.class, dumpExceptionOnError));
-		addValue(new BasicConfigValue<>("dec", boolean.class, decompilerComments));
-		addValue(new BasicConfigValue<>("sfc", boolean.class, sourceFileComments));
-		addValue(new BasicConfigValue<>("dcc", boolean.class, decompileComplexCondys));
-		addValue(new BasicConfigValue<>("fji", boolean.class, forceJsrInline));
+		addValue(new BasicConfigValue<>("remove-bridge", boolean.class, removeBridge));
+		addValue(new BasicConfigValue<>("remove-synthetic", boolean.class, removeSynthetic));
+		addValue(new BasicConfigValue<>("decompile-inner", boolean.class, decompileInner));
+		addValue(new BasicConfigValue<>("decompile-java4", boolean.class, decompileClass_1_4));
+		addValue(new BasicConfigValue<>("decompile-assert", boolean.class, decompileAssertions));
+		addValue(new BasicConfigValue<>("hide-empty-super", boolean.class, hideEmptySuper));
+		addValue(new BasicConfigValue<>("hide-default-constructor", boolean.class, hideDefaultConstructor));
+		addValue(new BasicConfigValue<>("decompile-generics", boolean.class, decompileGenericSignatures));
+		addValue(new BasicConfigValue<>("incorporate-returns", boolean.class, noExceptionsReturn));
+		addValue(new BasicConfigValue<>("ensure-synchronized-monitors", boolean.class, ensureSynchronizedMonitor));
+		addValue(new BasicConfigValue<>("decompile-enums", boolean.class, decompileEnum));
+		addValue(new BasicConfigValue<>("decompile-preview", boolean.class, decompilePreview));
+		addValue(new BasicConfigValue<>("remove-getclass", boolean.class, removeGetClassNew));
+		addValue(new BasicConfigValue<>("keep-literals", boolean.class, literalsAsIs));
+		addValue(new BasicConfigValue<>("boolean-as-int", boolean.class, booleanTrueOne));
+		addValue(new BasicConfigValue<>("ascii-strings", boolean.class, asciiStringCharacters));
+		addValue(new BasicConfigValue<>("synthetic-not-set", boolean.class, syntheticNotSet));
+		addValue(new BasicConfigValue<>("undefined-as-object", boolean.class, undefinedParamTypeObject));
+		addValue(new BasicConfigValue<>("use-lvt-names", boolean.class, useDebugVarNames));
+		addValue(new BasicConfigValue<>("use-method-parameters", boolean.class, useMethodParameters));
+		addValue(new BasicConfigValue<>("remove-empty-try-catch", boolean.class, removeEmptyRanges));
+		addValue(new BasicConfigValue<>("decompile-finally", boolean.class, finallyDeinline));
+		addValue(new BasicConfigValue<>("lambda-to-anonymous-class", boolean.class, lambdaToAnonymousClass));
+		addValue(new BasicConfigValue<>("bytecode-source-mapping", boolean.class, bytecodeSourceMapping));
+		addValue(new BasicConfigValue<>("dump-code-lines", boolean.class, dumpCodeLines));
+		addValue(new BasicConfigValue<>("ignore-invalid-bytecode", boolean.class, ignoreInvalidBytecode));
+		addValue(new BasicConfigValue<>("verify-anonymous-classes", boolean.class, verifyAnonymousClasses));
+		addValue(new BasicConfigValue<>("ternary-constant-simplification", boolean.class, ternaryConstantSimplification));
+		addValue(new BasicConfigValue<>("pattern-matching", boolean.class, patternMatching));
+		addValue(new BasicConfigValue<>("try-loop-fix", boolean.class, tryLoopFix));
+		addValue(new BasicConfigValue<>("ternary-in-if", boolean.class, ternaryConditions));
+		addValue(new BasicConfigValue<>("decompile-switch-expressions", boolean.class, switchExpressions));
+		addValue(new BasicConfigValue<>("show-hidden-statements", boolean.class, showHiddenStatements));
+		addValue(new BasicConfigValue<>("override-annotation", boolean.class, overrideAnnotation));
+		addValue(new BasicConfigValue<>("simplify-stack", boolean.class, simplifyStackSecondPass));
+		addValue(new BasicConfigValue<>("verify-merges", boolean.class, verifyVariableMerges));
+		addValue(new BasicConfigValue<>("explicit-generics", boolean.class, explicitGenericArguments));
+		addValue(new BasicConfigValue<>("inline-simple-lambdas", boolean.class, inlineSimpleLambdas));
+		addValue(new BasicConfigValue<>("skip-extra-files", boolean.class, skipExtraFiles));
+		addValue(new BasicConfigValue<>("warn-inconsistent-inner-attributes", boolean.class, warnInconsistentInnerClasses));
+		addValue(new BasicConfigValue<>("dump-bytecode-on-error", boolean.class, dumpBytecodeOnError));
+		addValue(new BasicConfigValue<>("dump-exception-on-error", boolean.class, dumpExceptionOnError));
+		addValue(new BasicConfigValue<>("decompiler-comments", boolean.class, decompilerComments));
+		addValue(new BasicConfigValue<>("sourcefile-comments", boolean.class, sourceFileComments));
+		addValue(new BasicConfigValue<>("decompile-complex-constant-dynamic", boolean.class, decompileComplexCondys));
+		addValue(new BasicConfigValue<>("force-jsr-inline", boolean.class, forceJsrInline));
+
 		registerConfigValuesHashUpdates();
 	}
 
