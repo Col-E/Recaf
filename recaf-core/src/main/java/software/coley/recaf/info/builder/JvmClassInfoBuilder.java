@@ -351,6 +351,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 				@Override
 				public void visitEnd() {
+					super.visitEnd();
 					methods.add(getMethodMember());
 				}
 			};
