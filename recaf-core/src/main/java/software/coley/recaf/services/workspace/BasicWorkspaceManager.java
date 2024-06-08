@@ -47,9 +47,10 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 
 	@Override
 	public void setCurrentIgnoringConditions(Workspace workspace) {
-		if (current != null) {
-			current.close();
-			CollectionUtil.safeForEach(closeListeners, listener -> listener.onWorkspaceClosed(workspace),
+		Workspace currentWorkspace = current;
+		if (currentWorkspace != null) {
+			currentWorkspace.close();
+			CollectionUtil.safeForEach(closeListeners, listener -> listener.onWorkspaceClosed(currentWorkspace),
 					(listener, t) -> logger.error("Exception thrown when closing workspace", t));
 		}
 		current = workspace;
