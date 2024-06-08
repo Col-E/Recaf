@@ -370,7 +370,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 			}, FxThreadUtil.executor());
 		}
 
-		private class BytecodeTransition extends Transition {
+		private static class BytecodeTransition extends Transition {
 			private final Labeled labeled;
 			private byte[] bytecode;
 
