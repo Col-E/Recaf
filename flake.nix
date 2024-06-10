@@ -3,7 +3,7 @@
     # This must be the stable nixpkgs if you're running the app on a
     # stable NixOS install.  Mixing EGL library versions doesn't work.
     nixpkgs.url = "github:lorenzleutgeb/nixpkgs/gradle-8.8";
-    build-gradle-application.url = "github:C0D3-M4513R/buildGradleApplication";
+    build-gradle-application.url = "github:raphiz/buildGradleApplication";
     utils.url = "github:numtide/flake-utils";
     flake-compat = {
       url = github:edolstra/flake-compat;
@@ -42,7 +42,7 @@
 
         devShell = with pkgs;
           mkShellNoCC {
-            buildInputs = [jdk openjfx22 gradle xorg.libxcb (updateVerificationMetadata { update_action = update_action; }) updateGradleVersion];
+            buildInputs = [jdk openjfx22 gradle xorg.libxcb (updateVerificationMetadata.override { updateAction = update_action; })];
             LD_LIBRARY_PATH = libPath;
           };
       });

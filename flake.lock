@@ -6,15 +6,15 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1717826615,
-        "narHash": "sha256-JmtmbGfCveJgftCDwqzykymjO7V5Cr5XM9eeNIZ5YXs=",
-        "owner": "C0D3-M4513R",
+        "lastModified": 1718027491,
+        "narHash": "sha256-uShoiA4DvdSdLQxK4mWFiL4JMN37LfoX3DrdTj0OM9g=",
+        "owner": "raphiz",
         "repo": "buildGradleApplication",
-        "rev": "fd1bcc92ff1c778104a8585b20c624b96db02ec8",
+        "rev": "45be5a6dba3bb6e583aabf4f8acefa48bfacd389",
         "type": "github"
       },
       "original": {
-        "owner": "C0D3-M4513R",
+        "owner": "raphiz",
         "repo": "buildGradleApplication",
         "type": "github"
       }
@@ -54,16 +54,16 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1717796960,
-        "narHash": "sha256-BKjQ9tQdsuoROrojHZb7KTAv95WprqCkNFvuzatfEo0=",
+        "lastModified": 1717696253,
+        "narHash": "sha256-1+ua0ggXlYYPLTmMl3YeYYsBXDSCqT+Gw3u6l4gvMhA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "8e0a5f16b7bf7f212be068dd302c49888c6ad68f",
+        "rev": "9b5328b7f761a7bbdc0e332ac4cf076a3eedb89b",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "release-24.05",
+        "ref": "nixos-24.05",
         "repo": "nixpkgs",
         "type": "github"
       }
