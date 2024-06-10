@@ -1,6 +1,7 @@
 package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import javafx.scene.layout.Pane;
 import software.coley.recaf.info.ClassInfo;
@@ -23,9 +24,10 @@ import java.util.List;
 public interface Navigable {
 	/**
 	 * @return The path layout pointing to the content <i>(Such as a {@link ClassInfo}, {@link ClassMember}, etc)</i>
-	 * that this {@link Navigable} class is representing.
+	 * that this {@link Navigable} class is representing. Can be {@code null} if this content is populated dynamically
+	 * <i>(Common for {@link UpdatableNavigable})</i>.
 	 */
-	@Nonnull
+	@Nullable
 	PathNode<?> getPath();
 
 	/**
@@ -70,12 +72,15 @@ public interface Navigable {
 	@Nonnull
 	default List<Navigable> getNavigableChildrenByPath(@Nonnull PathNode<?> path) {
 		PathNode<?> value = getPath();
-		if (path.equals(value))
+		if (value == null || path.equals(value))
 			return Collections.singletonList(this);
 
 		List<Navigable> list = null;
-		for (Navigable child : getNavigableChildren())
-			if (path.isDescendantOf(child.getPath())) {
+		for (Navigable child : getNavigableChildren()) {
+			PathNode<?> childPath = child.getPath();
+			if (childPath == null) continue;
+
+			if (path.isDescendantOf(childPath)) {
 				List<Navigable> childM = child.getNavigableChildrenByPath(path);
 				if (!childM.isEmpty()) {
 					if (list == null)
@@ -84,6 +89,7 @@ public interface Navigable {
 						list.addAll(childM);
 				}
 			}
+		}
 
 		return list == null ? Collections.emptyList() : list;
 	}

@@ -96,8 +96,11 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 		generateDisplay();
 
 		// Refresh UI with path
-		if (getCenter() instanceof UpdatableNavigable updatable)
-			updatable.onUpdatePath(getPath());
+		if (getCenter() instanceof UpdatableNavigable updatable) {
+			PathNode<?> currentPath = getPath();
+			if (currentPath != null)
+				updatable.onUpdatePath(currentPath);
+		}
 	}
 
 	/**
@@ -110,7 +113,7 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	 * @param tab
 	 * 		Tab to add to the side panel.
 	 */
-	protected void addSideTab(Tab tab) {
+	public void addSideTab(@Nonnull Tab tab) {
 		// Lazily create/add side-tabs to UI.
 		if (sideTabs == null) {
 			sideTabs = new SideTabs(Orientation.VERTICAL);
@@ -126,8 +129,16 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addPathUpdateListener(Consumer<P> listener) {
+	public void addPathUpdateListener(@Nonnull Consumer<P> listener) {
 		pathUpdateListeners.add(listener);
+	}
+
+	/**
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	public void removePathUpdateListener(@Nonnull Consumer<P> listener) {
+		pathUpdateListeners.remove(listener);
 	}
 
 	@Nonnull

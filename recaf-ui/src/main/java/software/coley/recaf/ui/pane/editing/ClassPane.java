@@ -32,30 +32,6 @@ import software.coley.recaf.util.Lang;
 public abstract class ClassPane extends AbstractContentPane<ClassPathNode> implements ClassNavigable {
 	private static final DebuggingLogger logger = Logging.get(ClassPane.class);
 
-	/**
-	 * Configures common side-tab content of child types.
-	 *
-	 * @param fieldsAndMethodsPane
-	 * 		Tab content to show fields/methods of a class.
-	 * @param inheritancePane
-	 * 		Tab content to show the inheritance hierarchy of a class.
-	 */
-	protected void configureCommonSideTabs(@Nonnull FieldsAndMethodsPane fieldsAndMethodsPane,
-	                                       @Nonnull InheritancePane inheritancePane) {
-		// Setup so clicking on items in fields-and-methods pane will synchronize with content in our class pane.
-		fieldsAndMethodsPane.setupSelectionNavigationListener(this);
-
-		// Setup side-tabs
-		addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
-				Icons.getIconView(Icons.FIELD_N_METHOD),
-				fieldsAndMethodsPane
-		));
-		addSideTab(new BoundTab(Lang.getBinding("hierarchy.title"),
-				CarbonIcons.FLOW,
-				inheritancePane
-		));
-	}
-
 	@Override
 	public void requestFocus(@Nonnull ClassMember member) {
 		// Delegate to child components

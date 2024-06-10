@@ -41,6 +41,8 @@ import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
+import software.coley.recaf.ui.pane.editing.SideTabs;
+import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.*;
 import software.coley.recaf.workspace.model.bundle.Bundle;
@@ -64,10 +66,10 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	private final AssemblerPipelineManager pipelineManager;
 	private final AssemblerToolTabs assemblerToolTabs;
+	private final SideTabsInjector sideTabsInjector;
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
 	private final AtomicBoolean updateLock = new AtomicBoolean();
-	private final Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider;
 	private AssemblerPipeline<? extends ClassInfo, ? extends ClassResult, ? extends ClassRepresentation> pipeline;
 	private ClassResult lastResult;
 	private ClassRepresentation lastAssembledClassRepresentation;
@@ -83,10 +85,10 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull AssemblerContextActionSupport contextActionSupport,
 	                     @Nonnull SearchBar searchBar,
 	                     @Nonnull KeybindingConfig keys,
-	                     @Nonnull Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider) {
+	                     @Nonnull SideTabsInjector sideTabsInjector) {
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
-		this.fieldsAndMethodsPaneProvider = fieldsAndMethodsPaneProvider;
+		this.sideTabsInjector = sideTabsInjector;
 
 		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
@@ -135,15 +137,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * 		The given path.
 	 */
 	private void lateInitForClass(@Nonnull ClassPathNode classPathNode) {
-		// Show declared fields/methods
-		FieldsAndMethodsPane fieldsAndMethodsPane = fieldsAndMethodsPaneProvider.get();
-		fieldsAndMethodsPane.setupSelectionNavigationListener(this);
-		addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
-				Icons.getIconView(Icons.FIELD_N_METHOD),
-				fieldsAndMethodsPane
-		));
-		fieldsAndMethodsPane.onUpdatePath(classPathNode);
-
 		// Since the content displayed is for a whole class, and the tool tabs are scoped to a method, we need to
 		// update them when a method is selected. We do so by tracking the caret position for being within the
 		// range of one of the methods in the last AST model.
@@ -273,7 +266,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 		// Update the path and call any path listeners.
 		this.path = path;
-		pathUpdateListeners.forEach(listener -> listener.accept(path));
+		CollectionUtil.safeForEach(pathUpdateListeners, listener -> listener.accept(path),
+				(listener, t) -> logger.error("Exception thrown when handling assembler-pane path update callback", t));
 
 		// Update UI state.
 		if (!updateLock.get()) {
