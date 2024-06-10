@@ -7,6 +7,10 @@ plugins {
 allprojects {
     group 'software.coley'
     version '4.0.0-SNAPSHOT'
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
 }
 
 subprojects {
@@ -18,7 +22,6 @@ subprojects {
     dependencies {
         // to enforce it everywhere as standard
         implementation(libs.jakarta.annotation)
-        implementation('org.codehaus.groovy:groovy-bom:3.0.14@pom')
     }
 
     configurations.configureEach {
@@ -105,15 +108,6 @@ subprojects {
         }
     }
 
-    tasks.withType(AbstractArchiveTask).configureEach {
-        preserveFileTimestamps = false
-        reproducibleFileOrder = true
-    }
-}
-
-tasks.withType(AbstractArchiveTask).configureEach {
-    preserveFileTimestamps = false
-    reproducibleFileOrder = true
 }
 
 // Always emit HTML & XML aggregate reports
