@@ -74,28 +74,27 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 							}
 						});
 			} else {
-				builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(declaringClass, method));
-				builder.item("menu.edit.assemble.method", EDIT, Unchecked.runnable(() ->
-						actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method))
-				));
-
+				// Edit menu
+				var edit = builder.submenu("menu.edit", EDIT);
+				edit.item("menu.edit.assemble.method", EDIT, Unchecked.runnable(() -> actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method))));
 				if (declaringClass.isJvmClass()) {
 					JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
 					JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
 
-					builder.item("menu.edit.copy", COPY_FILE, () -> actions.copyMember(workspace, resource, jvmBundle,declaringJvmClass, method));
-					builder.item("menu.edit.noop", CIRCLE_DASH, () -> actions.makeMethodsNoop(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
-					builder.item("menu.edit.delete", TRASH_CAN, () -> actions.deleteClassMethods(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
+					edit.item("menu.edit.copy", COPY_FILE, () -> actions.copyMember(workspace, resource, jvmBundle,declaringJvmClass, method));
+					edit.item("menu.edit.noop", CIRCLE_DASH, () -> actions.makeMethodsNoop(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
+					edit.item("menu.edit.delete", TRASH_CAN, () -> actions.deleteClassMethods(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
+					edit.item("menu.edit.remove.annotation", CLOSE, () -> actions.deleteMemberAnnotations(workspace, resource, jvmBundle, declaringJvmClass, method))
+							.disableWhen(method.getAnnotations().isEmpty());
 				}
 
 				// TODO: implement additional operations
 				//  - Edit
 				//    - Add annotation
-				//    - Remove annotations
 			}
 
 			// Search actions
-			builder.item("menu.search.method-references", CODE, () -> {
+			builder.item("menu.search.method-references", CODE_REFERENCE, () -> {
 				MemberReferenceSearchPane pane = actions.openNewMemberReferenceSearch();
 				pane.ownerPredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
 				pane.namePredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
@@ -104,6 +103,9 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 				pane.nameValueProperty().setValue(method.getName());
 				pane.descValueProperty().setValue(method.getDescriptor());
 			});
+
+			// Copy path
+			builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(declaringClass, method));
 
 			// Documentation actions
 			builder.memberItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
