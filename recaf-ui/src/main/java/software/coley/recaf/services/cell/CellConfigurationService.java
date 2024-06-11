@@ -103,7 +103,7 @@ public class CellConfigurationService implements Service {
 		cell.setText(null);
 		cell.setGraphic(null);
 		cell.setContextMenu(null);
-		cell.setOnMousePressed(null);
+		cell.setOnMouseClicked(null);
 	}
 
 	/**
