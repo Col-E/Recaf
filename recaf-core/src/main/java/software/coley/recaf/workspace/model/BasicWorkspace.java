@@ -97,12 +97,12 @@ public class BasicWorkspace implements Workspace {
 	}
 
 	@Override
-	public void addWorkspaceModificationListener(WorkspaceModificationListener listener) {
+	public void addWorkspaceModificationListener(@Nonnull WorkspaceModificationListener listener) {
 		modificationListeners.add(listener);
 	}
 
 	@Override
-	public void removeWorkspaceModificationListener(WorkspaceModificationListener listener) {
+	public void removeWorkspaceModificationListener(@Nonnull WorkspaceModificationListener listener) {
 		modificationListeners.remove(listener);
 	}
 
