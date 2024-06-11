@@ -11,6 +11,8 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
@@ -29,7 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Manager module handle exporting {@link Workspace} instances to {@link Path}s.
+ * Manager module handle exporting {@link Info} and {@link Workspace} instances to {@link Path}s.
  *
  * @author Matt Coley
  */
@@ -113,7 +115,7 @@ public class PathExportingManager {
 		}
 
 		// Create export options from the resource type and export the workspace to the selected path.
-		WorkspaceExporter exporter = createExporter(primaryResource, exportPath);
+		WorkspaceExporter exporter = createResourceExporter(primaryResource, exportPath);
 		try {
 			exporter.export(workspace);
 			logger.info("Exported workspace to path '{}'", exportPath);
@@ -132,7 +134,7 @@ public class PathExportingManager {
 	 * Export the given class.
 	 *
 	 * @param classInfo
-	 * 		Workspace to export.
+	 * 		Class to export.
 	 */
 	public void export(@Nonnull JvmClassInfo classInfo) {
 		// Prompt a path for the user to write to.
@@ -151,14 +153,12 @@ public class PathExportingManager {
 		if (selectedPath == null)
 			return;
 
-		// Ensure path ends with '.class'
-		Path exportPath = selectedPath.toPath();
-
 		// Update last export dir for classes.
 		lastClassExportDir.setValue(selectedPath.getParent());
 
 		// Write to path.
 		try {
+			Path exportPath = selectedPath.toPath();
 			Files.write(exportPath, classInfo.getBytecode());
 		} catch (IOException ex) {
 			logger.error("Failed to export class to path '{}'", selectedPath, ex);
@@ -171,8 +171,45 @@ public class PathExportingManager {
 		}
 	}
 
+	/**
+	 * Export the given file.
+	 *
+	 * @param fileInfo
+	 * 		File to export.
+	 */
+	public void export(@Nonnull FileInfo fileInfo) {
+		// Prompt a path for the user to write to.
+		ObservableString lastClassExportDir = recentFilesConfig.getLastClassExportDirectory();
+		File lastExportDir = lastClassExportDir.unboxingMap(File::new);
+		FileChooser chooser = new FileChooserBuilder()
+				.setInitialFileName(StringUtil.shortenPath(fileInfo.getName()))
+				.setInitialDirectory(lastExportDir)
+				.setTitle(Lang.get("dialog.file.export"))
+				.build();
+		File selectedPath = chooser.showSaveDialog(null);
+
+		// Selected path is null, meaning user closed out of file chooser.
+		// Cancel export.
+		if (selectedPath == null)
+			return;
+
+		// Write to path.
+		try {
+			Path exportPath = selectedPath.toPath();
+			Files.write(exportPath, fileInfo.getRawContent());
+		} catch (IOException ex) {
+			logger.error("Failed to export file to path '{}'", selectedPath, ex);
+			ErrorDialogs.show(
+					Lang.getBinding("dialog.error.exportfile.title"),
+					Lang.getBinding("dialog.error.exportfile.header"),
+					Lang.getBinding("dialog.error.exportfile.content"),
+					ex
+			);
+		}
+	}
+
 	@Nonnull
-	private WorkspaceExporter createExporter(@Nonnull WorkspaceResource resource, @Nonnull Path path) {
+	private WorkspaceExporter createResourceExporter(@Nonnull WorkspaceResource resource, @Nonnull Path path) {
 		WorkspaceExportOptions.CompressType compression = exportConfig.getCompression().getValue();
 		WorkspaceExportOptions options;
 		if (resource instanceof WorkspaceDirectoryResource) {
