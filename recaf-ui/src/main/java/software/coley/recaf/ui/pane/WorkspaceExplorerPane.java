@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.layout.BorderPane;
+import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.ui.control.tree.TreeFiltering;
 import software.coley.recaf.ui.control.tree.WorkspaceTree;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
@@ -35,6 +36,9 @@ public class WorkspaceExplorerPane extends BorderPane {
 								 @Nonnull WorkspaceTree workspaceTree,
 								 @Nullable Workspace workspace) {
 		this.workspaceTree = workspaceTree;
+
+		// As we are the explorer pane, these items should be treated as declarations and not references.
+		workspaceTree.contextSourceObjectPropertyProperty().setValue(ContextSource.DECLARATION);
 
 		// Add filter pane, and hook up key-events so the user can easily
 		// navigate between the tree and the filter.

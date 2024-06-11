@@ -96,7 +96,7 @@ public class WorkspaceTree extends PathNodeTree implements
 	 * @param resource
 	 * 		Resource to add to the tree.
 	 */
-	private void createResourceSubTree(WorkspaceResource resource) {
+	private void createResourceSubTree(@Nonnull WorkspaceResource resource) {
 		ResourcePathNode resourcePath = rootPath.child(resource);
 		resource.classBundleStream().forEach(bundle -> insertClasses(resourcePath, bundle));
 		resource.fileBundleStream().forEach(bundle -> insertFiles(resourcePath, bundle));
