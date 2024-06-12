@@ -50,6 +50,8 @@ public class MethodNoopingVisitor extends ClassVisitor {
 	 * Method visitor that replaces the contents with a no-op return.
 	 */
 	public static class NoopingMethodVisitor extends MethodVisitor implements Opcodes {
+		private static final int MAX_LOCALS = 0;
+		private static final int MAX_STACK = 2;
 		private static final Map<String, Consumer<MethodVisitor>> OBJECT_DEFAULTS = new HashMap<>();
 		private final Type type;
 
@@ -237,7 +239,7 @@ public class MethodNoopingVisitor extends ClassVisitor {
 
 		@Override
 		public void visitMaxs(int maxStack, int maxLocals) {
-			// skip
+			super.visitMaxs(MAX_STACK, MAX_LOCALS);
 		}
 
 		private static void register(@Nonnull String name, @Nonnull Consumer<MethodVisitor> consumer) {
