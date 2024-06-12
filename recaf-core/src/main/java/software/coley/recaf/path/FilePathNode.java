@@ -2,6 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 
@@ -87,7 +88,7 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 		if (o instanceof FilePathNode fileNode) {
 			String name = getValue().getName();
 			String otherName = fileNode.getValue().getName();
-			return String.CASE_INSENSITIVE_ORDER.compare(name, otherName);
+			return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(name, otherName);
 		}
 		return 0;
 	}

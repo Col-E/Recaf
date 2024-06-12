@@ -26,6 +26,7 @@ llzip = "2.5.0"
 logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.5.1"
 mockito = "5.11.0"
+natural-order = "1.1"
 openrewrite = "8.19.0"
 picocli = "4.7.5"
 procyon = "0.6.0"
@@ -103,6 +104,8 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 mapping-io = { module = "net.fabricmc:mapping-io", version.ref = "mapping-io" }
 
 mockito = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+
+natural-order = { module = "net.grey-panther:natural-comparator", version.ref = "natural-order" }
 
 openrewrite = { module = "org.openrewrite:rewrite-java-17", version.ref = "openrewrite" }
 

@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.info.*;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.cell.CellConfigurationService;
@@ -106,7 +107,7 @@ public class WorkspaceTree extends PathNodeTree implements
 		if (!embeddedResources.isEmpty()) {
 			EmbeddedResourceContainerPathNode containerPath = resourcePath.embeddedChildContainer();
 			embeddedResources.entrySet().stream() // Insert in sorted order of path name
-					.sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getKey(), o2.getKey()))
+					.sorted((o1, o2) -> CaseInsensitiveSimpleNaturalComparator.getInstance().compare(o1.getKey(), o2.getKey()))
 					.map(Map.Entry::getValue)
 					.forEach(embeddedResource -> {
 						ResourcePathNode resourcePathEmbedded = containerPath.child(embeddedResource);

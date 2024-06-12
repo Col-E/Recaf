@@ -2,6 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.collections.Maps;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
@@ -114,7 +115,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 				Map<WorkspaceFileResource, String> lookup = Maps.reverse(parentOfParent.getValue().getEmbeddedResources());
 				String ourKey = lookup.getOrDefault(resource, "?");
 				String otherKey = lookup.getOrDefault(otherResource, "?");
-				return String.CASE_INSENSITIVE_ORDER.compare(ourKey, otherKey);
+				return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(ourKey, otherKey);
 			} else {
 				if (workspace != null) {
 					if (resource == otherResource)
@@ -125,7 +126,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 					return Integer.compare(resources.indexOf(resource), resources.indexOf(otherResource));
 				} else {
 					// Enforce some ordering. Not ideal but works.
-					return String.CASE_INSENSITIVE_ORDER.compare(
+					return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(
 							resource.getClass().getSimpleName(),
 							otherResource.getClass().getSimpleName()
 					);
