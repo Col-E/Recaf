@@ -525,7 +525,7 @@ public class MappingGeneratorPane extends StackPane {
 	 * Config node for {@link ExcludeClassesFilter}.
 	 */
 	public class ExcludeClasses extends FilterWithConfigNode<ExcludeClassesFilter> {
-		private final StringProperty classPredicateId = new SimpleStringProperty();
+		private final StringProperty classPredicateId = new SimpleStringProperty(StringPredicateProvider.KEY_CONTAINS);
 		private final StringProperty className = new SimpleStringProperty("com/example/Foo");
 
 		@Nonnull
@@ -538,7 +538,13 @@ public class MappingGeneratorPane extends StackPane {
 		@Override
 		@SuppressWarnings("DataFlowIssue")
 		protected Function<NameGeneratorFilter, ExcludeClassesFilter> makeProvider() {
-			return next -> new ExcludeClassesFilter(next, stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()));
+			return next -> {
+				String id = classPredicateId.get();
+				StringPredicate predicate;
+				if (id == null) predicate = stringPredicateProvider.newNothingPredicate();
+				else predicate = stringPredicateProvider.newBiStringPredicate(id, className.get());
+				return new ExcludeClassesFilter(next, predicate);
+			};
 		}
 
 		@Override
@@ -708,7 +714,7 @@ public class MappingGeneratorPane extends StackPane {
 	 * Config node for {@link IncludeClassesFilter}.
 	 */
 	public class IncludeClasses extends FilterWithConfigNode<IncludeClassesFilter> {
-		private final StringProperty classPredicateId = new SimpleStringProperty();
+		private final StringProperty classPredicateId = new SimpleStringProperty(StringPredicateProvider.KEY_CONTAINS);
 		private final StringProperty className = new SimpleStringProperty("com/example/Foo");
 
 		@Nonnull
@@ -721,7 +727,13 @@ public class MappingGeneratorPane extends StackPane {
 		@Override
 		@SuppressWarnings("DataFlowIssue")
 		protected Function<NameGeneratorFilter, IncludeClassesFilter> makeProvider() {
-			return next -> new IncludeClassesFilter(next, stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()));
+			return next -> {
+				String id = classPredicateId.get();
+				StringPredicate predicate;
+				if (id == null) predicate = stringPredicateProvider.newNothingPredicate();
+				else predicate = stringPredicateProvider.newBiStringPredicate(id, className.get());
+				return new IncludeClassesFilter(next, predicate);
+			};
 		}
 
 		@Override
