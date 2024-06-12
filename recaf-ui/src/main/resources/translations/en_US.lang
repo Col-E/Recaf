@@ -768,6 +768,8 @@ number.match.gte-lt=min <= value < max
 number.match.gt-lte=min < value <= max
 number.match.gte-lte=min < value <= max
 number.match.any-of=numbers.contains(value)
+string.match.anything=Anything
+string.match.zilch=Nothing
 string.match.contains=str.contains(value)
 string.match.contains-ic=str.containsIgnoreCase(value)
 string.match.ends=str.endsWith(value)
