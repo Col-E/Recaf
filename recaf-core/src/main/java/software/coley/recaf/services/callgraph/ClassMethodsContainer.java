@@ -32,6 +32,7 @@ public class ClassMethodsContainer {
 	/**
 	 * @return Wrapped {@link JvmClassInfo}.
 	 */
+	@Nonnull
 	public JvmClassInfo getJvmClass() {
 		return jvmClass;
 	}
@@ -39,6 +40,7 @@ public class ClassMethodsContainer {
 	/**
 	 * @return Collection of method vertices within this class.
 	 */
+	@Nonnull
 	public Collection<MethodVertex> getVertices() {
 		return methodVertices.values();
 	}

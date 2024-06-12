@@ -127,6 +127,7 @@ public class MappingGenerator implements Service {
 			// Skip libraries in the family.
 			if (vertex.isLibraryVertex())
 				return;
+
 			// Skip module-info classes
 			if (vertex.isModule())
 				return;
@@ -170,7 +171,7 @@ public class MappingGenerator implements Service {
 				String methodDesc = method.getDescriptor();
 
 				// Skip if reserved method name.
-				if (methodName.length() > 0 && methodName.charAt(0) == '<')
+				if (!methodName.isEmpty() && methodName.charAt(0) == '<')
 					continue;
 
 				// Skip if filtered.

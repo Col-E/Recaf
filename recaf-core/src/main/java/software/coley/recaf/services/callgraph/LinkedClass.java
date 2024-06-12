@@ -29,7 +29,6 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 	private final BiFunction<String, String, MemberInfo<FieldMember>> fieldLookup;
 	private final BiFunction<String, String, MemberInfo<MethodMember>> methodLookup;
 
-	@SuppressWarnings("all") // Do not 'optimize' by using <> since it crashes javac on Java 11 (JDK-8212586)
 	public LinkedClass(@Nonnull ClassLookup lookup, @Nonnull JvmClassInfo info) {
 		this.info = info;
 
@@ -59,7 +58,7 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 				return null;
 			}
 
-			return new MemberInfo<FieldMember>() {
+			return new MemberInfo<>() {
 				@Override
 				public FieldMember innerValue() {
 					return declaredField;
@@ -83,7 +82,7 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 				logger.debugging(l -> l.warn("Missing declared method: {}{}", name, descriptor));
 				return null;
 			}
-			return new MemberInfo<MethodMember>() {
+			return new MemberInfo<>() {
 				@Override
 				public MethodMember innerValue() {
 					return declaredMethod;
