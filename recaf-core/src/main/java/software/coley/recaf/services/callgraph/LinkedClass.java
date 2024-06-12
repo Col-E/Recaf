@@ -3,6 +3,7 @@ package software.coley.recaf.services.callgraph;
 import dev.xdark.jlinker.ClassInfo;
 import dev.xdark.jlinker.MemberInfo;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
@@ -111,10 +112,12 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 		return info.getAccess();
 	}
 
-	@Nonnull
+	@Nullable
 	@Override
 	public ClassInfo<JvmClassInfo> superClass() {
-		return superClassLookup.apply(info.getSuperName());
+		String superName = info.getSuperName();
+		if (superName == null) return null;
+		return superClassLookup.apply(superName);
 	}
 
 	@Nonnull

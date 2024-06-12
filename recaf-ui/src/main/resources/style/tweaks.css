@@ -13,6 +13,7 @@
    -fx-background-color: -color-bg-inset;
 }
 
+/* For the file menu items with nested nodes. We don't want any padding so the whole menu is clickable */
 .closable-menu-item {
     -fx-padding: 0;
 }
@@ -156,4 +157,15 @@
 }
 .analysis-value-changed {
     -fx-background-color: -color-accent-muted;
+}
+
+.transparent-tree {
+    -fx-background-color: transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.transparent-cell {
+    -fx-background-color: transparent;
+}
+.transparent-cell:selected {
+    -fx-background-color: rgb(54, 58, 65);
 }

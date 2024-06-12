@@ -93,6 +93,24 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 				//    - Add annotation
 			}
 
+			// TODO: implement additional operations
+			//  - View
+			//    - Control flow graph
+			//    - Application flow graph
+			var view = builder.submenu("menu.view", VIEW);
+			if (declaringClass.isJvmClass()) {
+				JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
+				JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
+				view.item("menu.view.methodcallgraph", FLOW, () -> actions.openMethodCallGraph(workspace, resource, jvmBundle,declaringJvmClass, method));
+			}
+
+			// TODO: implement additional operations
+			//  - Deobfuscate
+			//    - Regenerate variable names
+			//    - Optimize with pattern matchers
+			//    - Optimize with SSVM
+			//  - Simulate with SSVM (Virtualize > Run)
+
 			// Search actions
 			builder.item("menu.search.method-references", CODE_REFERENCE, () -> {
 				MemberReferenceSearchPane pane = actions.openNewMemberReferenceSearch();
@@ -113,15 +131,6 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			// Refactor actions
 			builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameMethod);
 
-			// TODO: implement additional operations
-			//  - View
-			//    - Control flow graph
-			//    - Application flow graph
-			//  - Deobfuscate
-			//    - Regenerate variable names
-			//    - Optimize with pattern matchers
-			//    - Optimize with SSVM
-			//  - Simulate with SSVM (Virtualize > Run)
 			return menu;
 		};
 	}
