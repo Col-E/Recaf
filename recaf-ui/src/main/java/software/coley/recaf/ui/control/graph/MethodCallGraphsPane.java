@@ -44,6 +44,9 @@ public class MethodCallGraphsPane extends TabPane implements ClassNavigable, Upd
 
 		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphPane.CallGraphMode.CALLS, currentMethodInfo));
 		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphPane.CallGraphMode.CALLERS, currentMethodInfo));
+
+		// Remove the standard tab-pane border.
+		getStyleClass().addAll("borderless");
 	}
 
 	@Nonnull

@@ -129,7 +129,7 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			builder.memberItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
 
 			// Refactor actions
-			builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameMethod);
+			builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameMethod); // TODO: Hide when a library method (like System.exit)
 
 			return menu;
 		};
