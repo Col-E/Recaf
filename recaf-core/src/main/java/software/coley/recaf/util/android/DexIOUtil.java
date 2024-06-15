@@ -1,6 +1,7 @@
-package software.coley.recaf.util;
+package software.coley.recaf.util.android;
 
 import com.android.tools.r8.graph.DexProgramClass;
+import jakarta.annotation.Nonnull;
 import software.coley.dextranslator.model.ApplicationData;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
@@ -25,7 +26,8 @@ public class DexIOUtil {
 	 * @throws IOException
 	 * 		When the dex file cannot be read from.
 	 */
-	public static AndroidClassBundle read(ByteSource source) throws IOException {
+	@Nonnull
+	public static AndroidClassBundle read(@Nonnull ByteSource source) throws IOException {
 		return read(source.readAll());
 	}
 
@@ -38,7 +40,8 @@ public class DexIOUtil {
 	 * @throws IOException
 	 * 		When the dex file cannot be read from.
 	 */
-	public static AndroidClassBundle read(byte[] dex) throws IOException {
+	@Nonnull
+	public static AndroidClassBundle read(@Nonnull byte[] dex) throws IOException {
 		// Read dex file content
 		ApplicationData data = ApplicationData.fromDex(dex);
 

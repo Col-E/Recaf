@@ -8,6 +8,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
@@ -23,7 +24,6 @@ import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
 import software.coley.recaf.ui.pane.search.ClassReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.util.ClipboardUtil;
-import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -143,22 +143,18 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 		if (source.isReference()) {
 			builder.infoItem("menu.goto.class", ARROW_RIGHT, actions::gotoDeclaration);
 		} else if (source.isDeclaration()) {
-			builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(info));
-
 			// Edit menu
 			var edit = builder.submenu("menu.edit", EDIT);
 			edit.item("menu.edit.assemble.class", EDIT, Unchecked.runnable(() ->
 					actions.openAssembler(PathNodes.classPath(workspace, resource, bundle, info))
 			));
-			// TODO: Open an dialog which allows the user to create a member, and then open the relevant assembler
 			edit.infoItem("menu.edit.add.field", ADD_ALT, actions::addClassField);
 			edit.infoItem("menu.edit.add.method", ADD_ALT, actions::addClassMethod);
-			edit.item("menu.edit.add.annotation", ADD_ALT, () -> {}).disableWhen(true);
 			edit.infoItem("menu.edit.remove.field", CLOSE, actions::deleteClassFields).disableWhen(info.getFields().isEmpty());
 			edit.infoItem("menu.edit.remove.method", CLOSE, actions::deleteClassMethods).disableWhen(info.getMethods().isEmpty());
 			edit.infoItem("menu.edit.remove.annotation", CLOSE, actions::deleteClassAnnotations).disableWhen(info.getAnnotations().isEmpty());
-			builder.infoItem("menu.edit.copy", COPY_FILE, actions::copyClass);
-			builder.infoItem("menu.edit.delete", COPY_FILE, actions::deleteClass);
+			edit.infoItem("menu.edit.copy", COPY_FILE, actions::copyClass);
+			edit.infoItem("menu.edit.delete", COPY_FILE, actions::deleteClass);
 		}
 
 		// Search actions
@@ -174,13 +170,16 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			pane.typeValueProperty().setValue(info.getName());
 		});
 
-		// Documentation actions
-		builder.infoItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
-
 		// Refactor actions
 		var refactor = builder.submenu("menu.refactor", PAINT_BRUSH);
 		refactor.infoItem("menu.refactor.rename", TAG_EDIT, actions::renameClass);
 		refactor.infoItem("menu.refactor.move", STACKED_MOVE, actions::moveClass);
+
+		// Copy path
+		builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(info));
+
+		// Documentation actions
+		builder.infoItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
 
 		// Export actions
 		builder.infoItem("menu.export.class", EXPORT, actions::exportClass);

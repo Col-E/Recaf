@@ -13,13 +13,14 @@ import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.WorkspaceScoped;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.MultiMap;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
-import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -102,6 +103,13 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	@Nonnull
 	public ClassMethodsContainer getClassMethodsContainer(@Nonnull JvmClassInfo classInfo) {
 		return classToMethodsContainer.computeIfAbsent(classInfo, c -> new ClassMethodsContainer(classInfo));
+	}
+
+	@Nullable
+	public MethodVertex getVertex(@Nonnull MethodMember method) {
+		ClassInfo declaringClass = method.getDeclaringClass();
+		if (declaringClass == null) return null;
+		return getClassMethodsContainer(declaringClass.asJvmClass()).getVertex(method);
 	}
 
 	/**
@@ -209,15 +217,15 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	 * @param isInterface
 	 * 		Method interface flag.
 	 */
-	private void onMethodCalled(MutableMethodVertex methodVertex, int opcode, String owner, String name,
-								String descriptor, boolean isInterface) {
+	private void onMethodCalled(@Nonnull MutableMethodVertex methodVertex, int opcode, @Nonnull String owner,
+	                            @Nonnull String name, @Nonnull String descriptor, boolean isInterface) {
 		MethodRef ref = new MethodRef(owner, name, descriptor);
 
 		// Resolve the method
 		Result<Resolution<JvmClassInfo, MethodMember>> resolutionResult = resolve(opcode, owner, name, descriptor, isInterface);
 
 		// Handle result
-		if (resolutionResult != null && resolutionResult.isSuccess()) {
+		if (resolutionResult.isSuccess()) {
 			// Extract vertex from resolution
 			Resolution<JvmClassInfo, MethodMember> resolution = resolutionResult.value();
 			ClassMethodsContainer resolvedClass = getClassMethodsContainer(resolution.owner().innerValue());
@@ -256,16 +264,17 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	 * 		Invoke interface flag.
 	 *
 	 * @return Resolution result of the method within the owner.
-	 * {@code null} when the {@code owner} could not be found.
+	 * The result {@link Result#isError()} will be {@code true} when the {@code owner} could not be found.
 	 */
-	@Nullable
-	public Result<Resolution<JvmClassInfo, MethodMember>> resolve(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+	@Nonnull
+	public Result<Resolution<JvmClassInfo, MethodMember>> resolve(int opcode, @Nonnull String owner, @Nonnull String name,
+	                                                              @Nonnull String descriptor, boolean isInterface) {
 		JvmClassInfo ownerClass = lookup.apply(owner);
 
 		// Skip if we cannot resolve owner
 		if (ownerClass == null) {
 			unresolvedCalls.put(owner, new MethodRef(owner, name, descriptor));
-			return null;
+			return Result.error(ResolutionError.NO_SUCH_METHOD);
 		}
 
 		Result<Resolution<JvmClassInfo, MethodMember>> resolutionResult;
@@ -372,7 +381,7 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 		private final MethodRef method;
 		private final MethodMember resolvedMethod;
 
-		MutableMethodVertex(MethodRef method, MethodMember resolvedMethod) {
+		MutableMethodVertex(@Nonnull MethodRef method, @Nonnull MethodMember resolvedMethod) {
 			this.method = method;
 			this.resolvedMethod = resolvedMethod;
 		}

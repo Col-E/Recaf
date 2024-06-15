@@ -19,6 +19,14 @@ public class StringPredicateProvider {
 	/**
 	 * Key in {@link #newBiStringPredicate(String, String)} for equality matching.
 	 */
+	public static final String KEY_ANYTHING = "anything";
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for equality matching.
+	 */
+	public static final String KEY_NOTHING = "zilch"; // Use 'zilch' instead of 'nothing' so that the natural key ordering puts it last
+	/**
+	 * Key in {@link #newBiStringPredicate(String, String)} for equality matching.
+	 */
 	public static final String KEY_EQUALS = "equal";
 	/**
 	 * Key in {@link #newBiStringPredicate(String, String)} for case-insensitive equality matching.
@@ -56,11 +64,17 @@ public class StringPredicateProvider {
 	 * Key in {@link #newBiStringPredicate(String, String)} for full regex matching.
 	 */
 	public static final String KEY_REFEX_FULL = "regex-full";
+	private static final BiStringMatcher MATHER_ANYTHING = (a, b) -> true;
+	private static final BiStringMatcher MATHER_NOTHING = (a, b) -> false;
+	private static final StringPredicate PREDICATE_ANYTHING = new StringPredicate(KEY_ANYTHING, a -> true);
+	private static final StringPredicate PREDICATE_NOTHING = new StringPredicate(KEY_NOTHING, a -> false);
 	private final Map<String, BiStringMatcher> biStringMatchers = new ConcurrentHashMap<>();
 	private final Map<String, MultiStringMatcher> multiStringMatchers = new ConcurrentHashMap<>();
 
 	@Inject
 	public StringPredicateProvider() {
+		registerBiMatcher(KEY_ANYTHING, MATHER_ANYTHING);
+		registerBiMatcher(KEY_NOTHING, MATHER_NOTHING);
 		registerBiMatcher(KEY_EQUALS, String::equals);
 		registerBiMatcher(KEY_EQUALS_IGNORE_CASE, String::equalsIgnoreCase);
 		registerBiMatcher(KEY_CONTAINS, (key, value) -> value.contains(key));
@@ -109,6 +123,22 @@ public class StringPredicateProvider {
 	 */
 	public boolean registerMultiMatcher(@Nonnull String id, @Nonnull MultiStringMatcher matcher) {
 		return multiStringMatchers.putIfAbsent(id, matcher) == null;
+	}
+
+	/**
+	 * @return Predicate that matches anything.
+	 */
+	@Nonnull
+	public StringPredicate newAnythingPredicate() {
+		return PREDICATE_ANYTHING;
+	}
+
+	/**
+	 * @return Predicate that matches nothing.
+	 */
+	@Nonnull
+	public StringPredicate newNothingPredicate() {
+		return PREDICATE_NOTHING;
 	}
 
 	/**

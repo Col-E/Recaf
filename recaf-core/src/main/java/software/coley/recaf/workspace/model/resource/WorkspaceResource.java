@@ -102,6 +102,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all immediate JVM class bundles in the resource.
 	 */
+	@Nonnull
 	default Stream<JvmClassBundle> jvmClassBundleStream() {
 		return of(getJvmClassBundle());
 	}
@@ -109,6 +110,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all JVM class bundles in the resource, and in any embedded resources
 	 */
+	@Nonnull
 	default Stream<JvmClassBundle> jvmClassBundleStreamRecursive() {
 		return concat(jvmClassBundleStream(), getEmbeddedResources().values().stream()
 				.flatMap(WorkspaceResource::jvmClassBundleStreamRecursive));
@@ -117,6 +119,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all versioned JVM class bundles in the resource.
 	 */
+	@Nonnull
 	default Stream<JvmClassBundle> versionedJvmClassBundleStream() {
 		return getVersionedJvmClassBundles().values().stream();
 	}
@@ -124,6 +127,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all versioned JVM class bundles in the resource, and in any embedded resources
 	 */
+	@Nonnull
 	default Stream<JvmClassBundle> versionedJvmClassBundleStreamRecursive() {
 		return concat(versionedJvmClassBundleStream(), getEmbeddedResources().values().stream()
 				.flatMap(WorkspaceResource::versionedJvmClassBundleStreamRecursive));
@@ -132,6 +136,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all immediate Android class bundles in the resource.
 	 */
+	@Nonnull
 	default Stream<AndroidClassBundle> androidClassBundleStream() {
 		return getAndroidClassBundles().values().stream();
 	}
@@ -139,6 +144,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all Android class bundles in the resource, and in any embedded resources.
 	 */
+	@Nonnull
 	default Stream<AndroidClassBundle> androidClassBundleStreamRecursive() {
 		return concat(androidClassBundleStream(), getEmbeddedResources().values().stream()
 				.flatMap(WorkspaceResource::androidClassBundleStreamRecursive));
@@ -147,6 +153,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all immediate class bundles in the resource.
 	 */
+	@Nonnull
 	default Stream<ClassBundle<? extends ClassInfo>> classBundleStream() {
 		return concat(jvmClassBundleStream(), concat(versionedJvmClassBundleStream(), androidClassBundleStream()));
 	}
@@ -154,6 +161,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all class bundles in the resource, and in any embedded resources.
 	 */
+	@Nonnull
 	default Stream<ClassBundle<? extends ClassInfo>> classBundleStreamRecursive() {
 		return concat(classBundleStream(), getEmbeddedResources().values().stream()
 				.flatMap(WorkspaceResource::classBundleStreamRecursive));
@@ -162,6 +170,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all immediate file bundles in the resource.
 	 */
+	@Nonnull
 	default Stream<FileBundle> fileBundleStream() {
 		return of(getFileBundle());
 	}
@@ -169,6 +178,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all file bundles in the resource, and in any embedded resources.
 	 */
+	@Nonnull
 	default Stream<FileBundle> fileBundleStreamRecursive() {
 		return concat(fileBundleStream(), getEmbeddedResources().values().stream()
 				.flatMap(WorkspaceResource::fileBundleStreamRecursive));
@@ -177,6 +187,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all immediate bundles in the resource.
 	 */
+	@Nonnull
 	@SuppressWarnings("unchecked")
 	default <I extends Info> Stream<Bundle<I>> bundleStream() {
 		// Cast to object is a hack to allow generic usage of this method with <Info>.
@@ -190,6 +201,7 @@ public interface WorkspaceResource extends Closing {
 	/**
 	 * @return Stream of all bundles in the resource, and in any embedded resources.
 	 */
+	@Nonnull
 	@SuppressWarnings("unchecked")
 	default <I extends Info> Stream<Bundle<I>> bundleStreamRecursive() {
 		// Cast to object is a hack to allow generic usage of this method with <Info>.

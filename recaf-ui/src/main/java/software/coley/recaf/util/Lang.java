@@ -1,5 +1,6 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
@@ -31,6 +32,7 @@ public class Lang {
 	/**
 	 * @return Provided translations, also keys for {@link #getTranslations()}.
 	 */
+	@Nonnull
 	public static List<String> getTranslationKeys() {
 		return translationKeys;
 	}
@@ -38,6 +40,7 @@ public class Lang {
 	/**
 	 * @return Default translations, English, also key for {@link #getTranslations()}.
 	 */
+	@Nonnull
 	public static String getDefaultTranslations() {
 		return DEFAULT_TRANSLATIONS;
 	}
@@ -84,6 +87,7 @@ public class Lang {
 	/**
 	 * @return System language, or {@link #getDefaultTranslations()} if not set.
 	 */
+	@Nonnull
 	public static String getSystemLanguage() {
 		return SYSTEM_LANGUAGE == null ? getDefaultTranslations() : SYSTEM_LANGUAGE;
 	}
@@ -91,6 +95,7 @@ public class Lang {
 	/**
 	 * @return Map of supported translations and their key entries.
 	 */
+	@Nonnull
 	public static Map<String, Map<String, String>> getTranslations() {
 		return translations;
 	}
@@ -101,7 +106,8 @@ public class Lang {
 	 *
 	 * @return JavaFX string binding for specific translation key.
 	 */
-	public static synchronized StringBinding getBinding(String translationKey) {
+	@Nonnull
+	public static synchronized StringBinding getBinding(@Nonnull String translationKey) {
 		return translationBindings.computeIfAbsent(translationKey, k -> {
 			StringProperty currentTranslation = Lang.currentTranslation;
 			return new SynchronizedStringBinding() {
@@ -112,8 +118,7 @@ public class Lang {
 				@Override
 				protected synchronized String computeValue() {
 					String translated = Lang.get(currentTranslation.get(), translationKey);
-					if (translated != null)
-						translated = translated.replace("\\n", "\n");
+					translated = translated.replace("\\n", "\n");
 					return translated;
 				}
 			};
@@ -128,7 +133,8 @@ public class Lang {
 	 *
 	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
-	public static StringBinding formatBy(String format, ObservableValue<?>... args) {
+	@Nonnull
+	public static StringBinding formatBy(@Nonnull String format, ObservableValue<?>... args) {
 		return new SynchronizedStringBinding() {
 			{
 				bind(args);
@@ -150,7 +156,8 @@ public class Lang {
 	 *
 	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
-	public static StringBinding format(String translationKey, ObservableValue<?>... args) {
+	@Nonnull
+	public static StringBinding format(@Nonnull String translationKey, ObservableValue<?>... args) {
 		StringBinding root = getBinding(translationKey);
 		return new SynchronizedStringBinding() {
 			{
@@ -174,7 +181,8 @@ public class Lang {
 	 *
 	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
-	public static StringBinding formatLiterals(String translationKey, Object... args) {
+	@Nonnull
+	public static StringBinding formatLiterals(@Nonnull String translationKey, Object... args) {
 		StringBinding root = getBinding(translationKey);
 		return new SynchronizedStringBinding() {
 			{
@@ -196,7 +204,8 @@ public class Lang {
 	 *
 	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
-	public static StringBinding format(String translationKey, Object... args) {
+	@Nonnull
+	public static StringBinding format(@Nonnull String translationKey, Object... args) {
 		StringBinding root = getBinding(translationKey);
 		return new SynchronizedStringBinding() {
 			{
@@ -218,7 +227,8 @@ public class Lang {
 	 *
 	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
-	public static StringBinding concat(ObservableValue<String> translation, String... args) {
+	@Nonnull
+	public static StringBinding concat(@Nonnull ObservableValue<String> translation, String... args) {
 		return new SynchronizedStringBinding() {
 			{
 				bind(translation);
@@ -239,7 +249,8 @@ public class Lang {
 	 *
 	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
-	public static StringBinding concat(String translationKey, String... args) {
+	@Nonnull
+	public static StringBinding concat(@Nonnull String translationKey, String... args) {
 		StringBinding root = getBinding(translationKey);
 		return new SynchronizedStringBinding() {
 			{
@@ -256,6 +267,7 @@ public class Lang {
 	/**
 	 * @return Translations property.
 	 */
+	@Nonnull
 	public static StringProperty translationsProperty() {
 		return currentTranslation;
 	}
@@ -278,7 +290,8 @@ public class Lang {
 	 *
 	 * @return Translated value, based on {@link #getCurrentTranslations() current loaded mappings}.
 	 */
-	public static String get(String translations, String translationKey) {
+	@Nonnull
+	public static String get(@Nonnull String translations, @Nonnull String translationKey) {
 		Map<String, String> map = Lang.translations.getOrDefault(translations, currentTranslationMap);
 		String value = map.get(translationKey);
 		if (value == null) {
@@ -331,7 +344,7 @@ public class Lang {
 		SelfReferenceUtil.initializeFromContext(Lang.class);
 		SelfReferenceUtil selfReferenceUtil = SelfReferenceUtil.getInstance();
 		List<InternalPath> translations = selfReferenceUtil.getTranslations();
-		if (translations.size() > 0)
+		if (!translations.isEmpty())
 			logger.debug("Found {} translations", translations.size());
 		else
 			logger.error("Translations could not be loaded! CodeSource: {}",

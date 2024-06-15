@@ -38,6 +38,7 @@ import software.coley.recaf.services.navigation.UnsupportedContentException;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.TreeItems;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -74,10 +75,10 @@ public class CellConfigurationService implements Service {
 	 */
 	@Inject
 	public CellConfigurationService(@Nonnull CellConfigurationServiceConfig config,
-									@Nonnull TextProviderService textService,
-									@Nonnull IconProviderService iconService,
-									@Nonnull ContextMenuProviderService contextMenuService,
-									@Nonnull Actions actions) {
+	                                @Nonnull TextProviderService textService,
+	                                @Nonnull IconProviderService iconService,
+	                                @Nonnull ContextMenuProviderService contextMenuService,
+	                                @Nonnull Actions actions) {
 		this.config = config;
 		this.textService = textService;
 		this.iconService = iconService;
@@ -102,7 +103,7 @@ public class CellConfigurationService implements Service {
 		cell.setText(null);
 		cell.setGraphic(null);
 		cell.setContextMenu(null);
-		cell.setOnMousePressed(null);
+		cell.setOnMouseClicked(null);
 	}
 
 	/**
@@ -357,6 +358,8 @@ public class CellConfigurationService implements Service {
 
 			return textService.getCatchTextProvider(workspace, resource, bundle,
 					declaringClass, declaringMethod, catchPath.getValue()).makeText();
+		} else if (item instanceof EmbeddedResourceContainerPathNode) {
+			return Lang.get("tree.embedded-resources");
 		}
 
 		// No text
@@ -553,6 +556,8 @@ public class CellConfigurationService implements Service {
 
 			String caught = catchPath.getValue();
 			return iconService.getCatchIconProvider(workspace, resource, bundle, classInfo, method, caught).makeIcon();
+		} else if (item instanceof EmbeddedResourceContainerPathNode) {
+			return new FontIconView(CarbonIcons.CATEGORIES);
 		}
 
 		// No graphic

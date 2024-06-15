@@ -16,15 +16,14 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 /**
- * Basic groundwork for any mapping implementation. <br>
- * <br>
- * Mapping capabilities are defined in the constructor:
- * <ul>
- *     <li>{@link #doesSupportFieldTypeDifferentiation()}</li>
- *     <li>{@link #doesSupportVariableTypeDifferentiation()}</li>
- * </ul>
- * Allows hierarchy look-ups <i>(More info given at: {@link #enableHierarchyLookup(InheritanceGraph)}</i><br>
- * Handles inner class relations in class look-ups.
+ * A {@link Mappings} implementation with a number of additional operations to support usage beyond basic mapping info storage.
+ * <b>Enhancements</b>
+ * <ol>
+ * <li>Import mapping entries from a {@link IntermediateMappings} instance.</li>
+ * <li>Enhance field/method lookups with inheritance info from {@link InheritanceGraph}, see {@link #enableHierarchyLookup(InheritanceGraph)}.</li>
+ * <li>Enhance inner/outer class mapping edge cases via {@link #enableClassLookup(Workspace)}.</li>
+ * <li>Adapt keys in cases where fields/vars do not have type info associated with them <i>(for formats that suck)</i>.</li>
+ * </ol>
  *
  * @author Matt Coley
  */
@@ -42,7 +41,7 @@ public class MappingsAdapter implements Mappings {
 	 *        {@code true} if the mapping format implementation includes type descriptors in variable mappings.
 	 */
 	public MappingsAdapter(boolean supportFieldTypeDifferentiation,
-						   boolean supportVariableTypeDifferentiation) {
+	                       boolean supportVariableTypeDifferentiation) {
 		this.supportFieldTypeDifferentiation = supportFieldTypeDifferentiation;
 		this.supportVariableTypeDifferentiation = supportVariableTypeDifferentiation;
 	}
@@ -151,7 +150,7 @@ public class MappingsAdapter implements Mappings {
 	@Nullable
 	@Override
 	public String getMappedVariableName(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
-										@Nullable String name, @Nullable String desc, int index) {
+	                                    @Nullable String name, @Nullable String desc, int index) {
 		MappingKey key = getVariableKey(className, methodName, methodDesc, name, desc, index);
 		return mappings.get(key);
 	}
@@ -175,6 +174,16 @@ public class MappingsAdapter implements Mappings {
 			}
 		}
 		return intermediate;
+	}
+
+	@Override
+	public boolean doesSupportFieldTypeDifferentiation() {
+		return supportFieldTypeDifferentiation;
+	}
+
+	@Override
+	public boolean doesSupportVariableTypeDifferentiation() {
+		return supportVariableTypeDifferentiation;
 	}
 
 	/**
@@ -239,28 +248,6 @@ public class MappingsAdapter implements Mappings {
 	 */
 	public void enableClassLookup(@Nonnull Workspace workspace) {
 		this.workspace = workspace;
-	}
-
-	/**
-	 * Some mapping formats do not include field types since name overloading is illegal at the source level of Java.
-	 * It's valid in the bytecode but the mapping omits this info since it isn't necessary information for mapping
-	 * that does not support name overloading.
-	 *
-	 * @return {@code true} when field mappings include the type descriptor in their lookup information.
-	 */
-	public boolean doesSupportFieldTypeDifferentiation() {
-		return supportFieldTypeDifferentiation;
-	}
-
-	/**
-	 * Some mapping forats do not include variable types since name overloading is illegal at the source level of Java.
-	 * Variable names are not used by the JVM at all so their names can be anything at the bytecode level. So including
-	 * the type makes it easier to reverse mappings.
-	 *
-	 * @return {@code true} when variable mappings include the type descriptor in their lookup information.
-	 */
-	public boolean doesSupportVariableTypeDifferentiation() {
-		return supportVariableTypeDifferentiation;
 	}
 
 	/**
@@ -352,7 +339,7 @@ public class MappingsAdapter implements Mappings {
 	 * 		New name of the variable.
 	 */
 	public void addVariable(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
-							@Nonnull String originalName, @Nullable String desc, int index, @Nonnull String renamedName) {
+	                        @Nonnull String originalName, @Nullable String desc, int index, @Nonnull String renamedName) {
 		MappingKey key = getVariableKey(className, methodName, methodDesc, originalName, desc, index);
 		mappings.put(key, renamedName);
 	}
@@ -416,7 +403,7 @@ public class MappingsAdapter implements Mappings {
 	 */
 	@Nonnull
 	protected MappingKey getVariableKey(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
-										@Nullable String name, @Nullable String desc, int index) {
+	                                    @Nullable String name, @Nullable String desc, int index) {
 		return new VariableMappingKey(className, methodName, methodDesc, name, desc);
 	}
 }

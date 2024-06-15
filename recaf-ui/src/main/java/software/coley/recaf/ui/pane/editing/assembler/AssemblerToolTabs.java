@@ -8,7 +8,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Tab;
 import me.darknet.assembler.ast.ASTElement;
-import me.darknet.assembler.compiler.ClassRepresentation;
 import me.darknet.assembler.compiler.ClassResult;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.ClassInfo;
@@ -39,6 +38,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	private final Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider;
 	private final Instance<JvmVariablesPane> jvmVariablesPaneProvider;
 	private final Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider;
+	private final Instance<ControlFlowLines> controlFlowLineProvider;
 	private final List<Navigable> children = new CopyOnWriteArrayList<>();
 	private final SideTabs tabs = new SideTabs(Orientation.HORIZONTAL);
 	private PathNode<?> path;
@@ -46,10 +46,12 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	@Inject
 	public AssemblerToolTabs(@Nonnull Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider,
 							 @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider,
-							 @Nonnull Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider) {
+							 @Nonnull Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider,
+							 @Nonnull Instance<ControlFlowLines> controlFlowLineProvider) {
 		this.jvmStackAnalysisPaneProvider = jvmStackAnalysisPaneProvider;
 		this.jvmVariablesPaneProvider = jvmVariablesPaneProvider;
 		this.jvmExpressionCompilerPaneProvider = jvmExpressionCompilerPaneProvider;
+		this.controlFlowLineProvider = controlFlowLineProvider;
 
 		// Without an initial size, the first frame of a method has nothing in it. So the auto-size to fit content
 		// has nothing to fit to, which leads to only table headers being visible. Looks really dumb so giving it
@@ -73,13 +75,15 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			JvmStackAnalysisPane stackAnalysisPane = jvmStackAnalysisPaneProvider.get();
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
 			JvmExpressionCompilerPane expressionPane = jvmExpressionCompilerPaneProvider.get();
-			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane));
+			ControlFlowLines controlFlowLines = controlFlowLineProvider.get();
+			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane, controlFlowLines));
 			FxThreadUtil.run(() -> {
 				ObservableList<Tab> tabs = this.tabs.getTabs();
 				tabs.clear();
 				tabs.add(new BoundTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, stackAnalysisPane));
 				tabs.add(new BoundTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane));
 				tabs.add(new BoundTab(Lang.getBinding("assembler.playground.title"), CarbonIcons.CODE, expressionPane));
+				// Note: There is intentionally no tab for the jump arrow pane at the moment
 				tabs.forEach(t -> t.setClosable(false));
 			});
 		} else if (classInPath.isAndroidClass()) {

@@ -28,7 +28,7 @@ import me.darknet.assembler.util.Range;
 import org.reactfx.EventStreams;
 import software.coley.collections.Lists;
 import software.coley.recaf.services.cell.CellConfigurationService;
-import software.coley.recaf.ui.config.TextFormatConfig;
+import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;

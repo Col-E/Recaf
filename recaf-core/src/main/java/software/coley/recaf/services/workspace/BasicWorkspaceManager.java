@@ -7,12 +7,15 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.workspace.model.WorkspaceModificationListener;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Basic workspace manager implementation.
@@ -22,10 +25,10 @@ import java.util.List;
 @ApplicationScoped
 public class BasicWorkspaceManager implements WorkspaceManager {
 	private static final Logger logger = Logging.get(BasicWorkspaceManager.class);
-	private final List<WorkspaceCloseCondition> closeConditions = new ArrayList<>();
-	private final List<WorkspaceOpenListener> openListeners = new ArrayList<>();
-	private final List<WorkspaceCloseListener> closeListeners = new ArrayList<>();
-	private final List<WorkspaceModificationListener> defaultModificationListeners = new ArrayList<>();
+	private final List<WorkspaceCloseCondition> closeConditions = new CopyOnWriteArrayList<>();
+	private final List<WorkspaceOpenListener> openListeners = new CopyOnWriteArrayList<>();
+	private final List<WorkspaceCloseListener> closeListeners = new CopyOnWriteArrayList<>();
+	private final List<WorkspaceModificationListener> defaultModificationListeners = new CopyOnWriteArrayList<>();
 	private final WorkspaceManagerConfig config;
 	private Workspace current;
 
@@ -45,28 +48,17 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 
 	@Override
 	public void setCurrentIgnoringConditions(Workspace workspace) {
-		if (current != null) {
-			current.close();
-			for (WorkspaceCloseListener listener : new ArrayList<>(closeListeners)) {
-				try {
-					listener.onWorkspaceClosed(current);
-				} catch (Throwable t) {
-					logger.error("Exception thrown by '{}' when closing workspace",
-							listener.getClass().getName(), t);
-				}
-			}
+		Workspace currentWorkspace = current;
+		if (currentWorkspace != null) {
+			currentWorkspace.close();
+			CollectionUtil.safeForEach(closeListeners, listener -> listener.onWorkspaceClosed(currentWorkspace),
+					(listener, t) -> logger.error("Exception thrown when closing workspace", t));
 		}
 		current = workspace;
 		if (workspace != null) {
 			defaultModificationListeners.forEach(workspace::addWorkspaceModificationListener);
-			for (WorkspaceOpenListener listener : new ArrayList<>(openListeners)) {
-				try {
-					listener.onWorkspaceOpened(workspace);
-				} catch (Throwable t) {
-					logger.error("Exception thrown by '{}' when opening workspace",
-							listener.getClass().getName(), t);
-				}
-			}
+			CollectionUtil.safeForEach(openListeners, listener -> listener.onWorkspaceOpened(workspace),
+					(listener, t) -> logger.error("Exception thrown by when opening workspace", t));
 		}
 	}
 
@@ -77,12 +69,12 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 	@Override
-	public void addWorkspaceCloseCondition(WorkspaceCloseCondition condition) {
+	public void addWorkspaceCloseCondition(@Nonnull WorkspaceCloseCondition condition) {
 		closeConditions.add(condition);
 	}
 
 	@Override
-	public void removeWorkspaceCloseCondition(WorkspaceCloseCondition condition) {
+	public void removeWorkspaceCloseCondition(@Nonnull WorkspaceCloseCondition condition) {
 		closeConditions.remove(condition);
 	}
 
@@ -93,12 +85,12 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 	@Override
-	public void addWorkspaceOpenListener(WorkspaceOpenListener listener) {
+	public void addWorkspaceOpenListener(@Nonnull WorkspaceOpenListener listener) {
 		openListeners.add(listener);
 	}
 
 	@Override
-	public void removeWorkspaceOpenListener(WorkspaceOpenListener listener) {
+	public void removeWorkspaceOpenListener(@Nonnull WorkspaceOpenListener listener) {
 		openListeners.remove(listener);
 	}
 
@@ -109,12 +101,12 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 	@Override
-	public void addWorkspaceCloseListener(WorkspaceCloseListener listener) {
+	public void addWorkspaceCloseListener(@Nonnull WorkspaceCloseListener listener) {
 		closeListeners.add(listener);
 	}
 
 	@Override
-	public void removeWorkspaceCloseListener(WorkspaceCloseListener listener) {
+	public void removeWorkspaceCloseListener(@Nonnull WorkspaceCloseListener listener) {
 		closeListeners.remove(listener);
 	}
 
@@ -125,13 +117,25 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 	}
 
 	@Override
-	public void addDefaultWorkspaceModificationListeners(WorkspaceModificationListener listener) {
+	public void addDefaultWorkspaceModificationListeners(@Nonnull WorkspaceModificationListener listener) {
 		defaultModificationListeners.add(listener);
 	}
 
 	@Override
-	public void removeDefaultWorkspaceModificationListeners(WorkspaceModificationListener listener) {
+	public void removeDefaultWorkspaceModificationListeners(@Nonnull WorkspaceModificationListener listener) {
 		defaultModificationListeners.remove(listener);
+
+		addDefaultWorkspaceModificationListeners(new WorkspaceModificationListener() {
+			@Override
+			public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+				// Supporting library added to workspace
+			}
+
+			@Override
+			public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+				// Supporting library removed from workspace
+			}
+		});
 	}
 
 	@Nonnull

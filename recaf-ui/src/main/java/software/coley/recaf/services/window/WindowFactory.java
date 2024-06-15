@@ -8,7 +8,6 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.window.RecafStage;
-import software.coley.recaf.util.Icons;
 
 /**
  * Creates new windows.

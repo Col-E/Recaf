@@ -59,6 +59,7 @@ public final class MemorySegmentDataSource implements ByteSource, AutoCloseable 
 		return data;
 	}
 
+	// TODO: Replace this class with the one from LL-J-Zip when the next release is made
 	static final class MemorySegmentInputStream extends InputStream {
 		private final MemorySegment data;
 		private long read;

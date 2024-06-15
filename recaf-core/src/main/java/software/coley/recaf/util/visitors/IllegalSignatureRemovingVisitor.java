@@ -52,10 +52,10 @@ public class IllegalSignatureRemovingVisitor extends ClassVisitor {
 		};
 	}
 
-	private String map(String signature, boolean isOnClassOrMethod) {
+	private String map(String signature, boolean isTypeSignature) {
 		if (signature == null)
 			return null;
-		if (Types.isValidSignature(signature, isOnClassOrMethod))
+		if (Types.isValidSignature(signature, isTypeSignature))
 			return signature;
 		detected = true;
 		return null;

@@ -3,6 +3,7 @@ package software.coley.recaf.services.mapping;
 import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
@@ -14,6 +15,7 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
+import software.coley.recaf.util.visitors.IllegalSignatureRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -122,7 +124,11 @@ public class MappingApplier implements Service {
 		// Map intermediate mappings to the adapter so that we can pass in the inheritance graph for better coverage
 		// of cases inherited field/method references.
 		if (mappings instanceof IntermediateMappings intermediateMappings) {
-			MappingsAdapter adapter = new MappingsAdapter(true, true);
+			// Mapping formats that export to intermediate should mark whether they support
+			// differentiation of field and variable types.
+			boolean fieldDifferentiation = mappings.doesSupportFieldTypeDifferentiation();
+			boolean varDifferentiation = mappings.doesSupportVariableTypeDifferentiation();
+			MappingsAdapter adapter = new MappingsAdapter(fieldDifferentiation, varDifferentiation);
 			adapter.importIntermediate(intermediateMappings);
 			mappings = adapter;
 		}
@@ -167,7 +173,8 @@ public class MappingApplier implements Service {
 		ClassWriter cw = new ClassWriter(0);
 		ClassReader cr = classInfo.getClassReader();
 		WorkspaceClassRemapper remapVisitor = new WorkspaceClassRemapper(cw, workspace, mappings);
-		cr.accept(remapVisitor, 0);
+		ClassVisitor cv = classInfo.hasValidSignatures() ? remapVisitor : new IllegalSignatureRemovingVisitor(remapVisitor); // Because ASM crashes otherwise.
+		cr.accept(cv, 0);
 
 		// Update class if it has any modified references
 		if (remapVisitor.hasMappingBeenApplied()) {

@@ -2,6 +2,8 @@ package software.coley.recaf.ui.pane.editing;
 
 import jakarta.annotation.Nonnull;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.recaf.analytics.logging.DebuggingLogger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -16,6 +18,7 @@ import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.ui.pane.editing.tabs.InheritancePane;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 
@@ -27,29 +30,7 @@ import software.coley.recaf.util.Lang;
  * @see AndroidClassPane For {@link AndroidClassInfo}.
  */
 public abstract class ClassPane extends AbstractContentPane<ClassPathNode> implements ClassNavigable {
-	/**
-	 * Configures common side-tab content of child types.
-	 *
-	 * @param fieldsAndMethodsPane
-	 * 		Tab content to show fields/methods of a class.
-	 * @param inheritancePane
-	 * 		Tab content to show the inheritance hierarchy of a class.
-	 */
-	protected void configureCommonSideTabs(@Nonnull FieldsAndMethodsPane fieldsAndMethodsPane,
-										   @Nonnull InheritancePane inheritancePane) {
-		// Setup so clicking on items in fields-and-methods pane will synchronize with content in our class pane.
-		fieldsAndMethodsPane.setupSelectionNavigationListener(this);
-
-		// Setup side-tabs
-		addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
-				Icons.getIconView(Icons.FIELD_N_METHOD),
-				fieldsAndMethodsPane
-		));
-		addSideTab(new BoundTab(Lang.getBinding("hierarchy.title"),
-				CarbonIcons.FLOW,
-				inheritancePane
-		));
-	}
+	private static final DebuggingLogger logger = Logging.get(ClassPane.class);
 
 	@Override
 	public void requestFocus(@Nonnull ClassMember member) {
@@ -71,7 +52,8 @@ public abstract class ClassPane extends AbstractContentPane<ClassPathNode> imple
 		// Update if class has changed.
 		if (path instanceof ClassPathNode classPath) {
 			this.path = classPath;
-			pathUpdateListeners.forEach(listener -> listener.accept(classPath));
+			CollectionUtil.safeForEach(pathUpdateListeners, listener -> listener.accept(classPath),
+					(listener, t) -> logger.error("Exception thrown when handling class-pane path update callback", t));
 
 			// Initialize UI if it has not been done yet.
 			if (getCenter() == null)

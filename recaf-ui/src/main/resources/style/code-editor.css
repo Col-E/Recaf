@@ -74,6 +74,12 @@ Style for line numbers added next to paragraphs. Simply shows what lines text is
 	-fx-background-color: -color-bg-overlay;
 	-fx-max-height: 1000px;
 }
+.code-area .lineno .bg {
+    /* Used by the line number text label. Giving it a background allows hiding other line number graphics
+       under the background if they are rendered before the line number graphic. */
+    -fx-background-color: -color-bg-overlay;
+    -fx-background-insets: -2px -2px -2px -10px
+}
 .code-area .lineno .text {
     -fx-fill: -color-fg-muted;
 }

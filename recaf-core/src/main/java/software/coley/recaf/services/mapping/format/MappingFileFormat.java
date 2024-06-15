@@ -109,7 +109,7 @@ public interface MappingFileFormat {
 	 */
 	@Nonnull
 	static IntermediateMappings parse(@Nonnull String mappingText, @Nonnull MappingTreeReader visitor) throws InvalidMappingException {
-		IntermediateMappings mappings = new IntermediateMappings();
+		// Populate the mapping-io model
 		MemoryMappingTree tree = new MemoryMappingTree();
 		StringReader reader = new StringReader(mappingText);
 		try {
@@ -117,27 +117,50 @@ public interface MappingFileFormat {
 		} catch (IOException ex) {
 			throw new InvalidMappingException(ex);
 		}
+
+		// Create our mapping model.
+		IntermediateMappings mappings = new IntermediateMappings();
+
+		// Mapping IO supports multiple namespaces for outputs.
+		// This is only really used in the 'tiny' format. Generally speaking the input columns look like:
+		//   obfuscated, intermediate, clean
+		// or:
+		//   intermediate, clean
+		// We want everything to map to the final column, rather than their notion of the first
+		// column mapping to one of the following columns.
 		int namespaceCount = tree.getDstNamespaces().size();
 		int finalNamespace = namespaceCount - 1;
 		for (MappingTree.ClassMapping cm : tree.getClasses()) {
 			String finalClassName = cm.getDstName(finalNamespace);
+
+			// Add the base case: input --> final output name
 			mappings.addClass(cm.getSrcName(), finalClassName);
+
+			// Add destination[n] --> final output name, where n < destinations.length - 1.
+			// This is how we handle cases like 'intermediate --> clean' despite both of those
+			// being "output" columns.
 			if (namespaceCount > 1)
 				for (int i = 0; i < finalNamespace; i++)
 					mappings.addClass(cm.getDstName(i), finalClassName);
 			for (MappingTree.FieldMapping fm : cm.getFields()) {
 				String finalFieldName = fm.getDstName(finalNamespace);
+
+				// Base case, like before.
 				mappings.addField(cm.getSrcName(), fm.getSrcDesc(), fm.getSrcName(), finalFieldName);
+
+				// Support extra namespaces, like before.
 				if (namespaceCount > 1)
 					for (int i = 0; i < finalNamespace; i++)
-						mappings.addField(cm.getSrcName(), fm.getSrcDesc(), fm.getDstName(i), finalFieldName);
+						mappings.addField(cm.getDstName(i), fm.getDesc(i), fm.getDstName(i), finalFieldName);
 			}
 			for (MappingTree.MethodMapping mm : cm.getMethods()) {
 				String finalMethodName = mm.getDstName(finalNamespace);
+
+				// Same idea as field handling.
 				mappings.addMethod(cm.getSrcName(), mm.getSrcDesc(), mm.getSrcName(), finalMethodName);
 				if (namespaceCount > 1)
 					for (int i = 0; i < finalNamespace; i++)
-						mappings.addMethod(cm.getSrcName(), mm.getSrcDesc(), mm.getDstName(i), finalMethodName);
+						mappings.addMethod(cm.getDstName(i), mm.getDstDesc(i), mm.getDstName(i), finalMethodName);
 			}
 		}
 		return mappings;

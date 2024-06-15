@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.config;
+package software.coley.recaf.services.text;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -13,7 +13,7 @@ import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.StringUtil;
 
 /**
- * Config for text display.
+ * Config for text formatting.
  *
  * @author Matt Coley
  */

@@ -33,6 +33,34 @@ class StringUtilTest {
 	}
 
 	@Test
+	void testGetTabAdjustedLength() {
+		assertEquals(4, StringUtil.getTabAdjustedLength("\t", 4));
+		assertEquals(4, StringUtil.getTabAdjustedLength(" \t", 4));
+		assertEquals(4, StringUtil.getTabAdjustedLength("  \t", 4));
+		assertEquals(4, StringUtil.getTabAdjustedLength("   \t", 4));
+		assertEquals(4, StringUtil.getTabAdjustedLength("    ", 4));
+		assertEquals(10, StringUtil.getTabAdjustedLength("\t\t", 5));
+		assertEquals(10, StringUtil.getTabAdjustedLength(" \t\t", 5));
+		assertEquals(10, StringUtil.getTabAdjustedLength("  \t\t", 5));
+		assertEquals(10, StringUtil.getTabAdjustedLength("   \t\t", 5));
+		assertEquals(10, StringUtil.getTabAdjustedLength("     \t", 5));
+	}
+
+	@Test
+	void testGetWhitespacePrefixLength() {
+		assertEquals(4, StringUtil.getWhitespacePrefixLength("    text", 4));
+		assertEquals(4, StringUtil.getWhitespacePrefixLength("   \ttext", 4));
+		assertEquals(4, StringUtil.getWhitespacePrefixLength("  \ttext", 4));
+		assertEquals(4, StringUtil.getWhitespacePrefixLength(" \ttext", 4));
+		assertEquals(4, StringUtil.getWhitespacePrefixLength("\ttext", 4));
+		assertEquals(8, StringUtil.getWhitespacePrefixLength("    \ttext", 4));
+		assertEquals(8, StringUtil.getWhitespacePrefixLength("   \t \ttext", 4));
+		assertEquals(8, StringUtil.getWhitespacePrefixLength("  \t   \ttext", 4));
+		assertEquals(8, StringUtil.getWhitespacePrefixLength("\t \ttext", 4));
+		assertEquals(8, StringUtil.getWhitespacePrefixLength(" \t   \ttext", 4));
+	}
+
+	@Test
 	void testSplitNewline() {
 		assertEquals(1, StringUtil.splitNewline("").length);
 		assertEquals(1, StringUtil.splitNewline("a").length);

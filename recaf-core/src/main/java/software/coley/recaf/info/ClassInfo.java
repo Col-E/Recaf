@@ -6,6 +6,8 @@ import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.util.Types;
+import software.coley.recaf.util.visitors.IllegalSignatureRemovingVisitor;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -77,6 +79,16 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 */
 	@Nullable
 	String getSignature();
+
+	/**
+	 * @return {@code true} when the {@link #getSignature() class signature} and all
+	 * {@link #getFields() fields} and {@link #getMethods() methods} have valid {@link ClassMember#getSignature() signatures}.
+	 * {@code false} when any of those values is malformed.
+	 *
+	 * @see IllegalSignatureRemovingVisitor Visitor for removing invalid signatures on JVM classes.
+	 * @see Types#isValidSignature(String, boolean) Method for checking validity of a generic signature.
+	 */
+	boolean hasValidSignatures();
 
 	/**
 	 * @return Name of outer class that this is declared in, if this is an inner class.

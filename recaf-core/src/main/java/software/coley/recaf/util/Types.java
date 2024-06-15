@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.util.Arrays;
@@ -325,12 +326,13 @@ public class Types {
 	 * @param signature
 	 * 		Signature text.
 	 * @param isTypeSignature
-	 * 		See {@link org.objectweb.asm.commons.ClassRemapper} for usage.
+	 * 		See {@link org.objectweb.asm.signature.SignatureReader#accept(SignatureVisitor)} ({@code false})
+	 * 		and {@link org.objectweb.asm.signature.SignatureReader#acceptType(SignatureVisitor)} ({@code true}) for usage.
 	 *
 	 * @return {@code true} for a valid signature. Will be {@code false} otherwise, or for {@code null} values.
 	 */
 	public static boolean isValidSignature(@Nullable String signature, boolean isTypeSignature) {
-		if (signature == null)
+		if (signature == null || signature.isEmpty())
 			return false;
 		try {
 			SignatureReader signatureReader = new SignatureReader(signature);

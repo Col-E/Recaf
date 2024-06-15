@@ -1,6 +1,7 @@
 package software.coley.recaf.info.annotation;
 
 import jakarta.annotation.Nonnull;
+import org.objectweb.asm.Type;
 
 import java.util.List;
 
@@ -17,7 +18,8 @@ public interface AnnotationElement {
 	String getElementName();
 
 	/**
-	 * @return Element value. Can be a primitive, {@link String}, a {@link AnnotationElement}, or a {@link List} of any of the prior values.
+	 * @return Element value. Can be a primitive, {@link String}, a {@link AnnotationInfo},
+	 * a {@link AnnotationEnumReference}, a {@link Type}, or a {@link List} of any of the prior values.
 	 */
 	@Nonnull
 	Object getElementValue();

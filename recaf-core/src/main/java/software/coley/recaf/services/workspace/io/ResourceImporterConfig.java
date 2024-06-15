@@ -3,6 +3,7 @@ package software.coley.recaf.services.workspace.io;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import software.coley.collections.func.UncheckedFunction;
 import software.coley.lljzip.ZipIO;
 import software.coley.lljzip.format.model.CentralDirectoryFileHeader;
 import software.coley.lljzip.format.model.LocalFileHeader;
@@ -14,7 +15,6 @@ import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
-import software.coley.recaf.util.UncheckedFunction;
 
 /**
  * Config for {@link ResourceImporter}.

@@ -44,4 +44,17 @@ public class SafeCodeArea extends CodeArea {
 		if (paragraphIndex >= 0 && paragraphIndex < getParagraphs().size())
 			super.moveTo(paragraphIndex, columnIndex, selectionPolicy);
 	}
+
+	@Override
+	public void selectRange(int anchor, int caretPosition) {
+		if (anchor >= 0 && anchor <= getLength() && caretPosition >= 0 && caretPosition <= getLength())
+			super.selectRange(anchor, caretPosition);
+	}
+
+	@Override
+	public void selectRange(int anchorParagraph, int anchorColumn, int caretPositionParagraph, int caretPositionColumn) {
+		if (anchorParagraph >= 0 && anchorParagraph < getParagraphs().size() &&
+				caretPositionParagraph >= 0 && caretPositionParagraph < getParagraphs().size())
+			super.selectRange(anchorParagraph, anchorColumn, caretPositionParagraph, caretPositionColumn);
+	}
 }

@@ -50,12 +50,12 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
@@ -88,8 +88,8 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 
 	@Inject
 	public JavaContextActionSupport(@Nonnull CellConfigurationService cellConfigurationService,
-									@Nonnull AstService astService,
-									@Nonnull Workspace workspace) {
+	                                @Nonnull AstService astService,
+	                                @Nonnull Workspace workspace) {
 		this.cellConfigurationService = cellConfigurationService;
 		this.astService = astService;
 		contextHelper = new AstContextHelper(workspace);
@@ -179,40 +179,23 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			queuedSelectionTask = () -> select(member);
 		} else {
 			queuedSelectionTask = null;
-			SortedMap<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(unit, editor.getText());
-			for (Map.Entry<Range, Tree> entry : map.entrySet()) {
-				Tree tree = entry.getValue();
-				Range range = entry.getKey();
+			try {
+				SortedMap<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(unit, editor.getText());
+				for (Map.Entry<Range, Tree> entry : map.entrySet()) {
+					Tree tree = entry.getValue();
+					Range range = entry.getKey();
 
-				// Check against method and variable (field) declarations.
-				if (member.isMethod() && tree instanceof J.MethodDeclaration method) {
-					JavaType.Method methodType = method.getMethodType();
+					// Check against method and variable (field) declarations.
+					if (member.isMethod() && tree instanceof J.MethodDeclaration method) {
+						JavaType.Method methodType = method.getMethodType();
 
-					// Extract method info.
-					String name = method.getSimpleName();
-					String desc = methodType == null ? null : AstUtils.toDesc(methodType);
-					if (method.isConstructor()) {
-						name = "<init>";
-						if (desc != null) desc = StringUtil.cutOffAtFirst(desc, ")") + ")V";
-					}
-
-					// Compare to passed member.
-					if (member.getName().equals(name) && (desc == null || member.getDescriptor().equals(desc))) {
-						// Select it in the editor.
-						selectRange(range);
-						return;
-					}
-				} else if (member.isField() && tree instanceof J.VariableDeclarations variableDeclarations) {
-					for (J.VariableDeclarations.NamedVariable variable : variableDeclarations.getVariables()) {
-						JavaType.Variable variableType = variable.getVariableType();
-
-						// Skip variable declarations that are not fields.
-						if (variableType != null && !(variableType.getOwner() instanceof JavaType.FullyQualified))
-							continue;
-
-						// Extract variable info.
-						String name = variable.getSimpleName();
-						String desc = variableType == null ? null : AstUtils.toDesc(variableType);
+						// Extract method info.
+						String name = method.getSimpleName();
+						String desc = methodType == null ? null : AstUtils.toDesc(methodType);
+						if (method.isConstructor()) {
+							name = "<init>";
+							if (desc != null) desc = StringUtil.cutOffAtFirst(desc, ")") + ")V";
+						}
 
 						// Compare to passed member.
 						if (member.getName().equals(name) && (desc == null || member.getDescriptor().equals(desc))) {
@@ -220,12 +203,33 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 							selectRange(range);
 							return;
 						}
+					} else if (member.isField() && tree instanceof J.VariableDeclarations variableDeclarations) {
+						for (J.VariableDeclarations.NamedVariable variable : variableDeclarations.getVariables()) {
+							JavaType.Variable variableType = variable.getVariableType();
+
+							// Skip variable declarations that are not fields.
+							if (variableType != null && !(variableType.getOwner() instanceof JavaType.FullyQualified))
+								continue;
+
+							// Extract variable info.
+							String name = variable.getSimpleName();
+							String desc = variableType == null ? null : AstUtils.toDesc(variableType);
+
+							// Compare to passed member.
+							if (member.getName().equals(name) && (desc == null || member.getDescriptor().equals(desc))) {
+								// Select it in the editor.
+								selectRange(range);
+								return;
+							}
+						}
+					} else if (member.getName().equals("<clinit>") && tree instanceof J.Block block && block.isStatic()) {
+						// Select it in the editor.
+						selectRange(range);
+						return;
 					}
-				} else if (member.getName().equals("<clinit>") && tree instanceof J.Block block && block.isStatic()) {
-					// Select it in the editor.
-					selectRange(range);
-					return;
 				}
+			} catch (Throwable t) {
+				logger.error("Unhandled exception in Java context support - select '{}'", member.getName(), t);
 			}
 		}
 	}
@@ -273,9 +277,13 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	 * 		Text changed.
 	 */
 	private void handleShortDurationChange(@Nonnull PlainTextChange change) {
-		int position = change.getPosition();
-		int offset = change.getNetLength();
-		offsetMap.merge(position, offset, Integer::sum);
+		try {
+			int position = change.getPosition();
+			int offset = change.getNetLength();
+			offsetMap.merge(position, offset, Integer::sum);
+		} catch (Throwable t) {
+			logger.error("Unhandled exception merging offset-maps with new text-change", t);
+		}
 	}
 
 	/**
@@ -291,7 +299,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			lastFuture.cancel(true);
 
 		// Do parsing on BG thread, it can be slower on complex inputs.
-		lastFuture = parseThreadPool.submit(() -> {
+		lastFuture = parseThreadPool.submit(ThreadUtil.wrap(() -> {
 			String text = editor.getText();
 
 			// Skip if the source hasn't changed since the last time.
@@ -342,7 +350,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 
 			// Wipe offset map now that we have a new AST
 			offsetMap.clear();
-		});
+		}));
 	}
 
 	/**
@@ -456,7 +464,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			// This addresses situations where changes to the class introduce new type dependencies.
 			// If we used the existing parser, the newly added types would be unresolvable.
 			ClassInfo classInfo = classPath.getValue();
-			Executors.newSingleThreadExecutor().submit(() -> initialize(classInfo));
+			ThreadUtil.run(() -> initialize(classInfo));
 		}
 	}
 

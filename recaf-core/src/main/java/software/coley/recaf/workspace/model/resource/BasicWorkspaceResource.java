@@ -7,6 +7,7 @@ import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BundleListener;
@@ -14,6 +15,7 @@ import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Basic workspace resource implementation.
@@ -23,9 +25,9 @@ import java.util.*;
  */
 public class BasicWorkspaceResource implements WorkspaceResource {
 	private static final Logger logger = Logging.get(BasicWorkspaceResource.class);
-	private final List<ResourceJvmClassListener> jvmClassListeners = new ArrayList<>();
-	private final List<ResourceAndroidClassListener> androidClassListeners = new ArrayList<>();
-	private final List<ResourceFileListener> fileListeners = new ArrayList<>();
+	private final List<ResourceJvmClassListener> jvmClassListeners = new CopyOnWriteArrayList<>();
+	private final List<ResourceAndroidClassListener> androidClassListeners = new CopyOnWriteArrayList<>();
+	private final List<ResourceFileListener> fileListeners = new CopyOnWriteArrayList<>();
 	private final JvmClassBundle jvmClassBundle;
 	private final NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles;
 	private final Map<String, AndroidClassBundle> androidClassBundles;
@@ -61,11 +63,11 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	 * 		Parent resource <i>(If we are the JAR within a JAR)</i>.
 	 */
 	public BasicWorkspaceResource(JvmClassBundle jvmClassBundle,
-								  FileBundle fileBundle,
-								  NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
-								  Map<String, AndroidClassBundle> androidClassBundles,
-								  Map<String, WorkspaceFileResource> embeddedResources,
-								  WorkspaceResource containingResource) {
+	                              FileBundle fileBundle,
+	                              NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
+	                              Map<String, AndroidClassBundle> androidClassBundles,
+	                              Map<String, WorkspaceFileResource> embeddedResources,
+	                              WorkspaceResource containingResource) {
 		this.jvmClassBundle = jvmClassBundle;
 		this.fileBundle = fileBundle;
 		this.versionedJvmClassBundles = versionedJvmClassBundles;
@@ -92,6 +94,13 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		jvmClassBundleStream().forEach(bundle -> delegateJvmClassBundle(resource, bundle));
 		androidClassBundleStream().forEach(bundle -> delegateAndroidClassBundle(resource, bundle));
 		fileBundleStream().forEach(bundle -> delegateFileBundle(resource, bundle));
+
+		// Embedded resources will notify listeners of their containing resource when they are updated.
+		embeddedResources.values().forEach(embeddedResource -> {
+			embeddedResource.jvmClassBundleStream().forEach(bundle -> delegateJvmClassBundle(embeddedResource, bundle));
+			embeddedResource.androidClassBundleStream().forEach(bundle -> delegateAndroidClassBundle(embeddedResource, bundle));
+			embeddedResource.fileBundleStream().forEach(bundle -> delegateFileBundle(embeddedResource, bundle));
+		});
 	}
 
 	/**
@@ -106,35 +115,20 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		bundle.addBundleListener(new BundleListener<>() {
 			@Override
 			public void onNewItem(@Nonnull String key, @Nonnull JvmClassInfo cls) {
-				for (ResourceJvmClassListener listener : jvmClassListeners) {
-					try {
-						listener.onNewClass(resource, bundle, cls);
-					} catch (Throwable t) {
-						logger.error("Uncaught error in workspace listener delegation (new jvm class)", t);
-					}
-				}
+				CollectionUtil.safeForEach(jvmClassListeners, listener -> listener.onNewClass(resource, bundle, cls),
+						(listener, t) -> logger.error("Exception thrown when adding class", t));
 			}
 
 			@Override
 			public void onUpdateItem(@Nonnull String key, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
-				for (ResourceJvmClassListener listener : jvmClassListeners) {
-					try {
-						listener.onUpdateClass(resource, bundle, oldCls, newCls);
-					} catch (Throwable t) {
-						logger.error("Uncaught error in workspace listener delegation (update jvm class)", t);
-					}
-				}
+				CollectionUtil.safeForEach(jvmClassListeners, listener -> listener.onUpdateClass(resource, bundle, oldCls, newCls),
+						(listener, t) -> logger.error("Exception thrown when updating class", t));
 			}
 
 			@Override
 			public void onRemoveItem(@Nonnull String key, @Nonnull JvmClassInfo cls) {
-				for (ResourceJvmClassListener listener : jvmClassListeners) {
-					try {
-						listener.onRemoveClass(resource, bundle, cls);
-					} catch (Throwable t) {
-						logger.error("Uncaught error in workspace listener delegation (remove jvm class)", t);
-					}
-				}
+				CollectionUtil.safeForEach(jvmClassListeners, listener -> listener.onRemoveClass(resource, bundle, cls),
+						(listener, t) -> logger.error("Exception thrown when removing class", t));
 			}
 		});
 	}
@@ -151,35 +145,20 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		bundle.addBundleListener(new BundleListener<>() {
 			@Override
 			public void onNewItem(@Nonnull String key, @Nonnull AndroidClassInfo cls) {
-				for (ResourceAndroidClassListener listener : androidClassListeners) {
-					try {
-						listener.onNewClass(resource, bundle, cls);
-					} catch (Throwable t) {
-						logger.error("Uncaught error in workspace listener delegation (new android class)", t);
-					}
-				}
+				CollectionUtil.safeForEach(androidClassListeners, listener -> listener.onNewClass(resource, bundle, cls),
+						(listener, t) -> logger.error("Exception thrown when adding class", t));
 			}
 
 			@Override
 			public void onUpdateItem(@Nonnull String key, @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls) {
-				for (ResourceAndroidClassListener listener : androidClassListeners) {
-					try {
-						listener.onUpdateClass(resource, bundle, oldCls, newCls);
-					} catch (Throwable t) {
-						logger.error("Uncaught error in workspace listener delegation (update android class)", t);
-					}
-				}
+				CollectionUtil.safeForEach(androidClassListeners, listener -> listener.onUpdateClass(resource, bundle, oldCls, newCls),
+						(listener, t) -> logger.error("Exception thrown when updating class", t));
 			}
 
 			@Override
 			public void onRemoveItem(@Nonnull String key, @Nonnull AndroidClassInfo cls) {
-				for (ResourceAndroidClassListener listener : androidClassListeners) {
-					try {
-						listener.onRemoveClass(resource, bundle, cls);
-					} catch (Throwable t) {
-						logger.error("Uncaught error in workspace listener delegation (remove jvm class)", t);
-					}
-				}
+				CollectionUtil.safeForEach(androidClassListeners, listener -> listener.onRemoveClass(resource, bundle, cls),
+						(listener, t) -> logger.error("Exception thrown when removing class", t));
 			}
 		});
 	}
@@ -196,35 +175,20 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		bundle.addBundleListener(new BundleListener<>() {
 			@Override
 			public void onNewItem(@Nonnull String key, @Nonnull FileInfo file) {
-				for (ResourceFileListener listener : fileListeners) {
-					try {
-						listener.onNewFile(resource, bundle, file);
-					} catch (Throwable t) {
-						logger.error("Uncaught error in workspace listener delegation (new file)", t);
-					}
-				}
+				CollectionUtil.safeForEach(fileListeners, listener -> listener.onNewFile(resource, bundle, file),
+						(listener, t) -> logger.error("Exception thrown when adding file", t));
 			}
 
 			@Override
 			public void onUpdateItem(@Nonnull String key, @Nonnull FileInfo oldFile, @Nonnull FileInfo newFile) {
-				for (ResourceFileListener listener : fileListeners) {
-					try {
-						listener.onUpdateFile(resource, bundle, oldFile, newFile);
-					} catch (Throwable t) {
-						logger.error("Uncaught error in workspace listener delegation (update file)", t);
-					}
-				}
+				CollectionUtil.safeForEach(fileListeners, listener -> listener.onUpdateFile(resource, bundle, oldFile, newFile),
+						(listener, t) -> logger.error("Exception thrown when updating file", t));
 			}
 
 			@Override
 			public void onRemoveItem(@Nonnull String key, @Nonnull FileInfo file) {
-				for (ResourceFileListener listener : fileListeners) {
-					try {
-						listener.onRemoveFile(resource, bundle, file);
-					} catch (Throwable t) {
-						logger.error("Uncaught error in workspace listener delegation (remove file)", t);
-					}
-				}
+				CollectionUtil.safeForEach(fileListeners, listener -> listener.onRemoveFile(resource, bundle, file),
+						(listener, t) -> logger.error("Exception thrown when removing file", t));
 			}
 		});
 	}

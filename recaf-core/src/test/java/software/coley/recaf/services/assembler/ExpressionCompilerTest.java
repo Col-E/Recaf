@@ -1,7 +1,6 @@
 package software.coley.recaf.services.assembler;
 
 import jakarta.annotation.Nonnull;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,6 @@ import static org.objectweb.asm.Opcodes.*;
  * Tests for {@link ExpressionCompiler}
  */
 class ExpressionCompilerTest extends TestBase {
-	static ExpressionCompiler assembler;
 	static Workspace workspace;
 	static JvmClassInfo targetClass;
 	static JvmClassInfo targetCtorClass;
@@ -38,7 +36,6 @@ class ExpressionCompilerTest extends TestBase {
 
 	@BeforeAll
 	static void setup() throws IOException {
-		assembler = recaf.get(ExpressionCompiler.class);
 		targetClass = TestClassUtils.fromRuntimeClass(ClassWithFieldsAndMethods.class);
 		targetCtorClass = TestClassUtils.fromRuntimeClass(ClassWithRequiredConstructor.class);
 		targetEnum = TestClassUtils.fromRuntimeClass(DummyEnum.class);
@@ -46,14 +43,10 @@ class ExpressionCompilerTest extends TestBase {
 		workspaceManager.setCurrent(workspace);
 	}
 
-	@AfterEach
-	void cleanup() {
-		assembler.clearContext();
-	}
-
 	@Test
 	void importSupport() {
-		ExpressionResult result = compile("""
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		ExpressionResult result = compile(assembler, """
 				import java.util.Random;
 				    
 				try {
@@ -70,8 +63,9 @@ class ExpressionCompilerTest extends TestBase {
 
 	@Test
 	void classContext() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		assembler.setClassContext(targetClass);
-		ExpressionResult result = compile("""
+		ExpressionResult result = compile(assembler, """
 				int localConst = CONST_INT;
 				int localField = finalInt;
 				int localMethod = plusTwo();
@@ -82,15 +76,17 @@ class ExpressionCompilerTest extends TestBase {
 
 	@Test
 	void classContextWithRequiredCtor() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		assembler.setClassContext(targetCtorClass);
-		ExpressionResult result = compile("");
+		ExpressionResult result = compile(assembler, "");
 		assertSuccess(result);
 	}
 
 	@Test
 	void enumContext() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		assembler.setClassContext(targetEnum);
-		ExpressionResult result = compile("""
+		ExpressionResult result = compile(assembler, """
 				int i1 = ONE.ordinal();
 				int i2 = TWO.ordinal();
 				int i3 = THREE.ordinal();
@@ -101,9 +97,10 @@ class ExpressionCompilerTest extends TestBase {
 
 	@Test
 	void classAndMethodContextForParameters() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		assembler.setClassContext(targetClass);
 		assembler.setMethodContext(targetClass.getFirstDeclaredMethodByName("methodWithParameters"));
-		ExpressionResult result = compile("""
+		ExpressionResult result = compile(assembler, """
 				System.out.println(foo + ": " +
 						Long.toHexString(wide) +
 						"/" +
@@ -116,9 +113,10 @@ class ExpressionCompilerTest extends TestBase {
 	@Test
 	void classAndMethodContextForLocals() {
 		// Tests that local variables are accessible to the expression compiler
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		assembler.setClassContext(targetClass);
 		assembler.setMethodContext(targetClass.getFirstDeclaredMethodByName("methodWithLocalVariables"));
-		ExpressionResult result = compile("""
+		ExpressionResult result = compile(assembler, """
 				out.println(message.contains("0") ? "Has zero" : "No zero found");
 				""");
 		assertSuccess(result);
@@ -127,18 +125,20 @@ class ExpressionCompilerTest extends TestBase {
 	@Test
 	void classAndMethodContextForConstructor() {
 		// Tests that the assembler works for constructor method contexts
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		assembler.setClassContext(targetClass);
 		assembler.setMethodContext(targetClass.getFirstDeclaredMethodByName("<init>"));
-		ExpressionResult result = compile("");
+		ExpressionResult result = compile(assembler, "");
 		assertSuccess(result);
 	}
 
 	@Test
 	void classAndMethodContextForStaticInitializer() {
 		// Tests that the assembler works for static initializer method contexts
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		assembler.setClassContext(targetEnum);
 		assembler.setMethodContext(targetEnum.getFirstDeclaredMethodByName("<clinit>"));
-		ExpressionResult result = compile("");
+		ExpressionResult result = compile(assembler, "");
 		assertSuccess(result);
 	}
 
@@ -154,9 +154,10 @@ class ExpressionCompilerTest extends TestBase {
 			JvmClassInfo classInfo = new JvmClassInfoBuilder(cw.toByteArray()).build();
 
 			// The expression compiler should skip the field since it has an illegal name.
+			ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 			assembler.setClassContext(classInfo);
 			assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("methodName"));
-			ExpressionResult result = compile("");
+			ExpressionResult result = compile(assembler, "");
 			assertSuccess(result);
 		}
 
@@ -170,9 +171,10 @@ class ExpressionCompilerTest extends TestBase {
 			JvmClassInfo classInfo = new JvmClassInfoBuilder(cw.toByteArray()).build();
 
 			// The expression compiler should skip the method since it has an illegal name.
+			ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 			assembler.setClassContext(classInfo);
 			assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("methodName"));
-			ExpressionResult result = compile("");
+			ExpressionResult result = compile(assembler, "");
 			assertSuccess(result);
 		}
 
@@ -199,9 +201,10 @@ class ExpressionCompilerTest extends TestBase {
 
 			// The expression compiler should rename the obfuscated method specified as the context.
 			// Variables passed in (that are not illegally named) and such should still be accessible.
+			ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 			assembler.setClassContext(classInfo);
 			assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName(illegalMethodName));
-			ExpressionResult result = compile("int result = one + two + three;");
+			ExpressionResult result = compile(assembler, "int result = one + two + three;");
 			assertSuccess(result);
 		}
 	}
@@ -213,7 +216,7 @@ class ExpressionCompilerTest extends TestBase {
 	}
 
 	@Nonnull
-	private static ExpressionResult compile(@Nonnull String expressionResult) {
+	private static ExpressionResult compile(@Nonnull ExpressionCompiler assembler, @Nonnull String expressionResult) {
 		ExpressionResult result = assembler.compile(expressionResult);
 		List<CompilerDiagnostic> diagnostics = result.getDiagnostics();
 		diagnostics.forEach(System.out::println);

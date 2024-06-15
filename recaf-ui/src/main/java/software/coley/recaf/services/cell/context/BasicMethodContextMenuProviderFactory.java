@@ -8,6 +8,7 @@ import javafx.scene.control.ContextMenu;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
 
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -24,15 +25,12 @@ import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.util.ClipboardUtil;
-import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.List;
-
-import static software.coley.recaf.util.Menus.action;
 
 /**
  * Basic implementation for {@link MethodContextMenuProviderFactory}.
@@ -76,28 +74,45 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 							}
 						});
 			} else {
-				builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(declaringClass, method));
-				builder.item("menu.edit.assemble.method", EDIT, Unchecked.runnable(() ->
-						actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method))
-				));
-
+				// Edit menu
+				var edit = builder.submenu("menu.edit", EDIT);
+				edit.item("menu.edit.assemble.method", EDIT, Unchecked.runnable(() -> actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method))));
 				if (declaringClass.isJvmClass()) {
 					JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
 					JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
 
-					builder.item("menu.edit.copy", COPY_FILE, () -> actions.copyMember(workspace, resource, jvmBundle,declaringJvmClass, method));
-					builder.item("menu.edit.noop", CIRCLE_DASH, () -> actions.makeMethodsNoop(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
-					builder.item("menu.edit.delete", TRASH_CAN, () -> actions.deleteClassMethods(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
+					edit.item("menu.edit.copy", COPY_FILE, () -> actions.copyMember(workspace, resource, jvmBundle,declaringJvmClass, method));
+					edit.item("menu.edit.noop", CIRCLE_DASH, () -> actions.makeMethodsNoop(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
+					edit.item("menu.edit.delete", TRASH_CAN, () -> actions.deleteClassMethods(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
+					edit.item("menu.edit.remove.annotation", CLOSE, () -> actions.deleteMemberAnnotations(workspace, resource, jvmBundle, declaringJvmClass, method))
+							.disableWhen(method.getAnnotations().isEmpty());
 				}
 
 				// TODO: implement additional operations
 				//  - Edit
 				//    - Add annotation
-				//    - Remove annotations
 			}
 
+			// TODO: implement additional operations
+			//  - View
+			//    - Control flow graph
+			//    - Application flow graph
+			var view = builder.submenu("menu.view", VIEW);
+			if (declaringClass.isJvmClass()) {
+				JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
+				JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
+				view.item("menu.view.methodcallgraph", FLOW, () -> actions.openMethodCallGraph(workspace, resource, jvmBundle,declaringJvmClass, method));
+			}
+
+			// TODO: implement additional operations
+			//  - Deobfuscate
+			//    - Regenerate variable names
+			//    - Optimize with pattern matchers
+			//    - Optimize with SSVM
+			//  - Simulate with SSVM (Virtualize > Run)
+
 			// Search actions
-			builder.item("menu.search.method-references", CODE, () -> {
+			builder.item("menu.search.method-references", CODE_REFERENCE, () -> {
 				MemberReferenceSearchPane pane = actions.openNewMemberReferenceSearch();
 				pane.ownerPredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
 				pane.namePredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
@@ -107,21 +122,15 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 				pane.descValueProperty().setValue(method.getDescriptor());
 			});
 
+			// Copy path
+			builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(declaringClass, method));
+
 			// Documentation actions
 			builder.memberItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
 
 			// Refactor actions
-			builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameMethod);
+			builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameMethod); // TODO: Hide when a library method (like System.exit)
 
-			// TODO: implement additional operations
-			//  - View
-			//    - Control flow graph
-			//    - Application flow graph
-			//  - Deobfuscate
-			//    - Regenerate variable names
-			//    - Optimize with pattern matchers
-			//    - Optimize with SSVM
-			//  - Simulate with SSVM (Virtualize > Run)
 			return menu;
 		};
 	}

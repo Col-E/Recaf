@@ -5,7 +5,6 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import javafx.event.EventHandler;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.slf4j.Logger;
@@ -27,6 +26,7 @@ import java.util.*;
 public class WindowManager implements Service {
 	private static final Logger logger = Logging.get(WindowManager.class);
 	public static final String SERVICE_ID = "window-manager";
+	private static final String ANON_PREFIX = "anon-";
 	// Built-in window keys
 	public static final String WIN_MAIN = "main";
 	public static final String WIN_REMOTE_VMS = "remote-vms";
@@ -41,7 +41,7 @@ public class WindowManager implements Service {
 	private final Map<String, Stage> windowMappings = new HashMap<>();
 
 	@Inject
-	public WindowManager(WindowManagerConfig config, Instance<IdentifiableStage> stages) {
+	public WindowManager(@Nonnull WindowManagerConfig config, @Nonnull Instance<IdentifiableStage> stages) {
 		this.config = config;
 
 		// Register identifiable stages.
@@ -58,7 +58,7 @@ public class WindowManager implements Service {
 	 * 		Stage to register.
 	 */
 	public void registerAnonymous(@Nonnull Stage stage) {
-		register(UUID.randomUUID().toString(), stage);
+		register(ANON_PREFIX + UUID.randomUUID(), stage);
 	}
 
 	/**
@@ -84,24 +84,24 @@ public class WindowManager implements Service {
 		if (windowMappings.containsKey(id))
 			throw new IllegalStateException("The stage ID was already registered: " + id);
 
-		EventHandler<WindowEvent> baseOnShown = stage.getOnShown();
-		EventHandler<WindowEvent> baseOnHidden = stage.getOnHidden();
-
-		// Wrap original handlers to keep existing behavior.
 		// Record when windows are 'active' based on visibility.
-		EventHandler<WindowEvent> onShown = e -> {
+		// We're using event filters so users can still do things like 'stage.setOnShown(...)' and not interfere with
+		// our window tracking logic in here
+		stage.addEventFilter(WindowEvent.WINDOW_SHOWN, e -> {
 			logger.trace("Stage showing: {}", id);
 			activeWindows.add(stage);
-			if (baseOnShown != null) baseOnShown.handle(e);
-
-		};
-		EventHandler<WindowEvent> onHidden = e -> {
+		});
+		stage.addEventFilter(WindowEvent.WINDOW_HIDDEN, e -> {
 			logger.trace("Stage hiding: {}", id);
 			activeWindows.remove(stage);
-			if (baseOnHidden != null) baseOnHidden.handle(e);
-		};
-		stage.setOnShown(onShown);
-		stage.setOnHidden(onHidden);
+
+			// Anonymous stages can be pruned from the id->stage map.
+			// They are not meant to be persistent. But, we register them anyway for our duplicate register check above.
+			if (id.startsWith(ANON_PREFIX)) {
+				logger.trace("Stage pruned: {} ({})", id, stage.getTitle());
+				windowMappings.remove(id);
+			}
+		});
 
 		// If state is already visible, add it right away.
 		if (stage.isShowing()) activeWindows.add(stage);
@@ -119,7 +119,7 @@ public class WindowManager implements Service {
 	 * @return Active windows.
 	 */
 	@Nonnull
-	public ObservableList<Stage> getActiveWindows() {
+	public Collection<Stage> getActiveWindows() {
 		return activeWindows;
 	}
 

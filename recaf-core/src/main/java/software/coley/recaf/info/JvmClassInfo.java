@@ -8,10 +8,9 @@ import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.builtin.ReferencedClassesProperty;
 import software.coley.recaf.info.properties.builtin.StringDefinitionsProperty;
 import software.coley.recaf.util.Types;
+import software.coley.recaf.util.visitors.TypeVisitor;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -61,57 +60,87 @@ public interface JvmClassInfo extends ClassInfo {
 	 * @return Set of all classes referenced in the constant pool.
 	 */
 	@Nonnull
-	default Set<String> getReferencedClasses() {
-		SortedSet<String> classes = ReferencedClassesProperty.get(this);
+	default NavigableSet<String> getReferencedClasses() {
+		NavigableSet<String> classes = ReferencedClassesProperty.get(this);
 		if (classes != null)
 			return classes;
 
 		Set<String> classNames = new HashSet<>();
-		Consumer<String> nameHandler = className -> {
-			if (className.indexOf(0) == '[')
-				className = className.substring(className.lastIndexOf('[') + 1, className.indexOf(';'));
-			classNames.add(className);
-		};
-		Consumer<Type> typeConsumer = t -> {
-			if (t.getSort() == Type.ARRAY)
-				t = t.getElementType();
-			if (!Types.isPrimitive(t))
-				nameHandler.accept(t.getInternalName());
-		};
-
 		ClassReader reader = getClassReader();
+
+		// Iterate over pool entries. Supe fast way to discover most of the referenced types.
 		int itemCount = reader.getItemCount();
 		char[] buffer = new char[reader.getMaxStringLength()];
 		for (int i = 1; i < itemCount; i++) {
 			int offset = reader.getItem(i);
 			if (offset >= 10) {
-				int itemTag = reader.readByte(offset - 1);
-				if (itemTag == ConstantPoolConstants.CLASS) {
-					String className = reader.readUTF8(offset, buffer);
-					if (className.isEmpty())
-						continue;
-					if (className.indexOf(0) == '[')
-						className = className.substring(className.lastIndexOf('[') + 1, className.indexOf(';'));
-					classNames.add(className);
-				} else if (itemTag == ConstantPoolConstants.NAME_TYPE) {
-					String desc = reader.readUTF8(offset + 2, buffer);
-					if (desc.isEmpty())
-						continue;
-					if (desc.charAt(0) == '(') {
-						Type methodType = Type.getMethodType(desc);
-						for (Type argumentType : methodType.getArgumentTypes())
-							typeConsumer.accept(argumentType);
-						Type returnType = methodType.getReturnType();
-						typeConsumer.accept(returnType);
-					} else {
-						Type type = Type.getType(desc);
-						typeConsumer.accept(type);
+				try {
+					int itemTag = reader.readByte(offset - 1);
+					if (itemTag == ConstantPoolConstants.CLASS) {
+						String className = reader.readUTF8(offset, buffer);
+						if (className.isEmpty())
+							continue;
+						addName(className, classNames);
+					} else if (itemTag == ConstantPoolConstants.NAME_TYPE) {
+						String desc = reader.readUTF8(offset + 2, buffer);
+						if (desc.isEmpty())
+							continue;
+						if (desc.charAt(0) == '(') {
+							addMethodType(Type.getMethodType(desc), classNames);
+						} else {
+							Type type = Type.getType(desc);
+							addType(type, classNames);
+						}
+					} else if (itemTag == ConstantPoolConstants.METHOD_TYPE) {
+						String methodDesc = reader.readUTF8(offset, buffer);
+						if (methodDesc.isEmpty() || methodDesc.charAt(0) != '(')
+							continue;
+						addMethodType(Type.getMethodType(methodDesc), classNames);
 					}
+				} catch (Throwable ignored) {
+					// Exists only to catch situations where obfuscators put unused junk pool entries
+					// with malformed descriptors, which cause ASM's type parser to crash.
 				}
 			}
 		}
+
+		// In some cases like interface classes, there may be UTF8 pool entries outlining method descriptors which
+		// are not directly linked in NameType or MethodType pool entries. We need to iterate over fields and methods
+		// to get the descriptors in these cases.
+		reader.accept(new TypeVisitor(t -> {
+			if (t.getSort() == Type.METHOD)
+				addMethodType(t, classNames);
+			else
+				addType(t, classNames);
+		}), ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+
 		ReferencedClassesProperty.set(this, classNames);
-		return classNames;
+		return Objects.requireNonNull(ReferencedClassesProperty.get(this));
+	}
+
+	private static void addMethodType(@Nonnull Type methodType, @Nonnull Set<String> classNames) {
+		for (Type argumentType : methodType.getArgumentTypes())
+			addType(argumentType, classNames);
+		Type returnType = methodType.getReturnType();
+		addType(returnType, classNames);
+	}
+
+	private static void addType(@Nonnull Type type, @Nonnull Set<String> classNames) {
+		if (type.getSort() == Type.ARRAY)
+			type = type.getElementType();
+		if (!Types.isPrimitive(type))
+			addName(type.getInternalName(), classNames);
+	}
+
+	private static void addName(@Nonnull String className, @Nonnull Set<String> classNames) {
+		if (className.isEmpty())
+			return;
+		if (className.indexOf(0) == '[' || className.charAt(className.length() - 1) == ';')
+			addType(Type.getType(className), classNames);
+		else if (className.indexOf(0) == '(')
+			addMethodType(Type.getMethodType(className), classNames);
+		else
+			classNames.add(className);
 	}
 
 	/**

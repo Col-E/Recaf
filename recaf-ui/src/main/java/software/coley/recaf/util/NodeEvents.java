@@ -8,6 +8,8 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import software.coley.collections.Unchecked;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -22,6 +24,39 @@ import java.util.function.Predicate;
  */
 public class NodeEvents {
 	private NodeEvents() {
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to.
+	 * @param handler
+	 * 		Handler to add.
+	 */
+	public static void addMousePressHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
+		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMousePressed;
+		addHandler(node, handler, Unchecked.cast(original), Node::setOnMousePressed);
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to.
+	 * @param handler
+	 * 		Handler to add.
+	 */
+	public static void addMouseReleaseHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
+		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMouseReleased;
+		addHandler(node, handler, Unchecked.cast(original), Node::setOnMouseReleased);
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to.
+	 * @param handler
+	 * 		Handler to add.
+	 */
+	public static void addMouseClickHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
+		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMouseClicked;
+		addHandler(node, handler, Unchecked.cast(original), Node::setOnMouseClicked);
 	}
 
 	/**
@@ -91,15 +126,15 @@ public class NodeEvents {
 	}
 
 	private static <T extends Event> void addHandler(@Nonnull Node node, @Nonnull EventHandler<T> handler,
-													 @Nonnull Function<Node, EventHandler<T>> handlerGetter,
-													 @Nonnull BiConsumer<Node, EventHandler<T>> handlerSetter) {
+	                                                 @Nonnull Function<Node, EventHandler<T>> handlerGetter,
+	                                                 @Nonnull BiConsumer<Node, EventHandler<T>> handlerSetter) {
 		EventHandler<T> oldHandler = handlerGetter.apply(node);
 		handlerSetter.accept(node, new SplittingHandler<>(handler, oldHandler));
 	}
 
 	private static <T extends Event> void removeHandler(@Nonnull Node node, @Nonnull EventHandler<T> handler,
-														@Nonnull Function<Node, EventHandler<T>> handlerGetter,
-														@Nonnull BiConsumer<Node, EventHandler<T>> handlerSetter) {
+	                                                    @Nonnull Function<Node, EventHandler<T>> handlerGetter,
+	                                                    @Nonnull BiConsumer<Node, EventHandler<T>> handlerSetter) {
 		EventHandler<T> currentHandler = Unchecked.cast(handlerGetter.apply(node));
 		if (currentHandler instanceof SplittingHandler<T> splittingHandler) {
 			if (splittingHandler.primary == handler)
@@ -206,7 +241,7 @@ public class NodeEvents {
 		 * 		Next in the chain to invoke.
 		 */
 		private SplittingHandler(@Nonnull EventHandler<T> primary,
-								 @Nullable EventHandler<T> secondary) {
+		                         @Nullable EventHandler<T> secondary) {
 			this.primary = primary;
 			this.secondary = secondary;
 		}

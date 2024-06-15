@@ -33,6 +33,11 @@ public class MappingImplementationTests {
 		MappingFileFormat format = new TinyV1Mappings();
 		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertInheritMap(mappings);
+
+		// Extra asserts for the intermediate 'obfuscated' column
+		assertEquals("rename/Hello", mappings.getMappedClassName("a"));
+		assertEquals("newField", mappings.getMappedFieldName("a", "b", "Ljava/lang/String;"));
+		assertEquals("speak", mappings.getMappedMethodName("a", "c", "()V"));
 	}
 
 	@Test

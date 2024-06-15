@@ -22,6 +22,7 @@ import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -117,7 +118,7 @@ public class NavigationManager implements Navigable, Service {
 			// Force close any remaining tabs that hold navigable content.
 			for (DockingTab tab : dockingManager.getDockTabs()) {
 				if (tab.getContent() instanceof Navigable navigable) {
-					navigable.disable();
+					FxThreadUtil.run(navigable::disable);
 					tab.setClosable(true);
 					tab.close();
 				}

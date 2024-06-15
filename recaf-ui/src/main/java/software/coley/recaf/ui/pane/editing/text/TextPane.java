@@ -8,10 +8,10 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.TextFileInfo;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.services.navigation.FileNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
@@ -42,8 +42,8 @@ public class TextPane extends BorderPane implements FileNavigable, UpdatableNavi
 
 	@Inject
 	public TextPane(@Nonnull FileTypeAssociationService languageAssociation,
-					@Nonnull KeybindingConfig keys,
-					@Nonnull SearchBar searchBar) {
+	                @Nonnull KeybindingConfig keys,
+	                @Nonnull SearchBar searchBar) {
 		this.languageAssociation = languageAssociation;
 
 		// Configure the editor
@@ -125,7 +125,12 @@ public class TextPane extends BorderPane implements FileNavigable, UpdatableNavi
 				languageAssociation.configureEditorSyntax(info, editor);
 
 				// Update the text.
-				FxThreadUtil.run(() -> editor.setText(textInfo.getText()));
+				FxThreadUtil.run(() -> {
+					editor.setText(textInfo.getText());
+
+					// Prevent undo from reverting to empty state.
+					editor.getCodeArea().getUndoManager().forgetHistory();
+				});
 			}
 		}
 	}

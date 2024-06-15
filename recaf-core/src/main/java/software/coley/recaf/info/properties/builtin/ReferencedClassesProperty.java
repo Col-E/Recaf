@@ -3,12 +3,9 @@ package software.coley.recaf.info.properties.builtin;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.BasicProperty;
 
-import java.util.Collection;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Built in property to track what classes are referenced by this type.
@@ -23,7 +20,7 @@ public class ReferencedClassesProperty extends BasicProperty<SortedSet<String>> 
 	 * 		Collection of referenced classes.
 	 */
 	public ReferencedClassesProperty(@Nonnull Collection<String> classes) {
-		super(KEY, new TreeSet<>(classes));
+		super(KEY, Collections.unmodifiableNavigableSet(new TreeSet<>(classes)));
 	}
 
 	/**
@@ -33,7 +30,7 @@ public class ReferencedClassesProperty extends BasicProperty<SortedSet<String>> 
 	 * @return Set of referenced classes, or {@code null} when no association exists.
 	 */
 	@Nullable
-	public static SortedSet<String> get(@Nonnull ClassInfo info) {
+	public static NavigableSet<String> get(@Nonnull ClassInfo info) {
 		return info.getPropertyValueOrNull(KEY);
 	}
 

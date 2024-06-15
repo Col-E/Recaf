@@ -5,11 +5,11 @@ import jakarta.inject.Inject;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.internal.JavaTypeCache;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.ReflectUtil;
-import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Map;

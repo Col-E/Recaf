@@ -2,6 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
@@ -188,7 +189,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 				// Just sort alphabetically if parent not known.
 				String key = member.getName() + member.getDescriptor();
 				String otherKey = otherMember.getName() + member.getDescriptor();
-				cmp = String.CASE_INSENSITIVE_ORDER.compare(key, otherKey);
+				cmp = CaseInsensitiveSimpleNaturalComparator.getInstance().compare(key, otherKey);
 			}
 			return cmp;
 		}

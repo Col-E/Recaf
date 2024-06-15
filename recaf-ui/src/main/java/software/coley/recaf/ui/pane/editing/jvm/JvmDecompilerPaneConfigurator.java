@@ -102,6 +102,11 @@ public class JvmDecompilerPaneConfigurator extends AbstractDecompilerPaneConfigu
 				return String.valueOf(v);
 			}));
 
+			// Hack to prevent odd resize-based deadlock: #798
+			int w = 200;
+			setMaxWidth(w);
+			setPrefWidth(w);
+
 			// Update property.
 			valueProperty().addListener((ob, old, cur) -> javacTarget.setValue(cur));
 		}
@@ -122,6 +127,11 @@ public class JvmDecompilerPaneConfigurator extends AbstractDecompilerPaneConfigu
 					return Lang.get("java.targetdownsampleversion.disabled");
 				return String.valueOf(v);
 			}));
+
+			// Hack to prevent odd resize-based deadlock: #798
+			int w = 200;
+			setMaxWidth(w);
+			setPrefWidth(w);
 
 			// Update property.
 			valueProperty().addListener((ob, old, cur) -> javacDownsampleTarget.setValue(cur));

@@ -10,14 +10,14 @@ dex-translator = "1.1.1"
 directories = "26"
 docking = "1.2.3"
 downgrader = "1.1.1"
-extra-collections = "1.2.3"
+extra-collections = "1.3.0"
 extra-observables = "1.3.0"
 gson = "2.10.1"
 ikonli = "12.3.1"
-instrument-server = "1.4.0"
+instrument-server = "1.4.1"
 jackson = "2.16.1"
 jakarta-annotation = "3.0.0-M1"
-jasm = "913f24ec92"
+jasm = "3db094eade"
 jlinker = "1.0.7"
 jphantom = "1.4.4"
 junit = "5.10.2"
@@ -26,6 +26,7 @@ llzip = "2.5.0"
 logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.5.1"
 mockito = "5.11.0"
+natural-order = "1.1"
 openrewrite = "8.19.0"
 picocli = "4.7.5"
 procyon = "0.6.0"
@@ -44,7 +45,6 @@ peterabeles-gversion = "1.10.2"
 jgrapht = "1.5.2"
 
 [libraries]
-
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
 asm-analysis = { module = "org.ow2.asm:asm-analysis", version.ref = "asm" }
 asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
@@ -105,6 +105,8 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 mapping-io = { module = "net.fabricmc:mapping-io", version.ref = "mapping-io" }
 
 mockito = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+
+natural-order = { module = "net.grey-panther:natural-comparator", version.ref = "natural-order" }
 
 openrewrite = { module = "org.openrewrite:rewrite-java-17", version.ref = "openrewrite" }
 

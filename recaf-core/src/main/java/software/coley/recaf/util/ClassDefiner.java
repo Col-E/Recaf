@@ -1,5 +1,6 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
 import software.coley.collections.Maps;
 
 import java.util.Map;
@@ -18,7 +19,7 @@ public class ClassDefiner extends ClassLoader {
 	 * @param bytecode
 	 * 		Bytecode of class.
 	 */
-	public ClassDefiner(String name, byte[] bytecode) {
+	public ClassDefiner(@Nonnull String name, @Nonnull byte[] bytecode) {
 		this(Maps.of(name, bytecode));
 	}
 
@@ -26,7 +27,7 @@ public class ClassDefiner extends ClassLoader {
 	 * @param classes
 	 * 		Map of classes.
 	 */
-	public ClassDefiner(Map<String, byte[]> classes) {
+	public ClassDefiner(@Nonnull Map<String, byte[]> classes) {
 		super(ClassLoader.getSystemClassLoader());
 		this.classes = classes;
 	}

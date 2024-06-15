@@ -39,7 +39,7 @@ public abstract class AbstractJvmDecompiler extends AbstractDecompiler implement
 
 	@Override
 	public boolean removeJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter) {
-		return bytecodeFilters.add(filter);
+		return bytecodeFilters.remove(filter);
 	}
 
 	@Nonnull

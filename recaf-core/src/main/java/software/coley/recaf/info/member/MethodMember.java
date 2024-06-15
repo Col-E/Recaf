@@ -3,6 +3,7 @@ package software.coley.recaf.info.member;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.annotation.AnnotationElement;
 
 import java.util.List;
 
@@ -23,6 +24,12 @@ public interface MethodMember extends ClassMember {
 	 */
 	@Nonnull
 	List<LocalVariable> getLocalVariables();
+
+	/**
+	 * @return Element holding the default value for an annotation method.
+	 */
+	@Nullable
+	AnnotationElement getAnnotationDefault();
 
 	/**
 	 * @param index

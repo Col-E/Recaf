@@ -3,6 +3,7 @@ package software.coley.recaf.services.callgraph;
 import dev.xdark.jlinker.ClassInfo;
 import dev.xdark.jlinker.MemberInfo;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
@@ -29,7 +30,6 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 	private final BiFunction<String, String, MemberInfo<FieldMember>> fieldLookup;
 	private final BiFunction<String, String, MemberInfo<MethodMember>> methodLookup;
 
-	@SuppressWarnings("all") // Do not 'optimize' by using <> since it crashes javac on Java 11 (JDK-8212586)
 	public LinkedClass(@Nonnull ClassLookup lookup, @Nonnull JvmClassInfo info) {
 		this.info = info;
 
@@ -59,7 +59,7 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 				return null;
 			}
 
-			return new MemberInfo<FieldMember>() {
+			return new MemberInfo<>() {
 				@Override
 				public FieldMember innerValue() {
 					return declaredField;
@@ -83,7 +83,7 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 				logger.debugging(l -> l.warn("Missing declared method: {}{}", name, descriptor));
 				return null;
 			}
-			return new MemberInfo<MethodMember>() {
+			return new MemberInfo<>() {
 				@Override
 				public MethodMember innerValue() {
 					return declaredMethod;
@@ -112,10 +112,12 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 		return info.getAccess();
 	}
 
-	@Nonnull
+	@Nullable
 	@Override
 	public ClassInfo<JvmClassInfo> superClass() {
-		return superClassLookup.apply(info.getSuperName());
+		String superName = info.getSuperName();
+		if (superName == null) return null;
+		return superClassLookup.apply(superName);
 	}
 
 	@Nonnull

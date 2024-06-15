@@ -351,6 +351,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 				@Override
 				public void visitEnd() {
+					super.visitEnd();
 					methods.add(getMethodMember());
 				}
 			};
@@ -401,7 +402,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		private final BasicFieldMember fieldMember;
 
 		public FieldBuilderAdapter(int access, String name, String descriptor,
-								   String signature, Object value) {
+		                           String signature, Object value) {
 			super(getAsmVersion());
 			fieldMember = new BasicFieldMember(name, descriptor, signature, access, value);
 		}
@@ -425,12 +426,19 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 	private static class MethodBuilderAdapter extends MethodVisitor {
 		private final BasicMethodMember methodMember;
+		private final Type methodDescriptor;
+		private final List<LocalVariable> parameters;
+		private int parameterIndex;
+		private int parameterSlot;
 
 		public MethodBuilderAdapter(int access, String name, String descriptor,
-									String signature, String[] exceptions) {
+		                            String signature, String[] exceptions) {
 			super(getAsmVersion());
 			List<String> exceptionList = exceptions == null ? Collections.emptyList() : Arrays.asList(exceptions);
 			methodMember = new BasicMethodMember(name, descriptor, signature, access, exceptionList, new ArrayList<>());
+			methodDescriptor = Type.getMethodType(descriptor);
+			parameterSlot = methodMember.hasStaticModifier() ? 0 : 1;
+			parameters = new ArrayList<>(methodDescriptor.getArgumentCount());
 		}
 
 		@Override
@@ -450,6 +458,44 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			super.visitLocalVariable(name, descriptor, signature, start, end, index);
 		}
 
+		@Override
+		public void visitParameter(String name, int access) {
+			super.visitParameter(name, access);
+
+			Type[] argumentTypes = methodDescriptor.getArgumentTypes();
+			if (parameterIndex < argumentTypes.length) {
+				Type argumentType = argumentTypes[parameterIndex];
+
+				// Only add when we have a name for the parameter.
+				if (name != null)
+					parameters.add(new BasicLocalVariable(parameterSlot, name, argumentType.getDescriptor(), null));
+
+				parameterIndex++;
+				parameterSlot += argumentType.getSize();
+			}
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotationDefault() {
+			return new DefaultAnnotationAdapter(anno -> {
+				AnnotationElement element = anno.getElements().get(DefaultAnnotationAdapter.KEY);
+				if (element != null) methodMember.setAnnotationDefault(element);
+			});
+		}
+
+		@Override
+		public void visitEnd() {
+			super.visitEnd();
+
+			// Add local variables generated from the visited parameters if the local variable table hasn't already
+			// provided variables for those indices. This assists in providing variable models for abstract methods.
+			// This only works when a 'MethodParameters' attribute is present on the method. The javac compiler
+			// emits this when passing '-parameters'.
+			for (LocalVariable parameter : parameters)
+				if (methodMember.getLocalVariable(parameter.getIndex()) == null)
+					methodMember.addLocalVariable(parameter);
+		}
+
 		@Nonnull
 		public BasicMethodMember getMethodMember() {
 			return methodMember;
@@ -458,14 +504,14 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 	private static class AnnotationBuilderAdapter extends AnnotationVisitor {
 		private final Consumer<BasicAnnotationInfo> annotationConsumer;
-		private final Map<String, AnnotationElement> elements = new HashMap<>();
+		protected final Map<String, AnnotationElement> elements = new HashMap<>();
 		private final List<Object> arrayValues = new ArrayList<>();
 		private final List<BasicAnnotationInfo> subAnnotations = new ArrayList<>();
 		private final boolean visible;
 		private final String descriptor;
 
 		protected AnnotationBuilderAdapter(boolean visible, String descriptor,
-										   Consumer<BasicAnnotationInfo> annotationConsumer) {
+		                                   Consumer<BasicAnnotationInfo> annotationConsumer) {
 			super(getAsmVersion());
 			this.visible = visible;
 			this.descriptor = descriptor;
@@ -497,20 +543,19 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-			AnnotationBuilderAdapter adapter = new AnnotationBuilderAdapter(true, descriptor, anno -> {
+			return new AnnotationBuilderAdapter(true, descriptor, anno -> {
 				if (name == null) {
-					arrayValues.add(anno);
+					AnnotationBuilderAdapter.this.arrayValues.add(anno);
 				} else {
-					elements.put(name, new BasicAnnotationElement(name, anno));
+					AnnotationBuilderAdapter.this.elements.put(name, new BasicAnnotationElement(name, anno));
 				}
 			}) {
 				@Override
 				protected void populate(@Nonnull BasicAnnotationInfo anno) {
 					super.populate(anno);
-					subAnnotations.add(anno);
+					AnnotationBuilderAdapter.this.subAnnotations.add(anno);
 				}
 			};
-			return adapter;
 		}
 
 		@Override
@@ -535,6 +580,22 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			elements.forEach((name, value) -> anno.addElement(value));
 			subAnnotations.forEach(anno::addAnnotation);
 			if (annotationConsumer != null) annotationConsumer.accept(anno);
+		}
+	}
+
+	private static class DefaultAnnotationAdapter extends AnnotationBuilderAdapter {
+		private static final String KEY = "value";
+
+		protected DefaultAnnotationAdapter(Consumer<BasicAnnotationInfo> annotationConsumer) {
+			super(true, "Ljava/lang/Object;", annotationConsumer);
+		}
+
+		@Override
+		public void visitEnum(String name, String descriptor, String value) {
+			name = KEY;
+
+			BasicAnnotationEnumReference enumRef = new BasicAnnotationEnumReference(descriptor, value);
+			elements.put(name, new BasicAnnotationElement(name, enumRef));
 		}
 	}
 }

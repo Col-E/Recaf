@@ -4,12 +4,16 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages listeners for things like {@link MappingResults} application in an application-scoped, as opposed to
@@ -20,7 +24,8 @@ import java.util.List;
 @ApplicationScoped
 public class MappingListeners implements Service {
 	public static final String SERVICE_ID = "mapping-listeners";
-	private final List<MappingApplicationListener> mappingApplicationListeners = new ArrayList<>();
+	private static final Logger logger = Logging.get(MappingListeners.class);
+	private final List<MappingApplicationListener> mappingApplicationListeners = new CopyOnWriteArrayList<>();
 	private final MappingListenersConfig config;
 
 	@Inject
@@ -39,7 +44,7 @@ public class MappingListeners implements Service {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	public void addMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
+	public synchronized void addMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
 		mappingApplicationListeners.add(listener);
 	}
 
@@ -50,7 +55,7 @@ public class MappingListeners implements Service {
 	 * @return {@code true} when item was removed.
 	 * {@code false} when item was not in the list to begin with.
 	 */
-	public boolean removeMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
+	public synchronized boolean removeMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
 		return mappingApplicationListeners.remove(listener);
 	}
 
@@ -66,22 +71,20 @@ public class MappingListeners implements Service {
 		if (listeners.isEmpty())
 			return null;
 		else if (listeners.size() == 1)
-			return listeners.get(0);
+			return listeners.getFirst();
 
 		// Bundle multiple listeners.
 		return new MappingApplicationListener() {
 			@Override
 			public void onPreApply(@Nonnull MappingResults mappingResults) {
-				for (MappingApplicationListener listener : listeners) {
-					listener.onPreApply(mappingResults);
-				}
+				CollectionUtil.safeForEach(listeners, listener -> listener.onPreApply(mappingResults),
+						(listener, t) -> logger.error("Exception thrown before applying mappings", t));
 			}
 
 			@Override
 			public void onPostApply(@Nonnull MappingResults mappingResults) {
-				for (MappingApplicationListener listener : listeners) {
-					listener.onPostApply(mappingResults);
-				}
+				CollectionUtil.safeForEach(listeners, listener -> listener.onPostApply(mappingResults),
+						(listener, t) -> logger.error("Exception thrown after applying mappings", t));
 			}
 		};
 	}

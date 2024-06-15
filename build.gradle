@@ -56,7 +56,7 @@ subprojects {
 
     // Append options for unchecked/deprecation
     tasks.withType(JavaCompile).configureEach {
-        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation' << '-g' << '-parameters'
         options.encoding = 'UTF-8'
         options.incremental = true
     }

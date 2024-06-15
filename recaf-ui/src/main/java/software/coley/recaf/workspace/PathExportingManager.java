@@ -8,20 +8,18 @@ import javafx.scene.control.ButtonType;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.ui.config.ExportConfig;
-import software.coley.recaf.ui.config.RecentFilesConfig;
-import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.util.ErrorDialogs;
-import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Lang;
 import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.services.workspace.io.WorkspaceExporter;
+import software.coley.recaf.ui.config.ExportConfig;
+import software.coley.recaf.ui.config.RecentFilesConfig;
+import software.coley.recaf.util.*;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -33,7 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Manager module handle exporting {@link Workspace} instances to {@link Path}s.
+ * Manager module handle exporting {@link Info} and {@link Workspace} instances to {@link Path}s.
  *
  * @author Matt Coley
  */
@@ -46,8 +44,8 @@ public class PathExportingManager {
 
 	@Inject
 	public PathExportingManager(WorkspaceManager workspaceManager,
-								ExportConfig exportConfig,
-								RecentFilesConfig recentFilesConfig) {
+	                            ExportConfig exportConfig,
+	                            RecentFilesConfig recentFilesConfig) {
 		this.workspaceManager = workspaceManager;
 		this.exportConfig = exportConfig;
 		this.recentFilesConfig = recentFilesConfig;
@@ -75,7 +73,7 @@ public class PathExportingManager {
 		// Check if the user hasn't made any changes. Plenty of people have not understood that their changes weren't
 		// saved for one reason or another (the amount of people seeing a red flash thinking that is fine is crazy)
 		WorkspaceResource primaryResource = workspace.getPrimaryResource();
-		boolean noChangesFound = exportConfig.getWarnNoChanges().getValue() && primaryResource.bundleStream()
+		boolean noChangesFound = exportConfig.getWarnNoChanges().getValue() && primaryResource.bundleStreamRecursive()
 				.allMatch(b -> b.getDirtyKeys().isEmpty());
 		if (noChangesFound) {
 			Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Lang.get("dialog.file.nochanges"), ButtonType.YES, ButtonType.NO);
@@ -91,14 +89,16 @@ public class PathExportingManager {
 		File lastExportDir = lastWorkspaceExportDir.unboxingMap(File::new);
 		File selectedPath;
 		if (primaryResource instanceof WorkspaceDirectoryResource) {
-			DirectoryChooser chooser = new DirectoryChooser();
-			chooser.setInitialDirectory(lastExportDir);
-			chooser.setTitle(Lang.get("dialog.file.export"));
+			DirectoryChooser chooser = new DirectoryChooserBuilder()
+					.setInitialDirectory(lastExportDir)
+					.setTitle(Lang.get("dialog.file.export"))
+					.build();
 			selectedPath = chooser.showDialog(null);
 		} else {
-			FileChooser chooser = new FileChooser();
-			chooser.setInitialDirectory(lastExportDir);
-			chooser.setTitle(Lang.get("dialog.file.export"));
+			FileChooser chooser = new FileChooserBuilder()
+					.setInitialDirectory(lastExportDir)
+					.setTitle(Lang.get("dialog.file.export"))
+					.build();
 			selectedPath = chooser.showSaveDialog(null);
 		}
 
@@ -114,21 +114,8 @@ public class PathExportingManager {
 			return;
 		}
 
-		// Create export options from the resource type.
-		WorkspaceExportOptions.CompressType compression = exportConfig.getCompression().getValue();
-		WorkspaceExportOptions options;
-		if (primaryResource instanceof WorkspaceDirectoryResource) {
-			options = new WorkspaceExportOptions(WorkspaceExportOptions.OutputType.DIRECTORY, exportPath);
-		} else if (primaryResource instanceof WorkspaceFileResource) {
-			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, exportPath);
-		} else {
-			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, exportPath);
-		}
-		options.setBundleSupporting(exportConfig.getBundleSupportingResources().getValue());
-		options.setCreateZipDirEntries(exportConfig.getCreateZipDirEntries().getValue());
-
-		// Export the workspace to the selected path.
-		WorkspaceExporter exporter = workspaceManager.createExporter(options);
+		// Create export options from the resource type and export the workspace to the selected path.
+		WorkspaceExporter exporter = createResourceExporter(primaryResource, exportPath);
 		try {
 			exporter.export(workspace);
 			logger.info("Exported workspace to path '{}'", exportPath);
@@ -147,16 +134,18 @@ public class PathExportingManager {
 	 * Export the given class.
 	 *
 	 * @param classInfo
-	 * 		Workspace to export.
+	 * 		Class to export.
 	 */
 	public void export(@Nonnull JvmClassInfo classInfo) {
 		// Prompt a path for the user to write to.
 		ObservableString lastClassExportDir = recentFilesConfig.getLastClassExportDirectory();
 		File lastExportDir = lastClassExportDir.unboxingMap(File::new);
-		FileChooser chooser = new FileChooser();
-		chooser.setInitialDirectory(lastExportDir);
-		chooser.setTitle(Lang.get("dialog.file.export"));
-		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java Class", "*.class"));
+		FileChooser chooser = new FileChooserBuilder()
+				.setInitialFileName(StringUtil.shortenPath(classInfo.getName()) + ".class")
+				.setInitialDirectory(lastExportDir)
+				.setFileExtensionFilter("Java Class", "*.class")
+				.setTitle(Lang.get("dialog.file.export"))
+				.build();
 		File selectedPath = chooser.showSaveDialog(null);
 
 		// Selected path is null, meaning user closed out of file chooser.
@@ -164,14 +153,12 @@ public class PathExportingManager {
 		if (selectedPath == null)
 			return;
 
-		// Ensure path ends with '.class'
-		Path exportPath = selectedPath.toPath();
-
 		// Update last export dir for classes.
 		lastClassExportDir.setValue(selectedPath.getParent());
 
 		// Write to path.
 		try {
+			Path exportPath = selectedPath.toPath();
 			Files.write(exportPath, classInfo.getBytecode());
 		} catch (IOException ex) {
 			logger.error("Failed to export class to path '{}'", selectedPath, ex);
@@ -182,5 +169,58 @@ public class PathExportingManager {
 					ex
 			);
 		}
+	}
+
+	/**
+	 * Export the given file.
+	 *
+	 * @param fileInfo
+	 * 		File to export.
+	 */
+	public void export(@Nonnull FileInfo fileInfo) {
+		// Prompt a path for the user to write to.
+		ObservableString lastClassExportDir = recentFilesConfig.getLastClassExportDirectory();
+		File lastExportDir = lastClassExportDir.unboxingMap(File::new);
+		FileChooser chooser = new FileChooserBuilder()
+				.setInitialFileName(StringUtil.shortenPath(fileInfo.getName()))
+				.setInitialDirectory(lastExportDir)
+				.setTitle(Lang.get("dialog.file.export"))
+				.build();
+		File selectedPath = chooser.showSaveDialog(null);
+
+		// Selected path is null, meaning user closed out of file chooser.
+		// Cancel export.
+		if (selectedPath == null)
+			return;
+
+		// Write to path.
+		try {
+			Path exportPath = selectedPath.toPath();
+			Files.write(exportPath, fileInfo.getRawContent());
+		} catch (IOException ex) {
+			logger.error("Failed to export file to path '{}'", selectedPath, ex);
+			ErrorDialogs.show(
+					Lang.getBinding("dialog.error.exportfile.title"),
+					Lang.getBinding("dialog.error.exportfile.header"),
+					Lang.getBinding("dialog.error.exportfile.content"),
+					ex
+			);
+		}
+	}
+
+	@Nonnull
+	private WorkspaceExporter createResourceExporter(@Nonnull WorkspaceResource resource, @Nonnull Path path) {
+		WorkspaceExportOptions.CompressType compression = exportConfig.getCompression().getValue();
+		WorkspaceExportOptions options;
+		if (resource instanceof WorkspaceDirectoryResource) {
+			options = new WorkspaceExportOptions(WorkspaceExportOptions.OutputType.DIRECTORY, path);
+		} else if (resource instanceof WorkspaceFileResource) {
+			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, path);
+		} else {
+			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, path);
+		}
+		options.setBundleSupporting(exportConfig.getBundleSupportingResources().getValue());
+		options.setCreateZipDirEntries(exportConfig.getCreateZipDirEntries().getValue());
+		return options.create();
 	}
 }

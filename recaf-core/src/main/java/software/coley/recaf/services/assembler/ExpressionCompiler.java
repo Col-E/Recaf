@@ -4,13 +4,17 @@ import dev.xdark.blw.type.Types;
 import dev.xdark.blw.type.*;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import me.darknet.assembler.printer.JvmClassPrinter;
 import me.darknet.assembler.printer.JvmMethodPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import org.objectweb.asm.Opcodes;
+import org.slf4j.Logger;
 import regexodus.Matcher;
 import regexodus.Pattern;
+import software.coley.recaf.Bootstrap;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.BasicLocalVariable;
@@ -35,8 +39,9 @@ import java.util.stream.Collectors;
  *
  * @author Matt Coley
  */
-@WorkspaceScoped
+@Dependent
 public class ExpressionCompiler {
+	private static final Logger logger = Logging.get(ExpressionCompiler.class);
 	private static final Pattern IMPORT_EXTRACT_PATTERN = RegexUtil.pattern("^\\s*(import \\w.+;)");
 	private static final String EXPR_MARKER = "/* EXPR_START */";
 	private final JavacCompiler javac;
@@ -330,24 +335,32 @@ public class ExpressionCompiler {
 
 		// Stub out fields / methods
 		for (FieldMember field : fields) {
+			// Skip stubbing compiler-generated fields.
+			if (field.hasBridgeModifier() || field.hasSyntheticModifier())
+				continue;
+
 			// Skip stubbing of illegally named fields.
 			String name = field.getName();
 			if (!isSafeName(name))
 				continue;
-			NameType fieldInfo = getInfo(name, field.getDescriptor());
-			if (!isSafeClassName(fieldInfo.className))
+			NameType fieldNameType = getInfo(name, field.getDescriptor());
+			if (!isSafeClassName(fieldNameType.className))
 				continue;
 
 			// Skip enum constants, we added those earlier.
-			if (fieldInfo.className.equals(className.replace('/', '.')) && field.hasFinalModifier() && field.hasStaticModifier())
+			if (fieldNameType.className.equals(className.replace('/', '.')) && field.hasFinalModifier() && field.hasStaticModifier())
 				continue;
 
 			// Append the field. The only modifier that we care about here is if it is static or not.
 			if (field.hasStaticModifier())
 				code.append("static ");
-			code.append(fieldInfo.className).append(' ').append(fieldInfo.name).append(";\n");
+			code.append(fieldNameType.className).append(' ').append(fieldNameType.name).append(";\n");
 		}
 		for (MethodMember method : methods) {
+			// Skip stubbing compiler-generated methods.
+			if (method.hasBridgeModifier() || method.hasSyntheticModifier())
+				continue;
+
 			// Skip stubbing of illegally named methods.
 			String name = method.getName();
 			boolean isCtor = false;
@@ -480,7 +493,7 @@ public class ExpressionCompiler {
 			if (componentReturnType instanceof PrimitiveType primitiveParameter) {
 				className = primitiveParameter.name();
 			} else if (componentReturnType instanceof InstanceType instanceType) {
-				className = instanceType.internalName().replace('/', '.');
+				className = instanceType.internalName().replace('/', '.').replace('$', '.');
 			} else {
 				throw new ExpressionCompileException("Illegal component type: " + componentReturnType);
 			}
@@ -488,7 +501,7 @@ public class ExpressionCompiler {
 			size = 1;
 		} else {
 			size = 1;
-			className = Types.instanceTypeFromDescriptor(descriptor).internalName().replace('/', '.');
+			className = Types.instanceTypeFromDescriptor(descriptor).internalName().replace('/', '.').replace('$', '.');
 		}
 		return new NameType(size, name, className);
 	}
@@ -519,8 +532,16 @@ public class ExpressionCompiler {
 	private LocalVariable getParameterVariable(int parameterVarIndex, int parameterIndex) {
 		LocalVariable parameterVariable = findVar(parameterVarIndex);
 		if (parameterVariable == null) {
-			ClassType parameterType = methodType.parameterTypes().get(parameterIndex);
+			List<ClassType> parameterTypes = methodType.parameterTypes();
+			ClassType parameterType;
+			if (parameterIndex < parameterTypes.size()) {
+				parameterType = parameterTypes.get(parameterIndex);
+			} else {
+				logger.warn("Could not resolve parameter variable (pVar={}, pIndex={}) in {}", parameterVarIndex, parameterIndex, methodName);
+				parameterType = Types.OBJECT;
+			}
 			parameterVariable = new BasicLocalVariable(parameterVarIndex, "p" + parameterIndex, parameterType.descriptor(), null);
+
 		}
 		return parameterVariable;
 	}

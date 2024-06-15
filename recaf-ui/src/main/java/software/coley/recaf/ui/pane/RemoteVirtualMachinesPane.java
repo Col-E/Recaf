@@ -20,6 +20,7 @@ import javafx.scene.paint.Color;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
+import software.coley.collections.func.UncheckedSupplier;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.attach.AttachManager;
@@ -31,7 +32,6 @@ import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RemoteVirtualMachinesWindow;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.UncheckedSupplier;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
@@ -341,6 +341,10 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 
 				// JMX tiles
 				JmxBeanServerConnection jmxConnection = attachManager.getJmxServerConnection(descriptor);
+				if (jmxConnection == null) {
+					logger.warn("Failed to get JMX connection for descriptor: {}", descriptor);
+					return;
+				}
 				List<JmxWrapper> beanSuppliers = List.of(
 						new JmxWrapper(CarbonIcons.OBJECT_STORAGE, "attach.tab.classloading", jmxConnection::getClassloadingBeanInfo),
 						new JmxWrapper(CarbonIcons.QUERY_QUEUE, "attach.tab.compilation", jmxConnection::getCompilationBeanInfo),

@@ -1,13 +1,18 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
+import dev.xdark.blw.type.ClassType;
+import dev.xdark.blw.type.ObjectType;
+import dev.xdark.blw.type.PrimitiveType;
+import dev.xdark.blw.type.Types;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.SplitPane;
 import software.coley.collections.Lists;
 import software.coley.recaf.info.member.FieldMember;
-import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.services.assembler.ExpressionCompileException;
 import software.coley.recaf.services.assembler.ExpressionCompiler;
 import software.coley.recaf.services.assembler.ExpressionResult;
@@ -43,11 +48,12 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 	private final ExpressionCompiler expressionCompiler;
 	private final Editor javaEditor = new Editor();
 	private final Editor jasmEditor = new Editor();
+	private boolean isDirty;
 
 	@Inject
 	public JvmExpressionCompilerPane(@Nonnull ExpressionCompiler expressionCompiler,
-									 @Nonnull FileTypeAssociationService languageAssociation,
-									 @Nonnull Instance<SearchBar> searchBarProvider) {
+	                                 @Nonnull FileTypeAssociationService languageAssociation,
+	                                 @Nonnull Instance<SearchBar> searchBarProvider) {
 		this.expressionCompiler = expressionCompiler;
 
 		languageAssociation.configureEditorSyntax("java", javaEditor);
@@ -57,7 +63,6 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 				new BracketMatchGraphicFactory(),
 				new ProblemGraphicFactory()
 		);
-		javaEditor.setText(Lang.get("assembler.playground.comment").replace("\\n", "\n")); // TODO: The comment should reflect what contexts are allowed
 		jasmEditor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
 		jasmEditor.setSelectedBracketTracking(new SelectedBracketTracking());
 		jasmEditor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
@@ -80,6 +85,7 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 		expressionCompiler.clearContext();
 		if (canAssignClassContext())
 			expressionCompiler.setClassContext(currentClass.asJvmClass());
+		init(ContextType.CLASS);
 		scheduleCompile();
 	}
 
@@ -92,6 +98,7 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 				expressionCompiler.setMethodContext(currentMethod);
 			}
 		}
+		init(ContextType.METHOD);
 		scheduleCompile();
 	}
 
@@ -100,12 +107,77 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 		expressionCompiler.clearContext();
 		if (canAssignClassContext())
 			expressionCompiler.setClassContext(currentClass.asJvmClass());
+		init(ContextType.FIELD);
 		scheduleCompile();
 	}
 
 	@Override
 	protected void onPipelineOutputUpdate() {
 		// no-op
+	}
+
+	/**
+	 * Populates the initial text of the expression compiler pane.
+	 *
+	 * @param type
+	 * 		Content type in the {@link AssemblerPane}.
+	 */
+	private void init(@Nonnull ContextType type) {
+		if (!javaEditor.getCodeArea().getText().isBlank()) return;
+
+		// TODO: The comment should reflect what contexts are active
+		//  - Should query expression compiler for this info
+		String text = Lang.get("assembler.playground.comment").replace("\\n", "\n") + '\n';
+
+		switch (type) {
+			case CLASS, FIELD -> text += "return;";
+			case METHOD -> {
+				ClassType returnType = Types.methodType(currentMethod.getDescriptor()).returnType();
+				if (returnType instanceof ObjectType ot) {
+					text += "return null;";
+				} else if (returnType instanceof PrimitiveType pt) {
+					switch (pt.descriptor().charAt(0)) {
+						case 'V':
+							text += "return;";
+							break;
+						case 'J':
+							text += "return 0L;";
+							break;
+						case 'D':
+							text += "return 0.0;";
+							break;
+						case 'F':
+							text += "return 0F;";
+							break;
+						case 'I':
+							text += "return 0;";
+							break;
+						case 'C':
+							text += "return 'a';";
+							break;
+						case 'S':
+							text += "return (short) 0;";
+							break;
+						case 'B':
+							text += "return (byte) 0;";
+							break;
+						case 'Z':
+							text += "return false;";
+							break;
+					}
+				}
+			}
+		}
+		javaEditor.setText(text);
+
+		// Mark dirty when a user makes a change.
+		javaEditor.textProperty().addListener(new ChangeListener<>() {
+			@Override
+			public void changed(ObservableValue<? extends String> ob, String old, String cur) {
+				isDirty = true;
+				javaEditor.textProperty().removeListener(this);
+			}
+		});
 	}
 
 	/**
@@ -134,7 +206,7 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 	}
 
 	private void scheduleCompile() {
-		compilePool.submit(this::compile);
+		if (isDirty) compilePool.submit(this::compile);
 	}
 
 	private void compile() {
@@ -165,5 +237,12 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 			String assembly = result.getAssembly();
 			jasmEditor.setText(Objects.requireNonNullElse(assembly, "<no-output>"));
 		});
+	}
+
+	/**
+	 * Type of content in the containing {@link AssemblerPane}.
+	 */
+	private enum ContextType {
+		CLASS, FIELD, METHOD
 	}
 }

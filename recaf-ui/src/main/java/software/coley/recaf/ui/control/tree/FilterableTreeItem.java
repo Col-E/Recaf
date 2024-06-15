@@ -10,9 +10,9 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.TreeItem;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.util.ReflectUtil;
-import software.coley.recaf.util.Unchecked;
 
 import java.lang.reflect.Field;
 import java.util.Collections;

@@ -3,6 +3,8 @@ package software.coley.recaf.ui.control;
 import atlantafx.base.theme.Styles;
 import atlantafx.base.theme.Tweaks;
 import jakarta.annotation.Nonnull;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
@@ -25,6 +27,8 @@ import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
  * @author Matt Coley
  */
 public class PathNodeTree extends TreeView<PathNode<?>> {
+	protected final ObjectProperty<ContextSource> contextSourceObjectProperty = new SimpleObjectProperty<>(ContextSource.REFERENCE);
+
 	/**
 	 * @param configurationService
 	 * 		Cell service to configure tree cell rendering and population.
@@ -33,7 +37,7 @@ public class PathNodeTree extends TreeView<PathNode<?>> {
 	 */
 	public PathNodeTree(@Nonnull CellConfigurationService configurationService, @Nonnull Actions actions) {
 		setShowRoot(false);
-		setCellFactory(param -> new WorkspaceTreeCell(ContextSource.REFERENCE, configurationService));
+		setCellFactory(param -> new WorkspaceTreeCell(contextSourceObjectProperty.get(), configurationService));
 		getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 		setOnKeyPressed(e -> {
 			KeyCode code = e.getCode();
@@ -56,5 +60,13 @@ public class PathNodeTree extends TreeView<PathNode<?>> {
 				}
 			}
 		});
+	}
+
+	/**
+	 * @return Property of the {@link ContextSource} passed to newly created {@link WorkspaceTreeCell} instances.
+	 */
+	@Nonnull
+	public ObjectProperty<ContextSource> contextSourceObjectPropertyProperty() {
+		return contextSourceObjectProperty;
 	}
 }

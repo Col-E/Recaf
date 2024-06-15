@@ -6,11 +6,9 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.workspace.model.WorkspaceModificationListener;
-import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
-import software.coley.recaf.services.workspace.io.WorkspaceExporter;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collections;
@@ -23,17 +21,6 @@ import java.util.List;
  */
 public interface WorkspaceManager extends Service {
 	String SERVICE_ID = "workspace-manager";
-
-	/**
-	 * @param options
-	 * 		Exporting options, includes details on where to export, how to repackage content, etc.
-	 *
-	 * @return A new exporter configured to match the options.
-	 */
-	@Nonnull
-	default WorkspaceExporter createExporter(@Nonnull WorkspaceExportOptions options) {
-		return options.create();
-	}
 
 	/**
 	 * Exposes the current workspace directly and through CDI.
@@ -125,13 +112,13 @@ public interface WorkspaceManager extends Service {
 	 * @param condition
 	 * 		Condition to add.
 	 */
-	void addWorkspaceCloseCondition(WorkspaceCloseCondition condition);
+	void addWorkspaceCloseCondition(@Nonnull WorkspaceCloseCondition condition);
 
 	/**
 	 * @param condition
 	 * 		Condition to remove.
 	 */
-	void removeWorkspaceCloseCondition(WorkspaceCloseCondition condition);
+	void removeWorkspaceCloseCondition(@Nonnull WorkspaceCloseCondition condition);
 
 	/**
 	 * @return Listeners for when a new workspace is assigned as the current one.
@@ -143,13 +130,13 @@ public interface WorkspaceManager extends Service {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	void addWorkspaceOpenListener(WorkspaceOpenListener listener);
+	void addWorkspaceOpenListener(@Nonnull WorkspaceOpenListener listener);
 
 	/**
 	 * @param listener
 	 * 		Listener to remove.
 	 */
-	void removeWorkspaceOpenListener(WorkspaceOpenListener listener);
+	void removeWorkspaceOpenListener(@Nonnull WorkspaceOpenListener listener);
 
 	/**
 	 * @return Listeners for when the current workspace is removed as being current.
@@ -161,13 +148,13 @@ public interface WorkspaceManager extends Service {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	void addWorkspaceCloseListener(WorkspaceCloseListener listener);
+	void addWorkspaceCloseListener(@Nonnull WorkspaceCloseListener listener);
 
 	/**
 	 * @param listener
 	 * 		Listener to remove.
 	 */
-	void removeWorkspaceCloseListener(WorkspaceCloseListener listener);
+	void removeWorkspaceCloseListener(@Nonnull WorkspaceCloseListener listener);
 
 	/**
 	 * @return Listeners to add to any workspace passed to {@link #setCurrent(Workspace)}.
@@ -179,11 +166,11 @@ public interface WorkspaceManager extends Service {
 	 * @param listener
 	 * 		Listener to add.
 	 */
-	void addDefaultWorkspaceModificationListeners(WorkspaceModificationListener listener);
+	void addDefaultWorkspaceModificationListeners(@Nonnull WorkspaceModificationListener listener);
 
 	/**
 	 * @param listener
 	 * 		Listener to remove.
 	 */
-	void removeDefaultWorkspaceModificationListeners(WorkspaceModificationListener listener);
+	void removeDefaultWorkspaceModificationListeners(@Nonnull WorkspaceModificationListener listener);
 }

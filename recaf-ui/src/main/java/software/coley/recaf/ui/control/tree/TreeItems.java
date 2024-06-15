@@ -5,7 +5,7 @@ import jakarta.annotation.Nullable;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import software.coley.recaf.util.Unchecked;
+import software.coley.collections.Unchecked;
 
 /**
  * Utilities for {@link TreeItem} types.

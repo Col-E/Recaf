@@ -1,5 +1,6 @@
 package software.coley.recaf.util;
 
+import software.coley.collections.Unchecked;
 import software.coley.recaf.util.io.ByteSourceElement;
 import software.coley.recaf.util.io.ByteSources;
 

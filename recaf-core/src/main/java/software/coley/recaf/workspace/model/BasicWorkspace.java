@@ -1,8 +1,11 @@
 package software.coley.recaf.workspace.model;
 
 import jakarta.annotation.Nonnull;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -11,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Basic workspace implementation.
@@ -18,7 +22,8 @@ import java.util.List;
  * @author Matt Coley
  */
 public class BasicWorkspace implements Workspace {
-	private final List<WorkspaceModificationListener> modificationListeners = new ArrayList<>();
+	private static final Logger logger = Logging.get(BasicWorkspace.class);
+	private final List<WorkspaceModificationListener> modificationListeners = new CopyOnWriteArrayList<>();
 	private final WorkspaceResource primary;
 	private final List<WorkspaceResource> supporting = new ArrayList<>();
 	private final List<WorkspaceResource> internal;
@@ -71,18 +76,16 @@ public class BasicWorkspace implements Workspace {
 	@Override
 	public void addSupportingResource(@Nonnull WorkspaceResource resource) {
 		supporting.add(resource);
-		for (WorkspaceModificationListener listener : modificationListeners) {
-			listener.onAddLibrary(this, resource);
-		}
+		CollectionUtil.safeForEach(modificationListeners, listener -> listener.onAddLibrary(this, resource),
+				(listener, t) -> logger.error("Exception thrown when adding supporting resource", t));
 	}
 
 	@Override
 	public boolean removeSupportingResource(@Nonnull WorkspaceResource resource) {
 		boolean remove = supporting.remove(resource);
 		if (remove) {
-			for (WorkspaceModificationListener listener : modificationListeners) {
-				listener.onRemoveLibrary(this, resource);
-			}
+			CollectionUtil.safeForEach(modificationListeners, listener -> listener.onRemoveLibrary(this, resource),
+					(listener, t) -> logger.error("Exception thrown when removing supporting resource", t));
 		}
 		return remove;
 	}
@@ -94,12 +97,12 @@ public class BasicWorkspace implements Workspace {
 	}
 
 	@Override
-	public void addWorkspaceModificationListener(WorkspaceModificationListener listener) {
+	public void addWorkspaceModificationListener(@Nonnull WorkspaceModificationListener listener) {
 		modificationListeners.add(listener);
 	}
 
 	@Override
-	public void removeWorkspaceModificationListener(WorkspaceModificationListener listener) {
+	public void removeWorkspaceModificationListener(@Nonnull WorkspaceModificationListener listener) {
 		modificationListeners.remove(listener);
 	}
 

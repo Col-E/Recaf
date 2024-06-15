@@ -10,7 +10,6 @@ import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.Labeled;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
@@ -25,16 +24,15 @@ import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.comment.*;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Pane for listing comments made on classes and their members in the current workspace.
@@ -54,9 +52,9 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 
 	@Inject
 	public CommentListPane(@Nonnull CommentManager commentManager,
-						   @Nonnull CellConfigurationService cellConfigurationService,
-						   @Nonnull WorkspaceManager workspaceManager,
-						   @Nonnull Actions actions) {
+	                       @Nonnull CellConfigurationService cellConfigurationService,
+	                       @Nonnull WorkspaceManager workspaceManager,
+	                       @Nonnull Actions actions) {
 		this.cellConfigurationService = cellConfigurationService;
 		this.commentManager = commentManager;
 		this.actions = actions;
@@ -184,6 +182,7 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 		private final Map<String, Label> memberComments = new ConcurrentHashMap<>();
 		private final DelegatingClassComments comments;
 		private final ClassPathNode classPath;
+		private String fullTextCached;
 
 		private ClassCommentPane(@Nonnull ClassComments comments) {
 			if (comments instanceof DelegatingClassComments delegatingComments) {
@@ -284,8 +283,10 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 
 		@Override
 		public void onClassCommentUpdated(@Nonnull ClassPathNode path, @Nullable String comment) {
-			if (isApplicableClass(path))
+			if (isApplicableClass(path)) {
+				fullTextCached = null;
 				FxThreadUtil.run(() -> classComment.setText(comment));
+			}
 		}
 
 		@Override
@@ -300,6 +301,7 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 
 		private void onMemberCommentUpdated(@Nonnull ClassMemberPathNode path, @Nullable String comment) {
 			if (isApplicableClass(path.getParent())) {
+				fullTextCached = null;
 				ClassMember member = path.getValue();
 				Label memberComment = memberComments.get(memberKey(member));
 				if (comment != null && memberComment != null)
@@ -343,8 +345,8 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 			if (comment == null)
 				return "";
 			comment = comment.replace('\n', ' ');
-			if (comment.length() > 300)
-				comment = comment.substring(0, 300) + "...";
+			if (comment.length() > 60)
+				comment = comment.substring(0, 60) + "...";
 			return comment;
 		}
 
@@ -353,7 +355,23 @@ public class CommentListPane extends BorderPane implements Navigable, Documentat
 		 */
 		@Nonnull
 		private String buildFullText() {
-			return classComment.getText() + memberComments.values().stream().map(Labeled::getText).collect(Collectors.joining());
+			if (fullTextCached == null) {
+				StringBuilder sb = new StringBuilder();
+				String comment = comments.getClassComment();
+				if (comment != null) sb.append(comment);
+
+				ClassInfo classInfo = classPath.getValue();
+				for (FieldMember field : classInfo.getFields()) {
+					comment = comments.getFieldComment(field);
+					if (comment != null) sb.append(comment);
+				}
+				for (MethodMember method : classInfo.getMethods()) {
+					comment = comments.getMethodComment(method);
+					if (comment != null) sb.append(comment);
+				}
+				fullTextCached = sb.toString();
+			}
+			return fullTextCached;
 		}
 
 		/**

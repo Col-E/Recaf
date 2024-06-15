@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -23,7 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class Logging {
 	private static final Map<String, DebuggingLogger> loggers = new ConcurrentHashMap<>();
-	private static final List<LogConsumer<String>> logConsumers = new ArrayList<>();
+	private static final List<LogConsumer<String>> logConsumers = new CopyOnWriteArrayList<>();
 	private static Level interceptLevel = Level.INFO;
 
 	/**
@@ -50,7 +51,7 @@ public class Logging {
 	 * @param consumer
 	 * 		New log message consumer.
 	 */
-	public static void addLogConsumer(LogConsumer<String> consumer) {
+	public static void addLogConsumer(@Nonnull LogConsumer<String> consumer) {
 		logConsumers.add(consumer);
 	}
 
@@ -58,7 +59,7 @@ public class Logging {
 	 * @param consumer
 	 * 		Log message consumer to remove.
 	 */
-	public static void removeLogConsumer(LogConsumer<String> consumer) {
+	public static void removeLogConsumer(@Nonnull LogConsumer<String> consumer) {
 		logConsumers.remove(consumer);
 	}
 

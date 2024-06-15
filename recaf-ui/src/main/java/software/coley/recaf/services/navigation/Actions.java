@@ -16,8 +16,10 @@ import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
+import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
@@ -32,6 +34,7 @@ import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.graph.MethodCallGraphsPane;
 import software.coley.recaf.ui.control.popup.AddMemberPopup;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
 import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
@@ -59,14 +62,12 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static software.coley.collections.Unchecked.cast;
 import static software.coley.recaf.util.Lang.getBinding;
 import static software.coley.recaf.util.Menus.*;
 import static software.coley.recaf.util.StringUtil.*;
@@ -96,34 +97,36 @@ public class Actions implements Service {
 	private final Instance<VideoFilePane> videoPaneProvider;
 	private final Instance<AssemblerPane> assemblerPaneProvider;
 	private final Instance<CommentEditPane> documentationPaneProvider;
-	private final ActionsConfig config;
+	private final Instance<MethodCallGraphsPane> callGraphsPaneProvider;
 	private final Instance<StringSearchPane> stringSearchPaneProvider;
 	private final Instance<NumberSearchPane> numberSearchPaneProvider;
 	private final Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider;
 	private final Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider;
+	private final ActionsConfig config;
 
 	@Inject
 	public Actions(@Nonnull ActionsConfig config,
-				   @Nonnull NavigationManager navigationManager,
-				   @Nonnull DockingManager dockingManager,
-				   @Nonnull WindowFactory windowFactory,
-				   @Nonnull TextProviderService textService,
-				   @Nonnull IconProviderService iconService,
-				   @Nonnull PathExportingManager pathExportingManager,
-				   @Nonnull Instance<MappingApplier> applierProvider,
-				   @Nonnull Instance<JvmClassPane> jvmPaneProvider,
-				   @Nonnull Instance<AndroidClassPane> androidPaneProvider,
-				   @Nonnull Instance<BinaryXmlFilePane> binaryXmlPaneProvider,
-				   @Nonnull Instance<TextFilePane> textPaneProvider,
-				   @Nonnull Instance<ImageFilePane> imagePaneProvider,
-				   @Nonnull Instance<AudioFilePane> audioPaneProvider,
-				   @Nonnull Instance<VideoFilePane> videoPaneProvider,
-				   @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
-				   @Nonnull Instance<CommentEditPane> documentationPaneProvider,
-				   @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
-				   @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
-				   @Nonnull Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider,
-				   @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider) {
+	               @Nonnull NavigationManager navigationManager,
+	               @Nonnull DockingManager dockingManager,
+	               @Nonnull WindowFactory windowFactory,
+	               @Nonnull TextProviderService textService,
+	               @Nonnull IconProviderService iconService,
+	               @Nonnull PathExportingManager pathExportingManager,
+	               @Nonnull Instance<MappingApplier> applierProvider,
+	               @Nonnull Instance<JvmClassPane> jvmPaneProvider,
+	               @Nonnull Instance<AndroidClassPane> androidPaneProvider,
+	               @Nonnull Instance<BinaryXmlFilePane> binaryXmlPaneProvider,
+	               @Nonnull Instance<TextFilePane> textPaneProvider,
+	               @Nonnull Instance<ImageFilePane> imagePaneProvider,
+	               @Nonnull Instance<AudioFilePane> audioPaneProvider,
+	               @Nonnull Instance<VideoFilePane> videoPaneProvider,
+	               @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
+	               @Nonnull Instance<CommentEditPane> documentationPaneProvider,
+	               @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
+	               @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
+	               @Nonnull Instance<MethodCallGraphsPane> callGraphsPaneProvider,
+	               @Nonnull Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider,
+	               @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
@@ -143,6 +146,7 @@ public class Actions implements Service {
 		this.documentationPaneProvider = documentationPaneProvider;
 		this.stringSearchPaneProvider = stringSearchPaneProvider;
 		this.numberSearchPaneProvider = numberSearchPaneProvider;
+		this.callGraphsPaneProvider = callGraphsPaneProvider;
 		this.classReferenceSearchPaneProvider = classReferenceSearchPaneProvider;
 		this.memberReferenceSearchPaneProvider = memberReferenceSearchPaneProvider;
 	}
@@ -240,10 +244,10 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public ClassNavigable gotoDeclaration(@Nonnull Workspace workspace,
-										  @Nonnull WorkspaceResource resource,
-										  @Nonnull JvmClassBundle bundle,
-										  @Nonnull JvmClassInfo info) {
-		ClassPathNode path = buildPath(workspace, resource, bundle, info);
+	                                      @Nonnull WorkspaceResource resource,
+	                                      @Nonnull JvmClassBundle bundle,
+	                                      @Nonnull JvmClassInfo info) {
+		ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, info);
 		return (ClassNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, info).makeText();
@@ -302,10 +306,10 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public ClassNavigable gotoDeclaration(@Nonnull Workspace workspace,
-										  @Nonnull WorkspaceResource resource,
-										  @Nonnull AndroidClassBundle bundle,
-										  @Nonnull AndroidClassInfo info) {
-		ClassPathNode path = buildPath(workspace, resource, bundle, info);
+	                                      @Nonnull WorkspaceResource resource,
+	                                      @Nonnull AndroidClassBundle bundle,
+	                                      @Nonnull AndroidClassInfo info) {
+		ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, info);
 		return (ClassNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getAndroidClassInfoTextProvider(workspace, resource, bundle, info).makeText();
@@ -399,10 +403,10 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-										 @Nonnull WorkspaceResource resource,
-										 @Nonnull FileBundle bundle,
-										 @Nonnull BinaryXmlFileInfo info) {
-		FilePathNode path = buildPath(workspace, resource, bundle, info);
+	                                     @Nonnull WorkspaceResource resource,
+	                                     @Nonnull FileBundle bundle,
+	                                     @Nonnull BinaryXmlFileInfo info) {
+		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
@@ -438,10 +442,10 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-										 @Nonnull WorkspaceResource resource,
-										 @Nonnull FileBundle bundle,
-										 @Nonnull TextFileInfo info) {
-		FilePathNode path = buildPath(workspace, resource, bundle, info);
+	                                     @Nonnull WorkspaceResource resource,
+	                                     @Nonnull FileBundle bundle,
+	                                     @Nonnull TextFileInfo info) {
+		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
@@ -477,10 +481,10 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-										 @Nonnull WorkspaceResource resource,
-										 @Nonnull FileBundle bundle,
-										 @Nonnull ImageFileInfo info) {
-		FilePathNode path = buildPath(workspace, resource, bundle, info);
+	                                     @Nonnull WorkspaceResource resource,
+	                                     @Nonnull FileBundle bundle,
+	                                     @Nonnull ImageFileInfo info) {
+		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
@@ -516,10 +520,10 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-										 @Nonnull WorkspaceResource resource,
-										 @Nonnull FileBundle bundle,
-										 @Nonnull AudioFileInfo info) {
-		FilePathNode path = buildPath(workspace, resource, bundle, info);
+	                                     @Nonnull WorkspaceResource resource,
+	                                     @Nonnull FileBundle bundle,
+	                                     @Nonnull AudioFileInfo info) {
+		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
@@ -555,10 +559,10 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-										 @Nonnull WorkspaceResource resource,
-										 @Nonnull FileBundle bundle,
-										 @Nonnull VideoFileInfo info) {
-		FilePathNode path = buildPath(workspace, resource, bundle, info);
+	                                     @Nonnull WorkspaceResource resource,
+	                                     @Nonnull FileBundle bundle,
+	                                     @Nonnull VideoFileInfo info) {
+		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
@@ -590,9 +594,9 @@ public class Actions implements Service {
 	 * 		Class to document.
 	 */
 	public void openCommentEditing(@Nonnull Workspace workspace,
-								   @Nonnull WorkspaceResource resource,
-								   @Nonnull ClassBundle<? extends ClassInfo> bundle,
-								   @Nonnull ClassInfo info) {
+	                               @Nonnull WorkspaceResource resource,
+	                               @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                               @Nonnull ClassInfo info) {
 		createContent(() -> {
 			ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, info);
 
@@ -619,10 +623,10 @@ public class Actions implements Service {
 	 * 		Member to document.
 	 */
 	public void openCommentEditing(@Nonnull Workspace workspace,
-								   @Nonnull WorkspaceResource resource,
-								   @Nonnull ClassBundle<? extends ClassInfo> bundle,
-								   @Nonnull ClassInfo declaringClass,
-								   @Nonnull ClassMember member) {
+	                               @Nonnull WorkspaceResource resource,
+	                               @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                               @Nonnull ClassInfo declaringClass,
+	                               @Nonnull ClassMember member) {
 		createContent(() -> {
 			ClassMemberPathNode path = PathNodes.memberPath(workspace, resource, bundle, declaringClass, member);
 
@@ -637,7 +641,7 @@ public class Actions implements Service {
 
 	@Nonnull
 	private DockingTab createCommentEditTab(@Nonnull PathNode<?> path, @Nonnull String title,
-											@Nonnull Node graphic, @Nonnull ClassInfo classInfo) {
+	                                        @Nonnull Node graphic, @Nonnull ClassInfo classInfo) {
 		// Create content for the tab.
 		CommentEditPane content = documentationPaneProvider.get();
 		content.onUpdatePath(path);
@@ -667,9 +671,9 @@ public class Actions implements Service {
 	 * 		Class to move into a different package.
 	 */
 	public void moveClass(@Nonnull Workspace workspace,
-						  @Nonnull WorkspaceResource resource,
-						  @Nonnull JvmClassBundle bundle,
-						  @Nonnull JvmClassInfo info) {
+	                      @Nonnull WorkspaceResource resource,
+	                      @Nonnull JvmClassBundle bundle,
+	                      @Nonnull JvmClassInfo info) {
 		boolean isRootDirectory = isNullOrEmpty(info.getPackageName());
 		ItemTreeSelectionPopup.forPackageNames(bundle, packages -> {
 					// We only allow a single package, so the list should contain just one item.
@@ -712,9 +716,9 @@ public class Actions implements Service {
 	 * 		File to move into a different directory.
 	 */
 	public void moveFile(@Nonnull Workspace workspace,
-						 @Nonnull WorkspaceResource resource,
-						 @Nonnull FileBundle bundle,
-						 @Nonnull FileInfo info) {
+	                     @Nonnull WorkspaceResource resource,
+	                     @Nonnull FileBundle bundle,
+	                     @Nonnull FileInfo info) {
 		boolean isRootDirectory = isNullOrEmpty(info.getDirectoryName());
 		ItemTreeSelectionPopup.forDirectoryNames(bundle, chosenDirectories -> {
 					// We only allow a single directory, so the list should contain just one item.
@@ -747,9 +751,9 @@ public class Actions implements Service {
 	 * 		Package to go move into another package as a sub-package.
 	 */
 	public void movePackage(@Nonnull Workspace workspace,
-							@Nonnull WorkspaceResource resource,
-							@Nonnull JvmClassBundle bundle,
-							@Nonnull String packageName) {
+	                        @Nonnull WorkspaceResource resource,
+	                        @Nonnull JvmClassBundle bundle,
+	                        @Nonnull String packageName) {
 		boolean isRootDirectory = packageName.isEmpty();
 		ItemTreeSelectionPopup.forPackageNames(bundle, chosenPackages -> {
 					if (chosenPackages.isEmpty()) return;
@@ -805,9 +809,9 @@ public class Actions implements Service {
 	 * 		Directory to go move into another directory as a sub-directory.
 	 */
 	public void moveDirectory(@Nonnull Workspace workspace,
-							  @Nonnull WorkspaceResource resource,
-							  @Nonnull FileBundle bundle,
-							  @Nonnull String directoryName) {
+	                          @Nonnull WorkspaceResource resource,
+	                          @Nonnull FileBundle bundle,
+	                          @Nonnull String directoryName) {
 		boolean isRootDirectory = directoryName.isEmpty();
 		String localDirectoryName = shortenPath(directoryName);
 		ItemTreeSelectionPopup.forDirectoryNames(bundle, chosenDirectories -> {
@@ -912,9 +916,9 @@ public class Actions implements Service {
 	 * 		Class to rename.
 	 */
 	public void renameClass(@Nonnull Workspace workspace,
-							@Nonnull WorkspaceResource resource,
-							@Nonnull ClassBundle<? extends ClassInfo> bundle,
-							@Nonnull ClassInfo info) {
+	                        @Nonnull WorkspaceResource resource,
+	                        @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                        @Nonnull ClassInfo info) {
 		String originalName = info.getName();
 		Consumer<String> renameTask = newName -> {
 			// Create mapping for the class and any inner classes.
@@ -986,10 +990,10 @@ public class Actions implements Service {
 	 * 		Field to rename.
 	 */
 	public void renameField(@Nonnull Workspace workspace,
-							@Nonnull WorkspaceResource resource,
-							@Nonnull ClassBundle<? extends ClassInfo> bundle,
-							@Nonnull ClassInfo declaringClass,
-							@Nonnull FieldMember field) {
+	                        @Nonnull WorkspaceResource resource,
+	                        @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                        @Nonnull ClassInfo declaringClass,
+	                        @Nonnull FieldMember field) {
 		String originalName = field.getName();
 		Consumer<String> renameTask = newName -> {
 			IntermediateMappings mappings = new IntermediateMappings();
@@ -1055,10 +1059,10 @@ public class Actions implements Service {
 	 * 		Method to rename.
 	 */
 	public void renameMethod(@Nonnull Workspace workspace,
-							 @Nonnull WorkspaceResource resource,
-							 @Nonnull ClassBundle<? extends ClassInfo> bundle,
-							 @Nonnull ClassInfo declaringClass,
-							 @Nonnull MethodMember method) {
+	                         @Nonnull WorkspaceResource resource,
+	                         @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                         @Nonnull ClassInfo declaringClass,
+	                         @Nonnull MethodMember method) {
 		String originalName = method.getName();
 		Consumer<String> renameTask = newName -> {
 			IntermediateMappings mappings = new IntermediateMappings();
@@ -1117,9 +1121,9 @@ public class Actions implements Service {
 	 * 		File to rename.
 	 */
 	public void renameFile(@Nonnull Workspace workspace,
-						   @Nonnull WorkspaceResource resource,
-						   @Nonnull FileBundle bundle,
-						   @Nonnull FileInfo info) {
+	                       @Nonnull WorkspaceResource resource,
+	                       @Nonnull FileBundle bundle,
+	                       @Nonnull FileInfo info) {
 		String name = info.getName();
 		new NamePopup(newFileName -> {
 			if (name.equals(newFileName)) return;
@@ -1177,9 +1181,9 @@ public class Actions implements Service {
 	 * 		Name of directory to rename.
 	 */
 	public void renameDirectory(@Nonnull Workspace workspace,
-								@Nonnull WorkspaceResource resource,
-								@Nonnull FileBundle bundle,
-								@Nonnull String directoryName) {
+	                            @Nonnull WorkspaceResource resource,
+	                            @Nonnull FileBundle bundle,
+	                            @Nonnull String directoryName) {
 		boolean isRootDirectory = directoryName.isEmpty();
 		new NamePopup(newDirectoryName -> {
 			if (directoryName.equals(newDirectoryName)) return;
@@ -1230,9 +1234,9 @@ public class Actions implements Service {
 	 * 		Name of directory to copy.
 	 */
 	public void renamePackage(@Nonnull Workspace workspace,
-							  @Nonnull WorkspaceResource resource,
-							  @Nonnull JvmClassBundle bundle,
-							  @Nonnull String packageName) {
+	                          @Nonnull WorkspaceResource resource,
+	                          @Nonnull JvmClassBundle bundle,
+	                          @Nonnull String packageName) {
 		boolean isRootDirectory = packageName.isEmpty();
 		new NamePopup(newPackageName -> {
 			// Create mappings.
@@ -1275,9 +1279,9 @@ public class Actions implements Service {
 	 * 		Class to copy.
 	 */
 	public void copyClass(@Nonnull Workspace workspace,
-						  @Nonnull WorkspaceResource resource,
-						  @Nonnull JvmClassBundle bundle,
-						  @Nonnull JvmClassInfo info) {
+	                      @Nonnull WorkspaceResource resource,
+	                      @Nonnull JvmClassBundle bundle,
+	                      @Nonnull JvmClassInfo info) {
 		String originalName = info.getName();
 		Consumer<String> copyTask = newName -> {
 			// Create mappings.
@@ -1328,10 +1332,10 @@ public class Actions implements Service {
 	 * 		member to copy.
 	 */
 	public void copyMember(@Nonnull Workspace workspace,
-						   @Nonnull WorkspaceResource resource,
-						   @Nonnull JvmClassBundle bundle,
-						   @Nonnull JvmClassInfo declaringClass,
-						   @Nonnull ClassMember member) {
+	                       @Nonnull WorkspaceResource resource,
+	                       @Nonnull JvmClassBundle bundle,
+	                       @Nonnull JvmClassInfo declaringClass,
+	                       @Nonnull ClassMember member) {
 		String originalName = member.getName();
 		Consumer<String> copyTask = newName -> {
 			ClassWriter cw = new ClassWriter(0);
@@ -1358,9 +1362,9 @@ public class Actions implements Service {
 	 * 		File to copy.
 	 */
 	public void copyFile(@Nonnull Workspace workspace,
-						 @Nonnull WorkspaceResource resource,
-						 @Nonnull FileBundle bundle,
-						 @Nonnull FileInfo info) {
+	                     @Nonnull WorkspaceResource resource,
+	                     @Nonnull FileBundle bundle,
+	                     @Nonnull FileInfo info) {
 		new NamePopup(newName -> {
 			if (info.getName().equals(newName)) return;
 			bundle.put(info.toFileBuilder().withName(newName).build());
@@ -1382,9 +1386,9 @@ public class Actions implements Service {
 	 * 		Name of directory to copy.
 	 */
 	public void copyDirectory(@Nonnull Workspace workspace,
-							  @Nonnull WorkspaceResource resource,
-							  @Nonnull FileBundle bundle,
-							  @Nonnull String directoryName) {
+	                          @Nonnull WorkspaceResource resource,
+	                          @Nonnull FileBundle bundle,
+	                          @Nonnull String directoryName) {
 		boolean isRootDirectory = directoryName.isEmpty();
 		new NamePopup(newDirectoryName -> {
 			if (directoryName.equals(newDirectoryName)) return;
@@ -1420,9 +1424,9 @@ public class Actions implements Service {
 	 * 		Name of directory to copy.
 	 */
 	public void copyPackage(@Nonnull Workspace workspace,
-							@Nonnull WorkspaceResource resource,
-							@Nonnull JvmClassBundle bundle,
-							@Nonnull String packageName) {
+	                        @Nonnull WorkspaceResource resource,
+	                        @Nonnull JvmClassBundle bundle,
+	                        @Nonnull String packageName) {
 		boolean isRootDirectory = packageName.isEmpty();
 		new NamePopup(newPackageName -> {
 			// Create mappings.
@@ -1512,6 +1516,44 @@ public class Actions implements Service {
 		});
 	}
 
+
+	/**
+	 * Exports a class, prompting the user to select a location to save the class to.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Class declaring the method
+	 * @param method
+	 * 		Method to show the incoming/outgoing calls of.
+	 *
+	 * @return Navigable reference to the call graph pane.
+	 */
+	@Nonnull
+	public Navigable openMethodCallGraph(@Nonnull Workspace workspace,
+	                                     @Nonnull WorkspaceResource resource,
+	                                     @Nonnull JvmClassBundle bundle,
+	                                     @Nonnull JvmClassInfo declaringClass,
+	                                     @Nonnull MethodMember method) {
+		return createContent(() -> {
+			// Create text/graphic for the tab to create.
+			String title = Lang.get("menu.view.methodcallgraph") + ": " + method.getName();
+			Node graphic = new FontIconView(CarbonIcons.FLOW);
+
+			// Create content for the tab.
+			MethodCallGraphsPane content = callGraphsPaneProvider.get();
+			content.onUpdatePath(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method));
+
+			// Build the tab.
+			return createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+		});
+	}
+
+
 	/**
 	 * Exports a class, prompting the user to select a location to save the class to.
 	 *
@@ -1525,9 +1567,9 @@ public class Actions implements Service {
 	 * 		Class to delete.
 	 */
 	public void exportClass(@Nonnull Workspace workspace,
-							@Nonnull WorkspaceResource resource,
-							@Nonnull JvmClassBundle bundle,
-							@Nonnull JvmClassInfo info) {
+	                        @Nonnull WorkspaceResource resource,
+	                        @Nonnull JvmClassBundle bundle,
+	                        @Nonnull JvmClassInfo info) {
 		pathExportingManager.export(info);
 	}
 
@@ -1544,9 +1586,9 @@ public class Actions implements Service {
 	 * 		Class to delete.
 	 */
 	public void deleteClass(@Nonnull Workspace workspace,
-							@Nonnull WorkspaceResource resource,
-							@Nonnull JvmClassBundle bundle,
-							@Nonnull JvmClassInfo info) {
+	                        @Nonnull WorkspaceResource resource,
+	                        @Nonnull JvmClassBundle bundle,
+	                        @Nonnull JvmClassInfo info) {
 		// TODO: Ask user if they are sure
 		//  - Use config to check if "are you sure" prompts should be bypassed
 		bundle.remove(info.getName());
@@ -1565,9 +1607,9 @@ public class Actions implements Service {
 	 * 		File to delete.
 	 */
 	public void deleteFile(@Nonnull Workspace workspace,
-						   @Nonnull WorkspaceResource resource,
-						   @Nonnull FileBundle bundle,
-						   @Nonnull FileInfo info) {
+	                       @Nonnull WorkspaceResource resource,
+	                       @Nonnull FileBundle bundle,
+	                       @Nonnull FileInfo info) {
 		// TODO: Ask user if they are sure
 		//  - Use config to check if "are you sure" prompts should be bypassed
 		bundle.remove(info.getName());
@@ -1586,9 +1628,9 @@ public class Actions implements Service {
 	 * 		Name of package to delete.
 	 */
 	public void deletePackage(@Nonnull Workspace workspace,
-							  @Nonnull WorkspaceResource resource,
-							  @Nonnull ClassBundle<?> bundle,
-							  @Nonnull String packageName) {
+	                          @Nonnull WorkspaceResource resource,
+	                          @Nonnull ClassBundle<?> bundle,
+	                          @Nonnull String packageName) {
 		// TODO: Ask user if they are sure
 		//  - Use config to check if "are you sure" prompts should be bypassed
 		boolean isRootDirectory = packageName.isEmpty();
@@ -1622,9 +1664,9 @@ public class Actions implements Service {
 	 * 		Name of directory to delete.
 	 */
 	public void deleteDirectory(@Nonnull Workspace workspace,
-								@Nonnull WorkspaceResource resource,
-								@Nonnull FileBundle bundle,
-								@Nonnull String directoryName) {
+	                            @Nonnull WorkspaceResource resource,
+	                            @Nonnull FileBundle bundle,
+	                            @Nonnull String directoryName) {
 		// TODO: Ask user if they are sure
 		//  - Use config to check if "are you sure" prompts should be bypassed
 		boolean isRootDirectory = directoryName.isEmpty();
@@ -1658,9 +1700,9 @@ public class Actions implements Service {
 	 * 		Class to update.
 	 */
 	public void deleteClassFields(@Nonnull Workspace workspace,
-								  @Nonnull WorkspaceResource resource,
-								  @Nonnull JvmClassBundle bundle,
-								  @Nonnull JvmClassInfo info) {
+	                              @Nonnull WorkspaceResource resource,
+	                              @Nonnull JvmClassBundle bundle,
+	                              @Nonnull JvmClassInfo info) {
 		ItemListSelectionPopup.forFields(info, fields -> deleteClassFields(workspace, resource, bundle, info, fields))
 				.withMultipleSelection()
 				.withTitle(Lang.getBinding("menu.edit.remove.field"))
@@ -1684,10 +1726,10 @@ public class Actions implements Service {
 	 * 		Fields to delete.
 	 */
 	public void deleteClassFields(@Nonnull Workspace workspace,
-								  @Nonnull WorkspaceResource resource,
-								  @Nonnull JvmClassBundle bundle,
-								  @Nonnull JvmClassInfo declaringClass,
-								  @Nonnull Collection<FieldMember> fields) {
+	                              @Nonnull WorkspaceResource resource,
+	                              @Nonnull JvmClassBundle bundle,
+	                              @Nonnull JvmClassInfo declaringClass,
+	                              @Nonnull Collection<FieldMember> fields) {
 		ClassWriter writer = new ClassWriter(0);
 		MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, FieldPredicate.of(fields));
 		declaringClass.getClassReader().accept(visitor, 0);
@@ -1709,9 +1751,9 @@ public class Actions implements Service {
 	 * 		Class to update.
 	 */
 	public void deleteClassMethods(@Nonnull Workspace workspace,
-								   @Nonnull WorkspaceResource resource,
-								   @Nonnull JvmClassBundle bundle,
-								   @Nonnull JvmClassInfo info) {
+	                               @Nonnull WorkspaceResource resource,
+	                               @Nonnull JvmClassBundle bundle,
+	                               @Nonnull JvmClassInfo info) {
 		ItemListSelectionPopup.forMethods(info, methods -> deleteClassMethods(workspace, resource, bundle, info, methods))
 				.withMultipleSelection()
 				.withTitle(Lang.getBinding("menu.edit.remove.method"))
@@ -1735,10 +1777,10 @@ public class Actions implements Service {
 	 * 		Methods to delete.
 	 */
 	public void deleteClassMethods(@Nonnull Workspace workspace,
-								   @Nonnull WorkspaceResource resource,
-								   @Nonnull JvmClassBundle bundle,
-								   @Nonnull JvmClassInfo declaringClass,
-								   @Nonnull Collection<MethodMember> methods) {
+	                               @Nonnull WorkspaceResource resource,
+	                               @Nonnull JvmClassBundle bundle,
+	                               @Nonnull JvmClassInfo declaringClass,
+	                               @Nonnull Collection<MethodMember> methods) {
 		ClassWriter writer = new ClassWriter(0);
 		MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, MethodPredicate.of(methods));
 		declaringClass.getClassReader().accept(visitor, 0);
@@ -1760,20 +1802,48 @@ public class Actions implements Service {
 	 * 		Class to update.
 	 */
 	public void deleteClassAnnotations(@Nonnull Workspace workspace,
-									   @Nonnull WorkspaceResource resource,
-									   @Nonnull JvmClassBundle bundle,
-									   @Nonnull JvmClassInfo info) {
+	                                   @Nonnull WorkspaceResource resource,
+	                                   @Nonnull JvmClassBundle bundle,
+	                                   @Nonnull JvmClassInfo info) {
 		ItemListSelectionPopup.forAnnotationRemoval(info, annotations -> {
 					List<String> names = annotations.stream()
 							.map(AnnotationInfo::getDescriptor)
 							.map(desc -> desc.substring(1, desc.length() - 1))
 							.collect(Collectors.toList());
-					ClassWriter writer = new ClassWriter(0);
-					ClassAnnotationRemovingVisitor visitor = new ClassAnnotationRemovingVisitor(writer, names);
-					info.getClassReader().accept(visitor, 0);
-					bundle.put(info.toJvmClassBuilder()
-							.adaptFrom(writer.toByteArray())
-							.build());
+					immediateDeleteAnnotations(bundle, info, names);
+				})
+				.withMultipleSelection()
+				.withTitle(Lang.getBinding("menu.edit.remove.annotation"))
+				.withTextMapping(anno -> textService.getAnnotationTextProvider(workspace, resource, bundle, info, anno).makeText())
+				.withGraphicMapping(anno -> iconService.getAnnotationIconProvider(workspace, resource, bundle, info, anno).makeIcon())
+				.show();
+	}
+
+	/**
+	 * Prompts the user to select annotations on the field or method to remove.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to update.
+	 * @param member
+	 * 		Field or method to remove annotations from.
+	 */
+	public void deleteMemberAnnotations(@Nonnull Workspace workspace,
+	                                    @Nonnull WorkspaceResource resource,
+	                                    @Nonnull JvmClassBundle bundle,
+	                                    @Nonnull JvmClassInfo info,
+	                                    @Nonnull ClassMember member) {
+		ItemListSelectionPopup.forAnnotationRemoval(member, annotations -> {
+					List<String> names = annotations.stream()
+							.map(AnnotationInfo::getDescriptor)
+							.map(desc -> desc.substring(1, desc.length() - 1))
+							.collect(Collectors.toList());
+					immediateDeleteAnnotations(bundle, member, names);
 				})
 				.withMultipleSelection()
 				.withTitle(Lang.getBinding("menu.edit.remove.annotation"))
@@ -1795,9 +1865,9 @@ public class Actions implements Service {
 	 * 		Class to update.
 	 */
 	public void addClassField(@Nonnull Workspace workspace,
-							  @Nonnull WorkspaceResource resource,
-							  @Nonnull JvmClassBundle bundle,
-							  @Nonnull JvmClassInfo info) {
+	                          @Nonnull WorkspaceResource resource,
+	                          @Nonnull JvmClassBundle bundle,
+	                          @Nonnull JvmClassInfo info) {
 		new AddMemberPopup(member -> {
 			ClassWriter writer = new ClassWriter(0);
 			info.getClassReader().accept(new MemberStubAddingVisitor(writer, member), 0);
@@ -1828,9 +1898,9 @@ public class Actions implements Service {
 	 * 		Class to update.
 	 */
 	public void addClassMethod(@Nonnull Workspace workspace,
-							   @Nonnull WorkspaceResource resource,
-							   @Nonnull JvmClassBundle bundle,
-							   @Nonnull JvmClassInfo info) {
+	                           @Nonnull WorkspaceResource resource,
+	                           @Nonnull JvmClassBundle bundle,
+	                           @Nonnull JvmClassInfo info) {
 		new AddMemberPopup(member -> {
 			ClassWriter writer = new ClassWriter(0);
 			info.getClassReader().accept(new MemberStubAddingVisitor(writer, member), 0);
@@ -1863,16 +1933,66 @@ public class Actions implements Service {
 	 * 		Methods to noop.
 	 */
 	public void makeMethodsNoop(@Nonnull Workspace workspace,
-								@Nonnull WorkspaceResource resource,
-								@Nonnull JvmClassBundle bundle,
-								@Nonnull JvmClassInfo declaringClass,
-								@Nonnull Collection<MethodMember> methods) {
+	                            @Nonnull WorkspaceResource resource,
+	                            @Nonnull JvmClassBundle bundle,
+	                            @Nonnull JvmClassInfo declaringClass,
+	                            @Nonnull Collection<MethodMember> methods) {
 		ClassWriter writer = new ClassWriter(0);
 		MethodNoopingVisitor visitor = new MethodNoopingVisitor(writer, MethodPredicate.of(methods));
 		declaringClass.getClassReader().accept(visitor, 0);
 		bundle.put(declaringClass.toJvmClassBuilder()
 				.adaptFrom(writer.toByteArray())
 				.build());
+	}
+
+	/**
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param annotated
+	 * 		Annotated class or member.
+	 * @param annotationType
+	 * 		Annotation type to remove.
+	 */
+	public void immediateDeleteAnnotations(@Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                       @Nonnull Annotated annotated,
+	                                       @Nonnull String annotationType) {
+		immediateDeleteAnnotations(bundle, annotated, Collections.singleton(annotationType));
+	}
+
+	/**
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param annotated
+	 * 		Annotated class or member.
+	 * @param annotationTypes
+	 * 		Annotation types to remove.
+	 */
+	public void immediateDeleteAnnotations(@Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                       @Nonnull Annotated annotated,
+	                                       @Nonnull Collection<String> annotationTypes) {
+		try {
+			if (annotated instanceof JvmClassInfo target) {
+				ClassWriter writer = new ClassWriter(0);
+				target.getClassReader().accept(new ClassAnnotationRemovingVisitor(writer, annotationTypes), 0);
+				JvmClassInfo updatedClass = new JvmClassInfoBuilder(writer.toByteArray()).build();
+				bundle.put(cast(updatedClass));
+			} else if (annotated instanceof ClassMember member && member.getDeclaringClass() instanceof JvmClassInfo target) {
+				ClassWriter writer = new ClassWriter(0);
+				if (member.isField()) {
+					FieldMember field = (FieldMember) member;
+					target.getClassReader().accept(FieldAnnotationRemovingVisitor.forClass(writer, annotationTypes, field), 0);
+				} else {
+					MethodMember method = (MethodMember) member;
+					target.getClassReader().accept(MethodAnnotationRemovingVisitor.forClass(writer, annotationTypes, method), 0);
+				}
+				JvmClassInfo updatedClass = new JvmClassInfoBuilder(writer.toByteArray()).build();
+				bundle.put(cast(updatedClass));
+			} else {
+				logger.warn("Cannot remove annotations on unsupported annotated type: {}", annotated.getClass().getSimpleName());
+			}
+		} catch (Throwable t) {
+			logger.error("Failed removing annotation", t);
+		}
 	}
 
 	/**
@@ -1922,7 +2042,7 @@ public class Actions implements Service {
 			region = dockingManager.newRegion();
 			DockingTab tab = region.createTab(getBinding(titleId), content);
 			tab.setGraphic(new FontIconView(icon));
-			RecafScene scene = new RecafScene((region));
+			RecafScene scene = new RecafScene(region);
 			Stage window = windowFactory.createAnonymousStage(scene, getBinding("menu.search"), 800, 400);
 			window.show();
 			window.requestFocus();
@@ -2004,10 +2124,11 @@ public class Actions implements Service {
 	 *
 	 * @return Created tab.
 	 */
+	@Nonnull
 	private static DockingTab createTab(@Nonnull DockingRegion region,
-										@Nonnull String title,
-										@Nonnull Node graphic,
-										@Nonnull Node content) {
+	                                    @Nonnull String title,
+	                                    @Nonnull Node graphic,
+	                                    @Nonnull Node content) {
 		DockingTab tab = region.createTab(title, content);
 		tab.setGraphic(graphic);
 		return tab;
@@ -2027,10 +2148,11 @@ public class Actions implements Service {
 	 *
 	 * @return Created tab.
 	 */
+	@Nonnull
 	private static DockingTab createTab(@Nonnull DockingRegion region,
-										@Nonnull ObservableValue<String> title,
-										@Nonnull Node graphic,
-										@Nonnull Node content) {
+	                                    @Nonnull ObservableValue<String> title,
+	                                    @Nonnull Node graphic,
+	                                    @Nonnull Node content) {
 		DockingTab tab = region.createTab(title, content);
 		tab.setGraphic(graphic);
 		return tab;
@@ -2063,46 +2185,6 @@ public class Actions implements Service {
 						regionTab.close();
 				})
 		);
-	}
-
-	/**
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param info
-	 * 		Class item to end path with.
-	 *
-	 * @return Class path node.
-	 */
-	@Nonnull
-	private static ClassPathNode buildPath(@Nonnull Workspace workspace,
-										   @Nonnull WorkspaceResource resource,
-										   @Nonnull ClassBundle<?> bundle,
-										   @Nonnull ClassInfo info) {
-		return PathNodes.classPath(workspace, resource, bundle, info);
-	}
-
-	/**
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param info
-	 * 		File item to end path with.
-	 *
-	 * @return File path node.
-	 */
-	@Nonnull
-	private static FilePathNode buildPath(@Nonnull Workspace workspace,
-										  @Nonnull WorkspaceResource resource,
-										  @Nonnull FileBundle bundle,
-										  @Nonnull FileInfo info) {
-		return PathNodes.filePath(workspace, resource, bundle, info);
 	}
 
 	@Nonnull
