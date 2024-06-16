@@ -12,6 +12,8 @@ import software.coley.recaf.cdi.WorkspaceBeanExtension;
 
 import java.util.function.Consumer;
 
+import static software.coley.recaf.RecafBuildConfig.*;
+
 /**
  * Handles creation of Recaf instance.
  *
@@ -28,7 +30,12 @@ public class Bootstrap {
 	@Nonnull
 	public static Recaf get() {
 		if (instance == null) {
-			logger.info("Initializing Recaf {}", RecafBuildConfig.VERSION);
+			String fmt = """
+					Initializing Recaf {}
+					 - Build rev:  {}
+					 - Build date: {}
+					 - Build hash: {}""";
+			logger.info(fmt, VERSION, GIT_REVISION, BUILD_DATE, GIT_SHA);
 			long then = System.currentTimeMillis();
 
 			// Create the Recaf container
