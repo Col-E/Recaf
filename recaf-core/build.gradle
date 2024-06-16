@@ -40,7 +40,6 @@ dependencies {
     api(libs.bundles.jasm)
     api(libs.vineflower)
     api(libs.wordwrap)
-    api(libs.jgrapht)
 }
 
 // Force generation of gversion data class when the version information is not up-to-date
