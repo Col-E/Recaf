@@ -5,12 +5,8 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.cdi.EagerInitialization;
-import software.coley.recaf.plugin.ClassAllocator;
-import software.coley.recaf.plugin.Plugin;
-import software.coley.recaf.plugin.PluginContainer;
-import software.coley.recaf.plugin.PluginException;
-import software.coley.recaf.plugin.PluginLoader;
-import software.coley.recaf.services.plugin.discovery.DiscoveredPlugin;
+import software.coley.recaf.plugin.*;
+import software.coley.recaf.services.plugin.discovery.DiscoveredPluginSource;
 import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
 import software.coley.recaf.services.plugin.zip.ZipPluginLoader;
 
@@ -68,10 +64,10 @@ public class BasicPluginManager implements PluginManager {
 	@Nonnull
 	@Override
 	public Collection<PluginContainer<?>> loadPlugins(@Nonnull PluginDiscoverer discoverer) throws PluginException {
-		List<DiscoveredPlugin> discoveredPlugins = discoverer.findAll();
+		List<DiscoveredPluginSource> discoveredPlugins = discoverer.findSources();
 		List<PluginLoader> loaders = this.loaders;
 		List<PreparedPlugin> prepared = new ArrayList<>(discoveredPlugins.size());
-		for (DiscoveredPlugin plugin : discoveredPlugins) {
+		for (DiscoveredPluginSource plugin : discoveredPlugins) {
 			for (PluginLoader loader : loaders) {
 				PreparedPlugin preparedPlugin = loader.prepare(plugin.source());
 				if (preparedPlugin == null)
@@ -84,8 +80,8 @@ public class BasicPluginManager implements PluginManager {
 
 	@Nonnull
 	@Override
-	public PluginUnloader unloadPlugin(@Nonnull String id) {
-		return mainGraph.unload(id);
+	public PluginUnloader unloaderFor(@Nonnull String id) {
+		return mainGraph.unloaderFor(id);
 	}
 
 	@Override

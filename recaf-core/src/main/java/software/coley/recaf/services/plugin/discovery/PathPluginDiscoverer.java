@@ -8,21 +8,26 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * A common base for {@link Path} backed plugin discoverers.
+ *
+ * @author xDark
+ */
 public abstract class PathPluginDiscoverer implements PluginDiscoverer {
-
 	@Nonnull
 	@Override
-	public final List<DiscoveredPlugin> findAll() throws PluginException {
+	public final List<DiscoveredPluginSource> findSources() throws PluginException {
 		try (Stream<Path> s = stream()) {
-			return s
-					.map(path -> (DiscoveredPlugin) () -> ByteSources.forPath(path))
+			return s.map(path -> (DiscoveredPluginSource) () -> ByteSources.forPath(path))
 					.toList();
 		}
 	}
 
 	/**
-	 * @return A stream of paths.
-	 * @throws PluginException If discovery fails.
+	 * @return A stream of paths to treat as plugin sources.
+	 *
+	 * @throws PluginException
+	 * 		If discovery fails.
 	 */
 	@Nonnull
 	protected abstract Stream<Path> stream() throws PluginException;

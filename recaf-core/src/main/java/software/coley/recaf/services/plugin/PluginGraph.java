@@ -4,31 +4,39 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterators;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.plugin.ClassAllocator;
-import software.coley.recaf.plugin.Plugin;
-import software.coley.recaf.plugin.PluginContainer;
-import software.coley.recaf.plugin.PluginException;
-import software.coley.recaf.plugin.PluginInfo;
+import software.coley.recaf.plugin.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
+/**
+ * Plugin dependency graph.
+ *
+ * @author xDark
+ */
 final class PluginGraph {
 	final Map<String, LoadedPlugin> plugins = HashMap.newHashMap(16);
 	private final ClassAllocator classAllocator;
 
-	PluginGraph(ClassAllocator classAllocator) {
+	/**
+	 * @param classAllocator
+	 * 		Allocator to construct plugin instances with.
+	 */
+	PluginGraph(@Nonnull ClassAllocator classAllocator) {
 		this.classAllocator = classAllocator;
 	}
 
+	/**
+	 * Primary plugin load action.
+	 *
+	 * @param preparedPlugins
+	 * 		Intermediate plugin data to load.
+	 *
+	 * @return Collection of loaded plugin containers.
+	 *
+	 * @throws PluginException
+	 * 		If the plugins could not be loaded for any reason.
+	 */
 	@Nonnull
 	Collection<PluginContainer<?>> apply(@Nonnull List<PreparedPlugin> preparedPlugins) throws PluginException {
 		Map<String, LoadedPlugin> temp = LinkedHashMap.newLinkedHashMap(preparedPlugins.size());
@@ -46,7 +54,7 @@ final class PluginGraph {
 			}
 		}
 		for (LoadedPlugin plugin : temp.values()) {
-			PluginInfo info = plugin.container.info();
+			PluginInfo info = plugin.getContainer().info();
 			for (String dependencyId : info.dependencies()) {
 				LoadedPlugin dep = temp.get(dependencyId);
 				if (dep == null) {
@@ -55,14 +63,14 @@ final class PluginGraph {
 				if (dep == null) {
 					throw new PluginException("Plugin %s is missing dependency %s".formatted(info.id(), dependencyId));
 				}
-				plugin.dependencies.add(dep);
+				plugin.getDependencies().add(dep);
 			}
 			for (String dependencyId : info.softDependencies()) {
 				LoadedPlugin dep = temp.get(dependencyId);
 				if (dep == null && (dep = plugins.get(dependencyId)) == null) {
 					continue;
 				}
-				plugin.dependencies.add(dep);
+				plugin.getDependencies().add(dep);
 			}
 		}
 		for (LoadedPlugin loadedPlugin : temp.values()) {
@@ -70,7 +78,7 @@ final class PluginGraph {
 				enable(loadedPlugin);
 			} catch (PluginException ex) {
 				for (LoadedPlugin pl : temp.values()) {
-					PluginContainerImpl<?> container = pl.container;
+					PluginContainerImpl<?> container = pl.getContainer();
 					try {
 						try {
 							Plugin maybeEnabled = container.plugin;
@@ -88,11 +96,17 @@ final class PluginGraph {
 			}
 		}
 		plugins.putAll(temp);
-		return Collections2.transform(temp.values(), input -> input.container);
+		return Collections2.transform(temp.values(), input -> input.getContainer());
 	}
 
+	/**
+	 * @param id
+	 * 		Plugin identifier.
+	 *
+	 * @return Plugin unload action.
+	 */
 	@Nonnull
-	PluginUnloader unload(@Nonnull String id) {
+	PluginUnloader unloaderFor(@Nonnull String id) {
 		LoadedPlugin plugin = plugins.get(id);
 		if (plugin == null) {
 			throw new IllegalStateException("Plugin %s is not loaded".formatted(id));
@@ -110,7 +124,7 @@ final class PluginGraph {
 			@Nonnull
 			@Override
 			public PluginInfo unloadingPlugin() {
-				return plugin.container.info();
+				return plugin.getContainer().info();
 			}
 
 			@Nonnull
@@ -119,13 +133,24 @@ final class PluginGraph {
 				return dependants.values()
 						.stream()
 						.flatMap(Collection::stream)
-						.map(plugin -> plugin.container.info());
+						.map(plugin -> plugin.getContainer().info());
 			}
 		};
 	}
 
-	private PluginException unload(LoadedPlugin plugin, Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
-		String id = plugin.container.info().id();
+	/**
+	 * Attempts to unload the given plugin, along with its dependants.
+	 *
+	 * @param plugin
+	 * 		Plugin to unload.
+	 * @param dependants
+	 * 		Map of plugin dependents.
+	 *
+	 * @return Exception to be thrown if the plugin could not be unloaded.
+	 */
+	@Nullable
+	private PluginException unload(@Nonnull LoadedPlugin plugin, @Nonnull Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
+		String id = plugin.getContainer().info().id();
 		if (!plugins.remove(id, plugin)) {
 			throw new IllegalStateException("Plugin %s was already removed, recursion?".formatted(id));
 		}
@@ -135,13 +160,13 @@ final class PluginGraph {
 			if (inner != null) {
 				if (exception == null) {
 					exception = inner;
-				} else  {
+				} else {
 					exception.addSuppressed(inner);
 				}
 			}
 		}
 		try {
-			PluginContainerImpl<?> container = plugin.container;
+			PluginContainerImpl<?> container = plugin.getContainer();
 			try {
 				container.plugin().onDisable();
 			} finally {
@@ -160,56 +185,90 @@ final class PluginGraph {
 		return exception;
 	}
 
-	private void collectDependants(LoadedPlugin plugin, Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
+	/**
+	 * Iterates over which plugins depend on the given plugin, and stores them in the provided map.
+	 *
+	 * @param plugin
+	 * 		Plugin to collect dependants of.
+	 * @param dependants
+	 * 		Map to store results in.
+	 */
+	private void collectDependants(@Nonnull LoadedPlugin plugin, @Nonnull Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
 		Set<LoadedPlugin> dependantsSet = dependants.computeIfAbsent(plugin, __ -> HashSet.newHashSet(4));
 		for (LoadedPlugin pl : plugins.values()) {
 			if (plugin == pl) continue;
-			if (pl.dependencies.contains(plugin)) {
+			if (pl.getDependencies().contains(plugin)) {
 				dependantsSet.add(pl);
 				collectDependants(pl, dependants);
 			}
 		}
 	}
 
+	/**
+	 * @param id
+	 * 		Plugin identifier.
+	 *
+	 * @return Plugin container if the item was found.
+	 */
 	@Nullable
 	PluginContainer<?> getContainer(@Nonnull String id) {
 		LoadedPlugin plugin = plugins.get(id);
-		if (plugin == null) {
+		if (plugin == null)
 			return null;
-		}
-		return plugin.container;
+		return plugin.getContainer();
 	}
 
+	/**
+	 * @return Collection of plugin containers.
+	 */
 	@Nonnull
 	Collection<PluginContainer<?>> plugins() {
-		return Collections2.transform(plugins.values(), plugin -> plugin.container);
+		return Collections2.transform(plugins.values(), LoadedPlugin::getContainer);
 	}
 
+	/**
+	 * @param id
+	 * 		Plugin identifier.
+	 *
+	 * @return Iterator of dependency classloaders.
+	 */
 	@Nonnull
-	Iterator<PluginClassLoaderImpl> getDependencies(@Nonnull String id) {
+	Iterator<PluginClassLoaderImpl> getDependencyClassloaders(@Nonnull String id) {
 		var loaded = plugins.get(id);
 		if (loaded == null) {
 			return Collections.emptyIterator();
 		}
-		return Iterators.transform(loaded.dependencies.iterator(), input -> ((PluginClassLoaderImpl) input.container.plugin().getClass().getClassLoader()));
+		return Iterators.transform(loaded.getDependencies().iterator(), input -> ((PluginClassLoaderImpl) input.getContainer().plugin().getClass().getClassLoader()));
 	}
 
-	private void enable(LoadedPlugin loadedPlugin) throws PluginException {
-		for (LoadedPlugin dependency : loadedPlugin.dependencies) {
+	/**
+	 * Enables the given plugin, initializing if necessary.
+	 *
+	 * @param loadedPlugin
+	 * 		Plugin to enable.
+	 *
+	 * @throws PluginException
+	 * 		If the plugin could not be initialized or enabled.
+	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private void enable(@Nonnull LoadedPlugin loadedPlugin) throws PluginException {
+		// Enable dependent plugins
+		for (LoadedPlugin dependency : loadedPlugin.getDependencies())
 			enable(dependency);
-		}
-		//noinspection rawtypes
-		PluginContainerImpl container = loadedPlugin.container;
+
+		// Check if the plugin is already initialized.
+		PluginContainerImpl container = loadedPlugin.getContainer();
 		Plugin plugin = container.plugin;
-		if (plugin != null) return;
+		if (plugin != null) return; // Already initialized, skip.
+
+		// Initialize and enable the plugin.
 		try {
-			//noinspection unchecked
 			Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) container.classLoader.lookupClass(container.preparedPlugin.pluginClassName());
 			plugin = classAllocator.instance(pluginClass);
 			plugin.onEnable();
 			container.plugin = plugin;
-		} catch (Exception ex) {
-			throw new PluginException(ex);
+		} catch (Throwable t) {
+			throw new PluginException(t);
 		}
 	}
 }

@@ -3,11 +3,7 @@ package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.plugin.ClassAllocator;
-import software.coley.recaf.plugin.Plugin;
-import software.coley.recaf.plugin.PluginContainer;
-import software.coley.recaf.plugin.PluginException;
-import software.coley.recaf.plugin.PluginLoader;
+import software.coley.recaf.plugin.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
 
@@ -81,22 +77,28 @@ public interface PluginManager extends Service {
 	void registerLoader(@Nonnull PluginLoader loader);
 
 	/**
-	 * @param discoverer Plugin discoverer.
+	 * @param discoverer
+	 * 		Plugin discoverer.
+	 *
 	 * @return Loaded plugins.
+	 *
 	 * @throws PluginException
-	 *      If plugins fail to load.
+	 * 		If plugins fail to load.
 	 */
 	@Nonnull
 	Collection<PluginContainer<?>> loadPlugins(@Nonnull PluginDiscoverer discoverer) throws PluginException;
 
 
 	/**
-	 * @param id ID of the plugin to be unloaded.
+	 * @param id
+	 * 		ID of the plugin to be unloaded.
+	 *
 	 * @return Plugin unload action.
-	 * @see PluginUnloader
+	 *
 	 * @throws IllegalStateException
-	 *      If plugin to be unloaded was not found.
+	 * 		If plugin to be unloaded was not found.
+	 * @see PluginUnloader
 	 */
 	@Nonnull
-	PluginUnloader unloadPlugin(@Nonnull String id);
+	PluginUnloader unloaderFor(@Nonnull String id);
 }

@@ -7,12 +7,7 @@ import software.coley.recaf.util.io.ByteSource;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLStreamHandler;
+import java.net.*;
 
 final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoader {
 	private final PluginGraph graph;
@@ -81,9 +76,9 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 		Class<?> cls = lookupClassImpl(name);
 		if (cls != null)
 			return cls;
-		var dependencies = graph.getDependencies(id);
-		while (dependencies.hasNext()) {
-			if ((cls = dependencies.next().findClass(name)) != null)
+		var dependencyLoaders = graph.getDependencyClassloaders(id);
+		while (dependencyLoaders.hasNext()) {
+			if ((cls = dependencyLoaders.next().findClass(name)) != null)
 				return cls;
 		}
 		throw new ClassNotFoundException(name);

@@ -176,7 +176,6 @@ public class Main {
 	 * Load plugins.
 	 */
 	private static void initPlugins() {
-		// Plugin loading is handled in the implementation's @PostConstruct handler
 		PluginManager pluginManager = recaf.get(PluginManager.class);
 
 		// Log the discovered plugins

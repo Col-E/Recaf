@@ -48,50 +48,10 @@ public class PluginManagerTest extends TestBase {
 				.intercept(FixedValue.originType())
 				.defineMethod("onDisable", void.class, Modifier.PUBLIC)
 				.intercept(FixedValue.originType())
-				.annotateType(new PluginInformation() {
-					@Override
-					public Class<? extends Annotation> annotationType() {
-						return PluginInformation.class;
-					}
-
-					@Override
-					public String id() {
-						return id;
-					}
-
-					@Override
-					public String name() {
-						return name;
-					}
-
-					@Override
-					public String version() {
-						return version;
-					}
-
-					@Override
-					public String author() {
-						return author;
-					}
-
-					@Override
-					public String description() {
-						return description;
-					}
-
-					@Override
-					public String[] dependencies() {
-						return new String[0];
-					}
-
-					@Override
-					public String[] softDependencies() {
-						return new String[0];
-					}
-				}).make();
+				.annotateType(new PluginInformationRecord(id, name, version, author, description)).make();
 		byte[] zip = ZipCreationUtils.createZip(Map.of(
 				"test/PluginTest.class", unloaded.getBytes(),
-				ZipPluginLoader.SERVICE_PATH,  className.getBytes(StandardCharsets.UTF_8)
+				ZipPluginLoader.SERVICE_PATH, className.getBytes(StandardCharsets.UTF_8)
 		));
 
 		try {
@@ -120,13 +80,37 @@ public class PluginManagerTest extends TestBase {
 			assertSame(container, pluginManager.getPlugin(id));
 
 			// Now unload it
-			pluginManager.unloadPlugin(id).commit();
+			pluginManager.unloaderFor(id).commit();
 
 			// Assert the plugin is no longer active
 			assertEquals(0, pluginManager.getPlugins().size());
 			assertNull(pluginManager.getPlugin(id));
 		} catch (PluginException ex) {
 			fail("Failed to load plugin", ex);
+		}
+	}
+
+	// TODO: Test plugin dependency resolving
+	//  - "A depends on B, B depends on C"
+	//  - Given 'A, B, C' try and load 'A' - should load the dependencies
+
+	@SuppressWarnings("all")
+	private record PluginInformationRecord(String id, String name, String version, String author,
+	                                       String description) implements PluginInformation {
+		@Override
+		public Class<? extends Annotation> annotationType() {
+			return PluginInformation.class;
+		}
+
+
+		@Override
+		public String[] dependencies() {
+			return new String[0];
+		}
+
+		@Override
+		public String[] softDependencies() {
+			return new String[0];
 		}
 	}
 }

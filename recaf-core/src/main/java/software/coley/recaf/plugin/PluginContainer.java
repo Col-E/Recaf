@@ -13,7 +13,6 @@ import jakarta.annotation.Nonnull;
  * @see PluginLoader
  */
 public interface PluginContainer<P extends Plugin> {
-
 	/**
 	 * @return Plugin information.
 	 */

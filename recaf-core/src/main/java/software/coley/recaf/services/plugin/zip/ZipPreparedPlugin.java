@@ -1,19 +1,24 @@
 package software.coley.recaf.services.plugin.zip;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.plugin.PluginSource;
 import software.coley.recaf.plugin.PluginException;
 import software.coley.recaf.plugin.PluginInfo;
+import software.coley.recaf.plugin.PluginSource;
 import software.coley.recaf.services.plugin.PreparedPlugin;
 
 import java.io.IOException;
 
+/**
+ * ZIP backed prepared plugin implementation.
+ *
+ * @author xDark
+ */
 final class ZipPreparedPlugin implements PreparedPlugin {
 	private final PluginInfo pluginInfo;
 	private final String pluginClassName;
 	private final ZipSource classLoader;
 
-	ZipPreparedPlugin(PluginInfo pluginInfo, String pluginClassName, ZipSource classLoader) {
+	ZipPreparedPlugin(@Nonnull PluginInfo pluginInfo, @Nonnull String pluginClassName, @Nonnull ZipSource classLoader) {
 		this.pluginInfo = pluginInfo;
 		this.pluginClassName = pluginClassName;
 		this.classLoader = classLoader;

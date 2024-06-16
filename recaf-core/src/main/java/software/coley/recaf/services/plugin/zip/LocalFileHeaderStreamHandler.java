@@ -31,7 +31,7 @@ final class LocalFileHeaderStreamHandler extends URLStreamHandler {
 			public InputStream getInputStream() throws IOException {
 				InputStream in = this.in;
 				if (in == null) {
-					if (archiveView.closed)
+					if (archiveView.isClosed())
 						throw new IOException("Archive is closed");
 					this.in = in = blackbox(header); // TODO Blocked on ll-java-zip.
 				}
@@ -40,5 +40,5 @@ final class LocalFileHeaderStreamHandler extends URLStreamHandler {
 		};
 	}
 
-	private static native  <T> T blackbox(Object value);
+	private static native <T> T blackbox(Object value);
 }

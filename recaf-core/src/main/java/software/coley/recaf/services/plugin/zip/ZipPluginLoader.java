@@ -12,16 +12,12 @@ import software.coley.cafedude.classfile.annotation.Utf8ElementValue;
 import software.coley.cafedude.classfile.attribute.AnnotationsAttribute;
 import software.coley.cafedude.classfile.attribute.Attribute;
 import software.coley.cafedude.io.ClassFileReader;
+import software.coley.collections.Unchecked;
 import software.coley.lljzip.ZipIO;
 import software.coley.lljzip.format.model.ZipArchive;
-import software.coley.recaf.plugin.Plugin;
-import software.coley.recaf.plugin.PluginException;
-import software.coley.recaf.plugin.PluginInfo;
-import software.coley.recaf.plugin.PluginInformation;
-import software.coley.recaf.plugin.PluginLoader;
+import software.coley.recaf.plugin.*;
 import software.coley.recaf.services.plugin.PreparedPlugin;
 import software.coley.recaf.util.IOUtil;
-import software.coley.recaf.util.Unchecked;
 import software.coley.recaf.util.io.ByteSource;
 
 import java.io.BufferedReader;
@@ -64,6 +60,7 @@ public final class ZipPluginLoader implements PluginLoader {
 			if (resPluginImplementation == null) {
 				throw new PluginException("Cannot find %s resource".formatted(SERVICE_PATH));
 			}
+
 			// Cannot use ServiceLoader here, it will attempt to instantiate the plugin,
 			// which is what we *don't* want  at this point.
 			String pluginClassName;
@@ -77,11 +74,13 @@ public final class ZipPluginLoader implements PluginLoader {
 					}
 				}
 			}
+
 			// Find plugin class.
 			ByteSource resPluginClass = zs.findResource(pluginClassName.replace('.', '/') + ".class");
 			if (resPluginClass == null) {
 				throw new PluginException("Plugin class %s doesn't exist".formatted(pluginClassName));
 			}
+
 			// Find @PluginInformation annotation.
 			ClassFile cf;
 			try (InputStream in = resPluginClass.openStream()) {

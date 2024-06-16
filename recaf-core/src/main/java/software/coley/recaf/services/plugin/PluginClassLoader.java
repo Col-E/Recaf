@@ -10,17 +10,22 @@ import software.coley.recaf.util.io.ByteSource;
 public interface PluginClassLoader {
 
 	/**
-	 * @param name Resource path.
+	 * @param name
+	 * 		Resource path.
+	 *
 	 * @return Resource source or {@code null} if not found.
 	 */
 	@Nullable
 	ByteSource lookupResource(@Nonnull String name);
 
 	/**
-	 * @param name Class name.
+	 * @param name
+	 * 		Class name.
+	 *
 	 * @return Class.
+	 *
 	 * @throws ClassNotFoundException
-	 *      If class was not found.
+	 * 		If class was not found.
 	 */
 	@Nonnull
 	Class<?> lookupClass(@Nonnull String name) throws ClassNotFoundException;

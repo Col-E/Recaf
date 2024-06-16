@@ -5,12 +5,20 @@ import software.coley.recaf.plugin.Plugin;
 import software.coley.recaf.plugin.PluginContainer;
 import software.coley.recaf.plugin.PluginInfo;
 
+/**
+ * Plugin container implementation.
+ *
+ * @param <P>
+ * 		Plugin instance type.
+ *
+ * @author xDark
+ */
 final class PluginContainerImpl<P extends Plugin> implements PluginContainer<P> {
 	final PreparedPlugin preparedPlugin;
 	final PluginClassLoader classLoader;
 	P plugin;
 
-	PluginContainerImpl(PreparedPlugin preparedPlugin, PluginClassLoader classLoader) {
+	PluginContainerImpl(@Nonnull PreparedPlugin preparedPlugin, @Nonnull PluginClassLoader classLoader) {
 		this.preparedPlugin = preparedPlugin;
 		this.classLoader = classLoader;
 	}

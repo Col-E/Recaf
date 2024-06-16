@@ -1,14 +1,19 @@
 package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.plugin.PluginSource;
+import software.coley.recaf.plugin.PluginContainer;
 import software.coley.recaf.plugin.PluginException;
 import software.coley.recaf.plugin.PluginInfo;
+import software.coley.recaf.plugin.PluginSource;
+import software.coley.recaf.services.plugin.discovery.DiscoveredPluginSource;
+import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
 
 /**
- * Prepared plugin.
+ * Prepared plugin. Used as an intermediate step in plugin loading between {@link DiscoveredPluginSource}
+ * and {@link PluginContainer}.
  *
  * @author xDark
+ * @see BasicPluginManager#loadPlugins(PluginDiscoverer)
  */
 public interface PreparedPlugin {
 
@@ -33,7 +38,8 @@ public interface PreparedPlugin {
 	/**
 	 * Called if {@link PluginManager} rejects this plugin.
 	 *
-	 * @throws PluginException If any exception occurs.
+	 * @throws PluginException
+	 * 		If any exception occurs.
 	 */
 	void reject() throws PluginException;
 }

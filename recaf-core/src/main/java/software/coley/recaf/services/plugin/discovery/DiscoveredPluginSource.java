@@ -4,12 +4,13 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.io.ByteSource;
 
 /**
- * Discovered plugin.
+ * Provider for a {@link ByteSource} to point to a newly discovered plugin file.
+ *
+ * @author xDark
  */
-public interface DiscoveredPlugin {
-
+public interface DiscoveredPluginSource {
 	/**
-	 * @return Plugin file.
+	 * @return Source to load from the plugin file.
 	 */
 	@Nonnull
 	ByteSource source();
