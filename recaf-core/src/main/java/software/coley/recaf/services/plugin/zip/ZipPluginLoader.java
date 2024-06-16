@@ -62,7 +62,7 @@ public final class ZipPluginLoader implements PluginLoader {
 			}
 
 			// Cannot use ServiceLoader here, it will attempt to instantiate the plugin,
-			// which is what we *don't* want  at this point.
+			// which is what we *don't* want at this point.
 			String pluginClassName;
 			try (BufferedReader reader = IOUtil.toBufferedReader(resPluginImplementation.openStream())) {
 				pluginClassName = reader.readLine();
@@ -117,7 +117,8 @@ public final class ZipPluginLoader implements PluginLoader {
 		}
 	}
 
-	private static PluginInfo parsePluginInfo(Annotation annotation) throws PluginException {
+	@Nonnull
+	private static PluginInfo parsePluginInfo(@Nonnull Annotation annotation) throws PluginException {
 		PluginInfo info = PluginInfo.empty();
 		for (var e : annotation.getValues().entrySet()) {
 			String name = e.getKey().getText();
@@ -136,12 +137,13 @@ public final class ZipPluginLoader implements PluginLoader {
 		return info;
 	}
 
+	@Nonnull
 	private static String servicePath() {
 		return "META-INF/services/%s".formatted(Plugin.class.getName());
 	}
 
 	@SafeVarargs
-	private static <V extends ElementValue, R> R extractValue(ElementValue value, Function<V, R> extractor, V... typeHint) throws PluginException {
+	private static <V extends ElementValue, R> R extractValue(@Nonnull ElementValue value, Function<V, R> extractor, V... typeHint) throws PluginException {
 		Class<?> type = typeHint.getClass().getComponentType();
 		V v;
 		try {
@@ -153,11 +155,13 @@ public final class ZipPluginLoader implements PluginLoader {
 		return extractor.apply(v);
 	}
 
-	private static String string(ElementValue value) throws PluginException {
+	@Nonnull
+	private static String string(@Nonnull ElementValue value) throws PluginException {
 		return extractValue(value, (Utf8ElementValue elem) -> elem.getValue().getText());
 	}
 
-	private static Set<String> stringSet(ElementValue value) throws PluginException {
+	@Nonnull
+	private static Set<String> stringSet(@Nonnull ElementValue value) throws PluginException {
 		return extractValue(value, (ArrayElementValue array) -> array
 				.getArray()
 				.stream()

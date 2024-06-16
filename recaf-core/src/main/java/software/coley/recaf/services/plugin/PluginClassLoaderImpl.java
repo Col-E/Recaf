@@ -9,12 +9,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 
+/**
+ * Classloader for plugin content.
+ *
+ * @author xDark
+ */
 final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoader {
 	private final PluginGraph graph;
 	private final PluginSource source;
 	private final String id;
 
-	PluginClassLoaderImpl(PluginGraph graph, PluginSource source, String id) {
+	PluginClassLoaderImpl(@Nonnull PluginGraph graph, @Nonnull PluginSource source, @Nonnull String id) {
 		this.graph = graph;
 		this.source = source;
 		this.id = id;
@@ -27,15 +32,16 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 			return null;
 		}
 		try {
-			URI uri = new URI("recaf", "", name);
+			URI uri = new URI("recaf", "/", name);
 			return URL.of(uri, new URLStreamHandler() {
 				@Override
-				protected URLConnection openConnection(URL u) throws IOException {
+				protected URLConnection openConnection(URL u) {
 					return new URLConnection(u) {
 						InputStream in;
 
 						@Override
-						public void connect() throws IOException {
+						public void connect() {
+							// no-op
 						}
 
 						@Override
