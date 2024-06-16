@@ -11,7 +11,6 @@ import software.coley.recaf.cdi.InitializationStage;
 import software.coley.recaf.launch.LaunchArguments;
 import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.launch.LaunchHandler;
-import software.coley.recaf.plugin.Plugin;
 import software.coley.recaf.plugin.PluginContainer;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginManager;
@@ -177,19 +176,18 @@ public class Main {
 	 * Load plugins.
 	 */
 	private static void initPlugins() {
-		// Plugin loading is handled in the implementation's @PostConstruct handler
 		PluginManager pluginManager = recaf.get(PluginManager.class);
 
 		// Log the discovered plugins
-		Collection<PluginContainer<? extends Plugin>> plugins = pluginManager.getPlugins();
+		Collection<PluginContainer<?>> plugins = pluginManager.getPlugins();
 		if (plugins.isEmpty()) {
 			logger.info("Initialization: No plugins found");
 		} else {
 			String split = "\n - ";
 			logger.info("Initialization: {} plugins found:" + split + "{}",
 					plugins.size(),
-					plugins.stream().map(PluginContainer::getInformation)
-							.map(info -> info.getName() + " - " + info.getVersion())
+					plugins.stream().map(PluginContainer::info)
+							.map(info -> info.name() + " - " + info.version())
 							.collect(Collectors.joining(split)));
 		}
 	}

@@ -1,6 +1,5 @@
 package software.coley.recaf.services.plugin;
 
-import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableBoolean;

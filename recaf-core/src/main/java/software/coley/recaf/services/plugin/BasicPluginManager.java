@@ -2,23 +2,17 @@ package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.plugin.*;
-import software.coley.recaf.services.file.RecafDirectoriesConfig;
-import software.coley.recaf.util.TestEnvironment;
-import software.coley.recaf.util.io.ByteSource;
-import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.services.plugin.discovery.DiscoveredPluginSource;
+import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
+import software.coley.recaf.services.plugin.zip.ZipPluginLoader;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Basic implementation of {@link PluginManager}.
@@ -28,10 +22,8 @@ import java.util.*;
 @ApplicationScoped
 @EagerInitialization
 public class BasicPluginManager implements PluginManager {
-	private static final Logger logger = Logging.get(BasicPluginManager.class);
 	private final List<PluginLoader> loaders = new ArrayList<>();
-	private final Map<String, PluginContainer<?>> nameMap = new HashMap<>();
-	private final Map<? super Plugin, PluginContainer<?>> instanceMap = new IdentityHashMap<>();
+	private final PluginGraph mainGraph;
 	private final ClassAllocator classAllocator;
 	private final PluginManagerConfig config;
 
@@ -39,49 +31,10 @@ public class BasicPluginManager implements PluginManager {
 	public BasicPluginManager(PluginManagerConfig config, CdiClassAllocator classAllocator) {
 		this.classAllocator = classAllocator;
 		this.config = config;
+		mainGraph = new PluginGraph(classAllocator);
 
 		// Add ZIP/JAR loading
-		registerLoader(new ZipPluginLoader(BasicPluginManager.class.getClassLoader()));
-	}
-
-	@Inject
-	@PostConstruct
-	@SuppressWarnings("unused")
-	private void setup(RecafDirectoriesConfig directoriesConfig) {
-		// Do not load plugins in a test environment
-		if (TestEnvironment.isTestEnv())
-			return;
-
-		if (config.doScanOnStartup())
-			scanPlugins(directoriesConfig.getPluginDirectory());
-	}
-
-	/**
-	 * Scan all plugins in the plugin directory.
-	 */
-	private void scanPlugins(Path pluginsDir) {
-		// Ensure directory exists
-		try {
-			if (!Files.isDirectory(pluginsDir))
-				Files.createDirectories(pluginsDir);
-
-			// Auto close the directory handle
-			try (DirectoryStream<Path> paths = Files.newDirectoryStream(pluginsDir)) {
-				for (Path pluginPath : paths) {
-					// Load all supported plugins
-					ByteSource source = ByteSources.forPath(pluginPath);
-					if (isSupported(source)) {
-						try {
-							loadPlugin(source);
-						} catch (PluginLoadException ex) {
-							logger.error("Failed to load plugin from path: {}", pluginPath, ex);
-						}
-					}
-				}
-			}
-		} catch (IOException ex) {
-			logger.error("Failed to scan local plugin directory '{}'", pluginsDir, ex);
-		}
+		registerLoader(new ZipPluginLoader());
 	}
 
 	@Nonnull
@@ -92,44 +45,15 @@ public class BasicPluginManager implements PluginManager {
 
 	@Override
 	@Nullable
-	public PluginLoader getLoader(@Nonnull ByteSource source) throws IOException {
-		List<PluginLoader> loaders = this.loaders;
-		for (PluginLoader loader : loaders) {
-			if (loader.isSupported(source)) {
-				return loader;
-			}
-		}
-		return null;
-	}
-
-	@Override
-	public boolean isSupported(@Nonnull ByteSource source) throws IOException {
-		List<PluginLoader> loaders = this.loaders;
-		for (PluginLoader loader : loaders) {
-			if (loader.isSupported(source)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	@Nullable
 	@SuppressWarnings("unchecked")
-	public <T extends Plugin> PluginContainer<T> getPlugin(@Nonnull String name) {
-		return (PluginContainer<T>) nameMap.get(name.toLowerCase(Locale.ROOT));
+	public <T extends Plugin> PluginContainer<T> getPlugin(@Nonnull String id) {
+		return (PluginContainer<T>) mainGraph.getContainer(id);
 	}
 
 	@Nonnull
 	@Override
-	public Collection<PluginLoader> getLoaders() {
-		return Collections.unmodifiableList(loaders);
-	}
-
-	@Nonnull
-	@Override
-	public Collection<PluginContainer<? extends Plugin>> getPlugins() {
-		return Collections.unmodifiableCollection(nameMap.values());
+	public Collection<PluginContainer<?>> getPlugins() {
+		return mainGraph.plugins();
 	}
 
 	@Override
@@ -137,77 +61,32 @@ public class BasicPluginManager implements PluginManager {
 		loaders.add(loader);
 	}
 
+	@Nonnull
 	@Override
-	public void removeLoader(@Nonnull PluginLoader loader) {
-		loaders.remove(loader);
-	}
-
-	@Override
-	public boolean isPluginLoaded(@Nonnull String name) {
-		return nameMap.get(name) != null;
+	public Collection<PluginContainer<?>> loadPlugins(@Nonnull PluginDiscoverer discoverer) throws PluginException {
+		List<DiscoveredPluginSource> discoveredPlugins = discoverer.findSources();
+		List<PluginLoader> loaders = this.loaders;
+		List<PreparedPlugin> prepared = new ArrayList<>(discoveredPlugins.size());
+		for (DiscoveredPluginSource plugin : discoveredPlugins) {
+			for (PluginLoader loader : loaders) {
+				PreparedPlugin preparedPlugin = loader.prepare(plugin.source());
+				if (preparedPlugin == null)
+					continue;
+				prepared.add(preparedPlugin);
+			}
+		}
+		return mainGraph.apply(prepared);
 	}
 
 	@Nonnull
 	@Override
-	public <T extends Plugin> PluginContainer<T> loadPlugin(@Nonnull PluginContainer<T> container) throws PluginLoadException {
-		String name = container.getInformation().getName();
-
-		// Throw if a plugin with the same name is already loaded.
-		PluginLoader loader = container.getLoader();
-		if (nameMap.putIfAbsent(name.toLowerCase(Locale.ROOT), container) != null) {
-			// Plugin already exists, we do not allow multiple plugins with the same name.
-			// The passed in plugin container will be disabled since it shouldn't be used.
-			try {
-				logger.warn("Attempted to load duplicate instance of plugin '{}'", name);
-				loader.disablePlugin(container);
-			} catch (Exception ignored) {
-			}
-			throw new PluginLoadException("Duplicate plugin: " + name);
-		}
-
-		// Update the instance registry.
-		instanceMap.put(container.getPlugin(), container);
-
-		// If configured, we'll want to load the plugin immediately.
-		if (shouldEnablePluginOnLoad(container))
-			loader.enablePlugin(container);
-
-		return container;
+	public PluginUnloader unloaderFor(@Nonnull String id) {
+		return mainGraph.unloaderFor(id);
 	}
 
 	@Override
-	public void unloadPlugin(@Nonnull String name) {
-		PluginContainer<?> container = nameMap.get(name.toLowerCase(Locale.ROOT));
-		if (container == null) {
-			throw new IllegalStateException("Unknown plugin: " + name);
-		}
-		unloadPlugin(container);
-	}
-
-	@Override
-	public void unloadPlugin(@Nonnull Plugin plugin) {
-		PluginContainer<?> container = instanceMap.get(plugin);
-		if (container == null) {
-			throw new IllegalStateException("Unknown plugin: " + plugin);
-		}
-		unloadPlugin(container);
-	}
-
-	@Override
-	public void unloadPlugin(@Nonnull PluginContainer<?> container) {
-		String name = container.getInformation().getName();
-		if (!nameMap.remove(name.toLowerCase(Locale.ROOT), container)
-				|| !instanceMap.remove(container.getPlugin(), container)) {
-			throw new IllegalStateException("Plugin with name " + name + " does not belong to the container!");
-		}
-		container.getLoader().disablePlugin(container);
-	}
-
-	@Override
-	public <T extends Plugin> boolean shouldEnablePluginOnLoad(@Nonnull PluginContainer<T> container) {
-		// TODO: We should maintain a state (from config) which plugins the user wants to load on startup
-		//  and only allow those to be initialized on startup.
-		return true;
+	public boolean isPluginLoaded(@Nonnull String id) {
+		return mainGraph.getContainer(id) != null;
 	}
 
 	@Nonnull
