@@ -1,9 +1,9 @@
 package software.coley.recaf.plugin;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import software.coley.recaf.services.plugin.PreparedPlugin;
 import software.coley.recaf.util.io.ByteSource;
-
-import java.io.IOException;
 
 /**
  * The plugin loader.
@@ -12,51 +12,13 @@ import java.io.IOException;
  * @author xDark
  */
 public interface PluginLoader {
-	/**
-	 * Loads a plugin from {@link ByteSource}.
-	 *
-	 * @param allocator
-	 * 		Allocator to initialize {@link Plugin} instances with.
-	 * @param in
-	 *        {@link ByteSource} to load plugin from.
-	 *
-	 * @return Loaded plugin.
-	 *
-	 * @throws IOException
-	 * 		If any I/O error occurs.
-	 * @throws PluginLoadException
-	 * 		if loader has failed to load a plugin.
-	 * @throws UnsupportedSourceException
-	 * 		If loader does not support this type of source.
-	 */
-	@Nonnull
-	<T extends Plugin> PluginContainer<T> load(@Nonnull ClassAllocator allocator, @Nonnull ByteSource in)
-			throws IOException, PluginLoadException, UnsupportedSourceException;
 
 	/**
-	 * @param source
-	 * 		Content to read from.
-	 *
-	 * @return {@code true} when the content represents some data that can be loaded.
-	 *
-	 * @throws IOException
-	 * 		When the source cannot be read from.
+	 * @param source Content to read from.
+	 * @return Prepared plugin or {@code null}, if source is not supported.
+	 * @throws PluginException When plugin cannot be prepared.
 	 */
-	boolean isSupported(@Nonnull ByteSource source) throws IOException;
-
-	/**
-	 * Enables a plugin.
-	 *
-	 * @param container
-	 * 		The container containing {@link Plugin} instance.
-	 */
-	void enablePlugin(@Nonnull PluginContainer<?> container);
-
-	/**
-	 * Disables a plugin.
-	 *
-	 * @param container
-	 * 		The container containing {@link Plugin} instance.
-	 */
-	void disablePlugin(@Nonnull PluginContainer<?> container);
+	@Nullable
+	PreparedPlugin prepare(@Nonnull ByteSource source)
+			throws PluginException;
 }

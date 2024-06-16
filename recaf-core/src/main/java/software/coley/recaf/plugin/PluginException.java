@@ -1,15 +1,15 @@
 package software.coley.recaf.plugin;
 
 /**
- * Exception indicating that a {@link Plugin} could not be loaded.
+ * Exception thrown when action involving plugins fail.
  *
  * @author xDark
  */
-public final class PluginLoadException extends Exception {
+public final class PluginException extends Exception {
 	/**
 	 * Constructs a new exception.
 	 */
-	public PluginLoadException() {
+	public PluginException() {
 	}
 
 	/**
@@ -18,7 +18,7 @@ public final class PluginLoadException extends Exception {
 	 * @param message
 	 * 		The detail message.
 	 */
-	public PluginLoadException(String message) {
+	public PluginException(String message) {
 		super(message);
 	}
 
@@ -30,7 +30,7 @@ public final class PluginLoadException extends Exception {
 	 * @param cause
 	 * 		The cause of the exception.
 	 */
-	public PluginLoadException(String message, Throwable cause) {
+	public PluginException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
@@ -40,7 +40,7 @@ public final class PluginLoadException extends Exception {
 	 * @param cause
 	 * 		The cause of the exception.
 	 */
-	public PluginLoadException(Throwable cause) {
+	public PluginException(Throwable cause) {
 		super(cause);
 	}
 }

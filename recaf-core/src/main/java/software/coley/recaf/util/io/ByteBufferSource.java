@@ -2,8 +2,9 @@ package software.coley.recaf.util.io;
 
 import jakarta.annotation.Nonnull;
 
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 
 /**
@@ -12,38 +13,37 @@ import java.nio.ByteBuffer;
  * @author xDark
  */
 public final class ByteBufferSource implements ByteSource {
-	private final ByteBuffer buffer;
+	private final ByteSource source;
 
 	/**
 	 * @param buffer
 	 * 		Buffer.
 	 */
 	public ByteBufferSource(ByteBuffer buffer) {
-		this.buffer = buffer;
+		source = ByteSources.forMemorySegment(MemorySegment.ofBuffer(buffer));
 	}
 
 	@Nonnull
 	@Override
-	public byte[] readAll() {
-		ByteBuffer buffer = this.buffer;
-		byte[] data = new byte[buffer.remaining()];
-		buffer.slice().get(data);
-		return data;
+	public byte[] readAll() throws IOException {
+		return source.readAll();
 	}
 
 	@Nonnull
 	@Override
-	public byte[] peek(int count) {
-		ByteBuffer buffer = this.buffer;
-		count = Math.min(count, buffer.remaining());
-		byte[] buf = new byte[count];
-		buffer.slice().get(buf);
-		return buf;
+	public byte[] peek(int count) throws IOException {
+		return source.peek(count);
 	}
 
 	@Nonnull
 	@Override
-	public InputStream openStream() {
-		return new ByteArrayInputStream(readAll());
+	public InputStream openStream() throws IOException {
+		return source.openStream();
+	}
+
+	@Nonnull
+	@Override
+	public MemorySegment mmap() throws IOException {
+		return source.mmap();
 	}
 }
