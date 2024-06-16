@@ -12,8 +12,10 @@ import software.coley.recaf.launch.LaunchArguments;
 import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.launch.LaunchHandler;
 import software.coley.recaf.plugin.PluginContainer;
+import software.coley.recaf.plugin.PluginException;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginManager;
+import software.coley.recaf.services.plugin.discovery.DirectoryPluginDiscoverer;
 import software.coley.recaf.services.script.ScriptEngine;
 import software.coley.recaf.util.JFXValidation;
 import software.coley.recaf.util.Lang;
@@ -177,6 +179,14 @@ public class Main {
 	 */
 	private static void initPlugins() {
 		PluginManager pluginManager = recaf.get(PluginManager.class);
+
+		// Load from the plugin directory
+		try {
+			Path pluginDirectory = recaf.get(RecafDirectoriesConfig.class).getPluginDirectory();
+			pluginManager.loadPlugins(new DirectoryPluginDiscoverer(pluginDirectory));
+		} catch (PluginException ex) {
+			logger.error("Failed to initialize plugins", ex);
+		}
 
 		// Log the discovered plugins
 		Collection<PluginContainer<?>> plugins = pluginManager.getPlugins();
