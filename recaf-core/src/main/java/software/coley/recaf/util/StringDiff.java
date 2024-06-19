@@ -4,7 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.openrewrite.Cursor;
 import org.openrewrite.Tree;
-import org.openrewrite.shaded.jgit.diff.*;
+import org.openrewrite.jgit.diff.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
