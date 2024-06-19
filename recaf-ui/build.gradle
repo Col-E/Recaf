@@ -4,11 +4,10 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
-def javaFxVersion = '22-ea+28'
 def javaFxIncludeInDist = System.getProperty('skip.jfx.bundle') == null
 
 javafx {
-    version = javaFxVersion
+    version = libs.versions.javafx.lib.get()
     modules = ['javafx.controls', 'javafx.media']
 }
 

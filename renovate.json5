@@ -1,0 +1,53 @@
+// "json5 > json" for configs: https://json5.org/
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "onboardingConfigFileName": "renovate.json5",
+  "extends": [
+    ":dependencyDashboard",
+    "group:allNonMajor",
+    // "group:githubArtifactActions", // Group download-artifact and upload-artifact major updates together.
+    "group:jacksonMonorepo",
+    "group:junit5Monorepo",
+    // "group:monorepos", // https://docs.renovatebot.com/presets-group/#groupmonorepos
+    // Limit Java runtime versions to LTS releases. https://docs.renovatebot.com/presets-workarounds/#workaroundsjavaltsversions
+    // "workarounds:javaLTSVersions",
+    ":disableRateLimiting", // Remove hourly and concurrent rate limits.
+    // Use semantic commit type fix for dependencies and chore for all others if semantic commits are in use.
+    // ":semanticPrefixFixDepsChoreOthers",
+    // Avoid version fetching for Maven packages detected as project root. (?)
+    // "workarounds:disableMavenParentRoot",
+    // "semanticPrefixChore",
+    ":ignoreModulesAndTests", // Ignore node_modules, bower_components, vendor and various test/tests directories.
+    // "semanticPrefixFix",
+    // ":rebaseStalePrs" // Rebase existing PRs any time the base branch has been updated.
+  ],
+  "baseBranches": [
+    "dev4",
+  ],
+  "repositories": [
+    "Col-E/Recaf"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "org.openrewrite:rewrite-java-17",
+        "com.github.jumanji144.Jasm:jasm-core",
+        "com.github.jumanji144.Jasm:jasm-composition-jvm",
+        "ch.qos.logback:logback-classic",
+      ],
+      "enabled": false,
+    },
+    {
+      "matchPackagePrefixes": ["org.ow2.asm:asm"],
+      "groupName": "asm monorepo"
+    },
+    {
+      "matchPackagePrefixes": ["org.kordamp.ikonli:ikonli-"],
+      "groupName": "ikonli monorepo"
+    },
+    {
+      "matchPackagePrefixes": ["com.github.jumanji144.Jasm:jasm-"],
+      "groupName": "jasm monorepo",
+    }
+  ]
+}

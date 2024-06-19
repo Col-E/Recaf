@@ -40,6 +40,7 @@ benmanes-versions = "0.42.0"
 gradle-coverage-report-aggregator = "1.3.0"
 gradle-checker-processor = "2.0.2"
 javafx-plugin = "0.1.0"
+javafx-lib = "22-ea+16"
 shadow = "8.1.1"
 peterabeles-gversion = "1.10.2"
 
@@ -86,6 +87,9 @@ jakarta-annotation = { module = "jakarta.annotation:jakarta.annotation-api", ver
 
 jasm-composistion-jvm = { module = "com.github.jumanji144.Jasm:jasm-composition-jvm", version.ref = "jasm" }
 jasm-core = { module = "com.github.jumanji144.Jasm:jasm-core", version.ref = "jasm" }
+
+# for renovate to track
+javafx-base = { module = "org.openjfx:javafx-base", version.ref = "javafx-lib" }
 
 jlinker = { module = "com.github.xxDark:jlinker", version.ref = "jlinker" }
 

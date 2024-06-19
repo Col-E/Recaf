@@ -12,6 +12,7 @@
 *.js            text eol=lf
 *.csv           text eol=lf
 *.json          text eol=lf
+*.json5         text eol=lf
 *.properties    text eol=lf
 *.svg           text eol=lf
 *.xml           text eol=lf
