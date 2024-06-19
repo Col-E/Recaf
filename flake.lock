@@ -6,15 +6,15 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1718027491,
-        "narHash": "sha256-uShoiA4DvdSdLQxK4mWFiL4JMN37LfoX3DrdTj0OM9g=",
-        "owner": "raphiz",
+        "lastModified": 1718772938,
+        "narHash": "sha256-CQjn7Jy7a+ErejWkMAzddGGIr0EvAKGbvbDOvZcd+x8=",
+        "owner": "C0D3-M4513R",
         "repo": "buildGradleApplication",
-        "rev": "45be5a6dba3bb6e583aabf4f8acefa48bfacd389",
+        "rev": "b310a3ca02ef930beff8fe5844f77e59ec0b86d0",
         "type": "github"
       },
       "original": {
-        "owner": "raphiz",
+        "owner": "C0D3-M4513R",
         "repo": "buildGradleApplication",
         "type": "github"
       }
