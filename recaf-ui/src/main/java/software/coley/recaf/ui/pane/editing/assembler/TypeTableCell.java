@@ -2,6 +2,7 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import dev.xdark.blw.type.*;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.scene.Node;
 import javafx.scene.control.TableCell;
 import javafx.scene.input.MouseButton;
@@ -59,12 +60,12 @@ public class TypeTableCell<S> extends TableCell<S, ClassType> {
 	}
 
 	@Nonnull
-	private CellData getTypeData(@Nonnull ClassType type) {
+	private CellData getTypeData(@Nullable ClassType type) {
 		Node graphic;
 		String text;
 		ContextMenuProvider contextSupplier = null;
 		boolean disabled = false;
-		if (type == AnalysisUtils.NULL) {
+		if (type == null) {
 			graphic = Icons.getIconView(Icons.UNINITIALIZED);
 			text = "null";
 		} else if (type == Types.VOID || type == Types.BOX_VOID) {
