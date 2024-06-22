@@ -1,5 +1,7 @@
 package software.coley.recaf.util;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
@@ -7,6 +9,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import software.coley.collections.Unchecked;
@@ -23,7 +26,93 @@ import java.util.function.Predicate;
  * @author xDark
  */
 public class NodeEvents {
+	private static final Int2ObjectMap<KeyCode> charToKeycode = new Int2ObjectArrayMap<>();
+
+	static {
+		for (KeyCode code : KeyCode.values()) {
+			String charStr = code.getChar();
+			if (!charStr.isEmpty()) charToKeycode.put(charStr.charAt(0), code);
+		}
+	}
+
 	private NodeEvents() {
+	}
+
+	/**
+	 * @param c
+	 * 		Char to look up.
+	 *
+	 * @return Keycode for char. May be {@code null} for unsupported characters.
+	 */
+	@Nullable
+	public static KeyCode getKeycode(char c) {
+		return charToKeycode.get(c);
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to.
+	 * @param handler
+	 * 		Handler to add.
+	 */
+	public static void addMousePressHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
+		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMousePressed;
+		addHandler(node, handler, Unchecked.cast(original), Node::setOnMousePressed);
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to.
+	 * @param handler
+	 * 		Handler to add.
+	 */
+	public static void addMouseClickHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
+		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMouseClicked;
+		addHandler(node, handler, Unchecked.cast(original), Node::setOnMouseClicked);
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to.
+	 * @param handler
+	 * 		Handler to add.
+	 */
+	public static void addMouseReleaseHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
+		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMouseReleased;
+		addHandler(node, handler, Unchecked.cast(original), Node::setOnMouseReleased);
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to.
+	 * @param handler
+	 * 		Handler to add.
+	 */
+	public static void addMouseEnterHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
+		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMouseEntered;
+		addHandler(node, handler, Unchecked.cast(original), Node::setOnMouseEntered);
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to.
+	 * @param handler
+	 * 		Handler to add.
+	 */
+	public static void addMouseExitHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
+		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMouseExited;
+		addHandler(node, handler, Unchecked.cast(original), Node::setOnMouseExited);
+	}
+
+	/**
+	 * @param node
+	 * 		Node to add to.
+	 * @param handler
+	 * 		Handler to add.
+	 */
+	public static void addMouseMoveHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
+		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMouseMoved;
+		addHandler(node, handler, Unchecked.cast(original), Node::setOnMouseMoved);
 	}
 
 	/**

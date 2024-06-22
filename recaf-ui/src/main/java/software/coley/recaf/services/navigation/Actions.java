@@ -47,6 +47,7 @@ import software.coley.recaf.ui.pane.DocumentationPane;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
 import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
+import software.coley.recaf.ui.pane.editing.binary.HexFilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
 import software.coley.recaf.ui.pane.editing.media.AudioFilePane;
@@ -95,6 +96,7 @@ public class Actions implements Service {
 	private final Instance<ImageFilePane> imagePaneProvider;
 	private final Instance<AudioFilePane> audioPaneProvider;
 	private final Instance<VideoFilePane> videoPaneProvider;
+	private final Instance<HexFilePane> hexPaneProvider;
 	private final Instance<AssemblerPane> assemblerPaneProvider;
 	private final Instance<CommentEditPane> documentationPaneProvider;
 	private final Instance<MethodCallGraphsPane> callGraphsPaneProvider;
@@ -120,6 +122,7 @@ public class Actions implements Service {
 	               @Nonnull Instance<ImageFilePane> imagePaneProvider,
 	               @Nonnull Instance<AudioFilePane> audioPaneProvider,
 	               @Nonnull Instance<VideoFilePane> videoPaneProvider,
+	               @Nonnull Instance<HexFilePane> hexPaneProvider,
 	               @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
 	               @Nonnull Instance<CommentEditPane> documentationPaneProvider,
 	               @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
@@ -142,6 +145,7 @@ public class Actions implements Service {
 		this.imagePaneProvider = imagePaneProvider;
 		this.audioPaneProvider = audioPaneProvider;
 		this.videoPaneProvider = videoPaneProvider;
+		this.hexPaneProvider = hexPaneProvider;
 		this.assemblerPaneProvider = assemblerPaneProvider;
 		this.documentationPaneProvider = documentationPaneProvider;
 		this.stringSearchPaneProvider = stringSearchPaneProvider;
@@ -383,7 +387,7 @@ public class Actions implements Service {
 		} else if (info.isVideoFile()) {
 			return gotoDeclaration(workspace, resource, bundle, info.asVideoFile());
 		}
-		throw new UnsupportedContentException("Unsupported file type: " + info.getClass().getName());
+		return gotoDeclaration(workspace, resource, bundle, info.asFile());
 	}
 
 	/**
@@ -514,7 +518,7 @@ public class Actions implements Service {
 	 * @param bundle
 	 * 		Containing bundle.
 	 * @param info
-	 * 		Image file to go to.
+	 * 		Audio file to go to.
 	 *
 	 * @return Navigable content representing audio file content of the path.
 	 */
@@ -543,7 +547,7 @@ public class Actions implements Service {
 	}
 
 	/**
-	 * Brings a {@link FileNavigable} component representing the given vdeo file into focus.
+	 * Brings a {@link FileNavigable} component representing the given video file into focus.
 	 * If no such component exists, one is created.
 	 *
 	 * @param workspace
@@ -553,7 +557,7 @@ public class Actions implements Service {
 	 * @param bundle
 	 * 		Containing bundle.
 	 * @param info
-	 * 		Image file to go to.
+	 * 		Video file to go to.
 	 *
 	 * @return Navigable content representing video file content of the path.
 	 */
@@ -572,6 +576,45 @@ public class Actions implements Service {
 
 			// Create content for the tab.
 			VideoFilePane content = videoPaneProvider.get();
+			content.onUpdatePath(path);
+
+			// Build the tab.
+			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			setupInfoTabContextMenu(info, tab);
+			return tab;
+		});
+	}
+
+	/**
+	 * Brings a {@link FileNavigable} component representing the given file into focus.
+	 * If no such component exists, one is created.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		File to go to.
+	 *
+	 * @return Navigable content representing file content of the path.
+	 */
+	@Nonnull
+	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
+	                                     @Nonnull WorkspaceResource resource,
+	                                     @Nonnull FileBundle bundle,
+	                                     @Nonnull FileInfo info) {
+		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
+		return (FileNavigable) getOrCreatePathContent(path, () -> {
+			// Create text/graphic for the tab to create.
+			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
+			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			if (title == null) throw new IllegalStateException("Missing title");
+			if (graphic == null) throw new IllegalStateException("Missing graphic");
+
+			// Create content for the tab.
+			HexFilePane content = hexPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
