@@ -121,39 +121,6 @@ public class NodeEvents {
 	 * @param handler
 	 * 		Handler to add.
 	 */
-	public static void addMousePressHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
-		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMousePressed;
-		addHandler(node, handler, Unchecked.cast(original), Node::setOnMousePressed);
-	}
-
-	/**
-	 * @param node
-	 * 		Node to add to.
-	 * @param handler
-	 * 		Handler to add.
-	 */
-	public static void addMouseReleaseHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
-		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMouseReleased;
-		addHandler(node, handler, Unchecked.cast(original), Node::setOnMouseReleased);
-	}
-
-	/**
-	 * @param node
-	 * 		Node to add to.
-	 * @param handler
-	 * 		Handler to add.
-	 */
-	public static void addMouseClickHandler(@Nonnull Node node, @Nonnull EventHandler<MouseEvent> handler) {
-		Function<Node, EventHandler<? super MouseEvent>> original = Node::getOnMouseClicked;
-		addHandler(node, handler, Unchecked.cast(original), Node::setOnMouseClicked);
-	}
-
-	/**
-	 * @param node
-	 * 		Node to add to.
-	 * @param handler
-	 * 		Handler to add.
-	 */
 	public static void addKeyPressHandler(@Nonnull Node node, @Nonnull EventHandler<KeyEvent> handler) {
 		Function<Node, EventHandler<? super KeyEvent>> original = Node::getOnKeyPressed;
 		addHandler(node, handler, Unchecked.cast(original), Node::setOnKeyPressed);
