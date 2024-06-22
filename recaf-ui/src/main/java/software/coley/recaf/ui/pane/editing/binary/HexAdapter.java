@@ -56,8 +56,10 @@ public class HexAdapter extends BorderPane implements UpdatableNavigable {
 
 	@Override
 	public void disable() {
-		setCenter(null);
-		setDisable(true);
+		FxThreadUtil.run(() -> {
+			setCenter(null);
+			setDisable(true);
+		});
 	}
 
 	@Override
