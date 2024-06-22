@@ -26,7 +26,7 @@ public record VariableData(@Nonnull String name, @Nonnull ClassType type, @Nonnu
 	 */
 	@Nonnull
 	public static VariableData adaptFrom(@Nonnull Local local, @Nonnull AstUsages usage) {
-		return new VariableData(local.name(), local.type(), usage);
+		return new VariableData(local.name(), local.safeType(), usage);
 	}
 
 	/**
