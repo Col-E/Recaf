@@ -4,8 +4,6 @@ import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.animation.FadeTransition;
-import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -13,8 +11,9 @@ import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
-import javafx.util.Duration;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.ImageFileInfo;
 import software.coley.recaf.path.FilePathNode;
@@ -26,8 +25,11 @@ import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.ImageCanvas;
 import software.coley.recaf.ui.control.PannableView;
 import software.coley.recaf.util.Animations;
+import software.coley.recaf.util.ByteHeaderUtil;
+import software.coley.recaf.util.Icons;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -38,6 +40,7 @@ import java.util.Collections;
  */
 @Dependent
 public class ImagePane extends StackPane implements FileNavigable, UpdatableNavigable {
+	private static final Logger logger = Logging.get(ImagePane.class);
 	private final ImageCanvas imageView = new ImageCanvas();
 	protected FilePathNode path;
 
@@ -75,8 +78,26 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 			this.path = filePath;
 			FileInfo info = filePath.getValue();
 			if (info.isImageFile()) {
-				Image image = new Image(new ByteArrayInputStream(info.getRawContent()));
-				imageView.setImage(image);
+				byte[] content = info.getRawContent();
+
+				if ("ico".equals(info.getFileExtension()) && ByteHeaderUtil.match(content, ByteHeaderUtil.ICO)) {
+					// JavaFX doesn't directly support ICO files, so we need to adapt it.
+					try {
+						Image image = Icons.convertIcoToFxImage(content);
+						if (image != null)
+							imageView.setImage(image);
+						else {
+							logger.error("Failed to decode ICO image, no bundled images in file");
+							setDisable(true);
+						}
+					} catch (IOException ex) {
+						logger.error("Failed to decode ICO image", ex);
+						setDisable(true);
+					}
+				} else {
+					Image image = new Image(new ByteArrayInputStream(content));
+					imageView.setImage(image);
+				}
 			}
 		}
 	}

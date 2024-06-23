@@ -14,6 +14,8 @@ extra-collections = "1.3.0"
 extra-observables = "1.3.0"
 gson = "2.11.0"
 ikonli = "12.3.1"
+image-io-ext = "3.0.2" # newer release breaks ico plugin
+image-io-ext-ico = "3.0.2"
 instrument-server = "1.4.1"
 jackson = "2.17.1"
 jakarta-annotation = "3.0.0"
@@ -77,6 +79,9 @@ gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
 ikonli-javafx = { module = "org.kordamp.ikonli:ikonli-javafx", version.ref = "ikonli" }
 ikonli-pack = { module = "org.kordamp.ikonli:ikonli-carbonicons-pack", version.ref = "ikonli" }
+
+image-io-ext = { module = "com.twelvemonkeys.imageio:imageio-core", version.ref = "image-io-ext" }
+image-io-ext-ico = { module = "com.twelvemonkeys.imageio:imageio-ico", version.ref = "image-io-ext-ico" }
 
 instrument-server = { module = "software.coley:instrumentation-server", version.ref = "instrument-server" }
 
@@ -147,6 +152,10 @@ logging = [
 ikonli = [
     "ikonli-javafx",
     "ikonli-pack"
+]
+image-io = [
+    "image-io-ext",
+    "image-io-ext-ico"
 ]
 
 [plugins]

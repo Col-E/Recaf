@@ -57,11 +57,13 @@ public class ByteHeaderUtil {
 	public static final int[] JPG = {0xFF, 0xD8, 0xFF};
 	public static final int[] GIF = {0x47, 0x49, 0x46, 0x38};
 	public static final int[] BMP = {0x42, 0x4D};
+	public static final int[] ICO = {0x00, 0x00, 0x01, 0x00};
 	public static final List<int[]> IMAGE_HEADERS = List.of(
 			PNG,
 			JPG,
 			GIF,
-			BMP);
+			BMP,
+			ICO);
 	// Audio
 	public static final int[] OGG = {0x4F, 0x67, 0x67, 0x53};
 	public static final int[] WAV = {0x52, 0x49, 0x46, 0x46, WILD, WILD, WILD, WILD, 0x57, 0x41, 0x56, 0x45};

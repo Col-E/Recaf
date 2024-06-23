@@ -1,14 +1,23 @@
 package software.coley.recaf.util;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.scene.Node;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
+import javafx.scene.image.*;
 import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.ui.control.IconView;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
+import java.nio.IntBuffer;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -217,6 +226,67 @@ public class Icons {
 			return new Image(ResourceUtil.resource(path));
 		} catch (NullPointerException ex) {
 			return EMPTY_IMAGE;
+		}
+	}
+
+	/**
+	 * Offers the same functionality as {@code SwingFXUtils.toFXImage} but without having to pull in the extra
+	 * javafx-swing dependency.
+	 *
+	 * @param image
+	 * 		Buffered image assumed to be in {@link BufferedImage#TYPE_INT_ARGB}.
+	 *
+	 * @return JavaFX image.
+	 *
+	 * @author <a href="https://stackoverflow.com/a/75703543">Kevin Bähre</a>
+	 */
+	@Nonnull
+	public static Image convertToFxImage(@Nonnull BufferedImage image) {
+		int[] type_int_agrb = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+		IntBuffer buffer = IntBuffer.wrap(type_int_agrb);
+		PixelFormat<IntBuffer> pixelFormat = PixelFormat.getIntArgbPreInstance();
+		PixelBuffer<IntBuffer> pixelBuffer = new PixelBuffer<>(image.getWidth(), image.getHeight(), buffer, pixelFormat);
+		return new WritableImage(pixelBuffer);
+	}
+
+	/**
+	 * Converts an ICO file into a JavaFX image.
+	 *
+	 * @param ico
+	 * 		Raw bytes of ICO image.
+	 *
+	 * @return Highest resolution version of the icon image.
+	 *
+	 * @throws IOException
+	 * 		When the image file cannot be read.
+	 */
+	@Nullable
+	public static Image convertIcoToFxImage(@Nonnull byte[] ico) throws IOException {
+		ImageReader reader = null;
+
+		// This relies on "TwelveMonkeys" being on the classpath to register an image reader
+		// instance for ICO support.
+		try (ImageInputStream iis = ImageIO.createImageInputStream(new ByteArrayInputStream(ico))) {
+			Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+			if (!readers.hasNext())
+				throw new IOException("No supported readers for image type");
+
+			reader = readers.next();
+			reader.setInput(iis);
+			int count = reader.getNumImages(true);
+
+			// Get the image with the highest resolution.
+			Image result = null;
+			for (int i = 0; i < count; i++) {
+				BufferedImage img = reader.read(i, null);
+				if (result == null || result.getWidth() < img.getWidth())
+					result = convertToFxImage(img);
+			}
+			return result;
+		} finally {
+			if (reader != null) {
+				reader.dispose();
+			}
 		}
 	}
 }
