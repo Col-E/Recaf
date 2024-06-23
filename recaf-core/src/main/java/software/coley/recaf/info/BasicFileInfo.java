@@ -18,7 +18,7 @@ public class BasicFileInfo implements FileInfo {
 	private final String name;
 	private final byte[] rawContent;
 
-	public BasicFileInfo(FileInfoBuilder<?> builder) {
+	public BasicFileInfo(@Nonnull FileInfoBuilder<?> builder) {
 		this(builder.getName(),
 				builder.getRawContent(),
 				builder.getProperties());
@@ -32,7 +32,7 @@ public class BasicFileInfo implements FileInfo {
 	 * @param properties
 	 * 		Assorted properties.
 	 */
-	public BasicFileInfo(String name, byte[] rawContent, PropertyContainer properties) {
+	public BasicFileInfo(@Nonnull String name, @Nonnull byte[] rawContent, @Nonnull PropertyContainer properties) {
 		this.name = name;
 		this.rawContent = rawContent;
 		this.properties = properties;

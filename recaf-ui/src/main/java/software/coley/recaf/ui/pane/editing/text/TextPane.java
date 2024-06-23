@@ -72,14 +72,14 @@ public class TextPane extends BorderPane implements FileNavigable, UpdatableNavi
 	 */
 	private void save() {
 		// Pull data from path.
-		FileInfo info = path.getValue();
+		TextFileInfo info = path.getValue().asTextFile();
 		FileBundle bundle = path.getValueOfType(FileBundle.class);
 		if (bundle == null)
 			throw new IllegalStateException("Bundle missing from file path node");
 
 		// Create updated info model.
-		FileInfo newInfo = info.toFileBuilder()
-				.withRawContent(editor.getText().getBytes(StandardCharsets.UTF_8))
+		FileInfo newInfo = info.toTextBuilder()
+				.withRawContent(editor.getText().getBytes(info.getCharset()))
 				.build();
 
 		// Update the file in the bundle.

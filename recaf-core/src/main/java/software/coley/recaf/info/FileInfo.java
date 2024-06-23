@@ -25,6 +25,18 @@ public interface FileInfo extends Info, Named {
 	byte[] getRawContent();
 
 	/**
+	 * @return File extension of {@link #getName() the file name}, if any exists.
+	 */
+	@Nullable
+	default String getFileExtension() {
+		String fileName = getName();
+		int i = fileName.indexOf('.') + 1;
+		if (i > 0)
+			return fileName.toLowerCase().substring(i);
+		return null;
+	}
+
+	/**
 	 * @return Directory the file resides in.
 	 * May be {@code null} for files in the root directory.
 	 */

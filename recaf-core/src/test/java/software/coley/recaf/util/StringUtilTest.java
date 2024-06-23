@@ -3,7 +3,9 @@ package software.coley.recaf.util;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -341,24 +343,54 @@ class StringUtilTest {
 	}
 
 	@Test
-	void testIsText() {
+	void testDecodeString() {
 		// Text only
-		assertTrue(StringUtil.isText("hello".getBytes(StandardCharsets.UTF_8)));
-		assertTrue(StringUtil.isText("12345".getBytes(StandardCharsets.UTF_8)));
+		var result = StringUtil.decodeString("hello".getBytes(StandardCharsets.UTF_8));
+		assertTrue(result.couldDecode(), "Failed to decode 'hello' in UTF8");
+		assertEquals("hello", result.text(), "Decoded result did not yield original content");
+		assertEquals(StandardCharsets.UTF_8, result.charset(), "Unexpected charset for decoding 'hello' in UTF8");
+
+		result = StringUtil.decodeString("hello".getBytes(StandardCharsets.ISO_8859_1));
+		assertTrue(result.couldDecode(), "Failed to decode 'hello' in ISO_8859_1");
+		assertEquals("hello", result.text(), "Decoded result did not yield original content");
+		assertEquals(StandardCharsets.UTF_8, result.charset(), "Unexpected charset for decoding 'hello' in ISO_8859_1");
+
+		result = StringUtil.decodeString("12345".getBytes(StandardCharsets.UTF_8));
+		assertTrue(result.couldDecode(), "Failed to decode '12345' in UTF8");
+		assertEquals("12345", result.text(), "Decoded result did not yield original content");
+
+		// Ensure that long text doesn't get decoded wrong.
+		String longString = "\"the quick brown fox jumps over the lazy dog\"".repeat(2000);
+		result = StringUtil.decodeString(longString.getBytes(StandardCharsets.ISO_8859_1));
+		assertTrue(result.couldDecode(), "Failed to decode 'the-quick-brown-fox' in ISO_8859_1");
+		assertEquals(longString, result.text(), "Decoded result did not yield original content");
+
+		// Empty
+		result = StringUtil.decodeString(new byte[0]);
+		assertFalse(result.couldDecode(), "Should fail to decode empty data");
 
 		// Control category only
-		assertFalse(StringUtil.isText("\0\1\2\3".getBytes(StandardCharsets.UTF_8)));
+		result = StringUtil.decodeString("\0\1\2\3".getBytes(StandardCharsets.UTF_8));
+		assertFalse(result.couldDecode(), "Should fail to decode control category chars");
 
 		// Format category only
-		assertFalse(StringUtil.isText("\u00AD\u0600\u202E\uFFFA".getBytes(StandardCharsets.UTF_8)));
+		result = StringUtil.decodeString("\u00AD\u0600\u202E\uFFFA".getBytes(StandardCharsets.UTF_8));
+		assertFalse(result.couldDecode(), "Should fail to decode format category chars");
 
 		// Private use category only
-		assertFalse(StringUtil.isText("\uE000\uE001\uE002\uE003".getBytes(StandardCharsets.UTF_8)));
+		result = StringUtil.decodeString("\uE000\uE001\uE002\uE003".getBytes(StandardCharsets.UTF_8));
+		assertFalse(result.couldDecode(), "Should fail to decode private-use category chars");
 
 		// Surrogate category only
-		assertFalse(StringUtil.isText("\uD83C\uDF09\uD83C\uDF09".getBytes(StandardCharsets.UTF_8)));
+		result = StringUtil.decodeString("\uD83C\uDF09\uD83C\uDF09".getBytes(StandardCharsets.UTF_8));
+		assertFalse(result.couldDecode(), "Should fail to decode surrogate category chars");
 
 		// Unassigned category only
-		assertFalse(StringUtil.isText("\u0378\u0378\u0378\u0378".getBytes(StandardCharsets.UTF_8)));
+		result = StringUtil.decodeString("\u0378\u0378\u0378\u0378".getBytes(StandardCharsets.UTF_8));
+		assertEquals(StandardCharsets.ISO_8859_1, result.charset(), "Should fail to decode unassigned category chars as UTF8 - fall back to ISO_8859_1");
+
+		// Chars outside the acceptable range won't get decoded, which tells us our input has non-text chars.
+		result = StringUtil.decodeString(new byte[] { 0, 1, 15, 20, 26, 31 });
+		assertFalse(result.couldDecode(), "Should fail to decode with control chars (char < 32)");
 	}
 }
