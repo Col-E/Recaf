@@ -1,5 +1,7 @@
 package software.coley.recaf.ui.control;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
@@ -57,5 +59,17 @@ public class ActionMenuItem extends MenuItem {
 		textProperty().bind(text);
 		setGraphic(graphic);
 		setOnAction(e -> action.run());
+	}
+
+	/**
+	 * @param id
+	 * 		ID to assign.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public ActionMenuItem withId(@Nullable String id) {
+		setId(id);
+		return this;
 	}
 }
