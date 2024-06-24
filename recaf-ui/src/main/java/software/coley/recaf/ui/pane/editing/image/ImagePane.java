@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
@@ -27,6 +28,7 @@ import software.coley.recaf.ui.control.PannableView;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.Menus;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -131,9 +133,17 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 			Slider brightnessSlider = new Slider(-1, 1, 0);
 			brightnessSlider.valueProperty().addListener((ob, old, cur) -> imageView.setBrightness(cur.doubleValue()));
 
+			FontIconView contrastIcon = new FontIconView(CarbonIcons.BRIGHTNESS_CONTRAST);
+			Slider contrastSlider = new Slider(-1, 1, 0);
+			contrastSlider.valueProperty().addListener((ob, old, cur) -> imageView.setContrast(cur.doubleValue()));
+
 			box.add(brightnessIcon, 0, 0);
 			box.add(brightnessSlider, 1, 0);
-			box.getStyleClass().addAll(Styles.BORDER_DEFAULT, Styles.BG_SUBTLE, "round-container");
+
+			box.add(contrastIcon, 0, 1);
+			box.add(contrastSlider, 1, 1);
+
+			box.getStyleClass().addAll(Styles.BORDER_DEFAULT, Styles.BG_SUBTLE, "round-container-multi");
 
 			getChildren().add(box);
 		}

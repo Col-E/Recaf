@@ -76,9 +76,13 @@
 }
 
 /* Rounds the display of a container by its bg/border colors */
-.round-container {
-  -fx-border-radius: 10em;
-  -fx-background-radius: 10em;
+.round-container-single {
+    -fx-border-radius: 10em;
+    -fx-background-radius: 10em;
+}
+.round-container-multi {
+    -fx-border-radius: 1em;
+    -fx-background-radius: 1em;
 }
 
 /* Visual tweak to tab-pane separator */
