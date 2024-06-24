@@ -110,7 +110,7 @@ public class HexRow implements Cell<Integer, Node> {
 					}
 				} else {
 					contentHexLabels.add(new Label("  "));
-					if (showAscii) contentAsciiLabels.add(new Label("  "));
+					if (showAscii) contentAsciiLabels.add(new Label(" "));
 				}
 			}
 			layout.getStyleClass().remove("header");
