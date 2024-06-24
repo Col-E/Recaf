@@ -259,7 +259,8 @@ public class NodeEvents {
 	}
 
 	/**
-	 * Value change listener.
+	 * Value change listener. Key difference from {@link ChangeListener} is the return value of
+	 * {@link #changed(ObservableValue, Object, Object)}.
 	 *
 	 * @param <T>
 	 * 		Value type.
@@ -276,6 +277,9 @@ public class NodeEvents {
 		 * 		The old value.
 		 * @param newValue
 		 * 		The new value.
+		 *
+		 * @return {@code true} to remove the listener after this change.
+		 * {@code false} to keep the listener after this change.
 		 */
 		boolean changed(ObservableValue<? extends T> observable, T oldValue, T newValue);
 	}

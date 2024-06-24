@@ -20,6 +20,8 @@ public class PannableView extends Pane {
 	private final BorderPane nodeWrapper;
 	private double startDragX;
 	private double startDragY;
+	private double initTranslateX;
+	private double initTranslateY;
 	private double translateX;
 	private double translateY;
 
@@ -59,11 +61,28 @@ public class PannableView extends Pane {
 	}
 
 	/**
+	 * Sets the initial values to reset back to when calling {@link #resetTranslation()}.
+	 *
+	 * @param x
+	 * 		Initial translation X.
+	 * @param y
+	 * 		Initial translation Y.
+	 */
+	public void setInitTranslation(double x, double y) {
+		initTranslateX = x;
+		initTranslateY = y;
+		resetTranslation();
+	}
+
+	/**
 	 * Reset translation offset to 0.
 	 */
 	public void resetTranslation() {
-		nodeWrapper.setTranslateX(0);
-		nodeWrapper.setTranslateY(0);
+		translateX = initTranslateX;
+		translateY = initTranslateY;
+
+	    nodeWrapper.setTranslateX(initTranslateX);
+	    nodeWrapper.setTranslateY(initTranslateY);
 
 		Node node = nodeWrapper.getCenter();
 		node.setTranslateX(0);

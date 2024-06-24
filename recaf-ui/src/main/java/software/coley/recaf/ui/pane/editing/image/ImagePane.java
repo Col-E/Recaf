@@ -4,6 +4,7 @@ import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -25,10 +26,7 @@ import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.ImageCanvas;
 import software.coley.recaf.ui.control.PannableView;
-import software.coley.recaf.util.Animations;
-import software.coley.recaf.util.ByteHeaderUtil;
-import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Menus;
+import software.coley.recaf.util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -54,12 +52,16 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 		imagePanner.setOnContextMenuRequested(e -> {
 			if (menu == null) {
 				menu = new ContextMenu();
+				menu.setAutoHide(true);
 				menu.getItems().addAll(
 						Menus.action("menu.image.resetscale", CarbonIcons.ZOOM_RESET, imagePanner::resetZoom),
 						Menus.action("menu.image.center", CarbonIcons.ZOOM_PAN, imagePanner::resetTranslation)
 				);
 			}
 			menu.show(imagePanner, e.getScreenX(), e.getScreenY());
+		});
+		NodeEvents.addMousePressHandler(imagePanner, e -> {
+			if (menu != null && menu.isShowing()) menu.hide();
 		});
 
 		ColorAdjustmentControls colorAdjustmentControls = new ColorAdjustmentControls();
@@ -94,13 +96,12 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 			if (info.isImageFile()) {
 				byte[] content = info.getRawContent();
 
+				Image image = null;
 				if ("ico".equals(info.getFileExtension()) && ByteHeaderUtil.match(content, ByteHeaderUtil.ICO)) {
 					// JavaFX doesn't directly support ICO files, so we need to adapt it.
 					try {
-						Image image = Icons.convertIcoToFxImage(content);
-						if (image != null)
-							imageView.setImage(image);
-						else {
+						image = Icons.convertIcoToFxImage(content);
+						if (image == null) {
 							logger.error("Failed to decode ICO image, no bundled images in file");
 							setDisable(true);
 						}
@@ -109,8 +110,33 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 						setDisable(true);
 					}
 				} else {
-					Image image = new Image(new ByteArrayInputStream(content));
+					image = new Image(new ByteArrayInputStream(content));
+				}
+
+				// Update the image view and change the initial translation sizes so that it appears centered.
+				if (image != null) {
 					imageView.setImage(image);
+
+					// Note: The height property is updated after the width, so when we see the
+					// height become a non-zero value we know we can compute the proper translations
+					// to center the image.
+					Image ref = image;
+					NodeEvents.dispatchAndRemoveIf(imagePanner.heightProperty(), (ob, old, cur) -> {
+						if (cur.intValue() > 0) {
+							double wp = imagePanner.getWidth() / 2;
+							double hp = imagePanner.getHeight() / 2;
+
+							double wc = ref.getWidth() / 2;
+							double hc = ref.getHeight() / 2;
+
+							double x = wp - wc;
+							double y = hp - hc;
+
+							imagePanner.setInitTranslation(x, y);
+							return true;
+						}
+						return false;
+					});
 				}
 			}
 		}
