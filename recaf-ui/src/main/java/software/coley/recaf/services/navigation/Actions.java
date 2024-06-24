@@ -1609,7 +1609,6 @@ public class Actions implements Service {
 		});
 	}
 
-
 	/**
 	 * Exports a class, prompting the user to select a location to save the class to.
 	 *
@@ -1620,12 +1619,31 @@ public class Actions implements Service {
 	 * @param bundle
 	 * 		Containing bundle.
 	 * @param info
-	 * 		Class to delete.
+	 * 		Class to export.
 	 */
 	public void exportClass(@Nonnull Workspace workspace,
 	                        @Nonnull WorkspaceResource resource,
 	                        @Nonnull JvmClassBundle bundle,
 	                        @Nonnull JvmClassInfo info) {
+		pathExportingManager.export(info);
+	}
+
+	/**
+	 * Exports a file, prompting the user to select a location to save the file to.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		File to export.
+	 */
+	public void exportClass(@Nonnull Workspace workspace,
+	                        @Nonnull WorkspaceResource resource,
+	                        @Nonnull FileBundle bundle,
+	                        @Nonnull FileInfo info) {
 		pathExportingManager.export(info);
 	}
 

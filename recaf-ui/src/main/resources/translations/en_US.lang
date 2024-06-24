@@ -50,6 +50,7 @@ menu.edit.changeversion=Change class versions
 menu.edit.changeversion.up=Upgrade
 menu.edit.changeversion.down=Downgrade
 menu.export.class=Export class
+menu.export.file=Export file
 menu.help=Help
 menu.help.discord=Discord
 menu.help.docs=Online user documentation

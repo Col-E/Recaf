@@ -58,12 +58,17 @@ public class BasicFileContextMenuProviderFactory extends AbstractContextMenuProv
 				builder.infoItem("menu.edit.copy", COPY_FILE, actions::copyFile);
 				builder.infoItem("menu.edit.delete", TRASH_CAN, actions::deleteFile);
 
+				// Refactor actions
 				var refactor = builder.submenu("menu.refactor", PAINT_BRUSH);
 				refactor.infoItem("menu.refactor.move", STACKED_MOVE, actions::moveFile);
 				refactor.infoItem("menu.refactor.rename", TAG_EDIT, actions::renameFile);
+
 				// TODO: implement operations
 				//  - Search references
 				//  - Override text-view language (FileTypeAssociationService)
+
+				// Export actions
+				builder.infoItem("menu.export.file", EXPORT, actions::exportClass);
 			}
 			return menu;
 		};
