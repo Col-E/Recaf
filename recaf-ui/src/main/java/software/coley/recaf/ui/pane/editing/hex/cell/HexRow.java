@@ -10,6 +10,7 @@ import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import org.fxmisc.flowless.Cell;
+import org.fxmisc.flowless.VirtualFlow;
 import software.coley.recaf.ui.pane.editing.hex.HexConfig;
 import software.coley.recaf.ui.pane.editing.hex.HexUtil;
 import software.coley.recaf.ui.pane.editing.hex.ops.HexAccess;
@@ -21,6 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * Cell for {@link VirtualFlow} to draw a row of bytes.
+ *
+ * @author Matt Coley
+ */
 public class HexRow implements Cell<Integer, Node> {
 	private final HBox layout = new HBox();
 	private final HexConfig config;
@@ -40,6 +46,9 @@ public class HexRow implements Cell<Integer, Node> {
 		buildLayout();
 	}
 
+	/**
+	 * Re-populate the layout.
+	 */
 	public void redraw() {
 		reset();
 		buildLayout();
@@ -131,12 +140,21 @@ public class HexRow implements Cell<Integer, Node> {
 		updateSelection(ops.navigation().selectionOffset());
 	}
 
+	/**
+	 * @return {@code true} when this row contains the current selected offset.
+	 */
 	public boolean isRowSelected() {
 		return layout.getChildren().stream()
 				.anyMatch(child -> child instanceof HexCell cell
 						&& cell.offset() == ops.navigation().selectionOffset());
 	}
 
+	/**
+	 * Notifies cells of selection updates, primarily to refresh visual cues.
+	 *
+	 * @param offset
+	 * 		Target selection offset.
+	 */
 	public void updateSelection(int offset) {
 		CollectionUtil.safeForEach(layout.getChildren(), child -> {
 			boolean hexColumn = ops.navigation().isHexColumnSelected();
@@ -152,16 +170,31 @@ public class HexRow implements Cell<Integer, Node> {
 		}, (cell, error) -> {});
 	}
 
+	/**
+	 * @param offset
+	 * 		Offset in the data to check.
+	 *
+	 * @return {@code true} if this row contains the offset.
+	 */
 	public boolean hasOffset(int offset) {
 		return offset >= baseOffset && offset <= baseOffset + config.getRowLength().getValue();
 	}
 
-	public void engage(int offset, boolean doEdit) {
+	/**
+	 * Toggles editing in the cell at the given offset.
+	 *
+	 * @param offset
+	 * 		Target offset to toggle editing on.
+	 * @param initiateEdit
+	 *        {@code true} to trigger the target cell at the offset to begin editing.
+	 *        {@code false} to cancel editing.
+	 */
+	public void engage(int offset, boolean initiateEdit) {
 		Consumer<HexCellBase> action = cell -> {
 			boolean match = cell.offset() == offset;
 			if (match) {
-				if (!doEdit || cell.isEditing()) {
-					cell.endEdit(doEdit);
+				if (!initiateEdit || cell.isEditing()) {
+					cell.endEdit(false); // Cancel edit, do not commit
 				} else {
 					cell.beginEdit();
 				}
@@ -179,6 +212,14 @@ public class HexRow implements Cell<Integer, Node> {
 		}, (cell, error) -> {});
 	}
 
+	/**
+	 * Finds the cell matching the given offset and delegates key handling for the given key-code to it.
+	 *
+	 * @param offset
+	 * 		Target offset to send key to.
+	 * @param code
+	 * 		Key to send.
+	 */
 	public void sendKeyToCurrentEngaged(int offset, @Nonnull KeyCode code) {
 		Consumer<HexCellBase> action = cell -> {
 			boolean match = cell.offset() == offset;
@@ -196,6 +237,14 @@ public class HexRow implements Cell<Integer, Node> {
 		}, (cell, error) -> {});
 	}
 
+	/**
+	 * @param x
+	 * 		Layout x position.
+	 * @param y
+	 * 		Layout y position.
+	 *
+	 * @return Offset into the data for the closest cell to the given coordinates.
+	 */
 	public int pickOffsetAtPosition(double x, double y) {
 		HexCell closestChild = null;
 		double closestDistance = Integer.MAX_VALUE;
@@ -220,6 +269,9 @@ public class HexRow implements Cell<Integer, Node> {
 		return offset;
 	}
 
+	/**
+	 * Fixed size spacer to put between columns.
+	 */
 	private static class SmallSpacer extends Spacer {
 		private SmallSpacer() {
 			setMaxWidth(12);
