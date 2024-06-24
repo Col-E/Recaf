@@ -826,12 +826,6 @@ public class StringUtil {
 		if (result.couldDecode() && data.length != text.length())
 			return failedDecoding(data);
 
-
-		// data.length - new String(data, StandardCharsets.ISO_8859_1).length()
-
-		// StringUtil.getCommonPrefix(output.toString(), new String(data, StandardCharsets.ISO_8859_1))
-		//  - Only common up to 4096 - which is the blocksize
-
 		return result;
 	}
 
@@ -845,6 +839,29 @@ public class StringUtil {
 	 */
 	@Nonnull
 	public static StringDecodingResult decodeString(@Nonnull byte[] data, @Nonnull Charset encoding) {
+		int bytesToChars = 1;
+		if (encoding == StandardCharsets.UTF_8)
+			bytesToChars = 2;
+		else if (encoding == StandardCharsets.UTF_16 || encoding == StandardCharsets.UTF_16BE || encoding == StandardCharsets.UTF_16LE)
+			bytesToChars = 2;
+		else if (encoding == StandardCharsets.UTF_32 || encoding == StandardCharsets.UTF_32BE || encoding == StandardCharsets.UTF_32LE)
+			bytesToChars = 4;
+		return decodingResult(data, encoding, bytesToChars);
+	}
+
+	/**
+	 * @param data
+	 * 		Some data to decode.
+	 * @param encoding
+	 * 		Encoding to decode with.
+	 * @param bytesToChars
+	 * 		Expected number of bytes to make up a single {@code char} in the decoded output.
+	 * 		Strictly used to reduce calls to {@link StringBuilder#ensureCapacity(int)}.
+	 *
+	 * @return String decoding result. Check {@link StringDecodingResult#couldDecode()} to determine if successful.
+	 */
+	@Nonnull
+	private static StringDecodingResult decodingResult(@Nonnull byte[] data, @Nonnull Charset encoding, int bytesToChars) {
 		CharsetDecoder decoder = encoding.newDecoder()
 				.onMalformedInput(CodingErrorAction.REPORT)
 				.onUnmappableCharacter(CodingErrorAction.REPORT);
@@ -855,7 +872,7 @@ public class StringUtil {
 		int bufferSize = Math.min(length, 4096);
 		char[] charArray = new char[bufferSize];
 		CharBuffer charBuf = CharBuffer.wrap(charArray);
-		StringBuilder output = new StringBuilder();
+		StringBuilder output = new StringBuilder(data.length / bytesToChars);
 		while (true) {
 			try {
 				// Exit when no remaining chars to decode
@@ -881,8 +898,8 @@ public class StringUtil {
 						default -> true;
 					};
 					if (isTextChar) totalTextChars++;
-					output.append(c);
 				}
+				output.append(charArray, 0, arrayEnd);
 				totalChars += arrayEnd;
 
 				// Ensure buffer position increments to next place, but does not exceed the wrapped array's length.
