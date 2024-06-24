@@ -42,17 +42,29 @@ import java.util.Collections;
 public class ImagePane extends StackPane implements FileNavigable, UpdatableNavigable {
 	private static final Logger logger = Logging.get(ImagePane.class);
 	private final ImageCanvas imageView = new ImageCanvas();
+	private final PannableView imagePanner = new PannableView(imageView);
+	protected ContextMenu menu;
+
 	protected FilePathNode path;
 
 	@Inject
 	public ImagePane() {
-		PannableView imageWrapper = new PannableView(imageView);
+		imagePanner.setOnContextMenuRequested(e -> {
+			if (menu == null) {
+				menu = new ContextMenu();
+				menu.getItems().addAll(
+						Menus.action("menu.image.resetscale", CarbonIcons.ZOOM_RESET, imagePanner::resetZoom),
+						Menus.action("menu.image.center", CarbonIcons.ZOOM_PAN, imagePanner::resetTranslation)
+				);
+			}
+			menu.show(imagePanner, e.getScreenX(), e.getScreenY());
+		});
 
 		ColorAdjustmentControls colorAdjustmentControls = new ColorAdjustmentControls();
 		StackPane.setAlignment(colorAdjustmentControls, Pos.BOTTOM_CENTER);
 		StackPane.setMargin(colorAdjustmentControls, new Insets(7));
 
-		getChildren().addAll(imageWrapper, colorAdjustmentControls);
+		getChildren().addAll(imagePanner, colorAdjustmentControls);
 	}
 
 	@Nonnull
