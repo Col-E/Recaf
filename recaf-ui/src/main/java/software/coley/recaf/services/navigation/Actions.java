@@ -50,6 +50,7 @@ import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
 import software.coley.recaf.ui.pane.editing.binary.HexFilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
+import software.coley.recaf.ui.pane.editing.jvm.TextEditorType;
 import software.coley.recaf.ui.pane.editing.media.AudioFilePane;
 import software.coley.recaf.ui.pane.editing.media.ImageFilePane;
 import software.coley.recaf.ui.pane.editing.media.VideoFilePane;
@@ -285,8 +286,7 @@ public class Actions implements Service {
 							() -> content.setEditorType(JvmClassEditorType.HEX))
 			);
 			items.add(mode);
-			items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
-			items.add(separator());
+			addCopyPathAction(menu, info);
 			addCloseActions(menu, tab);
 			tab.setContextMenu(menu);
 			return tab;
@@ -463,7 +463,20 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, tab);
+			ContextMenu menu = new ContextMenu();
+			ObservableList<MenuItem> items = menu.getItems();
+			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
+			mode.getItems().addAll(
+					action("menu.mode.file.text", CarbonIcons.CODE,
+							() -> content.setEditorType(TextEditorType.TEXT)),
+					action("menu.mode.file.hex", CarbonIcons.NUMBER_0,
+							() -> content.setEditorType(TextEditorType.HEX))
+			);
+			items.add(mode);
+			addCopyPathAction(menu, info);
+			addCloseActions(menu, tab);
+			tab.setContextMenu(menu);
+
 			return tab;
 		});
 	}
@@ -2136,11 +2149,11 @@ public class Actions implements Service {
 	private static void setupInfoTabContextMenu(@Nonnull Info info, @Nonnull DockingTab tab) {
 		ContextMenu menu = new ContextMenu();
 		ObservableList<MenuItem> items = menu.getItems();
-		items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
-		items.add(separator());
+		addCopyPathAction(menu, info);
 		addCloseActions(menu, tab);
 		tab.setContextMenu(menu);
 	}
+
 
 	/**
 	 * Selects the containing {@link DockingTab} that contains the content.
@@ -2201,6 +2214,21 @@ public class Actions implements Service {
 		return tab;
 	}
 
+
+	/**
+	 * Adds 'copy path' action to the given menu, with a following separator assuming other items will be added next.
+	 *
+	 * @param menu
+	 * 		Menu to add to.
+	 * @param info
+	 * 		Info with path to copy.
+	 */
+	private static void addCopyPathAction(@Nonnull ContextMenu menu, @Nonnull Info info) {
+		ObservableList<MenuItem> items = menu.getItems();
+		items.add(action("menu.tab.copypath", CarbonIcons.COPY_LINK, () -> ClipboardUtil.copyString(info)));
+		items.add(separator());
+	}
+
 	/**
 	 * Adds close actions to the given menu.
 	 * <ul>
@@ -2211,20 +2239,20 @@ public class Actions implements Service {
 	 *
 	 * @param menu
 	 * 		Menu to add to.
-	 * @param currentTab
-	 * 		Current tab reference.
+	 * @param tab
+	 * 		Tab reference.
 	 */
-	private static void addCloseActions(@Nonnull ContextMenu menu, @Nonnull DockingTab currentTab) {
+	private static void addCloseActions(@Nonnull ContextMenu menu, @Nonnull DockingTab tab) {
 		menu.getItems().addAll(
-				action("menu.tab.close", CarbonIcons.CLOSE, currentTab::close),
+				action("menu.tab.close", CarbonIcons.CLOSE, tab::close),
 				action("menu.tab.closeothers", CarbonIcons.CLOSE, () -> {
-					for (DockingTab regionTab : currentTab.getRegion().getDockTabs()) {
-						if (regionTab != currentTab)
+					for (DockingTab regionTab : tab.getRegion().getDockTabs()) {
+						if (regionTab != tab)
 							regionTab.close();
 					}
 				}),
 				action("menu.tab.closeall", CarbonIcons.CLOSE, () -> {
-					for (DockingTab regionTab : currentTab.getRegion().getDockTabs())
+					for (DockingTab regionTab : tab.getRegion().getDockTabs())
 						regionTab.close();
 				})
 		);
