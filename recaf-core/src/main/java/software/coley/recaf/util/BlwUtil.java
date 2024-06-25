@@ -90,6 +90,8 @@ public class BlwUtil {
 				printer.execute(constWrapped);
 			else if (wrapped instanceof PrimitiveConversionInstruction convWrapped)
 				printer.execute(convWrapped);
+			else if (wrapped instanceof SimpleInstruction simpleWrapped)
+				printer.execute(simpleWrapped);
 			else
 				printer.execute(wrapped);
 		} else if (insn instanceof InvokeDynamicInsnNode indy) {

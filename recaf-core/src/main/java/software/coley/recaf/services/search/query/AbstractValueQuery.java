@@ -225,6 +225,26 @@ public abstract class AbstractValueQuery implements JvmClassQuery, FileQuery {
 		}
 
 		@Override
+		public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
+			super.visitLookupSwitchInsn(dflt, keys, labels);
+			for (int key : keys) {
+				if (isMatch(key)) {
+					resultSink.accept(memberPath.childInsn(new InsnNode(Opcodes.LOOKUPSWITCH), index), key);
+				}
+			}
+		}
+
+		@Override
+		public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
+			super.visitTableSwitchInsn(min, max, dflt, labels);
+			for (int i = min; i <= max; i++) {
+				if (isMatch(i)) {
+					resultSink.accept(memberPath.childInsn(new InsnNode(Opcodes.TABLESWITCH), index), i);
+				}
+			}
+		}
+
+		@Override
 		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 			AnnotationVisitor av = super.visitAnnotation(desc, visible);
 			return new AnnotationValueVisitor(av, visible, resultSink,
