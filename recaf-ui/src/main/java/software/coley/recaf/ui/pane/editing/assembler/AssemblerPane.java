@@ -459,7 +459,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					 */
 
 					eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(result, lastAssembledClass));
-				}).ifErr(errors -> processErrors(errors, ProblemPhase.BUILD));
+				}).ifErr(errors -> processErrors(errors, ProblemPhase.BUILD))
+						.ifWarn(warns -> processErrors(warns, ProblemLevel.WARN, ProblemPhase.BUILD));
 			} catch (Throwable ex) {
 				logger.error("Uncaught exception when assembling contents of {}", path, ex);
 				FxThreadUtil.run(() -> Animations.animateFailure(editor, 1000));
@@ -498,11 +499,25 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * 		Phase the problems belong to.
 	 */
 	private void processErrors(@Nonnull Collection<Error> errors, @Nonnull ProblemPhase phase) {
+		processErrors(errors, ProblemLevel.ERROR, phase);
+	}
+
+	/**
+	 * Add the given errors to {@link #problemTracking} and refresh the UI.
+	 *
+	 * @param errors
+	 * 		Problems to add.
+	 * @param level
+	 * 		Severity level of problems.
+	 * @param phase
+	 * 		Phase the problems belong to.
+	 */
+	private void processErrors(@Nonnull Collection<? extends Error> errors, @Nonnull ProblemLevel level, @Nonnull ProblemPhase phase) {
 		for (Error error : errors) {
 			Location location = error.getLocation();
 			int line = location == null ? 1 : location.line();
 			int column = location == null ? 1 : location.column();
-			Problem problem = new Problem(line, column, ProblemLevel.ERROR, phase, error.getMessage());
+			Problem problem = new Problem(line, column, level, phase, error.getMessage());
 			problemTracking.add(problem);
 
 			// REMOVE IS TRACING PARSER ERRORS
