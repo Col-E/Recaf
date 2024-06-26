@@ -54,7 +54,10 @@
 
 /* Makes text red, typically for error displays */
 .error-text {
-  -fx-text-fill: red;
+    -fx-text-fill: red;
+}
+.warn-text {
+    -fx-text-fill: yellow;
 }
 
 /* Clearly separates filter from the workspace tree */
