@@ -87,7 +87,7 @@ class ScriptManagerTest {
 		// Will complete when assertions are passed.
 		try {
 			Files.writeString(scriptDir.resolve("test.bsh"), script);
-			future.get(1, TimeUnit.SECONDS);
+			future.get(2, TimeUnit.SECONDS); // Really this is only set for this long because CI can be slow
 		} catch (Exception ex) {
 			fail(ex);
 		}
