@@ -114,7 +114,7 @@ public class VineflowerConfig extends BaseDecompilerConfig {
 		addValue(new BasicConfigValue<>("decompile-finally", boolean.class, finallyDeinline));
 		addValue(new BasicConfigValue<>("lambda-to-anonymous-class", boolean.class, lambdaToAnonymousClass));
 		addValue(new BasicConfigValue<>("bytecode-source-mapping", boolean.class, bytecodeSourceMapping));
-		addValue(new BasicConfigValue<>("dump-code-lines", boolean.class, dumpCodeLines));
+		addValue(new BasicConfigValue<>("__dump_original_lines__", boolean.class, dumpCodeLines));
 		addValue(new BasicConfigValue<>("ignore-invalid-bytecode", boolean.class, ignoreInvalidBytecode));
 		addValue(new BasicConfigValue<>("verify-anonymous-classes", boolean.class, verifyAnonymousClasses));
 		addValue(new BasicConfigValue<>("ternary-constant-simplification", boolean.class, ternaryConstantSimplification));
