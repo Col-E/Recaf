@@ -34,7 +34,7 @@ picocli = "4.7.6"
 procyon = "0.6.0"
 reactfx = { strictly = "2.0-M5" } # won't get updates, dead
 regex = "0.1.15"
-richtextfx = "0.11.2"
+richtextfx = "0.11.3"
 treemapfx = "1.1.0"
 vineflower = "1.10.1"
 wordwrap = "0.1.12"
