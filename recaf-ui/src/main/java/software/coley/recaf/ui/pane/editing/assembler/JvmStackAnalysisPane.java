@@ -59,7 +59,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		TableColumn<JvmVariableState, ClassType> columnType = new TableColumn<>(Lang.get("assembler.variables.type"));
 		TableColumn<JvmVariableState, ValueTableCell.ValueWrapper> columnValue = new TableColumn<>(Lang.get("assembler.variables.value"));
 		columnName.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().name));
-		columnType.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().value instanceof Value.NullValue ? null : param.getValue().type));
+		columnType.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().value instanceof Value.NullValue ? TypeTableCell.NULL_TYPE : param.getValue().type));
 		columnValue.setCellValueFactory(param -> new SimpleObjectProperty<>(new ValueTableCell.ValueWrapper(param.getValue().value, param.getValue().priorValue)));
 		columnType.setCellFactory(param -> new TypeTableCell<>(cellConfigurationService, formatConfig, workspace));
 		columnValue.setCellFactory(param -> new ValueTableCell<>());
@@ -67,7 +67,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 
 		TableColumn<JvmStackState, ClassType> columnTypeStack = new TableColumn<>(Lang.get("assembler.analysis.type"));
 		TableColumn<JvmStackState, ValueTableCell.ValueWrapper> columnValueStack = new TableColumn<>(Lang.get("assembler.analysis.value"));
-		columnTypeStack.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().type));
+		columnTypeStack.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().value instanceof Value.NullValue ? TypeTableCell.NULL_TYPE : param.getValue().type));
 		columnValueStack.setCellValueFactory(param -> new SimpleObjectProperty<>(new ValueTableCell.ValueWrapper(param.getValue().value, param.getValue().priorValue)));
 		columnTypeStack.setCellFactory(param -> new TypeTableCell<>(cellConfigurationService, formatConfig, workspace));
 		columnValueStack.setCellFactory(param -> new ValueTableCell<>());
