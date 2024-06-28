@@ -1,5 +1,6 @@
 package software.coley.recaf.services.attach;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableBoolean;
@@ -24,11 +25,12 @@ public class AttachManagerConfig extends BasicConfigContainer implements Service
 	private final ObservableBoolean attachJmxAgent = new ObservableBoolean(true);
 
 	@Inject
-	public AttachManagerConfig(RecafDirectoriesConfig directories) {
+	public AttachManagerConfig(@Nonnull RecafDirectoriesConfig directories) {
 		super(ConfigGroups.SERVICE_DEBUG, AttachManager.SERVICE_ID + CONFIG_SUFFIX);
 		this.directories = directories;
+
 		// Add values
-		addValue(new BasicConfigValue<>("passive-scanning", boolean.class, passiveScanning, true));
+		//  - The 'passiveScanning' field is *intentionally* not registered as a value.
 		addValue(new BasicConfigValue<>("attach-jmx-bean-agent", boolean.class, attachJmxAgent));
 	}
 
