@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -26,7 +27,7 @@ public class ActionButton extends Button implements Tooltipable {
 	 * @param action
 	 * 		Action to run on-click.
 	 */
-	public ActionButton(String text, Runnable action) {
+	public ActionButton(@Nullable String text, @Nonnull Runnable action) {
 		super(text);
 		setOnAction(e -> wrap(e, action));
 	}
@@ -37,7 +38,7 @@ public class ActionButton extends Button implements Tooltipable {
 	 * @param action
 	 * 		Action to run on-click.
 	 */
-	public ActionButton(Ikon icon, Runnable action) {
+	public ActionButton(@Nonnull Ikon icon, @Nonnull Runnable action) {
 		this(new FontIconView(icon), action);
 	}
 
@@ -47,7 +48,7 @@ public class ActionButton extends Button implements Tooltipable {
 	 * @param action
 	 * 		Action to run on-click.
 	 */
-	public ActionButton(Node graphic, Runnable action) {
+	public ActionButton(@Nonnull Node graphic, @Nonnull Runnable action) {
 		setGraphic(graphic);
 		setOnAction(e -> wrap(e, action));
 	}
@@ -60,7 +61,7 @@ public class ActionButton extends Button implements Tooltipable {
 	 * @param action
 	 * 		Action to run on-click.
 	 */
-	public ActionButton(Ikon icon, ObservableValue<String> text, Runnable action) {
+	public ActionButton(@Nonnull Ikon icon, @Nonnull ObservableValue<String> text, @Nonnull Runnable action) {
 		setGraphic(new FontIconView(icon));
 		textProperty().bind(text);
 		setOnAction(e -> wrap(e, action));
@@ -74,7 +75,7 @@ public class ActionButton extends Button implements Tooltipable {
 	 * @param action
 	 * 		Action to run on-click.
 	 */
-	public ActionButton(Node graphic, ObservableValue<String> text, Runnable action) {
+	public ActionButton(@Nonnull Node graphic, @Nonnull ObservableValue<String> text, @Nonnull Runnable action) {
 		setGraphic(graphic);
 		textProperty().bind(text);
 		setOnAction(e -> wrap(e, action));
@@ -86,7 +87,7 @@ public class ActionButton extends Button implements Tooltipable {
 	 * @param action
 	 * 		Action to run on-click.
 	 */
-	public ActionButton(ObservableValue<String> text, Runnable action) {
+	public ActionButton(@Nonnull ObservableValue<String> text, @Nonnull Runnable action) {
 		textProperty().bind(text);
 		setOnAction(e -> wrap(e, action));
 	}

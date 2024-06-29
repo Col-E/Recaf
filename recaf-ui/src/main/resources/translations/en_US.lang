@@ -389,6 +389,7 @@ assembler.analysis.type=Type
 assembler.analysis.value=Value
 assembler.playground.title=Java to Bytecode
 assembler.playground.comment=// Write some Java code here to convert it to bytecode automatically\n// You can access the current class's fields/methods,\n// and the current method's parameters/variables.
+assembler.snippets.title=Snippets
 assembler.variables.title=Declared Variables
 assembler.variables.name=Variable name
 assembler.variables.type=Type

@@ -1,6 +1,7 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.openrewrite.internal.ThrowingConsumer;
 
 import java.util.*;
@@ -52,8 +53,25 @@ public class CollectionUtil {
 	 * Results are only correct if the list itself is already in sorted order.
 	 */
 	public static <T extends Comparable<T>> int sortedInsertIndex(@Nonnull List<T> list, @Nonnull T item) {
+		return sortedInsertIndex(null, list, item);
+	}
+
+	/**
+	 * @param comparator
+	 * 		Optional comparator for sorting, must be specified if {@code T} is not {@link Comparable}.
+	 * @param list
+	 * 		List to insert into.
+	 * @param item
+	 * 		Item to insert.
+	 * @param <T>
+	 * 		Item type.
+	 *
+	 * @return Index to insert the item at to ensure sorted order.
+	 * Results are only correct if the list itself is already in sorted order.
+	 */
+	public static <T> int sortedInsertIndex(@Nullable Comparator<T> comparator, @Nonnull List<T> list, @Nonnull T item) {
 		if (list.isEmpty()) return 0;
-		int i = Collections.binarySearch(list, item);
+		int i = Collections.binarySearch(list, item, comparator);
 		if (i < 0) i = -i - 1; // When not found, invert to get correct index.
 		return i;
 	}

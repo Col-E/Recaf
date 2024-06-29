@@ -180,6 +180,11 @@
 
 /* Removes borders from controls */
 .borderless {
-     -fx-border-width: 0px;
-     -fx-border-insets: 0px;
+    -fx-border-width: 0px;
+    -fx-border-insets: 0px;
  }
+
+.graphic-button {
+    -fx-border-width: 0px;
+    -fx-background-radius: 5px;
+}

@@ -38,6 +38,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	private final Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider;
 	private final Instance<JvmVariablesPane> jvmVariablesPaneProvider;
 	private final Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider;
+	private final Instance<SnippetsPane> snippetPaneProvider;
 	private final Instance<ControlFlowLines> controlFlowLineProvider;
 	private final List<Navigable> children = new CopyOnWriteArrayList<>();
 	private final SideTabs tabs = new SideTabs(Orientation.HORIZONTAL);
@@ -47,10 +48,12 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	public AssemblerToolTabs(@Nonnull Instance<JvmStackAnalysisPane> jvmStackAnalysisPaneProvider,
 							 @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider,
 							 @Nonnull Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider,
+							 @Nonnull Instance<SnippetsPane> snippetPaneProvider,
 							 @Nonnull Instance<ControlFlowLines> controlFlowLineProvider) {
 		this.jvmStackAnalysisPaneProvider = jvmStackAnalysisPaneProvider;
 		this.jvmVariablesPaneProvider = jvmVariablesPaneProvider;
 		this.jvmExpressionCompilerPaneProvider = jvmExpressionCompilerPaneProvider;
+		this.snippetPaneProvider = snippetPaneProvider;
 		this.controlFlowLineProvider = controlFlowLineProvider;
 
 		// Without an initial size, the first frame of a method has nothing in it. So the auto-size to fit content
@@ -75,14 +78,16 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			JvmStackAnalysisPane stackAnalysisPane = jvmStackAnalysisPaneProvider.get();
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
 			JvmExpressionCompilerPane expressionPane = jvmExpressionCompilerPaneProvider.get();
+			SnippetsPane snippetsPane = snippetPaneProvider.get();
 			ControlFlowLines controlFlowLines = controlFlowLineProvider.get();
-			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane, controlFlowLines));
+			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane, snippetsPane, controlFlowLines));
 			FxThreadUtil.run(() -> {
 				ObservableList<Tab> tabs = this.tabs.getTabs();
 				tabs.clear();
 				tabs.add(new BoundTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, stackAnalysisPane));
 				tabs.add(new BoundTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane));
 				tabs.add(new BoundTab(Lang.getBinding("assembler.playground.title"), CarbonIcons.CODE, expressionPane));
+				tabs.add(new BoundTab(Lang.getBinding("assembler.snippets.title"), CarbonIcons.BOOK, snippetsPane));
 				// Note: There is intentionally no tab for the jump arrow pane at the moment
 				tabs.forEach(t -> t.setClosable(false));
 			});
