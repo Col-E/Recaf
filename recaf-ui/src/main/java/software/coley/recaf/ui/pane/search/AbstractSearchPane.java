@@ -152,6 +152,10 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	 * Initiates the search with current search inputs. Updates the output display.
 	 */
 	protected final void search() {
+		// Skip if the panel has been disabled (occurs when closing it).
+		// Sometimes the delay between searching and the user closing will initiate a search after closing.
+		if (isDisabled()) return;
+
 		// Must have a current workspace to search in.
 		Workspace workspace = workspaceManager.getCurrent();
 		if (workspace == null)
