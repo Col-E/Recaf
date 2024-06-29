@@ -265,7 +265,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	}
 
 	private void clearData() {
-		table.getItems().clear();
+		FxThreadUtil.run(() -> table.getItems().clear());
 		currentMethod = null;
 	}
 

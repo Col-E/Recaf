@@ -195,10 +195,12 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 	}
 
 	private void clearData() {
-		stackTable.setDisable(true);
-		varTable.setDisable(true);
-		stackTable.getItems().clear();
-		varTable.getItems().clear();
+		FxThreadUtil.run(() -> {
+			stackTable.setDisable(true);
+			varTable.setDisable(true);
+			stackTable.getItems().clear();
+			varTable.getItems().clear();
+		});
 		lastInsnIndex = -1;
 	}
 
