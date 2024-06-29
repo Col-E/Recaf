@@ -17,6 +17,7 @@ import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.config.ConfigCollectionValue;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
+import software.coley.recaf.config.RestoreAwareConfigContainer;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
@@ -102,8 +103,11 @@ public class ConfigManager implements Service {
 		for (ConfigContainer container : containers.values()) {
 			String key = container.getGroupAndId();
 			Path containerPath = fileConfig.getConfigDirectory().resolve(key + ".json");
-			if (!Files.exists(containerPath))
+			if (!Files.exists(containerPath)) {
+				if (container instanceof RestoreAwareConfigContainer listener)
+					listener.onNoRestore();
 				continue;
+			}
 
 			JsonObject json;
 			try (JsonReader reader = gson.newJsonReader(Files.newBufferedReader(containerPath))) {
@@ -128,6 +132,10 @@ public class ConfigManager implements Service {
 					logger.error("Failed to load config value: {}", id, e);
 				}
 			}
+
+			// Notify the container it has restored its config values from storage.
+			if (container instanceof RestoreAwareConfigContainer listener)
+				listener.onRestore();
 		}
 	}
 
