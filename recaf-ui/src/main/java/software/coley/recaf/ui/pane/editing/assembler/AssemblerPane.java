@@ -19,6 +19,7 @@ import me.darknet.assembler.util.Location;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
+import software.coley.collections.box.Box;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
@@ -133,17 +134,19 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * Sets up {@link FieldsAndMethodsPane} as a side-tab and sets up notifications for {@link AssemblerToolTabs}
 	 * and its children when the selected {@link ClassMember} in the {@link #lastConcreteAst} changes.
 	 *
-	 * @param classPathNode
+	 * @param classPath
 	 * 		The given path.
 	 */
-	private void lateInitForClass(@Nonnull ClassPathNode classPathNode) {
+	private void lateInitForClass(@Nonnull ClassPathNode classPath) {
 		// Since the content displayed is for a whole class, and the tool tabs are scoped to a method, we need to
 		// update them when a method is selected. We do so by tracking the caret position for being within the
 		// range of one of the methods in the last AST model.
+		Box<PathNode<?>> lastPathBox = new Box<>();
+		Box<ClassResult> lastResultBox = new Box<>();
 		editor.getCaretPosEventStream().addObserver(e -> {
 			if (lastConcreteAst == null)
 				return;
-			ClassInfo declaringClass = classPathNode.getValue();
+			ClassInfo declaringClass = classPath.getValue();
 			int caret = editor.getCodeArea().getCaretPosition();
 			for (ASTElement root : lastConcreteAst) {
 				if (root instanceof ASTClass astClass) {
@@ -161,13 +164,25 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							continue;
 						}
 
+						PathNode<?> prior = lastPathBox.get();
 						if (classMember != null) {
-							ClassMemberPathNode memberPath = classPathNode.child(classMember);
-							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
+							ClassMemberPathNode memberPath = classPath.child(classMember);
+							if (!Objects.equals(prior, memberPath)) {
+								lastPathBox.set(memberPath);
+								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
+							}
 						} else {
-							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(classPathNode));
+							if (!Objects.equals(prior, classPath)) {
+								lastPathBox.set(classPath);
+								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(classPath));
+							}
 						}
-						eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
+
+						ClassResult oldResult = lastResultBox.get();
+						if (oldResult != lastResult) {
+							lastResultBox.set(lastResult);
+							eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
+						}
 						return;
 					}
 				}
@@ -175,7 +190,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		});
 
 		// Common init
-		assemblerToolTabs.onUpdatePath(classPathNode);
+		assemblerToolTabs.onUpdatePath(classPath);
 		lateInit();
 	}
 

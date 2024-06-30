@@ -166,6 +166,12 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 	}
 
 	private void updateModel() {
+		// Skip if we've not selected a method
+		if (currentMethod == null) {
+			model = Collections.emptyList();
+			return;
+		}
+
 		// Collect all label usage information from the AST.
 		AstUsages emptyUsage = AstUsages.EMPTY_USAGE;
 		Map<String, AstUsages> labelUsages = new HashMap<>();
