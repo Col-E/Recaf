@@ -163,7 +163,7 @@ public class MappingGeneratorPane extends StackPane {
 				} else {
 					grid.add(new BoundLabel(getBinding(key)), 0, row);
 				}
-				ConfigComponentFactory factory = componentManager.getFactory(value);
+				ConfigComponentFactory factory = componentManager.getFactory(container, value);
 				Node node = factory.create(container, value);
 				grid.add(node, 1, row);
 			});

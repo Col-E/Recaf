@@ -17,10 +17,11 @@ import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginManager;
 import software.coley.recaf.services.plugin.discovery.DirectoryPluginDiscoverer;
 import software.coley.recaf.services.script.ScriptEngine;
-import software.coley.recaf.util.JFXValidation;
-import software.coley.recaf.util.Lang;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.io.ResourceImporter;
+import software.coley.recaf.ui.config.WindowScaleConfig;
+import software.coley.recaf.util.JFXValidation;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 
 import java.io.File;
@@ -106,8 +107,21 @@ public class Main {
 			initTranslations();
 			initPlugins();
 			fireInitEvent();
+			initScale(); // Needs to init after the init-event so config is loaded
 			RecafApplication.launch(RecafApplication.class, launchArgs.getArgs());
 		}
+	}
+
+	/**
+	 * Assigns UI scaling properties based on the window scale config.
+	 */
+	private static void initScale() {
+		WindowScaleConfig scaleConfig = recaf.get(WindowScaleConfig.class);
+
+		double scale = scaleConfig.getScale();
+		System.setProperty("sun.java2d.uiScale", String.format("%.0f%%", 100 * scale));
+		System.setProperty("glass.win.uiScale", String.valueOf(scale));
+		System.setProperty("glass.gtk.uiScale", String.valueOf(scale));
 	}
 
 	/**

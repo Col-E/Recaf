@@ -17,6 +17,7 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.ui.RecafTheme;
 import software.coley.recaf.ui.config.KeybindingConfig;
+import software.coley.recaf.ui.config.WindowScaleConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
@@ -73,6 +74,7 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 		workspaceManager.addWorkspaceCloseListener(this);
 
 		// Display
+		WindowScaleConfig scaleConfig = recaf.get(WindowScaleConfig.class);
 		Scene scene = new RecafScene(wrapper);
 		scene.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent event) -> {
 			// Global keybind handling
@@ -82,8 +84,8 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 				quickNav.requestFocus();
 			}
 		});
-		stage.setMinWidth(900);
-		stage.setMinHeight(600);
+		stage.setMinWidth(900 / scaleConfig.getScale());
+		stage.setMinHeight(600 / scaleConfig.getScale());
 		stage.setScene(scene);
 		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		stage.setTitle("Recaf");
