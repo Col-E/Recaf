@@ -34,7 +34,7 @@ public class ClosableActionMenuItem extends CustomMenuItem {
 	public ClosableActionMenuItem(String text, Node graphic, Runnable action, Runnable onClose) {
 		Label label = new Label(text);
 		label.setPadding(new Insets(10, 5, 10, 0));
-		Button closeButton = new GraphicActionButton(new FontIconView(CarbonIcons.CLOSE), () -> {
+		Button closeButton = new ActionButton(new FontIconView(CarbonIcons.CLOSE), () -> {
 			Menu parent = getParentMenu();
 			if (parent != null)
 				parent.getItems().remove(this);
