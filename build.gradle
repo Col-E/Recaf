@@ -7,20 +7,16 @@ plugins {
 allprojects {
     group 'software.coley'
     version '4.0.0-SNAPSHOT'
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
 }
 
 subprojects {
     apply plugin: 'java'
     apply plugin: 'jacoco'
     apply plugin: 'com.github.ben-manes.versions'
-
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        google()
-        maven { url 'https://maven.quiltmc.org/repository/release/' }
-        maven { url 'https://jitpack.io' }
-    }
 
     // ======================= DEPENDENCIES ========================
     dependencies {
@@ -109,6 +105,7 @@ subprojects {
             includes = ['software/coley/recaf/**']
         }
     }
+
 }
 
 // Always emit HTML & XML aggregate reports
