@@ -6,15 +6,15 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1718772938,
-        "narHash": "sha256-CQjn7Jy7a+ErejWkMAzddGGIr0EvAKGbvbDOvZcd+x8=",
-        "owner": "C0D3-M4513R",
+        "lastModified": 1720015284,
+        "narHash": "sha256-8d7ikVoBWnEKleEZbJVeEE1GBSmAC6fTthu6axxY+vw=",
+        "owner": "raphiz",
         "repo": "buildGradleApplication",
-        "rev": "b310a3ca02ef930beff8fe5844f77e59ec0b86d0",
+        "rev": "ce29479025b5ddc5911799d6ed0a07850d476ac6",
         "type": "github"
       },
       "original": {
-        "owner": "C0D3-M4513R",
+        "owner": "raphiz",
         "repo": "buildGradleApplication",
         "type": "github"
       }
@@ -82,16 +82,16 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1717406568,
-        "narHash": "sha256-0MaK6YkHrGMjE+oxcItz3ZRQ8oBGbIfJg67BKcpc1n8=",
-        "owner": "lorenzleutgeb",
+        "lastModified": 1719848872,
+        "narHash": "sha256-H3+EC5cYuq+gQW8y0lSrrDZfH71LB4DAf+TDFyvwCNA=",
+        "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "48d567fc7b299de90f70a48e4263e31f690ba03e",
+        "rev": "00d80d13810dbfea8ab4ed1009b09100cca86ba8",
         "type": "github"
       },
       "original": {
-        "owner": "lorenzleutgeb",
-        "ref": "gradle-8.8",
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }

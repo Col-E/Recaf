@@ -2,8 +2,8 @@
   inputs = {
     # This must be the stable nixpkgs if you're running the app on a
     # stable NixOS install.  Mixing EGL library versions doesn't work.
-    nixpkgs.url = "github:lorenzleutgeb/nixpkgs/gradle-8.8";
-    build-gradle-application.url = "github:C0D3-M4513R/buildGradleApplication";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    build-gradle-application.url = "github:raphiz/buildGradleApplication";
     utils.url = "github:numtide/flake-utils";
     flake-compat = {
       url = github:edolstra/flake-compat;
