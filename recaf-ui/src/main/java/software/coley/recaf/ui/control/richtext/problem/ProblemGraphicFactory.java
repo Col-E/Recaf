@@ -2,6 +2,7 @@ package software.coley.recaf.ui.control.richtext.problem;
 
 import jakarta.annotation.Nonnull;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -49,16 +50,31 @@ public class ProblemGraphicFactory extends AbstractLineGraphicFactory {
 		int line = paragraph + 1;
 		Problem problem = problemTracking.getProblem(line);
 		if (problem != null) {
+			ProblemLevel level = problem.getLevel();
+			Color levelColor = switch (level) {
+				case ERROR -> Color.RED;
+				case WARN -> Color.YELLOW;
+				default -> Color.TURQUOISE;
+			};
+			Node graphic = switch (level) {
+				case ERROR -> new FontIconView(CarbonIcons.ERROR, levelColor);
+				case WARN -> new FontIconView(CarbonIcons.WARNING_ALT, levelColor);
+				default -> new FontIconView(CarbonIcons.INFORMATION, levelColor);
+			};
+
 			Rectangle shape = new Rectangle();
 			shape.widthProperty().bind(container.widthProperty());
 			shape.heightProperty().bind(container.heightProperty());
 			shape.setCursor(Cursor.HAND);
-			shape.setFill(Color.RED);
+			shape.setFill(levelColor);
 			shape.setOpacity(0.33);
 
 			Tooltip tooltip = new Tooltip(formatTooltipMessage(problem));
-			tooltip.setGraphic(new FontIconView(CarbonIcons.ERROR, Color.RED));
-			tooltip.getStyleClass().add("error-text");
+			tooltip.setGraphic(graphic);
+			switch (level) {
+				case ERROR -> tooltip.getStyleClass().add("error-text");
+				case WARN -> tooltip.getStyleClass().add("warn-text");
+			}
 			Tooltip.install(shape, tooltip);
 			container.addTopLayer(shape);
 		}

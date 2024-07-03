@@ -3,6 +3,7 @@
     -fx-padding: 5px;
 }
 
+
 /* Fix for TiwulFX relying on Modena values while we use AtlantaFX */
 .adjacent-drop {
 	-fx-background-color: -color-accent-2;
@@ -13,6 +14,7 @@
    -fx-background-color: -color-bg-inset;
 }
 
+/* For the file menu items with nested nodes. We don't want any padding so the whole menu is clickable */
 .closable-menu-item {
     -fx-padding: 0;
 }
@@ -52,7 +54,10 @@
 
 /* Makes text red, typically for error displays */
 .error-text {
-  -fx-text-fill: red;
+    -fx-text-fill: red;
+}
+.warn-text {
+    -fx-text-fill: yellow;
 }
 
 /* Clearly separates filter from the workspace tree */
@@ -74,9 +79,13 @@
 }
 
 /* Rounds the display of a container by its bg/border colors */
-.round-container {
-  -fx-border-radius: 10em;
-  -fx-background-radius: 10em;
+.round-container-single {
+    -fx-border-radius: 10em;
+    -fx-background-radius: 10em;
+}
+.round-container-multi {
+    -fx-border-radius: 1em;
+    -fx-background-radius: 1em;
 }
 
 /* Visual tweak to tab-pane separator */
@@ -156,4 +165,26 @@
 }
 .analysis-value-changed {
     -fx-background-color: -color-accent-muted;
+}
+
+.transparent-tree {
+    -fx-background-color: transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.transparent-cell {
+    -fx-background-color: transparent;
+}
+.transparent-cell:selected {
+    -fx-background-color: rgb(54, 58, 65);
+}
+
+/* Removes borders from controls */
+.borderless {
+    -fx-border-width: 0px;
+    -fx-border-insets: 0px;
+ }
+
+.graphic-button {
+    -fx-border-width: 0px;
+    -fx-background-radius: 5px;
 }

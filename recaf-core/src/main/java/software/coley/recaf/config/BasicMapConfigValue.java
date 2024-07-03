@@ -3,7 +3,6 @@ package software.coley.recaf.config;
 import jakarta.annotation.Nonnull;
 import software.coley.observables.ObservableMap;
 
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -24,6 +23,7 @@ public class BasicMapConfigValue<K, V, M extends Map<K, V>> implements ConfigMap
 	private final Class<V> valueType;
 	private final Class<M> mapType;
 	private final ObservableMap<K, V, M> observable;
+	private final boolean hidden;
 
 	/**
 	 * @param key
@@ -33,17 +33,38 @@ public class BasicMapConfigValue<K, V, M extends Map<K, V>> implements ConfigMap
 	 * @param observable
 	 * 		Observable of value.
 	 */
+	@SuppressWarnings("rawtypes")
+	public BasicMapConfigValue(String key,
+	                           Class<? extends Map> type,
+	                           Class<K> keyType,
+	                           Class<V> valueType,
+	                           ObservableMap<K, V, M> observable) {
+		this(key, type, keyType, valueType, observable, false);
+	}
+
+	/**
+	 * @param key
+	 * 		Value key.
+	 * @param type
+	 * 		Value type class.
+	 * @param observable
+	 * 		Observable of value.
+	 * @param hidden
+	 * 		Hidden flag.
+	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public BasicMapConfigValue(String key,
-							   Class<? extends Map> type,
-							   Class<K> keyType,
-							   Class<V> valueType,
-							   ObservableMap<K, V, M> observable) {
+	                           Class<? extends Map> type,
+	                           Class<K> keyType,
+	                           Class<V> valueType,
+	                           ObservableMap<K, V, M> observable,
+	                           boolean hidden) {
 		this.key = key;
 		this.mapType = (Class<M>) type;
 		this.keyType = keyType;
 		this.valueType = valueType;
 		this.observable = observable;
+		this.hidden = hidden;
 	}
 
 	@Nonnull
@@ -75,12 +96,18 @@ public class BasicMapConfigValue<K, V, M extends Map<K, V>> implements ConfigMap
 	}
 
 	@Override
+	public boolean isHidden() {
+		return hidden;
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
 		BasicMapConfigValue<?, ?, ?> that = (BasicMapConfigValue<?, ?, ?>) o;
 
+		if (hidden != that.hidden) return false;
 		if (!key.equals(that.key)) return false;
 		if (!keyType.equals(that.keyType)) return false;
 		if (!valueType.equals(that.valueType)) return false;
@@ -95,6 +122,7 @@ public class BasicMapConfigValue<K, V, M extends Map<K, V>> implements ConfigMap
 		result = 31 * result + valueType.hashCode();
 		result = 31 * result + mapType.hashCode();
 		result = 31 * result + observable.hashCode();
+		result = 31 * result + (hidden ? 1 : 0);
 		return result;
 	}
 
@@ -106,6 +134,7 @@ public class BasicMapConfigValue<K, V, M extends Map<K, V>> implements ConfigMap
 				", valueType=" + valueType +
 				", mapType=" + mapType +
 				", observable=" + observable +
+				", hidden=" + hidden +
 				'}';
 	}
 }

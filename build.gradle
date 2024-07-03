@@ -51,12 +51,10 @@ subprojects {
     }
 
     // Append options for unchecked/deprecation
-    gradle.projectsEvaluated {
-        tasks.withType(JavaCompile).configureEach {
-            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-            options.encoding = 'UTF-8'
-            options.incremental = true
-        }
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation' << '-g' << '-parameters'
+        options.encoding = 'UTF-8'
+        options.incremental = true
     }
 
     // Enable automatic generation of null checks on annotated methods

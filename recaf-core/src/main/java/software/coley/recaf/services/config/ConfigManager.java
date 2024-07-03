@@ -17,6 +17,7 @@ import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.config.ConfigCollectionValue;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
+import software.coley.recaf.config.RestoreAwareConfigContainer;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Tracker for all {@link ConfigContainer} instances.
@@ -40,7 +42,7 @@ public class ConfigManager implements Service {
 	public static final String SERVICE_ID = "config-manager";
 	private static final Logger logger = Logging.get(ConfigManager.class);
 	private final Map<String, ConfigContainer> containers = new TreeMap<>();
-	private final List<ManagedConfigListener> listeners = new ArrayList<>();
+	private final List<ManagedConfigListener> listeners = new CopyOnWriteArrayList<>();
 	private final ConfigManagerConfig config;
 	private final RecafDirectoriesConfig fileConfig;
 	private final GsonProvider gsonProvider;
@@ -101,8 +103,11 @@ public class ConfigManager implements Service {
 		for (ConfigContainer container : containers.values()) {
 			String key = container.getGroupAndId();
 			Path containerPath = fileConfig.getConfigDirectory().resolve(key + ".json");
-			if (!Files.exists(containerPath))
+			if (!Files.exists(containerPath)) {
+				if (container instanceof RestoreAwareConfigContainer listener)
+					listener.onNoRestore();
 				continue;
+			}
 
 			JsonObject json;
 			try (JsonReader reader = gson.newJsonReader(Files.newBufferedReader(containerPath))) {
@@ -127,6 +132,10 @@ public class ConfigManager implements Service {
 					logger.error("Failed to load config value: {}", id, e);
 				}
 			}
+
+			// Notify the container it has restored its config values from storage.
+			if (container instanceof RestoreAwareConfigContainer listener)
+				listener.onRestore();
 		}
 	}
 

@@ -37,9 +37,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manager for comment tracking on {@link ClassInfo} and {@link ClassMember} content in workspaces.
@@ -55,8 +57,8 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	private final Map<String, DelegatingWorkspaceComments> delegatingMap = new ConcurrentHashMap<>();
 	/** Map of workspace comment impls modeling only data. Used for persistence. */
 	private final Map<String, PersistWorkspaceComments> persistMap = new ConcurrentHashMap<>();
-	private final Set<CommentUpdateListener> commentUpdateListeners = new HashSet<>();
-	private final Set<CommentContainerListener> commentContainerListeners = new HashSet<>();
+	private final List<CommentUpdateListener> commentUpdateListeners = new CopyOnWriteArrayList<>();
+	private final List<CommentContainerListener> commentContainerListeners = new CopyOnWriteArrayList<>();
 	private final WorkspaceManager workspaceManager;
 	private final RecafDirectoriesConfig directoriesConfig;
 	private final CommentManagerConfig config;

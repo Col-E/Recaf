@@ -73,22 +73,27 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			for (Problem problem : problems) {
 				// Map level to graphic
 				ProblemLevel level = problem.getLevel();
+				Color levelColor = switch (level) {
+					case ERROR -> Color.RED;
+					case WARN -> Color.YELLOW;
+					default -> Color.TURQUOISE;
+				};
 				Node graphic = switch (level) {
-					case ERROR -> new FontIconView(CarbonIcons.ERROR, Color.RED);
-					case WARN -> new FontIconView(CarbonIcons.WARNING_ALT, Color.YELLOW);
-					default -> new FontIconView(CarbonIcons.INFORMATION, Color.TURQUOISE);
+					case ERROR -> new FontIconView(CarbonIcons.ERROR, levelColor);
+					case WARN -> new FontIconView(CarbonIcons.WARNING_ALT, levelColor);
+					default -> new FontIconView(CarbonIcons.INFORMATION, levelColor);
 				};
 
 				// Create 'N: Message' layout
 				//  - Exclude line number 'N' when line number is negative
 				Label messageLabel = new Label(problem.getMessage());
-				messageLabel.setTextFill(Color.RED);
+				messageLabel.setTextFill(levelColor);
 				messageLabel.setMaxWidth(Integer.MAX_VALUE);
 				int line = problem.getLine();
 				HBox problemBox;
 				if (line >= 0) {
 					Label lineLabel = new Label(String.valueOf(line), graphic);
-					lineLabel.setTextFill(Color.RED);
+					lineLabel.setTextFill(levelColor);
 					lineLabel.getStyleClass().add(Styles.TEXT_BOLD);
 					problemBox = new HBox(lineLabel, messageLabel);
 				} else {

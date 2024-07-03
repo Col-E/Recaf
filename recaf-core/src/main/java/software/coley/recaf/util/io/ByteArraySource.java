@@ -3,7 +3,9 @@ package software.coley.recaf.util.io;
 import jakarta.annotation.Nonnull;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
 import java.util.Arrays;
 
 /**
@@ -55,5 +57,11 @@ public final class ByteArraySource implements ByteSource {
 	@Override
 	public InputStream openStream() {
 		return new ByteArrayInputStream(bytes, off, len);
+	}
+
+	@Nonnull
+	@Override
+	public MemorySegment mmap() throws IOException {
+		return MemorySegment.ofArray(bytes).asSlice(off, len);
 	}
 }

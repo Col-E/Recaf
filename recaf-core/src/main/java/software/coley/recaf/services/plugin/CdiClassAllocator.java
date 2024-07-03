@@ -3,11 +3,8 @@ package software.coley.recaf.services.plugin;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.spi.CreationalContext;
-import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.spi.*;
 import jakarta.inject.Inject;
-import software.coley.recaf.Bootstrap;
-import software.coley.recaf.Recaf;
 import software.coley.recaf.plugin.AllocationException;
 import software.coley.recaf.plugin.ClassAllocator;
 
@@ -25,7 +22,7 @@ public class CdiClassAllocator implements ClassAllocator {
 	private final BeanManager beanManager;
 
 	@Inject
-	public CdiClassAllocator(BeanManager beanManager) {
+	public CdiClassAllocator(@Nonnull BeanManager beanManager) {
 		this.beanManager = beanManager;
 	}
 

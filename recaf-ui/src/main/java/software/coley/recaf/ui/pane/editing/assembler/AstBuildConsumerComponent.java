@@ -27,6 +27,8 @@ public abstract class AstBuildConsumerComponent extends ContextualAssemblerCompo
 	@Override
 	protected void onSelectClass(@Nonnull ClassInfo declared) {
 		currentClass = declared;
+		currentField = null;
+		currentMethod = null;
 		onClassSelected();
 	}
 

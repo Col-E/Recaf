@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableCell;
 import me.darknet.assembler.compile.analysis.Value;
+import software.coley.recaf.util.EscapeUtil;
 
 import java.util.Objects;
 
@@ -34,6 +35,8 @@ public class ValueTableCell<S> extends TableCell<S, ValueTableCell.ValueWrapper>
 	private void configureValue(@Nonnull ValueWrapper wrapper) {
 		Value value = wrapper.value;
 		String valueRep = value.valueAsString();
+		if (valueRep != null)
+			valueRep = EscapeUtil.escapeAll(valueRep);
 		setText(valueRep);
 
 		// If a prior frame/value exists, highlight changed items

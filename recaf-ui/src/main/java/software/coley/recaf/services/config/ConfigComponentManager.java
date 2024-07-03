@@ -8,12 +8,14 @@ import jakarta.inject.Inject;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import software.coley.recaf.config.ConfigContainer;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.pane.ConfigPane;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 /**
  * Manages which {@link ConfigComponentFactory} instances to use to create editor components in the {@link ConfigPane}
@@ -41,8 +43,8 @@ public class ConfigComponentManager implements Service {
 
 	@Inject
 	public ConfigComponentManager(@Nonnull ConfigComponentManagerConfig config,
-								  @Nonnull Instance<KeyedConfigComponentFactory<?>> keyedFactories,
-								  @Nonnull Instance<TypedConfigComponentFactory<?>> typedFactories) {
+	                              @Nonnull Instance<KeyedConfigComponentFactory<?>> keyedFactories,
+	                              @Nonnull Instance<TypedConfigComponentFactory<?>> typedFactories) {
 		this.config = config;
 
 		// Register implementations
@@ -54,12 +56,38 @@ public class ConfigComponentManager implements Service {
 
 	/**
 	 * @param id
-	 * 		A {@link ConfigValue#getId()}, used to create factories to generate components for a specific value.
+	 * 		The {@link ConfigContainer#getGroupAndId()} + {@link ConfigValue#getId()}, used to create factories to generate components for a specific value.
 	 * @param factory
 	 * 		Factory to generate components to support the given type.
+	 *
+	 * @see #register(ConfigContainer, String, boolean, BiFunction) Alternative for generating a {@link KeyedConfigComponentFactory}.
 	 */
-	public void register(@Nonnull String id, @Nonnull ConfigComponentFactory<?> factory) {
+	public void register(@Nonnull String id, @Nonnull KeyedConfigComponentFactory<?> factory) {
 		keyToConfigurator.put(id, factory);
+	}
+
+	/**
+	 * @param registeringContainer
+	 * 		The container holding the config value.
+	 * @param valueId
+	 * 		The {@link ConfigValue#getId() config value id} to register for.
+	 * @param standAlone
+	 * 		See {@link ConfigComponentFactory#isStandAlone()}.
+	 * @param factory
+	 * 		Function for the implementation of {@link KeyedConfigComponentFactory}.
+	 * @param <T>
+	 * 		Config value type.
+	 */
+	public <T> void register(@Nonnull ConfigContainer registeringContainer, @Nonnull String valueId, boolean standAlone,
+	                         @Nonnull BiFunction<ConfigContainer, ConfigValue<T>, Node> factory) {
+		String id = registeringContainer.getGroupAndId() + ConfigGroups.PACKAGE_SPLIT + valueId;
+		keyToConfigurator.put(id, new KeyedConfigComponentFactory<T>(standAlone, id) {
+			@Nonnull
+			@Override
+			public Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<T> value) {
+				return factory.apply(container, value);
+			}
+		});
 	}
 
 	/**
@@ -68,7 +96,7 @@ public class ConfigComponentManager implements Service {
 	 * @param factory
 	 * 		Factory to generate components to support the given type.
 	 */
-	public void register(@Nonnull Class<?> type, @Nonnull ConfigComponentFactory<?> factory) {
+	public void register(@Nonnull Class<?> type, @Nonnull TypedConfigComponentFactory<?> factory) {
 		typeToConfigurator.put(type, factory);
 	}
 
@@ -81,9 +109,9 @@ public class ConfigComponentManager implements Service {
 	 * @return Component factory for value.
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> ConfigComponentFactory<T> getFactory(@Nonnull ConfigValue<T> value) {
+	public <T> ConfigComponentFactory<T> getFactory(@Nonnull ConfigContainer container, @Nonnull ConfigValue<T> value) {
 		// Get factory for config value ID.
-		String id = value.getId();
+		String id = container.getGroupAndId() + ConfigGroups.PACKAGE_SPLIT + value.getId();
 		ConfigComponentFactory<?> factory = keyToConfigurator.get(id);
 		if (factory != null)
 			return (ConfigComponentFactory<T>) factory;

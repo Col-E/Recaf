@@ -1,10 +1,13 @@
 package software.coley.recaf.info.builder;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.BasicTextFileInfo;
-import software.coley.recaf.info.BasicZipFileInfo;
 import software.coley.recaf.info.TextFileInfo;
-import software.coley.recaf.info.ZipFileInfo;
+import software.coley.recaf.util.StringDecodingResult;
+
+import java.nio.charset.Charset;
+import java.util.Objects;
 
 /**
  * Builder for {@link TextFileInfo}.
@@ -16,12 +19,24 @@ public class TextFileInfoBuilder extends FileInfoBuilder<TextFileInfoBuilder> {
 		// empty
 	}
 
-	public TextFileInfoBuilder(TextFileInfo textInfo) {
+	public TextFileInfoBuilder(@Nonnull TextFileInfo textInfo) {
 		super(textInfo);
+		this.decodingResult = new StringDecodingResult(textInfo.getRawContent(), textInfo.getCharset(), textInfo.getText());
 	}
 
-	public TextFileInfoBuilder(FileInfoBuilder<?> other) {
+	public TextFileInfoBuilder(@Nonnull FileInfoBuilder<?> other, @Nonnull StringDecodingResult decodingResult) {
 		super(other);
+		this.decodingResult = decodingResult;
+	}
+
+	@Nonnull
+	public String getText() {
+		return Objects.requireNonNull(getDecodingResult().text(), "File '" + getName() + "' could not be decoded");
+	}
+
+	@Nonnull
+	public Charset getCharset() {
+		return Objects.requireNonNull(getDecodingResult().charset(), "File '" + getName() + "' could not be decoded");
 	}
 
 	@Nonnull

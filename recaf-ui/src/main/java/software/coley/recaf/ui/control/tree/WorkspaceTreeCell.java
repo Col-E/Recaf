@@ -2,9 +2,9 @@ package software.coley.recaf.ui.control.tree;
 
 import jakarta.annotation.Nonnull;
 import javafx.scene.control.TreeCell;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.context.ContextSource;
-import software.coley.recaf.path.PathNode;
 
 import java.util.function.Function;
 
@@ -24,7 +24,7 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 	 * 		Service to configure cell content.
 	 */
 	public WorkspaceTreeCell(@Nonnull ContextSource source,
-							 @Nonnull CellConfigurationService configurationService) {
+	                         @Nonnull CellConfigurationService configurationService) {
 		this(path -> source, configurationService);
 	}
 
@@ -35,7 +35,7 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 	 * 		Service to configure cell content.
 	 */
 	public WorkspaceTreeCell(@Nonnull Function<PathNode<?>, ContextSource> sourceFunc,
-							 @Nonnull CellConfigurationService configurationService) {
+	                         @Nonnull CellConfigurationService configurationService) {
 		this.sourceFunc = sourceFunc;
 		this.configurationService = configurationService;
 	}
@@ -43,10 +43,11 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 	@Override
 	protected void updateItem(PathNode<?> item, boolean empty) {
 		super.updateItem(item, empty);
-		if (empty || item == null) {
-			configurationService.reset(this);
-		} else {
-			configurationService.configure(this, item, sourceFunc.apply(item));
-		}
+
+		// Always reset the cell between item updates.
+		configurationService.reset(this);
+
+		// Apply new cell properties if the item is valid.
+		if (!empty && item != null) configurationService.configure(this, item, sourceFunc.apply(item));
 	}
 }

@@ -103,15 +103,22 @@ public interface Workspace extends Closing {
 	 * @param listener
 	 * 		Modification listener to add.
 	 */
-	void addWorkspaceModificationListener(WorkspaceModificationListener listener);
+	void addWorkspaceModificationListener(@Nonnull WorkspaceModificationListener listener);
 
 	/**
 	 * @param listener
 	 * 		Modification listener to remove.
 	 */
-	void removeWorkspaceModificationListener(WorkspaceModificationListener listener);
+	void removeWorkspaceModificationListener(@Nonnull WorkspaceModificationListener listener);
 
 	/**
+	 * Searches for a class by the given name in the following bundles:
+	 * <ol>
+	 *     <li>The {@link WorkspaceResource#getJvmClassBundle()}</li>
+	 *     <li>Each {@link WorkspaceResource#getVersionedJvmClassBundles()}</li>
+	 *     <li>Each {@link WorkspaceResource#getAndroidClassBundles()}</li>
+	 * </ol>
+	 *
 	 * @param name
 	 * 		Class name.
 	 *
@@ -128,6 +135,9 @@ public interface Workspace extends Closing {
 	}
 
 	/**
+	 * Searches for a class by the given name in the following bundle:
+	 * {@link WorkspaceResource#getJvmClassBundle()}
+	 *
 	 * @param name
 	 * 		Class name.
 	 *
@@ -145,6 +155,9 @@ public interface Workspace extends Closing {
 	}
 
 	/**
+	 * Searches for a class by the given name in the following bundle:
+	 * {@link WorkspaceResource#getVersionedJvmClassBundles()}
+	 *
 	 * @param name
 	 * 		Class name.
 	 *
@@ -157,6 +170,9 @@ public interface Workspace extends Closing {
 	}
 
 	/**
+	 * Searches for a class by the given name in the target version bundle within
+	 * {@link WorkspaceResource#getVersionedJvmClassBundles()}.
+	 *
 	 * @param name
 	 * 		Class name.
 	 * @param version
@@ -182,6 +198,9 @@ public interface Workspace extends Closing {
 	}
 
 	/**
+	 * Searches for a class by the given name in the following bundle:
+	 * {@link WorkspaceResource#getAndroidClassBundles()}
+	 *
 	 * @param name
 	 * 		Class name.
 	 *

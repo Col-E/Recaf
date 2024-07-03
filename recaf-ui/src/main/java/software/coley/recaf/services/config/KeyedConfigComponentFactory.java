@@ -1,5 +1,6 @@
 package software.coley.recaf.services.config;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.config.ConfigValue;
 
 /**
@@ -19,7 +20,7 @@ public abstract class KeyedConfigComponentFactory<T> extends ConfigComponentFact
 	 * @param id
 	 * 		Value of a {@link ConfigValue#getId()} to associate with.
 	 */
-	protected KeyedConfigComponentFactory(boolean standAlone, String id) {
+	protected KeyedConfigComponentFactory(boolean standAlone, @Nonnull String id) {
 		super(standAlone);
 		this.id = id;
 	}

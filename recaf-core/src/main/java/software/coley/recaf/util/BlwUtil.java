@@ -4,7 +4,7 @@ import dev.xdark.blw.asm.internal.Util;
 import dev.xdark.blw.code.Instruction;
 import dev.xdark.blw.code.instruction.*;
 import jakarta.annotation.Nonnull;
-import me.darknet.assembler.helper.Names;
+import me.darknet.assembler.helper.Variables;
 import me.darknet.assembler.printer.InstructionPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import org.objectweb.asm.tree.*;
@@ -55,7 +55,7 @@ public class BlwUtil {
 	public static String toString(@Nonnull AbstractInsnNode insn) {
 		PrintContext<?> ctx = new PrintContext<>("");
 		InstructionPrinter printer = new InstructionPrinter(ctx.code(),
-				null, new Names(Collections.emptyMap(), Collections.emptyList()),
+				null, new Variables(Collections.emptyNavigableMap(), Collections.emptyList()),
 				Collections.emptyMap()
 		);
 
@@ -90,6 +90,8 @@ public class BlwUtil {
 				printer.execute(constWrapped);
 			else if (wrapped instanceof PrimitiveConversionInstruction convWrapped)
 				printer.execute(convWrapped);
+			else if (wrapped instanceof SimpleInstruction simpleWrapped)
+				printer.execute(simpleWrapped);
 			else
 				printer.execute(wrapped);
 		} else if (insn instanceof InvokeDynamicInsnNode indy) {

@@ -5,15 +5,12 @@ import com.github.weisj.jsvg.parser.SVGLoader;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.scene.Node;
-import javafx.scene.image.Image;
 import javafx.scene.image.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -112,23 +109,6 @@ public class SVG {
 		g.dispose();
 
 		// Convert to FX compatible image
-		return new ImageView(convertToFxImage(image));
-	}
-
-	/**
-	 * @param image
-	 * 		Buffered image assumed to be in {@link BufferedImage#TYPE_INT_ARGB}.
-	 *
-	 * @return JavaFX image.
-	 *
-	 * @author <a href="https://stackoverflow.com/a/75703543">Kevin Bähre</a>
-	 */
-	@Nonnull
-	private static Image convertToFxImage(@Nonnull BufferedImage image) {
-		int[] type_int_agrb = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
-		IntBuffer buffer = IntBuffer.wrap(type_int_agrb);
-		PixelFormat<IntBuffer> pixelFormat = PixelFormat.getIntArgbPreInstance();
-		PixelBuffer<IntBuffer> pixelBuffer = new PixelBuffer<>(image.getWidth(), image.getHeight(), buffer, pixelFormat);
-		return new WritableImage(pixelBuffer);
+		return new ImageView(Icons.convertToFxImage(image));
 	}
 }

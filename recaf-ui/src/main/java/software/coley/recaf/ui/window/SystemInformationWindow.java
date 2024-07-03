@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.window;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.control.ScrollPane;
@@ -17,7 +18,7 @@ import software.coley.recaf.util.Lang;
 @Dependent
 public class SystemInformationWindow extends AbstractIdentifiableStage {
 	@Inject
-	public SystemInformationWindow(SystemInformationPane infoPane) {
+	public SystemInformationWindow(@Nonnull SystemInformationPane infoPane) {
 		super(WindowManager.WIN_INFO);
 
 		// Layout

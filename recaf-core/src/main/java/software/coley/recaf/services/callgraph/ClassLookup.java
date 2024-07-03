@@ -25,7 +25,9 @@ public class ClassLookup implements Function<String, JvmClassInfo> {
 
 	@Override
 	public JvmClassInfo apply(String name) {
+		if (name == null) return null;
 		ClassPathNode classPath = workspace.findJvmClass(name);
+		if (classPath == null) classPath = workspace.findLatestVersionedJvmClass(name);
 		if (classPath == null) return null;
 		return classPath.getValue().asJvmClass();
 	}

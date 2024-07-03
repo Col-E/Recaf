@@ -5,6 +5,7 @@ import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
+import software.coley.recaf.util.StringDecodingResult;
 import software.coley.recaf.util.StringUtil;
 
 /**
@@ -14,14 +15,12 @@ import software.coley.recaf.util.StringUtil;
  * 		Self type. Exists so implementations don't get stunted in their chaining.
  *
  * @author Matt Coley
- * @see ZipFileInfoBuilder
- * @see DexFileInfoBuilder
- * @see ModulesFileInfoBuilder
  */
 public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	private PropertyContainer properties = new BasicPropertyContainer();
 	private String name;
 	private byte[] rawContent;
+	protected StringDecodingResult decodingResult;
 
 	public FileInfoBuilder() {
 		// default
@@ -92,6 +91,7 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	@SuppressWarnings("unchecked")
 	public B withRawContent(@Nonnull byte[] rawContent) {
 		this.rawContent = rawContent;
+		decodingResult = null; // Clear decoding when content changes
 		return (B) this;
 	}
 
@@ -107,12 +107,22 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 		return rawContent;
 	}
 
+	/**
+	 * @return Computed string decoding result.
+	 */
+	@Nonnull
+	protected StringDecodingResult getDecodingResult() {
+		if (decodingResult == null)
+			decodingResult = StringUtil.decodeString(rawContent);
+		return decodingResult;
+	}
+
 	@Nonnull
 	public BasicFileInfo build() {
 		if (name == null) throw new IllegalArgumentException("Name is required");
 		if (rawContent == null) throw new IllegalArgumentException("Content is required");
-		if (StringUtil.isText(rawContent))
-			return new BasicTextFileInfo(this);
+		if (getDecodingResult().couldDecode())
+			return new TextFileInfoBuilder(this, getDecodingResult()).build();
 		else
 			return new BasicFileInfo(this);
 	}

@@ -19,6 +19,7 @@ import me.darknet.assembler.util.Location;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
+import software.coley.collections.box.Box;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
@@ -41,6 +42,8 @@ import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
+import software.coley.recaf.ui.pane.editing.SideTabs;
+import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.*;
 import software.coley.recaf.workspace.model.bundle.Bundle;
@@ -64,10 +67,10 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	private final AssemblerPipelineManager pipelineManager;
 	private final AssemblerToolTabs assemblerToolTabs;
+	private final SideTabsInjector sideTabsInjector;
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
 	private final AtomicBoolean updateLock = new AtomicBoolean();
-	private final Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider;
 	private AssemblerPipeline<? extends ClassInfo, ? extends ClassResult, ? extends ClassRepresentation> pipeline;
 	private ClassResult lastResult;
 	private ClassRepresentation lastAssembledClassRepresentation;
@@ -83,10 +86,10 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull AssemblerContextActionSupport contextActionSupport,
 	                     @Nonnull SearchBar searchBar,
 	                     @Nonnull KeybindingConfig keys,
-	                     @Nonnull Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider) {
+	                     @Nonnull SideTabsInjector sideTabsInjector) {
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
-		this.fieldsAndMethodsPaneProvider = fieldsAndMethodsPaneProvider;
+		this.sideTabsInjector = sideTabsInjector;
 
 		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
@@ -131,26 +134,19 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * Sets up {@link FieldsAndMethodsPane} as a side-tab and sets up notifications for {@link AssemblerToolTabs}
 	 * and its children when the selected {@link ClassMember} in the {@link #lastConcreteAst} changes.
 	 *
-	 * @param classPathNode
+	 * @param classPath
 	 * 		The given path.
 	 */
-	private void lateInitForClass(@Nonnull ClassPathNode classPathNode) {
-		// Show declared fields/methods
-		FieldsAndMethodsPane fieldsAndMethodsPane = fieldsAndMethodsPaneProvider.get();
-		fieldsAndMethodsPane.setupSelectionNavigationListener(this);
-		addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
-				Icons.getIconView(Icons.FIELD_N_METHOD),
-				fieldsAndMethodsPane
-		));
-		fieldsAndMethodsPane.onUpdatePath(classPathNode);
-
+	private void lateInitForClass(@Nonnull ClassPathNode classPath) {
 		// Since the content displayed is for a whole class, and the tool tabs are scoped to a method, we need to
 		// update them when a method is selected. We do so by tracking the caret position for being within the
 		// range of one of the methods in the last AST model.
+		Box<PathNode<?>> lastPathBox = new Box<>();
+		Box<ClassResult> lastResultBox = new Box<>();
 		editor.getCaretPosEventStream().addObserver(e -> {
 			if (lastConcreteAst == null)
 				return;
-			ClassInfo declaringClass = classPathNode.getValue();
+			ClassInfo declaringClass = classPath.getValue();
 			int caret = editor.getCodeArea().getCaretPosition();
 			for (ASTElement root : lastConcreteAst) {
 				if (root instanceof ASTClass astClass) {
@@ -168,13 +164,25 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							continue;
 						}
 
+						PathNode<?> prior = lastPathBox.get();
 						if (classMember != null) {
-							ClassMemberPathNode memberPath = classPathNode.child(classMember);
-							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
+							ClassMemberPathNode memberPath = classPath.child(classMember);
+							if (!Objects.equals(prior, memberPath)) {
+								lastPathBox.set(memberPath);
+								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
+							}
 						} else {
-							eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(classPathNode));
+							if (!Objects.equals(prior, classPath)) {
+								lastPathBox.set(classPath);
+								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(classPath));
+							}
 						}
-						eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
+
+						ClassResult oldResult = lastResultBox.get();
+						if (oldResult != lastResult) {
+							lastResultBox.set(lastResult);
+							eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
+						}
 						return;
 					}
 				}
@@ -182,7 +190,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		});
 
 		// Common init
-		assemblerToolTabs.onUpdatePath(classPathNode);
+		assemblerToolTabs.onUpdatePath(classPath);
 		lateInit();
 	}
 
@@ -273,7 +281,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 		// Update the path and call any path listeners.
 		this.path = path;
-		pathUpdateListeners.forEach(listener -> listener.accept(path));
+		CollectionUtil.safeForEach(pathUpdateListeners, listener -> listener.accept(path),
+				(listener, t) -> logger.error("Exception thrown when handling assembler-pane path update callback", t));
 
 		// Update UI state.
 		if (!updateLock.get()) {
@@ -465,7 +474,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					 */
 
 					eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(result, lastAssembledClass));
-				}).ifErr(errors -> processErrors(errors, ProblemPhase.BUILD));
+				}).ifErr(errors -> processErrors(errors, ProblemPhase.BUILD))
+						.ifWarn(warns -> processErrors(warns, ProblemLevel.WARN, ProblemPhase.BUILD));
 			} catch (Throwable ex) {
 				logger.error("Uncaught exception when assembling contents of {}", path, ex);
 				FxThreadUtil.run(() -> Animations.animateFailure(editor, 1000));
@@ -504,11 +514,25 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * 		Phase the problems belong to.
 	 */
 	private void processErrors(@Nonnull Collection<Error> errors, @Nonnull ProblemPhase phase) {
+		processErrors(errors, ProblemLevel.ERROR, phase);
+	}
+
+	/**
+	 * Add the given errors to {@link #problemTracking} and refresh the UI.
+	 *
+	 * @param errors
+	 * 		Problems to add.
+	 * @param level
+	 * 		Severity level of problems.
+	 * @param phase
+	 * 		Phase the problems belong to.
+	 */
+	private void processErrors(@Nonnull Collection<? extends Error> errors, @Nonnull ProblemLevel level, @Nonnull ProblemPhase phase) {
 		for (Error error : errors) {
 			Location location = error.getLocation();
 			int line = location == null ? 1 : location.line();
 			int column = location == null ? 1 : location.column();
-			Problem problem = new Problem(line, column, ProblemLevel.ERROR, phase, error.getMessage());
+			Problem problem = new Problem(line, column, level, phase, error.getMessage());
 			problemTracking.add(problem);
 
 			// REMOVE IS TRACING PARSER ERRORS

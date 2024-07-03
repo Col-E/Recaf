@@ -42,6 +42,7 @@ public class FileTypeAssociationServiceConfig extends BasicConfigContainer imple
 				new Pair<>("jasm", "jasm"),
 				new Pair<>("xml", "xml"),
 				new Pair<>("html", "xml"),
+				new Pair<>("svg", "xml"),
 				new Pair<>("enigma", "enigma")
 		));
 		addValue(new BasicMapConfigValue<>("extensions-to-langs", Map.class, String.class, String.class, extensionsToLangKeys));

@@ -4,17 +4,12 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import javafx.scene.control.Label;
-import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.ui.config.ClassEditingConfig;
-import software.coley.recaf.ui.control.BoundTab;
-import software.coley.recaf.ui.control.IconView;
 import software.coley.recaf.ui.pane.editing.ClassPane;
-import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
-import software.coley.recaf.ui.pane.editing.tabs.InheritancePane;
-import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Lang;
+import software.coley.recaf.ui.pane.editing.SideTabsInjector;
+import software.coley.recaf.ui.pane.editing.binary.HexAdapter;
+import software.coley.recaf.ui.pane.editing.hex.HexConfig;
 
 /**
  * Displays {@link JvmClassInfo} in a configurable manner.
@@ -24,16 +19,18 @@ import software.coley.recaf.util.Lang;
 @Dependent
 public class JvmClassPane extends ClassPane {
 	private final Instance<JvmDecompilerPane> decompilerProvider;
+	private final HexConfig hexConfig;
 	private JvmClassEditorType editorType;
 
 	@Inject
 	public JvmClassPane(@Nonnull ClassEditingConfig config,
-						@Nonnull FieldsAndMethodsPane fieldsAndMethodsPane,
-						@Nonnull InheritancePane inheritancePane,
-						@Nonnull Instance<JvmDecompilerPane> decompilerProvider) {
+	                    @Nonnull HexConfig hexConfig,
+	                    @Nonnull SideTabsInjector sideTabsInjector,
+	                    @Nonnull Instance<JvmDecompilerPane> decompilerProvider) {
+		sideTabsInjector.injectLater(this);
+		this.hexConfig = hexConfig;
 		editorType = config.getDefaultJvmEditor().getValue();
 		this.decompilerProvider = decompilerProvider;
-		configureCommonSideTabs(fieldsAndMethodsPane, inheritancePane);
 	}
 
 	/**
@@ -67,7 +64,7 @@ public class JvmClassPane extends ClassPane {
 		JvmClassEditorType type = getEditorType();
 		switch (type) {
 			case DECOMPILE -> setDisplay(decompilerProvider.get());
-			case HEX -> setDisplay(new Label("TODO: Hex")); // TODO: Implement hex UI component
+			case HEX -> setDisplay(new HexAdapter(hexConfig));
 			default -> throw new IllegalStateException("Unknown editor type: " + type.name());
 		}
 	}

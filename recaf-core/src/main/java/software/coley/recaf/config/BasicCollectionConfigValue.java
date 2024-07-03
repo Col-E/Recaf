@@ -60,11 +60,6 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 		this.hidden = hidden;
 	}
 
-	@Override
-	public boolean isHidden() {
-		return hidden;
-	}
-
 	@Nonnull
 	@Override
 	public String getId() {
@@ -86,6 +81,11 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 	@Override
 	public ObservableCollection<T, C> getObservable() {
 		return observable;
+	}
+
+	@Override
+	public boolean isHidden() {
+		return hidden;
 	}
 
 	@Override

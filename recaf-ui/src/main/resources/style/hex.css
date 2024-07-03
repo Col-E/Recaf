@@ -1,0 +1,30 @@
+/* Set common text color/family for all child nodes */
+.hex-view {
+    -fx-text-fill: -color-base-3;
+    -fx-font-family: 'JetBrains Mono';
+}
+
+/* Labels with data equal to '0' will have a slightly faded display */
+.hex-view .label:zero {
+    -fx-text-fill: -color-fg-muted;
+}
+.hex-view .label:edited {
+    -fx-text-fill: -color-danger-5;
+}
+.hex-view .label:selected {
+    -fx-text-fill: -color-accent-3;
+}
+
+.hex-view .header {
+    -fx-padding: 1 0 1 0;
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: -color-border-default;
+    -fx-border-width: 0 0 1 0;
+}
+
+.hex-view .text-field {
+    -fx-padding: 0;
+    -fx-margin: 0;
+    -fx-background-color: -color-bg-inset;
+    -fx-highlight-fill: -color-accent-5;
+}

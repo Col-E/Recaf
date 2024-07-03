@@ -18,6 +18,7 @@
 *.yaml          text eol=lf
 *.yml           text eol=lf
 *.toml          text eol=lf
+*.lang          text eol=lf
 
 # These files are binary and should be left untouched
 *.png           binary

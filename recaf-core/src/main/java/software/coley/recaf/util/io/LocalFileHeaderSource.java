@@ -52,6 +52,12 @@ public final class LocalFileHeaderSource implements ByteSource {
 		return ByteSources.forMemorySegment(decompress()).openStream();
 	}
 
+	@Nonnull
+	@Override
+	public MemorySegment mmap() throws IOException {
+		return decompress();
+	}
+
 	/**
 	 * @return {@code true} when the data length of the content is 0.
 	 *

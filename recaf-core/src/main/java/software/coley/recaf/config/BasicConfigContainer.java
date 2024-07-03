@@ -34,16 +34,19 @@ public class BasicConfigContainer implements ConfigContainer {
 		configMap.put(value.getId(), value);
 	}
 
+	@Nonnull
 	@Override
 	public String getGroup() {
 		return group;
 	}
 
+	@Nonnull
 	@Override
 	public String getId() {
 		return id;
 	}
 
+	@Nonnull
 	@Override
 	public Map<String, ConfigValue<?>> getValues() {
 		return configMap;

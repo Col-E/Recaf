@@ -11,7 +11,7 @@ import java.util.Collection;
  *
  * @author Amejonah
  */
-interface MethodVertex {
+public interface MethodVertex {
 	/**
 	 * @return Basic method details.
 	 */

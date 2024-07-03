@@ -80,6 +80,7 @@ public class Menus {
 		Menu menu = new Menu();
 		menu.textProperty().bind(Lang.getBinding(textKey));
 		menu.setGraphic(graphic);
+		menu.setId(textKey);
 		return menu;
 	}
 
@@ -127,6 +128,7 @@ public class Menus {
 		Menu menu = new Menu();
 		menu.textProperty().bind(Lang.getBinding(textKey));
 		menu.setGraphic(graphic);
+		menu.setId(textKey);
 		return menu;
 	}
 
@@ -162,7 +164,7 @@ public class Menus {
 								  @Nonnull Runnable runnable, boolean antialias) {
 		Node graphic = imagePath == null ? null :
 				antialias ? Icons.getScaledIconView(imagePath) : Icons.getIconView(imagePath);
-		return new ActionMenu(Lang.getBinding(textKey), graphic, runnable);
+		return new ActionMenu(Lang.getBinding(textKey), graphic, runnable).withId(textKey);
 	}
 
 	/**
@@ -258,7 +260,7 @@ public class Menus {
 	 */
 	@Nonnull
 	public static ActionMenuItem action(@Nonnull String textKey, @Nullable Node graphic, @Nonnull Runnable runnable) {
-		return action(Lang.getBinding(textKey), graphic, runnable);
+		return action(Lang.getBinding(textKey), graphic, runnable).withId(textKey);
 	}
 
 	/**

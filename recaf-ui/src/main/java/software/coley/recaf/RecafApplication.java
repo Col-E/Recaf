@@ -12,8 +12,12 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.cdi.UiInitializationEvent;
 import software.coley.recaf.services.window.WindowManager;
+import software.coley.recaf.services.workspace.WorkspaceCloseListener;
+import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.ui.RecafTheme;
 import software.coley.recaf.ui.config.KeybindingConfig;
+import software.coley.recaf.ui.config.WindowScaleConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
@@ -26,9 +30,6 @@ import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.services.workspace.WorkspaceCloseListener;
-import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -73,6 +74,7 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 		workspaceManager.addWorkspaceCloseListener(this);
 
 		// Display
+		WindowScaleConfig scaleConfig = recaf.get(WindowScaleConfig.class);
 		Scene scene = new RecafScene(wrapper);
 		scene.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent event) -> {
 			// Global keybind handling
@@ -82,8 +84,8 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 				quickNav.requestFocus();
 			}
 		});
-		stage.setMinWidth(900);
-		stage.setMinHeight(600);
+		stage.setMinWidth(900 / scaleConfig.getScale());
+		stage.setMinHeight(600 / scaleConfig.getScale());
 		stage.setScene(scene);
 		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		stage.setTitle("Recaf");

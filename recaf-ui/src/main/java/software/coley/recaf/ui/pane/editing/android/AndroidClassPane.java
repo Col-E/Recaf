@@ -5,16 +5,10 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.scene.control.Label;
-import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.ui.config.ClassEditingConfig;
-import software.coley.recaf.ui.control.BoundTab;
-import software.coley.recaf.ui.control.IconView;
 import software.coley.recaf.ui.pane.editing.ClassPane;
-import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
-import software.coley.recaf.ui.pane.editing.tabs.InheritancePane;
-import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Lang;
+import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 
 /**
  * Displays {@link AndroidClassInfo} in a configurable manner.
@@ -28,12 +22,11 @@ public class AndroidClassPane extends ClassPane {
 
 	@Inject
 	public AndroidClassPane(@Nonnull ClassEditingConfig config,
-							@Nonnull FieldsAndMethodsPane fieldsAndMethodsPane,
-							@Nonnull InheritancePane inheritancePane,
+							@Nonnull SideTabsInjector sideTabsInjector,
 							@Nonnull Instance<AndroidDecompilerPane> decompilerProvider) {
+		sideTabsInjector.injectLater(this);
 		editorType = config.getDefaultAndroidEditor().getValue();
 		this.decompilerProvider = decompilerProvider;
-		configureCommonSideTabs(fieldsAndMethodsPane, inheritancePane);
 	}
 
 	/**

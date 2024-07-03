@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.pane;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Insets;
@@ -38,7 +39,7 @@ public class SystemInformationPane extends GridPane {
 	private static final int SEP_SIZE = 2;
 
 	@Inject
-	public SystemInformationPane(RecafDirectoriesConfig directories) {
+	public SystemInformationPane(@Nonnull RecafDirectoriesConfig directories) {
 		Path baseDir = directories.getBaseDirectory();
 
 		// Grid config
@@ -118,9 +119,11 @@ public class SystemInformationPane extends GridPane {
 	public String buildClipboard() {
 		// Data collection
 		Map<String, Map<String, String>> data = new LinkedHashMap<>();
+
 		// Current section title/map
 		String currentSection = null;
 		Map<String, String> currentMap = null;
+
 		// Current section key
 		boolean labelIsKey = true;
 		String currentKey = null;
@@ -146,6 +149,8 @@ public class SystemInformationPane extends GridPane {
 				labelIsKey = !labelIsKey;
 			}
 		}
+		data.put(currentSection, currentMap); // Add dangling map
+
 		// Put to string
 		StringBuilder sb = new StringBuilder();
 		data.forEach((section, map) -> {

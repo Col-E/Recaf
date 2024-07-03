@@ -1,5 +1,7 @@
 package software.coley.recaf.ui.control;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -36,5 +38,17 @@ public class ActionMenu extends Menu {
 
 		setGraphic(pane);
 		pane.setOnMousePressed(e -> action.run());
+	}
+
+	/**
+	 * @param id
+	 * 		ID to assign.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public ActionMenu withId(@Nullable String id) {
+		setId(id);
+		return this;
 	}
 }

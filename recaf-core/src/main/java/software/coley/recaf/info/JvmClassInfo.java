@@ -95,7 +95,7 @@ public interface JvmClassInfo extends ClassInfo {
 						String methodDesc = reader.readUTF8(offset, buffer);
 						if (methodDesc.isEmpty() || methodDesc.charAt(0) != '(')
 							continue;
-						addType(Type.getMethodType(methodDesc), classNames);
+						addMethodType(Type.getMethodType(methodDesc), classNames);
 					}
 				} catch (Throwable ignored) {
 					// Exists only to catch situations where obfuscators put unused junk pool entries
@@ -137,6 +137,8 @@ public interface JvmClassInfo extends ClassInfo {
 			return;
 		if (className.indexOf(0) == '[' || className.charAt(className.length() - 1) == ';')
 			addType(Type.getType(className), classNames);
+		else if (className.indexOf(0) == '(')
+			addMethodType(Type.getMethodType(className), classNames);
 		else
 			classNames.add(className);
 	}

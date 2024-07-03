@@ -11,15 +11,17 @@ import software.coley.recaf.cdi.InitializationStage;
 import software.coley.recaf.launch.LaunchArguments;
 import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.launch.LaunchHandler;
-import software.coley.recaf.plugin.Plugin;
 import software.coley.recaf.plugin.PluginContainer;
+import software.coley.recaf.plugin.PluginException;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginManager;
+import software.coley.recaf.services.plugin.discovery.DirectoryPluginDiscoverer;
 import software.coley.recaf.services.script.ScriptEngine;
-import software.coley.recaf.util.JFXValidation;
-import software.coley.recaf.util.Lang;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.io.ResourceImporter;
+import software.coley.recaf.ui.config.WindowScaleConfig;
+import software.coley.recaf.util.JFXValidation;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 
 import java.io.File;
@@ -105,8 +107,21 @@ public class Main {
 			initTranslations();
 			initPlugins();
 			fireInitEvent();
+			initScale(); // Needs to init after the init-event so config is loaded
 			RecafApplication.launch(RecafApplication.class, launchArgs.getArgs());
 		}
+	}
+
+	/**
+	 * Assigns UI scaling properties based on the window scale config.
+	 */
+	private static void initScale() {
+		WindowScaleConfig scaleConfig = recaf.get(WindowScaleConfig.class);
+
+		double scale = scaleConfig.getScale();
+		System.setProperty("sun.java2d.uiScale", String.format("%.0f%%", 100 * scale));
+		System.setProperty("glass.win.uiScale", String.valueOf(scale));
+		System.setProperty("glass.gtk.uiScale", String.valueOf(scale));
 	}
 
 	/**
@@ -177,19 +192,26 @@ public class Main {
 	 * Load plugins.
 	 */
 	private static void initPlugins() {
-		// Plugin loading is handled in the implementation's @PostConstruct handler
 		PluginManager pluginManager = recaf.get(PluginManager.class);
 
+		// Load from the plugin directory
+		try {
+			Path pluginDirectory = recaf.get(RecafDirectoriesConfig.class).getPluginDirectory();
+			pluginManager.loadPlugins(new DirectoryPluginDiscoverer(pluginDirectory));
+		} catch (PluginException ex) {
+			logger.error("Failed to initialize plugins", ex);
+		}
+
 		// Log the discovered plugins
-		Collection<PluginContainer<? extends Plugin>> plugins = pluginManager.getPlugins();
+		Collection<PluginContainer<?>> plugins = pluginManager.getPlugins();
 		if (plugins.isEmpty()) {
 			logger.info("Initialization: No plugins found");
 		} else {
 			String split = "\n - ";
 			logger.info("Initialization: {} plugins found:" + split + "{}",
 					plugins.size(),
-					plugins.stream().map(PluginContainer::getInformation)
-							.map(info -> info.getName() + " - " + info.getVersion())
+					plugins.stream().map(PluginContainer::info)
+							.map(info -> info.name() + " - " + info.version())
 							.collect(Collectors.joining(split)));
 		}
 	}

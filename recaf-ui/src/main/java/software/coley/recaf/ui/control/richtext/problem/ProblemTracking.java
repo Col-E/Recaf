@@ -13,6 +13,7 @@ import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.util.CollectionUtil;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -23,7 +24,7 @@ import java.util.function.Predicate;
  */
 public class ProblemTracking implements EditorComponent, Consumer<PlainTextChange> {
 	private static final DebuggingLogger logger = Logging.get(ProblemTracking.class);
-	private final List<ProblemInvalidationListener> listeners = new ArrayList<>();
+	private final List<ProblemInvalidationListener> listeners = new CopyOnWriteArrayList<>();
 	private final NavigableMap<Integer, Problem> problems = new TreeMap<>();
 	private Editor editor;
 

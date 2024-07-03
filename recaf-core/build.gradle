@@ -30,6 +30,7 @@ dependencies {
     api(libs.llzip)
     api(libs.bundles.logging)
     api(libs.mapping.io)
+    api(libs.natural.order)
     api(libs.picocli)
     api(libs.procyon)
     api(libs.jackson)

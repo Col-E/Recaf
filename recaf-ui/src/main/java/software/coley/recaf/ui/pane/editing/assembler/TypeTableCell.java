@@ -2,6 +2,7 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import dev.xdark.blw.type.*;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.scene.Node;
 import javafx.scene.control.TableCell;
 import javafx.scene.input.MouseButton;
@@ -13,6 +14,8 @@ import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.util.UUID;
+
 /**
  * Cell for rendering {@link ClassType}.
  *
@@ -22,6 +25,8 @@ import software.coley.recaf.workspace.model.Workspace;
  * @author Matt Coley
  */
 public class TypeTableCell<S> extends TableCell<S, ClassType> {
+	/** Special value used to represent null types. Randomized to prevent abuse. */
+	static final ClassType NULL_TYPE = Types.instanceTypeFromInternalName(UUID.randomUUID().toString());
 	private final CellConfigurationService cellConfigurationService;
 	private final TextFormatConfig formatConfig;
 	private final Workspace workspace;
@@ -59,12 +64,12 @@ public class TypeTableCell<S> extends TableCell<S, ClassType> {
 	}
 
 	@Nonnull
-	private CellData getTypeData(@Nonnull ClassType type) {
+	private CellData getTypeData(@Nullable ClassType type) {
 		Node graphic;
 		String text;
 		ContextMenuProvider contextSupplier = null;
 		boolean disabled = false;
-		if (type == AnalysisUtils.NULL) {
+		if (type == NULL_TYPE || type == null) {
 			graphic = Icons.getIconView(Icons.UNINITIALIZED);
 			text = "null";
 		} else if (type == Types.VOID || type == Types.BOX_VOID) {

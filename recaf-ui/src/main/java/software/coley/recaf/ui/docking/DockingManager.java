@@ -28,10 +28,10 @@ public class DockingManager {
 	private final DockingRegionFactory factory = new DockingRegionFactory(this);
 	private final DockingRegion primaryRegion;
 	private final List<DockingRegion> regions = new CopyOnWriteArrayList<>();
-	private final List<TabSelectionListener> tabSelectionListeners = new ArrayList<>();
-	private final List<TabCreationListener> tabCreationListeners = new ArrayList<>();
-	private final List<TabClosureListener> tabClosureListeners = new ArrayList<>();
-	private final List<TabMoveListener> tabMoveListeners = new ArrayList<>();
+	private final List<TabSelectionListener> tabSelectionListeners = new CopyOnWriteArrayList <>();
+	private final List<TabCreationListener> tabCreationListeners = new CopyOnWriteArrayList <>();
+	private final List<TabClosureListener> tabClosureListeners = new CopyOnWriteArrayList <>();
+	private final List<TabMoveListener> tabMoveListeners = new CopyOnWriteArrayList <>();
 
 	@Inject
 	public DockingManager() {

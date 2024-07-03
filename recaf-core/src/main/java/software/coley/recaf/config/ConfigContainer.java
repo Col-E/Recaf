@@ -1,5 +1,6 @@
 package software.coley.recaf.config;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Map;
@@ -22,6 +23,7 @@ public interface ConfigContainer {
 	 *
 	 * @see ConfigGroups For constant values.
 	 */
+	@Nonnull
 	String getGroup();
 
 	/**
@@ -30,11 +32,13 @@ public interface ConfigContainer {
 	 *
 	 * @return Unique ID of this container.
 	 */
+	@Nonnull
 	String getId();
 
 	/**
 	 * @return Combined {@link #getGroup()} and {@link #getId()}.
 	 */
+	@Nonnull
 	default String getGroupAndId() {
 		return getGroup() + PACKAGE_SPLIT + getId();
 	}
@@ -42,6 +46,7 @@ public interface ConfigContainer {
 	/**
 	 * @return Values in the container.
 	 */
+	@Nonnull
 	Map<String, ConfigValue<?>> getValues();
 
 	/**
@@ -50,6 +55,7 @@ public interface ConfigContainer {
 	 *
 	 * @return Full path, scoped to this container.
 	 */
+	@Nonnull
 	default String getScopedId(ConfigValue<?> value) {
 		return getGroupAndId() + PACKAGE_SPLIT + value.getId();
 	}

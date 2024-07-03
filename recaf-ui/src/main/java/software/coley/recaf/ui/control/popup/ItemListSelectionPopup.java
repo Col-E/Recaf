@@ -63,6 +63,10 @@ public class ItemListSelectionPopup<T> extends SelectionPopup<T> {
 				}
 			}
 		});
+
+		// Initial selection if there is only one item.
+		// Allows the user to jump straight to accept/cancel buttons.
+		if (items.size() == 1) list.getSelectionModel().selectFirst();
 	}
 
 	@Nonnull

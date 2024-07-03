@@ -18,6 +18,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.Accessed;
 import software.coley.recaf.info.ClassInfo;
@@ -175,7 +176,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 				// Then by alphabetic order.
 				if (result == 0 && sortAlphabetically.get()) {
 					if (valueA instanceof Named namedA && valueB instanceof Named namedB) {
-						result = String.CASE_INSENSITIVE_ORDER.compare(namedA.getName(), namedB.getName());
+						result = CaseInsensitiveSimpleNaturalComparator.getInstance().compare(namedA.getName(), namedB.getName());
 					}
 				}
 

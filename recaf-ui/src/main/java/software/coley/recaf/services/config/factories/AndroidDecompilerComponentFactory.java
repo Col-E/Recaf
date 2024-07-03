@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.Node;
 import software.coley.recaf.config.ConfigContainer;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.decompile.Decompiler;
 import software.coley.recaf.services.decompile.DecompilerManager;
@@ -25,7 +26,7 @@ public class AndroidDecompilerComponentFactory extends KeyedConfigComponentFacto
 
 	@Inject
 	public AndroidDecompilerComponentFactory(DecompilerManager decompilerManager) {
-		super(false, DecompilerManagerConfig.KEY_PREF_ANDROID_DECOMPILER);
+		super(false, id(decompilerManager.getServiceConfig()));
 		decompilers = decompilerManager.getAndroidDecompilers().stream()
 				.map(Decompiler::getName)
 				.toList();
@@ -35,5 +36,10 @@ public class AndroidDecompilerComponentFactory extends KeyedConfigComponentFacto
 	@Override
 	public Node create(@Nonnull ConfigContainer container, @Nonnull ConfigValue<String> value) {
 		return new ObservableComboBox<>(value.getObservable(), decompilers);
+	}
+
+	@Nonnull
+	private static String id(@Nonnull ConfigContainer container) {
+		return container.getGroupAndId() + ConfigGroups.PACKAGE_SPLIT + DecompilerManagerConfig.KEY_PREF_ANDROID_DECOMPILER;
 	}
 }

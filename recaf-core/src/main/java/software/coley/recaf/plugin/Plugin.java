@@ -2,6 +2,7 @@ package software.coley.recaf.plugin;
 
 /**
  * Base interface that all plugins must inherit from.
+ * Classes that implement this type should also be annotated with {@link PluginInformation}.
  *
  * @author xDark
  */
