@@ -11,11 +11,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.ui.pane.editing.hex.HexConfig;
 import software.coley.recaf.ui.pane.editing.hex.HexUtil;
 import software.coley.recaf.ui.pane.editing.hex.ops.HexAccess;
 import software.coley.recaf.ui.pane.editing.hex.ops.HexOperations;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.ArrayList;
@@ -156,7 +156,7 @@ public class HexRow implements Cell<Integer, Node> {
 	 * 		Target selection offset.
 	 */
 	public void updateSelection(int offset) {
-		CollectionUtil.safeForEach(layout.getChildren(), child -> {
+		Unchecked.checkedForEach(layout.getChildren(), child -> {
 			boolean hexColumn = ops.navigation().isHexColumnSelected();
 			if (hexColumn && child instanceof EditableHexCell cell) {
 				boolean match = cell.offset() == offset;
@@ -202,7 +202,7 @@ public class HexRow implements Cell<Integer, Node> {
 				cell.onSelectionLost();
 			}
 		};
-		CollectionUtil.safeForEach(layout.getChildren(), child -> {
+		Unchecked.checkedForEach(layout.getChildren(), child -> {
 			boolean hexColumn = ops.navigation().isHexColumnSelected();
 			if (hexColumn && child instanceof EditableHexCell cell) {
 				action.accept(cell);
@@ -227,7 +227,7 @@ public class HexRow implements Cell<Integer, Node> {
 				cell.handleKeyCode(code);
 			}
 		};
-		CollectionUtil.safeForEach(layout.getChildren(), child -> {
+		Unchecked.checkedForEach(layout.getChildren(), child -> {
 			boolean hexColumn = ops.navigation().isHexColumnSelected();
 			if (hexColumn && child instanceof EditableHexCell cell) {
 				action.accept(cell);

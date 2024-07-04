@@ -4,13 +4,12 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.ui.dnd.DragAndDrop;
 import software.coley.recaf.ui.docking.listener.TabClosureListener;
 import software.coley.recaf.ui.docking.listener.TabCreationListener;
 import software.coley.recaf.ui.docking.listener.TabMoveListener;
 import software.coley.recaf.ui.docking.listener.TabSelectionListener;
-import software.coley.recaf.util.CollectionUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,10 +27,10 @@ public class DockingManager {
 	private final DockingRegionFactory factory = new DockingRegionFactory(this);
 	private final DockingRegion primaryRegion;
 	private final List<DockingRegion> regions = new CopyOnWriteArrayList<>();
-	private final List<TabSelectionListener> tabSelectionListeners = new CopyOnWriteArrayList <>();
-	private final List<TabCreationListener> tabCreationListeners = new CopyOnWriteArrayList <>();
-	private final List<TabClosureListener> tabClosureListeners = new CopyOnWriteArrayList <>();
-	private final List<TabMoveListener> tabMoveListeners = new CopyOnWriteArrayList <>();
+	private final List<TabSelectionListener> tabSelectionListeners = new CopyOnWriteArrayList<>();
+	private final List<TabCreationListener> tabCreationListeners = new CopyOnWriteArrayList<>();
+	private final List<TabClosureListener> tabClosureListeners = new CopyOnWriteArrayList<>();
+	private final List<TabMoveListener> tabMoveListeners = new CopyOnWriteArrayList<>();
 
 	@Inject
 	public DockingManager() {
@@ -81,7 +80,8 @@ public class DockingManager {
 	/**
 	 * Package-private so {@link DockingRegion#DockingRegion(DockingManager)} has access.
 	 *
-	 * @param region Region to register.
+	 * @param region
+	 * 		Region to register.
 	 */
 	void registerRegion(@Nonnull DockingRegion region) {
 		if (!regions.contains(region))
@@ -132,7 +132,7 @@ public class DockingManager {
 	 * 		Tab created.
 	 */
 	void onTabCreate(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
-		CollectionUtil.safeForEach(tabCreationListeners, listener -> listener.onCreate(parent, tab),
+		Unchecked.checkedForEach(tabCreationListeners, listener -> listener.onCreate(parent, tab),
 				(listener, t) -> logger.error("Exception thrown when opening tab '{}'", tab.getText(), t));
 	}
 
@@ -145,7 +145,7 @@ public class DockingManager {
 	 * 		Tab created.
 	 */
 	void onTabClose(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
-		CollectionUtil.safeForEach(tabClosureListeners, listener -> listener.onClose(parent, tab),
+		Unchecked.checkedForEach(tabClosureListeners, listener -> listener.onClose(parent, tab),
 				(listener, t) -> logger.error("Exception thrown when closing tab '{}'", tab.getText(), t));
 	}
 
@@ -161,7 +161,7 @@ public class DockingManager {
 	 * 		Tab created.
 	 */
 	void onTabMove(@Nonnull DockingRegion oldRegion, @Nonnull DockingRegion newRegion, @Nonnull DockingTab tab) {
-		CollectionUtil.safeForEach(tabMoveListeners, listener -> listener.onMove(oldRegion, newRegion, tab),
+		Unchecked.checkedForEach(tabMoveListeners, listener -> listener.onMove(oldRegion, newRegion, tab),
 				(listener, t) -> logger.error("Exception thrown when moving tab '{}'", tab.getText(), t));
 	}
 
@@ -174,7 +174,7 @@ public class DockingManager {
 	 * 		Tab created.
 	 */
 	void onTabSelection(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
-		CollectionUtil.safeForEach(tabSelectionListeners, listener -> listener.onSelection(parent, tab),
+		Unchecked.checkedForEach(tabSelectionListeners, listener -> listener.onSelection(parent, tab),
 				(listener, t) -> logger.error("Exception thrown when selecting tab '{}'", tab.getText(), t));
 	}
 

@@ -5,9 +5,9 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.util.CollectionUtil;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -63,10 +63,10 @@ public class SnippetManager implements Service {
 		Snippet old = config.getSnippets().put(name, snippet);
 		if (snippet.equals(old)) return;
 		if (old == null)
-			CollectionUtil.safeForEach(listeners, listener -> listener.onSnippetAdded(snippet),
+			Unchecked.checkedForEach(listeners, listener -> listener.onSnippetAdded(snippet),
 					(listener, t) -> logger.error("Exception thrown when registering snippet '{}'", name, t));
 		else
-			CollectionUtil.safeForEach(listeners, listener -> listener.onSnippetModified(old, snippet),
+			Unchecked.checkedForEach(listeners, listener -> listener.onSnippetModified(old, snippet),
 					(listener, t) -> logger.error("Exception thrown when updating snippet '{}'", name, t));
 	}
 
@@ -89,7 +89,7 @@ public class SnippetManager implements Service {
 	public void removeSnippet(@Nonnull String name) {
 		Snippet removed = config.getSnippets().remove(name);
 		if (removed != null)
-			CollectionUtil.safeForEach(listeners, listener -> listener.onSnippetRemoved(removed),
+			Unchecked.checkedForEach(listeners, listener -> listener.onSnippetRemoved(removed),
 					(listener, t) -> logger.error("Exception thrown when removing snippet '{}'", name, t));
 	}
 

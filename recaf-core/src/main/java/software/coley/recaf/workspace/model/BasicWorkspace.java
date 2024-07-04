@@ -2,10 +2,10 @@ package software.coley.recaf.workspace.model;
 
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -76,7 +76,7 @@ public class BasicWorkspace implements Workspace {
 	@Override
 	public void addSupportingResource(@Nonnull WorkspaceResource resource) {
 		supporting.add(resource);
-		CollectionUtil.safeForEach(modificationListeners, listener -> listener.onAddLibrary(this, resource),
+		Unchecked.checkedForEach(modificationListeners, listener -> listener.onAddLibrary(this, resource),
 				(listener, t) -> logger.error("Exception thrown when adding supporting resource", t));
 	}
 
@@ -84,7 +84,7 @@ public class BasicWorkspace implements Workspace {
 	public boolean removeSupportingResource(@Nonnull WorkspaceResource resource) {
 		boolean remove = supporting.remove(resource);
 		if (remove) {
-			CollectionUtil.safeForEach(modificationListeners, listener -> listener.onRemoveLibrary(this, resource),
+			Unchecked.checkedForEach(modificationListeners, listener -> listener.onRemoveLibrary(this, resource),
 					(listener, t) -> logger.error("Exception thrown when removing supporting resource", t));
 		}
 		return remove;

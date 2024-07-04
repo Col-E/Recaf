@@ -5,13 +5,12 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -77,13 +76,13 @@ public class MappingListeners implements Service {
 		return new MappingApplicationListener() {
 			@Override
 			public void onPreApply(@Nonnull MappingResults mappingResults) {
-				CollectionUtil.safeForEach(listeners, listener -> listener.onPreApply(mappingResults),
+				Unchecked.checkedForEach(listeners, listener -> listener.onPreApply(mappingResults),
 						(listener, t) -> logger.error("Exception thrown before applying mappings", t));
 			}
 
 			@Override
 			public void onPostApply(@Nonnull MappingResults mappingResults) {
-				CollectionUtil.safeForEach(listeners, listener -> listener.onPostApply(mappingResults),
+				Unchecked.checkedForEach(listeners, listener -> listener.onPostApply(mappingResults),
 						(listener, t) -> logger.error("Exception thrown after applying mappings", t));
 			}
 		};

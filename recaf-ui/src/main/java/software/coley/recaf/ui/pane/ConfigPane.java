@@ -16,13 +16,13 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.collections.Lists;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.config.*;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.util.CollectionUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -53,8 +53,8 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 
 	@Inject
 	public ConfigPane(@Nonnull ConfigManager configManager,
-					  @Nonnull ConfigComponentManager componentManager,
-					  @Nonnull ConfigIconManager iconManager) {
+	                  @Nonnull ConfigComponentManager componentManager,
+	                  @Nonnull ConfigIconManager iconManager) {
 		this.componentManager = componentManager;
 		this.iconManager = iconManager;
 		configManager.addManagedConfigListener(this);
@@ -188,7 +188,7 @@ public class ConfigPane extends SplitPane implements ManagedConfigListener {
 					List<String> childrenNames = currentItem.getChildren().stream()
 							.map(TreeItem::getValue)
 							.toList();
-					int insertIndex = CollectionUtil.sortedInsertIndex(childrenNames, currentPackage);
+					int insertIndex = Lists.sortedInsertIndex(childrenNames, currentPackage);
 					currentItem.getChildren().add(insertIndex, child);
 				} else {
 					// Exit, cannot find item

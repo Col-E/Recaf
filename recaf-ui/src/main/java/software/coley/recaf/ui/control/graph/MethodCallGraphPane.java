@@ -15,6 +15,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.collections.Lists;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
@@ -33,7 +34,6 @@ import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
@@ -290,7 +290,7 @@ public class MethodCallGraphPane extends BorderPane implements ClassNavigable, U
 								})
 								.filter(i -> {
 									if (i.getValue() == null) return false;
-									int insert = CollectionUtil.sortedInsertIndex(Unchecked.cast(item.getChildren()), i);
+									int insert = Lists.sortedInsertIndex(Unchecked.cast(item.getChildren()), i);
 									item.getChildren().add(insert, i);
 									return !i.recursive;
 								}).collect(Collectors.toList());

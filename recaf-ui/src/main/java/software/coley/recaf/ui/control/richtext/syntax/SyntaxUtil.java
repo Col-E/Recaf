@@ -6,12 +6,13 @@ import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.slf4j.Logger;
+import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.IntRange;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static java.lang.Math.*;
@@ -69,8 +70,8 @@ public class SyntaxUtil {
 			IntRange startMarker = new IntRange(changeStart - 1, changeStart);
 			IntRange endMarker = new IntRange(changeEnd - 1, changeEnd);
 			int searchEnd = topLevelSpanRanges.size() - 1;
-			int startIndex = abs(CollectionUtil.binarySearch(topLevelSpanRanges, startMarker));
-			int endIndex = abs(CollectionUtil.binarySearch(topLevelSpanRanges, endMarker, startIndex, searchEnd));
+			int startIndex = abs(Lists.binarySearch(topLevelSpanRanges, startMarker));
+			int endIndex = abs(Lists.binarySearch(topLevelSpanRanges, endMarker, startIndex, searchEnd));
 
 			// Normalize binary search results.
 			int size = topLevelSpanRanges.size() - 1;

@@ -4,8 +4,8 @@ import jakarta.annotation.Nonnull;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.Ikon;
+import software.coley.collections.Lists;
 import software.coley.recaf.services.cell.context.ContextSource;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.Lang;
 
 import java.util.List;
@@ -56,6 +56,6 @@ public record ItemSink(@Nonnull List<MenuItem> target, @Nonnull ContextSource so
 		}
 
 		// Not allowed, create dummy that never appends anything.
-		return new ItemSink(CollectionUtil.noopList(), source);
+		return new ItemSink(Lists.noopList(), source);
 	}
 }

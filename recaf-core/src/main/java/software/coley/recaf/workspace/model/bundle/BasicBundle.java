@@ -2,9 +2,9 @@ package software.coley.recaf.workspace.model.bundle;
 
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
-import software.coley.recaf.util.CollectionUtil;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -123,7 +123,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 		backing.put(key, priorItem);
 
 		// Notify listeners
-		CollectionUtil.safeForEach(listeners, listener -> listener.onUpdateItem(key, currentItem, priorItem),
+		Unchecked.checkedForEach(listeners, listener -> listener.onUpdateItem(key, currentItem, priorItem),
 				(listener, t) -> logger.error("Exception thrown when decrementing bundle history", t));
 	}
 
@@ -171,7 +171,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	public I put(@Nonnull String key, @Nonnull I newValue) {
 		I oldValue = backing.put(key, newValue);
 		// Notify listeners
-		CollectionUtil.safeForEach(listeners, listener -> {
+		Unchecked.checkedForEach(listeners, listener -> {
 			if (oldValue == null) {
 				listener.onNewItem(key, newValue);
 			} else {
@@ -193,7 +193,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 		I info = backing.remove(key);
 		if (info != null) {
 			// Notify listeners
-			CollectionUtil.safeForEach(listeners, listener -> listener.onRemoveItem((String) key, info),
+			Unchecked.checkedForEach(listeners, listener -> listener.onRemoveItem((String) key, info),
 					(listener, t) -> logger.error("Exception thrown when removing bundle item", t));
 
 			// Update history

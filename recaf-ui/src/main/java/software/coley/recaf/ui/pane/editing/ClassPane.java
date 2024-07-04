@@ -1,7 +1,7 @@
 package software.coley.recaf.ui.pane.editing;
 
 import jakarta.annotation.Nonnull;
-import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
@@ -13,14 +13,8 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
-import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
-import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
-import software.coley.recaf.ui.pane.editing.tabs.InheritancePane;
-import software.coley.recaf.util.CollectionUtil;
-import software.coley.recaf.util.Icons;
-import software.coley.recaf.util.Lang;
 
 /**
  * Common outline for displaying {@link ClassInfo} content.
@@ -52,7 +46,7 @@ public abstract class ClassPane extends AbstractContentPane<ClassPathNode> imple
 		// Update if class has changed.
 		if (path instanceof ClassPathNode classPath) {
 			this.path = classPath;
-			CollectionUtil.safeForEach(pathUpdateListeners, listener -> listener.accept(classPath),
+			Unchecked.checkedForEach(pathUpdateListeners, listener -> listener.accept(classPath),
 					(listener, t) -> logger.error("Exception thrown when handling class-pane path update callback", t));
 
 			// Initialize UI if it has not been done yet.

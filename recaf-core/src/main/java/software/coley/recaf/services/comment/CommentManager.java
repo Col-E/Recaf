@@ -11,6 +11,7 @@ import org.davidmoten.text.utils.WordWrap;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.info.ClassInfo;
@@ -28,7 +29,6 @@ import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.json.GsonProvider;
 import software.coley.recaf.services.mapping.*;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TestEnvironment;
 import software.coley.recaf.workspace.model.Workspace;
@@ -36,10 +36,8 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -336,31 +334,31 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 
 	@Override
 	public void onClassCommentUpdated(@Nonnull ClassPathNode path, @Nullable String comment) {
-		CollectionUtil.safeForEach(commentUpdateListeners, listener -> listener.onClassCommentUpdated(path, comment),
+		Unchecked.checkedForEach(commentUpdateListeners, listener -> listener.onClassCommentUpdated(path, comment),
 				(listener, t) -> logger.error("Exception thrown when updating class comment", t));
 	}
 
 	@Override
 	public void onFieldCommentUpdated(@Nonnull ClassMemberPathNode path, @Nullable String comment) {
-		CollectionUtil.safeForEach(commentUpdateListeners, listener -> listener.onFieldCommentUpdated(path, comment),
+		Unchecked.checkedForEach(commentUpdateListeners, listener -> listener.onFieldCommentUpdated(path, comment),
 				(listener, t) -> logger.error("Exception thrown when updating field comment", t));
 	}
 
 	@Override
 	public void onMethodCommentUpdated(@Nonnull ClassMemberPathNode path, @Nullable String comment) {
-		CollectionUtil.safeForEach(commentUpdateListeners, listener -> listener.onMethodCommentUpdated(path, comment),
+		Unchecked.checkedForEach(commentUpdateListeners, listener -> listener.onMethodCommentUpdated(path, comment),
 				(listener, t) -> logger.error("Exception thrown when updating method comment", t));
 	}
 
 	@Override
 	public void onClassContainerCreated(@Nonnull ClassPathNode path, @Nullable ClassComments comments) {
-		CollectionUtil.safeForEach(commentContainerListeners, listener -> listener.onClassContainerCreated(path, comments),
+		Unchecked.checkedForEach(commentContainerListeners, listener -> listener.onClassContainerCreated(path, comments),
 				(listener, t) -> logger.error("Exception thrown when creating class comment container", t));
 	}
 
 	@Override
 	public void onClassContainerRemoved(@Nonnull ClassPathNode path, @Nullable ClassComments comments) {
-		CollectionUtil.safeForEach(commentContainerListeners, listener -> listener.onClassContainerRemoved(path, comments),
+		Unchecked.checkedForEach(commentContainerListeners, listener -> listener.onClassContainerRemoved(path, comments),
 				(listener, t) -> logger.error("Exception thrown when removing class comment container", t));
 	}
 

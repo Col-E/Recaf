@@ -8,6 +8,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.collections.observable.ObservableList;
 import software.coley.instrument.BuildConfig;
 import software.coley.instrument.Client;
@@ -17,7 +18,6 @@ import software.coley.instrument.message.MessageFactory;
 import software.coley.instrument.sock.SocketAvailability;
 import software.coley.instrument.util.Discovery;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.DevDetection;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
@@ -323,7 +323,7 @@ public class BasicAttachManager implements AttachManager {
 			}
 
 			// Call listeners
-			CollectionUtil.safeForEach(postScanListeners, listener -> listener.onScanCompleted(toAdd, toRemove),
+			Unchecked.checkedForEach(postScanListeners, listener -> listener.onScanCompleted(toAdd, toRemove),
 					(listener, t) -> logger.error("Exception thrown after scan completion", t));
 		});
 	}

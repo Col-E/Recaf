@@ -23,6 +23,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.collections.Lists;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.assembler.Snippet;
 import software.coley.recaf.services.assembler.SnippetListener;
@@ -39,7 +40,6 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.util.Animations;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.Lang;
 
 import java.util.Collection;
@@ -253,7 +253,7 @@ public class SnippetsPane extends StackPane implements SnippetListener, Navigabl
 
 	@Override
 	public void onSnippetAdded(@Nonnull Snippet snippet) {
-		int index = CollectionUtil.sortedInsertIndex(Snippet.NAME_COMPARATOR, snippetList, snippet);
+		int index = Lists.sortedInsertIndex(Snippet.NAME_COMPARATOR, snippetList, snippet);
 		snippetList.add(index, snippet);
 	}
 

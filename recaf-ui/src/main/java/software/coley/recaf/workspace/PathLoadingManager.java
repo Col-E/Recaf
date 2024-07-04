@@ -4,10 +4,10 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.io.ResourceImporter;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
@@ -72,7 +72,7 @@ public class PathLoadingManager {
 	public CompletableFuture<Workspace> asyncNewWorkspace(@Nonnull Path primaryPath, @Nonnull List<Path> supportingPaths,
 	                                                      @Nonnull Consumer<Throwable> errorHandling) {
 		// Invoke listeners, new content is being loaded.
-		CollectionUtil.safeForEach(preLoadListeners,
+		Unchecked.checkedForEach(preLoadListeners,
 				listener -> listener.onPreLoad(primaryPath, supportingPaths),
 				(listener, t) -> logger.error("Exception thrown opening workspace from '{}'", primaryPath, t));
 

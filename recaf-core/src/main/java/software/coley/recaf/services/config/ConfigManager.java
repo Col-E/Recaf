@@ -12,6 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.config.ConfigCollectionValue;
@@ -22,7 +23,6 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.json.GsonProvider;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.util.TestEnvironment;
 
 import java.io.IOException;
@@ -172,7 +172,7 @@ public class ConfigManager implements Service {
 		containers.put(id, container);
 
 		// Alert listeners when content added
-		CollectionUtil.safeForEach(listeners, listener -> listener.onRegister(container),
+		Unchecked.checkedForEach(listeners, listener -> listener.onRegister(container),
 				(listener, t) -> logger.error("Exception thrown when registering container '{}'", container.getId(), t));
 	}
 
@@ -185,7 +185,7 @@ public class ConfigManager implements Service {
 
 		// Alert listeners when content removed
 		if (removed != null) {
-			CollectionUtil.safeForEach(listeners, listener -> listener.onUnregister(container),
+			Unchecked.checkedForEach(listeners, listener -> listener.onUnregister(container),
 					(listener, t) -> logger.error("Exception thrown when unregistering container '{}'", container.getId(), t));
 		}
 	}

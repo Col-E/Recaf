@@ -6,11 +6,11 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
 import org.fxmisc.richtext.model.TwoDimensional;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
-import software.coley.recaf.util.CollectionUtil;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -45,7 +45,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 */
 	public void add(@Nonnull Problem problem) {
 		problems.put(problem.getLine(), problem);
-		CollectionUtil.safeForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
+		Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 				(listener, t) -> logger.error("Exception thrown when adding problem to tracking", t));
 	}
 
@@ -59,7 +59,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	public boolean removeByInstance(@Nonnull Problem problem) {
 		boolean updated = problems.entrySet().removeIf(p -> p.getValue() == problem);
 		if (updated)
-			CollectionUtil.safeForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
+			Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 					(listener, t) -> logger.error("Exception thrown when removing problem from tracking", t));
 		return updated;
 	}
@@ -74,7 +74,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	public boolean removeByLine(int line) {
 		boolean updated = problems.remove(line) != null;
 		if (updated)
-			CollectionUtil.safeForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
+			Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 					(listener, t) -> logger.error("Exception thrown when removing problem from tracking", t));
 		return updated;
 	}
@@ -88,7 +88,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	public boolean removeByPhase(@Nonnull ProblemPhase phase) {
 		boolean updated = problems.entrySet().removeIf(e -> e.getValue().getPhase() == phase);
 		if (updated)
-			CollectionUtil.safeForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
+			Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 					(listener, t) -> logger.error("Exception thrown when removing problem from tracking", t));
 		return updated;
 	}
@@ -98,7 +98,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 */
 	public void clear() {
 		problems.clear();
-		CollectionUtil.safeForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
+		Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 				(listener, t) -> logger.error("Exception thrown when clearing problems from tracking", t));
 	}
 

@@ -2,19 +2,22 @@ package software.coley.recaf.workspace.model.resource;
 
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BundleListener;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -115,19 +118,19 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		bundle.addBundleListener(new BundleListener<>() {
 			@Override
 			public void onNewItem(@Nonnull String key, @Nonnull JvmClassInfo cls) {
-				CollectionUtil.safeForEach(jvmClassListeners, listener -> listener.onNewClass(resource, bundle, cls),
+				Unchecked.checkedForEach(jvmClassListeners, listener -> listener.onNewClass(resource, bundle, cls),
 						(listener, t) -> logger.error("Exception thrown when adding class", t));
 			}
 
 			@Override
 			public void onUpdateItem(@Nonnull String key, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
-				CollectionUtil.safeForEach(jvmClassListeners, listener -> listener.onUpdateClass(resource, bundle, oldCls, newCls),
+				Unchecked.checkedForEach(jvmClassListeners, listener -> listener.onUpdateClass(resource, bundle, oldCls, newCls),
 						(listener, t) -> logger.error("Exception thrown when updating class", t));
 			}
 
 			@Override
 			public void onRemoveItem(@Nonnull String key, @Nonnull JvmClassInfo cls) {
-				CollectionUtil.safeForEach(jvmClassListeners, listener -> listener.onRemoveClass(resource, bundle, cls),
+				Unchecked.checkedForEach(jvmClassListeners, listener -> listener.onRemoveClass(resource, bundle, cls),
 						(listener, t) -> logger.error("Exception thrown when removing class", t));
 			}
 		});
@@ -145,19 +148,19 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		bundle.addBundleListener(new BundleListener<>() {
 			@Override
 			public void onNewItem(@Nonnull String key, @Nonnull AndroidClassInfo cls) {
-				CollectionUtil.safeForEach(androidClassListeners, listener -> listener.onNewClass(resource, bundle, cls),
+				Unchecked.checkedForEach(androidClassListeners, listener -> listener.onNewClass(resource, bundle, cls),
 						(listener, t) -> logger.error("Exception thrown when adding class", t));
 			}
 
 			@Override
 			public void onUpdateItem(@Nonnull String key, @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls) {
-				CollectionUtil.safeForEach(androidClassListeners, listener -> listener.onUpdateClass(resource, bundle, oldCls, newCls),
+				Unchecked.checkedForEach(androidClassListeners, listener -> listener.onUpdateClass(resource, bundle, oldCls, newCls),
 						(listener, t) -> logger.error("Exception thrown when updating class", t));
 			}
 
 			@Override
 			public void onRemoveItem(@Nonnull String key, @Nonnull AndroidClassInfo cls) {
-				CollectionUtil.safeForEach(androidClassListeners, listener -> listener.onRemoveClass(resource, bundle, cls),
+				Unchecked.checkedForEach(androidClassListeners, listener -> listener.onRemoveClass(resource, bundle, cls),
 						(listener, t) -> logger.error("Exception thrown when removing class", t));
 			}
 		});
@@ -175,19 +178,19 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		bundle.addBundleListener(new BundleListener<>() {
 			@Override
 			public void onNewItem(@Nonnull String key, @Nonnull FileInfo file) {
-				CollectionUtil.safeForEach(fileListeners, listener -> listener.onNewFile(resource, bundle, file),
+				Unchecked.checkedForEach(fileListeners, listener -> listener.onNewFile(resource, bundle, file),
 						(listener, t) -> logger.error("Exception thrown when adding file", t));
 			}
 
 			@Override
 			public void onUpdateItem(@Nonnull String key, @Nonnull FileInfo oldFile, @Nonnull FileInfo newFile) {
-				CollectionUtil.safeForEach(fileListeners, listener -> listener.onUpdateFile(resource, bundle, oldFile, newFile),
+				Unchecked.checkedForEach(fileListeners, listener -> listener.onUpdateFile(resource, bundle, oldFile, newFile),
 						(listener, t) -> logger.error("Exception thrown when updating file", t));
 			}
 
 			@Override
 			public void onRemoveItem(@Nonnull String key, @Nonnull FileInfo file) {
-				CollectionUtil.safeForEach(fileListeners, listener -> listener.onRemoveFile(resource, bundle, file),
+				Unchecked.checkedForEach(fileListeners, listener -> listener.onRemoveFile(resource, bundle, file),
 						(listener, t) -> logger.error("Exception thrown when removing file", t));
 			}
 		});

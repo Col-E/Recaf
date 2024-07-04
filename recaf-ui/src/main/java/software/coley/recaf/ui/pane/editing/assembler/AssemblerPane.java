@@ -281,7 +281,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 		// Update the path and call any path listeners.
 		this.path = path;
-		CollectionUtil.safeForEach(pathUpdateListeners, listener -> listener.accept(path),
+		Unchecked.checkedForEach(pathUpdateListeners, listener -> listener.accept(path),
 				(listener, t) -> logger.error("Exception thrown when handling assembler-pane path update callback", t));
 
 		// Update UI state.

@@ -6,14 +6,13 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.util.CollectionUtil;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -51,13 +50,13 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 		Workspace currentWorkspace = current;
 		if (currentWorkspace != null) {
 			currentWorkspace.close();
-			CollectionUtil.safeForEach(closeListeners, listener -> listener.onWorkspaceClosed(currentWorkspace),
+			Unchecked.checkedForEach(closeListeners, listener -> listener.onWorkspaceClosed(currentWorkspace),
 					(listener, t) -> logger.error("Exception thrown when closing workspace", t));
 		}
 		current = workspace;
 		if (workspace != null) {
 			defaultModificationListeners.forEach(workspace::addWorkspaceModificationListener);
-			CollectionUtil.safeForEach(openListeners, listener -> listener.onWorkspaceOpened(workspace),
+			Unchecked.checkedForEach(openListeners, listener -> listener.onWorkspaceOpened(workspace),
 					(listener, t) -> logger.error("Exception thrown by when opening workspace", t));
 		}
 	}
