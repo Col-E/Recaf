@@ -43,9 +43,9 @@ public class RegexSyntaxHighlighter extends AbstractSyntaxHighlighter {
 			StyleSpansBuilder<Collection<String>> builder = new StyleSpansBuilder<>();
 			region.visitBuilder(builder);
 			return builder.create();
-		} catch (RuntimeException ex) {
-			logger.error("Error creating style spans for text", ex);
-			throw ex;
+		} catch (Throwable t) {
+			logger.error("Error creating style spans for text", t);
+			throw t;
 		}
 	}
 
