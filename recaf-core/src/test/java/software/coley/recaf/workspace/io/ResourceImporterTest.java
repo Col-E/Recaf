@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.io;
 
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.FileInfo;
@@ -15,6 +16,7 @@ import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -23,9 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.nio.file.Paths;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -449,5 +450,40 @@ class ResourceImporterTest {
 		assertEquals(timeCreate, ZipCreationTimeProperty.get(fileInfo), "Missing creation time");
 		assertEquals(timeModify, ZipModificationTimeProperty.get(fileInfo), "Missing modification time");
 		assertEquals(timeAccess, ZipAccessTimeProperty.get(fileInfo), "Missing access time");
+	}
+
+	/**
+	 * There's a lombok fabric mod which bundles some classes with tampered names. The file contents are normal classes.
+	 * When we re-export the workspace we need to ensure the classes are written back to where they originally came from.
+	 */
+	@Test
+	void testLombokOddBehavior() throws IOException {
+		byte[] inputZipBytes = Files.readAllBytes(Paths.get("src/testFixtures/resources/lombok-sample.jar"));
+		WorkspaceResource resource = importer.importResource(ByteSources.wrap(inputZipBytes));
+		BasicWorkspace workspace = new BasicWorkspace(resource);
+
+
+		// Export the workspace
+		Set<String> paths = new TreeSet<>();
+		new WorkspaceExportOptions(WorkspaceOutputType.DIRECTORY, new WorkspaceExportConsumer() {
+			@Override
+			public void write(@Nonnull byte[] bytes) {
+				throw new RuntimeException("Should not be invoked in directory output type");
+			}
+
+			@Override
+			public void writeRelative(@Nonnull String relative, @Nonnull byte[] bytes) {
+				paths.add(relative);
+			}
+
+			@Override
+			public void commit() {
+				// no-op
+			}
+		}).create().export(workspace);
+
+		// Verify the paths match the input names
+		assertTrue(paths.contains("SCL.lombok/org/objectweb/asm/Constants.SCL.lombok"),
+				"Lombok's bundled ASM classes not written to expected path");
 	}
 }

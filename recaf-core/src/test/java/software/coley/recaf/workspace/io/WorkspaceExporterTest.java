@@ -36,15 +36,15 @@ class WorkspaceExporterTest {
 
 	@Test
 	void testFileExportDoesNotTamperResourceModel() throws IOException {
-		test(WorkspaceExportOptions.OutputType.FILE);
+		test(WorkspaceOutputType.FILE);
 	}
 
 	@Test
 	void testDirectoryExportDoesNotTamperResourceModel() throws IOException {
-		test(WorkspaceExportOptions.OutputType.DIRECTORY);
+		test(WorkspaceOutputType.DIRECTORY);
 	}
 
-	private static void test(WorkspaceExportOptions.OutputType outputType) throws IOException {
+	private static void test(WorkspaceOutputType outputType) throws IOException {
 		// Create test ZIP in memory
 		byte[] embeddedZipBytes = ZipCreationUtils.createSingleEntryZip("inside.txt", new byte[0]);
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
@@ -74,7 +74,7 @@ class WorkspaceExporterTest {
 				break;
 		}
 
-		WorkspaceExportOptions options = new WorkspaceExportOptions(outputType, temp);
+		WorkspaceExportOptions options = new WorkspaceExportOptions(outputType, new PathWorkspaceExportConsumer(temp));
 		options.setCreateZipDirEntries(true);
 		options.setBundleSupporting(false);
 		WorkspaceExporter exporter = options.create();

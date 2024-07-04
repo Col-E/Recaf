@@ -15,11 +15,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.zip.DeflaterOutputStream;
 
@@ -32,20 +30,20 @@ import static software.coley.lljzip.format.compression.ZipCompressions.STORED;
  * @author Matt Coley
  */
 public class WorkspaceExportOptions {
-	private final CompressType compressType;
-	private final OutputType outputType;
-	private final Path path;
+	private final WorkspaceCompressType compressType;
+	private final WorkspaceOutputType outputType;
+	private final WorkspaceExportConsumer consumer;
 	private boolean bundleSupporting;
 	private boolean createZipDirEntries;
 
 	/**
 	 * @param outputType
 	 * 		Type of output for contents.
-	 * @param path
-	 * 		Path to write to.
+	 * @param consumer
+	 * 		Consumer to write to.
 	 */
-	public WorkspaceExportOptions(@Nonnull OutputType outputType, @Nonnull Path path) {
-		this(CompressType.MATCH_ORIGINAL, outputType, path);
+	public WorkspaceExportOptions(@Nonnull WorkspaceOutputType outputType, @Nonnull WorkspaceExportConsumer consumer) {
+		this(WorkspaceCompressType.MATCH_ORIGINAL, outputType, consumer);
 	}
 
 	/**
@@ -53,13 +51,14 @@ public class WorkspaceExportOptions {
 	 * 		Compression option for contents exported.
 	 * @param outputType
 	 * 		Type of output for contents.
-	 * @param path
-	 * 		Path to write to.
+	 * @param consumer
+	 * 		Consumer to write to.
 	 */
-	public WorkspaceExportOptions(@Nonnull CompressType compressType, @Nonnull OutputType outputType, @Nonnull Path path) {
+	public WorkspaceExportOptions(@Nonnull WorkspaceCompressType compressType, @Nonnull WorkspaceOutputType outputType,
+	                              @Nonnull WorkspaceExportConsumer consumer) {
 		this.compressType = compressType;
 		this.outputType = outputType;
-		this.path = path;
+		this.consumer = consumer;
 	}
 
 	/**
@@ -85,45 +84,6 @@ public class WorkspaceExportOptions {
 	@Nonnull
 	public WorkspaceExporter create() {
 		return new WorkspaceExporterImpl();
-	}
-
-	/**
-	 * Compression option for ZIP/JAR outputs.
-	 */
-	public enum CompressType {
-		/**
-		 * Match the original compression of a {@link Info} item by checking {@link ZipCompressionProperty}.
-		 * When unknown, defaults to enabling compression.
-		 */
-		MATCH_ORIGINAL,
-		/**
-		 * Compress items only when if it will yield more compact data.
-		 * Some smaller files do not compress well due to the overhead cost of the compression.
-		 */
-		SMART,
-		/**
-		 * Compress all items in the output.
-		 */
-		ALWAYS,
-		/**
-		 * Do not compress any items in the output.
-		 */
-		NEVER,
-	}
-
-	/**
-	 * Output option between single files and directories.
-	 */
-	public enum OutputType {
-		/**
-		 * Output to a single file. The type of which is determined by the primary resource's
-		 * {@link WorkspaceFileResource#getFileInfo()} if available. Otherwise, defaults to ZIP/JAR.
-		 */
-		FILE,
-		/**
-		 * Output to a directory.
-		 */
-		DIRECTORY
 	}
 
 	/**
@@ -165,24 +125,21 @@ public class WorkspaceExportOptions {
 
 					// Write buffer to path
 					if (prefix != null) {
-						Files.write(path, prefix);
-						Files.write(path, zipBuilder.bytes(), StandardOpenOption.APPEND);
+						consumer.write(prefix);
+						consumer.write(zipBuilder.bytes());
 					} else {
-						Files.write(path, zipBuilder.bytes());
+						consumer.write(zipBuilder.bytes());
 					}
+					consumer.commit();
 					break;
 				case DIRECTORY:
 					for (Map.Entry<String, byte[]> entry : contents.entrySet()) {
 						// Write everything relative to the path
 						String relativePath = entry.getKey();
 						byte[] content = entry.getValue();
-						Path destination = path.resolve(relativePath);
-						Path parent = destination.getParent();
-						if (Files.isDirectory(path)) {
-							Files.createDirectories(parent);
-						}
-						Files.write(destination, content);
+						consumer.writeRelative(relativePath, content);
 					}
+					consumer.commit();
 					break;
 			}
 		}
@@ -219,7 +176,11 @@ public class WorkspaceExportOptions {
 			// Place classes into map
 			resource.jvmClassBundleStream().forEach(bundle -> {
 				for (JvmClassInfo classInfo : bundle) {
-					String key = classInfo.getName() + ".class";
+					String pathPrefix = PathPrefixProperty.get(classInfo);
+					String pathSuffix = Objects.requireNonNullElse(PathSuffixProperty.get(classInfo), ".class");
+					String key = classInfo.getName() + pathSuffix;
+					if (pathPrefix != null)
+						key = pathPrefix + key;
 					map.put(key, classInfo.getBytecode());
 					updateProperties(key, classInfo);
 				}

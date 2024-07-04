@@ -8,8 +8,8 @@ import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.services.workspace.io.WorkspaceCompressType;
 import software.coley.recaf.workspace.PathExportingManager;
-import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -20,8 +20,8 @@ import software.coley.recaf.workspace.model.Workspace;
  */
 @ApplicationScoped
 public class ExportConfig extends BasicConfigContainer {
-	private final ObservableObject<WorkspaceExportOptions.CompressType> compression
-			= new ObservableObject<>(WorkspaceExportOptions.CompressType.MATCH_ORIGINAL);
+	private final ObservableObject<WorkspaceCompressType> compression
+			= new ObservableObject<>(WorkspaceCompressType.MATCH_ORIGINAL);
 	private final ObservableBoolean bundleSupportingResources = new ObservableBoolean(false);
 	private final ObservableBoolean createZipDirEntries = new ObservableBoolean(true);
 	private final ObservableBoolean warnNoChanges = new ObservableBoolean(true);
@@ -30,7 +30,7 @@ public class ExportConfig extends BasicConfigContainer {
 	public ExportConfig() {
 		super(ConfigGroups.SERVICE_IO, "export" + CONFIG_SUFFIX);
 		// Add values
-		addValue(new BasicConfigValue<>("compression", WorkspaceExportOptions.CompressType.class, compression));
+		addValue(new BasicConfigValue<>("compression", WorkspaceCompressType.class, compression));
 		addValue(new BasicConfigValue<>("bundle-supporting-resources", boolean.class, bundleSupportingResources));
 		addValue(new BasicConfigValue<>("create-zip-dir-entries", boolean.class, createZipDirEntries));
 		addValue(new BasicConfigValue<>("warn-no-changes", boolean.class, warnNoChanges));
@@ -40,7 +40,7 @@ public class ExportConfig extends BasicConfigContainer {
 	 * @return Compression type to use when exporting workspaces.
 	 */
 	@Nonnull
-	public ObservableObject<WorkspaceExportOptions.CompressType> getCompression() {
+	public ObservableObject<WorkspaceCompressType> getCompression() {
 		return compression;
 	}
 

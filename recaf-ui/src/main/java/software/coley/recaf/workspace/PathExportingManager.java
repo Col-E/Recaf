@@ -15,8 +15,7 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
-import software.coley.recaf.services.workspace.io.WorkspaceExporter;
+import software.coley.recaf.services.workspace.io.*;
 import software.coley.recaf.ui.config.ExportConfig;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.util.*;
@@ -210,14 +209,15 @@ public class PathExportingManager {
 
 	@Nonnull
 	private WorkspaceExporter createResourceExporter(@Nonnull WorkspaceResource resource, @Nonnull Path path) {
-		WorkspaceExportOptions.CompressType compression = exportConfig.getCompression().getValue();
+		WorkspaceCompressType compression = exportConfig.getCompression().getValue();
 		WorkspaceExportOptions options;
+		PathWorkspaceExportConsumer exportConsumer = new PathWorkspaceExportConsumer(path);
 		if (resource instanceof WorkspaceDirectoryResource) {
-			options = new WorkspaceExportOptions(WorkspaceExportOptions.OutputType.DIRECTORY, path);
+			options = new WorkspaceExportOptions(WorkspaceOutputType.DIRECTORY, exportConsumer);
 		} else if (resource instanceof WorkspaceFileResource) {
-			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, path);
+			options = new WorkspaceExportOptions(compression, WorkspaceOutputType.FILE, exportConsumer);
 		} else {
-			options = new WorkspaceExportOptions(compression, WorkspaceExportOptions.OutputType.FILE, path);
+			options = new WorkspaceExportOptions(compression, WorkspaceOutputType.FILE, exportConsumer);
 		}
 		options.setBundleSupporting(exportConfig.getBundleSupportingResources().getValue());
 		options.setCreateZipDirEntries(exportConfig.getCreateZipDirEntries().getValue());
