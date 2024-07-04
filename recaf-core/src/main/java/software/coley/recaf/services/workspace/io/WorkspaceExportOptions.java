@@ -176,11 +176,17 @@ public class WorkspaceExportOptions {
 			// Place classes into map
 			resource.jvmClassBundleStream().forEach(bundle -> {
 				for (JvmClassInfo classInfo : bundle) {
-					String pathPrefix = PathPrefixProperty.get(classInfo);
-					String pathSuffix = Objects.requireNonNullElse(PathSuffixProperty.get(classInfo), ".class");
-					String key = classInfo.getName() + pathSuffix;
-					if (pathPrefix != null)
-						key = pathPrefix + key;
+					String key;
+					String originalName = PathOriginalNameProperty.get(classInfo);
+					if (originalName == null) {
+						String pathPrefix = PathPrefixProperty.get(classInfo);
+						String pathSuffix = Objects.requireNonNullElse(PathSuffixProperty.get(classInfo), ".class");
+						key = classInfo.getName() + pathSuffix;
+						if (pathPrefix != null)
+							key = pathPrefix + key;
+					} else {
+						key = originalName;
+					}
 					map.put(key, classInfo.getBytecode());
 					updateProperties(key, classInfo);
 				}

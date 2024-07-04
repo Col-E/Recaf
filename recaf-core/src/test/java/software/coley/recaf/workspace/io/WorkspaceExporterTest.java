@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.io;
 
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JarFileInfo;
@@ -16,9 +17,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Set;
+import java.util.TreeSet;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link WorkspaceExporter}
@@ -100,5 +103,70 @@ class WorkspaceExporterTest {
 		assertEquals(targetResource.getJvmClassBundle(), importedResource.getJvmClassBundle());
 		assertEquals(targetResource.getFileBundle(), importedResource.getFileBundle());
 		assertEquals(targetResource.getEmbeddedResources(), importedResource.getEmbeddedResources());
+	}
+
+	/**
+	 * There's a lombok fabric mod which bundles some classes with tampered names. The file contents are normal classes.
+	 * When we re-export the workspace we need to ensure the classes are written back to where they originally came from.
+	 */
+	@Test
+	void testLombokClassPrefixSuffixExport() throws IOException {
+		byte[] inputZipBytes = Files.readAllBytes(Paths.get("src/testFixtures/resources/name-prefix-suffix.jar"));
+		WorkspaceResource resource = importer.importResource(ByteSources.wrap(inputZipBytes));
+		assertNotNull(resource.getJvmClassBundle().get("org/objectweb/asm/Constants"), "Missing ASM classes");
+		BasicWorkspace workspace = new BasicWorkspace(resource);
+
+		// Export the workspace
+		Set<String> paths = new TreeSet<>();
+		new WorkspaceExportOptions(WorkspaceOutputType.DIRECTORY, new WorkspaceExportConsumer() {
+			@Override
+			public void write(@Nonnull byte[] bytes) {
+				throw new RuntimeException("Should not be invoked in directory output type");
+			}
+
+			@Override
+			public void writeRelative(@Nonnull String relative, @Nonnull byte[] bytes) {
+				paths.add(relative);
+			}
+
+			@Override
+			public void commit() {
+				// no-op
+			}
+		}).create().export(workspace);
+
+		// Verify the paths match the input names
+		assertTrue(paths.contains("SCL.lombok/org/objectweb/asm/Constants.SCL.lombok"),
+				"Lombok's bundled ASM classes not written to expected path");
+	}
+
+	@Test
+	void testNameDifferenceExport() throws IOException {
+		byte[] inputZipBytes = Files.readAllBytes(Paths.get("src/testFixtures/resources/name-difference.zip"));
+		WorkspaceResource resource = importer.importResource(ByteSources.wrap(inputZipBytes));
+		assertNotNull(resource.getJvmClassBundle().get("org/objectweb/asm/Constants"), "Missing ASM classes");
+		BasicWorkspace workspace = new BasicWorkspace(resource);
+
+		// Export the workspace
+		Set<String> paths = new TreeSet<>();
+		new WorkspaceExportOptions(WorkspaceOutputType.DIRECTORY, new WorkspaceExportConsumer() {
+			@Override
+			public void write(@Nonnull byte[] bytes) {
+				throw new RuntimeException("Should not be invoked in directory output type");
+			}
+
+			@Override
+			public void writeRelative(@Nonnull String relative, @Nonnull byte[] bytes) {
+				paths.add(relative);
+			}
+
+			@Override
+			public void commit() {
+				// no-op
+			}
+		}).create().export(workspace);
+
+		// Verify the paths match the input names
+		assertTrue(paths.contains("SomethingElse.bin"), "Class was not written back to expected name");
 	}
 }

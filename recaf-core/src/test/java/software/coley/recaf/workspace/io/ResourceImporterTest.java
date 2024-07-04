@@ -451,39 +451,4 @@ class ResourceImporterTest {
 		assertEquals(timeModify, ZipModificationTimeProperty.get(fileInfo), "Missing modification time");
 		assertEquals(timeAccess, ZipAccessTimeProperty.get(fileInfo), "Missing access time");
 	}
-
-	/**
-	 * There's a lombok fabric mod which bundles some classes with tampered names. The file contents are normal classes.
-	 * When we re-export the workspace we need to ensure the classes are written back to where they originally came from.
-	 */
-	@Test
-	void testLombokOddBehavior() throws IOException {
-		byte[] inputZipBytes = Files.readAllBytes(Paths.get("src/testFixtures/resources/lombok-sample.jar"));
-		WorkspaceResource resource = importer.importResource(ByteSources.wrap(inputZipBytes));
-		BasicWorkspace workspace = new BasicWorkspace(resource);
-
-
-		// Export the workspace
-		Set<String> paths = new TreeSet<>();
-		new WorkspaceExportOptions(WorkspaceOutputType.DIRECTORY, new WorkspaceExportConsumer() {
-			@Override
-			public void write(@Nonnull byte[] bytes) {
-				throw new RuntimeException("Should not be invoked in directory output type");
-			}
-
-			@Override
-			public void writeRelative(@Nonnull String relative, @Nonnull byte[] bytes) {
-				paths.add(relative);
-			}
-
-			@Override
-			public void commit() {
-				// no-op
-			}
-		}).create().export(workspace);
-
-		// Verify the paths match the input names
-		assertTrue(paths.contains("SCL.lombok/org/objectweb/asm/Constants.SCL.lombok"),
-				"Lombok's bundled ASM classes not written to expected path");
-	}
 }
