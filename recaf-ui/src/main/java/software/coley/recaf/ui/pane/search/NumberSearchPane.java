@@ -62,7 +62,7 @@ public class NumberSearchPane extends AbstractSearchPane {
 		DynamicNumericTextField textField = new DynamicNumericTextField(numericValueProperty, numericTypeProperty);
 		ComboBox<String> modeCombo = new BoundBiDiComboBox<>(numericPredicateId, biPredicates,
 				ToStringConverter.from(s -> Lang.get(NumberPredicate.TRANSLATION_PREFIX + s)));
-		modeCombo.getSelectionModel().select(0);
+		modeCombo.getSelectionModel().select(NumberPredicateProvider.KEY_EQUAL);
 		isBlank = textField.textProperty().isEmpty();
 
 		GridPane input = new GridPane();

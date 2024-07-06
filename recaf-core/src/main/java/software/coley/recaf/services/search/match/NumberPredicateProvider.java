@@ -17,23 +17,68 @@ import static software.coley.recaf.util.NumberUtil.cmp;
  */
 @ApplicationScoped
 public class NumberPredicateProvider {
+	/**
+	 * Key in {@link #newBiNumberPredicate(String, Number)} for equality matching.
+	 */
+	public static String KEY_EQUAL = "equal";
+	/**
+	 * Key in {@link #newBiNumberPredicate(String, Number)} for inequality matching.
+	 */
+	public static String KEY_NOT = "not";
+	/**
+	 * Key in {@link #newBiNumberPredicate(String, Number)} for greater-than matching.
+	 */
+	public static String KEY_GREATER_THAN = "gt";
+	/**
+	 * Key in {@link #newBiNumberPredicate(String, Number)} for greater-than or equal matching.
+	 */
+	public static String KEY_GREATER_EQUAL_THAN = "gte";
+	/**
+	 * Key in {@link #newBiNumberPredicate(String, Number)} for less-than matching.
+	 */
+	public static String KEY_LESS_THAN = "lt";
+	/**
+	 * Key in {@link #newBiNumberPredicate(String, Number)} for less-than or equal matching.
+	 */
+	public static String KEY_LESS_EQUAL_THAN = "lte";
+	/**
+	 * Key in {@link #newRangePredicate(Number, Number, boolean, boolean)} for {@code (min, max)} matching.
+	 */
+	public static String KEY_RANGE_GT_LT = "gt-lt";
+	/**
+	 * Key in {@link #newRangePredicate(Number, Number, boolean, boolean)} for {@code [min, max)} matching.
+	 */
+	public static String KEY_RANGE_GTE_LT = "gte-lt";
+	/**
+	 * Key in {@link #newRangePredicate(Number, Number, boolean, boolean)} for {@code (min, max]} matching.
+	 */
+	public static String KEY_RANGE_GT_LTE = "gt-lte";
+	/**
+	 * Key in {@link #newRangePredicate(Number, Number, boolean, boolean)} for {@code [min, max]} matching.
+	 */
+	public static String KEY_RANGE_GTE_LTE = "gte-lte";
+	/**
+	 * Key in {@link #newMultiNumberPredicate(String, Collection)} for any-single item matching.
+	 */
+	public static String KEY_ANY_OF = "any-of";
+
 	private final Map<String, BiNumberMatcher> biNumberMatchers = new ConcurrentHashMap<>();
 	private final Map<String, RangeNumberMatcher> rangeNumberMatchers = new ConcurrentHashMap<>();
 	private final Map<String, MultiNumberMatcher> multiNumberMatchers = new ConcurrentHashMap<>();
 
 	@Inject
 	public NumberPredicateProvider() {
-		registerBiMatcher("equal", (key, value) -> cmp(key, value) == 0);
-		registerBiMatcher("not", (key, value) -> cmp(key, value) != 0);
-		registerBiMatcher("gt", (key, value) -> cmp(key, value) < 0);
-		registerBiMatcher("gte", (key, value) -> cmp(key, value) <= 0);
-		registerBiMatcher("lt", (key, value) -> cmp(key, value) > 0);
-		registerBiMatcher("lte", (key, value) -> cmp(key, value) >= 0);
-		registerRangeMatcher("gt-lt", (lower, upper, value) -> cmp(lower, value) < 0 && cmp(upper, value) > 0);
-		registerRangeMatcher("gte-lt", (lower, upper, value) -> cmp(lower, value) <= 0 && cmp(upper, value) > 0);
-		registerRangeMatcher("gt-lte", (lower, upper, value) -> cmp(lower, value) < 0 && cmp(upper, value) >= 0);
-		registerRangeMatcher("gte-lte", (lower, upper, value) -> cmp(lower, value) <= 0 && cmp(upper, value) >= 0);
-		registerMultiMatcher("any-of", (keys, value) -> {
+		registerBiMatcher(KEY_EQUAL, (key, value) -> cmp(key, value) == 0);
+		registerBiMatcher(KEY_NOT, (key, value) -> cmp(key, value) != 0);
+		registerBiMatcher(KEY_GREATER_THAN, (key, value) -> cmp(key, value) < 0);
+		registerBiMatcher(KEY_GREATER_EQUAL_THAN, (key, value) -> cmp(key, value) <= 0);
+		registerBiMatcher(KEY_LESS_THAN, (key, value) -> cmp(key, value) > 0);
+		registerBiMatcher(KEY_LESS_EQUAL_THAN, (key, value) -> cmp(key, value) >= 0);
+		registerRangeMatcher(KEY_RANGE_GT_LT, (lower, upper, value) -> cmp(lower, value) < 0 && cmp(upper, value) > 0);
+		registerRangeMatcher(KEY_RANGE_GTE_LT, (lower, upper, value) -> cmp(lower, value) <= 0 && cmp(upper, value) > 0);
+		registerRangeMatcher(KEY_RANGE_GT_LTE, (lower, upper, value) -> cmp(lower, value) < 0 && cmp(upper, value) >= 0);
+		registerRangeMatcher(KEY_RANGE_GTE_LTE, (lower, upper, value) -> cmp(lower, value) <= 0 && cmp(upper, value) >= 0);
+		registerMultiMatcher(KEY_ANY_OF, (keys, value) -> {
 			for (Number key : keys)
 				if (cmp(key, value) == 0)
 					return true;
@@ -127,7 +172,7 @@ public class NumberPredicateProvider {
 	 */
 	@Nonnull
 	public NumberPredicate newRangePredicate(@Nonnull Number lower, @Nonnull Number upper,
-											 boolean inclusiveLower, boolean inclusiveUpper) {
+	                                         boolean inclusiveLower, boolean inclusiveUpper) {
 		String id = (inclusiveLower ? "gte" : "gt") + "-" + (inclusiveUpper ? "lte" : "lt");
 		return Objects.requireNonNull(newRangeNumberPredicate(id, lower, upper));
 	}

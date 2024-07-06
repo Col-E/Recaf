@@ -58,7 +58,7 @@ public class StringSearchPane extends AbstractSearchPane {
 		TextField textField = new TextField();
 		ComboBox<String> modeCombo = new BoundBiDiComboBox<>(stringPredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
-		modeCombo.getSelectionModel().select(0);
+		modeCombo.getSelectionModel().select(StringPredicateProvider.KEY_CONTAINS);
 
 		GridPane input = new GridPane();
 		ColumnConstraints colTexts = new ColumnConstraints();

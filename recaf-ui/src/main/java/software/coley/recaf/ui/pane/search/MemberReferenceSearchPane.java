@@ -65,13 +65,13 @@ public class MemberReferenceSearchPane extends AbstractSearchPane {
 		TextField textDesc = new TextField();
 		ComboBox<String> modeComboOwner = new BoundBiDiComboBox<>(ownerPredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
-		modeComboOwner.getSelectionModel().select(0);
+		modeComboOwner.getSelectionModel().select(StringPredicateProvider.KEY_CONTAINS);
 		ComboBox<String> modeComboName = new BoundBiDiComboBox<>(namePredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
-		modeComboName.getSelectionModel().select(0);
+		modeComboName.getSelectionModel().select(StringPredicateProvider.KEY_CONTAINS);
 		ComboBox<String> modeComboDesc = new BoundBiDiComboBox<>(descPredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
-		modeComboDesc.getSelectionModel().select(0);
+		modeComboDesc.getSelectionModel().select(StringPredicateProvider.KEY_CONTAINS);
 
 		GridPane input = new GridPane();
 		ColumnConstraints colTexts = new ColumnConstraints();
