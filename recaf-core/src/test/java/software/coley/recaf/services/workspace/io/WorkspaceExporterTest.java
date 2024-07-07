@@ -1,11 +1,10 @@
-package software.coley.recaf.workspace.io;
+package software.coley.recaf.services.workspace.io;
 
 import com.google.common.primitives.Bytes;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JarFileInfo;
-import software.coley.recaf.services.workspace.io.*;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.util.ZipCreationUtils;
@@ -197,7 +196,7 @@ class WorkspaceExporterTest {
 
 		// Verify the ZIP contents appear after the junk
 		byte[] zipBytesHead = Arrays.copyOf(zipBytes, 0x30);
-		byte[] outBytesHead = Arrays.copyOfRange(output, junkBytes.length,junkBytes.length + 0x30);
+		byte[] outBytesHead = Arrays.copyOfRange(output, junkBytes.length, junkBytes.length + 0x30);
 		for (int i = 0; i < 4; i++) {
 			assertEquals(zipBytesHead[i], outBytesHead[i], "Mismatch where normal ZIP is supposed to be appended");
 		}
