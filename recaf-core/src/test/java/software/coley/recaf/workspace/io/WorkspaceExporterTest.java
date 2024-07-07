@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.io;
 
+import com.google.common.primitives.Bytes;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -39,15 +42,15 @@ class WorkspaceExporterTest {
 
 	@Test
 	void testFileExportDoesNotTamperResourceModel() throws IOException {
-		test(WorkspaceOutputType.FILE);
+		testExportDoesNotTamperResourceModel(WorkspaceOutputType.FILE);
 	}
 
 	@Test
 	void testDirectoryExportDoesNotTamperResourceModel() throws IOException {
-		test(WorkspaceOutputType.DIRECTORY);
+		testExportDoesNotTamperResourceModel(WorkspaceOutputType.DIRECTORY);
 	}
 
-	private static void test(WorkspaceOutputType outputType) throws IOException {
+	private static void testExportDoesNotTamperResourceModel(WorkspaceOutputType outputType) throws IOException {
 		// Create test ZIP in memory
 		byte[] embeddedZipBytes = ZipCreationUtils.createSingleEntryZip("inside.txt", new byte[0]);
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
@@ -168,5 +171,39 @@ class WorkspaceExporterTest {
 
 		// Verify the paths match the input names
 		assertTrue(paths.contains("SomethingElse.bin"), "Class was not written back to expected name");
+	}
+
+	@Test
+	void testArbitraryHeaderDataIsKeptAfterExport() throws IOException {
+		// Read a regular ZIP file and then pre-pend a lot of junk data to the front of it
+		Random random = new Random(2410L);
+		byte[] zipBytes = Files.readAllBytes(Paths.get("src/testFixtures/resources/name-difference.zip"));
+		byte[] junkBytes = new byte[(int) Math.pow(2, 16)];
+		random.nextBytes(junkBytes);
+		byte[] concatJunkThenZip = Bytes.concat(junkBytes, zipBytes);
+
+		// Import the data with the junk in the front
+		WorkspaceResource resource = importer.importResource(ByteSources.wrap(concatJunkThenZip));
+		BasicWorkspace workspace = new BasicWorkspace(resource);
+
+		// Export it, and the junk should still be in the front, and the zip should still be in the back
+		ByteArrayWorkspaceExportConsumer bytesExport = new ByteArrayWorkspaceExportConsumer();
+		new WorkspaceExportOptions(WorkspaceOutputType.FILE, bytesExport).create().export(workspace);
+		byte[] output = bytesExport.getOutput();
+
+		// Verify the junk is still in the front of the output.
+		assertNotNull(output, "Failed to export workspace to archive");
+		assertEquals(0, Bytes.indexOf(output, junkBytes), "Failed to re-append prefix junk data to archive");
+
+		// Verify the ZIP contents appear after the junk
+		byte[] zipBytesHead = Arrays.copyOf(zipBytes, 0x30);
+		byte[] outBytesHead = Arrays.copyOfRange(output, junkBytes.length,junkBytes.length + 0x30);
+		for (int i = 0; i < 4; i++) {
+			assertEquals(zipBytesHead[i], outBytesHead[i], "Mismatch where normal ZIP is supposed to be appended");
+		}
+		String zipHeadName = new String(zipBytesHead).substring(30, 47);
+		String outHeadName = new String(outBytesHead).substring(30, 47);
+		assertEquals(outHeadName, "SomethingElse.bin", "Mismatch in outputs expected first ZIP entry name");
+		assertEquals(zipHeadName, outHeadName, "Mismatch where normal ZIP entry for 'SomethingElse.bin' is supposed to be");
 	}
 }
