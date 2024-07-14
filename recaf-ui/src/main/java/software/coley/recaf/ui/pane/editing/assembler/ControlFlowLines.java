@@ -32,6 +32,7 @@ import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
+import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLineGraphicFactory;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.SceneUtils;
 
@@ -261,12 +262,10 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 	/**
 	 * Highlighter which shows read and write access of a {@link LabelData}.
 	 */
-	private class ControlFlowLineFactory extends AbstractLineGraphicFactory {
+	private class ControlFlowLineFactory extends AbstractTextBoundLineGraphicFactory {
 		private static final int MASK_NORTH = 0;
 		private static final int MASK_SOUTH = 1;
 		private static final int MASK_EAST = 2;
-		private final int containerHeight = 16; // Each line graphic region is only 16px tall
-		private final int containerWidth = 16;
 		private final int[] offsets = new int[containerWidth];
 		private final long rainbowHueRotationDurationMillis = 3000;
 
@@ -299,218 +298,186 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				return;
 			}
 
-			// To keep the ordering of the line graphic factory priority we need to add the stack pane now
-			// since the rest of the work is done async below. We want this to have zero width so that it doesn't
-			// shit the editor around when the content becomes active/inactive.
-			StackPane stack = new StackPane();
-			stack.setManaged(false);
-			stack.setPrefWidth(0);
-			stack.setMouseTransparent(true);
-			container.addHorizontal(stack);
+			super.apply(container, paragraph);
+		}
 
-			// This looks stupid because it is, however it is necessary.
-			//
-			// When we're computing how long the lines need to be to connect to the text that references labels
-			// we need the cell layout to be up-to-date. But because the line graphic can be initialized at the same
-			// time as the paragraph in some cases it won't be always up-to-date, leading to the wrong length of lines.
-			//
-			// We could make this faster AND less complex if we assumed the font family and font size NEVER change
-			// and is always 'JetBrains Mono 12px' but if we did that and changed things we'd 100% forget about the hack
-			// and wonder why the thing broke. The magic 'width' per space char in such case is '7.2'.
-			FxThreadUtil.delayedRun(0, () -> {
-				stack.setPrefSize(containerHeight, containerHeight);
-				stack.setAlignment(Pos.CENTER_LEFT);
-				SceneUtils.getParentOfTypeLater(container, VirtualizedScrollPaneWrapper.class).whenComplete((parentScroll, error) -> {
-					ObservableValue<? extends Number> translateX;
-					if (parentScroll != null) {
-						translateX = Bindings.add(container.widthProperty().subtract(containerHeight), parentScroll.horizontalScrollProperty().negate());
-					} else {
-						// Should never happen since the 'VirtualizedScrollPaneWrapper' is mandated internally by 'Editor'.
-						translateX = container.widthProperty().subtract(containerHeight);
+		@Override
+		public void apply(@Nonnull StackPane container, int paragraph) {
+			List<LabelData> localModel = model;
+
+			double indent = ControlFlowLines.this.editor.computeWhitespacePrefixWidth(paragraph) - 3 /* padding so lines aren't right up against text */;
+			double width = containerWidth + indent;
+			double height = containerHeight + 2;
+			Canvas canvas = new Canvas(width, height);
+			canvas.setManaged(false);
+			canvas.setMouseTransparent(true);
+			canvas.setTranslateY(-1);
+
+			// Setup canvas styling for the render mode.
+			var renderMode = config.getRenderMode().getValue();
+			Blend blend = new Blend(BlendMode.HARD_LIGHT);
+			Effect effect = switch (renderMode) {
+				case FLAT -> blend;
+				case RAINBOW_GLOWING, FLAT_GLOWING -> {
+					Bloom bloom = new Bloom(0.2);
+					Glow glow = new Glow(0.7);
+					bloom.setInput(blend);
+					glow.setInput(bloom);
+					yield glow;
+				}
+			};
+			canvas.setEffect(effect);
+			if (renderMode == ControlFlowLinesConfig.LineRenderMode.RAINBOW_GLOWING) {
+				setupRainbowAnimation(effect, canvas).play();
+			}
+
+			GraphicsContext gc = canvas.getGraphicsContext2D();
+			gc.setLineWidth(1);
+			container.getChildren().add(canvas);
+
+			for (LabelData labelData : localModel) {
+				// Skip if there are no references to the current label.
+				List<ASTElement> labelReferrers = labelData.usage().writers();
+				if (labelReferrers.isEmpty()) continue;
+
+				// Skip if line is not inside a jump range.
+				if (!labelData.isInRange(paragraph + 1)) continue;
+
+				// Handle skipping over cases if we only want to draw lines for what is currently selected.
+				if (config.getConnectionMode().getValue() == ControlFlowLinesConfig.ConnectionMode.CURRENT_CONNECTION) {
+					ASTInstruction value = currentInstructionSelection.getValue();
+					if (value == null) {
+						// No current selection?  We can skip everything. Just return.
+						return;
+					} else if (SWITCH_INSNS.contains(value.identifier().literal())) {
+						// If the selected item is a switch we want to draw all the lines to all destinations.
+						//
+						// The label data writers will be targeting the label identifier children in the AST
+						// so if we walk the switch instruction's children we can see if the current label data
+						// references one of those elements.
+						List<ASTElement> elements = new ArrayList<>();
+						value.walk(e -> {
+							elements.add(e);
+							return true;
+						});
+						if (labelData.usage().readersAndWriters().noneMatch(elements::contains))
+							continue;
+					} else if (labelData.usage().readersAndWriters().noneMatch(m -> m.equals(value))) {
+						// Anything else like a label declaration or a jump instruction mentioning a label
+						// can be handled with a basic equality check against all the usage readers/writers.
+						continue;
 					}
-					stack.translateXProperty().bind(translateX);
-				});
-
-
-				double indent = editor.computeWhitespacePrefixWidth(paragraph) - 3 /* padding so lines aren't right up against text */;
-				double width = containerWidth + indent;
-				double height = containerHeight + 2;
-				Canvas canvas = new Canvas(width, height);
-				canvas.setManaged(false);
-				canvas.setMouseTransparent(true);
-				canvas.setTranslateY(-1);
-
-				// Setup canvas styling for the render mode.
-				var renderMode = config.getRenderMode().getValue();
-				Blend blend = new Blend(BlendMode.HARD_LIGHT);
-				Effect effect = switch (renderMode) {
-					case FLAT -> blend;
-					case RAINBOW_GLOWING, FLAT_GLOWING -> {
-						Bloom bloom = new Bloom(0.2);
-						Glow glow = new Glow(0.7);
-						bloom.setInput(blend);
-						glow.setInput(bloom);
-						yield glow;
-					}
-				};
-				canvas.setEffect(effect);
-				if (renderMode == ControlFlowLinesConfig.LineRenderMode.RAINBOW_GLOWING) {
-					setupRainbowAnimation(effect, canvas).play();
 				}
 
-				GraphicsContext gc = canvas.getGraphicsContext2D();
-				gc.setLineWidth(1);
-				stack.getChildren().add(canvas);
+				// There is always one 'reader' AKA the label itself.
+				// We will use this to figure out which direction to draw lines in below.
+				ASTElement labelTarget = labelData.labelDeclaration();
+				int declarationLine = labelTarget.location().line() - 1;
+				int nameHashBase = labelData.name().repeat(15).hashCode();
 
-				for (LabelData labelData : localModel) {
-					// Skip if there are no references to the current label.
-					List<ASTElement> labelReferrers = labelData.usage().writers();
-					if (labelReferrers.isEmpty()) continue;
+				int parallelLines = Math.max(1, labelData.computeOverlapping(model).size());
+				int lineSlot = labelData.lineSlot().get();
+				int offsetIndex = lineSlot % offsets.length;
+				int horizontalOffset = offsets[offsetIndex];
+				double hue = 360.0 / parallelLines * lineSlot;
+				Color color = createColor(hue);
 
-					// Skip if line is not inside a jump range.
-					if (!labelData.isInRange(paragraph + 1)) continue;
+				// Mask for tracking which portions of the jump lines have been drawn.
+				BitSet shapeMask = new BitSet(3);
 
-					// Handle skipping over cases if we only want to draw lines for what is currently selected.
-					if (config.getConnectionMode().getValue() == ControlFlowLinesConfig.ConnectionMode.CURRENT_CONNECTION) {
-						ASTInstruction value = currentInstructionSelection.getValue();
-						if (value == null) {
-							// No current selection?  We can skip everything. Just return.
-							return;
-						} else if (SWITCH_INSNS.contains(value.identifier().literal())) {
-							// If the selected item is a switch we want to draw all the lines to all destinations.
-							//
-							// The label data writers will be targeting the label identifier children in the AST
-							// so if we walk the switch instruction's children we can see if the current label data
-							// references one of those elements.
-							List<ASTElement> elements = new ArrayList<>();
-							value.walk(e -> {
-								elements.add(e);
-								return true;
-							});
-							if (labelData.usage().readersAndWriters().noneMatch(elements::contains))
-								continue;
-						} else if (labelData.usage().readersAndWriters().noneMatch(m -> m.equals(value))) {
-							// Anything else like a label declaration or a jump instruction mentioning a label
-							// can be handled with a basic equality check against all the usage readers/writers.
-							continue;
-						}
-					}
+				// Iterate over AST elements that refer to the label.
+				// We will use their position and the label declaration position to determine what shape to draw.
+				for (ASTElement referrer : labelReferrers) {
+					// Sanity check the AST element has location data.
+					Location referenceLoc = referrer.location();
+					if (referenceLoc == null) continue;
 
-					// There is always one 'reader' AKA the label itself.
-					// We will use this to figure out which direction to draw lines in below.
-					ASTElement labelTarget = labelData.labelDeclaration();
-					int declarationLine = labelTarget.location().line() - 1;
-					int nameHashBase = labelData.name().repeat(15).hashCode();
+					int referenceLine = referenceLoc.line() - 1;
+					boolean isBackReference = referenceLine > declarationLine;
 
-					int parallelLines = Math.max(1, labelData.computeOverlapping(model).size());
-					int lineSlot = labelData.lineSlot().get();
-					int offsetIndex = lineSlot % offsets.length;
-					int horizontalOffset = offsets[offsetIndex];
-					double hue = 360.0 / parallelLines * lineSlot;
-					Color color = createColor(hue);
-
-					// Mask for tracking which portions of the jump lines have been drawn.
-					BitSet shapeMask = new BitSet(3);
-
-					// Iterate over AST elements that refer to the label.
-					// We will use their position and the label declaration position to determine what shape to draw.
-					for (ASTElement referrer : labelReferrers) {
-						// Sanity check the AST element has location data.
-						Location referenceLoc = referrer.location();
-						if (referenceLoc == null) continue;
-
-						int referenceLine = referenceLoc.line() - 1;
-						boolean isBackReference = referenceLine > declarationLine;
-
-						gc.setStroke(color);
-						gc.beginPath();
-						boolean multiLine = labelData.countRefsOnLine(referenceLine) > 0;
-						double targetY = multiLine ? horizontalOffset : height / 2;
-						if (referenceLine == paragraph) {
-							// The Y coordinates in these lines is the midpoint because as references
-							// there should only be one line coming out of them. We don't need to fit
-							// multiple lines.
-							if (isBackReference) {
-								// Shape: └
-								if (!shapeMask.get(MASK_NORTH)) {
-									// Top section
-									gc.moveTo(horizontalOffset, 0);
-									gc.lineTo(horizontalOffset, targetY);
-									shapeMask.set(MASK_NORTH);
-								}
-								if (!shapeMask.get(MASK_EAST)) {
-									// Right section
-									gc.moveTo(horizontalOffset, targetY);
-									gc.lineTo(width, targetY);
-									shapeMask.set(MASK_EAST);
-								}
-							} else {
-								// Shape: ┌
-								if (!shapeMask.get(MASK_SOUTH)) {
-									// Bottom section
-									gc.moveTo(horizontalOffset, height);
-									gc.lineTo(horizontalOffset, targetY);
-									shapeMask.set(MASK_SOUTH);
-								}
-								if (!shapeMask.get(MASK_EAST)) {
-									// Right section
-									gc.moveTo(horizontalOffset, targetY);
-									gc.lineTo(width, targetY);
-									shapeMask.set(MASK_EAST);
-								}
-							}
-							gc.stroke();
-						} else if (paragraph == declarationLine) {
-							if (isBackReference) {
-								// Shape: ┌
-								if (!shapeMask.get(MASK_SOUTH)) {
-									// Bottom section
-									gc.moveTo(horizontalOffset, height);
-									gc.lineTo(horizontalOffset, targetY);
-									shapeMask.set(MASK_SOUTH);
-								}
-								if (!shapeMask.get(MASK_EAST)) {
-									// Right section
-									gc.moveTo(horizontalOffset, targetY);
-									gc.lineTo(width, targetY);
-									shapeMask.set(MASK_EAST);
-								}
-							} else {
-								// Shape: └
-								if (!shapeMask.get(MASK_NORTH)) {
-									// Top section
-									gc.moveTo(horizontalOffset, 0);
-									gc.lineTo(horizontalOffset, targetY);
-									shapeMask.set(MASK_NORTH);
-								}
-								if (!shapeMask.get(MASK_EAST)) {
-									// Right section
-									gc.moveTo(horizontalOffset, targetY);
-									gc.lineTo(width, targetY);
-									shapeMask.set(MASK_EAST);
-								}
-							}
-							gc.stroke();
-						} else if ((isBackReference && (paragraph > declarationLine && paragraph < referenceLine)) ||
-								(!isBackReference && (paragraph < declarationLine && paragraph > referenceLine))) {
+					gc.setStroke(color);
+					gc.beginPath();
+					boolean multiLine = labelData.countRefsOnLine(referenceLine) > 0;
+					double targetY = multiLine ? horizontalOffset : height / 2;
+					if (referenceLine == paragraph) {
+						// The Y coordinates in these lines is the midpoint because as references
+						// there should only be one line coming out of them. We don't need to fit
+						// multiple lines.
+						// Right section
+						if (isBackReference) {
+							// Shape: └
 							if (!shapeMask.get(MASK_NORTH)) {
 								// Top section
 								gc.moveTo(horizontalOffset, 0);
-								gc.lineTo(horizontalOffset, height / 2);
+								gc.lineTo(horizontalOffset, targetY);
 								shapeMask.set(MASK_NORTH);
 							}
+						} else {
+							// Shape: ┌
 							if (!shapeMask.get(MASK_SOUTH)) {
 								// Bottom section
-								gc.moveTo(horizontalOffset, height / 2);
-								gc.lineTo(horizontalOffset, height);
+								gc.moveTo(horizontalOffset, height);
+								gc.lineTo(horizontalOffset, targetY);
 								shapeMask.set(MASK_SOUTH);
 							}
-							gc.stroke();
 						}
-						gc.closePath();
+						if (!shapeMask.get(MASK_EAST)) {
+							// Right section
+							gc.moveTo(horizontalOffset, targetY);
+							gc.lineTo(width, targetY);
+							shapeMask.set(MASK_EAST);
+						}
+						gc.stroke();
+					} else if (paragraph == declarationLine) {
+						if (isBackReference) {
+							// Shape: ┌
+							if (!shapeMask.get(MASK_SOUTH)) {
+								// Bottom section
+								gc.moveTo(horizontalOffset, height);
+								gc.lineTo(horizontalOffset, targetY);
+								shapeMask.set(MASK_SOUTH);
+							}
+							if (!shapeMask.get(MASK_EAST)) {
+								// Right section
+								gc.moveTo(horizontalOffset, targetY);
+								gc.lineTo(width, targetY);
+								shapeMask.set(MASK_EAST);
+							}
+						} else {
+							// Shape: └
+							if (!shapeMask.get(MASK_NORTH)) {
+								// Top section
+								gc.moveTo(horizontalOffset, 0);
+								gc.lineTo(horizontalOffset, targetY);
+								shapeMask.set(MASK_NORTH);
+							}
+							if (!shapeMask.get(MASK_EAST)) {
+								// Right section
+								gc.moveTo(horizontalOffset, targetY);
+								gc.lineTo(width, targetY);
+								shapeMask.set(MASK_EAST);
+							}
+						}
+						gc.stroke();
+					} else if ((isBackReference && (paragraph > declarationLine && paragraph < referenceLine)) ||
+							(!isBackReference && (paragraph < declarationLine && paragraph > referenceLine))) {
+						if (!shapeMask.get(MASK_NORTH)) {
+							// Top section
+							gc.moveTo(horizontalOffset, 0);
+							gc.lineTo(horizontalOffset, height / 2);
+							shapeMask.set(MASK_NORTH);
+						}
+						if (!shapeMask.get(MASK_SOUTH)) {
+							// Bottom section
+							gc.moveTo(horizontalOffset, height / 2);
+							gc.lineTo(horizontalOffset, height);
+							shapeMask.set(MASK_SOUTH);
+						}
+						gc.stroke();
 					}
+					gc.closePath();
 				}
-			});
+			}
 		}
 
 		@Nonnull
