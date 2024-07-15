@@ -531,8 +531,9 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		for (Error error : errors) {
 			Location location = error.getLocation();
 			int line = location == null ? 1 : location.line();
-			int column = location == null ? 1 : location.column();
-			Problem problem = new Problem(line, column, level, phase, error.getMessage());
+			int start = location == null ? 1 : location.column();
+			int length = location == null ? 1 : location.length();
+			Problem problem = new Problem(line, start, length, level, phase, error.getMessage());
 			problemTracking.add(problem);
 
 			// REMOVE IS TRACING PARSER ERRORS

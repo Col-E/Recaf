@@ -44,7 +44,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * 		Problem to add.
 	 */
 	public void add(@Nonnull Problem problem) {
-		problems.put(problem.getLine(), problem);
+		problems.put(problem.line(), problem);
 		Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 				(listener, t) -> logger.error("Exception thrown when adding problem to tracking", t));
 	}
@@ -86,7 +86,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * @return {@code true} when one or more problems matching the phase were removed.
 	 */
 	public boolean removeByPhase(@Nonnull ProblemPhase phase) {
-		boolean updated = problems.entrySet().removeIf(e -> e.getValue().getPhase() == phase);
+		boolean updated = problems.entrySet().removeIf(e -> e.getValue().phase() == phase);
 		if (updated)
 			Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 					(listener, t) -> logger.error("Exception thrown when removing problem from tracking", t));
@@ -129,7 +129,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 */
 	@Nonnull
 	public List<Problem> getProblemsByLevel(ProblemLevel level) {
-		return getProblems(p -> p.getLevel() == level);
+		return getProblems(p -> p.level() == level);
 	}
 
 	/**
@@ -140,7 +140,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 */
 	@Nonnull
 	public List<Problem> getProblemsByPhase(ProblemPhase phase) {
-		return getProblems(p -> p.getPhase() == phase);
+		return getProblems(p -> p.phase() == phase);
 	}
 
 	/**
@@ -218,7 +218,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 					int shift = 1 + endLine - startLine;
 					removeByLine(line);
 					add(problem.withLine(line + shift));
-					logger.debugging(l -> l.trace("Move problem '{}' down {} lines", problem.getMessage(), shift));
+					logger.debugging(l -> l.trace("Move problem '{}' down {} lines", problem.message(), shift));
 				});
 	}
 
@@ -240,10 +240,10 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 
 					// Don't add problem back if it's in the removed range
 					if (line >= startLine + shift) {
-						logger.debugging(l -> l.trace("Move problem '{}' up {} lines", problem.getMessage(), shift));
+						logger.debugging(l -> l.trace("Move problem '{}' up {} lines", problem.message(), shift));
 						add(problem.withLine(line - shift));
 					} else {
-						logger.debugging(l -> l.trace("Remove problem '{}' in deleted range", problem.getMessage()));
+						logger.debugging(l -> l.trace("Remove problem '{}' in deleted range", problem.message()));
 					}
 				});
 	}

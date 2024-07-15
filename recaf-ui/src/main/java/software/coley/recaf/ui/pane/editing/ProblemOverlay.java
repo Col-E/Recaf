@@ -72,7 +72,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			ObservableList<Node> children = content.getChildren();
 			for (Problem problem : problems) {
 				// Map level to graphic
-				ProblemLevel level = problem.getLevel();
+				ProblemLevel level = problem.level();
 				Color levelColor = switch (level) {
 					case ERROR -> Color.RED;
 					case WARN -> Color.YELLOW;
@@ -86,10 +86,10 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 
 				// Create 'N: Message' layout
 				//  - Exclude line number 'N' when line number is negative
-				Label messageLabel = new Label(problem.getMessage());
+				Label messageLabel = new Label(problem.message());
 				messageLabel.setTextFill(levelColor);
 				messageLabel.setMaxWidth(Integer.MAX_VALUE);
-				int line = problem.getLine();
+				int line = problem.line();
 				HBox problemBox;
 				if (line >= 0) {
 					Label lineLabel = new Label(String.valueOf(line), graphic);
@@ -162,7 +162,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			// Show the count of each kind of problem
 			HBox wrapper = new HBox();
 			wrapper.setSpacing(5);
-			int info = tracking.getProblems(p -> p.getLevel().ordinal() <= ProblemLevel.INFO.ordinal()).size();
+			int info = tracking.getProblems(p -> p.level().ordinal() <= ProblemLevel.INFO.ordinal()).size();
 			int warn = tracking.getProblemsByLevel(ProblemLevel.WARN).size();
 			int error = tracking.getProblemsByLevel(ProblemLevel.ERROR).size();
 			if (info > 0) wrapper.getChildren().add(new Label(String.valueOf(info), iconInfo));

@@ -229,7 +229,8 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 			ExpressionCompileException exception = result.getException();
 			if (exception != null) {
 				Animations.animateFailure(javaEditor, 1000);
-				problemTracking.add(new Problem(-1, -1, ProblemLevel.ERROR, ProblemPhase.BUILD, StringUtil.traceToString(exception)));
+				problemTracking.add(new Problem(-1, -1, 0,
+						ProblemLevel.ERROR, ProblemPhase.BUILD, StringUtil.traceToString(exception)));
 				return;
 			}
 
