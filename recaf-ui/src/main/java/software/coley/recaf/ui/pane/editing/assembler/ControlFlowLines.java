@@ -373,7 +373,6 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				// We will use this to figure out which direction to draw lines in below.
 				ASTElement labelTarget = labelData.labelDeclaration();
 				int declarationLine = labelTarget.location().line() - 1;
-				int nameHashBase = labelData.name().repeat(15).hashCode();
 
 				int parallelLines = Math.max(1, labelData.computeOverlapping(model).size());
 				int lineSlot = labelData.lineSlot().get();
@@ -429,7 +428,8 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 						}
 						gc.stroke();
 					} else if (paragraph == declarationLine) {
-						if (isBackReference) {
+                        // Right section
+                        if (isBackReference) {
 							// Shape: ┌
 							if (!shapeMask.get(MASK_SOUTH)) {
 								// Bottom section
@@ -437,13 +437,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 								gc.lineTo(horizontalOffset, targetY);
 								shapeMask.set(MASK_SOUTH);
 							}
-							if (!shapeMask.get(MASK_EAST)) {
-								// Right section
-								gc.moveTo(horizontalOffset, targetY);
-								gc.lineTo(width, targetY);
-								shapeMask.set(MASK_EAST);
-							}
-						} else {
+                        } else {
 							// Shape: └
 							if (!shapeMask.get(MASK_NORTH)) {
 								// Top section
@@ -451,14 +445,14 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 								gc.lineTo(horizontalOffset, targetY);
 								shapeMask.set(MASK_NORTH);
 							}
-							if (!shapeMask.get(MASK_EAST)) {
-								// Right section
-								gc.moveTo(horizontalOffset, targetY);
-								gc.lineTo(width, targetY);
-								shapeMask.set(MASK_EAST);
-							}
-						}
-						gc.stroke();
+                        }
+                        if (!shapeMask.get(MASK_EAST)) {
+                            // Right section
+                            gc.moveTo(horizontalOffset, targetY);
+                            gc.lineTo(width, targetY);
+                            shapeMask.set(MASK_EAST);
+                        }
+                        gc.stroke();
 					} else if ((isBackReference && (paragraph > declarationLine && paragraph < referenceLine)) ||
 							(!isBackReference && (paragraph < declarationLine && paragraph > referenceLine))) {
 						if (!shapeMask.get(MASK_NORTH)) {

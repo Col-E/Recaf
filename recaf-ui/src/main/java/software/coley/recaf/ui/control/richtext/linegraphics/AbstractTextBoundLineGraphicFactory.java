@@ -48,6 +48,11 @@ public abstract class AbstractTextBoundLineGraphicFactory extends AbstractLineGr
         stack.setMouseTransparent(true);
         container.addHorizontal(stack);
 
+        // This delayed execution looks stupid because it is, however it is necessary.
+        //
+        // Any operation that requires knowledge of positioning and sizing cannot be
+        // done on the same frame as the creation of the cell. Thus we'll delay it by
+        // one frame.
         FxThreadUtil.delayedRun(0, () -> {
             stack.setPrefSize(containerHeight, containerHeight);
             stack.setAlignment(Pos.CENTER_LEFT);
