@@ -1,7 +1,6 @@
 package software.coley.recaf.ui.control.richtext.problem;
 
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLineGraphicFactory;
@@ -15,9 +14,7 @@ import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
  * @see ProblemTracking
  */
 public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
-	/**
-	 * New graphic factory.
-	 */
+
 	public ProblemGraphicFactory() {
 		super(LineGraphicFactory.P_LINE_PROBLEMS);
 	}
@@ -61,21 +58,22 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		gc.beginPath();
 
 		final double scalingFactor = .7;
-		final double waveUp = 3 * scalingFactor;
-		final double waveDown = 6 * scalingFactor;
-		final double stop = errorWidth - scalingFactor;
+		// heights
+		final double waveUp = containerHeight - 3 * scalingFactor;
+		final double waveDown = containerHeight - 6 * scalingFactor;
 
-		// draw sawtooth pattern
-		for (double offset = 0; offset < stop; offset += waveDown) {
-			gc.moveTo(offset, containerHeight - waveUp);
-			if (offset + waveUp < stop)
-				gc.lineTo(offset + waveUp, containerHeight - waveDown);
-			if (offset + waveDown < stop)
-				gc.lineTo(offset + waveDown, containerHeight - waveUp);
+		final double stepScale = .6;
+		final double step = waveDown * stepScale;
+		final double halfStep = step / 2;
+
+        // we want to draw waves such that the last wave is on the border of the errorWidth
+		for (double x = 0; x < errorWidth; x += step) {
+			gc.moveTo(x, waveUp);
+			if (x < errorWidth - halfStep)
+				gc.lineTo(x + halfStep, waveDown);
+			if (x < errorWidth - step)
+				gc.lineTo(x + step, waveUp);
 		}
-
-		// draw one last wave up
-		gc.lineTo(stop, containerHeight - waveUp);
 
 		gc.stroke();
 		gc.closePath();
