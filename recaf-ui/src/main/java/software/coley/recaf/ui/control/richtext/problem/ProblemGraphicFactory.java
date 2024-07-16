@@ -1,17 +1,12 @@
 package software.coley.recaf.ui.control.richtext.problem;
 
-import jakarta.annotation.Nonnull;
-import javafx.scene.Cursor;
-import javafx.scene.Node;
-import javafx.scene.control.Tooltip;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import org.kordamp.ikonli.carbonicons.CarbonIcons;
-import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphicFactory;
-import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
+import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
+
 
 /**
  * Graphic factory that adds overlays to line graphics indicating the problem status of the line.
@@ -19,9 +14,7 @@ import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
  * @author Matt Coley
  * @see ProblemTracking
  */
-public class ProblemGraphicFactory extends AbstractLineGraphicFactory {
-	private Editor editor;
-
+public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 	/**
 	 * New graphic factory.
 	 */
@@ -30,67 +23,61 @@ public class ProblemGraphicFactory extends AbstractLineGraphicFactory {
 	}
 
 	@Override
-	public void install(@Nonnull Editor editor) {
-		this.editor = editor;
+	protected void apply(StackPane pane, int paragraph) {
+		if (editor.getProblemTracking() == null)
+			return;
+
+		Problem problem = editor.getProblemTracking().getProblem(paragraph + 1);
+
+		if (problem == null)
+			return;
+
+		// compute the width of the draw canvas and offset required
+		int index = problem.column() + 1;
+		double toStart = editor.computeWidthUntilCharacter(paragraph, index);
+		double toEnd = editor.computeWidthUntilCharacter(paragraph, index + problem.length());
+		toEnd = Math.max(toEnd, toStart + 6);
+		double errorWidth = toEnd - toStart;
+
+		// Create the overlay
+		Canvas canvas = new Canvas(toEnd, containerHeight);
+		canvas.setManaged(false);
+		canvas.setMouseTransparent(true);
+		canvas.setTranslateY(3);
+		canvas.setTranslateX(toStart + 1.7);
+
+		pane.getChildren().add(canvas);
+
+		drawWaves(canvas, errorWidth);
 	}
 
-	@Override
-	public void uninstall(@Nonnull Editor editor) {
-		this.editor = null;
-	}
+	private void drawWaves(Canvas canvas, double errorWidth) {
+		var gc = canvas.getGraphicsContext2D();
 
-	@Override
-	public void apply(@Nonnull LineContainer container, int paragraph) {
-		ProblemTracking problemTracking = editor.getProblemTracking();
+		// make a solid red line
+		gc.setStroke(Color.RED);
+		gc.setLineWidth(1);
 
-		// Always null if no bracket tracking is registered for the editor.
-		if (problemTracking == null) return;
+		gc.beginPath();
 
-		// Add problem graphic overlay to lines with problems.
-		int line = paragraph + 1;
-		Problem problem = problemTracking.getProblem(line);
-		if (problem != null) {
-			ProblemLevel level = problem.getLevel();
-			Color levelColor = switch (level) {
-				case ERROR -> Color.RED;
-				case WARN -> Color.YELLOW;
-				default -> Color.TURQUOISE;
-			};
-			Node graphic = switch (level) {
-				case ERROR -> new FontIconView(CarbonIcons.ERROR, levelColor);
-				case WARN -> new FontIconView(CarbonIcons.WARNING_ALT, levelColor);
-				default -> new FontIconView(CarbonIcons.INFORMATION, levelColor);
-			};
+		final double scalingFactor = .7;
+		final double waveUp = 3 * scalingFactor;
+		final double waveDown = 6 * scalingFactor;
+		final double stop = errorWidth - scalingFactor;
 
-			Rectangle shape = new Rectangle();
-			shape.widthProperty().bind(container.widthProperty());
-			shape.heightProperty().bind(container.heightProperty());
-			shape.setCursor(Cursor.HAND);
-			shape.setFill(levelColor);
-			shape.setOpacity(0.33);
-
-			Tooltip tooltip = new Tooltip(formatTooltipMessage(problem));
-			tooltip.setGraphic(graphic);
-			switch (level) {
-				case ERROR -> tooltip.getStyleClass().add("error-text");
-				case WARN -> tooltip.getStyleClass().add("warn-text");
-			}
-			Tooltip.install(shape, tooltip);
-			container.addTopLayer(shape);
+		// draw sawtooth pattern
+		for (double offset = 0; offset < stop; offset += waveDown) {
+			gc.moveTo(offset, containerHeight - waveUp);
+			if (offset + waveUp < stop)
+				gc.lineTo(offset + waveUp, containerHeight - waveDown);
+			if (offset + waveDown < stop)
+				gc.lineTo(offset + waveDown, containerHeight - waveUp);
 		}
-	}
 
-	private static String formatTooltipMessage(Problem problem) {
-		StringBuilder sb = new StringBuilder();
-		int line = problem.getLine();
-		if (line > 0) {
-			int column = problem.getColumn();
-			if (column >= 0) {
-				sb.append("Column ").append(column);
-			}
-		} else {
-			sb.append("Unknown line");
-		}
-		return sb.append('\n').append(problem.getMessage()).toString();
+		// draw one last wave up
+		gc.lineTo(stop, containerHeight - waveUp);
+
+		gc.stroke();
+		gc.closePath();
 	}
 }

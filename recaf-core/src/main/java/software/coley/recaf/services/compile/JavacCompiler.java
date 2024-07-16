@@ -180,6 +180,7 @@ public class JavacCompiler implements Service {
 					diagnostics.add(new CompilerDiagnostic(
 							(int) diagnostic.getLineNumber(),
 							(int) diagnostic.getColumnNumber(),
+							(int) diagnostic.getEndPosition() - (int) diagnostic.getPosition(),
 							diagnostic.getMessage(Locale.getDefault()),
 							mapKind(diagnostic.getKind())
 					));

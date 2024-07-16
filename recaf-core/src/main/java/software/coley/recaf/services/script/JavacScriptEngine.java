@@ -213,7 +213,8 @@ public class JavacScriptEngine implements ScriptEngine {
 			source = source.replace("\t" + originalName + "(", "\t" + modifiedName + "(");
 		} else {
 			return new GenerateResult(null, List.of(
-					new CompilerDiagnostic(-1, -1, "Could not determine name of class", CompilerDiagnostic.Level.ERROR)));
+					new CompilerDiagnostic(-1, -1, 0,
+							"Could not determine name of class", CompilerDiagnostic.Level.ERROR)));
 		}
 
 		// Compile the class

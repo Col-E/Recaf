@@ -17,13 +17,12 @@ public record Problem(int line, int column, int length, ProblemLevel level, Prob
 	 */
 	@Nonnull
 	public static Problem fromDiagnostic(@Nonnull CompilerDiagnostic diagnostic) {
-		// TODO: refactor CompilerDiagnostic to also have a length field
 		ProblemLevel level = switch (diagnostic.level()) {
 			case WARNING -> ProblemLevel.WARN;
 			case INFO -> ProblemLevel.INFO;
 			default -> ProblemLevel.ERROR;
 		};
-		return new Problem(diagnostic.line(), diagnostic.column(), 1,
+		return new Problem(diagnostic.line(), diagnostic.column(), diagnostic.length(),
 				level, ProblemPhase.BUILD, diagnostic.message());
 	}
 

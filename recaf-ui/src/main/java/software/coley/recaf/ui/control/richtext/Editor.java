@@ -568,21 +568,28 @@ public class Editor extends BorderPane {
 		double width = 0;
 		int index = 0;
 
+		double lastWidth = 0;
+		double lastX = 0;
+
 		for (Text textNode : textNodes) {
 			String text = textNode.getText();
 			double boundWidth = textNode.getBoundsInLocal().getWidth();
+
 			if (index + text.length() < character) {
-				width += boundWidth;
 				index += text.length();
 			} else {
-				int length = character - index;
+				double lastStart = lastX + lastWidth;
 				double charWidth = boundWidth / StringUtil.getTabAdjustedLength(text);
-				width += charWidth * length;
-				break;
+
+				// Compute the width of the text until the character.
+				return lastStart + charWidth * (character - index);
 			}
+
+			lastWidth = boundWidth;
+			lastX = textNode.getLayoutX();
 		}
 
-		return width;
+		return 0L;
 	}
 
 	/**
