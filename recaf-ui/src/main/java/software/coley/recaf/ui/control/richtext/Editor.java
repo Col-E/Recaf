@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.richtext;
 
+import com.fasterxml.jackson.databind.node.TextNode;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
@@ -567,9 +568,7 @@ public class Editor extends BorderPane {
 		List<Text> textNodes = getTextNodes(paragraph);
 		double width = 0;
 		int index = 0;
-
-		double lastWidth = 0;
-		double lastX = 0;
+		Text lastNode = null;
 
 		for (Text textNode : textNodes) {
 			String text = textNode.getText();
@@ -577,19 +576,28 @@ public class Editor extends BorderPane {
 
 			if (index + text.length() < character) {
 				index += text.length();
+				width += boundWidth;
 			} else {
-				double lastStart = lastX + lastWidth;
 				double charWidth = boundWidth / StringUtil.getTabAdjustedLength(text);
-
-				// Compute the width of the text until the character.
-				return lastStart + charWidth * (character - index);
+				width += charWidth * (character - index);
+				return width;
 			}
 
-			lastWidth = boundWidth;
-			lastX = textNode.getLayoutX();
+			lastNode = textNode;
 		}
 
-		return 0L;
+		// we never reached the character
+		if (index < character) {
+			double charWidth = 0L;
+			if (lastNode == null)
+				charWidth = 1.7;
+			else
+				charWidth = lastNode.getBoundsInLocal().getWidth() / StringUtil.getTabAdjustedLength(lastNode.getText());
+
+			width += charWidth * (character - index);
+		}
+
+		return width;
 	}
 
 	/**
