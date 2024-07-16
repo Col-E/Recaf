@@ -367,6 +367,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					// The transform failed.
 					lastPartialAst = partialAst;
 					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(partialAst, AstPhase.CONCRETE_PARTIAL));
+					processErrors(errors, ProblemPhase.LINT);
 				});
 			}
 
