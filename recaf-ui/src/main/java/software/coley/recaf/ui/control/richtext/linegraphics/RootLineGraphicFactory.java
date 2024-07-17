@@ -80,6 +80,7 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory implement
 		BorderPane wrapper = new BorderPane(lineContainer);
 		wrapper.getStyleClass().add("lineno");
 		wrapper.setCursor(Cursor.DEFAULT);
+		wrapper.setMouseTransparent(true);
 		return wrapper;
 	}
 
