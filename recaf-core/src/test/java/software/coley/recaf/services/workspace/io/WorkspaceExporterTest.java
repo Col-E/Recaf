@@ -200,9 +200,9 @@ class WorkspaceExporterTest {
 		for (int i = 0; i < 4; i++) {
 			assertEquals(zipBytesHead[i], outBytesHead[i], "Mismatch where normal ZIP is supposed to be appended");
 		}
-		String zipHeadName = new String(zipBytesHead).substring(30, 47);
-		String outHeadName = new String(outBytesHead).substring(30, 47);
-		assertEquals(outHeadName, "SomethingElse.bin", "Mismatch in outputs expected first ZIP entry name");
+		String zipHeadName = new String(zipBytesHead, StandardCharsets.ISO_8859_1).substring(30, 47);
+		String outHeadName = new String(outBytesHead, StandardCharsets.ISO_8859_1).substring(30, 47);
+		assertEquals("SomethingElse.bin", outHeadName, "Mismatch in outputs expected first ZIP entry name");
 		assertEquals(zipHeadName, outHeadName, "Mismatch where normal ZIP entry for 'SomethingElse.bin' is supposed to be");
 	}
 }
