@@ -3,7 +3,6 @@ package software.coley.recaf.workspace.model.resource;
 import com.sun.tools.attach.VirtualMachine;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.objectweb.asm.ClassReader;
 import software.coley.instrument.ApiConstants;
 import software.coley.instrument.Client;
 import software.coley.instrument.data.ClassData;
@@ -86,7 +85,7 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 	@Nonnull
 	@Override
 	public Stream<JvmClassBundle> jvmClassBundleStream() {
-		return Stream.concat(super.jvmClassBundleStream(), remoteBundleMap.values().stream());
+		return Stream.concat(super.jvmClassBundleStream(), new ArrayList<>(remoteBundleMap.values()).stream());
 	}
 
 	@Override
