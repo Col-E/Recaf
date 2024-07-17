@@ -187,7 +187,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 				vmButtonsList.getChildren().remove(removedButton);
 
 				VmPane cell = vmCellMap.remove(descriptor);
-				cell.setDisable(true);
+				if (cell != null) cell.setDisable(true);
 			}
 
 			// Refresh current cell.
