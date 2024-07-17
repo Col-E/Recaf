@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control.richtext.problem;
 
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLineGraphicFactory;
@@ -39,20 +40,22 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		// Create the overlay
 		Canvas canvas = new Canvas(toEnd, containerHeight);
 		canvas.setManaged(false);
-		canvas.setMouseTransparent(true);
 		canvas.setTranslateY(3);
 		canvas.setTranslateX(toStart + 1.7);
 
 		pane.getChildren().add(canvas);
 
-		drawWaves(canvas, errorWidth);
+		drawWaves(canvas, problem.level() == ProblemLevel.WARN, errorWidth);
+
+		Tooltip tooltip = new Tooltip(problem.message());
+		Tooltip.install(canvas, tooltip);
 	}
 
-	private void drawWaves(Canvas canvas, double errorWidth) {
+	private void drawWaves(Canvas canvas, boolean warn, double errorWidth) {
 		var gc = canvas.getGraphicsContext2D();
 
 		// make a solid red line
-		gc.setStroke(Color.RED);
+		gc.setStroke(warn ? Color.YELLOW : Color.RED);
 		gc.setLineWidth(1);
 
 		gc.beginPath();
@@ -66,12 +69,15 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		final double step = waveDown * stepScale;
 		final double halfStep = step / 2;
 
+		final double downStop = errorWidth - halfStep;
+		final double upStop = errorWidth - step;
+
         // we want to draw waves such that the last wave is on the border of the errorWidth
 		for (double x = 0; x < errorWidth; x += step) {
 			gc.moveTo(x, waveUp);
-			if (x < errorWidth - halfStep)
+			if (x < downStop)
 				gc.lineTo(x + halfStep, waveDown);
-			if (x < errorWidth - step)
+			if (x < upStop)
 				gc.lineTo(x + step, waveUp);
 		}
 
