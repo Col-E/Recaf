@@ -28,11 +28,11 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
+import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.services.script.ScriptEngine;
 import software.coley.recaf.services.script.ScriptFile;
 import software.coley.recaf.services.script.ScriptManager;
 import software.coley.recaf.services.script.ScriptManagerConfig;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.ActionButton;
@@ -79,13 +79,13 @@ public class ScriptManagerPane extends BorderPane {
 
 	@Inject
 	public ScriptManagerPane(@Nonnull ScriptManagerConfig config,
-							 @Nonnull ScriptManager scriptManager,
-							 @Nonnull ScriptEngine engine,
-							 @Nonnull FileTypeAssociationService associationService,
-							 @Nonnull WindowFactory windowFactory,
-							 @Nonnull RecafDirectoriesConfig directories,
-							 @Nonnull KeybindingConfig keys,
-							 @Nonnull Instance<SearchBar> searchBarProvider) {
+	                         @Nonnull ScriptManager scriptManager,
+	                         @Nonnull ScriptEngine engine,
+	                         @Nonnull FileTypeAssociationService associationService,
+	                         @Nonnull WindowFactory windowFactory,
+	                         @Nonnull RecafDirectoriesConfig directories,
+	                         @Nonnull KeybindingConfig keys,
+	                         @Nonnull Instance<SearchBar> searchBarProvider) {
 		this.windowFactory = windowFactory;
 		this.scriptManager = scriptManager;
 		this.config = config;

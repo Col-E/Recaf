@@ -116,7 +116,8 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 		I currentItem = get(key);
 		I priorItem;
 		if (size > 1) {
-			priorItem = itemHistory.pop();
+			itemHistory.pop(); // Pop current value off stack.
+			priorItem = itemHistory.peek(); // Yield prior value.
 		} else {
 			priorItem = itemHistory.peek();
 		}

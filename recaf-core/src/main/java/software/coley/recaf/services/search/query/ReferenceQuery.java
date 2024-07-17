@@ -71,8 +71,8 @@ public class ReferenceQuery implements JvmClassQuery {
 	 *        {@code null} to ignore matching against reference owner descriptors.
 	 */
 	public ReferenceQuery(@Nullable StringPredicate ownerPredicate,
-						  @Nullable StringPredicate namePredicate,
-						  @Nullable StringPredicate descriptorPredicate) {
+	                      @Nullable StringPredicate namePredicate,
+	                      @Nullable StringPredicate descriptorPredicate) {
 		this.ownerPredicate = ownerPredicate;
 		this.namePredicate = namePredicate;
 		this.descriptorPredicate = descriptorPredicate;
@@ -138,8 +138,8 @@ public class ReferenceQuery implements JvmClassQuery {
 		private final JvmClassInfo classInfo;
 
 		public AsmReferenceClassVisitor(@Nonnull ResultSink resultSink,
-										@Nonnull ClassPathNode classPath,
-										@Nonnull JvmClassInfo classInfo) {
+		                                @Nonnull ClassPathNode classPath,
+		                                @Nonnull JvmClassInfo classInfo) {
 			super(RecafConstants.getAsmVersion());
 			this.resultSink = resultSink;
 			this.classPath = classPath;
@@ -210,9 +210,9 @@ public class ReferenceQuery implements JvmClassQuery {
 
 
 		public AsmReferenceMethodVisitor(@Nullable MethodVisitor delegate,
-										 @Nonnull MethodMember methodMember,
-										 @Nonnull ResultSink resultSink,
-										 @Nonnull ClassPathNode classLocation) {
+		                                 @Nonnull MethodMember methodMember,
+		                                 @Nonnull ResultSink resultSink,
+		                                 @Nonnull ClassPathNode classLocation) {
 			super(delegate);
 			this.resultSink = resultSink;
 			this.memberPath = classLocation.child(methodMember);
@@ -423,8 +423,8 @@ public class ReferenceQuery implements JvmClassQuery {
 		private final ClassMemberPathNode memberPath;
 
 		public AsmReferenceFieldVisitor(@Nullable FieldVisitor delegate,
-										@Nonnull ResultSink resultSink,
-										@Nonnull ClassMemberPathNode memberPath) {
+		                                @Nonnull ResultSink resultSink,
+		                                @Nonnull ClassMemberPathNode memberPath) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.resultSink = resultSink;
 			this.memberPath = memberPath;
@@ -462,9 +462,9 @@ public class ReferenceQuery implements JvmClassQuery {
 		private final boolean visible;
 
 		public AnnotationReferenceVisitor(@Nullable AnnotationVisitor delegate,
-										  boolean visible,
-										  @Nonnull ResultSink resultSink,
-										  @Nonnull PathNode<?> currentAnnoLocation) {
+		                                  boolean visible,
+		                                  @Nonnull ResultSink resultSink,
+		                                  @Nonnull PathNode<?> currentAnnoLocation) {
 			super(RecafConstants.getAsmVersion(), delegate);
 			this.visible = visible;
 			this.resultSink = resultSink;

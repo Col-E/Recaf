@@ -22,8 +22,8 @@ import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
-import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
@@ -137,7 +137,7 @@ public class JPhantomGenerator implements PhantomGenerator {
 	 */
 	@Nonnull
 	public static Map<String, byte[]> generate(@Nonnull Workspace workspace,
-											   @Nonnull Map<String, JvmClassInfo> inputMap) throws IOException {
+	                                           @Nonnull Map<String, JvmClassInfo> inputMap) throws IOException {
 		Map<String, byte[]> out = new HashMap<>();
 
 		// Write the parameter passed classes to a temp jar
