@@ -60,10 +60,13 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	public boolean removeByInstance(@Nonnull Problem problem) {
 		List<Problem> list = problems.get(problem.line());
 		if (list != null) {
-			boolean updated = list.remove(problem);
+			boolean updated = list.removeIf(p -> p == problem);
 			if (updated)
 				Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 						(listener, t) -> logger.error("Exception thrown when removing problem from tracking", t));
+			// if list empty, remove the entry
+			if (list.isEmpty())
+				problems.remove(problem.line());
 			return updated;
 		}
 		return false;
