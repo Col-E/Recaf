@@ -64,7 +64,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			if (problemTracking == null) return;
 
 			// Skip if no problems
-			Collection<Problem> problems = problemTracking.getProblems().values();
+			Collection<Problem> problems = problemTracking.getAllProblems();
 			if (problems.isEmpty()) return;
 
 			// Create vertical list

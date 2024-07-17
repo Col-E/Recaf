@@ -7,6 +7,8 @@ import javafx.scene.paint.Color;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
 
+import java.util.List;
+
 
 /**
  * Graphic factory that adds overlays to line graphics indicating the problem status of the line.
@@ -25,11 +27,17 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		if (editor.getProblemTracking() == null)
 			return;
 
-		Problem problem = editor.getProblemTracking().getProblem(paragraph + 1);
+		List<Problem> problems = editor.getProblemTracking().getProblems(paragraph + 1);
 
-		if (problem == null)
+		if (problems == null)
 			return;
 
+		for (Problem problem : problems) {
+			prepareProblem(problem, pane, paragraph);
+		}
+	}
+
+	private void prepareProblem(Problem problem, StackPane pane, int paragraph) {
 		// compute the width of the draw canvas and offset required
 		int index = problem.column() + 1;
 		double toStart = editor.computeWidthUntilCharacter(paragraph, index);
@@ -38,7 +46,7 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		double errorWidth = toEnd - toStart;
 
 		// Create the overlay
-		Canvas canvas = new Canvas(toEnd, containerHeight);
+		Canvas canvas = new Canvas(errorWidth, containerHeight);
 		canvas.setManaged(false);
 		canvas.setTranslateY(3);
 		canvas.setTranslateX(toStart + 1.7);
@@ -65,7 +73,7 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		final double waveUp = containerHeight - 3 * scalingFactor;
 		final double waveDown = containerHeight - 6 * scalingFactor;
 
-		final double stepScale = .6;
+		final double stepScale = .6 - (scalingFactor / 5);
 		final double step = waveDown * stepScale;
 		final double halfStep = step / 2;
 

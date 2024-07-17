@@ -25,7 +25,7 @@ import java.util.function.Predicate;
 public class ProblemTracking implements EditorComponent, Consumer<PlainTextChange> {
 	private static final DebuggingLogger logger = Logging.get(ProblemTracking.class);
 	private final List<ProblemInvalidationListener> listeners = new CopyOnWriteArrayList<>();
-	private final NavigableMap<Integer, Problem> problems = new TreeMap<>();
+	private final NavigableMap<Integer, List<Problem>> problems = new TreeMap<>();
 	private Editor editor;
 
 	/**
@@ -35,7 +35,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * @return Problem on the line.
 	 */
 	@Nullable
-	public Problem getProblem(int line) {
+	public List<Problem> getProblems(int line) {
 		return problems.get(line);
 	}
 
@@ -44,7 +44,8 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * 		Problem to add.
 	 */
 	public void add(@Nonnull Problem problem) {
-		problems.put(problem.line(), problem);
+		List<Problem> list = problems.computeIfAbsent(problem.line(), k -> new ArrayList<>());
+		list.add(problem);
 		Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 				(listener, t) -> logger.error("Exception thrown when adding problem to tracking", t));
 	}
@@ -57,11 +58,15 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * {@code false} when the problem instance was not contained in the problems map.
 	 */
 	public boolean removeByInstance(@Nonnull Problem problem) {
-		boolean updated = problems.entrySet().removeIf(p -> p.getValue() == problem);
-		if (updated)
-			Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
-					(listener, t) -> logger.error("Exception thrown when removing problem from tracking", t));
-		return updated;
+		List<Problem> list = problems.get(problem.line());
+		if (list != null) {
+			boolean updated = list.remove(problem);
+			if (updated)
+				Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
+						(listener, t) -> logger.error("Exception thrown when removing problem from tracking", t));
+			return updated;
+		}
+		return false;
 	}
 
 	/**
@@ -86,10 +91,10 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * @return {@code true} when one or more problems matching the phase were removed.
 	 */
 	public boolean removeByPhase(@Nonnull ProblemPhase phase) {
-		boolean updated = problems.entrySet().removeIf(e -> e.getValue().phase() == phase);
+		boolean updated = problems.values().removeIf(list -> list.removeIf(p -> p.phase() == phase));
 		if (updated)
 			Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
-					(listener, t) -> logger.error("Exception thrown when removing problem from tracking", t));
+					(listener, t) -> logger.error("Exception thrown when removing problems from tracking", t));
 		return updated;
 	}
 
@@ -151,17 +156,26 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 */
 	@Nonnull
 	public List<Problem> getProblems(Predicate<Problem> filter) {
-		return getProblems().values().stream()
+		List<Problem> list = new ArrayList<>();
+		problems.values().stream()
+				.flatMap(Collection::stream)
 				.filter(filter)
-				.toList();
+				.forEach(list::add);
+		return list;
 	}
 
 	/**
 	 * @return Map of problems.
 	 */
 	@Nonnull
-	public NavigableMap<Integer, Problem> getProblems() {
+	public NavigableMap<Integer, List<Problem>> getProblems() {
 		return problems;
+	}
+
+	public List<Problem> getAllProblems() {
+		List<Problem> list = new ArrayList<>();
+		problems.values().forEach(list::addAll);
+		return list;
 	}
 
 	@Override
@@ -205,20 +219,22 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 
 	protected void onLinesInserted(int startLine, int endLine) {
 		logger.debugging(l -> l.trace("Lines inserted: {}-{}", startLine, endLine));
-		TreeSet<Map.Entry<Integer, Problem>> set =
+		TreeSet<Map.Entry<Integer, List<Problem>>> set =
 				new TreeSet<>((o1, o2) -> Integer.compare(o2.getKey(), o1.getKey()));
 		set.addAll(problems.entrySet());
 		set.stream()
 				.filter(e -> e.getKey() >= startLine)
 				.forEach(e -> {
 					int line = e.getKey();
-					Problem problem = e.getValue();
+					List<Problem> list = e.getValue();
 
 					// Shift all problems down by the shift amount
 					int shift = 1 + endLine - startLine;
 					removeByLine(line);
-					add(problem.withLine(line + shift));
-					logger.debugging(l -> l.trace("Move problem '{}' down {} lines", problem.message(), shift));
+					list.forEach(p -> {
+						logger.debugging(l -> l.trace("Move problem '{}' down {} lines", p.message(), shift));
+						add(p.withLine(line + shift));
+					});
 				});
 	}
 
@@ -226,25 +242,25 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 		logger.debugging(l -> l.trace("Lines removed: {}-{}", startLine, endLine));
 
 		// We will want to sort the order of removed lines so we
-		TreeSet<Map.Entry<Integer, Problem>> set = new TreeSet<>(Comparator.comparingInt(Map.Entry::getKey));
+		TreeSet<Map.Entry<Integer, List<Problem>>> set = new TreeSet<>(Comparator.comparingInt(Map.Entry::getKey));
 		set.addAll(problems.entrySet());
 		set.stream()
 				.filter(e -> e.getKey() >= startLine)
 				.forEach(e -> {
 					int line = e.getKey();
-					Problem problem = e.getValue();
+					List<Problem> list = e.getValue();
 
 					// Shift all problems up by the shift amount
 					int shift = endLine - startLine;
 					removeByLine(line);
 
 					// Don't add problem back if it's in the removed range
-					if (line >= startLine + shift) {
-						logger.debugging(l -> l.trace("Move problem '{}' up {} lines", problem.message(), shift));
-						add(problem.withLine(line - shift));
-					} else {
-						logger.debugging(l -> l.trace("Remove problem '{}' in deleted range", problem.message()));
-					}
+					list.stream()
+							.filter(p -> p.line() < startLine || p.line() > endLine)
+							.forEach(p -> {
+								logger.debugging(l -> l.trace("Move problem '{}' up {} lines", p.message(), shift));
+								add(p.withLine(line - shift));
+							});
 				});
 	}
 
