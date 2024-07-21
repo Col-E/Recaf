@@ -34,6 +34,7 @@ import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.cfg.ControlFlowGraphPane;
 import software.coley.recaf.ui.control.graph.MethodCallGraphsPane;
 import software.coley.recaf.ui.control.popup.AddMemberPopup;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
@@ -101,6 +102,7 @@ public class Actions implements Service {
 	private final Instance<AssemblerPane> assemblerPaneProvider;
 	private final Instance<CommentEditPane> documentationPaneProvider;
 	private final Instance<MethodCallGraphsPane> callGraphsPaneProvider;
+	private final Instance<ControlFlowGraphPane> cfgPaneProvider;
 	private final Instance<StringSearchPane> stringSearchPaneProvider;
 	private final Instance<NumberSearchPane> numberSearchPaneProvider;
 	private final Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider;
@@ -109,28 +111,28 @@ public class Actions implements Service {
 
 	@Inject
 	public Actions(@Nonnull ActionsConfig config,
-	               @Nonnull NavigationManager navigationManager,
-	               @Nonnull DockingManager dockingManager,
-	               @Nonnull WindowFactory windowFactory,
-	               @Nonnull TextProviderService textService,
-	               @Nonnull IconProviderService iconService,
-	               @Nonnull PathExportingManager pathExportingManager,
-	               @Nonnull Instance<MappingApplier> applierProvider,
-	               @Nonnull Instance<JvmClassPane> jvmPaneProvider,
-	               @Nonnull Instance<AndroidClassPane> androidPaneProvider,
-	               @Nonnull Instance<BinaryXmlFilePane> binaryXmlPaneProvider,
-	               @Nonnull Instance<TextFilePane> textPaneProvider,
-	               @Nonnull Instance<ImageFilePane> imagePaneProvider,
-	               @Nonnull Instance<AudioFilePane> audioPaneProvider,
-	               @Nonnull Instance<VideoFilePane> videoPaneProvider,
-	               @Nonnull Instance<HexFilePane> hexPaneProvider,
-	               @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
-	               @Nonnull Instance<CommentEditPane> documentationPaneProvider,
-	               @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
-	               @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
-	               @Nonnull Instance<MethodCallGraphsPane> callGraphsPaneProvider,
-	               @Nonnull Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider,
-	               @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider) {
+                   @Nonnull NavigationManager navigationManager,
+                   @Nonnull DockingManager dockingManager,
+                   @Nonnull WindowFactory windowFactory,
+                   @Nonnull TextProviderService textService,
+                   @Nonnull IconProviderService iconService,
+                   @Nonnull PathExportingManager pathExportingManager,
+                   @Nonnull Instance<MappingApplier> applierProvider,
+                   @Nonnull Instance<JvmClassPane> jvmPaneProvider,
+                   @Nonnull Instance<AndroidClassPane> androidPaneProvider,
+                   @Nonnull Instance<BinaryXmlFilePane> binaryXmlPaneProvider,
+                   @Nonnull Instance<TextFilePane> textPaneProvider,
+                   @Nonnull Instance<ImageFilePane> imagePaneProvider,
+                   @Nonnull Instance<AudioFilePane> audioPaneProvider,
+                   @Nonnull Instance<VideoFilePane> videoPaneProvider,
+                   @Nonnull Instance<HexFilePane> hexPaneProvider,
+                   @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
+                   @Nonnull Instance<CommentEditPane> documentationPaneProvider,
+                   @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
+                   @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
+                   @Nonnull Instance<MethodCallGraphsPane> callGraphsPaneProvider, Instance<ControlFlowGraphPane> cfgPaneProvider,
+                   @Nonnull Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider,
+                   @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider) {
 		this.config = config;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
@@ -152,7 +154,8 @@ public class Actions implements Service {
 		this.stringSearchPaneProvider = stringSearchPaneProvider;
 		this.numberSearchPaneProvider = numberSearchPaneProvider;
 		this.callGraphsPaneProvider = callGraphsPaneProvider;
-		this.classReferenceSearchPaneProvider = classReferenceSearchPaneProvider;
+        this.cfgPaneProvider = cfgPaneProvider;
+        this.classReferenceSearchPaneProvider = classReferenceSearchPaneProvider;
 		this.memberReferenceSearchPaneProvider = memberReferenceSearchPaneProvider;
 	}
 
@@ -1602,6 +1605,25 @@ public class Actions implements Service {
 
 			// Create content for the tab.
 			MethodCallGraphsPane content = callGraphsPaneProvider.get();
+			content.onUpdatePath(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method));
+
+			// Build the tab.
+			return createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+		});
+	}
+
+	public Navigable openMethodCFG(@Nonnull Workspace workspace,
+										@Nonnull WorkspaceResource resource,
+										@Nonnull JvmClassBundle bundle,
+										@Nonnull JvmClassInfo declaringClass,
+										@Nonnull MethodMember method) {
+		return createContent(() -> {
+			// Create text/graphic for the tab to create.
+			String title = Lang.get("menu.view.methodcfg") + ": " + method.getName();
+			Node graphic = new FontIconView(CarbonIcons.FLOW);
+
+			// Create content for the tab.
+			ControlFlowGraphPane content = cfgPaneProvider.get();
 			content.onUpdatePath(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method));
 
 			// Build the tab.

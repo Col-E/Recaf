@@ -103,6 +103,7 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 				JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
 				JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
 				view.item("menu.view.methodcallgraph", FLOW, () -> actions.openMethodCallGraph(workspace, resource, jvmBundle,declaringJvmClass, method));
+				view.item("menu.view.methodcfg", FLOW_CONNECTION, () -> actions.openMethodCFG(workspace, resource, jvmBundle,declaringJvmClass, method));
 			}
 
 			// TODO: implement additional operations

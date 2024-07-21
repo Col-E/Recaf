@@ -44,6 +44,8 @@ gradle-checker-processor = "2.0.2"
 javafx-plugin = "0.1.0"
 shadow = "8.1.1"
 peterabeles-gversion = "1.10.3"
+jgraphx = "v4.0.0"
+fxgraphics2d = "2.1.4"
 
 [libraries]
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
@@ -129,6 +131,8 @@ treemapfx = { module = "software.coley:treemap-fx", version.ref = "treemapfx" }
 vineflower = { module = "org.vineflower:vineflower", version.ref = "vineflower" }
 
 wordwrap = { module = "com.github.davidmoten:word-wrap", version.ref = "wordwrap" }
+jgraphx = { module = "com.github.jgraph:jgraphx", version.ref = "jgraphx" }
+fxgraphics2d = { module = "org.jfree:org.jfree.fxgraphics2d", version.ref = "fxgraphics2d" }
 
 [bundles]
 asm = [
