@@ -1,5 +1,7 @@
 package software.coley.recaf.services.mapping.aggregate;
 
+import jakarta.annotation.Nonnull;
+
 /**
  * Listener for when the {@link AggregatedMappings aggregated mappings} are updated.
  *
@@ -12,5 +14,5 @@ public interface AggregatedMappingsListener {
 	 * @param mappings
 	 * 		Current aggregated mappings.
 	 */
-	void onAggregatedMappingsUpdated(AggregatedMappings mappings);
+	void onAggregatedMappingsUpdated(@Nonnull AggregatedMappings mappings);
 }

@@ -131,7 +131,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		// Find selected instruction (can be null)
 		Box<ASTInstruction> selected = new Box<>();
 		for (ASTElement element : astElements) {
-			if (element.range().within(pos)) {
+			if (element != null && element.range().within(pos)) {
 				element.walk(ast -> {
 					if (ast instanceof ASTInstruction instruction) {
 						Location location = ast.location();
