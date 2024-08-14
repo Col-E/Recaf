@@ -38,6 +38,7 @@ import software.coley.recaf.services.navigation.UnsupportedContentException;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.TreeItems;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
@@ -100,10 +101,12 @@ public class CellConfigurationService implements Service {
 	 * 		Cell to reset.
 	 */
 	public void reset(@Nonnull Cell<?> cell) {
-		cell.setText(null);
-		cell.setGraphic(null);
-		cell.setContextMenu(null);
-		cell.setOnMouseClicked(null);
+		FxThreadUtil.run(() -> {
+			cell.setText(null);
+			cell.setGraphic(null);
+			cell.setContextMenu(null);
+			cell.setOnMouseClicked(null);
+		});
 	}
 
 	/**
@@ -115,9 +118,11 @@ public class CellConfigurationService implements Service {
 	 * 		Origin source of the cell, for context menu specialization.
 	 */
 	public void configure(@Nonnull Cell<?> cell, @Nonnull PathNode<?> item, @Nonnull ContextSource source) {
-		cell.setText(textOf(item));
-		cell.setGraphic(graphicOf(item));
-		cell.setOnMouseClicked(contextMenuHandlerOf(cell, item, source));
+		FxThreadUtil.run(() -> {
+			cell.setText(textOf(item));
+			cell.setGraphic(graphicOf(item));
+			cell.setOnMouseClicked(contextMenuHandlerOf(cell, item, source));
+		});
 	}
 
 	/**
