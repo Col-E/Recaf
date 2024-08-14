@@ -1,6 +1,7 @@
 package software.coley.recaf.services.decompile.vineflower;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -18,9 +19,11 @@ public class LibrarySource extends BaseSource {
 	/**
 	 * @param workspace
 	 * 		Workspace to pull class files from.
+	 * @param targetInfo
+	 * 		Target class to decompile.
 	 */
-	protected LibrarySource(@Nonnull Workspace workspace) {
-		super(workspace);
+	protected LibrarySource(@Nonnull Workspace workspace, @Nonnull JvmClassInfo targetInfo) {
+		super(workspace, targetInfo);
 	}
 
 	@Override

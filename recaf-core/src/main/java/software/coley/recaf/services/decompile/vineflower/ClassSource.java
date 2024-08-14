@@ -17,19 +17,17 @@ import java.util.List;
  * @author therathatter
  */
 public class ClassSource extends BaseSource {
-	private final JvmClassInfo info;
 	private final DecompiledOutputSink sink;
 
 	/**
 	 * @param workspace
 	 * 		Workspace to pull class files from.
-	 * @param info
+	 * @param targetInfo
 	 * 		Target class to decompile.
 	 */
-	protected ClassSource(@Nonnull Workspace workspace, @Nonnull JvmClassInfo info) {
-		super(workspace);
-		this.info = info;
-		sink = new DecompiledOutputSink(info);
+	protected ClassSource(@Nonnull Workspace workspace, @Nonnull JvmClassInfo targetInfo) {
+		super(workspace, targetInfo);
+		sink = new DecompiledOutputSink(targetInfo);
 	}
 
 	/**
@@ -47,8 +45,8 @@ public class ClassSource extends BaseSource {
 		//  This will make QF/VF decompile each inner class separately as well, but its the best fix for now without
 		//  too much of a perf hit.
 		List<Entry> entries = new ArrayList<>();
-		entries.add(new Entry(info.getName(), Entry.BASE_VERSION));
-		for (InnerClassInfo innerClass : info.getInnerClasses()) {
+		entries.add(new Entry(targetInfo.getName(), Entry.BASE_VERSION));
+		for (InnerClassInfo innerClass : targetInfo.getInnerClasses()) {
 			// Only add entry if it exists in the workspace.
 			if (workspace.findClass(innerClass.getInnerClassName()) != null)
 				entries.add(new Entry(innerClass.getName(), Entry.BASE_VERSION));
