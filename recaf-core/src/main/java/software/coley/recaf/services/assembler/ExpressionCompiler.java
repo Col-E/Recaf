@@ -13,9 +13,7 @@ import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import regexodus.Matcher;
 import regexodus.Pattern;
-import software.coley.recaf.Bootstrap;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.BasicLocalVariable;
 import software.coley.recaf.info.member.FieldMember;
@@ -298,8 +296,13 @@ public class ExpressionCompiler {
 			if (!isSafeName(parameterName))
 				continue;
 
+			// Skip parameters with types that aren't accessible in the workspace.
+			String descriptor = parameterVariable.getDescriptor();
+			if (isMissingType(descriptor))
+				continue;
+
 			// Append the parameter.
-			NameType varInfo = getInfo(parameterName, parameterVariable.getDescriptor());
+			NameType varInfo = getInfo(parameterName, descriptor);
 			parameterVarIndex += varInfo.size;
 			code.append(varInfo.className).append(' ').append(varInfo.name);
 			if (i < parameterCount - 1) code.append(", ");
@@ -316,8 +319,13 @@ public class ExpressionCompiler {
 			if (!usedVariables.add(name))
 				continue;
 
+			// Skip parameters with types that aren't accessible in the workspace.
+			String descriptor = variable.getDescriptor();
+			if (isMissingType(descriptor))
+				continue;
+
 			// Append the parameter.
-			NameType varInfo = getInfo(name, variable.getDescriptor());
+			NameType varInfo = getInfo(name, descriptor);
 			if (hasPriorParameters)
 				code.append(", ");
 			code.append(varInfo.className).append(' ').append(varInfo.name);
@@ -350,6 +358,9 @@ public class ExpressionCompiler {
 			// Skip enum constants, we added those earlier.
 			if (fieldNameType.className.equals(className.replace('/', '.')) && field.hasFinalModifier() && field.hasStaticModifier())
 				continue;
+
+			// Skip fields with types that aren't accessible in the workspace.
+			if (isMissingType(field.getDescriptor())) continue;
 
 			// Append the field. The only modifier that we care about here is if it is static or not.
 			if (field.hasStaticModifier())
@@ -387,7 +398,8 @@ public class ExpressionCompiler {
 			NameType returnInfo = getInfo(name, localMethodType.returnType().descriptor());
 			if (!isSafeClassName(returnInfo.className))
 				continue;
-			if (!localMethodType.parameterTypes().stream().map(p -> {
+			List<ClassType> parameterTypes = localMethodType.parameterTypes();
+			if (!parameterTypes.stream().map(p -> {
 				try {
 					return getInfo("p", p.descriptor()).className();
 				} catch (Throwable t) {
@@ -395,6 +407,19 @@ public class ExpressionCompiler {
 				}
 			}).allMatch(ExpressionCompiler::isSafeClassName))
 				continue;
+
+			// Skip methods with return/parameter types that aren't accessible in the workspace.
+			boolean hasMissingType = false;
+			Type[] types = new Type[parameterTypes.size() + 1];
+			for (int i = 0; i < types.length - 1; i++)
+				types[i] = parameterTypes.get(i);
+			types[parameterTypes.size()] = localMethodType.returnType();
+			for (Type type : types) {
+				hasMissingType = isMissingType(type);
+				if (hasMissingType)
+					break;
+			}
+			if (hasMissingType) continue;
 
 			// Stub the method. Start with the access modifiers.
 			if (method.hasPublicModifier())
@@ -413,7 +438,7 @@ public class ExpressionCompiler {
 				code.append(returnInfo.className).append(' ').append(returnInfo.name).append('(');
 
 			// Add the parameters. We only care about the types, names don't really matter.
-			List<ClassType> methodParameterTypes = localMethodType.parameterTypes();
+			List<ClassType> methodParameterTypes = parameterTypes;
 			parameterCount = methodParameterTypes.size();
 			for (int i = 0; i < parameterCount; i++) {
 				ClassType paramType = methodParameterTypes.get(i);
@@ -583,9 +608,12 @@ public class ExpressionCompiler {
 			usedVariables.add(parameterName);
 			if (!isSafeName(parameterName))
 				continue;
-			NameType varInfo = getInfo(parameterName, parameterVariable.getDescriptor());
+			String descriptor = parameterVariable.getDescriptor();
+			if (isMissingType(descriptor))
+				continue;
+			NameType varInfo = getInfo(parameterName, descriptor);
 			parameterVarIndex += varInfo.size;
-			sb.append(parameterVariable.getDescriptor());
+			sb.append(descriptor);
 		}
 		for (LocalVariable variable : methodVariables) {
 			String name = variable.getName();
@@ -593,10 +621,39 @@ public class ExpressionCompiler {
 				continue;
 			if (!usedVariables.add(name))
 				continue;
-			sb.append(variable.getDescriptor());
+			String descriptor = variable.getDescriptor();
+			if (isMissingType(descriptor))
+				continue;
+			sb.append(descriptor);
 		}
 		sb.append(')').append(methodType.returnType().descriptor());
 		return sb.toString();
+	}
+
+	/**
+	 * @param descriptor
+	 * 		Some non-method descriptor.
+	 *
+	 * @return {@code true} if the type in the descriptor is found in the {@link #workspace}.
+	 */
+	private boolean isMissingType(@Nonnull String descriptor) {
+		Type type = Types.typeFromDescriptor(descriptor);
+		return isMissingType(type);
+	}
+
+	/**
+	 * @param type
+	 * 		Some non-method type.
+	 *
+	 * @return {@code true} if the type in the descriptor is found in the {@link #workspace}.
+	 */
+	private boolean isMissingType(@Nonnull Type type) {
+		if (type instanceof InstanceType instanceType && workspace.findClass(instanceType.internalName()) == null)
+			return true;
+		else
+			return type instanceof ArrayType arrayType
+					&& arrayType.rootComponentType() instanceof InstanceType instanceType
+					&& workspace.findClass(instanceType.internalName()) == null;
 	}
 
 	/**

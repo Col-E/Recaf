@@ -142,6 +142,69 @@ class ExpressionCompilerTest extends TestBase {
 		assertSuccess(result);
 	}
 
+	@Test
+	void ignoreNonExistingTypeForFields() {
+		ClassWriter cw = new ClassWriter(0);
+		cw.visit(V1_8, ACC_PUBLIC, "ExampleClass", null, "java/lang/Object", null);
+		cw.visitField(ACC_PRIVATE, "foo", "Lfoo/Bar;", null, null); // Bogus field type
+		cw.visitMethod(ACC_PRIVATE, "methodName", "()V", null, null);
+		JvmClassInfo classInfo = new JvmClassInfoBuilder(cw.toByteArray()).build();
+
+		// The expression compiler should skip the field since it uses a type not in the workspace.
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(classInfo);
+		assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("methodName"));
+		ExpressionResult result = compile(assembler, "");
+		assertSuccess(result);
+	}
+
+	@Test
+	void ignoreNonExistingTypeForMethodParams() {
+		ClassWriter cw = new ClassWriter(0);
+		cw.visit(V1_8, ACC_PUBLIC, "ExampleClass", null, "java/lang/Object", null);
+		cw.visitMethod(ACC_PRIVATE, "foo", "(Lfoo/Bar;)V", null, null); // Bogus parameter type
+		cw.visitMethod(ACC_PRIVATE, "methodName", "()V", null, null);
+		JvmClassInfo classInfo = new JvmClassInfoBuilder(cw.toByteArray()).build();
+
+		// The expression compiler should skip the method since it uses a type not in the workspace.
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(classInfo);
+		assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("methodName"));
+		ExpressionResult result = compile(assembler, "");
+		assertSuccess(result);
+	}
+
+	@Test
+	void ignoreNonExistingTypeForMethodReturns() {
+		ClassWriter cw = new ClassWriter(0);
+		cw.visit(V1_8, ACC_PUBLIC, "ExampleClass", null, "java/lang/Object", null);
+		cw.visitMethod(ACC_PRIVATE, "foo", "()Lfoo/Bar;", null, null); // Bogus method parameter type
+		cw.visitMethod(ACC_PRIVATE, "methodName", "()V", null, null);
+		JvmClassInfo classInfo = new JvmClassInfoBuilder(cw.toByteArray()).build();
+
+		// The expression compiler should skip the method since it uses a type not in the workspace.
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(classInfo);
+		assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("methodName"));
+		ExpressionResult result = compile(assembler, "");
+		assertSuccess(result);
+	}
+
+	@Test
+	void ignoreNonExistingTypeForMethodContext() {
+		ClassWriter cw = new ClassWriter(0);
+		cw.visit(V1_8, ACC_PUBLIC, "ExampleClass", null, "java/lang/Object", null);
+		cw.visitMethod(ACC_PRIVATE, "methodName", "(Lfoo/Bar;)V", null, null);
+		JvmClassInfo classInfo = new JvmClassInfoBuilder(cw.toByteArray()).build();
+
+		// The expression compiler should skip the method since it uses a type not in the workspace.
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(classInfo);
+		assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("methodName"));
+		ExpressionResult result = compile(assembler, "");
+		assertSuccess(result);
+	}
+
 	@Nested
 	class ObfuscatedContexts {
 		@ParameterizedTest
