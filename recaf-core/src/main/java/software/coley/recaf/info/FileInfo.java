@@ -93,6 +93,14 @@ public interface FileInfo extends Info, Named {
 	}
 
 	/**
+	 * @return Self cast to video file.
+	 */
+	@Nonnull
+	default NativeLibraryFileInfo asNativeLibraryFile() {
+		throw new IllegalStateException("Non-native-library file cannot be cast to native-library file");
+	}
+
+	/**
 	 * @return Self cast to zip file.
 	 */
 	@Nonnull
@@ -135,6 +143,13 @@ public interface FileInfo extends Info, Named {
 	 * @return {@code true} if self is a video file.
 	 */
 	default boolean isVideoFile() {
+		return false;
+	}
+
+	/**
+	 * @return {@code true} if self is a native-library file.
+	 */
+	default boolean isNativeLibraryFile() {
 		return false;
 	}
 

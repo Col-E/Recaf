@@ -119,6 +119,11 @@ public class BasicInfoImporter implements InfoImporter {
 					.withRawContent(data)
 					.withName(name)
 					.build();
+		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.PROGRAM_HEADERS)) {
+			return new NativeLibraryFileInfoBuilder()
+					.withRawContent(data)
+					.withName(name)
+					.build();
 		}
 
 		// Check for ZIP containers (For ZIP/JAR/JMod/WAR)

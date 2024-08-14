@@ -45,11 +45,13 @@ public class ByteHeaderUtil {
 	// Programs
 	public static final int[] PE = {0x4D, 0x5A};
 	public static final int[] ELF = {0x7F, 0x45, 0x4C, 0x46};
+	public static final int[] ELF_AR = {0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E, 0x0A};
 	public static final int[] DYLIB_32 = {0xCE, 0xFA, 0xED, 0xFE};
 	public static final int[] DYLIB_64 = {0xCF, 0xFA, 0xED, 0xFE};
 	public static final List<int[]> PROGRAM_HEADERS = List.of(
 			PE,
 			ELF,
+			ELF_AR,
 			DYLIB_32,
 			DYLIB_64);
 	// Images

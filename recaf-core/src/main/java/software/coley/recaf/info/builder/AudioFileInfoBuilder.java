@@ -14,8 +14,8 @@ public class AudioFileInfoBuilder extends FileInfoBuilder<AudioFileInfoBuilder> 
 		// empty
 	}
 
-	public AudioFileInfoBuilder(AudioFileInfo imageFileInfo) {
-		super(imageFileInfo);
+	public AudioFileInfoBuilder(AudioFileInfo audioFileInfo) {
+		super(audioFileInfo);
 	}
 
 	public AudioFileInfoBuilder(FileInfoBuilder<?> other) {
