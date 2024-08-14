@@ -22,6 +22,7 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.PathNodeTree;
 import software.coley.recaf.ui.control.tree.TreeItems;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
@@ -93,9 +94,11 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	@Override
 	public void disable() {
 		cancelLastSearch();
-		liveResultsTree.setRoot(null);
-		getChildren().clear();
-		setDisable(true);
+		FxThreadUtil.run(() -> {
+			liveResultsTree.setRoot(null);
+			getChildren().clear();
+			setDisable(true);
+		});
 	}
 
 	/**
