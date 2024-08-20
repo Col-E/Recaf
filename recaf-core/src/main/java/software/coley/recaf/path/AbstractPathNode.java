@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.collections.Unchecked;
 
+import java.util.Objects;
+
 /**
  * Base implementation of {@link PathNode}.
  *
@@ -125,12 +127,15 @@ public abstract class AbstractPathNode<P, V> implements PathNode<V> {
 
 		PathNode<?> node = (PathNode<?>) o;
 
-		return getValue().equals(node.getValue());
+		return getValue().equals(node.getValue()) && Objects.equals(parent, node.getParent());
 	}
 
 	@Override
 	public int hashCode() {
-		return getValue().hashCode();
+		int hash = getValue().hashCode();
+		if (parent != null)
+			return 31 * parent.hashCode() + hash;
+		return hash;
 	}
 
 	@Override
