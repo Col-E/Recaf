@@ -8,6 +8,7 @@ import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BundleListener;
@@ -26,7 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Coley
  * @see WorkspaceResourceBuilder Helper for creating instances.
  */
-public class BasicWorkspaceResource implements WorkspaceResource {
+public class BasicWorkspaceResource extends BasicPropertyContainer implements WorkspaceResource {
 	private static final Logger logger = Logging.get(BasicWorkspaceResource.class);
 	private final List<ResourceJvmClassListener> jvmClassListeners = new CopyOnWriteArrayList<>();
 	private final List<ResourceAndroidClassListener> androidClassListeners = new CopyOnWriteArrayList<>();
@@ -36,7 +37,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 	private final Map<String, AndroidClassBundle> androidClassBundles;
 	private final FileBundle fileBundle;
 	private final Map<String, WorkspaceFileResource> embeddedResources;
-	private WorkspaceResource containingResource;
+	private transient WorkspaceResource containingResource;
 
 	/**
 	 * @param builder
@@ -300,7 +301,8 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		if (!versionedJvmClassBundles.equals(other.getVersionedJvmClassBundles())) return false;
 		if (!androidClassBundles.equals(other.getAndroidClassBundles())) return false;
 		if (!fileBundle.equals(other.getFileBundle())) return false;
-		return embeddedResources.equals(other.getEmbeddedResources());
+		if (!embeddedResources.equals(other.getEmbeddedResources())) return false;
+		return getProperties().equals(other.getProperties());
 	}
 
 	@Override
@@ -311,6 +313,7 @@ public class BasicWorkspaceResource implements WorkspaceResource {
 		result = 31 * result + androidClassBundles.hashCode();
 		result = 31 * result + fileBundle.hashCode();
 		result = 31 * result + embeddedResources.hashCode();
+		result = 31 * result + getProperties().hashCode();
 		return result;
 	}
 }
