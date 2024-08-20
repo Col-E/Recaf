@@ -20,7 +20,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
@@ -43,10 +43,10 @@ public class MappingApplier implements Service {
 
 	@Inject
 	public MappingApplier(@Nonnull MappingApplierConfig config,
-						  @Nonnull InheritanceGraph inheritanceGraph,
-						  @Nonnull AggregateMappingManager aggregateMappingManager,
-						  @Nonnull MappingListeners listeners,
-						  @Nonnull Workspace workspace) {
+	                      @Nonnull InheritanceGraph inheritanceGraph,
+	                      @Nonnull AggregateMappingManager aggregateMappingManager,
+	                      @Nonnull MappingListeners listeners,
+	                      @Nonnull Workspace workspace) {
 		this.inheritanceGraph = inheritanceGraph;
 		this.aggregateMappingManager = aggregateMappingManager;
 		this.listeners = listeners;
@@ -70,9 +70,9 @@ public class MappingApplier implements Service {
 	 */
 	@Nonnull
 	public MappingResults applyToClasses(@Nonnull Mappings mappings,
-										 @Nonnull WorkspaceResource resource,
-										 @Nonnull JvmClassBundle bundle,
-										 @Nonnull List<JvmClassInfo> classes) {
+	                                     @Nonnull WorkspaceResource resource,
+	                                     @Nonnull JvmClassBundle bundle,
+	                                     @Nonnull Collection<JvmClassInfo> classes) {
 		mappings = enrich(mappings);
 		MappingResults results = new MappingResults(mappings, listeners.createBundledMappingApplicationListener())
 				.withAggregateManager(aggregateMappingManager);
@@ -80,9 +80,8 @@ public class MappingApplier implements Service {
 		// Apply mappings to the provided classes, collecting into the results model.
 		Mappings finalMappings = mappings;
 		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
-		for (JvmClassInfo classInfo : classes) {
+		for (JvmClassInfo classInfo : classes)
 			service.execute(() -> dumpIntoResults(results, workspace, resource, bundle, classInfo, finalMappings));
-		}
 		ThreadUtil.blockUntilComplete(service);
 
 		// Yield results
@@ -162,11 +161,11 @@ public class MappingApplier implements Service {
 	 * 		The mappings to apply.
 	 */
 	private static void dumpIntoResults(@Nonnull MappingResults results,
-										@Nonnull Workspace workspace,
-										@Nonnull WorkspaceResource resource,
-										@Nonnull JvmClassBundle bundle,
-										@Nonnull JvmClassInfo classInfo,
-										@Nonnull Mappings mappings) {
+	                                    @Nonnull Workspace workspace,
+	                                    @Nonnull WorkspaceResource resource,
+	                                    @Nonnull JvmClassBundle bundle,
+	                                    @Nonnull JvmClassInfo classInfo,
+	                                    @Nonnull Mappings mappings) {
 		String originalName = classInfo.getName();
 
 		// Apply renamer
