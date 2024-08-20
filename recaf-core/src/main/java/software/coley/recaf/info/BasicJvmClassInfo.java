@@ -20,7 +20,7 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 	 * @param builder
 	 * 		Builder to pull info from.
 	 */
-	public BasicJvmClassInfo(JvmClassInfoBuilder builder) {
+	public BasicJvmClassInfo(@Nonnull JvmClassInfoBuilder builder) {
 		super(builder);
 		this.bytecode = builder.getBytecode();
 		this.version = builder.getVersion();
