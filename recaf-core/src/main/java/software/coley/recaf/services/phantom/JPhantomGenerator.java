@@ -120,6 +120,7 @@ public class JPhantomGenerator implements PhantomGenerator {
 			JvmClassInfo phantomClassInfo = new JvmClassInfoBuilder(phantom).build();
 			bundle.initialPut(phantomClassInfo);
 		});
+		bundle.markInitialState();
 		return new GeneratedPhantomWorkspaceResource(new WorkspaceResourceBuilder()
 				.withJvmClassBundle(bundle));
 	}

@@ -7,13 +7,11 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.BundleListener;
-import software.coley.recaf.workspace.model.bundle.FileBundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -87,6 +85,7 @@ public class BasicWorkspaceResource extends BasicPropertyContainer implements Wo
 	protected void setup() {
 		setupListenerDelegation();
 		linkToEmbedded();
+		markInitialBundleStates();
 	}
 
 	/**
@@ -202,6 +201,19 @@ public class BasicWorkspaceResource extends BasicPropertyContainer implements Wo
 	 */
 	private void linkToEmbedded() {
 		embeddedResources.values().forEach(resource -> resource.setContainingResource(this));
+	}
+
+	/**
+	 * Mark the bundle as being in its initial state.
+	 */
+	private void markInitialBundleStates() {
+		// Since the bundles have been passed to our resource, we're going to assume that its fully constructed.
+		// Any changes after this point will be tracked as deviations from the state at this point.
+		bundleStream().forEach(bundle -> {
+			if (bundle instanceof BasicBundle<Info> basicBundle) {
+				basicBundle.markInitialState();
+			}
+		});
 	}
 
 	@Nonnull

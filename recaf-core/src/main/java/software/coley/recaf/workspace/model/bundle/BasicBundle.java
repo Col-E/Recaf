@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
+import software.coley.recaf.workspace.model.resource.BasicWorkspaceResource;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +24,8 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	private final Map<String, Stack<I>> history = new ConcurrentHashMap<>();
 	private final List<BundleListener<I>> listeners = new CopyOnWriteArrayList<>();
 	private final Map<String, I> backing = new ConcurrentHashMap<>();
+	private final Set<String> initialKeys = ConcurrentHashMap.newKeySet();
+	private final NavigableSet<String> removed = Collections.synchronizedNavigableSet(new TreeSet<>());
 
 	/**
 	 * Create initial history item.
@@ -41,10 +44,22 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	 *
 	 * @param info
 	 * 		Item to put.
+	 *
+	 * @see #markInitialState()
 	 */
 	public void initialPut(@Nonnull I info) {
 		backing.put(info.getName(), info);
 		initHistory(info);
+	}
+
+	/**
+	 * Mark the current snapshot of items as the initial state of the bundle.
+	 * <p>
+	 * Called when {@link BasicWorkspaceResource} is constructed, so any bundle assigned to a resource should be
+	 * automatically marked.
+	 */
+	public void markInitialState() {
+		initialKeys.addAll(backing.keySet());
 	}
 
 	/**
@@ -86,6 +101,12 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 			}
 		});
 		return dirty;
+	}
+
+	@Nonnull
+	@Override
+	public Set<String> getRemovedKeys() {
+		return Collections.unmodifiableNavigableSet(removed);
 	}
 
 	@Override
@@ -171,6 +192,10 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	@Override
 	public I put(@Nonnull String key, @Nonnull I newValue) {
 		I oldValue = backing.put(key, newValue);
+
+		// Ensure we don't track entries by this name as 'removed'
+		removed.remove(key);
+
 		// Notify listeners
 		Unchecked.checkedForEach(listeners, listener -> {
 			if (oldValue == null) {
@@ -193,8 +218,15 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	public I remove(@Nonnull Object key) {
 		I info = backing.remove(key);
 		if (info != null) {
+			String keyStr = (String) key;
+
+			// Mark the entry key as being removed, but only if it was in the initial key-set.
+			// Adding a file and removing it should not be tracked as a net-removal.
+			if (initialKeys.contains(keyStr))
+				removed.add(keyStr);
+
 			// Notify listeners
-			Unchecked.checkedForEach(listeners, listener -> listener.onRemoveItem((String) key, info),
+			Unchecked.checkedForEach(listeners, listener -> listener.onRemoveItem(keyStr, info),
 					(listener, t) -> logger.error("Exception thrown when removing bundle item", t));
 
 			// Update history
@@ -210,6 +242,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 
 	@Override
 	public void clear() {
+		removed.addAll(initialKeys);
 		backing.clear();
 		history.clear();
 	}
