@@ -18,13 +18,16 @@ import java.util.List;
  * @author Matt Coley
  */
 public record WorkspacePatch(@Nonnull Workspace workspace,
+                             @Nonnull List<RemovePath> removals,
                              @Nonnull List<JvmAssemblerPatch> jvmAssemblerPatches,
                              @Nonnull List<TextFilePatch> textFilePatches) {
 
 	// TODO: Add more patch type lists
+	//  - New classes / files
 	//  - Special patch types for specific transformations like:
 	//     - "replace this method with 'return 0'"
-	//     - "change this method's modifers"
+	//     - "change this method's modifiers"
+	//     - Can be JVM/Android agnostic
 
 	@Override
 	public boolean equals(Object o) {

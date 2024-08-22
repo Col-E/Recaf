@@ -6,19 +6,18 @@ import jakarta.inject.Inject;
 import me.darknet.assembler.error.Result;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.info.Info;
-import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.*;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
 import software.coley.recaf.services.workspace.patch.model.JvmAssemblerPatch;
+import software.coley.recaf.services.workspace.patch.model.RemovePath;
 import software.coley.recaf.services.workspace.patch.model.TextFilePatch;
 import software.coley.recaf.services.workspace.patch.model.WorkspacePatch;
 import software.coley.recaf.util.StringDiff;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.IOException;
@@ -109,6 +108,7 @@ public class PatchProvider implements Service {
 	 */
 	@Nonnull
 	public WorkspacePatch createPatch(@Nonnull Workspace workspace) throws PatchGenerationException {
+		List<RemovePath> removals = new ArrayList<>();
 		List<JvmAssemblerPatch> jvmAssemblerPatches = new ArrayList<>();
 		List<TextFilePatch> textFilePatches = new ArrayList<>();
 		PatchConsumer<ClassPathNode, JvmClassInfo> classConsumer = (classPath, initial, current) -> {
@@ -128,18 +128,40 @@ public class PatchProvider implements Service {
 			String initialDisassemble = initialDisassembleRes.get();
 			String currentDisassemble = currentDisassembleRes.get();
 			List<StringDiff.Diff> assemblerDiffs = StringDiff.diff(initialDisassemble, currentDisassemble);
-			jvmAssemblerPatches.add(new JvmAssemblerPatch(initialPath, assemblerDiffs));
+			if (!assemblerDiffs.isEmpty())
+				jvmAssemblerPatches.add(new JvmAssemblerPatch(initialPath, assemblerDiffs));
 		};
 		PatchConsumer<FilePathNode, FileInfo> fileConsumer = (filePath, initial, current) -> {
-			if (!initial.isTextFile() || !current.isTextFile()) {
+			if (initial.isTextFile() && current.isTextFile()) {
+				String initialText = initial.asTextFile().getText();
+				String currentText = current.asTextFile().getText();
+				List<StringDiff.Diff> textDiffs = StringDiff.diff(initialText, currentText);
+				if (!textDiffs.isEmpty())
+					textFilePatches.add(new TextFilePatch(filePath, textDiffs));
+			} else {
 				// TODO: Support binary patches of non-text files
 				logger.debug("Skipping file diff for '{}' as it is not a text file", initial.getName());
-				return;
 			}
 		};
 
 		try {
 			WorkspaceResource resource = workspace.getPrimaryResource();
+			ResourcePathNode resourcePath = PathNodes.resourcePath(workspace, resource);
+			resource.bundleStream().forEach(b -> {
+				BundlePathNode bundlePath = resourcePath.child(b);
+				Set<String> removedKeys = b.getRemovedKeys();
+				for (String key : removedKeys) {
+					if (b instanceof ClassBundle<?>) {
+						ClassInfo stub = new StubClassInfo(key);
+						ClassPathNode stubPath = bundlePath.child(stub.getPackageName()).child(stub);
+						removals.add(new RemovePath(stubPath));
+					} else {
+						FileInfo stub = new StubFileInfo(key);
+						FilePathNode stubPath = bundlePath.child(stub.getDirectoryName()).child(stub);
+						removals.add(new RemovePath(stubPath));
+					}
+				}
+			});
 			visitDirtyItems(workspace, resource, resource.getJvmClassBundle(), classConsumer);
 			for (var entry : resource.getVersionedJvmClassBundles().entrySet()) {
 				visitDirtyItems(workspace, resource, entry.getValue(), classConsumer);
@@ -150,6 +172,7 @@ public class PatchProvider implements Service {
 		}
 
 		return new WorkspacePatch(workspace,
+				Collections.unmodifiableList(removals),
 				Collections.unmodifiableList(jvmAssemblerPatches),
 				Collections.unmodifiableList(textFilePatches));
 	}

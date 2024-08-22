@@ -5,9 +5,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.services.workspace.patch.model.JvmAssemblerPatch;
+import software.coley.recaf.services.workspace.patch.model.RemovePath;
 import software.coley.recaf.services.workspace.patch.model.TextFilePatch;
 import software.coley.recaf.services.workspace.patch.model.WorkspacePatch;
 import software.coley.recaf.util.StringDiff;
@@ -27,6 +29,7 @@ import java.util.List;
  */
 public class PatchSerialization {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	private static final String KEY_REMOVALS = "removals";
 	private static final String KEY_CLASS_JVM_ASM_DIFFS = "class-jvm-asm-diffs";
 	private static final String KEY_FILE_TEXT_DIFFS = "file-text-diffs";
 	private static final String KEY_NAME = "name";
@@ -38,6 +41,8 @@ public class PatchSerialization {
 	private static final String KEY_START_B = "start-b";
 	private static final String KEY_END_B = "end-b";
 	private static final String KEY_TEXT_B = "text-b";
+	private static final String TYPE_CLASS = "class";
+	private static final String TYPE_FILE = "file";
 
 	private PatchSerialization() {}
 
@@ -54,43 +59,75 @@ public class PatchSerialization {
 		StringWriter out = new StringWriter();
 		try {
 			JsonWriter jw = GSON.newJsonWriter(out);
+			List<RemovePath> removals = patch.removals();
 			List<JvmAssemblerPatch> jvmAssemblerPatches = patch.jvmAssemblerPatches();
 			List<TextFilePatch> textFilePatches = patch.textFilePatches();
 
-			jw.beginObject();
-			if (!jvmAssemblerPatches.isEmpty()) {
-				jw.name(KEY_CLASS_JVM_ASM_DIFFS).beginArray();
-				for (JvmAssemblerPatch classPatch : jvmAssemblerPatches) {
-					String className = classPatch.path().getValue().getName();
-					jw.beginObject();
-					jw.name(KEY_NAME).value(className);
-					jw.name(KEY_DIFFS).beginArray();
-					for (StringDiff.Diff assemblerDiff : classPatch.assemblerDiffs())
-						serializeStringDiff(jw, assemblerDiff);
-					jw.endArray().endObject();
-				}
-				jw.endArray();
-			}
-
-			if (!textFilePatches.isEmpty()) {
-				jw.name(KEY_FILE_TEXT_DIFFS).beginArray();
-				for (TextFilePatch textPatch : textFilePatches) {
-					String fileName = textPatch.path().getValue().getName();
-					jw.beginObject();
-					jw.name(KEY_NAME).value(fileName);
-					jw.name(KEY_DIFFS).beginArray();
-					for (StringDiff.Diff assemblerDiff : textPatch.textDiffs())
-						serializeStringDiff(jw, assemblerDiff);
-					jw.endArray().endObject();
-				}
-				jw.endArray();
-			}
-			jw.endObject();
+			serializeRemovals(jw, removals);
+			serializeJvmAsmPatches(jvmAssemblerPatches, jw);
+			serializeTextPatches(textFilePatches, jw);
 		} catch (Exception ex) {
 			throw new IllegalStateException("Failed to create json writer for patch", ex);
 		}
 
 		return out.toString();
+	}
+
+	private static void serializeRemovals(@Nonnull JsonWriter jw, @Nonnull List<RemovePath> removals) throws IOException {
+		jw.beginObject();
+		if (!removals.isEmpty()) {
+			jw.name(KEY_REMOVALS).beginArray();
+			for (RemovePath removal : removals) {
+				Info info = removal.path().getValueOfType(Info.class);
+				if (info == null)
+					continue;
+
+				String name = info.getName();
+				jw.beginObject();
+				if (info.isClass()) {
+					jw.name(KEY_TYPE).value(TYPE_CLASS);
+					jw.name(KEY_NAME).value(name);
+				} else if (info.isFile()) {
+					jw.name(KEY_TYPE).value(TYPE_FILE);
+					jw.name(KEY_NAME).value(name);
+				}
+				jw.endObject();
+			}
+			jw.endArray();
+		}
+	}
+
+	private static void serializeJvmAsmPatches(@Nonnull List<JvmAssemblerPatch> jvmAssemblerPatches, @Nonnull JsonWriter jw) throws IOException {
+		if (!jvmAssemblerPatches.isEmpty()) {
+			jw.name(KEY_CLASS_JVM_ASM_DIFFS).beginArray();
+			for (JvmAssemblerPatch classPatch : jvmAssemblerPatches) {
+				String className = classPatch.path().getValue().getName();
+				jw.beginObject();
+				jw.name(KEY_NAME).value(className);
+				jw.name(KEY_DIFFS).beginArray();
+				for (StringDiff.Diff assemblerDiff : classPatch.assemblerDiffs())
+					serializeStringDiff(jw, assemblerDiff);
+				jw.endArray().endObject();
+			}
+			jw.endArray();
+		}
+	}
+
+	private static void serializeTextPatches(@Nonnull List<TextFilePatch> textFilePatches, @Nonnull JsonWriter jw) throws IOException {
+		if (!textFilePatches.isEmpty()) {
+			jw.name(KEY_FILE_TEXT_DIFFS).beginArray();
+			for (TextFilePatch textPatch : textFilePatches) {
+				String fileName = textPatch.path().getValue().getName();
+				jw.beginObject();
+				jw.name(KEY_NAME).value(fileName);
+				jw.name(KEY_DIFFS).beginArray();
+				for (StringDiff.Diff assemblerDiff : textPatch.textDiffs())
+					serializeStringDiff(jw, assemblerDiff);
+				jw.endArray().endObject();
+			}
+			jw.endArray();
+		}
+		jw.endObject();
 	}
 
 	private static void serializeStringDiff(@Nonnull JsonWriter jw, @Nonnull StringDiff.Diff diff) throws IOException {
@@ -120,10 +157,11 @@ public class PatchSerialization {
 	 */
 	@Nonnull
 	public static WorkspacePatch deserialize(@Nonnull Workspace workspace, @Nonnull String patchContents) throws PatchGenerationException {
+		List<RemovePath> removals = Collections.emptyList();
 		List<JvmAssemblerPatch> jvmAssemblerPatches = Collections.emptyList();
 		List<TextFilePatch> textFilePatches = Collections.emptyList();
 		if (patchContents.isBlank() || patchContents.charAt(0) != '{' || patchContents.charAt(patchContents.length() - 1) != '}')
-			return new WorkspacePatch(workspace, jvmAssemblerPatches, textFilePatches);
+			return new WorkspacePatch(workspace, removals, jvmAssemblerPatches, textFilePatches);
 		try {
 			JsonReader jr = GSON.newJsonReader(new StringReader(patchContents));
 			jr.beginObject();
@@ -133,13 +171,47 @@ public class PatchSerialization {
 					jvmAssemblerPatches = deserializeClassJvmAsmDiffs(workspace, jr);
 				} else if (name.equals(KEY_FILE_TEXT_DIFFS)) {
 					textFilePatches = deserializeFileTextDiffs(workspace, jr);
+				} else if (name.equals(KEY_REMOVALS)) {
+					removals = deserializeRemovals(workspace, jr);
 				}
 			}
 			jr.endObject();
-			return new WorkspacePatch(workspace, jvmAssemblerPatches, textFilePatches);
+			return new WorkspacePatch(workspace, removals, jvmAssemblerPatches, textFilePatches);
 		} catch (Exception ex) {
 			throw new PatchGenerationException(ex, "Failed to parse patch contents");
 		}
+	}
+
+	@Nonnull
+	private static List<RemovePath> deserializeRemovals(@Nonnull Workspace workspace, @Nonnull JsonReader jr) throws IOException, PatchGenerationException {
+		List<RemovePath> removals = new ArrayList<>();
+		jr.beginArray();
+		while (jr.hasNext()) {
+			String name = null;
+			String type = null;
+			jr.beginObject();
+			while (jr.hasNext()) {
+				String key = jr.nextName();
+				if (key.equals(KEY_NAME))
+					name = jr.nextString();
+				else if (key.equals(KEY_TYPE))
+					type = jr.nextString();
+			}
+			jr.endObject();
+
+			// Construct the removal
+			if (name != null) {
+				if (TYPE_CLASS.equals(type)) {
+					FilePathNode path = workspace.findFile(name);
+					if (path != null) removals.add(new RemovePath(path));
+				} else if (TYPE_FILE.equals(type)) {
+					ClassPathNode path = workspace.findClass(name);
+					if (path != null) removals.add(new RemovePath(path));
+				}
+			}
+		}
+		jr.endArray();
+		return removals;
 	}
 
 	@Nonnull
@@ -182,7 +254,7 @@ public class PatchSerialization {
 			while (jr.hasNext()) {
 				String key = jr.nextName();
 				if (key.equals(KEY_NAME))
-					name = key;
+					name = jr.nextString();
 				else if (key.equals(KEY_DIFFS))
 					diffs = deserializeStringDiffs(jr);
 			}

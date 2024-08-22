@@ -8,17 +8,21 @@ import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.error.Error;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.TextFileInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
 import software.coley.recaf.services.assembler.JvmAssemblerPipeline;
 import software.coley.recaf.services.workspace.patch.model.JvmAssemblerPatch;
+import software.coley.recaf.services.workspace.patch.model.RemovePath;
 import software.coley.recaf.services.workspace.patch.model.TextFilePatch;
 import software.coley.recaf.services.workspace.patch.model.WorkspacePatch;
 import software.coley.recaf.util.StringDiff;
+import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
@@ -58,13 +62,24 @@ public class PatchApplier implements Service {
 		List<Runnable> tasks = new ArrayList<>();
 		ErrorDelegate errorConsumerDelegate = new ErrorDelegate(errorConsumer);
 
+		for (RemovePath removal : patch.removals()) {
+			PathNode<?> path = removal.path();
+			Info toRemove = path.getValueOfType(Info.class);
+			Bundle<?> containingBundle = path.getValueOfType(Bundle.class);
+			if (toRemove != null && containingBundle != null) {
+				String entryName = toRemove.getName();
+				if (containingBundle.remove(entryName) == null)
+					logger.warn("Could not apply removal for path '{}' - not found in the workspace", entryName);
+			}
+		}
+
 		JvmAssemblerPipeline jvmAssemblerPipeline = assemblerPipelineManager.getJvmAssemblerPipeline();
 		for (JvmAssemblerPatch jvmAssemblerPatch : patch.jvmAssemblerPatches()) {
 			// Skip if any errors have been seen.
 			if (errorConsumerDelegate.hasSeenErrors())
 				return;
 
-			ClassPathNode path = jvmAssemblerPatch.path();
+			ClassPathNode path = jvmAssemblerPatch.path().withCurrentWorkspaceContent();
 			JvmClassInfo jvmClass = path.getValue().asJvmClass();
 			JvmClassBundle jvmBundle = path.getValueOfType(JvmClassBundle.class);
 			if (jvmBundle == null)
@@ -104,7 +119,7 @@ public class PatchApplier implements Service {
 			if (errorConsumerDelegate.hasSeenErrors())
 				return;
 
-			FilePathNode path = filePatch.path();
+			FilePathNode path = filePatch.path().withCurrentWorkspaceContent();
 			TextFileInfo textFile = path.getValue().asTextFile();
 			FileBundle fileBundle = path.getValueOfType(FileBundle.class);
 			if (fileBundle == null)
