@@ -53,12 +53,12 @@ public class BasicFileInfo implements FileInfo {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		BasicFileInfo other = (BasicFileInfo) o;
-
-		if (!name.equals(other.name)) return false;
-		return Arrays.equals(rawContent, other.rawContent);
+		if (o == null) return false;
+		if (o instanceof FileInfo other) {
+			if (!name.equals(other.getName())) return false;
+			return Arrays.equals(rawContent, other.getRawContent());
+		}
+		return false;
 	}
 
 	@Override

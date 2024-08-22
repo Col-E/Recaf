@@ -259,26 +259,27 @@ public abstract class BasicClassInfo implements ClassInfo {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (o == null) return false;
 
-		BasicClassInfo other = (BasicClassInfo) o;
-
-		// NOTE: Do NOT consider the properties since contents of the map can point back to this instance
-		//       or our containing resource, causing a cycle.
-		if (access != other.access) return false;
-		if (!name.equals(other.name)) return false;
-		if (!Objects.equals(superName, other.superName)) return false;
-		if (!interfaces.equals(other.interfaces)) return false;
-		if (!Objects.equals(signature, other.signature)) return false;
-		if (!Objects.equals(sourceFileName, other.sourceFileName)) return false;
-		if (!annotations.equals(other.annotations)) return false;
-		if (!typeAnnotations.equals(other.typeAnnotations)) return false;
-		if (!Objects.equals(outerClassName, other.outerClassName)) return false;
-		if (!Objects.equals(outerMethodName, other.outerMethodName)) return false;
-		if (!Objects.equals(outerMethodDescriptor, other.outerMethodDescriptor)) return false;
-		if (!innerClasses.equals(other.innerClasses)) return false;
-		if (!fields.equals(other.fields)) return false;
-		return methods.equals(other.methods);
+		if (o instanceof ClassInfo other) {
+			// NOTE: Do NOT consider the properties since contents of the map can point back to this instance
+			//       or our containing resource, causing a cycle.
+			if (access != other.getAccess()) return false;
+			if (!name.equals(other.getName())) return false;
+			if (!Objects.equals(superName, other.getSuperName())) return false;
+			if (!interfaces.equals(other.getInterfaces())) return false;
+			if (!Objects.equals(signature, other.getSignature())) return false;
+			if (!Objects.equals(sourceFileName, other.getSourceFileName())) return false;
+			if (!annotations.equals(other.getAnnotations())) return false;
+			if (!typeAnnotations.equals(other.getTypeAnnotations())) return false;
+			if (!Objects.equals(outerClassName, other.getOuterClassName())) return false;
+			if (!Objects.equals(outerMethodName, other.getOuterMethodName())) return false;
+			if (!Objects.equals(outerMethodDescriptor, other.getOuterMethodDescriptor())) return false;
+			if (!innerClasses.equals(other.getInnerClasses())) return false;
+			if (!fields.equals(other.getFields())) return false;
+			return methods.equals(other.getMethods());
+		}
+		return false;
 	}
 
 	@Override
