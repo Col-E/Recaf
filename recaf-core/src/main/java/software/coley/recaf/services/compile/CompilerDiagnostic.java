@@ -9,6 +9,8 @@ import jakarta.annotation.Nonnull;
  * 		Line the message applies to.
  * @param column
  * 		Column the message applies to within the line.
+ * @param length
+ * 		Length beyond the column position where the message applies to.
  * @param message
  * 		Message detailing the problem.
  * @param level

@@ -1,6 +1,5 @@
 package software.coley.recaf.ui.control.richtext;
 
-import com.fasterxml.jackson.databind.node.TextNode;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
@@ -36,7 +35,10 @@ import software.coley.recaf.ui.control.richtext.syntax.StyleResult;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxHighlighter;
 import software.coley.recaf.ui.control.richtext.syntax.SyntaxUtil;
 import software.coley.recaf.ui.pane.editing.ProblemOverlay;
-import software.coley.recaf.util.*;
+import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.IntRange;
+import software.coley.recaf.util.ReflectUtil;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.time.Duration;
@@ -506,20 +508,18 @@ public class Editor extends BorderPane {
 		Region paragraphBox = (Region) cell.getNode();
 		ObservableList<Node> paragraphBoxChildren = paragraphBox.getChildrenUnmodifiable();
 
-        if (paragraphBoxChildren.isEmpty()) {
-            return Collections.emptyList();
-        }
+		if (paragraphBoxChildren.isEmpty())
+			return Collections.emptyList();
 
 		// The text flow is always the first child of the box.
 		Region textFlow = (Region) paragraphBoxChildren.getFirst();
 
 		// In the text flow, we want the first 'Text' child. This should be the first one with empty spaces.
 		ObservableList<Node> flowChildren = textFlow.getChildrenUnmodifiable();
-
 		return Unchecked.cast(flowChildren.stream()
-							.filter(c -> c instanceof Text)
-							.toList());
-    }
+				.filter(c -> c instanceof Text)
+				.toList());
+	}
 
 	/**
 	 * Compute the width of blank text before non-blank text.
@@ -527,8 +527,9 @@ public class Editor extends BorderPane {
 	 * @param paragraph
 	 * 		Paragraph index to compute empty space (in pixels) to the first non-whitespace character.
 	 *
-	 * @see #getTextNodes(int)
 	 * @return Pixels to first non-whitespace character.
+	 *
+	 * @see #getTextNodes(int)
 	 */
 	public double computeWhitespacePrefixWidth(int paragraph) {
 		List<Text> textNodes = getTextNodes(paragraph);
@@ -558,9 +559,9 @@ public class Editor extends BorderPane {
 	 * Compute the width of text until a specific character.
 	 *
 	 * @param paragraph
-	 *    Paragraph index to compute the width of.
+	 * 		Paragraph index to compute the width of.
 	 * @param character
-	 *    Character index to compute the width until.
+	 * 		Character index to compute the width until.
 	 *
 	 * @return Width of text until the character.
 	 */

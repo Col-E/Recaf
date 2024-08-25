@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.richtext.problem;
 
+import jakarta.annotation.Nonnull;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
@@ -9,15 +10,14 @@ import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
 
 import java.util.List;
 
-
 /**
  * Graphic factory that adds overlays to line graphics indicating the problem status of the line.
  *
  * @author Matt Coley
+ * @author Justus Garbe
  * @see ProblemTracking
  */
 public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
-
 	public ProblemGraphicFactory() {
 		super(LineGraphicFactory.P_LINE_PROBLEMS);
 	}
@@ -27,18 +27,26 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		if (editor.getProblemTracking() == null)
 			return;
 
-		List<Problem> problems = editor.getProblemTracking().getProblems(paragraph + 1);
-
-		if (problems == null)
+		List<Problem> problems = editor.getProblemTracking().getProblemsOnLine(paragraph + 1);
+		if (problems == null || problems.isEmpty())
 			return;
 
-		for (Problem problem : problems) {
+		for (Problem problem : problems)
 			prepareProblem(problem, pane, paragraph);
-		}
 	}
 
-	private void prepareProblem(Problem problem, StackPane pane, int paragraph) {
-		// compute the width of the draw canvas and offset required
+	/**
+	 * Adds the given problem to the stack pane.
+	 *
+	 * @param problem
+	 * 		Problem to add.
+	 * @param pane
+	 * 		Pane to add the problem display to.
+	 * @param paragraph
+	 * 		Current paragraph index.
+	 */
+	private void prepareProblem(@Nonnull Problem problem, @Nonnull StackPane pane, int paragraph) {
+		// Compute the width of the draw canvas and offset required
 		int index = problem.column() + 1;
 		double toStart = editor.computeWidthUntilCharacter(paragraph, index);
 		double toEnd = editor.computeWidthUntilCharacter(paragraph, index + problem.length());
@@ -59,17 +67,26 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		Tooltip.install(canvas, tooltip);
 	}
 
-	private void drawWaves(Canvas canvas, boolean warn, double errorWidth) {
+	/**
+	 * Draws a saw-tooth wave pattern for the given error level of the given width.
+	 *
+	 * @param canvas
+	 * 		Drawing destination.
+	 * @param warn
+	 * 		Error level, either {@code true} for warning, or {@code false} for errors.
+	 * @param width
+	 * 		Length of waves to draw.
+	 */
+	private void drawWaves(@Nonnull Canvas canvas, boolean warn, double width) {
 		var gc = canvas.getGraphicsContext2D();
 
-		// make a solid red line
+		// Make a solid yellow/red line based on error level
 		gc.setStroke(warn ? Color.YELLOW : Color.RED);
 		gc.setLineWidth(1);
-
 		gc.beginPath();
 
+		// wave heights
 		final double scalingFactor = .7;
-		// heights
 		final double waveUp = containerHeight - 3 * scalingFactor;
 		final double waveDown = containerHeight - 6 * scalingFactor;
 
@@ -77,11 +94,11 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		final double step = waveDown * stepScale;
 		final double halfStep = step / 2;
 
-		final double downStop = errorWidth - halfStep;
-		final double upStop = errorWidth - step;
+		final double downStop = width - halfStep;
+		final double upStop = width - step;
 
-        // we want to draw waves such that the last wave is on the border of the errorWidth
-		for (double x = 0; x < errorWidth; x += step) {
+		// We want to draw waves such that the last wave is on the border of the errorWidth
+		for (double x = 0; x < width; x += step) {
 			gc.moveTo(x, waveUp);
 			if (x < downStop)
 				gc.lineTo(x + halfStep, waveDown);

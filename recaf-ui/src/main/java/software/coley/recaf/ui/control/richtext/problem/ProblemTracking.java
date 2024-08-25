@@ -29,22 +29,12 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	private Editor editor;
 
 	/**
-	 * @param line
-	 * 		Line number of problem.
-	 *
-	 * @return Problem on the line.
-	 */
-	@Nullable
-	public List<Problem> getProblems(int line) {
-		return problems.get(line);
-	}
-
-	/**
 	 * @param problem
 	 * 		Problem to add.
 	 */
 	public void add(@Nonnull Problem problem) {
-		List<Problem> list = problems.computeIfAbsent(problem.line(), k -> new ArrayList<>());
+		List<Problem> list;
+		synchronized (problems) {list = problems.computeIfAbsent(problem.line(), k -> new ArrayList<>());}
 		list.add(problem);
 		Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 				(listener, t) -> logger.error("Exception thrown when adding problem to tracking", t));
@@ -58,7 +48,8 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * {@code false} when the problem instance was not contained in the problems map.
 	 */
 	public boolean removeByInstance(@Nonnull Problem problem) {
-		List<Problem> list = problems.get(problem.line());
+		List<Problem> list;
+		synchronized (problems) {list = problems.get(problem.line());}
 		if (list != null) {
 			boolean updated = list.removeIf(p -> p == problem);
 			if (updated)
@@ -80,7 +71,8 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * {@code false} when there was no problem at the line.
 	 */
 	public boolean removeByLine(int line) {
-		boolean updated = problems.remove(line) != null;
+		boolean updated;
+		synchronized (problems) {updated = problems.remove(line) != null;}
 		if (updated)
 			Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 					(listener, t) -> logger.error("Exception thrown when removing problem from tracking", t));
@@ -94,7 +86,8 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * @return {@code true} when one or more problems matching the phase were removed.
 	 */
 	public boolean removeByPhase(@Nonnull ProblemPhase phase) {
-		boolean updated = problems.values().removeIf(list -> list.removeIf(p -> p.phase() == phase));
+		boolean updated;
+		synchronized (problems) {updated = problems.values().removeIf(list -> list.removeIf(p -> p.phase() == phase));}
 		if (updated)
 			Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 					(listener, t) -> logger.error("Exception thrown when removing problems from tracking", t));
@@ -105,7 +98,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * Clear all problems.
 	 */
 	public void clear() {
-		problems.clear();
+		synchronized (problems) {problems.clear();}
 		Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 				(listener, t) -> logger.error("Exception thrown when clearing problems from tracking", t));
 	}
@@ -130,13 +123,24 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	}
 
 	/**
+	 * @param line
+	 * 		Line number of problem.
+	 *
+	 * @return Problem on the line.
+	 */
+	@Nullable
+	public List<Problem> getProblemsOnLine(int line) {
+		synchronized (problems) {return problems.get(line);}
+	}
+
+	/**
 	 * @param level
 	 * 		Problem level to filter problems by.
 	 *
 	 * @return List of problems matching the given level.
 	 */
 	@Nonnull
-	public List<Problem> getProblemsByLevel(ProblemLevel level) {
+	public List<Problem> getProblemsByLevel(@Nonnull ProblemLevel level) {
 		return getProblems(p -> p.level() == level);
 	}
 
@@ -147,7 +151,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * @return List of problems matching the given phase.
 	 */
 	@Nonnull
-	public List<Problem> getProblemsByPhase(ProblemPhase phase) {
+	public List<Problem> getProblemsByPhase(@Nonnull ProblemPhase phase) {
 		return getProblems(p -> p.phase() == phase);
 	}
 
@@ -158,26 +162,33 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * @return List of problems matching the filter.
 	 */
 	@Nonnull
-	public List<Problem> getProblems(Predicate<Problem> filter) {
+	public List<Problem> getProblems(@Nonnull Predicate<Problem> filter) {
 		List<Problem> list = new ArrayList<>();
-		problems.values().stream()
-				.flatMap(Collection::stream)
-				.filter(filter)
-				.forEach(list::add);
+		synchronized (problems) {
+			problems.values().stream()
+					.flatMap(Collection::stream)
+					.filter(filter)
+					.forEach(list::add);
+		}
 		return list;
 	}
 
 	/**
-	 * @return Map of problems.
+	 * @return Map of all problems by line number.
 	 */
 	@Nonnull
 	public NavigableMap<Integer, List<Problem>> getProblems() {
-		return problems;
+		// Wrap to force usage to be synchronized
+		return Collections.synchronizedNavigableMap(problems);
 	}
 
+	/**
+	 * @return List of all problems.
+	 */
+	@Nonnull
 	public List<Problem> getAllProblems() {
 		List<Problem> list = new ArrayList<>();
-		problems.values().forEach(list::addAll);
+		synchronized (problems) {problems.values().forEach(list::addAll);}
 		return list;
 	}
 
@@ -246,7 +257,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 
 		// We will want to sort the order of removed lines so we
 		TreeSet<Map.Entry<Integer, List<Problem>>> set = new TreeSet<>(Comparator.comparingInt(Map.Entry::getKey));
-		set.addAll(problems.entrySet());
+		synchronized (problems) {set.addAll(problems.entrySet());}
 		set.stream()
 				.filter(e -> e.getKey() >= startLine)
 				.forEach(e -> {
