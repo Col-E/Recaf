@@ -145,6 +145,7 @@ public class DockingManager {
 	 * 		Tab created.
 	 */
 	void onTabClose(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
+		// TODO: In some cases the listeners need to be called on the FX thread
 		Unchecked.checkedForEach(tabClosureListeners, listener -> listener.onClose(parent, tab),
 				(listener, t) -> logger.error("Exception thrown when closing tab '{}'", tab.getText(), t));
 	}

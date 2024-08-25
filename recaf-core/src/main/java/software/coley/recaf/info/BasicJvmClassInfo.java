@@ -20,7 +20,7 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 	 * @param builder
 	 * 		Builder to pull info from.
 	 */
-	public BasicJvmClassInfo(JvmClassInfoBuilder builder) {
+	public BasicJvmClassInfo(@Nonnull JvmClassInfoBuilder builder) {
 		super(builder);
 		this.bytecode = builder.getBytecode();
 		this.version = builder.getVersion();
@@ -48,13 +48,14 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (o == null) return false;
 		if (!super.equals(o)) return false;
 
-		BasicJvmClassInfo that = (BasicJvmClassInfo) o;
-
-		if (version != that.version) return false;
-		return Arrays.equals(bytecode, that.bytecode);
+		if (o instanceof JvmClassInfo other) {
+			if (version != other.getVersion()) return false;
+			return Arrays.equals(bytecode, other.getBytecode());
+		}
+		return false;
 	}
 
 	@Override

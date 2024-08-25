@@ -10,6 +10,7 @@ import software.coley.lljzip.format.model.ZipArchive;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
 import software.coley.recaf.workspace.model.bundle.*;
 
@@ -25,7 +26,7 @@ import java.util.NavigableMap;
  *
  * @author Matt Coley
  */
-public class AndroidApiResource implements WorkspaceResource {
+public class AndroidApiResource extends BasicPropertyContainer implements WorkspaceResource {
 	private static final Logger logger = Logging.get(AndroidApiResource.class);
 	private static AndroidApiResource instance;
 	private final FileBundle files = new BasicFileBundle();

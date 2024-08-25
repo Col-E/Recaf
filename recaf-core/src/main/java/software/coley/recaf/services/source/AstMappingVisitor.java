@@ -108,8 +108,12 @@ public class AstMappingVisitor extends JavaIsoVisitor<ExecutionContext> {
 	@Nonnull
 	@Override
 	public J.ArrayType visitArrayType(@Nonnull J.ArrayType array, @Nonnull ExecutionContext ctx) {
-		array = array.withElementType(visitIdentifier((J.Identifier) array.getElementType(), ctx));
-		return super.visitArrayType(array, ctx);
+		try {
+			array = array.withElementType(visitIdentifier((J.Identifier) array.getElementType(), ctx));
+			return super.visitArrayType(array, ctx);
+		} catch (Throwable t) {
+			return super.visitArrayType(array, ctx);
+		}
 	}
 
 	@Nonnull

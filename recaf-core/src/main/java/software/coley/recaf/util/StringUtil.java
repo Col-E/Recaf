@@ -2,6 +2,8 @@ package software.coley.recaf.util;
 
 import it.unimi.dsi.fastutil.chars.Char2IntArrayMap;
 import it.unimi.dsi.fastutil.chars.Char2IntMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
@@ -23,6 +25,28 @@ import java.util.Random;
  */
 public class StringUtil {
 	public static final String[] EMPTY_STRING_ARRAY = new String[0];
+	private static final int[] EMPTY_INT_ARRAY = new int[0];
+
+	/**
+	 * @param input
+	 * 		Some text to search.
+	 * @param c
+	 * 		Char to get index of in the input string.
+	 *
+	 * @return Array of indices in the input string where the char exists.
+	 */
+	public static int[] indicesOf(@Nonnull String input, char c) {
+		IntList list = new IntArrayList(5);
+		int i = -1;
+		do {
+			i = input.indexOf(c, i);
+			if (i >= 0) {
+				list.add(i);
+				i++;
+			}
+		} while (i >= 0);
+		return list.toArray(EMPTY_INT_ARRAY);
+	}
 
 	/**
 	 * @param input
@@ -512,6 +536,36 @@ public class StringUtil {
 			}
 		}
 		return a.substring(0, len);
+	}
+
+	/**
+	 * @param a
+	 * 		Some string.
+	 * @param b
+	 * 		Another.
+	 *
+	 * @return The common suffix between the two strings.
+	 */
+	@Nonnull
+	public static String getCommonSuffix(@Nonnull String a, @Nonnull String b) {
+		int alen = a.length();
+		int blen = b.length();
+		int commonLength = Math.min(alen, blen);
+
+		// Base case where one string is empty.
+		if (commonLength == 0)
+			return "";
+
+		// Find fist non-equal char and get the suffix string.
+		for (int i = 1; i < commonLength + 1; i++) {
+			if (a.charAt(alen - i) != b.charAt(blen - i)) {
+				return a.substring(alen - i + 1);
+			}
+		}
+
+		// For the shared common length both strings are equal.
+		// Yield the shorter string.
+		return alen < blen ? a : b;
 	}
 
 	/**

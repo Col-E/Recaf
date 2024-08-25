@@ -50,14 +50,13 @@ public class MethodNoopingVisitor extends ClassVisitor {
 	 * Method visitor that replaces the contents with a no-op return.
 	 */
 	public static class NoopingMethodVisitor extends MethodVisitor implements Opcodes {
-		private static final int MAX_LOCALS = 1;
 		private static final int MAX_STACK = 2;
 		private static final Map<String, Consumer<MethodVisitor>> OBJECT_DEFAULTS = new HashMap<>();
 		private final Type type;
 
 		public NoopingMethodVisitor(@Nullable MethodVisitor mv, @Nonnull String desc) {
 			super(RecafConstants.getAsmVersion(), mv);
-			type = Type.getMethodType(desc).getReturnType();
+			type = Type.getMethodType(desc);
 		}
 
 		@Override
@@ -65,7 +64,8 @@ public class MethodNoopingVisitor extends ClassVisitor {
 			// Directly pass to the delegate so these do not get no-op'd
 			MethodVisitor mv = getDelegate();
 			if (mv == null) return;
-			int sort = type.getSort();
+			Type returnType = type.getReturnType();
+			int sort = returnType.getSort();
 			switch (sort) {
 				case Type.VOID -> {
 					// return;
@@ -94,7 +94,7 @@ public class MethodNoopingVisitor extends ClassVisitor {
 				case Type.ARRAY -> {
 					// return new T[0]
 					mv.visitInsn(ICONST_0);
-					Type elementType = type.getElementType();
+					Type elementType = returnType.getElementType();
 					int elementSort = elementType.getSort();
 					switch (elementSort) {
 						case Type.BOOLEAN -> mv.visitIntInsn(NEWARRAY, T_BOOLEAN);
@@ -111,7 +111,7 @@ public class MethodNoopingVisitor extends ClassVisitor {
 				}
 				default -> {
 					// See if there's a specific kind of default value better than null.
-					String className = type.getInternalName();
+					String className = returnType.getInternalName();
 					Consumer<MethodVisitor> defaultValueProvider = OBJECT_DEFAULTS.get(className);
 					if (defaultValueProvider != null) {
 						defaultValueProvider.accept(mv);
@@ -239,7 +239,9 @@ public class MethodNoopingVisitor extends ClassVisitor {
 
 		@Override
 		public void visitMaxs(int maxStack, int maxLocals) {
-			super.visitMaxs(MAX_STACK, MAX_LOCALS);
+			// Stack ---> 2 (max size of value pushed to return)
+			// Locals --> Match parameter sizes + 1 for 'this'
+			super.visitMaxs(MAX_STACK, type.getArgumentsAndReturnSizes() + 1);
 		}
 
 		private static void register(@Nonnull String name, @Nonnull Consumer<MethodVisitor> consumer) {

@@ -30,7 +30,7 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 	 * 		Inner class flags originally declared.
 	 */
 	public BasicInnerClassInfo(String outerDeclaringClassName, String innerClassName,
-							   String outerClassName, String innerName, int access) {
+	                           String outerClassName, String innerName, int access) {
 		this.outerDeclaringClassName = outerDeclaringClassName;
 		this.innerClassName = innerClassName;
 		this.outerClassName = outerClassName;
@@ -76,14 +76,15 @@ public class BasicInnerClassInfo implements InnerClassInfo {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (o == null) return false;
 
-		BasicInnerClassInfo inner = (BasicInnerClassInfo) o;
-
-		if (access != inner.access) return false;
-		if (!innerClassName.equals(inner.innerClassName)) return false;
-		if (!Objects.equals(outerClassName, inner.outerClassName)) return false;
-		return Objects.equals(innerName, inner.innerName);
+		if (o instanceof InnerClassInfo inner) {
+			if (access != inner.getAccess()) return false;
+			if (!innerClassName.equals(inner.getInnerClassName())) return false;
+			if (!Objects.equals(outerClassName, inner.getOuterClassName())) return false;
+			return Objects.equals(innerName, inner.getInnerName());
+		}
+		return false;
 	}
 
 	@Override

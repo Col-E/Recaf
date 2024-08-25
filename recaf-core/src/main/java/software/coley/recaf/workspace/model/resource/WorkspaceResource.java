@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Info;
+import software.coley.recaf.info.properties.PropertyContainer;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 
@@ -20,7 +21,7 @@ import static java.util.stream.Stream.of;
  *
  * @author Matt Coley
  */
-public interface WorkspaceResource extends Closing {
+public interface WorkspaceResource extends PropertyContainer, Closing {
 	/**
 	 * Contains the classes within the resource.
 	 * <br>

@@ -4,9 +4,12 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
 
 import java.util.Set;
 
@@ -99,6 +102,18 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	@Nonnull
 	public AnnotationPathNode child(@Nonnull AnnotationInfo annotation) {
 		return new AnnotationPathNode(this, annotation);
+	}
+
+	@Nonnull
+	@Override
+	public ClassPathNode withCurrentWorkspaceContent() {
+		DirectoryPathNode parent = getParent();
+		if (parent == null) return this;
+		ClassBundle<?> bundle = getValueOfType(ClassBundle.class);
+		if (bundle == null) return this;
+		ClassInfo classInfo = bundle.get(getValue().getName());
+		if (classInfo == null || classInfo == getValue()) return this;
+		return parent.child(classInfo);
 	}
 
 	@Override

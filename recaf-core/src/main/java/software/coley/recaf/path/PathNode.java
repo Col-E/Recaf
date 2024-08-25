@@ -36,6 +36,22 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	PathNode getParent();
 
 	/**
+	 * Creates a copy of the path node with this child-most node's value being looked up for a newer
+	 * value in the associated workspace.
+	 * <p/>
+	 * <b>Note:</b> A {@link WorkspacePathNode} must be present.
+	 *
+	 * @return A new path node pointing to the same location,
+	 * but with the {@link #getValue() value} being updated to the current in the associated {@link Workspace}.
+	 * If a lookup could not be done then the current instance is returned.
+	 */
+	@Nonnull
+	@SuppressWarnings("rawtypes")
+	default PathNode withCurrentWorkspaceContent() {
+		return this;
+	}
+
+	/**
 	 * @return Wrapped value.
 	 */
 	@Nonnull

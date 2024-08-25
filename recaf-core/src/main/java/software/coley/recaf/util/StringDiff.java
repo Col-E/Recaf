@@ -8,6 +8,8 @@ import org.openrewrite.jgit.diff.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -24,105 +26,113 @@ public class StringDiff {
 	 *
 	 * @return Diffs from {@code a} --> {@code b}.
 	 */
-	public static List<Diff> diff(String a, String b) {
-		// Track line info.
-		String[] aLines = a.split("\n");
-		String[] bLines = b.split("\n");
-		int[] aPositions = new int[aLines.length + 1];
-		int[] bPositions = new int[bLines.length + 1];
-		for (int i = 0; i < aPositions.length - 2; i++)
-			aPositions[i + 1] = aPositions[i] + aLines[i].length() + 1;
-		for (int i = 0; i < bPositions.length - 2; i++)
-			bPositions[i + 1] = bPositions[i] + bLines[i].length() + 1;
-		aPositions[aLines.length] = Integer.MAX_VALUE;
-		bPositions[bLines.length] = Integer.MAX_VALUE;
-
+	@Nonnull
+	public static List<Diff> diff(@Nonnull String a, @Nonnull String b) {
 		// Use JGit to diff.
 		EditList diffs = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.MYERS)
 				.diff(RawTextComparator.DEFAULT,
 						new RawText(a.getBytes(StandardCharsets.UTF_8)),
 						new RawText(b.getBytes(StandardCharsets.UTF_8)));
 
+		int[] newlineOffsetsA = computeNewlineOffsets(a);
+		int[] newlineOffsetsB = computeNewlineOffsets(b);
+
 		// Map to diff types that are easier to use.
 		// We want raw positions, not line numbers, so we can do replace operations easily.
-		List<Diff> ret = new ArrayList<>();
+		List<Diff> ret = new ArrayList<>(diffs.size());
 		for (Edit diff : diffs) {
+			int newlineStartA = diff.getBeginA(); // Line start of diff-A
+			int newlineEndA = diff.getEndA(); // Line end of diff-A
+			int offsetStartA = newlineOffsetsA[newlineStartA]; // Starting text offset of diff-A
+			int offsetEndA = newlineOffsetsA[newlineEndA]; // Ending text offset of diff-A
+			String contentA = a.substring(offsetStartA, offsetEndA);
+
+			int newlineStartB = diff.getBeginB(); // Line start of diff-B
+			int newlineEndB = diff.getEndB(); // Line end of diff-B
+			int offsetStartB = newlineOffsetsB[newlineStartB]; // Starting text offset of diff-B
+			int offsetEndB = newlineOffsetsB[newlineEndB]; // Ending text offset of diff-B
+			String contentB = b.substring(offsetStartB, offsetEndB);
+
+			// Shrink difference by trimming out the common prefix and suffix.
+			String commonPrefix = StringUtil.getCommonPrefix(contentA, contentB);
+			if (!commonPrefix.isEmpty()) {
+				int common = commonPrefix.length();
+				offsetStartA += common;
+				offsetStartB += common;
+				contentA = a.substring(offsetStartA, offsetEndA);
+				contentB = b.substring(offsetStartB, offsetEndB);
+			}
+			String commonSuffix = StringUtil.getCommonSuffix(contentA, contentB);
+			if (!commonSuffix.isEmpty()) {
+				int common = commonSuffix.length();
+				offsetEndA -= common;
+				offsetEndB -= common;
+				contentA = a.substring(offsetStartA, offsetEndA);
+				contentB = b.substring(offsetStartB, offsetEndB);
+			}
+
+			// Compute the diff type. It will have changed from what JGit reports if our
+			// shrinking has shrunk either 'A' or 'B' to an empty string.
 			DiffType type = DiffType.from(diff.getType());
-			int beginA = diff.getBeginA();
-			int endA = diff.getEndA();
-			int posStartA = aPositions[beginA];
-			int posEndA = aPositions[endA];
-			String contentA = pull(aLines, beginA, endA);
-			int beginB = diff.getBeginB();
-			int endB = diff.getEndB();
-			int posStartB = bPositions[beginB];
-			int posEndB = bPositions[endB];
-			String contentB = pull(bLines, beginB, endB);
-
-			// Shrink difference
-			int lengthA = contentA.length();
-			int lengthB = contentB.length();
-			int commonLength = Math.min(lengthA, lengthB);
-			int cutStart = 0;
-			while (cutStart < commonLength && contentA.charAt(cutStart) == contentB.charAt(cutStart))
-				cutStart++;
-			int cutEnd = 0;
-			while (cutEnd < commonLength && contentA.charAt(lengthA - cutEnd - 1) == contentB.charAt(lengthB - cutEnd - 1))
-				cutEnd++;
-			if (cutStart > 0) {
-				posStartA += cutStart;
-				posStartB += cutStart;
-				contentA = contentA.substring(cutStart);
-				contentB = contentB.substring(cutStart);
-			}
-			if (cutEnd > 0) {
-				posEndA -= cutEnd;
-				posEndB -= cutEnd;
-				int cutEndA = contentA.length() - cutEnd;
-				int cutEndB = contentB.length() - cutEnd; // Negative check is a quick fix, should diagnose properly later
-				contentA = cutEndA < 0 ? "" : contentA.substring(0, cutEndA);
-				contentB = cutEndB < 0 ? "" : contentB.substring(0, cutEndB);
-			}
-
-			// Check if shrinking changed type
 			if (contentA.isEmpty() && !contentB.isEmpty())
 				type = DiffType.INSERT;
 			else if (!contentA.isEmpty() && contentB.isEmpty())
 				type = DiffType.REMOVE;
 
-			ret.add(new Diff(type, posStartA, posStartB, posEndA, posEndB, contentA, contentB));
+			// Add our mapped diff.
+			ret.add(new Diff(type, offsetStartA, offsetStartB, offsetEndA, offsetEndB, contentA, contentB));
 		}
 		return ret;
 	}
 
 	/**
-	 * @param array
-	 * 		Sources.
-	 * @param start
-	 * 		Source line start.
-	 * @param end
-	 * 		Source line end.
+	 * @param text
+	 * 		Text to scan.
 	 *
-	 * @return Text from range.
+	 * @return Offsets of newline separators, with included cases for the start and end of
+	 * the string even if {@code "\n"} does not prefix or suffix the string.
 	 */
-	private static String pull(String[] array, int start, int end) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = start; i < end; i++)
-			sb.append(array[i]).append("\n");
-		return sb.toString();
+	@Nonnull
+	private static int[] computeNewlineOffsets(@Nonnull String text) {
+		// Find existing newline offsets.
+		int[] offsets = StringUtil.indicesOf(text, '\n');
+
+		int textLength = text.length();
+		if (offsets.length == 0) {
+			// Base cases for strings without newlines.
+			return text.isEmpty() ? new int[]{0} : new int[]{0, textLength};
+		} else {
+			// Ensure we start with a newline offset.
+			if (offsets[0] != 0) {
+				int[] newOffsets = new int[offsets.length + 1];
+				newOffsets[0] = 0;
+				System.arraycopy(offsets, 0, newOffsets, 1, offsets.length);
+				offsets = newOffsets;
+			}
+
+			// Ensure we end with a newline offset.
+			if (offsets[offsets.length - 1] != textLength - 1) {
+				int[] newOffsets = new int[offsets.length + 1];
+				newOffsets[offsets.length] = textLength;
+				System.arraycopy(offsets, 0, newOffsets, 0, offsets.length);
+				offsets = newOffsets;
+			}
+		}
+
+		return offsets;
 	}
 
 	/**
 	 * @param type
 	 * 		Diff type.
 	 * @param startA
-	 * 		Start position of original different text.
+	 * 		Start position of original text.
 	 * @param startB
-	 * 		Start position of modified different text.
+	 * 		Start position of modified text.
 	 * @param endA
-	 * 		End position of original different text.
+	 * 		End position of original text.
 	 * @param endB
-	 * 		End position of modified different text.
+	 * 		End position of modified text.
 	 * @param textA
 	 * 		Original text in range.
 	 * @param textB
@@ -130,7 +140,20 @@ public class StringDiff {
 	 *
 	 * @author Matt Coley
 	 */
-	public record Diff(DiffType type, int startA, int startB, int endA, int endB, String textA, String textB) {
+	public record Diff(@Nonnull DiffType type, int startA, int startB, int endA, int endB,
+	                   @Nonnull String textA, @Nonnull String textB) {
+		/**
+		 * Compare diffs by start positions.
+		 */
+		public static Comparator<Diff> COMPARE_BY_START_OFFSET = (da, db) -> {
+			int cmp = Integer.compare(da.startA, db.startA);
+			if (cmp == 0)
+				cmp = -Integer.compare(da.endA, db.endA);
+			if (cmp == 0)
+				cmp = da.textA.compareTo(db.textB);
+			return cmp;
+		};
+
 		/**
 		 * @return {@code true} when {@link #type()} is {@link DiffType#CHANGE}.
 		 */
@@ -159,12 +182,53 @@ public class StringDiff {
 			return type == DiffType.EMPTY;
 		}
 
+		/**
+		 * @param pos
+		 * 		Position to check.
+		 *
+		 * @return {@code true} when {@code pos} is in the range {@code [startA, endA)}.
+		 */
 		public boolean inRangeA(int pos) {
 			return pos >= startA && pos < endA;
 		}
 
+		/**
+		 * @param pos
+		 * 		Position to check.
+		 *
+		 * @return {@code true} when {@code pos} is in the range {@code [startB, endB)}.
+		 */
 		public boolean inRangeB(int pos) {
 			return pos >= startB && pos < endB;
+		}
+
+		/**
+		 * @param inputA
+		 * 		Full text for input "A".
+		 *
+		 * @return Patched text to conform to input "B".
+		 */
+		@Nonnull
+		public String apply(@Nonnull String inputA) {
+			String prefix = inputA.substring(0, startA);
+			String suffix = inputA.substring(endA);
+			return prefix + textB + suffix;
+		}
+
+		/**
+		 * @param inputA
+		 * 		Full text for input "A".
+		 * @param diffs
+		 * 		Series of diffs to apply.
+		 *
+		 * @return Patched text to conform to input "B".
+		 */
+		@Nonnull
+		public static String apply(@Nonnull String inputA, @Nonnull Collection<Diff> diffs) {
+			List<Diff> sortedDiffs = diffs.stream().sorted(COMPARE_BY_START_OFFSET).toList();
+			for (int i = sortedDiffs.size() - 1; i >= 0; i--)
+				inputA = sortedDiffs.get(i).apply(inputA);
+			return inputA;
 		}
 	}
 
@@ -185,7 +249,8 @@ public class StringDiff {
 		 *
 		 * @return Our diff type.
 		 */
-		public static DiffType from(Edit.Type type) {
+		@Nonnull
+		public static DiffType from(@Nonnull Edit.Type type) {
 			return switch (type) {
 				case INSERT -> INSERT;
 				case DELETE -> REMOVE;

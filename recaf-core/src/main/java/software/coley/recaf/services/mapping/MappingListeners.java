@@ -15,8 +15,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Manages listeners for things like {@link MappingResults} application in an application-scoped, as opposed to
- * some of the other mapping services which are workspace-scoped.
+ * Manages listeners for things like {@link MappingResults} applying operations.
  *
  * @author Matt Coley
  */

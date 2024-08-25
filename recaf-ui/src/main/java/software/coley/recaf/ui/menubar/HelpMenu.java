@@ -77,14 +77,14 @@ public class HelpMenu extends Menu {
 	 * Let's be honest, nobody reads this... <i>Unless we force them to.</i>
 	 */
 	private void openDocumentation() {
-		browse("https://recaf.gitbook.io/user-documentation/");
+		browse("https://recaf.coley.software/user/index.html");
 	}
 
 	/**
 	 * Now, if you're reading this one, that's pretty cool.
 	 */
 	private void openDeveloperDocumentation() {
-		browse("https://recaf.gitbook.io/developer-documentation/");
+		browse("https://recaf.coley.software/dev/index.html");
 	}
 
 

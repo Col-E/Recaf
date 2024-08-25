@@ -32,7 +32,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @return {@code true} when removal is a success.
 	 * {@code false} if nothing was removed.
 	 */
-	public boolean removeNodeByPath(@Nonnull PathNode<?> path) {
+	public synchronized boolean removeNodeByPath(@Nonnull PathNode<?> path) {
 		// Call from root node only.
 		WorkspaceTreeNode root = this;
 		while (root.getParent() instanceof WorkspaceTreeNode parentNode)
@@ -65,7 +65,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @return Node containing the path in the tree.
 	 */
 	@Nonnull
-	public WorkspaceTreeNode getOrCreateNodeByPath(@Nonnull PathNode<?> path) {
+	public synchronized WorkspaceTreeNode getOrCreateNodeByPath(@Nonnull PathNode<?> path) {
 		// Call from root node only.
 		WorkspaceTreeNode root = this;
 		while (root.getParent() instanceof WorkspaceTreeNode parentNode)
@@ -85,7 +85,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 */
 	@Nullable
 	@SuppressWarnings("deprecation")
-	public WorkspaceTreeNode getNodeByPath(@Nonnull PathNode<?> path) {
+	public synchronized WorkspaceTreeNode getNodeByPath(@Nonnull PathNode<?> path) {
 		PathNode<?> value = getValue();
 		if (path.equals(value))
 			return this;
@@ -102,7 +102,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 */
 	@Nullable
 	@SuppressWarnings("deprecation")
-	public WorkspaceTreeNode getFirstChild() {
+	public synchronized WorkspaceTreeNode getFirstChild() {
 		return getChildren().isEmpty()
 				? null : getChildren().getFirst() instanceof WorkspaceTreeNode node
 				? node : null;
@@ -135,7 +135,6 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	public String toString() {
 		return getClass().getSimpleName() + "[" + getValue().toString() + "]";
 	}
-
 
 	/**
 	 * Get/insert a {@link WorkspaceTreeNode} holding the given {@link PathNode} from/to the tree model.

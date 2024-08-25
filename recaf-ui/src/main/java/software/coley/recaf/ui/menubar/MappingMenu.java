@@ -92,7 +92,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 							results.apply();
 							logger.info("Applied mappings from {} - Updated {} classes", file.getName(), results.getPostMappingPaths().size());
 						} catch (Exception ex) {
-							logger.error("Failed to read mappings from {}", file.getName(), ex);
+							logger.error("Failed to read {} mappings from {}", formatName, file.getName(), ex);
 						}
 					});
 				}

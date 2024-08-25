@@ -24,7 +24,7 @@ public class Lang {
 	private static String SYSTEM_LANGUAGE;
 	private static final List<String> translationKeys = new ArrayList<>();
 	private static final Logger logger = Logging.get(Lang.class);
-	private static final Map<String, Map<String, String>> translations = new HashMap<>();
+	private static final Map<String, Map<String, String>> translations = new ConcurrentHashMap<>();
 	private static final Map<String, StringBinding> translationBindings = new ConcurrentHashMap<>();
 	private static Map<String, String> currentTranslationMap;
 	private static final StringProperty currentTranslation = new SynchronizedSimpleStringProperty(DEFAULT_TRANSLATIONS);
@@ -60,7 +60,7 @@ public class Lang {
 	 */
 	public static void setCurrentTranslations(String translationsKey) {
 		if (translations.containsKey(translationsKey)) {
-			currentTranslationMap = translations.get(translationsKey);
+			currentTranslationMap = translations.getOrDefault(translationsKey, Collections.emptyMap());
 			currentTranslation.set(translationsKey);
 		} else {
 			logger.warn("Tried to set translations to '{}', but no entries for the translations were found!", translationsKey);

@@ -3,10 +3,10 @@ name: CI/CD
 on:
   push:
     branches:
-      - dev4
+      - master
   pull_request:
     branches:
-      - dev4
+      - master
   workflow_dispatch:
     inputs:
       is-a-release:

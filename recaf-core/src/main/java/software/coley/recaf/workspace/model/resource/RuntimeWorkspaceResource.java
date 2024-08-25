@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
@@ -27,7 +28,7 @@ import java.util.NavigableMap;
  *
  * @author Matt Coley
  */
-public class RuntimeWorkspaceResource implements WorkspaceResource {
+public class RuntimeWorkspaceResource extends BasicPropertyContainer implements WorkspaceResource {
 	private static final Object STUB = new Object();
 	private static final Logger logger = Logging.get(RuntimeWorkspaceResource.class);
 	private static final Map<String, Object> cache = new HashMap<>();

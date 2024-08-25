@@ -1,10 +1,12 @@
 package software.coley.recaf.info.properties;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Basic implementation of property container.
@@ -12,7 +14,7 @@ import java.util.Map;
  * @author Matt Coley
  */
 public class BasicPropertyContainer implements PropertyContainer {
-	private Map<String, Property<?>> properties = new HashMap<>();
+	private Map<String, Property<?>> properties;
 
 	/**
 	 * Container with empty map.
@@ -25,8 +27,8 @@ public class BasicPropertyContainer implements PropertyContainer {
 	 * @param properties
 	 * 		Pre-defined property map.
 	 */
-	public BasicPropertyContainer(Map<String, Property<?>> properties) {
-		this.properties.putAll(properties);
+	public BasicPropertyContainer(@Nullable Map<String, Property<?>> properties) {
+		this.properties = properties == null || properties.isEmpty() ? null : new HashMap<>(properties);
 	}
 
 	@Override
@@ -57,16 +59,18 @@ public class BasicPropertyContainer implements PropertyContainer {
 
 		BasicPropertyContainer other = (BasicPropertyContainer) o;
 
-		return properties.equals(other.properties);
+		return Objects.equals(properties, other.properties);
 	}
 
 	@Override
 	public int hashCode() {
+		if (properties == null) return 0;
 		return properties.hashCode();
 	}
 
 	@Override
 	public String toString() {
+		if (properties == null) return "BasicPropertyContainer[0]";
 		return "BasicPropertyContainer[" + properties.size() + " items]";
 	}
 }

@@ -1,4 +1,4 @@
-package software.coley.recaf.workspace.io;
+package software.coley.recaf.services.workspace.io;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

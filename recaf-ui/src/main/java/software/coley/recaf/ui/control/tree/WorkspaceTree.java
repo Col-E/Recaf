@@ -403,9 +403,9 @@ public class WorkspaceTree extends PathNodeTree implements
 	private String interceptDirectoryName(@Nullable String directory) {
 		if (directory == null) return null;
 
-		String[] split = directory.split("/");
+		List<String> split = StringUtil.fastSplit(directory, true, '/');
 		int max = explorerConfig.getMaxTreeDirectoryDepth();
-		if (split.length > max) {
+		if (split.size() > max) {
 			return StringUtil.cutOffAtNth(directory, '/', max) + "...";
 		}
 		return directory;

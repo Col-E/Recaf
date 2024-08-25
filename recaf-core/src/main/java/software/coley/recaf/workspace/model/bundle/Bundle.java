@@ -35,6 +35,12 @@ public interface Bundle<I extends Info> extends Map<String, I>, Iterable<I>, Clo
 	Set<String> getDirtyKeys();
 
 	/**
+	 * @return Keys of items that were part of the initial bundle contents but have since been removed.
+	 */
+	@Nonnull
+	Set<String> getRemovedKeys();
+
+	/**
 	 * @param info
 	 * 		Item to write.
 	 *

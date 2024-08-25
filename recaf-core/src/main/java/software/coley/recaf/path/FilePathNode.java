@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
 
 import java.util.Set;
 
@@ -52,6 +53,18 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 	@Nonnull
 	public LineNumberPathNode child(int lineNo) {
 		return new LineNumberPathNode(this, lineNo);
+	}
+
+	@Nonnull
+	@Override
+	public FilePathNode withCurrentWorkspaceContent() {
+		DirectoryPathNode parent = getParent();
+		if (parent == null) return this;
+		FileBundle bundle = getValueOfType(FileBundle.class);
+		if (bundle == null) return this;
+		FileInfo fileInfo = bundle.get(getValue().getName());
+		if (fileInfo == null || fileInfo == getValue()) return this;
+		return parent.child(fileInfo);
 	}
 
 	@Override

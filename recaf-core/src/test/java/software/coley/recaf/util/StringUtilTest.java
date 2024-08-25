@@ -3,9 +3,7 @@ package software.coley.recaf.util;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +14,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for {@link StringUtil}
  */
 class StringUtilTest {
+	@Test
+	void indicesOf() {
+		assertArrayEquals(new int[]{0}, StringUtil.indicesOf("\n", '\n'));
+		assertArrayEquals(new int[]{0, 1, 2}, StringUtil.indicesOf("\n\n\n", '\n'));
+		assertArrayEquals(new int[]{1, 3, 4}, StringUtil.indicesOf("a\na\n\n", '\n'));
+		assertArrayEquals(new int[]{0, 1, 3}, StringUtil.indicesOf("\n\na\na", '\n'));
+	}
+
 	@Test
 	void testFastSplit() {
 		// Empty discarded
@@ -266,9 +272,29 @@ class StringUtilTest {
 
 	@Test
 	void testGetCommonPrefix() {
+		assertEquals("", StringUtil.getCommonPrefix("", ""));
 		assertEquals("1", StringUtil.getCommonPrefix("123", "1bc"));
 		assertEquals("", StringUtil.getCommonPrefix("aaa", "bbb"));
 		assertEquals("com/", StringUtil.getCommonPrefix("com/foo", "com/bar"));
+	}
+
+	@Test
+	void testGetCommonSuffix() {
+		assertEquals("", StringUtil.getCommonSuffix("", ""));
+		assertEquals("1", StringUtil.getCommonSuffix("321", "ab1"));
+		assertEquals("1", StringUtil.getCommonSuffix("31", "ab1"));
+		assertEquals("1", StringUtil.getCommonSuffix("1", "ab1"));
+		assertEquals("", StringUtil.getCommonSuffix("", "ab1"));
+		assertEquals("", StringUtil.getCommonSuffix("ab1", ""));
+		assertEquals("", StringUtil.getCommonSuffix("aaa", "bbb"));
+		String codeIfElse = """
+				if (bar())
+				   println("is bar");
+				else
+				   println("not bar");""";
+		String codeTernary = """
+				println(bar() ? "is bar" : "not bar");""";
+		assertEquals("\"not bar\");", StringUtil.getCommonSuffix(codeIfElse, codeTernary));
 	}
 
 	@Test
@@ -390,7 +416,7 @@ class StringUtilTest {
 		assertEquals(StandardCharsets.ISO_8859_1, result.charset(), "Should fail to decode unassigned category chars as UTF8 - fall back to ISO_8859_1");
 
 		// Chars outside the acceptable range won't get decoded, which tells us our input has non-text chars.
-		result = StringUtil.decodeString(new byte[] { 0, 1, 15, 20, 26, 31 });
+		result = StringUtil.decodeString(new byte[]{0, 1, 15, 20, 26, 31});
 		assertFalse(result.couldDecode(), "Should fail to decode with control chars (char < 32)");
 	}
 }

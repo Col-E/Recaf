@@ -49,7 +49,7 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	 * @param newMappings
 	 * 		The additional mappings that were added.
 	 */
-	public void updateAggregateMappings(Mappings newMappings) {
+	public void updateAggregateMappings(@Nonnull Mappings newMappings) {
 		aggregatedMappings.update(newMappings);
 		Unchecked.checkedForEach(aggregateListeners, listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()),
 				(listener, t) -> logger.error("Exception thrown when updating aggregate mappings", t));
