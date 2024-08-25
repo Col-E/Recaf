@@ -95,8 +95,11 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory implement
 		// Wrap so the padding of the HBox expands the space of the 'lineno'.
 		BorderPane wrapper = new BorderPane(lineContainer);
 		wrapper.getStyleClass().add("lineno");
-		wrapper.setCursor(Cursor.DEFAULT);
-		wrapper.setMouseTransparent(true);
+		// Note: The dimensions you will see on 'wrapper' do not appear to map its effective bounds.
+		// We used to set the cursor to DEFAULT here, but this led to the editor's TEXT cursor being
+		// replaced even when the visible bounds of this wrapper were not intersected with, and all
+		// sub-nodes of the wrapper were marked as mouse-transparent.
+		// The solution for now seems to just not specify a cursor.
 		return wrapper;
 	}
 

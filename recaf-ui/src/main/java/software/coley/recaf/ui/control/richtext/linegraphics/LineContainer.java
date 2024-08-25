@@ -25,7 +25,6 @@ public class LineContainer extends StackPane {
 	LineContainer() {
 		box.setAlignment(Pos.CENTER_LEFT);
 		box.setPadding(PADDING);
-		box.setMouseTransparent(true);
 		getChildren().add(box);
 	}
 

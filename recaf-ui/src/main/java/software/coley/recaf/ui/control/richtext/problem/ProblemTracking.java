@@ -124,13 +124,27 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 
 	/**
 	 * @param line
-	 * 		Line number of problem.
+	 * 		Line number of problems to get.
 	 *
-	 * @return Problem on the line.
+	 * @return Problems on the line.
 	 */
 	@Nullable
 	public List<Problem> getProblemsOnLine(int line) {
 		synchronized (problems) {return problems.get(line);}
+	}
+
+	/**
+	 * @param line
+	 * 		Line number of problem.
+	 *
+	 * @return First problem on the line.
+	 */
+	@Nullable
+	public Problem getFirstProblemOnLine(int line) {
+		List<Problem> problems = getProblemsOnLine(line);
+		if (problems == null || problems.isEmpty())
+			return null;
+		return problems.getFirst();
 	}
 
 	/**
