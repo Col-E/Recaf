@@ -1,10 +1,12 @@
 package software.coley.recaf.ui.control.richtext.linegraphics;
 
 import jakarta.annotation.Nonnull;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
+import software.coley.recaf.ui.control.richtext.problem.ProblemGutterGraphicFactory;
+import software.coley.recaf.ui.control.richtext.problem.ProblemSquiggleGraphicFactory;
 
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -32,16 +34,30 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory implement
 	}
 
 	/**
+	 * Adds the default graphic factories used for editor displays when the content is code.
+	 */
+	public void addDefaultCodeGraphicFactories() {
+		addLineGraphicFactories(
+				new BracketMatchGraphicFactory(),
+				new ProblemGutterGraphicFactory(),
+				new ProblemSquiggleGraphicFactory()
+		);
+	}
+
+	/**
+	 * Adds the given factories.
+	 *
 	 * @param factories
 	 * 		Graphic factories to add.
 	 */
 	public void addLineGraphicFactories(LineGraphicFactory... factories) {
-		for (LineGraphicFactory factory : factories) {
+		for (LineGraphicFactory factory : factories)
 			addLineGraphicFactory(factory);
-		}
 	}
 
 	/**
+	 * Adds the given factory.
+	 *
 	 * @param factory
 	 * 		Graphic factory to add.
 	 */

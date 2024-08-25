@@ -11,15 +11,15 @@ import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
 import java.util.List;
 
 /**
- * Graphic factory that adds overlays to line graphics indicating the problem status of the line.
+ * Graphic factory that adds overlays squiggles to the editor text where problems occur.
  *
  * @author Matt Coley
  * @author Justus Garbe
  * @see ProblemTracking
  */
-public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
-	public ProblemGraphicFactory() {
-		super(LineGraphicFactory.P_LINE_PROBLEMS);
+public class ProblemSquiggleGraphicFactory extends AbstractTextBoundLineGraphicFactory {
+	public ProblemSquiggleGraphicFactory() {
+		super(LineGraphicFactory.P_LINE_PROBLEM_SQUIGGLES);
 	}
 
 	@Override
@@ -56,6 +56,7 @@ public class ProblemGraphicFactory extends AbstractTextBoundLineGraphicFactory {
 		// Create the overlay
 		Canvas canvas = new Canvas(errorWidth, containerHeight);
 		canvas.setManaged(false);
+		canvas.setMouseTransparent(true);
 		canvas.setTranslateY(3);
 		canvas.setTranslateX(toStart + 1.7);
 

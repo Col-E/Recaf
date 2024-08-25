@@ -43,9 +43,7 @@ import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.AstMappingVisitor;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
-import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
@@ -103,10 +101,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		languageAssociation.configureEditorSyntax("java", editor);
 		editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setProblemTracking(problemTracking);
-		editor.getRootLineGraphicFactory().addLineGraphicFactories(
-				new BracketMatchGraphicFactory(),
-				new ProblemGraphicFactory()
-		);
+		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
 		contextActionSupport.install(editor);
 		searchBar.install(editor);
 

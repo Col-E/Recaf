@@ -59,10 +59,7 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 		languageAssociation.configureEditorSyntax("java", javaEditor);
 		javaEditor.setSelectedBracketTracking(new SelectedBracketTracking());
 		javaEditor.setProblemTracking(problemTracking);
-		javaEditor.getRootLineGraphicFactory().addLineGraphicFactories(
-				new BracketMatchGraphicFactory(),
-				new ProblemGraphicFactory()
-		);
+		javaEditor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
 		jasmEditor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
 		jasmEditor.setSelectedBracketTracking(new SelectedBracketTracking());
 		jasmEditor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));

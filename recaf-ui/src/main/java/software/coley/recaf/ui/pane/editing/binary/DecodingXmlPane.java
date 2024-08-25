@@ -19,7 +19,7 @@ import software.coley.recaf.services.info.association.FileTypeAssociationService
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
-import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
+import software.coley.recaf.ui.control.richtext.problem.ProblemSquiggleGraphicFactory;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;
@@ -46,10 +46,7 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 		// Configure the editor
 		editor = new Editor();
 		editor.setSelectedBracketTracking(new SelectedBracketTracking());
-		editor.getRootLineGraphicFactory().addLineGraphicFactories(
-				new BracketMatchGraphicFactory(),
-				new ProblemGraphicFactory()
-		);
+		editor.getRootLineGraphicFactory().addLineGraphicFactory(new BracketMatchGraphicFactory());
 		associationService.configureEditorSyntax("xml", editor);
 		editor.getCodeArea().setEditable(false);
 		searchBar.install(editor);

@@ -39,10 +39,8 @@ import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.ScrollbarPaddingUtil;
-import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.problem.Problem;
-import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
@@ -192,10 +190,7 @@ public class ScriptManagerPane extends BorderPane {
 			associationService.configureEditorSyntax("java", editor);
 			editor.setSelectedBracketTracking(new SelectedBracketTracking());
 			editor.setProblemTracking(problemTracking);
-			editor.getRootLineGraphicFactory().addLineGraphicFactories(
-					new BracketMatchGraphicFactory(),
-					new ProblemGraphicFactory()
-			);
+			editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
 
 			// Add extra components
 			searchBar.install(editor);

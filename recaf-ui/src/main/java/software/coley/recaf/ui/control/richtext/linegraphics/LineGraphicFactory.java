@@ -4,7 +4,8 @@ import jakarta.annotation.Nonnull;
 import javafx.scene.Node;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
-import software.coley.recaf.ui.control.richtext.problem.ProblemGraphicFactory;
+import software.coley.recaf.ui.control.richtext.problem.ProblemGutterGraphicFactory;
+import software.coley.recaf.ui.control.richtext.problem.ProblemSquiggleGraphicFactory;
 
 import java.util.function.IntFunction;
 
@@ -26,9 +27,13 @@ public interface LineGraphicFactory extends EditorComponent, Comparable<LineGrap
 	 */
 	int P_LINE_NUMBERS = 0;
 	/**
-	 * Priority for {@link ProblemGraphicFactory}.
+	 * Priority for {@link ProblemGutterGraphicFactory}.
 	 */
 	int P_LINE_PROBLEMS = 100;
+	/**
+	 * Priority for {@link ProblemSquiggleGraphicFactory}.
+	 */
+	int P_LINE_PROBLEM_SQUIGGLES = 101;
 	/**
 	 * Priority for {@link BracketMatchGraphicFactory}.
 	 */
