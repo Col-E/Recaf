@@ -63,7 +63,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	private final AssemblerPipelineManager pipelineManager;
 	private final AssemblerToolTabs assemblerToolTabs;
-	private final SideTabsInjector sideTabsInjector;
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
 	private final AtomicBoolean updateLock = new AtomicBoolean();
@@ -85,7 +84,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull SideTabsInjector sideTabsInjector) {
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
-		this.sideTabsInjector = sideTabsInjector;
 
 		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
@@ -485,6 +483,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 				updateLock.set(true);
 				try {
 					Bundle<ClassInfo> bundle = path.getValueOfType(Bundle.class);
+					if (bundle == null)
+						throw new IllegalStateException("Bundle not included in assembler pane's path");
 					bundle.put(lastAssembledClass);
 					FxThreadUtil.run(() -> Animations.animateSuccess(editor, 1000));
 				} catch (Throwable t) {
