@@ -34,6 +34,9 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
+import static software.coley.recaf.services.search.match.StringPredicateProvider.KEY_ANYTHING;
+import static software.coley.recaf.services.search.match.StringPredicateProvider.KEY_NOTHING;
+
 /**
  * Member reference search pane.
  *
@@ -59,7 +62,9 @@ public class MemberReferenceSearchPane extends AbstractSearchPane {
 
 		this.stringPredicateProvider = stringPredicateProvider;
 
-		List<String> stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream().sorted().toList();
+		List<String> stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream()
+				.filter(s -> !KEY_ANYTHING.equals(s) && !KEY_NOTHING.equals(s))
+				.sorted().toList();
 		TextField textOwner = new TextField();
 		TextField textName = new TextField();
 		TextField textDesc = new TextField();

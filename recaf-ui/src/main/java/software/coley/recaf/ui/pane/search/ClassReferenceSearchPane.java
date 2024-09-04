@@ -20,6 +20,7 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.search.SearchService;
 import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
+import  static software.coley.recaf.services.search.match.StringPredicateProvider.*;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
 import software.coley.recaf.services.workspace.WorkspaceManager;
@@ -54,7 +55,9 @@ public class ClassReferenceSearchPane extends AbstractSearchPane {
 
 		this.stringPredicateProvider = stringPredicateProvider;
 
-		List<String> stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream().sorted().toList();
+		List<String> stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream()
+				.filter(s -> !KEY_ANYTHING.equals(s) && !KEY_NOTHING.equals(s))
+				.sorted().toList();
 		TextField textField = new TextField();
 		ComboBox<String> modeCombo = new BoundBiDiComboBox<>(typePredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));

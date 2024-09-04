@@ -33,6 +33,9 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
+import static software.coley.recaf.services.search.match.StringPredicateProvider.KEY_ANYTHING;
+import static software.coley.recaf.services.search.match.StringPredicateProvider.KEY_NOTHING;
+
 /**
  * String search pane.
  *
@@ -54,7 +57,9 @@ public class StringSearchPane extends AbstractSearchPane {
 
 		this.stringPredicateProvider = stringPredicateProvider;
 
-		List<String> stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream().sorted().toList();
+		List<String> stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream()
+				.filter(s -> !KEY_ANYTHING.equals(s) && !KEY_NOTHING.equals(s))
+				.sorted().toList();
 		TextField textField = new TextField();
 		ComboBox<String> modeCombo = new BoundBiDiComboBox<>(stringPredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
