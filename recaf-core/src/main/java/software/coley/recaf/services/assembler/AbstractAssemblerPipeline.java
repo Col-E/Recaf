@@ -46,6 +46,10 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 
 	private void refreshContext() {
 		context = new PrintContext<>(generalConfig.getDisassemblyIndent().getValue());
+
+		// Enable comments that outline where try-catch ranges begin/end.
+		if (pipelineConfig instanceof JvmAssemblerPipelineConfig jvmConfig && jvmConfig.emitTryRangeComments())
+			context.setDebugTryCatchRanges(true);
 	}
 
 	@Nonnull

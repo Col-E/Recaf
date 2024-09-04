@@ -6,6 +6,8 @@ import software.coley.recaf.config.ConfigContainer;
  * Assembler pipeline config outline.
  *
  * @author Justus Garbe
+ * @see AndroidAssemblerPipelineConfig
+ * @see JvmAssemblerPipelineConfig
  */
 public interface AssemblerPipelineConfig extends ConfigContainer {
 	/**

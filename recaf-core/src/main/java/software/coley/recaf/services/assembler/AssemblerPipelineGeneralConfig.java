@@ -29,7 +29,7 @@ public class AssemblerPipelineGeneralConfig extends BasicConfigContainer impleme
 	}
 
 	/**
-	 * @return Indentation string.
+	 * @return String of a single indentation level.
 	 */
 	@Nonnull
 	public ObservableString getDisassemblyIndent() {

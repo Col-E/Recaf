@@ -512,6 +512,7 @@ service.assembler.dalvik-assembler-config.simulate-jvm-calls=Simulate common JVM
 service.assembler.jvm-assembler-config=JVM
 service.assembler.jvm-assembler-config.value-analysis=Enable value analysis
 service.assembler.jvm-assembler-config.simulate-jvm-calls=Simulate common JVM calls
+service.assembler.jvm-assembler-config.try-range-comments=Emit try-catch range comments
 service.assembler.flow-lines-config=Control flow lines
 service.assembler.flow-lines-config.connection-mode=Line mode
 service.assembler.flow-lines-config.render-mode=Render mode
