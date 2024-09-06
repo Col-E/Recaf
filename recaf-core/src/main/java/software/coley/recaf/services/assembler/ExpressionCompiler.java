@@ -581,8 +581,18 @@ public class ExpressionCompiler {
 	 */
 	@Nonnull
 	private static List<CompilerDiagnostic> remap(@Nonnull String code, @Nonnull List<CompilerDiagnostic> diagnostics) {
+		// Given the following example code:
+		//
+		// 1:  package foo;
+		// 2:  class Foo extends Bar {
+		// 3:  void method() { /* EXPR_START */
+		// 4:    // Code here
+		//
+		// The expression marker is on line 3, and our code starts on line four. So the reported line numbers need to
+		// be shifted down by three. There are two line breaks between the start and the marker, so we add plus one
+		// to consider the line the marker is itself on.
 		int exprStart = code.indexOf(EXPR_MARKER);
-		int lineOffset = StringUtil.count('\n', code.substring(0, exprStart));
+		int lineOffset = StringUtil.count('\n', code.substring(0, exprStart)) + 1;
 		return diagnostics.stream()
 				.map(d -> d.withLine(d.line() - lineOffset))
 				.toList();

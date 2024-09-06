@@ -205,6 +205,27 @@ class ExpressionCompilerTest extends TestBase {
 		assertSuccess(result);
 	}
 
+	@Test
+	void errorLineIsOffsetToInputExpressionLineNumber() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(targetClass);
+		assembler.setMethodContext(targetClass.getFirstDeclaredMethodByName("plusTwo"));
+		String expression = """
+				return "not-an-int";
+				""";
+		ExpressionResult result = compile(assembler, expression);
+
+		// Should be a failure
+		assertFalse(result.wasSuccess());
+		assertNull(result.getException());
+
+		// Should have an error on line 1 of our expression
+		List<CompilerDiagnostic> diagnostics = result.getDiagnostics();
+		assertEquals(1, diagnostics.size());
+		CompilerDiagnostic error = diagnostics.getFirst();
+		assertEquals(1, error.line());
+	}
+
 	@Nested
 	class ObfuscatedContexts {
 		@ParameterizedTest
