@@ -40,6 +40,7 @@ import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
+import software.coley.recaf.util.threading.ThreadUtil;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -65,6 +66,7 @@ public class Editor extends BorderPane {
 	public static final int SHORTER_DELAY_MS = 25;
 	public static final int SHORT_DELAY_MS = 150;
 	public static final int MEDIUM_DELAY_MS = 400;
+	private static final StyleResult FALLBACK_STYLE_RESULT = new StyleResult(StyleSpans.singleton(Collections.emptyList(), 0), 0);
 	private final StackPane stackPane = new StackPane();
 	private final CodeArea codeArea = new SafeCodeArea();
 	private final ScrollBar horizontalScrollbar;
@@ -137,7 +139,7 @@ public class Editor extends BorderPane {
 					// Pass to highlighter.
 					if (syntaxHighlighter != null) {
 						for (PlainTextChange change : changes) {
-							schedule(syntaxPool, () -> {
+							schedule(syntaxPool, FALLBACK_STYLE_RESULT, () -> {
 								String text = getText();
 								IntRange range = SyntaxUtil.getRangeForRestyle(text, getStyleSpans(), syntaxHighlighter, change);
 								int start = range.start();
@@ -183,7 +185,7 @@ public class Editor extends BorderPane {
 	 */
 	public CompletableFuture<Void> restyleAtPosition(int position, int length) {
 		if (syntaxHighlighter != null) {
-			return schedule(syntaxPool, () -> {
+			return schedule(syntaxPool, FALLBACK_STYLE_RESULT, () -> {
 				IntRange range = SyntaxUtil.getRangeForRestyle(getText(), getStyleSpans(),
 						syntaxHighlighter, new PlainTextChange(position, "", ".".repeat(length)));
 				int start = range.start();
@@ -372,7 +374,9 @@ public class Editor extends BorderPane {
 		this.syntaxHighlighter = syntaxHighlighter;
 		if (syntaxHighlighter != null) {
 			syntaxHighlighter.install(this);
-			codeArea.setStyleSpans(0, syntaxHighlighter.createStyleSpans(getText(), 0, getTextLength()));
+			String text = getText();
+			if (!text.isBlank())
+				codeArea.setStyleSpans(0, syntaxHighlighter.createStyleSpans(text, 0, getTextLength()));
 		}
 	}
 
@@ -638,6 +642,8 @@ public class Editor extends BorderPane {
 	/**
 	 * @param supplierService
 	 * 		Executor service to run the supplier on.
+	 * @param fallback
+	 * 		Fallback value when the supplier action encounters an exception.
 	 * @param supplier
 	 * 		Value supplier.
 	 * @param consumer
@@ -648,10 +654,10 @@ public class Editor extends BorderPane {
 	 * @return Future of consumer completion.
 	 */
 	@Nonnull
-	public <T> CompletableFuture<Void> schedule(@Nonnull ExecutorService supplierService,
+	public <T> CompletableFuture<Void> schedule(@Nonnull ExecutorService supplierService, @Nullable T fallback,
 	                                            @Nonnull Supplier<T> supplier, @Nonnull Consumer<T> consumer) {
-		return CompletableFuture.supplyAsync(supplier, supplierService)
-				.thenAcceptAsync(consumer, FxThreadUtil.executor());
+		return CompletableFuture.supplyAsync(ThreadUtil.wrap(supplier, fallback), supplierService)
+				.thenAcceptAsync(ThreadUtil.wrap(consumer), FxThreadUtil.executor());
 	}
 
 	/**
