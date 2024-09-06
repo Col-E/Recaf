@@ -25,6 +25,7 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -39,6 +40,8 @@ public class DecompilerManager implements Service {
 	private static final NoopJvmDecompiler NO_OP_JVM = NoopJvmDecompiler.getInstance();
 	private static final NoopAndroidDecompiler NO_OP_ANDROID = NoopAndroidDecompiler.getInstance();
 	private final ExecutorService decompileThreadPool = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID);
+	private final List<JvmBytecodeFilter> bytecodeFilters = new CopyOnWriteArrayList<>();
+	private final List<OutputTextFilter> outputTextFilters = new CopyOnWriteArrayList<>();
 	private final Map<String, JvmDecompiler> jvmDecompilers = new TreeMap<>();
 	private final Map<String, AndroidDecompiler> androidDecompilers = new TreeMap<>();
 	private final DecompilerManagerConfig config;
@@ -138,6 +141,13 @@ public class DecompilerManager implements Service {
 
 			// Decompile and cache the results.
 			DecompileResult result = decompiler.decompile(workspace, filteredClass);
+			String decompilation = result.getText();
+			if (decompilation != null && !outputTextFilters.isEmpty()) {
+				// Apply output filters and re-wrap the result with the new output text.
+				for (OutputTextFilter textFilter : outputTextFilters)
+					decompilation = textFilter.filter(workspace, classInfo, decompilation);
+				result = new DecompileResult(decompilation, result.getConfigHash());
+			}
 			if (doCache)
 				CachedDecompileProperty.set(classInfo, decompiler, result);
 			return result;
@@ -183,9 +193,7 @@ public class DecompilerManager implements Service {
 	 * 		Filter to add.
 	 */
 	public void addJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter) {
-		for (JvmDecompiler decompiler : jvmDecompilers.values()) {
-			decompiler.addJvmBytecodeFilter(filter);
-		}
+		bytecodeFilters.add(filter);
 	}
 
 	/**
@@ -195,9 +203,7 @@ public class DecompilerManager implements Service {
 	 * 		Filter to remove.
 	 */
 	public void removeJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter) {
-		for (JvmDecompiler decompiler : jvmDecompilers.values()) {
-			decompiler.removeJvmBytecodeFilter(filter);
-		}
+		bytecodeFilters.remove(filter);
 	}
 
 	/**
@@ -207,10 +213,7 @@ public class DecompilerManager implements Service {
 	 * 		Filter to add.
 	 */
 	public void addOutputTextFilter(@Nonnull OutputTextFilter filter) {
-		for (JvmDecompiler decompiler : jvmDecompilers.values())
-			decompiler.addOutputTextFilter(filter);
-		for (AndroidDecompiler decompiler : androidDecompilers.values())
-			decompiler.addOutputTextFilter(filter);
+		outputTextFilters.add(filter);
 	}
 
 	/**
@@ -220,10 +223,7 @@ public class DecompilerManager implements Service {
 	 * 		Filter to remove.
 	 */
 	public void removeOutputTextFilter(@Nonnull OutputTextFilter filter) {
-		for (JvmDecompiler decompiler : jvmDecompilers.values())
-			decompiler.removeOutputTextFilter(filter);
-		for (AndroidDecompiler decompiler : androidDecompilers.values())
-			decompiler.removeOutputTextFilter(filter);
+		outputTextFilters.remove(filter);
 	}
 
 	/**
@@ -314,7 +314,13 @@ public class DecompilerManager implements Service {
 			@Nonnull
 			@Override
 			public byte[] filter(@Nonnull Workspace workspace, @Nonnull JvmClassInfo initialClassInfo, @Nonnull byte[] bytecode) {
-				LazyValueHolder<ClassReader> reader = LazyValueHolder.forSupplier(() -> new ClassReader(bytecode));
+				// Apply filters to the input bytecode first
+				for (JvmBytecodeFilter filter : bytecodeFilters)
+					bytecode = filter.filter(workspace, initialClassInfo, bytecode);
+
+				// Setup filtering based on config
+				byte[] filteredBytecode = bytecode;
+				LazyValueHolder<ClassReader> reader = LazyValueHolder.forSupplier(() -> new ClassReader(filteredBytecode));
 				LazyValueHolder<ClassWriter> cw = LazyValueHolder.forSupplier(() -> {
 					// In most cases we want to pass the class-reader along to the class-writer.
 					// This will allow some operations to be sped up internally by ASM.
