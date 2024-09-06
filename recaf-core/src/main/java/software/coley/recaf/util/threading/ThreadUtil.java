@@ -1,11 +1,13 @@
 package software.coley.recaf.util.threading;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static software.coley.recaf.util.threading.ThreadPoolFactory.newScheduledThreadPool;
@@ -199,7 +201,7 @@ public class ThreadUtil {
 	 */
 	@Nonnull
 	public static ScheduledFuture<?> scheduleAtFixedRate(@Nonnull Runnable task, long initialDelay,
-														 long period, @Nonnull TimeUnit unit) {
+	                                                     long period, @Nonnull TimeUnit unit) {
 		return scheduledService.scheduleAtFixedRate(task, initialDelay, period, unit);
 	}
 
@@ -222,6 +224,59 @@ public class ThreadUtil {
 				action.run();
 			} catch (Throwable t) {
 				logger.error("Unhandled exception on thread '{}'", Thread.currentThread().getName(), t);
+			}
+		};
+	}
+
+	/**
+	 * Wrap action to handle error logging.
+	 * <br>
+	 * <b>IMPORTANT:</b> This does <i>not work</i> with {@link ThreadFactory} for all thread-pool implementations.
+	 * To support any {@link ExecutorService} type, instead wrap it with {@link ExecutorServiceDelegate} or
+	 * {@link ScheduledExecutorServiceDelegate} which will delegate passed {@link Consumer} tasks here.
+	 *
+	 * @param action
+	 * 		Consumer to run.
+	 * @param <T>
+	 * 		Consumer item type.
+	 *
+	 * @return Wrapper consumer.
+	 */
+	@Nonnull
+	public static <T> Consumer<T> wrap(@Nonnull Consumer<T> action) {
+		return in -> {
+			try {
+				action.accept(in);
+			} catch (Throwable t) {
+				logger.error("Unhandled exception on thread '{}'", Thread.currentThread().getName(), t);
+			}
+		};
+	}
+
+	/**
+	 * Wrap action to handle error logging.
+	 * <br>
+	 * <b>IMPORTANT:</b> This does <i>not work</i> with {@link ThreadFactory} for all thread-pool implementations.
+	 * To support any {@link ExecutorService} type, instead wrap it with {@link ExecutorServiceDelegate} or
+	 * {@link ScheduledExecutorServiceDelegate} which will delegate passed {@link Supplier} tasks here.
+	 *
+	 * @param action
+	 * 		Supplier to provide a value.
+	 * @param fallback
+	 * 		Fallback value when the supplier action encounters an exception.
+	 * @param <T>
+	 * 		Supplier item type.
+	 *
+	 * @return Wrapper consumer.
+	 */
+	@Nonnull
+	public static <T> Supplier<T> wrap(@Nonnull Supplier<T> action, @Nullable T fallback) {
+		return () -> {
+			try {
+				return action.get();
+			} catch (Throwable t) {
+				logger.error("Unhandled exception on thread '{}'", Thread.currentThread().getName(), t);
+				return fallback;
 			}
 		};
 	}
