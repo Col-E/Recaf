@@ -67,7 +67,7 @@ public class RegexSyntaxHighlighter extends AbstractSyntaxHighlighter {
 			if (advanceMark != null && backtrackMark != null) {
 				// If the range is a FULL match (from start to finish, no leading or trailing text)
 				// then we do not need to change anything.
-				if (rangeText.matches(rule.regex()))
+				if (RegexUtil.matches(rule.regex(), rangeText))
 					break;
 
 				// Positions of marks within the text.
@@ -186,6 +186,7 @@ public class RegexSyntaxHighlighter extends AbstractSyntaxHighlighter {
 			this.start = start;
 			this.end = end;
 		}
+
 		/**
 		 * Splits this node into subregions based on the given rules.
 		 *
