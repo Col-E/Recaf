@@ -5,10 +5,10 @@ import jakarta.annotation.Nullable;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.LocalVariable;
+import software.coley.recaf.info.properties.builtin.MemberIndexAcceleratorProperty;
 
 import java.util.List;
 import java.util.Set;
@@ -184,7 +184,12 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 				ClassInfo classInfo = parent.getValue();
 				List<? extends ClassMember> list = member.isField() ?
 						classInfo.getFields() : classInfo.getMethods();
-				cmp = Integer.compare(list.indexOf(member), list.indexOf(otherMember));
+				if (list.size() > MemberIndexAcceleratorProperty.CUTOFF) {
+					MemberIndexAcceleratorProperty accel = MemberIndexAcceleratorProperty.get(classInfo);
+					cmp = Integer.compare(accel.indexOf(member), accel.indexOf(otherMember));
+				} else {
+					cmp = Integer.compare(list.indexOf(member), list.indexOf(otherMember));
+				}
 			} else {
 				// Just sort alphabetically if parent not known.
 				String key = member.getName() + member.getDescriptor();
