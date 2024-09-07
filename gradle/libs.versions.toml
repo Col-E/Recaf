@@ -4,7 +4,7 @@ atlantafx = "2.0.1"
 binary-resources = "31.3.0-alpha01.8"
 cafedude = "2.1.1"
 cdi-api = "4.1.0"
-cdi-impl = "6.0.0.Beta1"
+cdi-impl = "6.0.0.Beta4"
 cfr = "0.152"
 dex-translator = "1.1.1"
 directories = "26"
@@ -22,14 +22,14 @@ jakarta-annotation = "3.0.0"
 jasm = "7d44c7d1d9"
 jlinker = "1.0.7"
 jphantom = "1.4.4"
-junit = "5.10.2"
-jsvg = "1.5.0"
+junit = "5.11.0"
+jsvg = "1.6.1"
 llzip = "2.6.2"
 logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.6.1"
-mockito = "5.12.0"
+mockito = "5.13.0"
 natural-order = "1.1"
-openrewrite = "8.28.0"
+openrewrite = "8.34.4"
 picocli = "4.7.6"
 procyon = "0.6.0"
 reactfx = { strictly = "2.0-M5" } # won't get updates, dead
@@ -54,7 +54,7 @@ asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
 
 atlantafx = { module = "io.github.mkpaz:atlantafx-base", version.ref = "atlantafx" }
 
-# Use our fork of Android"s release with fixes and less transitive dependencies
+# Use our fork of Android's release with fixes and less transitive dependencies
 binary-resources = { module = "com.github.Col-E:binary-resources", version.ref = "binary-resources" }
 
 cafedude = { module = "software.coley:cafedude-core", version.ref = "cafedude" }
