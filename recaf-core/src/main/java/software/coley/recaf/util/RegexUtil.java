@@ -1,9 +1,10 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import org.slf4j.Logger;
 import regexodus.Matcher;
 import regexodus.Pattern;
-import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class RegexUtil {
 	 * @return {@code true} when valid. {@code false} otherwise.
 	 */
 	@Nonnull
-	public static RegexValidation validate(String pattern) {
+	public static RegexValidation validate(@Nonnull String pattern) {
 		// Check prior failed patterns
 		RegexValidation result = FAILED_PATTERNS.get(pattern);
 		if (result == null) {
@@ -51,7 +52,7 @@ public class RegexUtil {
 	 *
 	 * @return Text matcher.
 	 */
-	public static Matcher getMatcher(String pattern, String text) {
+	public static Matcher getMatcher(@Nonnull String pattern, @Nonnull String text) {
 		return getPattern(pattern).matcher(text);
 	}
 
@@ -65,7 +66,7 @@ public class RegexUtil {
 	 *
 	 * @return {@code true} when the input is a full match.
 	 */
-	public static boolean matches(String pattern, String input) {
+	public static boolean matches(@Nonnull String pattern, @Nonnull String input) {
 		return getMatcher(pattern, input).matches();
 	}
 
@@ -79,7 +80,7 @@ public class RegexUtil {
 	 *
 	 * @return {@code true} when any part of the input matches.
 	 */
-	public static boolean matchesAny(String pattern, String input) {
+	public static boolean matchesAny(@Nonnull String pattern, @Nonnull String input) {
 		return getMatcher(pattern, input).find();
 	}
 
@@ -91,7 +92,8 @@ public class RegexUtil {
 	 *
 	 * @return Compiled {@link Pattern} of the regular expression.
 	 */
-	public synchronized static Pattern pattern(String regex) {
+	@Nonnull
+	public synchronized static Pattern pattern(@Nonnull String regex) {
 		return getPattern(regex).pattern;
 	}
 
@@ -103,7 +105,8 @@ public class RegexUtil {
 	 *
 	 * @return Compiled {@link ThreadLocalPattern} of the regular expression.
 	 */
-	private synchronized static ThreadLocalPattern getPattern(String regex) {
+	@Nonnull
+	private synchronized static ThreadLocalPattern getPattern(@Nonnull String regex) {
 		return PATTERNS.computeIfAbsent(regex, RegexUtil::generate);
 	}
 
@@ -113,7 +116,8 @@ public class RegexUtil {
 	 *
 	 * @return Compiled pattern, or {@link #INVALID_PATTERN} if the pattern is invalid.
 	 */
-	private static ThreadLocalPattern generate(String regex) {
+	@Nonnull
+	private static ThreadLocalPattern generate(@Nonnull String regex) {
 		if (FAILED_PATTERNS.containsKey(regex))
 			return INVALID_PATTERN;
 		try {
@@ -125,7 +129,7 @@ public class RegexUtil {
 		}
 	}
 
-	public record RegexValidation(boolean valid, String message) {
+	public record RegexValidation(boolean valid, @Nullable String message) {
 
 		public static final RegexValidation VALID = new RegexValidation(true, null);
 	}
@@ -134,11 +138,12 @@ public class RegexUtil {
 		final ThreadLocal<Matcher> matcher = new ThreadLocal<>();
 		final Pattern pattern;
 
-		private ThreadLocalPattern(Pattern pattern) {
+		private ThreadLocalPattern(@Nonnull Pattern pattern) {
 			this.pattern = pattern;
 		}
 
-		Matcher matcher(String input) {
+		@Nonnull
+		Matcher matcher(@Nonnull String input) {
 			ThreadLocal<Matcher> tlc = this.matcher;
 			Matcher matcher = tlc.get();
 			if (matcher == null) {
@@ -146,6 +151,11 @@ public class RegexUtil {
 				tlc.set(matcher);
 			} else {
 				matcher.setTarget(input);
+
+				// This may look redundant, but it resets the matcher internal state (As of 0.1.15).
+				// We need to do this between each use since 'setTarget' does not fully flush the internal state.
+				// See: https://github.com/tommyettinger/RegExodus/issues/5
+				matcher.setPattern(pattern);
 			}
 			return matcher;
 		}
