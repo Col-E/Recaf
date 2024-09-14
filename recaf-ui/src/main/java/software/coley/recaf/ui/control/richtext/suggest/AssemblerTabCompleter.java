@@ -272,7 +272,8 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		@Nonnull
 		@Override
 		public List<String> complete() {
-			return complete(workspace, ClassInfo::fieldStream);
+			boolean isStatic = partialInput.contains("getstatic ") || partialInput.contains("putstatic ");
+			return complete(workspace, c -> c.fieldStream().filter(m -> isStatic == m.hasStaticModifier()));
 		}
 	}
 
@@ -301,7 +302,8 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		public List<String> complete() {
 			// TODO: Will probably want to support more than just the declared methods
 			//  - If a class "Foo" extends "Bar" any "Foo.x" should complete available methods from "Bar"
-			return complete(workspace, ClassInfo::methodStream);
+			boolean isStatic = partialInput.contains("invokestatic ") || partialInput.contains("invokestaticinterface ");
+			return complete(workspace, c -> c.methodStream().filter(m -> isStatic == m.hasStaticModifier()));
 		}
 	}
 
@@ -356,8 +358,6 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 						.map(c -> c.getValue().getName());
 				return Stream.concat(a, b).toList();
 			}
-
-			// TODO: Members should be filtered by access as well (can be done in calling stream lookup)
 
 			// Complete member name/descriptors if we have "owner.x"
 			if (desc == null) {
