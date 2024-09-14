@@ -24,8 +24,10 @@ import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
 import org.reactfx.collection.MemoizationList;
+import org.slf4j.Logger;
 import software.coley.collections.Lists;
 import software.coley.collections.Unchecked;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
@@ -63,6 +65,7 @@ import java.util.function.Supplier;
  * @author Matt Coley
  */
 public class Editor extends BorderPane {
+	private static final Logger logger = Logging.get(Editor.class);
 	public static final int SHORTER_DELAY_MS = 25;
 	public static final int SHORT_DELAY_MS = 150;
 	public static final int MEDIUM_DELAY_MS = 400;
@@ -125,8 +128,12 @@ public class Editor extends BorderPane {
 		// Register a text change listener for recording state used for tab completion and updating problem locations.
 		codeArea.plainTextChanges().addObserver(change -> {
 			// Do fine completion updates.
-			if (tabCompleter != null)
-				tabCompleter.onFineTextUpdate(change);
+			try {
+				if (tabCompleter != null)
+					tabCompleter.onFineTextUpdate(change);
+			} catch (Throwable t) {
+				logger.error("Uncaught error on editor tab-completion update", t);
+			}
 		});
 
 		// Register a text change listener that operates on reduces calls (limit calls to when user stops typing).
@@ -136,25 +143,29 @@ public class Editor extends BorderPane {
 		codeArea.plainTextChanges()
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(SHORT_DELAY_MS))
 				.addObserver(changes -> {
-					// Pass to highlighter.
-					if (syntaxHighlighter != null) {
-						for (PlainTextChange change : changes) {
-							schedule(syntaxPool, FALLBACK_STYLE_RESULT, () -> {
-								String text = getText();
-								IntRange range = SyntaxUtil.getRangeForRestyle(text, getStyleSpans(), syntaxHighlighter, change);
-								int start = range.start();
-								int end = range.end();
-								return new StyleResult(syntaxHighlighter.createStyleSpans(text, start, end), start);
-							}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
+					try {
+						// Pass to highlighter.
+						if (syntaxHighlighter != null) {
+							for (PlainTextChange change : changes) {
+								schedule(syntaxPool, FALLBACK_STYLE_RESULT, () -> {
+									String text = getText();
+									IntRange range = SyntaxUtil.getRangeForRestyle(text, getStyleSpans(), syntaxHighlighter, change);
+									int start = range.start();
+									int end = range.end();
+									return new StyleResult(syntaxHighlighter.createStyleSpans(text, start, end), start);
+								}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
+							}
 						}
+
+						// Do rough completion updates.
+						if (tabCompleter != null)
+							tabCompleter.onRoughTextUpdate(changes);
+
+						// Record content of area.
+						lastDocumentSnapshot = codeArea.getContent().snapshot();
+					} catch (Throwable t) {
+						logger.error("Uncaught error on editor reduced-succession update", t);
 					}
-
-					// Do rough completion updates.
-					if (tabCompleter != null)
-						tabCompleter.onRoughTextUpdate(changes);
-
-					// Record content of area.
-					lastDocumentSnapshot = codeArea.getContent().snapshot();
 				});
 
 		// Create event-streams for various events.

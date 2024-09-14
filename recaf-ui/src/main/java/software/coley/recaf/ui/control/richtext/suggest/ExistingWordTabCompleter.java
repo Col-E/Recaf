@@ -94,7 +94,7 @@ public class ExistingWordTabCompleter implements TabCompleter<String> {
 		return completeFromContext(lineContext, completionHandler);
 	}
 
-	private boolean completeFromContext(@Nullable String context, @Nonnull Predicate<String> completionHandler) {
+	private static boolean completeFromContext(@Nullable String context, @Nonnull Predicate<String> completionHandler) {
 		if (context == null)
 			return false;
 		String group = null;
@@ -133,7 +133,7 @@ public class ExistingWordTabCompleter implements TabCompleter<String> {
 
 	private class StringCompletionPopup extends CompletionPopup<String> {
 		private StringCompletionPopup(int maxItemsToShow) {
-			super(20, maxItemsToShow, t -> t);
+			super(STANDARD_CELL_SIZE, maxItemsToShow, t -> t);
 		}
 
 		@Override

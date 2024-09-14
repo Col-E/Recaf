@@ -20,7 +20,7 @@ public class CompletionPopupUpdater<T> implements EventHandler<KeyEvent> {
 	private final CompletionPopup<T> completionPopup;
 
 	public CompletionPopupUpdater(@Nonnull TabCompleter<T> tabCompleter,
-								  @Nonnull CompletionPopup<T> completionPopup) {
+	                              @Nonnull CompletionPopup<T> completionPopup) {
 		this.tabCompleter = tabCompleter;
 		this.completionPopup = completionPopup;
 	}
@@ -28,6 +28,17 @@ public class CompletionPopupUpdater<T> implements EventHandler<KeyEvent> {
 	@Override
 	public void handle(KeyEvent event) {
 		KeyCode code = event.getCode();
+
+		// Remove popup if backspace is pressed.
+		if (code == BACK_SPACE) {
+			// If the popup is shown, one backspace will be consumed, so we must
+			// tell it to manually pass along a backspace to the editor.
+			if (completionPopup.isShowing()) {
+				completionPopup.handleBackspace();
+				completionPopup.hide();
+			}
+			return;
+		}
 
 		// Remove popup if escape is pressed.
 		if (code == ESCAPE) {

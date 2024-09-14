@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
+import javafx.scene.control.IndexRange;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.KeyCode;
@@ -29,6 +30,7 @@ import static javafx.scene.input.KeyCode.TAB;
  * @author Matt Coley
  */
 public abstract class CompletionPopup<T> {
+	public static final int STANDARD_CELL_SIZE = 20;
 	private final Popup popup = new Popup();
 	private final ListView<T> listView = new ListView<>();
 	private final ScrollPane scrollPane = new ScrollPane(listView);
@@ -56,6 +58,7 @@ public abstract class CompletionPopup<T> {
 
 		// Ensure scroll-pane is 'fit-to-height' so there's no empty space wasting virtual scroll space.
 		scrollPane.setFitToHeight(true);
+		scrollPane.setFitToWidth(true);
 		popup.getContent().add(scrollPane);
 
 		// Auto-hide covers most cases that would be hard to otherwise detect
@@ -64,6 +67,7 @@ public abstract class CompletionPopup<T> {
 
 		// For simplicity of a few operations we're going to ensure all cells are a fixed size.
 		listView.setFixedCellSize(this.cellSize = cellSize);
+		listView.setPrefWidth(400);
 
 		// Track what is the 'selected' value to complete.
 		listView.getSelectionModel().selectedItemProperty()
@@ -242,7 +246,7 @@ public abstract class CompletionPopup<T> {
 		//  - Needs a bit of padding due to the way borders/scrollbars render
 		// The scollpane should be dictating the size since it is the popup content root.
 		int itemCount = items.size();
-		popupSize = cellSize * Math.min(itemCount, maxItemsToShow);
+		popupSize = cellSize * (Math.min(itemCount, maxItemsToShow + 1));
 		scrollPane.setPrefHeight(popupSize);
 		scrollPane.setMaxHeight(popupSize);
 
@@ -304,5 +308,17 @@ public abstract class CompletionPopup<T> {
 			area.showParagraphAtCenter(area.getCurrentParagraph());
 
 		return true;
+	}
+
+	/**
+	 * Pass along backspace handling when we observe {@link KeyCode#BACK_SPACE} in a {@link KeyEvent}.
+	 */
+	public void handleBackspace() {
+		IndexRange selection = area.getSelection();
+		if (selection.getLength() > 1) {
+			area.deleteText(selection);
+		} else {
+			area.deletePreviousChar();
+		}
 	}
 }

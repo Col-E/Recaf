@@ -30,18 +30,25 @@ import software.coley.recaf.services.assembler.AssemblerPipeline;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
-import software.coley.recaf.ui.control.richtext.problem.*;
+import software.coley.recaf.ui.control.richtext.problem.Problem;
+import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
+import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
+import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
+import software.coley.recaf.ui.control.richtext.suggest.AssemblerTabCompleter;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
 import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
-import software.coley.recaf.util.*;
+import software.coley.recaf.util.Animations;
+import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.SceneUtils;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
 import java.time.Duration;
@@ -66,6 +73,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
 	private final AtomicBoolean updateLock = new AtomicBoolean();
+	private final AssemblerTabCompleter tabCompleter;
 	private AssemblerPipeline<? extends ClassInfo, ? extends ClassResult, ? extends ClassRepresentation> pipeline;
 	private ClassResult lastResult;
 	private ClassRepresentation lastAssembledClassRepresentation;
@@ -81,12 +89,15 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull AssemblerContextActionSupport contextActionSupport,
 	                     @Nonnull SearchBar searchBar,
 	                     @Nonnull KeybindingConfig keys,
-	                     @Nonnull SideTabsInjector sideTabsInjector) {
+	                     @Nonnull SideTabsInjector sideTabsInjector,
+	                     @Nonnull WorkspaceManager workspaceManager) {
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
 
 		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
+		tabCompleter = new AssemblerTabCompleter(Objects.requireNonNull(workspaceManager.getCurrent()));
+		editor.setTabCompleter(tabCompleter);
 		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
 		editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
@@ -353,13 +364,17 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 				return pipeline.concreteParse(roughResult.get()).ifOk(concreteAst -> {
 					// The transform was a success.
 					lastConcreteAst = concreteAst;
+					tabCompleter.setAst(concreteAst);
 					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(concreteAst, AstPhase.CONCRETE));
 				}).ifErr((partialAst, errors) -> {
 					// The transform failed.
 					lastPartialAst = partialAst;
+					tabCompleter.setAst(partialAst);
 					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(partialAst, AstPhase.CONCRETE_PARTIAL));
 					processErrors(errors, ProblemPhase.LINT);
 				});
+			} else {
+				tabCompleter.clearAst();
 			}
 
 			// Fall-back to rough AST.
