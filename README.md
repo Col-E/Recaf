@@ -37,13 +37,13 @@ An easy to use modern Java bytecode editor that abstracts away the complexities 
 - Attach to running Java process with instrumentation capabilities
 - And much more
 
-A complete list of features can be found in the [user documentation](https://recaf.gitbook.io/user-documentation/).
+A complete list of features can be found in the [user documentation](https://recaf.coley.software/user/index.html).
 
 ## Scripting & Plugins
 
 Recaf exposes almost all of its functionality through modular API's. Automating behaviors can be done easily with scripts, or with plugins for more complex situations. Additional features can also be added via plugins, which can register hooks in API's that offer them.
 
-To create your own script or plugin, see the developer documentation on [scripting and plugin development](https://recaf.gitbook.io/developer-documentation/plugins-and-scripts/plugin-vs-script).
+To create your own script or plugin, see the [developer documentation](https://recaf.coley.software/dev/index.html), specifically the _"plugins & scripts"_ section.
 
 ## Command Line
 
