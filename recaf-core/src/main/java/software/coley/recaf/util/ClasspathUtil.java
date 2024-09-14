@@ -3,6 +3,7 @@ package software.coley.recaf.util;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.collections.Unchecked;
+import software.coley.collections.tree.SortedTree;
 import software.coley.collections.tree.SortedTreeImpl;
 import software.coley.collections.tree.Tree;
 
@@ -11,9 +12,7 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.Class.forName;
@@ -33,7 +32,11 @@ public class ClasspathUtil {
 	/**
 	 * Cache of all system classes represented as a tree.
 	 */
-	private static volatile Tree<String, String> tree;
+	private static volatile Tree<String, String> classTree;
+	/**
+	 * Cache of all system classes represented as a set.
+	 */
+	private static volatile NavigableSet<String> classSet;
 	/**
 	 * Cached list of available system packages.
 	 */
@@ -126,14 +129,35 @@ public class ClasspathUtil {
 	}
 
 	/**
+	 * @return Set of all system classes.
+	 */
+	@Nonnull
+	public static NavigableSet<String> getSystemClassSet() {
+		if (classSet == null) {
+			synchronized (ClasspathUtil.class) {
+				if (classSet == null) {
+					classSet = new TreeSet<>();
+					ModuleFinder.ofSystem().findAll().stream()
+							.map(Unchecked.function(ModuleReference::open))
+							.flatMap(Unchecked.function(ModuleReader::list))
+							.filter(s -> s.endsWith(".class") && s.indexOf('-') == -1)
+							.map(s -> s.substring(0, s.length() - 6))
+							.forEach(s -> classSet.add(s));
+				}
+			}
+		}
+		return classSet;
+	}
+
+	/**
 	 * @return Tree representation of all system classes.
 	 */
 	@Nonnull
-	public static Tree<String, String> getSystemClasses() {
-		if (tree == null) {
+	public static Tree<String, String> getSystemClassTree() {
+		if (classTree == null) {
 			synchronized (ClasspathUtil.class) {
-				if (tree == null) {
-					tree = new SortedTreeImpl<>();
+				if (classTree == null) {
+					classTree = new SortedTreeImpl<>();
 					ModuleFinder.ofSystem().findAll().stream()
 							.map(Unchecked.function(ModuleReference::open))
 							.flatMap(Unchecked.function(ModuleReader::list))
@@ -141,13 +165,15 @@ public class ClasspathUtil {
 							.map(s -> s.substring(0, s.length() - 6))
 							.forEach(s -> {
 								String[] sections = s.split("/");
-								Tree<String, String> path = tree;
-								for (String section : sections)
-									path = path.computeIfAbsent(section, SortedTreeImpl::new);
+								Tree<String, String> path = classTree;
+								for (String section : sections) {
+									SortedTree<String, String> copy = (SortedTree<String, String>) path;
+									path = path.computeIfAbsent(section, x -> new SortedTreeImpl<>(copy, x));
+								}
 							});
 				}
 			}
 		}
-		return tree;
+		return classTree;
 	}
 }

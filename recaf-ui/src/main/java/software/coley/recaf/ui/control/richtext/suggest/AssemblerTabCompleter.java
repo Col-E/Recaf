@@ -10,17 +10,20 @@ import me.darknet.assembler.util.BlwOpcodes;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import regexodus.Matcher;
+import software.coley.collections.tree.Tree;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
+import software.coley.recaf.util.ClasspathUtil;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -302,7 +305,6 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		}
 	}
 
-
 	abstract static class ReferenceContext implements Context {
 		protected final String partialInput;
 		protected final String owner;
@@ -348,9 +350,11 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 				//  - Should be able to complete "new Strin" to "new java/lang/String"
 				//    - But out completion system just appends text so we'd need to do some more work there.
 
-				// TODO: System class names not completed since those are only populated on-demand in the workspace
-				return workspace.findClasses(c -> c.getName().startsWith(owner)).stream()
-						.map(c -> c.getValue().getName()).toList();
+				Stream<String> a = ClasspathUtil.getSystemClassSet().stream()
+						.filter(s -> s.startsWith(owner));
+				Stream<String> b = workspace.findClasses(c -> c.getName().startsWith(owner)).stream()
+						.map(c -> c.getValue().getName());
+				return Stream.concat(a, b).toList();
 			}
 
 			// TODO: Members should be filtered by access as well (can be done in calling stream lookup)
