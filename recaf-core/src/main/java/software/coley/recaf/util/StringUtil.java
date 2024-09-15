@@ -833,6 +833,26 @@ public class StringUtil {
 		if (data.length == 0)
 			return failedDecoding(data);
 
+		// Check for byte-order-mark
+		StringDecodingResult result = null;
+		if (data.length >= 4) {
+			if (ByteHeaderUtil.match(data, ByteHeaderUtil.TEXT_BOM_UTF_32BE)) {
+				result = decodeString(data, StandardCharsets.UTF_32BE);
+			} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.TEXT_BOM_UTF_32LE)) {
+				result = decodeString(data, StandardCharsets.UTF_32LE);
+			} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.TEXT_BOM_UTF_16BE)) {
+				result = decodeString(data, StandardCharsets.UTF_16BE);
+			} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.TEXT_BOM_UTF_16LE)) {
+				result = decodeString(data, StandardCharsets.UTF_16BE);
+			} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.TEXT_BOM_UTF_8)) {
+				result = decodeString(data, StandardCharsets.UTF_8);
+			}
+
+			// If that BOM specifies a charset that works then we're good to go.
+			if (result != null && result.couldDecode())
+				return result;
+		}
+
 		// From 'https://stackoverflow.com/questions/3584069/is-it-possible-to-detect-text-file-encoding-of-two-possible'
 		//
 		// It's not possible with 100% accuracy because, for example, the bytes C3 B1 are an equally valid
@@ -846,7 +866,7 @@ public class StringUtil {
 		//
 		//  1. Perform a UTF-8 validity check. If it passes, assume the data is UTF-8.
 		//  2. Otherwise, assume it's ISO-8859 (Latin).
-		StringDecodingResult result = decodeUtf8(data);
+		result = decodeUtf8(data);
 		if (result.couldDecode())
 			return result;
 		return decodeLatin(data);

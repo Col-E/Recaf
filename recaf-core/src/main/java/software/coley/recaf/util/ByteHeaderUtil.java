@@ -92,6 +92,12 @@ public class ByteHeaderUtil {
 	// Android files (Modular chunk system, use unsigned short LE headers)
 	public static final int[] BINARY_XML = {0x03, 0x00};
 	public static final int[] ARSC = {0x02, 0x00};
+	// Text BOM
+	public static final int[] TEXT_BOM_UTF_32BE = {0x00, 0x00, 0xFE, 0xFF};
+	public static final int[] TEXT_BOM_UTF_32LE = {0xFF, 0xFE, 0x00, 0x00};
+	public static final int[] TEXT_BOM_UTF_16BE = {0xFE, 0xFF, WILD, WILD};
+	public static final int[] TEXT_BOM_UTF_16LE = {0xFF, 0xFE, WILD, WILD};
+	public static final int[] TEXT_BOM_UTF_8 = {0xEF, 0xBB, 0xBF, WILD};
 	// Misc
 	public static final int[] PDF = {0x25, 0x50, 0x44, 0x46, 0x2D};
 
