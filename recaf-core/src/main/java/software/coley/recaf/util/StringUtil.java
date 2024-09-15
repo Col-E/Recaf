@@ -956,11 +956,22 @@ public class StringUtil {
 				output.append(charArray, 0, arrayEnd);
 				totalChars += arrayEnd;
 
+				// If we overflowed in our result, we still have more to decode with this
+				// current input buffer, so we should clear the output buffer and continue as-is.
+				if (result.isOverflow()) {
+					charBuf.flip();
+					continue;
+				}
+
 				// Ensure buffer position increments to next place, but does not exceed the wrapped array's length.
 				buffer.position(Math.min(length, totalChars));
 
 				// Reset the char-buffer contents.
 				charBuf.flip();
+
+				// If we underflowed in our result we are most likely done.
+				if (result.isUnderflow())
+					break;
 			} catch (Exception ex) {
 				return failedDecoding(data);
 			}
