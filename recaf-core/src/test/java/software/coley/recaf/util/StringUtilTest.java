@@ -442,7 +442,7 @@ class StringUtilTest {
 		}
 
 		void decodeFromPath(@Nonnull String path) throws Exception {
-			byte[] bytes = Files.readAllBytes(Paths.get(TestBase.class.getResource("/" + path).toURI()));
+			byte[] bytes = Files.readAllBytes(Paths.get("src/testFixtures/resources/" + path));
 			var result = StringUtil.decodeString(bytes);
 			assertTrue(result.couldDecode());
 		}
