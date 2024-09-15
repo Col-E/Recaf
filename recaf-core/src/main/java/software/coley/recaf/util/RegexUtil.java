@@ -150,12 +150,8 @@ public class RegexUtil {
 				matcher = pattern.matcher(input);
 				tlc.set(matcher);
 			} else {
+				matcher.flush();
 				matcher.setTarget(input);
-
-				// This may look redundant, but it resets the matcher internal state (As of 0.1.15).
-				// We need to do this between each use since 'setTarget' does not fully flush the internal state.
-				// See: https://github.com/tommyettinger/RegExodus/issues/5
-				matcher.setPattern(pattern);
 			}
 			return matcher;
 		}
