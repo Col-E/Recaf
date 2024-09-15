@@ -55,13 +55,19 @@ public class CompletionPopupUpdater<T> implements EventHandler<KeyEvent> {
 
 		// Any non-word character should remove the popup.
 		// Modifiers are also excluded so capitalizing letters won't hide the popup.
-		if (!code.isLetterKey() && !code.isDigitKey() && !code.isModifierKey()) {
+		if (!code.isLetterKey() && !code.isDigitKey() && !code.isModifierKey() && code != PERIOD) {
 			completionPopup.hide();
 			return;
 		}
 
 		// Update the bounds, or hide the popup if the caret bounds cannot be found.
 		if (!completionPopup.updateCaretBounds()) {
+			completionPopup.hide();
+			return;
+		}
+
+		// Hide if there is selected text. We only tab complete as a word is being written.
+		if (completionPopup.hasTextSelection()) {
 			completionPopup.hide();
 			return;
 		}

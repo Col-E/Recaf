@@ -10,10 +10,12 @@ import me.darknet.assembler.util.BlwOpcodes;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import regexodus.Matcher;
-import software.coley.collections.tree.Tree;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
 import software.coley.recaf.util.ClasspathUtil;
@@ -23,7 +25,6 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -34,6 +35,7 @@ import java.util.stream.Stream;
 public class AssemblerTabCompleter implements TabCompleter<String> {
 	private final CompletionPopup<String> completionPopup = new StringCompletionPopup(15);
 	private final Workspace workspace;
+	private final InheritanceGraph graph;
 	private CodeArea area;
 	private List<ASTElement> ast;
 	private Context context;
@@ -41,9 +43,12 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	/**
 	 * @param workspace
 	 * 		Workspace to pull class info from.
+	 * @param graph
+	 * 		Graph to pull hierarchies from.
 	 */
-	public AssemblerTabCompleter(@Nonnull Workspace workspace) {
+	public AssemblerTabCompleter(@Nonnull Workspace workspace, @Nonnull InheritanceGraph graph) {
 		this.workspace = workspace;
+		this.graph = graph;
 	}
 
 	/**
@@ -129,7 +134,12 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		}
 
 		// Get the line to regex match, and the trimmed slice of it for tab-completion's "partial text" to complete.
+		// The line content we track should be up to the caret, but no further since we're completing the text where
+		// the caret is at and not the end of the line.
+		int caretColumn = area.getCaretColumn();
 		String line = area.getParagraph(area.getCurrentParagraph()).getText();
+		if (caretColumn <= line.length())
+			line = line.substring(0, caretColumn);
 		String partialText = line.trim();
 
 		// Skip if there is nothing to complete.
@@ -190,6 +200,9 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	}
 
 	private class StringCompletionPopup extends CompletionPopup<String> {
+		// TODO: For better richness in the UI, we should migrate away from just 'String' and have a model
+		//  that includes information about the completion (be it opcodes, fields, methods, types, etc)
+
 		private StringCompletionPopup(int maxItemsToShow) {
 			super(STANDARD_CELL_SIZE, maxItemsToShow, t -> t);
 		}
@@ -273,7 +286,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		@Override
 		public List<String> complete() {
 			boolean isStatic = partialInput.contains("getstatic ") || partialInput.contains("putstatic ");
-			return complete(workspace, c -> c.fieldStream().filter(m -> isStatic == m.hasStaticModifier()));
+			return complete(workspace, graph, c -> c.fieldStream().filter(m -> isStatic == m.hasStaticModifier()));
 		}
 	}
 
@@ -300,10 +313,16 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		@Nonnull
 		@Override
 		public List<String> complete() {
-			// TODO: Will probably want to support more than just the declared methods
-			//  - If a class "Foo" extends "Bar" any "Foo.x" should complete available methods from "Bar"
 			boolean isStatic = partialInput.contains("invokestatic ") || partialInput.contains("invokestaticinterface ");
-			return complete(workspace, c -> c.methodStream().filter(m -> isStatic == m.hasStaticModifier()));
+			boolean isSpecial = partialInput.contains("invokespecial ");
+			return complete(workspace, graph, c -> c.methodStream().filter(m -> {
+				// Only invokespecial can be used to call constructors.
+				if (m.getName().startsWith("<") && !isSpecial)
+					return false;
+
+				// Limit by static matching
+				return isStatic == m.hasStaticModifier();
+			}));
 		}
 	}
 
@@ -341,32 +360,51 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		public abstract List<String> complete();
 
 		@Nonnull
-		protected List<String> complete(@Nonnull Workspace workspace,
+		protected List<String> complete(@Nonnull Workspace workspace, @Nonnull InheritanceGraph graph,
 		                                @Nonnull Function<ClassInfo, Stream<? extends ClassMember>> classMemberLookup) {
 			// Skip if no owner type specified.
 			if (owner == null) return Collections.emptyList();
 
-			// Complete class names
+			// Complete class names if the '.' separator is not seen, otherwise suggest any member in the class.
 			if (name == null && desc == null) {
 				// TODO: startsWith is nice, but mirroring IntelliJ would be nicer
 				//  - Should be able to complete "new Strin" to "new java/lang/String"
 				//    - But out completion system just appends text so we'd need to do some more work there.
-
-				Stream<String> a = ClasspathUtil.getSystemClassSet().stream()
-						.filter(s -> s.startsWith(owner));
-				Stream<String> b = workspace.findClasses(c -> c.getName().startsWith(owner)).stream()
-						.map(c -> c.getValue().getName());
-				return Stream.concat(a, b).toList();
+				//  - Also like IntelliJ we should prioritize common completions over niche ones
+				//    - Also not something that happens right here
+				if (partialInput.endsWith(".")) {
+					ClassPathNode ownerPath = workspace.findClass(owner);
+					if (ownerPath != null) {
+						Set<String> items = new TreeSet<>();
+						InheritanceVertex vertex = graph.getVertex(owner);
+						if (vertex != null)
+							for (InheritanceVertex parent : vertex.getAllParents())
+								items.addAll(collect(classMemberLookup.apply(parent.getValue())));
+						items.addAll(collect(classMemberLookup.apply(ownerPath.getValue())));
+						return items.isEmpty() ? Collections.emptyList() : new ArrayList<>(items);
+					}
+				} else {
+					// No separator, user is still typing out a class name.
+					Stream<String> a = ClasspathUtil.getSystemClassSet().stream()
+							.filter(s -> s.startsWith(owner));
+					Stream<String> b = workspace.findClasses(c -> c.getName().startsWith(owner)).stream()
+							.map(c -> c.getValue().getName());
+					return Stream.concat(a, b).toList();
+				}
 			}
 
 			// Complete member name/descriptors if we have "owner.x"
-			if (desc == null) {
+			if (name != null && desc == null) {
 				ClassPathNode ownerPath = workspace.findClass(owner);
 				if (ownerPath != null) {
-					return classMemberLookup.apply(ownerPath.getValue())
-							.filter(member -> member.getName().startsWith(name))
-							.map(member -> member.getName() + " " + member.getDescriptor())
-							.toList();
+					Set<String> items = new TreeSet<>();
+					InheritanceVertex vertex = graph.getVertex(owner);
+					Predicate<ClassMember> filter = member -> member.getName().startsWith(name);
+					if (vertex != null)
+						for (InheritanceVertex parent : vertex.getAllParents())
+							items.addAll(collect(classMemberLookup.apply(parent.getValue()), filter));
+					items.addAll(collect(classMemberLookup.apply(ownerPath.getValue()), filter));
+					return items.isEmpty() ? Collections.emptyList() : new ArrayList<>(items);
 				}
 			}
 
@@ -374,14 +412,30 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 			if (desc != null) {
 				ClassPathNode ownerPath = workspace.findClass(owner);
 				if (ownerPath != null) {
-					return classMemberLookup.apply(ownerPath.getValue())
-							.filter(member -> member.getName().equals(name) && member.getDescriptor().startsWith(desc))
-							.map(ClassMember::getDescriptor)
-							.toList();
+					Set<String> items = new TreeSet<>();
+					InheritanceVertex vertex = graph.getVertex(owner);
+					Predicate<ClassMember> filter = member -> member.getName().equals(name) && member.getDescriptor().startsWith(desc);
+					if (vertex != null)
+						for (InheritanceVertex parent : vertex.getAllParents())
+							items.addAll(collect(classMemberLookup.apply(parent.getValue()), filter));
+					items.addAll(collect(classMemberLookup.apply(ownerPath.getValue()), filter));
+					return items.isEmpty() ? Collections.emptyList() : new ArrayList<>(items);
 				}
 			}
 
 			return Collections.emptyList();
+		}
+
+		@Nonnull
+		private static List<String> collect(@Nonnull Stream<? extends ClassMember> stream) {
+			return collect(stream, null);
+		}
+
+		@Nonnull
+		private static List<String> collect(@Nonnull Stream<? extends ClassMember> stream, @Nullable Predicate<? extends ClassMember> predicate) {
+			if (predicate != null)
+				stream = stream.filter(Unchecked.cast(predicate));
+			return stream.map(member -> member.getName() + " " + member.getDescriptor()).toList();
 		}
 	}
 }

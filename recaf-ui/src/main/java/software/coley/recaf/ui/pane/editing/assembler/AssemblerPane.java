@@ -28,6 +28,7 @@ import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.assembler.AssemblerPipeline;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.workspace.WorkspaceManager;
@@ -90,13 +91,14 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull SearchBar searchBar,
 	                     @Nonnull KeybindingConfig keys,
 	                     @Nonnull SideTabsInjector sideTabsInjector,
-	                     @Nonnull WorkspaceManager workspaceManager) {
+	                     @Nonnull WorkspaceManager workspaceManager,
+	                     @Nonnull InheritanceGraph graph) {
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
 
 		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
-		tabCompleter = new AssemblerTabCompleter(Objects.requireNonNull(workspaceManager.getCurrent()));
+		tabCompleter = new AssemblerTabCompleter(Objects.requireNonNull(workspaceManager.getCurrent()), graph);
 		editor.setTabCompleter(tabCompleter);
 		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
 		editor.setSelectedBracketTracking(new SelectedBracketTracking());

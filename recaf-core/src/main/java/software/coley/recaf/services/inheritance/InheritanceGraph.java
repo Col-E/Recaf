@@ -470,12 +470,12 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		}
 
 		@Override
-		public boolean hasField(String name, String desc) {
+		public boolean hasField(@Nonnull String name, @Nonnull String desc) {
 			return false;
 		}
 
 		@Override
-		public boolean hasMethod(String name, String desc) {
+		public boolean hasMethod(@Nonnull String name, @Nonnull String desc) {
 			return false;
 		}
 
@@ -485,22 +485,22 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		}
 
 		@Override
-		public boolean isParentOf(InheritanceVertex vertex) {
+		public boolean isParentOf(@Nonnull InheritanceVertex vertex) {
 			return false;
 		}
 
 		@Override
-		public boolean isChildOf(InheritanceVertex vertex) {
+		public boolean isChildOf(@Nonnull InheritanceVertex vertex) {
 			return false;
 		}
 
 		@Override
-		public boolean isIndirectFamilyMember(InheritanceVertex vertex) {
+		public boolean isIndirectFamilyMember(@Nonnull InheritanceVertex vertex) {
 			return false;
 		}
 
 		@Override
-		public boolean isIndirectFamilyMember(Set<InheritanceVertex> family, InheritanceVertex vertex) {
+		public boolean isIndirectFamilyMember(@Nonnull Set<InheritanceVertex> family, @Nonnull InheritanceVertex vertex) {
 			return false;
 		}
 

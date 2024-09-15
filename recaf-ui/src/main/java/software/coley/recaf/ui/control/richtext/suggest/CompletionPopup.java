@@ -234,6 +234,13 @@ public abstract class CompletionPopup<T> {
 	}
 
 	/**
+	 * @return {@code true} when the associated text area has selected text.
+	 */
+	public boolean hasTextSelection() {
+		return area.getSelection().getLength() > 0;
+	}
+
+	/**
 	 * Updates the items to support completion of, and updates the size of the UI
 	 * to fit exactly the number of items to show.
 	 *
@@ -246,7 +253,7 @@ public abstract class CompletionPopup<T> {
 		//  - Needs a bit of padding due to the way borders/scrollbars render
 		// The scollpane should be dictating the size since it is the popup content root.
 		int itemCount = items.size();
-		popupSize = cellSize * (Math.min(itemCount, maxItemsToShow + 1));
+		popupSize = cellSize * (Math.min(itemCount, maxItemsToShow) + 1);
 		scrollPane.setPrefHeight(popupSize);
 		scrollPane.setMaxHeight(popupSize);
 
