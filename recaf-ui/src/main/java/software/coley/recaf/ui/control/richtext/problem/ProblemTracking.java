@@ -212,36 +212,40 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 		//  delete them. Deleting an empty line before a line with an error will void it.
 		//  I'm not really sure how to make a clean fix for that, but because the rest of
 		//  it works relatively well I'm not gonna touch it for now.
-		String insertedText = change.getInserted();
-		String removedText = change.getRemoved();
-		boolean lineInserted = insertedText.contains("\n");
-		boolean lineRemoved = removedText.contains("\n");
+		try {
+			String insertedText = change.getInserted();
+			String removedText = change.getRemoved();
+			boolean lineInserted = insertedText.contains("\n");
+			boolean lineRemoved = removedText.contains("\n");
 
-		// Handle line removal/insertion.
-		//
-		// Some thoughts, you may ask why we do an "if" block for each, but not with else if.
-		// Well, copy-pasting text does both. So we remove then insert for replacement.
-		if (lineRemoved) {
-			ReadOnlyStyledDocument<?, ?, ?> lastDocumentSnapshot = editor.getLastDocumentSnapshot();
+			// Handle line removal/insertion.
+			//
+			// Some thoughts, you may ask why we do an "if" block for each, but not with else if.
+			// Well, copy-pasting text does both. So we remove then insert for replacement.
+			if (lineRemoved) {
+				ReadOnlyStyledDocument<?, ?, ?> lastDocumentSnapshot = editor.getLastDocumentSnapshot();
 
-			// Get line number and add +1 to make it 1-indexed
-			int start = lastDocumentSnapshot.offsetToPosition(change.getPosition(), TwoDimensional.Bias.Backward).getMajor() + 1;
+				// Get line number and add +1 to make it 1-indexed
+				int start = lastDocumentSnapshot.offsetToPosition(change.getPosition(), TwoDimensional.Bias.Backward).getMajor() + 1;
 
-			// End line number needs +1 since it will include the next line due to inclusion of "\n"
-			int end = lastDocumentSnapshot.offsetToPosition(change.getRemovalEnd(), TwoDimensional.Bias.Backward).getMajor() + 1;
+				// End line number needs +1 since it will include the next line due to inclusion of "\n"
+				int end = lastDocumentSnapshot.offsetToPosition(change.getRemovalEnd(), TwoDimensional.Bias.Backward).getMajor() + 1;
 
-			onLinesRemoved(start, end);
-		}
-		if (lineInserted) {
-			CodeArea area = editor.getCodeArea();
+				onLinesRemoved(start, end);
+			}
+			if (lineInserted) {
+				CodeArea area = editor.getCodeArea();
 
-			// Get line number and add +1 to make it 1-indexed
-			int start = area.offsetToPosition(change.getPosition(), TwoDimensional.Bias.Backward).getMajor() + 1;
+				// Get line number and add +1 to make it 1-indexed
+				int start = area.offsetToPosition(change.getPosition(), TwoDimensional.Bias.Backward).getMajor() + 1;
 
-			// End line number doesn't need +1 since it will include the next line due to inclusion of "\n"
-			int end = area.offsetToPosition(change.getInsertionEnd(), TwoDimensional.Bias.Backward).getMajor();
+				// End line number doesn't need +1 since it will include the next line due to inclusion of "\n"
+				int end = area.offsetToPosition(change.getInsertionEnd(), TwoDimensional.Bias.Backward).getMajor();
 
-			onLinesInserted(start, end);
+				onLinesInserted(start, end);
+			}
+		} catch (Throwable t) {
+			logger.error("Error updating problem offsets in text document", t);
 		}
 	}
 

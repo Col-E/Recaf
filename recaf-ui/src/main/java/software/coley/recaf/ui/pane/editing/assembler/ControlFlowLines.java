@@ -6,9 +6,6 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.animation.Interpolator;
 import javafx.animation.Transition;
-import javafx.beans.binding.Bindings;
-import javafx.beans.value.ObservableValue;
-import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.*;
@@ -24,17 +21,17 @@ import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.util.Location;
 import org.reactfx.Change;
+import org.slf4j.Logger;
 import software.coley.collections.box.Box;
 import software.coley.collections.box.IntBox;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
-import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphicFactory;
-import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLineGraphicFactory;
+import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.SceneUtils;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -47,6 +44,7 @@ import java.util.function.Consumer;
  */
 @Dependent
 public class ControlFlowLines extends AstBuildConsumerComponent {
+	private static final Logger logger = Logging.get(ControlFlowLines.class);
 	private static final Set<String> INSN_SET = Set.of("goto", "ifnull", "ifnonnull", "ifeq", "ifne", "ifle", "ifge", "iflt", "ifgt",
 			"if_acmpeq", "if_acmpne", "if_icmpeq", "if_icmpge", "if_icmpgt", "if_icmple", "if_icmplt", "if_icmpne");
 	private static final Set<String> SWITCH_INSNS = Set.of("tableswitch", "lookupswitch");
@@ -125,12 +123,35 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 	 * @param caretChange
 	 * 		Caret pos change.
 	 */
-	private void onCaretMove(Change<Integer> caretChange) {
+	private void onCaretMove(@Nonnull Change<Integer> caretChange) {
+		try {
+			// Find selected instruction (can be null)
+			Box<ASTInstruction> selected = extracted();
+
+			// Check if the selection was a label or supported instruction.
+			ASTInstruction current = selected.get();
+			boolean hasSelection = false;
+			if (current instanceof ASTLabel) {
+				hasSelection = true;
+			} else if (current != null) {
+				String insnName = current.identifier().content();
+				List<ASTElement> arguments = current.arguments();
+				if (!arguments.isEmpty() && INSN_SET.contains(insnName) || SWITCH_INSNS.contains(insnName)) {
+					hasSelection = true;
+				}
+			}
+			currentInstructionSelection.setValue(current);
+			drawLines.setValue(hasSelection);
+		} catch (Throwable t) {
+			logger.error("Error updating control flow line targets", t);
+		}
+	}
+
+	@Nonnull
+	private Box<ASTInstruction> extracted() {
+		Box<ASTInstruction> selected = new Box<>();
 		int pos = editor.getCodeArea().getCaretPosition();
 		int line = editor.getCodeArea().getCurrentParagraph() + 1;
-
-		// Find selected instruction (can be null)
-		Box<ASTInstruction> selected = new Box<>();
 		for (ASTElement element : astElements) {
 			if (element == null)
 				continue;
@@ -142,7 +163,9 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 							selected.set(instruction);
 						else {
 							String identifier = instruction.identifier().content();
-							if (("tableswitch".equals(identifier) || "lookupswitch".equals(identifier)) && ast.range().within(pos)) {
+							if (("tableswitch".equals(identifier)
+									|| "lookupswitch".equals(identifier))
+									&& ast.range().within(pos)) {
 								selected.set(instruction);
 							}
 						}
@@ -151,21 +174,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				});
 			}
 		}
-
-		// Check if the selection was a label or supported instruction.
-		ASTInstruction current = selected.get();
-		boolean hasSelection = false;
-		if (current instanceof ASTLabel) {
-			hasSelection = true;
-		} else if (current != null) {
-			String insnName = current.identifier().content();
-			List<ASTElement> arguments = current.arguments();
-			if (!arguments.isEmpty() && INSN_SET.contains(insnName) || SWITCH_INSNS.contains(insnName)) {
-				hasSelection = true;
-			}
-		}
-		currentInstructionSelection.setValue(current);
-		drawLines.setValue(hasSelection);
+		return selected;
 	}
 
 	private void updateModel() {
@@ -430,8 +439,8 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 						}
 						gc.stroke();
 					} else if (paragraph == declarationLine) {
-                        // Right section
-                        if (isBackReference) {
+						// Right section
+						if (isBackReference) {
 							// Shape: ┌
 							if (!shapeMask.get(MASK_SOUTH)) {
 								// Bottom section
@@ -439,7 +448,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 								gc.lineTo(horizontalOffset, targetY);
 								shapeMask.set(MASK_SOUTH);
 							}
-                        } else {
+						} else {
 							// Shape: └
 							if (!shapeMask.get(MASK_NORTH)) {
 								// Top section
@@ -447,14 +456,14 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 								gc.lineTo(horizontalOffset, targetY);
 								shapeMask.set(MASK_NORTH);
 							}
-                        }
-                        if (!shapeMask.get(MASK_EAST)) {
-                            // Right section
-                            gc.moveTo(horizontalOffset, targetY);
-                            gc.lineTo(width, targetY);
-                            shapeMask.set(MASK_EAST);
-                        }
-                        gc.stroke();
+						}
+						if (!shapeMask.get(MASK_EAST)) {
+							// Right section
+							gc.moveTo(horizontalOffset, targetY);
+							gc.lineTo(width, targetY);
+							shapeMask.set(MASK_EAST);
+						}
+						gc.stroke();
 					} else if ((isBackReference && (paragraph > declarationLine && paragraph < referenceLine)) ||
 							(!isBackReference && (paragraph < declarationLine && paragraph > referenceLine))) {
 						if (!shapeMask.get(MASK_NORTH)) {

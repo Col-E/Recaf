@@ -27,7 +27,9 @@ import me.darknet.assembler.parser.TokenType;
 import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
 import org.reactfx.EventStreams;
+import org.slf4j.Logger;
 import software.coley.collections.Lists;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -45,6 +47,7 @@ import java.util.*;
  */
 @Dependent
 public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
+	private static final Logger logger = Logging.get(JvmStackAnalysisPane.class);
 	private final SimpleObjectProperty<Object> notifyQueue = new SimpleObjectProperty<>(new Object());
 	private final TableView<JvmVariableState> varTable = new TableView<>();
 	private final TableView<JvmStackState> stackTable = new TableView<>();
@@ -53,8 +56,8 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 	@Inject
 	@SuppressWarnings("unchecked")
 	public JvmStackAnalysisPane(@Nonnull CellConfigurationService cellConfigurationService,
-								@Nonnull TextFormatConfig formatConfig,
-								@Nonnull Workspace workspace) {
+	                            @Nonnull TextFormatConfig formatConfig,
+	                            @Nonnull Workspace workspace) {
 		TableColumn<JvmVariableState, String> columnName = new TableColumn<>(Lang.get("assembler.variables.name"));
 		TableColumn<JvmVariableState, ClassType> columnType = new TableColumn<>(Lang.get("assembler.variables.type"));
 		TableColumn<JvmVariableState, ValueTableCell.ValueWrapper> columnValue = new TableColumn<>(Lang.get("assembler.variables.value"));
@@ -83,7 +86,13 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 
 		EventStreams.changesOf(notifyQueue)
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORTER_DELAY_MS))
-				.addObserver(unused -> updateTable());
+				.addObserver(unused -> {
+					try {
+						updateTable();
+					} catch (Throwable t) {
+						logger.error("Error updating stack analysis table", t);
+					}
+				});
 	}
 
 	private void updateTable() {
@@ -252,7 +261,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 	 * 		Prior state in previous frame, if known.
 	 */
 	private record JvmVariableState(@Nonnull String name, @Nonnull ClassType type, @Nonnull Value value,
-									@Nullable Value priorValue) {}
+	                                @Nullable Value priorValue) {}
 
 	/**
 	 * Models an item on the stack.

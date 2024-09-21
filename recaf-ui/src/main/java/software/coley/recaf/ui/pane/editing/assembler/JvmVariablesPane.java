@@ -28,7 +28,9 @@ import me.darknet.assembler.util.Range;
 import org.fxmisc.richtext.CodeArea;
 import org.reactfx.Change;
 import org.reactfx.EventStreams;
+import org.slf4j.Logger;
 import software.coley.collections.Lists;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -39,9 +41,8 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.SVG;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.awt.*;
+import java.awt.RenderingHints;
 import java.time.Duration;
-import java.util.List;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -53,6 +54,7 @@ import java.util.function.Consumer;
  */
 @Dependent
 public class JvmVariablesPane extends AstBuildConsumerComponent {
+	private static final Logger logger = Logging.get(JvmVariablesPane.class);
 	private final SimpleObjectProperty<Object> notifyQueue = new SimpleObjectProperty<>(new Object());
 	private final TableView<VariableData> table = new TableView<>();
 	private final Consumer<Change<Integer>> onCaretMove = this::onCaretMove;
@@ -116,7 +118,13 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 
 		EventStreams.changesOf(notifyQueue)
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS))
-				.addObserver(unused -> updateTable());
+				.addObserver(unused -> {
+					try {
+						updateTable();
+					} catch (Throwable t) {
+						logger.error("Error updating variables table", t);
+					}
+				});
 	}
 
 	@Override

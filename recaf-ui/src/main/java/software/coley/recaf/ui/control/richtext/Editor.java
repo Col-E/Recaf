@@ -109,10 +109,14 @@ public class Editor extends BorderPane {
 
 		// Add event filter to hook tab usage.
 		codeArea.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (e.getCode() == KeyCode.TAB)
-				handleTab(e);
-			else if (e.getCode() == KeyCode.ENTER)
-				handleNewline(e);
+			try {
+				if (e.getCode() == KeyCode.TAB)
+					handleTab(e);
+				else if (e.getCode() == KeyCode.ENTER)
+					handleNewline(e);
+			} catch (Throwable t) {
+				logger.error("Error handling tab/newline interception in editor", t);
+			}
 		});
 
 		// Set paragraph graphic factory to the user-configurable root graphics factory.
@@ -132,7 +136,7 @@ public class Editor extends BorderPane {
 				if (tabCompleter != null)
 					tabCompleter.onFineTextUpdate(change);
 			} catch (Throwable t) {
-				logger.error("Uncaught error on editor tab-completion update", t);
+				logger.error("Error handling tab-completion update in editor", t);
 			}
 		});
 
