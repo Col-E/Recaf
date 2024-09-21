@@ -2264,14 +2264,17 @@ public class Actions implements Service {
 		menu.getItems().addAll(
 				action("menu.tab.close", CarbonIcons.CLOSE, tab::close),
 				action("menu.tab.closeothers", CarbonIcons.CLOSE, () -> {
-					for (DockingTab regionTab : tab.getRegion().getDockTabs()) {
+					Unchecked.checkedForEach(tab.getRegion().getDockTabs(), regionTab -> {
 						if (regionTab != tab)
 							regionTab.close();
-					}
+					}, (regionTab, error) -> {
+						logger.error("Failed to close tab '{}'", regionTab.getText(), error);
+					});
 				}),
 				action("menu.tab.closeall", CarbonIcons.CLOSE, () -> {
-					for (DockingTab regionTab : tab.getRegion().getDockTabs())
-						regionTab.close();
+					Unchecked.checkedForEach(tab.getRegion().getDockTabs(), DockingTab::close, (regionTab, error) -> {
+						logger.error("Failed to close tab '{}'", regionTab.getText(), error);
+					});
 				})
 		);
 	}
