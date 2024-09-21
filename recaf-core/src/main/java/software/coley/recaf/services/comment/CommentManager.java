@@ -305,8 +305,8 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 				var deserialized = gson.fromJson(json, new TypeToken<Map<String, PersistWorkspaceComments>>() {});
 				persistMap.putAll(deserialized);
 			}
-		} catch (IOException ex) {
-			logger.error("Failed to save comments", ex);
+		} catch (Throwable t) {
+			logger.error("Failed to load comments", t);
 		}
 	}
 
@@ -327,8 +327,8 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 				Files.createDirectories(commentsDirectory);
 			Path store = commentsDirectory.resolve("comments.json");
 			Files.writeString(store, serialized);
-		} catch (IOException ex) {
-			logger.error("Failed to save comments", ex);
+		} catch (Throwable t) {
+			logger.error("Failed to save comments", t);
 		}
 	}
 
