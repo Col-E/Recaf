@@ -54,36 +54,49 @@ public class PatchApplier implements Service {
 	 *
 	 * @param patch
 	 * 		Patch to apply.
-	 * @param errorConsumer
-	 * 		Optional consumers to be notified of errors when applying the patch.
-	 * 		When errors are observed the patch has not been applied.
+	 * @param feedback
+	 * 		Optional feedback for receiving errors.
+	 * 		When any error is observed the patching process is abandoned.
+	 *
+	 * @return {@code true} When the patch was successful.
+	 * {@code false} when the patch was abandoned.
 	 */
-	public void apply(@Nonnull WorkspacePatch patch, @Nullable Consumer<List<Error>> errorConsumer) {
+	public boolean apply(@Nonnull WorkspacePatch patch, @Nullable PatchFeedback feedback) {
 		List<Runnable> tasks = new ArrayList<>();
-		ErrorDelegate errorConsumerDelegate = new ErrorDelegate(errorConsumer);
+		ErrorDelegate errorConsumerDelegate = new ErrorDelegate(feedback == null ? null : feedback::onAssemblerErrorsObserved);
 
 		for (RemovePath removal : patch.removals()) {
 			PathNode<?> path = removal.path();
 			Info toRemove = path.getValueOfType(Info.class);
 			Bundle<?> containingBundle = path.getValueOfType(Bundle.class);
-			if (toRemove != null && containingBundle != null) {
-				String entryName = toRemove.getName();
+			if (containingBundle == null) {
+				if (feedback != null) feedback.onIncompletePathObserved(path);
+				return false;
+			}
+			if (toRemove == null) {
+				if (feedback != null) feedback.onIncompletePathObserved(path);
+				return false;
+			}
+			String entryName = toRemove.getName();
+			tasks.add(() -> {
 				if (containingBundle.remove(entryName) == null)
 					logger.warn("Could not apply removal for path '{}' - not found in the workspace", entryName);
-			}
+			});
 		}
 
 		JvmAssemblerPipeline jvmAssemblerPipeline = assemblerPipelineManager.getJvmAssemblerPipeline();
 		for (JvmAssemblerPatch jvmAssemblerPatch : patch.jvmAssemblerPatches()) {
 			// Skip if any errors have been seen.
 			if (errorConsumerDelegate.hasSeenErrors())
-				return;
+				return false;
 
 			ClassPathNode path = jvmAssemblerPatch.path().withCurrentWorkspaceContent();
 			JvmClassInfo jvmClass = path.getValue().asJvmClass();
 			JvmClassBundle jvmBundle = path.getValueOfType(JvmClassBundle.class);
-			if (jvmBundle == null)
-				throw new IllegalStateException("Incomplete path, does not contain JVM class bundle");
+			if (jvmBundle == null) {
+				if (feedback != null) feedback.onIncompletePathObserved(path);
+				return false;
+			}
 
 			// Apply patch
 			List<StringDiff.Diff> diffs = jvmAssemblerPatch.assemblerDiffs();
@@ -110,20 +123,22 @@ public class PatchApplier implements Service {
 						}).ifErr(errorConsumerDelegate::errors);
 			}).ifErr(errors -> {
 				// Disassemble failure
-				if (errorConsumer != null) errorConsumer.accept(errors);
+				if (feedback != null) feedback.onAssemblerErrorsObserved(errors);
 			});
 		}
 
 		for (TextFilePatch filePatch : patch.textFilePatches()) {
 			// Skip if any errors have been seen.
 			if (errorConsumerDelegate.hasSeenErrors())
-				return;
+				return false;
 
 			FilePathNode path = filePatch.path().withCurrentWorkspaceContent();
 			TextFileInfo textFile = path.getValue().asTextFile();
 			FileBundle fileBundle = path.getValueOfType(FileBundle.class);
-			if (fileBundle == null)
-				throw new IllegalStateException("Incomplete path, does not contain file bundle");
+			if (fileBundle == null) {
+				if (feedback != null) feedback.onIncompletePathObserved(path);
+				return false;
+			}
 			String patchedText = StringDiff.Diff.apply(textFile.getText(), filePatch.textDiffs());
 			tasks.add(() -> {
 				TextFileInfo patchedTextFile = textFile.toTextBuilder()
@@ -136,9 +151,16 @@ public class PatchApplier implements Service {
 		// If no errors have been seen apply all patches.
 		if (!errorConsumerDelegate.hasSeenErrors()) {
 			for (Runnable task : tasks) {
-				task.run();
+				try {
+					task.run();
+				} catch (Throwable t) {
+					// Most likely caused by listeners and not the patch itself.
+					// Log the error and continue.
+					logger.error("Error applying patch task", t);
+				}
 			}
 		}
+		return true;
 	}
 
 	@Nonnull

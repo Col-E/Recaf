@@ -167,12 +167,10 @@ public class PatchSerialization {
 			jr.beginObject();
 			while (jr.hasNext()) {
 				String name = jr.nextName();
-				if (name.equals(KEY_CLASS_JVM_ASM_DIFFS)) {
-					jvmAssemblerPatches = deserializeClassJvmAsmDiffs(workspace, jr);
-				} else if (name.equals(KEY_FILE_TEXT_DIFFS)) {
-					textFilePatches = deserializeFileTextDiffs(workspace, jr);
-				} else if (name.equals(KEY_REMOVALS)) {
-					removals = deserializeRemovals(workspace, jr);
+				switch (name) {
+					case KEY_CLASS_JVM_ASM_DIFFS -> jvmAssemblerPatches = deserializeClassJvmAsmDiffs(workspace, jr);
+					case KEY_FILE_TEXT_DIFFS -> textFilePatches = deserializeFileTextDiffs(workspace, jr);
+					case KEY_REMOVALS -> removals = deserializeRemovals(workspace, jr);
 				}
 			}
 			jr.endObject();
@@ -201,6 +199,8 @@ public class PatchSerialization {
 
 			// Construct the removal
 			if (name != null) {
+				// If the classes/files do not exist in the workspace then our job is already done,
+				// and we don't need to include these in the final patch model.
 				if (TYPE_CLASS.equals(type)) {
 					FilePathNode path = workspace.findFile(name);
 					if (path != null) removals.add(new RemovePath(path));

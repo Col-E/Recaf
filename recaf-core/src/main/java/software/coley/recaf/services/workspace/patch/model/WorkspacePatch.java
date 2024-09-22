@@ -10,6 +10,8 @@ import java.util.List;
  *
  * @param workspace
  * 		Workspace to apply the patches to.
+ * @param removals
+ * 		Removal patches to remove content by paths.
  * @param jvmAssemblerPatches
  * 		Text patches to apply to JVM classes via the assembler.
  * @param textFilePatches

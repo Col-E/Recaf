@@ -1,9 +1,14 @@
 package software.coley.recaf.services.workspace.patch;
 
+import jakarta.annotation.Nonnull;
 import me.darknet.assembler.error.Error;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
-import software.coley.recaf.info.*;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.StubClassInfo;
+import software.coley.recaf.info.StubFileInfo;
+import software.coley.recaf.info.TextFileInfo;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.workspace.patch.model.WorkspacePatch;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
@@ -12,10 +17,10 @@ import software.coley.recaf.util.visitors.MethodNoopingVisitor;
 import software.coley.recaf.util.visitors.MethodPredicate;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
-import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -59,7 +64,7 @@ class PatchingTest extends TestBase {
 		assertArrayEquals(initialClass.getBytecode(), classes.get(classKey).getBytecode(), "Revert failed");
 
 		// Apply the patch
-		patchApplier.apply(patch, errors -> fail("Errors encountered applying patch: " + errors.stream().map(Error::getMessage).collect(Collectors.joining(", "))));
+		assertTrue(patchApplier.apply(patch, failOnErrors()));
 
 		// Validate the patch was applied
 		JvmClassInfo patchedClassInfo = classes.get(classKey);
@@ -99,7 +104,7 @@ class PatchingTest extends TestBase {
 		assertEquals(textFile.getText(), revertedTextFile.getText(), "Revert failed");
 
 		// Apply the patch
-		patchApplier.apply(patch, errors -> fail("Errors encountered applying patch: " + errors.stream().map(Error::getMessage).collect(Collectors.joining(", "))));
+		assertTrue(patchApplier.apply(patch, failOnErrors()));
 
 		// Validate the patch was applied
 		TextFileInfo patchedTextFile = fileInfos.get(fileKey).asTextFile();
@@ -131,7 +136,7 @@ class PatchingTest extends TestBase {
 		fileBundle.put(bar);
 
 		// Apply the patch
-		patchApplier.apply(patch, errors -> fail("Errors encountered applying patch: " + errors.stream().map(Error::getMessage).collect(Collectors.joining(", "))));
+		assertTrue(patchApplier.apply(patch, failOnErrors()));
 
 		// Validate the patch was applied
 		assertNull(fileBundle.get(bar.getName()), "File bundle post-patch did not remove 'bar'");
@@ -161,9 +166,24 @@ class PatchingTest extends TestBase {
 		classBundle.put(bar);
 
 		// Apply the patch
-		patchApplier.apply(patch, errors -> fail("Errors encountered applying patch: " + errors.stream().map(Error::getMessage).collect(Collectors.joining(", "))));
+		assertTrue(patchApplier.apply(patch, failOnErrors()));
 
 		// Validate the patch was applied
 		assertNull(classBundle.get(bar.getName()), "Class bundle post-patch did not remove 'bar'");
+	}
+
+	@Nonnull
+	private PatchFeedback failOnErrors() {
+		return new PatchFeedback() {
+			@Override
+			public void onAssemblerErrorsObserved(@Nonnull List<Error> errors) {
+				fail("Errors encountered applying patch: " + errors.stream().map(Error::getMessage).collect(Collectors.joining(", ")));
+			}
+
+			@Override
+			public void onIncompletePathObserved(@Nonnull PathNode<?> path) {
+				fail("Incomplete path: " + path);
+			}
+		};
 	}
 }
