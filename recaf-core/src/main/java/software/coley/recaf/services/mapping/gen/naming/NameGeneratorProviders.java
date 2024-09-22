@@ -23,7 +23,7 @@ public class NameGeneratorProviders implements Service {
 
 	@Inject
 	public NameGeneratorProviders(@Nonnull NameGeneratorProvidersConfig config,
-								  @Nonnull Instance<NameGeneratorProvider<?>> providers) {
+	                              @Nonnull Instance<NameGeneratorProvider<?>> providers) {
 		this.config = config;
 
 		for (NameGeneratorProvider<?> provider : providers)
@@ -33,9 +33,15 @@ public class NameGeneratorProviders implements Service {
 	/**
 	 * @param provider
 	 * 		New provider to add.
+	 *
+	 * @throws IllegalStateException
+	 * 		When a provider with the given ID already is registered.z
 	 */
 	public void registerProvider(@Nonnull NameGeneratorProvider<?> provider) {
-		providerMap.put(provider.getId(), provider);
+		String id = provider.getId();
+		if (providerMap.get(id) != null)
+			throw new IllegalStateException("A provider with the given id '" + id + "' already exists!");
+		providerMap.put(id, provider);
 	}
 
 	/**

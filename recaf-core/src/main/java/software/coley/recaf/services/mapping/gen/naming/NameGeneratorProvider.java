@@ -6,12 +6,13 @@ import software.coley.recaf.config.ConfigGroups;
 
 /**
  * Provider for a {@link NameGenerator} implementation.
- * Each provider can be configured as a {@link ConfigContainer}.
+ * Each provider should be configured as a {@link ConfigContainer}.
  *
  * @param <T>
  * 		Name generator implementation type.
  *
  * @author Matt Coley
+ * @see AbstractNameGeneratorProvider Base abstract implementation.
  */
 public interface NameGeneratorProvider<T extends NameGenerator> extends ConfigContainer {
 	/**
