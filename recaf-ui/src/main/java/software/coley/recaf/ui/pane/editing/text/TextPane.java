@@ -8,7 +8,7 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.TextFileInfo;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNode;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
+import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.FileNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
@@ -16,7 +16,6 @@ import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
-import software.coley.recaf.ui.control.richtext.problem.ProblemSquiggleGraphicFactory;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
@@ -35,12 +34,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Dependent
 public class TextPane extends BorderPane implements FileNavigable, UpdatableNavigable {
 	protected final AtomicBoolean updateLock = new AtomicBoolean();
-	private final FileTypeAssociationService languageAssociation;
+	private final FileTypeSyntaxAssociationService languageAssociation;
 	protected final Editor editor;
 	protected FilePathNode path;
 
 	@Inject
-	public TextPane(@Nonnull FileTypeAssociationService languageAssociation,
+	public TextPane(@Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                @Nonnull KeybindingConfig keys,
 	                @Nonnull SearchBar searchBar) {
 		this.languageAssociation = languageAssociation;

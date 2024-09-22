@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
+import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.script.ScriptEngine;
 import software.coley.recaf.services.script.ScriptFile;
 import software.coley.recaf.services.script.ScriptManager;
@@ -69,7 +69,7 @@ public class ScriptManagerPane extends BorderPane {
 	private final ScriptManager scriptManager;
 	private final ScriptManagerConfig config;
 	private final ScriptEngine engine;
-	private final FileTypeAssociationService associationService;
+	private final FileTypeSyntaxAssociationService languageAssociation;
 	private final WindowFactory windowFactory;
 	private final RecafDirectoriesConfig directories;
 	private final KeybindingConfig keys;
@@ -79,7 +79,7 @@ public class ScriptManagerPane extends BorderPane {
 	public ScriptManagerPane(@Nonnull ScriptManagerConfig config,
 	                         @Nonnull ScriptManager scriptManager,
 	                         @Nonnull ScriptEngine engine,
-	                         @Nonnull FileTypeAssociationService associationService,
+	                         @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                         @Nonnull WindowFactory windowFactory,
 	                         @Nonnull RecafDirectoriesConfig directories,
 	                         @Nonnull KeybindingConfig keys,
@@ -88,7 +88,7 @@ public class ScriptManagerPane extends BorderPane {
 		this.scriptManager = scriptManager;
 		this.config = config;
 		this.engine = engine;
-		this.associationService = associationService;
+		this.languageAssociation = languageAssociation;
 		this.directories = directories;
 		this.keys = keys;
 		this.searchBarProvider = searchBarProvider;
@@ -138,7 +138,7 @@ public class ScriptManagerPane extends BorderPane {
 	 * 		Script to edit.
 	 */
 	private void editScript(@Nonnull ScriptFile script) {
-		ScriptEditor scriptEditor = new ScriptEditor(associationService, script.source(), searchBarProvider.get())
+		ScriptEditor scriptEditor = new ScriptEditor(languageAssociation, script.source(), searchBarProvider.get())
 				.withPath(script.path());
 		Scene scene = new RecafScene(scriptEditor, 750, 400);
 		windowFactory.createAnonymousStage(scene, getBinding("menu.scripting.editor"), 750, 400).show();
@@ -160,7 +160,7 @@ public class ScriptManagerPane extends BorderPane {
 								
 				System.out.println("Hello world");
 				""";
-		ScriptEditor scriptEditor = new ScriptEditor(associationService, template, searchBarProvider.get());
+		ScriptEditor scriptEditor = new ScriptEditor(languageAssociation, template, searchBarProvider.get());
 		Scene scene = new RecafScene(scriptEditor, 750, 400);
 		windowFactory.createAnonymousStage(scene, getBinding("menu.scripting.editor"), 750, 400).show();
 	}
@@ -184,7 +184,7 @@ public class ScriptManagerPane extends BorderPane {
 		private final Editor editor = new Editor();
 		private Path scriptPath;
 
-		private ScriptEditor(@Nonnull FileTypeAssociationService associationService, @Nonnull String initialText, @Nonnull SearchBar searchBar) {
+		private ScriptEditor(@Nonnull FileTypeSyntaxAssociationService associationService, @Nonnull String initialText, @Nonnull SearchBar searchBar) {
 			editor.setText(initialText);
 			editor.getCodeArea().getUndoManager().forgetHistory();
 			associationService.configureEditorSyntax("java", editor);

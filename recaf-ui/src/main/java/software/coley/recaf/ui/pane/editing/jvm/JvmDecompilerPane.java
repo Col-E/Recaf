@@ -27,7 +27,7 @@ import software.coley.recaf.services.compile.*;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
+import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.services.phantom.PhantomGenerationException;
@@ -85,7 +85,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	                         @Nonnull SearchBar searchBar,
 	                         @Nonnull ToolsContainerComponent toolsContainer,
 	                         @Nonnull JavaContextActionSupport contextActionSupport,
-	                         @Nonnull FileTypeAssociationService languageAssociation,
+	                         @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                         @Nonnull DecompilerManager decompilerManager,
 	                         @Nonnull JavacCompiler javac,
 	                         @Nonnull JavacCompilerConfig javacConfig,

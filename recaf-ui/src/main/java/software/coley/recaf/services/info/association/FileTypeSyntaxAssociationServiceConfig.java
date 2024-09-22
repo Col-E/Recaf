@@ -9,7 +9,6 @@ import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicMapConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 
@@ -19,7 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Config for {@link FileTypeAssociationService}.
+ * Config for {@link FileTypeSyntaxAssociationService}.
  * <p>
  * Retains mapping of file extensions to language keys used by:
  * <ul>
@@ -30,12 +29,12 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class FileTypeAssociationServiceConfig extends BasicConfigContainer implements ServiceConfig {
+public class FileTypeSyntaxAssociationServiceConfig extends BasicConfigContainer implements ServiceConfig {
 	private final ExtensionMapping extensionsToLangKeys;
 
 	@Inject
-	public FileTypeAssociationServiceConfig() {
-		super(ConfigGroups.SERVICE_UI, FileTypeAssociationService.SERVICE_ID + CONFIG_SUFFIX);
+	public FileTypeSyntaxAssociationServiceConfig() {
+		super(ConfigGroups.SERVICE_UI, FileTypeSyntaxAssociationService.SERVICE_ID + CONFIG_SUFFIX);
 
 		extensionsToLangKeys = new ExtensionMapping(List.of(
 				new Pair<>("java", "java"),

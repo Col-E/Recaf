@@ -34,7 +34,7 @@ import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.NoopJvmDecompiler;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
+import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.navigation.ClassNavigable;
@@ -88,7 +88,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	protected AbstractDecompilePane(@Nonnull DecompilerPaneConfig config,
 	                                @Nonnull SearchBar searchBar,
 	                                @Nonnull JavaContextActionSupport contextActionSupport,
-	                                @Nonnull FileTypeAssociationService languageAssociation,
+	                                @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                                @Nonnull DecompilerManager decompilerManager) {
 		this.config = config;
 		this.contextActionSupport = contextActionSupport;

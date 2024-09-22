@@ -22,17 +22,17 @@ import static software.coley.recaf.util.StringUtil.*;
  * for use by {@link RegexSyntaxHighlighter}.
  * <p>
  * Users can change which highlighter is used for different file extensions by updating the
- * {@link FileTypeAssociationServiceConfig#getExtensionsToLangKeys() extensions map config}.
+ * {@link FileTypeSyntaxAssociationServiceConfig#getExtensionsToLangKeys() extensions map config}.
  *
  * @author Matt Coley
  */
 @ApplicationScoped
-public class FileTypeAssociationService implements Service {
-	public static final String SERVICE_ID = "file-type-association";
-	private final FileTypeAssociationServiceConfig config;
+public class FileTypeSyntaxAssociationService implements Service {
+	public static final String SERVICE_ID = "file-type-syntax-association";
+	private final FileTypeSyntaxAssociationServiceConfig config;
 
 	@Inject
-	public FileTypeAssociationService(@Nonnull FileTypeAssociationServiceConfig config) {
+	public FileTypeSyntaxAssociationService(@Nonnull FileTypeSyntaxAssociationServiceConfig config) {
 		this.config = config;
 	}
 
@@ -85,7 +85,7 @@ public class FileTypeAssociationService implements Service {
 
 	@Nonnull
 	@Override
-	public FileTypeAssociationServiceConfig getServiceConfig() {
+	public FileTypeSyntaxAssociationServiceConfig getServiceConfig() {
 		return config;
 	}
 }

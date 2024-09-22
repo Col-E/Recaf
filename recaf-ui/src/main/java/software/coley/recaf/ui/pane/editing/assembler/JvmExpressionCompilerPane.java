@@ -17,7 +17,7 @@ import software.coley.recaf.services.assembler.ExpressionCompileException;
 import software.coley.recaf.services.assembler.ExpressionCompiler;
 import software.coley.recaf.services.assembler.ExpressionResult;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
-import software.coley.recaf.services.info.association.FileTypeAssociationService;
+import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
@@ -52,7 +52,7 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 
 	@Inject
 	public JvmExpressionCompilerPane(@Nonnull ExpressionCompiler expressionCompiler,
-	                                 @Nonnull FileTypeAssociationService languageAssociation,
+	                                 @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                                 @Nonnull Instance<SearchBar> searchBarProvider) {
 		this.expressionCompiler = expressionCompiler;
 
