@@ -29,7 +29,7 @@ logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.6.1"
 mockito = "5.13.0"
 natural-order = "1.1"
-openrewrite = "8.34.4"
+openrewrite = "8.36.0"
 picocli = "4.7.6"
 procyon = "0.6.0"
 reactfx = { strictly = "2.0-M5" } # won't get updates, dead
@@ -112,7 +112,7 @@ mockito = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 
 natural-order = { module = "net.grey-panther:natural-comparator", version.ref = "natural-order" }
 
-openrewrite = { module = "org.openrewrite:rewrite-java-17", version.ref = "openrewrite" }
+openrewrite = { module = "org.openrewrite:rewrite-java-21", version.ref = "openrewrite" }
 
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 
