@@ -3,6 +3,10 @@ package software.coley.recaf.ui.control.popup;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.beans.binding.StringBinding;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -23,6 +27,7 @@ import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 
 import static software.coley.recaf.util.Lang.get;
@@ -37,9 +42,22 @@ import static software.coley.recaf.util.Lang.get;
 public class OpenUrlPopup extends RecafStage {
 	private static final Logger logger = Logging.get(OpenUrlPopup.class);
 	private final TextField input = new TextField();
+
 	@Inject
 	public OpenUrlPopup(@Nonnull WorkspaceManager workspaceManager, @Nonnull ResourceImporter resourceImporter) {
-		Button load = new ActionButton(CarbonIcons.CLOUD_DOWNLOAD, Lang.getBinding("misc.download"), () -> {
+		BooleanProperty isInvalidUrl = new SimpleBooleanProperty(true);
+		isInvalidUrl.bind(input.textProperty().map(text -> {
+			try {
+				// noinspection ResultOfMethodCallIgnored
+				new URI(text).toURL();
+				return false;
+			} catch (Throwable t) {
+				return true;
+			}
+		}));
+		ObservableValue<String> downloadText = isInvalidUrl.flatMap(invalid ->
+				invalid ? Lang.getBinding("misc.download.invalid-url") : Lang.getBinding("misc.load"));
+		Button load = new ActionButton(CarbonIcons.CLOUD_DOWNLOAD, downloadText, () -> {
 			input.setDisable(true);
 			CompletableFuture.supplyAsync(() -> {
 				String url = input.getText();
@@ -60,7 +78,7 @@ public class OpenUrlPopup extends RecafStage {
 				}
 			}, FxThreadUtil.executor());
 		});
-		load.disableProperty().bind(input.disabledProperty());
+		load.disableProperty().bind(input.disabledProperty().or(isInvalidUrl));
 		input.setPromptText("https://example.com/application.jar");
 		input.setOnAction(e -> load.getOnAction().handle(e));
 
