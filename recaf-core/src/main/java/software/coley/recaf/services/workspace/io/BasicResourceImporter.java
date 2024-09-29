@@ -134,7 +134,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		BasicJvmClassBundle classes = new BasicJvmClassBundle();
 		BasicFileBundle files = new BasicFileBundle();
 		Map<String, AndroidClassBundle> androidClassBundles = new HashMap<>();
-		NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
+		NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles = new TreeMap<>();
 		Map<String, WorkspaceFileResource> embeddedResources = new HashMap<>();
 
 		// Read ZIP
@@ -222,7 +222,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		BasicJvmClassBundle classes = new BasicJvmClassBundle();
 		BasicFileBundle files = new BasicFileBundle();
 		Map<String, AndroidClassBundle> androidClassBundles = new HashMap<>();
-		NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
+		NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles = new TreeMap<>();
 		Map<String, WorkspaceFileResource> embeddedResources = new HashMap<>();
 
 		// Walk the directory
@@ -260,7 +260,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	private void addInfo(BasicJvmClassBundle classes,
 	                     BasicFileBundle files,
 	                     Map<String, AndroidClassBundle> androidClassBundles,
-	                     NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
+	                     NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles,
 	                     Map<String, WorkspaceFileResource> embeddedResources,
 	                     ByteSource infoSource,
 	                     String pathName,

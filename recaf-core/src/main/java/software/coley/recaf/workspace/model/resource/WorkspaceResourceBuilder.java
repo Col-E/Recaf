@@ -11,7 +11,7 @@ import java.util.TreeMap;
 
 public class WorkspaceResourceBuilder {
 	private JvmClassBundle jvmClassBundle = new BasicJvmClassBundle();
-	private NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
+	private NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles = new TreeMap<>();
 	private Map<String, AndroidClassBundle> androidClassBundles = Collections.emptyMap();
 	private FileBundle fileBundle = new BasicFileBundle();
 	private Map<String, WorkspaceFileResource> embeddedResources = Collections.emptyMap();
@@ -51,7 +51,7 @@ public class WorkspaceResourceBuilder {
 		return this;
 	}
 
-	public WorkspaceResourceBuilder withVersionedJvmClassBundles(NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles) {
+	public WorkspaceResourceBuilder withVersionedJvmClassBundles(NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles) {
 		this.versionedJvmClassBundles = versionedJvmClassBundles;
 		return this;
 	}
@@ -90,7 +90,7 @@ public class WorkspaceResourceBuilder {
 		return jvmClassBundle;
 	}
 
-	public NavigableMap<Integer, JvmClassBundle> getVersionedJvmClassBundles() {
+	public NavigableMap<Integer, VersionedClassBundle> getVersionedJvmClassBundles() {
 		return versionedJvmClassBundles;
 	}
 

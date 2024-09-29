@@ -43,7 +43,7 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	 * @return Map of versions, to JVM class bundles.
 	 */
 	@Nonnull
-	NavigableMap<Integer, JvmClassBundle> getVersionedJvmClassBundles();
+	NavigableMap<Integer, VersionedClassBundle> getVersionedJvmClassBundles();
 
 	/**
 	 * Contains Android class bundles.
@@ -121,7 +121,7 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	 * @return Stream of all versioned JVM class bundles in the resource.
 	 */
 	@Nonnull
-	default Stream<JvmClassBundle> versionedJvmClassBundleStream() {
+	default Stream<VersionedClassBundle> versionedJvmClassBundleStream() {
 		return getVersionedJvmClassBundles().values().stream();
 	}
 
@@ -129,7 +129,7 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	 * @return Stream of all versioned JVM class bundles in the resource, and in any embedded resources
 	 */
 	@Nonnull
-	default Stream<JvmClassBundle> versionedJvmClassBundleStreamRecursive() {
+	default Stream<VersionedClassBundle> versionedJvmClassBundleStreamRecursive() {
 		return concat(versionedJvmClassBundleStream(), getEmbeddedResources().values().stream()
 				.flatMap(WorkspaceResource::versionedJvmClassBundleStreamRecursive));
 	}

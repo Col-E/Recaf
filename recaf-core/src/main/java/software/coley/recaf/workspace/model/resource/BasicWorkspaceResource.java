@@ -31,7 +31,7 @@ public class BasicWorkspaceResource extends BasicPropertyContainer implements Wo
 	private final List<ResourceAndroidClassListener> androidClassListeners = new CopyOnWriteArrayList<>();
 	private final List<ResourceFileListener> fileListeners = new CopyOnWriteArrayList<>();
 	private final JvmClassBundle jvmClassBundle;
-	private final NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles;
+	private final NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles;
 	private final Map<String, AndroidClassBundle> androidClassBundles;
 	private final FileBundle fileBundle;
 	private final Map<String, WorkspaceFileResource> embeddedResources;
@@ -66,7 +66,7 @@ public class BasicWorkspaceResource extends BasicPropertyContainer implements Wo
 	 */
 	public BasicWorkspaceResource(JvmClassBundle jvmClassBundle,
 	                              FileBundle fileBundle,
-	                              NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
+	                              NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles,
 	                              Map<String, AndroidClassBundle> androidClassBundles,
 	                              Map<String, WorkspaceFileResource> embeddedResources,
 	                              WorkspaceResource containingResource) {
@@ -224,7 +224,7 @@ public class BasicWorkspaceResource extends BasicPropertyContainer implements Wo
 
 	@Nonnull
 	@Override
-	public NavigableMap<Integer, JvmClassBundle> getVersionedJvmClassBundles() {
+	public NavigableMap<Integer, VersionedClassBundle> getVersionedJvmClassBundles() {
 		return versionedJvmClassBundles;
 	}
 

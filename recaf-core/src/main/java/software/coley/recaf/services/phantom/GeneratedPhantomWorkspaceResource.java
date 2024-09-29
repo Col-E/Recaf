@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedClassBundle;
 import software.coley.recaf.workspace.model.resource.BasicWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -42,7 +43,7 @@ public class GeneratedPhantomWorkspaceResource extends BasicWorkspaceResource {
 	 */
 	public GeneratedPhantomWorkspaceResource(JvmClassBundle jvmClassBundle,
 											 FileBundle fileBundle,
-											 NavigableMap<Integer, JvmClassBundle> versionedJvmClassBundles,
+											 NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles,
 											 Map<String, AndroidClassBundle> androidClassBundles,
 											 Map<String, WorkspaceFileResource> embeddedResources,
 											 WorkspaceResource containingResource) {
