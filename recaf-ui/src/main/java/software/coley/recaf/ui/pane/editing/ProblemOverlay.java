@@ -18,6 +18,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -35,6 +36,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemInvalidationListe
 import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.PlatformType;
 
 import java.util.Collection;
@@ -170,6 +172,13 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			if (error > 0) wrapper.getChildren().add(new Label(String.valueOf(error), iconError));
 			return wrapper;
 		}));
+		indicator.tooltipProperty().bind(problemCount.map(size -> {
+			if (size.intValue() == 0)
+				return new Tooltip(Lang.get("assembler.problem.0"));
+			else if (size.intValue() == 1)
+				return new Tooltip(Lang.get("assembler.problem.1"));
+			return new Tooltip(Lang.get("assembler.problem.N").replace("N", String.valueOf(size)));
+		}));
 
 		BooleanBinding hasProblems = problemCount.greaterThan(0);
 		hasProblems.addListener((ob, had, has) -> {
@@ -249,7 +258,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			tracking.addListener(this);
 
 			// Initial value set to trigger a UI refresh.
-			problemCount.set(tracking.getProblems().size());
+			problemCount.set(tracking.getAllProblems().size());
 
 			// Layout tweaks
 			StackPane.setAlignment(this, Pos.TOP_RIGHT);
@@ -278,6 +287,6 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 	public void onProblemInvalidation() {
 		ProblemTracking tracking = editor.getProblemTracking();
 		if (tracking != null)
-			FxThreadUtil.run(() -> problemCount.set(tracking.getProblems().size()));
+			FxThreadUtil.run(() -> problemCount.set(tracking.getAllProblems().size()));
 	}
 }

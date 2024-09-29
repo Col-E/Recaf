@@ -381,6 +381,9 @@ hierarchy.parents=Parents
 logging.title=Logging
 
 ## Assembler
+assembler.problem.0=No problems
+assembler.problem.1=1 problem
+assembler.problem.N=N problems
 assembler.title=Assembler
 assembler.analysis.title=Analysis
 assembler.analysis.stack=Stack
