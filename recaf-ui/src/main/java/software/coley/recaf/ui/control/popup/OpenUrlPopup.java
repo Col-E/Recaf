@@ -11,7 +11,9 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -70,8 +72,8 @@ public class OpenUrlPopup extends RecafStage {
 					return false;
 				}
 			}).thenAcceptAsync((result) -> {
+				input.setDisable(false);
 				if (result) {
-					input.setDisable(false);
 					close();
 				} else {
 					Animations.animateFailure(input, 1000);
@@ -82,14 +84,19 @@ public class OpenUrlPopup extends RecafStage {
 		input.setPromptText("https://example.com/application.jar");
 		input.setOnAction(e -> load.getOnAction().handle(e));
 
-		input.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-		load.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
 		GridPane layout = new GridPane(8, 8);
+		ColumnConstraints e = new ColumnConstraints(0, -1, Double.MAX_VALUE);
+		e.setHgrow(Priority.ALWAYS);
+		layout.getColumnConstraints().add(e);
 		layout.add(input, 0, 0);
 		layout.add(load, 0, 1);
 		layout.setPadding(new Insets(10));
 		layout.setAlignment(Pos.TOP_CENTER);
+
+		input.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+		load.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+		layout.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
 		setMinWidth(300);
 		setMinHeight(90);
