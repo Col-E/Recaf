@@ -134,7 +134,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		BasicJvmClassBundle classes = new BasicJvmClassBundle();
 		BasicFileBundle files = new BasicFileBundle();
 		Map<String, AndroidClassBundle> androidClassBundles = new HashMap<>();
-		NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles = new TreeMap<>();
+		NavigableMap<Integer, VersionedJvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
 		Map<String, WorkspaceFileResource> embeddedResources = new HashMap<>();
 
 		// Read ZIP
@@ -222,7 +222,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		BasicJvmClassBundle classes = new BasicJvmClassBundle();
 		BasicFileBundle files = new BasicFileBundle();
 		Map<String, AndroidClassBundle> androidClassBundles = new HashMap<>();
-		NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles = new TreeMap<>();
+		NavigableMap<Integer, VersionedJvmClassBundle> versionedJvmClassBundles = new TreeMap<>();
 		Map<String, WorkspaceFileResource> embeddedResources = new HashMap<>();
 
 		// Walk the directory
@@ -260,7 +260,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	private void addInfo(BasicJvmClassBundle classes,
 	                     BasicFileBundle files,
 	                     Map<String, AndroidClassBundle> androidClassBundles,
-	                     NavigableMap<Integer, VersionedClassBundle> versionedJvmClassBundles,
+	                     NavigableMap<Integer, VersionedJvmClassBundle> versionedJvmClassBundles,
 	                     Map<String, WorkspaceFileResource> embeddedResources,
 	                     ByteSource infoSource,
 	                     String pathName,
@@ -324,7 +324,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					// Put it into the correct versioned class bundle.
 					int version = Integer.parseInt(versionName);
 					BasicJvmClassBundle bundle = (BasicJvmClassBundle) versionedJvmClassBundles
-							.computeIfAbsent(version, BasicVersionedClassBundle::new);
+							.computeIfAbsent(version, BasicVersionedJvmClassBundle::new);
 
 					// Handle duplicate classes
 					JvmClassInfo existingClass = bundle.get(className);

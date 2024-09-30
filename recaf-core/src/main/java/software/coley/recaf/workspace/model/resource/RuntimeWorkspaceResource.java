@@ -13,7 +13,7 @@ import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
-import software.coley.recaf.workspace.model.bundle.VersionedClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -125,7 +125,7 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 
 	@Nonnull
 	@Override
-	public NavigableMap<Integer, VersionedClassBundle> getVersionedJvmClassBundles() {
+	public NavigableMap<Integer, VersionedJvmClassBundle> getVersionedJvmClassBundles() {
 		return Collections.emptyNavigableMap();
 	}
 

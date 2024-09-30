@@ -9,14 +9,14 @@ import software.coley.recaf.info.properties.builtin.VersionedClassProperty;
  *
  * @author Matt Coley
  */
-public class BasicVersionedClassBundle extends BasicJvmClassBundle implements VersionedClassBundle, BundleListener<JvmClassInfo> {
+public class BasicVersionedJvmClassBundle extends BasicJvmClassBundle implements VersionedJvmClassBundle, BundleListener<JvmClassInfo> {
 	private final int version;
 
 	/**
 	 * @param version
 	 * 		Associated version.
 	 */
-	public BasicVersionedClassBundle(int version) {
+	public BasicVersionedJvmClassBundle(int version) {
 		this.version = version;
 
 		// Register self as listener. We'll apply the versioned class property to items added to this bundle.

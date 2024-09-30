@@ -2,7 +2,6 @@ package software.coley.recaf.workspace.model.resource;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.lljzip.ZipIO;
 import software.coley.lljzip.format.model.LocalFileHeader;
@@ -77,7 +76,7 @@ public class AndroidApiResource extends BasicPropertyContainer implements Worksp
 
 	@Nonnull
 	@Override
-	public NavigableMap<Integer, VersionedClassBundle> getVersionedJvmClassBundles() {
+	public NavigableMap<Integer, VersionedJvmClassBundle> getVersionedJvmClassBundles() {
 		return Collections.emptyNavigableMap();
 	}
 

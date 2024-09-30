@@ -7,8 +7,7 @@ import software.coley.recaf.info.properties.builtin.*;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
-import software.coley.recaf.workspace.model.bundle.VersionedClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -194,7 +193,7 @@ public class WorkspaceExportOptions {
 			});
 
 			// Place versioned files into map
-			for (Map.Entry<Integer, VersionedClassBundle> entry : resource.getVersionedJvmClassBundles().entrySet()) {
+			for (Map.Entry<Integer, VersionedJvmClassBundle> entry : resource.getVersionedJvmClassBundles().entrySet()) {
 				String versionPath = JarFileInfo.MULTI_RELEASE_PREFIX + entry.getKey() + "/";
 				for (Map.Entry<String, JvmClassInfo> classEntry : entry.getValue().entrySet()) {
 					String key = versionPath + classEntry.getKey() + ".class";

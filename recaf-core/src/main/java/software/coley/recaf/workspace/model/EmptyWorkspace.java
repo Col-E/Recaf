@@ -64,7 +64,7 @@ public class EmptyWorkspace extends BasicWorkspace {
 
 		@Nonnull
 		@Override
-		public NavigableMap<Integer, VersionedClassBundle> getVersionedJvmClassBundles() {
+		public NavigableMap<Integer, VersionedJvmClassBundle> getVersionedJvmClassBundles() {
 			return Collections.emptyNavigableMap();
 		}
 
