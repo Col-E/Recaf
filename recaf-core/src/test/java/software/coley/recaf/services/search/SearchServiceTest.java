@@ -7,7 +7,13 @@ import software.coley.recaf.info.BasicTextFileInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
-import software.coley.recaf.path.*;
+import software.coley.recaf.path.AnnotationPathNode;
+import software.coley.recaf.path.CatchPathNode;
+import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.InstructionPathNode;
+import software.coley.recaf.path.LocalVariablePathNode;
+import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.ThrowsPathNode;
 import software.coley.recaf.services.search.match.NumberPredicateProvider;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.services.search.query.NumberQuery;
@@ -17,8 +23,13 @@ import software.coley.recaf.services.search.query.StringQuery;
 import software.coley.recaf.services.search.result.Result;
 import software.coley.recaf.services.search.result.Results;
 import software.coley.recaf.test.TestBase;
-import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.test.dummy.*;
+import software.coley.recaf.test.dummy.AccessibleFields;
+import software.coley.recaf.test.dummy.AnnotationImpl;
+import software.coley.recaf.test.dummy.ClassWithAnnotation;
+import software.coley.recaf.test.dummy.ClassWithExceptions;
+import software.coley.recaf.test.dummy.HelloWorld;
+import software.coley.recaf.test.dummy.StringConsumer;
+import software.coley.recaf.test.dummy.TypeAnnotationImpl;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -29,6 +40,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.objectweb.asm.Opcodes.BIPUSH;
+import static software.coley.recaf.test.TestClassUtils.*;
 
 /**
  * Tests for {@link SearchService}
@@ -47,10 +59,10 @@ public class SearchServiceTest extends TestBase {
 		searchService = recaf.get(SearchService.class);
 
 		// Make workspace with just some classes
-		classesWorkspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
-				TestClassUtils.fromRuntimeClass(AccessibleFields.class),
-				TestClassUtils.fromRuntimeClass(HelloWorld.class),
-				TestClassUtils.fromRuntimeClass(StringConsumer.class)
+		classesWorkspace = fromBundle(fromClasses(
+				fromRuntimeClass(AccessibleFields.class),
+				fromRuntimeClass(HelloWorld.class),
+				fromRuntimeClass(StringConsumer.class)
 		));
 
 		// Make workspace with just some files
@@ -62,7 +74,7 @@ public class SearchServiceTest extends TestBase {
 				.withName("numbers.txt")
 				.withRawContent("1\n-1\n0xF\n0\n7".getBytes(StandardCharsets.UTF_8))
 				.build();
-		filesWorkspace = TestClassUtils.fromBundle(TestClassUtils.fromFiles(fileHello, fileNumbers));
+		filesWorkspace = fromBundle(fromFiles(fileHello, fileNumbers));
 	}
 
 	@Test
@@ -155,8 +167,8 @@ public class SearchServiceTest extends TestBase {
 
 		@Test
 		void testAnnotationStrings() throws IOException {
-			Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
-					TestClassUtils.fromRuntimeClass(ClassWithAnnotation.class)
+			Workspace workspace = fromBundle(fromClasses(
+					fromRuntimeClass(ClassWithAnnotation.class)
 			));
 
 			Results results = searchService.search(workspace, new StringQuery(strMatchProvider.newEqualPredicate("Hello")));
@@ -176,8 +188,8 @@ public class SearchServiceTest extends TestBase {
 
 		@Test
 		void testTypeAnnotationStrings() throws IOException {
-			Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
-					TestClassUtils.fromRuntimeClass(ClassWithAnnotation.class)
+			Workspace workspace = fromBundle(fromClasses(
+					fromRuntimeClass(ClassWithAnnotation.class)
 			));
 
 			Results results = searchService.search(workspace, new StringQuery(strMatchProvider.newEqualPredicate("arg")));
@@ -237,8 +249,8 @@ public class SearchServiceTest extends TestBase {
 
 		@Test
 		void testClassReferenceToNumberFormatException() throws IOException {
-			Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
-					TestClassUtils.fromRuntimeClass(ClassWithExceptions.class)
+			Workspace workspace = fromBundle(fromClasses(
+					fromRuntimeClass(ClassWithExceptions.class)
 			));
 
 			Results results = searchService.search(workspace, new ReferenceQuery(

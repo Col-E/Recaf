@@ -2,7 +2,14 @@ package software.coley.recaf.util;
 
 import software.coley.recaf.util.threading.CountDown;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -20,10 +27,31 @@ public final class Streams {
 	}
 
 	/**
+	 * Combines the given streams.
+	 *
+	 * @param streams
+	 * 		Streams to combine.
+	 * @param <T>
+	 * 		Stream element type.
+	 *
+	 * @return Combined stream.
+	 */
+	public static <T> Stream<? extends T> of(Stream<? extends T>... streams) {
+		Stream<? extends T> merged = null;
+		for (Stream<? extends T> stream : streams) {
+			if (merged == null) merged = stream;
+			else merged = Stream.concat(merged, stream);
+		}
+		return merged == null ? Stream.empty() : merged;
+	}
+
+	/**
 	 * Makes stream interruptable.
 	 *
 	 * @param stream
 	 * 		Stream to make interruptable.
+	 * @param <T>
+	 * 		Stream element type.
 	 *
 	 * @return Interruptable stream.
 	 */

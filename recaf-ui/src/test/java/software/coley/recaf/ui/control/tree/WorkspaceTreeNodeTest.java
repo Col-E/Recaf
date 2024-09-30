@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.BasicFileInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.StubFileInfo;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.path.*;
 import software.coley.recaf.test.dummy.AccessibleFields;
@@ -102,7 +103,8 @@ class WorkspaceTreeNodeTest {
 		z1 = z2.child(new BasicFileInfo("///zero.txt", new byte[0], new BasicPropertyContainer()));
 
 		// Embedded resource containing just 'root.txt'
-		embeddedResource = new WorkspaceFileResourceBuilder(new BasicJvmClassBundle(), fromFiles(default1.getValue())).build();
+		embeddedResource = new WorkspaceFileResourceBuilder(new BasicJvmClassBundle(), fromFiles(default1.getValue()))
+				.withFileInfo(new StubFileInfo("embedded.jar")).build();
 		resourceWithEmbedded = new WorkspaceResourceBuilder(new BasicJvmClassBundle(), new BasicFileBundle())
 				.withEmbeddedResources(Map.of(embeddedResourcePath, embeddedResource))
 				.build();

@@ -1,7 +1,12 @@
 package software.coley.recaf.workspace.model.resource;
 
 import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.workspace.model.bundle.*;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
+import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -9,6 +14,15 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+/**
+ * Builder for {@link WorkspaceResource} models.
+ *
+ * @author Matt Coley
+ * @see WorkspaceFileResourceBuilder
+ * @see WorkspaceDirectoryResourceBuilder
+ * @see #withFileInfo(FileInfo)  Wither to convert to a file resource builder
+ * @see #withDirectoryPath(Path) Wither to convert to a directory resource builder
+ */
 public class WorkspaceResourceBuilder {
 	private JvmClassBundle jvmClassBundle = new BasicJvmClassBundle();
 	private NavigableMap<Integer, VersionedJvmClassBundle> versionedJvmClassBundles = new TreeMap<>();

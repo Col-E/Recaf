@@ -5,6 +5,11 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.nio.file.Path;
 
+/**
+ * Builder for {@link WorkspaceDirectoryResource}.
+ *
+ * @author Matt Coley
+ */
 public class WorkspaceDirectoryResourceBuilder extends WorkspaceResourceBuilder {
 	private Path directoryPath;
 
@@ -23,7 +28,6 @@ public class WorkspaceDirectoryResourceBuilder extends WorkspaceResourceBuilder 
 	 * @param files
 	 * 		Primary files.
 	 */
-
 	public WorkspaceDirectoryResourceBuilder(JvmClassBundle classes, FileBundle files) {
 		super(classes, files);
 	}

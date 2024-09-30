@@ -3,6 +3,8 @@ package software.coley.recaf.workspace.model.resource;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.FileInfo;
 
+import java.util.Objects;
+
 /**
  * Basic implementation of a workspace resource sourced from a file.
  *
@@ -17,12 +19,17 @@ public class BasicWorkspaceFileResource extends BasicWorkspaceResource implement
 	 */
 	public BasicWorkspaceFileResource(WorkspaceFileResourceBuilder builder) {
 		super(builder);
-		this.fileInfo = builder.getFileInfo();
+		this.fileInfo = Objects.requireNonNull(builder.getFileInfo(), "Cannot construct file resource without an associated file");
 	}
 
 	@Nonnull
 	@Override
 	public FileInfo getFileInfo() {
 		return fileInfo;
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + " " + fileInfo.getName();
 	}
 }

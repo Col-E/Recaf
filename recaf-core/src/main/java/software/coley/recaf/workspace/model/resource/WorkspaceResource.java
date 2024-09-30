@@ -6,8 +6,14 @@ import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.PropertyContainer;
+import software.coley.recaf.util.Streams;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.*;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.Bundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -86,6 +92,33 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	 */
 	@Nullable
 	WorkspaceResource getContainingResource();
+
+	/**
+	 * Searches within this resource and all embedded resources for containment of the given bundle.
+	 * To reconstruct the path to the root from the returned result here use {@link #getContainingResource()}.
+	 *
+	 * @param bundle
+	 * 		Bundle that belongs to this resource, or a {@link #getEmbeddedResources() embedded resource}.
+	 *
+	 * @return The containing resource.
+	 * <ul>
+	 *     <li>Can be the current resource.</li>
+	 *     <li>Can be any level of nested embedded resource.</li>
+	 *     <li>Can be {@code null} if no embedded resource contains the given bundle.</li>
+	 * </ul>
+	 */
+	@Nullable
+	default WorkspaceResource resolveBundleContainer(@Nonnull Bundle<?> bundle) {
+		// Check for containment in this resource
+		if (bundleStream().anyMatch(b -> b == bundle)) return this;
+
+		// Check for containment in any embedded resource
+		for (WorkspaceFileResource embedded : getEmbeddedResources().values()) {
+			WorkspaceResource resource = embedded.resolveBundleContainer(bundle);
+			if (resource != null) return resource;
+		}
+		return null;
+	}
 
 	/**
 	 * @param resource
@@ -193,10 +226,14 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	default <I extends Info> Stream<Bundle<I>> bundleStream() {
 		// Cast to object is a hack to allow generic usage of this method with <Info>.
 		// Using <? extends Info> prevents <Info> usage.
+		//  noinspection RedundantCast
 		return (Stream<Bundle<I>>) (Object)
-				concat(concat(jvmClassBundleStream(),
-								androidClassBundleStream()),
-						fileBundleStream());
+				Streams.of(
+						jvmClassBundleStream(),
+						versionedJvmClassBundleStream(),
+						androidClassBundleStream(),
+						fileBundleStream()
+				);
 	}
 
 	/**
@@ -207,10 +244,14 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	default <I extends Info> Stream<Bundle<I>> bundleStreamRecursive() {
 		// Cast to object is a hack to allow generic usage of this method with <Info>.
 		// Using <? extends Info> prevents <Info> usage.
+		//  noinspection RedundantCast
 		return (Stream<Bundle<I>>) (Object)
-				concat(concat(jvmClassBundleStreamRecursive(),
-								androidClassBundleStreamRecursive()),
-						fileBundleStreamRecursive());
+				Streams.of(
+						jvmClassBundleStreamRecursive(),
+						versionedJvmClassBundleStreamRecursive(),
+						androidClassBundleStreamRecursive(),
+						fileBundleStreamRecursive()
+				);
 	}
 
 	/**

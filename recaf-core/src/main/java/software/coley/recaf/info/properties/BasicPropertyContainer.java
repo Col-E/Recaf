@@ -70,7 +70,8 @@ public class BasicPropertyContainer implements PropertyContainer {
 
 	@Override
 	public String toString() {
-		if (properties == null) return "BasicPropertyContainer[0]";
-		return "BasicPropertyContainer[" + properties.size() + " items]";
+		String typeName = getClass().getSimpleName();
+		if (properties == null) return typeName + "[0]";
+		return typeName + "[" + properties.size() + " items]";
 	}
 }
