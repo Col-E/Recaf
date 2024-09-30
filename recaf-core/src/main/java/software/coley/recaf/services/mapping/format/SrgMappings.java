@@ -59,25 +59,61 @@ public class SrgMappings extends AbstractMappingFileFormat {
 						mappings.addClass(obfClass, renamedClass);
 					}
 					case "FD:" -> {
+						// Common format:
+						// 0  1
+						// FD obf-owner/obf-name
 						String obfKey = args[1];
 						int splitPos = obfKey.lastIndexOf('/');
 						String obfOwner = obfKey.substring(0, splitPos);
 						String obfName = obfKey.substring(splitPos + 1);
-						String renamedKey = args[2];
-						splitPos = renamedKey.lastIndexOf('/');
-						String renamedName = renamedKey.substring(splitPos + 1);
-						mappings.addField(obfOwner, null, obfName, renamedName);
+
+						// Handle SRG variants
+						if (args.length == 5) {
+							// XSRG format:
+							// 0  1                  2        3                      4
+							// FD obf-owner/obf-name obf-desc clean-owner/clean-name clean-desc
+							String obfDesc = args[2];
+							String renamedKey = args[3];
+							splitPos = renamedKey.lastIndexOf('/');
+							String renamedName = renamedKey.substring(splitPos + 1);
+							mappings.addField(obfOwner, obfDesc, obfName, renamedName);
+						} else {
+							// SRG format:
+							// FD obf-owner/obf-name clean-owner/clean-name
+							String renamedKey = args[2];
+							splitPos = renamedKey.lastIndexOf('/');
+							String renamedName = renamedKey.substring(splitPos + 1);
+							mappings.addField(obfOwner, null, obfName, renamedName);
+						}
 					}
 					case "MD:" -> {
+						// Common format:
+						// 0  1                  3
+						// MD obf-owner/obf-name obf-desc
 						String obfKey = args[1];
 						int splitPos = obfKey.lastIndexOf('/');
 						String obfOwner = obfKey.substring(0, splitPos);
 						String obfName = obfKey.substring(splitPos + 1);
 						String obfDesc = args[2];
-						String renamedKey = args[3];
-						splitPos = renamedKey.lastIndexOf('/');
-						String renamedName = renamedKey.substring(splitPos + 1);
-						mappings.addMethod(obfOwner, obfDesc, obfName, renamedName);
+
+						// Handle SRG variants
+						if (args.length == 5) {
+							// XSRG format:
+							// 0  1                  2        3                      4
+							// MD obf-owner/obf-name obf-desc clean-owner/clean-name clean-desc
+							String renamedKey = args[3];
+							splitPos = renamedKey.lastIndexOf('/');
+							String renamedName = renamedKey.substring(splitPos + 1);
+							mappings.addMethod(obfOwner, obfDesc, obfName, renamedName);
+						} else {
+							// SRG format:
+							// 0  1                  2        3
+							// MD obf-owner/obf-name obf-desc clean-owner/clean-name
+							String renamedKey = args[3];
+							splitPos = renamedKey.lastIndexOf('/');
+							String renamedName = renamedKey.substring(splitPos + 1);
+							mappings.addMethod(obfOwner, obfDesc, obfName, renamedName);
+						}
 					}
 					default -> logger.trace("Unknown SRG mappings line type: \"{}\" @line {}", type, line);
 				}

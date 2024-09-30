@@ -76,6 +76,28 @@ public class MappingImplementationTests {
 	}
 
 	@Test
+	void testSrgWithCleanName() {
+		String mappingsText = """
+				CL: test/Greetings rename/Hello
+				FD: test/Greetings/oldField rename/Hello/newField
+				MD: test/Greetings/say ()V rename/Hello/speak""";
+		MappingFileFormat format = new SrgMappings();
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertInheritMap(mappings);
+	}
+
+	@Test
+	void testXSrg() {
+		String mappingsText = """
+				CL: test/Greetings rename/Hello
+				FD: test/Greetings/oldField Ljava/lang/String; rename/Hello/newField Ljava/lang/String;
+				MD: test/Greetings/say ()V rename/Hello/speak""";
+		MappingFileFormat format = new SrgMappings();
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertInheritMap(mappings);
+	}
+
+	@Test
 	void testSrgPackageMapping() {
 		String mappingsText = """
 				PK: test rename
