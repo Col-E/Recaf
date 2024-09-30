@@ -3,10 +3,7 @@ package software.coley.recaf.services.decompile.cfr;
 import jakarta.annotation.Nonnull;
 import org.benf.cfr.reader.api.ClassFileSource;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.util.visitors.ClassHollowingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
@@ -62,14 +59,6 @@ public class ClassSource implements ClassFileSource {
 		} else {
 			ClassPathNode result = workspace.findClass(className);
 			code = result == null ? null : result.getValue().asJvmClass().getBytecode();
-
-			// Simply CFR's work-load by gutting supporting class internals
-			if (code != null) {
-				ClassWriter writer = new ClassWriter(0);
-				ClassHollowingVisitor hollower = new ClassHollowingVisitor(writer);
-				new ClassReader(code).accept(hollower, ClassReader.SKIP_CODE);
-				code = writer.toByteArray();
-			}
 		}
 		return new Pair<>(code, inputPath);
 	}
