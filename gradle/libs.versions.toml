@@ -1,8 +1,8 @@
 [versions]
-asm = "9.7"
+asm = "9.7.1"
 atlantafx = "2.0.1"
 binary-resources = "31.3.0-alpha01.8"
-cafedude = "2.1.1"
+cafedude = "2.1.2"
 cdi-api = "4.1.0"
 cdi-impl = "6.0.0.Beta4"
 cfr = "0.152"
@@ -29,7 +29,7 @@ logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.6.1"
 mockito = "5.13.0"
 natural-order = "1.1"
-openrewrite = "8.36.0"
+openrewrite = "8.37.1"
 picocli = "4.7.6"
 procyon = "0.6.0"
 reactfx = { strictly = "2.0-M5" } # won't get updates, dead
