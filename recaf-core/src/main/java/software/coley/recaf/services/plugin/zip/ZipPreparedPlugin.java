@@ -1,9 +1,9 @@
 package software.coley.recaf.services.plugin.zip;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.plugin.PluginException;
-import software.coley.recaf.plugin.PluginInfo;
-import software.coley.recaf.plugin.PluginSource;
+import software.coley.recaf.services.plugin.PluginException;
+import software.coley.recaf.services.plugin.PluginInfo;
+import software.coley.recaf.services.plugin.PluginSource;
 import software.coley.recaf.services.plugin.PreparedPlugin;
 
 import java.io.IOException;

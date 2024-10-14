@@ -2,7 +2,6 @@ package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.plugin.PluginSource;
 import software.coley.recaf.util.io.ByteSource;
 
 import java.io.IOException;

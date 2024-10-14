@@ -1,8 +1,6 @@
 package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.plugin.PluginException;
-import software.coley.recaf.plugin.PluginInfo;
 
 import java.util.stream.Stream;
 

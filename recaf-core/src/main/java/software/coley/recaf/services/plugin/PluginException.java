@@ -1,4 +1,4 @@
-package software.coley.recaf.plugin;
+package software.coley.recaf.services.plugin;
 
 /**
  * Exception thrown when action involving plugins fail.

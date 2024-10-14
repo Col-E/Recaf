@@ -2,7 +2,7 @@ package software.coley.recaf.services.plugin.zip;
 
 import jakarta.annotation.Nonnull;
 import software.coley.lljzip.format.model.LocalFileHeader;
-import software.coley.recaf.plugin.PluginSource;
+import software.coley.recaf.services.plugin.PluginSource;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
 

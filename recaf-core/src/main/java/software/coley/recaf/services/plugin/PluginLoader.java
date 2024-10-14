@@ -1,13 +1,13 @@
-package software.coley.recaf.plugin;
+package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.services.plugin.PluginException;
 import software.coley.recaf.services.plugin.PreparedPlugin;
 import software.coley.recaf.util.io.ByteSource;
 
 /**
- * The plugin loader.
- * This interface is responsible for loading plugins from different sources.
+ * The plugin loader is responsible for loading plugins from different sources.
  *
  * @author xDark
  */

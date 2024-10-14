@@ -1,4 +1,4 @@
-package software.coley.recaf.plugin;
+package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nullable;
 import software.coley.recaf.util.io.ByteSource;

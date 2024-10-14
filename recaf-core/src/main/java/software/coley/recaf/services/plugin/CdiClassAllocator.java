@@ -5,8 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.spi.*;
 import jakarta.inject.Inject;
-import software.coley.recaf.plugin.AllocationException;
-import software.coley.recaf.plugin.ClassAllocator;
 
 import java.util.IdentityHashMap;
 import java.util.Map;

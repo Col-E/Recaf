@@ -2,8 +2,6 @@ package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.plugin.Plugin;
-import software.coley.recaf.plugin.PluginContainer;
-import software.coley.recaf.plugin.PluginInfo;
 
 /**
  * Plugin container implementation.

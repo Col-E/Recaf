@@ -1,6 +1,7 @@
-package software.coley.recaf.plugin;
+package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.plugin.Plugin;
 
 /**
  * Object that holds reference to a plugin and it's information.

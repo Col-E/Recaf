@@ -1,10 +1,6 @@
 package software.coley.recaf.services.plugin;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.plugin.PluginContainer;
-import software.coley.recaf.plugin.PluginException;
-import software.coley.recaf.plugin.PluginInfo;
-import software.coley.recaf.plugin.PluginSource;
 import software.coley.recaf.services.plugin.discovery.DiscoveredPluginSource;
 import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
 

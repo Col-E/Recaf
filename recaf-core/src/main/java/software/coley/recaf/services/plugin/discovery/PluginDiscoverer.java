@@ -1,7 +1,7 @@
 package software.coley.recaf.services.plugin.discovery;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.plugin.PluginException;
+import software.coley.recaf.services.plugin.PluginException;
 
 import java.util.List;
 
