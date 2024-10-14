@@ -196,8 +196,12 @@ public class Main {
 
 		// Load from the plugin directory
 		try {
-			Path pluginDirectory = recaf.get(RecafDirectoriesConfig.class).getPluginDirectory();
+			RecafDirectoriesConfig dirConfig = recaf.get(RecafDirectoriesConfig.class);
+			Path pluginDirectory = dirConfig.getPluginDirectory();
+			Path extraPluginDirectory = dirConfig.getExtraPluginDirectory();
 			pluginManager.loadPlugins(new DirectoryPluginDiscoverer(pluginDirectory));
+			if (extraPluginDirectory != null)
+				pluginManager.loadPlugins(new DirectoryPluginDiscoverer(extraPluginDirectory));
 		} catch (PluginException ex) {
 			logger.error("Failed to initialize plugins", ex);
 		}

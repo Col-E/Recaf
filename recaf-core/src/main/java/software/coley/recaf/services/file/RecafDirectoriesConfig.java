@@ -2,6 +2,7 @@ package software.coley.recaf.services.file;
 
 import dev.dirs.BaseDirectories;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.util.PlatformType;
 
 import java.io.IOException;
@@ -94,6 +96,22 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	@Nonnull
 	public Path getPluginDirectory() {
 		return pluginDirectory;
+	}
+
+	/**
+	 * Set via {@link LaunchCommand} to facilitate plugin development. Usually not set otherwise.
+	 *
+	 * @return Directory where extra plugins are stored. Can be {@code null}.
+	 */
+	@Nullable
+	public Path getExtraPluginDirectory() {
+		String pathProperty = System.getProperty("RECAF_EXTRA_PLUGINS");
+		if (pathProperty == null)
+			return null;
+		Path path = Paths.get(pathProperty);
+		if (Files.isDirectory(path))
+			return path;
+		return null;
 	}
 
 	/**
