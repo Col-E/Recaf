@@ -97,7 +97,10 @@ public class AssemblyResolver {
 							return new TypeReferenceResolution(parentClassDec, method, (ASTIdentifier) selectedType);
 					}
 
-					ASTElement selectedAnno = get(position, method.getAnnotations());
+					ASTElement selectedAnno = get(position, method.getVisibleAnnotations());
+					if (selectedAnno != null)
+						return new MethodAnnotationResolution(parentClassDec, method, (ASTAnnotation) selectedAnno);
+					selectedAnno = get(position, method.getInvisibleAnnotations());
 					if (selectedAnno != null)
 						return new MethodAnnotationResolution(parentClassDec, method, (ASTAnnotation) selectedAnno);
 
@@ -119,7 +122,10 @@ public class AssemblyResolver {
 
 					return new MethodResolution(parentClassDec, method);
 				} else if (child instanceof ASTField field) {
-					ASTElement selectedAnno = get(position, field.getAnnotations());
+					ASTElement selectedAnno = get(position, field.getVisibleAnnotations());
+					if (selectedAnno != null)
+						return new FieldAnnotationResolution(parentClassDec, field, (ASTAnnotation) selectedAnno);
+					selectedAnno = get(position, field.getInvisibleAnnotations());
 					if (selectedAnno != null)
 						return new FieldAnnotationResolution(parentClassDec, field, (ASTAnnotation) selectedAnno);
 
@@ -133,7 +139,10 @@ public class AssemblyResolver {
 					if (selectedInner != null)
 						return new InnerClassResolution(klass, (ASTInner) selectedInner);
 
-					ASTElement selectedAnno = get(position, klass.getAnnotations());
+					ASTElement selectedAnno = get(position, klass.getVisibleAnnotations());
+					if (selectedAnno != null)
+						return new ClassAnnotationResolution(klass, (ASTAnnotation) selectedAnno);
+					selectedAnno = get(position, klass.getInvisibleAnnotations());
 					if (selectedAnno != null)
 						return new ClassAnnotationResolution(klass, (ASTAnnotation) selectedAnno);
 
