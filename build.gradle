@@ -12,6 +12,7 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'jacoco'
+    apply plugin: 'maven-publish'
     apply plugin: 'com.github.ben-manes.versions'
 
     repositories {
@@ -107,6 +108,18 @@ subprojects {
 
         jacoco {
             includes = ['software/coley/recaf/**']
+        }
+    }
+
+    // Setup artifact publishing to maven local
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+        repositories {
+            mavenLocal()
         }
     }
 }
