@@ -14,6 +14,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTArray;
+import me.darknet.assembler.ast.primitive.ASTCode;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.primitive.ASTLabel;
 import me.darknet.assembler.ast.primitive.ASTObject;
@@ -199,7 +200,10 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 			Consumer<ASTMethod> methodConsumer = astMethod -> {
 				if (currentMethod != null && !Objects.equals(currentMethod.getName(), astMethod.getName().literal()))
 					return;
-				for (ASTInstruction instruction : astMethod.code().instructions()) {
+				ASTCode code = astMethod.code();
+				if (code == null)
+					return;
+				for (ASTInstruction instruction : code.instructions()) {
 					if (instruction instanceof ASTLabel label) {
 						readUpdater.accept(label.identifier().content(), label);
 					} else {

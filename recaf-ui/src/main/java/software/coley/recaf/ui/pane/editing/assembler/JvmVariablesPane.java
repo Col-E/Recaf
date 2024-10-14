@@ -17,6 +17,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import me.darknet.assembler.ast.ASTElement;
+import me.darknet.assembler.ast.primitive.ASTCode;
 import me.darknet.assembler.ast.primitive.ASTIdentifier;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.specific.ASTClass;
@@ -220,7 +221,10 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 					String literalName = parameter.literal();
 					variableUsages.putIfAbsent(literalName, emptyUsage);
 				}
-				for (ASTInstruction instruction : astMethod.code().instructions()) {
+				ASTCode code = astMethod.code();
+				if (code == null)
+					return;
+				for (ASTInstruction instruction : code.instructions()) {
 					String insnName = instruction.identifier().content();
 					boolean isLoad = insnName.endsWith("load");
 					if (((isLoad || insnName.endsWith("store")) && insnName.charAt(1) != 'a') || insnName.equals("iinc")) {

@@ -14,6 +14,7 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import me.darknet.assembler.ast.ASTElement;
+import me.darknet.assembler.ast.primitive.ASTCode;
 import me.darknet.assembler.ast.primitive.ASTEmpty;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.specific.ASTClass;
@@ -185,7 +186,10 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		int pos = editor.getCodeArea().getCaretPosition();
 		if (!method.range().within(pos))
 			return -1;
-		List<ASTInstruction> instructions = method.code().instructions();
+		ASTCode code = method.code();
+		if (code == null)
+			return -1;
+		List<ASTInstruction> instructions = code.instructions();
 		int paragraph = editor.getCodeArea().getCurrentParagraph();
 		int result = Collections.binarySearch(instructions, new ASTEmpty(new Token(
 				new Range(pos, pos + 1),
