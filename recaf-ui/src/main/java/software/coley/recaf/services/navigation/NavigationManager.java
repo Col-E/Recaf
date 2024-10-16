@@ -16,15 +16,21 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
-import software.coley.recaf.path.*;
+import software.coley.recaf.path.AbstractPathNode;
+import software.coley.recaf.path.BundlePathNode;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.MappingResults;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingTab;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -33,7 +39,14 @@ import software.coley.recaf.workspace.model.resource.ResourceFileListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Tracks available {@link Navigable} content currently open in the UI.
@@ -59,8 +72,8 @@ public class NavigationManager implements Navigable, Service {
 
 	@Inject
 	public NavigationManager(@Nonnull NavigationManagerConfig config,
-							 @Nonnull DockingManager dockingManager,
-							 @Nonnull WorkspaceManager workspaceManager) {
+	                         @Nonnull DockingManager dockingManager,
+	                         @Nonnull WorkspaceManager workspaceManager) {
 		this.config = config;
 
 		// Track what navigable content is available.
@@ -126,13 +139,15 @@ public class NavigationManager implements Navigable, Service {
 		}));
 
 		// Track current workspace so that we are navigable ourselves.
-		workspaceManager.addWorkspaceOpenListener(workspace -> {
+		// Nothing here *needs* to be on the FX thread per-say, but because the closer handling logic is on the FX
+		// thread making this also on the FX thread will help prevent race conditions on assigning the 'path' field.
+		workspaceManager.addWorkspaceOpenListener(workspace -> FxThreadUtil.run(() -> {
 			WorkspacePathNode workspacePath = PathNodes.workspacePath(workspace);
 			path = workspacePath;
 
 			// Update forwarding's path.
 			forwarding.workspacePath = workspacePath;
-		});
+		}));
 
 		// Setup forwarding workspace updates to children.
 		workspaceManager.addDefaultWorkspaceModificationListeners(new WorkspaceModificationListener() {
