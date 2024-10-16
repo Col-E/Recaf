@@ -49,6 +49,7 @@ public interface Navigable {
 	 *     <li>A {@link Dependent} {@link Navigable} content within a tab tracked by {@link DockingManager} is closed.</li>
 	 *     <li>An associated {@link ClassInfo} or {@link FileInfo} in the workspace is removed.</li>
 	 * </ul>
+	 * <b>Must be called on the FX thread.</b>
 	 */
 	void disable();
 

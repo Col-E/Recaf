@@ -98,17 +98,16 @@ public class DockingTab extends DetachableTab {
 
 			// Remove from containing tab-pane.
 			TabPane tabPane = getTabPane();
-			if (tabPane != null)
-				FxThreadUtil.run(() -> {
-					// In cases where this is handled after the scene has been closed
-					// we can skip this process as the docking library we use does not
-					// consider such cases and throws an exception.
-					ObservableList<Tab> tabList = tabPane.getTabs();
-					if (tabPane.getScene() != null) {
-						tabList.remove(this);
-						priorRegion = null;
-					}
-				});
+			if (tabPane != null) {
+				// In cases where this is handled after the scene has been closed
+				// we can skip this process as the docking library we use does not
+				// consider such cases and throws an exception.
+				ObservableList<Tab> tabList = tabPane.getTabs();
+				if (tabPane.getScene() != null) {
+					tabList.remove(this);
+					priorRegion = null;
+				}
+			}
 		}
 	}
 

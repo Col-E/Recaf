@@ -93,7 +93,7 @@ public class NavigationManager implements Navigable, Service {
 		}));
 
 		// When the workspace closes, close all associated children.
-		workspaceManager.addWorkspaceCloseListener(workspace -> {
+		workspaceManager.addWorkspaceCloseListener(workspace -> FxThreadUtil.run(() -> {
 			for (Navigable child : new HashSet<>(children)) {
 				child.disable();
 				DockingTab dockingTab = childrenToTab.get(child);
@@ -118,12 +118,12 @@ public class NavigationManager implements Navigable, Service {
 			// Force close any remaining tabs that hold navigable content.
 			for (DockingTab tab : dockingManager.getDockTabs()) {
 				if (tab.getContent() instanceof Navigable navigable) {
-					FxThreadUtil.run(navigable::disable);
+					navigable.disable();
 					tab.setClosable(true);
 					tab.close();
 				}
 			}
-		});
+		}));
 
 		// Track current workspace so that we are navigable ourselves.
 		workspaceManager.addWorkspaceOpenListener(workspace -> {
@@ -255,8 +255,10 @@ public class NavigationManager implements Navigable, Service {
 		@Override
 		public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
 			ClassPathNode path = workspacePath.child(resource).child(bundle).child(cls.getPackageName()).child(cls);
-			for (Navigable navigable : getNavigableChildrenByPath(path))
-				navigable.disable();
+			FxThreadUtil.run(() -> {
+				for (Navigable navigable : getNavigableChildrenByPath(path))
+					navigable.disable();
+			});
 		}
 
 		@Override
@@ -276,8 +278,10 @@ public class NavigationManager implements Navigable, Service {
 		@Override
 		public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
 			ClassPathNode path = workspacePath.child(resource).child(bundle).child(cls.getPackageName()).child(cls);
-			for (Navigable navigable : getNavigableChildrenByPath(path))
-				navigable.disable();
+			FxThreadUtil.run(() -> {
+				for (Navigable navigable : getNavigableChildrenByPath(path))
+					navigable.disable();
+			});
 		}
 
 		@Override
@@ -297,8 +301,10 @@ public class NavigationManager implements Navigable, Service {
 		@Override
 		public void onRemoveFile(@Nonnull WorkspaceResource resource, @Nonnull FileBundle bundle, @Nonnull FileInfo file) {
 			FilePathNode path = workspacePath.child(resource).child(bundle).child(file.getDirectoryName()).child(file);
-			for (Navigable navigable : getNavigableChildrenByPath(path))
-				navigable.disable();
+			FxThreadUtil.run(() -> {
+				for (Navigable navigable : getNavigableChildrenByPath(path))
+					navigable.disable();
+			});
 		}
 	}
 

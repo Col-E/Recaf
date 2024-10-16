@@ -94,11 +94,9 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	@Override
 	public void disable() {
 		cancelLastSearch();
-		FxThreadUtil.run(() -> {
-			liveResultsTree.setRoot(null);
-			getChildren().clear();
-			setDisable(true);
-		});
+		liveResultsTree.setRoot(null);
+		getChildren().clear();
+		setDisable(true);
 	}
 
 	/**
