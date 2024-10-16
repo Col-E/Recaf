@@ -9,13 +9,13 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.RecafApplication;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;
@@ -36,9 +36,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class WorkspaceRootPane extends BorderPane {
 	@Inject
 	public WorkspaceRootPane(@Nonnull DockingManager dockingManager,
-							 @Nonnull WorkspaceManager workspaceManager,
-							 @Nonnull Instance<WorkspaceExplorerPane> explorerPaneProvider,
-							 @Nonnull Instance<WorkspaceInformationPane> informationPaneProvider) {
+	                         @Nonnull WorkspaceManager workspaceManager,
+	                         @Nonnull Instance<WorkspaceExplorerPane> explorerPaneProvider,
+	                         @Nonnull Instance<WorkspaceInformationPane> informationPaneProvider) {
 		getStyleClass().add("bg-inset");
 
 		AtomicReference<DockingRegion> lastTreeRegion = new AtomicReference<>();
@@ -67,31 +67,33 @@ public class WorkspaceRootPane extends BorderPane {
 
 		// Register a close listener to remove the old workspace's content from the pane's regions.
 		workspaceManager.addWorkspaceCloseListener(workspace -> {
-			DockingRegion dockTree = lastTreeRegion.get();
-			if (dockTree != null) {
-				// Close all tabs.
-				for (DockingTab tab : new ArrayList<>(dockTree.getDockTabs())) {
-					// Mark as closable so they can be closed.
-					tab.setClosable(true);
+			FxThreadUtil.run(() -> {
+				DockingRegion dockTree = lastTreeRegion.get();
+				if (dockTree != null) {
+					// Close all tabs.
+					for (DockingTab tab : new ArrayList<>(dockTree.getDockTabs())) {
+						// Mark as closable so they can be closed.
+						tab.setClosable(true);
 
-					// When the last tab in the region is closed,
-					// the close handler should kick in and clean things up for us.
-					// We will validate this below.
-					tab.close();
+						// When the last tab in the region is closed,
+						// the close handler should kick in and clean things up for us.
+						// We will validate this below.
+						tab.close();
+					}
 				}
-			}
-			DockingRegion dockPrimary = lastPrimaryRegion.get();
-			if (dockPrimary != null) {
-				// Only close closable tabs.
-				for (DockingTab tab : new ArrayList<>(dockPrimary.getDockTabs())) {
-					tab.close();
+				DockingRegion dockPrimary = lastPrimaryRegion.get();
+				if (dockPrimary != null) {
+					// Only close closable tabs.
+					for (DockingTab tab : new ArrayList<>(dockPrimary.getDockTabs())) {
+						tab.close();
+					}
 				}
-			}
+			});
 		});
 	}
 
 	private void createPrimaryTab(@Nonnull DockingRegion region,
-								  @Nonnull Instance<WorkspaceInformationPane> informationPaneProvider) {
+	                              @Nonnull Instance<WorkspaceInformationPane> informationPaneProvider) {
 		// Add summary of workspace, targeting the primary region.
 		// In the UI, this region will persist and be the default location for
 		// opening most 'new' content/tabs.
@@ -100,7 +102,7 @@ public class WorkspaceRootPane extends BorderPane {
 	}
 
 	private void createWorkspaceExplorerTab(@Nonnull DockingRegion region,
-											@Nonnull Instance<WorkspaceExplorerPane> explorerPaneProvider) {
+	                                        @Nonnull Instance<WorkspaceExplorerPane> explorerPaneProvider) {
 		// Add workspace explorer tree.
 		DockingTab workspaceTab = region.createTab(Lang.getBinding("workspace.title"), explorerPaneProvider.get());
 		workspaceTab.setGraphic(new FontIconView(CarbonIcons.TREE_VIEW));
