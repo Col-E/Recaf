@@ -2148,7 +2148,7 @@ public class Actions implements Service {
 			return createContent(factory);
 		} else {
 			// Content by path is already open.
-			Navigable navigable = children.get(0);
+			Navigable navigable = children.getFirst();
 			selectTab(navigable);
 			navigable.requestFocus();
 			return navigable;

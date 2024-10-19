@@ -330,10 +330,10 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 				logger.warn("Could not create Java AST model from source of: {} after {}ms", classNameEsc, diff);
 				astAvailabilityButton.setUnavailable();
 			} else {
-				SourceFile result = results.get(0);
+				SourceFile result = results.getFirst();
 				if (result instanceof ParseError parseError) {
 					unit = null;
-					ParseExceptionResult errResult = (ParseExceptionResult) parseError.getMarkers().getMarkers().get(0);
+					ParseExceptionResult errResult = (ParseExceptionResult) parseError.getMarkers().getMarkers().getFirst();
 					logger.warn("Parse error from source of: {} after {}ms, err={}",
 							classNameEsc, diff, errResult.getMessage());
 					astAvailabilityButton.setParserError(errResult);

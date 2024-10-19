@@ -125,7 +125,7 @@ public class ExitDebugLoggingHook {
 		System.out.println(" - Architecture:   " + System.getProperty("os.arch"));
 		System.out.println(" - Processors:     " + Runtime.getRuntime().availableProcessors());
 		System.out.println(" - Path Separator: " + File.pathSeparator);
-		System.out.println("Recaf" + JavaVersion.get());
+		System.out.println("Recaf");
 		System.out.println(" - Version:    " + RecafBuildConfig.VERSION);
 		System.out.println(" - Build hash: " + RecafBuildConfig.GIT_SHA);
 		System.out.println(" - Build date: " + RecafBuildConfig.GIT_DATE);
