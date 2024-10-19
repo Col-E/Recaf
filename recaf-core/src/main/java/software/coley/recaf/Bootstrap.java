@@ -39,9 +39,14 @@ public class Bootstrap {
 			long then = System.currentTimeMillis();
 
 			// Create the Recaf container
-			SeContainer container = createContainer();
-			instance = new Recaf(container);
-			logger.info("Recaf CDI container created in {}ms", System.currentTimeMillis() - then);
+			try {
+				SeContainer container = createContainer();
+				instance = new Recaf(container);
+				logger.info("Recaf CDI container created in {}ms", System.currentTimeMillis() - then);
+			} catch (Throwable t) {
+				logger.error("Failed to create Recaf CDI container", t);
+				System.exit(ExitCodes.ERR_CDI_INIT_FAILURE);
+			}
 		}
 		return instance;
 	}
