@@ -5,7 +5,7 @@ plugins {
 }
 
 def javaFxVersion = '22.0.1'
-def javaFxIncludeInDist = System.getProperty('skip.jfx.bundle') == null
+def javaFxIncludeInDist = System.getProperty('skip_jfx_bundle') == null
 
 javafx {
     version = javaFxVersion

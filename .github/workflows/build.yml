@@ -57,7 +57,7 @@ jobs:
             **/hs_err_pid*
       # Build the distribution jar and upload it, without bundling JavaFX in the jar
       - name: Create distribution jar
-        run: ./gradlew assemble -x compileTestJava -Dskip.jfx.bundle=true
+        run: ./gradlew assemble -x compileTestJava -Dskip_jfx_bundle=true
       - name: Upload distribution jar
         if: always()
         uses: actions/upload-artifact@v3
