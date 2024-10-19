@@ -25,9 +25,9 @@ public interface BundleContextMenuAdapter extends ContextMenuAdapter {
 	 * @param bundle
 	 * 		The bundle the menu is for.
 	 */
-	default void adaptBundleContextMenu(@Nonnull ContextMenu menu,
-										@Nonnull ContextSource source,
-										@Nonnull Workspace workspace,
-										@Nonnull WorkspaceResource resource,
-										@Nonnull Bundle<? extends Info> bundle) {}
+	void adaptBundleContextMenu(@Nonnull ContextMenu menu,
+	                            @Nonnull ContextSource source,
+	                            @Nonnull Workspace workspace,
+	                            @Nonnull WorkspaceResource resource,
+	                            @Nonnull Bundle<? extends Info> bundle);
 }

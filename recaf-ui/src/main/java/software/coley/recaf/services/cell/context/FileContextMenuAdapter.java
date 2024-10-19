@@ -27,10 +27,10 @@ public interface FileContextMenuAdapter extends ContextMenuAdapter {
 	 * @param info
 	 * 		The file the menu is for.
 	 */
-	default void adaptFileInfoContextMenu(@Nonnull ContextMenu menu,
-										  @Nonnull ContextSource source,
-										  @Nonnull Workspace workspace,
-										  @Nonnull WorkspaceResource resource,
-										  @Nonnull FileBundle bundle,
-										  @Nonnull FileInfo info) {}
+	void adaptFileInfoContextMenu(@Nonnull ContextMenu menu,
+	                              @Nonnull ContextSource source,
+	                              @Nonnull Workspace workspace,
+	                              @Nonnull WorkspaceResource resource,
+	                              @Nonnull FileBundle bundle,
+	                              @Nonnull FileInfo info);
 }

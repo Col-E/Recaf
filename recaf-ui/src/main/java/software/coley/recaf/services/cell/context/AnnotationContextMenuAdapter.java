@@ -31,11 +31,11 @@ public interface AnnotationContextMenuAdapter extends ContextMenuAdapter {
 	 * @param annotation
 	 * 		The annotation the menu is for.
 	 */
-	default void adaptAnnotationContextMenu(@Nonnull ContextMenu menu,
-											@Nonnull ContextSource source,
-											@Nonnull Workspace workspace,
-											@Nonnull WorkspaceResource resource,
-											@Nonnull ClassBundle<? extends ClassInfo> bundle,
-											@Nonnull Annotated annotated,
-											@Nonnull AnnotationInfo annotation) {}
+	void adaptAnnotationContextMenu(@Nonnull ContextMenu menu,
+	                                @Nonnull ContextSource source,
+	                                @Nonnull Workspace workspace,
+	                                @Nonnull WorkspaceResource resource,
+	                                @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                @Nonnull Annotated annotated,
+	                                @Nonnull AnnotationInfo annotation);
 }

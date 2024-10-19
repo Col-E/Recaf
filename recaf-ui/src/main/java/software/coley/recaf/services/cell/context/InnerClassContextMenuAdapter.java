@@ -30,11 +30,11 @@ public interface InnerClassContextMenuAdapter extends ContextMenuAdapter {
 	 * @param inner
 	 * 		The inner class the menu is for.
 	 */
-	default void adaptInnerClassInfoContextMenu(@Nonnull ContextMenu menu,
-												@Nonnull ContextSource source,
-												@Nonnull Workspace workspace,
-												@Nonnull WorkspaceResource resource,
-												@Nonnull ClassBundle<? extends ClassInfo> bundle,
-												@Nonnull ClassInfo outerClass,
-												@Nonnull InnerClassInfo inner) {}
+	void adaptInnerClassInfoContextMenu(@Nonnull ContextMenu menu,
+	                                    @Nonnull ContextSource source,
+	                                    @Nonnull Workspace workspace,
+	                                    @Nonnull WorkspaceResource resource,
+	                                    @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                    @Nonnull ClassInfo outerClass,
+	                                    @Nonnull InnerClassInfo inner);
 }

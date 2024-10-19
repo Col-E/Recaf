@@ -26,10 +26,10 @@ public interface DirectoryContextMenuAdapter extends ContextMenuAdapter {
 	 * @param directoryName
 	 * 		The full path of the directory the menu is for.
 	 */
-	default void adaptDirectoryContextMenu(@Nonnull ContextMenu menu,
-										   @Nonnull ContextSource source,
-										   @Nonnull Workspace workspace,
-										   @Nonnull WorkspaceResource resource,
-										   @Nonnull FileBundle bundle,
-										   @Nonnull String directoryName) {}
+	void adaptDirectoryContextMenu(@Nonnull ContextMenu menu,
+	                               @Nonnull ContextSource source,
+	                               @Nonnull Workspace workspace,
+	                               @Nonnull WorkspaceResource resource,
+	                               @Nonnull FileBundle bundle,
+	                               @Nonnull String directoryName);
 }

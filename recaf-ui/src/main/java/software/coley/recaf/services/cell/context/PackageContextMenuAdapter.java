@@ -29,10 +29,10 @@ public interface PackageContextMenuAdapter extends ContextMenuAdapter {
 	 * @param packageName
 	 * 		The full package name, separated by {@code /}.
 	 */
-	default void adaptPackageContextMenu(@Nonnull ContextMenu menu,
-										 @Nonnull ContextSource source,
-										 @Nonnull Workspace workspace,
-										 @Nonnull WorkspaceResource resource,
-										 @Nonnull ClassBundle<? extends ClassInfo> bundle,
-										 @Nonnull String packageName) {}
+	void adaptPackageContextMenu(@Nonnull ContextMenu menu,
+	                             @Nonnull ContextSource source,
+	                             @Nonnull Workspace workspace,
+	                             @Nonnull WorkspaceResource resource,
+	                             @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                             @Nonnull String packageName);
 }

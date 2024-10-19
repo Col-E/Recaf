@@ -21,8 +21,8 @@ public interface ResourceContextMenuAdapter extends ContextMenuAdapter {
 	 * @param resource
 	 * 		The resource the menu is for.
 	 */
-	default void adaptResourceContextMenu(@Nonnull ContextMenu menu,
-										  @Nonnull ContextSource source,
-										  @Nonnull Workspace workspace,
-										  @Nonnull WorkspaceResource resource) {}
+	void adaptResourceContextMenu(@Nonnull ContextMenu menu,
+	                              @Nonnull ContextSource source,
+	                              @Nonnull Workspace workspace,
+	                              @Nonnull WorkspaceResource resource);
 }

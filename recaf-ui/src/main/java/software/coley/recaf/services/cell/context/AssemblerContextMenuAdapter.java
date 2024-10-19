@@ -31,11 +31,11 @@ public interface AssemblerContextMenuAdapter extends ContextMenuAdapter {
 	 * @param assemblerData
 	 * 		The assembler data the menu is for.
 	 */
-	default void adaptAssemblerMenu(@Nonnull ContextMenu menu,
-									@Nonnull ContextSource source,
-									@Nonnull Workspace workspace,
-									@Nonnull WorkspaceResource resource,
-									@Nonnull ClassBundle<? extends ClassInfo> bundle,
-									@Nonnull ClassInfo declaringClass,
-									@Nonnull AssemblerPathData assemblerData) {}
+	void adaptAssemblerMenu(@Nonnull ContextMenu menu,
+	                        @Nonnull ContextSource source,
+	                        @Nonnull Workspace workspace,
+	                        @Nonnull WorkspaceResource resource,
+	                        @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                        @Nonnull ClassInfo declaringClass,
+	                        @Nonnull AssemblerPathData assemblerData);
 }

@@ -30,11 +30,11 @@ public interface MethodContextMenuAdapter extends ContextMenuAdapter {
 	 * @param method
 	 * 		The method the menu is for.
 	 */
-	default void adaptMethodContextMenu(@Nonnull ContextMenu menu,
-										@Nonnull ContextSource source,
-										@Nonnull Workspace workspace,
-										@Nonnull WorkspaceResource resource,
-										@Nonnull ClassBundle<? extends ClassInfo> bundle,
-										@Nonnull ClassInfo declaringClass,
-										@Nonnull MethodMember method) {}
+	void adaptMethodContextMenu(@Nonnull ContextMenu menu,
+	                            @Nonnull ContextSource source,
+	                            @Nonnull Workspace workspace,
+	                            @Nonnull WorkspaceResource resource,
+	                            @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                            @Nonnull ClassInfo declaringClass,
+	                            @Nonnull MethodMember method);
 }

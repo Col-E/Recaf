@@ -30,11 +30,11 @@ public interface FieldContextMenuAdapter extends ContextMenuAdapter {
 	 * @param field
 	 * 		The field the menu is for.
 	 */
-	default void adaptFieldContextMenu(@Nonnull ContextMenu menu,
-									   @Nonnull ContextSource source,
-									   @Nonnull Workspace workspace,
-									   @Nonnull WorkspaceResource resource,
-									   @Nonnull ClassBundle<? extends ClassInfo> bundle,
-									   @Nonnull ClassInfo declaringClass,
-									   @Nonnull FieldMember field) {}
+	void adaptFieldContextMenu(@Nonnull ContextMenu menu,
+	                           @Nonnull ContextSource source,
+	                           @Nonnull Workspace workspace,
+	                           @Nonnull WorkspaceResource resource,
+	                           @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                           @Nonnull ClassInfo declaringClass,
+	                           @Nonnull FieldMember field);
 }
