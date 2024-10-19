@@ -33,30 +33,30 @@ public class JFXValidation {
 				int majorVersion = Integer.parseInt(versionMatcher.group());
 				if (majorVersion < MIN_JFX_VERSION) {
 					logger.error("JavaFX version {} is present, but Recaf requires {}+", majorVersion, MIN_JFX_VERSION);
-					return ExitCodes.ERR_OLD_JFX_VERSION;
+					return ExitCodes.ERR_FX_OLD_VERSION;
 				}
 			} else {
 				logger.error("JavaFX version {} does not declare a major release version, cannot validate compatibility", versionProperty);
-				return ExitCodes.ERR_UNKNOWN_JFX_VERSION;
+				return ExitCodes.ERR_FX_UNKNOWN_VERSION;
 			}
 
 			logger.info("JavaFX successfully initialized: {}", versionProperty);
 			return ExitCodes.SUCCESS;
 		} catch (ClassNotFoundException ex) {
 			logger.error("JFX validation failed, could not find 'VersionInfo' class", ex);
-			return ExitCodes.ERR_CLASS_NOT_FOUND;
+			return ExitCodes.ERR_FX_CLASS_NOT_FOUND;
 		} catch (NoSuchMethodException ex) {
 			logger.error("JFX validation failed, could not find 'setupSystemProperties' in 'VersionInfo'", ex);
-			return ExitCodes.ERR_NO_SUCH_METHOD;
+			return ExitCodes.ERR_FX_NO_SUCH_METHOD;
 		} catch (InvocationTargetException ex) {
 			logger.error("JFX validation failed, failed to invoke 'setupSystemProperties'", ex);
-			return ExitCodes.ERR_INVOKE_TARGET;
+			return ExitCodes.ERR_FX_INVOKE_TARGET;
 		} catch (IllegalAccessException | InaccessibleObjectException ex) {
 			logger.error("JFX validation failed, failed to invoke 'setupSystemProperties'", ex);
-			return ExitCodes.ERR_ACCESS_TARGET;
+			return ExitCodes.ERR_FX_ACCESS_TARGET;
 		} catch (Exception ex) {
 			logger.error("JFX validation failed due to unhandled exception", ex);
-			return ExitCodes.ERR_UNKNOWN;
+			return ExitCodes.ERR_FX_UNKNOWN;
 		}
 	}
 }

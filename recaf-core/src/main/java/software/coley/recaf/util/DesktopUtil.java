@@ -1,8 +1,10 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.analytics.SystemInformation;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -35,11 +37,11 @@ public class DesktopUtil {
 	 * 		to be launched.
 	 */
 	public static void showDocument(@Nonnull URI uri) throws IOException {
+		final Runtime rt = Runtime.getRuntime();
 		switch (PlatformType.get()) {
-			case MAC -> Runtime.getRuntime().exec("open " + uri);
-			case WINDOWS -> Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + uri);
+			case MAC -> rt.exec(new String[]{"open", uri.toString()});
+			case WINDOWS -> rt.exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", uri.toString()});
 			case LINUX -> {
-				Runtime rt = Runtime.getRuntime();
 				String[] browsers = new String[]{"xdg-open", "google-chrome", "firefox", "opera", "konqueror", "mozilla"};
 				for (String browser : browsers) {
 					try (InputStream in = rt.exec(new String[]{"which", browser}).getInputStream()) {
@@ -51,7 +53,7 @@ public class DesktopUtil {
 				}
 				throw new IOException("No browser found");
 			}
-			default -> throw new IllegalStateException("Unsupported OS");
+			default -> throw new IllegalStateException("Unsupported OS: " + SystemInformation.OS_NAME);
 		}
 	}
 

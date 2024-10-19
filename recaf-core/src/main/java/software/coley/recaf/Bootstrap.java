@@ -35,7 +35,7 @@ public class Bootstrap {
 					 - Build rev:  {}
 					 - Build date: {}
 					 - Build hash: {}""";
-			logger.info(fmt, VERSION, GIT_REVISION, BUILD_DATE, GIT_SHA);
+			logger.info(fmt, VERSION, GIT_REVISION, GIT_DATE, GIT_SHA);
 			long then = System.currentTimeMillis();
 
 			// Create the Recaf container
@@ -45,7 +45,7 @@ public class Bootstrap {
 				logger.info("Recaf CDI container created in {}ms", System.currentTimeMillis() - then);
 			} catch (Throwable t) {
 				logger.error("Failed to create Recaf CDI container", t);
-				System.exit(ExitCodes.ERR_CDI_INIT_FAILURE);
+				ExitDebugLoggingHook.exit(ExitCodes.ERR_CDI_INIT_FAILURE);
 			}
 		}
 		return instance;

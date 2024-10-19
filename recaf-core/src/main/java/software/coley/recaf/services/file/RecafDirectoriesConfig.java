@@ -149,8 +149,11 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 		return path;
 	}
 
+	/**
+	 * @return Root directory for storing Recaf data.
+	 */
 	@Nonnull
-	private static Path createBaseDirectory() {
+	public static Path createBaseDirectory() {
 		// Try system property first
 		String recafDir = System.getProperty("RECAF_DIR");
 		if (recafDir == null) // Next try looking for an environment variable
@@ -160,9 +163,8 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 
 		// The directories library can break on some version of windows, but it will always
 		// resolve to '%APPDATA%' at the end of the day. So we'll just do that ourselves here,
-		if (PlatformType.get() == PlatformType.WINDOWS) {
+		if (PlatformType.get() == PlatformType.WINDOWS)
 			return Paths.get(System.getenv("APPDATA"), "Recaf");
-		}
 
 		// Use generic data/config location
 		try {

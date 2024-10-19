@@ -11,9 +11,9 @@ import software.coley.recaf.cdi.InitializationStage;
 import software.coley.recaf.launch.LaunchArguments;
 import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.launch.LaunchHandler;
+import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginContainer;
 import software.coley.recaf.services.plugin.PluginException;
-import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginManager;
 import software.coley.recaf.services.plugin.discovery.DirectoryPluginDiscoverer;
 import software.coley.recaf.services.script.ScriptEngine;
@@ -52,6 +52,10 @@ public class Main {
 	 * 		Application arguments.
 	 */
 	public static void main(String[] args) {
+		// Add a shutdown hook which dumps system information to console.
+		// Should provide useful information that users can copy/paste to us for diagnosing problems.
+		ExitDebugLoggingHook.register();
+
 		// Add a class reference for our UI module.
 		Bootstrap.setWeldConsumer(weld -> weld.addPackage(true, Main.class));
 
@@ -71,7 +75,7 @@ public class Main {
 		if (!launchArgValues.isHeadless()) {
 			int validationCode = JFXValidation.validateJFX();
 			if (validationCode != 0) {
-				System.exit(validationCode);
+				ExitDebugLoggingHook.exit(validationCode);
 				return;
 			}
 		}
