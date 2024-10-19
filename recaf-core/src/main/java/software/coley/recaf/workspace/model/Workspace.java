@@ -16,12 +16,10 @@ import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
-import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
-import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Comparator;
@@ -336,7 +334,9 @@ public interface Workspace extends Closing {
 	@Nonnull
 	default Stream<FilePathNode> filesStream() {
 		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-		return allResourcesStream(true)
+
+		// Internal resources don't have files, so we won't iterate over those.
+		return allResourcesStream(false)
 				.flatMap(resource -> {
 					Stream<FilePathNode> stream = null;
 					for (FileBundle bundle : resource.fileBundleStreamRecursive().toList()) {
@@ -423,15 +423,14 @@ public interface Workspace extends Closing {
 	@Nullable
 	default FilePathNode findFile(@Nonnull String name) {
 		for (WorkspaceResource resource : getAllResources(false)) {
-			FileBundle bundle = resource.getFileBundle();
-			FileInfo fileInfo = bundle.get(name);
-			if (fileInfo != null)
-				return PathNodes.filePath(this, resource, bundle, fileInfo);
-			for (WorkspaceFileResource embedded : resource.getEmbeddedResources().values()) {
-				FileInfo embeddedFileInfo = embedded.getFileInfo();
-				if (embeddedFileInfo.getName().equals(name))
-					return PathNodes.filePath(this, resource, bundle, embeddedFileInfo);
-			}
+			Optional<FilePathNode> path = resource.fileBundleStreamRecursive()
+					.filter(bundle -> bundle.get(name) != null)
+					.findFirst()
+					.map(bundle -> {
+						FileInfo fileInfo = bundle.get(name);
+						return PathNodes.filePath(this, resource, bundle, fileInfo);
+					});
+			if (path.isPresent()) return path.get();
 		}
 		return null;
 	}
@@ -444,28 +443,7 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default SortedSet<FilePathNode> findFiles(@Nonnull Predicate<FileInfo> filter) {
-		SortedSet<FilePathNode> results = new TreeSet<>();
-		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-		// Internal resources don't have files, so we won't iterate over those.
-		for (WorkspaceResource resource : getAllResources(false)) {
-			ResourcePathNode resourcePath = workspacePath.child(resource);
-			FileBundle bundle = resource.getFileBundle();
-			BundlePathNode bundlePath = resourcePath.child(bundle);
-			for (FileInfo fileInfo : bundle.values()) {
-				if (filter.test(fileInfo)) {
-					results.add(bundlePath
-							.child(fileInfo.getDirectoryName())
-							.child(fileInfo));
-				}
-			}
-
-			// TODO: Match 'resource.getEmbeddedResources()'
-			//  - Path model does not have existing logic to support embedded resources yet.
-			//    - They do not exist as entries in the file-bundle
-			//    - Perhaps we should change the API for that, having them as entries, but tracked specially
-			//      to allow easy access. Having them in the file-bundle would make logic simpler as there would be
-			//      less edge-case work.
-		}
-		return results;
+		return filesStream().filter(node -> filter.test(node.getValue()))
+				.collect(Collectors.toCollection(TreeSet::new));
 	}
 }

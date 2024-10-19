@@ -101,7 +101,7 @@ class WorkspaceModelTest {
 			assertEquals(1, workspace.getSupportingResources().size());
 
 			// Same idea in reverse
-			workspace.removeSupportingResource(supporting);
+			assertTrue(workspace.removeSupportingResource(supporting));
 			verify(listener).onRemoveLibrary(same(workspace), same(supporting));
 			assertTrue(workspace.getSupportingResources().isEmpty());
 		}
