@@ -62,9 +62,12 @@ public class ProblemGutterGraphicFactory extends AbstractLineGraphicFactory  {
 				default -> new FontIconView(CarbonIcons.INFORMATION, levelColor);
 			};
 
+			// Workaround: When launching Recaf with some specific window scale values
+			// a rounding error causes the shape to infinitely expand.
+			// If we map the double value to an int, it acts as a floor operation and prevents the issue.
 			Rectangle shape = new Rectangle();
-			shape.widthProperty().bind(container.widthProperty());
-			shape.heightProperty().bind(container.heightProperty());
+			shape.widthProperty().bind(container.widthProperty().map(Number::intValue));
+			shape.heightProperty().bind(container.heightProperty().map(Number::intValue));
 			shape.setCursor(Cursor.HAND);
 			shape.setFill(levelColor);
 			shape.setOpacity(0.33);
