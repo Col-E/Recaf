@@ -66,7 +66,7 @@ public class IncrementingNameGenerator implements DeconflictingNameGenerator {
 		String name = nextMethodName();
 		String descriptor = method.getDescriptor();
 		while (owner.getDeclaredMethod(name, descriptor) != null)
-			name = nextFieldName();
+			name = nextMethodName();
 		return name;
 	}
 }
