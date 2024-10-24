@@ -10,16 +10,9 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
 buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url = uri("https://plugins.gradle.org/m2/")
-        }
-    }
     dependencies {
         classpath(libs.bundles.asm)
     }
-
 }
 
 plugins {
