@@ -22,16 +22,28 @@ plugins {
 val artifactTypeAttribute = Attribute.of("artifactType", String::class.java)
 val repackagedAttribute = Attribute.of("repackaged", Boolean::class.javaObjectType)
 
+
 val repackage: Configuration by configurations.creating {
     attributes.attribute(repackagedAttribute, true)
 }
 
 // Configure project's dependencies
-abstract class MyRepackager : TransformAction<TransformParameters.None> {
+abstract class MyAbsRepackager : TransformAction<TransformParameters.None> {
+
     @InputArtifact
     abstract fun getInputArtifact(): Provider<FileSystemLocation>
+
     override fun transform(outputs: TransformOutputs) {
         val input = getInputArtifact().get().asFile
+        val repackPrefix = if (input.name.contains(Regex("vineflower"))) {
+            "recaf/relocation/libs/vineflower/"
+        } else if (input.name.contains(Regex("java-decompiler-engine"))) {
+            "recaf/relocation/libs/fernflower/"
+        } else if (input.name.contains(Regex("forgeflower"))) {
+            "recaf/relocation/libs/forgeflower/"
+        } else {
+            ""
+        }
         val output = outputs.file(
             input.name.let {
                 if (it.endsWith(".jar"))
@@ -42,10 +54,11 @@ abstract class MyRepackager : TransformAction<TransformParameters.None> {
         )
         println("Repackaging ${input.absolutePath} to ${output.absolutePath}")
         ZipOutputStream(output.outputStream()).use { zipOut ->
-            relocate(zipOut, ZipFile(input), "recaf/relocation/libs/vineflower/", null)
+            relocate(zipOut, ZipFile(input), repackPrefix, null)
             zipOut.flush()
         }
     }
+
 
     fun relocate(
         zipOut: ZipOutputStream,
@@ -133,18 +146,23 @@ abstract class MyRepackager : TransformAction<TransformParameters.None> {
 }
 
 
+
 dependencies {
     attributesSchema {
         attribute(repackagedAttribute)
+        // attribute(f_repackagedAttribute)
     }
     artifactTypes.getByName("jar") {
         attributes.attribute(repackagedAttribute, false)
+        // attributes.attribute(f_repackagedAttribute, false)
     }
-    registerTransform(MyRepackager::class) {
+    registerTransform(MyAbsRepackager::class) {
         from.attribute(repackagedAttribute, false).attribute(artifactTypeAttribute, "jar")
         to.attribute(repackagedAttribute, true).attribute(artifactTypeAttribute, "jar")
     }
-
     repackage(libs.vineflower)
+    repackage(libs.fernflower)
+    repackage(libs.forgeflower)
+
     api(files(repackage.files))
 }

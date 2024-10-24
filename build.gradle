@@ -21,6 +21,8 @@ subprojects {
         google()
         maven { url 'https://maven.quiltmc.org/repository/release/' }
         maven { url 'https://jitpack.io' }
+        maven { url 'https://www.jetbrains.com/intellij-repository/releases' }
+        maven { url 'https://maven.minecraftforge.net' }
     }
 
     // ======================= DEPENDENCIES ========================
