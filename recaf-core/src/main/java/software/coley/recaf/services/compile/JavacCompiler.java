@@ -13,7 +13,11 @@ import software.coley.recaf.util.LookupUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
+import javax.tools.ToolProvider;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
@@ -59,8 +63,8 @@ public class JavacCompiler implements Service {
 	 */
 	@Nonnull
 	public CompilerResult compile(@Nonnull JavacArguments arguments,
-								  @Nullable Workspace workspace,
-								  @Nullable JavacListener listener) {
+	                              @Nullable Workspace workspace,
+	                              @Nullable JavacListener listener) {
 		return compile(arguments, workspace, null, listener);
 	}
 
@@ -79,9 +83,9 @@ public class JavacCompiler implements Service {
 	 */
 	@Nonnull
 	public CompilerResult compile(@Nonnull JavacArguments arguments,
-								  @Nullable Workspace workspace,
-								  @Nullable List<WorkspaceResource> supplementaryResources,
-								  @Nullable JavacListener listener) {
+	                              @Nullable Workspace workspace,
+	                              @Nullable List<WorkspaceResource> supplementaryResources,
+	                              @Nullable JavacListener listener) {
 		if (compiler == null)
 			return new CompilerResult(new IllegalStateException("Cannot load 'javac' compiler."));
 
@@ -168,7 +172,7 @@ public class JavacCompiler implements Service {
 	 * @return Listener to encompass recording behavior and the user defined listener.
 	 */
 	private JavacListener createRecordingListener(@Nullable JavacListener listener,
-												  @Nonnull List<CompilerDiagnostic> diagnostics) {
+	                                              @Nonnull List<CompilerDiagnostic> diagnostics) {
 		return new ForwardingListener(listener) {
 			@Override
 			public void report(@Nonnull Diagnostic<? extends JavaFileObject> diagnostic) {
