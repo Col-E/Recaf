@@ -2,7 +2,9 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.Remapper
+import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
+import java.io.InputStreamReader
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
@@ -47,61 +49,89 @@ abstract class MyRepackager : TransformAction<TransformParameters.None> {
         )
         println("Repackaging ${input.absolutePath} to ${output.absolutePath}")
         ZipOutputStream(output.outputStream()).use { zipOut ->
-            relocate(zipOut, ZipFile(input), "recaf/relocation/libs/vineflower/")
+            relocate(zipOut, ZipFile(input), "recaf/relocation/libs/vineflower/", null)
             zipOut.flush()
         }
     }
 
-    fun relocate(zipOut: ZipOutputStream, zipFile: ZipFile, repackPrefix: String) {
+    fun relocate(
+        zipOut: ZipOutputStream,
+        zipFile: ZipFile,
+        repackPrefix: String,
+        prententriesSet: MutableSet<String>?
+    ) {
         zipFile.use { zipIn ->
             val entriesList = zipIn.entries().toList()
             val entriesSet = entriesList.mapTo(mutableSetOf()) { it.name }
+            if (prententriesSet != null) {
+                entriesSet.addAll(prententriesSet)
+            }
             for (entry in entriesList) {
-                val newName = if (entry.name.contains("/") && !entry.name.startsWith("META-INF/")) {
-                    repackPrefix + entry.name
-                } else {
-                    entry.name
+                if (entry.name.endsWith("module-info.class")) {
+                    continue
                 }
+                val newName =
+                    if (!entry.isDirectory && entry.name.startsWith("META-INF/services/")) {
+                        "META-INF/services/" + repackPrefix.replace(
+                            '/',
+                            '.'
+                        ) + entry.name.substring(entry.name.lastIndexOf('/') + 1)
+                    } else if (entry.name.contains("/") && !entry.name.startsWith("META-INF/")) {
+                        repackPrefix + entry.name
+                    } else {
+                        entry.name
+                    }
                 zipOut.putNextEntry(ZipEntry(newName))
-                if (entry.name.endsWith(".class")) {
-                    val writer = ClassWriter(0)
-                    ClassReader(zipIn.getInputStream(entry)).accept(
-                        ClassRemapper(
-                            writer,
-                            object : Remapper() {
-                                override fun map(internalName: String?): String? {
-                                    if (internalName == null) return null
-                                    return if (entriesSet.contains("$internalName.class")) {
-                                        repackPrefix + internalName
-                                    } else {
-                                        internalName
+                if (!entry.isDirectory) {
+                    if (entry.name.endsWith(".class")) {
+                        val writer = ClassWriter(0)
+                        ClassReader(zipIn.getInputStream(entry)).accept(
+                            ClassRemapper(
+                                writer,
+                                object : Remapper() {
+                                    override fun map(internalName: String?): String? {
+                                        if (internalName == null) return null
+                                        return if (entriesSet.contains("$internalName.class")) {
+                                            repackPrefix + internalName
+                                        } else {
+                                            internalName
+                                        }
                                     }
                                 }
-                            }
-                        ),
-                        0
-                    )
-                    zipOut.write(
-                        writer.toByteArray()
-                    )
-                } else if (entry.name.endsWith(".jar")) {
-                    val tempJar = File.createTempFile("recaf-relocate-", ".jar")
+                            ),
+                            0
+                        )
+                        zipOut.write(
+                            writer.toByteArray()
+                        )
+                    } else if (entry.name.endsWith(".jar")) {
+                        val tempJar = File.createTempFile("recaf-relocate-", ".jar")
 
-                    // zipIn.getInputStream(entry).copyTo(fo)
-                    tempJar.writeBytes(zipIn.getInputStream(entry).readBytes())
-                    ByteArrayOutputStream().use { bo ->
-                        ZipOutputStream(bo).use { zos ->
-                            relocate(zos, ZipFile(tempJar), repackPrefix)
-                            zos.flush()
+                        // zipIn.getInputStream(entry).copyTo(fo)
+                        tempJar.writeBytes(zipIn.getInputStream(entry).readBytes())
+                        ByteArrayOutputStream().use { bo ->
+                            ZipOutputStream(bo).use { zos ->
+                                relocate(zos, ZipFile(tempJar), repackPrefix, entriesSet)
+                                zos.flush()
+                            }
+                            bo.flush()
+                            zipOut.write(bo.toByteArray())
                         }
-                        bo.flush()
-                        zipOut.write(bo.toByteArray())
+                        if (tempJar.exists()) {
+                            tempJar.delete()
+                        }
+                    } else if (entry.name.contains("/") && entry.name.startsWith("META-INF/services/")) {
+                        val bufferedReader = BufferedReader(InputStreamReader(zipIn.getInputStream(entry)))
+                        zipOut.write(
+                            repackPrefix.replace(
+                                '/',
+                                '.'
+                            ).toByteArray(Charsets.UTF_8)
+                        )
+                        zipOut.write(bufferedReader.readLine().toByteArray(Charsets.UTF_8))
+                    } else {
+                        zipIn.getInputStream(entry).copyTo(zipOut)
                     }
-                    if (tempJar.exists()) {
-                        tempJar.delete()
-                    }
-                } else {
-                    zipIn.getInputStream(entry).copyTo(zipOut)
                 }
                 zipOut.closeEntry()
             }
