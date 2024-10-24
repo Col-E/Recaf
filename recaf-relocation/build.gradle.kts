@@ -2,6 +2,7 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.Remapper
+import java.io.ByteArrayOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
@@ -83,11 +84,25 @@ abstract class MyRepackager : TransformAction<TransformParameters.None> {
                     zipOut.write(
                         writer.toByteArray()
                     )
+                } else if (entry.name.endsWith(".jar")) {
+                    val tempJar = File.createTempFile("recaf-relocate-", ".jar")
+
+                    // zipIn.getInputStream(entry).copyTo(fo)
+                    tempJar.writeBytes(zipIn.getInputStream(entry).readBytes())
+                    ByteArrayOutputStream().use { bo ->
+                        ZipOutputStream(bo).use { zos ->
+                            relocate(zos, ZipFile(tempJar), repackPrefix)
+                            zos.flush()
+                        }
+                        bo.flush()
+                        zipOut.write(bo.toByteArray())
+                    }
+                    if (tempJar.exists()) {
+                        tempJar.delete()
+                    }
                 } else {
                     zipIn.getInputStream(entry).copyTo(zipOut)
                 }
-                // zipOut.putNextEntry(ZipEntry(entry.name))
-                // zipIn.getInputStream(entry).copyTo(zipOut)
                 zipOut.closeEntry()
             }
         }
