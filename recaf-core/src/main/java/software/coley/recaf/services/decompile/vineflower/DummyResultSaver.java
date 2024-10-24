@@ -1,6 +1,6 @@
 package software.coley.recaf.services.decompile.vineflower;
 
-import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import recaf.relocation.libs.vineflower.org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
 import java.util.jar.Manifest;
 

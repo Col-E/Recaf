@@ -1,7 +1,7 @@
 package software.coley.recaf.services.decompile.vineflower;
 
 import jakarta.annotation.Nonnull;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import recaf.relocation.libs.vineflower.org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import software.coley.observables.ObservableObject;
