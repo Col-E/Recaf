@@ -202,6 +202,23 @@ public class NodeEvents {
 	}
 
 	/**
+	 * Runs an action on the given observable's value if it is present <i>(non-null)</i>,
+	 * or once when it changes to another value.
+	 *
+	 * @param value
+	 * 		Value to observe.
+	 * @param action
+	 * 		Action to run on the value.
+	 * @param <T>
+	 * 		Value type.
+	 */
+	public static <T> void runOnceIfPresentOrOnChange(@Nonnull ObservableValue<T> value, @Nonnull Consumer<T> action) {
+		T current = value.getValue();
+		if (current != null) action.accept(current);
+		else runOnceOnChange(value, action);
+	}
+
+	/**
 	 * Runs an action on the given observable once when it changes.
 	 *
 	 * @param value

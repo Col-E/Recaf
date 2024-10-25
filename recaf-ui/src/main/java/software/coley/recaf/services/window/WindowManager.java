@@ -12,8 +12,14 @@ import software.coley.collections.observable.ObservableList;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.window.IdentifiableStage;
+import software.coley.recaf.util.NodeEvents;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Manages active {@link Stage} windows.
@@ -36,12 +42,15 @@ public class WindowManager implements Service {
 	public static final String WIN_MAP_PROGRESS = "mapping-progress";
 	public static final String WIN_QUICK_NAV = "quick-nav";
 	// Manager instance data
+	private final WindowStyling windowStyling;
 	private final WindowManagerConfig config;
 	private final ObservableList<Stage> activeWindows = new ObservableList<>();
 	private final Map<String, Stage> windowMappings = new HashMap<>();
 
 	@Inject
-	public WindowManager(@Nonnull WindowManagerConfig config, @Nonnull Instance<IdentifiableStage> stages) {
+	public WindowManager(@Nonnull WindowStyling windowStyling, @Nonnull WindowManagerConfig config,
+	                     @Nonnull Instance<IdentifiableStage> stages) {
+		this.windowStyling = windowStyling;
 		this.config = config;
 
 		// Register identifiable stages.
@@ -83,6 +92,11 @@ public class WindowManager implements Service {
 		// Validate input, ensuring duplicate allocations are not allowed.
 		if (windowMappings.containsKey(id))
 			throw new IllegalStateException("The stage ID was already registered: " + id);
+
+		// Add custom stylesheets if any are registered.
+		if (!windowStyling.getStylesheetUris().isEmpty())
+			NodeEvents.runOnceIfPresentOrOnChange(stage.sceneProperty(),
+					scene -> scene.getStylesheets().addAll(windowStyling.getStylesheetUris()));
 
 		// Record when windows are 'active' based on visibility.
 		// We're using event filters so users can still do things like 'stage.setOnShown(...)' and not interfere with
