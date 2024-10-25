@@ -11,6 +11,7 @@ import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.launch.LaunchCommand;
+import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.PlatformType;
 
 import java.io.IOException;
@@ -33,11 +34,13 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	private final Path pluginDirectory = resolveDirectory("plugins");
 	private final Path styleDirectory = resolveDirectory("style");
 	private final Path scriptsDirectory = resolveDirectory("scripts");
+	private final Path tempDirectory = resolveDirectory("temp");
 	private Path currentLog;
 
 	@Inject
 	public RecafDirectoriesConfig() {
 		super(ConfigGroups.SERVICE_IO, "directories" + CONFIG_SUFFIX);
+		setupLocalTempDir();
 	}
 
 	/**
@@ -138,6 +141,14 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 		return scriptsDirectory;
 	}
 
+	/**
+	 * @return Directory where temporary files are stored.
+	 */
+	@Nonnull
+	public Path getTempDirectory() {
+		return tempDirectory;
+	}
+
 	@Nonnull
 	private Path resolveDirectory(@Nonnull String dir) {
 		Path path = baseDirectory.resolve(dir);
@@ -147,6 +158,27 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 			logger.error("Could not create Recaf directory: " + dir, ex);
 		}
 		return path;
+	}
+
+	private void setupLocalTempDir() {
+		// If it does not exist yet, make it.
+		if (!Files.isDirectory(tempDirectory)) {
+			try {
+				Files.createDirectories(tempDirectory);
+			} catch (IOException ex) {
+				logger.error("Failed creating temp directory", ex);
+			}
+		}
+
+		// When we shut down, remove all files inside of it.
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			try {
+				if (Files.isDirectory(tempDirectory))
+					IOUtil.cleanDirectory(tempDirectory);
+			} catch (IOException ex) {
+				logger.error("Failed clearing temp directory", ex);
+			}
+		}));
 	}
 
 	/**
