@@ -9,6 +9,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import org.slf4j.Logger;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.cdi.InitializationStage;
@@ -39,14 +40,13 @@ import software.coley.recaf.workspace.model.resource.ResourceFileListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Tracks available {@link Navigable} content currently open in the UI.
@@ -63,9 +63,11 @@ import java.util.Set;
 public class NavigationManager implements Navigable, Service {
 	public static final String ID = "navigation";
 	private static final Logger logger = Logging.get(NavigationManager.class);
-	private final List<Navigable> children = new ArrayList<>();
-	private final Map<Navigable, DockingTab> childrenToTab = new IdentityHashMap<>();
-	private final Map<DockingTab, NavigableSpy> tabToSpy = new IdentityHashMap<>();
+	private final List<Navigable> children = new CopyOnWriteArrayList<>();
+	private final List<NavigableAddListener> addListeners = new CopyOnWriteArrayList<>();
+	private final List<NavigableRemoveListener> removeListeners = new CopyOnWriteArrayList<>();
+	private final Map<Navigable, DockingTab> childrenToTab = Collections.synchronizedMap(new IdentityHashMap<>());
+	private final Map<DockingTab, NavigableSpy> tabToSpy = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final Forwarding forwarding = new Forwarding();
 	private final NavigationManagerConfig config;
 	private PathNode<?> path = new DummyInitialNode();
@@ -107,7 +109,7 @@ public class NavigationManager implements Navigable, Service {
 
 		// When the workspace closes, close all associated children.
 		workspaceManager.addWorkspaceCloseListener(workspace -> FxThreadUtil.run(() -> {
-			for (Navigable child : new HashSet<>(children)) {
+			for (Navigable child : children) {
 				child.disable();
 				DockingTab dockingTab = childrenToTab.get(child);
 				if (dockingTab != null)
@@ -167,6 +169,46 @@ public class NavigationManager implements Navigable, Service {
 		});
 	}
 
+	/**
+	 * Add a listener that observes the addition of {@link Navigable} components to the UI.
+	 *
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	public void addNavigableAddListener(@Nonnull NavigableAddListener listener) {
+		addListeners.add(listener);
+	}
+
+	/**
+	 * Remove a listener that observes the addition of {@link Navigable} components to the UI.
+	 *
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	public void removeNavigableAddListener(@Nonnull NavigableAddListener listener) {
+		addListeners.remove(listener);
+	}
+
+	/**
+	 * Add a listener that observes the removal of {@link Navigable} components to the UI.
+	 *
+	 * @param listener
+	 * 		Listener to add.
+	 */
+	public void addNavigableRemoveListener(@Nonnull NavigableRemoveListener listener) {
+		removeListeners.add(listener);
+	}
+
+	/**
+	 * Remove a listener that observes the removal of {@link Navigable} components to the UI.
+	 *
+	 * @param listener
+	 * 		Listener to remove.
+	 */
+	public void removeNavigableRemoveListener(@Nonnull NavigableRemoveListener listener) {
+		removeListeners.remove(listener);
+	}
+
 	@Nonnull
 	@Override
 	public PathNode<?> getPath() {
@@ -176,7 +218,7 @@ public class NavigationManager implements Navigable, Service {
 	@Nonnull
 	@Override
 	public Collection<Navigable> getNavigableChildren() {
-		return children;
+		return Collections.unmodifiableCollection(children);
 	}
 
 	@Override
@@ -221,6 +263,8 @@ public class NavigationManager implements Navigable, Service {
 			if (value instanceof Navigable navigable && navigable.isTrackable()) {
 				children.add(navigable);
 				childrenToTab.put(navigable, tab);
+				Unchecked.checkedForEach(addListeners, listener -> listener.onAdd(navigable),
+						(listener, t) -> logger.error("Exception thrown when handling navigable added '{}'", navigable.getClass().getName(), t));
 			}
 		}
 
@@ -228,6 +272,8 @@ public class NavigationManager implements Navigable, Service {
 			if (value instanceof Navigable navigable) {
 				children.remove(navigable);
 				childrenToTab.remove(navigable);
+				Unchecked.checkedForEach(removeListeners, listener -> listener.onRemove(navigable),
+						(listener, t) -> logger.error("Exception thrown when handling navigable removed '{}'", navigable.getClass().getName(), t));
 
 				// For dependent beans, we are likely not going to see them ever again.
 				// Call disable to clean them up.
