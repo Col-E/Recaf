@@ -45,6 +45,9 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 
 	@Override
 	public void start(Stage stage) {
+		// Notify the thread util that FX has been initialized
+		FxThreadUtil.onInitialize();
+
 		// Setup global style
 		setUserAgentStylesheet(new RecafTheme().getUserAgentStylesheet());
 
