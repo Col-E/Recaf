@@ -21,6 +21,7 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.io.ResourceImporter;
 import software.coley.recaf.ui.config.WindowScaleConfig;
 import software.coley.recaf.util.JFXValidation;
+import software.coley.recaf.util.JdkValidation;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 
@@ -79,6 +80,9 @@ public class Main {
 				return;
 			}
 		}
+
+		// Validate we're on a JDK and not a JRE
+		JdkValidation.validateJdk();
 
 		// Invoke the bootstrapper, initializing the UI once the container is built.
 		recaf = Bootstrap.get();

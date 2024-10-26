@@ -13,7 +13,8 @@ import jakarta.annotation.Nonnull;
 public class RecafLoggingFilter extends Filter<ILoggingEvent> {
 	@Override
 	public FilterReply decide(@Nonnull ILoggingEvent event) {
-		if (event.getLoggerName().startsWith("software.coley."))
+		String loggerName = event.getLoggerName();
+		if (loggerName.startsWith("software.coley.") || Logging.loggerKeys().contains(loggerName))
 			return FilterReply.ACCEPT;
 		return FilterReply.DENY;
 	}
