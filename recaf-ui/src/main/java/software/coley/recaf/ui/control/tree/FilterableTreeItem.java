@@ -65,6 +65,14 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	}
 
 	/**
+	 * @return Unfiltered children.
+	 */
+	@Nonnull
+	public ObservableList<TreeItem<T>> getSourceChildren() {
+		return sourceChildren;
+	}
+
+	/**
 	 * @return Source parent, ignoring filtering.
 	 */
 	@Nonnull
@@ -157,9 +165,11 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	 * 		Child item to add.
 	 */
 	protected void addPreSortedChild(@Nonnull TreeItem<T> item) {
-		sourceChildren.add(item);
-		if (item instanceof FilterableTreeItem<?> filterableItem)
-			filterableItem.sourceParent.set(Unchecked.cast(this));
+		synchronized (sourceChildren) {
+			sourceChildren.add(item);
+			if (item instanceof FilterableTreeItem<?> filterableItem)
+				filterableItem.sourceParent.set(Unchecked.cast(this));
+		}
 	}
 
 	/**

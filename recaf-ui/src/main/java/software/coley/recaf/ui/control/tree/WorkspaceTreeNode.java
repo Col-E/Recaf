@@ -2,7 +2,9 @@ package software.coley.recaf.ui.control.tree;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
@@ -147,7 +149,6 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @return Inserted node.
 	 */
 	@Nonnull
-	@SuppressWarnings("deprecation")
 	public static WorkspaceTreeNode getOrInsertIntoTree(@Nonnull WorkspaceTreeNode node, @Nonnull PathNode<?> path) {
 		return getOrInsertIntoTree(node, path, false);
 	}
@@ -177,6 +178,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 				node = getOrInsertIntoTree(node, parent, sorted);
 
 			// Work off of the first node that does NOT contain a directory value.
+			// This should result in the node pointing to a bundle.
 			while (node.getValue() instanceof DirectoryPathNode) {
 				node = (WorkspaceTreeNode) node.getParent();
 			}
@@ -197,7 +199,12 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 
 				// Get existing tree node, or create child if non-existent
 				WorkspaceTreeNode childNode = null;
-				for (TreeItem<PathNode<?>> child : node.getChildren())
+				ObservableList<TreeItem<PathNode<?>>> children;
+				if (node instanceof FilterableTreeItem<?> filterableNode)
+					children = Unchecked.cast(filterableNode.getSourceChildren());
+				else
+					children = node.getChildren();
+				for (TreeItem<PathNode<?>> child : children)
 					if (child.getValue().equals(localPathNode)) {
 						childNode = (WorkspaceTreeNode) child;
 						break;
@@ -229,7 +236,12 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 		}
 
 		// Check if already inserted.
-		for (TreeItem<PathNode<?>> child : node.getChildren())
+		ObservableList<TreeItem<PathNode<?>>> children;
+		if (node instanceof FilterableTreeItem<?> filterableNode)
+			children = Unchecked.cast(filterableNode.getSourceChildren());
+		else
+			children = node.getChildren();
+		for (TreeItem<PathNode<?>> child : children)
 			if (path.equals(child.getValue()))
 				return (WorkspaceTreeNode) child;
 
