@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
+import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import software.coley.recaf.info.ClassInfo;
@@ -26,9 +27,34 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	 * 		Mappings wrapper to pull values from.
 	 */
 	public WorkspaceBackedRemapper(@Nonnull Workspace workspace,
-								   @Nonnull Mappings mappings) {
+	                               @Nonnull Mappings mappings) {
 		super(mappings);
 		this.workspace = workspace;
+	}
+
+	@Override
+	public Object mapValue(Object value) {
+		// We need to adapt the invoke-dynamic mapping call from the base implementation of ASM's remapper.
+		// This is copied from the base implementation but adds the BSM + remapped args to the call so
+		// that it points to our enhanced 'mapInvokeDynamicMethodName' method.
+		if (value instanceof ConstantDynamic constantDynamic) {
+			int bootstrapMethodArgumentCount = constantDynamic.getBootstrapMethodArgumentCount();
+			Object[] remappedBootstrapMethodArguments = new Object[bootstrapMethodArgumentCount];
+			for (int i = 0; i < bootstrapMethodArgumentCount; ++i) {
+				remappedBootstrapMethodArguments[i] =
+						mapValue(constantDynamic.getBootstrapMethodArgument(i));
+			}
+
+			String descriptor = constantDynamic.getDescriptor();
+			return new ConstantDynamic(
+					mapInvokeDynamicMethodName(constantDynamic.getName(), descriptor, constantDynamic.getBootstrapMethod(), remappedBootstrapMethodArguments),
+					mapDesc(descriptor),
+					(Handle) mapValue(constantDynamic.getBootstrapMethod()),
+					remappedBootstrapMethodArguments);
+		}
+
+		// Other values can be handled by the base implementation
+		return super.mapValue(value);
 	}
 
 	@Override
@@ -70,8 +96,9 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	 * 		The arguments to the bsm.
 	 *
 	 * @return New name of the method.
-	 */ @Nonnull
-	public String mapInvokeDynamicMethodName( @Nonnull String name,  @Nonnull String descriptor,  @Nonnull Handle bsm,  @Nonnull Object[] bsmArguments) {
+	 */
+	@Nonnull
+	public String mapInvokeDynamicMethodName(@Nonnull String name, @Nonnull String descriptor, @Nonnull Handle bsm, @Nonnull Object[] bsmArguments) {
 		if (bsm.equals(Handles.META_FACTORY)) {
 			// Get the interface from the descriptor return type.
 			String interfaceOwner = Type.getReturnType(descriptor).getInternalName();
@@ -102,9 +129,10 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	 * 		Index of the variable.
 	 *
 	 * @return Mapped name of the variable, or the existing name if no mapping exists.
-	 */ @Nonnull
-	public String mapVariableName( @Nonnull String className ,  @Nonnull String methodName,  @Nonnull String methodDesc,
-								  String name, String desc, int index) {
+	 */
+	@Nonnull
+	public String mapVariableName(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
+	                              String name, String desc, int index) {
 		String mapped = mappings.getMappedVariableName(className, methodName, methodDesc, name, desc, index);
 		if (mapped != null) {
 			markModified();
