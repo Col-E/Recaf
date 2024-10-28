@@ -180,8 +180,10 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		CancellableSearchFeedback feedback;
 		if (liveResults.get()) {
 			feedback = new LiveOnlySearchFeedback(result -> {
-				WorkspaceTreeNode node = WorkspaceTreeNode.getOrInsertIntoTree(root, result.getPath(), false);
-				TreeItems.expandParents(node);
+				synchronized (root) {
+					WorkspaceTreeNode node = WorkspaceTreeNode.getOrInsertIntoTree(root, result.getPath(), false);
+					TreeItems.expandParents(node);
+				}
 			});
 			CompletableFuture.runAsync(() -> searchService.search(workspace, query, feedback));
 		} else {
