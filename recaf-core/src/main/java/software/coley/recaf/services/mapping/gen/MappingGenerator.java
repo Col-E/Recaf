@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
@@ -20,7 +21,12 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Mapping generator.
@@ -185,6 +191,25 @@ public class MappingGenerator implements Service {
 				MemberKey key = MemberKey.of(method);
 				if (libraryMethods.contains(key) || mappings.getMappedMethodName(ownerName, methodName, methodDesc) != null)
 					continue;
+
+				// Create variable mappings
+				for (LocalVariable variable : method.getLocalVariables()) {
+					String variableName = variable.getName();
+
+					// Do not rename 'this' local variable... Unless its not "this" then force it to be "this"
+					if (variable.getIndex() == 0 && !method.hasStaticModifier()) {
+						if (!"this".equals(variableName))
+							mappings.addVariable(ownerName, methodName, methodDesc, variableName, variable.getDescriptor(), variable.getIndex(), "this");
+						continue;
+					}
+
+					if (filter.shouldMapLocalVariable(owner, method, variable)) {
+						String mappedVariableName = generator.mapVariable(owner, method, variable);
+						if (!mappedVariableName.equals(variableName)) {
+							mappings.addVariable(ownerName, methodName, methodDesc, variableName, variable.getDescriptor(), variable.getIndex(), mappedVariableName);
+						}
+					}
+				}
 
 				// Create mapped name and record into mappings.
 				String mappedMethodName = generator.mapMethod(owner, method);

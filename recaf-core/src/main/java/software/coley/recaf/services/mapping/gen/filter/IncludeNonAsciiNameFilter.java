@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 
 /**
@@ -42,6 +43,13 @@ public class IncludeNonAsciiNameFilter extends NameGeneratorFilter {
 		return super.shouldMapMethod(owner, method);
 	}
 
+	@Override
+	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		if (shouldMap(variable))
+			return true;
+		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
+	}
+
 	private static boolean shouldMap(ClassInfo info) {
 		return shouldMap(info.getName());
 	}
@@ -50,8 +58,12 @@ public class IncludeNonAsciiNameFilter extends NameGeneratorFilter {
 		return shouldMap(info.getName());
 	}
 
+	private static boolean shouldMap(LocalVariable info) {
+		return shouldMap(info.getName());
+	}
+
 	private static boolean shouldMap(String name) {
 		return name.codePoints()
-				.anyMatch(code -> (code < 0x21 || code > 0x7A));
+				.anyMatch(code -> (code < 0x21 || code > 0x7A) || Character.isWhitespace(code));
 	}
 }

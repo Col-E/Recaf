@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 
 /**
@@ -76,5 +77,21 @@ public abstract class NameGeneratorFilter {
 			return next == null || next.shouldMapMethod(owner, method);
 		else
 			return next != null && next.shouldMapMethod(owner, method);
+	}
+
+	/**
+	 * @param owner
+	 * 		Class the method is defined in.
+	 * @param declaringMethod
+	 * 		Method the variable is defined in.
+	 * @param variable Variable to check.
+	 *
+	 * @return {@code true} if the generator should create a new name for the method.
+	 */
+	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		if (defaultMap)
+			return next == null || next.shouldMapLocalVariable(owner, declaringMethod, variable);
+		else
+			return next != null && next.shouldMapLocalVariable(owner, declaringMethod, variable);
 	}
 }

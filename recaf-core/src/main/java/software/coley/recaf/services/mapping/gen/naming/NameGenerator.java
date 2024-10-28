@@ -3,6 +3,7 @@ package software.coley.recaf.services.mapping.gen.naming;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 
 /**
@@ -41,4 +42,17 @@ public interface NameGenerator {
 	 */
 	@Nonnull
 	String mapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember method);
+
+	/**
+	 * @param owner
+	 * 		Class the method is defined in.
+	 * @param declaringMethod
+	 * 		Method the variable is defined in.
+	 * @param variable
+	 * 		Variable to rename.
+	 *
+	 * @return New variable name.
+	 */
+	@Nonnull
+	String mapVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable);
 }

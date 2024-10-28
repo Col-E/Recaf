@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.search.match.StringPredicate;
 
@@ -43,5 +44,12 @@ public class ExcludeClassesFilter extends NameGeneratorFilter {
 	public boolean shouldMapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember method) {
 		// Consider owner type, we do not want to map methods if they are inside the exclusion filter
 		return shouldMapClass(owner) && super.shouldMapMethod(owner, method);
+	}
+
+	@Override
+	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		return shouldMapClass(owner)
+				&& super.shouldMapMethod(owner, declaringMethod)
+				&& super.shouldMapLocalVariable(owner, declaringMethod, variable);
 	}
 }

@@ -260,12 +260,14 @@ public class MappingGeneratorPane extends StackPane {
 				int classes = mappings.getClasses().size();
 				int fields = mappings.getFields().size();
 				int methods = mappings.getMethods().size();
+				int variables = mappings.getVariables().size();
 				String formatted = """
 						Mappings will rename:
 						 - %d classes
 						 - %d fields
 						 - %d methods
-						""".formatted(classes, fields, methods);
+						 - %d variables
+						""".formatted(classes, fields, methods, variables);
 				stats.setText(formatted);
 
 				// Also update editor preview
@@ -440,9 +442,11 @@ public class MappingGeneratorPane extends StackPane {
 		private final StringProperty classPredicateId = new SimpleStringProperty();
 		private final StringProperty fieldPredicateId = new SimpleStringProperty();
 		private final StringProperty methodPredicateId = new SimpleStringProperty();
+		private final StringProperty variablePredicateId = new SimpleStringProperty();
 		private final StringProperty className = new SimpleStringProperty("com/example/Foo");
 		private final StringProperty fieldName = new SimpleStringProperty("foo");
 		private final StringProperty methodName = new SimpleStringProperty("getFoo");
+		private final StringProperty variableName = new SimpleStringProperty("fizz");
 
 		@Nonnull
 		@Override
@@ -477,7 +481,18 @@ public class MappingGeneratorPane extends StackPane {
 								else
 									return methodName;
 							}));
-						return Lang.getBinding("misc.ignored");
+						return variablePredicateId.isNotNull().flatMap(hasVariable -> {
+							if (hasVariable)
+								return Bindings.concat(Lang.getBinding("mapgen.filter.excludename"), ": ", variablePredicateId.flatMap(key -> {
+									if (StringPredicateProvider.KEY_ANYTHING.equals(key))
+										return Lang.getBinding("string.match.anything");
+									else if (StringPredicateProvider.KEY_NOTHING.equals(key))
+										return Lang.getBinding("string.match.zilch");
+									else
+										return variableName;
+								}));
+							return Lang.getBinding("misc.ignored");
+						});
 					});
 				});
 			});
@@ -489,7 +504,8 @@ public class MappingGeneratorPane extends StackPane {
 			return next -> new ExcludeNameFilter(next,
 					classPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()) : null,
 					fieldPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(fieldPredicateId.get(), fieldName.get()) : null,
-					methodPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null
+					methodPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null,
+					variablePredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(variablePredicateId.get(), variableName.get()) : null
 			);
 		}
 
@@ -498,6 +514,7 @@ public class MappingGeneratorPane extends StackPane {
 			BoundTextField txtClass = new BoundTextField(className);
 			BoundTextField txtField = new BoundTextField(fieldName);
 			BoundTextField txtMethod = new BoundTextField(methodName);
+			BoundTextField txtVariable = new BoundTextField(variableName);
 			txtClass.disableProperty().bind(classPredicateId.isNull()
 					.or(classPredicateId.isEqualTo(StringPredicateProvider.KEY_ANYTHING))
 					.or(classPredicateId.isEqualTo(StringPredicateProvider.KEY_NOTHING)));
@@ -507,6 +524,9 @@ public class MappingGeneratorPane extends StackPane {
 			txtMethod.disableProperty().bind(methodPredicateId.isNull()
 					.or(methodPredicateId.isEqualTo(StringPredicateProvider.KEY_ANYTHING))
 					.or(methodPredicateId.isEqualTo(StringPredicateProvider.KEY_NOTHING)));
+			txtVariable.disableProperty().bind(variablePredicateId.isNull()
+					.or(variablePredicateId.isEqualTo(StringPredicateProvider.KEY_ANYTHING))
+					.or(variablePredicateId.isEqualTo(StringPredicateProvider.KEY_NOTHING)));
 
 			GridPane grid = new GridPane();
 			grid.setVgap(5);
@@ -517,6 +537,8 @@ public class MappingGeneratorPane extends StackPane {
 					txtField, new BoundComboBox<>(fieldPredicateId, stringPredicatesWithNull, textPredicateConverter));
 			grid.addRow(2, new BoundLabel(Lang.getBinding("mapgen.filter.method-name")),
 					txtMethod, new BoundComboBox<>(methodPredicateId, stringPredicatesWithNull, textPredicateConverter));
+			grid.addRow(3, new BoundLabel(Lang.getBinding("mapgen.filter.variable-name")),
+					txtMethod, new BoundComboBox<>(variablePredicateId, stringPredicatesWithNull, textPredicateConverter));
 			sink.accept(null, grid);
 		}
 	}
@@ -630,9 +652,11 @@ public class MappingGeneratorPane extends StackPane {
 		private final StringProperty classPredicateId = new SimpleStringProperty();
 		private final StringProperty fieldPredicateId = new SimpleStringProperty();
 		private final StringProperty methodPredicateId = new SimpleStringProperty();
+		private final StringProperty variablePredicateId = new SimpleStringProperty();
 		private final StringProperty className = new SimpleStringProperty("com/example/Foo");
 		private final StringProperty fieldName = new SimpleStringProperty("foo");
 		private final StringProperty methodName = new SimpleStringProperty("getFoo");
+		private final StringProperty variableName = new SimpleStringProperty("fizz");
 
 		@Nonnull
 		@Override
@@ -667,7 +691,18 @@ public class MappingGeneratorPane extends StackPane {
 								else
 									return methodName;
 							}));
-						return Lang.getBinding("misc.ignored");
+						return variablePredicateId.isNotNull().flatMap(hasVariable -> {
+							if (hasVariable)
+								return Bindings.concat(Lang.getBinding("mapgen.filter.includename"), ": ", variablePredicateId.flatMap(key -> {
+									if (StringPredicateProvider.KEY_ANYTHING.equals(key))
+										return Lang.getBinding("string.match.anything");
+									else if (StringPredicateProvider.KEY_NOTHING.equals(key))
+										return Lang.getBinding("string.match.zilch");
+									else
+										return variableName;
+								}));
+							return Lang.getBinding("misc.ignored");
+						});
 					});
 				});
 			});
@@ -679,7 +714,8 @@ public class MappingGeneratorPane extends StackPane {
 			return next -> new IncludeNameFilter(next,
 					classPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(classPredicateId.get(), className.get()) : null,
 					fieldPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(fieldPredicateId.get(), fieldName.get()) : null,
-					methodPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null
+					methodPredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(methodPredicateId.get(), methodName.get()) : null,
+					variablePredicateId.isNotNull().get() ? stringPredicateProvider.newBiStringPredicate(variablePredicateId.get(), variableName.get()) : null
 			);
 		}
 
@@ -688,6 +724,7 @@ public class MappingGeneratorPane extends StackPane {
 			BoundTextField txtClass = new BoundTextField(className);
 			BoundTextField txtField = new BoundTextField(fieldName);
 			BoundTextField txtMethod = new BoundTextField(methodName);
+			BoundTextField txtVariable = new BoundTextField(variableName);
 			txtClass.disableProperty().bind(classPredicateId.isNull()
 					.or(classPredicateId.isEqualTo(StringPredicateProvider.KEY_ANYTHING))
 					.or(classPredicateId.isEqualTo(StringPredicateProvider.KEY_NOTHING)));
@@ -697,6 +734,10 @@ public class MappingGeneratorPane extends StackPane {
 			txtMethod.disableProperty().bind(methodPredicateId.isNull()
 					.or(methodPredicateId.isEqualTo(StringPredicateProvider.KEY_ANYTHING))
 					.or(methodPredicateId.isEqualTo(StringPredicateProvider.KEY_NOTHING)));
+			txtVariable.disableProperty().bind(variablePredicateId.isNull()
+					.or(variablePredicateId.isEqualTo(StringPredicateProvider.KEY_ANYTHING))
+					.or(variablePredicateId.isEqualTo(StringPredicateProvider.KEY_NOTHING)));
+
 			GridPane grid = new GridPane();
 			grid.setVgap(5);
 			grid.setHgap(5);
@@ -706,6 +747,8 @@ public class MappingGeneratorPane extends StackPane {
 					txtField, new BoundComboBox<>(fieldPredicateId, stringPredicatesWithNull, textPredicateConverter));
 			grid.addRow(2, new BoundLabel(Lang.getBinding("mapgen.filter.method-name")),
 					txtMethod, new BoundComboBox<>(methodPredicateId, stringPredicatesWithNull, textPredicateConverter));
+			grid.addRow(3, new BoundLabel(Lang.getBinding("mapgen.filter.variable-name")),
+					txtMethod, new BoundComboBox<>(variablePredicateId, stringPredicatesWithNull, textPredicateConverter));
 			sink.accept(null, grid);
 		}
 	}
@@ -793,6 +836,7 @@ public class MappingGeneratorPane extends StackPane {
 		private final BooleanProperty classes = new SimpleBooleanProperty(true);
 		private final BooleanProperty fields = new SimpleBooleanProperty(true);
 		private final BooleanProperty methods = new SimpleBooleanProperty(true);
+		private final BooleanProperty variables = new SimpleBooleanProperty(true);
 
 		@Nonnull
 		@Override
@@ -803,7 +847,7 @@ public class MappingGeneratorPane extends StackPane {
 		@Nonnull
 		@Override
 		protected Function<NameGeneratorFilter, IncludeLongNameFilter> makeProvider() {
-			return next -> new IncludeLongNameFilter(next, length.get(), classes.get(), fields.get(), methods.get());
+			return next -> new IncludeLongNameFilter(next, length.get(), classes.get(), fields.get(), methods.get(), variables.get());
 		}
 
 		@Override
@@ -812,6 +856,7 @@ public class MappingGeneratorPane extends StackPane {
 			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includeclass"), classes));
 			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includefield"), fields));
 			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includemethod"), methods));
+			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includevariable"), variables));
 		}
 	}
 

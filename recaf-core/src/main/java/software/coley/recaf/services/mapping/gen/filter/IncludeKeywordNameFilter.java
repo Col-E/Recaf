@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.util.StringUtil;
 
@@ -47,5 +48,12 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 		if (getKeywords().contains(info.getName()))
 			return true;
 		return super.shouldMapMethod(owner, info);
+	}
+
+	@Override
+	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		if (getKeywords().contains(variable.getName()))
+			return true;
+		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
 	}
 }

@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
@@ -66,5 +67,12 @@ public class AlphabetNameGenerator implements DeconflictingNameGenerator {
 	@Override
 	public String mapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember method) {
 		return name(owner.getName() + "#" + method.getName());
+	}
+
+	@Nonnull
+	@Override
+	public String mapVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		return name(owner.getName() + "#" + declaringMethod.getName() + "#" + variable.getIndex() +
+				"#" + variable.getName() + "#" + variable.getDescriptor());
 	}
 }

@@ -7,18 +7,28 @@ import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Opcodes;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.MethodMapping;
-import software.coley.recaf.services.mapping.gen.filter.*;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeClassesFilter;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeModifiersNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeClassesFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeModifiersNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
 import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.test.dummy.*;
+import software.coley.recaf.test.dummy.AccessibleFields;
+import software.coley.recaf.test.dummy.AccessibleMethods;
+import software.coley.recaf.test.dummy.AccessibleMethodsChild;
+import software.coley.recaf.test.dummy.StringConsumer;
+import software.coley.recaf.test.dummy.StringConsumerUser;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -59,6 +69,12 @@ public class MappingGeneratorTest extends TestBase {
 			public String mapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember method) {
 				return "mapped" + StringUtil.uppercaseFirstChar(method.getName());
 			}
+
+			@Nonnull
+			@Override
+			public String mapVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+				return "mapped" + StringUtil.uppercaseFirstChar(variable.getName());
+			}
 		};
 		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
 				AccessibleFields.class,
@@ -93,6 +109,8 @@ public class MappingGeneratorTest extends TestBase {
 		assertNotNull(mappings.getMappedFieldName(className, "protectedField", "I"));
 		assertNotNull(mappings.getMappedFieldName(className, "publicField", "I"));
 		assertNotNull(mappings.getMappedFieldName(className, "packageField", "I"));
+		className = StringConsumerUser.class.getName().replace('.', '/');
+		assertNotNull(mappings.getMappedVariableName(className, "main", "([Ljava/lang/String;)V", "args", "[Ljava/lang/String;", 0));
 	}
 
 	@Nested
@@ -120,8 +138,20 @@ public class MappingGeneratorTest extends TestBase {
 					else if (inheritanceGraph.getVertex(info.getName())
 							.isLibraryMethod(method.getName(), method.getDescriptor()))
 						assertNull(mappedMethodName, "Library method had generated mappings");
-					else
+					else {
 						assertNotNull(mappedMethodName, "Method not mapped: " + info.getName() + "." + method.getName());
+						for (LocalVariable variable : method.getLocalVariables()) {
+							// Skip asserts for "this" local variable, we want to keep that one.
+							if (variable.getIndex() == 0 && variable.getName().equals("this"))
+								continue;
+
+							String mappedVariableName = mappings.getMappedVariableName(info.getName(),
+									method.getName(), method.getDescriptor(), variable.getName(),
+									variable.getDescriptor(), variable.getIndex());
+							assertNotNull(mappedMethodName, "Method variable not mapped: " + info.getName() + "."
+									+ method.getName() + " - " + variable.getName());
+						}
+					}
 				}
 			}
 		}
@@ -140,6 +170,7 @@ public class MappingGeneratorTest extends TestBase {
 			assertEquals(0, intermediate.getClasses().size());
 			assertEquals(0, intermediate.getFields().size());
 			assertEquals(0, intermediate.getMethods().size());
+			assertEquals(0, intermediate.getVariables().size());
 		}
 
 		@Test
@@ -220,6 +251,9 @@ public class MappingGeneratorTest extends TestBase {
 			assertEquals(0, intermediate.getClasses().size());
 			assertEquals(1, intermediate.getFields().size());
 			assertEquals(2, intermediate.getMethods().size());
+
+			// None of the methods included for mapping have any variables
+			assertTrue(intermediate.getVariables().isEmpty());
 		}
 
 		@Test
@@ -260,7 +294,7 @@ public class MappingGeneratorTest extends TestBase {
 		void testIncludeNameFilter() {
 			StringPredicate predicate = strMatchProvider.newContainsPredicate("AccessibleMethods");
 			IncludeNameFilter filter =
-					new IncludeNameFilter(null, predicate, predicate, predicate);
+					new IncludeNameFilter(null, predicate, predicate, predicate, predicate);
 
 			// Generate mappings
 			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
@@ -270,6 +304,7 @@ public class MappingGeneratorTest extends TestBase {
 			assertEquals(2, intermediate.getClasses().size());
 			assertEquals(0, intermediate.getFields().size());
 			assertEquals(0, intermediate.getMethods().size());
+			assertEquals(0, intermediate.getVariables().size());
 		}
 
 		/** Similar to {@link #testIncludeNameFilter()} but with a filter that includes members when a class is mapped */
@@ -287,6 +322,7 @@ public class MappingGeneratorTest extends TestBase {
 			assertEquals(2, intermediate.getClasses().size());
 			assertEquals(0, intermediate.getFields().size());
 			assertEquals(2, intermediate.getMethods().size());
+			assertEquals(0, intermediate.getVariables().size()); // None of the methods have locals
 			String key = AccessibleMethods.class.getName().replace('.', '/');
 			String keyChild = AccessibleMethodsChild.class.getName().replace('.', '/');
 			List<MethodMapping> methodMappings = intermediate.getMethods().get(key);

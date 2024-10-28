@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 
 import java.util.Collection;
@@ -60,5 +61,11 @@ public class ExcludeModifiersNameFilter extends NameGeneratorFilter {
 		if (targetMethods && method.hasAnyModifiers(flags))
 			return false;
 		return super.shouldMapMethod(owner, method);
+	}
+
+	@Override
+	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		// Variables are not targeted, so delegate to next filter
+		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
 	}
 }

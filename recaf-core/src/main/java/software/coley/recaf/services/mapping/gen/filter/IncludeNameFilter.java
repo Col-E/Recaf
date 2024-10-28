@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.search.match.StringPredicate;
 
@@ -17,6 +18,7 @@ public class IncludeNameFilter extends NameGeneratorFilter {
 	private final StringPredicate classPredicate;
 	private final StringPredicate fieldPredicate;
 	private final StringPredicate methodPredicate;
+	private final StringPredicate variablePredicate;
 
 	/**
 	 * @param next
@@ -30,13 +32,18 @@ public class IncludeNameFilter extends NameGeneratorFilter {
 	 * @param methodPredicate
 	 * 		Method name predicate for excluded names.
 	 *        {@code null} to skip filtering for method names.
+	 * @param variablePredicate
+	 * 		Variable name predicate for excluded names.
+	 *        {@code null} to skip filtering for variable names.
 	 */
 	public IncludeNameFilter(@Nullable NameGeneratorFilter next, @Nullable StringPredicate classPredicate,
-							 @Nullable StringPredicate fieldPredicate, @Nullable StringPredicate methodPredicate) {
+							 @Nullable StringPredicate fieldPredicate, @Nullable StringPredicate methodPredicate,
+							 @Nullable StringPredicate variablePredicate) {
 		super(next, false);
 		this.classPredicate = classPredicate;
 		this.fieldPredicate = fieldPredicate;
 		this.methodPredicate = methodPredicate;
+		this.variablePredicate = variablePredicate;
 	}
 
 	@Override
@@ -58,5 +65,12 @@ public class IncludeNameFilter extends NameGeneratorFilter {
 		if (methodPredicate != null && methodPredicate.match(method.getName()))
 			return true;
 		return super.shouldMapMethod(owner, method);
+	}
+
+	@Override
+	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		if (variablePredicate != null && variablePredicate.match(variable.getName()))
+			return true;
+		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
 	}
 }

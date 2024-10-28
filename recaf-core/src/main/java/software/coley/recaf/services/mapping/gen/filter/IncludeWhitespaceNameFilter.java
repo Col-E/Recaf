@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.util.EscapeUtil;
 
@@ -43,12 +44,23 @@ public class IncludeWhitespaceNameFilter extends NameGeneratorFilter {
 		return super.shouldMapMethod(owner, method);
 	}
 
+	@Override
+	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		if (shouldMap(variable))
+			return true;
+		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
+	}
+
 	private static boolean shouldMap(ClassInfo info) {
 		return shouldMap(info.getName());
 	}
 
 	private static boolean shouldMap(ClassMember member) {
 		return shouldMap(member.getName());
+	}
+
+	private static boolean shouldMap(LocalVariable variable) {
+		return shouldMap(variable.getName());
 	}
 
 	private static boolean shouldMap(String name) {

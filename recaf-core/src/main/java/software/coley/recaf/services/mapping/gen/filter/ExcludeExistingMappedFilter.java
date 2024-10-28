@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 
@@ -45,5 +46,13 @@ public class ExcludeExistingMappedFilter extends NameGeneratorFilter {
 		if (aggregate.getReverseMethodMapping(owner.getName(), method.getName(), method.getDescriptor()) != null)
 			return false;
 		return super.shouldMapMethod(owner, method);
+	}
+
+	@Override
+	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		if (aggregate.getReverseVariableMapping(owner.getName(), declaringMethod.getName(),
+				declaringMethod.getDescriptor(), variable.getName(), variable.getDescriptor(), variable.getIndex()) != null)
+			return false;
+		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
 	}
 }

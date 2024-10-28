@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 
 /**
@@ -17,6 +18,7 @@ public class IncludeLongNameFilter extends NameGeneratorFilter {
 	private final boolean targetClasses;
 	private final boolean targetFields;
 	private final boolean targetMethods;
+	private final boolean targetVariables;
 
 	/**
 	 * @param next
@@ -29,14 +31,17 @@ public class IncludeLongNameFilter extends NameGeneratorFilter {
 	 * 		Check against fields.
 	 * @param targetMethods
 	 * 		Check against methods.
+	 * @param targetVariables
+	 * 		Check against variables.
 	 */
 	public IncludeLongNameFilter(@Nullable NameGeneratorFilter next, int maxNameLength,
-								 boolean targetClasses, boolean targetFields, boolean targetMethods) {
+	                             boolean targetClasses, boolean targetFields, boolean targetMethods, boolean targetVariables) {
 		super(next, false);
 		this.maxNameLength = maxNameLength;
 		this.targetClasses = targetClasses;
 		this.targetFields = targetFields;
 		this.targetMethods = targetMethods;
+		this.targetVariables = targetVariables;
 	}
 
 	@Override
@@ -60,11 +65,22 @@ public class IncludeLongNameFilter extends NameGeneratorFilter {
 		return super.shouldMapMethod(owner, method);
 	}
 
+	@Override
+	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		if (targetVariables && shouldMap(variable))
+			return true;
+		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
+	}
+
 	private boolean shouldMap(ClassInfo info) {
 		return shouldMap(info.getName());
 	}
 
 	private boolean shouldMap(ClassMember info) {
+		return shouldMap(info.getName());
+	}
+
+	private boolean shouldMap(LocalVariable info) {
 		return shouldMap(info.getName());
 	}
 

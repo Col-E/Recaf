@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping.aggregate;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.WorkspaceBackedRemapper;
@@ -8,9 +9,14 @@ import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MemberMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
+import software.coley.recaf.services.mapping.data.VariableMapping;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Mappings implementation for internal tracking of aggregated mappings.
@@ -57,7 +63,8 @@ public class AggregatedMappings extends IntermediateMappings {
 	 * @return Original class name.
 	 * {@code null} if the class has not been mapped.
 	 */
-	public String getReverseClassMapping(String name) {
+	@Nullable
+	public String getReverseClassMapping(@Nonnull String name) {
 		return reverseOrderClassMapping.get(name);
 	}
 
@@ -72,17 +79,25 @@ public class AggregatedMappings extends IntermediateMappings {
 	 * @return Original name of the field if any mappings exist.
 	 * {@code null} if the field has not been mapped.
 	 */
-	public String getReverseFieldMapping(String owner, String fieldName, String fieldDesc) {
+	@Nullable
+	public String getReverseFieldMapping(@Nonnull String owner, @Nonnull String fieldName, @Nonnull String fieldDesc) {
 		String originalOwnerName = getReverseClassMapping(owner);
 		if (originalOwnerName == null)
 			originalOwnerName = owner;
+
+		// Get fields in the original class
 		List<FieldMapping> fieldMappings = fields.get(originalOwnerName);
-		if (fieldMappings == null)
+		if (fieldMappings == null || fieldMappings.isEmpty())
 			return null;
+
+		// Find a matching field
+		String originalDesc = reverseMapper.mapDesc(fieldDesc);
 		for (FieldMapping fieldMapping : fieldMappings) {
+			// The current name must match the mappings "new" name
 			if (!fieldName.equals(fieldMapping.getNewName()))
 				continue;
-			String originalDesc = reverseMapper.mapDesc(fieldDesc);
+
+			// The original field descriptor must match the mapping key's
 			if (originalDesc.equals(fieldMapping.getDesc()))
 				return fieldMapping.getOldName();
 		}
@@ -100,25 +115,86 @@ public class AggregatedMappings extends IntermediateMappings {
 	 * @return Original name of the method if any mappings exist.
 	 * {@code null} if the method has not been mapped.
 	 */
-	public String getReverseMethodMapping(String owner, String methodName, String methodDesc) {
+	@Nullable
+	public String getReverseMethodMapping(@Nonnull String owner, @Nonnull String methodName, @Nonnull String methodDesc) {
 		String originalOwnerName = getReverseClassMapping(owner);
 		if (originalOwnerName == null)
 			originalOwnerName = owner;
+
+		// Get methods in the original class
 		List<MethodMapping> methodMappings = methods.get(originalOwnerName);
-		if (methodMappings == null)
+		if (methodMappings == null || methodMappings.isEmpty())
 			return null;
+
+		// Find a matching method
+		String originalDesc = reverseMapper.mapDesc(methodDesc);
 		for (MethodMapping methodMapping : methodMappings) {
+			// The current name must match the mappings "new" name
 			if (!methodName.equals(methodMapping.getNewName()))
 				continue;
-			String originalDesc = reverseMapper.mapDesc(methodDesc);
+
+			// The original method descriptor must match the mapping key's
 			if (originalDesc.equals(methodMapping.getDesc()))
 				return methodMapping.getOldName();
 		}
 		return null;
 	}
 
+	/**
+	 * @param owner
+	 * 		Current class name.
+	 * @param methodName
+	 * 		Current method name.
+	 * @param methodDesc
+	 * 		Current method descriptor.
+	 * @param varName
+	 * 		Current variable name.
+	 * @param varDesc
+	 * 		Current variable descriptor.
+	 * @param varIndex
+	 * 		Variable index.
+	 *
+	 * @return Original name of the variable if any mappings exist.
+	 * {@code null} if the variable has not been mapped.
+	 */
+	@Nullable
+	public String getReverseVariableMapping(@Nonnull String owner, @Nonnull String methodName, @Nonnull String methodDesc,
+	                                        @Nonnull String varName, @Nonnull String varDesc, int varIndex) {
+		String originalOwnerName = getReverseClassMapping(owner);
+		if (originalOwnerName == null)
+			originalOwnerName = owner;
+
+		// Get methods in the original class
+		List<MethodMapping> methodMappings = methods.get(originalOwnerName);
+		if (methodMappings == null || methodMappings.isEmpty())
+			return null;
+
+		String originalMethodDesc = reverseMapper.mapDesc(methodDesc);
+		String originalVarDesc = reverseMapper.mapDesc(varDesc);
+		for (MethodMapping methodMapping : methodMappings) {
+			// The current name must match the mappings "new" name
+			if (!methodName.equals(methodMapping.getNewName()))
+				continue;
+
+			// The original method descriptor must match the mapping key's
+			if (originalMethodDesc.equals(methodMapping.getDesc())) {
+				// Get the variables that were mapped under the original name
+				List<VariableMapping> variableMappings = variables.get(varKey(originalOwnerName, methodMapping.getOldName(), originalMethodDesc));
+				for (VariableMapping variableMapping : variableMappings) {
+					// If the variable index, name, and descriptor match, yield the variable mapping's original name
+					if (variableMapping.getIndex() == varIndex && variableMapping.getNewName().equals(varName)) {
+						if (varDesc.equals(originalVarDesc)) {
+							return variableMapping.getOldName();
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
 	@Override
-	public void addClass(String oldName, String newName) {
+	public void addClass(@Nonnull String oldName, @Nonnull String newName) {
 		super.addClass(oldName, newName);
 		reverseOrderClassMapping.put(newName, oldName);
 	}
@@ -142,7 +218,7 @@ public class AggregatedMappings extends IntermediateMappings {
 	 *
 	 * @return {@code true} when the mapping operation required bridging a current class name to its original name.
 	 */
-	public boolean update(Mappings newMappings) {
+	public boolean update(@Nonnull Mappings newMappings) {
 		// ORIGINAL:
 		//  a -> b
 		//  a.f1 -> b.f2
@@ -157,6 +233,7 @@ public class AggregatedMappings extends IntermediateMappings {
 		bridged = updateClasses(intermediate.getClasses());
 		bridged |= updateMembers(intermediate.getFields().values());
 		bridged |= updateMembers(intermediate.getMethods().values());
+		bridged |= updateVariables(intermediate.getVariables().values());
 		return bridged;
 	}
 
@@ -168,7 +245,7 @@ public class AggregatedMappings extends IntermediateMappings {
 			String aName = reverseOrderClassMapping.get(bName);
 			if (aName != null) {
 				// There is a prior entry of the class, 'aName' thus we use it as the key
-				// and not 'bName' since that was the prior value the mapping for 'aName.
+				// and not 'bName' since that was the prior value the mapping for 'aName'.
 				bridged = true;
 				addClass(aName, cName);
 			} else {
@@ -179,27 +256,26 @@ public class AggregatedMappings extends IntermediateMappings {
 		return bridged;
 	}
 
-
 	private <M extends MemberMapping> boolean updateMembers(Collection<List<M>> newMappings) {
 		// With members, we need to take special care, for example:
 		// 1. a --> b
 		// 2. b.x --> b.y
-		// Now we need to ensure the mapping "a.x --> y" exists.
+		// Now we need to ensure the mapping "a.x --> b.y" exists.
 		boolean bridged = false;
 		for (List<M> members : newMappings) {
 			for (MemberMapping newMemberMapping : members) {
-				String bName = newMemberMapping.getOwnerName();
-				String aName = reverseOrderClassMapping.get(bName);
+				String bOwnerName = newMemberMapping.getOwnerName();
+				String aOwnerName = reverseOrderClassMapping.get(bOwnerName);
 				String oldMemberName = newMemberMapping.getOldName();
 				String newMemberName = newMemberMapping.getNewName();
 				String desc = newMemberMapping.getDesc();
-				String owner = bName;
-				if (aName != null) {
+				String owner = bOwnerName;
+				if (aOwnerName != null) {
 					// We need to map the member current mapped owner name to the
 					// original owner's name.
 					bridged = true;
-					owner = aName;
-					oldMemberName = findPriorMemberName(aName, newMemberMapping);
+					owner = aOwnerName;
+					oldMemberName = findPriorMemberName(aOwnerName, newMemberMapping);
 				}
 
 				// Desc must always be checked for updates
@@ -213,6 +289,29 @@ public class AggregatedMappings extends IntermediateMappings {
 				}
 			}
 		}
+		return bridged;
+	}
+
+	private boolean updateVariables(Collection<List<VariableMapping>> newMappings) {
+		// a.foo() var x
+		//   ...
+		// a.foo() --> b.foo()
+		// b.foo() --> b.bar()
+		// b.bar() var x --> var z
+		//   ...
+		// a.foo() var x --> var z
+		boolean bridged = false;
+
+		/*
+		TODO: Aggregate variable mappings
+		for (List<VariableMapping> variableMappings : newMappings) {
+			for (VariableMapping newVariableMapping : variableMappings) {
+				String bOwner = newVariableMapping.getOwnerName();
+				String bMethodName = newVariableMapping.getMethodName();
+				String bMethodDesc = newVariableMapping.getMethodDesc();
+			}
+		}
+		 */
 		return bridged;
 	}
 
