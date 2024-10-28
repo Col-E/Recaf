@@ -152,17 +152,20 @@ dependencies {
         attribute(repackagedAttribute)
         // attribute(f_repackagedAttribute)
     }
+
     artifactTypes.getByName("jar") {
         attributes.attribute(repackagedAttribute, false)
         // attributes.attribute(f_repackagedAttribute, false)
     }
+
     registerTransform(MyAbsRepackager::class) {
         from.attribute(repackagedAttribute, false).attribute(artifactTypeAttribute, "jar")
         to.attribute(repackagedAttribute, true).attribute(artifactTypeAttribute, "jar")
     }
+
     repackage(libs.vineflower)
     repackage(libs.fernflower)
     repackage(libs.forgeflower)
-
+    api(libs.annotations)
     api(files(repackage.files))
 }
