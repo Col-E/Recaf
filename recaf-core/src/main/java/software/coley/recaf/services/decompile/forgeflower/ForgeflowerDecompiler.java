@@ -53,7 +53,7 @@ public class ForgeflowerDecompiler extends AbstractJvmDecompiler {
         options.put("rsy", "1");
         options.put("rbr", "1");
         options.put("nls", "1");
-        options.put("ban", List.of("//Recreated by Recaf (powered by ForgeFlower decompiler)\n\n"));
+        options.put("ban", List.of("//Recreated by Recaf (powered by ForgeFlower decompiler)\n"));
         options.put("mpm", 60);
         options.put("ind", "    ");
         options.put("iib", "1");
