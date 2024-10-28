@@ -1,23 +1,23 @@
-package software.coley.recaf.services.decompile.fernflower;
+package software.coley.recaf.services.decompile.forgeflower;
 
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
-import recaf.relocation.libs.fernflower.org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import recaf.relocation.libs.forgeflower.org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
 
 /**
- * Logger for Fernflower
+ * Logger for Forgeflower
  *
  * @author meiMingle
  */
-public class FernflowerLogger extends IFernflowerLogger {
-	private static final Logger logger = Logging.get(FernflowerLogger.class);
-	private static final String VF_PREFIX = "FF: ";
+public class ForgeflowerLogger extends IFernflowerLogger {
+	private static final Logger logger = Logging.get(ForgeflowerLogger.class);
+	private static final String VF_PREFIX = "FgF: ";
 	private final ObservableObject<Level> level;
 
-	public FernflowerLogger(@Nonnull FernflowerConfig config) {
+	public ForgeflowerLogger(@Nonnull ForgeflowerConfig config) {
 		this.level = config.getLoggingLevel();
 	}
 

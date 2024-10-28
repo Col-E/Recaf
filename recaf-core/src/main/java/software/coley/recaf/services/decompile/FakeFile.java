@@ -1,4 +1,4 @@
-package software.coley.recaf.services.decompile.fernflower;
+package software.coley.recaf.services.decompile;
 
 import java.io.File;
 
