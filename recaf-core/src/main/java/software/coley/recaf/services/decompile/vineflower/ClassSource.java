@@ -1,7 +1,7 @@
 package software.coley.recaf.services.decompile.vineflower;
 
 import jakarta.annotation.Nonnull;
-import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import recaf.relocation.libs.vineflower.org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.workspace.model.Workspace;
