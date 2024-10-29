@@ -11,6 +11,7 @@ import software.coley.recaf.services.decompile.AbstractJvmDecompiler;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.util.Map;
 
 /**
  * Vineflower decompiler implementation.
@@ -41,7 +42,9 @@ public class VineflowerDecompiler extends AbstractJvmDecompiler {
 	@Nonnull
 	@Override
 	public DecompileResult decompileInternal(@Nonnull Workspace workspace, @Nonnull JvmClassInfo info) {
-		Fernflower fernflower = new Fernflower(dummySaver, config.getFernflowerProperties(), logger);
+		Map<String, Object> customProperties = this.config.getFernflowerProperties();
+		customProperties.put("banner", "//Recreated by Recaf (powered by VineFlower decompiler)\n\n");
+		Fernflower fernflower = new Fernflower(dummySaver, customProperties, logger);
 
 		try {
 			ClassSource source = new ClassSource(workspace, info);
