@@ -36,7 +36,7 @@ public class FernflowerDecompiler extends AbstractJvmDecompiler {
     @Inject
     public FernflowerDecompiler(@Nonnull FernflowerConfig config) {
         // Change this version to be dynamic when / if the Fernflower authors make a function that returns the version...
-        super(NAME, "242.23726.103", config);
+        super(NAME, "243.21565-EAP-CANDIDATE-SNAPSHOT", config);
         this.config = config;
         logger = new FernflowerLogger(config);
     }
@@ -44,25 +44,8 @@ public class FernflowerDecompiler extends AbstractJvmDecompiler {
     @Nonnull
     @Override
     public DecompileResult decompileInternal(@Nonnull Workspace workspace, @Nonnull JvmClassInfo info) {
+        Map<String, Object> fernflowerProperties = config.getFernflowerProperties();
 
-
-        Map<String, Object> options = new HashMap<>();
-
-        options.put("hdc", "0");
-        options.put("dgs", "1");
-        options.put("rsy", "1");
-        options.put("rbr", "1");
-        options.put("nls", "1");
-        options.put("ban", "//Recreated by Recaf (powered by FernFlower decompiler)\n\n");
-        options.put("mpm", 60);
-        options.put("ind", "    ");
-        options.put("iib", "1");
-        options.put("vac", "1");
-        options.put("cps", "1");
-        options.put("crp", "1");
-
-        options.put("bsm", "1");// "decompiler.use.line.mapping"
-        options.put("__dump_original_lines__", "1");// "decompiler.dump.original.lines"
 
         MyResultSaver saver = new MyResultSaver();
         MyBytecodeProvider provider = new MyBytecodeProvider(workspace);
@@ -70,15 +53,21 @@ public class FernflowerDecompiler extends AbstractJvmDecompiler {
         BaseDecompiler decompiler = new BaseDecompiler(
                 provider,
                 saver,
-                options,
+                fernflowerProperties,
                 logger
         );
 
         try {
-            String path = ((BasicWorkspaceFileResource) workspace.getPrimaryResource()).getFileInfo().getName() + "!" + info.getName() + ".class";
+            String clzName = info.getName();
+            String path = ((BasicWorkspaceFileResource) workspace.getPrimaryResource()).getFileInfo().getName() + "!" + clzName + ".class";
             decompiler.addSource(new FakeFile(path));
             List<InnerClassInfo> innerClasses = info.getInnerClasses();
-            innerClasses.forEach(inner -> decompiler.addSource(new FakeFile(((BasicWorkspaceFileResource) workspace.getPrimaryResource()).getFileInfo().getName() + "!" + inner.getName() + ".class")));
+            innerClasses.forEach(inner->{
+                if (workspace.findClass(inner.getInnerClassName())!=null) {
+                    decompiler.addSource(new FakeFile(((BasicWorkspaceFileResource) workspace.getPrimaryResource()).getFileInfo().getName() + "!" + inner.getName() + ".class"));
+                }
+
+            });
             decompiler.decompileContext();
             if (saver.getResult() == null || saver.getResult().isEmpty()) {
                 return new DecompileResult(new IllegalStateException("Missing decompilation output"), 0);

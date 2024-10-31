@@ -23,7 +23,10 @@ public class MyBytecodeProvider implements IBytecodeProvider {
         String path = split[0];
         String name = split[1];
 
-        ClassPathNode aClass = workspace.findClass(name.substring(0, name.lastIndexOf('.')));
-        return aClass.getValue().asJvmClass().getBytecode();
+        ClassPathNode aClass = workspace.findJvmClass(name.substring(0, name.lastIndexOf('.')));
+        if (aClass != null) {
+            return aClass.getValue().asJvmClass().getBytecode();
+        }
+        return null;
     }
 }
