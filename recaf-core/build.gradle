@@ -38,8 +38,8 @@ dependencies {
     api(libs.openrewrite)
     api(libs.regex)
     api(libs.bundles.jasm)
-//    api(libs.vineflower)
-    api( project(':recaf-relocation'))
+    // api(libs.vineflower)
+    api(project(':recaf-relocation'))
     api(libs.wordwrap)
 }
 

@@ -166,6 +166,5 @@ dependencies {
     repackage(libs.vineflower)
     repackage(libs.fernflower)
     repackage(libs.forgeflower)
-    api(libs.annotations)
     api(files(repackage.files))
 }
