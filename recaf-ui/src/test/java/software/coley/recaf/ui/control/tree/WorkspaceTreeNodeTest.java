@@ -403,6 +403,30 @@ class WorkspaceTreeNodeTest {
 			assertTrue(workspaceNode.removeNodeByPath(p1a), "Class could not be removed");
 			assertNull(workspaceNode.getNodeByPath(p1a), "Class accessible after removed");
 		}
+
+		@Test
+		void removeWhileFilteredDoesNotEliminateOtherClasses() {
+			// Create workspace root and insert the class, which should generate all paths between the class and the workspace node.
+			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
+			WorkspaceTreeNode classNodeA = getOrInsertIntoTree(workspaceNode, p1a);
+			WorkspaceTreeNode classNodeB = getOrInsertIntoTree(workspaceNode, p1b);
+			WorkspaceTreeNode classNodeC = getOrInsertIntoTree(workspaceNode, p1c);
+			assertNotNull(classNodeA, "Class not yielded by original assert");
+			assertNotNull(classNodeB, "Class not yielded by original assert");
+			assertNotNull(classNodeC, "Class not yielded by original assert");
+			assertNotNull(workspaceNode.getNodeByPath(p1a), "Could not get class after setup");
+			assertNotNull(workspaceNode.getNodeByPath(p1b), "Could not get class after setup");
+			assertNotNull(workspaceNode.getNodeByPath(p1c), "Could not get class after setup");
+
+			// Apply a filter so that nothing is shown.
+			workspaceNode.predicateProperty().set(p -> false);
+
+			// Remove 'Class A' and verify 'Class B' and 'Class C' are still accessible
+			assertTrue(workspaceNode.removeNodeByPath(p1a), "Could not remove class after filtering");
+			assertNull(workspaceNode.getNodeByPath(p1a), "Class A accessible after removed");
+			assertNotNull(workspaceNode.getNodeByPath(p1b), "Class B not accessible after adjacent leaf removed");
+			assertNotNull(workspaceNode.getNodeByPath(p1c), "Class C not accessible after adjacent leaf removed");
+		}
 	}
 
 	@Nested

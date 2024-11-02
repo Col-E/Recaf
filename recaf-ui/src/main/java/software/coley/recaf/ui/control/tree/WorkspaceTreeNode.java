@@ -8,6 +8,7 @@ import software.coley.collections.Unchecked;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.util.StringUtil;
 
 /**
  * Tree item subtype for more convenience tree building operations.
@@ -43,7 +44,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 			WorkspaceTreeNode parentNode = nodeByPath.getParentNode();
 			if (parentNode != null) {
 				boolean removed = parentNode.removeSourceChild(nodeByPath);
-				while (parentNode.isLeaf() && parentNode.getParentNode() != null) {
+				while (parentNode.isUnfilteredLeaf() && parentNode.getParentNode() != null) {
 					WorkspaceTreeNode parentOfParent = parentNode.getParentNode();
 					parentOfParent.removeSourceChild(parentNode);
 					parentNode = parentOfParent;
@@ -149,6 +150,26 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[" + getValue().toString() + "]";
+	}
+
+	/**
+	 * A debugging util to inspect the state of the tree without having to dig through
+	 * the actual references in the debugger.
+	 *
+	 * @return String representation of this tree and all of its descendants.
+	 */
+	@Nonnull
+	public String printTree() {
+		StringBuilder sb = new StringBuilder(toString());
+		for (TreeItem<PathNode<?>> child : getSourceChildren()) {
+			if (child instanceof WorkspaceTreeNode childNode) {
+				String childTree = childNode.printTree();
+				for (String childTreeEntry : StringUtil.fastSplit(childTree, false, '\n')) {
+					sb.append("\n    ").append(childTreeEntry);
+				}
+			}
+		}
+		return sb.toString();
 	}
 
 	/**

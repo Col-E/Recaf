@@ -59,6 +59,14 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 		setUnderlyingChildren(filteredChildren);
 	}
 
+	/**
+	 * @return Predicate property.
+	 */
+	@Nonnull
+	public ObjectProperty<Predicate<TreeItem<T>>> predicateProperty() {
+		return predicate;
+	}
+
 	@Override
 	@Deprecated(since = "Use FilterableTreeItem dedicated methods for interacting with children")
 	public ObservableList<TreeItem<T>> getChildren() {
@@ -210,11 +218,10 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	}
 
 	/**
-	 * @return Predicate property.
+	 * @return {@code true} when this tree item is a true leaf based on the unfiltered children.
 	 */
-	@Nonnull
-	public ObjectProperty<Predicate<TreeItem<T>>> predicateProperty() {
-		return predicate;
+	protected boolean isUnfilteredLeaf() {
+		return sourceChildren.isEmpty();
 	}
 
 	static {
