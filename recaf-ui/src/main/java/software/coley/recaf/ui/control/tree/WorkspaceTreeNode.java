@@ -214,7 +214,9 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 			// Work off of the first node that does NOT contain a directory value.
 			// This should result in the node pointing to a bundle.
 			while (node.getValue() instanceof DirectoryPathNode) {
-				node = (WorkspaceTreeNode) node.getParent();
+				node = (WorkspaceTreeNode) node.getSourceParent();
+				if (node == null)
+					throw new IllegalStateException("Directory path node had no parent in workspace tree");
 			}
 
 			// Insert the directory path, separated by '/'.
