@@ -3,12 +3,19 @@ package software.coley.recaf.ui.control.tree;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.info.BasicFileInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.StubFileInfo;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
-import software.coley.recaf.path.*;
+import software.coley.recaf.path.BundlePathNode;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.path.ResourcePathNode;
+import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.test.dummy.AccessibleFields;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.test.dummy.StringConsumer;
@@ -358,6 +365,45 @@ class WorkspaceTreeNodeTest {
 		assertTrue(child.matches(p1a));
 	}
 
+	@Nested
+	class Filtered {
+		@Test
+		void insertWhileFilteredStillUpdatesChildren() {
+			// Create workspace root, but apply a filter so that nothing is shown
+			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
+			workspaceNode.predicateProperty().set(p -> false);
+
+			// Insert the class, which should generate all paths between the class and the workspace node.
+			WorkspaceTreeNode classNode = getOrInsertIntoTree(workspaceNode, p1a);
+			assertNotNull(classNode, "Class not yielded by original assert");
+
+			// Validate the filtered view is still empty, but the unfiltered model has children
+			WorkspaceTreeNode node = workspaceNode;
+			for (int d = 0; d < 5; d++) {
+				assertTrue(node.getChildren().isEmpty(), "Filtered children list is not empty: depth=" + d);
+				assertFalse(node.getSourceChildren().isEmpty(), "Unfiltered children list was empty: depth=" + d);
+				node = Unchecked.cast(workspaceNode.getSourceChildren().getFirst());
+			}
+		}
+
+		@Test
+		void removeWhileFilteredStillUpdatesChildren() {
+			// Create workspace root and insert the class, which should generate all paths between the class and the workspace node.
+			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
+			WorkspaceTreeNode classNode = getOrInsertIntoTree(workspaceNode, p1a);
+			assertNotNull(classNode, "Class not yielded by original assert");
+			assertNotNull(workspaceNode.getNodeByPath(p1a), "Could not get class after setup");
+
+			// Apply a filter so that nothing is shown.
+			// We should still be able to access items via path-lookup though.
+			workspaceNode.predicateProperty().set(p -> false);
+			assertNotNull(workspaceNode.getNodeByPath(p1a), "Could not get class after filtering");
+
+			// Validate the filtered view is still empty, but the unfiltered model has children
+			assertTrue(workspaceNode.removeNodeByPath(p1a), "Class could not be removed");
+			assertNull(workspaceNode.getNodeByPath(p1a), "Class accessible after removed");
+		}
+	}
 
 	@Nested
 	class Insertion {

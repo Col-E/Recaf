@@ -35,23 +35,21 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * {@code false} if nothing was removed.
 	 */
 	public synchronized boolean removeNodeByPath(@Nonnull PathNode<?> path) {
-		// Call from root node only.
-		WorkspaceTreeNode root = this;
-		while (root.getParent() instanceof WorkspaceTreeNode parentNode)
-			root = parentNode;
-
-		// Get node by path.
-		WorkspaceTreeNode nodeByPath = root.getNodeByPath(path);
+		// Get node by path from the root.
+		WorkspaceTreeNode nodeByPath = getRoot().getNodeByPath(path);
 
 		// Get that node's parent, remove the child.
-		if (nodeByPath != null && nodeByPath.getParent() instanceof WorkspaceTreeNode parentNode) {
-			boolean removed = parentNode.removeSourceChild(nodeByPath);
-			while (parentNode.isLeaf() && parentNode.getParentNode() != null) {
-				WorkspaceTreeNode parentOfParent = parentNode.getParentNode();
-				parentOfParent.removeSourceChild(parentNode);
-				parentNode = parentOfParent;
+		if (nodeByPath != null) {
+			WorkspaceTreeNode parentNode = nodeByPath.getParentNode();
+			if (parentNode != null) {
+				boolean removed = parentNode.removeSourceChild(nodeByPath);
+				while (parentNode.isLeaf() && parentNode.getParentNode() != null) {
+					WorkspaceTreeNode parentOfParent = parentNode.getParentNode();
+					parentOfParent.removeSourceChild(parentNode);
+					parentNode = parentOfParent;
+				}
+				return removed;
 			}
-			return removed;
 		}
 
 		// No known node by path.
@@ -69,9 +67,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	@Nonnull
 	public synchronized WorkspaceTreeNode getOrCreateNodeByPath(@Nonnull PathNode<?> path) {
 		// Call from root node only.
-		WorkspaceTreeNode root = this;
-		while (root.getParent() instanceof WorkspaceTreeNode parentNode)
-			root = parentNode;
+		WorkspaceTreeNode root = getRoot();
 
 		// Lookup and/or create nodes for path.
 		return getOrInsertIntoTree(root, path);
@@ -86,13 +82,14 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @return Node containing the path in the tree.
 	 */
 	@Nullable
-	@SuppressWarnings("deprecation")
 	public synchronized WorkspaceTreeNode getNodeByPath(@Nonnull PathNode<?> path) {
+		// Base case, we are that path.
 		PathNode<?> value = getValue();
 		if (path.equals(value))
 			return this;
 
-		for (TreeItem<PathNode<?>> child : getChildren())
+		// Check all children for a match, regardless of the current filter.
+		for (TreeItem<PathNode<?>> child : getSourceChildren())
 			if (path.isDescendantOf(child.getValue()) && child instanceof WorkspaceTreeNode childNode)
 				return childNode.getNodeByPath(path);
 
@@ -103,11 +100,27 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @return First child tree node. {@code null} if no child is found.
 	 */
 	@Nullable
-	@SuppressWarnings("deprecation")
 	public synchronized WorkspaceTreeNode getFirstChild() {
-		return getChildren().isEmpty()
-				? null : getChildren().getFirst() instanceof WorkspaceTreeNode node
+		// Get first child, regardless of the current filter.
+		var children = getSourceChildren();
+		return children.isEmpty()
+				? null : children.getFirst() instanceof WorkspaceTreeNode node
 				? node : null;
+	}
+
+	/**
+	 * @return The root of this tree node's parent hierarchy.
+	 */
+	@Nonnull
+	public WorkspaceTreeNode getRoot() {
+		WorkspaceTreeNode root = this;
+		while (true) {
+			WorkspaceTreeNode parentNode = root.getParentNode();
+			if (parentNode == null)
+				break;
+			root = parentNode;
+		}
+		return root;
 	}
 
 	/**
@@ -121,11 +134,11 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	}
 
 	/**
-	 * @return {@link #getParent()} but cast to {@link WorkspaceTreeNode}.
+	 * @return {@link #getSourceParent()} but cast to {@link WorkspaceTreeNode}.
 	 */
 	@Nullable
 	public WorkspaceTreeNode getParentNode() {
-		return (WorkspaceTreeNode) getParent();
+		return (WorkspaceTreeNode) getSourceParent();
 	}
 
 	@Override
