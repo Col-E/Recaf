@@ -41,11 +41,11 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 
 		// Get that node's parent, remove the child.
 		if (nodeByPath != null) {
-			WorkspaceTreeNode parentNode = nodeByPath.getParentNode();
+			WorkspaceTreeNode parentNode = nodeByPath.getSourceParentNode();
 			if (parentNode != null) {
 				boolean removed = parentNode.removeSourceChild(nodeByPath);
-				while (parentNode.isUnfilteredLeaf() && parentNode.getParentNode() != null) {
-					WorkspaceTreeNode parentOfParent = parentNode.getParentNode();
+				while (parentNode.isSourceLeaf() && parentNode.getSourceParentNode() != null) {
+					WorkspaceTreeNode parentOfParent = parentNode.getSourceParentNode();
 					parentOfParent.removeSourceChild(parentNode);
 					parentNode = parentOfParent;
 				}
@@ -116,7 +116,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	public WorkspaceTreeNode getRoot() {
 		WorkspaceTreeNode root = this;
 		while (true) {
-			WorkspaceTreeNode parentNode = root.getParentNode();
+			WorkspaceTreeNode parentNode = root.getSourceParentNode();
 			if (parentNode == null)
 				break;
 			root = parentNode;
@@ -138,7 +138,7 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @return {@link #getSourceParent()} but cast to {@link WorkspaceTreeNode}.
 	 */
 	@Nullable
-	public WorkspaceTreeNode getParentNode() {
+	public WorkspaceTreeNode getSourceParentNode() {
 		return (WorkspaceTreeNode) getSourceParent();
 	}
 

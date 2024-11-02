@@ -440,29 +440,29 @@ class WorkspaceTreeNodeTest {
 			assertNotNull(classNode, "Class not yielded by original assert");
 
 			// Assert all package entries exist for: software.coley.recaf.test.dummy
-			WorkspaceTreeNode packageDummy = classNode.getParentNode();
+			WorkspaceTreeNode packageDummy = classNode.getSourceParentNode();
 			assertNotNull(packageDummy, "Missing node for package: 'software.coley.recaf.test.dummy'");
-			WorkspaceTreeNode packageTest = packageDummy.getParentNode();
+			WorkspaceTreeNode packageTest = packageDummy.getSourceParentNode();
 			assertNotNull(packageTest, "Missing node for package: 'software.coley.recaf.test'");
-			WorkspaceTreeNode packageRecaf = packageTest.getParentNode();
+			WorkspaceTreeNode packageRecaf = packageTest.getSourceParentNode();
 			assertNotNull(packageRecaf, "Missing node for package: 'software.coley.recaf'");
-			WorkspaceTreeNode packageColey = packageRecaf.getParentNode();
+			WorkspaceTreeNode packageColey = packageRecaf.getSourceParentNode();
 			assertNotNull(packageColey, "Missing node for package: 'software.coley'");
-			WorkspaceTreeNode packageSoftware = packageColey.getParentNode();
+			WorkspaceTreeNode packageSoftware = packageColey.getSourceParentNode();
 			assertNotNull(packageSoftware, "Missing node for package: 'software'");
 
 			// Bundle parent
-			WorkspaceTreeNode bundleNode = packageSoftware.getParentNode();
+			WorkspaceTreeNode bundleNode = packageSoftware.getSourceParentNode();
 			assertNotNull(bundleNode, "Missing bundle node");
 			assertTrue(bundleNode.getValue() instanceof BundlePathNode);
 
 			// Resource parent
-			WorkspaceTreeNode resourceNode = bundleNode.getParentNode();
+			WorkspaceTreeNode resourceNode = bundleNode.getSourceParentNode();
 			assertNotNull(resourceNode, "Missing resource node");
 			assertTrue(resourceNode.getValue() instanceof ResourcePathNode);
 
 			// Workspace parent should be the same as the original item we had.
-			WorkspaceTreeNode workspaceNode2 = resourceNode.getParentNode();
+			WorkspaceTreeNode workspaceNode2 = resourceNode.getSourceParentNode();
 			assertSame(workspaceNode, workspaceNode2);
 		}
 

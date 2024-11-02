@@ -220,7 +220,7 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	/**
 	 * @return {@code true} when this tree item is a true leaf based on the unfiltered children.
 	 */
-	protected boolean isUnfilteredLeaf() {
+	protected boolean isSourceLeaf() {
 		return sourceChildren.isEmpty();
 	}
 
