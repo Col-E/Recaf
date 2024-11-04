@@ -398,7 +398,7 @@ public class MappingGeneratorPane extends StackPane {
 			// At least one input, show them via the modal
 			Label title = new BoundLabel(filterConfig.display());
 			title.getStyleClass().add(Styles.TITLE_3);
-			VBox layout = new VBox(title, configurator, new ActionButton(Lang.getBinding("mapgen.filters.editdone"), () -> {
+			VBox layout = new VBox(title, configurator, new ActionButton(Lang.getBinding("misc.done"), () -> {
 				modal.hide(true);
 				if (onDone != null)
 					onDone.run();

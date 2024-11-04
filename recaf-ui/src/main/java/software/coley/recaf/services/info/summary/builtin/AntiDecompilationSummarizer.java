@@ -45,7 +45,13 @@ import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -236,7 +242,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 				illegalNameCount > 0) {
 			ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("anti-decompile-patching");
 			Label title = new BoundLabel(Lang.getBinding("service.analysis.anti-decompile"));
-			title.getStyleClass().add(Styles.TEXT_BOLD);
+			title.getStyleClass().addAll(Styles.TITLE_4);
 			consumer.appendSummary(title);
 
 			// Option to remove cycles
@@ -452,7 +458,6 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 		box.setAlignment(Pos.CENTER_LEFT);
 		return box;
 	}
-
 
 
 	/**

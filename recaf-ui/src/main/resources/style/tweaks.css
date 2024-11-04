@@ -77,6 +77,23 @@
 .background-light {
     -fx-background-color: -color-border-subtle;
 }
+.background-dark {
+    -fx-background-color: -color-bg-overlay !important;
+}
+
+/* Tweak the larger titles to not be bold (which looks rather ugly in most cases) */
+.title-1 {
+    -fx-font-size: 2em;
+    -fx-font-weight: normal;
+}
+.title-2 {
+    -fx-font-size: 1.75em;
+    -fx-font-weight: normal;
+}
+.title-3 {
+    -fx-font-size: 1.5em;
+    -fx-font-weight: normal;
+}
 
 /* Rounds the display of a container by its bg/border colors */
 .round-container-single {
@@ -182,7 +199,11 @@
 .borderless {
     -fx-border-width: 0px;
     -fx-border-insets: 0px;
- }
+}
+.border-muted {
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1px;
+}
 
 .graphic-button {
     -fx-border-width: 0px;
