@@ -82,7 +82,9 @@ public class ExitDebugLoggingHook {
 				try {
 					if (!visited.get() && frame.getDeclaringClass() == shutdown && frame.getMethodName().equals("exit")) {
 						Object[] locals = (Object[]) getLocals.invoke(frame);
-						handle(Integer.parseInt(String.valueOf(locals[0])));
+						String local0 = locals[0].toString().replaceAll("\\D+", "");
+						int exit = (int) Long.parseLong(local0); // Need to parse as long, cast to int
+						handle(exit);
 						visited.set(true);
 					}
 				} catch (Throwable t) {

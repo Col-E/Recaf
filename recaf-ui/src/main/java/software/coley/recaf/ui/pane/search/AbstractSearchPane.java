@@ -180,6 +180,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		CancellableSearchFeedback feedback;
 		if (liveResults.get()) {
 			feedback = new LiveOnlySearchFeedback(result -> {
+				// Search is multi-threaded, so we will want to lock on the root to prevent concurrent-modification errors
 				synchronized (root) {
 					WorkspaceTreeNode node = WorkspaceTreeNode.getOrInsertIntoTree(root, result.getPath(), false);
 					TreeItems.expandParents(node);

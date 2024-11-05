@@ -3,12 +3,19 @@ package software.coley.recaf.ui.control.tree;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.info.BasicFileInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.StubFileInfo;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
-import software.coley.recaf.path.*;
+import software.coley.recaf.path.BundlePathNode;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.path.ResourcePathNode;
+import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.test.dummy.AccessibleFields;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.test.dummy.StringConsumer;
@@ -358,6 +365,69 @@ class WorkspaceTreeNodeTest {
 		assertTrue(child.matches(p1a));
 	}
 
+	@Nested
+	class Filtered {
+		@Test
+		void insertWhileFilteredStillUpdatesChildren() {
+			// Create workspace root, but apply a filter so that nothing is shown
+			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
+			workspaceNode.predicateProperty().set(p -> false);
+
+			// Insert the class, which should generate all paths between the class and the workspace node.
+			WorkspaceTreeNode classNode = getOrInsertIntoTree(workspaceNode, p1a);
+			assertNotNull(classNode, "Class not yielded by original assert");
+
+			// Validate the filtered view is still empty, but the unfiltered model has children
+			WorkspaceTreeNode node = workspaceNode;
+			for (int d = 0; d < 5; d++) {
+				assertTrue(node.getChildren().isEmpty(), "Filtered children list is not empty: depth=" + d);
+				assertFalse(node.getSourceChildren().isEmpty(), "Unfiltered children list was empty: depth=" + d);
+				node = Unchecked.cast(workspaceNode.getSourceChildren().getFirst());
+			}
+		}
+
+		@Test
+		void removeWhileFilteredStillUpdatesChildren() {
+			// Create workspace root and insert the class, which should generate all paths between the class and the workspace node.
+			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
+			WorkspaceTreeNode classNode = getOrInsertIntoTree(workspaceNode, p1a);
+			assertNotNull(classNode, "Class not yielded by original assert");
+			assertNotNull(workspaceNode.getNodeByPath(p1a), "Could not get class after setup");
+
+			// Apply a filter so that nothing is shown.
+			// We should still be able to access items via path-lookup though.
+			workspaceNode.predicateProperty().set(p -> false);
+			assertNotNull(workspaceNode.getNodeByPath(p1a), "Could not get class after filtering");
+
+			// Validate the filtered view is still empty, but the unfiltered model has children
+			assertTrue(workspaceNode.removeNodeByPath(p1a), "Class could not be removed");
+			assertNull(workspaceNode.getNodeByPath(p1a), "Class accessible after removed");
+		}
+
+		@Test
+		void removeWhileFilteredDoesNotEliminateOtherClasses() {
+			// Create workspace root and insert the class, which should generate all paths between the class and the workspace node.
+			WorkspaceTreeNode workspaceNode = new WorkspaceTreeNode(p5);
+			WorkspaceTreeNode classNodeA = getOrInsertIntoTree(workspaceNode, p1a);
+			WorkspaceTreeNode classNodeB = getOrInsertIntoTree(workspaceNode, p1b);
+			WorkspaceTreeNode classNodeC = getOrInsertIntoTree(workspaceNode, p1c);
+			assertNotNull(classNodeA, "Class not yielded by original assert");
+			assertNotNull(classNodeB, "Class not yielded by original assert");
+			assertNotNull(classNodeC, "Class not yielded by original assert");
+			assertNotNull(workspaceNode.getNodeByPath(p1a), "Could not get class after setup");
+			assertNotNull(workspaceNode.getNodeByPath(p1b), "Could not get class after setup");
+			assertNotNull(workspaceNode.getNodeByPath(p1c), "Could not get class after setup");
+
+			// Apply a filter so that nothing is shown.
+			workspaceNode.predicateProperty().set(p -> false);
+
+			// Remove 'Class A' and verify 'Class B' and 'Class C' are still accessible
+			assertTrue(workspaceNode.removeNodeByPath(p1a), "Could not remove class after filtering");
+			assertNull(workspaceNode.getNodeByPath(p1a), "Class A accessible after removed");
+			assertNotNull(workspaceNode.getNodeByPath(p1b), "Class B not accessible after adjacent leaf removed");
+			assertNotNull(workspaceNode.getNodeByPath(p1c), "Class C not accessible after adjacent leaf removed");
+		}
+	}
 
 	@Nested
 	class Insertion {
@@ -370,29 +440,29 @@ class WorkspaceTreeNodeTest {
 			assertNotNull(classNode, "Class not yielded by original assert");
 
 			// Assert all package entries exist for: software.coley.recaf.test.dummy
-			WorkspaceTreeNode packageDummy = classNode.getParentNode();
+			WorkspaceTreeNode packageDummy = classNode.getSourceParentNode();
 			assertNotNull(packageDummy, "Missing node for package: 'software.coley.recaf.test.dummy'");
-			WorkspaceTreeNode packageTest = packageDummy.getParentNode();
+			WorkspaceTreeNode packageTest = packageDummy.getSourceParentNode();
 			assertNotNull(packageTest, "Missing node for package: 'software.coley.recaf.test'");
-			WorkspaceTreeNode packageRecaf = packageTest.getParentNode();
+			WorkspaceTreeNode packageRecaf = packageTest.getSourceParentNode();
 			assertNotNull(packageRecaf, "Missing node for package: 'software.coley.recaf'");
-			WorkspaceTreeNode packageColey = packageRecaf.getParentNode();
+			WorkspaceTreeNode packageColey = packageRecaf.getSourceParentNode();
 			assertNotNull(packageColey, "Missing node for package: 'software.coley'");
-			WorkspaceTreeNode packageSoftware = packageColey.getParentNode();
+			WorkspaceTreeNode packageSoftware = packageColey.getSourceParentNode();
 			assertNotNull(packageSoftware, "Missing node for package: 'software'");
 
 			// Bundle parent
-			WorkspaceTreeNode bundleNode = packageSoftware.getParentNode();
+			WorkspaceTreeNode bundleNode = packageSoftware.getSourceParentNode();
 			assertNotNull(bundleNode, "Missing bundle node");
 			assertTrue(bundleNode.getValue() instanceof BundlePathNode);
 
 			// Resource parent
-			WorkspaceTreeNode resourceNode = bundleNode.getParentNode();
+			WorkspaceTreeNode resourceNode = bundleNode.getSourceParentNode();
 			assertNotNull(resourceNode, "Missing resource node");
 			assertTrue(resourceNode.getValue() instanceof ResourcePathNode);
 
 			// Workspace parent should be the same as the original item we had.
-			WorkspaceTreeNode workspaceNode2 = resourceNode.getParentNode();
+			WorkspaceTreeNode workspaceNode2 = resourceNode.getSourceParentNode();
 			assertSame(workspaceNode, workspaceNode2);
 		}
 
