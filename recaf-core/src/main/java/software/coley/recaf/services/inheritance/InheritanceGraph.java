@@ -28,7 +28,14 @@ import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -256,6 +263,29 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		if (vertex.isModule())
 			return Collections.singleton(vertex);
 		return vertex.getFamily(includeObject);
+	}
+
+	/**
+	 * Given {@code List.class.isAssignableFrom(ArrayList.class)} the {@code first} parameter would be
+	 * {@code java/util/List} and the {@code second} parameter would be {@code java/util/ArrayList}.
+	 *
+	 * @param first
+	 * 		Assumed super-class or interface type.
+	 * @param second
+	 * 		Assumed child class which extends the super-class or implements the interface type.
+	 *
+	 * @return {@code true} when {@code first.isAssignableFrom(second)}.
+	 */
+	public boolean isAssignableFrom(@Nonnull String first, @Nonnull String second) {
+		// Base/edge case
+		if (OBJECT.equals(first))
+			return true;
+
+		// Lookup vertex for the child type, and see if any parent contains the supposed super/interface type.
+		InheritanceVertex secondVertex = getVertex(second);
+		if (secondVertex == null)
+			return false;
+		return secondVertex.allParents().anyMatch(v -> v.getName().equals(first));
 	}
 
 	/**
