@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests {@link MappingFileFormat} implementation support for importing from intermediate mappings.
  */
-public class MappingIntermediateTests extends TestBase {
+public class MappingIntermediateTest extends TestBase {
 	@Test
 	void testMapFromIntermediate() {
 		// Setup base mappings

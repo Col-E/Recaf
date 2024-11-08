@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Tests various {@link MappingFileFormat} implementation's ability to parse input texts.
  */
-public class MappingImplementationTests {
+public class MappingImplementationTest {
 	@Test
 	void testTinyV1() {
 		String mappingsText = """
