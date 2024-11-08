@@ -5,6 +5,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.geometry.Insets;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import software.coley.recaf.info.ClassInfo;
@@ -52,7 +53,7 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 							 @Nonnull WorkspaceResource resource,
 							 @Nonnull SummaryConsumer consumer) {
 		Label title = new BoundLabel(Lang.getBinding("service.analysis.entry-points"));
-		title.getStyleClass().add(Styles.TEXT_BOLD);
+		title.getStyleClass().addAll(Styles.TITLE_4);
 		consumer.appendSummary(title);
 
 		// Visit JVM classes
@@ -69,6 +70,7 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 					String classDisplay = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, cls).makeText();
 					Node classIcon = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, cls).makeIcon();
 					Label classLabel = new Label(classDisplay, classIcon);
+					classLabel.setCursor(Cursor.HAND);
 					classLabel.setOnMouseEntered(e -> classLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
 					classLabel.setOnMouseExited(e -> classLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
 					classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, resource, bundle, classLookup.get()));
@@ -79,6 +81,7 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 						String methodDisplay = textService.getMethodMemberTextProvider(workspace, resource, bundle, cls, method).makeText();
 						Node methodIcon = iconService.getClassMemberIconProvider(workspace, resource, bundle, cls, method).makeIcon();
 						Label methodLabel = new Label(methodDisplay);
+						methodLabel.setCursor(Cursor.HAND);
 						methodLabel.setGraphic(methodIcon);
 						methodLabel.setPadding(new Insets(2, 2, 2, 15));
 						methodLabel.setOnMouseEntered(e -> methodLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));

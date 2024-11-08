@@ -108,6 +108,21 @@ class InheritanceGraphTest extends TestBase {
 	}
 
 	@Test
+	void isAssignableFrom() {
+		String edibleName = Inheritance.Edible.class.getName().replace('.', '/');
+		String appleName = Inheritance.Apple.class.getName().replace('.', '/');
+		String grapeName = Inheritance.Grape.class.getName().replace('.', '/');
+
+		// Edible.class.isAssignableFrom(Apple.class) --> true
+		assertTrue(graph.isAssignableFrom(edibleName, appleName), "Edible should be assignable from Apple");
+		assertTrue(graph.isAssignableFrom(edibleName, grapeName), "Edible should be assignable from Grape");
+
+		// Apple.class.isAssignableFrom(Edible.class) --> false
+		assertFalse(graph.isAssignableFrom(appleName, edibleName), "Apple should not be assignable from Edible");
+		assertFalse(graph.isAssignableFrom(grapeName, edibleName), "Grape should not be assignable from Edible");
+	}
+
+	@Test
 	void getFamilyOfThrowable() {
 		String notFoodExceptionName = Inheritance.NotFoodException.class.getName().replace('.', '/');
 		ClassPathNode classPath = workspace.findJvmClass(notFoodExceptionName);

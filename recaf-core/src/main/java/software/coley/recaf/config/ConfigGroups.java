@@ -53,6 +53,10 @@ public final class ConfigGroups {
 	 */
 	public static final String SERVICE_PLUGIN = SERVICE + PACKAGE_SPLIT + "plugin";
 	/**
+	 * Group for transformation components.
+	 */
+	public static final String SERVICE_TRANSFORM = SERVICE + PACKAGE_SPLIT + "transform";
+	/**
 	 * Group base for UI classes.
 	 */
 	public static final String SERVICE_UI = SERVICE + PACKAGE_SPLIT + "ui";

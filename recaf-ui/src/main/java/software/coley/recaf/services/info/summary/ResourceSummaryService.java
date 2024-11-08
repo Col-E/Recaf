@@ -13,9 +13,10 @@ import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.SortedSet;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -28,12 +29,12 @@ public class ResourceSummaryService implements Service {
 	public static final String SERVICE_ID = "info-summary";
 	private static final Logger logger = Logging.get(ResourceSummaryService.class);
 	private static final ExecutorService threadPool = ThreadPoolFactory.newSingleThreadExecutor("resource-summary");
+	private final Map<String, ResourceSummarizer> summarizers = new ConcurrentHashMap<>();
 	private final ResourceSummaryServiceConfig config;
-	private final SortedSet<ResourceSummarizer> summarizers = new TreeSet<>();
 
 	@Inject
 	public ResourceSummaryService(@Nonnull ResourceSummaryServiceConfig config,
-								  @Nonnull Instance<ResourceSummarizer> summarizers) {
+	                              @Nonnull Instance<ResourceSummarizer> summarizers) {
 		this.config = config;
 
 		// TODO: Summarizer for android
@@ -43,7 +44,7 @@ public class ResourceSummaryService implements Service {
 
 		// Add discovered summarizers from classpath.
 		for (ResourceSummarizer summarizer : summarizers)
-			this.summarizers.add(summarizer);
+			addSummarizer(summarizer);
 	}
 
 	/**
@@ -55,14 +56,17 @@ public class ResourceSummaryService implements Service {
 	 * 		Resource to summarize.
 	 * @param consumer
 	 * 		Consumer of summary data.
+	 *
+	 * @return Future of summarization completion.
 	 */
-	public void summarizeTo(@Nonnull Workspace workspace,
-							@Nonnull WorkspaceResource resource,
-							@Nonnull SummaryConsumer consumer) {
+	@Nonnull
+	public CompletableFuture<Void> summarizeTo(@Nonnull Workspace workspace,
+	                                           @Nonnull WorkspaceResource resource,
+	                                           @Nonnull SummaryConsumer consumer) {
 		// Run async so we do not block the UI thread
-		CompletableFuture.runAsync(() -> {
+		return CompletableFuture.runAsync(() -> {
 			boolean lastSummarizerAppended = false;
-			for (ResourceSummarizer summarizer : summarizers) {
+			for (ResourceSummarizer summarizer : new TreeSet<>(summarizers.values())) {
 				if (lastSummarizerAppended)
 					consumer.appendSummary(new Separator());
 				try {
@@ -80,7 +84,7 @@ public class ResourceSummaryService implements Service {
 	 * 		Summarizer to add.
 	 */
 	public void addSummarizer(@Nonnull ResourceSummarizer summarizer) {
-		summarizers.add(summarizer);
+		summarizers.put(summarizer.id(), summarizer);
 	}
 
 	/**
@@ -90,7 +94,7 @@ public class ResourceSummaryService implements Service {
 	 * @return {@code true} on removal. {@code false} when it did not exist prior.
 	 */
 	public boolean removeSummarizer(@Nonnull ResourceSummarizer summarizer) {
-		return summarizers.remove(summarizer);
+		return summarizers.remove(summarizer.id()) != null;
 	}
 
 	@Nonnull

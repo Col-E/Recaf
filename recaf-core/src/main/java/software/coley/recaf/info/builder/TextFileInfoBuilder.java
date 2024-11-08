@@ -30,6 +30,11 @@ public class TextFileInfoBuilder extends FileInfoBuilder<TextFileInfoBuilder> {
 	}
 
 	@Nonnull
+	public TextFileInfoBuilder withText(@Nonnull String text) {
+		return withRawContent(text.getBytes(getCharset()));
+	}
+
+	@Nonnull
 	public String getText() {
 		return Objects.requireNonNull(getDecodingResult().text(), "File '" + getName() + "' could not be decoded");
 	}
