@@ -5,16 +5,25 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Sets;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.WorkspaceScoped;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.BundlePathNode;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,40 +49,52 @@ public class TransformationApplier implements Service {
 	}
 
 	/**
-	 * @param transformerClasses
-	 * 		JVM class transformers to run.
 	 * @param workspace
 	 * 		Workspace to transform.
+	 * @param transformerClasses
+	 * 		JVM class transformers to run.
+	 *
+	 * @return Result container with details about the transformation, including any failures, the transformed classes,
+	 * and the option to apply the transformations to the workspace.
 	 *
 	 * @throws TransformationException
 	 * 		When transformation cannot be run for any reason.
 	 */
-	public void transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
-	                         @Nonnull Workspace workspace) throws TransformationException {
-		transformJvm(transformerClasses, workspace, null);
+	@Nonnull
+	public TransformResult transformJvm(@Nonnull Workspace workspace, @Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses) throws TransformationException {
+		return transformJvm(workspace, transformerClasses, null);
 	}
 
 	/**
-	 * @param transformerClasses
-	 * 		JVM class transformers to run.
 	 * @param workspace
 	 * 		Workspace to transform.
+	 * @param transformerClasses
+	 * 		JVM class transformers to run.
 	 * @param predicate
 	 * 		Filter to control which JVM classes are transformed.
 	 * 		Can be {@code null} to transform all JVM classes.
 	 *
+	 * @return Result container with details about the transformation, including any failures, the transformed classes,
+	 * and the option to apply the transformations to the workspace.
+	 *
 	 * @throws TransformationException
 	 * 		When transformation cannot be run for any reason.
 	 */
-	public void transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
-	                         @Nonnull Workspace workspace, @Nullable JvmClassTransformerPredicate predicate) throws TransformationException {
+	@Nonnull
+	public TransformResult transformJvm(@Nonnull Workspace workspace, @Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
+	                                    @Nullable JvmClassTransformerPredicate predicate) throws TransformationException {
 		// Build transformer visitation order
 		TransformerQueue queue = buildQueue(transformerClasses);
 
+		// Map to hold transformation errors for each class:transformer
+		Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> transformJvmFailures = new HashMap<>();
+
 		// Build the transformer context and apply all transformations in order
-		JvmTransformerContext context = new JvmTransformerContext(queue.transformers);
 		WorkspaceResource resource = workspace.getPrimaryResource();
+		ResourcePathNode resourcePath = PathNodes.resourcePath(workspace, resource);
+		JvmTransformerContext context = new JvmTransformerContext(workspace, resource, queue.transformers);
 		resource.jvmClassBundleStreamRecursive().forEach(bundle -> {
+			BundlePathNode bundlePathNode = resourcePath.child(bundle);
 			for (JvmClassTransformer transformer : queue.transformers) {
 				bundle.forEach(cls -> {
 					// Skip if the class does not pass the predicate
@@ -84,13 +105,38 @@ public class TransformationApplier implements Service {
 						transformer.transform(context, workspace, resource, bundle, cls);
 					} catch (Throwable t) {
 						logger.error("Transformer '{}' failed on class '{}'", transformer.name(), cls.getName(), t);
+						ClassPathNode path = bundlePathNode.child(cls.getPackageName()).child(cls);
+						var transformerToThrowable = transformJvmFailures.computeIfAbsent(path, p -> new HashMap<>());
+						transformerToThrowable.put(transformer.getClass(), t);
 					}
 				});
 			}
 		});
 
 		// Update the workspace contents with the transformation results
-		context.applyChanges(graph);
+		Map<ClassPathNode, JvmClassInfo> transformedJvmClasses = context.buildChangeMap(graph);
+		return new TransformResult() {
+			@Nonnull
+			@Override
+			public Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> getJvmTransformerFailures() {
+				return transformJvmFailures;
+			}
+
+			@Nonnull
+			@Override
+			public Map<ClassPathNode, JvmClassInfo> getJvmTransformedClasses() {
+				return transformedJvmClasses;
+			}
+
+			@Override
+			public void apply() {
+				Unchecked.checkedForEach(transformedJvmClasses, (path, cls) -> {
+					JvmClassBundle bundle = path.getValueOfType(JvmClassBundle.class);
+					if (bundle != null)
+						bundle.put(cls);
+				}, (path, cls, t) -> logger.error("Exception thrown handling transform application", t));
+			}
+		};
 
 		// TODO: If we want a transformer which generates and applies mappings, we need a way to facilitate that
 		//  - Letting a transformer control mapping applier is bad because that can break the tracking state of class models
