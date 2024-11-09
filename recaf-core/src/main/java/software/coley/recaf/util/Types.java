@@ -19,7 +19,16 @@ import java.util.List;
  */
 public class Types {
 	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
+	public static final Type CLASS_TYPE = Type.getObjectType("java/lang/Class");
 	public static final Type STRING_TYPE = Type.getObjectType("java/lang/String");
+	public static final Type ARRAY_1D_BOOLEAN = Type.getObjectType("[Z");
+	public static final Type ARRAY_1D_CHAR = Type.getObjectType("[C");
+	public static final Type ARRAY_1D_BYTE = Type.getObjectType("[B");
+	public static final Type ARRAY_1D_SHORT = Type.getObjectType("[S");
+	public static final Type ARRAY_1D_INT = Type.getObjectType("[I");
+	public static final Type ARRAY_1D_FLOAT = Type.getObjectType("[F");
+	public static final Type ARRAY_1D_DOUBLE = Type.getObjectType("[D");
+	public static final Type ARRAY_1D_LONG = Type.getObjectType("[J");
 	public static final Type[] PRIMITIVES = new Type[]{
 			Type.VOID_TYPE,
 			Type.BOOLEAN_TYPE,
