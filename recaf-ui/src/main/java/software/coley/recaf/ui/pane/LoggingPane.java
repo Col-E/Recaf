@@ -6,6 +6,7 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -16,6 +17,7 @@ import javafx.scene.shape.Shape;
 import javafx.util.Duration;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.event.Level;
+import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.LogConsumer;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
@@ -27,10 +29,14 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Pane for displaying logger calls.
@@ -39,7 +45,8 @@ import java.util.stream.Collectors;
  */
 @Dependent
 public class LoggingPane extends BorderPane implements LogConsumer<String> {
-	private final List<LogCallInfo> infos = new ArrayList<>();
+	private final List<LogCallInfo> infos = Collections.synchronizedList(new ArrayList<>());
+	private final Queue<String> messageQueue = new ArrayDeque<>();
 	private final Editor editor = new Editor();
 	private final CodeArea codeArea = editor.getCodeArea();
 
@@ -52,7 +59,7 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 		setCenter(editor);
 
 		// Initial line
-		infos.add(new LogCallInfo("Initial", Level.TRACE, "", null));
+		infos.add(new LogCallInfo(Level.TRACE, null));
 		codeArea.appendText("Current log will write to: " + StringUtil.pathToAbsoluteString(config.getCurrentLogPath()));
 
 		// We want to reduce the calls to the FX thread, so we will chunk log-appends into groups
@@ -60,14 +67,18 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 		ThreadPoolFactory.newScheduledThreadPool("logging-pane")
 				.scheduleAtFixedRate(() -> {
 					try {
-						int skip = codeArea.getParagraphs().size();
-						int size = infos.size();
-						if (size > skip) {
-							String collectedMessageLines = infos.stream().skip(skip)
-									.map(LogCallInfo::getAndPruneContent)
-									.collect(Collectors.joining("\n"));
+						StringBuilder messageBuilder = new StringBuilder();
+						synchronized (messageQueue) {
+							if (messageQueue.isEmpty())
+								return;
+							String message;
+							while ((message = messageQueue.poll()) != null)
+								messageBuilder.append(message).append('\n');
+						}
+						if (messageBuilder.length() > 1) {
+							String collectedMessage = messageBuilder.substring(0, messageBuilder.length() - 1);
 							FxThreadUtil.run(() -> {
-								codeArea.appendText("\n" + collectedMessageLines);
+								codeArea.appendText("\n" + collectedMessage);
 								codeArea.showParagraphAtBottom(codeArea.getParagraphs().size() - 1);
 							});
 						}
@@ -80,48 +91,29 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 	}
 
 	@Override
-	public void accept(@Nonnull String loggerName, @Nonnull Level level, String messageContent) {
-		infos.add(new LogCallInfo(loggerName, level, messageContent, null));
+	public void accept(@Nonnull String loggerName, @Nonnull Level level, @Nullable String messageContent) {
+		accept(loggerName, level, messageContent, null);
 	}
 
 	@Override
-	public void accept(@Nonnull String loggerName, @Nonnull Level level, String messageContent, Throwable throwable) {
-		infos.add(new LogCallInfo(loggerName, level, messageContent, throwable));
-	}
-
-	private static class LogCallInfo {
-		private final String loggerName;
-		private final Level level;
-		private final Throwable throwable;
-		private String messageContent;
-
-		LogCallInfo(@Nonnull String loggerName,
-					@Nonnull Level level,
-					@Nonnull String messageContent,
-					@Nullable Throwable throwable) {
-			this.loggerName = loggerName;
-			this.level = level;
-			this.messageContent = messageContent;
-			this.throwable = throwable;
+	public void accept(@Nonnull String loggerName, @Nonnull Level level, @Nullable String messageContent, @Nullable Throwable throwable) {
+		if (messageContent == null) {
+			if (throwable == null)
+				return;
+			messageContent = Objects.requireNonNullElse(throwable.getMessage(), throwable.getClass().getSimpleName());
 		}
-
-		/**
-		 * Gets the message content once, then clears it, so we don't hold a constant reference to it.
-		 *
-		 * @return Message content of log call.
-		 */
-		@Nonnull
-		public String getAndPruneContent() {
-			String content = messageContent;
-			if (content == null)
-				throw new PruneError();
-			messageContent = null;
-			return content;
+		infos.add(new LogCallInfo(level, throwable));
+		synchronized (messageQueue) {
+			messageQueue.add(messageContent);
 		}
 	}
+
+	private record LogCallInfo(
+			@Nonnull Level level,
+			@Nullable Throwable throwable) {}
 
 	private class LoggingLineFactory implements LineGraphicFactory {
-		private static final Insets PADDING = new Insets(0, 5, 0, 0);
+		private static final Insets PADDING = new Insets(0, 10, 0, 0);
 		private static final double SIZE = 4;
 		private static final double[] TRIANGLE = {
 				SIZE, 0, // Size used for circles is radius, so for triangles we want to double positions based on it.
@@ -161,6 +153,7 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 			HBox wrapper = new HBox(shape);
 			wrapper.setAlignment(Pos.CENTER);
 			wrapper.setPadding(PADDING);
+			wrapper.setCursor(Cursor.HAND);
 			if (info.throwable != null) {
 				Tooltip tooltip = new Tooltip(StringUtil.traceToString(info.throwable));
 				tooltip.setShowDelay(Duration.ZERO);
