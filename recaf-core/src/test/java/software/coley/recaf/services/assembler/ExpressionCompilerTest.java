@@ -143,6 +143,16 @@ class ExpressionCompilerTest extends TestBase {
 	}
 
 	@Test
+	void ignoreTooOldTargetVersion() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setVersionTarget(1);
+		ExpressionResult result = compile(assembler, """
+				System.out.println("We do not compile against Java 1");
+				""");
+		assertSuccess(result);
+	}
+
+	@Test
 	void ignoreNonExistingTypeForFields() {
 		ClassWriter cw = new ClassWriter(0);
 		cw.visit(V1_8, ACC_PUBLIC, "ExampleClass", null, "java/lang/Object", null);

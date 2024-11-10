@@ -138,6 +138,19 @@ public class ExpressionCompiler {
 	}
 
 	/**
+	 * Set the target version of Java.
+	 * <br>
+	 * Java 8 would pass 8.
+	 *
+	 * @param versionTarget
+	 * 		Java version target.
+	 * 		Range of supported values: [{@link JavacCompiler#getMinTargetVersion()} - {@link JavaVersion#get()}]
+	 */
+	public void setVersionTarget(int versionTarget) {
+		this.versionTarget = versionTarget;
+	}
+
+	/**
 	 * Compiles the given expression with the current context.
 	 *
 	 * @param expression
@@ -159,7 +172,7 @@ public class ExpressionCompiler {
 		}
 
 		// Compile the generated class
-		JavacArguments arguments = new JavacArguments(className, code, null, versionTarget, -1, true, false, false);
+		JavacArguments arguments = new JavacArguments(className, code, null, Math.max(versionTarget, JavacCompiler.getMinTargetVersion()), -1, true, false, false);
 		CompilerResult result = javac.compile(arguments, workspace, null);
 		if (!result.wasSuccess()) {
 			Throwable exception = result.getException();
