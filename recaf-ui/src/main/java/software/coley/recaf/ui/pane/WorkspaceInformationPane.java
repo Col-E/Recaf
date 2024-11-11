@@ -107,7 +107,7 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 
 		// When the summary is done, clear the "loading..." overlay.
 		CompletableFuture.allOf(summaryFutures.toArray(CompletableFuture[]::new))
-				.whenCompleteAsync((ignored, error) -> modal.hide(true), FxThreadUtil.executor());
+				.whenCompleteAsync((ignored, error) -> FxThreadUtil.delayedRun(100, () -> modal.hide(true)));
 	}
 
 	@Nonnull
