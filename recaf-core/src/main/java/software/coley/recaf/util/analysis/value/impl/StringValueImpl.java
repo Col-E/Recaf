@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.value.ObjectValue;
+import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
 
 import java.util.Optional;
@@ -36,5 +38,21 @@ public class StringValueImpl extends ObjectValueImpl implements StringValue {
 	@Override
 	public boolean hasKnownValue() {
 		return nullness() == Nullness.NOT_NULL && text.isPresent();
+	}
+
+	@Nonnull
+	@Override
+	public ReValue mergeWith(@Nonnull ReValue other) {
+		if (other instanceof StringValue otherString) {
+			if (getText().isPresent() && otherString.getText().isPresent()) {
+				String s = getText().get();
+				String otherS = otherString.getText().get();
+				if (s.equals(otherS))
+					return ObjectValue.string(s);
+			}
+		}
+
+		// Fall back to object merge logic
+		return super.mergeWith(other);
 	}
 }

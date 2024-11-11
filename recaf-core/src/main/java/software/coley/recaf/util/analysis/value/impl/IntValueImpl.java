@@ -1,7 +1,9 @@
 package software.coley.recaf.util.analysis.value.impl;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IntValue;
+import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.OptionalInt;
 
@@ -46,5 +48,20 @@ public class IntValueImpl implements IntValue {
 	@Override
 	public String toString() {
 		return type().getInternalName() + ":" + (value.isPresent() ? value.getAsInt() : "?");
+	}
+
+	@Nonnull
+	@Override
+	public ReValue mergeWith(@Nonnull ReValue other) {
+		if (other instanceof IntValue otherInt) {
+			if (value().isPresent() && otherInt.value().isPresent()) {
+				int i = value().getAsInt();
+				int otherI = otherInt.value().getAsInt();
+				if (i == otherI)
+					return IntValue.of(i);
+			}
+			return IntValue.UNKNOWN;
+		}
+		throw new IllegalStateException("Cannot merge with: " + other);
 	}
 }

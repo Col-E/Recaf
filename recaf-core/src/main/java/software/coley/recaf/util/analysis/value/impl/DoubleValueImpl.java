@@ -2,6 +2,7 @@ package software.coley.recaf.util.analysis.value.impl;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.analysis.value.DoubleValue;
+import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.OptionalDouble;
 
@@ -46,5 +47,20 @@ public class DoubleValueImpl implements DoubleValue {
 	@Override
 	public String toString() {
 		return type().getInternalName() + ":" + (value.isPresent() ? value.getAsDouble() : "?");
+	}
+
+	@Nonnull
+	@Override
+	public ReValue mergeWith(@Nonnull ReValue other) {
+		if (other instanceof DoubleValue otherDouble) {
+			if (value().isPresent() && otherDouble.value().isPresent()) {
+				double d = value().getAsDouble();
+				double otherD = otherDouble.value().getAsDouble();
+				if (d == otherD)
+					return DoubleValue.of(d);
+			}
+			return DoubleValue.UNKNOWN;
+		}
+		throw new IllegalStateException("Cannot merge with: " + other);
 	}
 }

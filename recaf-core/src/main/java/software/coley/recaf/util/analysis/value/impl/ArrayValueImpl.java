@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import org.objectweb.asm.Type;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.ArrayValue;
+import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.sql.Types;
 import java.util.OptionalInt;
@@ -37,6 +38,21 @@ public class ArrayValueImpl implements ArrayValue {
 	@Override
 	public Type type() {
 		return type;
+	}
+
+	@Nonnull
+	@Override
+	public ReValue mergeWith(@Nonnull ReValue other) {
+		if (other instanceof ArrayValue otherArray) {
+			if (getFirstDimensionLength().isPresent() && otherArray.getFirstDimensionLength().isPresent()) {
+				int dim = getFirstDimensionLength().getAsInt();
+				int otherDim = otherArray.getFirstDimensionLength().getAsInt();
+				if (dim == otherDim)
+					return ArrayValue.of(type, nullness.mergeWith(otherArray.nullness()), dim);
+			}
+			return ArrayValue.of(type, nullness.mergeWith(otherArray.nullness()));
+		}
+		throw new IllegalStateException("Cannot merge with: " + other);
 	}
 
 	@Nonnull

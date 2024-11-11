@@ -18,10 +18,16 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Interpreter;
 import org.objectweb.asm.tree.analysis.SimpleVerifier;
+import org.slf4j.Logger;
 import software.coley.recaf.RecafConstants;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.util.Types;
+import software.coley.recaf.util.analysis.lookup.GetFieldLookup;
+import software.coley.recaf.util.analysis.lookup.GetStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
@@ -30,8 +36,6 @@ import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
-import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
-import software.coley.recaf.util.analysis.value.impl.ObjectValueImpl;
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -43,11 +47,32 @@ import java.util.OptionalInt;
  * @see ReValue Base enhanced value type.
  */
 public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
+	private static final Logger logger = Logging.get(ReInterpreter.class);
 	private final InheritanceGraph graph;
+	private GetStaticLookup getStaticLookup;
+	private GetFieldLookup getFieldLookup;
+	private InvokeStaticLookup invokeStaticLookup;
+	private InvokeVirtualLookup invokeVirtualLookup;
 
 	public ReInterpreter(@Nonnull InheritanceGraph graph) {
 		super(RecafConstants.getAsmVersion());
 		this.graph = graph;
+	}
+
+	public void setGetStaticLookup(@Nullable GetStaticLookup getStaticLookup) {
+		this.getStaticLookup = getStaticLookup;
+	}
+
+	public void setGetFieldLookup(@Nullable GetFieldLookup getFieldLookup) {
+		this.getFieldLookup = getFieldLookup;
+	}
+
+	public void setInvokeStaticLookup(@Nullable InvokeStaticLookup invokeStaticLookup) {
+		this.invokeStaticLookup = invokeStaticLookup;
+	}
+
+	public void setInvokeVirtualLookup(@Nullable InvokeVirtualLookup invokeVirtualLookup) {
+		this.invokeVirtualLookup = invokeVirtualLookup;
 	}
 
 	@Nonnull
@@ -69,12 +94,8 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			case Type.FLOAT -> FloatValue.UNKNOWN;
 			case Type.LONG -> LongValue.UNKNOWN;
 			case Type.DOUBLE -> DoubleValue.UNKNOWN;
-			case Type.ARRAY -> new ArrayValueImpl(type, nullness);
-			case Type.OBJECT -> {
-				if (Types.OBJECT_TYPE.equals(type)) yield ObjectValue.object(nullness);
-				else if (Types.STRING_TYPE.equals(type)) yield ObjectValue.string(nullness);
-				yield new ObjectValueImpl(type, nullness);
-			}
+			case Type.ARRAY -> ArrayValue.of(type, nullness);
+			case Type.OBJECT -> ObjectValue.object(type, nullness);
 			default -> throw new IllegalArgumentException("Invalid type for new value: " + type);
 		};
 	}
@@ -161,8 +182,10 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			case JSR:
 				return ObjectValue.VAL_JSR;
 			case GETSTATIC:
-				// TODO: Lookup for known static values (Integer.MAX for instance)
-				Type fieldType = Type.getType(((FieldInsnNode) insn).desc);
+				FieldInsnNode field = (FieldInsnNode) insn;
+				if (getStaticLookup != null)
+					return getStaticLookup.get(field);
+				Type fieldType = Type.getType(field.desc);
 				return newValue(fieldType);
 			case NEW:
 				Type objectType = Type.getObjectType(((TypeInsnNode) insn).desc);
@@ -266,7 +289,10 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			case ATHROW:
 				return null;
 			case GETFIELD: {
-				Type fieldType = Type.getType(((FieldInsnNode) insn).desc);
+				FieldInsnNode field = (FieldInsnNode) insn;
+				if (getFieldLookup != null)
+					return getFieldLookup.get(field, value);
+				Type fieldType = Type.getType(field.desc);
 				return newValue(fieldType);
 			}
 			case NEWARRAY:
@@ -488,8 +514,12 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			Type returnType = Type.getReturnType(((InvokeDynamicInsnNode) insn).desc);
 			return newValue(returnType);
 		} else {
-			// TODO: Handle special case static methods
-			// TODO: Handle special case virtual methods on known string values
+			MethodInsnNode method = (MethodInsnNode) insn;
+			if (opcode == INVOKESTATIC && invokeStaticLookup != null) {
+				return invokeStaticLookup.get(method, values);
+			} else if (opcode == INVOKEVIRTUAL && invokeVirtualLookup != null) {
+				return invokeVirtualLookup.get(method, values.getFirst(), values.subList(1, values.size()));
+			}
 			Type returnType = Type.getReturnType(((MethodInsnNode) insn).desc);
 			return newValue(returnType);
 		}
@@ -561,6 +591,20 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		// The merge of array types of different dimensions is an Object array type.
 		if (dim1 != dim2)
 			return newArrayValue(Types.OBJECT_TYPE, Math.min(dim1, dim2));
+
+		// If the dimensions are the same, and there is no array aspect of these values
+		// then we want to merge the values in such a way that tracks state if possible.
+		if (dim1 == 0) {
+			try {
+				if (isAssignableFrom(type1, type2))
+					return value1.mergeWith(value2);
+				if (isAssignableFrom(type2, type1))
+					return value2.mergeWith(value1);
+			} catch (Throwable t) {
+				logger.error("Failed ReValue merge of {} and {}",
+						value1.getClass().getSimpleName(), value2.getClass().getSimpleName(), t);
+			}
+		}
 
 		// Type1 and type2 have a Type.OBJECT sort by construction (see above),
 		// as expected by isAssignableFrom.

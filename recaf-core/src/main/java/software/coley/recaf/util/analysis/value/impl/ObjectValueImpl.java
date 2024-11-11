@@ -3,7 +3,9 @@ package software.coley.recaf.util.analysis.value.impl;
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.Type;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
+import software.coley.recaf.util.analysis.value.ReValue;
 
 /**
  * Object value holder implementation.
@@ -28,6 +30,14 @@ public class ObjectValueImpl implements ObjectValue {
 	@Override
 	public Type type() {
 		return type;
+	}
+
+	@Nonnull
+	@Override
+	public ReValue mergeWith(@Nonnull ReValue other) {
+		if (other instanceof ObjectValue otherObject)
+			return ObjectValue.object(type, nullness().mergeWith(otherObject.nullness()));
+		throw new IllegalStateException("Cannot merge with: " + other);
 	}
 
 	@Nonnull
