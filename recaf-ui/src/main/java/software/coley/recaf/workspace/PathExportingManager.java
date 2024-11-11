@@ -15,10 +15,19 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.services.workspace.io.*;
+import software.coley.recaf.services.workspace.io.PathWorkspaceExportConsumer;
+import software.coley.recaf.services.workspace.io.WorkspaceCompressType;
+import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
+import software.coley.recaf.services.workspace.io.WorkspaceExporter;
+import software.coley.recaf.services.workspace.io.WorkspaceOutputType;
 import software.coley.recaf.ui.config.ExportConfig;
 import software.coley.recaf.ui.config.RecentFilesConfig;
-import software.coley.recaf.util.*;
+import software.coley.recaf.util.DirectoryChooserBuilder;
+import software.coley.recaf.util.ErrorDialogs;
+import software.coley.recaf.util.FileChooserBuilder;
+import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -69,18 +78,36 @@ public class PathExportingManager {
 	 * 		Workspace to export.
 	 */
 	public void export(@Nonnull Workspace workspace) {
+		export(workspace, "workspace", true);
+	}
+
+	/**
+	 * Export the given workspace.
+	 *
+	 * @param workspace
+	 * 		Workspace to export.
+	 * @param contentDescription
+	 * 		Description string for what is within the workspace.
+	 * @param alertWhenEmpty
+	 *        {@code true} to warn users before exporting that no changes are present in the workspace.
+	 *        {@code false} to skip the warning.
+	 */
+	public void export(@Nonnull Workspace workspace, @Nonnull String contentDescription, boolean alertWhenEmpty) {
+		WorkspaceResource primaryResource = workspace.getPrimaryResource();
+
 		// Check if the user hasn't made any changes. Plenty of people have not understood that their changes weren't
 		// saved for one reason or another (the amount of people seeing a red flash thinking that is fine is crazy)
-		WorkspaceResource primaryResource = workspace.getPrimaryResource();
-		boolean noChangesFound = exportConfig.getWarnNoChanges().getValue() && primaryResource.bundleStreamRecursive()
-				.allMatch(b -> b.getDirtyKeys().isEmpty());
-		if (noChangesFound) {
-			Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Lang.get("dialog.file.nochanges"), ButtonType.YES, ButtonType.NO);
-			alert.setTitle(Lang.get("dialog.title.nochanges"));
-			Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
-			stage.getIcons().add(Icons.getImage(Icons.LOGO));
-			if (alert.showAndWait().orElse(ButtonType.NO) != ButtonType.YES)
-				return;
+		if (alertWhenEmpty) {
+			boolean noChangesFound = exportConfig.getWarnNoChanges().getValue() && primaryResource.bundleStreamRecursive()
+					.allMatch(b -> b.getDirtyKeys().isEmpty());
+			if (noChangesFound) {
+				Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Lang.get("dialog.file.nochanges"), ButtonType.YES, ButtonType.NO);
+				alert.setTitle(Lang.get("dialog.title.nochanges"));
+				Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+				stage.getIcons().add(Icons.getImage(Icons.LOGO));
+				if (alert.showAndWait().orElse(ButtonType.NO) != ButtonType.YES)
+					return;
+			}
 		}
 
 		// Prompt a path for the user to write to.
@@ -117,9 +144,9 @@ public class PathExportingManager {
 		WorkspaceExporter exporter = createResourceExporter(primaryResource, exportPath);
 		try {
 			exporter.export(workspace);
-			logger.info("Exported workspace to path '{}'", exportPath);
+			logger.info("Exported " + contentDescription + " to path '{}'", exportPath);
 		} catch (IOException ex) {
-			logger.error("Failed to export workspace to path '{}'", exportPath, ex);
+			logger.error("Failed to export " + contentDescription + " to path '{}'", exportPath, ex);
 			ErrorDialogs.show(
 					Lang.getBinding("dialog.error.exportworkspace.title"),
 					Lang.getBinding("dialog.error.exportworkspace.header"),

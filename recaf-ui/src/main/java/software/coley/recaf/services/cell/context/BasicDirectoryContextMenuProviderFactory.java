@@ -55,6 +55,8 @@ public class BasicDirectoryContextMenuProviderFactory extends AbstractContextMen
 				refactor.directoryItem("menu.refactor.move", STACKED_MOVE, actions::moveDirectory);
 				refactor.directoryItem("menu.refactor.rename", TAG_EDIT, actions::renameDirectory);
 
+				builder.directoryItem("menu.export.directory", EXPORT, actions::exportDirectory);
+
 				// TODO: implement operations
 				//  - Search references
 			}
