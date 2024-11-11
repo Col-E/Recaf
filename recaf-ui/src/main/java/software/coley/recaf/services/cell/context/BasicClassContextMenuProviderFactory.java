@@ -150,6 +150,7 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			));
 			edit.infoItem("menu.edit.add.field", ADD_ALT, actions::addClassField);
 			edit.infoItem("menu.edit.add.method", ADD_ALT, actions::addClassMethod);
+			edit.infoItem("menu.edit.override.method", HEALTH_CROSS, actions::overrideClassMethod);
 			edit.infoItem("menu.edit.remove.field", CLOSE, actions::deleteClassFields).disableWhen(info.getFields().isEmpty());
 			edit.infoItem("menu.edit.remove.method", CLOSE, actions::deleteClassMethods).disableWhen(info.getMethods().isEmpty());
 			edit.infoItem("menu.edit.remove.annotation", CLOSE, actions::deleteClassAnnotations).disableWhen(info.getAnnotations().isEmpty());

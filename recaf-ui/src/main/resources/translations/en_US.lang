@@ -36,6 +36,7 @@ menu.edit=Edit
 menu.edit.add.field=Add field
 menu.edit.add.method=Add method
 menu.edit.add.annotation=Add annotation
+menu.edit.override.method=Override method
 menu.edit.remove.field=Remove fields
 menu.edit.remove.method=Remove methods
 menu.edit.remove.annotation=Remove annotations
@@ -244,6 +245,7 @@ dialog.header.move-package=Move the package into to a new parent package.
 ## Add members
 dialog.title.add-field=Add field
 dialog.title.add-method=Add method
+dialog.title.override-method=Override method
 dialog.input.name=Name
 dialog.input.desc=Descriptor
 dialog.warn.illegal-name=Illegal name

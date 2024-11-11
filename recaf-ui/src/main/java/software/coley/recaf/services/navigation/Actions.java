@@ -27,8 +27,10 @@ import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProviderService;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
@@ -39,6 +41,7 @@ import software.coley.recaf.ui.control.popup.AddMemberPopup;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
 import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
+import software.coley.recaf.ui.control.popup.OverrideMethodPopup;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
@@ -88,7 +91,9 @@ public class Actions implements Service {
 	private final WindowFactory windowFactory;
 	private final TextProviderService textService;
 	private final IconProviderService iconService;
+	private final CellConfigurationService cellConfigurationService;
 	private final PathExportingManager pathExportingManager;
+	private final Instance<InheritanceGraph> graphProvider;
 	private final Instance<MappingApplier> applierProvider;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
@@ -114,7 +119,9 @@ public class Actions implements Service {
 	               @Nonnull WindowFactory windowFactory,
 	               @Nonnull TextProviderService textService,
 	               @Nonnull IconProviderService iconService,
+				   @Nonnull CellConfigurationService cellConfigurationService,
 	               @Nonnull PathExportingManager pathExportingManager,
+				   @Nonnull Instance<InheritanceGraph> graphProvider,
 	               @Nonnull Instance<MappingApplier> applierProvider,
 	               @Nonnull Instance<JvmClassPane> jvmPaneProvider,
 	               @Nonnull Instance<AndroidClassPane> androidPaneProvider,
@@ -137,7 +144,9 @@ public class Actions implements Service {
 		this.windowFactory = windowFactory;
 		this.textService = textService;
 		this.iconService = iconService;
+		this.cellConfigurationService = cellConfigurationService;
 		this.pathExportingManager = pathExportingManager;
+		this.graphProvider= graphProvider;
 		this.applierProvider = applierProvider;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
@@ -1990,6 +1999,42 @@ public class Actions implements Service {
 				logger.error("Failed to open assembler for new method", e);
 			}
 		}).forMethod(info).show();
+	}
+
+	/**
+	 * Prompts the user for method declaration info, to add it to the given class.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param info
+	 * 		Class to update.
+	 */
+	public void overrideClassMethod(@Nonnull Workspace workspace,
+	                           @Nonnull WorkspaceResource resource,
+	                           @Nonnull JvmClassBundle bundle,
+	                           @Nonnull JvmClassInfo info) {
+		InheritanceGraph graph = graphProvider.get();
+		if (graph == null)
+			return;
+		new OverrideMethodPopup(this, cellConfigurationService, graph, workspace, info, (methodOwner, method) -> {
+			ClassWriter writer = new ClassWriter(0);
+			info.getClassReader().accept(new MemberStubAddingVisitor(writer, method), 0);
+			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
+					.adaptFrom(writer.toByteArray())
+					.build();
+			bundle.put(updatedInfo);
+
+			// Open the assembler with the new method
+			try {
+				openAssembler(PathNodes.memberPath(workspace, resource, bundle, updatedInfo, method));
+			} catch (IncompletePathException e) {
+				logger.error("Failed to open assembler for new method", e);
+			}
+		}).show();
 	}
 
 	/**
