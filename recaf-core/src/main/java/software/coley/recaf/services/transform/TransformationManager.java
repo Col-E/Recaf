@@ -8,12 +8,14 @@ import jakarta.enterprise.inject.spi.Bean;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
+import software.coley.recaf.Bootstrap;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -43,7 +45,12 @@ public class TransformationManager implements Service {
 		for (Instance.Handle<JvmClassTransformer> handle : jvmTransformers.handles()) {
 			Bean<JvmClassTransformer> bean = handle.getBean();
 			Class<? extends JvmClassTransformer> transformerClass = Unchecked.cast(bean.getBeanClass());
-			jvmTransformerSuppliers.put(transformerClass, handle::get);
+			jvmTransformerSuppliers.put(transformerClass, () -> {
+				// Even though our transformers may be @Dependent scoped, we need to do a new lookup each time we want
+				// a new instance to get our desired scope behavior. If we re-use the instance handle that is injected
+				// here then even @Dependent scoped beans will yield the same instance again and again.
+				return Bootstrap.get().get(transformerClass);
+			});
 		}
 	}
 
