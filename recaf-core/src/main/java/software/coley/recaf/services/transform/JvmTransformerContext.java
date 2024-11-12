@@ -5,13 +5,19 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.util.visitors.WorkspaceClassWriter;
+import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,34 +30,49 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JvmTransformerContext {
 	private final Map<Class<? extends JvmClassTransformer>, JvmClassTransformer> transformerMap;
 	private final Map<String, JvmClassData> classData = new ConcurrentHashMap<>();
+	private final Workspace workspace;
+	private final WorkspaceResource resource;
 
 	/**
 	 * Constructs a new context from an array of transformers.
 	 *
+	 * @param workspace
+	 * 		Workspace containing the classes to transform.
+	 * @param resource
+	 * 		Resource in the workspace containing classes to transform. Should always be the {@link Workspace#getPrimaryResource()}.
 	 * @param transformers
 	 * 		Transformers to associate with this context.
 	 */
-	public JvmTransformerContext(@Nonnull JvmClassTransformer... transformers) {
-		this.transformerMap = buildMap(transformers);
+	public JvmTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource, @Nonnull JvmClassTransformer... transformers) {
+		this(workspace, resource, Arrays.asList(transformers));
 	}
 
 	/**
 	 * Constructs a new context from a collection of transformers.
 	 *
+	 * @param workspace
+	 * 		Workspace containing the classes to transform.
+	 * @param resource
+	 * 		Resource in the workspace containing classes to transform. Should always be the {@link Workspace#getPrimaryResource()}.
 	 * @param transformers
 	 * 		Transformers to associate with this context.
 	 */
-	public JvmTransformerContext(@Nonnull Collection<? extends JvmClassTransformer> transformers) {
+	public JvmTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource, @Nonnull Collection<? extends JvmClassTransformer> transformers) {
 		this.transformerMap = buildMap(transformers);
+		this.workspace = workspace;
+		this.resource = resource;
 	}
 
 	/**
-	 * Apply any of the recorded changes within this context to the associated workspace.
+	 * Builds the map of initial transformed class paths to their final transformed states.
 	 *
 	 * @param graph
 	 * 		Inheritance graph tied to the workspace the transformed classes belong to.
 	 */
-	protected void applyChanges(@Nonnull InheritanceGraph graph) {
+	@Nonnull
+	protected Map<ClassPathNode, JvmClassInfo> buildChangeMap(@Nonnull InheritanceGraph graph) {
+		ResourcePathNode resourcePath = PathNodes.resourcePath(workspace, resource);
+		Map<ClassPathNode, JvmClassInfo> map = new HashMap<>();
 		for (JvmClassData data : classData.values()) {
 			if (data.isDirty()) {
 				if (data.node != null) {
@@ -60,21 +81,30 @@ public class JvmTransformerContext {
 					data.node.accept(writer);
 					byte[] modifiedBytes = writer.toByteArray();
 
-					// Update workspace
+					// Update output map
 					JvmClassInfo modifiedClass = data.initialClass.toJvmClassBuilder()
 							.adaptFrom(modifiedBytes)
 							.build();
-					data.bundle.put(modifiedClass);
+					ClassPathNode classPath = resourcePath.child(data.bundle)
+							.child(modifiedClass.getPackageName())
+							.child(modifiedClass);
+					map.put(classPath, modifiedClass);
 				} else {
-					// Update workspace if the bytecode is not the same as the initial state
+					// Update output map if the bytecode is not the same as the initial state
 					byte[] bytecode = data.getBytecode();
-					if (!Arrays.equals(bytecode, data.initialClass.getBytecode()))
-						data.bundle.put(data.initialClass.toJvmClassBuilder()
+					if (!Arrays.equals(bytecode, data.initialClass.getBytecode())) {
+						JvmClassInfo modifiedClass = data.initialClass.toJvmClassBuilder()
 								.adaptFrom(bytecode)
-								.build());
+								.build();
+						ClassPathNode classPath = resourcePath.child(data.bundle)
+								.child(modifiedClass.getPackageName())
+								.child(modifiedClass);
+						map.put(classPath, modifiedClass);
+					}
 				}
 			}
 		}
+		return map;
 	}
 
 	/**
@@ -189,11 +219,6 @@ public class JvmTransformerContext {
 	@Nonnull
 	private JvmClassData getJvmClassData(@Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo info) {
 		return classData.computeIfAbsent(info.getName(), ignored -> new JvmClassData(bundle, info));
-	}
-
-	@Nonnull
-	private static Map<Class<? extends JvmClassTransformer>, JvmClassTransformer> buildMap(@Nonnull JvmClassTransformer[] transformers) {
-		return buildMap(Arrays.asList(transformers));
 	}
 
 	@Nonnull

@@ -8,6 +8,7 @@ import software.coley.recaf.info.annotation.TypeAnnotationInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.Property;
+import software.coley.recaf.util.JavaVersion;
 
 import java.util.Collections;
 import java.util.List;
@@ -223,7 +224,7 @@ public class StubClassInfo implements ClassInfo {
 
 		@Override
 		public int getVersion() {
-			return 0;
+			return JavaVersion.VERSION_OFFSET + JavaVersion.get();
 		}
 
 		@Nonnull

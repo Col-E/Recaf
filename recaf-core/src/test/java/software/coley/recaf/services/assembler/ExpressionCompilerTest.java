@@ -15,6 +15,7 @@ import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.ClassWithFieldsAndMethods;
+import software.coley.recaf.test.dummy.ClassWithInnerAndMembers;
 import software.coley.recaf.test.dummy.ClassWithRequiredConstructor;
 import software.coley.recaf.test.dummy.DummyEnum;
 import software.coley.recaf.workspace.model.Workspace;
@@ -33,12 +34,14 @@ class ExpressionCompilerTest extends TestBase {
 	static JvmClassInfo targetClass;
 	static JvmClassInfo targetCtorClass;
 	static JvmClassInfo targetEnum;
+	static JvmClassInfo targetOuterWithInner;
 
 	@BeforeAll
 	static void setup() throws IOException {
 		targetClass = TestClassUtils.fromRuntimeClass(ClassWithFieldsAndMethods.class);
 		targetCtorClass = TestClassUtils.fromRuntimeClass(ClassWithRequiredConstructor.class);
 		targetEnum = TestClassUtils.fromRuntimeClass(DummyEnum.class);
+		targetOuterWithInner = TestClassUtils.fromRuntimeClass(ClassWithInnerAndMembers.class);
 		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(targetClass, targetCtorClass, targetEnum));
 		workspaceManager.setCurrent(workspace);
 	}
@@ -139,6 +142,30 @@ class ExpressionCompilerTest extends TestBase {
 		assembler.setClassContext(targetEnum);
 		assembler.setMethodContext(targetEnum.getFirstDeclaredMethodByName("<clinit>"));
 		ExpressionResult result = compile(assembler, "");
+		assertSuccess(result);
+	}
+
+	@Test
+	void classWithInnerReferences() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(targetOuterWithInner);
+		ExpressionResult result = compile(assembler, """
+				TheInner inner = new TheInner();
+				System.out.println("foo: " + foo);
+				System.out.println("bar: " + inner.bar);
+				inner.strings.add("something");
+				inner.innerToOuter();
+				""");
+		assertSuccess(result);
+	}
+
+	@Test
+	void ignoreTooOldTargetVersion() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setVersionTarget(1);
+		ExpressionResult result = compile(assembler, """
+				System.out.println("We do not compile against Java 1");
+				""");
 		assertSuccess(result);
 	}
 
