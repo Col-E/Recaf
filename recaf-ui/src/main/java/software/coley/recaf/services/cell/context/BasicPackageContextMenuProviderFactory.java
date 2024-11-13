@@ -62,6 +62,8 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 					var refactor = jvmBuilder.submenu("menu.refactor", PAINT_BRUSH);
 					refactor.directoryItem("menu.refactor.move", STACKED_MOVE, actions::movePackage);
 					refactor.directoryItem("menu.refactor.rename", TAG_EDIT, actions::renamePackage);
+
+					jvmBuilder.directoryItem("menu.export.package", EXPORT, actions::exportPackage);
 				}
 			}
 
