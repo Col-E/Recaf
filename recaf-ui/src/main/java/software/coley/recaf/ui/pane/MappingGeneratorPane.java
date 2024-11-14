@@ -538,7 +538,7 @@ public class MappingGeneratorPane extends StackPane {
 			grid.addRow(2, new BoundLabel(Lang.getBinding("mapgen.filter.method-name")),
 					txtMethod, new BoundComboBox<>(methodPredicateId, stringPredicatesWithNull, textPredicateConverter));
 			grid.addRow(3, new BoundLabel(Lang.getBinding("mapgen.filter.variable-name")),
-					txtMethod, new BoundComboBox<>(variablePredicateId, stringPredicatesWithNull, textPredicateConverter));
+					txtVariable, new BoundComboBox<>(variablePredicateId, stringPredicatesWithNull, textPredicateConverter));
 			sink.accept(null, grid);
 		}
 	}
