@@ -17,7 +17,7 @@ public class BaseDecompilerConfig extends BasicConfigContainer implements Decomp
 	 * @param id
 	 * 		Container ID.
 	 */
-	public BaseDecompilerConfig( @Nonnull String id) {
+	public BaseDecompilerConfig(@Nonnull String id) {
 		super(SERVICE_DECOMPILE_IMPL, id);
 	}
 

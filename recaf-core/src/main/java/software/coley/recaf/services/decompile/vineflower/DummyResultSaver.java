@@ -1,6 +1,7 @@
 package software.coley.recaf.services.decompile.vineflower;
 
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 
 import java.util.jar.Manifest;
 
@@ -9,6 +10,7 @@ import java.util.jar.Manifest;
  *
  * @author therathatter
  */
+@ExcludeFromJacocoGeneratedReport(justification = "We don't use VF file IO, everything stays in memory")
 public class DummyResultSaver implements IResultSaver {
     @Override
     public void saveFolder(String s) {

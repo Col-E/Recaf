@@ -2,7 +2,9 @@ package software.coley.recaf.services.decompile;
 
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.coley.observables.ObservableBoolean;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
@@ -14,6 +16,7 @@ import software.coley.recaf.services.decompile.vineflower.VineflowerDecompiler;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
+import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
@@ -28,18 +31,35 @@ import static org.mockito.Mockito.*;
  * Tests for {@link DecompilerManager}.
  */
 public class DecompileManagerTest extends TestBase {
+	private static final ObservableBoolean OB_TRUE = new ObservableBoolean(true);
+	private static final ObservableBoolean OB_FALSE = new ObservableBoolean(false);
 	static final TestJvmBytecodeFilter bytecodeFilter = new TestJvmBytecodeFilter();
 	static final TestOutputTextFilter textFilter = new TestOutputTextFilter();
 	static DecompilerManager decompilerManager;
+	static DecompilerManagerConfig decompilerManagerConfig;
 	static Workspace workspace;
-	static JvmClassInfo classToDecompile;
+	static JvmClassInfo classHelloWorld;
 
 	@BeforeAll
 	static void setup() throws IOException {
 		decompilerManager = recaf.get(DecompilerManager.class);
-		classToDecompile = TestClassUtils.fromRuntimeClass(HelloWorld.class);
-		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(classToDecompile));
+
+		// Setup workspace to pull from
+		classHelloWorld = TestClassUtils.fromRuntimeClass(HelloWorld.class);
+		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(classHelloWorld));
 		workspaceManager.setCurrent(workspace);
+	}
+
+	@BeforeEach
+	void setupEach() {
+		// We don't want to cache decompilations for this test, but we also
+		// do not want to edit the shared config in tests.
+		// Thus, we will make new config instances each test run so there's no cross-test pollution.
+		decompilerManagerConfig = new DecompilerManagerConfig();
+		decompilerManagerConfig.getCacheDecompilations().setValue(false);
+		assertDoesNotThrow(() -> ReflectUtil.quietSet(unwrapProxy(decompilerManager),
+				DecompilerManager.class.getDeclaredField("config"),
+				decompilerManagerConfig));
 	}
 
 	@Test
@@ -81,7 +101,7 @@ public class DecompileManagerTest extends TestBase {
 			decompilerManager.addOutputTextFilter(textFilterSpy);
 
 			// Decompile
-			decompilerManager.decompile(decompiler, workspace, classToDecompile).get();
+			decompilerManager.decompile(decompiler, workspace, classHelloWorld).get();
 
 			// Verify each filter was called once
 			verify(bytecodeFilterSpy, times(1)).filter(any(), any(), any());
@@ -94,11 +114,64 @@ public class DecompileManagerTest extends TestBase {
 		}
 	}
 
+	@Test
+	void testCaching() {
+		decompilerManagerConfig.getCacheDecompilations().setValue(true);
+		JvmDecompiler decompiler = decompilerManager.getJvmDecompiler(CfrDecompiler.NAME);
+		DecompileResult firstResult = assertDoesNotThrow(() -> decompilerManager.decompile(decompiler, workspace, classHelloWorld).get(1, TimeUnit.DAYS));
+
+		// Assert that repeated decompiles use the same result (caching, should be handled by abstract base)
+		// Only the manager will cache results. Using decompilers direcrly will not cache.
+		assertTrue(decompilerManagerConfig.getCacheDecompilations().getValue(), "Cache config not 'true'");
+		DecompileResult newResult = assertDoesNotThrow(() -> decompilerManager.decompile(decompiler, workspace, classHelloWorld).get(1, TimeUnit.SECONDS));
+		assertSame(firstResult, newResult, "Decompiler did not cache results");
+
+		// Change the decompiler hash. The decompiler result should change.
+		decompiler.getConfig().setHash(-1);
+		newResult = assertDoesNotThrow(() -> decompilerManager.decompile(decompiler, workspace, classHelloWorld).get(1, TimeUnit.SECONDS));
+		assertNotSame(firstResult, newResult, "Decompiler used cached result even though config hash changed");
+
+		// Verify direct decompiler usage does not cache
+		DecompileResult direct1 = decompiler.decompile(workspace, classHelloWorld);
+		DecompileResult direct2 = decompiler.decompile(workspace, classHelloWorld);
+		assertNotSame(direct1, direct2, "Direct decompiler use cached results unexpectedly");
+	}
+
+	@Test
+	void testFilterHollow() {
+		String decompilationBefore = assertDoesNotThrow(() -> decompilerManager.decompile(workspace, classHelloWorld).get().getText());
+		assertTrue(decompilationBefore.contains("\"Hello world\""));
+
+		decompilerManagerConfig.getFilterHollow().setValue(true);
+
+		// Hollowing will remove method bodies, so the 'println' call should no longer exist in the output
+		String decompilationAfter = assertDoesNotThrow(() -> decompilerManager.decompile(workspace, classHelloWorld).get().getText());
+		assertFalse(decompilationAfter.contains("\"Hello world\""));
+	}
+
+	@Test
+	void testDisplay() {
+		for (JvmDecompiler decompiler : decompilerManager.getJvmDecompilers()) {
+			assertTrue(decompiler.toString().contains(decompiler.getName()));
+			assertTrue(decompiler.toString().contains(decompiler.getVersion()));
+		}
+	}
+
+	@Test
+	void testComparison() {
+		JvmDecompiler cfr = decompilerManager.getJvmDecompiler(CfrDecompiler.NAME);
+		JvmDecompiler pro = decompilerManager.getJvmDecompiler(ProcyonDecompiler.NAME);
+		assertNotNull(cfr);
+		assertNotNull(pro);
+		assertNotEquals(cfr, pro);
+		assertNotEquals(cfr.hashCode(), pro.hashCode());
+	}
+
 	private static void runJvmDecompilation(@Nonnull JvmDecompiler decompiler) {
 		try {
 			// Generally, you'd handle results like this, with a when-complete.
 			// The blocking 'get' at the end is just so our test works.
-			DecompileResult firstResult = decompilerManager.decompile(decompiler, workspace, classToDecompile)
+			DecompileResult firstResult = decompilerManager.decompile(decompiler, workspace, classHelloWorld)
 					.whenComplete((result, throwable) -> {
 						assertNull(throwable);
 
@@ -107,23 +180,12 @@ public class DecompileManagerTest extends TestBase {
 						assertNotNull(result.getText(), "Decompile result missing text");
 						assertTrue(result.getText().contains("\"Hello world\""), "Decompilation seems to be wrong");
 					}) // Block on this thread until we have the value.
-					.get(1, TimeUnit.DAYS);
-
-			// Assert that repeated decompiles use the same result (caching, should be handled by abstract base)
-			// Only the manager will cache results. Using decompilers direcrly will not cache.
-			assertTrue(decompilerManager.getServiceConfig().getCacheDecompilations().getValue(), "Default cache config not 'true'");
-			DecompileResult newResult = decompilerManager.decompile(decompiler, workspace, classToDecompile).get(1, TimeUnit.SECONDS);
-			assertSame(firstResult, newResult, "Decompiler did not cache results");
-
-			// Change the decompiler hash. The decompiler result should change.
-			decompiler.getConfig().setHash(-1);
-			newResult = decompilerManager.decompile(decompiler, workspace, classToDecompile).get(1, TimeUnit.SECONDS);
-			assertNotSame(firstResult, newResult, "Decompiler used cached result even though config hash changed");
+					.get(5, TimeUnit.SECONDS);
 
 			// Verify direct decompiler usage does not cache
-			DecompileResult direct1 = decompiler.decompile(workspace, classToDecompile);
-			DecompileResult direct2 = decompiler.decompile(workspace, classToDecompile);
-			assertNotSame(direct1, direct2, "Direct decompiler use cached results unexpectedly");
+			DecompileResult result = decompiler.decompile(workspace, classHelloWorld);
+			assertNull(result.getException(), "No exceptions should be reported during decompilation");
+			assertNotNull(result.getText(), "Missing decompilation output");
 		} catch (InterruptedException e) {
 			fail("Decompile was interrupted", e);
 		} catch (ExecutionException e) {
@@ -148,5 +210,4 @@ public class DecompileManagerTest extends TestBase {
 			return code;
 		}
 	}
-
 }

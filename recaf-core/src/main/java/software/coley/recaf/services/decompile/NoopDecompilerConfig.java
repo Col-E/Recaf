@@ -1,19 +1,19 @@
 package software.coley.recaf.services.decompile;
 
-import software.coley.recaf.config.BasicConfigContainer;
-import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Dummy config for {@link NoopJvmDecompiler} and {@link NoopAndroidDecompiler}.
  *
  * @author Matt Coley
  */
-public class NoopDecompilerConfig extends BasicConfigContainer implements DecompilerConfig {
+@ExcludeFromJacocoGeneratedReport(justification = "Config POJO")
+public class NoopDecompilerConfig extends BaseDecompilerConfig implements DecompilerConfig {
 	/**
 	 * New dummy config.
 	 */
 	public NoopDecompilerConfig() {
-		super(ConfigGroups.SERVICE_DECOMPILE, "decompiler-noop" + CONFIG_SUFFIX);
+		super("noop");
 	}
 
 	@Override

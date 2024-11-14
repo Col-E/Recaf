@@ -456,7 +456,7 @@ public class ClassPrinter {
 			@Override
 			protected void buildDeclarationFlags(@Nonnull StringBuilder sb) {
 				// Force only printing the modifier 'static' even if other flags are present
-				sb.append("static ");
+				sb.append("static");
 			}
 
 			@Override

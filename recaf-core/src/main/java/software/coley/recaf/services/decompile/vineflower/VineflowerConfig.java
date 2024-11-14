@@ -10,6 +10,7 @@ import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.services.decompile.BaseDecompilerConfig;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import java.util.Map;
  */
 @ApplicationScoped
 @SuppressWarnings("all") // ignore unused refs / typos
+@ExcludeFromJacocoGeneratedReport(justification = "Config POJO")
 public class VineflowerConfig extends BaseDecompilerConfig {
 	private final ObservableObject<Level> loggingLevel = new ObservableObject<>(Level.WARN);
 	private final ObservableBoolean removeBridge = new ObservableBoolean(true);

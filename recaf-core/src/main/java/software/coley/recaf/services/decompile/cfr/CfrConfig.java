@@ -13,6 +13,7 @@ import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.decompile.BaseDecompilerConfig;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.StringUtil;
 
@@ -28,6 +29,7 @@ import java.util.Map;
  */
 @ApplicationScoped
 @SuppressWarnings("all") // ignore unused refs / typos
+@ExcludeFromJacocoGeneratedReport(justification = "Config POJO")
 public class CfrConfig extends BaseDecompilerConfig {
 	private final ObservableObject<BooleanOption> stringbuffer = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> stringbuilder = new ObservableObject<>(BooleanOption.DEFAULT);

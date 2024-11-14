@@ -27,7 +27,7 @@ jsvg = "1.6.1"
 llzip = "2.6.2"
 logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.6.1"
-mockito = "5.13.0"
+mockito = "5.14.2"
 natural-order = "1.1"
 openrewrite = "8.37.1"
 picocli = "4.7.6"

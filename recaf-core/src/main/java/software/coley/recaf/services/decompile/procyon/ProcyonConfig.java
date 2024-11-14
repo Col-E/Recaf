@@ -12,6 +12,7 @@ import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.decompile.BaseDecompilerConfig;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Config for {@link ProcyonDecompiler}
@@ -19,6 +20,7 @@ import software.coley.recaf.services.decompile.BaseDecompilerConfig;
  * @author Matt Coley
  */
 @ApplicationScoped
+@ExcludeFromJacocoGeneratedReport(justification = "Config POJO")
 public class ProcyonConfig extends BaseDecompilerConfig {
 	private final ObservableBoolean includeLineNumbersInBytecode = new ObservableBoolean(true);
 	private final ObservableBoolean showSyntheticMembers = new ObservableBoolean(false);
