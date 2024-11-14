@@ -447,17 +447,21 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							String memberType;
 							if (oldMember.isMethod()) {
 								memberType = "method";
-								if (assembledClass.getMethods().size() == methodCount) {
-									newMember = assembledClass.getDeclaredMethod(oldMember.getName(), oldMember.getDescriptor());
-								} else {
-									newMember = null;
+								newMember = assembledClass.getDeclaredMethod(oldMember.getName(), oldMember.getDescriptor());
+								if (methodCount != assembledClass.getMethods().size()){
+									ASTElement sourceAst = lastConcreteAst.get(0);
+									Error err = new Error("Assembling in this context detected a change in the number of methods.\n" +
+											"Check and see if your class has illegal duplicate method definitions.", sourceAst.location());
+									processErrors(List.of(err), ProblemPhase.BUILD);
 								}
 							} else {
 								memberType = "field";
-								if (assembledClass.getFields().size() == fieldCount) {
-									newMember = assembledClass.getDeclaredField(oldMember.getName(), oldMember.getDescriptor());
-								} else {
-									newMember = null;
+								newMember = assembledClass.getDeclaredField(oldMember.getName(), oldMember.getDescriptor());
+								if (fieldCount != assembledClass.getFields().size()){
+									ASTElement sourceAst = lastConcreteAst.get(0);
+									Error err = new Error("Assembling in this context detected a change in the number of fields.\n" +
+											"Check and see if your class has illegal duplicate field definitions.", sourceAst.location());
+									processErrors(List.of(err), ProblemPhase.BUILD);
 								}
 							}
 
