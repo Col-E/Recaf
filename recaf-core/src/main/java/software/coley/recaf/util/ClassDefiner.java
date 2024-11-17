@@ -28,7 +28,7 @@ public class ClassDefiner extends ClassLoader {
 	 * 		Map of classes.
 	 */
 	public ClassDefiner(@Nonnull Map<String, byte[]> classes) {
-		super(ClassLoader.getSystemClassLoader());
+		super(ClassDefiner.class.getClassLoader());
 		this.classes = classes;
 	}
 

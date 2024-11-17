@@ -85,7 +85,7 @@ public class InternalPath {
 	 */
 	public URL getURL() throws IOException {
 		if (internal) {
-			return ClassLoader.getSystemClassLoader().getResource(getPath());
+			return InternalPath.class.getClassLoader().getResource(getPath());
 		} else {
 			return new File(getPath()).toURI().toURL();
 		}
