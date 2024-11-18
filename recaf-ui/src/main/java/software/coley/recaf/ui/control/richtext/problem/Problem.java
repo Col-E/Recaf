@@ -61,6 +61,11 @@ public record Problem(int line, int column, int length, ProblemLevel level, Prob
 
 	@Override
 	public int compareTo(Problem o) {
-		return Integer.compare(line, o.line);
+		int cmp = Integer.compare(line, o.line);
+		if (cmp == 0)
+			cmp = Integer.compare(column, o.column);
+		if (cmp == 0)
+			cmp = level.compareTo(o.level);
+		return cmp;
 	}
 }
