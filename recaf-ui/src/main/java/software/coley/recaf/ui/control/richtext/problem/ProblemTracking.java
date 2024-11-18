@@ -6,6 +6,7 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
 import org.fxmisc.richtext.model.TwoDimensional;
+import software.coley.collections.Lists;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -35,7 +36,8 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	public void add(@Nonnull Problem problem) {
 		List<Problem> list;
 		synchronized (problems) {list = problems.computeIfAbsent(problem.line(), k -> new ArrayList<>());}
-		list.add(problem);
+		int index = Lists.sortedInsertIndex(list, problem);
+		list.add(index, problem);
 		Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
 				(listener, t) -> logger.error("Exception thrown when adding problem to tracking", t));
 	}
