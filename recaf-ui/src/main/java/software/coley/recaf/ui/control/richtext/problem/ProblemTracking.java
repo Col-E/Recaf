@@ -130,9 +130,9 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 *
 	 * @return Problems on the line.
 	 */
-	@Nullable
+	@Nonnull
 	public List<Problem> getProblemsOnLine(int line) {
-		synchronized (problems) {return problems.get(line);}
+		synchronized (problems) { return problems.getOrDefault(line, Collections.emptyList()); }
 	}
 
 	/**
@@ -144,7 +144,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	@Nullable
 	public Problem getFirstProblemOnLine(int line) {
 		List<Problem> problems = getProblemsOnLine(line);
-		if (problems == null || problems.isEmpty())
+		if (problems.isEmpty())
 			return null;
 		return problems.getFirst();
 	}

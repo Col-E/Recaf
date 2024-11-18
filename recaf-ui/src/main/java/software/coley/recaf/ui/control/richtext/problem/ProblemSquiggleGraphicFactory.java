@@ -28,7 +28,7 @@ public class ProblemSquiggleGraphicFactory extends AbstractTextBoundLineGraphicF
 			return;
 
 		List<Problem> problems = editor.getProblemTracking().getProblemsOnLine(paragraph + 1);
-		if (problems == null || problems.isEmpty())
+		if (problems.isEmpty())
 			return;
 
 		for (Problem problem : problems)
