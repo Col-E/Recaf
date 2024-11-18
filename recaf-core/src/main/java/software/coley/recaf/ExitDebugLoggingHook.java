@@ -16,10 +16,16 @@ import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.module.ModuleReference;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -118,9 +124,33 @@ public class ExitDebugLoggingHook {
 		System.out.println(" - Version (Raw):     " + JavaVersion.get());
 		System.out.println(" - Vendor:            " + System.getProperty("java.vm.vendor", "<unknown>"));
 		System.out.println(" - Home:              " + System.getProperty("java.home", "<unknown>"));
+
 		System.out.println("JavaFX");
 		System.out.println(" - Version (Runtime): " + System.getProperty("javafx.runtime.version", "<uninitialized>"));
 		System.out.println(" - Version (Raw):     " + System.getProperty("javafx.version", "<uninitialized>"));
+		{
+			ClassLoader loader = ExitDebugLoggingHook.class.getClassLoader();
+			String javafxClass = "javafx/beans/Observable.class";
+			try {
+				Iterator<URL> iterator = loader.getResources(javafxClass).asIterator();
+				if (!iterator.hasNext()) {
+					System.out.println(" - Location: not found");
+				} else {
+					URL url = iterator.next();
+					if (!iterator.hasNext()) {
+						System.out.println(" - Location:          " + url);
+					} else {
+						System.out.println(" - Location (likely): " + url);
+						do {
+							System.out.println(" - Location (seen):   " + url);
+						} while (iterator.hasNext());
+					}
+				}
+			} catch (Exception ex) {
+				System.out.println(" - Location:   <error>");
+			}
+		}
+
 		System.out.println("Operating System");
 		System.out.println(" - Name:           " + System.getProperty("os.name"));
 		System.out.println(" - Version:        " + System.getProperty("os.version"));
@@ -153,6 +183,11 @@ public class ExitDebugLoggingHook {
 				System.out.println(" - Directory: " + pathEntry);
 			}
 		}
+
+		System.out.println("Boot class loader:");
+		dumpBootstrapClassLoader();
+		System.out.println("Platform class loader:");
+		dumpBuiltinClassLoader(ClassLoader.getPlatformClassLoader());
 
 		Path root = RecafDirectoriesConfig.createBaseDirectory().resolve("config");
 		if (printConfigs && Files.isDirectory(root)) {
@@ -194,6 +229,35 @@ public class ExitDebugLoggingHook {
 				System.out.println("   - " + element);
 			}
 		});
+	}
+
+	private static void dumpBuiltinClassLoader(ClassLoader loader) {
+		try {
+			Class<?> c = Class.forName("jdk.internal.loader.BuiltinClassLoader");
+			Field nameToModuleField = c.getDeclaredField("nameToModule");
+			nameToModuleField.setAccessible(true);
+			//noinspection unchecked
+			Map<String, ModuleReference> mdouleMap = (Map<String, ModuleReference>) nameToModuleField.get(loader);
+			for (Map.Entry<String, ModuleReference> e : mdouleMap.entrySet()) {
+				ModuleReference moduleReference = e.getValue();
+				System.out.printf("%s located at %s%n", moduleReference.descriptor().toNameAndVersion(), moduleReference.location()
+						.map(URI::toString)
+						.orElse("Unknown"));
+			}
+		} catch (Exception ex) {
+			System.out.printf("dumpBuiltinClassLoader(%s) - <error>%n", loader);
+		}
+	}
+
+	private static void dumpBootstrapClassLoader() {
+		try {
+			Class<?> c = Class.forName("jdk.internal.loader.ClassLoaders");
+			Method bootLoaderMethod = c.getDeclaredMethod("bootLoader");
+			bootLoaderMethod.setAccessible(true);
+			dumpBuiltinClassLoader((ClassLoader) bootLoaderMethod.invoke(null));
+		} catch (Exception ex) {
+			System.out.println("dumpBootstrapClassLoader - <error>");
+		}
 	}
 
 	@Nonnull
