@@ -2,6 +2,7 @@ package software.coley.recaf.analytics.logging;
 
 import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 
 import java.util.function.Consumer;
 
@@ -11,6 +12,7 @@ import java.util.function.Consumer;
  *
  * @author Matt Coley
  */
+@ExcludeFromJacocoGeneratedReport(justification = "Logging not relevant for test coverage")
 public interface DebuggingLogger extends Logger {
 	boolean DEBUG = System.getenv("RECAF_DEBUG") != null;
 

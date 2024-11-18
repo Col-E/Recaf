@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 import org.slf4j.event.Level;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 
 import java.util.regex.Matcher;
 
@@ -12,6 +13,7 @@ import java.util.regex.Matcher;
  *
  * @author Matt Coley
  */
+@ExcludeFromJacocoGeneratedReport(justification = "Logging not relevant for test coverage")
 public abstract class InterceptingLogger implements DebuggingLogger {
 	private final Logger backing;
 

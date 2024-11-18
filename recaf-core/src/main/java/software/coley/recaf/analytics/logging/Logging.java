@@ -7,6 +7,7 @@ import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @author Matt Coley
  */
+@ExcludeFromJacocoGeneratedReport(justification = "Logging not relevant for test coverage")
 public class Logging {
 	private static final Map<String, DebuggingLogger> loggers = new ConcurrentHashMap<>();
 	private static final NavigableSet<String> loggerKeys = Collections.synchronizedNavigableSet(new TreeSet<>());
