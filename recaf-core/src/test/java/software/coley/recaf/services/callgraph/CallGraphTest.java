@@ -1,9 +1,13 @@
 package software.coley.recaf.services.callgraph;
 
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
 import software.coley.observables.ObservableBoolean;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.StringConsumer;
@@ -13,11 +17,15 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * Tests for {@link CallGraph}
  */
 class CallGraphTest {
+	private static final byte[] fooBytes;
+	private static final byte[] fooCallerBytes;
+
 	@Test
 	@Timeout(10)
 	void testCalleeCallerRelation() throws IOException {
@@ -33,15 +41,7 @@ class CallGraphTest {
 		JvmClassInfo mainClass = pathUser.getValue().asJvmClass();
 		JvmClassInfo functionClass = pathFunc.getValue().asJvmClass();
 
-		CallGraph graph = new CallGraph(new CallGraphConfig(), workspace);
-
-		// Need to wait until async population of graph contents is done.
-		ObservableBoolean ready = graph.isReady();
-		assertDoesNotThrow(() -> {
-			while (!ready.getValue()) {
-				Thread.sleep(100);
-			}
-		});
+		CallGraph graph = graph(workspace);
 
 		ClassMethodsContainer containerMain = graph.getClassMethodsContainer(mainClass);
 		ClassMethodsContainer containerFunction = graph.getClassMethodsContainer(functionClass);
@@ -62,7 +62,72 @@ class CallGraphTest {
 		assertTrue(newVertex.getCallers().contains(mainVertex));
 	}
 
-	// TODO: Test removing existing class from workspace makes calls to its methods unresolved
+	@Test
+	@Timeout(10)
+	void testUnresolvedCall() {
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				new JvmClassInfoBuilder(fooCallerBytes).build()
+		));
 
-	// TODO: Test adding missing class to workspace makes unresolved calls valid
+		ClassPathNode pathUser = workspace.findJvmClass("FooCaller");
+		assertNotNull(pathUser, "Missing FooCaller class");
+		JvmClassInfo mainClass = pathUser.getValue().asJvmClass();
+
+		CallGraph graph = graph(workspace);
+
+		// Get outbound calls for call(Foo). Should just be to 'foo.bar()' which is unresolved
+		ClassMethodsContainer fooCaller = graph.getClassMethodsContainer(mainClass);
+		MethodVertex callVertex = fooCaller.getVertex("call", "(LFoo;)V");
+		assertNotNull(callVertex, "Missing method vertex for 'call'");
+		assertEquals(0, callVertex.getCalls().size());
+		assertEquals(1, graph.getUnresolvedDeclarations().get("Foo").size(), "Expected to have unresolved call to Foo.bar()");
+
+		// Add the missing Foo class to the workspace
+		workspace.getPrimaryResource().getJvmClassBundle().put(new JvmClassInfoBuilder(fooBytes).build());
+
+		// The call to Foo.bar() should be resolved now
+		assertEquals(1, callVertex.getCalls().size());
+		assertEquals(0, graph.getUnresolvedDeclarations().size(), "Expected to have resolved unresolved call to Foo.bar()");
+
+		// TODO: Make a similar test case, but in reverse.
+		//  We probably want to prune the call-graph model when things get removed.
+	}
+
+	@Nonnull
+	static CallGraph graph(@Nonnull Workspace workspace) {
+		CallGraph graph = new CallGraph(new CallGraphConfig(), workspace);
+
+		// Need to wait until async population of graph contents is done.
+		ObservableBoolean ready = graph.isReady();
+		assertDoesNotThrow(() -> {
+			while (!ready.getValue()) {
+				Thread.sleep(100);
+			}
+		});
+
+		return graph;
+	}
+
+	static {
+		ClassWriter cv = new ClassWriter(0);
+		cv.visit(V1_8, ACC_PUBLIC, "Foo", null, "java/lang/Object", null);
+		MethodVisitor mv = cv.visitMethod(0, "bar", "()V", null, null);
+		mv.visitCode();
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(1, 1);
+		mv.visitEnd();
+		cv.visitEnd();
+		fooBytes = cv.toByteArray();
+
+		cv.visit(V1_8, ACC_PUBLIC | ACC_STATIC, "FooCaller", null, "java/lang/Object", null);
+		mv = cv.visitMethod(0, "call", "(LFoo;)V", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "Foo", "bar", "()V", false);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(2, 2);
+		mv.visitEnd();
+		cv.visitEnd();
+		fooCallerBytes = cv.toByteArray();
+	}
 }
