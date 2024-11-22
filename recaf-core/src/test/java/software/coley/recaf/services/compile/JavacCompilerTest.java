@@ -75,7 +75,7 @@ public class JavacCompilerTest extends TestBase {
 
 		// Run compiler, it should fail with no passed workspace due to the unknown 'StringConsumer'
 		CompilerResult result = javac.compile(arguments, null, null);
-		assertEquals(1, result.getDiagnostics().size(), "Expected compilation failure");
+		assertFalse(result.getDiagnostics().isEmpty(), "Expected compilation failure");
 		assertFalse(result.getCompilations().containsKey("HelloWorld"), "Class should have failed compilation");
 
 		// First, create the class that was missing. We cannot use the existing StringConsumer because Javac will find

@@ -4,6 +4,7 @@ package software.coley.recaf.services.decompile;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import software.coley.recaf.services.decompile.fallback.FallbackDecompiler;
 import software.coley.recaf.services.decompile.fallback.print.ClassPrinter;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.test.TestClassUtils;
@@ -22,6 +23,9 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Tests for {@link FallbackDecompiler}
+ */
 class FallbackDecompilerTest {
 	static TextFormatConfig textConfig = new TextFormatConfig();
 

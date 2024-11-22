@@ -11,6 +11,7 @@ import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.launch.LaunchCommand;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.PlatformType;
 
@@ -25,6 +26,7 @@ import java.nio.file.Paths;
  * @author Matt Coley
  */
 @ApplicationScoped
+@ExcludeFromJacocoGeneratedReport(justification = "We do not access the config directories in tests (avoiding IO is preferred anyways)")
 public class RecafDirectoriesConfig extends BasicConfigContainer implements ConfigContainer {
 	private static final Logger logger = Logging.get(RecafDirectoriesConfig.class);
 	private final Path baseDirectory = createBaseDirectory();
@@ -48,9 +50,8 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	 * 		Path to current log-file.
 	 */
 	public void initCurrentLogPath(@Nonnull Path currentLog) {
-		if (this.currentLog == null) {
+		if (this.currentLog == null)
 			this.currentLog = currentLog;
-		}
 	}
 
 	/**

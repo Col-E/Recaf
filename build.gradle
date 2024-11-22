@@ -73,10 +73,14 @@ subprojects {
     test {
         useJUnitPlatform()
 
+        // Required for Mockito in newer JDK's which disable useful features by default for 'integrity' reasons.
+        jvmArgs '-XX:+EnableDynamicAgentLoading'
+
         systemProperty 'junit.jupiter.execution.parallel.enabled', true
         systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
 
         testLogging {
+            showStandardStreams = true
             events "passed", "skipped", "failed"
         }
     }
