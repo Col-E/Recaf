@@ -335,6 +335,8 @@ public abstract class ClassStubGenerator {
 	protected void appendInnerClasses(@Nonnull StringBuilder code) throws ExpressionCompileException {
 		for (InnerClassInfo innerClass : innerClasses) {
 			String innerClassName = innerClass.getInnerClassName();
+			if (!innerClassName.startsWith(className))
+				continue;
 			if (innerClassName.length() <= className.length())
 				continue;
 			ClassPathNode innerClassPath = workspace.findClass(innerClassName);

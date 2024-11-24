@@ -16,6 +16,7 @@ import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.ClassWithFieldsAndMethods;
 import software.coley.recaf.test.dummy.ClassWithInnerAndMembers;
+import software.coley.recaf.test.dummy.ClassWithLambda;
 import software.coley.recaf.test.dummy.ClassWithRequiredConstructor;
 import software.coley.recaf.test.dummy.DummyEnum;
 import software.coley.recaf.workspace.model.Workspace;
@@ -35,6 +36,7 @@ class ExpressionCompilerTest extends TestBase {
 	static JvmClassInfo targetCtorClass;
 	static JvmClassInfo targetEnum;
 	static JvmClassInfo targetOuterWithInner;
+	static JvmClassInfo targetClassWithLambda;
 
 	@BeforeAll
 	static void setup() throws IOException {
@@ -42,6 +44,7 @@ class ExpressionCompilerTest extends TestBase {
 		targetCtorClass = TestClassUtils.fromRuntimeClass(ClassWithRequiredConstructor.class);
 		targetEnum = TestClassUtils.fromRuntimeClass(DummyEnum.class);
 		targetOuterWithInner = TestClassUtils.fromRuntimeClass(ClassWithInnerAndMembers.class);
+		targetClassWithLambda = TestClassUtils.fromRuntimeClass(ClassWithLambda.class);
 		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(targetClass, targetCtorClass, targetEnum));
 		workspaceManager.setCurrent(workspace);
 	}
@@ -229,6 +232,16 @@ class ExpressionCompilerTest extends TestBase {
 		assembler.setClassContext(classInfo);
 		assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("methodName"));
 		ExpressionResult result = compile(assembler, "");
+		assertSuccess(result);
+	}
+
+	@Test
+	void dontStubBogusInnerLikeMethodHandlesLookup() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(targetClassWithLambda);
+		ExpressionResult result = compile(assembler, """
+				System.out.println("The stub should not reference the MethodHandles$Lookup synthetic inner class");
+				""");
 		assertSuccess(result);
 	}
 
