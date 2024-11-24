@@ -41,7 +41,11 @@ import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.*;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.Bundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
@@ -164,11 +168,16 @@ public class CellConfigurationService implements Service {
 	 * 		Content within the cell.
 	 */
 	public void configureStyle(@Nonnull Node cell, @Nonnull PathNode<?> item) {
-		// Add the edited class CSS style to classes with changes made to them
+		// Add the edited class CSS style to classes & files with changes made to them
 		cell.getStyleClass().remove(CLASS_EDITED);
 		if (item instanceof ClassPathNode classPathNode) {
 			var bundle = classPathNode.getValueOfType(ClassBundle.class);
 			if (bundle != null && bundle.hasHistory(classPathNode.getValue().getName())) {
+				cell.getStyleClass().add(CLASS_EDITED);
+			}
+		} else if (item instanceof FilePathNode filePathNode) {
+			var bundle = filePathNode.getValueOfType(FileBundle.class);
+			if (bundle != null && bundle.hasHistory(filePathNode.getValue().getName())) {
 				cell.getStyleClass().add(CLASS_EDITED);
 			}
 		}
