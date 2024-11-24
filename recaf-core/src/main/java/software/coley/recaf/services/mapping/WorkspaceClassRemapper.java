@@ -21,7 +21,6 @@ import software.coley.recaf.workspace.model.Workspace;
  */
 public class WorkspaceClassRemapper extends ClassRemapper {
 	private final WorkspaceBackedRemapper workspaceRemapper;
-	private String visitedClassName;
 
 	/**
 	 * @param cv
@@ -39,13 +38,6 @@ public class WorkspaceClassRemapper extends ClassRemapper {
 	}
 
 	@Override
-	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		// Record the class name
-		visitedClassName = name;
-		super.visit(version, access, name, signature, superName, interfaces);
-	}
-
-	@Override
 	public MethodVisitor visitMethod(int access, @Nonnull String name, @Nonnull String descriptor,
 	                                 @Nullable String signature, @Nullable String[] exceptions) {
 		// Adapted from base ClassRemapper implementation.
@@ -59,7 +51,7 @@ public class WorkspaceClassRemapper extends ClassRemapper {
 						remappedDescriptor,
 						remapper.mapSignature(signature, false),
 						exceptions == null ? null : remapper.mapTypes(exceptions));
-		return mv == null ? null : new VariableRenamingMethodVisitor(visitedClassName, name, descriptor, mv, workspaceRemapper);
+		return mv == null ? null : new VariableRenamingMethodVisitor(className, name, descriptor, mv, workspaceRemapper);
 	}
 
 	@Override
