@@ -1,7 +1,9 @@
 package software.coley.recaf.util.analysis.value.impl;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
+import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.OptionalDouble;
 
@@ -50,5 +52,20 @@ public class FloatValueImpl implements FloatValue {
 	@Override
 	public String toString() {
 		return type().getInternalName() + ":" + (value.isPresent() ? value.getAsDouble() : "?");
+	}
+
+	@Nonnull
+	@Override
+	public ReValue mergeWith(@Nonnull ReValue other) {
+		if (other instanceof FloatValue otherFloat) {
+			if (value().isPresent() && otherFloat.value().isPresent()) {
+				double f = value().getAsDouble();
+				double otherF = otherFloat.value().getAsDouble();
+				if (f == otherF)
+					return FloatValue.of((float) f);
+			}
+			return FloatValue.UNKNOWN;
+		}
+		throw new IllegalStateException("Cannot merge with: " + other);
 	}
 }

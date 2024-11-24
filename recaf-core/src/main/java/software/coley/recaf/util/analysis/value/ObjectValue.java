@@ -47,6 +47,21 @@ public non-sealed interface ObjectValue extends ReValue {
 
 	/**
 	 * @param nullness
+	 * 		Null state of the {@link Class}.
+	 *
+	 * @return Object value for a class literal of the given nullness.
+	 */
+	@Nonnull
+	static ObjectValue clazz(@Nonnull Nullness nullness) {
+		return switch (nullness) {
+			case NULL -> VAL_CLASS_NULL;
+			case NOT_NULL -> VAL_CLASS;
+			case UNKNOWN -> VAL_CLASS_MAYBE_NULL;
+		};
+	}
+
+	/**
+	 * @param nullness
 	 * 		Null state of the string.
 	 *
 	 * @return String value of the given nullness.
@@ -73,6 +88,17 @@ public non-sealed interface ObjectValue extends ReValue {
 			case NOT_NULL -> VAL_OBJECT;
 			case UNKNOWN -> VAL_OBJECT_MAYBE_NULL;
 		};
+	}
+
+	@Nonnull
+	static ObjectValue object(@Nonnull Type type, @Nonnull Nullness nullness) {
+		if (Types.OBJECT_TYPE.equals(type))
+			return object(nullness);
+		if (Types.STRING_TYPE.equals(type))
+			return string(nullness);
+		if (Types.CLASS_TYPE.equals(type))
+			return clazz(nullness);
+		return new ObjectValueImpl(type, nullness);
 	}
 
 	/**

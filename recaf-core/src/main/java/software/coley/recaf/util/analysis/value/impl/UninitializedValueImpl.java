@@ -1,5 +1,7 @@
 package software.coley.recaf.util.analysis.value.impl;
 
+import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
 
 /**
@@ -15,5 +17,11 @@ public class UninitializedValueImpl implements UninitializedValue {
 	@Override
 	public String toString() {
 		return ".";
+	}
+
+	@Nonnull
+	@Override
+	public ReValue mergeWith(@Nonnull ReValue other) {
+		return UNINITIALIZED_VALUE;
 	}
 }
