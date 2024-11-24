@@ -111,7 +111,9 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 
 	@Override
 	public boolean hasHistory(@Nonnull String key) {
-		return history.get(key) != null;
+		// History implies there are past entries for the current value, hence more than one entry.
+		Stack<I> stack = history.get(key);
+		return stack != null && stack.size() > 1;
 	}
 
 	@Override
