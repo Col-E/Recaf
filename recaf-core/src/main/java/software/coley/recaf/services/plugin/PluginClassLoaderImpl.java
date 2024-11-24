@@ -18,7 +18,8 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 	private final PluginSource source;
 	private final String id;
 
-	PluginClassLoaderImpl(@Nonnull PluginGraph graph, @Nonnull PluginSource source, @Nonnull String id) {
+	PluginClassLoaderImpl(@Nonnull ClassLoader classLoader, @Nonnull PluginGraph graph, @Nonnull PluginSource source, @Nonnull String id) {
+		super(classLoader);
 		this.graph = graph;
 		this.source = source;
 		this.id = id;

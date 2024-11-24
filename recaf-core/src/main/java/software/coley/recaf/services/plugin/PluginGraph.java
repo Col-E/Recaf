@@ -46,7 +46,9 @@ final class PluginGraph {
 			if (plugins.containsKey(id)) {
 				throw new PluginException("Plugin %s is already loaded".formatted(id));
 			}
-			var classLoader = new PluginClassLoaderImpl(this, preparedPlugin.pluginSource(), id);
+			var threadContextClassLoader = Thread.currentThread().getContextClassLoader();
+			var parentLoader = threadContextClassLoader != null ? threadContextClassLoader : ClassLoader.getSystemClassLoader();
+			var classLoader = new PluginClassLoaderImpl(parentLoader, this, preparedPlugin.pluginSource(), id);
 			LoadedPlugin loadedPlugin = new LoadedPlugin(new PluginContainerImpl<>(preparedPlugin, classLoader));
 
 			if (temp.putIfAbsent(id, loadedPlugin) != null) {
