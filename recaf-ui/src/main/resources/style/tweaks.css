@@ -70,6 +70,11 @@
     -fx-background-insets: 0;
 }
 
+/* Indicates a class in the workspace tree has been edited */
+.modified-class-cell {
+    -fx-text-fill: rgb(75, 175, 210);
+}
+
 /* Applies background colors */
 .background {
     -fx-background-color: -color-bg-default;

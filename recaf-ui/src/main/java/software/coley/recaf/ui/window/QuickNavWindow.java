@@ -91,6 +91,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			packageName = formatConfig.filterMaxLength(packageName);
 
 			Label classDisplay = new Label();
+			configurationService.configureStyle(classDisplay, classPath);
 			classDisplay.setText(configurationService.textOf(classPath));
 			classDisplay.setGraphic(configurationService.graphicOf(classPath));
 
