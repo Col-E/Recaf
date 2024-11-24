@@ -9,7 +9,11 @@ import software.coley.recaf.util.Streams;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -433,12 +437,7 @@ public class InheritanceVertex {
 	 */
 	public void setValue(@Nonnull ClassInfo value) {
 		this.value = value;
-
-		// Reset children & parent sets
-		synchronized (this) {
-			children = null;
-			parents = null;
-		}
+		clearCachedVertices();
 	}
 
 	@Override

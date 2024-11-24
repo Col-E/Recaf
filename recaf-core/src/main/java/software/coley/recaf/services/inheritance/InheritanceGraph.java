@@ -114,6 +114,11 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 */
 	private void populateParentToChildLookup(@Nonnull String name, @Nonnull String parentName) {
 		parentToChild.computeIfAbsent(parentName, k -> ConcurrentHashMap.newKeySet()).add(name);
+
+		InheritanceVertex parentVertex = getVertex(parentName);
+		InheritanceVertex childVertex = getVertex(name);
+		if (parentVertex != null) parentVertex.clearCachedVertices();
+		if (childVertex != null) childVertex.clearCachedVertices();
 	}
 
 	/**
