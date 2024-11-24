@@ -93,17 +93,17 @@ public class AstRangeMapper {
 			}
 
 			@Override
-			protected void visitModifier(@Nonnull J.Modifier modifier, PrintOutputCapture<ExecutionContext> p) {
+			public J visitModifier(@Nonnull J.Modifier modifier, PrintOutputCapture<ExecutionContext> p) {
 				PositionPrintOutputCapture prefix = new PositionPrintOutputCapture(ppoc);
 				spacePrinter.visitSpace(modifier.getPrefix(), Space.Location.ANY, prefix);
 
 				Range.Position startPosition = new Range.Position(prefix.posInBacking, prefix.line, prefix.column);
-				super.visitModifier(modifier, p);
+				J ret = super.visitModifier(modifier, p);
 				Range.Position endPosition = new Range.Position(ppoc.posInBacking, ppoc.line, ppoc.column);
 				Range range = new Range(randomId(), startPosition, endPosition);
 				rangeMap.put(range, modifier);
+				return ret;
 			}
-
 		};
 		printer.visit(tree, ppoc);
 

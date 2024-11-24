@@ -29,7 +29,7 @@ logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.6.1"
 mockito = "5.14.2"
 natural-order = "1.1"
-openrewrite = "8.37.1"
+openrewrite = "8.40.3"
 picocli = "4.7.6"
 procyon = "0.6.0"
 reactfx = { strictly = "2.0-M5" } # won't get updates, dead
