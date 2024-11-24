@@ -20,6 +20,7 @@ import software.coley.recaf.services.mapping.format.MappingFileFormat;
 import software.coley.recaf.services.mapping.format.MappingFormatManager;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.services.window.WindowManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.pane.MappingGeneratorPane;
@@ -27,7 +28,6 @@ import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.FileChooserBuilder;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -51,13 +51,13 @@ public class MappingMenu extends WorkspaceAwareMenu {
 
 	@Inject
 	public MappingMenu(@Nonnull WindowManager windowManager,
-					   @Nonnull WindowFactory windowFactory,
-					   @Nonnull WorkspaceManager workspaceManager,
-					   @Nonnull AggregateMappingManager aggregateMappingManager,
-					   @Nonnull MappingFormatManager formatManager,
-					   @Nonnull MappingApplier mappingApplier,
-					   @Nonnull Instance<MappingGeneratorPane> generatorPaneInstance,
-					   @Nonnull RecentFilesConfig recentFiles) {
+	                   @Nonnull WindowFactory windowFactory,
+	                   @Nonnull WorkspaceManager workspaceManager,
+	                   @Nonnull AggregateMappingManager aggregateMappingManager,
+	                   @Nonnull MappingFormatManager formatManager,
+	                   @Nonnull MappingApplier mappingApplier,
+	                   @Nonnull Instance<MappingGeneratorPane> generatorPaneInstance,
+	                   @Nonnull RecentFilesConfig recentFiles) {
 		super(workspaceManager);
 
 		this.windowManager = windowManager;
@@ -112,8 +112,13 @@ public class MappingMenu extends WorkspaceAwareMenu {
 								MappingFileFormat format = formatManager.createFormatInstance(formatName);
 								if (format != null) {
 									String mappingsText = format.exportText(mappings);
-									Files.writeString(file.toPath(), mappingsText);
-									logger.info("Exporting mappings to {} in {} format", file.getName(), formatName);
+									if (mappingsText != null) {
+										Files.writeString(file.toPath(), mappingsText);
+										logger.info("Exporting mappings to {} in {} format", file.getName(), formatName);
+									} else {
+										// We already checked for export support, so this should never happen
+										throw new IllegalStateException("Mapping export shouldn't be null for format: " + formatName);
+									}
 								} else {
 									throw new IllegalStateException("Format was unregistered: " + formatName);
 								}
