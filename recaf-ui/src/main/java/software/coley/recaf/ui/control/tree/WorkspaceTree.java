@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.scene.control.TreeItem;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
@@ -15,15 +16,18 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.EmbeddedResourceContainerPathNode;
 import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
+import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.control.PathNodeTree;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.NodeEvents;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.WorkspaceModificationListener;
@@ -64,8 +68,17 @@ public class WorkspaceTree extends PathNodeTree implements
 	 */
 	@Inject
 	public WorkspaceTree(@Nonnull CellConfigurationService configurationService, @Nonnull Actions actions,
-	                     @Nonnull WorkspaceExplorerConfig explorerConfig) {
+	                     @Nonnull KeybindingConfig keys, @Nonnull WorkspaceExplorerConfig explorerConfig) {
 		super(configurationService, actions);
+
+		// Additional workspace-explorer specific bind handling
+		NodeEvents.addKeyPressHandler(this, e -> {
+			if (keys.getRename().match(e)) {
+				TreeItem<PathNode<?>> selectedItem = getSelectionModel().getSelectedItem();
+				if (selectedItem != null)
+					actions.rename(selectedItem.getValue());
+			}
+		});
 
 		this.explorerConfig = explorerConfig;
 	}
