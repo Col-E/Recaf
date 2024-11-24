@@ -240,9 +240,6 @@ public class MethodPrinter {
 
 			// Cleanup the output text.
 			String asmDump = baos.toString(StandardCharsets.UTF_8);
-			int beginIndex = asmDump.indexOf("   L0");
-			if (beginIndex > 0)
-				asmDump = asmDump.substring(beginIndex);
 
 			// Indent it just a bit with our printer and append to the string builder.
 			Printer codePrinter = new Printer();
