@@ -2,7 +2,7 @@
 asm = "9.7.1"
 atlantafx = "2.0.1"
 binary-resources = "31.3.0-alpha01.8"
-cafedude = "2.1.2"
+cafedude = "2.1.3"
 cdi-api = "4.1.0"
 cdi-impl = "6.0.0.Beta4"
 cfr = "0.152"
