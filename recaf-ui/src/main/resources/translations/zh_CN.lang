@@ -459,7 +459,6 @@ service.analysis.comments-config=注释
 service.analysis.comments-config.enable-display=在反编译中显示注释
 service.analysis.comments-config.word-wrapping-limit=换行限制
 service.analysis.graph-calls-config=调用图
-service.analysis.graph-calls-config.active=在工作空间打开时启用
 service.analysis.graph-inheritance-config=继承图
 service.analysis.jphantom-generator-config=JPhantom
 service.analysis.jphantom-generator-config.generate-workspace-phantoms=生成并添加phantoms到工作空间

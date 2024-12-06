@@ -7,7 +7,6 @@ import dev.xdark.jlinker.ResolutionError;
 import dev.xdark.jlinker.Result;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Handle;
@@ -17,11 +16,9 @@ import software.coley.observables.ObservableBoolean;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.services.Service;
 import software.coley.recaf.util.MultiMap;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
@@ -32,12 +29,12 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
@@ -48,56 +45,38 @@ import java.util.stream.Stream;
  * @author Matt Coley
  * @see MethodVertex
  */
-@WorkspaceScoped
-public class CallGraph implements Service, WorkspaceModificationListener, ResourceJvmClassListener {
-	public static final String SERVICE_ID = "graph-calls";
+public class CallGraph implements WorkspaceModificationListener, ResourceJvmClassListener {
 	private static final DebuggingLogger logger = Logging.get(CallGraph.class);
 	private final ExecutorService threadPool = ThreadPoolFactory.newFixedThreadPool("call-graph", 1, true);
 	private final CachedLinkResolver resolver = new CachedLinkResolver();
 	private final Map<JvmClassInfo, LinkedClass> classToLinkerType = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final Map<JvmClassInfo, ClassMethodsContainer> classToMethodsContainer = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final MultiMap<String, MethodRef, Set<MethodRef>> unresolvedDeclarations = MultiMap.from(
-			Collections.synchronizedMap(new HashMap<>()),
-			() -> Collections.synchronizedSet(new HashSet<>()));
+			new ConcurrentHashMap<>(),
+			() -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
 	private final MultiMap<String, CallingContext, Set<CallingContext>> unresolvedReferences = MultiMap.from(
-			Collections.synchronizedMap(new HashMap<>()),
-			() -> Collections.synchronizedSet(new HashSet<>()));
+			new ConcurrentHashMap<>(),
+			() -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
 	private final ObservableBoolean isReady = new ObservableBoolean(false);
-	private final CallGraphConfig config;
 	private final Workspace workspace;
 	private final ClassLookup lookup;
+	private boolean initialized;
 
 	/**
-	 * @param config
-	 * 		Graphing config options.
 	 * @param workspace
 	 * 		Workspace to pull data from.
 	 */
-	@Inject
-	public CallGraph(@Nonnull CallGraphConfig config, @Nonnull Workspace workspace) {
-		this.config = config;
+	public CallGraph(@Nonnull Workspace workspace) {
 		this.workspace = workspace;
-		lookup = new ClassLookup(workspace);
 
-		// Only initialize & register listeners if active.
-		// Allow toggling the active config later to activate the service.
-		config.getActive().addChangeListener((ob, old, cur) -> setActive(cur));
-		setActive(config.getActive().getValue());
+		lookup = new ClassLookup(workspace);
 	}
 
-	private void setActive(boolean active) {
-		// Always reset ready state.
-		isReady.setValue(false);
-
-		// Add/remove self as listener.
-		if (active) {
-			workspace.addWorkspaceModificationListener(this);
-			workspace.getPrimaryResource().addResourceJvmClassListener(this);
-			initialize(workspace);
-		} else {
-			workspace.removeWorkspaceModificationListener(this);
-			workspace.getPrimaryResource().removeResourceJvmClassListener(this);
-		}
+	/**
+	 * @return {@code true} when {@link #initialize()} has been called.
+	 */
+	public boolean isInitialized() {
+		return initialized;
 	}
 
 	/**
@@ -145,10 +124,17 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	}
 
 	/**
-	 * @param workspace
-	 * 		Workspace to {@link #visit(JvmClassInfo)} all classes of.
+	 * Initialize the graph.
 	 */
-	private void initialize(@Nonnull Workspace workspace) {
+	public void initialize() {
+		// Only allow calls to initialize the graph once
+		if (initialized) return;
+		initialized = true;
+
+		// Register modification listeners so that we can update the graph when class state changes.
+		workspace.addWorkspaceModificationListener(this);
+		workspace.getPrimaryResource().addResourceJvmClassListener(this);
+
 		// Initialize asynchronously, and mark 'isReady' if completed successfully
 		CompletableFuture.runAsync(() -> {
 			for (WorkspaceResource resource : workspace.getAllResources(false)) {
@@ -448,18 +434,6 @@ public class CallGraph implements Service, WorkspaceModificationListener, Resour
 	@VisibleForTesting
 	MultiMap<String, MethodRef, Set<MethodRef>> getUnresolvedDeclarations() {
 		return unresolvedDeclarations;
-	}
-
-	@Nonnull
-	@Override
-	public String getServiceId() {
-		return SERVICE_ID;
-	}
-
-	@Nonnull
-	@Override
-	public CallGraphConfig getServiceConfig() {
-		return config;
 	}
 
 	/**

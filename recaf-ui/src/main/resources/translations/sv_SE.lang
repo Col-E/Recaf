@@ -391,7 +391,6 @@ tree.hidelibs=Dölj bibliotek
 service=Alla tjänster
 service.analysis=Analys
 service.analysis.graph-calls-config=Samtalsgraf
-service.analysis.graph-calls-config.active=Aktivera vid öppning av arbetsmiljöer
 service.analysis.graph-inheritance-config=Hierarkigraf
 service.analysis.search-config=Sök
 service.analysis.entry-points=Ingångspunkter

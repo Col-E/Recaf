@@ -495,7 +495,6 @@ service.analysis.comments-config=Comments
 service.analysis.comments-config.enable-display=Display comments in decompilation
 service.analysis.comments-config.word-wrapping-limit=Word wrap limit
 service.analysis.graph-calls-config=Call graph
-service.analysis.graph-calls-config.active=Enable on workspaces open
 service.analysis.graph-inheritance-config=Inheritance graph
 service.analysis.jphantom-generator-config=JPhantom
 service.analysis.jphantom-generator-config.generate-workspace-phantoms=Generate and append phantoms to workspaces

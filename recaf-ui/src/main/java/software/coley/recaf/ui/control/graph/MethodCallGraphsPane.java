@@ -14,6 +14,7 @@ import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.callgraph.CallGraph;
+import software.coley.recaf.services.callgraph.CallGraphService;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.ClassNavigable;
@@ -25,6 +26,7 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Container pane for two {@link MethodCallGraphPane} for inbound and outbound calls.
@@ -37,11 +39,12 @@ public class MethodCallGraphsPane extends TabPane implements ClassNavigable, Upd
 	private ClassPathNode path;
 
 	@Inject
-	public MethodCallGraphsPane(@Nonnull Workspace workspace, @Nonnull CallGraph callGraph,
+	public MethodCallGraphsPane(@Nonnull Workspace workspace, @Nonnull CallGraphService callGraphService,
 	                            @Nonnull TextFormatConfig format, @Nonnull Actions actions,
 	                            @Nonnull CellConfigurationService configurationService) {
 		currentMethodInfo = new SimpleObjectProperty<>();
 
+		CallGraph callGraph = Objects.requireNonNull(callGraphService.getCurrentWorkspaceGraph(), "Graph not created");
 		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphPane.CallGraphMode.CALLS, currentMethodInfo));
 		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphPane.CallGraphMode.CALLERS, currentMethodInfo));
 

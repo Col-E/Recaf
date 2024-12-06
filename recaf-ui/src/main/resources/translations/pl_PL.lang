@@ -471,7 +471,6 @@ service.analysis.comments-config=Komentarze
 service.analysis.comments-config.enable-display=Wyświetlaj komentarze w dekompilacji
 service.analysis.comments-config.word-wrapping-limit=Limit zawijania słów
 service.analysis.graph-calls-config=Graf wywołań
-service.analysis.graph-calls-config.active=Włącz przy otwieraniu obszarów roboczych
 service.analysis.graph-inheritance-config=Graf dziedziczenia
 service.analysis.jphantom-generator-config=JPhantom
 service.analysis.jphantom-generator-config.generate-workspace-phantoms=Generuj i dołącz fantomy do obszarów roboczych
