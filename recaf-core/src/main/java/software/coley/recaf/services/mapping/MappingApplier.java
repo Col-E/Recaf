@@ -12,6 +12,7 @@ import software.coley.recaf.info.properties.builtin.OriginalClassNameProperty;
 import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
@@ -21,6 +22,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
@@ -43,11 +45,11 @@ public class MappingApplier implements Service {
 
 	@Inject
 	public MappingApplier(@Nonnull MappingApplierConfig config,
-	                      @Nonnull InheritanceGraph inheritanceGraph,
+	                      @Nonnull InheritanceGraphService graphService,
 	                      @Nonnull AggregateMappingManager aggregateMappingManager,
 	                      @Nonnull MappingListeners listeners,
 	                      @Nonnull Workspace workspace) {
-		this.inheritanceGraph = inheritanceGraph;
+		this.inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
 		this.aggregateMappingManager = aggregateMappingManager;
 		this.listeners = listeners;
 		this.workspace = workspace;

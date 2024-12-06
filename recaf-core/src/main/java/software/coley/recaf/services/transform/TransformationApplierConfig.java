@@ -7,7 +7,7 @@ import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
- * Config for {@link TransformationApplier}.
+ * Config for {@link TransformationApplierService}.
  *
  * @author Matt Coley
  */
@@ -15,6 +15,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class TransformationApplierConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public TransformationApplierConfig() {
-		super(ConfigGroups.SERVICE_TRANSFORM, TransformationApplier.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_TRANSFORM, TransformationApplierService.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }

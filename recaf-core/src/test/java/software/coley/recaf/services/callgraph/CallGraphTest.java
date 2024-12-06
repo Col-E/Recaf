@@ -96,6 +96,7 @@ class CallGraphTest {
 	@Nonnull
 	static CallGraph graph(@Nonnull Workspace workspace) {
 		CallGraph graph = new CallGraph(workspace);
+		graph.initialize();
 
 		// Need to wait until async population of graph contents is done.
 		ObservableBoolean ready = graph.isReady();

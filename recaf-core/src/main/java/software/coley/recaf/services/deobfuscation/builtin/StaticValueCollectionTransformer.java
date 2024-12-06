@@ -11,18 +11,18 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
-import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IntValue;
@@ -34,7 +34,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.HashSet;
-import java.util.List;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,11 +48,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class StaticValueCollectionTransformer implements JvmClassTransformer {
 	private final Map<String, StaticValues> classValues = new ConcurrentHashMap<>();
 	private final Map<String, EffectivelyFinalFields> classFinals = new ConcurrentHashMap<>();
-	private final InheritanceGraph graph;
+	private final Map<Workspace, InheritanceGraph> graphCache = new IdentityHashMap<>();
+	private final InheritanceGraphService graphService;
+	private final WorkspaceManager workspaceManager;
 
 	@Inject
-	public StaticValueCollectionTransformer(@Nonnull InheritanceGraph graph) {
-		this.graph = graph;
+	public StaticValueCollectionTransformer(@Nonnull WorkspaceManager workspaceManager, @Nonnull InheritanceGraphService graphService) {
+		this.workspaceManager = workspaceManager;
+		this.graphService = graphService;
 	}
 
 	@Nullable
@@ -67,6 +70,11 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	                      @Nonnull JvmClassInfo classInfo) throws TransformationException {
+		// TODO: Instead of a map, we should make a workspace setup call first
+		InheritanceGraph graph = graphCache.computeIfAbsent(workspace, w -> w == workspaceManager.getCurrent() ?
+				graphService.getCurrentWorkspaceInheritanceGraph() :
+				graphService.newInheritanceGraph(workspace));
+
 		StaticValues valuesContainer = new StaticValues();
 		EffectivelyFinalFields finalContainer = new EffectivelyFinalFields();
 

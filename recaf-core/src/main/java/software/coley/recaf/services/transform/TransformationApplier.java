@@ -2,18 +2,15 @@ package software.coley.recaf.services.transform;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Sets;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
-import software.coley.recaf.services.Service;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -32,25 +29,29 @@ import java.util.Set;
  * @author Matt Coley
  * @see TransformationManager
  */
-@WorkspaceScoped
-public class TransformationApplier implements Service {
-	public static final String SERVICE_ID = "transformation-applier";
+public class TransformationApplier {
 	private static final Logger logger = Logging.get(TransformationApplier.class);
-	private final TransformationManager manager;
-	private final InheritanceGraph graph;
-	private final TransformationApplierConfig config;
+	private final TransformationManager transformationManager;
+	private final InheritanceGraph inheritanceGraph;
+	private final Workspace workspace;
 
-	@Inject
-	public TransformationApplier(@Nonnull TransformationManager manager, @Nonnull InheritanceGraph graph,
-	                             @Nonnull TransformationApplierConfig config) {
-		this.manager = manager;
-		this.graph = graph;
-		this.config = config;
+	/**
+	 * @param transformationManager
+	 * 		Manager to pull transformer instances from.
+	 * @param inheritanceGraph
+	 * 		Inheritance graph to use for frame computation <i>(Some transformers will trigger this)</i>
+	 * @param workspace
+	 * 		Workspace with classes to transform.
+	 */
+	public TransformationApplier(@Nonnull TransformationManager transformationManager,
+	                             @Nonnull InheritanceGraph inheritanceGraph,
+	                             @Nonnull Workspace workspace) {
+		this.transformationManager = transformationManager;
+		this.workspace = workspace;
+		this.inheritanceGraph = inheritanceGraph;
 	}
 
 	/**
-	 * @param workspace
-	 * 		Workspace to transform.
 	 * @param transformerClasses
 	 * 		JVM class transformers to run.
 	 *
@@ -61,13 +62,11 @@ public class TransformationApplier implements Service {
 	 * 		When transformation cannot be run for any reason.
 	 */
 	@Nonnull
-	public TransformResult transformJvm(@Nonnull Workspace workspace, @Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses) throws TransformationException {
-		return transformJvm(workspace, transformerClasses, null);
+	public TransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses) throws TransformationException {
+		return transformJvm(transformerClasses, null);
 	}
 
 	/**
-	 * @param workspace
-	 * 		Workspace to transform.
 	 * @param transformerClasses
 	 * 		JVM class transformers to run.
 	 * @param predicate
@@ -81,7 +80,7 @@ public class TransformationApplier implements Service {
 	 * 		When transformation cannot be run for any reason.
 	 */
 	@Nonnull
-	public TransformResult transformJvm(@Nonnull Workspace workspace, @Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
+	public TransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
 	                                    @Nullable JvmClassTransformerPredicate predicate) throws TransformationException {
 		// Build transformer visitation order
 		TransformerQueue queue = buildQueue(transformerClasses);
@@ -114,7 +113,7 @@ public class TransformationApplier implements Service {
 		});
 
 		// Update the workspace contents with the transformation results
-		Map<ClassPathNode, JvmClassInfo> transformedJvmClasses = context.buildChangeMap(graph);
+		Map<ClassPathNode, JvmClassInfo> transformedJvmClasses = context.buildChangeMap(inheritanceGraph);
 		return new TransformResult() {
 			@Nonnull
 			@Override
@@ -161,23 +160,11 @@ public class TransformationApplier implements Service {
 		// Create the transformer and its dependencies
 		//  - Dependencies first
 		//  - Then the transformer
-		JvmClassTransformer transformer = manager.newJvmTransformer(transformerClass);
+		JvmClassTransformer transformer = transformationManager.newJvmTransformer(transformerClass);
 		for (Class<? extends JvmClassTransformer> dependency : transformer.dependencies())
 			if (!queue.containsType(dependency))
 				insert(queue, dependency, Sets.add(dependants, transformerClass));
 		queue.add(transformer);
-	}
-
-	@Nonnull
-	@Override
-	public String getServiceId() {
-		return SERVICE_ID;
-	}
-
-	@Nonnull
-	@Override
-	public TransformationApplierConfig getServiceConfig() {
-		return config;
 	}
 
 	/**

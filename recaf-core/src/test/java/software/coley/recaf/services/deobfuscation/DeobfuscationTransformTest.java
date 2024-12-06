@@ -23,6 +23,7 @@ import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
 import software.coley.recaf.services.deobfuscation.builtin.StaticValueInliningTransformer;
 import software.coley.recaf.services.transform.TransformResult;
 import software.coley.recaf.services.transform.TransformationApplier;
+import software.coley.recaf.services.transform.TransformationApplierService;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
@@ -42,14 +43,14 @@ class DeobfuscationTransformTest extends TestBase {
 	private static final boolean PRINT_BEFORE_AFTER = true;
 	private static final String CLASS_NAME = "Example";
 	private static JvmAssemblerPipeline assembler;
+	private static TransformationApplierService transformationApplierService;
 	private static TransformationApplier transformationApplier;
 	private static JvmDecompiler decompiler;
 	private static Workspace workspace;
 
 	@BeforeAll
 	static void setupServices() {
-		assembler = recaf.get(JvmAssemblerPipeline.class);
-		transformationApplier = recaf.get(TransformationApplier.class);
+		transformationApplierService = recaf.get(TransformationApplierService.class);
 		decompiler = new CfrDecompiler(new CfrConfig());
 	}
 
@@ -57,6 +58,8 @@ class DeobfuscationTransformTest extends TestBase {
 	void setupWorkspace() {
 		workspace = new BasicWorkspace(new WorkspaceResourceBuilder().build());
 		workspaceManager.setCurrentIgnoringConditions(workspace);
+		assembler = recaf.get(JvmAssemblerPipeline.class);
+		transformationApplier = transformationApplierService.newApplierForCurrentWorkspace();
 	}
 
 	@Nested
@@ -279,7 +282,7 @@ class DeobfuscationTransformTest extends TestBase {
 		JvmClassInfo cls = assemble(assembly);
 
 		// Transforming should not actually result in any changes
-		TransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(workspace, List.of(StaticValueInliningTransformer.class)));
+		TransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm( List.of(StaticValueInliningTransformer.class)));
 		assertTrue(result.getJvmTransformerFailures().isEmpty(), "There were transformation failures");
 		assertEquals(0, result.getJvmTransformedClasses().size(), "There were unexpected transformations applied");
 	}
@@ -293,7 +296,7 @@ class DeobfuscationTransformTest extends TestBase {
 		assertTrue(initialDecompile.contains(expectedBefore));
 
 		// Run the transformer
-		TransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(workspace, List.of(StaticValueInliningTransformer.class)));
+		TransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm( List.of(StaticValueInliningTransformer.class)));
 		assertTrue(result.getJvmTransformerFailures().isEmpty(), "There were transformation failures");
 		assertEquals(1, result.getJvmTransformedClasses().size(), "Expected transformation to be applied");
 

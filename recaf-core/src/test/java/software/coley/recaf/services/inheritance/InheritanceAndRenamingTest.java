@@ -29,7 +29,6 @@ class InheritanceAndRenamingTest extends TestBase {
 	static MappingApplier mappingApplier;
 	static JvmClassInfo[] generatedClasses;
 
-
 	@BeforeAll
 	static void setup() {
 		generatedClasses = IntStream.rangeClosed(1, 5).mapToObj(i -> {
@@ -45,7 +44,7 @@ class InheritanceAndRenamingTest extends TestBase {
 		workspaceManager.setCurrent(workspace);
 
 		// Get graph
-		graph = recaf.get(InheritanceGraph.class);
+		graph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
 		graph.toString(); // Force immediate init.
 
 		// Get mapping applier

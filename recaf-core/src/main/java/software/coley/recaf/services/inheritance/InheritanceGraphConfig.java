@@ -7,7 +7,7 @@ import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
- * Config for {@link InheritanceGraph}
+ * Config for {@link InheritanceGraphService}
  *
  * @author Matt Coley
  */

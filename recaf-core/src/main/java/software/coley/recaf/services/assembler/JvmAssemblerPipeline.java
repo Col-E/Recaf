@@ -29,13 +29,14 @@ import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * JVM assembler pipeline implementation.
@@ -52,12 +53,12 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 
 	@Inject
 	public JvmAssemblerPipeline(@Nonnull Workspace workspace,
-								@Nonnull InheritanceGraph inheritanceGraph,
-								@Nonnull AssemblerPipelineGeneralConfig generalConfig,
-								@Nonnull JvmAssemblerPipelineConfig config) {
+	                            @Nonnull InheritanceGraphService graphService,
+	                            @Nonnull AssemblerPipelineGeneralConfig generalConfig,
+	                            @Nonnull JvmAssemblerPipelineConfig config) {
 		super(generalConfig, config);
 		this.workspace = workspace;
-		this.inheritanceGraph = inheritanceGraph;
+		this.inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
 	}
 
 	@Nonnull

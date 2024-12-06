@@ -2,11 +2,7 @@ package software.coley.recaf.services.inheritance;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
 import software.coley.collections.Lists;
-import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
-import software.coley.recaf.cdi.EagerInitialization;
-import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.BasicJvmClassInfo;
 import software.coley.recaf.info.ClassInfo;
@@ -16,7 +12,6 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.MappingApplicationListener;
-import software.coley.recaf.services.mapping.MappingListeners;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.model.Workspace;
@@ -42,13 +37,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Class inheritance graph utility.
+ * Represents class inheritance as a navigable graph.
  *
  * @author Matt Coley
  */
-@WorkspaceScoped
-@EagerInitialization
-@AutoRegisterWorkspaceListeners
 public class InheritanceGraph implements Service, WorkspaceModificationListener, WorkspaceCloseListener,
 		ResourceJvmClassListener, ResourceAndroidClassListener, MappingApplicationListener {
 	public static final String SERVICE_ID = "graph-inheritance";
@@ -70,8 +62,8 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @param workspace
 	 * 		Workspace to pull classes from.
 	 */
-	@Inject
-	public InheritanceGraph(@Nonnull InheritanceGraphConfig config, @Nonnull MappingListeners mappingListeners, @Nonnull Workspace workspace) {
+	public InheritanceGraph(@Nonnull InheritanceGraphConfig config,
+	                        @Nonnull Workspace workspace) {
 		this.config = config;
 		this.workspace = workspace;
 
@@ -79,9 +71,6 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		WorkspaceResource primaryResource = workspace.getPrimaryResource();
 		primaryResource.addResourceJvmClassListener(this);
 		primaryResource.addResourceAndroidClassListener(this);
-
-		// Add listener to handle updating the graph when renaming is applied.
-		mappingListeners.addMappingApplicationListener(this);
 
 		// Populate downwards (parent --> child) lookup
 		refreshChildLookup();

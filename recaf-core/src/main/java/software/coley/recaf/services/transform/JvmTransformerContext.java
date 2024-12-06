@@ -66,18 +66,18 @@ public class JvmTransformerContext {
 	/**
 	 * Builds the map of initial transformed class paths to their final transformed states.
 	 *
-	 * @param graph
+	 * @param inheritanceGraph
 	 * 		Inheritance graph tied to the workspace the transformed classes belong to.
 	 */
 	@Nonnull
-	protected Map<ClassPathNode, JvmClassInfo> buildChangeMap(@Nonnull InheritanceGraph graph) {
+	protected Map<ClassPathNode, JvmClassInfo> buildChangeMap(@Nonnull InheritanceGraph inheritanceGraph) {
 		ResourcePathNode resourcePath = PathNodes.resourcePath(workspace, resource);
 		Map<ClassPathNode, JvmClassInfo> map = new HashMap<>();
 		for (JvmClassData data : classData.values()) {
 			if (data.isDirty()) {
 				if (data.node != null) {
 					// Emit bytecode from the current node
-					ClassWriter writer = new WorkspaceClassWriter(graph, data.initialClass.getClassReader(), 0);
+					ClassWriter writer = new WorkspaceClassWriter(inheritanceGraph, data.initialClass.getClassReader(), 0);
 					data.node.accept(writer);
 					byte[] modifiedBytes = writer.toByteArray();
 

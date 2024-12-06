@@ -19,6 +19,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
@@ -47,9 +48,9 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 	private ClassPathNode path;
 
 	@Inject
-	public InheritancePane(@Nonnull InheritanceGraph inheritanceGraph,
+	public InheritancePane(@Nonnull InheritanceGraphService graphService,
 						   @Nonnull CellConfigurationService configurationService) {
-		this.inheritanceGraph = inheritanceGraph;
+		this.inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
 		contentType.addListener((ob, old, cur) -> regenerateTree());
 
 		// Configure tree.

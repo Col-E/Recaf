@@ -13,13 +13,32 @@ import jakarta.inject.Inject;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.SplitPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import javafx.util.StringConverter;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -31,6 +50,7 @@ import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.config.ConfigComponentFactory;
 import software.coley.recaf.services.config.ConfigComponentManager;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
@@ -40,21 +60,37 @@ import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.format.EnigmaMappings;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
 import software.coley.recaf.services.mapping.gen.filter.*;
-import software.coley.recaf.services.mapping.gen.naming.*;
+import software.coley.recaf.services.mapping.gen.naming.DeconflictingNameGenerator;
+import software.coley.recaf.services.mapping.gen.naming.IncrementingNameGeneratorProvider;
+import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
+import software.coley.recaf.services.mapping.gen.naming.NameGeneratorProvider;
+import software.coley.recaf.services.mapping.gen.naming.NameGeneratorProviders;
 import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.LanguageStylesheets;
-import software.coley.recaf.ui.control.*;
+import software.coley.recaf.ui.control.ActionButton;
+import software.coley.recaf.ui.control.ActionMenuItem;
+import software.coley.recaf.ui.control.BoundCheckBox;
+import software.coley.recaf.ui.control.BoundComboBox;
+import software.coley.recaf.ui.control.BoundIntSpinner;
+import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.BoundTextField;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
-import software.coley.recaf.util.*;
+import software.coley.recaf.util.AccessFlag;
+import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.ToStringConverter;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -94,7 +130,7 @@ public class MappingGeneratorPane extends StackPane {
 	                            @Nonnull StringPredicateProvider stringPredicateProvider,
 	                            @Nonnull MappingGenerator mappingGenerator,
 	                            @Nonnull ConfigComponentManager componentManager,
-	                            @Nonnull InheritanceGraph graph,
+	                            @Nonnull InheritanceGraphService graphService,
 	                            @Nonnull AggregateMappingManager aggregateMappingManager,
 	                            @Nonnull MappingApplier mappingApplier,
 	                            @Nonnull Instance<SearchBar> searchBarProvider) {
@@ -104,7 +140,7 @@ public class MappingGeneratorPane extends StackPane {
 		this.stringPredicateProvider = stringPredicateProvider;
 		this.mappingGenerator = mappingGenerator;
 		this.componentManager = componentManager;
-		this.graph = graph;
+		this.graph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
 		this.mappingApplier = mappingApplier;
 
 		// Cache text matchers.

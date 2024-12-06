@@ -10,6 +10,7 @@ import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.MethodMapping;
@@ -85,7 +86,7 @@ public class MappingGeneratorTest extends TestBase {
 		));
 		resource = workspace.getPrimaryResource();
 		workspaceManager.setCurrent(workspace);
-		inheritanceGraph = recaf.get(InheritanceGraph.class);
+		inheritanceGraph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
 		mappingGenerator = recaf.get(MappingGenerator.class);
 		strMatchProvider = recaf.get(StringPredicateProvider.class);
 	}

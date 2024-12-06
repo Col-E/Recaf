@@ -4,9 +4,8 @@ import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
-import software.coley.recaf.services.inheritance.InheritanceGraphConfig;
-import software.coley.recaf.services.mapping.MappingListeners;
-import software.coley.recaf.services.mapping.MappingListenersConfig;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.workspace.model.Workspace;
@@ -27,7 +26,7 @@ import static org.mockito.Mockito.*;
 /**
  * Tests for {@link TransformationApplier}
  */
-class TransformationApplierTest {
+class TransformationApplierTest extends TestBase {
 	private static final TransformationApplierConfig config = new TransformationApplierConfig();
 	private static final InheritanceGraph graph;
 	private static final Workspace workspace;
@@ -36,14 +35,10 @@ class TransformationApplierTest {
 		// Make a dummy workspace. We just need a single class (and any class will work)
 		try {
 			workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(HelloWorld.class));
+			graph = recaf.get(InheritanceGraphService.class).newInheritanceGraph(workspace);
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to read input class for transformer test", e);
 		}
-
-		// Make the graph
-		MappingListeners listeners = new MappingListeners(new MappingListenersConfig());
-		InheritanceGraphConfig graphConfig = new InheritanceGraphConfig();
-		graph = new InheritanceGraph(graphConfig, listeners, workspace);
 	}
 
 	@Test
@@ -60,8 +55,8 @@ class TransformationApplierTest {
 
 		// If we transform with "B" we should observe that only "B" is called on sine the two hold no relation
 		TransformationManager manager = new TransformationManager(map);
-		TransformationApplier applier = new TransformationApplier(manager, graph, config);
-		assertDoesNotThrow(() -> applier.transformJvm(workspace, Collections.singletonList(JvmTransformerB.class)));
+		TransformationApplier applier = new TransformationApplier(manager, graph, workspace);
+		assertDoesNotThrow(() -> applier.transformJvm(Collections.singletonList(JvmTransformerB.class)));
 
 		// "A" not used
 		verify(transformerA, never()).transform(any(), any(), any(), any(), any());
@@ -84,8 +79,8 @@ class TransformationApplierTest {
 
 		// If we transform with "B" we should observe that both "B" and "A" were called on.
 		TransformationManager manager = new TransformationManager(map);
-		TransformationApplier applier = new TransformationApplier(manager, graph, config);
-		assertDoesNotThrow(() -> applier.transformJvm(workspace, Collections.singletonList(JvmTransformerDependingOnA.class)));
+		TransformationApplier applier = new TransformationApplier(manager, graph, workspace);
+		assertDoesNotThrow(() -> applier.transformJvm(Collections.singletonList(JvmTransformerDependingOnA.class)));
 		verify(transformerA, times(1)).transform(any(), same(workspace), any(), any(), any());
 		verify(transformerB, times(1)).transform(any(), same(workspace), any(), any(), any());
 	}
@@ -104,9 +99,9 @@ class TransformationApplierTest {
 
 		// If we transform with "A" or "B" we should observe an exception due to the detected cycle
 		TransformationManager manager = new TransformationManager(map);
-		TransformationApplier applier = new TransformationApplier(manager, graph, config);
-		assertThrows(TransformationException.class, () -> applier.transformJvm(workspace, Collections.singletonList(JvmCycleA.class)));
-		assertThrows(TransformationException.class, () -> applier.transformJvm(workspace, Collections.singletonList(JvmCycleB.class)));
+		TransformationApplier applier = new TransformationApplier(manager, graph, workspace);
+		assertThrows(TransformationException.class, () -> applier.transformJvm(Collections.singletonList(JvmCycleA.class)));
+		assertThrows(TransformationException.class, () -> applier.transformJvm(Collections.singletonList(JvmCycleB.class)));
 		verify(transformerA, never()).transform(any(), same(workspace), any(), any(), any());
 		verify(transformerB, never()).transform(any(), same(workspace), any(), any(), any());
 	}
@@ -122,8 +117,8 @@ class TransformationApplierTest {
 
 		// If we transform with the single transformer we should observe an exception due to the detected cycle
 		TransformationManager manager = new TransformationManager(map);
-		TransformationApplier applier = new TransformationApplier(manager, graph, config);
-		assertThrows(TransformationException.class, () -> applier.transformJvm(workspace, Collections.singletonList(JvmCycleSingle.class)));
+		TransformationApplier applier = new TransformationApplier(manager, graph, workspace);
+		assertThrows(TransformationException.class, () -> applier.transformJvm(Collections.singletonList(JvmCycleSingle.class)));
 		verify(transformer, never()).transform(any(), same(workspace), any(), any(), any());
 	}
 
@@ -131,8 +126,8 @@ class TransformationApplierTest {
 	void missingRegistration() {
 		// If we transform with a transformer that is not registered in the manager, the transform should fail
 		TransformationManager manager = new TransformationManager(Collections.emptyMap());
-		TransformationApplier applier = new TransformationApplier(manager, graph, config);
-		assertThrows(TransformationException.class, () -> applier.transformJvm(workspace, Collections.singletonList(JvmCycleSingle.class)));
+		TransformationApplier applier = new TransformationApplier(manager, graph, workspace);
+		assertThrows(TransformationException.class, () -> applier.transformJvm(Collections.singletonList(JvmCycleSingle.class)));
 	}
 
 	static class JvmTransformerA implements JvmClassTransformer {

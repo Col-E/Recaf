@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
@@ -57,18 +58,18 @@ class BootstrapTest extends TestBase {
 
 	@Test
 	void testGetWorkspaceScopedInstance() {
-		// Get the graph when one workspace is open.
+		// Get the manager when one workspace is open.
 		workspaceManager.setCurrent(EmptyWorkspace.get());
-		InheritanceGraph graph1 = unwrapProxy(recaf.get(InheritanceGraph.class));
-		InheritanceGraph graph2 = unwrapProxy(recaf.get(InheritanceGraph.class));
-		assertSame(graph1, graph2, "Graph should be workspace-scoped, but values differ!");
+		AggregateMappingManager manager1 = unwrapProxy(recaf.get(AggregateMappingManager.class));
+		AggregateMappingManager manager2 = unwrapProxy(recaf.get(AggregateMappingManager.class));
+		assertSame(manager1, manager2, "Graph should be workspace-scoped, but values differ!");
 
 		// Assign a new workspace.
-		// The graph should be different since the prior workspace is closed.
+		// The manager should be different since the prior workspace is closed.
 		workspaceManager.setCurrent(EmptyWorkspace.get());
-		InheritanceGraph graph3 = unwrapProxy(recaf.get(InheritanceGraph.class));
-		InheritanceGraph graph4 = unwrapProxy(recaf.get(InheritanceGraph.class));
-		assertSame(graph3, graph4, "Graph should be workspace-scoped, but values differ!");
-		assertNotSame(graph1, graph3, "Graph scope from before/after a new workspace yielded the same graph bean!");
+		AggregateMappingManager manager3 = unwrapProxy(recaf.get(AggregateMappingManager.class));
+		AggregateMappingManager manager4 = unwrapProxy(recaf.get(AggregateMappingManager.class));
+		assertSame(manager3, manager4, "Graph should be workspace-scoped, but values differ!");
+		assertNotSame(manager1, manager3, "Graph scope from before/after a new workspace yielded the same graph bean!");
 	}
 }

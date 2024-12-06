@@ -11,6 +11,7 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -34,7 +35,7 @@ public class MappingListeners implements Service {
 	/**
 	 * Adds a listener which is passed to created {@link MappingResults} from
 	 * {@link MappingApplier#applyToPrimaryResource(Mappings)} and
-	 * {@link MappingApplier#applyToClasses(Mappings, WorkspaceResource, JvmClassBundle, List)}.
+	 * {@link MappingApplier#applyToClasses(Mappings, WorkspaceResource, JvmClassBundle, Collection)}.
 	 * <p>
 	 * This allows you to listen to all mapping operations done via proper API usage, intercepting before they
 	 * execute the task, and after they complete the mapping task.

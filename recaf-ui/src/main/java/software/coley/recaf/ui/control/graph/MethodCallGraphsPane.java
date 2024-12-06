@@ -44,7 +44,7 @@ public class MethodCallGraphsPane extends TabPane implements ClassNavigable, Upd
 	                            @Nonnull CellConfigurationService configurationService) {
 		currentMethodInfo = new SimpleObjectProperty<>();
 
-		CallGraph callGraph = Objects.requireNonNull(callGraphService.getCurrentWorkspaceGraph(), "Graph not created");
+		CallGraph callGraph = Objects.requireNonNull(callGraphService.getCurrentWorkspaceCallGraph(), "Graph not created");
 		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphPane.CallGraphMode.CALLS, currentMethodInfo));
 		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphPane.CallGraphMode.CALLERS, currentMethodInfo));
 

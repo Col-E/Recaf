@@ -12,6 +12,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.builtin.OriginalClassNameProperty;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
@@ -37,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class MappingApplierTest extends TestBase {
 	static NameGenerator nameGenerator;
-	static MappingGenerator mappingGenerator;
+	MappingGenerator mappingGenerator;
 	Workspace workspace;
 	WorkspaceResource resource;
 	AggregateMappingManager aggregateMappingManager;
@@ -71,7 +72,7 @@ class MappingApplierTest extends TestBase {
 		resource = workspace.getPrimaryResource();
 		workspaceManager.setCurrent(workspace);
 		aggregateMappingManager = recaf.get(AggregateMappingManager.class);
-		inheritanceGraph = recaf.get(InheritanceGraph.class);
+		inheritanceGraph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
 		mappingGenerator = recaf.get(MappingGenerator.class);
 		mappingApplier = recaf.get(MappingApplier.class);
 	}

@@ -31,7 +31,7 @@ public class MappingsAdapter implements Mappings {
 	private final Map<MappingKey, String> mappings = new HashMap<>();
 	private final boolean supportFieldTypeDifferentiation;
 	private final boolean supportVariableTypeDifferentiation;
-	private InheritanceGraph graph;
+	private InheritanceGraph inheritanceGraph;
 	private Workspace workspace;
 
 	/**
@@ -130,7 +130,7 @@ public class MappingsAdapter implements Mappings {
 	public String getMappedFieldName(@Nonnull String ownerName, @Nonnull String fieldName, @Nonnull String fieldDesc) {
 		MappingKey key = getFieldKey(ownerName, fieldName, fieldDesc);
 		String mapped = mappings.get(key);
-		if (mapped == null && graph != null) {
+		if (mapped == null && inheritanceGraph != null) {
 			mapped = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
 		}
 		return mapped;
@@ -141,7 +141,7 @@ public class MappingsAdapter implements Mappings {
 	public String getMappedMethodName(@Nonnull String ownerName, @Nonnull String methodName, @Nonnull String methodDesc) {
 		MappingKey key = getMethodKey(ownerName, methodName, methodDesc);
 		String mapped = mappings.get(key);
-		if (mapped == null && graph != null) {
+		if (mapped == null && inheritanceGraph != null) {
 			mapped = findInParent(ownerName, parent -> getMethodKey(parent, methodName, methodDesc));
 		}
 		return mapped;
@@ -198,7 +198,7 @@ public class MappingsAdapter implements Mappings {
 	 * @return The first mapping match in a parent class found by the lookup function.
 	 */
 	private String findInParent(String owner, Function<String, ? extends MappingKey> lookup) {
-		InheritanceVertex vertex = graph.getVertex(owner);
+		InheritanceVertex vertex = inheritanceGraph.getVertex(owner);
 		if (vertex == null)
 			return null;
 		Iterator<InheritanceVertex> iterator = vertex.allParents().iterator();
@@ -232,11 +232,11 @@ public class MappingsAdapter implements Mappings {
 	 * was to {@link TreeMap#size()}. If you only have the {@link Map} entry you need the type hierarchy to find that
 	 * {@link TreeMap} is a child of {@link Map} and thus should <i>"inherit"</i> the mapping of {@link Map#size()}.
 	 *
-	 * @param graph
+	 * @param inheritanceGraph
 	 * 		Inheritance graph to use.
 	 */
-	public void enableHierarchyLookup(@Nonnull InheritanceGraph graph) {
-		this.graph = graph;
+	public void enableHierarchyLookup(@Nonnull InheritanceGraph inheritanceGraph) {
+		this.inheritanceGraph = inheritanceGraph;
 	}
 
 	/**
