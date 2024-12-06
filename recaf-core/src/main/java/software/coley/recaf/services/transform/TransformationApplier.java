@@ -92,6 +92,16 @@ public class TransformationApplier {
 		WorkspaceResource resource = workspace.getPrimaryResource();
 		ResourcePathNode resourcePath = PathNodes.resourcePath(workspace, resource);
 		JvmTransformerContext context = new JvmTransformerContext(workspace, resource, queue.transformers);
+		for (JvmClassTransformer transformer : queue.transformers) {
+			try {
+				transformer.setup(context, workspace);
+			} catch (Throwable t) {
+				// If setup fails, abort the transformation
+				String message = "Transformer '" + transformer.name() + "' failed on setup";
+				logger.error(message, t);
+				throw new TransformationException(message, t);
+			}
+		}
 		resource.jvmClassBundleStreamRecursive().forEach(bundle -> {
 			BundlePathNode bundlePathNode = resourcePath.child(bundle);
 			for (JvmClassTransformer transformer : queue.transformers) {

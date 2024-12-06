@@ -48,9 +48,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class StaticValueCollectionTransformer implements JvmClassTransformer {
 	private final Map<String, StaticValues> classValues = new ConcurrentHashMap<>();
 	private final Map<String, EffectivelyFinalFields> classFinals = new ConcurrentHashMap<>();
-	private final Map<Workspace, InheritanceGraph> graphCache = new IdentityHashMap<>();
 	private final InheritanceGraphService graphService;
 	private final WorkspaceManager workspaceManager;
+	private InheritanceGraph inheritanceGraph;
 
 	@Inject
 	public StaticValueCollectionTransformer(@Nonnull WorkspaceManager workspaceManager, @Nonnull InheritanceGraphService graphService) {
@@ -67,14 +67,16 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 	}
 
 	@Override
+	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		inheritanceGraph = workspace == workspaceManager.getCurrent() ?
+				graphService.getCurrentWorkspaceInheritanceGraph() :
+				graphService.newInheritanceGraph(workspace);
+	}
+
+	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	                      @Nonnull JvmClassInfo classInfo) throws TransformationException {
-		// TODO: Instead of a map, we should make a workspace setup call first
-		InheritanceGraph inheritanceGraph = graphCache.computeIfAbsent(workspace, w -> w == workspaceManager.getCurrent() ?
-				graphService.getCurrentWorkspaceInheritanceGraph() :
-				graphService.newInheritanceGraph(workspace));
-
 		StaticValues valuesContainer = new StaticValues();
 		EffectivelyFinalFields finalContainer = new EffectivelyFinalFields();
 

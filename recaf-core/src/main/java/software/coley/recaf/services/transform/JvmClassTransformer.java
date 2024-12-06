@@ -17,6 +17,16 @@ import java.util.Set;
  */
 public interface JvmClassTransformer {
 	/**
+	 * Used to do any workspace-scope setup actions before transformations occur.
+	 *
+	 * @param context
+	 * 		Transformation context for access to other transformers and recording class changes.
+	 * @param workspace
+	 * 		Workspace containing classes to transform.
+	 */
+	default void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {}
+
+	/**
 	 * Implementations can {@link #dependencies() depend on other transformers} and access them
 	 * via {@link JvmTransformerContext#getJvmTransformer(Class)}. This may be useful in cases where you want to have
 	 * one transformer act as a shared data-storage between multiple transformers.
