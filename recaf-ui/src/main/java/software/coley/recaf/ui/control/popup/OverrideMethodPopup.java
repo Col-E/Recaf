@@ -42,7 +42,7 @@ public class OverrideMethodPopup extends RecafStage {
 	private final PathNodeTree tree;
 
 	public OverrideMethodPopup(@Nonnull Actions actions, @Nonnull CellConfigurationService configurationService,
-	                           @Nonnull InheritanceGraph graph, @Nonnull Workspace workspace,
+	                           @Nonnull InheritanceGraph inheritanceGraph, @Nonnull Workspace workspace,
 	                           @Nonnull ClassInfo targetClass, @Nonnull BiConsumer<ClassInfo, MethodMember> memberConsumer) {
 		WorkspacePathNode rootPath = PathNodes.workspacePath(workspace);
 		TreeItem<PathNode<?>> rootItem = new TreeItem<>(rootPath);
@@ -52,7 +52,7 @@ public class OverrideMethodPopup extends RecafStage {
 		tree.getStyleClass().add("border-muted");
 
 		// Setup tree contents
-		InheritanceVertex vertex = graph.getVertex(targetClass.getName());
+		InheritanceVertex vertex = inheritanceGraph.getVertex(targetClass.getName());
 		if (vertex != null) {
 			vertex.allParents().forEach(parent -> {
 				ClassPathNode parentPath = workspace.findClass(parent.getName());

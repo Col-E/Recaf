@@ -25,7 +25,7 @@ import static org.objectweb.asm.Opcodes.V1_8;
  */
 class InheritanceAndRenamingTest extends TestBase {
 	static Workspace workspace;
-	static InheritanceGraph graph;
+	static InheritanceGraph inheritanceGraph;
 	static MappingApplier mappingApplier;
 	static JvmClassInfo[] generatedClasses;
 
@@ -44,8 +44,8 @@ class InheritanceAndRenamingTest extends TestBase {
 		workspaceManager.setCurrent(workspace);
 
 		// Get graph
-		graph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
-		graph.toString(); // Force immediate init.
+		inheritanceGraph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
+		inheritanceGraph.toString(); // Force immediate init.
 
 		// Get mapping applier
 		mappingApplier = recaf.get(MappingApplier.class);
@@ -56,7 +56,7 @@ class InheritanceAndRenamingTest extends TestBase {
 		// Verify initial state
 		for (int i = 1; i <= 5; i++) {
 			String name = "I" + i;
-			InheritanceVertex vertex = graph.getVertex(name);
+			InheritanceVertex vertex = inheritanceGraph.getVertex(name);
 			assertNotNull(vertex, "Graph missing '" + name + "'");
 		}
 
@@ -70,15 +70,15 @@ class InheritanceAndRenamingTest extends TestBase {
 		// Very old classes are removed from the graph
 		for (int i = 1; i <= 5; i++) {
 			String name = "I" + i;
-			InheritanceVertex vertex = graph.getVertex(name);
+			InheritanceVertex vertex = inheritanceGraph.getVertex(name);
 			assertNull(vertex, "Graph contains pre-mapped '" + name + "'");
 		}
 
 		// Verify the new classes are added to the graph
-		InheritanceVertex objectVertex = graph.getVertex("java/lang/Object");
+		InheritanceVertex objectVertex = inheritanceGraph.getVertex("java/lang/Object");
 		for (int i = 1; i <= 5; i++) {
 			String name = "R" + i;
-			InheritanceVertex vertex = graph.getVertex(name);
+			InheritanceVertex vertex = inheritanceGraph.getVertex(name);
 			assertNotNull(vertex, "Graph missing post-mapped '" + name + "'");
 			if (i > 1) {
 				Set<InheritanceVertex> parents = vertex.getParents();

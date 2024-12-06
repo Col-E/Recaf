@@ -119,7 +119,7 @@ public class MappingGeneratorPane extends StackPane {
 	private final StringPredicateProvider stringPredicateProvider;
 	private final MappingGenerator mappingGenerator;
 	private final ConfigComponentManager componentManager;
-	private final InheritanceGraph graph;
+	private final InheritanceGraph inheritanceGraph;
 	private final ModalPane modal = new ModalPane();
 	private final MappingApplier mappingApplier;
 	private final Pane previewGroup;
@@ -140,7 +140,7 @@ public class MappingGeneratorPane extends StackPane {
 		this.stringPredicateProvider = stringPredicateProvider;
 		this.mappingGenerator = mappingGenerator;
 		this.componentManager = componentManager;
-		this.graph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
+		this.inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
 		this.mappingApplier = mappingApplier;
 
 		// Cache text matchers.
@@ -243,7 +243,7 @@ public class MappingGeneratorPane extends StackPane {
 				deconflictingGenerator.setWorkspace(workspace);
 
 			// Generate the mappings
-			return mappingGenerator.generate(workspace, workspace.getPrimaryResource(), graph, generator, finalFilter);
+			return mappingGenerator.generate(workspace, workspace.getPrimaryResource(), inheritanceGraph, generator, finalFilter);
 		}).whenCompleteAsync((mappings, error) -> {
 			previewGroup.setDisable(false);
 			if (mappings != null) {

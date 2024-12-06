@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class InheritanceGraphTest extends TestBase {
 	static Workspace workspace;
-	static InheritanceGraph graph;
+	static InheritanceGraph inheritanceGraph;
 
 	@BeforeAll
 	static void setup() throws IOException {
@@ -38,7 +38,7 @@ class InheritanceGraphTest extends TestBase {
 		workspaceManager.setCurrent(workspace);
 
 		// Get graph
-		graph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
+		inheritanceGraph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
 	}
 
 	@Test
@@ -46,7 +46,7 @@ class InheritanceGraphTest extends TestBase {
 		String appleName = Inheritance.Apple.class.getName().replace('.', '/');
 
 		// Check vertex
-		InheritanceVertex vertex = graph.getVertex(appleName);
+		InheritanceVertex vertex = inheritanceGraph.getVertex(appleName);
 		assertNotNull(vertex, "Could not get Apple vertex from workspace");
 		assertEquals(appleName, vertex.getName(), "Vertex should have same name as lookup");
 
@@ -70,7 +70,7 @@ class InheritanceGraphTest extends TestBase {
 				"Apple missing parent: Edible");
 
 		// Check awareness of library methods
-		vertex = graph.getVertex(StringConsumer.class.getName().replace('.', '/'));
+		vertex = inheritanceGraph.getVertex(StringConsumer.class.getName().replace('.', '/'));
 		assertTrue(vertex.hasMethod("accept", "(Ljava/lang/Object;)V"));
 		assertTrue(vertex.hasMethod("accept", "(Ljava/lang/String;)V")); // Redirects to Object method
 		assertTrue(vertex.isLibraryMethod("accept", "(Ljava/lang/Object;)V")); // From Consumer<T>
@@ -86,7 +86,7 @@ class InheritanceGraphTest extends TestBase {
 				appleName.replace("Apple", "Edible"), // parent of apple
 				appleName.replace("Apple", "Grape") // shared parent edible
 		);
-		Set<InheritanceVertex> family = graph.getVertexFamily(appleName, false);
+		Set<InheritanceVertex> family = inheritanceGraph.getVertexFamily(appleName, false);
 		assertEquals(5, family.size());
 		assertEquals(names, family.stream().map(InheritanceVertex::getName).collect(Collectors.toSet()));
 	}
@@ -98,11 +98,11 @@ class InheritanceGraphTest extends TestBase {
 		String grapeName = Inheritance.Grape.class.getName().replace('.', '/');
 
 		// Compare obvious case --> edible
-		String commonType = graph.getCommon(appleName, grapeName);
+		String commonType = inheritanceGraph.getCommon(appleName, grapeName);
 		assertEquals(edibleName, commonType, "Common type of Apple/Grape should be Edible");
 
 		// Compare with bogus --> object
-		commonType = graph.getCommon(appleName, UUID.randomUUID().toString());
+		commonType = inheritanceGraph.getCommon(appleName, UUID.randomUUID().toString());
 		assertEquals(Types.OBJECT_TYPE.getInternalName(), commonType,
 				"Common type of two unrelated classes should be Object");
 	}
@@ -114,12 +114,12 @@ class InheritanceGraphTest extends TestBase {
 		String grapeName = Inheritance.Grape.class.getName().replace('.', '/');
 
 		// Edible.class.isAssignableFrom(Apple.class) --> true
-		assertTrue(graph.isAssignableFrom(edibleName, appleName), "Edible should be assignable from Apple");
-		assertTrue(graph.isAssignableFrom(edibleName, grapeName), "Edible should be assignable from Grape");
+		assertTrue(inheritanceGraph.isAssignableFrom(edibleName, appleName), "Edible should be assignable from Apple");
+		assertTrue(inheritanceGraph.isAssignableFrom(edibleName, grapeName), "Edible should be assignable from Grape");
 
 		// Apple.class.isAssignableFrom(Edible.class) --> false
-		assertFalse(graph.isAssignableFrom(appleName, edibleName), "Apple should not be assignable from Edible");
-		assertFalse(graph.isAssignableFrom(grapeName, edibleName), "Grape should not be assignable from Edible");
+		assertFalse(inheritanceGraph.isAssignableFrom(appleName, edibleName), "Apple should not be assignable from Edible");
+		assertFalse(inheritanceGraph.isAssignableFrom(grapeName, edibleName), "Grape should not be assignable from Edible");
 	}
 
 	@Test
@@ -131,11 +131,11 @@ class InheritanceGraphTest extends TestBase {
 		// Assert that looking at child types of throwable finds NotFoodException.
 		// Our class extends Exception, which extends Throwable. So there should be a vertex between Throwable and our type.
 		JvmClassInfo notFoodException = classPath.getValue().asJvmClass();
-		List<ClassInfo> exceptionClasses = graph.getVertex("java/lang/Exception").getAllChildren().stream()
+		List<ClassInfo> exceptionClasses = inheritanceGraph.getVertex("java/lang/Exception").getAllChildren().stream()
 				.map(InheritanceVertex::getValue)
 				.toList();
 		assertTrue(exceptionClasses.contains(notFoodException), "Subtypes of 'Exception' did not yield 'NotFoodException'");
-		List<ClassInfo> throwableClasses = graph.getVertex("java/lang/Throwable").getAllChildren().stream()
+		List<ClassInfo> throwableClasses = inheritanceGraph.getVertex("java/lang/Throwable").getAllChildren().stream()
 				.map(InheritanceVertex::getValue)
 				.toList();
 		assertTrue(throwableClasses.contains(notFoodException), "Subtypes of 'Throwable' did not yield 'NotFoodException'");

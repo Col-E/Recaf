@@ -54,8 +54,8 @@ public class TransformationApplierService implements Service {
 			return newApplier(workspace, Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created"));
 
 		// Need to make a new graph for the given workspace
-		InheritanceGraph graph = graphService.newInheritanceGraph(workspace);
-		return newApplier(workspace, graph);
+		InheritanceGraph inheritanceGraph = graphService.newInheritanceGraph(workspace);
+		return newApplier(workspace, inheritanceGraph);
 	}
 
 	/**
@@ -67,8 +67,8 @@ public class TransformationApplierService implements Service {
 		Workspace workspace = workspaceManager.getCurrent();
 		if (workspace == null)
 			return null;
-		InheritanceGraph graph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
-		return newApplier(workspace, graph);
+		InheritanceGraph inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
+		return newApplier(workspace, inheritanceGraph);
 	}
 
 	/**

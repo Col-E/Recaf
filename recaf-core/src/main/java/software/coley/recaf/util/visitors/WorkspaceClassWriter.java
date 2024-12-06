@@ -12,29 +12,29 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
  * @author Matt Coley
  */
 public class WorkspaceClassWriter extends ClassWriter {
-	private final InheritanceGraph graph;
+	private final InheritanceGraph inheritanceGraph;
 
 	/**
-	 * @param graph
-	 * 		Graph to pull inheritance relations from.
+	 * @param inheritanceGraph
+	 * 		Inheritance graph to pull inheritance relations from.
 	 * @param flags
 	 * 		Writer flags.
 	 */
-	public WorkspaceClassWriter(@Nonnull InheritanceGraph graph, int flags) {
-		this(graph, null, flags);
+	public WorkspaceClassWriter(@Nonnull InheritanceGraph inheritanceGraph, int flags) {
+		this(inheritanceGraph, null, flags);
 	}
 
 	/**
-	 * @param graph
-	 * 		Graph to pull inheritance relations from.
+	 * @param inheritanceGraph
+	 * 		Inheritance graph to pull inheritance relations from.
 	 * @param reader
 	 * 		Reader to pre-populate the constant pool with. Speeds up writing process a bit.
 	 * @param flags
 	 * 		Writer flags.
 	 */
-	public WorkspaceClassWriter(@Nonnull InheritanceGraph graph, @Nullable ClassReader reader, int flags) {
+	public WorkspaceClassWriter(@Nonnull InheritanceGraph inheritanceGraph, @Nullable ClassReader reader, int flags) {
 		super(reader, flags);
-		this.graph = graph;
+		this.inheritanceGraph = inheritanceGraph;
 	}
 
 	@Override
@@ -44,6 +44,6 @@ public class WorkspaceClassWriter extends ClassWriter {
 			return "java/lang/Object";
 
 		// Find common parent in workspace
-		return graph.getCommon(type1, type2);
+		return inheritanceGraph.getCommon(type1, type2);
 	}
 }

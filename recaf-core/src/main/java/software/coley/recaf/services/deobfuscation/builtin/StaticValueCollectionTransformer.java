@@ -71,7 +71,7 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	                      @Nonnull JvmClassInfo classInfo) throws TransformationException {
 		// TODO: Instead of a map, we should make a workspace setup call first
-		InheritanceGraph graph = graphCache.computeIfAbsent(workspace, w -> w == workspaceManager.getCurrent() ?
+		InheritanceGraph inheritanceGraph = graphCache.computeIfAbsent(workspace, w -> w == workspaceManager.getCurrent() ?
 				graphService.getCurrentWorkspaceInheritanceGraph() :
 				graphService.newInheritanceGraph(workspace));
 
@@ -140,7 +140,7 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 
 			// Only analyze if we see static setters
 			if (clinit != null && hasStaticSetters(clinit)) {
-				ReInterpreter interpreter = new ReInterpreter(graph);
+				ReInterpreter interpreter = new ReInterpreter(inheritanceGraph);
 				ReAnalyzer analyzer = new ReAnalyzer(interpreter);
 				try {
 					Frame<ReValue>[] frames = analyzer.analyze(className, clinit);

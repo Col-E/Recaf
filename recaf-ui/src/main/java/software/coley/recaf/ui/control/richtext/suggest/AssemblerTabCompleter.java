@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 public class AssemblerTabCompleter implements TabCompleter<String> {
 	private final CompletionPopup<String> completionPopup = new StringCompletionPopup(15);
 	private final Workspace workspace;
-	private final InheritanceGraph graph;
+	private final InheritanceGraph inheritanceGraph;
 	private CodeArea area;
 	private List<ASTElement> ast;
 	private Context context;
@@ -43,12 +43,12 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	/**
 	 * @param workspace
 	 * 		Workspace to pull class info from.
-	 * @param graph
+	 * @param inheritanceGraph
 	 * 		Graph to pull hierarchies from.
 	 */
-	public AssemblerTabCompleter(@Nonnull Workspace workspace, @Nonnull InheritanceGraph graph) {
+	public AssemblerTabCompleter(@Nonnull Workspace workspace, @Nonnull InheritanceGraph inheritanceGraph) {
 		this.workspace = workspace;
-		this.graph = graph;
+		this.inheritanceGraph = inheritanceGraph;
 	}
 
 	/**
@@ -286,7 +286,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		@Override
 		public List<String> complete() {
 			boolean isStatic = partialInput.contains("getstatic ") || partialInput.contains("putstatic ");
-			return complete(workspace, graph, c -> c.fieldStream().filter(m -> isStatic == m.hasStaticModifier()));
+			return complete(workspace, inheritanceGraph, c -> c.fieldStream().filter(m -> isStatic == m.hasStaticModifier()));
 		}
 	}
 
@@ -315,7 +315,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		public List<String> complete() {
 			boolean isStatic = partialInput.contains("invokestatic ") || partialInput.contains("invokestaticinterface ");
 			boolean isSpecial = partialInput.contains("invokespecial ");
-			return complete(workspace, graph, c -> c.methodStream().filter(m -> {
+			return complete(workspace, inheritanceGraph, c -> c.methodStream().filter(m -> {
 				// Only invokespecial can be used to call constructors.
 				if (m.getName().startsWith("<") && !isSpecial)
 					return false;
@@ -360,7 +360,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		public abstract List<String> complete();
 
 		@Nonnull
-		protected List<String> complete(@Nonnull Workspace workspace, @Nonnull InheritanceGraph graph,
+		protected List<String> complete(@Nonnull Workspace workspace, @Nonnull InheritanceGraph inheritanceGraph,
 		                                @Nonnull Function<ClassInfo, Stream<? extends ClassMember>> classMemberLookup) {
 			// Skip if no owner type specified.
 			if (owner == null) return Collections.emptyList();
@@ -376,7 +376,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 					ClassPathNode ownerPath = workspace.findClass(owner);
 					if (ownerPath != null) {
 						Set<String> items = new TreeSet<>();
-						InheritanceVertex vertex = graph.getVertex(owner);
+						InheritanceVertex vertex = inheritanceGraph.getVertex(owner);
 						if (vertex != null)
 							for (InheritanceVertex parent : vertex.getAllParents())
 								items.addAll(collect(classMemberLookup.apply(parent.getValue())));
@@ -398,7 +398,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 				ClassPathNode ownerPath = workspace.findClass(owner);
 				if (ownerPath != null) {
 					Set<String> items = new TreeSet<>();
-					InheritanceVertex vertex = graph.getVertex(owner);
+					InheritanceVertex vertex = inheritanceGraph.getVertex(owner);
 					Predicate<ClassMember> filter = member -> member.getName().startsWith(name);
 					if (vertex != null)
 						for (InheritanceVertex parent : vertex.getAllParents())
@@ -413,7 +413,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 				ClassPathNode ownerPath = workspace.findClass(owner);
 				if (ownerPath != null) {
 					Set<String> items = new TreeSet<>();
-					InheritanceVertex vertex = graph.getVertex(owner);
+					InheritanceVertex vertex = inheritanceGraph.getVertex(owner);
 					Predicate<ClassMember> filter = member -> member.getName().equals(name) && member.getDescriptor().startsWith(desc);
 					if (vertex != null)
 						for (InheritanceVertex parent : vertex.getAllParents())

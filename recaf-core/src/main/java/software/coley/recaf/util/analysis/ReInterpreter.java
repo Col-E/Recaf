@@ -48,15 +48,15 @@ import java.util.OptionalInt;
  */
 public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 	private static final Logger logger = Logging.get(ReInterpreter.class);
-	private final InheritanceGraph graph;
+	private final InheritanceGraph inheritanceGraph;
 	private GetStaticLookup getStaticLookup;
 	private GetFieldLookup getFieldLookup;
 	private InvokeStaticLookup invokeStaticLookup;
 	private InvokeVirtualLookup invokeVirtualLookup;
 
-	public ReInterpreter(@Nonnull InheritanceGraph graph) {
+	public ReInterpreter(@Nonnull InheritanceGraph inheritanceGraph) {
 		super(RecafConstants.getAsmVersion());
-		this.graph = graph;
+		this.inheritanceGraph = inheritanceGraph;
 	}
 
 	public void setGetStaticLookup(@Nullable GetStaticLookup getStaticLookup) {
@@ -627,7 +627,7 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 	@Nonnull
 	private Type getSuperClass(@Nonnull Type type) {
 		String name = type.getInternalName();
-		InheritanceVertex vertex = graph.getVertex(name);
+		InheritanceVertex vertex = inheritanceGraph.getVertex(name);
 		if (vertex == null)
 			return Types.OBJECT_TYPE;
 		String superName = vertex.getValue().getSuperName();
@@ -636,7 +636,7 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 
 	private boolean isInterface(@Nonnull Type type) {
 		String name = type.getInternalName();
-		InheritanceVertex vertex = graph.getVertex(name);
+		InheritanceVertex vertex = inheritanceGraph.getVertex(name);
 		if (vertex == null)
 			return false;
 		return vertex.getValue().hasInterfaceModifier();
@@ -645,6 +645,6 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 	private boolean isAssignableFrom(@Nonnull Type type1, @Nonnull Type type2) {
 		String name1 = type1.getInternalName();
 		String name2 = type2.getInternalName();
-		return graph.isAssignableFrom(name1, name2);
+		return inheritanceGraph.isAssignableFrom(name1, name2);
 	}
 }

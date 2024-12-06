@@ -130,7 +130,7 @@ public class Actions implements Service {
 	private final IconProviderService iconService;
 	private final CellConfigurationService cellConfigurationService;
 	private final PathExportingManager pathExportingManager;
-	private final Instance<InheritanceGraph> graphProvider;
+	private final Instance<InheritanceGraph> inheritanceGraphProvider;
 	private final Instance<MappingApplier> applierProvider;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
@@ -158,7 +158,7 @@ public class Actions implements Service {
 	               @Nonnull IconProviderService iconService,
 	               @Nonnull CellConfigurationService cellConfigurationService,
 	               @Nonnull PathExportingManager pathExportingManager,
-	               @Nonnull Instance<InheritanceGraph> graphProvider,
+	               @Nonnull Instance<InheritanceGraph> inheritanceGraphProvider,
 	               @Nonnull Instance<MappingApplier> applierProvider,
 	               @Nonnull Instance<JvmClassPane> jvmPaneProvider,
 	               @Nonnull Instance<AndroidClassPane> androidPaneProvider,
@@ -183,7 +183,7 @@ public class Actions implements Service {
 		this.iconService = iconService;
 		this.cellConfigurationService = cellConfigurationService;
 		this.pathExportingManager = pathExportingManager;
-		this.graphProvider = graphProvider;
+		this.inheritanceGraphProvider = inheritanceGraphProvider;
 		this.applierProvider = applierProvider;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
@@ -2110,10 +2110,10 @@ public class Actions implements Service {
 	                                @Nonnull WorkspaceResource resource,
 	                                @Nonnull JvmClassBundle bundle,
 	                                @Nonnull JvmClassInfo info) {
-		InheritanceGraph graph = graphProvider.get();
-		if (graph == null)
+		InheritanceGraph inheritanceGraph = inheritanceGraphProvider.get();
+		if (inheritanceGraph == null)
 			return;
-		new OverrideMethodPopup(this, cellConfigurationService, graph, workspace, info, (methodOwner, method) -> {
+		new OverrideMethodPopup(this, cellConfigurationService, inheritanceGraph, workspace, info, (methodOwner, method) -> {
 			ClassWriter writer = new ClassWriter(0);
 			info.getClassReader().accept(new MemberStubAddingVisitor(writer, method), 0);
 			JvmClassInfo updatedInfo = info.toJvmClassBuilder()

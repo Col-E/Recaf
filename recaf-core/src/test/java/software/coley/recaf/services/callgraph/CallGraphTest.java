@@ -41,10 +41,10 @@ class CallGraphTest {
 		JvmClassInfo mainClass = pathUser.getValue().asJvmClass();
 		JvmClassInfo functionClass = pathFunc.getValue().asJvmClass();
 
-		CallGraph graph = graph(workspace);
+		CallGraph callGraph = newCallGraph(workspace);
 
-		ClassMethodsContainer containerMain = graph.getClassMethodsContainer(mainClass);
-		ClassMethodsContainer containerFunction = graph.getClassMethodsContainer(functionClass);
+		ClassMethodsContainer containerMain = callGraph.getClassMethodsContainer(mainClass);
+		ClassMethodsContainer containerFunction = callGraph.getClassMethodsContainer(functionClass);
 
 		// Get outbound calls for main. Should just be to 'new StringConsumer()' and 'StringConsumer.accept(String)'
 		MethodVertex mainVertex = containerMain.getVertex("main", "([Ljava/lang/String;)V");
@@ -73,40 +73,40 @@ class CallGraphTest {
 		assertNotNull(pathUser, "Missing FooCaller class");
 		JvmClassInfo mainClass = pathUser.getValue().asJvmClass();
 
-		CallGraph graph = graph(workspace);
+		CallGraph callGraph = newCallGraph(workspace);
 
 		// Get outbound calls for call(Foo). Should just be to 'foo.bar()' which is unresolved
-		ClassMethodsContainer fooCaller = graph.getClassMethodsContainer(mainClass);
+		ClassMethodsContainer fooCaller = callGraph.getClassMethodsContainer(mainClass);
 		MethodVertex callVertex = fooCaller.getVertex("call", "(LFoo;)V");
 		assertNotNull(callVertex, "Missing method vertex for 'call'");
 		assertEquals(0, callVertex.getCalls().size());
-		assertEquals(1, graph.getUnresolvedDeclarations().get("Foo").size(), "Expected to have unresolved call to Foo.bar()");
+		assertEquals(1, callGraph.getUnresolvedDeclarations().get("Foo").size(), "Expected to have unresolved call to Foo.bar()");
 
 		// Add the missing Foo class to the workspace
 		workspace.getPrimaryResource().getJvmClassBundle().put(new JvmClassInfoBuilder(fooBytes).build());
 
 		// The call to Foo.bar() should be resolved now
 		assertEquals(1, callVertex.getCalls().size());
-		assertEquals(0, graph.getUnresolvedDeclarations().size(), "Expected to have resolved unresolved call to Foo.bar()");
+		assertEquals(0, callGraph.getUnresolvedDeclarations().size(), "Expected to have resolved unresolved call to Foo.bar()");
 
 		// TODO: Make a similar test case, but in reverse.
 		//  We probably want to prune the call-graph model when things get removed.
 	}
 
 	@Nonnull
-	static CallGraph graph(@Nonnull Workspace workspace) {
-		CallGraph graph = new CallGraph(workspace);
-		graph.initialize();
+	static CallGraph newCallGraph(@Nonnull Workspace workspace) {
+		CallGraph callGraph = new CallGraph(workspace);
+		callGraph.initialize();
 
 		// Need to wait until async population of graph contents is done.
-		ObservableBoolean ready = graph.isReady();
+		ObservableBoolean ready = callGraph.isReady();
 		assertDoesNotThrow(() -> {
 			while (!ready.getValue()) {
 				Thread.sleep(100);
 			}
 		});
 
-		return graph;
+		return callGraph;
 	}
 
 	static {

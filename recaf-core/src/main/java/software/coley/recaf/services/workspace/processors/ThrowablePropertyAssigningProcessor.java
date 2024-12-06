@@ -31,16 +31,16 @@ import java.util.Objects;
 @Dependent
 public class ThrowablePropertyAssigningProcessor implements WorkspaceProcessor, ResourceJvmClassListener, ResourceAndroidClassListener {
 	private static final String THROWABLE = "java/lang/Throwable";
-	private final InheritanceGraph graph;
+	private final InheritanceGraph inheritanceGraph;
 
 	@Inject
 	public ThrowablePropertyAssigningProcessor(@Nonnull InheritanceGraphService graphService) {
-		this.graph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
+		this.inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
 	}
 
 	@Override
 	public void onWorkspaceOpened(@Nonnull Workspace workspace) {
-		graph.getVertex(THROWABLE).allChildren().forEach(vertex -> {
+		inheritanceGraph.getVertex(THROWABLE).allChildren().forEach(vertex -> {
 			ClassInfo classInfo = vertex.getValue();
 			ThrowableProperty.set(classInfo);
 		});
@@ -70,7 +70,7 @@ public class ThrowablePropertyAssigningProcessor implements WorkspaceProcessor, 
 	}
 
 	private void handle(@Nonnull ClassInfo cls) {
-		InheritanceVertex vertex = graph.getVertex(cls.getName());
+		InheritanceVertex vertex = inheritanceGraph.getVertex(cls.getName());
 		if (vertex != null && vertex.hasParent(THROWABLE))
 			ThrowableProperty.set(cls);
 	}
