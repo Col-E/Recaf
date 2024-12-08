@@ -15,7 +15,6 @@ import software.coley.recaf.services.Service;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -64,6 +63,28 @@ public class TransformationManager implements Service {
 	public TransformationManager(@Nonnull Map<Class<? extends JvmClassTransformer>, Supplier<JvmClassTransformer>> jvmTransformerSuppliers) {
 		this.jvmTransformerSuppliers.putAll(jvmTransformerSuppliers);
 		this.config = new TransformationManagerConfig();
+	}
+
+	/**
+	 * @param transformerClass
+	 * 		Class of transformer to register.
+	 * @param transformerSupplier
+	 * 		Supplier of transformer instances.
+	 * @param <T>
+	 * 		Transformer type.
+	 */
+	public <T extends JvmClassTransformer> void registerJvmClassTransformer(@Nonnull Class<T> transformerClass, @Nonnull Supplier<T> transformerSupplier) {
+		jvmTransformerSuppliers.put(Unchecked.cast(transformerClass), Unchecked.cast(transformerSupplier));
+	}
+
+	/**
+	 * @param transformerClass
+	 * 		Class of transformer to unregister.
+	 * @param <T>
+	 * 		Transformer type.
+	 */
+	public <T extends JvmClassTransformer> void unregisterJvmClassTransformer(@Nonnull Class<T> transformerClass) {
+		jvmTransformerSuppliers.remove(Unchecked.cast(transformerClass));
 	}
 
 	@Nonnull

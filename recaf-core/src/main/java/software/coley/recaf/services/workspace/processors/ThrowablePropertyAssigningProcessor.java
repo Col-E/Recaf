@@ -39,7 +39,7 @@ public class ThrowablePropertyAssigningProcessor implements WorkspaceProcessor, 
 	}
 
 	@Override
-	public void onWorkspaceOpened(@Nonnull Workspace workspace) {
+	public void processWorkspace(@Nonnull Workspace workspace) {
 		inheritanceGraph.getVertex(THROWABLE).allChildren().forEach(vertex -> {
 			ClassInfo classInfo = vertex.getValue();
 			ThrowableProperty.set(classInfo);

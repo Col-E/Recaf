@@ -4,19 +4,19 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
- * Subtype of {@link WorkspaceOpenListener} for use in {@link WorkspaceProcessing}.
+ * Generic processor for use in {@link WorkspaceProcessingService}.
  *
  * @author Matt Coley
- * @see WorkspaceProcessing Manages calling implementations of this type.
+ * @see WorkspaceProcessingService Manages calling implementations of this type.
  */
 public interface WorkspaceProcessor {
 	/**
 	 * Called when {@link WorkspaceManager#setCurrent(Workspace)} passes.
 	 *
 	 * @param workspace
-	 * 		New workspace assigned.
+	 * 		Workspace to process.
 	 */
-	void onWorkspaceOpened(@Nonnull Workspace workspace);
+	void processWorkspace(@Nonnull Workspace workspace);
 
 	/**
 	 * @return Post processing task name.
