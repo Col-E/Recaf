@@ -10,6 +10,7 @@ import javafx.scene.control.IndexRange;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -85,6 +86,9 @@ public class Editor extends BorderPane {
 	private SelectedBracketTracking selectedBracketTracking;
 	private ProblemTracking problemTracking;
 	private ProblemOverlay problemOverlay;
+	private boolean autoScrolling = false;
+	private double autoScrollStartY;
+	private static final double AUTO_SCROLL_MULTIPLIER = 0.2;
 
 	/**
 	 * New editor instance.
@@ -177,6 +181,9 @@ public class Editor extends BorderPane {
 
 		// Initial snapshot state.
 		lastDocumentSnapshot = ReadOnlyStyledDocument.from(codeArea.getDocument());
+
+		// Initialize auto-scroll functionality
+		initializeAutoScroll();
 	}
 
 	/**
@@ -864,5 +871,56 @@ public class Editor extends BorderPane {
 			codeArea.moveTo(Math.min(codeArea.getLength(), pos));
 			observable.removeListener(this);
 		}
+	}
+
+	/**
+	 * Initialize middle-mouse button auto-scrolling functionality.
+	 */
+	private void initializeAutoScroll() {
+		// Handle middle mouse press to start auto-scrolling
+		codeArea.setOnMousePressed(e -> {
+			if (e.getButton() == MouseButton.MIDDLE) {
+				autoScrolling = true;
+				autoScrollStartY = e.getY();
+				e.consume();
+			}
+		});
+
+		// Handle mouse release to stop auto-scrolling
+		codeArea.setOnMouseReleased(e -> {
+			if (e.getButton() == MouseButton.MIDDLE) {
+				autoScrolling = false;
+				e.consume();
+			}
+		});
+
+		// Combined handler for both mouse movement and dragging
+		Consumer<javafx.scene.input.MouseEvent> scrollHandler = e -> {
+			if (autoScrolling) {
+				double deltaY = e.getY() - autoScrollStartY;
+				
+				// Get current scroll values
+				double value = verticalScrollbar.getValue();
+				double min = verticalScrollbar.getMin();
+				double max = verticalScrollbar.getMax();
+				
+				// Calculate scroll amount based on viewport size
+				double viewportHeight = virtualFlow.getHeight();
+				double scrollAmount = (deltaY * AUTO_SCROLL_MULTIPLIER) * 
+						(viewportHeight > 0 ? Math.max(1.0, virtualCellList.size() / viewportHeight) : 1.0);
+				
+				// Calculate new scroll position
+				double newValue = value + scrollAmount;
+				newValue = Math.max(min, Math.min(max, newValue));
+				
+				// Update scroll position
+				verticalScrollbar.setValue(newValue);
+				e.consume();
+			}
+		};
+
+		// Apply the handler to both mouse moved and dragged events
+		codeArea.setOnMouseMoved(scrollHandler::accept);
+		codeArea.setOnMouseDragged(scrollHandler::accept);
 	}
 }
