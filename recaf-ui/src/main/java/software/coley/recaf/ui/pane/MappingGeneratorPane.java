@@ -53,6 +53,7 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
@@ -121,7 +122,7 @@ public class MappingGeneratorPane extends StackPane {
 	private final ConfigComponentManager componentManager;
 	private final InheritanceGraph inheritanceGraph;
 	private final ModalPane modal = new ModalPane();
-	private final MappingApplier mappingApplier;
+	private final MappingApplierService mappingApplierService;
 	private final Pane previewGroup;
 
 	@Inject
@@ -132,7 +133,7 @@ public class MappingGeneratorPane extends StackPane {
 	                            @Nonnull ConfigComponentManager componentManager,
 	                            @Nonnull InheritanceGraphService graphService,
 	                            @Nonnull AggregateMappingManager aggregateMappingManager,
-	                            @Nonnull MappingApplier mappingApplier,
+	                            @Nonnull MappingApplierService mappingApplierService,
 	                            @Nonnull Instance<SearchBar> searchBarProvider) {
 
 		this.workspace = workspace;
@@ -141,7 +142,7 @@ public class MappingGeneratorPane extends StackPane {
 		this.mappingGenerator = mappingGenerator;
 		this.componentManager = componentManager;
 		this.inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
-		this.mappingApplier = mappingApplier;
+		this.mappingApplierService = mappingApplierService;
 
 		// Cache text matchers.
 		stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream().sorted().toList();
@@ -256,15 +257,19 @@ public class MappingGeneratorPane extends StackPane {
 
 	private void apply() {
 		Mappings mappings = mappingsToApply.get();
+		if (mappings == null)
+			return;
+
+		MappingApplier applier = mappingApplierService.inCurrentWorkspace();
+		if (applier == null)
+			return;
 
 		// Apply the mappings
-		if (mappings != null) {
-			MappingResults results = mappingApplier.applyToPrimaryResource(mappings);
-			results.apply();
+		MappingResults results = applier.applyToPrimaryResource(mappings);
+		results.apply();
 
-			// Clear property now that the mappings have been applied
-			mappingsToApply.set(null);
-		}
+		// Clear property now that the mappings have been applied
+		mappingsToApply.set(null);
 	}
 
 	@Nonnull

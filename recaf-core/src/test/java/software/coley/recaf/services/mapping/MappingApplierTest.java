@@ -43,7 +43,7 @@ class MappingApplierTest extends TestBase {
 	WorkspaceResource resource;
 	AggregateMappingManager aggregateMappingManager;
 	InheritanceGraph inheritanceGraph;
-	MappingApplier mappingApplier;
+	MappingApplierService mappingApplierService;
 
 	@BeforeAll
 	static void setupGenerator() {
@@ -74,7 +74,7 @@ class MappingApplierTest extends TestBase {
 		aggregateMappingManager = recaf.get(AggregateMappingManager.class);
 		inheritanceGraph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
 		mappingGenerator = recaf.get(MappingGenerator.class);
-		mappingApplier = recaf.get(MappingApplier.class);
+		mappingApplierService = recaf.get(MappingApplierService.class);
 	}
 
 	@Test
@@ -105,7 +105,7 @@ class MappingApplierTest extends TestBase {
 		});
 
 		// Preview the mapping operation
-		MappingResults results = mappingApplier.applyToPrimaryResource(mappings);
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
 
 		// The supplier class we define should be remapped.
 		// The runner class (AnonymousLambda) itself should not be remapped, but should be updated to point to
@@ -160,7 +160,7 @@ class MappingApplierTest extends TestBase {
 		});
 
 		// Preview the mapping operation
-		MappingResults results = mappingApplier.applyToPrimaryResource(mappings);
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
 
 		// The enum class we define should be remapped.
 		// The runner class (DummyEnumPrinter) itself should not be remapped, but should be updated to point to
@@ -199,7 +199,7 @@ class MappingApplierTest extends TestBase {
 		});
 
 		// Preview the mapping operation
-		MappingResults results = mappingApplier.applyToPrimaryResource(mappings);
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
 
 		// The annotation class we define should be remapped.
 		// The user class (ClassWithAnnotation) itself should not be remapped,
@@ -254,7 +254,7 @@ class MappingApplierTest extends TestBase {
 		});
 
 		// Preview the mapping operation
-		MappingResults results = mappingApplier.applyToPrimaryResource(mappings);
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
 
 		assertNotNull(mappings.getMappedClassName(overlapInterfaceAName), "OverlapInterfaceA should be remapped");
 		assertNotNull(mappings.getMappedClassName(overlapInterfaceBName), "OverlapInterfaceB should be remapped");

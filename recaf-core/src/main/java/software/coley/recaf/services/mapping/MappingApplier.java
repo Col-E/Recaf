@@ -1,19 +1,17 @@
 package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
-import jakarta.inject.Inject;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.HasMappedReferenceProperty;
 import software.coley.recaf.info.properties.builtin.OriginalClassNameProperty;
 import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
-import software.coley.recaf.services.Service;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
-import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.util.visitors.IllegalSignatureRemovingVisitor;
@@ -22,7 +20,6 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
@@ -33,27 +30,33 @@ import java.util.stream.Stream;
  * @author Matt Coley
  * @see MappingResults
  */
-@WorkspaceScoped
-public class MappingApplier implements Service {
-	public static final String SERVICE_ID = "mapping-applier";
-	private static final ExecutorService applierThreadPool = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID);
+public class MappingApplier {
+	private static final ExecutorService applierThreadPool = ThreadPoolFactory.newFixedThreadPool(MappingApplierService.SERVICE_ID);
 	private final InheritanceGraph inheritanceGraph;
 	private final AggregateMappingManager aggregateMappingManager;
 	private final MappingListeners listeners;
 	private final Workspace workspace;
-	private final MappingApplierConfig config;
 
-	@Inject
-	public MappingApplier(@Nonnull MappingApplierConfig config,
-	                      @Nonnull InheritanceGraphService graphService,
-	                      @Nonnull AggregateMappingManager aggregateMappingManager,
-	                      @Nonnull MappingListeners listeners,
-	                      @Nonnull Workspace workspace) {
-		this.inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
+	/**
+	 * @param workspace
+	 * 		Workspace to apply mappings in.
+	 * @param inheritanceGraph
+	 * 		Inheritance graph for the given workspace.
+	 * @param listeners
+	 * 		Application mapping listeners
+	 * 		<i>(If the target workspace is the {@link WorkspaceManager#getCurrent() current one})</i>
+	 * @param aggregateMappingManager
+	 * 		Aggregate mappings for tracking applications in the current workspace
+	 * 		<i>(If the target workspace is the {@link WorkspaceManager#getCurrent() current one})</i>
+	 */
+	public MappingApplier(@Nonnull Workspace workspace,
+	                      @Nonnull InheritanceGraph inheritanceGraph,
+	                      @Nullable MappingListeners listeners,
+	                      @Nullable AggregateMappingManager aggregateMappingManager) {
+		this.inheritanceGraph = inheritanceGraph;
 		this.aggregateMappingManager = aggregateMappingManager;
 		this.listeners = listeners;
 		this.workspace = workspace;
-		this.config = config;
 	}
 
 	/**
@@ -76,8 +79,10 @@ public class MappingApplier implements Service {
 	                                     @Nonnull JvmClassBundle bundle,
 	                                     @Nonnull Collection<JvmClassInfo> classes) {
 		mappings = enrich(mappings);
-		MappingResults results = new MappingResults(mappings, listeners.createBundledMappingApplicationListener())
-				.withAggregateManager(aggregateMappingManager);
+		MappingApplicationListener listener = listeners == null ? null : listeners.createBundledMappingApplicationListener();
+		MappingResults results = new MappingResults(mappings, listener);
+		if (aggregateMappingManager != null)
+			results.withAggregateManager(aggregateMappingManager);
 
 		// Apply mappings to the provided classes, collecting into the results model.
 		Mappings finalMappings = mappings;
@@ -101,14 +106,15 @@ public class MappingApplier implements Service {
 	@Nonnull
 	public MappingResults applyToPrimaryResource(@Nonnull Mappings mappings) {
 		mappings = enrich(mappings);
-		WorkspaceResource resource = workspace.getPrimaryResource();
-
-		MappingResults results = new MappingResults(mappings, listeners.createBundledMappingApplicationListener())
-				.withAggregateManager(aggregateMappingManager);
+		MappingApplicationListener listener = listeners == null ? null : listeners.createBundledMappingApplicationListener();
+		MappingResults results = new MappingResults(mappings, listener);
+		if (aggregateMappingManager != null)
+			results.withAggregateManager(aggregateMappingManager);
 
 		// Apply mappings to all classes in the primary resource, collecting into the results model.
 		Mappings finalMappings = mappings;
 		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
+		WorkspaceResource resource = workspace.getPrimaryResource();
 		Stream.concat(resource.jvmClassBundleStream(), resource.versionedJvmClassBundleStream()).forEach(bundle -> {
 			bundle.forEach(classInfo -> {
 				service.execute(() -> dumpIntoResults(results, workspace, resource, bundle, classInfo, finalMappings));
@@ -198,17 +204,5 @@ public class MappingApplier implements Service {
 			// Add to the results collection.
 			results.add(workspace, resource, bundle, classInfo, updatedInfo);
 		}
-	}
-
-	@Nonnull
-	@Override
-	public String getServiceId() {
-		return SERVICE_ID;
-	}
-
-	@Nonnull
-	@Override
-	public MappingApplierConfig getServiceConfig() {
-		return config;
 	}
 }

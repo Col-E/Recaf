@@ -41,6 +41,7 @@ import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.control.FontIconView;
@@ -130,8 +131,8 @@ public class Actions implements Service {
 	private final IconProviderService iconService;
 	private final CellConfigurationService cellConfigurationService;
 	private final PathExportingManager pathExportingManager;
+	private final MappingApplierService mappingApplierService;
 	private final Instance<InheritanceGraph> inheritanceGraphProvider;
-	private final Instance<MappingApplier> applierProvider;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
 	private final Instance<BinaryXmlFilePane> binaryXmlPaneProvider;
@@ -158,6 +159,7 @@ public class Actions implements Service {
 	               @Nonnull IconProviderService iconService,
 	               @Nonnull CellConfigurationService cellConfigurationService,
 	               @Nonnull PathExportingManager pathExportingManager,
+	               @Nonnull MappingApplierService mappingApplierService,
 	               @Nonnull Instance<InheritanceGraph> inheritanceGraphProvider,
 	               @Nonnull Instance<MappingApplier> applierProvider,
 	               @Nonnull Instance<JvmClassPane> jvmPaneProvider,
@@ -183,8 +185,8 @@ public class Actions implements Service {
 		this.iconService = iconService;
 		this.cellConfigurationService = cellConfigurationService;
 		this.pathExportingManager = pathExportingManager;
+		this.mappingApplierService = mappingApplierService;
 		this.inheritanceGraphProvider = inheritanceGraphProvider;
-		this.applierProvider = applierProvider;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
 		this.binaryXmlPaneProvider = binaryXmlPaneProvider;
@@ -795,7 +797,7 @@ public class Actions implements Service {
 					}
 
 					// Apply the mappings.
-					MappingApplier applier = applierProvider.get();
+					MappingApplier applier = mappingApplierService.inWorkspace(workspace);
 					MappingResults results = applier.applyToPrimaryResource(mappings);
 					results.apply();
 				})
@@ -889,7 +891,7 @@ public class Actions implements Service {
 					}
 
 					// Apply the mappings.
-					MappingApplier applier = applierProvider.get();
+					MappingApplier applier = mappingApplierService.inWorkspace(workspace);
 					MappingResults results = applier.applyToPrimaryResource(mappings);
 					results.apply();
 				}).withTitle(Lang.getBinding("dialog.title.move-package"))
@@ -1033,7 +1035,7 @@ public class Actions implements Service {
 			}
 
 			// Apply the mappings.
-			MappingApplier applier = applierProvider.get();
+			MappingApplier applier = mappingApplierService.inWorkspace(workspace);
 			MappingResults results = applier.applyToPrimaryResource(mappings);
 			results.apply();
 		};
@@ -1102,7 +1104,7 @@ public class Actions implements Service {
 			mappings.addField(declaringClass.getName(), field.getDescriptor(), originalName, newName);
 
 			// Apply the mappings.
-			MappingApplier applier = applierProvider.get();
+			MappingApplier applier = mappingApplierService.inWorkspace(workspace);
 			MappingResults results = applier.applyToPrimaryResource(mappings);
 			results.apply();
 		};
@@ -1171,7 +1173,7 @@ public class Actions implements Service {
 			mappings.addMethod(declaringClass.getName(), method.getDescriptor(), originalName, newName);
 
 			// Apply the mappings.
-			MappingApplier applier = applierProvider.get();
+			MappingApplier applier = mappingApplierService.inWorkspace(workspace);
 			MappingResults results = applier.applyToPrimaryResource(mappings);
 			results.apply();
 		};
@@ -1359,7 +1361,7 @@ public class Actions implements Service {
 
 			// Apply mappings to create copies of the affected classes, using the provided name.
 			// Then dump the mapped classes into bundle.
-			MappingApplier applier = applierProvider.get();
+			MappingApplier applier = mappingApplierService.inWorkspace(workspace);
 			MappingResults results = applier.applyToPrimaryResource(mappings);
 			results.apply();
 		}).withInitialPathName(packageName)
@@ -1406,7 +1408,7 @@ public class Actions implements Service {
 
 			// Apply mappings to create copies of the affected classes, using the provided name.
 			// Then dump the mapped classes into bundle.
-			MappingApplier applier = applierProvider.get();
+			MappingApplier applier = mappingApplierService.inWorkspace(workspace);
 			MappingResults results = applier.applyToClasses(mappings, resource, bundle, classesToCopy);
 			for (ClassPathNode mappedClassPath : results.getPostMappingPaths().values()) {
 				JvmClassInfo mappedClass = mappedClassPath.getValue().asJvmClass();
@@ -1551,7 +1553,7 @@ public class Actions implements Service {
 
 			// Apply mappings to create copies of the affected classes, using the provided name.
 			// Then dump the mapped classes into bundle.
-			MappingApplier applier = applierProvider.get();
+			MappingApplier applier = mappingApplierService.inWorkspace(workspace);
 			MappingResults results = applier.applyToClasses(mappings, resource, bundle, classesToCopy);
 			for (ClassPathNode mappedClassPath : results.getPostMappingPaths().values()) {
 				JvmClassInfo mappedClass = mappedClassPath.getValue().asJvmClass();

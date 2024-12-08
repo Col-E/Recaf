@@ -7,6 +7,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
@@ -26,7 +27,7 @@ import static org.objectweb.asm.Opcodes.V1_8;
 class InheritanceAndRenamingTest extends TestBase {
 	static Workspace workspace;
 	static InheritanceGraph inheritanceGraph;
-	static MappingApplier mappingApplier;
+	static MappingApplierService mappingApplierService;
 	static JvmClassInfo[] generatedClasses;
 
 	@BeforeAll
@@ -48,7 +49,7 @@ class InheritanceAndRenamingTest extends TestBase {
 		inheritanceGraph.toString(); // Force immediate init.
 
 		// Get mapping applier
-		mappingApplier = recaf.get(MappingApplier.class);
+		mappingApplierService = recaf.get(MappingApplierService.class);
 	}
 
 	@Test
@@ -64,7 +65,7 @@ class InheritanceAndRenamingTest extends TestBase {
 		IntermediateMappings mappings = new IntermediateMappings();
 		for (int i = 1; i <= 5; i++)
 			mappings.addClass("I" + i, "R" + i);
-		MappingResults results = mappingApplier.applyToPrimaryResource(mappings);
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
 		results.apply();
 
 		// Very old classes are removed from the graph

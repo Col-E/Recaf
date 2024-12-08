@@ -1,12 +1,16 @@
 package software.coley.recaf.services.comment;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.test.TestBase;
@@ -26,7 +30,7 @@ class CommentManagerTest extends TestBase {
 	static CommentManager commentManager;
 	static CommentManagerConfig commentManagerConfig;
 	static DecompilerManager decompilerManager;
-	static MappingApplier mappingApplier;
+	static MappingApplierService mappingApplierService;
 	static JvmClassInfo classToDecompile;
 	static Workspace workspace;
 
@@ -41,7 +45,7 @@ class CommentManagerTest extends TestBase {
 		commentManager = recaf.get(CommentManager.class);
 		commentManagerConfig = recaf.get(CommentManagerConfig.class);
 		decompilerManager = recaf.get(DecompilerManager.class);
-		mappingApplier = recaf.get(MappingApplier.class);
+		mappingApplierService = recaf.get(MappingApplierService.class);
 	}
 
 	@Test
@@ -97,7 +101,7 @@ class CommentManagerTest extends TestBase {
 		mappings.addMethod(classToDecompile.getName(), "()V", "methodWithLocalVariables", "fizz");
 
 		// Apply the mappings
-		MappingResults results = mappingApplier.applyToPrimaryResource(mappings);
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
 		ClassPathNode postMappingPath = results.getPostMappingPath(classToDecompile.getName());
 		assertNotNull(postMappingPath, "Post-mapping path does not exist in mapping results");
 		results.apply();

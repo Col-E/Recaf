@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
@@ -55,7 +56,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 	                   @Nonnull WorkspaceManager workspaceManager,
 	                   @Nonnull AggregateMappingManager aggregateMappingManager,
 	                   @Nonnull MappingFormatManager formatManager,
-	                   @Nonnull MappingApplier mappingApplier,
+	                   @Nonnull MappingApplierService mappingApplierService,
 	                   @Nonnull Instance<MappingGeneratorPane> generatorPaneInstance,
 	                   @Nonnull RecentFilesConfig recentFiles) {
 		super(workspaceManager);
@@ -88,7 +89,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 							IntermediateMappings parsedMappings = format.parse(mappingsText);
 							logger.info("Loaded mappings from {} in {} format", file.getName(), formatName);
 
-							MappingResults results = mappingApplier.applyToPrimaryResource(parsedMappings);
+							MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(parsedMappings);
 							results.apply();
 							logger.info("Applied mappings from {} - Updated {} classes", file.getName(), results.getPostMappingPaths().size());
 						} catch (Exception ex) {

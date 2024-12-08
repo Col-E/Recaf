@@ -7,7 +7,7 @@ import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
- * Config for {@link MappingApplier}
+ * Config for {@link MappingApplierService}
  *
  * @author Matt Coley
  */
@@ -15,6 +15,6 @@ import software.coley.recaf.services.ServiceConfig;
 public class MappingApplierConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
 	public MappingApplierConfig() {
-		super(ConfigGroups.SERVICE_MAPPING, MappingApplier.SERVICE_ID + CONFIG_SUFFIX);
+		super(ConfigGroups.SERVICE_MAPPING, MappingApplierService.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }
