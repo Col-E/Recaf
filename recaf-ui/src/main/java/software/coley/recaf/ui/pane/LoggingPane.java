@@ -64,7 +64,7 @@ public class LoggingPane extends BorderPane implements LogConsumer<String> {
 
 		// We want to reduce the calls to the FX thread, so we will chunk log-appends into groups
 		// occurring every 500ms, which shouldn't be too noticeable, and save us some CPU time.
-		ThreadPoolFactory.newScheduledThreadPool("logging-pane")
+		ThreadPoolFactory.newScheduledThreadPool("logging-pane", 1, true)
 				.scheduleAtFixedRate(() -> {
 					try {
 						StringBuilder messageBuilder = new StringBuilder();
