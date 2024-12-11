@@ -145,7 +145,7 @@ public class ThreadPoolFactory {
 		public Thread newThread(@Nonnull Runnable r) {
 			Thread thread = new Thread(r);
 			thread.setDaemon(daemon);
-			thread.setName(name + "-" + tid++);
+			thread.setName("Recaf-" + name + "-" + tid++);
 			return thread;
 		}
 	}

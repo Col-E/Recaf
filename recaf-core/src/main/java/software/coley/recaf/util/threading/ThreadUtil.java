@@ -20,7 +20,7 @@ import static software.coley.recaf.util.threading.ThreadPoolFactory.newScheduled
  */
 public class ThreadUtil {
 	private static final Logger logger = Logging.get(ThreadUtil.class);
-	private static final ScheduledExecutorService scheduledService = newScheduledThreadPool("Recaf misc");
+	private static final ScheduledExecutorService scheduledService = newScheduledThreadPool("misc");
 
 	/**
 	 * @param action
