@@ -10,6 +10,7 @@ import javafx.scene.control.Tab;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compiler.ClassResult;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.Navigable;

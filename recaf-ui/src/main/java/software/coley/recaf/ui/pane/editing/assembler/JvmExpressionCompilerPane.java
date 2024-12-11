@@ -113,6 +113,12 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 		// no-op
 	}
 
+	@Override
+	public void disable() {
+		javaEditor.close();
+		jasmEditor.close();
+	}
+
 	/**
 	 * Populates the initial text of the expression compiler pane.
 	 *

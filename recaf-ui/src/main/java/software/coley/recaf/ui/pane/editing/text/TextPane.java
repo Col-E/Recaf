@@ -100,6 +100,7 @@ public class TextPane extends BorderPane implements FileNavigable, UpdatableNavi
 	public void disable() {
 		setDisable(true);
 		setOnKeyPressed(null);
+		editor.close();
 	}
 
 	@Override

@@ -227,6 +227,7 @@ public class SnippetsPane extends StackPane implements SnippetListener, Navigabl
 	@Override
 	public void disable() {
 		snippetManager.removeSnippetListener(this);
+		editor.close();
 	}
 
 	@Nullable

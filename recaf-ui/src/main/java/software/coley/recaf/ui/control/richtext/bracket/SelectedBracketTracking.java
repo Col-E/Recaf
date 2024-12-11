@@ -8,6 +8,7 @@ import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.util.FxThreadUtil;
@@ -28,7 +29,7 @@ import java.util.function.Consumer;
  * @see BracketMatchGraphicFactory Adds a line indicator to an {@link Editor} for lines covering the {@link #getRange() range}.
  * @see Editor#setSelectedBracketTracking(SelectedBracketTracking) Call to install into an {@link Editor}.
  */
-public class SelectedBracketTracking implements EditorComponent, Consumer<Change<Integer>> {
+public class SelectedBracketTracking implements EditorComponent, Closing, Consumer<Change<Integer>> {
 	private static final Logger logger = Logging.get(SelectedBracketTracking.class);
 	private final ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("brackets");
 	private EventStream<Change<Integer>> lastEventStream;
@@ -240,5 +241,11 @@ public class SelectedBracketTracking implements EditorComponent, Consumer<Change
 
 		// Start found? Create range.
 		return (start >= 0) ? new IntRange(start, end) : null;
+	}
+
+	@Override
+	public void close() {
+		if (!service.isShutdown())
+			service.shutdownNow();
 	}
 }

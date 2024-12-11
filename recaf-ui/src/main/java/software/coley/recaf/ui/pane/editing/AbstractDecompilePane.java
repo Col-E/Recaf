@@ -144,6 +144,8 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	public void disable() {
 		setDisable(true);
 		setOnKeyPressed(null);
+		editor.close();
+		contextActionSupport.close();
 	}
 
 	@Override

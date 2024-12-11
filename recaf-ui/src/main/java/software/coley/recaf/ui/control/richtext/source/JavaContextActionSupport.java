@@ -25,6 +25,7 @@ import org.openrewrite.marker.Range;
 import org.openrewrite.tree.ParseError;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -67,7 +68,7 @@ import java.util.concurrent.Future;
  * @see AssemblerContextActionSupport Alternative for context actions on assembly sources.
  */
 @Dependent
-public class JavaContextActionSupport implements EditorComponent, UpdatableNavigable {
+public class JavaContextActionSupport implements EditorComponent, UpdatableNavigable, Closing {
 	private static final DebuggingLogger logger = Logging.get(JavaContextActionSupport.class);
 	private static final long REPARSE_ELAPSED_TIME = 2_000L;
 	private final ExecutorService parseThreadPool = ThreadPoolFactory.newSingleThreadExecutor("java-parse");
@@ -452,7 +453,13 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 
 	@Override
 	public void disable() {
-		// no-op
+		close();
+	}
+
+	@Override
+	public void close() {
+		if (!parseThreadPool.isShutdown())
+			parseThreadPool.shutdownNow();
 	}
 
 	@Override

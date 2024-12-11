@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import software.coley.collections.Lists;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
@@ -64,7 +65,7 @@ import java.util.function.Supplier;
  *
  * @author Matt Coley
  */
-public class Editor extends BorderPane {
+public class Editor extends BorderPane implements Closing {
 	private static final Logger logger = Logging.get(Editor.class);
 	public static final int SHORTER_DELAY_MS = 25;
 	public static final int SHORT_DELAY_MS = 150;
@@ -177,6 +178,14 @@ public class Editor extends BorderPane {
 
 		// Initial snapshot state.
 		lastDocumentSnapshot = ReadOnlyStyledDocument.from(codeArea.getDocument());
+	}
+
+	@Override
+	public void close() {
+		if (selectedBracketTracking != null)
+			selectedBracketTracking.close();
+		if (!syntaxPool.isShutdown())
+			syntaxPool.shutdownNow();
 	}
 
 	/**

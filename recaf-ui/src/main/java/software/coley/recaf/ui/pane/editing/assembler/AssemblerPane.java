@@ -234,6 +234,12 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		}
 	}
 
+	@Override
+	public void disable() {
+		super.disable();
+		editor.close();
+	}
+
 	@Nonnull
 	@Override
 	public PathNode<?> getPath() {

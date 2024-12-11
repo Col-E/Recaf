@@ -70,6 +70,7 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 	public void disable() {
 		setDisable(true);
 		setOnKeyPressed(null);
+		editor.close();
 	}
 
 	@Override
