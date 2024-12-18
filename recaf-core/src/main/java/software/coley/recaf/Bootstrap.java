@@ -74,10 +74,7 @@ public class Bootstrap {
 		weld.addExtension(EagerInitializationExtension.getInstance());
 
 		// Setup bean discovery
-		//  - one instance for base package in API
-		//  - one instance for base package in Core
 		logger.info("CDI: Registering bean packages");
-		weld.addPackage(true, RecafConstants.class);
 		weld.addPackage(true, Recaf.class);
 
 		// Handle user-defined action
