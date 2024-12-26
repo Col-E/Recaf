@@ -2,12 +2,15 @@ package software.coley.recaf.services.workspace.io;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import software.coley.recaf.info.BasicNativeLibraryFileInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JarFileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.ZipAccessTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipCommentProperty;
 import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
@@ -448,5 +451,22 @@ class ResourceImporterTest {
 		assertEquals(timeCreate, ZipCreationTimeProperty.get(fileInfo), "Missing creation time");
 		assertEquals(timeModify, ZipModificationTimeProperty.get(fileInfo), "Missing modification time");
 		assertEquals(timeAccess, ZipAccessTimeProperty.get(fileInfo), "Missing access time");
+	}
+
+	/** @see InfoImporterTest#testImportFileWithoutZipPrefixHasZipMarkerAssigned() */
+	@Test
+	void testImportFileWithExeHeaderAsZipIfZipContentsAreValid() throws IOException {
+		// Create virtual ZIP with single 'Hello.txt' and suffix the file with a PE header.
+		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
+		byte[] inputBytes = new byte[4096];
+		inputBytes[0] = 0x4D;
+		inputBytes[1] = 0x5A;
+		System.arraycopy(zipFileBytes, 0, inputBytes, inputBytes.length - zipFileBytes.length, zipFileBytes.length);
+		ByteSource exeSource = ByteSources.wrap(inputBytes);
+
+		// When we import the "executable" we should still load the ZIP file contents since it has a ZIP marker
+		// and is able to be processed as a ZIP archive.
+		WorkspaceResource resource = importer.importResource(exeSource);
+		assertTrue(resource.getFileBundle().containsKey("Hello.txt"));
 	}
 }

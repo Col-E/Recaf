@@ -1,15 +1,17 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.builder.*;
 import software.coley.recaf.info.properties.builtin.IllegalClassSuspectProperty;
+import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
@@ -59,14 +61,14 @@ public class BasicInfoImporter implements InfoImporter {
 					logger.debug("CafeDude patched class: {}", name);
 					try {
 						return new JvmClassInfoBuilder(patched)
-							.skipValidationChecks(false)
-							.build();
+								.skipValidationChecks(false)
+								.build();
 					} catch (Throwable t1) {
 						logger.error("CafeDude patching output is still non-compliant with ASM for file: {}", name);
 						return new FileInfoBuilder<>()
-							.withRawContent(data)
-							.withName(name)
-							.build();
+								.withRawContent(data)
+								.withName(name)
+								.build();
 					}
 				}
 			} catch (Throwable t) {
@@ -82,6 +84,56 @@ public class BasicInfoImporter implements InfoImporter {
 		}
 
 		// Comparing against known file types.
+		boolean hasZipMarker = ByteHeaderUtil.matchAtAnyOffset(data, ByteHeaderUtil.ZIP);
+		FileInfo info = readAsSpecializedFile(name, data);
+		if (info != null) {
+			if (hasZipMarker)
+				ZipMarkerProperty.set(info);
+			return info;
+		}
+
+		// Check for ZIP containers (For ZIP/JAR/JMod/WAR)
+		//  - While this is more common, some of the known file types may match 'ZIP' with
+		//    our 'any-offset' condition we have here.
+		//  - We need 'any-offset' to catch all ZIP cases, but it can match some of the file types
+		//    above in some conditions, which means we have to check for it last.
+		if (hasZipMarker) {
+			ZipFileInfoBuilder builder = new ZipFileInfoBuilder()
+					.withProperty(new ZipMarkerProperty())
+					.withRawContent(data)
+					.withName(name);
+
+			// Record name, handle extension to determine info-type
+			String extension = IOUtil.getExtension(name);
+			if (extension == null) return builder.build();
+			return switch (extension.toUpperCase()) {
+				case "JAR" -> builder.asJar().build();
+				case "APK" -> builder.asApk().build();
+				case "WAR" -> builder.asWar().build();
+				case "JMOD" -> builder.asJMod().build();
+				default -> builder.build();
+			};
+		}
+
+		// No special case known for file, treat as generic file
+		// Will be automatically mapped to a text file if the contents are all mappable characters.
+		return new FileInfoBuilder<>()
+				.withRawContent(data)
+				.withName(name)
+				.build();
+	}
+
+	/**
+	 * @param name
+	 * 		Name of file.
+	 * @param data
+	 * 		File content.
+	 *
+	 * @return The {@link FileInfo} subtype of matched special cases <i>(Media, executables, etc.)</i>
+	 * or {@code null} if no special case is matched.
+	 */
+	@Nullable
+	private static FileInfo readAsSpecializedFile(@Nonnull String name, byte[] data) {
 		if (ByteHeaderUtil.match(data, ByteHeaderUtil.DEX)) {
 			return new DexFileInfoBuilder()
 					.withRawContent(data)
@@ -125,35 +177,7 @@ public class BasicInfoImporter implements InfoImporter {
 					.withName(name)
 					.build();
 		}
-
-		// Check for ZIP containers (For ZIP/JAR/JMod/WAR)
-		//  - While this is more common, some of the known file types may match 'ZIP' with
-		//    our 'any-offset' condition we have here.
-		//  - We need 'any-offset' to catch all ZIP cases, but it can match some of the file types
-		//    above in some conditions, which means we have to check for it last.
-		if (ByteHeaderUtil.matchAtAnyOffset(data, ByteHeaderUtil.ZIP)) {
-			ZipFileInfoBuilder builder = new ZipFileInfoBuilder()
-					.withRawContent(data)
-					.withName(name);
-
-			// Record name, handle extension to determine info-type
-			String extension = IOUtil.getExtension(name);
-			if (extension == null) return builder.build();
-			return switch (extension.toUpperCase()) {
-				case "JAR" -> builder.asJar().build();
-				case "APK" -> builder.asApk().build();
-				case "WAR" -> builder.asWar().build();
-				case "JMOD" -> builder.asJMod().build();
-				default -> builder.build();
-			};
-		}
-
-		// No special case known for file, treat as generic file
-		// Will be automatically mapped to a text file if the contents are all mappable characters.
-		return new FileInfoBuilder<>()
-				.withRawContent(data)
-				.withName(name)
-				.build();
+		return null;
 	}
 
 	/**

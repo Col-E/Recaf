@@ -3,6 +3,7 @@ package software.coley.recaf.services.workspace.io;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.*;
+import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
@@ -98,12 +99,35 @@ class InfoImporterTest {
 
 		// However, if we provide various extensions then we can use the file name to infer what kind of ZIP it is.
 		read = importer.readInfo("data.jar", zipSource);
-		assertTrue(read instanceof JarFileInfo);
+		assertInstanceOf(JarFileInfo.class, read);
 		read = importer.readInfo("data.war", zipSource);
-		assertTrue(read instanceof WarFileInfo);
+		assertInstanceOf(WarFileInfo.class, read);
 		read = importer.readInfo("data.jmod", zipSource);
-		assertTrue(read instanceof JModFileInfo);
+		assertInstanceOf(JModFileInfo.class, read);
 		read = importer.readInfo("data.apk", zipSource);
-		assertTrue(read instanceof ApkFileInfo);
+		assertInstanceOf(ApkFileInfo.class, read);
+	}
+
+	/** @see ResourceImporterTest#testImportFileWithExeHeaderAsZipIfZipContentsAreValid() */
+	@Test
+	void testImportFileWithoutZipPrefixHasZipMarkerAssigned() throws IOException {
+		// Create virtual ZIP with single 'Hello.txt' and suffix the file with a PE header.
+		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
+		byte[] inputBytes = new byte[4096];
+		inputBytes[0] = 0x4D;
+		inputBytes[1] = 0x5A;
+		System.arraycopy(zipFileBytes, 0, inputBytes, inputBytes.length - zipFileBytes.length, zipFileBytes.length);
+		ByteSource exeSource = ByteSources.wrap(inputBytes);
+
+		// We should import the info as an executable since the header matches
+		// but note that it has the ZIP marker in its contents.
+		Info read = importer.readInfo("example.exe", exeSource);
+		assertTrue(read.isFile());
+		assertTrue(read.asFile().isNativeLibraryFile());
+		assertFalse(read.asFile().isZipFile());
+		assertEquals(BasicNativeLibraryFileInfo.class, read.getClass());
+
+		// The ZIP marker should exist.
+		assertTrue(ZipMarkerProperty.get(read.asFile()));
 	}
 }

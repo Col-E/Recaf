@@ -11,8 +11,15 @@ import software.coley.lljzip.format.model.ZipArchive;
 import software.coley.lljzip.util.ExtraFieldTime;
 import software.coley.lljzip.util.MemorySegmentUtil;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.info.*;
+import software.coley.recaf.info.DexFileInfo;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.Info;
+import software.coley.recaf.info.JarFileInfo;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.ModulesFileInfo;
+import software.coley.recaf.info.ZipFileInfo;
 import software.coley.recaf.info.builder.FileInfoBuilder;
+import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.IOUtil;
@@ -22,17 +29,34 @@ import software.coley.recaf.util.android.DexIOUtil;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
-import software.coley.recaf.workspace.model.bundle.*;
-import software.coley.recaf.workspace.model.resource.*;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
+import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.BasicVersionedJvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResourceBuilder;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * Basic implementation of the resource importer.
@@ -105,6 +129,17 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		if (readInfoAsFile.isZipFile()) {
 			ZipFileInfo readInfoAsZip = readInfoAsFile.asZipFile();
 			return handleZip(builder, readInfoAsZip, source);
+		} else if (ZipMarkerProperty.get(readInfoAsFile)) {
+			// In some cases the file may have been matched as something else (like an executable)
+			// but also count as a ZIP container. Applications that bundle Java applications into native exe files
+			// tend to do this.
+			try {
+				return handleZip(builder, new ZipFileInfoBuilder(readInfoAsFile.toFileBuilder()).build(), source);
+			} catch (Throwable t) {
+				// Some files will just so happen to have a ZIP marker in their bytes but not represent an actual ZIP.
+				// This is fine because by this point we have an info-type to fall back on.
+				logger.debug("Saw ZIP marker in file {} but could not parse as ZIP.", name);
+			}
 		}
 
 		// Check for DEX file format.
