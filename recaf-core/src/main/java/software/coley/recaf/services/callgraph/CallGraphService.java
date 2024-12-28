@@ -66,7 +66,8 @@ public class CallGraphService implements Service {
 	public CallGraph getCurrentWorkspaceCallGraph() {
 		CallGraph graph = currentWorkspaceGraph;
 
-		// Lazily initialize the graph so that we don't do a full graph
+		// Lazily initialize the graph so that we don't do a full graph immediately when the workspace is opened.
+		// It will only initialize when a user needs to use it.
 		if (!graph.isInitialized())
 			CompletableFuture.runAsync(graph::initialize);
 

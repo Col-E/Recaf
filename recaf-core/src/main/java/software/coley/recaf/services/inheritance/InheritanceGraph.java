@@ -30,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.SequencedSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -297,7 +298,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		if (vertex == null || OBJECT.equals(first) || OBJECT.equals(second))
 			return OBJECT;
 
-		Set<String> firstParents = vertex.allParents()
+		SequencedSet<String> firstParents = vertex.allParents()
 				.map(InheritanceVertex::getName)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 		firstParents.add(first);
