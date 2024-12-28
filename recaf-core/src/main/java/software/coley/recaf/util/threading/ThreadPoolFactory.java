@@ -132,8 +132,10 @@ public class ThreadPoolFactory {
 	}
 
 	private static class FactoryImpl implements ThreadFactory {
+		private static int fidCounter;
 		private final String name;
 		private final boolean daemon;
+		private final int fid = fidCounter++;
 		private int tid = 0;
 
 		public FactoryImpl(String name, boolean daemon) {
@@ -145,7 +147,7 @@ public class ThreadPoolFactory {
 		public Thread newThread(@Nonnull Runnable r) {
 			Thread thread = new Thread(r);
 			thread.setDaemon(daemon);
-			thread.setName("Recaf-" + name + "-" + tid++);
+			thread.setName("Recaf-" + name + " [" + fid + ":" + tid++ + "]");
 			return thread;
 		}
 	}
