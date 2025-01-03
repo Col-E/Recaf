@@ -48,7 +48,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload test artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-artifacts
           retention-days: 21
@@ -60,7 +60,7 @@ jobs:
         run: ./gradlew assemble -x compileTestJava -Dskip_jfx_bundle=true
       - name: Upload distribution jar
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: snapshot-build
           retention-days: 30
@@ -156,7 +156,7 @@ jobs:
           JRELEASER_NEXUS2_PASSWORD: ${{ secrets.JRELEASER_DEPLOY_MAVEN_NEXUS2_PASSWORD }}
       # Upload JRelease debug log
       - name: JReleaser output
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: jreleaser-release
