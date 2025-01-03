@@ -1,10 +1,17 @@
 package software.coley.recaf.util.android;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.google.devrel.gmscore.tools.apk.arsc.*;
+import com.google.devrel.gmscore.tools.apk.arsc.BinaryResourceFile;
+import com.google.devrel.gmscore.tools.apk.arsc.BinaryResourceValue;
+import com.google.devrel.gmscore.tools.apk.arsc.Chunk;
+import com.google.devrel.gmscore.tools.apk.arsc.PackageChunk;
+import com.google.devrel.gmscore.tools.apk.arsc.ResourceTableChunk;
+import com.google.devrel.gmscore.tools.apk.arsc.TypeChunk;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -17,7 +24,14 @@ import software.coley.android.xml.AndroidResourceProvider;
 import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 
 import java.io.IOException;
-import java.util.*;
+import java.io.InputStreamReader;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
@@ -30,7 +44,6 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public class AndroidRes implements AndroidResourceProvider {
-	private static final XmlMapper MAPPER = new XmlMapper();
 	private static final AndroidRes ANDROID_BASE;
 	private final Int2ObjectMap<String> resIdToName;
 	private final Object2IntMap<String> resNameToId;
@@ -42,13 +55,13 @@ public class AndroidRes implements AndroidResourceProvider {
 	private final Map<String, Set<String>> formatToAttrs;
 
 	private AndroidRes(@Nonnull Int2ObjectMap<String> resIdToName,
-					   @Nonnull Object2IntMap<String> resNameToId,
-					   @Nonnull Map<String, String> attrToFormat,
-					   @Nonnull Map<String, Object2LongMap<String>> attrToEnum,
-					   @Nonnull Map<String, Object2LongMap<String>> attrToFlags,
-					   @Nonnull Map<String, BinaryResourceValue> attrToSimpleResource,
-					   @Nonnull Map<String, Map<Integer, BinaryResourceValue>> attrToComplexResource,
-					   @Nonnull Map<String, Set<String>> formatToAttrs) {
+	                   @Nonnull Object2IntMap<String> resNameToId,
+	                   @Nonnull Map<String, String> attrToFormat,
+	                   @Nonnull Map<String, Object2LongMap<String>> attrToEnum,
+	                   @Nonnull Map<String, Object2LongMap<String>> attrToFlags,
+	                   @Nonnull Map<String, BinaryResourceValue> attrToSimpleResource,
+	                   @Nonnull Map<String, Map<Integer, BinaryResourceValue>> attrToComplexResource,
+	                   @Nonnull Map<String, Set<String>> formatToAttrs) {
 		this.resIdToName = resIdToName;
 		this.resNameToId = resNameToId;
 		this.attrToFormat = attrToFormat;
@@ -275,6 +288,8 @@ public class AndroidRes implements AndroidResourceProvider {
 				.collect(Collectors.joining("|"));
 	}
 
+	private static final Gson GSON = new GsonBuilder().create();
+
 	static {
 		try {
 			// Parse res-map entries (hex=name)
@@ -295,12 +310,9 @@ public class AndroidRes implements AndroidResourceProvider {
 			Map<String, String> attrToFormat = new TreeMap<>();
 			Map<String, Object2LongMap<String>> attrToEnum = new TreeMap<>();
 			Map<String, Object2LongMap<String>> attrToFlags = new TreeMap<>();
-			JsonNode tree = MAPPER.readTree(AndroidRes.class.getResourceAsStream("/android/attrs_manifest.xml"));
-			for (JsonNode child : tree)
-				visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, child);
-			tree = MAPPER.readTree(AndroidRes.class.getResourceAsStream("/android/attrs.xml"));
-			for (JsonNode child : tree)
-				visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, child);
+
+			JsonObject tree = (JsonObject) JsonParser.parseReader(new InputStreamReader(AndroidRes.class.getResourceAsStream("/android/attrs.json")));
+			visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, tree);
 			ANDROID_BASE = new AndroidRes(resIdToName, resNameToId,
 					attrToFormat, attrToEnum, attrToFlags, Collections.emptyMap(), Collections.emptyMap(), formatToAttrs);
 		} catch (IOException ex) {
@@ -309,30 +321,29 @@ public class AndroidRes implements AndroidResourceProvider {
 	}
 
 	private static void visit(@Nonnull Map<String, Set<String>> formatToAttrs,
-							  @Nonnull Map<String, String> attrToFormat,
-							  @Nonnull Map<String, Object2LongMap<String>> attrToEnum,
-							  @Nonnull Map<String, Object2LongMap<String>> attrToFlags,
-							  @Nonnull JsonNode node) {
-		JsonNode nameNode = node.get("name");
-		if (nameNode != null && node instanceof ObjectNode) {
-			ObjectNode childObject = (ObjectNode) node;
-			String name = nameNode.asText();
+	                          @Nonnull Map<String, String> attrToFormat,
+	                          @Nonnull Map<String, Object2LongMap<String>> attrToEnum,
+	                          @Nonnull Map<String, Object2LongMap<String>> attrToFlags,
+	                          @Nonnull JsonObject node) {
+		JsonElement nameNode = node.get("name");
+		if (nameNode != null && node instanceof JsonObject childObject) {
+			String name = nameNode.getAsString();
 
 			// Handle different kinds of entries
-			JsonNode formatNode = childObject.get("format");
+			JsonElement formatNode = childObject.get("format");
 			if (formatNode != null) {
-				String format = formatNode.asText();
+				String format = formatNode.getAsString();
 				attrToFormat.put(name, format);
 				formatToAttrs.computeIfAbsent(format, f -> new TreeSet<>()).add(name);
 				return;
 			} else {
-				JsonNode flagNode = childObject.get("flag");
-				if (flagNode instanceof ArrayNode) {
-					ArrayNode flagArray = (ArrayNode) flagNode;
+				JsonElement flagNode = childObject.get("flag");
+				if (flagNode instanceof JsonArray flagArray) {
 					Object2LongMap<String> nameToValue = new Object2LongOpenHashMap<>();
-					for (JsonNode flagEntry : flagArray) {
-						String flagName = flagEntry.get("name").asText();
-						String flagValueText = flagEntry.get("value").asText();
+					for (JsonElement flagEntry : flagArray) {
+						JsonObject flagObject = flagEntry.getAsJsonObject();
+						String flagName = flagObject.get("name").getAsString();
+						String flagValueText = flagObject.get("value").getAsString();
 						if (flagValueText.startsWith("0x"))
 							flagValueText = flagValueText.substring(2);
 						long flagValue = Long.parseLong(flagValueText, 16);
@@ -341,13 +352,13 @@ public class AndroidRes implements AndroidResourceProvider {
 					attrToFlags.put(name, nameToValue);
 					return;
 				} else {
-					JsonNode enumNode = node.get("enum");
-					if (enumNode instanceof ArrayNode) {
-						ArrayNode enumArray = (ArrayNode) enumNode;
+					JsonElement enumNode = node.get("enum");
+					if (enumNode instanceof JsonArray enumArray) {
 						Object2LongMap<String> nameToValue = new Object2LongOpenHashMap<>();
-						for (JsonNode flagEntry : enumArray) {
-							String enumName = flagEntry.get("name").asText();
-							String enumValueText = flagEntry.get("value").asText();
+						for (JsonElement flagEntry : enumArray) {
+							JsonObject flagObject = flagEntry.getAsJsonObject();
+							String enumName = flagObject.get("name").getAsString();
+							String enumValueText = flagObject.get("value").getAsString();
 							if (enumValueText.startsWith("0x"))
 								enumValueText = enumValueText.substring(2);
 							long enumValue = Long.parseLong(enumValueText);
@@ -361,7 +372,8 @@ public class AndroidRes implements AndroidResourceProvider {
 		}
 
 		// Visit the children if this node is not a child and isn't one of the types we expect.
-		for (JsonNode child : node)
-			visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, child);
+		for (JsonElement child : node.asMap().values())
+			if (child instanceof JsonObject childObject)
+				visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, childObject);
 	}
 }

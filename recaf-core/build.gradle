@@ -34,13 +34,16 @@ dependencies {
     api(libs.natural.order)
     api(libs.picocli)
     api(libs.procyon)
-    api(libs.jackson)
     api(libs.jlinker)
     api(libs.regex)
     api(libs.bundles.jasm)
     api(libs.vineflower)
     api(libs.wordwrap)
     api(libs.sourcesolver)
+
+    // We use Jackson as a test dependency so that we can convert Android API XML models into JSON.
+    // This way, we only need to include GSON in the final Recaf build.
+    testImplementation(libs.jackson)
 }
 
 // Force generation of gversion data class when the version information is not up-to-date
