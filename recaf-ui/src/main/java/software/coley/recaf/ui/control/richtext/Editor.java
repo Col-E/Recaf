@@ -16,10 +16,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
-import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
-import org.fxmisc.richtext.model.*;
+import org.fxmisc.richtext.model.PlainTextChange;
+import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyledDocument;
+import org.fxmisc.richtext.model.TwoDimensional;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
@@ -73,8 +76,7 @@ public class Editor extends BorderPane implements Closing {
 	private static final StyleResult FALLBACK_STYLE_RESULT = new StyleResult(StyleSpans.singleton(Collections.emptyList(), 0), 0);
 	private final StackPane stackPane = new StackPane();
 	private final CodeArea codeArea = new SafeCodeArea();
-	private final ScrollBar horizontalScrollbar;
-	private final ScrollBar verticalScrollbar;
+	private final VirtualizedScrollPaneWrapper<CodeArea> codeScrollWrapper;
 	private final VirtualFlow<?, ?> virtualFlow;
 	private final MemoizationList<Cell<?, ?>> virtualCellList;
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
@@ -93,9 +95,8 @@ public class Editor extends BorderPane implements Closing {
 	public Editor() {
 		// Get the reflection hacks out of the way first.
 		//  - Want to have access to scrollbars & the internal 'virtualFlow'
-		VirtualizedScrollPaneWrapper<CodeArea> scrollPane = new VirtualizedScrollPaneWrapper<>(codeArea);
-		horizontalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(scrollPane, VirtualizedScrollPane.class.getDeclaredField("hbar")));
-		verticalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(scrollPane, VirtualizedScrollPane.class.getDeclaredField("vbar")));
+		codeScrollWrapper = new VirtualizedScrollPaneWrapper<>(codeArea);
+
 		virtualFlow = Unchecked.get(() -> ReflectUtil.quietGet(codeArea, GenericStyledArea.class.getDeclaredField("virtualFlow")));
 		Object virtualCellManager = Unchecked.get(() -> ReflectUtil.quietGet(virtualFlow, VirtualFlow.class.getDeclaredField("cellListManager")));
 		virtualCellList = ReflectUtil.quietInvoke(virtualCellManager.getClass(), virtualCellManager, "getLazyCellList", new Class[0], new Object[0]);
@@ -103,7 +104,7 @@ public class Editor extends BorderPane implements Closing {
 		// Initial layout / style.
 		getStylesheets().add("/style/code-editor.css");
 		setCenter(stackPane);
-		stackPane.getChildren().add(scrollPane);
+		stackPane.getChildren().add(codeScrollWrapper);
 
 		// Do not want text wrapping in a code editor.
 		codeArea.setWrapText(false);
@@ -652,7 +653,7 @@ public class Editor extends BorderPane implements Closing {
 	 */
 	@Nonnull
 	public ScrollBar getHorizontalScrollbar() {
-		return horizontalScrollbar;
+		return codeScrollWrapper.getHorizontalScrollbar();
 	}
 
 	/**
@@ -660,7 +661,7 @@ public class Editor extends BorderPane implements Closing {
 	 */
 	@Nonnull
 	public ScrollBar getVerticalScrollbar() {
-		return verticalScrollbar;
+		return codeScrollWrapper.getVerticalScrollbar();
 	}
 
 	/**
