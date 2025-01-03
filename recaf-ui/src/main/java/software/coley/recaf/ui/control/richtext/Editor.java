@@ -10,17 +10,19 @@ import javafx.scene.control.IndexRange;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
-import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
-import org.fxmisc.richtext.model.*;
+import org.fxmisc.richtext.model.PlainTextChange;
+import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyledDocument;
+import org.fxmisc.richtext.model.TwoDimensional;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
@@ -73,8 +75,7 @@ public class Editor extends BorderPane {
 	private static final StyleResult FALLBACK_STYLE_RESULT = new StyleResult(StyleSpans.singleton(Collections.emptyList(), 0), 0);
 	private final StackPane stackPane = new StackPane();
 	private final CodeArea codeArea = new SafeCodeArea();
-	private final ScrollBar horizontalScrollbar;
-	private final ScrollBar verticalScrollbar;
+	private final VirtualizedScrollPaneWrapper<CodeArea> codeScrollWrapper;
 	private final VirtualFlow<?, ?> virtualFlow;
 	private final MemoizationList<Cell<?, ?>> virtualCellList;
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
@@ -86,9 +87,6 @@ public class Editor extends BorderPane {
 	private SelectedBracketTracking selectedBracketTracking;
 	private ProblemTracking problemTracking;
 	private ProblemOverlay problemOverlay;
-	private boolean autoScrolling = false;
-	private double autoScrollStartY;
-	private static final double AUTO_SCROLL_MULTIPLIER = 0.2;
 
 	/**
 	 * New editor instance.
@@ -96,9 +94,8 @@ public class Editor extends BorderPane {
 	public Editor() {
 		// Get the reflection hacks out of the way first.
 		//  - Want to have access to scrollbars & the internal 'virtualFlow'
-		VirtualizedScrollPaneWrapper<CodeArea> scrollPane = new VirtualizedScrollPaneWrapper<>(codeArea);
-		horizontalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(scrollPane, VirtualizedScrollPane.class.getDeclaredField("hbar")));
-		verticalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(scrollPane, VirtualizedScrollPane.class.getDeclaredField("vbar")));
+		codeScrollWrapper = new VirtualizedScrollPaneWrapper<>(codeArea);
+
 		virtualFlow = Unchecked.get(() -> ReflectUtil.quietGet(codeArea, GenericStyledArea.class.getDeclaredField("virtualFlow")));
 		Object virtualCellManager = Unchecked.get(() -> ReflectUtil.quietGet(virtualFlow, VirtualFlow.class.getDeclaredField("cellListManager")));
 		virtualCellList = ReflectUtil.quietInvoke(virtualCellManager.getClass(), virtualCellManager, "getLazyCellList", new Class[0], new Object[0]);
@@ -106,7 +103,7 @@ public class Editor extends BorderPane {
 		// Initial layout / style.
 		getStylesheets().add("/style/code-editor.css");
 		setCenter(stackPane);
-		stackPane.getChildren().add(scrollPane);
+		stackPane.getChildren().add(codeScrollWrapper);
 
 		// Do not want text wrapping in a code editor.
 		codeArea.setWrapText(false);
@@ -181,9 +178,6 @@ public class Editor extends BorderPane {
 
 		// Initial snapshot state.
 		lastDocumentSnapshot = ReadOnlyStyledDocument.from(codeArea.getDocument());
-
-		// Initialize auto-scroll functionality
-		initializeAutoScroll();
 	}
 
 	/**
@@ -650,7 +644,7 @@ public class Editor extends BorderPane {
 	 */
 	@Nonnull
 	public ScrollBar getHorizontalScrollbar() {
-		return horizontalScrollbar;
+		return codeScrollWrapper.getHorizontalScrollbar();
 	}
 
 	/**
@@ -658,7 +652,7 @@ public class Editor extends BorderPane {
 	 */
 	@Nonnull
 	public ScrollBar getVerticalScrollbar() {
-		return verticalScrollbar;
+		return codeScrollWrapper.getVerticalScrollbar();
 	}
 
 	/**
@@ -871,56 +865,5 @@ public class Editor extends BorderPane {
 			codeArea.moveTo(Math.min(codeArea.getLength(), pos));
 			observable.removeListener(this);
 		}
-	}
-
-	/**
-	 * Initialize middle-mouse button auto-scrolling functionality.
-	 */
-	private void initializeAutoScroll() {
-		// Handle middle mouse press to start auto-scrolling
-		codeArea.setOnMousePressed(e -> {
-			if (e.getButton() == MouseButton.MIDDLE) {
-				autoScrolling = true;
-				autoScrollStartY = e.getY();
-				e.consume();
-			}
-		});
-
-		// Handle mouse release to stop auto-scrolling
-		codeArea.setOnMouseReleased(e -> {
-			if (e.getButton() == MouseButton.MIDDLE) {
-				autoScrolling = false;
-				e.consume();
-			}
-		});
-
-		// Combined handler for both mouse movement and dragging
-		Consumer<javafx.scene.input.MouseEvent> scrollHandler = e -> {
-			if (autoScrolling) {
-				double deltaY = e.getY() - autoScrollStartY;
-				
-				// Get current scroll values
-				double value = verticalScrollbar.getValue();
-				double min = verticalScrollbar.getMin();
-				double max = verticalScrollbar.getMax();
-				
-				// Calculate scroll amount based on viewport size
-				double viewportHeight = virtualFlow.getHeight();
-				double scrollAmount = (deltaY * AUTO_SCROLL_MULTIPLIER) * 
-						(viewportHeight > 0 ? Math.max(1.0, virtualCellList.size() / viewportHeight) : 1.0);
-				
-				// Calculate new scroll position
-				double newValue = value + scrollAmount;
-				newValue = Math.max(min, Math.min(max, newValue));
-				
-				// Update scroll position
-				verticalScrollbar.setValue(newValue);
-				e.consume();
-			}
-		};
-
-		// Apply the handler to both mouse moved and dragged events
-		codeArea.setOnMouseMoved(scrollHandler::accept);
-		codeArea.setOnMouseDragged(scrollHandler::accept);
 	}
 }
