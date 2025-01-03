@@ -15,14 +15,6 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
-import org.openrewrite.ParseExceptionResult;
-import org.openrewrite.SourceFile;
-import org.openrewrite.Tree;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.marker.Range;
-import org.openrewrite.tree.ParseError;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
@@ -38,7 +30,8 @@ import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
-import software.coley.recaf.services.source.*;
+import software.coley.recaf.services.source.AstResolveResult;
+import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -53,9 +46,17 @@ import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.sourcesolver.Parser;
+import software.coley.sourcesolver.model.CompilationUnitModel;
+import software.coley.sourcesolver.util.Range;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -75,15 +76,15 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private final NavigableMap<Integer, Integer> offsetMap = new TreeMap<>();
 	private final AstAvailabilityButton astAvailabilityButton = new AstAvailabilityButton();
 	private final CellConfigurationService cellConfigurationService;
+	private final Workspace workspace;
 	private final AstService astService;
-	private final AstContextHelper contextHelper;
+	private final Parser parser;
 	private Future<?> lastFuture;
 	private int lastSourceHash;
 	private ClassPathNode path;
 	private Runnable queuedSelectionTask;
 	private String className;
-	private J.CompilationUnit unit;
-	private JavaParser parser;
+	private CompilationUnitModel unit;
 	private Editor editor;
 	private ContextMenu menu;
 
@@ -93,7 +94,8 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	                                @Nonnull Workspace workspace) {
 		this.cellConfigurationService = cellConfigurationService;
 		this.astService = astService;
-		contextHelper = new AstContextHelper(workspace);
+		this.workspace = workspace;
+		parser = astService.getSharedJavaParser();
 	}
 
 	/**
@@ -111,7 +113,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	 * @return Current AST for the class.
 	 */
 	@Nullable
-	public J.CompilationUnit getUnit() {
+	public CompilationUnitModel getUnit() {
 		return unit;
 	}
 
@@ -150,11 +152,6 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private void initialize(@Nonnull JvmClassInfo targetClass) {
 		// Set name
 		className = EscapeUtil.escapeStandard(targetClass.getName());
-
-		// Allocate new parser
-		if (parser != null)
-			parser.reset();
-		parser = astService.newParser(targetClass);
 	}
 
 	/**
@@ -176,12 +173,14 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	 * 		Member to select.
 	 */
 	public void select(@Nonnull ClassMember member) {
-		if (unit == null) {
+		CompilationUnitModel localUnit = unit;
+		if (localUnit == null) {
 			queuedSelectionTask = () -> select(member);
 		} else {
 			queuedSelectionTask = null;
 			try {
-				SortedMap<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(unit, editor.getText());
+				/*
+				SortedMap<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(localUnit, editor.getText());
 				for (Map.Entry<Range, Tree> entry : map.entrySet()) {
 					Tree tree = entry.getValue();
 					Range range = entry.getKey();
@@ -228,7 +227,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 						selectRange(range);
 						return;
 					}
-				}
+				}*/
 			} catch (Throwable t) {
 				logger.error("Unhandled exception in Java context support - select '{}'", member.getName(), t);
 			}
@@ -244,7 +243,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private void selectRange(@Nonnull Range range) {
 		CodeArea area = editor.getCodeArea();
 		FxThreadUtil.run(() -> {
-			area.selectRange(range.getEnd().getOffset(), range.getStart().getOffset());
+			area.selectRange(range.end(), range.begin());
 			area.showParagraphAtCenter(area.getCurrentParagraph());
 		});
 	}
@@ -264,7 +263,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private AstResolveResult resolvePosition(int pos, boolean doOffset) {
 		if (unit == null) return null;
 		if (doOffset) pos = offset(pos);
-		return contextHelper.resolve(unit, pos, editor.getText());
+		return astService.newJavaResolver(workspace, unit).resolveThenAdapt(pos);
 	}
 
 	/**
@@ -317,36 +316,31 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			if (unit != null)
 				astAvailabilityButton.setNewParseInProgress();
 
-			// Clear parser cache
-			parser.reset();
 
 			// Parse the current source
 			long start = System.currentTimeMillis();
-			logger.debugging(l -> l.info("Starting AST parse..."));
-			List<SourceFile> results = parser.parse(text).toList();
-			long diff = (System.currentTimeMillis() - start);
 			String classNameEsc = EscapeUtil.escapeAll(className);
-			if (results.isEmpty()) {
-				unit = null;
-				logger.warn("Could not create Java AST model from source of: {} after {}ms", classNameEsc, diff);
-				astAvailabilityButton.setUnavailable();
-			} else {
-				SourceFile result = results.getFirst();
-				if (result instanceof ParseError parseError) {
-					unit = null;
-					ParseExceptionResult errResult = (ParseExceptionResult) parseError.getMarkers().getMarkers().getFirst();
-					logger.warn("Parse error from source of: {} after {}ms, err={}",
-							classNameEsc, diff, errResult.getMessage());
-					astAvailabilityButton.setParserError(errResult);
-				} else if (result instanceof J.CompilationUnit unit) {
-					this.unit = unit;
+			logger.debugging(l -> l.info("Starting AST parse..."));
+			try {
+				CompilationUnitModel resultingUnit = parser.parse(text);
+				long diffMs = (System.currentTimeMillis() - start);
+				if (resultingUnit.getDeclaredClasses().isEmpty()) {
+					this.unit = null;
+					logger.warn("Could not create Java AST model from source of: {} after {}ms", classNameEsc, diffMs);
+					astAvailabilityButton.setUnavailable();
+				} else {
+					this.unit = resultingUnit;
 
-					logger.debugging(l -> l.info("AST parsed successfully, took {}ms", diff));
+					logger.debugging(l -> l.info("AST parsed successfully, took {}ms", diffMs));
 					astAvailabilityButton.setAvailable();
 
 					// Run queued tasks
 					if (queuedSelectionTask != null) queuedSelectionTask.run();
 				}
+			} catch (Throwable ex) {
+				long diffMs = (System.currentTimeMillis() - start);
+				logger.warn("Parse error from source of: {} after {}ms", classNameEsc, diffMs, ex);
+				astAvailabilityButton.setParserError(ex);
 			}
 
 			// Wipe offset map now that we have a new AST
@@ -478,7 +472,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	/**
 	 * Button/label detailing the current availability of the {@link #unit}.
 	 */
-	private static class AstAvailabilityButton extends Button {
+	public static class AstAvailabilityButton extends Button {
 		private AstAvailabilityButton() {
 			textProperty().bind(Lang.getBinding("java.parse-state.initial"));
 			setGraphic(new FontIconView(CarbonIcons.DOCUMENT_UNKNOWN));
@@ -533,12 +527,12 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		 * @param error
 		 * 		The exception result from the parser.
 		 */
-		private void setParserError(@Nonnull ParseExceptionResult error) {
+		private void setParserError(@Nonnull Throwable error) {
 			setVisible(true);
 			setOnAction(e -> {
 				BoundLabel title = new BoundLabel(Lang.getBinding("java.parse-state.error-details"));
 
-				String exceptionType = error.getExceptionType();
+				String exceptionType = error.getClass().getSimpleName();
 				String message = error.getMessage();
 
 				TextArea errorTextArea = new TextArea();

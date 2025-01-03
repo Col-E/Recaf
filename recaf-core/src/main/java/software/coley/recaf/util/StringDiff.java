@@ -1,13 +1,13 @@
 package software.coley.recaf.util;
 
+import com.github.difflib.DiffUtils;
+import com.github.difflib.patch.AbstractDelta;
+import com.github.difflib.patch.DeltaType;
+import com.github.difflib.patch.Patch;
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
-import org.openrewrite.Cursor;
-import org.openrewrite.Tree;
-import org.openrewrite.jgit.diff.*;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -28,29 +28,22 @@ public class StringDiff {
 	 */
 	@Nonnull
 	public static List<Diff> diff(@Nonnull String a, @Nonnull String b) {
-		// Use JGit to diff.
-		EditList diffs = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.MYERS)
-				.diff(RawTextComparator.DEFAULT,
-						new RawText(a.getBytes(StandardCharsets.UTF_8)),
-						new RawText(b.getBytes(StandardCharsets.UTF_8)));
-
 		int[] newlineOffsetsA = computeNewlineOffsets(a);
 		int[] newlineOffsetsB = computeNewlineOffsets(b);
-
-		// Map to diff types that are easier to use.
-		// We want raw positions, not line numbers, so we can do replace operations easily.
-		List<Diff> ret = new ArrayList<>(diffs.size());
-		for (Edit diff : diffs) {
-			int newlineStartA = diff.getBeginA(); // Line start of diff-A
-			int newlineEndA = diff.getEndA(); // Line end of diff-A
-			int offsetStartA = newlineOffsetsA[newlineStartA]; // Starting text offset of diff-A
-			int offsetEndA = newlineOffsetsA[newlineEndA]; // Ending text offset of diff-A
+		List<String> aa = Arrays.asList(StringUtil.splitNewline(a));
+		List<String> bb = Arrays.asList(StringUtil.splitNewline(b));
+		Patch<String> stringPatch = DiffUtils.diff(aa, bb);
+		List<Diff> diffs = new ArrayList<>();
+		for (AbstractDelta<String> delta : stringPatch.getDeltas()) {
+			if (delta.getType() == DeltaType.EQUAL)
+				continue;
+			int newlineStartA = delta.getSource().getPosition();
+			int newlineStartB = delta.getTarget().getPosition();
+			int offsetStartA = newlineOffsetsA[newlineStartA];
+			int offsetStartB = newlineOffsetsB[newlineStartB];
+			int offsetEndA = newlineOffsetsA[Math.max(newlineStartA + 1, delta.getSource().last() + 1)];
+			int offsetEndB = newlineOffsetsB[Math.max(newlineStartB + 1, delta.getTarget().last() + 1)];
 			String contentA = a.substring(offsetStartA, offsetEndA);
-
-			int newlineStartB = diff.getBeginB(); // Line start of diff-B
-			int newlineEndB = diff.getEndB(); // Line end of diff-B
-			int offsetStartB = newlineOffsetsB[newlineStartB]; // Starting text offset of diff-B
-			int offsetEndB = newlineOffsetsB[newlineEndB]; // Ending text offset of diff-B
 			String contentB = b.substring(offsetStartB, offsetEndB);
 
 			// Shrink difference by trimming out the common prefix and suffix.
@@ -59,30 +52,30 @@ public class StringDiff {
 				int common = commonPrefix.length();
 				offsetStartA += common;
 				offsetStartB += common;
-				contentA = a.substring(offsetStartA, offsetEndA);
-				contentB = b.substring(offsetStartB, offsetEndB);
+				contentA = contentA.substring(common);
+				contentB = contentB.substring(common);
 			}
 			String commonSuffix = StringUtil.getCommonSuffix(contentA, contentB);
 			if (!commonSuffix.isEmpty()) {
 				int common = commonSuffix.length();
 				offsetEndA -= common;
 				offsetEndB -= common;
-				contentA = a.substring(offsetStartA, offsetEndA);
-				contentB = b.substring(offsetStartB, offsetEndB);
+				contentA = contentA.substring(0, contentA.length() - common);
+				contentB = contentB.substring(0, contentB.length() - common);
 			}
 
 			// Compute the diff type. It will have changed from what JGit reports if our
 			// shrinking has shrunk either 'A' or 'B' to an empty string.
-			DiffType type = DiffType.from(diff.getType());
+			DiffType type = DiffType.from(delta.getType());
 			if (contentA.isEmpty() && !contentB.isEmpty())
 				type = DiffType.INSERT;
 			else if (!contentA.isEmpty() && contentB.isEmpty())
 				type = DiffType.REMOVE;
 
 			// Add our mapped diff.
-			ret.add(new Diff(type, offsetStartA, offsetStartB, offsetEndA, offsetEndB, contentA, contentB));
+			diffs.add(new Diff(type, offsetStartA, offsetStartB, offsetEndA, offsetEndB, contentA, contentB));
 		}
-		return ret;
+		return diffs;
 	}
 
 	/**
@@ -245,98 +238,18 @@ public class StringDiff {
 
 		/**
 		 * @param type
-		 * 		JGit diff type.
+		 * 		Delta type.
 		 *
 		 * @return Our diff type.
 		 */
 		@Nonnull
-		public static DiffType from(@Nonnull Edit.Type type) {
+		public static DiffType from(@Nonnull DeltaType type) {
 			return switch (type) {
 				case INSERT -> INSERT;
 				case DELETE -> REMOVE;
-				case REPLACE -> CHANGE;
-				case EMPTY -> EMPTY;
+				case CHANGE -> CHANGE;
+				case EQUAL -> EMPTY;
 			};
-		}
-	}
-
-	/**
-	 * Helper that holds diff information between the original text, and the test that the tree believes it is modeling.
-	 * In some instances these models may not be aligned and will have to be de-conflicted.
-	 */
-	public static class DiffHelper {
-		private final List<StringDiff.Diff> diffs;
-
-		/**
-		 * @param backingText
-		 * 		Original text that yields the tree.
-		 * @param tree
-		 * 		Tree model to compare against. Will be turned into a string representation.
-		 */
-		public DiffHelper(@Nonnull String backingText, @Nonnull Tree tree) {
-			String treePrintText = tree.print(new Cursor(null, tree));
-			this.diffs = StringDiff.diff(backingText, treePrintText);
-		}
-
-		/**
-		 * Replacements can be detected in both the original and AST text representations.
-		 * Thus, we can search in the 'b' ranges, which are those belonging to the AST and still maintain
-		 * the ability to grab a result.
-		 *
-		 * @param pos
-		 * 		Position in the AST's version of the text.
-		 *
-		 * @return Replace diff encompassing the given position,
-		 * or {@code null} if no replace diff wraps the requested range.
-		 */
-		@Nullable
-		public StringDiff.Diff getReplaced(int pos) {
-			for (StringDiff.Diff diff : diffs) {
-				if (diff.isReplace() && diff.inRangeB(pos)) {
-					return diff;
-				}
-			}
-			return null;
-		}
-
-		/**
-		 * Removals can only be detected in the original text representation.
-		 * Thus, we will search in the 'a' ranges, which are those belonging to the original backing text.
-		 *
-		 * @param pos
-		 * 		Position in the original backing version of the text.
-		 *
-		 * @return Removal diff encompassing the given position,
-		 * or {@code null} if no removal diff wraps the requested range.
-		 */
-		@Nullable
-		public StringDiff.Diff getRemoved(int pos) {
-			for (StringDiff.Diff diff : diffs) {
-				if (diff.isRemoval() && diff.inRangeA(pos)) {
-					return diff;
-				}
-			}
-			return null;
-		}
-
-		/**
-		 * Insertions can only be detected in the AST's text representation.
-		 * Thus, we will search in the 'b' ranges, which are those belonging to the AST.
-		 *
-		 * @param pos
-		 * 		Position in the AST's version of the text.
-		 *
-		 * @return Insertion diff encompassing the given position,
-		 * or {@code null} if no insertion diff wraps the requested range.
-		 */
-		@Nullable
-		public StringDiff.Diff getInserted(int pos) {
-			for (StringDiff.Diff diff : diffs) {
-				if (diff.isInsert() && diff.inRangeB(pos)) {
-					return diff;
-				}
-			}
-			return null;
 		}
 	}
 }

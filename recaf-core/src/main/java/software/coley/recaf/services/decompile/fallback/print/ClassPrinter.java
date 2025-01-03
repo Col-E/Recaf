@@ -69,7 +69,7 @@ public class ClassPrinter {
 	 */
 	private void appendImports(@Nonnull Printer out) {
 		String lastRootPackage = null;
-		NavigableSet<String> referencedClasses = classInfo.getReferencedClasses();
+		NavigableSet<String> referencedClasses = new TreeSet<>(classInfo.getReferencedClasses());
 		boolean hasImports = false;
 		for (String referencedClass : referencedClasses) {
 			// Skip classes in the default package.

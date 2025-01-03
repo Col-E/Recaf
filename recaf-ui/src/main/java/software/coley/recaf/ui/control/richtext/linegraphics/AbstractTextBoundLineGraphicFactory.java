@@ -5,7 +5,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
-import org.openrewrite.jgit.annotations.NonNull;
 import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.FxThreadUtil;
@@ -84,5 +83,5 @@ public abstract class AbstractTextBoundLineGraphicFactory extends AbstractLineGr
 	 * @param paragraph
 	 * 		The paragraph index.
 	 */
-	protected abstract void apply(@NonNull StackPane pane, int paragraph);
+	protected abstract void apply(@Nonnull StackPane pane, int paragraph);
 }

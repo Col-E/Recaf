@@ -1,11 +1,11 @@
 package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
-import org.openrewrite.java.tree.J;
 import software.coley.recaf.path.PathNode;
+import software.coley.sourcesolver.resolve.result.Resolution;
 
 /**
- * Wrapper for {@link AstContextHelper#resolve(J.CompilationUnit, int, String)} operations.
+ * Wrapper for {@link Resolution} values.
  *
  * @param isDeclaration
  * 		Flag indicating if resolved item is a declaration or reference.
@@ -13,6 +13,7 @@ import software.coley.recaf.path.PathNode;
  * 		Resolved value.
  *
  * @author Matt Coley
+ * @see ResolverAdapter
  */
 public record AstResolveResult(boolean isDeclaration, @Nonnull PathNode<?> path) {
 	/**
@@ -40,6 +41,7 @@ public record AstResolveResult(boolean isDeclaration, @Nonnull PathNode<?> path)
 	/**
 	 * @return Copy of self, as a declaration.
 	 */
+	@Nonnull
 	public AstResolveResult asDeclaration() {
 		return new AstResolveResult(true, path());
 	}
@@ -47,6 +49,7 @@ public record AstResolveResult(boolean isDeclaration, @Nonnull PathNode<?> path)
 	/**
 	 * @return Copy of self, as a reference.
 	 */
+	@Nonnull
 	public AstResolveResult asReference() {
 		return new AstResolveResult(false, path());
 	}
@@ -57,7 +60,8 @@ public record AstResolveResult(boolean isDeclaration, @Nonnull PathNode<?> path)
 	 *
 	 * @return Copy of self, as matching state.
 	 */
-	public AstResolveResult matchDeclarationState(AstResolveResult other) {
+	@Nonnull
+	public AstResolveResult matchDeclarationState(@Nonnull AstResolveResult other) {
 		if (this == other)
 			return this;
 		if (isDeclaration == other.isDeclaration)

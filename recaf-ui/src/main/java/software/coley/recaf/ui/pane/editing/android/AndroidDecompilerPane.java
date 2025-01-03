@@ -5,9 +5,10 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.services.decompile.DecompilerManager;
+import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.source.AstResolveResult;
-import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
+import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
@@ -25,14 +26,15 @@ import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 public class AndroidDecompilerPane extends AbstractDecompilePane {
 	@Inject
 	public AndroidDecompilerPane(@Nonnull DecompilerPaneConfig config,
-								 @Nonnull KeybindingConfig keys,
-								 @Nonnull SearchBar searchBar,
-								 @Nonnull ToolsContainerComponent toolsContainer,
-								 @Nonnull JavaContextActionSupport contextActionSupport,
-								 @Nonnull FileTypeSyntaxAssociationService languageAssociation,
-								 @Nonnull DecompilerManager decompilerManager,
-								 @Nonnull Actions actions) {
-		super(config, searchBar, contextActionSupport, languageAssociation, decompilerManager);
+	                             @Nonnull KeybindingConfig keys,
+	                             @Nonnull SearchBar searchBar,
+	                             @Nonnull ToolsContainerComponent toolsContainer,
+	                             @Nonnull AstService astService,
+	                             @Nonnull JavaContextActionSupport contextActionSupport,
+	                             @Nonnull FileTypeSyntaxAssociationService languageAssociation,
+	                             @Nonnull DecompilerManager decompilerManager,
+	                             @Nonnull Actions actions) {
+		super(config, searchBar, astService, contextActionSupport, languageAssociation, decompilerManager);
 
 		// Install tools container with configurator
 		new AndroidDecompilerPaneConfigurator(toolsContainer, config, decompiler, decompilerManager);

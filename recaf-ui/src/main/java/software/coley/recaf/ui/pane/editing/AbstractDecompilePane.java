@@ -15,10 +15,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.util.Duration;
 import org.fxmisc.richtext.CodeArea;
-import org.openrewrite.Cursor;
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.InMemoryExecutionContext;
-import org.openrewrite.java.tree.J;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
@@ -40,7 +36,8 @@ import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
-import software.coley.recaf.services.source.AstMappingVisitor;
+import software.coley.recaf.services.source.AstMapper;
+import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
@@ -55,6 +52,7 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringDiff;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.sourcesolver.model.CompilationUnitModel;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -79,20 +77,24 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	protected final ObservableBoolean decompileInProgress = new ObservableBoolean(false);
 	protected final AtomicBoolean updateLock = new AtomicBoolean();
 	protected final ProblemTracking problemTracking = new ProblemTracking();
-	protected final DecompilerPaneConfig config;
+	protected final AstService astService;
 	protected final JavaContextActionSupport contextActionSupport;
 	protected final DecompilerManager decompilerManager;
+	protected final DecompilerPaneConfig config;
 	protected final Editor editor;
 	protected ClassPathNode path;
 
 	protected AbstractDecompilePane(@Nonnull DecompilerPaneConfig config,
 	                                @Nonnull SearchBar searchBar,
+	                                @Nonnull AstService astService,
 	                                @Nonnull JavaContextActionSupport contextActionSupport,
 	                                @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                                @Nonnull DecompilerManager decompilerManager) {
-		this.config = config;
+		this.astService = astService;
 		this.contextActionSupport = contextActionSupport;
 		this.decompilerManager = decompilerManager;
+		this.config = config;
+
 		decompiler.setValue(decompilerManager.getTargetJvmDecompiler());
 		decompiler.addChangeListener((ob, old, cur) -> decompile());
 
@@ -198,7 +200,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	 * Attempts to update the {@link #editor}'s text with intent-specific AST operations.
 	 * This includes:
 	 * <ul>
-	 *     <li>{@link AstMappingVisitor} when handling classes marked with {@link RemapOriginTaskProperty}</li>
+	 *     <li>{@link AstMapper} when handling classes marked with {@link RemapOriginTaskProperty}</li>
 	 * </ul>
 	 *
 	 * @param classInfo
@@ -213,45 +215,35 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		if (!currentText.isBlank()) {
 			MappingResults mappingOrigin = classInfo.getPropertyValueOrNull(RemapOriginTaskProperty.KEY);
 			if (mappingOrigin != null) {
-				// If the mapping operation affects inner classes
 				Mappings mappings = mappingOrigin.getMappings();
 
 				// We can handle the update with AST mapping instead of decompiling the class again.
-				AstMappingVisitor visitor = new AstMappingVisitor(mappings);
-				J.CompilationUnit unit = contextActionSupport.getUnit();
-				if (unit != null) {
-					ExecutionContext ctx = new InMemoryExecutionContext();
-					J mappedAst;
-					try {
-						mappedAst = unit.acceptJava(visitor, ctx);
-					} catch (Throwable t) {
-						logger.warn("Failed updating decompilation AST", t);
-						return false;
-					}
-					if (mappedAst != null) {
-						// We want to get the difference between the current and modified text and update only
-						// the areas of the text that are modified. In most situations this will be much faster
-						// than re-assigning the whole text (which will require restyling the entire document)
-						String modified = mappedAst.print(new Cursor(null, unit));
-						List<StringDiff.Diff> diffs = StringDiff.diff(currentText, modified);
-						FxThreadUtil.run(() -> {
-							// Track where caret was.
-							CodeArea area = editor.getCodeArea();
-							int currentParagraph = area.getCurrentParagraph();
-							int currentColumn = area.getCaretColumn();
+				CompilationUnitModel unit = contextActionSupport.getUnit();
+				Workspace workspace = path.getValueOfType(Workspace.class);
+				if (unit != null && workspace != null) {
+					String modifiedSource = astService.applyMappings(unit, astService.newJavaResolver(workspace, unit), mappings);
 
-							// Apply diffs.
-							for (int i = diffs.size() - 1; i >= 0; i--) {
-								StringDiff.Diff diff = diffs.get(i);
-								if (diff.type() == StringDiff.DiffType.CHANGE)
-									area.replaceText(diff.startA(), diff.endA(), diff.textB());
-							}
+					// We want to get the difference between the current and modified text and update only
+					// the areas of the text that are modified. In most situations this will be much faster
+					// than re-assigning the whole text (which will require restyling the entire document)
+					List<StringDiff.Diff> diffs = StringDiff.diff(currentText, modifiedSource);
+					FxThreadUtil.run(() -> {
+						// Track where caret was.
+						CodeArea area = editor.getCodeArea();
+						int currentParagraph = area.getCurrentParagraph();
+						int currentColumn = area.getCaretColumn();
 
-							// Reset caret.
-							area.moveTo(currentParagraph, currentColumn);
-						});
-						return true;
-					}
+						// Apply diffs.
+						for (int i = diffs.size() - 1; i >= 0; i--) {
+							StringDiff.Diff diff = diffs.get(i);
+							if (diff.type() == StringDiff.DiffType.CHANGE)
+								area.replaceText(diff.startA(), diff.endA(), diff.textB());
+						}
+
+						// Reset caret.
+						area.moveTo(currentParagraph, currentColumn);
+					});
+					return true;
 				}
 			}
 		}

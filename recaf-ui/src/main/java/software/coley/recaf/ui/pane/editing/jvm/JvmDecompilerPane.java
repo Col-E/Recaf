@@ -23,7 +23,11 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
 import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.services.compile.*;
+import software.coley.recaf.services.compile.CompileMap;
+import software.coley.recaf.services.compile.CompilerDiagnostic;
+import software.coley.recaf.services.compile.JavacArgumentsBuilder;
+import software.coley.recaf.services.compile.JavacCompiler;
+import software.coley.recaf.services.compile.JavacCompilerConfig;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
@@ -33,6 +37,7 @@ import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.services.phantom.PhantomGenerationException;
 import software.coley.recaf.services.phantom.PhantomGenerator;
 import software.coley.recaf.services.source.AstResolveResult;
+import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
@@ -55,7 +60,12 @@ import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -84,6 +94,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	                         @Nonnull KeybindingConfig keys,
 	                         @Nonnull SearchBar searchBar,
 	                         @Nonnull ToolsContainerComponent toolsContainer,
+	                         @Nonnull AstService astService,
 	                         @Nonnull JavaContextActionSupport contextActionSupport,
 	                         @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                         @Nonnull DecompilerManager decompilerManager,
@@ -91,7 +102,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	                         @Nonnull JavacCompilerConfig javacConfig,
 	                         @Nonnull PhantomGenerator phantomGenerator,
 	                         @Nonnull Actions actions) {
-		super(config, searchBar, contextActionSupport, languageAssociation, decompilerManager);
+		super(config, searchBar, astService, contextActionSupport, languageAssociation, decompilerManager);
 		this.phantomGenerator = phantomGenerator;
 		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
 		this.javacTarget = new ObservableInteger(javacConfig.getDefaultTargetVersion().getValue());
