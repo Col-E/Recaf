@@ -17,21 +17,27 @@ import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
+import software.coley.recaf.services.mapping.aggregate.AggregatedMappingsListener;
 import software.coley.recaf.services.mapping.format.MappingFileFormat;
 import software.coley.recaf.services.mapping.format.MappingFormatManager;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
+import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.pane.MappingGeneratorPane;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.FileChooserBuilder;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 import static software.coley.recaf.util.Lang.getBinding;
@@ -77,6 +83,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 				.setTitle(Lang.get("dialog.file.open"))
 				.build();
 
+		Map<MappingFileFormat, MenuItem> formatToExportAsItems = new IdentityHashMap<>();
 		for (String formatName : formatManager.getMappingFileFormats()) {
 			apply.getItems().add(actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
 				// Show the prompt, load the mappings text ant attempt to load them.
@@ -100,16 +107,16 @@ public class MappingMenu extends WorkspaceAwareMenu {
 			}));
 
 			// Temp instance to check for export support.
-			MappingFileFormat tmp = formatManager.createFormatInstance(formatName);
-			if (tmp == null) continue;
-			if (tmp.supportsExportText()) {
-				export.getItems().add(actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
+			MappingFileFormat tmpFormat = formatManager.createFormatInstance(formatName);
+			if (tmpFormat == null) continue;
+			if (tmpFormat.supportsExportText()) {
+				ActionMenuItem exportAsItem = actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
 					// Show the prompt, write current mappings to the given path.
 					File file = chooser.showSaveDialog(windowManager.getMainWindow());
 					if (file != null) {
 						exportPool.submit(() -> {
 							try {
-								AggregatedMappings mappings = aggregateMappingManager.getAggregatedMappings();
+								AggregatedMappings mappings = Objects.requireNonNull(aggregateMappingManager.getAggregatedMappings());
 								MappingFileFormat format = formatManager.createFormatInstance(formatName);
 								if (format != null) {
 									String mappingsText = format.exportText(mappings);
@@ -129,7 +136,9 @@ public class MappingMenu extends WorkspaceAwareMenu {
 							}
 						});
 					}
-				}));
+				});
+				export.getItems().add(exportAsItem);
+				formatToExportAsItems.put(tmpFormat, exportAsItem);
 			} else {
 				MenuItem item = new MenuItem();
 				item.textProperty().bind(Lang.formatLiterals("menu.mappings.export.unsupported", formatName));
@@ -148,6 +157,20 @@ public class MappingMenu extends WorkspaceAwareMenu {
 
 		// Disable if attached via agent, or there is no workspace
 		disableProperty().bind(hasAgentWorkspace.or(hasWorkspace.not()));
+
+		// Disable formats that require field type differentiation if we have aggregate data that does not have differentiation.
+		aggregateMappingManager.addAggregatedMappingsListener(mappings -> {
+			FxThreadUtil.run(() -> {
+				for (var formatItemEntry : formatToExportAsItems.entrySet()) {
+					if (formatItemEntry.getKey().doesSupportFieldTypeDifferentiation())
+						formatItemEntry.getValue().setDisable(mappings.isMissingFieldDescriptors());
+				}
+			});
+		});
+		workspaceManager.addWorkspaceCloseListener(closedWorkspace -> {
+			// Re-enable when closing so the next workspace has a clean slate
+			formatToExportAsItems.values().forEach(i -> i.setDisable(false));
+		});
 	}
 
 	private void openGenerate(@Nonnull Instance<MappingGeneratorPane> generatorPaneInstance) {

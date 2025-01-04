@@ -1,15 +1,17 @@
 package software.coley.recaf.services.mapping.aggregate;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.cdi.AutoRegisterWorkspaceListeners;
-import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
+import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.List;
@@ -21,21 +23,24 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Coley
  * @author Marius Renner
  */
-@WorkspaceScoped
-@AutoRegisterWorkspaceListeners
+@ApplicationScoped
 public class AggregateMappingManager implements Service, WorkspaceCloseListener {
 	public static final String SERVICE_ID = "mapping-aggregator";
 	private static final Logger logger = Logging.get(AggregateMappingManager.class);
 	private final List<AggregatedMappingsListener> aggregateListeners = new CopyOnWriteArrayList<>();
-	private final AggregatedMappings aggregatedMappings;
 	private final AggregateMappingManagerConfig config;
+	private AggregatedMappings aggregatedMappings;
 
 	@Inject
 	public AggregateMappingManager(@Nonnull AggregateMappingManagerConfig config,
-	                               @Nonnull Workspace workspace) {
+	                               @Nonnull WorkspaceManager workspaceManager) {
 		this.config = config;
-		aggregatedMappings = new AggregatedMappings(workspace);
+
+		ListenerHost host = new ListenerHost();
+		workspaceManager.addWorkspaceOpenListener(host);
+		workspaceManager.addWorkspaceCloseListener(host);
 	}
+
 
 	@Override
 	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
@@ -50,6 +55,8 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	 * 		The additional mappings that were added.
 	 */
 	public void updateAggregateMappings(@Nonnull Mappings newMappings) {
+		if (aggregatedMappings == null)
+			return;
 		aggregatedMappings.update(newMappings);
 		Unchecked.checkedForEach(aggregateListeners, listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()),
 				(listener, t) -> logger.error("Exception thrown when updating aggregate mappings", t));
@@ -59,6 +66,8 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	 * Clears all mapping information.
 	 */
 	private void clearAggregated() {
+		if (aggregatedMappings == null)
+			return;
 		aggregatedMappings.clear();
 		Unchecked.checkedForEach(aggregateListeners, listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()),
 				(listener, t) -> logger.error("Exception thrown when updating aggregate mappings", t));
@@ -84,9 +93,9 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	}
 
 	/**
-	 * @return Current aggregated mappings in the ASM format.
+	 * @return Current aggregated mappings in the ASM format. Will be {@code null} if no workspace is open.
 	 */
-	@Nonnull
+	@Nullable
 	public AggregatedMappings getAggregatedMappings() {
 		return aggregatedMappings;
 	}
@@ -101,5 +110,17 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 	@Override
 	public AggregateMappingManagerConfig getServiceConfig() {
 		return config;
+	}
+
+	private class ListenerHost implements WorkspaceOpenListener, WorkspaceCloseListener {
+		@Override
+		public void onWorkspaceOpened(@Nonnull Workspace workspace) {
+			aggregatedMappings = new AggregatedMappings(workspace);
+		}
+
+		@Override
+		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
+			aggregatedMappings = null;
+		}
 	}
 }

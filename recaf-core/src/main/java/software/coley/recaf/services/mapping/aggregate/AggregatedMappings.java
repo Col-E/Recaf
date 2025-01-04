@@ -35,6 +35,7 @@ import java.util.Objects;
 public class AggregatedMappings extends IntermediateMappings {
 	private final Map<String, String> reverseOrderClassMapping = new HashMap<>();
 	private final WorkspaceBackedRemapper reverseMapper;
+	private boolean missingFieldDescriptors;
 
 	/**
 	 * @param workspace
@@ -200,9 +201,21 @@ public class AggregatedMappings extends IntermediateMappings {
 	}
 
 	/**
+	 * Some mapping formats do not include the descriptor of fields since they assume all fields are uniquely identified by name.
+	 * This kinda sucks because unless we do a lot of additional lookup work <i>(Which may not even be successful)</i>,
+	 * we're missing out on data. If this is ever the case formats that do require this data cannot be exported to.
+	 *
+	 * @return {@code true} when there are field entries in these mapping which do not have descriptors associated with them.
+	 */
+	public boolean isMissingFieldDescriptors() {
+		return missingFieldDescriptors;
+	}
+
+	/**
 	 * Clears the mapping entries.
 	 */
 	public void clear() {
+		missingFieldDescriptors = false;
 		classes.clear();
 		fields.clear();
 		methods.clear();
@@ -237,7 +250,7 @@ public class AggregatedMappings extends IntermediateMappings {
 		return bridged;
 	}
 
-	private boolean updateClasses(Map<String, ClassMapping> classes) {
+	private boolean updateClasses(@Nonnull Map<String, ClassMapping> classes) {
 		boolean bridged = false;
 		for (ClassMapping newMapping : classes.values()) {
 			String cName = newMapping.getNewName();
@@ -256,7 +269,7 @@ public class AggregatedMappings extends IntermediateMappings {
 		return bridged;
 	}
 
-	private <M extends MemberMapping> boolean updateMembers(Collection<List<M>> newMappings) {
+	private <M extends MemberMapping> boolean updateMembers(@Nonnull Collection<List<M>> newMappings) {
 		// With members, we need to take special care, for example:
 		// 1. a --> b
 		// 2. b.x --> b.y
@@ -283,8 +296,9 @@ public class AggregatedMappings extends IntermediateMappings {
 
 				// Add bridged entry
 				if (newMemberMapping.isField()) {
+					missingFieldDescriptors |= desc == null;
 					addField(owner, desc, oldMemberName, newMemberName);
-				} else {
+				} else if (desc != null) {
 					addMethod(owner, desc, oldMemberName, newMemberName);
 				}
 			}
@@ -292,7 +306,7 @@ public class AggregatedMappings extends IntermediateMappings {
 		return bridged;
 	}
 
-	private boolean updateVariables(Collection<List<VariableMapping>> newMappings) {
+	private boolean updateVariables(@Nonnull Collection<List<VariableMapping>> newMappings) {
 		// a.foo() var x
 		//   ...
 		// a.foo() --> b.foo()
@@ -315,7 +329,8 @@ public class AggregatedMappings extends IntermediateMappings {
 		return bridged;
 	}
 
-	private String applyReverseMappings(String desc) {
+	@Nullable
+	private String applyReverseMappings(@Nullable String desc) {
 		if (desc == null)
 			return null;
 		else if (desc.charAt(0) == '(')
@@ -324,7 +339,8 @@ public class AggregatedMappings extends IntermediateMappings {
 			return reverseMapper.mapDesc(desc);
 	}
 
-	private String findPriorMemberName(String oldClassName, MemberMapping memberMapping) {
+	@Nonnull
+	private String findPriorMemberName(@Nonnull String oldClassName, @Nonnull MemberMapping memberMapping) {
 		if (memberMapping.isField()) {
 			return findPriorName(memberMapping, getClassFieldMappings(oldClassName));
 		} else {
@@ -332,7 +348,8 @@ public class AggregatedMappings extends IntermediateMappings {
 		}
 	}
 
-	private String findPriorName(MemberMapping newMethodMapping, List<? extends MemberMapping> members) {
+	@Nonnull
+	private String findPriorName(@Nonnull MemberMapping newMethodMapping, @Nonnull List<? extends MemberMapping> members) {
 		// If the old name not previously mapped, then it's the same as what the new mapping has given.
 		// So the passed new mapping is a safe default.
 		MemberMapping target = newMethodMapping;

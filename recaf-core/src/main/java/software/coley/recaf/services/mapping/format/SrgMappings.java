@@ -191,7 +191,7 @@ public class SrgMappings extends AbstractMappingFileFormat {
 
 		@Nullable
 		@Override
-		public ClassMapping getClassMapping(String name) {
+		public ClassMapping getClassMapping(@Nonnull String name) {
 			ClassMapping classMapping = super.getClassMapping(name);
 			if (classMapping == null && !packageMappings.isEmpty()) {
 				for (Pair<String, String> packageMapping : packageMappings) {

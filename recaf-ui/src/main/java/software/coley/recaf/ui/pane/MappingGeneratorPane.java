@@ -355,7 +355,7 @@ public class MappingGeneratorPane extends StackPane {
 	private Node createFilterDisplay(@Nonnull AggregateMappingManager aggregateMappingManager) {
 		// List to house current filters.
 		filters.setCellFactory(param -> new ConfiguredFilterCell());
-		filters.getItems().add(new ExcludeExistingMapped(aggregateMappingManager.getAggregatedMappings()));
+		filters.getItems().add(new ExcludeExistingMapped(Objects.requireNonNull(aggregateMappingManager.getAggregatedMappings())));
 		ReadOnlyObjectProperty<FilterWithConfigNode<?>> selectedItem = filters.getSelectionModel().selectedItemProperty();
 		BooleanBinding hasItemSelection = selectedItem.isNull();
 
@@ -389,7 +389,7 @@ public class MappingGeneratorPane extends StackPane {
 		dropdownText.bind(Lang.getBinding("mapgen.filters.type"));
 		dropdown.getItems().addAll(
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.excludealreadymapped",
-						() -> new ExcludeExistingMapped(aggregateMappingManager.getAggregatedMappings())),
+						() -> new ExcludeExistingMapped(Objects.requireNonNull(aggregateMappingManager.getAggregatedMappings()))),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.excludename", ExcludeName::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.excludeclasses", ExcludeClasses::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.excludemodifier", ExcludeModifiers::new),

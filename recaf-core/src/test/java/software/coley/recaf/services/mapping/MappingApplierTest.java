@@ -134,6 +134,7 @@ class MappingApplierTest extends TestBase {
 		// We will validate this is only done AFTER 'results.apply()' is run.
 		// For future tests we will skip this since if it works here, it works there.
 		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
+		assertNotNull(aggregatedMappings);
 		assertNull(aggregatedMappings.getMappedClassName(stringSupplierName),
 				"StringSupplier should not yet be tracked in aggregate");
 		results.apply();
@@ -177,6 +178,7 @@ class MappingApplierTest extends TestBase {
 		// Assert aggregate updated too.
 		results.apply();
 		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
+		assertNotNull(aggregatedMappings);
 		assertNotNull(aggregatedMappings.getMappedClassName(dummyEnumName),
 				"DummyEnum should be tracked in aggregate");
 
@@ -213,6 +215,7 @@ class MappingApplierTest extends TestBase {
 		// Assert aggregate updated too.
 		results.apply();
 		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
+		assertNotNull(aggregatedMappings);
 		assertNotNull(aggregatedMappings.getMappedClassName(annotationName),
 				"AnnotationImpl should be tracked in aggregate");
 
@@ -268,6 +271,7 @@ class MappingApplierTest extends TestBase {
 		// Assert aggregate updated too.
 		results.apply();
 		AggregatedMappings aggregatedMappings = aggregateMappingManager.getAggregatedMappings();
+		assertNotNull(aggregatedMappings);
 		assertNotNull(aggregatedMappings.getMappedClassName(overlapInterfaceAName),
 				"OverlapInterfaceA should be tracked in aggregate");
 		assertNotNull(aggregatedMappings.getMappedClassName(overlapInterfaceBName),
