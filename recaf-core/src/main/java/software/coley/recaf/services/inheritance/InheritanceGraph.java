@@ -4,10 +4,9 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.collections.Lists;
 import software.coley.recaf.info.AndroidClassInfo;
-import software.coley.recaf.info.BasicJvmClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.Service;
@@ -20,7 +19,6 @@ import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
-import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collections;
@@ -491,7 +489,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 
 	private static class InheritanceStubVertex extends InheritanceVertex {
 		private InheritanceStubVertex() {
-			super(new StubClass(), in -> null, in -> null, false);
+			super(new StubClassInfo("java/lang/Object").asJvmClass(), in -> null, in -> null, false);
 		}
 
 		@Override
@@ -575,14 +573,6 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 		@Override
 		public String getName() {
 			return "$$STUB$$";
-		}
-	}
-
-	private static class StubClass extends BasicJvmClassInfo {
-		public StubClass() {
-			super(new JvmClassInfoBuilder()
-					.adaptFrom(RuntimeWorkspaceResource.getInstance().getJvmClassBundle()
-							.get("java/lang/Object").getClassReader()));
 		}
 	}
 }
