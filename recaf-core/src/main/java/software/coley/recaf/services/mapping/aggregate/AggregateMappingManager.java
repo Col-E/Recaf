@@ -24,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Marius Renner
  */
 @ApplicationScoped
-public class AggregateMappingManager implements Service, WorkspaceCloseListener {
+public class AggregateMappingManager implements Service {
 	public static final String SERVICE_ID = "mapping-aggregator";
 	private static final Logger logger = Logging.get(AggregateMappingManager.class);
 	private final List<AggregatedMappingsListener> aggregateListeners = new CopyOnWriteArrayList<>();
@@ -39,13 +39,6 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 		ListenerHost host = new ListenerHost();
 		workspaceManager.addWorkspaceOpenListener(host);
 		workspaceManager.addWorkspaceCloseListener(host);
-	}
-
-
-	@Override
-	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
-		aggregateListeners.clear();
-		clearAggregated();
 	}
 
 	/**
@@ -121,6 +114,8 @@ public class AggregateMappingManager implements Service, WorkspaceCloseListener 
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 			aggregatedMappings = null;
+			aggregateListeners.clear();
+			clearAggregated();
 		}
 	}
 }

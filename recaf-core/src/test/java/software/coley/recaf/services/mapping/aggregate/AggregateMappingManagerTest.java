@@ -20,8 +20,9 @@ public class AggregateMappingManagerTest extends TestBase {
 
 	@BeforeEach
 	void setupPerTest() {
-		workspaceManager.setCurrent(EmptyWorkspace.get());
 		aggregateMappingManager = recaf.get(AggregateMappingManager.class);
+		assertNotNull(aggregateMappingManager.toString()); // Bogus call to initialize the aggregate mapping manager
+		workspaceManager.setCurrent(EmptyWorkspace.get());
 	}
 
 	@AfterEach
