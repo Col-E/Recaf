@@ -16,6 +16,7 @@ import software.coley.recaf.ui.control.popup.ChangeClassVersionForAllPopup;
 import software.coley.recaf.ui.control.popup.DecompileAllPopup;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -34,10 +35,10 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 
 	@Inject
 	public BasicBundleContextMenuProviderFactory(@Nonnull TextProviderService textService,
-												 @Nonnull IconProviderService iconService,
-												 @Nonnull Instance<DecompileAllPopup> decompileAllPaneProvider,
-												 @Nonnull Instance<ChangeClassVersionForAllPopup> changeClassVersionProvider,
-												 @Nonnull Actions actions) {
+	                                             @Nonnull IconProviderService iconService,
+	                                             @Nonnull Instance<DecompileAllPopup> decompileAllPaneProvider,
+	                                             @Nonnull Instance<ChangeClassVersionForAllPopup> changeClassVersionProvider,
+	                                             @Nonnull Actions actions) {
 		super(textService, iconService, actions);
 		this.decompileAllPaneProvider = decompileAllPaneProvider;
 		this.changeClassVersionProvider = changeClassVersionProvider;
@@ -46,9 +47,9 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 	@Nonnull
 	@Override
 	public ContextMenuProvider getBundleContextMenuProvider(@Nonnull ContextSource source,
-															@Nonnull Workspace workspace,
-															@Nonnull WorkspaceResource resource,
-															@Nonnull Bundle<? extends Info> bundle) {
+	                                                        @Nonnull Workspace workspace,
+	                                                        @Nonnull WorkspaceResource resource,
+	                                                        @Nonnull Bundle<? extends Info> bundle) {
 		return () -> {
 			TextProvider nameProvider = textService.getBundleTextProvider(workspace, resource, bundle);
 			IconProvider iconProvider = iconService.getBundleIconProvider(workspace, resource, bundle);
@@ -59,6 +60,7 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 			edit.item("misc.clear", TRASH_CAN, bundle::clear);
 
 			if (bundle instanceof JvmClassBundle jvmBundle) {
+				builder.item("menu.export.classes", DOCUMENT_EXPORT, () -> actions.exportClasses(workspace, resource, jvmBundle));
 				builder.item("menu.file.decompileall", DOCUMENT_EXPORT, () -> {
 					DecompileAllPopup popup = decompileAllPaneProvider.get();
 					popup.setTargetBundle(jvmBundle);
@@ -69,6 +71,8 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 					popup.setTargetBundle(jvmBundle);
 					popup.show();
 				});
+			} else if (bundle instanceof FileBundle fileBundle) {
+				builder.item("menu.export.files", DOCUMENT_EXPORT, () -> actions.exportFiles(workspace, resource, fileBundle));
 			}
 			return menu;
 		};

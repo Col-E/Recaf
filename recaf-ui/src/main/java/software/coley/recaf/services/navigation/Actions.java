@@ -1724,6 +1724,26 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Exports all classes in a bundle, prompting the user to select a location to save the file to.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Bundle with contents to export.
+	 */
+	public void exportClasses(@Nonnull Workspace workspace,
+	                          @Nonnull WorkspaceResource resource,
+	                          @Nonnull JvmClassBundle bundle) {
+		BasicJvmClassBundle bundleCopy = new BasicJvmClassBundle();
+		bundle.valuesAsCopy().forEach(bundleCopy::initialPut);
+		WorkspaceResource resourceCopy = new WorkspaceResourceBuilder().withJvmClassBundle(bundleCopy).build();
+		Workspace workspaceCopy = new BasicWorkspace(resourceCopy);
+		pathExportingManager.export(workspaceCopy, "bundle", false);
+	}
+
+	/**
 	 * Exports a directory, prompting the user to select a location to save the file to.
 	 *
 	 * @param workspace
@@ -1749,6 +1769,26 @@ public class Actions implements Service {
 		WorkspaceResource resourceCopy = new WorkspaceResourceBuilder().withFileBundle(bundleCopy).build();
 		Workspace workspaceCopy = new BasicWorkspace(resourceCopy);
 		pathExportingManager.export(workspaceCopy, "directory", false);
+	}
+
+	/**
+	 * Exports all files in a bundle, prompting the user to select a location to save the file to.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Bundle with contents to export.
+	 */
+	public void exportFiles(@Nonnull Workspace workspace,
+	                        @Nonnull WorkspaceResource resource,
+	                        @Nonnull FileBundle bundle) {
+		BasicFileBundle bundleCopy = new BasicFileBundle();
+		bundle.valuesAsCopy().forEach(bundleCopy::initialPut);
+		WorkspaceResource resourceCopy = new WorkspaceResourceBuilder().withFileBundle(bundleCopy).build();
+		Workspace workspaceCopy = new BasicWorkspace(resourceCopy);
+		pathExportingManager.export(workspaceCopy, "bundle", false);
 	}
 
 	/**
