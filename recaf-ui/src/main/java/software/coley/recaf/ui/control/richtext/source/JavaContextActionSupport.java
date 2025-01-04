@@ -32,6 +32,7 @@ import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.services.source.AstService;
+import software.coley.recaf.services.source.ResolverAdapter;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -42,20 +43,23 @@ import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.sourcesolver.Parser;
+import software.coley.sourcesolver.model.ClassModel;
 import software.coley.sourcesolver.model.CompilationUnitModel;
+import software.coley.sourcesolver.model.MethodModel;
+import software.coley.sourcesolver.model.VariableModel;
+import software.coley.sourcesolver.resolve.result.DescribableResolution;
+import software.coley.sourcesolver.resolve.result.MethodResolution;
 import software.coley.sourcesolver.util.Range;
 
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 import java.util.NavigableMap;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -85,6 +89,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private Runnable queuedSelectionTask;
 	private String className;
 	private CompilationUnitModel unit;
+	private ResolverAdapter resolver;
 	private Editor editor;
 	private ContextMenu menu;
 
@@ -179,55 +184,43 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		} else {
 			queuedSelectionTask = null;
 			try {
-				/*
-				SortedMap<Range, Tree> map = AstRangeMapper.computeRangeToTreeMapping(localUnit, editor.getText());
-				for (Map.Entry<Range, Tree> entry : map.entrySet()) {
-					Tree tree = entry.getValue();
-					Range range = entry.getKey();
-
-					// Check against method and variable (field) declarations.
-					if (member.isMethod() && tree instanceof J.MethodDeclaration method) {
-						JavaType.Method methodType = method.getMethodType();
-
-						// Extract method info.
-						String name = method.getSimpleName();
-						String desc = methodType == null ? null : AstUtils.toDesc(methodType);
-						if (method.isConstructor()) {
-							name = "<init>";
-							if (desc != null) desc = StringUtil.cutOffAtFirst(desc, ")") + ")V";
-						}
-
-						// Compare to passed member.
-						if (member.getName().equals(name) && (desc == null || member.getDescriptor().equals(desc))) {
-							// Select it in the editor.
-							selectRange(range);
-							return;
-						}
-					} else if (member.isField() && tree instanceof J.VariableDeclarations variableDeclarations) {
-						for (J.VariableDeclarations.NamedVariable variable : variableDeclarations.getVariables()) {
-							JavaType.Variable variableType = variable.getVariableType();
-
-							// Skip variable declarations that are not fields.
-							if (variableType != null && !(variableType.getOwner() instanceof JavaType.FullyQualified))
-								continue;
-
-							// Extract variable info.
-							String name = variable.getSimpleName();
-							String desc = variableType == null ? null : AstUtils.toDesc(variableType);
-
-							// Compare to passed member.
-							if (member.getName().equals(name) && (desc == null || member.getDescriptor().equals(desc))) {
-								// Select it in the editor.
-								selectRange(range);
-								return;
+				for (ClassModel declaredClass : localUnit.getDeclaredClasses()) {
+					if (member.isField()) {
+						List<VariableModel> matchedFields = declaredClass.getFields().stream()
+								.filter(v -> v.getName().equals(member.getName()))
+								.toList();
+						if (matchedFields.size() == 1) {
+							// Only one field by the given name.
+							selectRange(matchedFields.getFirst().getRange());
+						} else if (matchedFields.size() > 1) {
+							// Multiple fields by the given name, need to differentiate by type.
+							for (VariableModel field : matchedFields) {
+								if (field.getType().resolve(resolver) instanceof DescribableResolution fieldTypeResolution
+										&& fieldTypeResolution.getDescribableEntry().getDescriptor().equals(member.getDescriptor())) {
+									selectRange(field.getRange());
+									break;
+								}
 							}
 						}
-					} else if (member.getName().equals("<clinit>") && tree instanceof J.Block block && block.isStatic()) {
-						// Select it in the editor.
-						selectRange(range);
-						return;
+					} else {
+						List<MethodModel> matchedMethods = declaredClass.getMethods().stream()
+								.filter(m -> m.getName().equals(member.getName()))
+								.toList();
+						if (matchedMethods.size() == 1) {
+							// Only one method by the given name.
+							selectRange(matchedMethods.getFirst().getRange());
+						} else if (matchedMethods.size() > 1) {
+							// Multiple methods by the given name, need to differentiate by signature.
+							for (MethodModel method : matchedMethods) {
+								if (method.resolve(resolver) instanceof MethodResolution methodResolution
+										&& methodResolution.getMethodEntry().getDescriptor().equals(member.getDescriptor())) {
+									selectRange(method.getRange());
+									break;
+								}
+							}
+						}
 					}
-				}*/
+				}
 			} catch (Throwable t) {
 				logger.error("Unhandled exception in Java context support - select '{}'", member.getName(), t);
 			}
@@ -261,9 +254,9 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 
 	@Nullable
 	private AstResolveResult resolvePosition(int pos, boolean doOffset) {
-		if (unit == null) return null;
+		if (unit == null || resolver == null) return null;
 		if (doOffset) pos = offset(pos);
-		return astService.newJavaResolver(workspace, unit).resolveThenAdapt(pos);
+		return resolver.resolveThenAdapt(pos);
 	}
 
 	/**
@@ -329,11 +322,14 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 				CompilationUnitModel resultingUnit = parser.parse(text);
 				long diffMs = (System.currentTimeMillis() - start);
 				if (resultingUnit.getDeclaredClasses().isEmpty()) {
-					this.unit = null;
+					unit = null;
+					resolver = null;
+
 					logger.warn("Could not create Java AST model from source of: {} after {}ms", classNameEsc, diffMs);
 					astAvailabilityButton.setUnavailable();
 				} else {
-					this.unit = resultingUnit;
+					unit = resultingUnit;
+					resolver = astService.newJavaResolver(workspace, resultingUnit);
 
 					logger.debugging(l -> l.info("AST parsed successfully, took {}ms", diffMs));
 					astAvailabilityButton.setAvailable();
