@@ -134,7 +134,24 @@ public interface Workspace extends Closing {
 	 */
 	@Nullable
 	default ClassPathNode findClass(@Nonnull String name) {
-		ClassPathNode result = findJvmClass(name);
+		return findClass(true, name);
+	}
+
+	/**
+	 * Searches for a class by the given name in the {@link WorkspaceResource#getJvmClassBundle()},
+	 * {@link WorkspaceResource#getVersionedJvmClassBundles()}, and {@link WorkspaceResource#getAndroidClassBundles()}
+	 * of all resources in the workspace <i>(Including embedded resources in other resources)</i>.
+	 *
+	 * @param includeInternal
+	 * 		Flag to include internal supporting resources.
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Path to <i>the first</i> class matching the given name.
+	 */
+	@Nullable
+	default ClassPathNode findClass(boolean includeInternal, @Nonnull String name) {
+		ClassPathNode result = findJvmClass(includeInternal, name);
 		if (result == null)
 			result = findLatestVersionedJvmClass(name);
 		if (result == null)
@@ -153,7 +170,23 @@ public interface Workspace extends Closing {
 	 */
 	@Nullable
 	default ClassPathNode findJvmClass(@Nonnull String name) {
-		for (WorkspaceResource resource : getAllResources(true)) {
+		return findJvmClass(true, name);
+	}
+
+	/**
+	 * Searches for a class by the given name in the {@link WorkspaceResource#getJvmClassBundle()}
+	 * of all resources in the workspace <i>(Including embedded resources in other resources)</i>.
+	 *
+	 * @param includeInternal
+	 * 		Flag to include internal supporting resources.
+	 * @param name
+	 * 		Class name.
+	 *
+	 * @return Path to <i>the first</i> JVM class matching the given name.
+	 */
+	@Nullable
+	default ClassPathNode findJvmClass(boolean includeInternal, @Nonnull String name) {
+		for (WorkspaceResource resource : getAllResources(includeInternal)) {
 			Optional<ClassPathNode> path = resource.jvmClassBundleStreamRecursive()
 					.filter(bundle -> bundle.get(name) != null)
 					.findFirst()
@@ -196,6 +229,7 @@ public interface Workspace extends Closing {
 	 */
 	@Nullable
 	default ClassPathNode findVersionedJvmClass(@Nonnull String name, int version) {
+		// Internal resources don't have versioned classes, so we won't iterate over those.
 		for (WorkspaceResource resource : getAllResources(false)) {
 			Optional<ClassPathNode> path = resource.versionedJvmClassBundleStreamRecursive()
 					.filter(bundle -> bundle.version() <= version && bundle.get(name) != null)
@@ -220,6 +254,7 @@ public interface Workspace extends Closing {
 	 */
 	@Nullable
 	default ClassPathNode findAndroidClass(@Nonnull String name) {
+		// Internal resources don't have android classes, so we won't iterate over those.
 		for (WorkspaceResource resource : getAllResources(false)) {
 			Optional<ClassPathNode> path = resource.androidClassBundleStreamRecursive()
 					.filter(bundle -> bundle.get(name) != null)
@@ -271,8 +306,21 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default SortedSet<ClassPathNode> findClasses(@Nonnull Predicate<ClassInfo> filter) {
+		return findClasses(true, filter);
+	}
+
+	/**
+	 * @param includeInternal
+	 * 		Flag to include internal supporting resources.
+	 * @param filter
+	 * 		Class filter.
+	 *
+	 * @return Classes matching the given filter.
+	 */
+	@Nonnull
+	default SortedSet<ClassPathNode> findClasses(boolean includeInternal, @Nonnull Predicate<ClassInfo> filter) {
 		SortedSet<ClassPathNode> result = new TreeSet<>();
-		result.addAll(findJvmClasses(Unchecked.cast(filter)));
+		result.addAll(findJvmClasses(includeInternal, Unchecked.cast(filter)));
 		result.addAll(findVersionedJvmClasses(Unchecked.cast(filter)));
 		result.addAll(findAndroidClasses(Unchecked.cast(filter)));
 		return result;
@@ -283,7 +331,18 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default Stream<ClassPathNode> classesStream() {
-		return Stream.concat(jvmClassesStream(), androidClassesStream());
+		return classesStream(true);
+	}
+
+	/**
+	 * @param includeInternal
+	 * 		Flag to include internal supporting resources.
+	 *
+	 * @return Stream of all classes.
+	 */
+	@Nonnull
+	default Stream<ClassPathNode> classesStream(boolean includeInternal) {
+		return Stream.concat(jvmClassesStream(includeInternal), androidClassesStream());
 	}
 
 	/**
@@ -291,8 +350,19 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default Stream<ClassPathNode> jvmClassesStream() {
+		return jvmClassesStream(true);
+	}
+
+	/**
+	 * @param includeInternal
+	 * 		Flag to include internal supporting resources.
+	 *
+	 * @return Stream of JVM classes.
+	 */
+	@Nonnull
+	default Stream<ClassPathNode> jvmClassesStream(boolean includeInternal) {
 		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-		return allResourcesStream(true)
+		return allResourcesStream(includeInternal)
 				.flatMap(resource -> {
 					Stream<ClassPathNode> stream = null;
 					List<JvmClassBundle> bundles = Stream.concat(resource.jvmClassBundleStreamRecursive(), resource.versionedJvmClassBundleStreamRecursive()).toList();
@@ -314,7 +384,9 @@ public interface Workspace extends Closing {
 	@Nonnull
 	default Stream<ClassPathNode> androidClassesStream() {
 		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-		return allResourcesStream(true)
+
+		// Internal resources don't have android classes, so we won't iterate over those.
+		return allResourcesStream(false)
 				.flatMap(resource -> {
 					Stream<ClassPathNode> stream = null;
 					for (AndroidClassBundle bundle : resource.androidClassBundleStreamRecursive().toList()) {
@@ -358,7 +430,20 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default SortedSet<ClassPathNode> findJvmClasses(@Nonnull Predicate<JvmClassInfo> filter) {
-		return jvmClassesStream().filter(node -> filter.test((JvmClassInfo) node.getValue()))
+		return findJvmClasses(true, filter);
+	}
+
+	/**
+	 * @param includeInternal
+	 * 		Flag to include internal supporting resources.
+	 * @param filter
+	 * 		JVM class filter.
+	 *
+	 * @return Classes matching the given filter.
+	 */
+	@Nonnull
+	default SortedSet<ClassPathNode> findJvmClasses(boolean includeInternal, @Nonnull Predicate<JvmClassInfo> filter) {
+		return jvmClassesStream(includeInternal).filter(node -> filter.test((JvmClassInfo) node.getValue()))
 				.collect(Collectors.toCollection(TreeSet::new));
 	}
 
@@ -372,7 +457,9 @@ public interface Workspace extends Closing {
 	default SortedSet<ClassPathNode> findVersionedJvmClasses(@Nonnull Predicate<JvmClassInfo> filter) {
 		SortedSet<ClassPathNode> results = new TreeSet<>();
 		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-		for (WorkspaceResource resource : getAllResources(true)) {
+
+		// Internal resources don't have versioned classes, so we won't iterate over those.
+		for (WorkspaceResource resource : getAllResources(false)) {
 			ResourcePathNode resourcePath = workspacePath.child(resource);
 			for (JvmClassBundle bundle : resource.getVersionedJvmClassBundles().values()) {
 				BundlePathNode bundlePath = resourcePath.child(bundle);
@@ -398,7 +485,9 @@ public interface Workspace extends Closing {
 	default SortedSet<ClassPathNode> findAndroidClasses(@Nonnull Predicate<AndroidClassInfo> filter) {
 		SortedSet<ClassPathNode> results = new TreeSet<>();
 		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-		for (WorkspaceResource resource : getAllResources(true)) {
+
+		// Internal resources don't have android classes, so we won't iterate over those.
+		for (WorkspaceResource resource : getAllResources(false)) {
 			ResourcePathNode resourcePath = workspacePath.child(resource);
 			for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
 				BundlePathNode bundlePath = resourcePath.child(bundle);
@@ -422,6 +511,7 @@ public interface Workspace extends Closing {
 	 */
 	@Nullable
 	default FilePathNode findFile(@Nonnull String name) {
+		// Internal resources don't have files, so we won't iterate over those.
 		for (WorkspaceResource resource : getAllResources(false)) {
 			Optional<FilePathNode> path = resource.fileBundleStreamRecursive()
 					.filter(bundle -> bundle.get(name) != null)
