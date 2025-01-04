@@ -7,7 +7,9 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
+import software.coley.recaf.util.ClasspathUtil;
 import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
@@ -17,10 +19,13 @@ import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implementation of a workspace resource sourced from runtime classes.
@@ -30,9 +35,9 @@ import java.util.NavigableMap;
  * @author Matt Coley
  */
 public class RuntimeWorkspaceResource extends BasicPropertyContainer implements WorkspaceResource {
-	private static final Object STUB = new Object();
 	private static final Logger logger = Logging.get(RuntimeWorkspaceResource.class);
-	private static final Map<String, Object> cache = new HashMap<>();
+	private static final Map<String, JvmClassInfo> cache = new ConcurrentHashMap<>();
+	private static final Set<String> stubClasses = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	private static RuntimeWorkspaceResource instance;
 	private final JvmClassBundle classes;
 	private final FileBundle files;
@@ -53,22 +58,20 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 				String key = name.toString();
 				if (key.indexOf('.') >= 0)
 					key = key.replace('.', '/');
-				Object present = cache.get(key);
-				if (present == STUB)
+				JvmClassInfo present = cache.get(key);
+				if (present == null && stubClasses.contains(key))
 					return null;
-				if (present instanceof JvmClassInfo)
-					return (JvmClassInfo) present;
+
 				// Can't do "computeIfAbsent" since we also want to store null values.
 				byte[] value = null;
 				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
-					if (in != null) {
+					if (in != null)
 						value = IOUtil.toByteArray(in);
-					}
 				} catch (IOException ex) {
 					logger.error("Failed to fetch runtime bytecode of class: " + key, ex);
 				}
 				if (value == null) {
-					cache.put(key, STUB);
+					stubClasses.add(key);
 					return null;
 				}
 				JvmClassInfo info = new JvmClassInfoBuilder()
@@ -76,6 +79,21 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 						.build();
 				cache.put(key, info);
 				return info;
+			}
+
+			@Override
+			public Set<String> keySet() {
+				return cache.keySet();
+			}
+
+			@Override
+			public Collection<JvmClassInfo> values() {
+				return cache.values();
+			}
+
+			@Override
+			public Set<Entry<String, JvmClassInfo>> entrySet() {
+				return cache.entrySet();
 			}
 
 			@Override
@@ -109,6 +127,13 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 			}
 		};
 		files = new BasicFileBundle();
+
+		// Populate the system classes in the background.
+		CompletableFuture.runAsync(() -> {
+			long start = System.currentTimeMillis();
+			for (String name : ClasspathUtil.getSystemClassSet())
+				classes.get(name);
+		}, ThreadUtil.executor());
 	}
 
 	@Nonnull
