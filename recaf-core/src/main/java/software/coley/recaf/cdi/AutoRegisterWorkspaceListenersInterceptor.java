@@ -81,9 +81,11 @@ public class AutoRegisterWorkspaceListenersInterceptor {
 
 		// If a current workspace exists (at the time of creation of the instance), add the modification listener too.
 		// We don't need to worry about clearing these because workspaces remove their own listeners on closing.
-		Workspace current = workspaceManager.getCurrent();
-		if (current != null && value instanceof WorkspaceModificationListener modificationListener)
-			current.addWorkspaceModificationListener(modificationListener);
+		if (workspaceManager.hasCurrentWorkspace()) {
+			Workspace current = workspaceManager.getCurrent();
+			if (value instanceof WorkspaceModificationListener modificationListener)
+				current.addWorkspaceModificationListener(modificationListener);
+		}
 
 		return context.proceed();
 	}

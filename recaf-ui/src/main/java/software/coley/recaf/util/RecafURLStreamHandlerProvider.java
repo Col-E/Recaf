@@ -135,15 +135,17 @@ public class RecafURLStreamHandlerProvider extends URLStreamHandlerProvider {
 
 		private void loadContent() throws IOException {
 			// Validate state
-			Workspace workspace = workspaceManager.getCurrent();
-			if (workspace == null)
+			if (!workspaceManager.hasCurrentWorkspace())
 				throw new IOException("No workspace currently open!");
+
 			// Transform path
 			String path = getURL().getPath();
 			if (path.charAt(0) == '/')
 				path = path.substring(1);
 			path = URLDecoder.decode(path, StandardCharsets.UTF_8);
+
 			// Handle protocol implementations
+			Workspace workspace = workspaceManager.getCurrent();
 			String protocol = getURL().getProtocol();
 			switch (protocol) {
 				case recafClass:

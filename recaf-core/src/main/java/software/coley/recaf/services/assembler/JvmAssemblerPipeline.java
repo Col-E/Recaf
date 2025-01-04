@@ -1,7 +1,6 @@
 package software.coley.recaf.services.assembler;
 
 import jakarta.annotation.Nonnull;
-import jakarta.inject.Inject;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.JvmCompiler;
@@ -20,7 +19,6 @@ import me.darknet.assembler.printer.ClassPrinter;
 import me.darknet.assembler.printer.JvmClassPrinter;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.cdi.WorkspaceScoped;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
@@ -43,7 +41,6 @@ import java.util.Objects;
  *
  * @author Justus Garbe
  */
-@WorkspaceScoped
 public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo, JavaCompileResult, JavaClassRepresentation> {
 	public static final String SERVICE_ID = "jvm-assembler";
 	private static final Logger logger = Logging.get(JvmAssemblerPipeline.class);
@@ -51,14 +48,13 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	private final InheritanceGraph inheritanceGraph;
 	private final Workspace workspace;
 
-	@Inject
 	public JvmAssemblerPipeline(@Nonnull Workspace workspace,
-	                            @Nonnull InheritanceGraphService graphService,
+	                            @Nonnull InheritanceGraph inheritanceGraph,
 	                            @Nonnull AssemblerPipelineGeneralConfig generalConfig,
-	                            @Nonnull JvmAssemblerPipelineConfig config) {
-		super(generalConfig, config);
+	                            @Nonnull JvmAssemblerPipelineConfig jvmConfig) {
+		super(generalConfig, jvmConfig);
 		this.workspace = workspace;
-		this.inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
+		this.inheritanceGraph = inheritanceGraph;
 	}
 
 	@Nonnull

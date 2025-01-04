@@ -246,8 +246,8 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 	}
 
 	private void updateTree() {
-		Workspace workspace = workspaceManager.getCurrent();
-		if (workspace != null) {
+		if (workspaceManager.hasCurrentWorkspace()) {
+			Workspace workspace = workspaceManager.getCurrent();
 			Callable<Boolean> action = () -> treeContentListDelegate.setAll(buildTreeRoots(workspaceToTree(workspace)));
 			if (active.get())
 				pool.submit(action);

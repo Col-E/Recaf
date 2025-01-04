@@ -53,10 +53,10 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 	private final Map<JvmClassInfo, ClassMethodsContainer> classToMethodsContainer = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final MultiMap<String, MethodRef, Set<MethodRef>> unresolvedDeclarations = MultiMap.from(
 			new ConcurrentHashMap<>(),
-			() -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+			ConcurrentHashMap::newKeySet);
 	private final MultiMap<String, CallingContext, Set<CallingContext>> unresolvedReferences = MultiMap.from(
 			new ConcurrentHashMap<>(),
-			() -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+			ConcurrentHashMap::newKeySet);
 	private final ObservableBoolean isReady = new ObservableBoolean(false);
 	private final Workspace workspace;
 	private final ClassLookup lookup;

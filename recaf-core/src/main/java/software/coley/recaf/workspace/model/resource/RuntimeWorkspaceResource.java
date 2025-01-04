@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RuntimeWorkspaceResource extends BasicPropertyContainer implements WorkspaceResource {
 	private static final Logger logger = Logging.get(RuntimeWorkspaceResource.class);
 	private static final Map<String, JvmClassInfo> cache = new ConcurrentHashMap<>();
-	private static final Set<String> stubClasses = Collections.newSetFromMap(new ConcurrentHashMap<>());
+	private static final Set<String> stubClasses = ConcurrentHashMap.newKeySet();
 	private static RuntimeWorkspaceResource instance;
 	private final JvmClassBundle classes;
 	private final FileBundle files;

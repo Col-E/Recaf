@@ -15,6 +15,7 @@ import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.services.assembler.AssemblerPipelineManager;
 import software.coley.recaf.services.assembler.JvmAssemblerPipeline;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.JvmDecompiler;
@@ -58,7 +59,7 @@ class DeobfuscationTransformTest extends TestBase {
 	void setupWorkspace() {
 		workspace = new BasicWorkspace(new WorkspaceResourceBuilder().build());
 		workspaceManager.setCurrentIgnoringConditions(workspace);
-		assembler = recaf.get(JvmAssemblerPipeline.class);
+		assembler = recaf.get(AssemblerPipelineManager.class).newJvmAssemblerPipeline(workspace);
 		transformationApplier = transformationApplierService.newApplierForCurrentWorkspace();
 	}
 

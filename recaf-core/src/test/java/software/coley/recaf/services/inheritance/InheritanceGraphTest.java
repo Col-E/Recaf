@@ -30,6 +30,9 @@ class InheritanceGraphTest extends TestBase {
 
 	@BeforeAll
 	static void setup() throws IOException {
+		InheritanceGraphService inheritanceGraphService = recaf.get(InheritanceGraphService.class);
+		assertNotNull(inheritanceGraphService.toString()); // Bogus call to initialize the service
+
 		// Create workspace with the inheritance classes
 		BasicJvmClassBundle classes = TestClassUtils.fromClasses(Inheritance.class.getClasses());
 		classes.initialPut(TestClassUtils.fromRuntimeClass(StringConsumer.class));
@@ -38,7 +41,7 @@ class InheritanceGraphTest extends TestBase {
 		workspaceManager.setCurrent(workspace);
 
 		// Get graph
-		inheritanceGraph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
+		inheritanceGraph = inheritanceGraphService.getCurrentWorkspaceInheritanceGraph();
 	}
 
 	@Test

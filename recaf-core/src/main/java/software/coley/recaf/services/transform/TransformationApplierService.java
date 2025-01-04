@@ -64,10 +64,10 @@ public class TransformationApplierService implements Service {
 	 */
 	@Nullable
 	public TransformationApplier newApplierForCurrentWorkspace() {
-		Workspace workspace = workspaceManager.getCurrent();
-		if (workspace == null)
+		if (!workspaceManager.hasCurrentWorkspace())
 			return null;
 		InheritanceGraph inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
+		Workspace workspace = workspaceManager.getCurrent();
 		return newApplier(workspace, inheritanceGraph);
 	}
 

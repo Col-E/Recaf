@@ -7,6 +7,7 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.workspace.model.BasicWorkspace;
+import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -26,12 +27,23 @@ public interface WorkspaceManager extends Service {
 	 * Exposes the current workspace directly and through CDI.
 	 * Any {@link Instance<Workspace>} in the Recaf application should point to this value.
 	 *
-	 * @return The current active workspace. May be {@code null} when no active workspace is open.
+	 * @return The current active workspace. Will be {@link EmptyWorkspace} when no active workspace is open.
+	 *
+	 * @see #hasCurrentWorkspace()
 	 */
-	@Nullable
+	@Nonnull
 	@Produces
 	@Dependent
 	Workspace getCurrent();
+
+	/**
+	 * The {@link #getCurrent()} method will yield an empty workspace when nothing is currently open.
+	 * This method should be used to check if no workspace is actually open.
+	 *
+	 * @return {@code true} when there is a valid current workspace.
+	 * {@code false} when no workspace is open.
+	 */
+	boolean hasCurrentWorkspace();
 
 	/**
 	 * @param workspace
@@ -42,7 +54,7 @@ public interface WorkspaceManager extends Service {
 	 */
 	default boolean setCurrent(@Nullable Workspace workspace) {
 		Workspace current = getCurrent();
-		if (current == null) {
+		if (!hasCurrentWorkspace()) {
 			// If there is no current workspace, then just assign it.
 			setCurrentIgnoringConditions(workspace);
 			return true;
@@ -73,7 +85,7 @@ public interface WorkspaceManager extends Service {
 	 * @return {@code true} on success.
 	 */
 	default boolean closeCurrent() {
-		if (getCurrent() != null)
+		if (hasCurrentWorkspace())
 			return setCurrent(null);
 		return true;
 	}

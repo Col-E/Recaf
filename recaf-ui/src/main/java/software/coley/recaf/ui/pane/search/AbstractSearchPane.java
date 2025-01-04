@@ -158,11 +158,11 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		if (isDisabled()) return;
 
 		// Must have a current workspace to search in.
-		Workspace workspace = workspaceManager.getCurrent();
-		if (workspace == null)
+		if (!workspaceManager.hasCurrentWorkspace())
 			return;
 
 		// Create a new root.
+		Workspace workspace = workspaceManager.getCurrent();
 		PathNodeTree tree = liveResults.get() ? liveResultsTree : newTree();
 		WorkspaceTreeNode root = new WorkspaceTreeNode(PathNodes.workspacePath(workspace));
 		root.setExpanded(true);

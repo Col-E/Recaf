@@ -3,8 +3,6 @@ package software.coley.recaf;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.se.SeContainer;
-import software.coley.recaf.cdi.WorkspaceBeanContext;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 
 import java.lang.annotation.Annotation;
 import java.util.Locale;
@@ -24,18 +22,6 @@ public class Recaf {
 	 */
 	public Recaf(@Nonnull SeContainer container) {
 		this.container = container;
-		setupWorkspaceScopedBeanContext();
-	}
-
-	/**
-	 * Registers {@link WorkspaceBeanContext} as a listener to the {@link WorkspaceManager} instance.
-	 * This allows the context to remove old beans associated with old workspaces.
-	 */
-	private void setupWorkspaceScopedBeanContext() {
-		WorkspaceBeanContext instance = WorkspaceBeanContext.getInstance();
-		WorkspaceManager workspaceManager = get(WorkspaceManager.class);
-		workspaceManager.addWorkspaceOpenListener(instance);
-		workspaceManager.addWorkspaceCloseListener(instance);
 	}
 
 	/**

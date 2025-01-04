@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.AutoRegisterWorkspaceListenersInterceptor;
 import software.coley.recaf.cdi.EagerInitializationExtension;
-import software.coley.recaf.cdi.WorkspaceBeanExtension;
 
 import java.util.function.Consumer;
 
@@ -70,7 +69,6 @@ public class Bootstrap {
 		// Setup custom interceptors & extensions
 		logger.info("CDI: Adding interceptors & extensions");
 		weld.addInterceptor(AutoRegisterWorkspaceListenersInterceptor.class);
-		weld.addExtension(WorkspaceBeanExtension.getInstance());
 		weld.addExtension(EagerInitializationExtension.getInstance());
 
 		// Setup bean discovery

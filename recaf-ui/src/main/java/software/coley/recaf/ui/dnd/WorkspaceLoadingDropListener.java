@@ -54,7 +54,7 @@ public class WorkspaceLoadingDropListener implements FileDropListener {
 			pathLoadingManager.asyncNewWorkspace(primary, supporting, err -> {
 				logger.error("Failed to create new workspace from dropped files", err);
 			});
-		} else if (workspaceManager.getCurrent() != null && config.appendOnDragDrop()) {
+		} else if (workspaceManager.hasCurrentWorkspace() && config.appendOnDragDrop()) {
 			// Append files to current workspace
 			pathLoadingManager.asyncAddSupportingResourcesToWorkspace(workspaceManager.getCurrent(), files, err -> {
 				logger.error("Failed to add supporting resources from dropped files", err);

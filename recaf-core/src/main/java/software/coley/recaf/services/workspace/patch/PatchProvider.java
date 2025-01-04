@@ -10,6 +10,7 @@ import software.coley.recaf.info.*;
 import software.coley.recaf.path.*;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
+import software.coley.recaf.services.assembler.JvmAssemblerPipeline;
 import software.coley.recaf.services.workspace.patch.model.JvmAssemblerPatch;
 import software.coley.recaf.services.workspace.patch.model.RemovePath;
 import software.coley.recaf.services.workspace.patch.model.TextFilePatch;
@@ -115,8 +116,9 @@ public class PatchProvider implements Service {
 			DirectoryPathNode parent = Objects.requireNonNull(classPath.getParent());
 			ClassPathNode initialPath = parent.child(initial);
 			ClassPathNode currentPath = parent.child(current);
-			Result<String> initialDisassembleRes = assemblerPipelineManager.getJvmAssemblerPipeline().disassemble(initialPath);
-			Result<String> currentDisassembleRes = assemblerPipelineManager.getJvmAssemblerPipeline().disassemble(currentPath);
+			JvmAssemblerPipeline assembler = assemblerPipelineManager.newJvmAssemblerPipeline(workspace);
+			Result<String> initialDisassembleRes = assembler.disassemble(initialPath);
+			Result<String> currentDisassembleRes = assembler.disassemble(currentPath);
 			if (!initialDisassembleRes.hasValue())
 				throw new PatchGenerationException("Failed to disassemble initial state of '" + initial.getName() + "'");
 			if (initialDisassembleRes.hasErr())

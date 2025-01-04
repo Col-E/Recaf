@@ -62,12 +62,14 @@ public class MappingApplierService implements Service {
 	 */
 	@Nullable
 	public MappingApplier inCurrentWorkspace() {
-		Workspace workspace = workspaceManager.getCurrent();
-		if (workspace == null)
+		if (!workspaceManager.hasCurrentWorkspace())
 			return null;
+
 		InheritanceGraph currentWorkspaceInheritanceGraph = inheritanceGraphService.getCurrentWorkspaceInheritanceGraph();
 		if (currentWorkspaceInheritanceGraph == null)
 			return null;
+
+		Workspace workspace = workspaceManager.getCurrent();
 		return new MappingApplier(workspace, currentWorkspaceInheritanceGraph, listeners, aggregateMappingManager);
 	}
 

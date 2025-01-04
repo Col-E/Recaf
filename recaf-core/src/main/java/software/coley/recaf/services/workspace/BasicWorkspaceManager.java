@@ -36,6 +36,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 		this.config = config;
 	}
 
+	@Nonnull
 	@Override
 	@Produces
 	@Dependent
@@ -43,6 +44,11 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 		if (current == null)
 			return EmptyWorkspace.get();
 		return current;
+	}
+
+	@Override
+	public boolean hasCurrentWorkspace() {
+		return current != null;
 	}
 
 	@Override

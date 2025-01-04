@@ -131,8 +131,6 @@ public class AstService implements Service {
 	@Nonnull
 	public ResolverAdapter newJavaResolver(@Nonnull CompilationUnitModel unit) {
 		Workspace workspace = workspaceManager.getCurrent();
-		if (workspace == null)
-			workspace = EmptyWorkspace.get();
 		return newJavaResolver(workspace, poolFromWorkspace(workspace), unit);
 	}
 

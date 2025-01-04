@@ -84,7 +84,7 @@ public class PatchApplier implements Service {
 			});
 		}
 
-		JvmAssemblerPipeline jvmAssemblerPipeline = assemblerPipelineManager.getJvmAssemblerPipeline();
+		JvmAssemblerPipeline jvmAssemblerPipeline = assemblerPipelineManager.newJvmAssemblerPipeline(patch.workspace());
 		for (JvmAssemblerPatch jvmAssemblerPatch : patch.jvmAssemblerPatches()) {
 			// Skip if any errors have been seen.
 			if (errorConsumerDelegate.hasSeenErrors())

@@ -57,11 +57,11 @@ public class InheritanceGraphService implements Service {
 	 */
 	@Nullable
 	public InheritanceGraph getCurrentWorkspaceInheritanceGraph() {
-		Workspace workspace = workspaceManager.getCurrent();
-		if (workspace == null)
+		if (!workspaceManager.hasCurrentWorkspace())
 			return null;
 
 		if (currentWorkspaceGraph == null) {
+			Workspace workspace = workspaceManager.getCurrent();
 			InheritanceGraph graph = newInheritanceGraph(workspace);
 			currentWorkspaceGraph = graph;
 
