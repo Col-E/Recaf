@@ -9,7 +9,6 @@ import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.enterprise.inject.spi.Extension;
 import jakarta.enterprise.inject.spi.ProcessBean;
 import jakarta.inject.Inject;
-import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +18,6 @@ import java.util.List;
  * {@link Inject} and reference them externally.
  *
  * @author Matt Coley
- * @see WorkspaceBeanContext#onWorkspaceOpened(Workspace) for instantiation of {@link WorkspaceScoped} eager beans.
  */
 public class EagerInitializationExtension implements Extension {
 	private static final EagerInitializationExtension INSTANCE = new EagerInitializationExtension();
@@ -73,14 +71,11 @@ public class EagerInitializationExtension implements Extension {
 	public void onProcessBean(@Observes ProcessBean<?> event) {
 		Annotated annotated = event.getAnnotated();
 		EagerInitialization eager = annotated.getAnnotation(EagerInitialization.class);
-		if (eager != null) {
-			if (annotated.isAnnotationPresent(ApplicationScoped.class)) {
-				if (eager.value() == InitializationStage.IMMEDIATE)
-					applicationScopedEagerBeans.add(event.getBean());
-				else if (eager.value() == InitializationStage.AFTER_UI_INIT)
-					applicationScopedEagerBeansForUi.add(event.getBean());
-			} else if (annotated.isAnnotationPresent(WorkspaceScoped.class))
-				workspaceScopedEagerBeans.add(event.getBean());
+		if (eager != null && annotated.isAnnotationPresent(ApplicationScoped.class)) {
+			if (eager.value() == InitializationStage.IMMEDIATE)
+				applicationScopedEagerBeans.add(event.getBean());
+			else if (eager.value() == InitializationStage.AFTER_UI_INIT)
+				applicationScopedEagerBeansForUi.add(event.getBean());
 		}
 	}
 

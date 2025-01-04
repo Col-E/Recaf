@@ -39,11 +39,13 @@ import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.window.WindowFactory;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.graph.MethodCallGraphsPane;
 import software.coley.recaf.ui.control.popup.AddMemberPopup;
@@ -124,6 +126,7 @@ import static software.coley.recaf.util.StringUtil.*;
 public class Actions implements Service {
 	public static final String ID = "actions";
 	private static final Logger logger = Logging.get(Actions.class);
+	private final WorkspaceManager workspaceManager;
 	private final NavigationManager navigationManager;
 	private final DockingManager dockingManager;
 	private final WindowFactory windowFactory;
@@ -132,7 +135,7 @@ public class Actions implements Service {
 	private final CellConfigurationService cellConfigurationService;
 	private final PathExportingManager pathExportingManager;
 	private final MappingApplierService mappingApplierService;
-	private final Instance<InheritanceGraph> inheritanceGraphProvider;
+	private final InheritanceGraphService inheritanceGraphService;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
 	private final Instance<BinaryXmlFilePane> binaryXmlPaneProvider;
@@ -152,6 +155,7 @@ public class Actions implements Service {
 
 	@Inject
 	public Actions(@Nonnull ActionsConfig config,
+	               @Nonnull WorkspaceManager workspaceManager,
 	               @Nonnull NavigationManager navigationManager,
 	               @Nonnull DockingManager dockingManager,
 	               @Nonnull WindowFactory windowFactory,
@@ -160,7 +164,7 @@ public class Actions implements Service {
 	               @Nonnull CellConfigurationService cellConfigurationService,
 	               @Nonnull PathExportingManager pathExportingManager,
 	               @Nonnull MappingApplierService mappingApplierService,
-	               @Nonnull Instance<InheritanceGraph> inheritanceGraphProvider,
+	               @Nonnull InheritanceGraphService inheritanceGraphService,
 	               @Nonnull Instance<MappingApplier> applierProvider,
 	               @Nonnull Instance<JvmClassPane> jvmPaneProvider,
 	               @Nonnull Instance<AndroidClassPane> androidPaneProvider,
@@ -178,6 +182,7 @@ public class Actions implements Service {
 	               @Nonnull Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider,
 	               @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider) {
 		this.config = config;
+		this.workspaceManager = workspaceManager;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
 		this.windowFactory = windowFactory;
@@ -186,7 +191,7 @@ public class Actions implements Service {
 		this.cellConfigurationService = cellConfigurationService;
 		this.pathExportingManager = pathExportingManager;
 		this.mappingApplierService = mappingApplierService;
-		this.inheritanceGraphProvider = inheritanceGraphProvider;
+		this.inheritanceGraphService = inheritanceGraphService;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
 		this.binaryXmlPaneProvider = binaryXmlPaneProvider;
@@ -2152,7 +2157,9 @@ public class Actions implements Service {
 	                                @Nonnull WorkspaceResource resource,
 	                                @Nonnull JvmClassBundle bundle,
 	                                @Nonnull JvmClassInfo info) {
-		InheritanceGraph inheritanceGraph = inheritanceGraphProvider.get();
+		InheritanceGraph inheritanceGraph = workspaceManager.getCurrent() == workspace ?
+				inheritanceGraphService.getCurrentWorkspaceInheritanceGraph() :
+				inheritanceGraphService.newInheritanceGraph(workspace);
 		if (inheritanceGraph == null)
 			return;
 		new OverrideMethodPopup(this, cellConfigurationService, inheritanceGraph, workspace, info, (methodOwner, method) -> {
