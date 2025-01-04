@@ -9,6 +9,7 @@ import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.util.ClasspathUtil;
 import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
@@ -26,6 +27,8 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Implementation of a workspace resource sourced from runtime classes.
@@ -148,12 +151,14 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 		files = new BasicFileBundle();
 
 		// Populate the system classes in the background.
-		CompletableFuture.runAsync(() -> {
-			long start = System.currentTimeMillis();
-			for (String name : ClasspathUtil.getSystemClassSet())
-				classes.get(name);
-			System.out.print("Pre-cache: " + (System.currentTimeMillis() - start));
-		}, ThreadUtil.executor());
+		try (ExecutorService ex = ThreadPoolFactory.newSingleThreadExecutor("runtime-class-population")) {
+			CompletableFuture.runAsync(() -> {
+				long start = System.currentTimeMillis();
+				for (String name : ClasspathUtil.getSystemClassSet())
+					classes.get(name);
+				System.out.print("Pre-cache: " + (System.currentTimeMillis() - start));
+			}, ex);
+		}
 	}
 
 	@Nonnull
