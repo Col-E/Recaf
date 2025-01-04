@@ -22,6 +22,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -216,10 +217,12 @@ class WorkspaceModelTest {
 
 
 			// Build the workspace
+			//  - using the basic workspace with 'false' parameter so that we include only our resources
+			//    and no internal resources like the runtime classpath.
 			WorkspaceResource primary = new WorkspaceResourceBuilder()
 					.withEmbeddedResources(Map.of("1.jar", embeddedBuilder.build()))
 					.build();
-			Workspace workspace = new BasicWorkspace(primary);
+			Workspace workspace = new BasicWorkspace(primary, Collections.emptyList(), false);
 
 			// Find a class in the primary resource's embedded resource
 			ClassPathNode result = findClass(workspace, AccessibleFields.class);

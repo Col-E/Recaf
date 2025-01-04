@@ -43,14 +43,30 @@ public class BasicWorkspace implements Workspace {
 	 * 		Provided supporting resources.
 	 */
 	public BasicWorkspace(@Nonnull WorkspaceResource primary, @Nonnull Collection<WorkspaceResource> supporting) {
+		this(primary, supporting, true);
+	}
+
+	/**
+	 * @param primary
+	 * 		Primary resource.
+	 * @param supporting
+	 * 		Provided supporting resources.
+	 * @param useInternalResources
+	 *        {@code true} to include internal resources such as {@link RuntimeWorkspaceResource} and {@link AndroidApiResource}.
+	 */
+	public BasicWorkspace(@Nonnull WorkspaceResource primary, @Nonnull Collection<WorkspaceResource> supporting, boolean useInternalResources) {
 		this.primary = primary;
 		this.supporting.addAll(supporting);
 
-		RuntimeWorkspaceResource runtimeResource = RuntimeWorkspaceResource.getInstance();
-		if (primary.getAndroidClassBundles().isEmpty()) {
-			internal = Collections.singletonList(runtimeResource);
+		if (useInternalResources) {
+			RuntimeWorkspaceResource runtimeResource = RuntimeWorkspaceResource.getInstance();
+			if (primary.getAndroidClassBundles().isEmpty()) {
+				internal = Collections.singletonList(runtimeResource);
+			} else {
+				internal = List.of(runtimeResource, AndroidApiResource.getInstance());
+			}
 		} else {
-			internal = List.of(runtimeResource, AndroidApiResource.getInstance());
+			internal = Collections.emptyList();
 		}
 	}
 
