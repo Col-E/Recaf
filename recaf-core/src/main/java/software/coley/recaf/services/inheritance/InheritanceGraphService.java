@@ -11,6 +11,8 @@ import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.util.Objects;
+
 /**
  * Service offering the creation of {@link InheritanceGraph inheritance graphs} for workspaces.
  *
@@ -36,6 +38,22 @@ public class InheritanceGraphService implements Service {
 
 		ListenerHost host = new ListenerHost();
 		workspaceManager.addWorkspaceCloseListener(host);
+	}
+
+	/**
+	 * Gets an existing graph if present for the workspace,
+	 * or makes a new one if there is no associated graph for the workspace.
+	 *
+	 * @param workspace
+	 * 		Workspace to pull classes from.
+	 *
+	 * @return Inheritance graph model for the given workspace.
+	 */
+	@Nonnull
+	public InheritanceGraph getOrCreateInheritanceGraph(@Nonnull Workspace workspace) {
+		return workspaceManager.getCurrent() == workspace ?
+				Objects.requireNonNull(getCurrentWorkspaceInheritanceGraph(), "Failed to get current workspace graph") :
+				newInheritanceGraph(workspace);
 	}
 
 	/**

@@ -2157,11 +2157,7 @@ public class Actions implements Service {
 	                                @Nonnull WorkspaceResource resource,
 	                                @Nonnull JvmClassBundle bundle,
 	                                @Nonnull JvmClassInfo info) {
-		InheritanceGraph inheritanceGraph = workspaceManager.getCurrent() == workspace ?
-				inheritanceGraphService.getCurrentWorkspaceInheritanceGraph() :
-				inheritanceGraphService.newInheritanceGraph(workspace);
-		if (inheritanceGraph == null)
-			return;
+		InheritanceGraph inheritanceGraph = inheritanceGraphService.getOrCreateInheritanceGraph(workspace);
 		new OverrideMethodPopup(this, cellConfigurationService, inheritanceGraph, workspace, info, (methodOwner, method) -> {
 			ClassWriter writer = new ClassWriter(0);
 			info.getClassReader().accept(new MemberStubAddingVisitor(writer, method), 0);
