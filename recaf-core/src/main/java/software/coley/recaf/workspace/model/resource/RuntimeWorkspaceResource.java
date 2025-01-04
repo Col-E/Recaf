@@ -53,20 +53,30 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 
 	private RuntimeWorkspaceResource() {
 		classes = new BasicJvmClassBundle() {
+			private final byte[] loadBuffer = IOUtil.newByteBuffer();
+
 			@Override
 			public JvmClassInfo get(@Nonnull Object name) {
 				String key = name.toString();
 				if (key.indexOf('.') >= 0)
 					key = key.replace('.', '/');
+
+				// Check if we have a cached value.
 				JvmClassInfo present = cache.get(key);
-				if (present == null && stubClasses.contains(key))
+				if (present != null)
+					return present;
+
+				// Check if the class is a known failure case.
+				if (stubClasses.contains(key))
 					return null;
 
-				// Can't do "computeIfAbsent" since we also want to store null values.
+				// Get the class bytes.
 				byte[] value = null;
 				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
 					if (in != null)
-						value = IOUtil.toByteArray(in);
+						synchronized (loadBuffer) {
+							value = IOUtil.toByteArray(in, loadBuffer);
+						}
 				} catch (IOException ex) {
 					logger.error("Failed to fetch runtime bytecode of class: " + key, ex);
 				}
@@ -74,11 +84,20 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 					stubClasses.add(key);
 					return null;
 				}
-				JvmClassInfo info = new JvmClassInfoBuilder()
-						.adaptFrom(value, ClassReader.SKIP_CODE)
-						.build();
-				cache.put(key, info);
-				return info;
+
+				// Try and parse the class and yield the result.
+				try {
+					JvmClassInfo info = new JvmClassInfoBuilder()
+							.adaptFrom(value, ClassReader.SKIP_CODE)
+							.build();
+					cache.put(key, info);
+					return info;
+				} catch (Throwable t) {
+					// There are some weird auto-generated classes in the VM like 'accessibility_ja'
+					// which have invalid constant pools and kill our class parser. Ignore those.
+					stubClasses.add(key);
+					return null;
+				}
 			}
 
 			@Override
@@ -133,6 +152,7 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 			long start = System.currentTimeMillis();
 			for (String name : ClasspathUtil.getSystemClassSet())
 				classes.get(name);
+			System.out.print("Pre-cache: " + (System.currentTimeMillis() - start));
 		}, ThreadUtil.executor());
 	}
 
