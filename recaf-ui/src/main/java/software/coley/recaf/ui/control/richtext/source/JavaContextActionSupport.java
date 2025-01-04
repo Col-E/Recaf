@@ -294,6 +294,10 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		if (parser == null)
 			return;
 
+		// Skip if we already shut down the pool.
+		if (parseThreadPool.isShutdown())
+			return;
+
 		// Cancel last parse future if not complete
 		if (lastFuture != null && !lastFuture.isDone())
 			lastFuture.cancel(true);
