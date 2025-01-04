@@ -7,6 +7,7 @@ import javafx.scene.control.Menu;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.WorkspaceOpenListener;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.AgentServerRemoteVmResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -29,17 +30,21 @@ public abstract class WorkspaceAwareMenu extends Menu implements WorkspaceOpenLi
 
 	@Override
 	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
-		hasWorkspace.set(false);
-		hasAgentWorkspace.set(false);
-		workspaceStateChanged();
+		FxThreadUtil.run(() -> {
+			hasWorkspace.set(false);
+			hasAgentWorkspace.set(false);
+			workspaceStateChanged();
+		});
 	}
 
 	@Override
 	public void onWorkspaceOpened(@Nonnull Workspace workspace) {
-		WorkspaceResource primaryResource = workspace.getPrimaryResource();
-		hasWorkspace.set(true);
-		hasAgentWorkspace.set(primaryResource instanceof AgentServerRemoteVmResource);
-		workspaceStateChanged();
+		FxThreadUtil.run(() -> {
+			WorkspaceResource primaryResource = workspace.getPrimaryResource();
+			hasWorkspace.set(true);
+			hasAgentWorkspace.set(primaryResource instanceof AgentServerRemoteVmResource);
+			workspaceStateChanged();
+		});
 	}
 
 	protected void workspaceStateChanged() {
