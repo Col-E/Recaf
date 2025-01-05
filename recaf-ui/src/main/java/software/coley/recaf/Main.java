@@ -23,6 +23,7 @@ import software.coley.recaf.ui.config.WindowScaleConfig;
 import software.coley.recaf.util.JFXValidation;
 import software.coley.recaf.util.JdkValidation;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 
 import java.io.File;
@@ -34,6 +35,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -90,13 +92,14 @@ public class Main {
 		launchArgs.setCommand(launchArgValues);
 		launchArgs.setRawArgs(args);
 
-		// Setup the launch-handler bean to load inputs if specified by the launch arguments.
-		// It will be executed
-		LaunchHandler.task = Main::initHandleInputs;
+		// Set up the launch-handler bean to load inputs if specified by the launch arguments.
 		Bean<?> bean = recaf.getContainer().getBeanContainer().getBeans(LaunchHandler.class).iterator().next();
 		if (launchArgValues.isHeadless()) {
+			LaunchHandler.task = Main::initHandleInputs;
 			EagerInitializationExtension.getApplicationScopedEagerBeans().add(bean);
 		} else {
+			// Run input handling in the background so that it does not block the UI
+			LaunchHandler.task = () -> CompletableFuture.runAsync(Main::initHandleInputs, ThreadUtil.executor());
 			EagerInitializationExtension.getApplicationScopedEagerBeansForUi().add(bean);
 		}
 
