@@ -135,4 +135,13 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 		}
 		return 0;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		// Resource equality checks are abysmally slow because are checking if all the contained
+		// contents are also equal. Realistically we can get away with a reference check.
+		if (o instanceof ResourcePathNode otherPath)
+			return getValue() == otherPath.getValue() && Objects.equals(getParent(), otherPath.getParent());
+		return false;
+	}
 }

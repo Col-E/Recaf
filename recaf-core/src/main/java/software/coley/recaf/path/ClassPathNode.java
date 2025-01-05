@@ -11,6 +11,7 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -153,5 +154,13 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 			return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(name, otherName);
 		}
 		return 0;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		// If the class names are the same and the parent paths are also equal, then this path points to the same location.
+		if (o instanceof ClassPathNode otherPath)
+			return getValue().getName().equals(otherPath.getValue().getName()) && Objects.equals(getParent(), otherPath.getParent());
+		return false;
 	}
 }

@@ -11,6 +11,7 @@ import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.properties.builtin.MemberIndexAcceleratorProperty;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -204,5 +205,15 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 			return 1;
 
 		return 0;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		// If the member names/signatures are the same and the parent paths are also equal, then this path points to the same location.
+		if (o instanceof ClassMemberPathNode otherPath)
+			return getValue().getName().equals(otherPath.getValue().getName())
+					&& getValue().getDescriptor().equals(otherPath.getValue().getDescriptor())
+					&& Objects.equals(getParent(), otherPath.getParent());
+		return false;
 	}
 }

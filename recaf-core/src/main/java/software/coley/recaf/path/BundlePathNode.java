@@ -9,6 +9,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -143,5 +144,14 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 			}
 		}
 		return 0;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		// Bundle equality checks are abysmally slow because are checking if all the contained
+		// contents are also equal. Realistically we can get away with a reference check.
+		if (o instanceof BundlePathNode otherPath)
+			return getValue() == otherPath.getValue() && Objects.equals(getParent(), otherPath.getParent());
+		return false;
 	}
 }

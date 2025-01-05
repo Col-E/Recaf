@@ -60,4 +60,13 @@ public class WorkspacePathNode extends AbstractPathNode<Object, Workspace> {
 	public int localCompare(PathNode<?> o) {
 		return 0;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		// Workspace equality checks are abysmally slow because are checking if all the contained
+		// contents are also equal. Realistically we can get away with a reference check.
+		if (o instanceof WorkspacePathNode otherPath)
+			return getValue() == otherPath.getValue();
+		return false;
+	}
 }
