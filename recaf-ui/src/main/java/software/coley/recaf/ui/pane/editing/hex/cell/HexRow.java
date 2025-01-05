@@ -28,11 +28,12 @@ import java.util.function.Consumer;
  * @author Matt Coley
  */
 public class HexRow implements Cell<Integer, Node> {
-	private final HBox layout = new HBox();
-	private final HexConfig config;
-	private final IntegerProperty rowCount;
-	private final HexOperations ops;
-	private int baseOffset;
+	protected final HBox layout = new HBox();
+	protected final HexConfig config;
+	protected final IntegerProperty rowCount;
+	protected final HexOperations ops;
+	protected int baseOffset;
+	protected int lastConfigHash;
 
 	public HexRow(@Nonnull HexConfig config, @Nonnull IntegerProperty rowCount, @Nonnull HexOperations ops, int row) {
 		this.config = config;
@@ -43,15 +44,20 @@ public class HexRow implements Cell<Integer, Node> {
 		layout.setMouseTransparent(true);
 		layout.setAlignment(Pos.CENTER_LEFT);
 		layout.setSpacing(4);
-		buildLayout();
+
+		buildFreshLayout();
 	}
 
 	/**
 	 * Re-populate the layout.
 	 */
 	public void redraw() {
-		reset();
-		buildLayout();
+		int configHash = config.hashCode();
+		if (lastConfigHash != configHash) {
+			reset();
+		} else {
+			refreshLayout();
+		}
 	}
 
 	@Override
@@ -66,64 +72,145 @@ public class HexRow implements Cell<Integer, Node> {
 
 	@Override
 	public void updateItem(Integer row) {
-		this.baseOffset = row * config.getRowLength().getValue();
-		buildLayout();
+		int rowLength = config.getRowLength().getValue();
+		int oldBaseOffset = this.baseOffset;
+		int newBaseOffset = row * rowLength;
+		if (oldBaseOffset != newBaseOffset) {
+			this.baseOffset = newBaseOffset;
+			refreshLayout();
+		}
 	}
 
 	@Override
 	public void reset() {
-		// When the cell is no longer needed we clear the layout.
-		layout.getChildren().clear();
+		// We only need to clear the layout when the hash changes.
+		int configHash = config.hashCode();
+		if (lastConfigHash != configHash) {
+			layout.getChildren().clear();
+			buildFreshLayout();
+		}
 	}
 
-	private void buildLayout() {
+	/**
+	 * Updates the existing {@link HexCellBase} items in this row.
+	 * <br>
+	 * This assumes the {@link #baseOffset} does not represent the header, or the last row in the file
+	 * which are special cases and not supported.
+	 */
+	private void refreshLayout() {
+		if (baseOffset < 0)
+			throw new IllegalStateException("Hex row refreshed in unsupported context");
+
+		ObservableList<Node> children = layout.getChildren();
 		int rowLength = config.getRowLength().getValue();
 		int rowSplit = config.getRowSplitInterval().getValue();
 		int addressWidth = Integer.toHexString(rowCount.get() * rowLength).length();
 		boolean showAddress = config.getShowAddress().getValue();
 		boolean showAscii = config.getShowAscii().getValue();
+
+		// Update the label value.
+		int spaces = 0;
+		if (showAddress) {
+			Label lblAddress = (Label) children.getFirst();
+			lblAddress.setText(StringUtil.fillLeft(8, " ", HexUtil.strFormat(addressWidth, baseOffset) + ":"));
+			spaces++;
+		}
+
+		// Update the hex values
+		HexAccess read = ops.currentAccess();
+		int asciiChildOffset = 0;
+		for (int i = 0; i < rowLength; i++) {
+			// Account for spacer padding
+			if (i % rowSplit == 0 && i < rowLength - 1)
+				spaces++;
+			int childIndex = i + spaces;
+			int offset = baseOffset + i;
+			boolean outOfBounds = !read.isInBounds(offset);
+
+			HexCellBase valueLabel = (HexCellBase) children.get(childIndex);
+			valueLabel.setDisable(outOfBounds);
+			valueLabel.setOpacity(outOfBounds ? 0.1 : 1);
+			valueLabel.updateOffset(offset);
+
+			// Record the last child index as the beginning of where to look for ascii display controls.
+			asciiChildOffset = childIndex;
+		}
+		if (showAscii) {
+			// Offset by the last row-split padding (not counted above), and the first padding before the ascii begins.
+			asciiChildOffset += 2;
+
+			// Update ascii values.
+			for (int i = 0; i < rowLength; i++) {
+				int childIndex = asciiChildOffset + i;
+				int offset = baseOffset + i;
+				boolean outOfBounds = !read.isInBounds(offset);
+
+				HexCellBase asciiLabel = (HexCellBase) children.get(childIndex);
+				asciiLabel.setDisable(outOfBounds);
+				asciiLabel.setOpacity(outOfBounds ? 0.1 : 1);
+				asciiLabel.updateOffset(offset);
+			}
+		}
+
+		// Update selection so that the newly generated row will display the current selection
+		// if it appears on this row.
+		updateSelection(ops.navigation().selectionOffset());
+	}
+
+	protected void buildFreshLayout() {
+		if (baseOffset < 0)
+			throw new IllegalStateException("Hex row refreshed in unsupported context");
+
+		lastConfigHash = config.hashCode();
+		int rowLength = config.getRowLength().getValue();
+		int rowSplit = config.getRowSplitInterval().getValue();
+		int addressWidth = Integer.toHexString(rowCount.get() * rowLength).length();
+		boolean showAddress = config.getShowAddress().getValue();
+		boolean showAscii = config.getShowAscii().getValue();
+
 		ObservableList<Node> children = layout.getChildren();
 
 		Label lblAddress;
 		List<Node> contentHexLabels = new ArrayList<>();
 		List<Node> contentAsciiLabels = new ArrayList<>();
 		HexAccess read = ops.currentAccess();
-		if (baseOffset < 0) {
-			// Negative used as an edge case to display the column headers
-			lblAddress = new Label(StringUtil.fillLeft(addressWidth + 1, " ", "Address:"));
-			for (int i = 0; i < rowLength; i++) {
-				if (i % rowSplit == 0 && i < rowLength - 1)
-					contentHexLabels.add(new SmallSpacer());
-				Label columnOffset = new Label(HexUtil.strFormat00((byte) i));
-				contentHexLabels.add(columnOffset);
-			}
-			contentAsciiLabels.addAll(List.of(new Label("A"), new Label("S"), new Label("C"), new Label("I"), new Label("I")));
-			layout.getStyleClass().add("header");
-		} else {
-			lblAddress = new Label(StringUtil.fillLeft(8, " ", HexUtil.strFormat(addressWidth, baseOffset) + ":"));
-			for (int i = 0; i < rowLength; i++) {
-				if (i % rowSplit == 0 && i < rowLength - 1)
-					contentHexLabels.add(new SmallSpacer());
-				int offset = baseOffset + i;
-				byte b = read.getByte(offset);
-				if (read.isInBounds(offset)) {
-					// Hex labels
-					HexCellBase valueLabel = new EditableHexCell(ops, offset, b);
-					contentHexLabels.add(valueLabel);
 
-					// Ascii labels
-					if (showAscii) {
-						char c = HexUtil.charAscii(b);
-						HexCellBase asciiLabel = new EditableAsciiCell(ops, offset, b);
-						contentAsciiLabels.add(asciiLabel);
-					}
-				} else {
-					contentHexLabels.add(new Label("  "));
-					if (showAscii) contentAsciiLabels.add(new Label(" "));
-				}
+		lblAddress = new Label(StringUtil.fillLeft(8, " ", HexUtil.strFormat(addressWidth, baseOffset) + ":"));
+		for (int i = 0; i < rowLength; i++) {
+			if (i % rowSplit == 0 && i < rowLength - 1)
+				contentHexLabels.add(new SmallSpacer());
+			int offset = baseOffset + i;
+			byte b = read.getByte(offset);
+			boolean outOfBounds = !read.isInBounds(offset);
+
+			// Hex labels
+			HexCellBase valueLabel = new EditableHexCell(ops, offset, b);
+			valueLabel.setDisable(outOfBounds);
+			valueLabel.setOpacity(outOfBounds ? 0.1 : 1);
+			contentHexLabels.add(valueLabel);
+
+			// Ascii labels
+			if (showAscii) {
+				char c = HexUtil.charAscii(b);
+				HexCellBase asciiLabel = new EditableAsciiCell(ops, offset, b);
+				asciiLabel.setDisable(outOfBounds);
+				asciiLabel.setOpacity(outOfBounds ? 0.1 : 1);
+				contentAsciiLabels.add(asciiLabel);
 			}
-			layout.getStyleClass().remove("header");
 		}
+		setChildren(lblAddress, contentHexLabels, contentAsciiLabels);
+
+		// Update selection so that the newly generated row will display the current selection
+		// if it appears on this row.
+		updateSelection(ops.navigation().selectionOffset());
+	}
+
+	protected void setChildren(@Nonnull Label lblAddress,
+	                           @Nonnull List<Node> contentHexLabels,
+	                           @Nonnull List<Node> contentAsciiLabels) {
+		boolean showAddress = config.getShowAddress().getValue();
+		boolean showAscii = config.getShowAscii().getValue();
+
 		List<Node> nodes = new ArrayList<>(contentHexLabels.size() + 2);
 		if (showAddress)
 			nodes.add(lblAddress);
@@ -133,11 +220,7 @@ public class HexRow implements Cell<Integer, Node> {
 			nodes.addAll(contentAsciiLabels);
 		}
 		nodes.add(new Spacer()); // Added at the end to occupy space to the right
-		children.setAll(nodes);
-
-		// Update selection so that the newly generated row will display the current selection
-		// if it appears on this row.
-		updateSelection(ops.navigation().selectionOffset());
+		layout.getChildren().setAll(nodes);
 	}
 
 	/**
@@ -158,12 +241,12 @@ public class HexRow implements Cell<Integer, Node> {
 	public void updateSelection(int offset) {
 		Unchecked.checkedForEach(layout.getChildren(), child -> {
 			boolean hexColumn = ops.navigation().isHexColumnSelected();
-			if (hexColumn && child instanceof EditableHexCell cell) {
-				boolean match = cell.offset() == offset;
+			if (child instanceof EditableHexCell cell) {
+				boolean match = hexColumn && cell.offset() == offset;
 				if (match) cell.onSelectionGained();
 				else cell.onSelectionLost();
-			} else if (!hexColumn && child instanceof EditableAsciiCell cell) {
-				boolean match = cell.offset() == offset;
+			} else if (child instanceof EditableAsciiCell cell) {
+				boolean match = !hexColumn && cell.offset() == offset;
 				if (match) cell.onSelectionGained();
 				else cell.onSelectionLost();
 			}
@@ -186,17 +269,22 @@ public class HexRow implements Cell<Integer, Node> {
 	 * @param offset
 	 * 		Target offset to toggle editing on.
 	 * @param initiateEdit
-	 *        {@code true} to trigger the target cell at the offset to begin editing.
+	 *        {@code true} to trigger the target cell at the offset to begin editing or complete a current edit.
 	 *        {@code false} to cancel editing.
 	 */
 	public void engage(int offset, boolean initiateEdit) {
 		Consumer<HexCellBase> action = cell -> {
 			boolean match = cell.offset() == offset;
 			if (match) {
-				if (!initiateEdit || cell.isEditing()) {
-					cell.endEdit(false); // Cancel edit, do not commit
-				} else {
+				if (initiateEdit && cell.isEditing()) {
+					// Complete the current edit
+					cell.endEdit(true);
+				} else if (initiateEdit) {
+					// Initiate a new edit
 					cell.beginEdit();
+				} else {
+					// Cancel the current edit
+					cell.endEdit(false);
 				}
 			} else {
 				cell.onSelectionLost();
@@ -272,8 +360,8 @@ public class HexRow implements Cell<Integer, Node> {
 	/**
 	 * Fixed size spacer to put between columns.
 	 */
-	private static class SmallSpacer extends Spacer {
-		private SmallSpacer() {
+	protected static class SmallSpacer extends Spacer {
+		protected SmallSpacer() {
 			setMaxWidth(12);
 		}
 	}

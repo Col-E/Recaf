@@ -94,6 +94,7 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 
 		// Assign properties last so property listeners configured above can act on them.
 		offsetProperty.setValue(offset);
+		offsetProperty.addListener((ob, old, cur) -> refreshText(cur.intValue()));
 
 		// Update the initial text to model the hexadecimal representation of the byte.
 		textProperty.setValue(mapper().map(b));
@@ -140,6 +141,11 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 	protected abstract byte toByteValue();
 
 	/**
+	 * @return {@code true} when the data of this cell does not reflect the original state.
+	 */
+	protected abstract boolean isDataStateChanged();
+
+	/**
 	 * Called by {@link #endEdit(boolean)} before a commit is made, allowing processing of the {@link #textProperty}
 	 * before that value is used to update the backing hex content.
 	 */
@@ -156,7 +162,42 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 	 */
 	protected void updateEditedPseudoState() {
 		// Change the label text color if it differs from the original content
-		label.pseudoClassStateChanged(PSEUDO_EDITED, ops.originalAccess().getByte(offset()) != toByteValue());
+		label.pseudoClassStateChanged(PSEUDO_EDITED, isDataStateChanged());
+	}
+
+	/**
+	 * Updates the offset value. If the value is not different,
+	 * we refresh the display in case the backing data has changed.
+	 *
+	 * @param offset
+	 * 		New offset value.
+	 */
+	public void updateOffset(int offset) {
+		if (offset == offsetProperty.get())
+			refreshText(offset);
+		else
+			offsetProperty.set(offset);
+
+		// Refresh the edited pseudo-state since the data could have been changed from the original.
+		updateEditedPseudoState();
+	}
+
+	/**
+	 * Refresh the current text property.
+	 *
+	 * @param offset
+	 * 		Offset to pull from.
+	 */
+	private void refreshText(int offset) {
+		textProperty.set(mapper().map(ops.currentAccess().getByte(offset)));
+	}
+
+	/**
+	 * @return Property of the offset into the data this cell represents.
+	 */
+	@Nonnull
+	public IntegerProperty offsetProperty() {
+		return offsetProperty;
 	}
 
 	@Nonnull
@@ -178,7 +219,8 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 	@Override
 	public void onSelectionLost() {
 		label.pseudoClassStateChanged(PSEUDO_SELECTED, false);
-		if (isEditing()) endEdit(true);
+		if (isEditing())
+			endEdit(true);
 	}
 
 	@Override

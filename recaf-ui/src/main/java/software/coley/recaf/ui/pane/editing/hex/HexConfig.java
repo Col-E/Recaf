@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
 import software.coley.recaf.config.BasicConfigContainer;
+import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 
 /**
@@ -23,6 +24,10 @@ public class HexConfig extends BasicConfigContainer {
 	@Inject
 	public HexConfig() {
 		super(ConfigGroups.SERVICE_UI, "hex" + CONFIG_SUFFIX);
+		addValue(new BasicConfigValue<>("show-address", boolean.class, showAddress));
+		addValue(new BasicConfigValue<>("show-ascii", boolean.class, showAscii));
+		addValue(new BasicConfigValue<>("row-length", int.class, rowLength));
+		addValue(new BasicConfigValue<>("row-split-interval", int.class, rowSplitInterval));
 	}
 
 	/**

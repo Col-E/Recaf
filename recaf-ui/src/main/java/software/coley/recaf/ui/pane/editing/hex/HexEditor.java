@@ -19,7 +19,9 @@ import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.pane.editing.hex.cell.HexRow;
+import software.coley.recaf.ui.pane.editing.hex.cell.HexRowHeader;
 import software.coley.recaf.ui.pane.editing.hex.ops.HexAccess;
 import software.coley.recaf.ui.pane.editing.hex.ops.HexNavigation;
 import software.coley.recaf.ui.pane.editing.hex.ops.HexOperations;
@@ -58,7 +60,7 @@ public class HexEditor extends BorderPane {
 		getStyleClass().add("hex-view");
 		flow = VirtualFlow.createVertical(rows, row -> new HexRow(config, rowCount, ops, row));
 		flow.setFocusTraversable(true);
-		VirtualizedScrollPane<VirtualFlow<Integer, HexRow>> scroll = new VirtualizedScrollPane<>(flow);
+		VirtualizedScrollPane<VirtualFlow<Integer, HexRow>> scroll = new VirtualizedScrollPaneWrapper<>(flow);
 
 		config.getRowLength().addChangeListener((ob, old, cur) -> refreshRowDisplay());
 		config.getRowSplitInterval().addChangeListener((ob, old, cur) -> refreshRowDisplay());
@@ -67,12 +69,15 @@ public class HexEditor extends BorderPane {
 
 		registerInputListeners();
 
+		setTop(new HexRowHeader(config, rowCount, ops).getNode());
 		setCenter(scroll);
 	}
 
 	private void registerInputListeners() {
 		NodeEvents.addKeyPressHandler(flow, ops.keyListener());
-		NodeEvents.addMousePressHandler(this, e -> {
+		NodeEvents.addMousePressHandler(flow, e -> {
+			if (!e.isPrimaryButtonDown())
+				return;
 			int currentOffset = ops.navigation().selectionOffset();
 			for (HexRow cell : flow.visibleCells()) {
 				Bounds bounds = cell.getNode().getBoundsInParent();
@@ -91,7 +96,7 @@ public class HexEditor extends BorderPane {
 			// Do not propagate the event up the scene graph.
 			e.consume();
 		});
-		NodeEvents.addMouseReleaseHandler(this, e -> {
+		NodeEvents.addMouseReleaseHandler(flow, e -> {
 			// If we've not gotten focus grab it and consume the event so that it does not propagate up the scene graph.
 			if (!flow.isFocusWithin()) {
 				e.consume();
@@ -207,8 +212,7 @@ public class HexEditor extends BorderPane {
 		double rowLength = config.getRowLength().getValue().doubleValue();
 		int rowCount = (int) Math.max(1, Math.ceil(data.length / rowLength));
 		if (rowCount != this.rows.size()) {
-			// Start at -1 since we use that as an edge case to display the column titles and such.
-			List<Integer> zeroToRowMax = IntStream.range(-1, rowCount)
+			List<Integer> zeroToRowMax = IntStream.range(0, rowCount)
 					.boxed().collect(Collectors.toList());
 			this.rows.setAll(zeroToRowMax);
 			this.rowCount.setValue(rowCount);
@@ -266,9 +270,7 @@ public class HexEditor extends BorderPane {
 	 */
 	private int offsetToRowIndex(int offset) {
 		int rowLength = config.getRowLength().getValue();
-
-		// 'offset/row-length' gets the correct row in the data, but we need to add 1 since row 0 is the header.
-		return (offset / rowLength) + 1;
+		return (offset / rowLength);
 	}
 
 	@Nonnull

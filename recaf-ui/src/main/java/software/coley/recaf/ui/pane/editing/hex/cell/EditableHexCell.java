@@ -59,6 +59,11 @@ public class EditableHexCell extends HexCellBase implements HexCell {
 	}
 
 	@Override
+	protected boolean isDataStateChanged() {
+		return ops.originalAccess().getByte(offset()) != toByteValue();
+	}
+
+	@Override
 	protected void preProcessCommit() {
 		// Fill in remaining spaces if ending before text input is full.
 		while (textProperty.length().get() < 2)

@@ -196,4 +196,12 @@ class NumberUtilTest {
 		assertFalse(NumberUtil.isZero(-1));
 		assertTrue(NumberUtil.isZero(0));
 	}
+
+	@Test
+	void testHaveSameSign() {
+		assertTrue(NumberUtil.haveSameSign(1, 1));
+		assertTrue(NumberUtil.haveSameSign(-1, -1));
+		assertFalse(NumberUtil.haveSameSign(1, -1));
+		assertFalse(NumberUtil.haveSameSign(-1, 1));
+	}
 }

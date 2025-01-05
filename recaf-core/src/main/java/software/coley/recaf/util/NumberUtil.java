@@ -11,7 +11,9 @@ import org.objectweb.asm.Type;
  */
 public class NumberUtil {
 	/**
-	 * @param number Value to convert to string.
+	 * @param number
+	 * 		Value to convert to string.
+	 *
 	 * @return String representation of value.
 	 */
 	@Nonnull
@@ -447,5 +449,17 @@ public class NumberUtil {
 	 */
 	public static boolean isZero(int i) {
 		return i == 0;
+	}
+
+	/**
+	 * @param a
+	 * 		Some value.
+	 * @param b
+	 * 		Another value.
+	 *
+	 * @return {@code true} when they have the same sign.
+	 */
+	public static boolean haveSameSign(int a, int b) {
+		return a * b > 0;
 	}
 }

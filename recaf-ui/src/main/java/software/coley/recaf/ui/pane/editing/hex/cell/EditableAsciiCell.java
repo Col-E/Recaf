@@ -9,6 +9,7 @@ import software.coley.recaf.ui.pane.editing.hex.HexUtil;
 import software.coley.recaf.ui.pane.editing.hex.ops.HexOperations;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Hex cell for displaying a single ascii char.
@@ -66,5 +67,12 @@ public class EditableAsciiCell extends HexCellBase implements HexCell {
 
 		// Delegate to existing value since there is no change.
 		return ops.currentAccess().getByte(offset());
+	}
+
+	@Override
+	protected boolean isDataStateChanged() {
+		String original = mapper().map(ops.originalAccess().getByte(offset()));
+		String current = textProperty.get();
+		return !Objects.equals(original, current);
 	}
 }
