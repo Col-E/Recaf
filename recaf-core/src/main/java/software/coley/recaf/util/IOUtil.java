@@ -440,9 +440,8 @@ public final class IOUtil {
 	 */
 	public static void copy(InputStream in, OutputStream out, byte[] buf) throws IOException {
 		int r;
-		while ((r = in.read(buf)) != -1) {
+		while ((r = in.read(buf)) != -1)
 			out.write(buf, 0, r);
-		}
 	}
 
 	/**
@@ -590,9 +589,9 @@ public final class IOUtil {
 	 * 		When any I/O error occurs.
 	 */
 	public static void copy(URL url, OutputStream out,
-							byte[] buf,
-							int connectionTimeoutMillis,
-							int readTimeoutMillis)
+	                        byte[] buf,
+	                        int connectionTimeoutMillis,
+	                        int readTimeoutMillis)
 			throws IOException {
 		URLConnection connection = url.openConnection();
 		connection.setDoInput(true);
@@ -626,8 +625,8 @@ public final class IOUtil {
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static void copy(URL url, OutputStream out,
-							int connectionTimeoutMillis,
-							int readTimeoutMillis)
+	                        int connectionTimeoutMillis,
+	                        int readTimeoutMillis)
 			throws IOException {
 		copy(url, out, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
 	}
@@ -652,9 +651,9 @@ public final class IOUtil {
 	 * 		When any I/O error occurs.
 	 */
 	public static void copy(URL url, Path path,
-							byte[] buf,
-							int connectionTimeoutMillis,
-							int readTimeoutMillis)
+	                        byte[] buf,
+	                        int connectionTimeoutMillis,
+	                        int readTimeoutMillis)
 			throws IOException {
 		try (OutputStream os = Files.newOutputStream(path)) {
 			copy(url, os, buf, connectionTimeoutMillis, readTimeoutMillis);
@@ -679,8 +678,8 @@ public final class IOUtil {
 	 * @see IOUtil#newByteBuffer()
 	 */
 	public static void copy(URL url, Path path,
-							int connectionTimeoutMillis,
-							int readTimeoutMillis)
+	                        int connectionTimeoutMillis,
+	                        int readTimeoutMillis)
 			throws IOException {
 		copy(url, path, newByteBuffer(), connectionTimeoutMillis, readTimeoutMillis);
 	}
@@ -806,6 +805,11 @@ public final class IOUtil {
 		return data;
 	}
 
+	/**
+	 * A {@link ByteArrayOutputStream} which is optimized for single use cases of known lengths.
+	 * When the buffer is filled to capacity, we yield the buffer as the result directly instead
+	 * of providing a copy like how is done in {@link ByteArrayOutputStream#toByteArray()}.
+	 */
 	private static final class OptimizedByteArrayOutputStream extends ByteArrayOutputStream {
 		/**
 		 * @param size
@@ -823,10 +827,11 @@ public final class IOUtil {
 		byte[] getBytes() {
 			byte[] buf = this.buf;
 			int count = this.count;
+
 			// If the size is a match we do not need to do a copy operation
-			if (count == buf.length) {
+			if (count == buf.length)
 				return buf;
-			}
+
 			// Cut buffer down to expected size
 			return Arrays.copyOfRange(buf, 0, count);
 		}

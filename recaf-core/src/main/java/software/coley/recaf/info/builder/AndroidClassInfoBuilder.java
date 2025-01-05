@@ -122,8 +122,7 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 					String sig = m.getSignature().toString();
 					int access = m.getAccessFlags().getAsCfAccessFlags();
 					List<String> thrownTypes = Collections.emptyList();
-					List<LocalVariable> variables = Collections.emptyList();
-					BasicMethodMember method = new BasicMethodMember(name, desc, sig, access, thrownTypes, variables);
+					BasicMethodMember method = new BasicMethodMember(name, desc, sig, access, thrownTypes);
 					for (AnnotationInfo anno : mapAnnos(m.annotations())) method.addAnnotation(anno);
 					return method;
 				})

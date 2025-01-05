@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.annotation.AnnotationElement;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,7 +16,7 @@ import java.util.Objects;
  */
 public class BasicMethodMember extends BasicMember implements MethodMember {
 	private final List<String> thrownTypes;
-	private final List<LocalVariable> variables;
+	private List<LocalVariable> variables;
 	private AnnotationElement annotationDefault;
 
 	/**
@@ -28,14 +30,11 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 	 * 		Method access modifiers.
 	 * @param thrownTypes
 	 * 		Method's thrown exceptions.
-	 * @param variables
-	 * 		Method's local variables.
 	 */
 	public BasicMethodMember(@Nonnull String name, @Nonnull String desc, @Nullable String signature, int access,
-							 @Nonnull List<String> thrownTypes, @Nonnull List<LocalVariable> variables) {
+	                         @Nonnull List<String> thrownTypes) {
 		super(name, desc, signature, access);
 		this.thrownTypes = thrownTypes;
-		this.variables = variables;
 	}
 
 	/**
@@ -43,11 +42,14 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 	 * 		Variable to add.
 	 */
 	public void addLocalVariable(@Nonnull LocalVariable variable) {
+		if (variables == null)
+			variables = new ArrayList<>();
 		variables.add(variable);
 	}
 
 	/**
-	 * @param annotationDefault Element value to set.
+	 * @param annotationDefault
+	 * 		Element value to set.
 	 */
 	public void setAnnotationDefault(@Nonnull AnnotationElement annotationDefault) {
 		this.annotationDefault = annotationDefault;
@@ -62,6 +64,8 @@ public class BasicMethodMember extends BasicMember implements MethodMember {
 	@Nonnull
 	@Override
 	public List<LocalVariable> getLocalVariables() {
+		if (variables == null)
+			return Collections.emptyList();
 		return variables;
 	}
 

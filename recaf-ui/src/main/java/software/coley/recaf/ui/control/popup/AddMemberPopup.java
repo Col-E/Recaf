@@ -158,7 +158,7 @@ public class AddMemberPopup extends RecafStage {
 		String desc = descInput.textProperty().get();
 		ClassMember member;
 		if (isMethod) {
-			member = new BasicMethodMember(name, desc, null, access, Collections.emptyList(), Collections.emptyList());
+			member = new BasicMethodMember(name, desc, null, access, Collections.emptyList());
 		} else {
 			member = new BasicFieldMember(name, desc, null, access, null);
 		}

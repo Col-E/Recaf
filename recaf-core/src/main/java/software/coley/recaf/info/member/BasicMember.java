@@ -10,6 +10,7 @@ import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -19,13 +20,13 @@ import java.util.Map;
  * @author Matt Coley
  */
 public abstract class BasicMember implements ClassMember {
-	private final PropertyContainer properties = new BasicPropertyContainer();
-	private final List<AnnotationInfo> annotations = new ArrayList<>();
-	private final List<TypeAnnotationInfo> typeAnnotations = new ArrayList<>();
 	private final String name;
 	private final String desc;
 	private final String signature;
 	private final int access;
+	private PropertyContainer properties;
+	private List<AnnotationInfo> annotations;
+	private List<TypeAnnotationInfo> typeAnnotations;
 	private ClassInfo declaringClass;
 
 	protected BasicMember(@Nonnull String name, @Nonnull String desc, @Nullable String signature, int access) {
@@ -43,6 +44,8 @@ public abstract class BasicMember implements ClassMember {
 	 * 		Annotation to add.
 	 */
 	public void addAnnotation(@Nonnull AnnotationInfo annotation) {
+		if (annotations == null)
+			annotations = new ArrayList<>(2);
 		annotations.add(annotation);
 	}
 
@@ -54,6 +57,8 @@ public abstract class BasicMember implements ClassMember {
 	 * 		Annotation to add.
 	 */
 	public void addTypeAnnotation(@Nonnull TypeAnnotationInfo typeAnnotation) {
+		if (typeAnnotations == null)
+			typeAnnotations = new ArrayList<>(2);
 		typeAnnotations.add(typeAnnotation);
 	}
 
@@ -97,28 +102,37 @@ public abstract class BasicMember implements ClassMember {
 	@Nonnull
 	@Override
 	public List<AnnotationInfo> getAnnotations() {
+		if (annotations == null)
+			return Collections.emptyList();
 		return annotations;
 	}
 
 	@Nonnull
 	@Override
 	public List<TypeAnnotationInfo> getTypeAnnotations() {
+		if (typeAnnotations == null)
+			return Collections.emptyList();
 		return typeAnnotations;
 	}
 
 	@Override
 	public <V> void setProperty(Property<V> property) {
+		if (properties == null)
+			properties = new BasicPropertyContainer();
 		properties.setProperty(property);
 	}
 
 	@Override
 	public void removeProperty(String key) {
-		properties.removeProperty(key);
+		if (properties != null)
+			properties.removeProperty(key);
 	}
 
 	@Nonnull
 	@Override
 	public Map<String, Property<?>> getProperties() {
+		if (properties == null)
+			return Collections.emptyMap();
 		return properties.getProperties();
 	}
 }

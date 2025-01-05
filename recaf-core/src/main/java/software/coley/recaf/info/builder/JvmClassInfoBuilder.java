@@ -2,17 +2,44 @@ package software.coley.recaf.info.builder;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 import software.coley.recaf.info.BasicInnerClassInfo;
 import software.coley.recaf.info.BasicJvmClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.info.annotation.*;
-import software.coley.recaf.info.member.*;
+import software.coley.recaf.info.annotation.AnnotationElement;
+import software.coley.recaf.info.annotation.AnnotationInfo;
+import software.coley.recaf.info.annotation.BasicAnnotationElement;
+import software.coley.recaf.info.annotation.BasicAnnotationEnumReference;
+import software.coley.recaf.info.annotation.BasicAnnotationInfo;
+import software.coley.recaf.info.annotation.TypeAnnotationInfo;
+import software.coley.recaf.info.member.BasicFieldMember;
+import software.coley.recaf.info.member.BasicLocalVariable;
+import software.coley.recaf.info.member.BasicMethodMember;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.builtin.UnknownAttributesProperty;
 import software.coley.recaf.util.MultiMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import static software.coley.recaf.RecafConstants.getAsmVersion;
@@ -241,12 +268,12 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	 * @see MethodBuilderAdapter
 	 */
 	private class ClassBuilderAdapter extends ClassVisitor {
-		private final List<AnnotationInfo> annotations = new ArrayList<>();
-		private final List<TypeAnnotationInfo> typeAnnotations = new ArrayList<>();
-		private final List<InnerClassInfo> innerClasses = new ArrayList<>();
-		private final List<FieldMember> fields = new ArrayList<>();
-		private final List<MethodMember> methods = new ArrayList<>();
-		private final List<Attribute> classCustomAttributes = new ArrayList<>();
+		private List<AnnotationInfo> annotations;
+		private List<TypeAnnotationInfo> typeAnnotations;
+		private List<InnerClassInfo> innerClasses;
+		private List<FieldMember> fields;
+		private List<MethodMember> methods;
+		private List<Attribute> classCustomAttributes;
 		private final MultiMap<String, Attribute, List<Attribute>> fieldCustomAttributes;
 		private final MultiMap<String, Attribute, List<Attribute>> methodCustomAttributes;
 
@@ -283,11 +310,15 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+			if (annotations == null)
+				annotations = new ArrayList<>();
 			return new AnnotationBuilderAdapter(visible, descriptor, annotations::add);
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+			if (typeAnnotations == null)
+				typeAnnotations = new ArrayList<>();
 			return new AnnotationBuilderAdapter(visible, descriptor,
 					anno -> typeAnnotations.add(anno.withTypeInfo(typeRef, typePath)));
 		}
@@ -300,6 +331,8 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			String currentClassName = getName();
 
 			// Add the inner data
+			if (innerClasses == null)
+				innerClasses = new ArrayList<>();
 			innerClasses.add(new BasicInnerClassInfo(currentClassName, name, outerName, innerName, access));
 
 			// If the local 'name' is the current class name, then we are visiting an inner class entry
@@ -318,6 +351,8 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public void visitAttribute(Attribute attribute) {
+			if (classCustomAttributes == null)
+				classCustomAttributes = new ArrayList<>();
 			classCustomAttributes.add(attribute);
 			super.visitAttribute(attribute);
 		}
@@ -334,6 +369,8 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 				@Override
 				public void visitEnd() {
+					if (fields == null)
+						fields = new ArrayList<>();
 					fields.add(getFieldMember());
 				}
 			};
@@ -352,6 +389,8 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 				@Override
 				public void visitEnd() {
 					super.visitEnd();
+					if (methods == null)
+						methods = new ArrayList<>();
 					methods.add(getMethodMember());
 				}
 			};
@@ -360,22 +399,26 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		@Override
 		public void visitEnd() {
 			super.visitEnd();
-			if (!annotations.isEmpty()) {
+			if (annotations != null)
 				withAnnotations(annotations);
-			}
-			withFields(fields);
-			withMethods(methods);
-			withInnerClasses(innerClasses);
-			withAnnotations(annotations);
-			withTypeAnnotations(typeAnnotations);
+			if (fields != null)
+				withFields(fields);
+			if (methods != null)
+				withMethods(methods);
+			if (innerClasses != null)
+				withInnerClasses(innerClasses);
+			if (annotations != null)
+				withAnnotations(annotations);
+			if (typeAnnotations != null)
+				withTypeAnnotations(typeAnnotations);
 		}
 
 		/**
 		 * @return {@code true} when any custom attributes were found.
 		 */
 		public boolean hasCustomAttributes() {
-			return !classCustomAttributes.isEmpty() ||
-					!fieldCustomAttributes.isEmpty() ||
+			return (classCustomAttributes != null && !classCustomAttributes.isEmpty()) ||
+					(!fieldCustomAttributes.isEmpty()) ||
 					!methodCustomAttributes.isEmpty();
 		}
 
@@ -385,9 +428,10 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		@Nonnull
 		public Collection<String> getCustomAttributeNames() {
 			Set<String> names = new TreeSet<>();
-			classCustomAttributes.stream()
-					.map(a -> a.type)
-					.forEach(names::add);
+			if (classCustomAttributes != null)
+				classCustomAttributes.stream()
+						.map(a -> a.type)
+						.forEach(names::add);
 			fieldCustomAttributes.values()
 					.map(a -> a.type)
 					.forEach(names::add);
@@ -427,7 +471,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	private static class MethodBuilderAdapter extends MethodVisitor {
 		private final BasicMethodMember methodMember;
 		private final Type methodDescriptor;
-		private final List<LocalVariable> parameters;
+		private List<LocalVariable> parameters;
 		private int parameterIndex;
 		private int parameterSlot;
 
@@ -435,10 +479,9 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		                            String signature, String[] exceptions) {
 			super(getAsmVersion());
 			List<String> exceptionList = exceptions == null ? Collections.emptyList() : Arrays.asList(exceptions);
-			methodMember = new BasicMethodMember(name, descriptor, signature, access, exceptionList, new ArrayList<>());
+			methodMember = new BasicMethodMember(name, descriptor, signature, access, exceptionList);
 			methodDescriptor = Type.getMethodType(descriptor);
 			parameterSlot = methodMember.hasStaticModifier() ? 0 : 1;
-			parameters = new ArrayList<>(methodDescriptor.getArgumentCount());
 		}
 
 		@Override
@@ -467,8 +510,11 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 				Type argumentType = argumentTypes[parameterIndex];
 
 				// Only add when we have a name for the parameter.
-				if (name != null)
+				if (name != null) {
+					if (parameters == null)
+						parameters = new ArrayList<>(methodDescriptor.getArgumentCount());
 					parameters.add(new BasicLocalVariable(parameterSlot, name, argumentType.getDescriptor(), null));
+				}
 
 				parameterIndex++;
 				parameterSlot += argumentType.getSize();
@@ -491,9 +537,10 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 			// provided variables for those indices. This assists in providing variable models for abstract methods.
 			// This only works when a 'MethodParameters' attribute is present on the method. The javac compiler
 			// emits this when passing '-parameters'.
-			for (LocalVariable parameter : parameters)
-				if (methodMember.getLocalVariable(parameter.getIndex()) == null)
-					methodMember.addLocalVariable(parameter);
+			if (parameters != null)
+				for (LocalVariable parameter : parameters)
+					if (methodMember.getLocalVariable(parameter.getIndex()) == null)
+						methodMember.addLocalVariable(parameter);
 		}
 
 		@Nonnull

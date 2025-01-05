@@ -10,7 +10,6 @@ import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.util.ClasspathUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
-import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
@@ -27,7 +26,6 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 /**
