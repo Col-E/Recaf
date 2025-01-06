@@ -7,7 +7,11 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -38,12 +42,17 @@ import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.control.PannableView;
 import software.coley.recaf.ui.window.MappingProgressWindow;
-import software.coley.recaf.util.*;
+import software.coley.recaf.util.Colors;
+import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.ToStringConverter;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
-import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -58,6 +67,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.ToDoubleFunction;
 
@@ -90,9 +100,9 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 
 	@Inject
 	public MappingProgressPane(@Nonnull CellConfigurationService configurationService,
-							   @Nonnull WorkspaceExplorerConfig explorerConfig,
-							   @Nonnull Instance<AggregateMappingManager> aggregateMappingManagerInstance,
-							   @Nonnull WorkspaceManager workspaceManager) {
+	                           @Nonnull WorkspaceExplorerConfig explorerConfig,
+	                           @Nonnull Instance<AggregateMappingManager> aggregateMappingManagerInstance,
+	                           @Nonnull WorkspaceManager workspaceManager) {
 		this.workspaceManager = workspaceManager;
 		this.configurationService = configurationService;
 		this.explorerConfig = explorerConfig;
@@ -107,12 +117,13 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 
 		// When a workspace is opened, refresh the tree and listen for changes on the new workspace.
 		workspaceManager.addWorkspaceOpenListener(workspace -> {
-			int classes = workspace.findClasses(false, c -> true).size();
-
-			treeMapPane.setPrefWidth(40 * classes);
-			treeMapPane.setPrefHeight(5 * classes);
-			treeMapWrapper.resetTranslation();
-			treeMapWrapper.resetZoom();
+			CompletableFuture.supplyAsync(() -> workspace.findClasses(false, c -> true).size(), ThreadUtil.executor())
+					.thenAcceptAsync(classes -> {
+						treeMapPane.setPrefWidth(40 * classes);
+						treeMapPane.setPrefHeight(5 * classes);
+						treeMapWrapper.resetTranslation();
+						treeMapWrapper.resetZoom();
+					}, FxThreadUtil.executor());
 
 			// When the mappings update, refresh the tree and mappings reference.
 			aggregateMappingManagerInstance.get().addAggregatedMappingsListener(this::updateTreeAndMappings);
