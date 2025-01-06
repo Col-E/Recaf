@@ -41,13 +41,16 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		//     FIELD baseField targetField baseDesc
 		//     METHOD baseMethod targetMethod baseMethodDesc
 		//         ARG baseArg targetArg
-		int line = 0;
 		Stack<String> currentClass = new Stack<>();
-		for (String lineStr : lines) {
-			line++;
+		for (int i = 0; i < lines.length; i++) {
+			String lineStr = lines[i];
 			String lineStrTrim = lineStr.trim();
+			if (lineStrTrim.isBlank())
+				continue;
 			int strIndent = lineStr.indexOf(lineStrTrim) + 1;
 			String[] args = lineStrTrim.split(" ");
+			if (args.length == 0)
+				continue;
 			String type = args[0];
 			try {
 				switch (type) {
@@ -102,11 +105,11 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 						// Do nothing, mapper does not support comments & arg names
 						break;
 					default:
-						logger.trace("Unknown Engima mappings line type: \"{}\" @line {}", type, line);
+						logger.trace("Unknown Engima mappings line type: \"{}\" @line {}", type, i);
 						break;
 				}
 			} catch (IndexOutOfBoundsException ex) {
-				throw new IllegalArgumentException(FAIL + "failed parsing line " + line, ex);
+				throw new IllegalArgumentException(FAIL + "failed parsing line " + i, ex);
 			}
 		}
 		return mappings;
