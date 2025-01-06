@@ -20,7 +20,18 @@ import software.coley.recaf.info.ModulesFileInfo;
 import software.coley.recaf.info.ZipFileInfo;
 import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.builder.ZipFileInfoBuilder;
-import software.coley.recaf.info.properties.builtin.*;
+import software.coley.recaf.info.properties.builtin.InputFilePathProperty;
+import software.coley.recaf.info.properties.builtin.PathOriginalNameProperty;
+import software.coley.recaf.info.properties.builtin.PathPrefixProperty;
+import software.coley.recaf.info.properties.builtin.PathSuffixProperty;
+import software.coley.recaf.info.properties.builtin.VersionedClassProperty;
+import software.coley.recaf.info.properties.builtin.ZipAccessTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipCommentProperty;
+import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
+import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
+import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.ModulesIOUtil;
@@ -410,10 +421,11 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				try {
 					AndroidClassBundle dexBundle = DexIOUtil.read(infoSource);
 					androidClassBundles.put(pathName, dexBundle);
-					return;
 				} catch (IOException ex) {
 					logger.error("Failed to read embedded DEX '{}'", pathName, ex);
+					files.initialPut(fileInfo);
 				}
+				return;
 			}
 
 			// Check for container file cases (Any ZIP type, JAR/WAR/etc)
@@ -426,6 +438,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					embeddedResources.put(pathName, embeddedResource);
 				} catch (IOException ex) {
 					logger.error("Failed to read embedded ZIP '{}'", pathName, ex);
+					files.initialPut(fileInfo);
 				}
 				return;
 			}
@@ -440,6 +453,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					embeddedResources.put(pathName, embeddedResource);
 				} catch (IOException ex) {
 					logger.error("Failed to read embedded ZIP '{}'", pathName, ex);
+					files.initialPut(fileInfo);
 				}
 				return;
 			}
