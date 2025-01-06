@@ -11,6 +11,7 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.workspace.WorkspaceProcessor;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -19,7 +20,7 @@ import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListene
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Workspace processor that marks {@link ClassInfo} values that inherit from {@link Throwable}
@@ -31,21 +32,17 @@ import java.util.Objects;
 @Dependent
 public class ThrowablePropertyAssigningProcessor implements WorkspaceProcessor, ResourceJvmClassListener, ResourceAndroidClassListener {
 	private static final String THROWABLE = "java/lang/Throwable";
-	private final InheritanceGraph inheritanceGraph;
+	private final InheritanceGraphService graphService;
+	private InheritanceGraph inheritanceGraph;
 
 	@Inject
 	public ThrowablePropertyAssigningProcessor(@Nonnull InheritanceGraphService graphService) {
-		this.inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
+		this.graphService = graphService;
 	}
 
 	@Override
 	public void processWorkspace(@Nonnull Workspace workspace) {
-		inheritanceGraph.getVertex(THROWABLE).allChildren().forEach(vertex -> {
-			ClassInfo classInfo = vertex.getValue();
-			ThrowableProperty.set(classInfo);
-		});
-
-		// Ensure future changes to workspace also get updated.
+		// Ensure future changes to workspace will process any new classes.
 		ThrowablePropertyAssigningProcessor processor = this;
 		workspace.addWorkspaceModificationListener(new WorkspaceModificationListener() {
 			@Override
@@ -58,9 +55,15 @@ public class ThrowablePropertyAssigningProcessor implements WorkspaceProcessor, 
 				library.removeListener(processor);
 			}
 		});
-		for (WorkspaceResource resource : workspace.getAllResources(false)) {
+		for (WorkspaceResource resource : workspace.getAllResources(false))
 			resource.addListener(processor);
-		}
+
+		// Provide a graph asynchronously, then process all classes in the workspace.
+		CompletableFuture.supplyAsync(() -> graphService.getOrCreateInheritanceGraph(workspace), ThreadUtil.executor())
+				.thenAccept(inheritanceGraph -> {
+					this.inheritanceGraph = inheritanceGraph;
+					workspace.findClasses(false, c -> true).forEach(path -> handle(path.getValue()));
+				});
 	}
 
 	@Nonnull
@@ -70,6 +73,12 @@ public class ThrowablePropertyAssigningProcessor implements WorkspaceProcessor, 
 	}
 
 	private void handle(@Nonnull ClassInfo cls) {
+		// Skip if not ready yet.
+		// Any 'missed' cases here should be satisfied by the initial pass when the graph becomes available.
+		if (inheritanceGraph == null)
+			return;
+
+		// Mark the class if it has 'java/lang/Throwable' as a parent.
 		InheritanceVertex vertex = inheritanceGraph.getVertex(cls.getName());
 		if (vertex != null && vertex.hasParent(THROWABLE))
 			ThrowableProperty.set(cls);
