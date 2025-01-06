@@ -4,12 +4,23 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
-import software.coley.recaf.info.builder.*;
+import software.coley.recaf.info.builder.ArscFileInfoBuilder;
+import software.coley.recaf.info.builder.AudioFileInfoBuilder;
+import software.coley.recaf.info.builder.BinaryXmlFileInfoBuilder;
+import software.coley.recaf.info.builder.DexFileInfoBuilder;
+import software.coley.recaf.info.builder.FileInfoBuilder;
+import software.coley.recaf.info.builder.ImageFileInfoBuilder;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.builder.ModulesFileInfoBuilder;
+import software.coley.recaf.info.builder.NativeLibraryFileInfoBuilder;
+import software.coley.recaf.info.builder.VideoFileInfoBuilder;
+import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.IllegalClassSuspectProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.util.ByteHeaderUtil;
@@ -44,23 +55,25 @@ public class BasicInfoImporter implements InfoImporter {
 		// Check for Java classes
 		if (matchesClass(data)) {
 			try {
+				int readerFlags = config.doSkipCodeParing() ? ClassReader.SKIP_CODE : 0;
+
 				// If we're skipping validation, any ASM parse failures will result in the class
 				// being treated as a file instead (see catch block)
 				if (config.doSkipAsmValidation())
-					return new JvmClassInfoBuilder(data).build();
+					return new JvmClassInfoBuilder(data, readerFlags).build();
 
 				// If we are doing validation, disable skipping ASM checks.
 				try {
 					return new JvmClassInfoBuilder()
 							.skipValidationChecks(false)
-							.adaptFrom(data)
+							.adaptFrom(data, readerFlags)
 							.build();
 				} catch (Throwable t) {
 					// Patch if not compatible with ASM
 					byte[] patched = classPatcher.patch(name, data);
 					logger.debug("CafeDude patched class: {}", name);
 					try {
-						return new JvmClassInfoBuilder(patched)
+						return new JvmClassInfoBuilder(patched, readerFlags)
 								.skipValidationChecks(false)
 								.build();
 					} catch (Throwable t1) {

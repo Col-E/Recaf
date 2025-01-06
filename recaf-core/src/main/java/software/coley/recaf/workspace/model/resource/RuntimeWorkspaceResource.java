@@ -88,9 +88,7 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 
 				// Try and parse the class and yield the result.
 				try {
-					JvmClassInfo info = new JvmClassInfoBuilder()
-							.adaptFrom(value, ClassReader.SKIP_CODE)
-							.build();
+					JvmClassInfo info = new JvmClassInfoBuilder(value, ClassReader.SKIP_CODE).build();
 					cache.put(key, info);
 					return info;
 				} catch (Throwable t) {
