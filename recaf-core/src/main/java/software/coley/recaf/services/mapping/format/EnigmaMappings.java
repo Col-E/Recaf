@@ -15,6 +15,8 @@ import java.util.Stack;
 
 /**
  * Enigma mappings file implementation.
+ * <p>
+ * Specification: <a href="https://wiki.fabricmc.net/documentation:enigma_mappings">enigma_mappings</a>
  *
  * @author Matt Coley
  */
@@ -71,12 +73,17 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 						break;
 					case "FIELD":
 						// Check if no longer within inner-class scope
-						if (strIndent < currentClass.size()) {
+						if (strIndent < currentClass.size())
 							currentClass.pop();
-						}
+
 						// Parse field
 						if (currentClass.empty())
 							throw new IllegalArgumentException(FAIL + "could not map field, no class context");
+
+						// Skip if there aren't enough arguments to pull the necessary items
+						if (args.length < 4)
+							continue;
+
 						String currentField = removeNonePackage(args[1]);
 						String renamedField = removeNonePackage(args[2]);
 						String currentFieldDesc = removeNonePackage(args[3]);
@@ -84,15 +91,22 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 						break;
 					case "METHOD":
 						// Check if no longer within inner-class scope
-						if (strIndent < currentClass.size()) {
+						if (strIndent < currentClass.size())
 							currentClass.pop();
-						}
+
 						// Parse method
 						if (currentClass.empty())
 							throw new IllegalArgumentException(FAIL + "could not map method, no class context");
-						String currentMethod = args[1];
-						if (currentMethod.equals("<init>"))
+
+						// Skip if there aren't enough arguments to pull the necessary items
+						if (args.length < 4)
 							continue;
+
+						// Skip constructors/initializers
+						String currentMethod = args[1];
+						if (currentMethod.startsWith("<"))
+							continue;
+
 						// Not all methods need to be renamed if they have child arg elements that are renamed
 						if (args.length >= 4) {
 							String renamedMethod = args[2];
