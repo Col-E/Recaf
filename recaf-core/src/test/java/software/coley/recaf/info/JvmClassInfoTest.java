@@ -2,12 +2,14 @@ package software.coley.recaf.info;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Opcodes;
 import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.AccessibleFields;
 import software.coley.recaf.util.ByteHeaderUtil;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -93,8 +95,10 @@ class JvmClassInfoTest {
 				"Direct copy via builder should have same class equality");
 
 		// With modification
+		byte[] modifiedBytecode = Arrays.copyOf(accessibleFields.getBytecode(), accessibleFields.getBytecode().length);
+		modifiedBytecode[5] = 1; // Change minor version to any non-zero value
 		JvmClassInfo builderModifiedCopy = accessibleFields.toJvmClassBuilder()
-				.withName("Modified")
+				.withBytecode(modifiedBytecode)
 				.build();
 		assertNotEquals(accessibleFields, builderModifiedCopy,
 				"Direct copy via builder should have same class equality");

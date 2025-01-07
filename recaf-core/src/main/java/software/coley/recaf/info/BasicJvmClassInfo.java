@@ -49,12 +49,14 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null) return false;
-		if (!super.equals(o)) return false;
 
 		if (o instanceof JvmClassInfo other) {
 			if (version != other.getVersion()) return false;
 			return Arrays.equals(bytecode, other.getBytecode());
+		} else if (!super.equals(o)) {
+			return false;
 		}
+
 		return false;
 	}
 

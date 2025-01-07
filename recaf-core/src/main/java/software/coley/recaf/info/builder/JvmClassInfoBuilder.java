@@ -86,6 +86,18 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	}
 
 	/**
+	 * Creates a builder with data pulled from the given bytecode.
+	 *
+	 * @param reader
+	 * 		ASM class reader to read bytecode from.
+	 * @param readerFlags
+	 * 		Reader flags to use when populating information via {@link ClassReader#accept(ClassVisitor, int)}.
+	 */
+	public JvmClassInfoBuilder(@Nonnull ClassReader reader, int readerFlags) {
+		adaptFrom(reader, readerFlags);
+	}
+
+	/**
 	 * Creates a builder with the given bytecode.
 	 *
 	 * @param bytecode
