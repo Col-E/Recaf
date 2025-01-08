@@ -91,6 +91,7 @@ subprojects {
             testImplementation(libs.junit.api)
             testImplementation(libs.junit.params)
             testImplementation(libs.mockito)
+            testImplementation(libs.assertj)
             testRuntimeOnly(libs.junit.engine)
         }
     }

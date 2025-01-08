@@ -4,8 +4,7 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests various {@link MappingFileFormat} implementation's ability to parse input texts.
@@ -140,6 +139,21 @@ public class MappingImplementationTest {
 		MappingFileFormat format = new EnigmaMappings();
 		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertInheritMap(mappings);
+	}
+
+	@Test
+	void testEnigmaWithoutEntries() {
+		// The mapped names are optional, so we should be able to parse a sample with no
+		// actual target names, and get an empty result.
+		String mappingsText = """
+				CLASS test/Greetings
+				\tFIELD oldField Ljava/lang/String;
+				\tMETHOD say ()V""";
+		MappingFileFormat format = new EnigmaMappings();
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertTrue(mappings.getClasses().isEmpty());
+		assertTrue(mappings.getFields().isEmpty());
+		assertTrue(mappings.getMethods().isEmpty());
 	}
 
 	@Test

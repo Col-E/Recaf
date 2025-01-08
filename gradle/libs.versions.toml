@@ -1,4 +1,5 @@
 [versions]
+assertj = "3.27.2"
 asm = "9.7.1"
 atlantafx = "2.0.1"
 binary-resources = "31.3.0-alpha01.8"
@@ -48,6 +49,8 @@ shadow = "8.3.5"
 peterabeles-gversion = "1.10.3"
 
 [libraries]
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
 asm-analysis = { module = "org.ow2.asm:asm-analysis", version.ref = "asm" }
 asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
