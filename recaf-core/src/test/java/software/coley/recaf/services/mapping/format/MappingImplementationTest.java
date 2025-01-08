@@ -121,17 +121,12 @@ public class MappingImplementationTest {
 	@Test
 	void testEnigma() {
 		String mappingsText = """
+				COMMENT foo
 				CLASS test/Greetings rename/Hello
 				\tFIELD oldField newField Ljava/lang/String;
-				\tMETHOD say speak ()V""";
+				\tMETHOD say speak ()V
+				\tCLASS Inner RenamedInner""";
 		String mappingsTextWithTrailingNewline = mappingsText + "\n";
-
-		// The format spec says there should be a trailing newline, but we'll support both cases
-		MappingFileFormat format = new EnigmaMappings();
-		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
-		assertInheritMap(mappings);
-		mappings = assertDoesNotThrow(() -> format.parse(mappingsTextWithTrailingNewline));
-		assertInheritMap(mappings);
 
 		// The mapped names are optional, so we should be able to parse a sample with no
 		// actual target names, and get an empty result.
@@ -139,10 +134,38 @@ public class MappingImplementationTest {
 				CLASS test/Greetings
 				\tFIELD oldField Ljava/lang/String;
 				\tMETHOD say ()V""";
-		mappings = assertDoesNotThrow(() -> format.parse(mappingsTextWithNoDestinationNames));
+		MappingFileFormat format = new EnigmaMappings();
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsTextWithNoDestinationNames));
 		assertTrue(mappings.getClasses().isEmpty());
 		assertTrue(mappings.getFields().isEmpty());
 		assertTrue(mappings.getMethods().isEmpty());
+
+		// The format spec says there should be a trailing newline, but we'll support both cases
+		mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertInheritMap(mappings);
+		mappings = assertDoesNotThrow(() -> format.parse(mappingsTextWithTrailingNewline));
+		assertInheritMap(mappings);
+		assertEquals("rename/Hello$RenamedInner", mappings.getMappedClassName("test/Greetings$Inner"));
+
+		// This is an extreme edge case of comments and newlines spread out randomly
+		String sampleWithCommentsAndNewlines = """
+				COMMENT class comment # ignored
+				# also ignored
+							\t
+				CLASS test/Greetings rename/Hello
+				\t# field comment up next
+							\t
+				# not indented but still ignored
+				\tCOMMENT This is a comment on the field
+							\t
+				\tFIELD oldField newField Ljava/lang/String;
+							\t
+				\tMETHOD say speak ()V
+							\t
+				\t\t# There are no args
+				\t\tARG noArgsHere""";
+		mappings = assertDoesNotThrow(() -> format.parse(sampleWithCommentsAndNewlines));
+		assertInheritMap(mappings);
 	}
 
 	@Test
