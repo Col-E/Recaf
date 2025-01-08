@@ -194,6 +194,22 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	}
 
 	/**
+	 * Do note that there can be multiple fields with one name if there are different descriptors for each.
+	 * To differentiate properly, please use {@link #getDeclaredField(String, String)}.
+	 *
+	 * @param name
+	 * 		Field name.
+	 *
+	 * @return First matching field definition, or {@code null} if none were found.
+	 */
+	@Nullable
+	default FieldMember getFirstDeclaredFieldByName(@Nonnull String name) {
+		return fieldStream()
+				.filter(f -> f.getName().equals(name))
+				.findFirst().orElse(null);
+	}
+
+	/**
 	 * @param name
 	 * 		Field name.
 	 * @param descriptor

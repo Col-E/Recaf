@@ -11,7 +11,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
-import software.coley.recaf.test.dummy.StringConsumer;
+import software.coley.recaf.test.dummy.ClassWithLambda;
 import software.coley.recaf.test.dummy.StringConsumerUser;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
@@ -49,9 +49,13 @@ class PathNodeTest {
 	static JvmClassInfo secondaryClassInfo;
 	static AndroidClassInfo primaryAndroidClassInfo;
 	// paths
+	static ClassMemberPathNode p1field;
+	static ClassMemberPathNode p1method;
 	static ClassPathNode p1;
+	static FilePathNode pFile1;
+	static FilePathNode pFile2;
 	static DirectoryPathNode p2;
-	static DirectoryPathNode p2b;
+	static DirectoryPathNode p2parent;
 	static BundlePathNode p3;
 	static BundlePathNode p3and1;
 	static BundlePathNode p3and2;
@@ -65,10 +69,10 @@ class PathNodeTest {
 
 	@BeforeAll
 	static void setup() throws IOException {
-		primaryClassInfo = fromRuntimeClass(StringConsumer.class);
+		primaryClassInfo = fromRuntimeClass(ClassWithLambda.class);
 		primaryJvmBundle = fromClasses(primaryClassInfo);
 		primaryFileBundle = new BasicFileBundle();
-		primaryFileInfo = new TextFileInfoBuilder().withName("foo").withRawContent("foo".getBytes()).build();
+		primaryFileInfo = new TextFileInfoBuilder().withName("foo.txt").withRawContent("foo".getBytes()).build();
 		primaryFileBundle.put(primaryFileInfo);
 		primaryAndroidClassInfo = new AndroidClassInfoBuilder().withName("foo/HelloWorld").build();
 		primaryAndroidBundle = new BasicAndroidClassBundle();
@@ -83,6 +87,7 @@ class PathNodeTest {
 				.withAndroidClassBundles(androidClassBundles)
 				.build();
 
+		FileInfo secondaryFileInfo = new TextFileInfoBuilder().withName("bar.txt").withRawContent("bar".getBytes()).build();
 		secondaryClassInfo = fromRuntimeClass(StringConsumerUser.class);
 		secondaryJvmBundle = fromClasses(secondaryClassInfo);
 		secondaryResource = new WorkspaceResourceBuilder()
@@ -100,9 +105,13 @@ class PathNodeTest {
 		p3and1 = p4.child(primaryAndroidBundle);
 		p3and2 = p4.child(secondaryAndroidBundle);
 		p3file = p4.child(primaryFileBundle);
+		pFile1 = p3file.child(null).child(primaryFileInfo);
+		pFile2 = p3file.child(null).child(secondaryFileInfo);
 		p2 = p3.child(packageName);
-		p2b = p3.child(parentPackageName);
+		p2parent = p3.child(parentPackageName);
 		p1 = p2.child(primaryClassInfo);
+		p1field = p1.child(Objects.requireNonNull(primaryClassInfo.getFirstDeclaredFieldByName("map")));
+		p1method = p1.child(Objects.requireNonNull(primaryClassInfo.getFirstDeclaredMethodByName("runnable")));
 
 		s4 = p5.child(secondaryResource);
 		s3 = s4.child(secondaryJvmBundle);
@@ -144,17 +153,17 @@ class PathNodeTest {
 		void childDescendantOfParent() {
 			// Descendant of parent
 			assertThat(p1.isDescendantOf(p2)).isTrue();
-			assertThat(p1.isDescendantOf(p2b)).isTrue();
+			assertThat(p1.isDescendantOf(p2parent)).isTrue();
 			assertThat(p1.isDescendantOf(p3)).isTrue();
 			assertThat(p1.isDescendantOf(p4)).isTrue();
 			assertThat(p1.isDescendantOf(p5)).isTrue();
-			assertThat(p2.isDescendantOf(p2b)).isTrue();
+			assertThat(p2.isDescendantOf(p2parent)).isTrue();
 			assertThat(p2.isDescendantOf(p3)).isTrue();
 			assertThat(p2.isDescendantOf(p4)).isTrue();
 			assertThat(p2.isDescendantOf(p5)).isTrue();
-			assertThat(p2b.isDescendantOf(p3)).isTrue();
-			assertThat(p2b.isDescendantOf(p4)).isTrue();
-			assertThat(p2b.isDescendantOf(p5)).isTrue();
+			assertThat(p2parent.isDescendantOf(p3)).isTrue();
+			assertThat(p2parent.isDescendantOf(p4)).isTrue();
+			assertThat(p2parent.isDescendantOf(p5)).isTrue();
 			assertThat(p3.isDescendantOf(p4)).isTrue();
 			assertThat(p3.isDescendantOf(p5)).isTrue();
 			assertThat(p4.isDescendantOf(p5)).isTrue();
@@ -165,7 +174,7 @@ class PathNodeTest {
 			// Descendant of self
 			assertThat(p1.isDescendantOf(p1)).isTrue();
 			assertThat(p2.isDescendantOf(p2)).isTrue();
-			assertThat(p2b.isDescendantOf(p2b)).isTrue();
+			assertThat(p2parent.isDescendantOf(p2parent)).isTrue();
 			assertThat(p3.isDescendantOf(p3)).isTrue();
 			assertThat(p4.isDescendantOf(p4)).isTrue();
 			assertThat(p5.isDescendantOf(p5)).isTrue();
@@ -183,8 +192,8 @@ class PathNodeTest {
 			assertThat(p4.isDescendantOf(p1)).isFalse();
 			assertThat(p3.isDescendantOf(p2)).isFalse();
 			assertThat(p3.isDescendantOf(p1)).isFalse();
-			assertThat(p2b.isDescendantOf(p2)).isFalse();
-			assertThat(p2b.isDescendantOf(p1)).isFalse();
+			assertThat(p2parent.isDescendantOf(p2)).isFalse();
+			assertThat(p2parent.isDescendantOf(p1)).isFalse();
 			assertThat(p2.isDescendantOf(p1)).isFalse();
 		}
 
@@ -364,10 +373,53 @@ class PathNodeTest {
 			assertThatComparable(p3file).isGreaterThan(p3and1);
 			assertThatComparable(p3and2).isGreaterThan(p3and1);
 		}
+
+		@Test
+		void compareToOtherResourceLocations() {
+			// Primary resource should come first
+			assertThatComparable(p4).isLessThan(s4);
+			assertThatComparable(s4).isGreaterThan(p4);
+
+			// Self comparison
+			assertThat(p4.localCompare(p4)).isZero();
+			assertThat(s4.localCompare(s4)).isZero();
+		}
 	}
 
 	@Nested
 	class Misc {
+		@Test
+		void hasEqualOrChildValue() {
+			// Comparison between members
+			assertThat(p1field.hasEqualOrChildValue(p1method)).isFalse();
+			assertThat(p1method.hasEqualOrChildValue(p1field)).isFalse();
+			assertThat(p1method.hasEqualOrChildValue(p1method)).isTrue();
+			assertThat(p1field.hasEqualOrChildValue(p1field)).isTrue();
+
+			// Comparison between classes
+			assertThat(p1.hasEqualOrChildValue(p1)).isTrue();
+			assertThat(p1.hasEqualOrChildValue(s1)).isFalse();
+			assertThat(s1.hasEqualOrChildValue(p1)).isFalse();
+
+			// Comparison between files
+			assertThat(pFile1.hasEqualOrChildValue(pFile1)).isTrue();
+			assertThat(pFile1.hasEqualOrChildValue(pFile2)).isFalse();
+
+			// Comparison between packages
+			//  - p2       == 'com/example'
+			//  - p2parent == 'com/'
+			// The deeper package should be treated as a "child value" of the parent package
+			assertThat(p2.hasEqualOrChildValue(p2parent)).isTrue();
+			assertThat(p2parent.hasEqualOrChildValue(p2)).isFalse();
+
+			// Comparison between other types
+			assertThat(p1field.hasEqualOrChildValue(p1)).isFalse();
+			assertThat(p1field.hasEqualOrChildValue(p2)).isFalse();
+			assertThat(p1field.hasEqualOrChildValue(p3)).isFalse();
+			assertThat(p1field.hasEqualOrChildValue(p4)).isFalse();
+			assertThat(p1field.hasEqualOrChildValue(p5)).isFalse();
+		}
+
 		@Test
 		void bundleInTarget() {
 			// JVM bundle
