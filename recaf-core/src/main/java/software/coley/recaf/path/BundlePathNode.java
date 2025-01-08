@@ -5,7 +5,7 @@ import jakarta.annotation.Nullable;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Map;
@@ -89,7 +89,7 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 	 */
 	public boolean isInVersionedJvmBundle() {
 		WorkspaceResource resource = parentValue();
-		if (resource != null && getValue() instanceof JvmClassBundle jvmBundle)
+		if (resource != null && getValue() instanceof VersionedJvmClassBundle jvmBundle)
 			return resource.getVersionedJvmClassBundles().containsValue(jvmBundle);
 		return false;
 	}
