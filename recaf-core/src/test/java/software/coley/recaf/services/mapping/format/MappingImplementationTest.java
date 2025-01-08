@@ -132,18 +132,14 @@ public class MappingImplementationTest {
 		assertInheritMap(mappings);
 		mappings = assertDoesNotThrow(() -> format.parse(mappingsTextWithTrailingNewline));
 		assertInheritMap(mappings);
-	}
 
-	@Test
-	void testEnigmaWithoutEntries() {
 		// The mapped names are optional, so we should be able to parse a sample with no
 		// actual target names, and get an empty result.
-		String mappingsText = """
+		String mappingsTextWithNoDestinationNames = """
 				CLASS test/Greetings
 				\tFIELD oldField Ljava/lang/String;
 				\tMETHOD say ()V""";
-		MappingFileFormat format = new EnigmaMappings();
-		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		mappings = assertDoesNotThrow(() -> format.parse(mappingsTextWithNoDestinationNames));
 		assertTrue(mappings.getClasses().isEmpty());
 		assertTrue(mappings.getFields().isEmpty());
 		assertTrue(mappings.getMethods().isEmpty());
