@@ -125,20 +125,13 @@ public class MappingImplementationTest {
 				CLASS test/Greetings rename/Hello
 				\tFIELD oldField newField Ljava/lang/String;
 				\tMETHOD say speak ()V""";
+		String mappingsTextWithTrailingNewline = mappingsText + "\n";
+
+		// The format spec says there should be a trailing newline, but we'll support both cases
 		MappingFileFormat format = new EnigmaMappings();
 		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertInheritMap(mappings);
-	}
-
-	@Test
-	void testEnigma2() {
-		String mappingsText = """
-				CLASS test/Greetings rename/Hello
-				\tFIELD oldField newField Ljava/lang/String;
-				\tMETHOD say speak ()V
-				""";
-		MappingFileFormat format = new EnigmaMappings();
-		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		mappings = assertDoesNotThrow(() -> format.parse(mappingsTextWithTrailingNewline));
 		assertInheritMap(mappings);
 	}
 

@@ -15,4 +15,12 @@ public class InvalidMappingException extends Exception {
 	public InvalidMappingException(@Nonnull Throwable cause) {
 		super(cause);
 	}
+
+	/**
+	 * @param message
+	 * 		Detail message for why the mappings are invalid.
+	 */
+	public InvalidMappingException(@Nonnull String message) {
+		super(message);
+	}
 }

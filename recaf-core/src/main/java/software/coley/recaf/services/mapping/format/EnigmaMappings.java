@@ -18,6 +18,7 @@ import java.util.Deque;
  * <p>
  * Specification: <a href="https://wiki.fabricmc.net/documentation:enigma_mappings">enigma_mappings</a>
  *
+ * @author Janmm14
  * @author Matt Coley
  */
 @Dependent
@@ -25,13 +26,13 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	public static final String NAME = "Enigma";
 	private static final String FAIL = "Invalid Enigma mappings, ";
 	private static final Logger LOGGER = Logging.get(EnigmaMappings.class);
-	// parser phase constants
+	// Parser phase constants
 	private static final int PHASE_IGNORE_LINE = 0;
 	private static final int PHASE_FIND_TYPE = 1;
 	private static final int PHASE_TYPE_CLASS = 2;
 	private static final int PHASE_TYPE_FIELD = 3;
 	private static final int PHASE_TYPE_METHOD = 4;
-	// needs to be higher than highest phase, as it is an additive flag
+	// The finishing flag needs to be higher than the highest phase, as it is an additive flag
 	private static final int PHASE_TYPE_FLAG_FINISH = 8;
 
 	/**
@@ -41,27 +42,23 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		super(NAME, true, true);
 	}
 
-	private static final class ParserState {
-		private byte indent = 0;
-		private byte phase = PHASE_FIND_TYPE;
-		private byte typeArgsIndex = 0;
-		/**
-		 * {@code -1} indicates search for token start
-		 */
-		private int start = -1;
-		private int line = 1;
-		private final String[] typeArgs = new String[3];
-		private final Deque<String> currentClass = new ArrayDeque<>();
-	}
-
 	@Nonnull
 	@Override
-	public IntermediateMappings parse(@Nonnull String mappingText) {
-		return parse0(mappingText);
+	public IntermediateMappings parse(@Nonnull String mappingsText) throws InvalidMappingException {
+		return parseEnigma(mappingsText);
 	}
 
+	/**
+	 * @param mappingsText
+	 * 		Text of the mappings to parse.
+	 *
+	 * @return Intermediate mappings from parsed text.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When reading the mappings encounters any failure.
+	 */
 	@Nonnull
-	public static IntermediateMappings parse0(@Nonnull String mappingText) {
+	public static IntermediateMappings parseEnigma(@Nonnull String mappingsText) throws InvalidMappingException {
 		// COMMENT comment #ignored
 		// CLASS BaseClass TargetClass
 		//     FIELD baseField targetField baseDesc
@@ -71,8 +68,8 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		//         FIELD innerField targetField innerDesc
 		IntermediateMappings mappings = new IntermediateMappings();
 		ParserState state = new ParserState();
-		for (int i = 0; i < mappingText.length(); i++) {
-			char c = mappingText.charAt(i);
+		for (int i = 0; i < mappingsText.length(); i++) {
+			char c = mappingsText.charAt(i);
 			if (c != '\n' && c != '\r' && c != '#' && c != ' ') {
 				if (state.phase == PHASE_IGNORE_LINE) continue; // inside # or ignored type
 				if (state.phase == PHASE_FIND_TYPE) {
@@ -80,11 +77,12 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 						state.indent++;
 						continue;
 					}
+
+					// If indent is lower than current class depth, pop
 					while (state.indent < state.currentClass.size()) {
 						state.currentClass.pop();
 					}
 				}
-				// If indent is lower than current class depth, pop
 
 				// start of new token
 				if (state.start == -1) {
@@ -94,7 +92,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 				boolean isSpace = c == ' ';
 				if (isSpace || state.phase != PHASE_IGNORE_LINE && state.phase < PHASE_TYPE_FLAG_FINISH) {
 					// finished reading a token
-					handleToken(mappingText, state, i);
+					handleToken(mappingsText, state, i);
 				}
 				if (isSpace) continue; // continue parsing next token
 
@@ -107,10 +105,12 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 				}
 
 				state.line++;
+
 				// skip two-char newline to not count 1 new line twice
-				if (c == '\r' && mappingText.length() > i + 1 && mappingText.charAt(i + 1) == '\n') {
+				if (c == '\r' && mappingsText.length() > i + 1 && mappingsText.charAt(i + 1) == '\n') {
 					i++;
 				}
+
 				// reset values for next line
 				state.phase = PHASE_FIND_TYPE;
 				state.indent = 0;
@@ -120,41 +120,47 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 				state.typeArgs[2] = null;
 			}
 		}
+
 		// handle and/or write last token if applicable
 		if (state.phase > PHASE_FIND_TYPE) {
 			if (state.phase < PHASE_TYPE_FLAG_FINISH) {
-				handleToken(mappingText, state, mappingText.length());
+				handleToken(mappingsText, state, mappingsText.length());
 			}
 			writeCurrentMapping(state, mappings);
 		}
 		return mappings;
 	}
 
-	private static void writeCurrentMapping(ParserState state, IntermediateMappings mappings) {
+	private static void writeCurrentMapping(@Nonnull ParserState state, @Nonnull IntermediateMappings mappings) throws InvalidMappingException {
 		switch (state.phase) {
 			case PHASE_TYPE_CLASS + PHASE_TYPE_FLAG_FINISH:
 				if (state.typeArgsIndex == 2) {
-					//noinspection DataFlowIssue
-					mappings.addClass(state.currentClass.peek(), state.typeArgs[1]);
+					String cls = state.currentClass.peek();
+					if (cls == null)
+						throw new InvalidMappingException(FAIL + "cannot peek current class context when finishing class section");
+					mappings.addClass(cls, state.typeArgs[1]);
 				}
 				break;
 			case PHASE_TYPE_FIELD + PHASE_TYPE_FLAG_FINISH:
 				if (state.typeArgsIndex == 3) {
-					String peek = state.currentClass.peek();
-					//noinspection DataFlowIssue
-					mappings.addField(peek, state.typeArgs[2], state.typeArgs[0], state.typeArgs[1]);
+					String cls = state.currentClass.peek();
+					if (cls == null)
+						throw new InvalidMappingException(FAIL + "cannot peek current class context when finishing field section");
+					mappings.addField(cls, state.typeArgs[2], state.typeArgs[0], state.typeArgs[1]);
 				}
 				break;
 			case PHASE_TYPE_METHOD + PHASE_TYPE_FLAG_FINISH:
 				if (state.typeArgsIndex == 3) {
-					//noinspection DataFlowIssue
-					mappings.addMethod(state.currentClass.peek(), state.typeArgs[2], state.typeArgs[0], state.typeArgs[1]);
+					String cls = state.currentClass.peek();
+					if (cls == null)
+						throw new InvalidMappingException(FAIL + "cannot peek current class context when finishing method section");
+					mappings.addMethod(cls, state.typeArgs[2], state.typeArgs[0], state.typeArgs[1]);
 				}
 				break;
 		}
 	}
 
-	private static void handleToken(@Nonnull String mappingText, ParserState state, int i) {
+	private static void handleToken(@Nonnull String mappingText, @Nonnull ParserState state, int i) throws InvalidMappingException {
 		switch (state.phase) {
 			case PHASE_FIND_TYPE -> {
 				state.typeArgsIndex = 0;
@@ -163,13 +169,13 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 					case "CLASS" -> state.phase = 2;
 					case "FIELD" -> {
 						if (state.currentClass.isEmpty()) {
-							throw new IllegalArgumentException(FAIL + "could not map field, no class context @line " + state.line + " @char " + i);
+							throw new InvalidMappingException(FAIL + "could not map field, no class context @line " + state.line + " @char " + i);
 						}
 						state.phase = PHASE_TYPE_FIELD;
 					}
 					case "METHOD" -> {
 						if (state.currentClass.isEmpty()) {
-							throw new IllegalArgumentException(FAIL + "could not map method, no class context @line " + state.line + " @char " + i);
+							throw new InvalidMappingException(FAIL + "could not map method, no class context @line " + state.line + " @char " + i);
 						}
 						state.phase = PHASE_TYPE_METHOD;
 					}
@@ -267,14 +273,17 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 						break;
 				}
 			}
-			default -> throw new IllegalStateException("Unexpected value: " + state.phase);
+			default -> throw new InvalidMappingException("Unexpected value: " + state.phase);
 		}
 		state.start = -1;
 	}
 
 	@Override
 	public String exportText(@Nonnull Mappings mappings) {
-		//TODO fix inner class handling
+		//TODO: Fix inner class handling
+		// - Currently we export inner classes as top-level classes
+		// - We should match the spec and have inner-classes indented beneath their outer classes
+
 		StringBuilder sb = new StringBuilder();
 		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {
@@ -314,7 +323,21 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		return sb.toString();
 	}
 
-	private static String removeNonePackage(String text) {
+	@Nonnull
+	private static String removeNonePackage(@Nonnull String text) {
 		return text.replaceAll("(?:^|(?<=L))none/", "");
+	}
+
+	private static final class ParserState {
+		private byte indent = 0;
+		private byte phase = PHASE_FIND_TYPE;
+		private byte typeArgsIndex = 0;
+		/**
+		 * {@code -1} indicates search for token start
+		 */
+		private int start = -1;
+		private int line = 1;
+		private final String[] typeArgs = new String[3];
+		private final Deque<String> currentClass = new ArrayDeque<>();
 	}
 }
