@@ -29,7 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatComparable;
 import static software.coley.recaf.test.TestClassUtils.*;
 
 /**
@@ -52,7 +53,8 @@ class PathNodeTest {
 	static DirectoryPathNode p2;
 	static DirectoryPathNode p2b;
 	static BundlePathNode p3;
-	static BundlePathNode p3and;
+	static BundlePathNode p3and1;
+	static BundlePathNode p3and2;
 	static BundlePathNode p3file;
 	static ResourcePathNode p4;
 	static WorkspacePathNode p5;
@@ -70,9 +72,11 @@ class PathNodeTest {
 		primaryFileBundle.put(primaryFileInfo);
 		primaryAndroidClassInfo = new AndroidClassInfoBuilder().withName("foo/HelloWorld").build();
 		primaryAndroidBundle = new BasicAndroidClassBundle();
+		BasicAndroidClassBundle secondaryAndroidBundle = new BasicAndroidClassBundle();
 		primaryAndroidBundle.put(primaryAndroidClassInfo);
 		Map<String, AndroidClassBundle> androidClassBundles = new HashMap<>();
-		androidClassBundles.put("classex.dex", primaryAndroidBundle);
+		androidClassBundles.put("classes.dex", primaryAndroidBundle);
+		androidClassBundles.put("others.dex", secondaryAndroidBundle);
 		primaryResource = new WorkspaceResourceBuilder()
 				.withJvmClassBundle(primaryJvmBundle)
 				.withFileBundle(primaryFileBundle)
@@ -93,7 +97,8 @@ class PathNodeTest {
 		p5 = PathNodes.workspacePath(workspace);
 		p4 = p5.child(primaryResource);
 		p3 = p4.child(primaryJvmBundle);
-		p3and = p4.child(primaryAndroidBundle);
+		p3and1 = p4.child(primaryAndroidBundle);
+		p3and2 = p4.child(secondaryAndroidBundle);
 		p3file = p4.child(primaryFileBundle);
 		p2 = p3.child(packageName);
 		p2b = p3.child(parentPackageName);
@@ -113,23 +118,23 @@ class PathNodeTest {
 			ClassInfo v1 = p1.getValueOfType(ClassInfo.class);
 			Accessed v2 = p1.getValueOfType(Accessed.class);
 			Annotated v3 = p1.getValueOfType(Annotated.class);
-			assertSame(v1, v2);
-			assertSame(v2, v3);
+			assertThat(v2).isSameAs(v1);
+			assertThat(v3).isSameAs(v2);
 		}
 
 		@Test
 		void getParentOfTypeForParentTypes() {
-			ClassMemberPathNode memberPath = p1.child(primaryClassInfo.getMethods().get(0));
+			ClassMemberPathNode memberPath = p1.child(primaryClassInfo.getMethods().getFirst());
 
 			// Member path is not a class-info, so this will be the parent.
 			ClassPathNode v1 = memberPath.getPathOfType(ClassInfo.class);
-			assertSame(v1, p1);
+			assertThat(p1).isSameAs(v1);
 
 			// The member itself is accessed/annotated
 			ClassMemberPathNode v2 = memberPath.getPathOfType(Accessed.class);
 			ClassMemberPathNode v3 = memberPath.getPathOfType(Annotated.class);
-			assertSame(memberPath, v2);
-			assertSame(v2, v3);
+			assertThat(v2).isSameAs(memberPath);
+			assertThat(v3).isSameAs(v2);
 		}
 	}
 
@@ -138,56 +143,56 @@ class PathNodeTest {
 		@Test
 		void childDescendantOfParent() {
 			// Descendant of parent
-			assertTrue(p1.isDescendantOf(p2));
-			assertTrue(p1.isDescendantOf(p2b));
-			assertTrue(p1.isDescendantOf(p3));
-			assertTrue(p1.isDescendantOf(p4));
-			assertTrue(p1.isDescendantOf(p5));
-			assertTrue(p2.isDescendantOf(p2b));
-			assertTrue(p2.isDescendantOf(p3));
-			assertTrue(p2.isDescendantOf(p4));
-			assertTrue(p2.isDescendantOf(p5));
-			assertTrue(p2b.isDescendantOf(p3));
-			assertTrue(p2b.isDescendantOf(p4));
-			assertTrue(p2b.isDescendantOf(p5));
-			assertTrue(p3.isDescendantOf(p4));
-			assertTrue(p3.isDescendantOf(p5));
-			assertTrue(p4.isDescendantOf(p5));
+			assertThat(p1.isDescendantOf(p2)).isTrue();
+			assertThat(p1.isDescendantOf(p2b)).isTrue();
+			assertThat(p1.isDescendantOf(p3)).isTrue();
+			assertThat(p1.isDescendantOf(p4)).isTrue();
+			assertThat(p1.isDescendantOf(p5)).isTrue();
+			assertThat(p2.isDescendantOf(p2b)).isTrue();
+			assertThat(p2.isDescendantOf(p3)).isTrue();
+			assertThat(p2.isDescendantOf(p4)).isTrue();
+			assertThat(p2.isDescendantOf(p5)).isTrue();
+			assertThat(p2b.isDescendantOf(p3)).isTrue();
+			assertThat(p2b.isDescendantOf(p4)).isTrue();
+			assertThat(p2b.isDescendantOf(p5)).isTrue();
+			assertThat(p3.isDescendantOf(p4)).isTrue();
+			assertThat(p3.isDescendantOf(p5)).isTrue();
+			assertThat(p4.isDescendantOf(p5)).isTrue();
 		}
 
 		@Test
 		void descendantOfSelf() {
 			// Descendant of self
-			assertTrue(p1.isDescendantOf(p1));
-			assertTrue(p2.isDescendantOf(p2));
-			assertTrue(p2b.isDescendantOf(p2b));
-			assertTrue(p3.isDescendantOf(p3));
-			assertTrue(p4.isDescendantOf(p4));
-			assertTrue(p5.isDescendantOf(p5));
+			assertThat(p1.isDescendantOf(p1)).isTrue();
+			assertThat(p2.isDescendantOf(p2)).isTrue();
+			assertThat(p2b.isDescendantOf(p2b)).isTrue();
+			assertThat(p3.isDescendantOf(p3)).isTrue();
+			assertThat(p4.isDescendantOf(p4)).isTrue();
+			assertThat(p5.isDescendantOf(p5)).isTrue();
 		}
 
 		@Test
 		void parentNotDescendantOfChild() {
 			// Parent is not descendant of child
-			assertFalse(p5.isDescendantOf(p4));
-			assertFalse(p5.isDescendantOf(p3));
-			assertFalse(p5.isDescendantOf(p2));
-			assertFalse(p5.isDescendantOf(p1));
-			assertFalse(p4.isDescendantOf(p3));
-			assertFalse(p4.isDescendantOf(p2));
-			assertFalse(p4.isDescendantOf(p1));
-			assertFalse(p3.isDescendantOf(p2));
-			assertFalse(p3.isDescendantOf(p1));
-			assertFalse(p2b.isDescendantOf(p2));
-			assertFalse(p2b.isDescendantOf(p1));
-			assertFalse(p2.isDescendantOf(p1));
+			assertThat(p5.isDescendantOf(p4)).isFalse();
+			assertThat(p5.isDescendantOf(p3)).isFalse();
+			assertThat(p5.isDescendantOf(p2)).isFalse();
+			assertThat(p5.isDescendantOf(p1)).isFalse();
+			assertThat(p4.isDescendantOf(p3)).isFalse();
+			assertThat(p4.isDescendantOf(p2)).isFalse();
+			assertThat(p4.isDescendantOf(p1)).isFalse();
+			assertThat(p3.isDescendantOf(p2)).isFalse();
+			assertThat(p3.isDescendantOf(p1)).isFalse();
+			assertThat(p2b.isDescendantOf(p2)).isFalse();
+			assertThat(p2b.isDescendantOf(p1)).isFalse();
+			assertThat(p2.isDescendantOf(p1)).isFalse();
 		}
 
 		@Test
 		void sameDirectoryPathsFromDifferentParentAreNotDescendants() {
-			assertFalse(p3.isDescendantOf(s3));
-			assertFalse(p2.isDescendantOf(s2));
-			assertFalse(p1.isDescendantOf(s1));
+			assertThat(p3.isDescendantOf(s3)).isFalse();
+			assertThat(p2.isDescendantOf(s2)).isFalse();
+			assertThat(p1.isDescendantOf(s1)).isFalse();
 		}
 
 		@Test
@@ -202,106 +207,106 @@ class PathNodeTest {
 			DirectoryPathNode dirABB = new DirectoryPathNode("a/b/b");
 
 			// A
-			assertFalse(dirA.isParentOf(dirB));
-			assertTrue(dirA.isParentOf(dirAA));
-			assertTrue(dirA.isParentOf(dirAAA));
-			assertTrue(dirA.isParentOf(dirAAB));
-			assertTrue(dirA.isParentOf(dirAB));
-			assertTrue(dirA.isParentOf(dirABA));
-			assertTrue(dirA.isParentOf(dirABB));
+			assertThat(dirA.isParentOf(dirB)).isFalse();
+			assertThat(dirA.isParentOf(dirAA)).isTrue();
+			assertThat(dirA.isParentOf(dirAAA)).isTrue();
+			assertThat(dirA.isParentOf(dirAAB)).isTrue();
+			assertThat(dirA.isParentOf(dirAB)).isTrue();
+			assertThat(dirA.isParentOf(dirABA)).isTrue();
+			assertThat(dirA.isParentOf(dirABB)).isTrue();
 			// B
-			assertFalse(dirB.isParentOf(dirA));
-			assertFalse(dirB.isParentOf(dirAA));
-			assertFalse(dirB.isParentOf(dirAAA));
-			assertFalse(dirB.isParentOf(dirAAB));
-			assertFalse(dirB.isParentOf(dirAB));
-			assertFalse(dirB.isParentOf(dirABA));
-			assertFalse(dirB.isParentOf(dirABB));
+			assertThat(dirB.isParentOf(dirA)).isFalse();
+			assertThat(dirB.isParentOf(dirAA)).isFalse();
+			assertThat(dirB.isParentOf(dirAAA)).isFalse();
+			assertThat(dirB.isParentOf(dirAAB)).isFalse();
+			assertThat(dirB.isParentOf(dirAB)).isFalse();
+			assertThat(dirB.isParentOf(dirABA)).isFalse();
+			assertThat(dirB.isParentOf(dirABB)).isFalse();
 			// AA
-			assertFalse(dirAA.isParentOf(dirB));
-			assertFalse(dirAA.isParentOf(dirA));
-			assertTrue(dirAA.isParentOf(dirAAA));
-			assertTrue(dirAA.isParentOf(dirAAB));
-			assertFalse(dirAA.isParentOf(dirAB));
-			assertFalse(dirAA.isParentOf(dirABA));
-			assertFalse(dirAA.isParentOf(dirABB));
+			assertThat(dirAA.isParentOf(dirB)).isFalse();
+			assertThat(dirAA.isParentOf(dirA)).isFalse();
+			assertThat(dirAA.isParentOf(dirAAA)).isTrue();
+			assertThat(dirAA.isParentOf(dirAAB)).isTrue();
+			assertThat(dirAA.isParentOf(dirAB)).isFalse();
+			assertThat(dirAA.isParentOf(dirABA)).isFalse();
+			assertThat(dirAA.isParentOf(dirABB)).isFalse();
 			// AB
-			assertFalse(dirAB.isParentOf(dirB));
-			assertFalse(dirAB.isParentOf(dirAA));
-			assertFalse(dirAB.isParentOf(dirAAA));
-			assertFalse(dirAB.isParentOf(dirAAB));
-			assertTrue(dirAB.isParentOf(dirABA));
-			assertTrue(dirAB.isParentOf(dirABB));
+			assertThat(dirAB.isParentOf(dirB)).isFalse();
+			assertThat(dirAB.isParentOf(dirAA)).isFalse();
+			assertThat(dirAB.isParentOf(dirAAA)).isFalse();
+			assertThat(dirAB.isParentOf(dirAAB)).isFalse();
+			assertThat(dirAB.isParentOf(dirABA)).isTrue();
+			assertThat(dirAB.isParentOf(dirABB)).isTrue();
 
 			// Classes
 			// A
 			ClassPathNode classA = dirA.child(createEmptyClass(dirA.getValue() + "/TheClass"));
-			assertTrue(classA.isDescendantOf(dirA));
-			assertFalse(classA.isDescendantOf(dirAA));
-			assertFalse(classA.isDescendantOf(dirAB));
-			assertFalse(classA.isDescendantOf(dirAAA));
-			assertFalse(classA.isDescendantOf(dirAAB));
-			assertFalse(classA.isDescendantOf(dirABA));
-			assertFalse(classA.isDescendantOf(dirABB));
-			assertFalse(classA.isDescendantOf(dirB));
+			assertThat(classA.isDescendantOf(dirA)).isTrue();
+			assertThat(classA.isDescendantOf(dirAA)).isFalse();
+			assertThat(classA.isDescendantOf(dirAB)).isFalse();
+			assertThat(classA.isDescendantOf(dirAAA)).isFalse();
+			assertThat(classA.isDescendantOf(dirAAB)).isFalse();
+			assertThat(classA.isDescendantOf(dirABA)).isFalse();
+			assertThat(classA.isDescendantOf(dirABB)).isFalse();
+			assertThat(classA.isDescendantOf(dirB)).isFalse();
 
 			// AA
 			ClassPathNode classAA = dirAA.child(createEmptyClass(dirAA.getValue() + "/TheClass"));
-			assertTrue(classAA.isDescendantOf(dirA));
-			assertTrue(classAA.isDescendantOf(dirAA));
-			assertFalse(classAA.isDescendantOf(dirAB));
-			assertFalse(classAA.isDescendantOf(dirAAA));
-			assertFalse(classAA.isDescendantOf(dirAAB));
-			assertFalse(classAA.isDescendantOf(dirABA));
-			assertFalse(classAA.isDescendantOf(dirABB));
-			assertFalse(classAA.isDescendantOf(dirB));
+			assertThat(classAA.isDescendantOf(dirA)).isTrue();
+			assertThat(classAA.isDescendantOf(dirAA)).isTrue();
+			assertThat(classAA.isDescendantOf(dirAB)).isFalse();
+			assertThat(classAA.isDescendantOf(dirAAA)).isFalse();
+			assertThat(classAA.isDescendantOf(dirAAB)).isFalse();
+			assertThat(classAA.isDescendantOf(dirABA)).isFalse();
+			assertThat(classAA.isDescendantOf(dirABB)).isFalse();
+			assertThat(classAA.isDescendantOf(dirB)).isFalse();
 
 			// AAA
 			ClassPathNode classAAA = dirAAA.child(createEmptyClass(dirAAA.getValue() + "/TheClass"));
-			assertTrue(classAAA.isDescendantOf(dirA));
-			assertTrue(classAAA.isDescendantOf(dirAA));
-			assertFalse(classAAA.isDescendantOf(dirAB));
-			assertTrue(classAAA.isDescendantOf(dirAAA));
-			assertFalse(classAAA.isDescendantOf(dirAAB));
-			assertFalse(classAAA.isDescendantOf(dirABA));
-			assertFalse(classAAA.isDescendantOf(dirABB));
-			assertFalse(classAAA.isDescendantOf(dirB));
+			assertThat(classAAA.isDescendantOf(dirA)).isTrue();
+			assertThat(classAAA.isDescendantOf(dirAA)).isTrue();
+			assertThat(classAAA.isDescendantOf(dirAB)).isFalse();
+			assertThat(classAAA.isDescendantOf(dirAAA)).isTrue();
+			assertThat(classAAA.isDescendantOf(dirAAB)).isFalse();
+			assertThat(classAAA.isDescendantOf(dirABA)).isFalse();
+			assertThat(classAAA.isDescendantOf(dirABB)).isFalse();
+			assertThat(classAAA.isDescendantOf(dirB)).isFalse();
 
 			// B
 			ClassPathNode classB = dirB.child(createEmptyClass(dirB.getValue() + "/TheClass"));
-			assertFalse(classB.isDescendantOf(dirA));
-			assertFalse(classB.isDescendantOf(dirAA));
-			assertFalse(classB.isDescendantOf(dirAB));
-			assertFalse(classB.isDescendantOf(dirAAA));
-			assertFalse(classB.isDescendantOf(dirAAB));
-			assertFalse(classB.isDescendantOf(dirABA));
-			assertFalse(classB.isDescendantOf(dirABB));
-			assertTrue(classB.isDescendantOf(dirB));
+			assertThat(classB.isDescendantOf(dirA)).isFalse();
+			assertThat(classB.isDescendantOf(dirAA)).isFalse();
+			assertThat(classB.isDescendantOf(dirAB)).isFalse();
+			assertThat(classB.isDescendantOf(dirAAA)).isFalse();
+			assertThat(classB.isDescendantOf(dirAAB)).isFalse();
+			assertThat(classB.isDescendantOf(dirABA)).isFalse();
+			assertThat(classB.isDescendantOf(dirABB)).isFalse();
+			assertThat(classB.isDescendantOf(dirB)).isTrue();
 
 			// Class to class
 			// A
-			assertTrue(classA.isDescendantOf(classA));
-			assertFalse(classA.isDescendantOf(classAA));
-			assertFalse(classA.isDescendantOf(classAAA));
-			assertFalse(classA.isDescendantOf(classB));
+			assertThat(classA.isDescendantOf(classA)).isTrue();
+			assertThat(classA.isDescendantOf(classAA)).isFalse();
+			assertThat(classA.isDescendantOf(classAAA)).isFalse();
+			assertThat(classA.isDescendantOf(classB)).isFalse();
 
 			// AA
-			assertFalse(classAA.isDescendantOf(classA));
-			assertTrue(classAA.isDescendantOf(classAA));
-			assertFalse(classAA.isDescendantOf(classAAA));
-			assertFalse(classAA.isDescendantOf(classB));
+			assertThat(classAA.isDescendantOf(classA)).isFalse();
+			assertThat(classAA.isDescendantOf(classAA)).isTrue();
+			assertThat(classAA.isDescendantOf(classAAA)).isFalse();
+			assertThat(classAA.isDescendantOf(classB)).isFalse();
 
 			// AAA
-			assertFalse(classAAA.isDescendantOf(classA));
-			assertFalse(classAAA.isDescendantOf(classAA));
-			assertTrue(classAAA.isDescendantOf(classAAA));
-			assertFalse(classAAA.isDescendantOf(classB));
+			assertThat(classAAA.isDescendantOf(classA)).isFalse();
+			assertThat(classAAA.isDescendantOf(classAA)).isFalse();
+			assertThat(classAAA.isDescendantOf(classAAA)).isTrue();
+			assertThat(classAAA.isDescendantOf(classB)).isFalse();
 
 			// B
-			assertFalse(classB.isDescendantOf(classA));
-			assertFalse(classB.isDescendantOf(classAA));
-			assertFalse(classB.isDescendantOf(classAAA));
-			assertTrue(classB.isDescendantOf(classB));
+			assertThat(classB.isDescendantOf(classA)).isFalse();
+			assertThat(classB.isDescendantOf(classAA)).isFalse();
+			assertThat(classB.isDescendantOf(classAAA)).isFalse();
+			assertThat(classB.isDescendantOf(classB)).isTrue();
 		}
 	}
 
@@ -311,35 +316,35 @@ class PathNodeTest {
 		@SuppressWarnings("all")
 		void compareToSelfIsZero() {
 			// Self comparison or equal items should always be 0
-			assertEquals(0, p1.compareTo(p1));
-			assertEquals(0, p2.compareTo(p2));
-			assertEquals(0, p3.compareTo(p3));
-			assertEquals(0, p4.compareTo(p4));
-			assertEquals(0, p5.compareTo(p5));
+			assertThatComparable(p1).isEqualTo(p1);
+			assertThatComparable(p2).isEqualTo(p2);
+			assertThatComparable(p3).isEqualTo(p3);
+			assertThatComparable(p4).isEqualTo(p4);
+			assertThatComparable(p5).isEqualTo(p5);
 		}
 
 		@Test
 		void compareToParentIsGreater() {
 			// Children appear last (thus > 0)
-			assertTrue(p1.compareTo(p2) > 0);
-			assertTrue(p2.compareTo(p3) > 0);
-			assertTrue(p3.compareTo(p4) > 0);
-			assertTrue(p4.compareTo(p5) > 0);
+			assertThatComparable(p1).isGreaterThan(p2);
+			assertThatComparable(p2).isGreaterThan(p3);
+			assertThatComparable(p3).isGreaterThan(p4);
+			assertThatComparable(p4).isGreaterThan(p5);
 		}
 
 		@Test
 		void compareToChildIsLess() {
 			// Parents appear first (thus < 0)
-			assertTrue(p5.compareTo(p4) < 0);
-			assertTrue(p5.compareTo(p3) < 0);
-			assertTrue(p5.compareTo(p2) < 0);
-			assertTrue(p5.compareTo(p1) < 0);
-			assertTrue(p4.compareTo(p3) < 0);
-			assertTrue(p4.compareTo(p2) < 0);
-			assertTrue(p4.compareTo(p1) < 0);
-			assertTrue(p3.compareTo(p2) < 0);
-			assertTrue(p3.compareTo(p1) < 0);
-			assertTrue(p2.compareTo(p1) < 0);
+			assertThatComparable(p5).isLessThan(p4);
+			assertThatComparable(p5).isLessThan(p3);
+			assertThatComparable(p5).isLessThan(p2);
+			assertThatComparable(p5).isLessThan(p1);
+			assertThatComparable(p4).isLessThan(p3);
+			assertThatComparable(p4).isLessThan(p2);
+			assertThatComparable(p4).isLessThan(p1);
+			assertThatComparable(p3).isLessThan(p2);
+			assertThatComparable(p3).isLessThan(p1);
+			assertThatComparable(p2).isLessThan(p1);
 		}
 
 		@Test
@@ -348,14 +353,16 @@ class PathNodeTest {
 			// 2: Versioned
 			// 3: Android
 			// 4: File
-			assertEquals(-1, p3.compareTo(p3and));
-			assertEquals(-1, p3.compareTo(p3file));
-			assertEquals(-1, p3and.compareTo(p3file));
+			assertThatComparable(p3).isLessThan(p3and1);
+			assertThatComparable(p3).isLessThan(p3file);
+			assertThatComparable(p3and1).isLessThan(p3file);
+			assertThatComparable(p3and1).isLessThan(p3and2);
 
 			// Inverse
-			assertEquals(1, p3and.compareTo(p3));
-			assertEquals(1, p3file.compareTo(p3));
-			assertEquals(1, p3file.compareTo(p3and));
+			assertThatComparable(p3and1).isGreaterThan(p3);
+			assertThatComparable(p3file).isGreaterThan(p3);
+			assertThatComparable(p3file).isGreaterThan(p3and1);
+			assertThatComparable(p3and2).isGreaterThan(p3and1);
 		}
 	}
 
@@ -364,22 +371,22 @@ class PathNodeTest {
 		@Test
 		void bundleInTarget() {
 			// JVM bundle
-			assertTrue(p3.isInJvmBundle());
-			assertFalse(p3.isInVersionedJvmBundle());
-			assertFalse(p3.isInAndroidBundle());
-			assertFalse(p3.isInFileBundle());
+			assertThat(p3.isInJvmBundle()).isTrue();
+			assertThat(p3.isInVersionedJvmBundle()).isFalse();
+			assertThat(p3.isInAndroidBundle()).isFalse();
+			assertThat(p3.isInFileBundle()).isFalse();
 
 			// Android bundle
-			assertFalse(p3and.isInJvmBundle());
-			assertFalse(p3and.isInVersionedJvmBundle());
-			assertTrue(p3and.isInAndroidBundle());
-			assertFalse(p3and.isInFileBundle());
+			assertThat(p3and1.isInJvmBundle()).isFalse();
+			assertThat(p3and1.isInVersionedJvmBundle()).isFalse();
+			assertThat(p3and1.isInAndroidBundle()).isTrue();
+			assertThat(p3and1.isInFileBundle()).isFalse();
 
 			// File bundle
-			assertFalse(p3file.isInJvmBundle());
-			assertFalse(p3file.isInVersionedJvmBundle());
-			assertFalse(p3file.isInAndroidBundle());
-			assertTrue(p3file.isInFileBundle());
+			assertThat(p3file.isInJvmBundle()).isFalse();
+			assertThat(p3file.isInVersionedJvmBundle()).isFalse();
+			assertThat(p3file.isInAndroidBundle()).isFalse();
+			assertThat(p3file.isInFileBundle()).isTrue();
 		}
 	}
 }
