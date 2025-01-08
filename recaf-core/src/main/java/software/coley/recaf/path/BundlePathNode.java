@@ -98,10 +98,10 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 	 * @return Bit-mask used for ordering in {@link #compareTo(PathNode)}.
 	 */
 	private int bundleMask() {
-		return ((isInJvmBundle() ? 1 : 0) << 16) |
-				((isInVersionedJvmBundle() ? 1 : 0) << 14) |
-				((isInAndroidBundle() ? 1 : 0) << 12) |
-				((isInFileBundle() ? 1 : 0) << 10);
+		return ((isInJvmBundle() ? 1 : 0) << 10) |
+				((isInVersionedJvmBundle() ? 1 : 0) << 12) |
+				((isInAndroidBundle() ? 1 : 0) << 14) |
+				((isInFileBundle() ? 1 : 0) << 16);
 	}
 
 	@Override
@@ -117,15 +117,18 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 
 	@Override
 	public int localCompare(PathNode<?> o) {
-		if (this == o) return 0;
+		if (this == o)
+			return 0;
 
 		if (o instanceof BundlePathNode bundlePathNode) {
-			int cmp = -Integer.compare(bundleMask(), bundlePathNode.bundleMask());
+			int cmp = Integer.compare(bundleMask(), bundlePathNode.bundleMask());
+			if (cmp != 0)
+				return cmp;
 
 			// Order dex class bundles to be in alphabetical order.
 			Bundle bundle = getValue();
 			Object otherBundle = o.getValue();
-			if (cmp == 0 && getParent() != null &&
+			if (getParent() != null &&
 					bundle instanceof AndroidClassBundle &&
 					otherBundle instanceof AndroidClassBundle) {
 				WorkspaceResource resource = getParent().getValue();

@@ -3,7 +3,11 @@ package software.coley.recaf.path;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.info.*;
+import software.coley.recaf.info.Accessed;
+import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
@@ -11,7 +15,11 @@ import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.test.dummy.StringConsumerUser;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.*;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.BasicAndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
@@ -44,6 +52,8 @@ class PathNodeTest {
 	static DirectoryPathNode p2;
 	static DirectoryPathNode p2b;
 	static BundlePathNode p3;
+	static BundlePathNode p3and;
+	static BundlePathNode p3file;
 	static ResourcePathNode p4;
 	static WorkspacePathNode p5;
 	static ClassPathNode s1;
@@ -58,7 +68,7 @@ class PathNodeTest {
 		primaryFileBundle = new BasicFileBundle();
 		primaryFileInfo = new TextFileInfoBuilder().withName("foo").withRawContent("foo".getBytes()).build();
 		primaryFileBundle.put(primaryFileInfo);
-		primaryAndroidClassInfo = new AndroidClassInfoBuilder().withName("foo").build();
+		primaryAndroidClassInfo = new AndroidClassInfoBuilder().withName("foo/HelloWorld").build();
 		primaryAndroidBundle = new BasicAndroidClassBundle();
 		primaryAndroidBundle.put(primaryAndroidClassInfo);
 		Map<String, AndroidClassBundle> androidClassBundles = new HashMap<>();
@@ -83,6 +93,8 @@ class PathNodeTest {
 		p5 = PathNodes.workspacePath(workspace);
 		p4 = p5.child(primaryResource);
 		p3 = p4.child(primaryJvmBundle);
+		p3and = p4.child(primaryAndroidBundle);
+		p3file = p4.child(primaryFileBundle);
 		p2 = p3.child(packageName);
 		p2b = p3.child(parentPackageName);
 		p1 = p2.child(primaryClassInfo);
@@ -328,6 +340,46 @@ class PathNodeTest {
 			assertTrue(p3.compareTo(p2) < 0);
 			assertTrue(p3.compareTo(p1) < 0);
 			assertTrue(p2.compareTo(p1) < 0);
+		}
+
+		@Test
+		void compareToOtherBundleTypes() {
+			// 1: JVM
+			// 2: Versioned
+			// 3: Android
+			// 4: File
+			assertEquals(-1, p3.compareTo(p3and));
+			assertEquals(-1, p3.compareTo(p3file));
+			assertEquals(-1, p3and.compareTo(p3file));
+
+			// Inverse
+			assertEquals(1, p3and.compareTo(p3));
+			assertEquals(1, p3file.compareTo(p3));
+			assertEquals(1, p3file.compareTo(p3and));
+		}
+	}
+
+	@Nested
+	class Misc {
+		@Test
+		void bundleInTarget() {
+			// JVM bundle
+			assertTrue(p3.isInJvmBundle());
+			assertFalse(p3.isInVersionedJvmBundle());
+			assertFalse(p3.isInAndroidBundle());
+			assertFalse(p3.isInFileBundle());
+
+			// Android bundle
+			assertFalse(p3and.isInJvmBundle());
+			assertFalse(p3and.isInVersionedJvmBundle());
+			assertTrue(p3and.isInAndroidBundle());
+			assertFalse(p3and.isInFileBundle());
+
+			// File bundle
+			assertFalse(p3file.isInJvmBundle());
+			assertFalse(p3file.isInVersionedJvmBundle());
+			assertFalse(p3file.isInAndroidBundle());
+			assertTrue(p3file.isInFileBundle());
 		}
 	}
 }
