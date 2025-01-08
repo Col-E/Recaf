@@ -131,6 +131,18 @@ public class MappingImplementationTest {
 	}
 
 	@Test
+	void testEnigma2() {
+		String mappingsText = """
+				CLASS test/Greetings rename/Hello
+				\tFIELD oldField newField Ljava/lang/String;
+				\tMETHOD say speak ()V
+				""";
+		MappingFileFormat format = new EnigmaMappings();
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertInheritMap(mappings);
+	}
+
+	@Test
 	void testJadx() {
 		String mappingsText = """
 				c test.Greetings = Hello

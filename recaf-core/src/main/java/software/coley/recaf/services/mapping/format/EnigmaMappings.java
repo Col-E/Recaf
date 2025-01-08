@@ -120,6 +120,13 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 				state.typeArgs[2] = null;
 			}
 		}
+		// handle and/or write last token if applicable
+		if (state.phase > PHASE_FIND_TYPE) {
+			if (state.phase < PHASE_TYPE_FLAG_FINISH) {
+				handleToken(mappingText, state, mappingText.length());
+			}
+			writeCurrentMapping(state, mappings);
+		}
 		return mappings;
 	}
 
