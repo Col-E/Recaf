@@ -6,7 +6,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import me.darknet.assembler.printer.JvmClassPrinter;
-import me.darknet.assembler.printer.JvmMethodPrinter;
+import me.darknet.assembler.printer.MethodPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
@@ -186,11 +186,11 @@ public class ExpressionCompiler {
 		// Convert the compiled class to JASM
 		try {
 			PrintContext<?> context = new PrintContext<>(assemblerConfig.getDisassemblyIndent().getValue());
+			context.setLabelPrefix("g");
 			JvmClassPrinter printer = new JvmClassPrinter(new ByteArrayInputStream(klass));
-			JvmMethodPrinter method = (JvmMethodPrinter) printer.method(stubber.getAdaptedMethodName(), stubber.methodDescriptorWithVariables());
+			MethodPrinter method = printer.method(stubber.getAdaptedMethodName(), stubber.methodDescriptorWithVariables());
 			if (method == null)
 				return new ExpressionResult(new ExpressionCompileException("Target method was not in generated class"));
-			method.setLabelPrefix("g");
 			method.print(context);
 			return new ExpressionResult(context.toString());
 		} catch (IOException ex) {

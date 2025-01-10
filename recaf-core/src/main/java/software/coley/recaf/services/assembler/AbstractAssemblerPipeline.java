@@ -47,6 +47,9 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 	private void refreshContext() {
 		context = new PrintContext<>(generalConfig.getDisassemblyIndent().getValue());
 
+		// Enable aggressive variable name dropping to prevent use of bogus kotlin variable ranges.
+		context.setAggressivelyDropVars(true);
+
 		// Enable comments that outline where try-catch ranges begin/end.
 		if (pipelineConfig instanceof JvmAssemblerPipelineConfig jvmConfig && jvmConfig.emitTryRangeComments())
 			context.setDebugTryCatchRanges(true);
