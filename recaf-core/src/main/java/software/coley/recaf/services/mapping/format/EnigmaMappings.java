@@ -108,7 +108,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 * @param line
 	 * 		Current line number in the mappings file <i>(1 based)</i>
 	 * @param indent
-	 * 		Current level of indentation. Should match the size of the {@code currentClass} {@link Deque}.
+	 * 		Current level of indentation. Should be equal to or less than the size of the {@code currentClass} {@link Deque}.
 	 * @param i
 	 * 		Current offset into the mappings file.
 	 * @param mappingsText
@@ -160,7 +160,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 * @param line
 	 * 		Current line number in the mappings file <i>(1 based)</i>
 	 * @param indent
-	 * 		Current level of indentation. Should match the size of the {@code currentClass} {@link Deque}.
+	 * 		Current level of indentation. Should be equal to or less than the size of the {@code currentClass} {@link Deque}.
 	 * @param i
 	 * 		Current offset into the mappings file.
 	 * @param mappingsText
@@ -252,7 +252,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 * @param currentClass
 	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
 	 * @param indent
-	 * 		Current level of indentation. Should match the size of the {@code currentClass} {@link Deque}.
+	 * 		Current level of indentation. Should be equal to or less than the size of the {@code currentClass} {@link Deque}.
 	 * @param failStr
 	 * 		Message to include in the thrown invalid mapping exception if the indentation state is invalid.
 	 * @param i
@@ -294,7 +294,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 * @param mappingsText
 	 * 		Mappings file contents.
 	 *
-	 * @return Updated offset into the mappings file, skipping to the next space character.
+	 * @return Updated offset into the mappings file, skipping to the next non-space character.
 	 */
 	private static int skipSpace(int i, @Nonnull String mappingsText) {
 		for (int len = mappingsText.length(); i < len; i++) {
