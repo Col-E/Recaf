@@ -279,7 +279,8 @@ public abstract class ClassStubGenerator {
 
 				NameType paramInfo = getInfo("p" + i, paramType.descriptor());
 				code.append(paramInfo.className).append(' ').append(paramInfo.name);
-				if (i < parameterCount - 1) code.append(", ");
+				if (i < parameterCount - 1)
+					code.append(", ");
 			}
 			code.append(") { ");
 			if (isCtor) {
@@ -338,6 +339,8 @@ public abstract class ClassStubGenerator {
 			if (!innerClassName.startsWith(className))
 				continue;
 			if (innerClassName.length() <= className.length())
+				continue;
+			if (!isSafeClassName(innerClassName.replace('/', '.').replace('$', '.')))
 				continue;
 			ClassPathNode innerClassPath = workspace.findClass(innerClassName);
 			if (innerClassPath != null) {
