@@ -55,6 +55,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 * 		Text of the mappings to parse.
 	 *
 	 * @return Intermediate mappings from parsed text.
+	 *
 	 * @throws InvalidMappingException
 	 * 		When reading the mappings encounters any failure.
 	 */
@@ -103,8 +104,27 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		return mappings;
 	}
 
+	/**
+	 * @param line
+	 * 		Current line number in the mappings file <i>(1 based)</i>
+	 * @param indent
+	 * 		Current level of indentation. Should match the size of the {@code currentClass} {@link Deque}.
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param mappings
+	 * 		Output mappings.
+	 *
+	 * @return Updated offset into the mappings file.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When reading the mappings encounters any failure.
+	 */
 	private static int handleLine(int line, int indent, int i, @Nonnull String mappingsText, @Nonnull Deque<Pair<String, String>> currentClass,
-								  @Nonnull IntermediateMappings mappings) throws InvalidMappingException {
+	                              @Nonnull IntermediateMappings mappings) throws InvalidMappingException {
 		// read next token
 		String lineType = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
 		switch (lineType) {
@@ -127,15 +147,38 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 				}
 				currentClass.push(new Pair<>(classNameA, classNameB));
 			}
-			case "FIELD" -> i = handleClassMemberMapping(line, indent, i, mappingsText, currentClass, "FIELD", mappings::addField);
-			case "METHOD" -> i = handleClassMemberMapping(line, indent, i, mappingsText, currentClass, "METHOD", mappings::addMethod);
+			case "FIELD" ->
+					i = handleClassMemberMapping(line, indent, i, mappingsText, currentClass, "FIELD", mappings::addField);
+			case "METHOD" ->
+					i = handleClassMemberMapping(line, indent, i, mappingsText, currentClass, "METHOD", mappings::addMethod);
 		}
 		i = skipLineRest(i, mappingsText);
 		return i;
 	}
 
+	/**
+	 * @param line
+	 * 		Current line number in the mappings file <i>(1 based)</i>
+	 * @param indent
+	 * 		Current level of indentation. Should match the size of the {@code currentClass} {@link Deque}.
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param type
+	 * 		The expected type of content we're handling. IE, {@code CLASS}, {@code FIELD}, or {@code METHOD}.
+	 * @param consumer
+	 * 		Consumer to record parsed mappings into.
+	 *
+	 * @return Updated offset into the mappings file.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When reading the mappings encounters any failure.
+	 */
 	private static int handleClassMemberMapping(int line, int indent, int i, @Nonnull String mappingsText, @Nonnull Deque<Pair<String, String>> currentClass,
-												@Nonnull String type, @Nonnull MemberMappingsConsumer consumer) throws InvalidMappingException {
+	                                            @Nonnull String type, @Nonnull MemberMappingsConsumer consumer) throws InvalidMappingException {
 		// <name-a> <name-b> <formatted-access-modifier> <desc> <eol>
 		// <name-b> = '' | '-' | <space> <name>
 		updateIndent(currentClass, indent, () -> FAIL + type + " indent level " + indent + " too deep (expected max. "
@@ -146,7 +189,8 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 
 		String nameA = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
 		String nameB = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
-		// if can have mapping
+
+		// If can have mapping
 		if (!nameB.isEmpty() && !"-".equals(nameB) && !nameB.startsWith("ACC:")) {
 			String desc = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
 			if (desc.startsWith("ACC:")) { // skip optional access modifier
@@ -162,6 +206,14 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		return i;
 	}
 
+	/**
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param classNameA
+	 * 		Initial class name.
+	 *
+	 * @return Fully qualified class name based on the current context in the deque.
+	 */
 	@Nonnull
 	private static String qualifyWithOuterClassesA(@Nonnull Deque<Pair<String, String>> currentClass, @Nonnull String classNameA) {
 		if (currentClass.isEmpty()) {
@@ -175,6 +227,14 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		return classNameA;
 	}
 
+	/**
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param classNameB
+	 * 		Destination class name.
+	 *
+	 * @return Fully qualified class name based on the current context in the deque.
+	 */
 	@Nonnull
 	private static String qualifyWithOuterClassesB(@Nonnull Deque<Pair<String, String>> currentClass, @Nonnull String classNameB) {
 		if (currentClass.isEmpty()) {
@@ -188,6 +248,19 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		return classNameB;
 	}
 
+	/**
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param indent
+	 * 		Current level of indentation. Should match the size of the {@code currentClass} {@link Deque}.
+	 * @param failStr
+	 * 		Message to include in the thrown invalid mapping exception if the indentation state is invalid.
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 *
+	 * @throws InvalidMappingException
+	 * 		Thrown when the indentation state does not match the current class context.
+	 */
 	private static void updateIndent(@Nonnull Deque<Pair<String, String>> currentClass, int indent, @Nonnull Supplier<String> failStr, int i) throws InvalidMappingException {
 		if (indent > currentClass.size()) {
 			throw new InvalidMappingException(failStr.get() + i);
@@ -197,6 +270,14 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		}
 	}
 
+	/**
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 *
+	 * @return Updated offset into the mappings file, skipping to the end of the line.
+	 */
 	private static int skipLineRest(int i, @Nonnull String mappingsText) {
 		for (int len = mappingsText.length(); i < len; i++) {
 			char c = mappingsText.charAt(i);
@@ -207,6 +288,14 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		return i;
 	}
 
+	/**
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 *
+	 * @return Updated offset into the mappings file, skipping to the next space character.
+	 */
 	private static int skipSpace(int i, @Nonnull String mappingsText) {
 		for (int len = mappingsText.length(); i < len; i++) {
 			char c = mappingsText.charAt(i);
@@ -217,6 +306,17 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		return i;
 	}
 
+	/**
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 *
+	 * @return Updated offset into the mappings file, skipping to the end of the token.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When a tab is encountered <i>(Unexpected indentation)</i>.
+	 */
 	private static int readToken(int i, @Nonnull String mappingsText) throws InvalidMappingException {
 		// read until next space, newline, or comment
 		for (int len = mappingsText.length(); i < len; i++) {
