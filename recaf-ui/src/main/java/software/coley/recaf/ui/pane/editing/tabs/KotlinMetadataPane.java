@@ -6,10 +6,14 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
@@ -17,7 +21,9 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.ui.config.MemberDisplayFormatConfig;
+import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.kotlin.model.KtClass;
 import software.coley.recaf.util.kotlin.model.KtConstructor;
 import software.coley.recaf.util.kotlin.model.KtElement;
@@ -83,7 +89,14 @@ public class KotlinMetadataPane extends BorderPane implements Navigable {
 				}
 			}
 		});
+		Label label = new BoundLabel(Lang.getBinding("kotlinmetadata.orderwarning"));
+		label.getStyleClass().add(Styles.TEXT_SUBTLE);
+		label.setPadding(new Insets(8));
+		label.setWrapText(true);
+		BorderPane labelWrapper = new BorderPane(label);
+		labelWrapper.getStyleClass().add("workspace-filter-pane"); // Style used for top-border separator
 		setCenter(tree);
+		setBottom(labelWrapper);
 		setMinWidth(235);
 	}
 

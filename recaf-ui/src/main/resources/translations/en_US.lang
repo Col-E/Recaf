@@ -386,6 +386,7 @@ hierarchy.parents=Parents
 
 ## Kotlin Metadata
 kotlinmetadata.title=@Metadata
+kotlinmetadata.orderwarning=Important: Items do not appear in the same order as defined in the class file
 
 ## Logging
 logging.title=Logging
