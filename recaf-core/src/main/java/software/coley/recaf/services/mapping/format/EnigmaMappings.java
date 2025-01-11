@@ -3,6 +3,7 @@ package software.coley.recaf.services.mapping.format;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import org.slf4j.Logger;
+import software.coley.collections.tuple.Pair;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
@@ -12,6 +13,7 @@ import software.coley.recaf.services.mapping.data.MethodMapping;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.function.Supplier;
 
 /**
  * Enigma mappings file implementation.
@@ -67,215 +69,266 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		//     CLASS 1 InnerClass
 		//         FIELD innerField targetField innerDesc
 		IntermediateMappings mappings = new IntermediateMappings();
-		ParserState state = new ParserState();
-		for (int i = 0; i < mappingsText.length(); i++) {
-			char c = mappingsText.charAt(i);
-			if (c != '\n' && c != '\r' && c != '#' && c != ' ') {
-				if (state.phase == PHASE_IGNORE_LINE) continue; // inside # or ignored type
-				if (state.phase == PHASE_FIND_TYPE) {
-					if (c == '\t') { // read tab
-						state.indent++;
-						continue;
-					}
+		Deque<Pair<String, String>> currentClass = new ArrayDeque<>();
 
-					// If indent is lower than current class depth, pop
-					while (state.indent < state.currentClass.size()) {
-						state.currentClass.pop();
-					}
-				}
-
-				// start of new token
-				if (state.start == -1) {
-					state.start = i;
-				}
-			} else { // newline, #, <space>
-				boolean isSpace = c == ' ';
-				if (isSpace || state.phase != PHASE_IGNORE_LINE && state.phase < PHASE_TYPE_FLAG_FINISH) {
-					// finished reading a token
-					handleToken(mappingsText, state, i);
-				}
-				if (isSpace) continue; // continue parsing next token
-
-				// newline or comment -> current line finished
-				writeCurrentMapping(state, mappings);
-
-				if (c == '#') {
-					state.phase = 0; // skip
+		int line = 1;
+		for (int i = 0, len = mappingsText.length(); i < len; ) { // i incremented inside the loop
+			// count \t
+			int indent = 0;
+			for (; i < len; i++) {
+				char c = mappingsText.charAt(i);
+				if (c == '\t') {
+					indent++;
 					continue;
 				}
+				break;
+			}
 
-				state.line++;
+			// parse line
+			i = handleLine(line, indent, i, mappingsText, currentClass, mappings);
 
-				// skip two-char newline to not count 1 new line twice
-				if (c == '\r' && mappingsText.length() > i + 1 && mappingsText.charAt(i + 1) == '\n') {
-					i++;
+			// go to next line
+			if (i < len) {
+				char c = mappingsText.charAt(i);
+				assert c == '\n' || c == '\r' : "Expected newline, got <" + c + "> (" + ((int) c) + ") @line " + line + " @char " + i;
+				line++;
+				if (c == '\r') {
+					int ip1 = i + 1;
+					if (ip1 < len && mappingsText.charAt(ip1) == '\n') {
+						i++;
+					}
 				}
-
-				// reset values for next line
-				state.phase = PHASE_FIND_TYPE;
-				state.indent = 0;
-				state.start = -1;
-				state.typeArgs[0] = null;
-				state.typeArgs[1] = null;
-				state.typeArgs[2] = null;
+				i++;
 			}
-		}
-
-		// handle and/or write last token if applicable
-		if (state.phase > PHASE_FIND_TYPE) {
-			if (state.phase < PHASE_TYPE_FLAG_FINISH) {
-				handleToken(mappingsText, state, mappingsText.length());
-			}
-			writeCurrentMapping(state, mappings);
 		}
 		return mappings;
 	}
 
-	private static void writeCurrentMapping(@Nonnull ParserState state, @Nonnull IntermediateMappings mappings) throws InvalidMappingException {
-		switch (state.phase) {
-			case PHASE_TYPE_CLASS + PHASE_TYPE_FLAG_FINISH:
-				if (state.typeArgsIndex == 2) {
-					String cls = state.currentClass.peek();
-					if (cls == null)
-						throw new InvalidMappingException(FAIL + "cannot peek current class context when finishing class section");
-					mappings.addClass(cls, state.typeArgs[1]);
+	/**
+	 * @param line
+	 * 		Current line number in the mappings file <i>(1 based)</i>
+	 * @param indent
+	 * 		Current level of indentation. Should match the size of the {@code currentClass} {@link Deque}.
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param mappings
+	 * 		Output mappings.
+	 *
+	 * @return Updated offset into the mappings file.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When reading the mappings encounters any failure.
+	 */
+	private static int handleLine(int line, int indent, int i, @Nonnull String mappingsText, @Nonnull Deque<Pair<String, String>> currentClass,
+	                              @Nonnull IntermediateMappings mappings) throws InvalidMappingException {
+		// read next token
+		String lineType = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		switch (lineType) {
+			case "CLASS" -> {
+				updateIndent(currentClass, indent, () -> ("Invalid Enigma mappings, CLASS indent level " + indent + " too deep (expected max. "
+						+ currentClass.size() + ", " + currentClass + ") @line " + line + " @char "), i);
+
+				String classNameA = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+				classNameA = removeNonePackage(classNameA);
+				classNameA = qualifyWithOuterClassesA(currentClass, classNameA);
+
+				String classNameB = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+				if (classNameB.isEmpty() || "-".equals(classNameB) || classNameB.startsWith("ACC:")) {
+					// no mapping for class, but need to include for context for following members
+					classNameB = classNameA;
+				} else {
+					classNameB = removeNonePackage(classNameB);
+					classNameB = qualifyWithOuterClassesB(currentClass, classNameB);
+					mappings.addClass(classNameA, classNameB);
 				}
-				break;
-			case PHASE_TYPE_FIELD + PHASE_TYPE_FLAG_FINISH:
-				if (state.typeArgsIndex == 3) {
-					String cls = state.currentClass.peek();
-					if (cls == null)
-						throw new InvalidMappingException(FAIL + "cannot peek current class context when finishing field section");
-					mappings.addField(cls, state.typeArgs[2], state.typeArgs[0], state.typeArgs[1]);
-				}
-				break;
-			case PHASE_TYPE_METHOD + PHASE_TYPE_FLAG_FINISH:
-				if (state.typeArgsIndex == 3) {
-					String cls = state.currentClass.peek();
-					if (cls == null)
-						throw new InvalidMappingException(FAIL + "cannot peek current class context when finishing method section");
-					mappings.addMethod(cls, state.typeArgs[2], state.typeArgs[0], state.typeArgs[1]);
-				}
-				break;
+				currentClass.push(new Pair<>(classNameA, classNameB));
+			}
+			case "FIELD" ->
+					i = handleClassMemberMapping(line, indent, i, mappingsText, currentClass, "FIELD", mappings::addField);
+			case "METHOD" ->
+					i = handleClassMemberMapping(line, indent, i, mappingsText, currentClass, "METHOD", mappings::addMethod);
+		}
+		i = skipLineRest(i, mappingsText);
+		return i;
+	}
+
+	/**
+	 * @param line
+	 * 		Current line number in the mappings file <i>(1 based)</i>
+	 * @param indent
+	 * 		Current level of indentation. Should match the size of the {@code currentClass} {@link Deque}.
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param type
+	 * 		The expected type of content we're handling. IE, {@code CLASS}, {@code FIELD}, or {@code METHOD}.
+	 * @param consumer
+	 * 		Consumer to record parsed mappings into.
+	 *
+	 * @return Updated offset into the mappings file.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When reading the mappings encounters any failure.
+	 */
+	private static int handleClassMemberMapping(int line, int indent, int i, @Nonnull String mappingsText, @Nonnull Deque<Pair<String, String>> currentClass,
+	                                            @Nonnull String type, @Nonnull MemberMappingsConsumer consumer) throws InvalidMappingException {
+		// <name-a> <name-b> <formatted-access-modifier> <desc> <eol>
+		// <name-b> = '' | '-' | <space> <name>
+		updateIndent(currentClass, indent, () -> FAIL + type + " indent level " + indent + " too deep (expected max. "
+				+ currentClass.size() + ", " + currentClass + ") @line " + line + " @char ", i);
+		if (currentClass.isEmpty()) {
+			throw new InvalidMappingException(FAIL + type + " without class context @line " + line + " @char " + i);
+		}
+
+		String nameA = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		String nameB = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+
+		// If can have mapping
+		if (!nameB.isEmpty() && !"-".equals(nameB) && !nameB.startsWith("ACC:")) {
+			String desc = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+			if (desc.startsWith("ACC:")) { // skip optional access modifier
+				desc = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+			}
+			if (desc.isEmpty()) {
+				// no desc found = line contained only one name and optional access modifier = no mapping
+				return i;
+			}
+			assert currentClass.peek() != null; // checked above
+			consumer.accept(currentClass.peek().getLeft(), desc, nameA, nameB);
+		}
+		return i;
+	}
+
+	/**
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param classNameA
+	 * 		Initial class name.
+	 *
+	 * @return Fully qualified class name based on the current context in the deque.
+	 */
+	@Nonnull
+	private static String qualifyWithOuterClassesA(@Nonnull Deque<Pair<String, String>> currentClass, @Nonnull String classNameA) {
+		if (currentClass.isEmpty()) {
+			return classNameA;
+		}
+		StringBuilder sb = new StringBuilder();
+		for (Pair<String, String> pair : currentClass) {
+			sb.append(pair.getLeft()).append('$');
+		}
+		classNameA = sb.append(classNameA).toString();
+		return classNameA;
+	}
+
+	/**
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param classNameB
+	 * 		Destination class name.
+	 *
+	 * @return Fully qualified class name based on the current context in the deque.
+	 */
+	@Nonnull
+	private static String qualifyWithOuterClassesB(@Nonnull Deque<Pair<String, String>> currentClass, @Nonnull String classNameB) {
+		if (currentClass.isEmpty()) {
+			return classNameB;
+		}
+		StringBuilder sb = new StringBuilder();
+		for (Pair<String, String> pair : currentClass) {
+			sb.append(pair.getRight()).append('$');
+		}
+		classNameB = sb.append(classNameB).toString();
+		return classNameB;
+	}
+
+	/**
+	 * @param currentClass
+	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param indent
+	 * 		Current level of indentation. Should match the size of the {@code currentClass} {@link Deque}.
+	 * @param failStr
+	 * 		Message to include in the thrown invalid mapping exception if the indentation state is invalid.
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 *
+	 * @throws InvalidMappingException
+	 * 		Thrown when the indentation state does not match the current class context.
+	 */
+	private static void updateIndent(@Nonnull Deque<Pair<String, String>> currentClass, int indent, @Nonnull Supplier<String> failStr, int i) throws InvalidMappingException {
+		if (indent > currentClass.size()) {
+			throw new InvalidMappingException(failStr.get() + i);
+		}
+		while (currentClass.size() > indent) {
+			currentClass.pop();
 		}
 	}
 
-	private static void handleToken(@Nonnull String mappingText, @Nonnull ParserState state, int i) throws InvalidMappingException {
-		switch (state.phase) {
-			case PHASE_FIND_TYPE -> {
-				state.typeArgsIndex = 0;
-				String typeStr = mappingText.substring(state.start, i);
-				switch (typeStr) {
-					case "CLASS" -> state.phase = 2;
-					case "FIELD" -> {
-						if (state.currentClass.isEmpty()) {
-							throw new InvalidMappingException(FAIL + "could not map field, no class context @line " + state.line + " @char " + i);
-						}
-						state.phase = PHASE_TYPE_FIELD;
-					}
-					case "METHOD" -> {
-						if (state.currentClass.isEmpty()) {
-							throw new InvalidMappingException(FAIL + "could not map method, no class context @line " + state.line + " @char " + i);
-						}
-						state.phase = PHASE_TYPE_METHOD;
-					}
-					case "ARG", "COMMENT" -> state.phase = PHASE_IGNORE_LINE;
-					default -> {
-						LOGGER.trace("Unknown Engima mappings line type: \"{}\" @line {} @char {}", state.phase, state.line, i);
-						state.phase = PHASE_IGNORE_LINE;
-					}
-				}
+	/**
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 *
+	 * @return Updated offset into the mappings file, skipping to the end of the line.
+	 */
+	private static int skipLineRest(int i, @Nonnull String mappingsText) {
+		for (int len = mappingsText.length(); i < len; i++) {
+			char c = mappingsText.charAt(i);
+			if (c == '\r' || c == '\n') {
+				break;
 			}
-			case PHASE_TYPE_CLASS -> {
-				// <class-section> ::= <class-section-indentation> 'CLASS' <space> <class-name-a> <class-name-b>
-				//                     <formatted-access-modifier> <eol> <class-sub-sections>
-				// <formatted-access-modifier> ::= '' | <space> 'ACC:' <access-modifier>
-
-				// read class-name-a, class-name-b (optional)
-				// when finished, add FINISH_FLAG to type
-				String currArg = removeNonePackage(mappingText.substring(state.start, i));
-				switch (state.typeArgsIndex) {
-					case 0 -> { // class-name-a
-						if (!state.currentClass.isEmpty()) {
-							StringBuilder sb = new StringBuilder();
-							for (String clazz : state.currentClass) {
-								sb.append(clazz).append('$');
-							}
-							currArg = sb.append(currArg).toString();
-						}
-						state.currentClass.push(currArg);
-						state.typeArgs[state.typeArgsIndex++] = currArg;
-					}
-					case 1 -> { // class-name-b (optional) | skip access modifier
-						if (currArg.isEmpty() || "-".equals(currArg) || currArg.startsWith("ACC:")) {
-							state.phase += PHASE_TYPE_FLAG_FINISH;
-							break;
-						}
-						state.typeArgs[state.typeArgsIndex++] = currArg;
-						state.phase += PHASE_TYPE_FLAG_FINISH;
-					}
-				}
-			}
-			case PHASE_TYPE_FIELD -> {
-				// <field-section> ::= <class-section-indentation> <tab> 'FIELD'<space> <field-name-a> <field-name-b>
-				//                     <formatted-access-modifier> <field-desc-a> <eol> <field-sub-sections>
-				// <formatted-access-modifier> ::= '' | <space> 'ACC:' <access-modifier>
-
-				// read field-name-a, field-name-b (optional), skip access modifier, read field-desc-a
-				// when optional, need to check the read thing is not the next one
-				// when finished, add FINISH_FLAG to type
-				String currArg = mappingText.substring(state.start, i);
-				switch (state.typeArgsIndex) {
-					case 0: // field-name-a
-						state.typeArgs[state.typeArgsIndex++] = currArg;
-						break;
-					case 1: // field-name-b (optional)
-						if (currArg.isEmpty() || "-".equals(currArg) || currArg.startsWith("ACC:")) {
-							state.phase += PHASE_TYPE_FLAG_FINISH;
-							break;
-						}
-						state.typeArgs[state.typeArgsIndex++] = currArg;
-						break;
-					case 2: // access-modifier (skip) | field-desc-a
-						if (currArg.isEmpty() || currArg.startsWith("ACC:")) {
-							break;
-						}
-						state.typeArgs[state.typeArgsIndex++] = currArg;
-						state.phase += PHASE_TYPE_FLAG_FINISH;
-						break;
-				}
-			}
-			case PHASE_TYPE_METHOD -> {
-				// <method-section> ::= <class-section-indentation> <tab> 'METHOD' <space> <method-name-a> <method-name-b>
-				//                      <formatted-access-modifier> <method-desc-a> <eol> <method-sub-sections>
-				// <formatted-access-modifier> ::= '' | <space> 'ACC:' <access-modifier>
-
-				// read method-name-a, method-name-b (optional), skip access modifier, read method-desc-a
-				// when finished, add FINISH_FLAG to type
-				String currArg = mappingText.substring(state.start, i);
-				switch (state.typeArgsIndex) {
-					case 0: // method-name-a
-						state.typeArgs[state.typeArgsIndex++] = currArg;
-						break;
-					case 1: // method-name-b (optional)
-						if (currArg.isEmpty() || "-".equals(currArg) || currArg.startsWith("ACC:")) {
-							state.phase += PHASE_TYPE_FLAG_FINISH;
-							break;
-						}
-						state.typeArgs[state.typeArgsIndex++] = currArg;
-						break;
-					case 2: // access-modifier (skip) | method-desc-a
-						if (currArg.isEmpty() || currArg.startsWith("ACC:")) {
-							break;
-						}
-						state.typeArgs[state.typeArgsIndex++] = currArg;
-						state.phase += PHASE_TYPE_FLAG_FINISH;
-						break;
-				}
-			}
-			default -> throw new InvalidMappingException("Unexpected value: " + state.phase);
 		}
-		state.start = -1;
+		return i;
+	}
+
+	/**
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 *
+	 * @return Updated offset into the mappings file, skipping to the next space character.
+	 */
+	private static int skipSpace(int i, @Nonnull String mappingsText) {
+		for (int len = mappingsText.length(); i < len; i++) {
+			char c = mappingsText.charAt(i);
+			if (c != ' ') {
+				break;
+			}
+		}
+		return i;
+	}
+
+	/**
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 *
+	 * @return Updated offset into the mappings file, skipping to the end of the token.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When a tab is encountered <i>(Unexpected indentation)</i>.
+	 */
+	private static int readToken(int i, @Nonnull String mappingsText) throws InvalidMappingException {
+		// read until next space, newline, or comment
+		for (int len = mappingsText.length(); i < len; i++) {
+			char c = mappingsText.charAt(i);
+			if (c == '\n' || c == '\r' || c == ' ' || c == '#') {
+				break;
+			}
+			if (c == '\t') {
+				throw new InvalidMappingException("Unexpected tab character @char " + i);
+			}
+		}
+		return i;
 	}
 
 	@Override
@@ -328,16 +381,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		return text.replaceAll("(?:^|(?<=L))none/", "");
 	}
 
-	private static final class ParserState {
-		private byte indent = 0;
-		private byte phase = PHASE_FIND_TYPE;
-		private byte typeArgsIndex = 0;
-		/**
-		 * {@code -1} indicates search for token start
-		 */
-		private int start = -1;
-		private int line = 1;
-		private final String[] typeArgs = new String[3];
-		private final Deque<String> currentClass = new ArrayDeque<>();
+	private interface MemberMappingsConsumer {
+		void accept(String oldClassName, String desc, String oldName, String newName);
 	}
 }
