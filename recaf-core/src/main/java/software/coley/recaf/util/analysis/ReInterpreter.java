@@ -31,6 +31,7 @@ import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
+import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
@@ -86,18 +87,11 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 
 	@Nullable
 	public ReValue newValue(@Nullable Type type, @Nonnull Nullness nullness) {
-		if (type == null)
-			return UninitializedValue.UNINITIALIZED_VALUE;
-		return switch (type.getSort()) {
-			case Type.VOID -> null;
-			case Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> IntValue.UNKNOWN;
-			case Type.FLOAT -> FloatValue.UNKNOWN;
-			case Type.LONG -> LongValue.UNKNOWN;
-			case Type.DOUBLE -> DoubleValue.UNKNOWN;
-			case Type.ARRAY -> ArrayValue.of(type, nullness);
-			case Type.OBJECT -> ObjectValue.object(type, nullness);
-			default -> throw new IllegalArgumentException("Invalid type for new value: " + type);
-		};
+		try {
+			return ReValue.ofType(type, nullness);
+		} catch (IllegalValueException ex) {
+			throw new IllegalStateException(ex);
+		}
 	}
 
 	@Override

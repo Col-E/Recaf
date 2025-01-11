@@ -28,7 +28,7 @@ public interface ArrayValue extends ObjectValue {
 	 * @param nullness
 	 * 		Array null state.
 	 *
-	 * @return Array value holding the array content.
+	 * @return Array value of the given type.
 	 */
 	@Nonnull
 	static ArrayValue of(@Nonnull Type type, @Nonnull Nullness nullness) {
@@ -54,7 +54,7 @@ public interface ArrayValue extends ObjectValue {
 	 * @param length
 	 * 		Array length.
 	 *
-	 * @return Array value holding the array content.
+	 * @return Array value of the given type/length.
 	 */
 	@Nonnull
 	static ArrayValue of(@Nonnull Type type, @Nonnull Nullness nullness, int length) {

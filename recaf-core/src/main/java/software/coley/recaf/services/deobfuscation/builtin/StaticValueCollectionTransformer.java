@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.Frame;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
@@ -106,7 +107,7 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 				continue;
 
 			// Skip if the value cannot be mapped to our representation
-			ReValue mappedValue = extractFromAsmConstant(defaultValue);
+			ReValue mappedValue = Unchecked.getOr(() -> ReValue.ofConstant(defaultValue), null);
 			if (mappedValue == null)
 				continue;
 
@@ -197,38 +198,6 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 		for (AbstractInsnNode abstractInsnNode : method.instructions)
 			if (abstractInsnNode.getOpcode() == Opcodes.PUTSTATIC) return true;
 		return false;
-	}
-
-	/**
-	 * @param value
-	 * 		ASM constant value.
-	 *
-	 * @return A {@link ReValue} wrapper of the given input,
-	 * or {@code null} if the value could not be represented.
-	 *
-	 * @see LdcInsnNode#cst Possible values
-	 */
-	@Nullable
-	private static ReValue extractFromAsmConstant(Object value) {
-		if (value instanceof String s)
-			return ObjectValue.string(s);
-		if (value instanceof Integer i)
-			return IntValue.of(i);
-		if (value instanceof Float f)
-			return FloatValue.of(f);
-		if (value instanceof Long l)
-			return LongValue.of(l);
-		if (value instanceof Double d)
-			return DoubleValue.of(d);
-		if (value instanceof Type type) {
-			if (type.getSort() == Type.METHOD)
-				return ObjectValue.VAL_METHOD_TYPE;
-			else
-				return ObjectValue.VAL_CLASS;
-		}
-		if (value instanceof Handle handle)
-			return ObjectValue.VAL_METHOD_HANDLE;
-		return null;
 	}
 
 	/**
