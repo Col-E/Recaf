@@ -120,14 +120,16 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * This List <strong>MUST</strong> be sorted in order of the outermost first.
 	 * The last element is the outer of the class itself.
 	 * <br>
-	 * For an example, if our class is 'C' then this list will be [A, B]:
-	 * <pre>
+	 * For an example, if our class is 'C' then this list will be {@code [foo/A, foo/A$B]}:
+	 * <pre>{@code
+	 * package foo;
+	 *
 	 * class A {
 	 *     class B {
 	 *         class C {}  // This class
 	 *     }
 	 * }
-	 * </pre>
+	 * }</pre>
 	 *
 	 * @return Breadcrumbs of the outer class.
 	 */
@@ -145,6 +147,19 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 */
 	default boolean isInnerClass() {
 		return getOuterClassName() != null || getOuterMethodName() != null;
+	}
+
+	/**
+	 * @param className
+	 * 		Name of a supposed outer class.
+	 *
+	 * @return {@code true} if this class is an inner class of the given outer class.
+	 */
+	default boolean isInnerClassOf(@Nonnull String className) {
+		// If we don't start with that class name, we can't possibly be an inner class.
+		if (!getName().startsWith(className + "$"))
+			return false;
+		return getOuterClassBreadcrumbs().contains(className);
 	}
 
 	/**

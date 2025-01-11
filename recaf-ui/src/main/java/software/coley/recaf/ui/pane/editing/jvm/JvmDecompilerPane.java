@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
@@ -33,9 +32,6 @@ import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.Actions;
-import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
-import software.coley.recaf.services.phantom.PhantomGenerationException;
-import software.coley.recaf.services.phantom.PhantomGenerator;
 import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.ui.config.KeybindingConfig;
@@ -58,10 +54,7 @@ import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
-import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -85,8 +78,6 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	private final ObservableInteger javacDownsampleTarget;
 	private final ObservableBoolean javacDebug;
 	private final ModalPaneComponent overlayModal = new ModalPaneComponent();
-	private final PhantomGenerator phantomGenerator;
-	private final JavacCompilerConfig javacConfig;
 	private final JavacCompiler javac;
 
 	@Inject
@@ -100,14 +91,11 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	                         @Nonnull DecompilerManager decompilerManager,
 	                         @Nonnull JavacCompiler javac,
 	                         @Nonnull JavacCompilerConfig javacConfig,
-	                         @Nonnull PhantomGenerator phantomGenerator,
 	                         @Nonnull Actions actions) {
 		super(config, searchBar, astService, contextActionSupport, languageAssociation, decompilerManager);
-		this.phantomGenerator = phantomGenerator;
 		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
 		this.javacTarget = new ObservableInteger(javacConfig.getDefaultTargetVersion().getValue());
 		this.javacDownsampleTarget = new ObservableInteger(javacConfig.getDefaultDownsampleTargetVersion().getValue());
-		this.javacConfig = javacConfig;
 		this.javac = javac;
 
 		// Install tools container with configurator
@@ -154,37 +142,6 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		// Invoke compiler with data.
 		String infoName = info.getName();
 		CompletableFuture.supplyAsync(() -> {
-			// Generate phantoms for missing references in this class, if enabled and only if
-			// there are no generated phantom resources already in the workspace.
-			// This should be time-capped by 'completeOnTimeout' to prevent lock-ups.
-			List<WorkspaceResource> phantomResources;
-			if (javacConfig.getGeneratePhantoms().getValue() && workspace.getSupportingResources().stream()
-					.noneMatch(resource -> resource instanceof GeneratedPhantomWorkspaceResource)) {
-				ClassInfo currentInfo = path.getValue();
-				Collection<JvmClassInfo> classesToScan;
-				if (currentInfo.getInnerClasses().isEmpty()) {
-					classesToScan = Collections.singleton(currentInfo.asJvmClass());
-				} else {
-					classesToScan = workspace.findJvmClasses(c -> c.getName().startsWith(currentInfo.getName())).stream()
-							.map(p -> p.getValue().asJvmClass())
-							.collect(Collectors.toList());
-				}
-				try {
-					WorkspaceResource resource = phantomGenerator.createPhantomsForClasses(workspace, classesToScan);
-					phantomResources = Collections.singletonList(resource);
-					int generatedCount = resource.getJvmClassBundle().size();
-					if (generatedCount > 0)
-						logger.debug("Generated {} phantoms for pre-compile", generatedCount);
-				} catch (PhantomGenerationException ex) {
-					logger.warn("Failed to generate phantoms for compilation against '{}'", currentInfo.getName(), ex);
-					phantomResources = null;
-				}
-			} else {
-				phantomResources = null;
-			}
-			return phantomResources;
-		}, compilePool).completeOnTimeout(null, 2, TimeUnit.SECONDS).thenApplyAsync(phantomResources -> {
-			// Populate javac args
 			boolean debug = javacDebug.getValue();
 			JavacArgumentsBuilder builder = new JavacArgumentsBuilder()
 					.withVersionTarget(useConfiguredVersion(info))
@@ -194,10 +151,8 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 					.withDebugLineNumbers(debug)
 					.withClassSource(editor.getText())
 					.withClassName(infoName);
-
-			// Run javac with args + phantoms
-			return javac.compile(builder.build(), workspace, phantomResources, null);
-		}, compilePool).whenCompleteAsync((result, throwable) -> {
+			return javac.compile(builder.build(), workspace, null);
+		}, compilePool).completeOnTimeout(null, 2, TimeUnit.SECONDS).whenCompleteAsync((result, throwable) -> {
 			// Handle results.
 			//  - Success --> Update content in the containing bundle
 			//  - Failure --> Show error + diagnostics to user

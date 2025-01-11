@@ -9,6 +9,9 @@ import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
+import software.coley.recaf.services.phantom.PhantomGenerationException;
+import software.coley.recaf.services.phantom.PhantomGenerator;
 import software.coley.recaf.util.LookupUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -25,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -43,10 +47,13 @@ public class JavacCompiler implements Service {
 	private static final DebuggingLogger logger = Logging.get(JavacCompiler.class);
 	private static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 	private static int minTargetVersion = 7;
+	private final PhantomGenerator phantomGenerator;
 	private final JavacCompilerConfig config;
 
 	@Inject
-	public JavacCompiler(JavacCompilerConfig config) {
+	public JavacCompiler(@Nonnull PhantomGenerator phantomGenerator,
+	                     @Nonnull JavacCompilerConfig config) {
+		this.phantomGenerator = phantomGenerator;
 		this.config = config;
 	}
 
@@ -100,6 +107,25 @@ public class JavacCompiler implements Service {
 				Collections.emptyList() : workspace.getAllResources(true);
 		if (supplementaryResources != null)
 			virtualClassPath = Lists.combine(virtualClassPath, supplementaryResources);
+
+		// Generate phantom classes if the workspace does not already have phantoms in it.
+		if (workspace != null && config.getGeneratePhantoms().getValue() && workspace.getSupportingResources().stream()
+				.noneMatch(resource -> resource instanceof GeneratedPhantomWorkspaceResource)) {
+			try {
+				// Only scan the target class and any of its inner classes for content to fill in.
+				List<JvmClassInfo> classesToScan = workspace.findJvmClasses(c -> c.getName().equals(className) || c.isInnerClassOf(className)).stream()
+						.map(p -> p.getValue().asJvmClass())
+						.collect(Collectors.toList());
+				WorkspaceResource phantomResource = phantomGenerator.createPhantomsForClasses(workspace, classesToScan);
+				int generatedCount = phantomResource.getJvmClassBundle().size();
+				if (generatedCount > 0)
+					logger.debug("Generated {} phantoms for pre-compile", generatedCount);
+				virtualClassPath = Lists.add(virtualClassPath, phantomResource);
+			} catch (PhantomGenerationException ex) {
+				logger.warn("Failed to generate phantoms for compilation against '{}'", className, ex);
+			}
+		}
+
 		List<CompilerDiagnostic> diagnostics = new ArrayList<>();
 		JavacListener listenerWrapper = createRecordingListener(listener, diagnostics);
 		JavaFileManager fmFallback = compiler.getStandardFileManager(listenerWrapper, Locale.getDefault(), UTF_8);
@@ -144,7 +170,7 @@ public class JavacCompiler implements Service {
 				logger.warn("Cannot downsample beyond Java {}", JavacCompiler.MIN_DOWNSAMPLE_VER);
 			return new CompilerResult(compilations, diagnostics);
 		} catch (RuntimeException ex) {
-			logger.debugging(l -> l.error("Compilation of '{}' crashed: {}", className, ex));
+			logger.debugging(l -> l.error("Compilation of '{}' crashed", className, ex));
 			return new CompilerResult(ex);
 		}
 	}

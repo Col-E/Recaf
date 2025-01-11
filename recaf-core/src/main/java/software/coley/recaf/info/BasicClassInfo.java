@@ -204,20 +204,21 @@ public abstract class BasicClassInfo implements ClassInfo {
 				return breadcrumbs = Collections.emptyList();
 
 			int maxOuterDepth = 10;
-			breadcrumbs = new ArrayList<>();
+			List<String> list = new ArrayList<>();
 			int counter = 0;
 			while (currentOuter != null) {
 				if (++counter > maxOuterDepth) {
-					breadcrumbs.clear(); // assuming some obfuscator is at work, so breadcrumbs might be invalid.
+					list.clear(); // assuming some obfuscator is at work, so breadcrumbs might be invalid.
 					break;
 				}
-				breadcrumbs.addFirst(currentOuter);
+				list.addFirst(currentOuter);
 				String targetOuter = currentOuter;
 				currentOuter = innerClasses.stream()
-						.filter(i -> i.getInnerClassName().equals(targetOuter))
+						.filter(i -> i.getInnerClassName().equals(targetOuter) && i.getOuterClassName() != null)
 						.map(InnerClassInfo::getOuterClassName)
 						.findFirst().orElse(null);
 			}
+			breadcrumbs = Collections.unmodifiableList(list);
 		}
 		return breadcrumbs;
 	}
