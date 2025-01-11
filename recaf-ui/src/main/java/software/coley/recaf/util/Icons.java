@@ -83,6 +83,7 @@ public class Icons {
 	public static final String SORT_ALPHABETICAL = "icons/sort-alphabetical.png";
 	public static final String SORT_VISIBILITY = "icons/sort-visibility.png";
 	public static final String PHANTOM = "icons/phantom.png";
+	public static final String KOTLIN_FLAT = "icons/kotlin-flat.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();

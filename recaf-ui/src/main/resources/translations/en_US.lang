@@ -384,6 +384,9 @@ hierarchy.title=Inheritance
 hierarchy.children=Children
 hierarchy.parents=Parents
 
+## Kotlin Metadata
+kotlinmetadata.title=@Metadata
+
 ## Logging
 logging.title=Logging
 

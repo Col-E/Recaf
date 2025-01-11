@@ -44,7 +44,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 	private List<String> breadcrumbs;
 	private int sigCheck = SIGS_UNKNOWN;
 
-	protected BasicClassInfo(AbstractClassInfoBuilder<?> builder) {
+	protected BasicClassInfo(@Nonnull AbstractClassInfoBuilder<?> builder) {
 		this(builder.getName(),
 				builder.getSuperName(),
 				builder.getInterfaces(),

@@ -46,21 +46,29 @@ public class MemberDisplayFormatConfig extends BasicConfigContainer {
 
 	@Nonnull
 	public String getDisplay(@Nonnull FieldMember member) {
-		return switch (nameTypeDisplay.getValue()) {
-			case NAME_ONLY -> member.getName();
-			case NAME_AND_RAW_DESCRIPTOR -> member.getName() + " " + member.getDescriptor();
-			case NAME_AND_PRETTY_DESCRIPTOR ->
-					member.getName() + " " + Types.pretty(Type.getType(member.getDescriptor()));
-		};
+		return getFieldDisplay(member.getName(), member.getDescriptor());
 	}
 
 	@Nonnull
 	public String getDisplay(@Nonnull MethodMember member) {
+		return getMethodDisplay(member.getName(), member.getDescriptor());
+	}
+
+	@Nonnull
+	public String getFieldDisplay(@Nonnull String name, @Nonnull String desc) {
 		return switch (nameTypeDisplay.getValue()) {
-			case NAME_ONLY -> member.getName();
-			case NAME_AND_RAW_DESCRIPTOR -> member.getName() + member.getDescriptor();
-			case NAME_AND_PRETTY_DESCRIPTOR ->
-					member.getName() + " " + Types.pretty(Type.getMethodType(member.getDescriptor()));
+			case NAME_ONLY -> name;
+			case NAME_AND_RAW_DESCRIPTOR -> name + " " + desc;
+			case NAME_AND_PRETTY_DESCRIPTOR -> name + " " + Types.pretty(Type.getType(desc));
+		};
+	}
+
+	@Nonnull
+	public String getMethodDisplay(@Nonnull String name, @Nonnull String desc) {
+		return switch (nameTypeDisplay.getValue()) {
+			case NAME_ONLY -> name;
+			case NAME_AND_RAW_DESCRIPTOR -> name + desc;
+			case NAME_AND_PRETTY_DESCRIPTOR -> name + " " + Types.pretty(Type.getMethodType(desc));
 		};
 	}
 

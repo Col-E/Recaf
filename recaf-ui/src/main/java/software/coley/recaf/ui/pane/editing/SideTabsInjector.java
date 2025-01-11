@@ -15,8 +15,11 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.ui.pane.editing.tabs.InheritancePane;
+import software.coley.recaf.ui.pane.editing.tabs.KotlinMetadataPane;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.kotlin.KotlinMetadata;
+import software.coley.recaf.util.kotlin.model.KtClass;
 
 import java.util.function.Consumer;
 
@@ -30,12 +33,15 @@ public class SideTabsInjector {
 	private static final Logger logger = Logging.get(SideTabsInjector.class);
 	private final Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider;
 	private final Instance<InheritancePane> inheritancePaneProvider;
+	private final Instance<KotlinMetadataPane> kotlinPaneProvider;
 
 	@Inject
 	public SideTabsInjector(@Nonnull Instance<FieldsAndMethodsPane> fieldsAndMethodsPaneProvider,
-	                        @Nonnull Instance<InheritancePane> inheritancePaneProvider) {
+	                        @Nonnull Instance<InheritancePane> inheritancePaneProvider,
+	                        @Nonnull Instance<KotlinMetadataPane> kotlinPaneProvider) {
 		this.fieldsAndMethodsPaneProvider = fieldsAndMethodsPaneProvider;
 		this.inheritancePaneProvider = inheritancePaneProvider;
+		this.kotlinPaneProvider = kotlinPaneProvider;
 	}
 
 	/**
@@ -95,6 +101,17 @@ public class SideTabsInjector {
 					CarbonIcons.FLOW,
 					inheritancePane
 			));
+
+			// Add kotlin metadata tab if metadata is found.
+			KtClass metadata = KotlinMetadata.extractKtModel(classNavigable.getClassPath().getValue());
+			if (metadata != null) {
+				KotlinMetadataPane kotlinMetadataPane = kotlinPaneProvider.get();
+				kotlinMetadataPane.setMetadata(metadata);
+				pane.addSideTab(new BoundTab(Lang.getBinding("kotlinmetadata.title"),
+						Icons.getIconView(Icons.KOTLIN_FLAT),
+						kotlinMetadataPane
+				));
+			}
 		} else {
 			logger.warn("Called 'injectClassTabs' for non-class navigable content");
 		}

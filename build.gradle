@@ -25,8 +25,12 @@ subprojects {
 
     // ======================= DEPENDENCIES ========================
     dependencies {
-        // to enforce it everywhere as standard
+        // Enforce jakarta annotations everywhere as the standard for Nullable/Nonnull
         implementation(libs.jakarta.annotation)
+
+        // Local libraries for internal use only
+        //  (none of the types from these libraries should be part of a public API)
+        implementation fileTree(dir: "$rootProject.projectDir/libs", include: ['*.jar'])
     }
 
     configurations.configureEach {
