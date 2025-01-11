@@ -39,7 +39,7 @@ class CommentManagerTest extends TestBase {
 		// Setup workspace
 		classToDecompile = TestClassUtils.fromRuntimeClass(ClassWithFieldsAndMethods.class);
 		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(classToDecompile));
-		recaf.get(WorkspaceManager.class).setCurrent(workspace);
+		workspaceManager.setCurrent(workspace);
 
 		// Grab services
 		commentManager = recaf.get(CommentManager.class);

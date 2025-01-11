@@ -321,8 +321,7 @@ class PathNodeTest {
 
 	@Nested
 	class Comparison {
-		@Test // ignore warning about 'compareTo' on self
-		@SuppressWarnings("all")
+		@Test
 		void compareToSelfIsZero() {
 			// Self comparison or equal items should always be 0
 			assertThatComparable(p1).isEqualTo(p1);
