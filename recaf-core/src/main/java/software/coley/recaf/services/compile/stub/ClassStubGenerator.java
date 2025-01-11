@@ -127,10 +127,7 @@ public abstract class ClassStubGenerator {
 		if (AccessFlag.isEnum(classAccess)) {
 			int enumConsts = 0;
 			for (FieldMember field : fields) {
-				if (field.getDescriptor().length() == 1)
-					continue;
-				InstanceType fieldDesc = Types.instanceTypeFromDescriptor(field.getDescriptor());
-				if (fieldDesc.internalName().equals(className) && field.hasFinalModifier() && field.hasStaticModifier()) {
+				if (isEnumConst(field)) {
 					if (enumConsts > 0)
 						code.append(", ");
 					code.append(field.getName());
@@ -157,6 +154,10 @@ public abstract class ClassStubGenerator {
 			if (field.hasBridgeModifier() || field.hasSyntheticModifier())
 				continue;
 
+			// Skip enum constants, we added those earlier.
+			if (isEnumConst(field))
+				continue;
+
 			// Skip stubbing of illegally named fields.
 			String name = field.getName();
 			if (!isSafeName(name))
@@ -165,15 +166,9 @@ public abstract class ClassStubGenerator {
 			if (!isSafeClassName(fieldNameType.className))
 				continue;
 
-			// Skip enum constants, we added those earlier.
-			if (AccessFlag.isEnum(classAccess)
-					&& fieldNameType.className.equals(className.replace('/', '.'))
-					&& field.hasFinalModifier()
-					&& field.hasStaticModifier())
-				continue;
-
 			// Skip fields with types that aren't accessible in the workspace.
-			if (isMissingType(field.getDescriptor())) continue;
+			if (isMissingType(field.getDescriptor()))
+				continue;
 
 			// Append the field. The only modifier that we care about here is if it is static or not.
 			if (field.hasStaticModifier())
@@ -397,6 +392,28 @@ public abstract class ClassStubGenerator {
 	@Nonnull
 	protected String getLocalName() {
 		return StringUtil.shortenPath(className);
+	}
+
+	/**
+	 * @param field
+	 * 		Field to check.
+	 *
+	 * @return {@code true} when it represents an enum constant.
+	 */
+	protected boolean isEnumConst(@Nonnull FieldMember field) {
+		// This class must be an enum.
+		if (!AccessFlag.isEnum(classAccess))
+			return false;
+
+		// The field must be 'public static final'
+		if (!field.hasFinalModifier() || !field.hasStaticModifier() || !field.hasPublicModifier())
+			return false;
+
+		// The descriptor must be: L + className + ;
+		if (field.getDescriptor().length() != className.length() + 2)
+			return false;
+		InstanceType fieldDesc = Types.instanceTypeFromDescriptor(field.getDescriptor());
+		return fieldDesc.internalName().equals(className);
 	}
 
 	/**

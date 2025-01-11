@@ -92,6 +92,8 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 			methodName = "static_ctor";
 		else if (!isSafeName(methodName))
 			methodName = "obfuscated_method";
+		else if (AccessFlag.isEnum(classAccess) && isReservedEnumMethodName(methodName))
+			methodName = "enum_method";
 
 		// Assign expression host method details
 		this.methodFlags = methodFlags;
@@ -346,5 +348,16 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 
 		}
 		return parameterVariable;
+	}
+
+	private static boolean isReservedEnumMethodName(@Nonnull String methodName) {
+		return methodName.equals("values")
+				|| methodName.equals("valueOf")
+				|| methodName.equals("ordinal")
+				|| methodName.equals("name")
+				|| methodName.equals("describeConstable")
+				|| methodName.equals("compareTo")
+				|| methodName.equals("equals")
+				|| methodName.equals("hashCode");
 	}
 }
