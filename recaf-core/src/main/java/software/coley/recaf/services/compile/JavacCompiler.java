@@ -109,20 +109,22 @@ public class JavacCompiler implements Service {
 			virtualClassPath = Lists.combine(virtualClassPath, supplementaryResources);
 
 		// Generate phantom classes if the workspace does not already have phantoms in it.
-		if (workspace != null && config.getGeneratePhantoms().getValue() && workspace.getSupportingResources().stream()
-				.noneMatch(resource -> resource instanceof GeneratedPhantomWorkspaceResource)) {
-			try {
-				// Only scan the target class and any of its inner classes for content to fill in.
-				List<JvmClassInfo> classesToScan = workspace.findJvmClasses(c -> c.getName().equals(className) || c.isInnerClassOf(className)).stream()
-						.map(p -> p.getValue().asJvmClass())
-						.collect(Collectors.toList());
-				WorkspaceResource phantomResource = phantomGenerator.createPhantomsForClasses(workspace, classesToScan);
-				int generatedCount = phantomResource.getJvmClassBundle().size();
-				if (generatedCount > 0)
-					logger.debug("Generated {} phantoms for pre-compile", generatedCount);
-				virtualClassPath = Lists.add(virtualClassPath, phantomResource);
-			} catch (PhantomGenerationException ex) {
-				logger.warn("Failed to generate phantoms for compilation against '{}'", className, ex);
+		if (workspace != null && config.getGeneratePhantoms().getValue()
+				&& workspace.getSupportingResources().stream().noneMatch(resource -> resource instanceof GeneratedPhantomWorkspaceResource)) {
+			// Only scan the target class and any of its inner classes for content to fill in.
+			List<JvmClassInfo> classesToScan = workspace.findJvmClasses(c -> c.getName().equals(className) || c.isInnerClassOf(className)).stream()
+					.map(p -> p.getValue().asJvmClass())
+					.collect(Collectors.toList());
+			if (!classesToScan.isEmpty()) {
+				try {
+					WorkspaceResource phantomResource = phantomGenerator.createPhantomsForClasses(workspace, classesToScan);
+					int generatedCount = phantomResource.getJvmClassBundle().size();
+					if (generatedCount > 0)
+						logger.debug("Generated {} phantoms for pre-compile", generatedCount);
+					virtualClassPath = Lists.add(virtualClassPath, phantomResource);
+				} catch (PhantomGenerationException ex) {
+					logger.warn("Failed to generate phantoms for compilation against '{}'", className, ex);
+				}
 			}
 		}
 
