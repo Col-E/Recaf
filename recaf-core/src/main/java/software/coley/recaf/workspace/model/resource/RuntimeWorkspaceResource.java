@@ -140,6 +140,11 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 			}
 
 			@Override
+			public int size() {
+				return cache.size();
+			}
+
+			@Override
 			public void clear() {
 				// no-op
 			}
@@ -149,10 +154,8 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 		// Populate the system classes in the background.
 		try (ExecutorService ex = ThreadPoolFactory.newSingleThreadExecutor("runtime-class-population")) {
 			CompletableFuture.runAsync(() -> {
-				long start = System.currentTimeMillis();
 				for (String name : ClasspathUtil.getSystemClassSet())
 					classes.get(name);
-				System.out.print("Pre-cache: " + (System.currentTimeMillis() - start));
 			}, ex);
 		}
 	}
