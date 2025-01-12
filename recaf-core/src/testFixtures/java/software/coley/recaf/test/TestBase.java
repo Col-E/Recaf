@@ -5,9 +5,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.parallel.Isolated;
 import software.coley.recaf.Bootstrap;
 import software.coley.recaf.Recaf;
-import software.coley.recaf.services.plugin.PluginManagerConfig;
-import software.coley.recaf.util.TestEnvironment;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.TestEnvironment;
 
 import java.lang.annotation.Annotation;
 
@@ -17,8 +16,16 @@ import java.lang.annotation.Annotation;
  */
 @Isolated
 public class TestBase {
-	protected static final Recaf recaf = Bootstrap.get();
+	protected static final Recaf recaf;
 	protected static WorkspaceManager workspaceManager;
+
+	static {
+		Bootstrap.setWeldConsumer(w -> w.addPackage(true, TestConfigSetup.class));
+		recaf = Bootstrap.get();
+
+		// Trigger the test-default bean to load
+		recaf.get(TestConfigSetup.class).configure();
+	}
 
 	@BeforeAll
 	public static void setupWorkspaceManager() {
