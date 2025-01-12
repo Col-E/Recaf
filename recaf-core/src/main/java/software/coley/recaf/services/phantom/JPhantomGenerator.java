@@ -95,7 +95,7 @@ public class JPhantomGenerator implements PhantomGenerator {
 			throws PhantomGenerationException {
 		// Convert collection to map
 		Map<String, JvmClassInfo> classMap = classes.stream()
-				.collect(Collectors.toMap(Info::getName, Function.identity()));
+				.collect(Collectors.toMap(Info::getName, Function.identity(), (a, b) -> a));
 
 		// Generate phantoms for them and wrap into resource
 		try {
