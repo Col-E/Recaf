@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 /**
  * ASM instruction utilities.
@@ -28,6 +29,23 @@ public class AsmInsnUtil implements Opcodes {
 			case Type.FLOAT -> new InsnNode(FCONST_0);
 			case Type.DOUBLE -> new InsnNode(DCONST_0);
 			default -> new InsnNode(ACONST_NULL);
+		};
+	}
+
+	/**
+	 * @param varInsn
+	 * 		Variable instruction.
+	 *
+	 * @return Type that encompasses the variable being accessed/written to,
+	 */
+	@Nonnull
+	public static Type getTypeForVarInsn(@Nonnull VarInsnNode varInsn) {
+		return switch (varInsn.getOpcode()) {
+			case Opcodes.ISTORE, Opcodes.ILOAD -> Type.INT_TYPE;
+			case Opcodes.LSTORE, Opcodes.LLOAD -> Type.LONG_TYPE;
+			case Opcodes.FSTORE, Opcodes.FLOAD -> Type.FLOAT_TYPE;
+			case Opcodes.DSTORE, Opcodes.DLOAD -> Type.DOUBLE_TYPE;
+			default -> Types.OBJECT_TYPE;
 		};
 	}
 
