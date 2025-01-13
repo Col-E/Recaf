@@ -2,8 +2,22 @@ package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
 import software.coley.collections.Unchecked;
-import software.coley.recaf.info.*;
-import software.coley.recaf.info.properties.builtin.*;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.Info;
+import software.coley.recaf.info.JarFileInfo;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.ZipFileInfo;
+import software.coley.recaf.info.properties.builtin.PathOriginalNameProperty;
+import software.coley.recaf.info.properties.builtin.PathPrefixProperty;
+import software.coley.recaf.info.properties.builtin.PathSuffixProperty;
+import software.coley.recaf.info.properties.builtin.ZipAccessTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipCommentProperty;
+import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
+import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
+import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -103,11 +117,25 @@ public class WorkspaceExportOptions {
 			populate(workspace);
 			switch (outputType) {
 				case FILE:
+					// Test if we're supposed to just write the file as-is instead of bundling it in an archive.
+					//  - Must only have one thing to write
+					//  - Workspace input must be a single non-archive file
+					if (contents.size() == 1 &&
+							workspace.getPrimaryResource() instanceof WorkspaceFileResource primaryFileResource &&
+							!(primaryFileResource.getFileInfo() instanceof ZipFileInfo)) {
+						byte[] data = contents.values().iterator().next();
+						if (prefix != null)
+							consumer.write(prefix);
+						consumer.write(data);
+						return;
+					}
+
+					// Otherwise, lets make an archive.
 					ZipCreationUtils.ZipBuilder zipBuilder = ZipCreationUtils.builder();
 					if (createZipDirEntries)
 						zipBuilder = zipBuilder.createDirectories();
 
-					// Final copy for lambda, write all contents to ZIP buffer
+					// Final copy for lambda, write all contents to ZIP buffer.
 					ZipCreationUtils.ZipBuilder finalZipBuilder = zipBuilder;
 					contents.forEach((name, content) -> {
 						// Cannot mirror exact compression type, so we'll just do binary "is this compressed or nah?"

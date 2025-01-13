@@ -205,4 +205,25 @@ class WorkspaceExporterTest {
 		assertEquals("SomethingElse.bin", outHeadName, "Mismatch in outputs expected first ZIP entry name");
 		assertEquals(zipHeadName, outHeadName, "Mismatch where normal ZIP entry for 'SomethingElse.bin' is supposed to be");
 	}
+
+	@Test
+	void testNonArchiveExportedAsIsAndNotBundledInAZipContainer() throws IOException {
+		// Make a basic [0, 1, 2, 3... 100]
+		byte[] bytes = new byte[100];
+		for (int i = 0; i < bytes.length; i++)
+			bytes[i] = (byte) i;
+
+		// Import the data.
+		WorkspaceResource resource = importer.importResource(ByteSources.wrap(bytes));
+		BasicWorkspace workspace = new BasicWorkspace(resource);
+
+		// Export it as a file.
+		ByteArrayWorkspaceExportConsumer bytesExport = new ByteArrayWorkspaceExportConsumer();
+		new WorkspaceExportOptions(WorkspaceOutputType.FILE, bytesExport).create().export(workspace);
+		byte[] output = bytesExport.getOutput();
+
+		// Verify the contents are the exact same. Because it's not an archive we should not be
+		// exporting it back bundled inside an archive.
+		assertArrayEquals(bytes, output, "Expected input and output to be exact match");
+	}
 }
