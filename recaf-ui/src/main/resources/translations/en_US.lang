@@ -741,6 +741,7 @@ service.io.recent-workspaces-config.recent-workspaces=Recent workspace
 service.io.recent-workspaces-config.last-class-export-path=Last class export path
 service.io.resource-importer-config=Archive importing
 service.io.resource-importer-config.zip-strategy=ZIP parsing strategy
+service.io.resource-importer-config.allow-basic-base-offset-zero-check=Default to check 0 as zip beginning with JVM strategy
 service.io.resource-importer-config.skip-revisited-cen-to-local-links=Skip duplicate CEN-to-LOC entries with JVM strategy
 service.mapping=Mapping
 service.mapping.mapping-aggregator-config=Mapping aggregation

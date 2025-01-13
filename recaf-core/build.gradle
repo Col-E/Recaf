@@ -28,7 +28,7 @@ dependencies {
     api(libs.gson) // required by R8 (from dex-translator)
     api(libs.instrument.server)
     api(libs.jphantom)
-    api(libs.llzip)
+    api(libs.lljzip)
     api(libs.bundles.logging)
     api(libs.mapping.io)
     api(libs.natural.order)

@@ -25,6 +25,7 @@ import software.coley.recaf.services.ServiceConfig;
 public class ResourceImporterConfig extends BasicConfigContainer implements ServiceConfig {
 	private final ObservableObject<ZipStrategy> zipStrategy = new ObservableObject<>(ZipStrategy.JVM);
 	private final ObservableBoolean skipRevisitedCenToLocalLinks = new ObservableBoolean(true);
+	private final ObservableBoolean allowBasicJvmBaseOffsetZeroCheck = new ObservableBoolean(true);
 
 	@Inject
 	public ResourceImporterConfig() {
@@ -32,6 +33,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 
 		addValue(new BasicConfigValue<>("zip-strategy", ZipStrategy.class, zipStrategy));
 		addValue(new BasicConfigValue<>("skip-revisited-cen-to-local-links", boolean.class, skipRevisitedCenToLocalLinks));
+		addValue(new BasicConfigValue<>("allow-basic-base-offset-zero-check", boolean.class, allowBasicJvmBaseOffsetZeroCheck));
 	}
 
 	/**
@@ -56,13 +58,38 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	}
 
 	/**
+	 * When the {@link #getZipStrategy() ZIP strategy} is {@link ZipStrategy#JVM} this allows toggling
+	 * how the JVM base offset of the zip file is calculated. Normally the start of a ZIP file is calculated
+	 * based off the logic in {@code ZipFile.Source#findEND()} which looks like:
+	 * <pre>{@code
+	 *  // ENDSIG matched, however the size of file comment in it does
+	 *  // not match the real size. One "common" cause for this problem
+	 *  // is some "extra" bytes are padded at the end of the zipfile.
+	 *  // Let's do some extra verification, we don't care about the
+	 *  // performance in this situation.
+	 *  byte[] sbuf = new byte[4];
+	 *  long cenpos = end.endpos - end.cenlen;
+	 *  long locpos = cenpos - end.cenoff;
+	 * }</pre>
+	 * In some edge cases this results in {@code locpos} being {@code > 0} even when the file has no prefix/padding.
+	 *
+	 * @return {@code true} when defaulting to check for zero being the base JVM zip offset instead of the lookup
+	 * based on the code in {@code ZipFile.Source#findEND()}.
+	 */
+	@Nonnull
+	public ObservableBoolean getAllowBasicJvmBaseOffsetZeroCheck() {
+		return allowBasicJvmBaseOffsetZeroCheck;
+	}
+
+	/**
 	 * @return Mapping of input bytes to a ZIP archive model.
 	 */
 	@Nonnull
 	public UncheckedFunction<byte[], ZipArchive> mapping() {
 		ZipStrategy strategy = zipStrategy.getValue();
 		if (strategy == ZipStrategy.JVM)
-			return input -> ZipIO.read(input, new JvmZipReader(skipRevisitedCenToLocalLinks.getValue()));
+			return input -> ZipIO.read(input, new JvmZipReader(skipRevisitedCenToLocalLinks.getValue(),
+					allowBasicJvmBaseOffsetZeroCheck.getValue()));
 		if (strategy == ZipStrategy.STANDARD)
 			return ZipIO::readStandard;
 		return ZipIO::readNaive;
