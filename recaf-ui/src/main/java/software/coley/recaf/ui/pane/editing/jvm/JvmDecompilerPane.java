@@ -22,6 +22,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.services.compile.CompileMap;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.compile.JavacArgumentsBuilder;
@@ -107,11 +108,22 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		setOnKeyPressed(e -> {
 			if (keys.getSave().match(e))
 				save();
-			if (keys.getRename().match(e)) {
+			else if (keys.getRename().match(e)) {
 				// Resolve what the caret position has, then handle renaming on the generic result.
 				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
 				if (result != null)
 					actions.rename(result.path());
+			} else if (keys.getGoto().match(e)) {
+				// Resolve what the caret position has, then handle navigating to the resulting path.
+				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
+				if (result != null) {
+					try {
+						actions.gotoDeclaration(result.path());
+					} catch (IncompletePathException ex) {
+						// Should realistically never happen
+						logger.warn("Cannot goto location, path incomplete", ex);
+					}
+				}
 			}
 		});
 

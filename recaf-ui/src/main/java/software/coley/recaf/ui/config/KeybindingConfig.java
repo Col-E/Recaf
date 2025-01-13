@@ -47,6 +47,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 	private static final String ID_REPLACE = "editor.replace";
 	private static final String ID_SAVE = "editor.save";
 	private static final String ID_RENAME = "editor.rename";
+	private static final String ID_GOTO = "editor.goto";
 	private final BindingBundle bundle;
 
 	@Inject
@@ -59,7 +60,8 @@ public class KeybindingConfig extends BasicConfigContainer {
 				createBindForPlatform(ID_FIND, CONTROL, F),
 				createBindForPlatform(ID_REPLACE, CONTROL, R),
 				createBindForPlatform(ID_SAVE, CONTROL, S),
-				createBindForPlatform(ID_RENAME, ALT, R)
+				createBindForPlatform(ID_RENAME, ALT, R),
+				createBindForPlatform(ID_GOTO, F3)
 		));
 		addValue(new BasicMapConfigValue<>("bundle", BindingBundle.class, String.class, Binding.class, bundle));
 
@@ -147,6 +149,16 @@ public class KeybindingConfig extends BasicConfigContainer {
 	@Nonnull
 	public Binding getRename() {
 		return Objects.requireNonNull(bundle.get(ID_RENAME));
+	}
+
+	/**
+	 * @return Keybinding for renaming whatever is found at the current caret position.
+	 *
+	 * @see JvmDecompilerPane Usage in decompiler.
+	 */
+	@Nonnull
+	public Binding getGoto() {
+		return Objects.requireNonNull(bundle.get(ID_GOTO));
 	}
 
 	/**

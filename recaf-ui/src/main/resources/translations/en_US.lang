@@ -133,6 +133,7 @@ menu.plugin.uninstall.warning=Are you sure you want to delete this plugin?
 bind.inputprompt.initial=<waiting>
 bind.inputprompt.finish=<ENTER to finish>
 bind.editor.find=Find
+bind.editor.goto=Goto
 bind.editor.rename=Rename
 bind.editor.replace=Replace
 bind.editor.save=Save
