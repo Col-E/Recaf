@@ -776,6 +776,7 @@ service.ui.member-format-config.name-type-display=Name & type display
 service.ui.tab-completion-config=Tab Completion
 service.ui.text-format-config=Text format
 service.ui.tab-completion-config.enabled-in-assembler=Enabled in assembler
+service.ui.tab-completion-config.popup-position=Preferred completion popup position in relation to cursor
 service.ui.text-format-config.escape=Enable text escapes
 service.ui.text-format-config.max-length=Maximum text display length
 service.ui.text-format-config.shorten=Enable text shortening

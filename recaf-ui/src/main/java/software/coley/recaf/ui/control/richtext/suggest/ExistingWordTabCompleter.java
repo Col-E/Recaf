@@ -23,7 +23,7 @@ import java.util.function.Predicate;
  */
 public class ExistingWordTabCompleter implements TabCompleter<String> {
 	private final Set<String> words = ConcurrentHashMap.newKeySet();
-	private final CompletionPopup<String> completionPopup = new StringCompletionPopup(8);
+	private final CompletionPopup<String> completionPopup = new StringCompletionPopup(new TabCompletionConfig(), 8);
 	private CodeArea area;
 	private String lineContext;
 
@@ -132,8 +132,8 @@ public class ExistingWordTabCompleter implements TabCompleter<String> {
 	}
 
 	private class StringCompletionPopup extends CompletionPopup<String> {
-		private StringCompletionPopup(int maxItemsToShow) {
-			super(STANDARD_CELL_SIZE, maxItemsToShow, t -> t);
+		private StringCompletionPopup(@Nonnull TabCompletionConfig config, int maxItemsToShow) {
+			super(config, STANDARD_CELL_SIZE, maxItemsToShow, t -> t);
 		}
 
 		@Override
