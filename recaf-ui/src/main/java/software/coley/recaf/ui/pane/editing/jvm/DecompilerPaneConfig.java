@@ -21,7 +21,7 @@ import software.coley.recaf.util.DevDetection;
 @ApplicationScoped
 public class DecompilerPaneConfig extends BasicConfigContainer {
 	private final ObservableInteger timeoutSeconds = new ObservableInteger(60);
-	private final ObservableBoolean useMappingAcceleration = new ObservableBoolean(true);
+	private final ObservableBoolean useMappingAcceleration = new ObservableBoolean(false);
 	private final ObservableBoolean acknowledgedSaveWithErrors = new ObservableBoolean(DevDetection.isDevEnv());
 
 	@Inject
