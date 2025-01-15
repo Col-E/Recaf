@@ -147,7 +147,7 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter
 				if (code.range().within(caret))
 					inCode = true;
 				break;
-			} else {
+			} else if (element != null) {
 				element = element.pick(caret);
 			}
 		}
