@@ -46,7 +46,8 @@ public class BasicClassIconProviderFactory implements ClassIconProviderFactory {
 		return classIconProvider(info);
 	}
 
-	private static IconProvider classIconProvider(ClassInfo info) {
+	@Nonnull
+	private static IconProvider classIconProvider(@Nonnull ClassInfo info) {
 		// Special class cases
 		if (info.hasEnumModifier()) return ENUM;
 		if (info.hasAnnotationModifier()) return ANNO;

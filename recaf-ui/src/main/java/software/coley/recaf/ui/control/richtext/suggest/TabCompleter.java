@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control.richtext.suggest;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -48,4 +49,18 @@ public interface TabCompleter<T> extends EditorComponent {
 	 * Implementations should update any state that is expensive to maintain in here.
 	 */
 	void onRoughTextUpdate(@Nonnull List<PlainTextChange> changes);
+
+	/**
+	 * Called when the {@link CompletionPopupUpdater} observes a typed non-letter/non-digit {@link KeyCode}.
+	 * <p/>
+	 * Implementations can check for key-codes not covered by {@link KeyCode#isLetterKey()} and {@link KeyCode#isDigitKey()}
+	 * to support completion of additional characters. For example the {@code []} characters are not covered by default
+	 * and an implementation would need to explicitly support them via this method.
+	 *
+	 * @param code Key-code to check for tab-completion support.
+	 * @return {@code true} when this completer supports the tab-completion of the given key-code.
+	 */
+	default boolean isSpecialCompletableKeyCode(@Nullable KeyCode code) {
+		return false;
+	}
 }

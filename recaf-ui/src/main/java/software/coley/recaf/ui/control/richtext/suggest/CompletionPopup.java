@@ -6,6 +6,7 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.KeyCode;
@@ -53,6 +54,22 @@ public abstract class CompletionPopup<T> {
 	 * 		Mapper of {@code T} values to {@code String}.
 	 */
 	public CompletionPopup(int cellSize, int maxItemsToShow, @Nonnull CompletionValueTextifier<T> textifier) {
+		this(cellSize, maxItemsToShow, textifier, t -> null);
+	}
+
+	/**
+	 * @param cellSize
+	 * 		Height of cells in the list-view of completion items.
+	 * @param maxItemsToShow
+	 * 		Number of cells to show at a time.
+	 * @param textifier
+	 * 		Mapper of {@code T} values to {@code String}.
+	 * @param graphifier
+	 * 		Mapper of {@code T} values to display graphics.
+	 */
+	public CompletionPopup(int cellSize, int maxItemsToShow,
+	                       @Nonnull CompletionValueTextifier<T> textifier,
+	                       @Nonnull CompletionValueGraphicMapper<T> graphifier) {
 		this.maxItemsToShow = maxItemsToShow;
 		this.textifier = textifier;
 
@@ -92,6 +109,21 @@ public abstract class CompletionPopup<T> {
 
 				// Multi-key action like 'Control Z' fail if we consume the event.
 				if (!event.isControlDown()) event.consume();
+			}
+		});
+
+		// Map the completion values to a nicer display format.
+		listView.setCellFactory(v -> new ListCell<>() {
+			@Override
+			protected void updateItem(T item, boolean empty) {
+				super.updateItem(item, empty);
+				if (empty || item == null) {
+					setText(null);
+					setGraphic(null);
+				} else {
+					setText(textifier.toText(item));
+					setGraphic(graphifier.toGraphic(item));
+				}
 			}
 		});
 	}
@@ -303,8 +335,29 @@ public abstract class CompletionPopup<T> {
 	}
 
 	protected boolean complete(@Nonnull String partialText, @Nonnull String fullText) {
-		if (!fullText.startsWith(partialText))
+		// Skip if the partial text (the current line) does not represent a substring of the text to complete (the full text)
+		if (!fullText.startsWith(partialText)) {
+			// If the current partial text has separators, check if the full text completion
+			// begins at a point AFTER the separator.
+			int space = partialText.indexOf(' ');
+			if (space >= 0)
+				return complete(partialText.substring(space + 1), fullText);
+			int dot = partialText.indexOf('.');
+			if (dot >= 0)
+				return complete(partialText.substring(dot + 1), fullText);
+
+			// If the partial text has no separators, check if the full text completion  has separators.
+			// If it does, then we'll try to complete a substring of the original completion starting at the separator.
+			space = fullText.indexOf(' ');
+			if (space >= 0)
+				return complete(partialText, fullText.substring(space + 1));
+			dot = fullText.indexOf('.');
+			if (dot >= 0)
+				return complete(partialText, fullText.substring(dot + 1));
+
+			// No sub-sequence of the existing partial text and the text to complete matches.
 			return false;
+		}
 
 		// Insert the rest of the text.
 		String remainingWordText = fullText.substring(partialText.length());

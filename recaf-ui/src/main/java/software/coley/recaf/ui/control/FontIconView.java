@@ -27,7 +27,7 @@ public class FontIconView extends Text {
 	 * @param icon
 	 * 		Icon to use.
 	 */
-	public FontIconView(Ikon icon) {
+	public FontIconView(@Nonnull Ikon icon) {
 		this(icon, IconView.DEFAULT_ICON_SIZE, null);
 	}
 
@@ -37,7 +37,7 @@ public class FontIconView extends Text {
 	 * @param color
 	 * 		Color to use.
 	 */
-	public FontIconView(Ikon icon, @Nonnull Color color) {
+	public FontIconView(@Nonnull Ikon icon, @Nonnull Color color) {
 		this(icon, IconView.DEFAULT_ICON_SIZE, color);
 	}
 
@@ -47,7 +47,7 @@ public class FontIconView extends Text {
 	 * @param size
 	 * 		Size of icon in pixels.
 	 */
-	public FontIconView(Ikon icon, int size) {
+	public FontIconView(@Nonnull Ikon icon, int size) {
 		this(icon, size, null);
 	}
 
@@ -59,7 +59,7 @@ public class FontIconView extends Text {
 	 * @param color
 	 * 		Optional color to use.
 	 */
-	public FontIconView(Ikon icon, int size, @Nullable Color color) {
+	public FontIconView(@Nonnull Ikon icon, int size, @Nullable Color color) {
 		int code = icon.getCode();
 		IkonHandler ikonHandler = codeToHandler.computeIfAbsent(code, k -> resolver.resolve(icon.getDescription()));
 

@@ -2,27 +2,37 @@ package software.coley.recaf.ui.control.richtext.suggest;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.paint.Color;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTCode;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.util.BlwOpcodes;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import regexodus.Matcher;
-import software.coley.collections.Unchecked;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
-import software.coley.recaf.util.ClasspathUtil;
+import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.RegexUtil;
+import software.coley.recaf.util.SVG;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -32,10 +42,11 @@ import java.util.stream.Stream;
  *
  * @author Matt Coley
  */
-public class AssemblerTabCompleter implements TabCompleter<String> {
-	private final CompletionPopup<String> completionPopup = new StringCompletionPopup(15);
+public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter.AssemblerCompletion> {
+	private final CompletionPopup<AssemblerCompletion> completionPopup = new AssemblerCompletionPopup(15);
 	private final Workspace workspace;
 	private final InheritanceGraph inheritanceGraph;
+	private final CellConfigurationService configurationService;
 	private CodeArea area;
 	private List<ASTElement> ast;
 	private Context context;
@@ -46,9 +57,12 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	 * @param inheritanceGraph
 	 * 		Graph to pull hierarchies from.
 	 */
-	public AssemblerTabCompleter(@Nonnull Workspace workspace, @Nonnull InheritanceGraph inheritanceGraph) {
+	public AssemblerTabCompleter(@Nonnull Workspace workspace,
+	                             @Nonnull InheritanceGraph inheritanceGraph,
+	                             @Nonnull CellConfigurationService configurationService) {
 		this.workspace = workspace;
 		this.inheritanceGraph = inheritanceGraph;
+		this.configurationService = configurationService;
 	}
 
 	/**
@@ -81,7 +95,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 
 	@Nonnull
 	@Override
-	public List<String> computeCurrentCompletions() {
+	public List<AssemblerCompletion> computeCurrentCompletions() {
 		return context.complete();
 	}
 
@@ -93,6 +107,15 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	@Override
 	public void onRoughTextUpdate(@Nonnull List<PlainTextChange> changes) {
 		// no-op
+	}
+
+	@Override
+	public boolean isSpecialCompletableKeyCode(@Nullable KeyCode code) {
+		// Support completing:
+		// - '/' which is used to separate packages in class names
+		// - '[' which is used in array descriptors
+		// - ';' which is used to mark the end of object type descriptors
+		return code == KeyCode.SLASH || code == KeyCode.OPEN_BRACKET || code == KeyCode.SEMICOLON;
 	}
 
 	@Override
@@ -166,7 +189,10 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 			}
 
 			// Method matching
-			matcher = RegexUtil.getMatcher("^\\s*(?:(?:invoke)(?:virtual|interface|special|static)(?:interface)?)\\s+({type}[\\w\\/]+)?(?:\\.({name}\\w+)?)?(?:\\s+({desc}[\\w\\/;]+))?\\s*$", line);
+			matcher = RegexUtil.getMatcher("^\\s*(?:(?:invoke)(?:virtual|interface|special|static)(?:interface)?)\\s+" +
+					"({type}[\\w\\/]+)?" +
+					"(?:\\.({name}\\w+)?)?" +
+					"(?:\\s+({desc}.+))?\\s*$", line);
 			if (matcher.find()) {
 				String type = matcher.group("type");
 				String name = matcher.group("name");
@@ -192,19 +218,52 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	private static boolean completeFromContext(@Nullable String context, @Nonnull Predicate<String> completionHandler) {
 		if (context == null)
 			return false;
-		String group = null;
-		Matcher matcher = RegexUtil.getMatcher("[\\w\\/]+", context);
-		while (matcher.find())
-			group = matcher.group();
-		return group != null && completionHandler.test(group);
+		String trimmedContext = context.trim();
+		if (trimmedContext.isBlank())
+			return false;
+		return completionHandler.test(trimmedContext);
 	}
 
-	private class StringCompletionPopup extends CompletionPopup<String> {
-		// TODO: For better richness in the UI, we should migrate away from just 'String' and have a model
-		//  that includes information about the completion (be it opcodes, fields, methods, types, etc)
-
-		private StringCompletionPopup(int maxItemsToShow) {
-			super(STANDARD_CELL_SIZE, maxItemsToShow, t -> t);
+	private class AssemblerCompletionPopup extends CompletionPopup<AssemblerCompletion> {
+		private AssemblerCompletionPopup(int maxItemsToShow) {
+			super(STANDARD_CELL_SIZE, maxItemsToShow, AssemblerCompletion::text, completion -> switch (completion) {
+				case AssemblerCompletion.Opcode opcode -> {
+					String text = opcode.text();
+					if (text.startsWith("invoke"))
+						yield Icons.getIconView(Icons.METHOD);
+					if (text.startsWith("get") || text.startsWith("put"))
+						yield Icons.getIconView(Icons.FIELD);
+					if (text.endsWith("load"))
+						yield SVG.ofIconFile(SVG.REF_READ);
+					if (text.endsWith("store") || text.equals("iinc"))
+						yield SVG.ofIconFile(SVG.REF_WRITE);
+					if (text.contains("const") || text.equals("ldc"))
+						yield Icons.getIconView(Icons.PRIMITIVE);
+					if (text.startsWith("if") || text.endsWith("switch"))
+						yield new FontIconView(CarbonIcons.FLOW, Color.STEELBLUE);
+					if (text.endsWith("add"))
+						yield new FontIconView(CarbonIcons.ADD, Color.LIMEGREEN);
+					if (text.endsWith("sub") || text.endsWith("neg"))
+						yield new FontIconView(CarbonIcons.SUBTRACT, Color.RED);
+					if (text.startsWith("dup"))
+						yield new FontIconView(CarbonIcons.COPY, Color.DARKGRAY);
+					if (text.endsWith("return"))
+						yield new FontIconView(CarbonIcons.TEXT_NEW_LINE, Color.STEELBLUE);
+					if (text.equals("new") || text.equals("checkcast") || text.equals("instanceof"))
+						yield Icons.getIconView(Icons.CLASS);
+					if (text.indexOf('2') == 1) // x2y conversions
+						yield SVG.ofIconFile(SVG.TYPE_CONVERSION);
+					if (text.contains("cmp"))
+						yield new FontIconView(CarbonIcons.COMPARE, Color.DARKGRAY);
+					if (text.contains("array"))
+						yield Icons.getIconView(Icons.ARRAY);
+					if (text.equals("athrow"))
+						yield SVG.ofIconFile(SVG.EXCEPTION_BREAKPOINT);
+					yield Icons.getIconView(Icons.INTERNAL);
+				}
+				case AssemblerCompletion.Type type -> configurationService.graphicOf(type.path());
+				case AssemblerCompletion.Member member -> configurationService.graphicOf(member.path());
+			});
 		}
 
 		@Override
@@ -218,7 +277,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	 */
 	private interface Context {
 		@Nonnull
-		default List<String> complete() {
+		default List<AssemblerCompletion> complete() {
 			return Collections.emptyList();
 		}
 
@@ -231,7 +290,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	/**
 	 * Nothing to offer.
 	 */
-	record EmptyContext() implements Context {}
+	private record EmptyContext() implements Context {}
 
 	/**
 	 * The user is in the code block with only a single token.
@@ -241,8 +300,13 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	 * @param partialInput
 	 * 		Partial input text.
 	 */
-	record CodeOpcodeContext(@Nonnull String partialInput) implements Context {
-		private static final SortedSet<String> opcodes = new TreeSet<>(BlwOpcodes.getFilteredOpcodes().keySet());
+	private record CodeOpcodeContext(@Nonnull String partialInput) implements Context {
+		private static final SortedSet<String> opcodes = new TreeSet<>();
+
+		static {
+			opcodes.addAll(BlwOpcodes.getFilteredOpcodes().keySet());
+			opcodes.removeIf(op -> (op.contains("store") || op.contains("load")) && op.indexOf('_') > -1);
+		}
 
 		@Nonnull
 		@Override
@@ -252,12 +316,13 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 
 		@Nonnull
 		@Override
-		public List<String> complete() {
-			List<String> items = new ArrayList<>();
+		public List<AssemblerCompletion> complete() {
+			List<AssemblerCompletion> items = new ArrayList<>();
 			String trimmed = partialInput.trim();
-			for (String opcode : opcodes)
+			for (String opcode : opcodes) {
 				if (opcode.startsWith(trimmed) && !opcode.equals(trimmed))
-					items.add(opcode);
+					items.add(new AssemblerCompletion.Opcode(opcode));
+			}
 			return items;
 		}
 	}
@@ -267,7 +332,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	 * <br>
 	 * We should offer various parts of the field reference based on what is currently written.
 	 */
-	class CodeFieldContext extends ReferenceContext {
+	private class CodeFieldContext extends ReferenceContext {
 		/**
 		 * @param partialInput
 		 * 		Partial input text.
@@ -284,7 +349,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 
 		@Nonnull
 		@Override
-		public List<String> complete() {
+		public List<AssemblerCompletion> complete() {
 			boolean isStatic = partialInput.contains("getstatic ") || partialInput.contains("putstatic ");
 			return complete(workspace, inheritanceGraph, c -> c.fieldStream().filter(m -> isStatic == m.hasStaticModifier()));
 		}
@@ -295,7 +360,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 	 * <br>
 	 * We should offer various parts of the method reference based on what is currently written.
 	 */
-	class CodeMethodContext extends ReferenceContext {
+	private class CodeMethodContext extends ReferenceContext {
 		/**
 		 * @param partialInput
 		 * 		Partial input text.
@@ -312,7 +377,7 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 
 		@Nonnull
 		@Override
-		public List<String> complete() {
+		public List<AssemblerCompletion> complete() {
 			boolean isStatic = partialInput.contains("invokestatic ") || partialInput.contains("invokestaticinterface ");
 			boolean isSpecial = partialInput.contains("invokespecial ");
 			return complete(workspace, inheritanceGraph, c -> c.methodStream().filter(m -> {
@@ -326,7 +391,10 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 		}
 	}
 
-	abstract static class ReferenceContext implements Context {
+	/**
+	 * Type or member reference context.
+	 */
+	private abstract static class ReferenceContext implements Context {
 		protected final String partialInput;
 		protected final String owner;
 		protected final String name;
@@ -357,11 +425,11 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 
 		@Nonnull
 		@Override
-		public abstract List<String> complete();
+		public abstract List<AssemblerCompletion> complete();
 
 		@Nonnull
-		protected List<String> complete(@Nonnull Workspace workspace, @Nonnull InheritanceGraph inheritanceGraph,
-		                                @Nonnull Function<ClassInfo, Stream<? extends ClassMember>> classMemberLookup) {
+		protected List<AssemblerCompletion> complete(@Nonnull Workspace workspace, @Nonnull InheritanceGraph inheritanceGraph,
+		                                             @Nonnull Function<ClassInfo, Stream<? extends ClassMember>> classMemberLookup) {
 			// Skip if no owner type specified.
 			if (owner == null) return Collections.emptyList();
 
@@ -375,21 +443,24 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 				if (partialInput.endsWith(".")) {
 					ClassPathNode ownerPath = workspace.findClass(owner);
 					if (ownerPath != null) {
-						Set<String> items = new TreeSet<>();
+						List<ClassMember> items = new ArrayList<>();
 						InheritanceVertex vertex = inheritanceGraph.getVertex(owner);
 						if (vertex != null)
 							for (InheritanceVertex parent : vertex.getAllParents())
-								items.addAll(collect(classMemberLookup.apply(parent.getValue())));
-						items.addAll(collect(classMemberLookup.apply(ownerPath.getValue())));
-						return items.isEmpty() ? Collections.emptyList() : new ArrayList<>(items);
+								classMemberLookup.apply(parent.getValue()).forEach(items::add);
+						classMemberLookup.apply(ownerPath.getValue()).forEach(items::add);
+						return items.stream()
+								.map(ownerPath::child)
+								.map(AssemblerCompletion.Member::new)
+								.map(AssemblerCompletion.class::cast)
+								.toList();
 					}
 				} else {
 					// No separator, user is still typing out a class name.
-					Stream<String> a = ClasspathUtil.getSystemClassSet().stream()
-							.filter(s -> s.startsWith(owner));
-					Stream<String> b = workspace.findClasses(c -> c.getName().startsWith(owner)).stream()
-							.map(c -> c.getValue().getName());
-					return Stream.concat(a, b).toList();
+					return workspace.findClasses(c -> c.getName().startsWith(owner)).stream()
+							.map(AssemblerCompletion.Type::new)
+							.map(AssemblerCompletion.class::cast)
+							.toList();
 				}
 			}
 
@@ -397,14 +468,22 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 			if (name != null && desc == null) {
 				ClassPathNode ownerPath = workspace.findClass(owner);
 				if (ownerPath != null) {
-					Set<String> items = new TreeSet<>();
+					List<ClassMember> items = new ArrayList<>();
 					InheritanceVertex vertex = inheritanceGraph.getVertex(owner);
 					Predicate<ClassMember> filter = member -> member.getName().startsWith(name);
 					if (vertex != null)
 						for (InheritanceVertex parent : vertex.getAllParents())
-							items.addAll(collect(classMemberLookup.apply(parent.getValue()), filter));
-					items.addAll(collect(classMemberLookup.apply(ownerPath.getValue()), filter));
-					return items.isEmpty() ? Collections.emptyList() : new ArrayList<>(items);
+							classMemberLookup.apply(parent.getValue())
+									.filter(filter)
+									.forEach(items::add);
+					classMemberLookup.apply(ownerPath.getValue())
+							.filter(filter)
+							.forEach(items::add);
+					return items.stream()
+							.map(ownerPath::child)
+							.map(AssemblerCompletion.Member::new)
+							.map(AssemblerCompletion.class::cast)
+							.toList();
 				}
 			}
 
@@ -412,30 +491,68 @@ public class AssemblerTabCompleter implements TabCompleter<String> {
 			if (desc != null) {
 				ClassPathNode ownerPath = workspace.findClass(owner);
 				if (ownerPath != null) {
-					Set<String> items = new TreeSet<>();
+					List<ClassMember> items = new ArrayList<>();
 					InheritanceVertex vertex = inheritanceGraph.getVertex(owner);
 					Predicate<ClassMember> filter = member -> member.getName().equals(name) && member.getDescriptor().startsWith(desc);
 					if (vertex != null)
 						for (InheritanceVertex parent : vertex.getAllParents())
-							items.addAll(collect(classMemberLookup.apply(parent.getValue()), filter));
-					items.addAll(collect(classMemberLookup.apply(ownerPath.getValue()), filter));
-					return items.isEmpty() ? Collections.emptyList() : new ArrayList<>(items);
+							classMemberLookup.apply(parent.getValue())
+									.filter(filter)
+									.forEach(items::add);
+					classMemberLookup.apply(ownerPath.getValue())
+							.filter(filter)
+							.forEach(items::add);
+					return items.stream()
+							.map(ownerPath::child)
+							.map(AssemblerCompletion.Member::new)
+							.map(AssemblerCompletion.class::cast)
+							.toList();
 				}
 			}
 
 			return Collections.emptyList();
 		}
+	}
 
+	/**
+	 * Completion value type with subtypes for different kinds of completable assembler content.
+	 */
+	public sealed interface AssemblerCompletion {
+		/**
+		 * @return Text to complete.
+		 */
 		@Nonnull
-		private static List<String> collect(@Nonnull Stream<? extends ClassMember> stream) {
-			return collect(stream, null);
+		String text();
+
+		/**
+		 * @param text
+		 * 		Opcode name.
+		 */
+		record Opcode(@Nonnull String text) implements AssemblerCompletion {}
+
+		/**
+		 * @param path
+		 * 		Path to type to complete.
+		 */
+		record Type(@Nonnull ClassPathNode path) implements AssemblerCompletion {
+			@Nonnull
+			@Override
+			public String text() {
+				return path.getValue().getName();
+			}
 		}
 
-		@Nonnull
-		private static List<String> collect(@Nonnull Stream<? extends ClassMember> stream, @Nullable Predicate<? extends ClassMember> predicate) {
-			if (predicate != null)
-				stream = stream.filter(Unchecked.cast(predicate));
-			return stream.map(member -> member.getName() + " " + member.getDescriptor()).toList();
+		/**
+		 * @param path
+		 * 		Path to member to complete.
+		 */
+		record Member(@Nonnull ClassMemberPathNode path) implements AssemblerCompletion {
+			@Nonnull
+			@Override
+			public String text() {
+				ClassMember member = path.getValue();
+				return member.getName() + " " + member.getDescriptor();
+			}
 		}
 	}
 }

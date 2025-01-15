@@ -55,7 +55,7 @@ public class CompletionPopupUpdater<T> implements EventHandler<KeyEvent> {
 
 		// Any non-word character should remove the popup.
 		// Modifiers are also excluded so capitalizing letters won't hide the popup.
-		if (!code.isLetterKey() && !code.isDigitKey() && !code.isModifierKey() && code != PERIOD) {
+		if (!code.isLetterKey() && !code.isDigitKey() && !code.isModifierKey() && code != PERIOD && !tabCompleter.isSpecialCompletableKeyCode(code)) {
 			completionPopup.hide();
 			return;
 		}

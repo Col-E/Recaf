@@ -28,6 +28,7 @@ import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.assembler.AssemblerPipeline;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.navigation.ClassNavigable;
@@ -43,6 +44,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.suggest.AssemblerTabCompleter;
+import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
@@ -51,6 +53,7 @@ import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.SceneUtils;
+import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
 import java.time.Duration;
@@ -75,8 +78,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
 	private final AtomicBoolean updateLock = new AtomicBoolean();
-	private final AssemblerTabCompleter tabCompleter;
 	private AssemblerPipeline<? extends ClassInfo, ? extends ClassResult, ? extends ClassRepresentation> pipeline;
+	private AssemblerTabCompleter tabCompleter;
 	private ClassResult lastResult;
 	private ClassRepresentation lastAssembledClassRepresentation;
 	private ClassInfo lastAssembledClass;
@@ -93,15 +96,20 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull KeybindingConfig keys,
 	                     @Nonnull SideTabsInjector sideTabsInjector,
 	                     @Nonnull WorkspaceManager workspaceManager,
-	                     @Nonnull InheritanceGraphService graphService) {
+	                     @Nonnull InheritanceGraphService graphService,
+						 @Nonnull CellConfigurationService cellConfigurationService,
+	                     @Nonnull TabCompletionConfig tabCompletionConfig) {
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
 
 		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
 		InheritanceGraph inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
-		tabCompleter = new AssemblerTabCompleter(Objects.requireNonNull(workspaceManager.getCurrent()), inheritanceGraph);
-		editor.setTabCompleter(tabCompleter);
+		if (tabCompletionConfig.isEnabledInAssembler()) {
+			Workspace workspace = Objects.requireNonNull(workspaceManager.getCurrent());
+			tabCompleter = new AssemblerTabCompleter(workspace, inheritanceGraph, cellConfigurationService);
+			editor.setTabCompleter(tabCompleter);
+		}
 		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
 		editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
@@ -374,17 +382,17 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 				return pipeline.concreteParse(roughResult.get()).ifOk(concreteAst -> {
 					// The transform was a success.
 					lastConcreteAst = concreteAst;
-					tabCompleter.setAst(concreteAst);
+					if (tabCompleter != null) tabCompleter.setAst(concreteAst);
 					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(concreteAst, AstPhase.CONCRETE));
 				}).ifErr((partialAst, errors) -> {
 					// The transform failed.
 					lastPartialAst = partialAst;
-					tabCompleter.setAst(partialAst);
+					if (tabCompleter != null) tabCompleter.setAst(partialAst);
 					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(partialAst, AstPhase.CONCRETE_PARTIAL));
 					processErrors(errors, ProblemPhase.LINT);
 				});
 			} else {
-				tabCompleter.clearAst();
+				if (tabCompleter != null) tabCompleter.clearAst();
 			}
 
 			// Fall-back to rough AST.
