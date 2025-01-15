@@ -34,6 +34,7 @@ import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.text.TextFormatConfig;
+import software.coley.recaf.ui.control.IconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
@@ -42,9 +43,15 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.SVG;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.awt.RenderingHints;
 import java.time.Duration;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -285,9 +292,6 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	 * Highlighter which shows read and write access of a {@link VariableData}.
 	 */
 	private class VarHighlightLineFactory extends AbstractLineGraphicFactory {
-		private static final Map<RenderingHints.Key, Object> REF_RENDER_HINTS =
-				Map.of(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-		private static final int ICON_SIZE = 16;
 		private VariableData variable;
 
 		private VarHighlightLineFactory() {
@@ -331,22 +335,19 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 					for (ASTElement reader : variable.usage().readers()) {
 						Location location = reader.location();
 						if (location != null && location.line() - 1 == paragraph) {
-							graphic = SVG.ofFile(SVG.REF_READ, ICON_SIZE, REF_RENDER_HINTS);
-							graphic.prefWidth(ICON_SIZE);
+							graphic = SVG.ofIconFile(SVG.REF_READ);
 							break createGraphic;
 						}
 					}
 					for (ASTElement writer : variable.usage().writers()) {
 						Location location = writer.location();
 						if (location != null && location.line() - 1 == paragraph) {
-							graphic = SVG.ofFile(SVG.REF_WRITE, ICON_SIZE,
-									REF_RENDER_HINTS);
-							graphic.prefWidth(ICON_SIZE);
+							graphic = SVG.ofIconFile(SVG.REF_WRITE);
 							break createGraphic;
 						}
 					}
 				}
-				graphic = new Spacer(ICON_SIZE);
+				graphic = new Spacer(IconView.DEFAULT_ICON_SIZE);
 			}
 			graphic.setCursor(Cursor.HAND);
 			container.addHorizontal(graphic);

@@ -6,6 +6,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.scene.Node;
 import javafx.scene.image.*;
+import software.coley.recaf.ui.control.IconView;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -21,15 +22,31 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Coley
  */
 public class SVG {
+	private static final Map<RenderingHints.Key, Object> STROKE_HINTS = Map.of(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 	private static final SVGDocument EMPTY_DOCUMENT;
+	public static final String EXCEPTION_BREAKPOINT = "icons/exception-breakpoint.svg";
 	public static final String REF_READ = "icons/read-access.svg";
 	public static final String REF_WRITE = "icons/write-access.svg";
+	public static final String TYPE_CONVERSION = "icons/type-conversion.svg";
 	private static final Map<String, SVGDocument> DOCUMENT_CACHE = new ConcurrentHashMap<>();
 
 	static {
 		EMPTY_DOCUMENT = new SVGLoader()
 				.load(new ByteArrayInputStream(("<svg width=\"0\" height=\"0\" xmlns=\"http://www.w3.org/2000/svg\">" +
 						"</svg>").getBytes(StandardCharsets.UTF_8)));
+	}
+
+	/**
+	 * @param path
+	 * 		Path to local image. See constants defined in {@link SVG}.
+	 *
+	 * @return SVG node of file contents sized to an icon.
+	 */
+	@Nonnull
+	public static Node ofIconFile(@Nonnull String path) {
+		Node graphic = ofFile(path, IconView.DEFAULT_ICON_SIZE, STROKE_HINTS);
+		graphic.prefWidth(IconView.DEFAULT_ICON_SIZE);
+		return graphic;
 	}
 
 	/**
