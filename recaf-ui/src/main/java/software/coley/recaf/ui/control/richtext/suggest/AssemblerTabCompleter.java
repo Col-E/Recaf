@@ -44,10 +44,10 @@ import java.util.stream.Stream;
  */
 public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter.AssemblerCompletion> {
 	private final CompletionPopup<AssemblerCompletion> completionPopup;
-
 	private final Workspace workspace;
 	private final InheritanceGraph inheritanceGraph;
 	private final CellConfigurationService configurationService;
+	private final TabCompletionConfig config;
 	private CodeArea area;
 	private List<ASTElement> ast;
 	private Context context;
@@ -57,15 +57,20 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter
 	 * 		Workspace to pull class info from.
 	 * @param inheritanceGraph
 	 * 		Graph to pull hierarchies from.
+	 * @param configurationService
+	 * 		Service to configure cell content.
+	 * @param config
+	 * 		Tab completion config.
 	 */
 	public AssemblerTabCompleter(@Nonnull Workspace workspace,
 	                             @Nonnull InheritanceGraph inheritanceGraph,
 	                             @Nonnull CellConfigurationService configurationService,
-								 @Nonnull TabCompletionConfig config) {
+	                             @Nonnull TabCompletionConfig config) {
 		this.workspace = workspace;
 		this.inheritanceGraph = inheritanceGraph;
 		this.configurationService = configurationService;
-		this.completionPopup = new AssemblerCompletionPopup(config, 15);
+		this.completionPopup = new AssemblerCompletionPopup(config);
+		this.config = config;
 	}
 
 	/**
@@ -99,7 +104,9 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter
 	@Nonnull
 	@Override
 	public List<AssemblerCompletion> computeCurrentCompletions() {
-		return context.complete();
+		return context.complete().stream()
+				.filter(completion -> completion.text().length() <= config.getMaxCompletionLength())
+				.toList();
 	}
 
 	@Override
@@ -226,8 +233,8 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter
 	}
 
 	private class AssemblerCompletionPopup extends CompletionPopup<AssemblerCompletion> {
-		private AssemblerCompletionPopup(@Nonnull TabCompletionConfig config, int maxItemsToShow) {
-			super(config, STANDARD_CELL_SIZE, maxItemsToShow, AssemblerCompletion::text, completion -> switch (completion) {
+		private AssemblerCompletionPopup(@Nonnull TabCompletionConfig config) {
+			super(config, STANDARD_CELL_SIZE, AssemblerCompletion::text, completion -> switch (completion) {
 				case AssemblerCompletion.Opcode opcode -> {
 					String text = opcode.text();
 					if (text.startsWith("invoke"))

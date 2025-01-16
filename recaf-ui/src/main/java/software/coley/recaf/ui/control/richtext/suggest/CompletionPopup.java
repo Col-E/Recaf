@@ -20,7 +20,6 @@ import org.fxmisc.richtext.CodeArea;
 import software.coley.recaf.ui.control.richtext.Editor;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static javafx.scene.input.KeyCode.ENTER;
@@ -41,7 +40,6 @@ public abstract class CompletionPopup<T> {
 	private final ScrollPane scrollPane = new ScrollPane(listView);
 	private final CompletionValueTextifier<T> textifier;
 	private final TabCompletionConfig config;
-	private final int maxItemsToShow;
 	private final int cellSize;
 	private CompletionPopupFocuser completionPopupFocuser;
 	private CompletionPopupUpdater<T> completionPopupUpdater;
@@ -51,33 +49,32 @@ public abstract class CompletionPopup<T> {
 	private T selected;
 
 	/**
+	 * @param config
+	 * 		Tab completion config.
 	 * @param cellSize
 	 * 		Height of cells in the list-view of completion items.
-	 * @param maxItemsToShow
-	 * 		Number of cells to show at a time.
 	 * @param textifier
 	 * 		Mapper of {@code T} values to {@code String}.
 	 */
-	public CompletionPopup(@Nonnull TabCompletionConfig config, int cellSize, int maxItemsToShow,
-						   @Nonnull CompletionValueTextifier<T> textifier) {
-		this(config, cellSize, maxItemsToShow, textifier, t -> null);
+	public CompletionPopup(@Nonnull TabCompletionConfig config, int cellSize,
+	                       @Nonnull CompletionValueTextifier<T> textifier) {
+		this(config, cellSize, textifier, t -> null);
 	}
 
 	/**
+	 * @param config
+	 * 		Tab completion config.
 	 * @param cellSize
 	 * 		Height of cells in the list-view of completion items.
-	 * @param maxItemsToShow
-	 * 		Number of cells to show at a time.
 	 * @param textifier
 	 * 		Mapper of {@code T} values to {@code String}.
 	 * @param graphifier
 	 * 		Mapper of {@code T} values to display graphics.
 	 */
-	public CompletionPopup(@Nonnull TabCompletionConfig config, int cellSize, int maxItemsToShow,
-						   @Nonnull CompletionValueTextifier<T> textifier,
-						   @Nonnull CompletionValueGraphicMapper<T> graphifier) {
+	public CompletionPopup(@Nonnull TabCompletionConfig config, int cellSize,
+	                       @Nonnull CompletionValueTextifier<T> textifier,
+	                       @Nonnull CompletionValueGraphicMapper<T> graphifier) {
 		this.config = config;
-		this.maxItemsToShow = maxItemsToShow;
 		this.textifier = textifier;
 
 		// Ensure scroll-pane is 'fit-to-height' so there's no empty space wasting virtual scroll space.
@@ -327,7 +324,7 @@ public abstract class CompletionPopup<T> {
 		//  - Needs a bit of padding due to the way borders/scrollbars render
 		// The scollpane should be dictating the size since it is the popup content root.
 		int itemCount = items.size();
-		popupSize = cellSize * (Math.min(itemCount, maxItemsToShow) + 1);
+		popupSize = cellSize * (Math.min(itemCount, config.getMaxCompletionRows()) + 1);
 		scrollPane.setPrefHeight(popupSize);
 		scrollPane.setMaxHeight(popupSize);
 
