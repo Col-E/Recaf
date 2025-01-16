@@ -142,17 +142,15 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter
 
 		// Must be in code block
 		boolean inCode = false;
-		ASTElement element = ast.getFirst();
 		int caret = area.getCaretPosition();
-		for (int i = 0; i < 5; i++) {
-			if (element instanceof ASTMethod method) {
-				ASTCode code = method.code();
+		ASTElement element = ast.getFirst().pick(caret);
+		while (element != null){
+			if (element instanceof ASTCode code) {
 				if (code.range().within(caret))
 					inCode = true;
 				break;
-			} else if (element != null) {
-				element = element.pick(caret);
 			}
+			element = element.parent();
 		}
 		if (!inCode) {
 			context = new EmptyContext();
