@@ -107,7 +107,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		InheritanceGraph inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
 		if (tabCompletionConfig.isEnabledInAssembler()) {
 			Workspace workspace = Objects.requireNonNull(workspaceManager.getCurrent());
-			tabCompleter = new AssemblerTabCompleter(workspace, inheritanceGraph, cellConfigurationService);
+			tabCompleter = new AssemblerTabCompleter(workspace, inheritanceGraph, cellConfigurationService, tabCompletionConfig);
 			editor.setTabCompleter(tabCompleter);
 		}
 		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());

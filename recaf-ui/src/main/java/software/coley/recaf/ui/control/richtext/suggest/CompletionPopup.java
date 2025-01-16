@@ -1,9 +1,11 @@
 package software.coley.recaf.ui.control.richtext.suggest;
 
+import com.sun.javafx.util.Utils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.ListCell;
@@ -13,6 +15,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Popup;
+import javafx.stage.Screen;
 import org.fxmisc.richtext.CodeArea;
 import software.coley.recaf.ui.control.richtext.Editor;
 
@@ -36,7 +39,7 @@ public abstract class CompletionPopup<T> {
 	private final ListView<T> listView = new ListView<>();
 	private final ScrollPane scrollPane = new ScrollPane(listView);
 	private final CompletionValueTextifier<T> textifier;
-	private final int maxItemsToShow;
+	private final TabCompletionConfig config;
 	private final int cellSize;
 	private CompletionPopupFocuser completionPopupFocuser;
 	private CompletionPopupUpdater<T> completionPopupUpdater;
@@ -46,31 +49,32 @@ public abstract class CompletionPopup<T> {
 	private T selected;
 
 	/**
+	 * @param config
+	 * 		Tab completion config.
 	 * @param cellSize
 	 * 		Height of cells in the list-view of completion items.
-	 * @param maxItemsToShow
-	 * 		Number of cells to show at a time.
 	 * @param textifier
 	 * 		Mapper of {@code T} values to {@code String}.
 	 */
-	public CompletionPopup(int cellSize, int maxItemsToShow, @Nonnull CompletionValueTextifier<T> textifier) {
-		this(cellSize, maxItemsToShow, textifier, t -> null);
+	public CompletionPopup(@Nonnull TabCompletionConfig config, int cellSize,
+	                       @Nonnull CompletionValueTextifier<T> textifier) {
+		this(config, cellSize, textifier, t -> null);
 	}
 
 	/**
+	 * @param config
+	 * 		Tab completion config.
 	 * @param cellSize
 	 * 		Height of cells in the list-view of completion items.
-	 * @param maxItemsToShow
-	 * 		Number of cells to show at a time.
 	 * @param textifier
 	 * 		Mapper of {@code T} values to {@code String}.
 	 * @param graphifier
 	 * 		Mapper of {@code T} values to display graphics.
 	 */
-	public CompletionPopup(int cellSize, int maxItemsToShow,
+	public CompletionPopup(@Nonnull TabCompletionConfig config, int cellSize,
 	                       @Nonnull CompletionValueTextifier<T> textifier,
 	                       @Nonnull CompletionValueGraphicMapper<T> graphifier) {
-		this.maxItemsToShow = maxItemsToShow;
+		this.config = config;
 		this.textifier = textifier;
 
 		// Ensure scroll-pane is 'fit-to-height' so there's no empty space wasting virtual scroll space.
@@ -81,6 +85,10 @@ public abstract class CompletionPopup<T> {
 		// Auto-hide covers most cases that would be hard to otherwise detect
 		// and isn't overly aggressive to hide it too often.
 		popup.setAutoHide(true);
+
+		// Auto-fix can move the popup infront of the caret, which is not what we want.
+		// In #show() we will manually adjust the position of the popup to ensure it is on screen.
+		popup.setAutoFix(false);
 
 		// For simplicity of a few operations we're going to ensure all cells are a fixed size.
 		listView.setFixedCellSize(this.cellSize = cellSize);
@@ -227,9 +235,40 @@ public abstract class CompletionPopup<T> {
 	 * @see Popup#show(Node, double, double)
 	 */
 	public void show() {
-		// If the popup has content to show, show it above where the caret position is.
-		if (popupSize > 0)
-			popup.show(area, lastCaretBounds.getMinX(), lastCaretBounds.getMinY() - popupSize);
+		// If the popup has content to show
+		if (popupSize <= 0) {
+			return;
+		}
+		double anchorX = config.getPopupPosition().isRight()
+				? lastCaretBounds.getMaxX()
+				: lastCaretBounds.getMinX() - popup.getWidth();
+		double anchorY = config.getPopupPosition().isAbove()
+				? lastCaretBounds.getMaxY()
+				: lastCaretBounds.getMinY() - popupSize;
+
+		// choose other position if the popup is off-screen
+		// if the popup is off-screen, flip the popup to the other side of the caret on that axis
+		// (it will also avoid popup from being split between two screens)
+
+		// code loosely adapted from PopupWindow#updateWindow(double, double)
+		final Screen currentScreen = Utils.getScreenForPoint(anchorX, anchorY);
+		final Rectangle2D screenBounds =
+				Utils.hasFullScreenStage(currentScreen)
+						? currentScreen.getBounds()
+						: currentScreen.getVisualBounds();
+
+		if (anchorY + popupSize > screenBounds.getMaxY()) {
+			anchorY = lastCaretBounds.getMinY() - popupSize;
+		} else if (anchorY < screenBounds.getMinY()) {
+			anchorY = lastCaretBounds.getMaxY();
+		}
+		if (anchorX + popup.getWidth() > screenBounds.getMaxX()) {
+			anchorX = lastCaretBounds.getMinX() - popup.getWidth();
+		} else if (anchorX < screenBounds.getMinX()) {
+			anchorX = lastCaretBounds.getMaxX();
+		}
+
+		popup.show(area, anchorX, anchorY);
 	}
 
 	/**
@@ -285,7 +324,7 @@ public abstract class CompletionPopup<T> {
 		//  - Needs a bit of padding due to the way borders/scrollbars render
 		// The scollpane should be dictating the size since it is the popup content root.
 		int itemCount = items.size();
-		popupSize = cellSize * (Math.min(itemCount, maxItemsToShow) + 1);
+		popupSize = cellSize * (Math.min(itemCount, config.getMaxCompletionRows()) + 1);
 		scrollPane.setPrefHeight(popupSize);
 		scrollPane.setMaxHeight(popupSize);
 
