@@ -243,8 +243,8 @@ public abstract class CompletionPopup<T> {
 				? lastCaretBounds.getMaxX()
 				: lastCaretBounds.getMinX() - popup.getWidth();
 		double anchorY = config.getPopupPosition().isAbove()
-				? lastCaretBounds.getMaxY()
-				: lastCaretBounds.getMinY() - popupSize;
+				? lastCaretBounds.getMinY() - popupSize
+				: lastCaretBounds.getMaxY();
 
 		// choose other position if the popup is off-screen
 		// if the popup is off-screen, flip the popup to the other side of the caret on that axis
