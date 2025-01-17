@@ -11,12 +11,14 @@ import software.coley.recaf.cdi.InitializationStage;
 import software.coley.recaf.launch.LaunchArguments;
 import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.launch.LaunchHandler;
+import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.plugin.PluginContainer;
 import software.coley.recaf.services.plugin.PluginException;
 import software.coley.recaf.services.plugin.PluginManager;
 import software.coley.recaf.services.plugin.discovery.DirectoryPluginDiscoverer;
 import software.coley.recaf.services.script.ScriptEngine;
+import software.coley.recaf.services.script.ScriptResult;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.io.ResourceImporter;
 import software.coley.recaf.ui.config.WindowScaleConfig;
@@ -249,9 +251,22 @@ public class Main {
 			File script = launchArgs.getScript();
 			if (script != null && !script.isFile())
 				script = launchArgs.getScriptInScriptsDirectory();
-			if (script != null && script.isFile())
-				recaf.get(ScriptEngine.class)
-						.run(Files.readString(script.toPath()));
+			if (script != null && script.isFile()) {
+				ScriptResult result = recaf.get(ScriptEngine.class)
+						.run(Files.readString(script.toPath()))
+						.get();
+				if (!result.wasSuccess()) {
+					if (result.wasRuntimeError()) {
+						// The script engine will have already logged the exceptions
+						logger.error("Error encountered when executing script '{}'", script.getName());
+					} else if (result.wasCompileFailure()) {
+						// Inform the user where the script is incorrectly formatted
+						logger.error("Error compiling script:\n{}", result.getCompileDiagnostics().stream()
+								.map(CompilerDiagnostic::toString)
+								.collect(Collectors.joining("\n")));
+					}
+				}
+			}
 		} catch (Throwable t) {
 			logger.error("Error handling execution of launch script.", t);
 		}
