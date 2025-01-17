@@ -235,10 +235,10 @@ public abstract class CompletionPopup<T> {
 	 * @see Popup#show(Node, double, double)
 	 */
 	public void show() {
-		// If the popup has content to show
-		if (popupSize <= 0) {
+		// Do nothing if there is no content to display (popup size calculated to be 0)
+		if (popupSize <= 0)
 			return;
-		}
+
 		double anchorX = config.getPopupPosition().isRight()
 				? lastCaretBounds.getMaxX()
 				: lastCaretBounds.getMinX() - popup.getWidth();
@@ -246,17 +246,16 @@ public abstract class CompletionPopup<T> {
 				? lastCaretBounds.getMinY() - popupSize
 				: lastCaretBounds.getMaxY();
 
-		// choose other position if the popup is off-screen
+		// Choose another position if the popup is off-screen.
 		// if the popup is off-screen, flip the popup to the other side of the caret on that axis
 		// (it will also avoid popup from being split between two screens)
-
-		// code loosely adapted from PopupWindow#updateWindow(double, double)
+		//
+		// Code loosely adapted from PopupWindow#updateWindow(double, double)
 		final Screen currentScreen = Utils.getScreenForPoint(anchorX, anchorY);
 		final Rectangle2D screenBounds =
 				Utils.hasFullScreenStage(currentScreen)
 						? currentScreen.getBounds()
 						: currentScreen.getVisualBounds();
-
 		if (anchorY + popupSize > screenBounds.getMaxY()) {
 			anchorY = lastCaretBounds.getMinY() - popupSize;
 		} else if (anchorY < screenBounds.getMinY()) {
