@@ -7,8 +7,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTCode;
-import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.util.BlwOpcodes;
+import me.darknet.assembler.util.EscapeUtil;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -151,7 +151,7 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter
 		boolean inCode = false;
 		int caret = area.getCaretPosition();
 		ASTElement element = ast.getFirst().pick(caret);
-		while (element != null){
+		while (element != null) {
 			if (element instanceof ASTCode code) {
 				if (code.range().within(caret))
 					inCode = true;
@@ -546,7 +546,7 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter
 			@Nonnull
 			@Override
 			public String text() {
-				return path.getValue().getName();
+				return EscapeUtil.escapeLiteral(path.getValue().getName());
 			}
 		}
 
@@ -559,7 +559,9 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter
 			@Override
 			public String text() {
 				ClassMember member = path.getValue();
-				return member.getName() + " " + member.getDescriptor();
+				String name = EscapeUtil.escapeLiteral(member.getName());
+				String desc = EscapeUtil.escapeLiteral(member.getDescriptor());
+				return name + " " + desc;
 			}
 		}
 	}
