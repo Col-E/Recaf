@@ -238,6 +238,10 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 							StringDiff.Diff diff = diffs.get(i);
 							if (diff.type() == StringDiff.DiffType.CHANGE)
 								area.replaceText(diff.startA(), diff.endA(), diff.textB());
+							else if (diff.type() == StringDiff.DiffType.INSERT)
+								area.insertText(diff.startA(), diff.textB());
+							else if (diff.type() == StringDiff.DiffType.REMOVE)
+								area.replaceText(diff.startA(), diff.endA(), "");
 						}
 
 						// Reset caret.
