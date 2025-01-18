@@ -25,6 +25,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Stream;
 
@@ -35,9 +36,9 @@ import java.util.stream.Stream;
  */
 public class AgentServerRemoteVmResource extends BasicWorkspaceResource implements WorkspaceRemoteVmResource {
 	private static final DebuggingLogger logger = Logging.get(AgentServerRemoteVmResource.class);
-	private final Map<Integer, RemoteJvmClassBundle> remoteBundleMap = new HashMap<>();
-	private final Map<Integer, ClassLoaderInfo> remoteLoaders = new HashMap<>();
-	private final Map<Integer, Set<ClassData>> queuedClasses = new HashMap<>();
+	private final Map<Integer, RemoteJvmClassBundle> remoteBundleMap = new ConcurrentHashMap<>();
+	private final Map<Integer, ClassLoaderInfo> remoteLoaders = new ConcurrentHashMap<>();
+	private final Map<Integer, Set<ClassData>> queuedClasses = new ConcurrentHashMap<>();
 	private final Set<String> queuedRedefines = new ConcurrentSkipListSet<>();
 	private final VirtualMachine virtualMachine;
 	private final Client client;
