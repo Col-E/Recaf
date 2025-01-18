@@ -270,7 +270,7 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 	@Nonnull
 	private Tree<String, ClassPathNode> workspaceToTree(@Nonnull Workspace workspace) {
 		Tree<String, ClassPathNode> tree = new SortedTreeImpl<>();
-		workspace.findClasses(classInfo -> true)
+		workspace.findClasses(false, classInfo -> true)
 				.forEach(classPath -> {
 					// Only match classes in the primary resource
 					WorkspaceResource resource = classPath.getValueOfType(WorkspaceResource.class);
