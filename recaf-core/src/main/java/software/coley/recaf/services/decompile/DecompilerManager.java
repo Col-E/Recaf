@@ -20,10 +20,20 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.decompile.filter.JvmBytecodeFilter;
 import software.coley.recaf.services.decompile.filter.OutputTextFilter;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
-import software.coley.recaf.util.visitors.*;
+import software.coley.recaf.util.visitors.BogusNameRemovingVisitor;
+import software.coley.recaf.util.visitors.ClassHollowingVisitor;
+import software.coley.recaf.util.visitors.DuplicateAnnotationRemovingVisitor;
+import software.coley.recaf.util.visitors.IllegalAnnotationRemovingVisitor;
+import software.coley.recaf.util.visitors.IllegalSignatureRemovingVisitor;
+import software.coley.recaf.util.visitors.LongAnnotationRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -39,6 +49,7 @@ public class DecompilerManager implements Service {
 	private static final DebuggingLogger logger = Logging.get(DecompilerManager.class);
 	private static final NoopJvmDecompiler NO_OP_JVM = NoopJvmDecompiler.getInstance();
 	private static final NoopAndroidDecompiler NO_OP_ANDROID = NoopAndroidDecompiler.getInstance();
+	private final JvmBytecodeFilter layeredJvmFilter = new LayeredJvmBytecodeFilter();
 	private final ExecutorService decompileThreadPool = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID);
 	private final List<JvmBytecodeFilter> bytecodeFilters = new CopyOnWriteArrayList<>();
 	private final List<OutputTextFilter> outputTextFilters = new CopyOnWriteArrayList<>();
@@ -137,7 +148,7 @@ public class DecompilerManager implements Service {
 			// We will use the layered filter manually here so any user requested cleanup is done before we pass the class to the decompiler.
 			// The decompiler base implementation skips some work if there are no registered filters so doing it externally like this is
 			// better for performance. If the user has no filtering enabled then no re-reads and re-writes are necessary.
-			JvmClassInfo filteredClass = JvmBytecodeFilter.applyFilters(workspace, classInfo, Collections.singletonList(getLayeredJvmBytecodeFilter()));
+			JvmClassInfo filteredClass = JvmBytecodeFilter.applyFilters(workspace, classInfo, Collections.singletonList(layeredJvmFilter));
 
 			// Decompile and cache the results.
 			DecompileResult result = decompiler.decompile(workspace, filteredClass);
@@ -308,74 +319,78 @@ public class DecompilerManager implements Service {
 		return config;
 	}
 
-	@Nonnull
-	private JvmBytecodeFilter getLayeredJvmBytecodeFilter() {
-		return new JvmBytecodeFilter() {
-			@Nonnull
-			@Override
-			public byte[] filter(@Nonnull Workspace workspace, @Nonnull JvmClassInfo initialClassInfo, @Nonnull byte[] bytecode) {
-				// Apply filters to the input bytecode first
-				for (JvmBytecodeFilter filter : bytecodeFilters)
-					bytecode = filter.filter(workspace, initialClassInfo, bytecode);
+	/**
+	 * JVM bytecode filter that applies multiple other filters:
+	 * <ol>
+	 *     <li>Any values in {@link #bytecodeFilters}</li>
+	 *     <li>Any filters based on the current values in {@link #config}</li>
+	 * </ol>
+	 */
+	private class LayeredJvmBytecodeFilter implements JvmBytecodeFilter {
+		@Nonnull
+		@Override
+		public byte[] filter(@Nonnull Workspace workspace, @Nonnull JvmClassInfo initialClassInfo, @Nonnull byte[] bytecode) {
+			// Apply filters to the input bytecode first
+			for (JvmBytecodeFilter filter : bytecodeFilters)
+				bytecode = filter.filter(workspace, initialClassInfo, bytecode);
 
-				// Setup filtering based on config
-				byte[] filteredBytecode = bytecode;
-				LazyValueHolder<ClassReader> reader = LazyValueHolder.forSupplier(() -> new ClassReader(filteredBytecode));
-				LazyValueHolder<ClassWriter> cw = LazyValueHolder.forSupplier(() -> {
-					// In most cases we want to pass the class-reader along to the class-writer.
-					// This will allow some operations to be sped up internally by ASM.
-					//
-					// However, we can't do this is we're filtering debug information since it blanket copies all
-					// debug attribute information without checking what the class-reader flags are.
-					// Thus, when we're pruning debug info, we should pass 'null'.
-					ClassReader backing = config.getFilterDebug().getValue() ? null : reader.get();
-					return new ClassWriter(backing, 0);
-				});
-				ClassVisitor cv = null;
+			// Setup filtering based on config
+			byte[] filteredBytecode = bytecode;
+			LazyValueHolder<ClassReader> reader = LazyValueHolder.forSupplier(() -> new ClassReader(filteredBytecode));
+			LazyValueHolder<ClassWriter> cw = LazyValueHolder.forSupplier(() -> {
+				// In most cases we want to pass the class-reader along to the class-writer.
+				// This will allow some operations to be sped up internally by ASM.
+				//
+				// However, we can't do this is we're filtering debug information since it blanket copies all
+				// debug attribute information without checking what the class-reader flags are.
+				// Thus, when we're pruning debug info, we should pass 'null'.
+				ClassReader backing = config.getFilterDebug().getValue() ? null : reader.get();
+				return new ClassWriter(backing, 0);
+			});
+			ClassVisitor cv = null;
 
-				// The things you want to 'filter' first need to appear last in this chain since we're building a chain
-				// of visitors which delegate from one onto another.
-				if (config.getFilterNonAsciiNames().getValue()) {
-					cv = cw.get();
-					cv = BogusNameRemovingVisitor.create(workspace, cv);
-				}
-				if (config.getFilterLongAnnotations().getValue()) {
-					if (cv == null) cv = cw.get();
-					cv = new LongAnnotationRemovingVisitor(cv, config.getFilterLongAnnotationsLength().getValue());
-				}
-				if (config.getFilterDuplicateAnnotations().getValue()) {
-					if (cv == null) cv = cw.get();
-					cv = new DuplicateAnnotationRemovingVisitor(cv);
-				}
-				if (config.getFilterIllegalAnnotations().getValue()) {
-					if (cv == null) cv = cw.get();
-					cv = new IllegalAnnotationRemovingVisitor(cv);
-				}
-				if (config.getFilterHollow().getValue()) {
-					if (cv == null) cv = cw.get();
-					cv = new ClassHollowingVisitor(cv, EnumSet.allOf(ClassHollowingVisitor.Item.class));
-				}
-				if (config.getFilterSignatures().getValue()) {
-					if (cv == null) cv = cw.get();
-					cv = new IllegalSignatureRemovingVisitor(cv);
-				}
-				if (config.getFilterDebug().getValue() && cv == null)
-					cv = cw.get();
-
-				// If no filtering has been requested, we never need to initialize the reader or writer.
-				// Just return the original bytecode passed in.
-				if (cv == null)
-					return bytecode;
-
-				try {
-					int readFlags = config.getFilterDebug().getValue() ? ClassReader.SKIP_DEBUG : 0;
-					reader.get().accept(cv, readFlags);
-					return cw.get().toByteArray();
-				} catch (Throwable t) {
-					logger.error("Error applying filters to class '{}'", initialClassInfo.getName(), t);
-					return bytecode;
-				}
+			// The things you want to 'filter' first need to appear last in this chain since we're building a chain
+			// of visitors which delegate from one onto another.
+			if (config.getFilterNonAsciiNames().getValue()) {
+				cv = cw.get();
+				cv = BogusNameRemovingVisitor.create(workspace, cv);
 			}
-		};
+			if (config.getFilterLongAnnotations().getValue()) {
+				if (cv == null) cv = cw.get();
+				cv = new LongAnnotationRemovingVisitor(cv, config.getFilterLongAnnotationsLength().getValue());
+			}
+			if (config.getFilterDuplicateAnnotations().getValue()) {
+				if (cv == null) cv = cw.get();
+				cv = new DuplicateAnnotationRemovingVisitor(cv);
+			}
+			if (config.getFilterIllegalAnnotations().getValue()) {
+				if (cv == null) cv = cw.get();
+				cv = new IllegalAnnotationRemovingVisitor(cv);
+			}
+			if (config.getFilterHollow().getValue()) {
+				if (cv == null) cv = cw.get();
+				cv = new ClassHollowingVisitor(cv, EnumSet.allOf(ClassHollowingVisitor.Item.class));
+			}
+			if (config.getFilterSignatures().getValue()) {
+				if (cv == null) cv = cw.get();
+				cv = new IllegalSignatureRemovingVisitor(cv);
+			}
+			if (config.getFilterDebug().getValue() && cv == null)
+				cv = cw.get();
+
+			// If no filtering has been requested, we never need to initialize the reader or writer.
+			// Just return the original bytecode passed in.
+			if (cv == null)
+				return bytecode;
+
+			try {
+				int readFlags = config.getFilterDebug().getValue() ? ClassReader.SKIP_DEBUG : 0;
+				reader.get().accept(cv, readFlags);
+				return cw.get().toByteArray();
+			} catch (Throwable t) {
+				logger.error("Error applying filters to class '{}'", initialClassInfo.getName(), t);
+				return bytecode;
+			}
+		}
 	}
 }
