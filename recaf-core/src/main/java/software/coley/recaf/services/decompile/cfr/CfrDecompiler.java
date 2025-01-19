@@ -36,6 +36,8 @@ public class CfrDecompiler extends AbstractJvmDecompiler {
 	public CfrDecompiler(@Nonnull CfrConfig config) {
 		super(NAME, CfrVersionInfo.VERSION, config);
 		this.config = config;
+
+		// TODO: Update CFR when https://github.com/leibnitz27/cfr/issues/361 is fixed
 	}
 
 	@Nonnull
