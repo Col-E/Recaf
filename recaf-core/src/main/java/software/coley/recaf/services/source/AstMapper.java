@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
+import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.StringUtil;
 import software.coley.sourcesolver.model.ClassModel;
 import software.coley.sourcesolver.model.CompilationUnitModel;
@@ -226,6 +227,22 @@ public class AstMapper {
 			// The name doesn't have an associated model, but is after the declared type.
 			String name = variableModel.getName();
 			int begin = variableModel.getType().getRange().end();
+
+			// Enum constants don't have an AST model for their type, so the range is "unknown".
+			// If we're confident this is an enum constant, then we'll make the beginning range the start of the field name instead.
+			if (begin == -1) {
+				ClassModel declaringClass = variableModel.getParentOfType(ClassModel.class);
+				if (declaringClass != null) {
+					if (declaringClass.resolve(resolver) instanceof ClassResolution declaringResolution
+							&& AccessFlag.isEnum(declaringResolution.getClassEntry().getAccess())) {
+						Resolution type = variableModel.getType().resolve(resolver);
+						if (type.matches(declaringResolution)) {
+							begin = variableModel.getRange().begin();
+						}
+					}
+				}
+			}
+
 			int end = source.indexOf(name, begin) + name.length();
 			if (end < begin)
 				return Range.UNKNOWN;

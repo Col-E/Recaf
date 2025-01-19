@@ -17,8 +17,21 @@ import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.test.dummy.*;
-import software.coley.recaf.util.JavaVersion;
+import software.coley.recaf.test.dummy.AccessibleFields;
+import software.coley.recaf.test.dummy.AnnotationImpl;
+import software.coley.recaf.test.dummy.ClassWithConstructor;
+import software.coley.recaf.test.dummy.ClassWithExceptions;
+import software.coley.recaf.test.dummy.ClassWithMethodReference;
+import software.coley.recaf.test.dummy.ClassWithMultipleMethods;
+import software.coley.recaf.test.dummy.ClassWithStaticInit;
+import software.coley.recaf.test.dummy.DummyEnum;
+import software.coley.recaf.test.dummy.HelloWorld;
+import software.coley.recaf.test.dummy.OverlapClassAB;
+import software.coley.recaf.test.dummy.OverlapInterfaceA;
+import software.coley.recaf.test.dummy.OverlapInterfaceB;
+import software.coley.recaf.test.dummy.StringList;
+import software.coley.recaf.test.dummy.StringListUser;
+import software.coley.recaf.test.dummy.StringSupplier;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
@@ -527,6 +540,25 @@ public class AstServiceTest extends TestBase {
 		}
 
 		@Test
+		void renameField_EnumConst() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+										
+					enum DummyEnum {
+						ONE, TWO, THREE
+					}
+					""";
+			handleUnit(source, unit -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				String owner = DummyEnum.class.getName().replace('.', '/');
+				mappings.addField(owner, "L" + owner + ";", "ONE", "FIRST");
+
+				String modified = applyMappings(unit, mappings);
+				assertTrue(modified.contains("FIRST,"));
+			});
+		}
+
+		@Test
 		void renameClass_ReplacesCast() {
 			String source = """
 					package software.coley.recaf.test.dummy;
@@ -572,7 +604,7 @@ public class AstServiceTest extends TestBase {
 		void renameClass_ReplacePackageImport() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-					
+										
 					import software.coley.recaf.util.*;
 										
 					class HelloWorld {
