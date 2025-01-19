@@ -10,6 +10,7 @@ import jakarta.annotation.Nonnull;
 public abstract class AbstractMappingKey implements MappingKey {
 	private String text;
 
+	@Nonnull
 	@Override
 	public String getAsText() {
 		String text = this.text;

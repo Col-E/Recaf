@@ -226,9 +226,12 @@ public interface MappingFileFormat {
 				}
 			}
 
+			// Write the mappings in natural sorted order by name.
+			// Intermediate mappings are *typically* sorted, but it is not a guarantee.
+			VisitOrder order = VisitOrder.createByName();
 			StringWriter sw = new StringWriter();
 			MappingVisitor writer = writerFactory.apply(sw);
-			tree.accept(writer, VisitOrder.createByInputOrder());
+			tree.accept(writer, order);
 			return sw.toString();
 		} catch (Throwable t) {
 			throw new InvalidMappingException(t);
