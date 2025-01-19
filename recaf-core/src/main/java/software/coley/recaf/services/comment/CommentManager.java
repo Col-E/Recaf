@@ -98,8 +98,11 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 				// Adapt with comment annotations.
 				ClassWriter writer = new ClassWriter(0);
 				ClassReader reader = new ClassReader(bytecode);
-				reader.accept(new CommentInsertingVisitor(classComments, classPath, writer), 0);
-				return writer.toByteArray();
+				CommentInsertingVisitor inserter = new CommentInsertingVisitor(classComments, classPath, writer);
+				reader.accept(inserter, 0);
+				if (inserter.getInsertions() > 0)
+					return writer.toByteArray();
+				return bytecode;
 			}
 		};
 		OutputTextFilter keyReplacementFilter = new OutputTextFilter() {

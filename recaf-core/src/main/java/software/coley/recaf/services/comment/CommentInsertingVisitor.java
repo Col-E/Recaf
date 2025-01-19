@@ -18,6 +18,7 @@ import software.coley.recaf.path.ClassPathNode;
 public class CommentInsertingVisitor extends ClassVisitor {
 	private final ClassComments comments;
 	private final ClassPathNode classPath;
+	private int insertions;
 
 	/**
 	 * @param comments
@@ -33,6 +34,13 @@ public class CommentInsertingVisitor extends ClassVisitor {
 		this.classPath = classPath;
 	}
 
+	/**
+	 * @return Number of inserted comment annotations.
+	 */
+	public int getInsertions() {
+		return insertions;
+	}
+
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		super.visit(version, access, name, signature, superName, interfaces);
@@ -42,6 +50,7 @@ public class CommentInsertingVisitor extends ClassVisitor {
 		if (comment != null) {
 			CommentKey key = CommentKey.id(classPath);
 			visitAnnotation(key.annotationDescriptor(), true);
+			insertions++;
 		}
 	}
 
@@ -56,6 +65,7 @@ public class CommentInsertingVisitor extends ClassVisitor {
 			if (field != null) {
 				CommentKey key = CommentKey.id(classPath.child(field));
 				fv.visitAnnotation(key.annotationDescriptor(), true);
+				insertions++;
 			}
 		}
 
@@ -73,6 +83,7 @@ public class CommentInsertingVisitor extends ClassVisitor {
 			if (method != null) {
 				CommentKey key = CommentKey.id(classPath.child(method));
 				mv.visitAnnotation(key.annotationDescriptor(), true);
+				insertions++;
 			}
 		}
 
