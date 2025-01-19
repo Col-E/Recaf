@@ -132,35 +132,60 @@ public interface MappingFileFormat {
 		int finalNamespace = namespaceCount - 1;
 		for (MappingTree.ClassMapping cm : tree.getClasses()) {
 			String finalClassName = cm.getDstName(finalNamespace);
+			if (finalClassName != null) {
+				// Add the base case: input --> final output name
+				mappings.addClass(cm.getSrcName(), finalClassName);
 
-			// Add the base case: input --> final output name
-			mappings.addClass(cm.getSrcName(), finalClassName);
+				// Add destination[n] --> final output name, where n < destinations.length - 1.
+				// This is how we handle cases like 'intermediate --> clean' despite both of those
+				// being "output" columns.
+				if (namespaceCount > 1)
+					for (int i = 0; i < finalNamespace; i++) {
+						String intermediateClassName = cm.getDstName(i);
+						if (intermediateClassName != null)
+							mappings.addClass(intermediateClassName, finalClassName);
+					}
+			}
 
-			// Add destination[n] --> final output name, where n < destinations.length - 1.
-			// This is how we handle cases like 'intermediate --> clean' despite both of those
-			// being "output" columns.
-			if (namespaceCount > 1)
-				for (int i = 0; i < finalNamespace; i++)
-					mappings.addClass(cm.getDstName(i), finalClassName);
 			for (MappingTree.FieldMapping fm : cm.getFields()) {
 				String finalFieldName = fm.getDstName(finalNamespace);
+				if (finalFieldName == null)
+					continue;
 
 				// Base case, like before.
-				mappings.addField(cm.getSrcName(), fm.getSrcDesc(), fm.getSrcName(), finalFieldName);
+				String fieldDesc = fm.getSrcDesc();
+				mappings.addField(cm.getSrcName(), fieldDesc, fm.getSrcName(), finalFieldName);
 
 				// Support extra namespaces, like before.
 				if (namespaceCount > 1)
-					for (int i = 0; i < finalNamespace; i++)
-						mappings.addField(cm.getDstName(i), fm.getDesc(i), fm.getDstName(i), finalFieldName);
+					for (int i = 0; i < finalNamespace; i++) {
+						String intermediateClassName = cm.getDstName(i);
+						String intermediateFieldDesc = fm.getDstDesc(i);
+						String intermediateFieldName = fm.getDstName(i);
+						if (intermediateClassName != null && intermediateFieldName != null)
+							mappings.addField(intermediateClassName, intermediateFieldDesc, intermediateFieldName, finalFieldName);
+					}
 			}
+
 			for (MappingTree.MethodMapping mm : cm.getMethods()) {
 				String finalMethodName = mm.getDstName(finalNamespace);
+				if (finalMethodName == null)
+					continue;
 
-				// Same idea as field handling.
-				mappings.addMethod(cm.getSrcName(), mm.getSrcDesc(), mm.getSrcName(), finalMethodName);
+				// Base case, like before.
+				String methodDesc = mm.getSrcDesc();
+				if (methodDesc != null)
+					mappings.addMethod(cm.getSrcName(), methodDesc, mm.getSrcName(), finalMethodName);
+
+				// Support extra namespaces, like before.
 				if (namespaceCount > 1)
-					for (int i = 0; i < finalNamespace; i++)
-						mappings.addMethod(cm.getDstName(i), mm.getDstDesc(i), mm.getDstName(i), finalMethodName);
+					for (int i = 0; i < finalNamespace; i++) {
+						String intermediateClassName = cm.getDstName(i);
+						String intermediateMethodDesc = mm.getDstDesc(i);
+						String intermediateMethodName = mm.getDstName(i);
+						if (intermediateClassName != null && intermediateMethodDesc != null && intermediateMethodName != null)
+							mappings.addMethod(intermediateClassName, intermediateMethodDesc, intermediateMethodName, finalMethodName);
+					}
 			}
 		}
 		return mappings;
@@ -203,7 +228,7 @@ public interface MappingFileFormat {
 	 */
 	@Nonnull
 	static String export(@Nonnull Mappings mappings, @Nonnull String inputNamespace,
-						 @Nonnull List<String> outputNamespaces, @Nonnull Function<StringWriter, MappingVisitor> writerFactory) throws InvalidMappingException {
+	                     @Nonnull List<String> outputNamespaces, @Nonnull Function<StringWriter, MappingVisitor> writerFactory) throws InvalidMappingException {
 		MemoryMappingTree tree = new MemoryMappingTree();
 		IntermediateMappings intermediate = mappings.exportIntermediate();
 		try {
