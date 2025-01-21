@@ -13,6 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -286,8 +287,9 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 								var bundle = path.getValueOfType(ClassBundle.class);
 								if (bundle != null) {
 									// Patch class to remove illegal signatures.
-									ClassWriter writer = new ClassWriter(0);
-									classInfo.getClassReader().accept(new IllegalSignatureRemovingVisitor(writer), 0);
+									ClassReader reader = classInfo.getClassReader();
+									ClassWriter writer = new ClassWriter(0); // reader not passed so removed signatures can be pruned from the constant pool
+									reader.accept(new IllegalSignatureRemovingVisitor(writer), 0);
 									JvmClassInfo patchedInfo = classInfo.toJvmClassBuilder().withBytecode(writer.toByteArray()).build();
 
 									// Replace class
@@ -322,8 +324,9 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 								var bundle = path.getValueOfType(ClassBundle.class);
 								if (bundle != null) {
 									// Patch class to remove duplicate annotations.
-									ClassWriter writer = new ClassWriter(0);
-									classInfo.getClassReader().accept(new DuplicateAnnotationRemovingVisitor(writer), 0);
+									ClassReader reader = classInfo.getClassReader();
+									ClassWriter writer = new ClassWriter(reader, 0);
+									reader.accept(new DuplicateAnnotationRemovingVisitor(writer), 0);
 									JvmClassInfo patchedInfo = classInfo.toJvmClassBuilder().withBytecode(writer.toByteArray()).build();
 
 									// Replace class
@@ -357,8 +360,9 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 								var bundle = path.getValueOfType(ClassBundle.class);
 								if (bundle != null) {
 									// Patch class to remove long annotations.
-									ClassWriter writer = new ClassWriter(0);
-									classInfo.getClassReader().accept(new LongAnnotationRemovingVisitor(writer, LONG_ANNO), 0);
+									ClassReader reader = classInfo.getClassReader();
+									ClassWriter writer = new ClassWriter(0); // reader not passed so removed annotations can be pruned from the constant pool
+									reader.accept(new LongAnnotationRemovingVisitor(writer, LONG_ANNO), 0);
 									JvmClassInfo patchedInfo = classInfo.toJvmClassBuilder().withBytecode(writer.toByteArray()).build();
 
 									// Replace class
@@ -392,8 +396,9 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 								var bundle = path.getValueOfType(ClassBundle.class);
 								if (bundle != null) {
 									// Patch class to remove illegal annotations.
-									ClassWriter writer = new ClassWriter(0);
-									classInfo.getClassReader().accept(new IllegalAnnotationRemovingVisitor(writer), 0);
+									ClassReader reader = classInfo.getClassReader();
+									ClassWriter writer = new ClassWriter(0); // reader not passed so removed annotations can be pruned from the constant pool
+									reader.accept(new IllegalAnnotationRemovingVisitor(writer), 0);
 									JvmClassInfo patchedInfo = classInfo.toJvmClassBuilder().withBytecode(writer.toByteArray()).build();
 
 									// Replace class

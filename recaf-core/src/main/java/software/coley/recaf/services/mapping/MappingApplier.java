@@ -177,16 +177,16 @@ public class MappingApplier {
 		String originalName = classInfo.getName();
 
 		// Apply renamer
-		ClassWriter cw = new ClassWriter(0);
-		ClassReader cr = classInfo.getClassReader();
-		WorkspaceClassRemapper remapVisitor = new WorkspaceClassRemapper(cw, workspace, mappings);
+		ClassReader reader = classInfo.getClassReader();
+		ClassWriter writer = new ClassWriter(reader, 0);
+		WorkspaceClassRemapper remapVisitor = new WorkspaceClassRemapper(writer, workspace, mappings);
 		ClassVisitor cv = classInfo.hasValidSignatures() ? remapVisitor : new IllegalSignatureRemovingVisitor(remapVisitor); // Because ASM crashes otherwise.
-		cr.accept(cv, 0);
+		reader.accept(cv, 0);
 
 		// Update class if it has any modified references
 		if (remapVisitor.hasMappingBeenApplied()) {
 			JvmClassInfo updatedInfo = classInfo.toJvmClassBuilder()
-					.adaptFrom(cw.toByteArray())
+					.adaptFrom(writer.toByteArray())
 					.build();
 
 			// Mark has referencing something mapped.

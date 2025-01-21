@@ -96,8 +96,8 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 					return bytecode;
 
 				// Adapt with comment annotations.
-				ClassWriter writer = new ClassWriter(0);
 				ClassReader reader = new ClassReader(bytecode);
+				ClassWriter writer = new ClassWriter(reader, 0);
 				CommentInsertingVisitor inserter = new CommentInsertingVisitor(classComments, classPath, writer);
 				reader.accept(inserter, 0);
 				if (inserter.getInsertions() > 0)

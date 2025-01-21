@@ -62,10 +62,11 @@ public class CompileMap extends TreeMap<String, byte[]> {
 			String key = entry.getKey();
 			try {
 				ClassNode node = new ClassNode();
-				new ClassReader(entry.getValue()).accept(node, 0);
+				ClassReader reader = new ClassReader(entry.getValue());
+				reader.accept(node, 0);
 				if (node.version > version) {
 					JavaDowngrader.downgrade(node, version);
-					ClassWriter writer = new ClassWriter(0);
+					ClassWriter writer = new ClassWriter(reader, 0);
 					node.accept(writer);
 					put(key, writer.toByteArray());
 				}

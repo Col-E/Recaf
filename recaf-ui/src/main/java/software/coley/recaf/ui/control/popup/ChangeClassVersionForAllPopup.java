@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import net.raphimc.javadowngrader.JavaDowngrader;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -89,8 +90,9 @@ public class ChangeClassVersionForAllPopup extends RecafStage {
 					if (baseClassVersion <= JavaVersion.VERSION_OFFSET + 7 && !classInfo.hasInterfaceModifier()) {
 						// We need to use ASM's JSRInlinerAdapter to ensure JSR/RET instructions are removed from
 						// the updated copy of the class file.
-						ClassWriter writer = new ClassWriter(0);
-						classInfo.getClassReader().accept(new ClassVisitor(RecafConstants.getAsmVersion(), writer) {
+						ClassReader reader = classInfo.getClassReader();
+						ClassWriter writer = new ClassWriter(reader, 0);
+						reader.accept(new ClassVisitor(RecafConstants.getAsmVersion(), writer) {
 							@Override
 							public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 								super.visit(classTarget, access, name, signature, superName, interfaces);
@@ -147,9 +149,10 @@ public class ChangeClassVersionForAllPopup extends RecafStage {
 			CompletableFuture.supplyAsync(() -> {
 				try {
 					ClassNode node = new ClassNode();
-					classInfo.getClassReader().accept(node, 0);
+					ClassReader reader = classInfo.getClassReader();
+					reader.accept(node, 0);
 					JavaDowngrader.downgrade(node, target);
-					ClassWriter writer = new ClassWriter(0);
+					ClassWriter writer = new ClassWriter(reader, 0);
 					node.accept(writer);
 					return new JvmClassInfoBuilder(writer.toByteArray()).build();
 				} catch (Exception ex) {

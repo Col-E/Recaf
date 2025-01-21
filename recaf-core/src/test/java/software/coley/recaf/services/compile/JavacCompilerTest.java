@@ -81,8 +81,8 @@ public class JavacCompilerTest extends TestBase {
 		// First, create the class that was missing. We cannot use the existing StringConsumer because Javac will find
 		// it on our class-path. So, we remap it to a different package.
 		JvmClassInfo classInfo = TestClassUtils.fromRuntimeClass(StringConsumer.class);
-		ClassWriter writer = new ClassWriter(0);
 		ClassReader reader = classInfo.getClassReader();
+		ClassWriter writer = new ClassWriter(reader, 0);
 		ClassRemapper mapper = new ClassRemapper(writer, new SimpleRemapper(classInfo.getName(), "dummy/StringConsumer"));
 		reader.accept(mapper, 0);
 		classInfo = new JvmClassInfoBuilder(writer.toByteArray()).build();
