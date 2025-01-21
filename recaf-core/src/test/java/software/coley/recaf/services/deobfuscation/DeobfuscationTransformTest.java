@@ -1,6 +1,7 @@
 package software.coley.recaf.services.deobfuscation;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.visitor.JavaCompileResult;
 import me.darknet.assembler.error.Error;
@@ -21,8 +22,11 @@ import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.cfr.CfrConfig;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
+import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueCollectionTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
-import software.coley.recaf.services.transform.TransformResult;
+import software.coley.recaf.services.transform.JvmClassTransformer;
+import software.coley.recaf.services.transform.JvmTransformResult;
 import software.coley.recaf.services.transform.TransformationApplier;
 import software.coley.recaf.services.transform.TransformationApplierService;
 import software.coley.recaf.test.TestBase;
@@ -63,6 +67,10 @@ class DeobfuscationTransformTest extends TestBase {
 		transformationApplier = transformationApplierService.newApplierForCurrentWorkspace();
 	}
 
+	/**
+	 * @see StaticValueInliningTransformer
+	 * @see StaticValueCollectionTransformer
+	 */
 	@Nested
 	class StaticValueInlining {
 		@Test
@@ -91,7 +99,7 @@ class DeobfuscationTransformTest extends TestBase {
 					    }
 					}
 					""";
-			validateBeforeAfter(asm, "println(foo);", "println(5);");
+			validateInlining(asm, "println(foo);", "println(5);");
 
 			// With strings
 			asm = """
@@ -118,7 +126,7 @@ class DeobfuscationTransformTest extends TestBase {
 					    }
 					}
 					""";
-			validateBeforeAfter(asm, "println(foo);", "println(\"Hello\");");
+			validateInlining(asm, "println(foo);", "println(\"Hello\");");
 		}
 
 		@Test
@@ -157,7 +165,7 @@ class DeobfuscationTransformTest extends TestBase {
 					    }
 					}
 					""";
-			validateNoTransformation(asm);
+			validateNoInlining(asm);
 		}
 
 		@Test
@@ -186,7 +194,7 @@ class DeobfuscationTransformTest extends TestBase {
 					    }
 					}
 					""";
-			validateBeforeAfter(asm, "println(foo);", "println(5);");
+			validateInlining(asm, "println(foo);", "println(5);");
 		}
 
 		@Test
@@ -205,7 +213,7 @@ class DeobfuscationTransformTest extends TestBase {
 					    }
 					}
 					""";
-			validateBeforeAfter(asm, "println(foo);", "println(5);");
+			validateInlining(asm, "println(foo);", "println(5);");
 		}
 
 		@Test
@@ -240,7 +248,7 @@ class DeobfuscationTransformTest extends TestBase {
 					    }
 					}
 					""";
-			validateBeforeAfter(asm, "println(foo);", "println(25);");
+			validateInlining(asm, "println(foo);", "println(25);");
 		}
 
 		@Test
@@ -275,20 +283,48 @@ class DeobfuscationTransformTest extends TestBase {
 					    }
 					}
 					""";
-			validateBeforeAfter(asm, "println(foo);", "println(\"Hello\");");
+			validateInlining(asm, "println(foo);", "println(\"Hello\");");
+		}
+
+		private void validateNoInlining(@Nonnull String assembly) {
+			validateNoTransformation(assembly, List.of(StaticValueInliningTransformer.class));
+		}
+
+
+		private void validateInlining(@Nonnull String assembly, @Nonnull String expectedBefore, @Nullable String expectedAfter) {
+			validateBeforeAfter(assembly, List.of(StaticValueInliningTransformer.class), expectedBefore, expectedAfter);
 		}
 	}
 
-	private void validateNoTransformation(@Nonnull String assembly) {
+	/**
+	 * For trans
+	 */
+	@Nested
+	class Removals {
+		@Test
+		void illegalSignatureRemoving() {
+			// An int primitive is an invalid argument for a field signature (Valhalla when Brian?).
+			// Most other invalid signatures aren't visible via decompilation so this suffices to show the transformer works.
+			// Most of it delegates to code that is tested elsewhere.
+			String asm = """
+					.signature "Ljava/util/List<I>;"
+					.field private static foo Ljava/lang/List;
+					""";
+			validateBeforeAfter(asm, List.of(IllegalSignatureRemovingTransformer.class), "List<int> foo", "List foo");
+		}
+	}
+
+	private void validateNoTransformation(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers) {
 		JvmClassInfo cls = assemble(assembly);
 
 		// Transforming should not actually result in any changes
-		TransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm( List.of(StaticValueInliningTransformer.class)));
-		assertTrue(result.getJvmTransformerFailures().isEmpty(), "There were transformation failures");
-		assertEquals(0, result.getJvmTransformedClasses().size(), "There were unexpected transformations applied");
+		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertEquals(0, result.getTransformerFailures().size(), "There were unexpected transformations applied");
 	}
 
-	private void validateBeforeAfter(@Nonnull String assembly, @Nonnull String expectedBefore, @Nonnull String expectedAfter) {
+	private void validateBeforeAfter(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,
+	                                 @Nonnull String expectedBefore, @Nullable String expectedAfter) {
 		JvmClassInfo cls = assemble(assembly);
 
 		// Before transformation, check that the expected before-state is matched
@@ -297,18 +333,23 @@ class DeobfuscationTransformTest extends TestBase {
 		assertTrue(initialDecompile.contains(expectedBefore));
 
 		// Run the transformer
-		TransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm( List.of(StaticValueInliningTransformer.class)));
-		assertTrue(result.getJvmTransformerFailures().isEmpty(), "There were transformation failures");
-		assertEquals(1, result.getJvmTransformedClasses().size(), "Expected transformation to be applied");
+		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertEquals(1, result.getTransformedClasses().size(), "Expected transformation to be applied");
 
 		// Validate output has been transformed to match the expected after-state.
 		String transformedDecompile = decompileTransformed(result);
 		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER ========\n" + transformedDecompile);
-		assertTrue(transformedDecompile.contains(expectedAfter));
+		if (expectedAfter == null)
+			// If the 'after' is null, we should just check if the 'before' no longer exists
+			assertFalse(transformedDecompile.contains(expectedBefore));
+		else
+			// Otherwise, check if the 'after' exists
+			assertTrue(transformedDecompile.contains(expectedAfter));
 	}
 
 	@Nonnull
-	private String decompileTransformed(@Nonnull TransformResult result) {
+	private String decompileTransformed(@Nonnull JvmTransformResult result) {
 		result.apply();
 		JvmClassBundle bundle = workspace.getPrimaryResource().getJvmClassBundle();
 		JvmClassInfo cls = bundle.get(CLASS_NAME);

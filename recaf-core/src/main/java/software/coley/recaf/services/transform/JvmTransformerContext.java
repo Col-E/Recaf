@@ -172,6 +172,7 @@ public class JvmTransformerContext {
 	 * 		Bundle containing the class.
 	 * @param info
 	 * 		The class's model in the workspace.
+	 * 		This does not need to reflect the updated state of the bytecode, it is strictly used for keying/lookups.
 	 * @param bytecode
 	 * 		Bytecode of the class to store.
 	 *

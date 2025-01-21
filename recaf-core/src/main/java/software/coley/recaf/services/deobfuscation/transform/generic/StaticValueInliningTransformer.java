@@ -10,6 +10,7 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -104,7 +105,7 @@ public class StaticValueInliningTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public Set<Class<? extends JvmClassTransformer>> dependencies() {
+	public Set<Class<? extends ClassTransformer>> dependencies() {
 		return Collections.singleton(StaticValueCollectionTransformer.class);
 	}
 }

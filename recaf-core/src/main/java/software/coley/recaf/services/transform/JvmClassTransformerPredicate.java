@@ -7,7 +7,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
- * Predicate for preventing transformation of classes in {@link TransformationApplier}.
+ * Predicate for preventing transformation of JVM classes in {@link TransformationApplier}.
  *
  * @author Matt Coley
  */

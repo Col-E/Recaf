@@ -15,7 +15,7 @@ import java.util.Set;
  *
  * @author Matt Coley
  */
-public interface JvmClassTransformer {
+public interface JvmClassTransformer extends ClassTransformer {
 	/**
 	 * Used to do any workspace-scope setup actions before transformations occur.
 	 *
@@ -54,18 +54,4 @@ public interface JvmClassTransformer {
 	void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	               @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	               @Nonnull JvmClassInfo classInfo) throws TransformationException;
-
-	/**
-	 * @return Name of the transformer.
-	 */
-	@Nonnull
-	String name();
-
-	/**
-	 * @return Set of transformer classes that must run before this one.
-	 */
-	@Nonnull
-	default Set<Class<? extends JvmClassTransformer>> dependencies() {
-		return Collections.emptySet();
-	}
 }

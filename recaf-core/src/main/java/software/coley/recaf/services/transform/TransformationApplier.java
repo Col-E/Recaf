@@ -4,7 +4,6 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import software.coley.collections.Sets;
-import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.BundlePathNode;
@@ -22,6 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static software.coley.collections.Unchecked.cast;
+import static software.coley.collections.Unchecked.checkedForEach;
 
 /**
  * Applies transformations to workspaces.
@@ -62,7 +64,7 @@ public class TransformationApplier {
 	 * 		When transformation cannot be run for any reason.
 	 */
 	@Nonnull
-	public TransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses) throws TransformationException {
+	public JvmTransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses) throws TransformationException {
 		return transformJvm(transformerClasses, null);
 	}
 
@@ -80,19 +82,20 @@ public class TransformationApplier {
 	 * 		When transformation cannot be run for any reason.
 	 */
 	@Nonnull
-	public TransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
-	                                    @Nullable JvmClassTransformerPredicate predicate) throws TransformationException {
+	public JvmTransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
+	                                       @Nullable JvmClassTransformerPredicate predicate) throws TransformationException {
 		// Build transformer visitation order
-		TransformerQueue queue = buildQueue(transformerClasses);
+		TransformerQueue queue = buildQueue(cast(transformerClasses));
 
 		// Map to hold transformation errors for each class:transformer
 		Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> transformJvmFailures = new HashMap<>();
 
 		// Build the transformer context and apply all transformations in order
+		List<JvmClassTransformer> transformers = queue.getTransformers();
 		WorkspaceResource resource = workspace.getPrimaryResource();
 		ResourcePathNode resourcePath = PathNodes.resourcePath(workspace, resource);
-		JvmTransformerContext context = new JvmTransformerContext(workspace, resource, queue.transformers);
-		for (JvmClassTransformer transformer : queue.transformers) {
+		JvmTransformerContext context = new JvmTransformerContext(workspace, resource, transformers);
+		for (JvmClassTransformer transformer : transformers) {
 			try {
 				transformer.setup(context, workspace);
 			} catch (Throwable t) {
@@ -104,7 +107,7 @@ public class TransformationApplier {
 		}
 		resource.jvmClassBundleStreamRecursive().forEach(bundle -> {
 			BundlePathNode bundlePathNode = resourcePath.child(bundle);
-			for (JvmClassTransformer transformer : queue.transformers) {
+			for (JvmClassTransformer transformer : transformers) {
 				bundle.forEach(cls -> {
 					// Skip if the class does not pass the predicate
 					if (predicate != null && !predicate.shouldTransform(workspace, resource, bundle, cls))
@@ -124,22 +127,22 @@ public class TransformationApplier {
 
 		// Update the workspace contents with the transformation results
 		Map<ClassPathNode, JvmClassInfo> transformedJvmClasses = context.buildChangeMap(inheritanceGraph);
-		return new TransformResult() {
+		return new JvmTransformResult() {
 			@Nonnull
 			@Override
-			public Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> getJvmTransformerFailures() {
+			public Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> getTransformerFailures() {
 				return transformJvmFailures;
 			}
 
 			@Nonnull
 			@Override
-			public Map<ClassPathNode, JvmClassInfo> getJvmTransformedClasses() {
+			public Map<ClassPathNode, JvmClassInfo> getTransformedClasses() {
 				return transformedJvmClasses;
 			}
 
 			@Override
 			public void apply() {
-				Unchecked.checkedForEach(transformedJvmClasses, (path, cls) -> {
+				checkedForEach(transformedJvmClasses, (path, cls) -> {
 					JvmClassBundle bundle = path.getValueOfType(JvmClassBundle.class);
 					if (bundle != null)
 						bundle.put(cls);
@@ -150,19 +153,19 @@ public class TransformationApplier {
 		// TODO: If we want a transformer which generates and applies mappings, we need a way to facilitate that
 		//  - Letting a transformer control mapping applier is bad because that can break the tracking state of class models
 		//  - We should probably just track a "mappings to apply" in the transformer context and apply it afterwards
-		//    - We can add that 'MappingAppplier' as an argument to the 'apply' method above
+		//    - We can add that 'MappingAppplier' as an argument to the 'buildChangeMap' method above
 	}
 
 	@Nonnull
-	private TransformerQueue buildQueue(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses) throws TransformationException {
+	private TransformerQueue buildQueue(@Nonnull List<Class<? extends ClassTransformer>> transformerClasses) throws TransformationException {
 		TransformerQueue queue = new TransformerQueue();
-		for (Class<? extends JvmClassTransformer> transformerClass : transformerClasses)
+		for (Class<? extends ClassTransformer> transformerClass : transformerClasses)
 			insert(queue, transformerClass, Collections.emptySet());
 		return queue;
 	}
 
-	private void insert(@Nonnull TransformerQueue queue, @Nonnull Class<? extends JvmClassTransformer> transformerClass,
-	                    @Nonnull Set<Class<? extends JvmClassTransformer>> dependants) throws TransformationException {
+	private void insert(@Nonnull TransformerQueue queue, @Nonnull Class<? extends ClassTransformer> transformerClass,
+	                    @Nonnull Set<Class<? extends ClassTransformer>> dependants) throws TransformationException {
 		// Abort if a cycle is detected
 		if (dependants.contains(transformerClass))
 			throw new TransformationException("Transformer dependency cycle detected with '" + transformerClass.getSimpleName() + "'");
@@ -170,8 +173,14 @@ public class TransformationApplier {
 		// Create the transformer and its dependencies
 		//  - Dependencies first
 		//  - Then the transformer
-		JvmClassTransformer transformer = transformationManager.newJvmTransformer(transformerClass);
-		for (Class<? extends JvmClassTransformer> dependency : transformer.dependencies())
+		ClassTransformer transformer;
+		if (JvmClassTransformer.class.isAssignableFrom(transformerClass)) {
+			Class<? extends JvmClassTransformer> jvmTransformerClass = cast(transformerClass);
+			transformer = transformationManager.newJvmTransformer(jvmTransformerClass);
+		} else {
+			throw new TransformationException("Unsupported transformer class type: " + transformerClass);
+		}
+		for (Class<? extends ClassTransformer> dependency : transformer.dependencies())
 			if (!queue.containsType(dependency))
 				insert(queue, dependency, Sets.add(dependants, transformerClass));
 		queue.add(transformer);
@@ -181,14 +190,14 @@ public class TransformationApplier {
 	 * Wrapper holding which transformers to run.
 	 */
 	private static class TransformerQueue {
-		private final List<JvmClassTransformer> transformers = new ArrayList<>();
-		private final List<Class<? extends JvmClassTransformer>> transformerTypes = new ArrayList<>();
+		private final List<ClassTransformer> transformers = new ArrayList<>();
+		private final List<Class<? extends ClassTransformer>> transformerTypes = new ArrayList<>();
 
 		/**
 		 * @param transformer
 		 * 		Transformer to add to the queue.
 		 */
-		private void add(@Nonnull JvmClassTransformer transformer) {
+		private void add(@Nonnull ClassTransformer transformer) {
 			transformers.add(transformer);
 			transformerTypes.add(transformer.getClass());
 		}
@@ -199,8 +208,19 @@ public class TransformationApplier {
 		 *
 		 * @return {@code true} when the queue already has a transformer of that type registered.
 		 */
-		private boolean containsType(@Nonnull Class<? extends JvmClassTransformer> transformerClass) {
+		private boolean containsType(@Nonnull Class<? extends ClassTransformer> transformerClass) {
 			return transformerTypes.contains(transformerClass);
+		}
+
+		/**
+		 * @param <T>
+		 * 		Inferred transformer type.
+		 *
+		 * @return List of registered transformers.
+		 */
+		@Nonnull
+		private <T extends ClassTransformer> List<T> getTransformers() {
+			return cast(transformers);
 		}
 	}
 }

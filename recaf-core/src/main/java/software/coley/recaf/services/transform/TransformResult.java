@@ -1,21 +1,20 @@
 package software.coley.recaf.services.transform;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Map;
 
 /**
- * Intermediate holder of transformations of workspace classes. You can inspect the state of the transformed classes
- * before you apply the changes to the associated {@link Workspace}.
+ * Intermediate holder of transformations of workspace classes.
  *
  * @author Matt Coley
  */
-public interface TransformResult {
+public interface TransformResult<CT extends ClassTransformer, CI extends ClassInfo> {
 	/**
 	 * Puts the transformed classes into the associated workspace.
+	 * You can inspect the state of transformed classes before this via {@link #getTransformedClasses()}.
 	 */
 	void apply();
 
@@ -24,11 +23,11 @@ public interface TransformResult {
 	 * Empty if transformation was a complete success <i>(no failures)</i>.
 	 */
 	@Nonnull
-	Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> getJvmTransformerFailures();
+	Map<ClassPathNode, Map<Class<? extends CT>, Throwable>> getTransformerFailures();
 
 	/**
 	 * @return Map of class paths to the original classes, to the resulting transformed class models.
 	 */
 	@Nonnull
-	Map<ClassPathNode, JvmClassInfo> getJvmTransformedClasses();
+	Map<ClassPathNode, CI> getTransformedClasses();
 }

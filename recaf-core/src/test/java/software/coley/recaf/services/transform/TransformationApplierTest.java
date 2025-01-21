@@ -173,7 +173,7 @@ class TransformationApplierTest extends TestBase {
 
 		@Nonnull
 		@Override
-		public Set<Class<? extends JvmClassTransformer>> dependencies() {
+		public Set<Class<? extends ClassTransformer>> dependencies() {
 			return Collections.singleton(JvmTransformerA.class);
 		}
 
@@ -195,7 +195,7 @@ class TransformationApplierTest extends TestBase {
 
 		@Nonnull
 		@Override
-		public Set<Class<? extends JvmClassTransformer>> dependencies() {
+		public Set<Class<? extends ClassTransformer>> dependencies() {
 			return Collections.singleton(JvmCycleSingle.class);
 		}
 
@@ -217,7 +217,7 @@ class TransformationApplierTest extends TestBase {
 
 		@Nonnull
 		@Override
-		public Set<Class<? extends JvmClassTransformer>> dependencies() {
+		public Set<Class<? extends ClassTransformer>> dependencies() {
 			return Collections.singleton(JvmCycleB.class);
 		}
 
@@ -239,7 +239,7 @@ class TransformationApplierTest extends TestBase {
 
 		@Nonnull
 		@Override
-		public Set<Class<? extends JvmClassTransformer>> dependencies() {
+		public Set<Class<? extends ClassTransformer>> dependencies() {
 			return Collections.singleton(JvmCycleA.class);
 		}
 
