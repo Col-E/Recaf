@@ -12,7 +12,11 @@ import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
 import software.coley.recaf.util.Types;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -127,7 +131,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 
 		// Check class level signature.
 		String classSignature = getSignature();
-		if (classSignature != null && !Types.isValidSignature(classSignature, false)) {
+		if (classSignature != null && !Types.isValidClassSignature(classSignature)) {
 			sigCheck = SIGS_INVALID;
 			return false;
 		}
@@ -135,7 +139,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 		// Check field signatures.
 		for (FieldMember field : getFields()) {
 			String fieldSignature = field.getSignature();
-			if (fieldSignature != null && !Types.isValidSignature(field.getSignature(), true)) {
+			if (fieldSignature != null && !Types.isValidFieldSignature(field.getSignature())) {
 				sigCheck = SIGS_INVALID;
 				return false;
 			}
@@ -144,7 +148,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 		// Check method signatures.
 		for (MethodMember method : getMethods()) {
 			String methodSignature = method.getSignature();
-			if (methodSignature != null && !Types.isValidSignature(methodSignature, false)) {
+			if (methodSignature != null && !Types.isValidMethodSignature(methodSignature)) {
 				sigCheck = SIGS_INVALID;
 				return false;
 			}
@@ -152,7 +156,7 @@ public abstract class BasicClassInfo implements ClassInfo {
 			// And local variables.
 			for (LocalVariable variable : method.getLocalVariables()) {
 				String localSignature = variable.getSignature();
-				if (localSignature != null && !Types.isValidSignature(localSignature, true)) {
+				if (localSignature != null && !Types.isValidMethodSignature(localSignature)) {
 					sigCheck = SIGS_INVALID;
 					return false;
 				}

@@ -1,5 +1,6 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -32,30 +33,29 @@ public class IllegalSignatureRemovingVisitor extends ClassVisitor {
 	}
 
 	@Override
-	public void visit(int version, int access, String name, String s, String superName, String[] interfaces) {
-		super.visit(version, access, name, map(s, false), superName, interfaces);
+	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+		super.visit(version, access, name, map(signature, Types.SignatureContext.CLASS), superName, interfaces);
 	}
 
 	@Override
-	public FieldVisitor visitField(int access, String name, String desc, String s, Object value) {
-		return super.visitField(access, name, desc, map(s, true), value);
+	public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+		return super.visitField(access, name, desc, map(signature, Types.SignatureContext.FIELD), value);
 	}
 
 	@Override
-	public MethodVisitor visitMethod(int access, String name, String desc, String s, String[] exceptions) {
-		MethodVisitor mv = super.visitMethod(access, name, desc, map(s, false), exceptions);
+	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+		MethodVisitor mv = super.visitMethod(access, name, desc, map(signature, Types.SignatureContext.METHOD), exceptions);
 		return new MethodVisitor(RecafConstants.getAsmVersion(), mv) {
 			@Override
-			public void visitLocalVariable(String name, String desc, String s, Label start, Label end, int index) {
-				super.visitLocalVariable(name, desc, map(s, true), start, end, index);
+			public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
+				super.visitLocalVariable(name, desc, map(signature, Types.SignatureContext.FIELD), start, end, index);
 			}
 		};
 	}
 
-	private String map(String signature, boolean isTypeSignature) {
-		if (signature == null)
-			return null;
-		if (Types.isValidSignature(signature, isTypeSignature))
+	@Nullable
+	private String map(@Nullable String signature, @Nonnull Types.SignatureContext type) {
+		if (Types.isValidSignature(signature, type))
 			return signature;
 		detected = true;
 		return null;

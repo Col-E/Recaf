@@ -4,9 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.signature.SignatureReader;
-import org.objectweb.asm.signature.SignatureVisitor;
-import org.objectweb.asm.signature.SignatureWriter;
+import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,20 +69,10 @@ public class Types {
 		if (desc == null || desc.length() != 1)
 			return false;
 		char c = desc.charAt(0);
-		switch (c) {
-			case 'V':
-			case 'Z':
-			case 'C':
-			case 'B':
-			case 'S':
-			case 'I':
-			case 'F':
-			case 'J':
-			case 'D':
-				return true;
-			default:
-				return false;
-		}
+		return switch (c) {
+			case 'V', 'Z', 'C', 'B', 'S', 'I', 'F', 'J', 'D' -> true;
+			default -> false;
+		};
 	}
 
 	/**
@@ -333,27 +321,77 @@ public class Types {
 
 	/**
 	 * @param signature
-	 * 		Signature text.
-	 * @param isTypeSignature
-	 * 		See {@link org.objectweb.asm.signature.SignatureReader#accept(SignatureVisitor)} ({@code false})
-	 * 		and {@link org.objectweb.asm.signature.SignatureReader#acceptType(SignatureVisitor)} ({@code true}) for usage.
+	 * 		Class declaration signature.
 	 *
-	 * @return {@code true} for a valid signature. Will be {@code false} otherwise, or for {@code null} values.
+	 * @return {@code true} for a valid signatures, or {@code null}. Will be {@code false} otherwise.
 	 */
-	public static boolean isValidSignature(@Nullable String signature, boolean isTypeSignature) {
-		if (signature == null || signature.isEmpty())
+	public static boolean isValidClassSignature(@Nullable String signature) {
+		return isValidSignature(signature, SignatureContext.CLASS);
+	}
+
+	/**
+	 * @param signature
+	 * 		Field or variable signature.
+	 *
+	 * @return {@code true} for a valid signatures, or {@code null}. Will be {@code false} otherwise.
+	 */
+	public static boolean isValidFieldSignature(@Nullable String signature) {
+		return isValidSignature(signature, SignatureContext.FIELD);
+	}
+
+
+	/**
+	 * @param signature
+	 * 		Method signature.
+	 *
+	 * @return {@code true} for a valid signatures, or {@code null}. Will be {@code false} otherwise.
+	 */
+	public static boolean isValidMethodSignature(@Nullable String signature) {
+		return isValidSignature(signature, SignatureContext.METHOD);
+	}
+
+	/**
+	 * @param signature
+	 * 		Signature contents.
+	 * @param context
+	 * 		Signature usage context.
+	 *
+	 * @return {@code true} for a valid signatures, or {@code null}. Will be {@code false} otherwise.
+	 */
+	public static boolean isValidSignature(@Nullable String signature, @Nonnull SignatureContext context) {
+		if (signature == null)
+			return true;
+		if (signature.isEmpty())
 			return false;
 		try {
-			SignatureReader signatureReader = new SignatureReader(signature);
-			SignatureWriter signatureWriter = new SignatureWriter();
-			if (isTypeSignature) {
-				signatureReader.acceptType(signatureWriter);
-			} else {
-				signatureReader.accept(signatureWriter);
+			switch (context) {
+				case CLASS -> CheckClassAdapter.checkClassSignature(signature);
+				case FIELD -> CheckClassAdapter.checkFieldSignature(signature);
+				case METHOD -> CheckClassAdapter.checkMethodSignature(signature);
 			}
 			return true;
-		} catch (Exception ex) {
+		} catch (Throwable t) {
 			return false;
 		}
+	}
+
+	/**
+	 * Types of signature use-cases.
+	 *
+	 * @see #isValidSignature(String, SignatureContext)
+	 */
+	public enum SignatureContext {
+		/**
+		 * Class declarations.
+		 */
+		CLASS,
+		/**
+		 * Fields or variable declarations.
+		 */
+		FIELD,
+		/**
+		 * Method declarations.
+		 */
+		METHOD
 	}
 }

@@ -117,15 +117,18 @@ public class TypesTest {
 
 	@Test
 	void testIsValidSignature() {
-		assertTrue(Types.isValidSignature("()V", false));
-		assertTrue(Types.isValidSignature("V", true));
-		assertTrue(Types.isValidSignature("Ljava/lang/Supplier;", true));
-		assertTrue(Types.isValidSignature("Ljava/lang/Supplier<Ljava/lang/String;>;", true));
-		assertTrue(Types.isValidSignature("Ljava/util/List<[Ljava/util/List<Ljava/lang/String;>;>;", true));
+		assertTrue(Types.isValidMethodSignature("()V"));
+		assertTrue(Types.isValidFieldSignature("Ljava/lang/Supplier;"));
+		assertTrue(Types.isValidClassSignature("Ljava/lang/Supplier;"));
+		assertTrue(Types.isValidClassSignature("Ljava/lang/Supplier<Ljava/lang/String;>;"));
+		assertTrue(Types.isValidClassSignature("Ljava/util/List<[Ljava/util/List<Ljava/lang/String;>;>;"));
+		assertTrue(Types.isValidFieldSignature("Ljava/util/List<[Ljava/util/List<Ljava/lang/String;>;>;"));
 		//
-		assertFalse(Types.isValidSignature("", true), "empty invalid");
-		assertFalse(Types.isValidSignature("", false), "empty invalid");
-		assertTrue(Types.isValidSignature("Ljava/lang/Supplier<I>;", true), "int prim not valid arg");
+		assertFalse(Types.isValidClassSignature(""), "Empty signature must be invalid");
+		assertFalse(Types.isValidFieldSignature(""), "Empty signature must be invalid");
+		assertFalse(Types.isValidMethodSignature(""), "Empty signature must be invalid");
+		assertFalse(Types.isValidFieldSignature("V"), "Fields cannot be 'void'");
+		assertFalse(Types.isValidClassSignature("Ljava/lang/Supplier<I>;"), "Primitive int cannot be used as type argument");
 	}
 
 	@Test

@@ -86,7 +86,7 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	 * {@code false} when any of those values is malformed.
 	 *
 	 * @see IllegalSignatureRemovingVisitor Visitor for removing invalid signatures on JVM classes.
-	 * @see Types#isValidSignature(String, boolean) Method for checking validity of a generic signature.
+	 * @see Types#isValidSignature(String, Types.SignatureContext) Method for checking validity of a generic signature.
 	 */
 	boolean hasValidSignatures();
 
