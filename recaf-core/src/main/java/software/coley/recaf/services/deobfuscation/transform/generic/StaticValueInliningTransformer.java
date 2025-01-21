@@ -1,4 +1,4 @@
-package software.coley.recaf.services.deobfuscation.builtin;
+package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
