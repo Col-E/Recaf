@@ -155,6 +155,18 @@ public enum AccessFlag {
 	}
 
 	/**
+	 * @param acc
+	 * 		Access flag mask.
+	 * @param flag
+	 * 		Flag to remove.
+	 *
+	 * @return Updated flag mask.
+	 */
+	public static int removeFlag(int acc, int flag) {
+		return acc & ~flag;
+	}
+
+	/**
 	 * @param flags
 	 * 		Array of access flags.
 	 *

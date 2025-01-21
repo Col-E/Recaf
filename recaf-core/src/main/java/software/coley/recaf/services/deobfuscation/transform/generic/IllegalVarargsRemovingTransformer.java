@@ -4,35 +4,48 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Type;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.util.visitors.IllegalSignatureRemovingVisitor;
+import software.coley.recaf.util.visitors.IllegalVarargsRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
- * A transformer that removes any invalid signatures from classes and any of their declared members.
+ * A transformer that removes any invalid use of varargs from methods.
  *
  * @author Matt Coley
  */
 @ApplicationScoped
-public class IllegalSignatureRemovingTransformer implements JvmClassTransformer {
+public class IllegalVarargsRemovingTransformer implements JvmClassTransformer {
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	                      @Nonnull JvmClassInfo classInfo) throws TransformationException {
-		// The model will lazily compute if all the signatures in the class are valid.
-		// If any one is invalid, we can modify it with the removing visitor.
-		if (!classInfo.hasValidSignatures()) {
-			// Adapt the class bytes by removing any illegal signature.
+		// First scan the model to see if we need to actually reparse and patch the bytecode.
+		boolean hasInvalidVarargs = false;
+		for (MethodMember method : classInfo.getMethods()) {
+			if (method.hasVarargsModifier()) {
+				Type methodType = Type.getMethodType(method.getDescriptor());
+				Type[] argumentTypes = methodType.getArgumentTypes();
+				if (argumentTypes.length == 0 || argumentTypes[argumentTypes.length - 1].getSort() != Type.ARRAY) {
+					hasInvalidVarargs = true;
+					break;
+				}
+			}
+		}
+
+		// If we found an invalid use case, we'll do the work to remove it.
+		if (hasInvalidVarargs) {
 			ClassReader reader = classInfo.getClassReader();
 			ClassWriter writer = new ClassWriter(reader, 0);
-			IllegalSignatureRemovingVisitor remover = new IllegalSignatureRemovingVisitor(writer);
+			IllegalVarargsRemovingVisitor remover = new IllegalVarargsRemovingVisitor(writer);
 			reader.accept(remover, 0);
-			if (remover.hasDetectedIllegalSignatures()) // Should always occur given the circumstances
+			if (remover.hasDetectedIllegalVarargs()) // Should always occur given the circumstances
 				context.setBytecode(bundle, classInfo, writer.toByteArray());
 		}
 	}
@@ -40,6 +53,6 @@ public class IllegalSignatureRemovingTransformer implements JvmClassTransformer 
 	@Nonnull
 	@Override
 	public String name() {
-		return "Illegal signature removal";
+		return "Illegal varargs removal";
 	}
 }

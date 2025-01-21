@@ -310,6 +310,11 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		@Override
 		public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 			super.visit(version, access, name, signature, superName, interfaces);
+			if (name == null)
+				// If you encounter this, you probably generated the class with ClassWriter, but forgot to actually
+				// pass the ClassWriter as a delegate to the ClassVisitor manipulating the class. Thus, it is never
+				// informed of the actual contents of the class.
+				throw new IllegalStateException("Invalid class, name is null");
 			withVersion(version & 0xFF);
 			withAccess(access);
 			withName(name);

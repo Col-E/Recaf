@@ -23,6 +23,7 @@ import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.cfr.CfrConfig;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueCollectionTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
@@ -311,6 +312,22 @@ class DeobfuscationTransformTest extends TestBase {
 					.field private static foo Ljava/lang/List;
 					""";
 			validateBeforeAfter(asm, List.of(IllegalSignatureRemovingTransformer.class), "List<int> foo", "List foo");
+		}
+
+		@Test
+		void illegalVarargsRemoving() {
+			// CFR actually checks for illegal varargs use and emits a nice warning for us.
+			// So we'll just check if that goes away.
+			String asm = """
+					.method public static varargs example ([I[II)V {
+					    code: {
+					    A:
+					        return
+					    B:
+					    }
+					}
+					""";
+			validateBeforeAfter(asm, List.of(IllegalVarargsRemovingTransformer.class), "/* corrupt varargs signature?! */", null);
 		}
 	}
 
