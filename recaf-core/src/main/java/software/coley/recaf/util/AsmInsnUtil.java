@@ -1,12 +1,17 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 /**
@@ -16,19 +21,46 @@ import org.objectweb.asm.tree.VarInsnNode;
  */
 public class AsmInsnUtil implements Opcodes {
 	/**
-	 * @param type
-	 * 		Type to push.
+	 * Convert an instruction opcode to a {@link Handle} tag.
 	 *
-	 * @return Instruction to push a default value of the given type onto the stack.
+	 * @param opcode
+	 * 		Some method or field opcode.
+	 *
+	 * @return Relevant handle tag.
 	 */
-	@Nonnull
-	public static AbstractInsnNode getDefaultValue(@Nonnull Type type) {
-		return switch (type.getSort()) {
-			case Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> new InsnNode(ICONST_0);
-			case Type.LONG -> new InsnNode(LCONST_0);
-			case Type.FLOAT -> new InsnNode(FCONST_0);
-			case Type.DOUBLE -> new InsnNode(DCONST_0);
-			default -> new InsnNode(ACONST_NULL);
+	public static int opcodeToTag(int opcode) {
+		return switch (opcode) {
+			case INVOKEINTERFACE -> H_INVOKEINTERFACE;
+			case INVOKESPECIAL -> H_INVOKESPECIAL;
+			case INVOKEVIRTUAL -> H_INVOKEVIRTUAL;
+			case INVOKESTATIC -> H_INVOKESTATIC;
+			case GETFIELD -> H_GETFIELD;
+			case GETSTATIC -> H_GETSTATIC;
+			case PUTFIELD -> H_PUTFIELD;
+			case PUTSTATIC -> H_PUTSTATIC;
+			default -> throw new IllegalStateException("Unsupported opcode: " + opcode);
+		};
+	}
+
+	/**
+	 * Convert a {@link Handle} tag to an instruction opcode.
+	 *
+	 * @param tag
+	 * 		Some method or field handle tag.
+	 *
+	 * @return Relevant instruction opcode.
+	 */
+	public static int tagToOpcode(int tag) {
+		return switch (tag) {
+			case H_INVOKEINTERFACE -> INVOKEINTERFACE;
+			case H_INVOKESPECIAL -> INVOKESPECIAL;
+			case H_INVOKEVIRTUAL -> INVOKEVIRTUAL;
+			case H_INVOKESTATIC -> INVOKESTATIC;
+			case H_GETFIELD -> GETFIELD;
+			case H_GETSTATIC -> GETSTATIC;
+			case H_PUTFIELD -> PUTFIELD;
+			case H_PUTSTATIC -> PUTSTATIC;
+			default -> throw new IllegalStateException("Unsupported tag: " + tag);
 		};
 	}
 
@@ -46,6 +78,72 @@ public class AsmInsnUtil implements Opcodes {
 			case Opcodes.FSTORE, Opcodes.FLOAD -> Type.FLOAT_TYPE;
 			case Opcodes.DSTORE, Opcodes.DLOAD -> Type.DOUBLE_TYPE;
 			default -> Types.OBJECT_TYPE;
+		};
+	}
+
+	/**
+	 * @param index
+	 * 		Variable index.
+	 * @param variableType
+	 * 		Variable type.
+	 *
+	 * @return Load instruction for variable type at the given index.
+	 */
+	@Nonnull
+	public static VarInsnNode createVarLoad(int index, @Nonnull Type variableType) {
+		return switch (variableType.getSort()) {
+			case Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> new VarInsnNode(ILOAD, index);
+			case Type.FLOAT -> new VarInsnNode(FLOAD, index);
+			case Type.DOUBLE -> new VarInsnNode(DLOAD, index);
+			case Type.LONG -> new VarInsnNode(LLOAD, index);
+			default -> new VarInsnNode(ALOAD, index);
+		};
+	}
+
+	/**
+	 * @param index
+	 * 		Variable index.
+	 * @param variableType
+	 * 		Variable type.
+	 *
+	 * @return Store instruction for variable type at the given index.
+	 */
+	@Nonnull
+	public static VarInsnNode createVarStore(int index, @Nonnull Type variableType) {
+		return switch (variableType.getSort()) {
+			case Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> new VarInsnNode(ISTORE, index);
+			case Type.FLOAT -> new VarInsnNode(FSTORE, index);
+			case Type.DOUBLE -> new VarInsnNode(DSTORE, index);
+			case Type.LONG -> new VarInsnNode(LSTORE, index);
+			default -> new VarInsnNode(ASTORE, index);
+		};
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} if the instruction pushes a constant value onto the stack.
+	 */
+	public static boolean isConstValue(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		return op >= ACONST_NULL && op <= LDC;
+	}
+
+	/**
+	 * @param type
+	 * 		Type to push.
+	 *
+	 * @return Instruction to push a default value of the given type onto the stack.
+	 */
+	@Nonnull
+	public static AbstractInsnNode getDefaultValue(@Nonnull Type type) {
+		return switch (type.getSort()) {
+			case Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> new InsnNode(ICONST_0);
+			case Type.LONG -> new InsnNode(LCONST_0);
+			case Type.FLOAT -> new InsnNode(FCONST_0);
+			case Type.DOUBLE -> new InsnNode(DCONST_0);
+			default -> new InsnNode(ACONST_NULL);
 		};
 	}
 
@@ -153,5 +251,519 @@ public class AsmInsnUtil implements Opcodes {
 			case Type.DOUBLE -> DRETURN;
 			default -> ARETURN;
 		};
+	}
+
+	/**
+	 * @param op
+	 * 		Instruction opcode.
+	 *
+	 * @return {@code true} when it is a return operation.
+	 */
+	public static boolean isReturn(int op) {
+		return switch (op) {
+			case IRETURN, LRETURN, FRETURN, DRETURN, ARETURN, RETURN -> true;
+			default -> false;
+		};
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} if the instruction modified the control flow.
+	 */
+	public static boolean isFlowControl(@Nonnull AbstractInsnNode insn) {
+		int type = insn.getType();
+		return type == AbstractInsnNode.JUMP_INSN ||
+				type == AbstractInsnNode.TABLESWITCH_INSN ||
+				type == AbstractInsnNode.LOOKUPSWITCH_INSN ||
+				insn.getOpcode() == ATHROW || insn.getOpcode() == RET;
+	}
+
+	/**
+	 * Computes the size of stack items consumed for the given operation of the instruction.
+	 * This considers {@code long} and {@code double} types taking two spaces.
+	 *
+	 * @param insn
+	 * 		Instruction to compute for.
+	 *
+	 * @return Size of stack consumed. Never negative.
+	 *
+	 * @see #getSizeProduced(AbstractInsnNode)
+	 * @see <a href="https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-6.html#jvms-6.5">JVMS 6.5</a>
+	 */
+	public static int getSizeConsumed(@Nonnull AbstractInsnNode insn) {
+		// Just a note about this consumed and the other produced method, ASM has a giant
+		// array in MethodWriter that has the total delta, but in some cases you want to know
+		// both components that combine into the final delta. It also skips entries that are
+		// not constant, so we would still need some edge-case handling anyways.
+		int op = insn.getOpcode();
+		int type = insn.getType();
+		if (type == AbstractInsnNode.MULTIANEWARRAY_INSN) {
+			return ((MultiANewArrayInsnNode) insn).dims;
+		} else if (type == AbstractInsnNode.METHOD_INSN) {
+			MethodInsnNode min = (MethodInsnNode) insn;
+			Type methodType = Type.getMethodType(min.desc);
+			int count = op == INVOKESTATIC ? 0 : 1;
+			for (Type argType : methodType.getArgumentTypes()) {
+				count += argType.getSize();
+			}
+			return count;
+		} else if (type == AbstractInsnNode.INVOKE_DYNAMIC_INSN) {
+			Type methodType = Type.getMethodType(((InvokeDynamicInsnNode) insn).desc);
+			int count = 0;
+			for (Type argType : methodType.getArgumentTypes()) {
+				count += argType.getSize();
+			}
+			return count;
+		} else if (type == AbstractInsnNode.FIELD_INSN) {
+			FieldInsnNode fin = (FieldInsnNode) insn;
+			if (op == GETSTATIC)
+				return 0;
+			if (op == GETFIELD)
+				return 1; // owner-value
+			if (op == PUTSTATIC)
+				return Type.getType(fin.desc).getSize(); // value (can be wide)
+			if (op == PUTFIELD)
+				return 1 + Type.getType(fin.desc).getSize(); // owner, value (can be wide)
+		} else if (type == AbstractInsnNode.FRAME ||
+				type == AbstractInsnNode.LABEL ||
+				type == AbstractInsnNode.LINE) {
+			return 0;
+		}
+		// noinspection EnhancedSwitchMigration
+		switch (op) {
+			// visitInsn
+			case NOP:
+			case ACONST_NULL:
+			case ICONST_M1:
+			case ICONST_0:
+			case ICONST_1:
+			case ICONST_2:
+			case ICONST_3:
+			case ICONST_4:
+			case ICONST_5:
+			case LCONST_0:
+			case LCONST_1:
+			case FCONST_0:
+			case FCONST_1:
+			case FCONST_2:
+			case DCONST_0:
+			case DCONST_1:
+				return 0;
+			// visitIntInsn
+			case BIPUSH:
+			case SIPUSH:
+				return 0;
+			// visitLdcInsn
+			case LDC:
+				return 0;
+			// visitVarInsn
+			case ILOAD:
+			case LLOAD:
+			case FLOAD:
+			case DLOAD:
+			case ALOAD:
+				return 0;
+			// visitInsn
+			case IALOAD:
+			case LALOAD:
+			case FALOAD:
+			case DALOAD:
+			case AALOAD:
+			case BALOAD:
+			case CALOAD:
+			case SALOAD:
+				return 2; // arrayref, index
+			// visitVarInsn
+			case ISTORE:
+			case FSTORE:
+			case ASTORE:
+				return 1; // value
+			case DSTORE:
+			case LSTORE:
+				return 2; // wide-value
+			// visitInsn
+			case IASTORE:
+			case FASTORE:
+			case AASTORE:
+			case BASTORE:
+			case CASTORE:
+			case SASTORE:
+				return 3; // arrayref, index, value
+			case DASTORE:
+			case LASTORE:
+				return 4; // arrayref, index, wide-value
+			case POP:
+				return 1; // value
+			case POP2:
+				return 2; // value x2 or wide-value
+			case DUP:
+			case DUP_X1:
+			case DUP_X2:
+			case DUP2:
+			case DUP2_X1:
+			case DUP2_X2:
+			case SWAP:
+				return 0; // Does not "consume" technically
+			case IADD:
+			case FADD:
+			case ISUB:
+			case FSUB:
+			case IMUL:
+			case FMUL:
+			case IDIV:
+			case FDIV:
+			case IREM:
+			case FREM:
+			case INEG:
+			case FNEG:
+			case ISHL:
+			case ISHR:
+			case IUSHR:
+			case IAND:
+			case IXOR:
+			case IOR:
+				return 2; // value1, value2
+			case DNEG:
+			case DREM:
+			case DDIV:
+			case DMUL:
+			case DSUB:
+			case DADD:
+			case LUSHR:
+			case LSHR:
+			case LSHL:
+			case LNEG:
+			case LREM:
+			case LDIV:
+			case LMUL:
+			case LSUB:
+			case LADD:
+			case LAND:
+			case LOR:
+			case LXOR:
+				return 4; // wide-value1, wide-value2
+			// visitIincInsn
+			case IINC:
+				return 0;
+			// visitInsn
+			case I2L:
+			case I2F:
+			case I2D:
+			case F2I:
+			case F2L:
+			case F2D:
+			case I2B:
+			case I2C:
+			case I2S:
+				return 1; // value
+			case D2I:
+			case D2L:
+			case D2F:
+			case L2I:
+			case L2F:
+			case L2D:
+				return 2; // wide-value
+			case FCMPL:
+			case FCMPG:
+				return 2; // value1, value2
+			case LCMP:
+			case DCMPL:
+			case DCMPG:
+				return 4; // wide-value1, wide-value2
+			// visitJumpInsn
+			case IFEQ:
+			case IFNE:
+			case IFLT:
+			case IFGE:
+			case IFGT:
+			case IFLE:
+			case IFNULL:
+			case IFNONNULL:
+				return 1; // value
+			case IF_ICMPEQ:
+			case IF_ICMPNE:
+			case IF_ICMPLT:
+			case IF_ICMPGE:
+			case IF_ICMPGT:
+			case IF_ICMPLE:
+			case IF_ACMPEQ:
+			case IF_ACMPNE:
+				return 2; // value1, value2
+			case GOTO:
+				return 0;
+			case JSR:
+				return 0;
+			// visitVarInsn
+			case RET:
+				return 0;
+			// visiTableSwitchInsn/visitLookupSwitch
+			case TABLESWITCH:
+			case LOOKUPSWITCH:
+				return 1; // value
+			// visitInsn
+			case IRETURN:
+			case FRETURN:
+			case ARETURN:
+				return 1; // value
+			case LRETURN:
+			case DRETURN:
+				return 2; // wide-value
+			case RETURN:
+				return 0;
+			// visitTypeInsn
+			case NEW:
+				return 0;
+			// visitIntInsn
+			case NEWARRAY:
+				return 1; // count
+			// visitTypeInsn
+			case ANEWARRAY:
+				return 1; // count
+			// visitInsn
+			case ARRAYLENGTH:
+				return 1; // array
+			case ATHROW:
+				return 1; // exception, but it technically should clear the stack
+			// visitTypeInsn
+			case CHECKCAST:
+				return 0; // instance to verify, not technically consumed but referenced
+			case INSTANCEOF:
+				return 1; // value
+			// visitInsn
+			case MONITORENTER:
+			case MONITOREXIT:
+				return 1; // monitor
+			default:
+				throw new IllegalArgumentException("Unhandled instruction: " + op);
+		}
+	}
+
+	/**
+	 * Computes the size of stack items produced for the given operation of the instruction.
+	 * This considers {@code long} and {@code double} types taking two spaces.
+	 *
+	 * @param insn
+	 * 		Instruction to compute for.
+	 *
+	 * @return Size of stack produced. Never negative.
+	 *
+	 * @see #getSizeConsumed(AbstractInsnNode)
+	 * @see <a href="https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-6.html#jvms-6.5">JVMS 6.5</a>
+	 */
+	public static int getSizeProduced(AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		int type = insn.getType();
+		if (type == AbstractInsnNode.METHOD_INSN) {
+			Type methodType = Type.getMethodType(((MethodInsnNode) insn).desc);
+			return methodType.getReturnType().getSize();
+		} else if (type == AbstractInsnNode.INVOKE_DYNAMIC_INSN) {
+			Type methodType = Type.getMethodType(((InvokeDynamicInsnNode) insn).desc);
+			return methodType.getReturnType().getSize();
+		} else if (type == AbstractInsnNode.FIELD_INSN) {
+			FieldInsnNode fin = (FieldInsnNode) insn;
+			Type fieldtype = Type.getType(fin.desc);
+			if (op == GETSTATIC)
+				return fieldtype.getSize(); // field type can be wide
+			if (op == GETFIELD)
+				return fieldtype.getSize(); // field type can be wide
+			if (op == PUTSTATIC || op == PUTFIELD)
+				return 0;
+		} else if (type == AbstractInsnNode.LDC_INSN) {
+			Object cst = ((LdcInsnNode) insn).cst;
+			return (cst instanceof Double || cst instanceof Long) ? 2 : 1;
+		} else if (type == AbstractInsnNode.FRAME ||
+				type == AbstractInsnNode.LABEL ||
+				type == AbstractInsnNode.LINE) {
+			return 0;
+		} else if (type == AbstractInsnNode.JUMP_INSN) {
+			return op == JSR ? 1 : 0;
+		}
+		// noinspection EnhancedSwitchMigration
+		switch (op) {
+			// visitInsn
+			case NOP:
+				return 0;
+			case ACONST_NULL:
+			case ICONST_M1:
+			case ICONST_0:
+			case ICONST_1:
+			case ICONST_2:
+			case ICONST_3:
+			case ICONST_4:
+			case ICONST_5:
+			case FCONST_0:
+			case FCONST_1:
+			case FCONST_2:
+				return 1; // value
+			case LCONST_0:
+			case LCONST_1:
+			case DCONST_0:
+			case DCONST_1:
+				return 2; // wide-value
+			// visitIntInsn
+			case BIPUSH:
+			case SIPUSH:
+				return 1; // value
+			// visitVarInsn
+			case ILOAD:
+			case FLOAD:
+			case ALOAD:
+				return 1; // value
+			case LLOAD:
+			case DLOAD:
+				return 2; // wide-value
+			// visitInsn
+			case IALOAD:
+			case FALOAD:
+			case AALOAD:
+			case BALOAD:
+			case CALOAD:
+			case SALOAD:
+				return 1; // value
+			case LALOAD:
+			case DALOAD:
+				return 2; // wide-value
+			// visitVarInsn
+			case ISTORE:
+			case LSTORE:
+			case FSTORE:
+			case DSTORE:
+			case ASTORE:
+				return 0;
+			// visitInsn
+			case IASTORE:
+			case LASTORE:
+			case FASTORE:
+			case DASTORE:
+			case AASTORE:
+			case BASTORE:
+			case CASTORE:
+			case SASTORE:
+				return 0;
+			case POP:
+			case POP2:
+				return 0;
+			case DUP:
+			case DUP_X1:
+			case DUP_X2:
+				return 1; // stack stuff
+			case DUP2:
+			case DUP2_X1:
+			case DUP2_X2:
+				return 2; // stack stuff
+			case SWAP:
+				return 0; // technically does not introduce
+			case IADD:
+			case FADD:
+			case ISUB:
+			case FSUB:
+			case IMUL:
+			case FMUL:
+			case IDIV:
+			case FDIV:
+			case IREM:
+			case FREM:
+			case INEG:
+			case FNEG:
+			case ISHL:
+			case ISHR:
+			case IUSHR:
+			case IAND:
+			case IOR:
+			case IXOR:
+				return 1; // result
+			case LDIV:
+			case LMUL:
+			case LSUB:
+			case LADD:
+			case LREM:
+			case LNEG:
+			case LSHL:
+			case LSHR:
+			case LUSHR:
+			case LAND:
+			case LOR:
+			case LXOR:
+			case DADD:
+			case DSUB:
+			case DMUL:
+			case DDIV:
+			case DREM:
+			case DNEG:
+				return 2; // wide-result
+			// visitIincInsn
+			case IINC:
+				return 0;
+			// visitInsn
+			case I2F:
+			case L2I:
+			case L2F:
+			case F2I:
+			case D2I:
+			case D2F:
+			case I2B:
+			case I2C:
+			case I2S:
+				return 1; // result
+			case I2D:
+			case L2D:
+			case F2D:
+			case F2L:
+			case D2L:
+			case I2L:
+				return 2; // wide-result
+			case LCMP:
+			case FCMPL:
+			case FCMPG:
+			case DCMPL:
+			case DCMPG:
+				return 1; // result
+			// visitVarInsn
+			case RET:
+				return 0;
+			// visiTableSwitchInsn/visitLookupSwitch
+			case TABLESWITCH:
+			case LOOKUPSWITCH:
+				return 0;
+			// visitInsn
+			case IRETURN:
+			case LRETURN:
+			case FRETURN:
+			case DRETURN:
+			case ARETURN:
+			case RETURN:
+				return 0;
+			// visitTypeInsn
+			case NEW:
+				return 1; // uninitialized value
+			// visitIntInsn
+			case NEWARRAY:
+				return 1;
+			// visitTypeInsn
+			case ANEWARRAY:
+				return 1;
+			// visitInsn
+			case ARRAYLENGTH:
+				return 1;
+			case ATHROW:
+				return 0;
+			// visitTypeInsn
+			case CHECKCAST:
+				return 0; // technically does not introduce
+			case INSTANCEOF:
+				return 1; // result
+			// visitInsn
+			case MONITORENTER:
+				return 0;
+			case MONITOREXIT:
+				return 0;
+			// visitMultiANewArrayInsn
+			case MULTIANEWARRAY:
+				return 1; // array
+			default:
+				throw new IllegalArgumentException("Unhandled instruction: " + op);
+		}
 	}
 }
