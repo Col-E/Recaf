@@ -68,7 +68,7 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
-	                      @Nonnull JvmClassInfo classInfo) throws TransformationException {
+	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
 		StaticValues valuesContainer = new StaticValues();
 		EffectivelyFinalFields finalContainer = new EffectivelyFinalFields();
 
@@ -79,7 +79,7 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 		//    - will be slower, but it will be opt-in and off by default
 
 		// Populate initial values based on field's default value attribute
-		for (FieldMember field : classInfo.getFields()) {
+		for (FieldMember field : initialClassState.getFields()) {
 			if (!field.hasStaticModifier())
 				continue;
 
@@ -107,9 +107,9 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 		}
 
 		// Visit <clinit> of classes and collect static field values of primitives
-		String className = classInfo.getName();
-		if (classInfo.getDeclaredMethod("<clinit>", "()V") != null) {
-			ClassNode node = context.getNode(bundle, classInfo);
+		String className = initialClassState.getName();
+		if (initialClassState.getDeclaredMethod("<clinit>", "()V") != null) {
+			ClassNode node = context.getNode(bundle, initialClassState);
 
 			// Find the static initializer and determine which fields are "effectively-final"
 			MethodNode clinit = null;

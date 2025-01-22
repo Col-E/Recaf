@@ -35,7 +35,7 @@ class TransformationManagerTest {
 		@Override
 		public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 		                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
-		                      @Nonnull JvmClassInfo classInfo) {
+		                      @Nonnull JvmClassInfo initialClassState) {
 			// no-op
 		}
 

@@ -40,11 +40,11 @@ public class StaticValueInliningTransformer implements JvmClassTransformer {
 	@SuppressWarnings("OptionalGetWithoutIsPresent")
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
-	                      @Nonnull JvmClassInfo classInfo) throws TransformationException {
+	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
 		var staticValueCollector = context.getJvmTransformer(StaticValueCollectionTransformer.class);
 
 		boolean dirty = false;
-		ClassNode node = context.getNode(bundle, classInfo);
+		ClassNode node = context.getNode(bundle, initialClassState);
 		for (MethodNode method : node.methods) {
 			// Skip static initializer and abstract methods
 			if (method.name.contains("<clinit>") || method.instructions == null)
@@ -94,7 +94,7 @@ public class StaticValueInliningTransformer implements JvmClassTransformer {
 
 		// Record transformed class if we made any changes
 		if (dirty)
-			context.setNode(bundle, classInfo, node);
+			context.setNode(bundle, initialClassState, node);
 	}
 
 	@Nonnull

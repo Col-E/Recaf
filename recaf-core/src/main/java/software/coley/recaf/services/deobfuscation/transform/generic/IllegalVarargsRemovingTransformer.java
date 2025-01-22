@@ -25,10 +25,10 @@ public class IllegalVarargsRemovingTransformer implements JvmClassTransformer {
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
-	                      @Nonnull JvmClassInfo classInfo) throws TransformationException {
+	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
 		// First scan the model to see if we need to actually reparse and patch the bytecode.
 		boolean hasInvalidVarargs = false;
-		for (MethodMember method : classInfo.getMethods()) {
+		for (MethodMember method : initialClassState.getMethods()) {
 			if (method.hasVarargsModifier()) {
 				Type methodType = Type.getMethodType(method.getDescriptor());
 				Type[] argumentTypes = methodType.getArgumentTypes();
@@ -41,12 +41,12 @@ public class IllegalVarargsRemovingTransformer implements JvmClassTransformer {
 
 		// If we found an invalid use case, we'll do the work to remove it.
 		if (hasInvalidVarargs) {
-			ClassReader reader = classInfo.getClassReader();
+			ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
 			ClassWriter writer = new ClassWriter(reader, 0);
 			IllegalVarargsRemovingVisitor remover = new IllegalVarargsRemovingVisitor(writer);
 			reader.accept(remover, 0);
 			if (remover.hasDetectedIllegalVarargs()) // Should always occur given the circumstances
-				context.setBytecode(bundle, classInfo, writer.toByteArray());
+				context.setBytecode(bundle, initialClassState, writer.toByteArray());
 		}
 	}
 

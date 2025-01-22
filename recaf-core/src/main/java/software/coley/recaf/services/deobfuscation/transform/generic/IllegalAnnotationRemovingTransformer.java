@@ -25,16 +25,16 @@ public class IllegalAnnotationRemovingTransformer implements JvmClassTransformer
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
-	                      @Nonnull JvmClassInfo classInfo) throws TransformationException {
+	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
 		// Only visit/transform if the class has annotations.
-		if (hasAnnotations(classInfo)) {
+		if (hasAnnotations(initialClassState)) {
 			// Adapt the class bytes by removing any illegal annotation.
-			ClassReader reader = classInfo.getClassReader();
+			ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
 			ClassWriter writer = new ClassWriter(reader, 0);
 			IllegalAnnotationRemovingVisitor remover = new IllegalAnnotationRemovingVisitor(writer);
 			reader.accept(remover, 0);
 			if (remover.hasDetectedIllegalAnnotations()) // Should always occur given the circumstances.
-				context.setBytecode(bundle, classInfo, writer.toByteArray());
+				context.setBytecode(bundle, initialClassState, writer.toByteArray());
 		}
 	}
 
