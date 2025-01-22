@@ -1,7 +1,12 @@
 package software.coley.recaf.util.visitors;
 
 import jakarta.annotation.Nullable;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.TypePath;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.util.Types;
 
@@ -11,12 +16,21 @@ import software.coley.recaf.util.Types;
  * @author Matt Coley
  */
 public class IllegalAnnotationRemovingVisitor extends ClassVisitor {
+	private boolean detected;
+
 	/**
 	 * @param cv
 	 * 		Parent visitor.
 	 */
 	public IllegalAnnotationRemovingVisitor(@Nullable ClassVisitor cv) {
 		super(RecafConstants.getAsmVersion(), cv);
+	}
+
+	/**
+	 * @return {@code true} when illegal annotations have been removed from the visited class.
+	 */
+	public boolean hasDetectedIllegalAnnotations() {
+		return detected;
 	}
 
 	@Override
@@ -33,26 +47,42 @@ public class IllegalAnnotationRemovingVisitor extends ClassVisitor {
 
 	@Override
 	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-		if (!Types.isValidDesc(descriptor))
+		if (!isValidAnnotationDesc(descriptor))
 			return null;
 		return new IllegalSubAnnoRemover(super.visitAnnotation(descriptor, visible));
 	}
 
 	@Override
 	public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-		if (!Types.isValidDesc(descriptor))
+		if (!isValidAnnotationDesc(descriptor))
 			return null;
 		return new IllegalSubAnnoRemover(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible));
 	}
 
-	private static class IllegalSubAnnoRemover extends AnnotationVisitor {
+	private boolean isValidAnnotationDesc(@Nullable String descriptor) {
+		boolean valid = isValidAnnotationDesc0(descriptor);
+		if (!valid)
+			detected = true;
+		return valid;
+	}
+
+	private static boolean isValidAnnotationDesc0(@Nullable String descriptor) {
+		if (descriptor == null || descriptor.isBlank())
+			return false; // Must not be empty
+		char c = descriptor.charAt(0);
+		if (c == 'V' || c == '(')
+			return false; // Must not be void or method type
+		return Types.isValidDesc(descriptor);
+	}
+
+	private class IllegalSubAnnoRemover extends AnnotationVisitor {
 		protected IllegalSubAnnoRemover(@Nullable AnnotationVisitor av) {
 			super(RecafConstants.getAsmVersion(), av);
 		}
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-			if (!Types.isValidDesc(descriptor))
+			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitAnnotation(name, descriptor));
 		}
@@ -63,69 +93,69 @@ public class IllegalAnnotationRemovingVisitor extends ClassVisitor {
 		}
 	}
 
-	private static class FieldIllegalAnnoRemover extends FieldVisitor {
+	private class FieldIllegalAnnoRemover extends FieldVisitor {
 		protected FieldIllegalAnnoRemover(@Nullable FieldVisitor fv) {
 			super(RecafConstants.getAsmVersion(), fv);
 		}
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			if (!Types.isValidDesc(descriptor))
+			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitAnnotation(descriptor, visible));
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			if (!Types.isValidDesc(descriptor))
+			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible));
 		}
 	}
 
-	private static class MethodIllegalAnnoRemover extends MethodVisitor {
+	private class MethodIllegalAnnoRemover extends MethodVisitor {
 		protected MethodIllegalAnnoRemover(@Nullable MethodVisitor mv) {
 			super(RecafConstants.getAsmVersion(), mv);
 		}
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-			if (!Types.isValidDesc(descriptor))
+			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitAnnotation(descriptor, visible));
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			if (!Types.isValidDesc(descriptor))
+			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible));
 		}
 
 		@Override
 		public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
-			if (!Types.isValidDesc(descriptor))
+			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitParameterAnnotation(parameter, descriptor, visible));
 		}
 
 		@Override
 		public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			if (!Types.isValidDesc(descriptor))
+			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitInsnAnnotation(typeRef, typePath, descriptor, visible));
 		}
 
 		@Override
 		public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			if (!Types.isValidDesc(descriptor))
+			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible));
 		}
 
 		@Override
 		public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start, Label[] end, int[] index, String descriptor, boolean visible) {
-			if (!Types.isValidDesc(descriptor))
+			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, descriptor, visible));
 		}
