@@ -9,6 +9,7 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.util.visitors.FrameSkippingVisitor;
 import software.coley.recaf.util.visitors.WorkspaceClassWriter;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -32,6 +33,7 @@ public class JvmTransformerContext {
 	private final Map<String, JvmClassData> classData = new ConcurrentHashMap<>();
 	private final Workspace workspace;
 	private final WorkspaceResource resource;
+	private boolean recomputeFrames;
 
 	/**
 	 * Constructs a new context from an array of transformers.
@@ -77,8 +79,13 @@ public class JvmTransformerContext {
 			if (data.isDirty()) {
 				if (data.node != null) {
 					// Emit bytecode from the current node
-					ClassWriter writer = new WorkspaceClassWriter(inheritanceGraph, data.initialClass.getClassReader(), 0);
-					data.node.accept(writer);
+					int flags = recomputeFrames ? ClassWriter.COMPUTE_FRAMES : 0;
+					ClassReader reader = data.initialClass.getClassReader();
+					ClassWriter writer = new WorkspaceClassWriter(inheritanceGraph, reader, flags);
+					if (recomputeFrames)
+						data.node.accept(new FrameSkippingVisitor(writer));
+					else
+						data.node.accept(writer);
 					byte[] modifiedBytes = writer.toByteArray();
 
 					// Update output map
@@ -194,6 +201,13 @@ public class JvmTransformerContext {
 		JvmClassData data = getJvmClassData(bundle, info);
 		data.setBytecode(data.initialClass.getBytecode());
 		data.dirty = false;
+	}
+
+	/**
+	 * Called by transformers that have more thorough changes applied to classes that likely violate existing frames.
+	 */
+	public void setRecomputeFrames() {
+		recomputeFrames = true;
 	}
 
 	/**
