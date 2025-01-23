@@ -2,14 +2,38 @@ package software.coley.recaf.util;
 
 import dev.xdark.blw.asm.internal.Util;
 import dev.xdark.blw.code.Instruction;
-import dev.xdark.blw.code.instruction.*;
+import dev.xdark.blw.code.JavaOpcodes;
+import dev.xdark.blw.code.Label;
+import dev.xdark.blw.code.generic.GenericLabel;
+import dev.xdark.blw.code.instruction.BranchInstruction;
+import dev.xdark.blw.code.instruction.ConditionalJumpInstruction;
+import dev.xdark.blw.code.instruction.ImmediateJumpInstruction;
+import dev.xdark.blw.code.instruction.SimpleInstruction;
+import dev.xdark.blw.code.instruction.VarInstruction;
+import dev.xdark.blw.code.instruction.VariableIncrementInstruction;
+import dev.xdark.blw.simulation.ExecutionEngines;
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.helper.Variables;
 import me.darknet.assembler.printer.InstructionPrinter;
 import me.darknet.assembler.printer.PrintContext;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.tree.IincInsnNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Misc blw utilities.
@@ -25,24 +49,28 @@ public class BlwUtil {
 	 */
 	@Nonnull
 	public static Instruction convert(@Nonnull AbstractInsnNode insn) {
-		if (insn instanceof LdcInsnNode ldc) {
-			return Util.wrapLdcInsn(ldc.cst);
-		} else if (insn instanceof MethodInsnNode min) {
-			return Util.wrapMethodInsn(min.getOpcode(), min.owner, min.name, min.desc, false);
-		} else if (insn instanceof FieldInsnNode fin) {
-			return Util.wrapFieldInsn(fin.getOpcode(), fin.owner, fin.name, fin.desc);
-		} else if (insn instanceof TypeInsnNode tin) {
-			return Util.wrapTypeInsn(tin.getOpcode(), tin.desc);
-		} else if (insn instanceof IntInsnNode iin) {
-			return Util.wrapIntInsn(iin.getOpcode(), iin.operand);
-		} else if (insn instanceof InsnNode in) {
-			return Util.wrapInsn(in.getOpcode());
-		} else if (insn instanceof InvokeDynamicInsnNode indy) {
-			return Util.wrapInvokeDynamicInsn(indy.name, indy.desc, indy.bsm, indy.bsmArgs);
-		}
-
-		// Unhandled
-		return new SimpleInstruction(-1);
+		return switch (insn) {
+			case LdcInsnNode ldc -> Util.wrapLdcInsn(ldc.cst);
+			case MethodInsnNode min -> Util.wrapMethodInsn(min.getOpcode(), min.owner, min.name, min.desc, false);
+			case FieldInsnNode fin -> Util.wrapFieldInsn(fin.getOpcode(), fin.owner, fin.name, fin.desc);
+			case TypeInsnNode tin -> Util.wrapTypeInsn(tin.getOpcode(), tin.desc);
+			case IntInsnNode iin -> Util.wrapIntInsn(iin.getOpcode(), iin.operand);
+			case InsnNode in -> Util.wrapInsn(in.getOpcode());
+			case InvokeDynamicInsnNode indy -> Util.wrapInvokeDynamicInsn(indy.name, indy.desc, indy.bsm, indy.bsmArgs);
+			case VarInsnNode vin -> new VarInstruction(insn.getOpcode(), vin.var);
+			case IincInsnNode iin -> new VariableIncrementInstruction(iin.var, iin.incr);
+			case JumpInsnNode jin -> {
+				int offset = AsmInsnUtil.indexOf(jin.label);
+				Label label = new GenericLabel();
+				label.setIndex(offset);
+				yield jin.getOpcode() == Opcodes.GOTO ?
+						new ImmediateJumpInstruction(insn.getOpcode(), label) :
+						new ConditionalJumpInstruction(insn.getOpcode(), label);
+			}
+			case LabelNode ln -> new LabelInstruction(AsmInsnUtil.indexOf(ln));
+			case FrameNode fr -> new SimpleInstruction(0);
+			default -> new SimpleInstruction(insn.getOpcode());
+		};
 	}
 
 	/**
@@ -53,55 +81,93 @@ public class BlwUtil {
 	 */
 	@Nonnull
 	public static String toString(@Nonnull AbstractInsnNode insn) {
-		PrintContext<?> ctx = new PrintContext<>("");
-		InstructionPrinter printer = new InstructionPrinter(ctx.code(),
-				null, new Variables(Collections.emptyNavigableMap(), Collections.emptyList()),
-				Collections.emptyMap()
-		);
+		Instruction converted = convert(insn);
+		return toString(converted);
+	}
 
-		// Map ASM insn model to BLW which is used by JASM
-		if (insn instanceof LdcInsnNode ldc) {
-			printer.execute(Util.wrapLdcInsn(ldc.cst));
-		} else if (insn instanceof MethodInsnNode min) {
-			printer.execute(Util.wrapMethodInsn(min.getOpcode(), min.owner, min.name, min.desc, false));
-		} else if (insn instanceof FieldInsnNode fin) {
-			printer.execute(Util.wrapFieldInsn(fin.getOpcode(), fin.owner, fin.name, fin.desc));
-		} else if (insn instanceof TypeInsnNode tin) {
-			Instruction wrapped = Util.wrapTypeInsn(tin.getOpcode(), tin.desc);
-			if (wrapped instanceof AllocateInstruction allocateWrapped)
-				printer.execute(allocateWrapped);
-			else if (wrapped instanceof CheckCastInstruction castWrapped)
-				printer.execute(castWrapped);
-			else if (wrapped instanceof InstanceofInstruction instanceofWrapped)
-				printer.execute(instanceofWrapped);
-			else
-				printer.execute(wrapped);
-		} else if (insn instanceof IntInsnNode iin) {
-			Instruction wrapped = Util.wrapIntInsn(iin.getOpcode(), iin.operand);
-			if (wrapped instanceof ConstantInstruction<?> constWrapped)
-				printer.execute(constWrapped);
-			else if (wrapped instanceof AllocateInstruction allocateWrapped)
-				printer.execute(allocateWrapped);
-			else
-				printer.execute(wrapped);
-		} else if (insn instanceof InsnNode in) {
-			Instruction wrapped = Util.wrapInsn(in.getOpcode());
-			if (wrapped instanceof ConstantInstruction<?> constWrapped)
-				printer.execute(constWrapped);
-			else if (wrapped instanceof PrimitiveConversionInstruction convWrapped)
-				printer.execute(convWrapped);
-			else if (wrapped instanceof SimpleInstruction simpleWrapped)
-				printer.execute(simpleWrapped);
-			else
-				printer.execute(wrapped);
-		} else if (insn instanceof InvokeDynamicInsnNode indy) {
-			printer.execute(Util.wrapInvokeDynamicInsn(indy.name, indy.desc, indy.bsm, indy.bsmArgs));
+	/**
+	 * @param insn
+	 * 		BLW instruction.
+	 *
+	 * @return JASM text representation of BLW instruction.
+	 */
+	@Nonnull
+	private static String toString(@Nonnull Instruction insn) {
+		// Special case for our converted model
+		Map<Integer, String> labelNames;
+		if (insn instanceof LabelInstruction label) {
+			int index = label.getIndex();
+			labelNames = Map.of(index, "L" + index);
+		} else if (insn instanceof BranchInstruction branch) {
+			labelNames = branch.targetsStream()
+					.collect(Collectors.toMap(Label::getIndex, l -> "L" + l.getIndex()));
+		} else {
+			labelNames = Collections.emptyMap();
+		}
+
+		PrintContext<?> ctx = new PrintContext<>("");
+		Variables emptyVariables = new Variables(Collections.emptyNavigableMap(), Collections.emptyList());
+		InstructionPrinter printer = new InstructionPrinter(ctx.code(), null, emptyVariables, labelNames);
+
+		int op = insn.opcode();
+		if (insn instanceof LabelInstruction label) {
+			printer.label(label);
+		} else if (op >= 0 && op < JavaOpcodes.WIDE) {
+			ExecutionEngines.execute(printer, insn);
 		} else {
 			// The current search models shouldn't yield anything aside from the above types.
-			return "<missing text mapper: " + insn.getClass().getSimpleName() + ">";
+			return "<missing text mapper: " + insn.getClass().getSimpleName() + ":" + op + ">";
 		}
 
 		// Cut off first 2 chars of unused indentation then cap off the max length.
 		return ctx.toString().substring(2).replace('\n', ' ');
+	}
+
+	/**
+	 * Dummy instruction to facilitate label printing in {@link #toString(Instruction)}.
+	 */
+	private static class LabelInstruction implements Label, Instruction {
+		private int index;
+
+		public LabelInstruction(int index) {
+			setIndex(index);
+		}
+
+		@Override
+		public int opcode() {
+			return -2;
+		}
+
+		@Override
+		public int getIndex() {
+			return index;
+		}
+
+		@Override
+		public void setIndex(int index) {
+			this.index = index;
+		}
+
+		@Override
+		public int getLineNumber() {
+			return -1;
+		}
+
+		@Override
+		public void setLineNumber(int line) {
+			// no-op
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (!(o instanceof LabelInstruction that)) return false;
+			return index == that.index;
+		}
+
+		@Override
+		public int hashCode() {
+			return index;
+		}
 	}
 }

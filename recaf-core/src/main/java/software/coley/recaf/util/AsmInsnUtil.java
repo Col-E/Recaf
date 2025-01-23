@@ -65,6 +65,21 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
+	 * @param insn
+	 * 		Instruction to get index of.
+	 *
+	 * @return Index of instruction in containing method.
+	 */
+	public static int indexOf(@Nonnull AbstractInsnNode insn) {
+		int i = 0;
+		while (insn != null) {
+			insn = insn.getPrevious();
+			i++;
+		}
+		return i;
+	}
+
+	/**
 	 * @param varInsn
 	 * 		Variable instruction.
 	 *
@@ -251,6 +266,16 @@ public class AsmInsnUtil implements Opcodes {
 			case Type.DOUBLE -> DRETURN;
 			default -> ARETURN;
 		};
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} when it is a return operation.
+	 */
+	public static boolean isReturn(@Nonnull AbstractInsnNode insn) {
+		return isReturn(insn.getOpcode());
 	}
 
 	/**
