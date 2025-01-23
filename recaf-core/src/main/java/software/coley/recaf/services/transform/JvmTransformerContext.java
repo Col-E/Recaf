@@ -119,7 +119,9 @@ public class JvmTransformerContext {
 
 	/**
 	 * Gets the current ASM node representation of the given class.
+	 * <p/>
 	 * Transformers can update the <i>"current"</i> state of the node via
+	 * {@link #setBytecode(JvmClassBundle, JvmClassInfo, byte[])} or
 	 * {@link #setNode(JvmClassBundle, JvmClassInfo, ClassNode)}.
 	 *
 	 * @param bundle
@@ -138,8 +140,10 @@ public class JvmTransformerContext {
 
 	/**
 	 * Gets the current bytecode of the given class.
+	 * <p/>
 	 * Transformers can update the <i>"current"</i> state of the bytecode via
-	 * {@link #setBytecode(JvmClassBundle, JvmClassInfo, byte[])}.
+	 * {@link #setBytecode(JvmClassBundle, JvmClassInfo, byte[])} or
+	 * {@link #setNode(JvmClassBundle, JvmClassInfo, ClassNode)}.
 	 *
 	 * @param bundle
 	 * 		Bundle containing the class.
@@ -157,8 +161,6 @@ public class JvmTransformerContext {
 
 	/**
 	 * Updates the transformed state of a class by recording an ASM node representation of the class.
-	 * Once the transformation application is completed, the latest value recorded here
-	 * <i>(or in {@link #setBytecode(JvmClassBundle, JvmClassInfo, byte[])}</i> will be dumped into the workspace.
 	 *
 	 * @param bundle
 	 * 		Bundle containing the class.
@@ -175,8 +177,6 @@ public class JvmTransformerContext {
 
 	/**
 	 * Updates the transformed state of a class by recording new bytecode of the class.
-	 * Once the transformation application is completed, the latest value recorded here
-	 * <i>(or in {@link #setNode(JvmClassBundle, JvmClassInfo, ClassNode)})</i> will be dumped into the workspace.
 	 *
 	 * @param bundle
 	 * 		Bundle containing the class.
@@ -256,7 +256,7 @@ public class JvmTransformerContext {
 	private static class JvmClassData {
 		private final JvmClassBundle bundle;
 		private final JvmClassInfo initialClass;
-		private byte[] bytecode;
+		private volatile byte[] bytecode;
 		private volatile ClassNode node;
 		private boolean dirty;
 
@@ -289,13 +289,19 @@ public class JvmTransformerContext {
 		}
 
 		/**
-		 * The current bytecode of the class as set by {@link JvmTransformerContext#setBytecode(JvmClassBundle, JvmClassInfo, byte[])}.
-		 * This value does not update when using {@link JvmTransformerContext#setNode(JvmClassBundle, JvmClassInfo, ClassNode)}.
-		 *
 		 * @return Current bytecode of the class.
 		 */
 		@Nonnull
 		public byte[] getBytecode() {
+			if (bytecode == null) {
+				synchronized (this) {
+					if (bytecode == null) {
+						ClassWriter writer = new ClassWriter(0);
+						node.accept(writer);
+						bytecode = writer.toByteArray();
+					}
+				}
+			}
 			return bytecode;
 		}
 
@@ -304,8 +310,11 @@ public class JvmTransformerContext {
 		 * 		Current node representation to set for this class.
 		 */
 		public void setNode(@Nonnull ClassNode node) {
-			this.node = node;
-			dirty = true;
+			synchronized (this) {
+				this.node = node;
+				bytecode = null; // Invalidate bytecode state
+				dirty = true;
+			}
 		}
 
 		/**
@@ -313,9 +322,11 @@ public class JvmTransformerContext {
 		 * 		Current bytecode to set for this class.
 		 */
 		public void setBytecode(@Nonnull byte[] bytecode) {
-			this.bytecode = bytecode;
-			node = null; // Invalidate node state
-			dirty = true;
+			synchronized (this) {
+				this.bytecode = bytecode;
+				node = null; // Invalidate node state
+				dirty = true;
+			}
 		}
 
 		/**
