@@ -22,6 +22,7 @@ import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.cfr.CfrConfig;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
+import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCatchMergingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueCollectionTransformer;
@@ -31,6 +32,7 @@ import software.coley.recaf.services.transform.JvmTransformResult;
 import software.coley.recaf.services.transform.TransformationApplier;
 import software.coley.recaf.services.transform.TransformationApplierService;
 import software.coley.recaf.test.TestBase;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -38,6 +40,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -293,7 +296,7 @@ class DeobfuscationTransformTest extends TestBase {
 
 
 		private void validateInlining(@Nonnull String assembly, @Nonnull String expectedBefore, @Nullable String expectedAfter) {
-			validateBeforeAfter(assembly, List.of(StaticValueInliningTransformer.class), expectedBefore, expectedAfter);
+			validateBeforeAfterDecompile(assembly, List.of(StaticValueInliningTransformer.class), expectedBefore, expectedAfter);
 		}
 	}
 
@@ -311,7 +314,7 @@ class DeobfuscationTransformTest extends TestBase {
 					.signature "Ljava/util/List<I>;"
 					.field private static foo Ljava/lang/List;
 					""";
-			validateBeforeAfter(asm, List.of(IllegalSignatureRemovingTransformer.class), "List<int> foo", "List foo");
+			validateBeforeAfterDecompile(asm, List.of(IllegalSignatureRemovingTransformer.class), "List<int> foo", "List foo");
 		}
 
 		@Test
@@ -327,7 +330,49 @@ class DeobfuscationTransformTest extends TestBase {
 					    }
 					}
 					""";
-			validateBeforeAfter(asm, List.of(IllegalVarargsRemovingTransformer.class), "/* corrupt varargs signature?! */", null);
+			validateBeforeAfterDecompile(asm, List.of(IllegalVarargsRemovingTransformer.class), "/* corrupt varargs signature?! */", null);
+		}
+
+		@Test
+		void duplicateCatchHandlers() {
+			String asm = """
+					.method public static example ()V {
+						exceptions: {
+					       {  A,  B,  C, Ljava/lang/Throwable0; },
+					       {  A,  B,  D, Ljava/lang/Throwable1; },
+					       {  A,  B,  E, Ljava/lang/Throwable2; },
+					       {  A,  B,  F, Ljava/lang/Throwable3; }
+					    },
+					    code: {
+					    A:
+					        invokestatic Example.throwing ()V
+					    B:
+					        goto END
+					    C:
+					        invokevirtual java/lang/Throwable.printStackTrace ()V
+					        invokestatic  com/example/MyApp.logFailure ()V
+					        goto END
+					    D:
+					        invokevirtual java/lang/Throwable.printStackTrace ()V
+					        invokestatic  com/example/MyApp.logFailure ()V
+					        goto END
+					    E:
+					        invokevirtual java/lang/Throwable.printStackTrace ()V
+					        invokestatic  com/example/MyApp.logFailure ()V
+					        goto END
+					    F:
+					        invokevirtual java/lang/Throwable.printStackTrace ()V
+					        invokestatic  com/example/MyApp.logFailure ()V
+					        goto END
+					    END:
+					        return
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(DuplicateCatchMergingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("printStackTrace", dis), "Catch block contents were not merged");
+				assertEquals(5, StringUtil.count("goto", dis), "Expected 5 goto instructions after merging");
+			});
 		}
 	}
 
@@ -340,8 +385,8 @@ class DeobfuscationTransformTest extends TestBase {
 		assertEquals(0, result.getTransformerFailures().size(), "There were unexpected transformations applied");
 	}
 
-	private void validateBeforeAfter(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,
-	                                 @Nonnull String expectedBefore, @Nullable String expectedAfter) {
+	private void validateBeforeAfterDecompile(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,
+	                                          @Nonnull String expectedBefore, @Nullable String expectedAfter) {
 		JvmClassInfo cls = assemble(assembly);
 
 		// Before transformation, check that the expected before-state is matched
@@ -365,6 +410,36 @@ class DeobfuscationTransformTest extends TestBase {
 			assertTrue(transformedDecompile.contains(expectedAfter));
 	}
 
+	private void validateAfterAssembly(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,
+	                                   @Nonnull Consumer<String> assertionChecker) {
+		if (PRINT_BEFORE_AFTER) System.out.println("======== BEFORE ========\n" + assembly);
+
+		// Run the transformer
+		JvmClassInfo cls = assemble(assembly);
+		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertEquals(1, result.getTransformedClasses().size(), "Expected transformation to be applied");
+
+		// Validate output has been transformed to match the expected after-state.
+		String transformedDisassembly = disassembleTransformed(result);
+		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER ========\n" + transformedDisassembly);
+		assertionChecker.accept(transformedDisassembly);
+	}
+
+	@Nonnull
+	private String disassembleTransformed(@Nonnull JvmTransformResult result) {
+		result.apply();
+		JvmClassBundle bundle = workspace.getPrimaryResource().getJvmClassBundle();
+		WorkspaceResource resource = workspace.getPrimaryResource();
+		JvmClassInfo cls = bundle.get(CLASS_NAME);
+		ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, cls);
+		Result<String> disassembly = assembler.disassemble(path);
+		if (disassembly.isOk())
+			return disassembly.get();
+		fail(disassembly.errors().stream().map(Error::toString).collect(Collectors.joining("\n")));
+		return "<error>";
+	}
+
 	@Nonnull
 	private String decompileTransformed(@Nonnull JvmTransformResult result) {
 		result.apply();
@@ -380,6 +455,7 @@ class DeobfuscationTransformTest extends TestBase {
 			fail("Missing decompilation result");
 		return result.getText();
 	}
+
 
 	@Nonnull
 	private JvmClassInfo assemble(@Nonnull String body) {

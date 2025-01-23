@@ -19,8 +19,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -31,9 +33,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JvmTransformerContext {
 	private final Map<Class<? extends JvmClassTransformer>, JvmClassTransformer> transformerMap;
 	private final Map<String, JvmClassData> classData = new ConcurrentHashMap<>();
+	private final Set<String> recomputeFrameClasses = new HashSet<>();
 	private final Workspace workspace;
 	private final WorkspaceResource resource;
-	private boolean recomputeFrames;
 
 	/**
 	 * Constructs a new context from an array of transformers.
@@ -79,10 +81,11 @@ public class JvmTransformerContext {
 			if (data.isDirty()) {
 				if (data.node != null) {
 					// Emit bytecode from the current node
-					int flags = recomputeFrames ? ClassWriter.COMPUTE_FRAMES : 0;
+					boolean recompute = recomputeFrameClasses.contains(data.node.name);
+					int flags = recompute ? ClassWriter.COMPUTE_FRAMES : 0;
 					ClassReader reader = data.initialClass.getClassReader();
 					ClassWriter writer = new WorkspaceClassWriter(inheritanceGraph, reader, flags);
-					if (recomputeFrames)
+					if (recompute)
 						data.node.accept(new FrameSkippingVisitor(writer));
 					else
 						data.node.accept(writer);
@@ -205,9 +208,12 @@ public class JvmTransformerContext {
 
 	/**
 	 * Called by transformers that have more thorough changes applied to classes that likely violate existing frames.
+	 *
+	 * @param className
+	 * 		Name of class to recompute frames for when building the change map.
 	 */
-	public void setRecomputeFrames() {
-		recomputeFrames = true;
+	public void setRecomputeFrames(@Nonnull String className) {
+		recomputeFrameClasses.add(className);
 	}
 
 	/**
