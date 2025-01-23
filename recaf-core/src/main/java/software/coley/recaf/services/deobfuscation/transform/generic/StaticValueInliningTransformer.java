@@ -1,6 +1,7 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -34,7 +35,7 @@ import java.util.Set;
  *
  * @author Matt Coley
  */
-@Dependent
+@ApplicationScoped
 public class StaticValueInliningTransformer implements JvmClassTransformer {
 	@Override
 	@SuppressWarnings("OptionalGetWithoutIsPresent")

@@ -91,6 +91,8 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 				// We can only assume private fields are effectively-final if nothing outside the <clinit> writes to them.
 				// Any other level of access can be written to by child classes or classes in the same package.
 				finalContainer.addMaybe(field.getName(), field.getDescriptor());
+			// TODO: As mentioned above, we can add another 'else' case here for non-private fields
+			//  but then we need to make sure no other classes write to those fields. So its more computational work...
 
 			// Skip if there is no default value
 			Object defaultValue = field.getDefaultValue();
