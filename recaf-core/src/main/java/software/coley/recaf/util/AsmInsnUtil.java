@@ -441,8 +441,6 @@ public class AsmInsnUtil implements Opcodes {
 			case FDIV:
 			case IREM:
 			case FREM:
-			case INEG:
-			case FNEG:
 			case ISHL:
 			case ISHR:
 			case IUSHR:
@@ -450,7 +448,6 @@ public class AsmInsnUtil implements Opcodes {
 			case IXOR:
 			case IOR:
 				return 2; // value1, value2
-			case DNEG:
 			case DREM:
 			case DDIV:
 			case DMUL:
@@ -459,7 +456,6 @@ public class AsmInsnUtil implements Opcodes {
 			case LUSHR:
 			case LSHR:
 			case LSHL:
-			case LNEG:
 			case LREM:
 			case LDIV:
 			case LMUL:
@@ -469,6 +465,12 @@ public class AsmInsnUtil implements Opcodes {
 			case LOR:
 			case LXOR:
 				return 4; // wide-value1, wide-value2
+			case INEG:
+			case FNEG:
+				return 1; // value
+			case DNEG:
+			case LNEG:
+				return 2; // wide-value
 			// visitIincInsn
 			case IINC:
 				return 0;
