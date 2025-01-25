@@ -169,7 +169,7 @@ public non-sealed interface IntValue extends ReValue {
 	@Nonnull
 	default IntValue negate() {
 		OptionalInt value = value();
-		if (value.isPresent()) return of(value.getAsInt());
+		if (value.isPresent()) return of(-value.getAsInt());
 		return UNKNOWN;
 	}
 
