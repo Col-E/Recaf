@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
@@ -25,6 +27,7 @@ import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
 import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCatchMergingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueCollectionTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
@@ -301,7 +304,7 @@ class DeobfuscationTransformTest extends TestBase {
 	}
 
 	/**
-	 * For trans
+	 * For transformers that generally remove/cleanup content.
 	 */
 	@Nested
 	class Removals {
@@ -376,6 +379,232 @@ class DeobfuscationTransformTest extends TestBase {
 		}
 	}
 
+	@Nested
+	class Folding {
+		@Test
+		void foldIntegerMath() {
+			String asm = """
+					.method public static example ()I {
+					    code: {
+					    A:
+					        iconst_1
+					        iconst_1
+					        iadd
+					        // 1 + 1  --> 2
+					        ineg
+					        // 2      --> -2
+					        iconst_2
+					        imul
+					        // -2 x 2 --> -4
+					        iconst_4
+					        idiv
+					        // -4 / 4 --> -1
+					        iconst_m1
+					        isub
+					        // -1 --1 --> 0
+					        ireturn
+					    B:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to 0");
+			});
+		}
+
+		@Test
+		void foldFloatMath() {
+			String asm = """
+					.method public static example ()F {
+					    code: {
+					    A:
+					        fconst_1
+					        fconst_1
+					        fadd
+					        // 1 + 1  --> 2
+					        fneg
+					        // 2      --> -2
+					        fconst_2
+					        fmul
+					        // -2 x 2 --> -4
+					        ldc 4F
+					        fdiv
+					        // -4 / 4 --> -1
+					        ldc -1F
+					        fsub
+					        // -1 --1 --> 0
+					        freturn
+					    B:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("fconst_0", dis), "Expected to fold to 0F");
+			});
+		}
+
+		@Test
+		void foldDoubleMath() {
+			String asm = """
+					.method public static example ()D {
+					    code: {
+					    A:
+					        dconst_1
+					        dconst_1
+					        dadd
+					        // 1 + 1  --> 2
+					        dneg
+					        // 2      --> -2
+					        ldc 2.0
+					        dmul
+					        // -2 x 2 --> -4
+					        ldc 4.0
+					        ddiv
+					        // -4 / 4 --> -1
+					        ldc -1.0
+					        dsub
+					        // -1 --1 --> 0
+					        dreturn
+					    B:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("dconst_0", dis), "Expected to fold to 0.0");
+			});
+		}
+
+		@Test
+		void foldLongMath() {
+			String asm = """
+					.method public static example ()J {
+					    code: {
+					    A:
+					        lconst_1
+					        lconst_1
+					        ladd
+					        // 1 + 1  --> 2
+					        lneg
+					        // 2      --> -2
+					        ldc 2L
+					        lmul
+					        // -2 x 2 --> -4
+					        ldc 4L
+					        ldiv
+					        // -4 / 4 --> -1
+					        ldc -1L
+					        lsub
+					        // -1 --1 --> 0
+					        lreturn
+					    B:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("lconst_0", dis), "Expected to fold to 0L");
+			});
+		}
+
+		@Test
+		void foldConversions() {
+			String asm = """
+					.method public static example ()I {
+					    code: {
+					    A:
+					        ldc 5.125
+					        d2l
+					        l2f
+					        f2i
+					        ireturn
+					    B:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to 5");
+			});
+		}
+
+		@Test
+		void foldLongComparison() {
+			String asm = """
+					.method public static example ()I {
+					    code: {
+					    A:
+					        ldc 123L
+					        ldc 321L
+					        lcmp
+					        ireturn
+					    B:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("iconst_m1", dis), "Expected to fold to -1");
+			});
+		}
+
+		@Test
+		void foldFloatComparison() {
+			String asm = """
+					.method public static example ()I {
+					    code: {
+					    A:
+					        ldc 123.0F
+					        ldc 321.0F
+					        fcmpl
+					        ireturn
+					    B:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("iconst_m1", dis), "Expected to fold to -1");
+			});
+		}
+
+		@Test
+		void foldDoubleComparison() {
+			String asm = """
+					.method public static example ()I {
+					    code: {
+					    A:
+					        ldc 123.0
+					        ldc 321.0
+					        dcmpl
+					        ireturn
+					    B:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("iconst_m1", dis), "Expected to fold to -1");
+			});
+		}
+
+		@Test
+		@Disabled("Requires an impl for the ReInterpreter lookups")
+		void foldMethodCalls() {
+			String asm = """
+					.method public static example ()I {
+					    code: {
+					    A:
+					        iconst_1
+					        iconst_5
+					        invokestatic java/lang/Math.min (II)I
+					        ireturn
+					    B:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
+				assertEquals(0, StringUtil.count("iconst_5", dis), "Expected to prune argument");
+				assertEquals(0, StringUtil.count("Math.min", dis), "Expected to prune method call");
+			});
+		}
+	}
+
 	private void validateNoTransformation(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers) {
 		JvmClassInfo cls = assemble(assembly);
 
@@ -432,7 +661,10 @@ class DeobfuscationTransformTest extends TestBase {
 		JvmClassBundle bundle = workspace.getPrimaryResource().getJvmClassBundle();
 		WorkspaceResource resource = workspace.getPrimaryResource();
 		JvmClassInfo cls = bundle.get(CLASS_NAME);
-		ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, cls);
+		MethodMember method = cls.getFirstDeclaredMethodByName("example");
+		if (method == null)
+			fail("Failed to find 'example' method, cannot disassemble");
+		ClassMemberPathNode path = PathNodes.memberPath(workspace, resource, bundle, cls, method);
 		Result<String> disassembly = assembler.disassemble(path);
 		if (disassembly.isOk())
 			return disassembly.get();
@@ -455,7 +687,6 @@ class DeobfuscationTransformTest extends TestBase {
 			fail("Missing decompilation result");
 		return result.getText();
 	}
-
 
 	@Nonnull
 	private JvmClassInfo assemble(@Nonnull String body) {

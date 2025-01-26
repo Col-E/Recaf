@@ -163,7 +163,7 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 						}
 					}
 				} catch (Throwable t) {
-					throw new TransformationException("Analysis failure", t);
+					throw new TransformationException("Error encountered when computing static constants", t);
 				}
 			}
 		}
