@@ -284,7 +284,7 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 				return null;
 			case GETFIELD: {
 				FieldInsnNode field = (FieldInsnNode) insn;
-				if (getFieldLookup != null)
+				if (getFieldLookup != null && value.hasKnownValue())
 					return getFieldLookup.get(field, value);
 				Type fieldType = Type.getType(field.desc);
 				return newValue(fieldType);
@@ -509,9 +509,9 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			return newValue(returnType);
 		} else {
 			MethodInsnNode method = (MethodInsnNode) insn;
-			if (opcode == INVOKESTATIC && invokeStaticLookup != null) {
+			if (opcode == INVOKESTATIC && invokeStaticLookup != null && values.stream().allMatch(ReValue::hasKnownValue)) {
 				return invokeStaticLookup.get(method, values);
-			} else if (opcode == INVOKEVIRTUAL && invokeVirtualLookup != null) {
+			} else if (opcode == INVOKEVIRTUAL && invokeVirtualLookup != null && values.stream().allMatch(ReValue::hasKnownValue)) {
 				return invokeVirtualLookup.get(method, values.getFirst(), values.subList(1, values.size()));
 			}
 			Type returnType = Type.getReturnType(((MethodInsnNode) insn).desc);

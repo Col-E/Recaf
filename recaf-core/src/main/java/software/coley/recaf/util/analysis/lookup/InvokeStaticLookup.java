@@ -17,6 +17,7 @@ public interface InvokeStaticLookup {
 	 * 		Method reference.
 	 * @param values
 	 * 		Argument values to the method.
+	 * 		All items {@link ReValue#hasKnownValue() have known values}.
 	 *
 	 * @return Value representing the return value of the method.
 	 */

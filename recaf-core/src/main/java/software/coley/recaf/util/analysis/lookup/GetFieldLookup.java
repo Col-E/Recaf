@@ -15,6 +15,7 @@ public interface GetFieldLookup {
 	 * 		Field reference.
 	 * @param context
 	 * 		Class context the field resides within.
+	 * 		Has a {@link ReValue#hasKnownValue() known value}.
 	 *
 	 * @return Value representing the field.
 	 */

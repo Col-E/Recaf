@@ -17,8 +17,10 @@ public interface InvokeVirtualLookup {
 	 * 		Method reference.
 	 * @param context
 	 * 		Class context the method resides within.
+	 * 		Has a {@link ReValue#hasKnownValue() known value}.
 	 * @param values
 	 * 		Argument values to the method.
+	 * 		All items {@link ReValue#hasKnownValue() have known values}.
 	 *
 	 * @return Value representing the return value of the method.
 	 */
