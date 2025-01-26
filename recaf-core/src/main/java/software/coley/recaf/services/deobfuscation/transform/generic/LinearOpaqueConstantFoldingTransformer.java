@@ -24,7 +24,6 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
-import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IntValue;
@@ -247,6 +246,65 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 							localDirty = true;
 							break;
 						}
+						case GETSTATIC:
+						case GETFIELD: {
+							// We'll have some loops further below that will set this flag to indicate to skip this
+							// instruction after the loop completes.
+							boolean skip = false;
+
+							// Get the contributing instructions.
+							FieldInsnNode fin = (FieldInsnNode) instruction;
+							if (opcode == GETFIELD) {
+								// Get instruction of the top stack's contributing instruction.
+								AbstractInsnNode argumentValue = method.instructions.get(i - 1);
+								while (argumentValue != null && argumentValue.getOpcode() == NOP)
+									argumentValue = argumentValue.getPrevious();
+								if (argumentValue == null)
+									continue;
+
+								// Get instruction of the 2nd-to-top stack's contributing instruction.
+								AbstractInsnNode argumentContext = argumentValue.getPrevious();
+								while (argumentContext != null && argumentContext.getOpcode() == NOP)
+									argumentContext = argumentContext.getPrevious();
+								if (argumentContext == null)
+									continue;
+
+								// Both argument instructions must be value producers.
+								if (!isValueProducer(argumentValue) || !isValueProducer(argumentContext))
+									continue;
+
+								// We must have a viable replacement to offer.
+								AbstractInsnNode replacement = toInsn(nextFrameStackTop);
+								if (replacement == null)
+									continue;
+
+								// Replace the arguments and field instructions with the replacement const value.
+								method.instructions.set(instruction, replacement);
+								method.instructions.set(argumentValue, new InsnNode(NOP));
+								method.instructions.set(argumentContext, new InsnNode(NOP));
+								localDirty = true;
+							} else {
+								// Get instruction of the top stack's contributing instruction.
+								// It must also be a value producing instruction.
+								AbstractInsnNode argumentValue = method.instructions.get(i - 1);
+								while (argumentValue != null && argumentValue.getOpcode() == NOP)
+									argumentValue = argumentValue.getPrevious();
+								if (argumentValue == null || !isValueProducer(argumentValue))
+									continue;
+
+								// We must have a viable replacement to offer.
+								AbstractInsnNode replacement = toInsn(nextFrameStackTop);
+								if (replacement == null)
+									continue;
+
+								// Replace the argument and field instructions with the replacement const value.
+								method.instructions.set(instruction, replacement);
+								method.instructions.set(argumentValue, new InsnNode(NOP));
+								localDirty = true;
+								break;
+							}
+							break;
+						}
 					}
 				}
 
@@ -288,9 +346,8 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 		if (insn instanceof FieldInsnNode)
 			return true;
 
-		// We only support context-less provider methods at the moment.
+		// Methods that take no-parameters and yield a single value are producers.
 		return insn instanceof MethodInsnNode min &&
-				min.getOpcode() == INVOKESTATIC &&
 				min.desc.startsWith("()") &&
 				!min.desc.endsWith(")V");
 	}
