@@ -4,11 +4,16 @@ import jakarta.annotation.Nonnull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.util.analysis.ReAnalyzer;
+import software.coley.recaf.util.analysis.ReInterpreter;
+import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.visitors.FrameSkippingVisitor;
 import software.coley.recaf.util.visitors.WorkspaceClassWriter;
 import software.coley.recaf.workspace.model.Workspace;
@@ -115,6 +120,53 @@ public class JvmTransformerContext {
 			}
 		}
 		return map;
+	}
+
+	/**
+	 * @param inheritanceGraph
+	 * 		Inheritance graph of workspace.
+	 * @param cls
+	 * 		Name of class defining a method to analyze.
+	 * @param method
+	 * 		Method to analyze.
+	 *
+	 * @return Analyzed frames of the given method.
+	 *
+	 * @throws TransformationException
+	 * 		When the analyzer throws an exception when computing the frames of the given method.
+	 */
+	@Nonnull
+	public Frame<ReValue>[] analyze(@Nonnull InheritanceGraph inheritanceGraph,
+	                                @Nonnull ClassNode cls,
+	                                @Nonnull MethodNode method) throws TransformationException {
+		try {
+			ReAnalyzer analyzer = newAnalyzer(inheritanceGraph, cls, method);
+			return analyzer.analyze(cls.name, method);
+		} catch (Throwable t) {
+			throw new TransformationException("Error encountered when computing method frames", t);
+		}
+	}
+
+	/**
+	 * @param inheritanceGraph
+	 * 		Inheritance graph of workspace.
+	 * @param cls
+	 * 		Name of class defining a method to analyze.
+	 * @param method
+	 * 		Method to analyze.
+	 *
+	 * @return An analyzer for the given method.
+	 */
+	@Nonnull
+	public ReAnalyzer newAnalyzer(@Nonnull InheritanceGraph inheritanceGraph,
+	                              @Nonnull ClassNode cls,
+	                              @Nonnull MethodNode method) {
+		ReInterpreter interpreter = new ReInterpreter(inheritanceGraph);
+		// TODO: A fleshed out implementation for each to facilitate:
+		//  - interpreter.setInvokeStaticLookup(...);
+		//  - interpreter.setInvokeVirtualLookup(...);
+		//  - interpreter.setGetStaticLookup(...);
+		return new ReAnalyzer(interpreter);
 	}
 
 	/**

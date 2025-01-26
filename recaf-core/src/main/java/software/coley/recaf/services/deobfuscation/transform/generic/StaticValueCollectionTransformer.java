@@ -50,6 +50,16 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 		this.graphService = graphService;
 	}
 
+	/**
+	 * @param className
+	 * 		Name of class defining the field.
+	 * @param fieldName
+	 * 		Field name.
+	 * @param fieldDesc
+	 * 		Field descriptor.
+	 *
+	 * @return Static value wrapper if known, otherwise {@code null}.
+	 */
 	@Nullable
 	public ReValue getStaticValue(@Nonnull String className, @Nonnull String fieldName, @Nonnull String fieldDesc) {
 		StaticValues values = classValues.get(className);
@@ -136,10 +146,10 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 
 			// Only analyze if we see static setters
 			if (clinit != null && hasStaticSetters(clinit)) {
-				ReInterpreter interpreter = new ReInterpreter(inheritanceGraph);
-				ReAnalyzer analyzer = new ReAnalyzer(interpreter);
 				try {
-					Frame<ReValue>[] frames = analyzer.analyze(className, clinit);
+					ReAnalyzer analyzer = context.newAnalyzer(inheritanceGraph, node, clinit);
+					ReInterpreter interpreter = analyzer.getInterpreter();
+					Frame<ReValue>[] frames = analyzer.analyze(node.name, clinit);
 					AbstractInsnNode[] instructions = clinit.instructions.toArray();
 					for (int i = 0; i < instructions.length; i++) {
 						AbstractInsnNode instruction = instructions[i];

@@ -10,11 +10,22 @@ import software.coley.recaf.util.analysis.value.ReValue;
  * @author Matt Coley
  */
 public class ReAnalyzer extends Analyzer<ReValue> {
+	private final ReInterpreter interpreter;
+
 	/**
 	 * @param interpreter
 	 * 		Enhanced interpreter.
 	 */
 	public ReAnalyzer(@Nonnull ReInterpreter interpreter) {
 		super(interpreter);
+		this.interpreter = interpreter;
+	}
+
+	/**
+	 * @return Interpreter backing this analyzer.
+	 */
+	@Nonnull
+	public ReInterpreter getInterpreter() {
+		return interpreter;
 	}
 }

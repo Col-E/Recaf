@@ -22,8 +22,6 @@ import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.AsmInsnUtil;
-import software.coley.recaf.util.analysis.ReAnalyzer;
-import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IntValue;
@@ -74,15 +72,9 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 			InsnList instructions = method.instructions;
 			if (instructions == null)
 				continue;
-			ReInterpreter interpreter = new ReInterpreter(inheritanceGraph);
-			// TODO: A fleshed out implementation for each to facilitate
-			//  - interpreter.setInvokeStaticLookup(...);
-			//  - interpreter.setInvokeVirtualLookup(...);
-			//  - interpreter.setGetStaticLookup(...);
-			ReAnalyzer analyzer = new ReAnalyzer(interpreter);
 			try {
 				boolean localDirty = false;
-				Frame<ReValue>[] frames = analyzer.analyze(className, method);
+				Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
 				for (int i = 1; i < method.instructions.size() - 1; i++) {
 					// We must know the contents of the next frame, and it must have 1 or more values on the stack.
 					Frame<ReValue> nextFrame = frames[i + 1];
@@ -330,7 +322,6 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 	public String name() {
 		return "Opaque constant folding";
 	}
-
 
 	/**
 	 * @param insn
