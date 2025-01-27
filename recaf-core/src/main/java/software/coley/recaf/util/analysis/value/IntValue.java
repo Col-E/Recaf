@@ -67,6 +67,56 @@ public non-sealed interface IntValue extends ReValue {
 		return 1;
 	}
 
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is equal to the given value.
+	 */
+	default boolean isSame(int value) {
+		return value().isPresent() && value().getAsInt() == value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than the given value.
+	 */
+	default boolean isLessThan(int value) {
+		return value().isPresent() && value().getAsInt() < value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than or equal to the given value.
+	 */
+	default boolean isLessThanOrEqual(int value) {
+		return value().isPresent() && value().getAsInt() <= value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than the given value.
+	 */
+	default boolean isGreaterThan(int value) {
+		return value().isPresent() && value().getAsInt() > value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than or equal to the given value.
+	 */
+	default boolean isGreaterThanOrEqual(int value) {
+		return value().isPresent() && value().getAsInt() >= value;
+	}
+
 	@Nonnull
 	default IntValue add(int incr) {
 		OptionalInt value = value();

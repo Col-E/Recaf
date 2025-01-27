@@ -114,6 +114,13 @@ public non-sealed interface ObjectValue extends ReValue {
 		return nullness() == Nullness.NULL;
 	}
 
+	/**
+	 * @return {@code true} when this value is known to be <b>not</b> {@code null}.
+	 */
+	default boolean isNotNull() {
+		return nullness() == Nullness.NOT_NULL;
+	}
+
 	@Override
 	default int getSize() {
 		return 1;
