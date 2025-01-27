@@ -142,7 +142,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 								continue;
 
 							// Both argument instructions must be value producers.
-							if (!isValueProducer(argument1) || !isValueProducer(argument2))
+							if (!isSupportedValueProducer(argument1) || !isSupportedValueProducer(argument2))
 								continue;
 
 							// We must have a viable replacement to offer.
@@ -181,7 +181,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 							AbstractInsnNode argument = method.instructions.get(i - 1);
 							while (argument != null && argument.getOpcode() == NOP)
 								argument = argument.getPrevious();
-							if (argument == null || !isValueProducer(argument))
+							if (argument == null || !isSupportedValueProducer(argument))
 								continue;
 
 							// We must have a viable replacement to offer.
@@ -217,7 +217,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 								// Argument must be a value producing instruction.
 								while (argument != null && argument.getOpcode() == NOP)
 									argument = argument.getPrevious();
-								if (argument == null || !isValueProducer(argument)) {
+								if (argument == null || !isSupportedValueProducer(argument)) {
 									skip = true;
 									break;
 								}
@@ -262,7 +262,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 									continue;
 
 								// Both argument instructions must be value producers.
-								if (!isValueProducer(argumentValue) || !isValueProducer(argumentContext))
+								if (!isSupportedValueProducer(argumentValue) || !isSupportedValueProducer(argumentContext))
 									continue;
 
 								// We must have a viable replacement to offer.
@@ -281,7 +281,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 								AbstractInsnNode argumentValue = method.instructions.get(i - 1);
 								while (argumentValue != null && argumentValue.getOpcode() == NOP)
 									argumentValue = argumentValue.getPrevious();
-								if (argumentValue == null || !isValueProducer(argumentValue))
+								if (argumentValue == null || !isSupportedValueProducer(argumentValue))
 									continue;
 
 								// We must have a viable replacement to offer.
@@ -324,20 +324,31 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 	}
 
 	/**
+	 * Check if the instruction is responsible for providing some value we can possibly fold.
+	 * This method doesn't tell us if the value is known though. The next frame after this
+	 * instruction should have the provided value on the stack top.
+	 *
 	 * @param insn
 	 * 		Instruction to check.
 	 *
 	 * @return {@code true} when the instruction will produce a single value.
 	 */
-	private static boolean isValueProducer(@Nonnull AbstractInsnNode insn) {
+	protected static boolean isSupportedValueProducer(@Nonnull AbstractInsnNode insn) {
+		// Skip if this instruction consumes a value off the stack.
+		if (AsmInsnUtil.getSizeConsumed(insn) > 0)
+			return false;
+
+		// The following cases are supported:
+		//  - constants
+		//  - variable loads (context will determine if value in variable is constant at the given position)
+		//  - static field gets (context will determine if value in field is constant/known)
+		//  - static method calls with 0 args (context will determine if returned value of method is constant/known)
 		if (AsmInsnUtil.isConstValue(insn))
 			return true;
-
-		// Fields always provide single values.
+		if (insn.getOpcode() >= ILOAD && insn.getOpcode() <= ALOAD)
+			return true;
 		if (insn instanceof FieldInsnNode)
 			return true;
-
-		// Methods that take no-parameters and yield a single value are producers.
 		return insn instanceof MethodInsnNode min &&
 				min.desc.startsWith("()") &&
 				!min.desc.endsWith(")V");

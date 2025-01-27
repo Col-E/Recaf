@@ -28,6 +28,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCa
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueCollectionTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
@@ -601,6 +602,93 @@ class DeobfuscationTransformTest extends TestBase {
 				assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
 				assertEquals(0, StringUtil.count("iconst_5", dis), "Expected to prune argument");
 				assertEquals(0, StringUtil.count("Math.min", dis), "Expected to prune method call");
+			});
+		}
+
+		@Test
+		void foldOpaqueIfeq() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        iconst_0
+					        ifeq C
+					    B:
+					        // Should be skipped over by transformer
+					        aconst_null
+					        athrow
+					    C:
+					        return
+					    D:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("ifeq", dis), "Expected to remove ifeq");
+				assertEquals(1, StringUtil.count("goto", dis), "Expected to replace ifeq <target> with goto <target>");
+			});
+		}
+
+		@Test
+		void foldOpaqueIfIcmplt() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        iconst_0
+					        iconst_3
+					        if_icmplt C
+					    B:
+					        // Should be skipped over by transformer
+					        aconst_null
+					        athrow
+					    C:
+					        return
+					    D:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("if_icmplt", dis), "Expected to remove if_icmplt");
+				assertEquals(1, StringUtil.count("goto", dis), "Expected to replace if_icmplt <target> with goto <target>");
+			});
+		}
+
+		@Test
+		void foldOpaqueTableSwitch() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        iconst_2
+					        tableswitch {
+					            min: 0,
+					            max: 2,
+					            cases: { B, C, D },
+					            default: E
+					        }
+					    B:
+					        aconst_null
+					        athrow
+					    C:
+					        aconst_null
+					        athrow
+					    D:
+					        return
+					    E:
+					        aconst_null
+					        athrow
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+				// Switch should be replaced with a single goto
+				assertEquals(0, StringUtil.count("tableswitch", dis), "Expected to remove tableswitch");
+				assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace tableswitch <target> with goto <target>");
+
+				// Dead code should be removed
+				assertEquals(0, StringUtil.count("aconst_null", dis), "Expected to remove dead aconst_null");
+				assertEquals(0, StringUtil.count("athrow", dis), "Expected to remove dead athrow");
 			});
 		}
 	}
