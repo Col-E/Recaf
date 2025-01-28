@@ -9,10 +9,18 @@ import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.MultiANewArrayInsnNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
+
+import java.util.List;
 
 /**
  * ASM instruction utilities.
@@ -303,6 +311,84 @@ public class AsmInsnUtil implements Opcodes {
 				type == AbstractInsnNode.TABLESWITCH_INSN ||
 				type == AbstractInsnNode.LOOKUPSWITCH_INSN ||
 				insn.getOpcode() == ATHROW || insn.getOpcode() == RET;
+	}
+
+	/**
+	 * Check if the given block of instructions has a catch block handler target.
+	 * <p/>
+	 * When {@code includeFirstInsn=true} this will include match the first instruction of the block if it is
+	 * the label outlined by {@link TryCatchBlockNode#handler}. Otherwise, if {@code false} is passed, then the handler
+	 * is somewhere in the middle of the block.
+	 *
+	 * @param method
+	 * 		Containing method to analyze control flow of.
+	 * @param block
+	 * 		Some arbitrary list of instructions representing a block of code.
+	 * @param includeFirstInsn
+	 *        {@code true} to count the first instruction of the {@code block} which is assumed to be a
+	 *        {@link LabelNode} that is a candidate for being a value of {@link TryCatchBlockNode#handler}.
+	 *
+	 * @return {@code true} when the block contains a label that is a catch block handler.
+	 */
+	public static boolean hasHandlerFlowIntoBlock(@Nonnull MethodNode method,
+	                                              @Nonnull List<AbstractInsnNode> block,
+	                                              boolean includeFirstInsn) {
+		int start = includeFirstInsn ? 0 : 1;
+		for (TryCatchBlockNode tryCatchBlock : method.tryCatchBlocks)
+			if (block.indexOf(tryCatchBlock.handler) >= start)
+				return true;
+		return false;
+	}
+
+	/**
+	 * Check if the given block of instructions is referenced by explicit control flow instructions.
+	 * <p/>
+	 * This does not cover the following cases:
+	 * <ul>
+	 *     <li>Linear control flow where the previous instruction continues normally to the next instruction.</li>
+	 * </ul>
+	 * This is checks for explicit control flow references such as:
+	 * <ul>
+	 *     <li>{@link JumpInsnNode}</li>
+	 *     <li>{@link TableSwitchInsnNode}</li>
+	 *     <li>{@link LookupSwitchInsnNode}</li>
+	 * </ul>
+	 *
+	 * @param method
+	 * 		Containing method to analyze control flow of.
+	 * @param block
+	 * 		Some arbitrary list of instructions representing a block of code.
+	 *
+	 * @return {@code true} when the method has control flow outside the given block that flows into the given block.
+	 * {@code false} when the given block is never explicitly flowed into via control flow instructions.
+	 */
+	public static boolean hasInboundFlowReferences(@Nonnull MethodNode method, @Nonnull List<AbstractInsnNode> block) {
+		// No control flow instruction should point to this block *at all*.
+		for (AbstractInsnNode insn : method.instructions) {
+			// Skip instructions in the given block.
+			if (block.contains(insn))
+				continue;
+
+			// Check for control-flow instructions pointing to a location in the given block.
+			if (insn instanceof JumpInsnNode jump && block.contains(jump.label))
+				return true;
+			if (insn instanceof TableSwitchInsnNode tswitch) {
+				if (block.contains(tswitch.dflt))
+					return true;
+				for (LabelNode label : tswitch.labels)
+					if (block.contains(label))
+						return true;
+			}
+			if (insn instanceof LookupSwitchInsnNode lswitch) {
+				if (block.contains(lswitch.dflt))
+					return true;
+				for (LabelNode label : lswitch.labels)
+					if (block.contains(label))
+						return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

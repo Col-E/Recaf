@@ -7,15 +7,12 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.BlwUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -31,6 +28,7 @@ import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.GOTO;
 import static org.objectweb.asm.Opcodes.NOP;
+import static software.coley.recaf.util.AsmInsnUtil.*;
 
 /**
  * A transformer that removes duplicate code in try-catch handler blocks.
@@ -79,7 +77,7 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 						catchBlockInsns.add(insn);
 
 					// Abort when we encounter an exit or control flow.
-					if (AsmInsnUtil.isReturn(insn) || AsmInsnUtil.isFlowControl(insn))
+					if (isReturn(insn) || isFlowControl(insn))
 						break;
 
 					insn = insn.getNext();
@@ -123,36 +121,16 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 
 	private static boolean hasExternalFlowIntoCatchBlock(@Nonnull MethodNode method,
 	                                                     @Nonnull List<AbstractInsnNode> block) {
-		// No catch block should be used to point to a label that is in the middle of the block.
-		// The start of the block is fine because that is expected for this block.
-		for (TryCatchBlockNode tryCatchBlock : method.tryCatchBlocks) {
-			if (block.indexOf(tryCatchBlock.handler) > 0)
-				return true;
-		}
+		// We pass 'includeFirstInsn = false' because no catch block should be used to point to a label
+		// that is in the middle of the block. However, if the handler is the start of the block, that is fine
+		// as that is expected as a potential handler.
+		if (hasHandlerFlowIntoBlock(method, block, false))
+			return true;
 
 		// No control flow instruction should point to this block *at all*.
-		for (AbstractInsnNode insn : method.instructions) {
-			if (insn instanceof JumpInsnNode jump && block.contains(jump.label))
-				return true;
-			if (insn instanceof TableSwitchInsnNode tswitch) {
-				if (block.contains(tswitch.dflt))
-					return true;
-				for (LabelNode label : tswitch.labels) {
-					if (block.contains(label))
-						return true;
-				}
-			}
-			if (insn instanceof LookupSwitchInsnNode lswitch) {
-				if (block.contains(lswitch.dflt))
-					return true;
-				for (LabelNode label : lswitch.labels) {
-					if (block.contains(label))
-						return true;
-				}
-			}
-		}
-
-		return false;
+		// If we observe this to be the case, it would be very hard to manipulate the contents of this block
+		// without breaking the flow of the method.
+		return hasInboundFlowReferences(method, block);
 	}
 
 	@Nonnull
@@ -176,7 +154,7 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 					.skip(1) // Skip first label, which will always be unique
 					.map(BlwUtil::toString)
 					.collect(Collectors.joining("\n"));
-			this.index = AsmInsnUtil.indexOf(instructions.getFirst());
+			this.index = indexOf(instructions.getFirst());
 		}
 
 		/**
@@ -192,6 +170,14 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 			}
 		}
 
+		/**
+		 * Redirects the control flow of this block to the given label.
+		 *
+		 * @param container
+		 * 		Method instruction container to modify control flow of.
+		 * @param target
+		 * 		Target label to jump to.
+		 */
 		public void redirectTo(@Nonnull InsnList container, @Nonnull LabelNode target) {
 			AbstractInsnNode first = instructions.getFirst();
 			container.insert(first, new JumpInsnNode(GOTO, target));
