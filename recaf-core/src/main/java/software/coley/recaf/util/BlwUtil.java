@@ -1,8 +1,8 @@
 package software.coley.recaf.util;
 
 import dev.xdark.blw.asm.internal.Util;
+import dev.xdark.blw.code.ExtensionOpcodes;
 import dev.xdark.blw.code.Instruction;
-import dev.xdark.blw.code.JavaOpcodes;
 import dev.xdark.blw.code.Label;
 import dev.xdark.blw.code.generic.GenericLabel;
 import dev.xdark.blw.code.instruction.BranchInstruction;
@@ -112,7 +112,7 @@ public class BlwUtil {
 		int op = insn.opcode();
 		if (insn instanceof LabelInstruction label) {
 			printer.label(label);
-		} else if (op >= 0 && op < JavaOpcodes.WIDE) {
+		} else if (op >= 0 && op <= ExtensionOpcodes.PRIMITIVE_CONVERSION) {
 			ExecutionEngines.execute(printer, insn);
 		} else {
 			// The current search models shouldn't yield anything aside from the above types.
