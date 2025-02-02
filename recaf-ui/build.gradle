@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
-def javaFxVersion = '22.0.1'
+def javaFxVersion = '23.0.2'
 def javaFxIncludeInDist = System.getProperty('skip_jfx_bundle') == null
 
 javafx {
