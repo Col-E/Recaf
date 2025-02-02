@@ -57,6 +57,56 @@ public non-sealed interface DoubleValue extends ReValue {
 		return 2;
 	}
 
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is equal to the given value.
+	 */
+	default boolean isEqualTo(double value) {
+		return value().isPresent() && value().getAsDouble() == value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than the given value.
+	 */
+	default boolean isLessThan(double value) {
+		return value().isPresent() && value().getAsDouble() < value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than or equal to the given value.
+	 */
+	default boolean isLessThanOrEqual(double value) {
+		return value().isPresent() && value().getAsDouble() <= value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than the given value.
+	 */
+	default boolean isGreaterThan(double value) {
+		return value().isPresent() && value().getAsDouble() > value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than or equal to the given value.
+	 */
+	default boolean isGreaterThanOrEqual(double value) {
+		return value().isPresent() && value().getAsDouble() >= value;
+	}
+
 	@Nonnull
 	default DoubleValue add(@Nonnull DoubleValue other) {
 		OptionalDouble value = value();

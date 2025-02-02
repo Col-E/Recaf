@@ -61,6 +61,56 @@ public non-sealed interface FloatValue extends ReValue {
 		return 1;
 	}
 
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is equal to the given value.
+	 */
+	default boolean isEqualTo(float value) {
+		return value().isPresent() && value().getAsDouble() == value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than the given value.
+	 */
+	default boolean isLessThan(float value) {
+		return value().isPresent() && value().getAsDouble() < value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than or equal to the given value.
+	 */
+	default boolean isLessThanOrEqual(float value) {
+		return value().isPresent() && value().getAsDouble() <= value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than the given value.
+	 */
+	default boolean isGreaterThan(float value) {
+		return value().isPresent() && value().getAsDouble() > value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than or equal to the given value.
+	 */
+	default boolean isGreaterThanOrEqual(float value) {
+		return value().isPresent() && value().getAsDouble() >= value;
+	}
+
 	@Nonnull
 	default FloatValue add(@Nonnull FloatValue other) {
 		OptionalDouble value = value();

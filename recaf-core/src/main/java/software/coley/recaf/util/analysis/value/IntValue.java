@@ -73,7 +73,7 @@ public non-sealed interface IntValue extends ReValue {
 	 *
 	 * @return {@code true} when the known value is equal to the given value.
 	 */
-	default boolean isSame(int value) {
+	default boolean isEqualTo(int value) {
 		return value().isPresent() && value().getAsInt() == value;
 	}
 

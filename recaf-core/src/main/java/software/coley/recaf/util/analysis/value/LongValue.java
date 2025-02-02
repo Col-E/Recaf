@@ -58,6 +58,56 @@ public non-sealed interface LongValue extends ReValue {
 		return 2;
 	}
 
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is equal to the given value.
+	 */
+	default boolean isEqualTo(long value) {
+		return value().isPresent() && value().getAsLong() == value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than the given value.
+	 */
+	default boolean isLessThan(long value) {
+		return value().isPresent() && value().getAsLong() < value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than or equal to the given value.
+	 */
+	default boolean isLessThanOrEqual(long value) {
+		return value().isPresent() && value().getAsLong() <= value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than the given value.
+	 */
+	default boolean isGreaterThan(long value) {
+		return value().isPresent() && value().getAsLong() > value;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than or equal to the given value.
+	 */
+	default boolean isGreaterThanOrEqual(long value) {
+		return value().isPresent() && value().getAsLong() >= value;
+	}
+
 	@Nonnull
 	default LongValue add(@Nonnull LongValue other) {
 		OptionalLong value = value();

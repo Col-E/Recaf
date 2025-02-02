@@ -101,6 +101,10 @@ public non-sealed interface ObjectValue extends ReValue {
 		return new ObjectValueImpl(type, nullness);
 	}
 
+	@Nonnull
+	@Override
+	Type type();
+
 	/**
 	 * @return Null state of this value.
 	 */

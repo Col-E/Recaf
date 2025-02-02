@@ -98,9 +98,9 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 							// Replace single argument binary control flow.
 							localDirty |= switch (opcode) {
 								case IFEQ ->
-										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isSame(0));
+										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isEqualTo(0));
 								case IFNE ->
-										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> !v.isSame(0));
+										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> !v.isEqualTo(0));
 								case IFLT ->
 										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isLessThan(0));
 								case IFGE ->
@@ -132,9 +132,9 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 							// Replace double argument binary control flow.
 							localDirty |= switch (opcode) {
 								case IF_ICMPEQ ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> a.isSame(b.value().getAsInt()));
+										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> a.isEqualTo(b.value().getAsInt()));
 								case IF_ICMPNE ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> !a.isSame(b.value().getAsInt()));
+										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> !a.isEqualTo(b.value().getAsInt()));
 								case IF_ICMPLT ->
 										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> a.isLessThan(b.value().getAsInt()));
 								case IF_ICMPGE ->
@@ -165,7 +165,7 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 						int keyIndex = -1;
 						for (int j = 0; j < lsin.keys.size(); j++) {
 							int key = lsin.keys.get(j);
-							if (intValue.isSame(key)) {
+							if (intValue.isEqualTo(key)) {
 								keyIndex = j;
 								break;
 							}
