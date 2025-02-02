@@ -29,6 +29,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSign
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueCollectionTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
@@ -377,6 +378,93 @@ class DeobfuscationTransformTest extends TestBase {
 				assertEquals(1, StringUtil.count("printStackTrace", dis), "Catch block contents were not merged");
 				assertEquals(5, StringUtil.count("goto", dis), "Expected 5 goto instructions after merging");
 			});
+		}
+
+		@Test
+		void redundantTryCatch() {
+			String asm = """
+					.method public static example ()V {
+						exceptions: {
+					       {  A,  B,  C, Ljava/lang/Throwable; }
+					    },
+					    code: {
+					    A:
+					        aconst_null
+					        pop
+					    B:
+					        goto END
+					    C:
+					        astore ex
+					        aload ex
+					        invokevirtual java/lang/Throwable.printStackTrace ()V
+					        goto END
+					    END:
+					        return
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("exceptions:", dis), "Should have removed exception ranges");
+				assertEquals(0, StringUtil.count("printStackTrace", dis), "Should have removed catch block contents");
+				assertEquals(0, StringUtil.count("astore", dis), "Should have removed catch block contents");
+			});
+		}
+
+		/** Ensures {@link RedundantTryCatchRemovingTransformer} is not too aggressive. */
+		@Test
+		void oneRedundantOneRelevantTryCatch() {
+			String asm = """
+					.method public static example ()V {
+						exceptions: {
+					       {  A,  B,  C, Ljava/lang/ClassNotFoundException; },
+					       {  A,  B,  C, Ljava/lang/ArithmeticException; }
+					    },
+					    code: {
+					    A:
+					        iconst_0
+					        iconst_0
+					        idiv
+					        pop
+					    B:
+					        goto END
+					    C:
+					        astore ex
+					        aload ex
+					        invokevirtual java/lang/Throwable.printStackTrace ()V
+					        goto END
+					    END:
+					        return
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("Ljava/lang/ArithmeticException;", dis), "Should not have removed ArithmeticException");
+				assertEquals(0, StringUtil.count("Ljava/lang/ClassNotFoundException;", dis), "Should have removed ClassNotFoundException");
+			});
+		}
+
+		/** Ensures {@link RedundantTryCatchRemovingTransformer} is not too aggressive. */
+		@Test
+		void keepPotentialThrowingMethodTryCatch() {
+			String asm = """
+					.method public static example ()V {
+						exceptions: {
+					       {  A,  B,  C, Ljava/lang/Throwable; }
+					    },
+					    code: {
+					    A:
+					        invokestatic Example.throwing ()V
+					    B:
+					        goto END
+					    C:
+					        invokevirtual java/lang/Throwable.printStackTrace ()V
+					        goto END
+					    END:
+					        return
+					    }
+					}
+					""";
+			validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
 		}
 	}
 
