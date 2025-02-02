@@ -1,6 +1,7 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -311,6 +312,52 @@ public class AsmInsnUtil implements Opcodes {
 				type == AbstractInsnNode.TABLESWITCH_INSN ||
 				type == AbstractInsnNode.LOOKUPSWITCH_INSN ||
 				insn.getOpcode() == ATHROW || insn.getOpcode() == RET;
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} if the instruction represents metadata such as line numbers, stack frames, or a label/offset.
+	 */
+	public static boolean isMetaData(@Nonnull AbstractInsnNode insn) {
+		// The following instruction types set their opcode as '-1'
+		// - FrameNode
+		// - LabelNode
+		// - LineNumberNode
+		return insn.getOpcode() == -1;
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to begin from.
+	 *
+	 * @return Next non-metadata instruction.
+	 * Can be {@code null} for no next instruction at the end of a method.
+	 */
+	@Nullable
+	public static AbstractInsnNode getNextInsn(@Nonnull AbstractInsnNode insn) {
+		AbstractInsnNode next = insn.getNext();
+		while (next != null && isMetaData(next))
+			next = next.getNext();
+		return next;
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to begin from.
+	 *
+	 * @return Next non-metadata instruction, following {@link Opcodes#GOTO} if found.
+	 * Can be {@code null} for no next instruction at the end of a method.
+	 */
+	@Nullable
+	public static AbstractInsnNode getNextFollowGoto(@Nonnull AbstractInsnNode insn) {
+		AbstractInsnNode next = getNextInsn(insn);
+		while (next != null && next.getOpcode() == GOTO) {
+			JumpInsnNode jin = (JumpInsnNode) next;
+			next = getNextInsn(jin.label);
+		}
+		return next;
 	}
 
 	/**
