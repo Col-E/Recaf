@@ -132,17 +132,17 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 							// Replace double argument binary control flow.
 							localDirty |= switch (opcode) {
 								case IF_ICMPEQ ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> a.isEqualTo(b.value().getAsInt()));
+										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isEqualTo);
 								case IF_ICMPNE ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> !a.isEqualTo(b.value().getAsInt()));
+										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> !a.isEqualTo(b));
 								case IF_ICMPLT ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> a.isLessThan(b.value().getAsInt()));
+										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isLessThan);
 								case IF_ICMPGE ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> a.isGreaterThanOrEqual(b.value().getAsInt()));
+										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isGreaterThanOrEqual);
 								case IF_ICMPGT ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> a.isGreaterThan(b.value().getAsInt()));
+										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isGreaterThan);
 								case IF_ICMPLE ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> a.isLessThanOrEqual(b.value().getAsInt()));
+										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isLessThanOrEqual);
 								case IF_ACMPEQ ->
 										replaceObjObjValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin,
 												(a, b) -> a.isNull() && b.isNull(), // Both null --> both are equal

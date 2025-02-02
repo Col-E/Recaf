@@ -78,6 +78,17 @@ public non-sealed interface IntValue extends ReValue {
 	}
 
 	/**
+	 * @param otherValue
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is equal to the given value.
+	 */
+	default boolean isEqualTo(@Nonnull IntValue otherValue) {
+		return value().isPresent() && otherValue.value().isPresent()
+				&& value().getAsInt() == otherValue.value().getAsInt();
+	}
+
+	/**
 	 * @param value
 	 * 		Value to check against.
 	 *
@@ -85,6 +96,17 @@ public non-sealed interface IntValue extends ReValue {
 	 */
 	default boolean isLessThan(int value) {
 		return value().isPresent() && value().getAsInt() < value;
+	}
+
+	/**
+	 * @param otherValue
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than the given value.
+	 */
+	default boolean isLessThan(@Nonnull IntValue otherValue) {
+		return value().isPresent() && otherValue.value().isPresent()
+				&& value().getAsInt() < otherValue.value().getAsInt();
 	}
 
 	/**
@@ -98,6 +120,17 @@ public non-sealed interface IntValue extends ReValue {
 	}
 
 	/**
+	 * @param otherValue
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is less than or equal to the given value.
+	 */
+	default boolean isLessThanOrEqual(@Nonnull IntValue otherValue) {
+		return value().isPresent() && otherValue.value().isPresent()
+				&& value().getAsInt() <= otherValue.value().getAsInt();
+	}
+
+	/**
 	 * @param value
 	 * 		Value to check against.
 	 *
@@ -108,6 +141,17 @@ public non-sealed interface IntValue extends ReValue {
 	}
 
 	/**
+	 * @param otherValue
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than the given value.
+	 */
+	default boolean isGreaterThan(@Nonnull IntValue otherValue) {
+		return value().isPresent() && otherValue.value().isPresent()
+				&& value().getAsInt() > otherValue.value().getAsInt();
+	}
+
+	/**
 	 * @param value
 	 * 		Value to check against.
 	 *
@@ -115,6 +159,17 @@ public non-sealed interface IntValue extends ReValue {
 	 */
 	default boolean isGreaterThanOrEqual(int value) {
 		return value().isPresent() && value().getAsInt() >= value;
+	}
+
+	/**
+	 * @param otherValue
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is greater than or equal to the given value.
+	 */
+	default boolean isGreaterThanOrEqual(@Nonnull IntValue otherValue) {
+		return value().isPresent() && otherValue.value().isPresent()
+				&& value().getAsInt() >= otherValue.value().getAsInt();
 	}
 
 	@Nonnull
