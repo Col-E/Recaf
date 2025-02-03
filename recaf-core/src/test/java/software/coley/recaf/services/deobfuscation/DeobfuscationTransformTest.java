@@ -25,6 +25,7 @@ import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.cfr.CfrConfig;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
 import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCatchMergingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
@@ -778,6 +779,179 @@ class DeobfuscationTransformTest extends TestBase {
 				assertEquals(0, StringUtil.count("aconst_null", dis), "Expected to remove dead aconst_null");
 				assertEquals(0, StringUtil.count("athrow", dis), "Expected to remove dead athrow");
 			});
+		}
+
+		@Test
+		void foldUselessGoto() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        goto D
+					    B:
+					        goto C
+					    C:
+					        goto G
+					    D:
+					        goto H
+					    E:
+					        goto L
+					    F:
+					        goto N
+					    G:
+					        goto E
+					    H:
+					        goto M
+					    I:
+					        goto J
+					    J:
+					        getstatic java/lang/System.out Ljava/io/PrintStream;
+					        ldc "Hello world"
+					        invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
+					        return
+					    K:
+					        goto I
+					    L:
+					        goto K
+					    M:
+					        goto F
+					    N:
+					        goto B
+					    O:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(GotoInliningTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("goto", dis), "Expected to replace all goto <target> with inlining");
+			});
+		}
+
+		/** Showcase pairing of {@link OpaquePredicateFoldingTransformer} with {@link GotoInliningTransformer} */
+		@Test
+		void foldOpaquePredicatesIntoGotosThenInlineTheGotos() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        iconst_0
+					        ifeq D
+					        goto E
+					    B:
+					        iconst_1
+					        ifne C
+					        goto E
+					    C:
+					        iconst_0
+					        ifne E
+					        goto G
+					    D:
+					        iconst_0
+					        ifeq H
+					        goto N
+					    E:
+					        iconst_2
+					        ifeq N
+					        goto L
+					    F:
+					        iconst_2
+					        ifne N
+					        iconst_0
+					        ifeq A
+					        goto L
+					    G:
+					        iconst_0
+					        ifeq E
+					        goto N
+					    H:
+					        iconst_1
+					        ifeq L
+					        goto M
+					    I:
+					        iconst_4
+					        ifeq A
+					    J:
+					        getstatic java/lang/System.out Ljava/io/PrintStream;
+					        ldc "Hello world"
+					        invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
+					        return
+					    K:
+					        iconst_5
+					        ifne I
+					        goto L
+					    L:
+					        iconst_0
+					        ifne J
+					        goto K
+					    M:
+					        iconst_2
+					        ifne F
+					        goto N
+					    N:
+					        goto B
+					    O:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class, GotoInliningTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("goto", dis), "Expected to replace all goto <target> with inlining");
+			});
+		}
+
+		@Test
+		void doNotFoldGotoInsideTryRangeWithCodeOutsideOfTryRange() {
+			// Because this would technically be a behavior change (unless we do lots of more analysis)
+			// we do not inline goto instructions that span the boundaries of try-catch.
+			//
+			// You would first need to apply a transformer to remove the try-catch if it is not actually useful.
+			String asm = """
+					.method public static example ()V {
+						exceptions: {
+					       {  E0,  E1,  EH, Ljava/lang/Throwable; }
+					    },
+					    code: {
+					    E0:
+					        goto X
+					    E1:
+					    EH:
+					        athrow
+					    X:
+					        getstatic java/lang/System.out Ljava/io/PrintStream;
+					        ldc "Hello world"
+					        invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
+					        return
+					    Z:
+					    }
+					}
+					""";
+			validateNoTransformation(asm, List.of(GotoInliningTransformer.class));
+		}
+
+		@Test
+		void doNotFoldGotoOutsideTryRangeWithCodeInsideOfTryRange() {
+			// Because this would technically be a behavior change (unless we do lots of more analysis)
+			// we do not inline goto instructions that span the boundaries of try-catch.
+			//
+			// You would first need to apply a transformer to remove the try-catch if it is not actually useful.
+			String asm = """
+					.method public static example ()V {
+						exceptions: {
+					       {  E0,  E1,  EH, Ljava/lang/Throwable; }
+					    },
+					    code: {
+					    A:
+					        goto E0
+					    E0:
+					        getstatic java/lang/System.out Ljava/io/PrintStream;
+					        ldc "Hello world"
+					        invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
+					        return
+					    E1:
+					    EH:
+					        athrow
+					    }
+					}
+					""";
+			validateNoTransformation(asm, List.of(GotoInliningTransformer.class));
 		}
 	}
 
