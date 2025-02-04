@@ -4,13 +4,22 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.context.ContextSource;
+import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.TreeFiltering;
 import software.coley.recaf.ui.control.tree.WorkspaceTree;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
 import software.coley.recaf.ui.dnd.DragAndDrop;
 import software.coley.recaf.ui.dnd.WorkspaceLoadingDropListener;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -33,8 +42,8 @@ public class WorkspaceExplorerPane extends BorderPane {
 	 */
 	@Inject
 	public WorkspaceExplorerPane(@Nonnull WorkspaceLoadingDropListener listener,
-								 @Nonnull WorkspaceTree workspaceTree,
-								 @Nullable Workspace workspace) {
+	                             @Nonnull WorkspaceTree workspaceTree,
+	                             @Nullable Workspace workspace) {
 		this.workspaceTree = workspaceTree;
 
 		// As we are the explorer pane, these items should be treated as declarations and not references.
@@ -49,12 +58,31 @@ public class WorkspaceExplorerPane extends BorderPane {
 		DragAndDrop.installFileSupport(this, listener);
 
 		// Layout
-		setCenter(workspaceTree);
+		StackPane stack = new StackPane(workspaceTree);
+		setCenter(stack);
 		setBottom(workspaceTreeFilterPane);
 
 		// Populate tree
 		if (workspace != null)
 			workspaceTree.createWorkspaceRoot(workspace);
+
+		// Add label to indicate when filter pane input results in the tree being empty.
+		// This should help out users if they forget they have something in the search bar and the tree looks empty.
+		Label noResultsLabel = new BoundLabel(Lang.getBinding("menu.search.noresults"));
+		noResultsLabel.setGraphic(new FontIconView(CarbonIcons.SEARCH));
+		noResultsLabel.setMouseTransparent(true);
+		noResultsLabel.setVisible(false);
+		noResultsLabel.setOpacity(0.5);
+		workspaceTreeFilterPane.currentPredicateProperty().addListener((ob, old, cur) -> {
+			TreeItem<PathNode<?>> root = workspaceTree.getRoot();
+			if (root != null) {
+				noResultsLabel.setVisible(root.getChildren().isEmpty());
+			} else {
+				noResultsLabel.setVisible(false);
+			}
+		});
+		StackPane.setAlignment(noResultsLabel, Pos.CENTER);
+		stack.getChildren().add(noResultsLabel);
 	}
 
 	/**
