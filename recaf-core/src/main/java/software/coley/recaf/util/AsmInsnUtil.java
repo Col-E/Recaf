@@ -155,6 +155,19 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} if the instruction pushes a constant {@code int} value onto the stack.
+	 */
+	public static boolean isConstIntValue(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op == LDC && ((LdcInsnNode) insn).cst instanceof Integer)
+			return true;
+		return (op >= ICONST_M1 && op <= ICONST_5) || op == SIPUSH || op == BIPUSH;
+	}
+
+	/**
 	 * @param type
 	 * 		Type to push.
 	 *

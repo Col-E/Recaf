@@ -25,6 +25,7 @@ import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.cfr.CfrConfig;
 import software.coley.recaf.services.decompile.cfr.CfrDecompiler;
 import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCatchMergingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.EnumNameRestorationTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
@@ -466,6 +467,66 @@ class DeobfuscationTransformTest extends TestBase {
 					}
 					""";
 			validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+		}
+
+		@Test
+		void enumNameRestoration() {
+			String asm = """
+					.super java/lang/Enum
+					.class public final enum Example {
+					    .field public static final enum a LExample;
+					    .field public static final enum b LExample;
+					    .field public static final enum c LExample;
+					    .field public static final enum d LExample;
+					    .field private static final x [LExample;
+										
+					    .method static <clinit> ()V {
+					        code: {
+					        A:
+					            new Example
+					            dup
+					            ldc "STATIC"
+					            iconst_0
+					            invokespecial Example.<init> (Ljava/lang/String;I)V
+					            putstatic Example.a LExample;
+					        B:
+					            new Example
+					            dup
+					            ldc "WORLDGEN"
+					            iconst_1
+					            invokespecial Example.<init> (Ljava/lang/String;I)V
+					            putstatic Example.b LExample;
+					        C:
+					            new Example
+					            dup
+					            ldc "DIMENSIONS"
+					            iconst_2
+					            invokespecial Example.<init> (Ljava/lang/String;I)V
+					            putstatic Example.c LExample;
+					        D:
+					            new Example
+					            dup
+					            ldc "RELOADABLE"
+					            iconst_3
+					            invokespecial Example.<init> (Ljava/lang/String;I)V
+					            putstatic Example.d LExample;
+					        E:
+					            invokestatic Example.$values ()[LExample;
+					            putstatic Example.x [LExample;
+					        F:
+					            return
+					        G:
+					        }
+					    }
+					}
+					""";
+			validateMappingAfterAssembly(asm, List.of(EnumNameRestorationTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("enum STATIC LExample;", dis), "Missing enum const mapping");
+				assertEquals(1, StringUtil.count("enum WORLDGEN LExample;", dis), "Missing enum const mapping");
+				assertEquals(1, StringUtil.count("enum DIMENSIONS LExample;", dis), "Missing enum const mapping");
+				assertEquals(1, StringUtil.count("enum RELOADABLE LExample;", dis), "Missing enum const mapping");
+				assertEquals(1, StringUtil.count("final $values [LExample;", dis), "Missing enum $values array mapping");
+			});
 		}
 	}
 
@@ -956,7 +1017,8 @@ class DeobfuscationTransformTest extends TestBase {
 	}
 
 	private void validateNoTransformation(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers) {
-		JvmClassInfo cls = assemble(assembly);
+		boolean isFullBody = assembly.contains(".class");
+		JvmClassInfo cls = assemble(assembly, isFullBody);
 
 		// Transforming should not actually result in any changes
 		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
@@ -966,7 +1028,8 @@ class DeobfuscationTransformTest extends TestBase {
 
 	private void validateBeforeAfterDecompile(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,
 	                                          @Nonnull String expectedBefore, @Nullable String expectedAfter) {
-		JvmClassInfo cls = assemble(assembly);
+		boolean isFullBody = assembly.contains(".class");
+		JvmClassInfo cls = assemble(assembly, isFullBody);
 
 		// Before transformation, check that the expected before-state is matched
 		String initialDecompile = decompile(cls);
@@ -992,30 +1055,55 @@ class DeobfuscationTransformTest extends TestBase {
 	private void validateAfterAssembly(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,
 	                                   @Nonnull Consumer<String> assertionChecker) {
 		if (PRINT_BEFORE_AFTER) System.out.println("======== BEFORE ========\n" + assembly);
+		boolean isFullBody = assembly.contains(".class");
 
 		// Run the transformer
-		JvmClassInfo cls = assemble(assembly);
+		JvmClassInfo cls = assemble(assembly, isFullBody);
 		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
 		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
 		assertEquals(1, result.getTransformedClasses().size(), "Expected transformation to be applied");
 
 		// Validate output has been transformed to match the expected after-state.
-		String transformedDisassembly = disassembleTransformed(result);
+		String transformedDisassembly = disassembleTransformed(result, isFullBody);
+		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER ========\n" + transformedDisassembly);
+		assertionChecker.accept(transformedDisassembly);
+	}
+
+	private void validateMappingAfterAssembly(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,
+	                                          @Nonnull Consumer<String> assertionChecker) {
+		if (PRINT_BEFORE_AFTER) System.out.println("======== BEFORE ========\n" + assembly);
+		boolean isFullBody = assembly.contains(".class");
+
+		// Run the transformer
+		JvmClassInfo cls = assemble(assembly, isFullBody);
+		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertFalse(result.getMappingsToApply().isEmpty(), "Expected transformation to register mappings");
+
+		// Validate output has been transformed to match the expected after-state.
+		String transformedDisassembly = disassembleTransformed(result, isFullBody);
 		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER ========\n" + transformedDisassembly);
 		assertionChecker.accept(transformedDisassembly);
 	}
 
 	@Nonnull
-	private String disassembleTransformed(@Nonnull JvmTransformResult result) {
+	private String disassembleTransformed(@Nonnull JvmTransformResult result, boolean isFullBody) {
 		result.apply();
 		JvmClassBundle bundle = workspace.getPrimaryResource().getJvmClassBundle();
 		WorkspaceResource resource = workspace.getPrimaryResource();
 		JvmClassInfo cls = bundle.get(CLASS_NAME);
-		MethodMember method = cls.getFirstDeclaredMethodByName("example");
-		if (method == null)
-			fail("Failed to find 'example' method, cannot disassemble");
-		ClassMemberPathNode path = PathNodes.memberPath(workspace, resource, bundle, cls, method);
-		Result<String> disassembly = assembler.disassemble(path);
+		Result<String> disassembly;
+		if (isFullBody) {
+			ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, cls);
+			disassembly = assembler.disassemble(path);
+		} else {
+			MethodMember method = cls.getFirstDeclaredMethodByName("example");
+			if (method == null)
+				fail("Failed to find 'example' method, cannot disassemble");
+			ClassMemberPathNode path = PathNodes.memberPath(workspace, resource, bundle, cls, method);
+			disassembly = assembler.disassemble(path);
+		}
+
 		if (disassembly.isOk())
 			return disassembly.get();
 		fail(disassembly.errors().stream().map(Error::toString).collect(Collectors.joining("\n")));
@@ -1039,8 +1127,8 @@ class DeobfuscationTransformTest extends TestBase {
 	}
 
 	@Nonnull
-	private JvmClassInfo assemble(@Nonnull String body) {
-		String assembly = """
+	private JvmClassInfo assemble(@Nonnull String body, boolean isFullBody) {
+		String assembly = isFullBody ? body : """
 				.super java/lang/Object
 				.class public super %NAME% {
 				%CODE%
