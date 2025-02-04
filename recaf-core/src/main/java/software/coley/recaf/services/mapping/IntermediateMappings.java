@@ -97,6 +97,13 @@ public class IntermediateMappings implements Mappings {
 	}
 
 	/**
+	 * @return {@code true} when this mappings container has no entries.
+	 */
+	public boolean isEmpty() {
+		return classes.isEmpty() && fields.isEmpty() && methods.isEmpty() && variables.isEmpty();
+	}
+
+	/**
 	 * @return Names of classes with mappings.
 	 */
 	@Nonnull

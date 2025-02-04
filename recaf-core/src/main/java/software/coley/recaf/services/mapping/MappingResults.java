@@ -6,12 +6,10 @@ import org.slf4j.Logger;
 import software.coley.collections.tuple.Pair;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
-import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
-import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -77,10 +75,10 @@ public class MappingResults {
 	 * 		The post-mapped class.
 	 */
 	public void add(@Nonnull Workspace workspace,
-					@Nonnull WorkspaceResource resource,
-					@Nonnull ClassBundle<?> bundle,
-					@Nonnull ClassInfo preMapping,
-					@Nonnull ClassInfo postMapping) {
+	                @Nonnull WorkspaceResource resource,
+	                @Nonnull ClassBundle<?> bundle,
+	                @Nonnull ClassInfo preMapping,
+	                @Nonnull ClassInfo postMapping) {
 		String preMappingName = preMapping.getName();
 		String postMappingName = postMapping.getName();
 		BundlePathNode bundlePath = PathNodes.bundlePath(workspace, resource, bundle);
@@ -289,7 +287,7 @@ public class MappingResults {
 	 * 	   <li>Anything else</li>
 	 * </ol>
 	 * The reason for NEW classes being first is so that existing classes, when updated, can see the NEW classes
-	 * in the workspace. An example of this being important is in {@link AstService#newParser(JvmClassInfo)}.
+	 * in the workspace.
 	 * <br>
 	 * Then LOW complexity classes are next. Statistically speaking it is typical for complex classes to rely on many
 	 * more less complex classes. Following the principle of making new types available first, we make changes to the
@@ -303,8 +301,8 @@ public class MappingResults {
 	 * 		Runnable that applies the mapping to the associated workspace.
 	 */
 	private record ApplicationEntry(@Nonnull ClassPathNode pre,
-									@Nonnull ClassPathNode post,
-									@Nonnull Runnable applicationRunnable) implements Comparable<ApplicationEntry> {
+	                                @Nonnull ClassPathNode post,
+	                                @Nonnull Runnable applicationRunnable) implements Comparable<ApplicationEntry> {
 		/**
 		 * @return {@code true} when pre-and-post mapping names are the same.
 		 * Indicates the class was not mapped, but some references within it to others have been.
