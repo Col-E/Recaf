@@ -231,6 +231,16 @@ class StringUtilTest {
 	}
 
 	@Test
+	void testCountRegex() {
+		assertEquals(0, StringUtil.countRegex("\\w", null));
+		assertEquals(0, StringUtil.countRegex("\\w", null));
+		assertEquals(0, StringUtil.countRegex("\\w", ""));
+		assertEquals(3, StringUtil.countRegex("\\w", "foo"));
+		assertEquals(1, StringUtil.countRegex("\\w{2}", "foo"));
+		assertEquals(2, StringUtil.countRegex("\\w+", "example bar"));
+	}
+
+	@Test
 	void testPathToString() {
 		assertEquals("foo" + File.separator + "bar.txt", StringUtil.pathToString(Paths.get("foo/bar.txt")));
 	}

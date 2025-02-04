@@ -6,12 +6,17 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import regexodus.Matcher;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -360,10 +365,29 @@ public class StringUtil {
 		if (text == null || text.isEmpty())
 			return 0;
 		int count = 0;
-		while (text.contains(pattern)) {
-			text = text.replaceFirst(pattern, "");
+		int patternIndex = text.indexOf(pattern);
+		while (patternIndex >= 0) {
+			patternIndex = text.indexOf(pattern, patternIndex + 1);
 			count++;
 		}
+		return count;
+	}
+
+	/**
+	 * @param pattern
+	 * 		Regex pattern to look for.
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return Number of times the given pattern appears in the text.
+	 */
+	public static int countRegex(@Nonnull String pattern, @Nullable String text) {
+		if (text == null || text.isEmpty())
+			return 0;
+		int count = 0;
+		Matcher matcher = RegexUtil.pattern(pattern).matcher(text);
+		while (matcher.find())
+			count++;
 		return count;
 	}
 
