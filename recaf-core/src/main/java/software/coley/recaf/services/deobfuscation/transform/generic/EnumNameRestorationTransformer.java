@@ -109,11 +109,7 @@ public class EnumNameRestorationTransformer implements JvmClassTransformer {
 		if (indexInsn == null || !isConstIntValue(indexInsn))
 			return;
 
-		AbstractInsnNode constructorInsn = getNextFollowGoto(indexInsn);
-		if (constructorInsn == null || constructorInsn.getOpcode() != INVOKESPECIAL)
-			return;
-
-		AbstractInsnNode next = getNextFollowGoto(constructorInsn);
+		AbstractInsnNode next = getNextFollowGoto(indexInsn);
 		while (next != null && next.getOpcode() != PUTSTATIC)
 			next = getNextFollowGoto(next);
 		if (next != null && next.getOpcode() == PUTSTATIC) {
