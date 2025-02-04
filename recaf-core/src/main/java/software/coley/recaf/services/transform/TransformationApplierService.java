@@ -9,6 +9,8 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -27,15 +29,18 @@ public class TransformationApplierService implements Service {
 	private static final Logger logger = Logging.get(TransformationApplierService.class);
 	private final TransformationManager transformationManager;
 	private final InheritanceGraphService graphService;
+	private final MappingApplierService mappingService;
 	private final WorkspaceManager workspaceManager;
 	private final TransformationApplierConfig config;
 
 	@Inject
 	public TransformationApplierService(@Nonnull TransformationManager transformationManager,
 	                                    @Nonnull InheritanceGraphService graphService,
+										@Nonnull MappingApplierService mappingService,
 	                                    @Nonnull WorkspaceManager workspaceManager,
 	                                    @Nonnull TransformationApplierConfig config) {
 		this.graphService = graphService;
+		this.mappingService = mappingService;
 		this.workspaceManager = workspaceManager;
 		this.transformationManager = transformationManager;
 		this.config = config;
@@ -50,12 +55,16 @@ public class TransformationApplierService implements Service {
 	@Nonnull
 	public TransformationApplier newApplier(@Nonnull Workspace workspace) {
 		// Optimal case for current workspace using the shared workspace inheritance graph
-		if (workspace == workspaceManager.getCurrent())
-			return newApplier(workspace, Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created"));
+		if (workspace == workspaceManager.getCurrent()) {
+			InheritanceGraph graphNotCreated = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
+			MappingApplier mappingApplier = Objects.requireNonNull(mappingService.inCurrentWorkspace(), "Mapping applier not created");
+			return newApplier(workspace, graphNotCreated, mappingApplier);
+		}
 
 		// Need to make a new graph for the given workspace
 		InheritanceGraph inheritanceGraph = graphService.newInheritanceGraph(workspace);
-		return newApplier(workspace, inheritanceGraph);
+		MappingApplier mappingApplier = mappingService.inWorkspace(workspace);
+		return newApplier(workspace, inheritanceGraph, mappingApplier);
 	}
 
 	/**
@@ -67,8 +76,9 @@ public class TransformationApplierService implements Service {
 		if (!workspaceManager.hasCurrentWorkspace())
 			return null;
 		InheritanceGraph inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
+		MappingApplier mappingApplier = Objects.requireNonNull(mappingService.inCurrentWorkspace(), "Mapping applier not created");
 		Workspace workspace = workspaceManager.getCurrent();
-		return newApplier(workspace, inheritanceGraph);
+		return newApplier(workspace, inheritanceGraph, mappingApplier);
 	}
 
 	/**
@@ -76,12 +86,15 @@ public class TransformationApplierService implements Service {
 	 * 		Workspace to apply transformations within.
 	 * @param inheritanceGraph
 	 * 		Inheritance graph for the given workspace.
+	 * @param mappingApplier
+	 * 		Mapping applier for the given workspace.
 	 *
 	 * @return Transformation applier for the given workspace.
 	 */
 	@Nonnull
-	private TransformationApplier newApplier(@Nonnull Workspace workspace, @Nonnull InheritanceGraph inheritanceGraph) {
-		return new TransformationApplier(transformationManager, inheritanceGraph, workspace);
+	private TransformationApplier newApplier(@Nonnull Workspace workspace, @Nonnull InheritanceGraph inheritanceGraph,
+	                                         @Nonnull MappingApplier mappingApplier) {
+		return new TransformationApplier(transformationManager, inheritanceGraph, mappingApplier, workspace);
 	}
 
 	@Nonnull

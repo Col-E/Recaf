@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
@@ -29,6 +31,7 @@ import static org.mockito.Mockito.*;
 class TransformationApplierTest extends TestBase {
 	private static final TransformationApplierConfig config = new TransformationApplierConfig();
 	private static final InheritanceGraph inheritanceGraph;
+	private static final MappingApplier mappingApplier;
 	private static final Workspace workspace;
 
 	static {
@@ -36,6 +39,7 @@ class TransformationApplierTest extends TestBase {
 		try {
 			workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(HelloWorld.class));
 			inheritanceGraph = recaf.get(InheritanceGraphService.class).newInheritanceGraph(workspace);
+			mappingApplier = recaf.get(MappingApplierService.class).inWorkspace(workspace);
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to read input class for transformer test", e);
 		}
@@ -55,7 +59,7 @@ class TransformationApplierTest extends TestBase {
 
 		// If we transform with "B" we should observe that only "B" is called on sine the two hold no relation
 		TransformationManager manager = new TransformationManager(map);
-		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, workspace);
+		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, mappingApplier, workspace);
 		assertDoesNotThrow(() -> applier.transformJvm(Collections.singletonList(JvmTransformerB.class)));
 
 		// "A" not used
@@ -79,7 +83,7 @@ class TransformationApplierTest extends TestBase {
 
 		// If we transform with "B" we should observe that both "B" and "A" were called on.
 		TransformationManager manager = new TransformationManager(map);
-		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, workspace);
+		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, mappingApplier, workspace);
 		assertDoesNotThrow(() -> applier.transformJvm(Collections.singletonList(JvmTransformerDependingOnA.class)));
 		verify(transformerA, times(1)).transform(any(), same(workspace), any(), any(), any());
 		verify(transformerB, times(1)).transform(any(), same(workspace), any(), any(), any());
@@ -99,7 +103,7 @@ class TransformationApplierTest extends TestBase {
 
 		// If we transform with "A" or "B" we should observe an exception due to the detected cycle
 		TransformationManager manager = new TransformationManager(map);
-		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, workspace);
+		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, mappingApplier, workspace);
 		assertThrows(TransformationException.class, () -> applier.transformJvm(Collections.singletonList(JvmCycleA.class)));
 		assertThrows(TransformationException.class, () -> applier.transformJvm(Collections.singletonList(JvmCycleB.class)));
 		verify(transformerA, never()).transform(any(), same(workspace), any(), any(), any());
@@ -117,7 +121,7 @@ class TransformationApplierTest extends TestBase {
 
 		// If we transform with the single transformer we should observe an exception due to the detected cycle
 		TransformationManager manager = new TransformationManager(map);
-		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, workspace);
+		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, mappingApplier, workspace);
 		assertThrows(TransformationException.class, () -> applier.transformJvm(Collections.singletonList(JvmCycleSingle.class)));
 		verify(transformer, never()).transform(any(), same(workspace), any(), any(), any());
 	}
@@ -126,7 +130,7 @@ class TransformationApplierTest extends TestBase {
 	void missingRegistration() {
 		// If we transform with a transformer that is not registered in the manager, the transform should fail
 		TransformationManager manager = new TransformationManager(Collections.emptyMap());
-		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, workspace);
+		TransformationApplier applier = new TransformationApplier(manager, inheritanceGraph, mappingApplier, workspace);
 		assertThrows(TransformationException.class, () -> applier.transformJvm(Collections.singletonList(JvmCycleSingle.class)));
 	}
 

@@ -11,6 +11,7 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -37,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class JvmTransformerContext {
 	private final Map<Class<? extends JvmClassTransformer>, JvmClassTransformer> transformerMap;
+	private final IntermediateMappings mappings = new IntermediateMappings();
 	private final Map<String, JvmClassData> classData = new ConcurrentHashMap<>();
 	private final Set<String> recomputeFrameClasses = new HashSet<>();
 	private final Workspace workspace;
@@ -74,6 +76,10 @@ public class JvmTransformerContext {
 
 	/**
 	 * Builds the map of initial transformed class paths to their final transformed states.
+	 * <br>
+	 * The map keys are existing workspace paths the respective classes.
+	 * <br>
+	 * The map values are classes post-transformation, without any mappings applied.
 	 *
 	 * @param inheritanceGraph
 	 * 		Inheritance graph tied to the workspace the transformed classes belong to.
@@ -266,6 +272,17 @@ public class JvmTransformerContext {
 	 */
 	public void setRecomputeFrames(@Nonnull String className) {
 		recomputeFrameClasses.add(className);
+	}
+
+	/**
+	 * Transformers that aim to rename classes, fields, and methods should register the desired mappings
+	 * here, and they will be applied after all other transformations are applied.
+	 *
+	 * @return Mappings to apply upon transformation completion.
+	 */
+	@Nonnull
+	public IntermediateMappings getMappings() {
+		return mappings;
 	}
 
 	/**

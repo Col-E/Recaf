@@ -11,6 +11,9 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.mapping.IntermediateMappings;
+import software.coley.recaf.services.mapping.MappingApplier;
+import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -35,22 +38,27 @@ public class TransformationApplier {
 	private static final Logger logger = Logging.get(TransformationApplier.class);
 	private final TransformationManager transformationManager;
 	private final InheritanceGraph inheritanceGraph;
+	private final MappingApplier mappingApplier;
 	private final Workspace workspace;
 
 	/**
 	 * @param transformationManager
 	 * 		Manager to pull transformer instances from.
 	 * @param inheritanceGraph
-	 * 		Inheritance graph to use for frame computation <i>(Some transformers will trigger this)</i>
+	 * 		Inheritance graph to use for frame computation <i>(Some transformers will trigger this)</i>.
+	 * @param mappingApplier
+	 * 		Mapping applier to update workspace with mappings registered by transformers.
 	 * @param workspace
 	 * 		Workspace with classes to transform.
 	 */
 	public TransformationApplier(@Nonnull TransformationManager transformationManager,
 	                             @Nonnull InheritanceGraph inheritanceGraph,
+	                             @Nonnull MappingApplier mappingApplier,
 	                             @Nonnull Workspace workspace) {
 		this.transformationManager = transformationManager;
-		this.workspace = workspace;
 		this.inheritanceGraph = inheritanceGraph;
+		this.mappingApplier = mappingApplier;
+		this.workspace = workspace;
 	}
 
 	/**
@@ -140,20 +148,29 @@ public class TransformationApplier {
 				return transformedJvmClasses;
 			}
 
+			@Nonnull
+			@Override
+			public IntermediateMappings getMappingsToApply() {
+				return context.getMappings();
+			}
+
 			@Override
 			public void apply() {
+				// Dump transformed classes into the workspace
 				checkedForEach(transformedJvmClasses, (path, cls) -> {
 					JvmClassBundle bundle = path.getValueOfType(JvmClassBundle.class);
 					if (bundle != null)
 						bundle.put(cls);
 				}, (path, cls, t) -> logger.error("Exception thrown handling transform application", t));
+
+				// Apply mappings if they exist
+				IntermediateMappings mappings = context.getMappings();
+				if (!mappings.isEmpty()) {
+					MappingResults results = mappingApplier.applyToPrimaryResource(mappings);
+					results.apply();
+				}
 			}
 		};
-
-		// TODO: If we want a transformer which generates and applies mappings, we need a way to facilitate that
-		//  - Letting a transformer control mapping applier is bad because that can break the tracking state of class models
-		//  - We should probably just track a "mappings to apply" in the transformer context and apply it afterwards
-		//    - We can add that 'MappingAppplier' as an argument to the 'buildChangeMap' method above
 	}
 
 	@Nonnull
