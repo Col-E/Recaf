@@ -61,7 +61,8 @@ public class SelectedBracketTracking implements EditorComponent, Closing, Consum
 	@Override
 	public void accept(Change<Integer> change) {
 		// Submit task to check for open/close pair
-		service.submit(() -> setRange(scanAround(change.getNewValue())));
+		if (!service.isShutdown())
+			service.submit(() -> setRange(scanAround(change.getNewValue())));
 	}
 
 	/**
