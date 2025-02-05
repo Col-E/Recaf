@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.objectweb.asm.Opcodes.*;
-import static software.coley.recaf.util.AsmInsnUtil.isReturn;
+import static software.coley.recaf.util.AsmInsnUtil.*;
 
 /**
  * A transformer that inlines control flow of <i>(redundant)</i> {@link Opcodes#GOTO} instructions.
@@ -139,8 +139,22 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 					while (target != null) {
 						if (target.getType() != AbstractInsnNode.FRAME)
 							block.add(target);
-						if (isGotBlockTerminator(target.getOpcode()))
+						if (isGotBlockTerminator(target.getOpcode())) {
+							// This is the end of the block. Check if inlining this would cause
+							// dangling code (no return at the end of the method)
+							AbstractInsnNode next = getNextInsn(target);
+							if (instructions.getLast() == next || next == null) {
+								// This block is the code at the end of the method.
+								// Check if the code before this block has terminal control flow
+								// (to prevent creation of dangling code at the end of the method)
+								AbstractInsnNode prevBeforeBlock = getPreviousInsn(jin.label);
+								if (prevBeforeBlock != null && !isTerminalOrAlwaysTakeFlowControl(prevBeforeBlock.getOpcode()))
+									break doInline;
+							}
+
+							// We're OK to inline this block
 							break;
+						}
 						target = target.getNext();
 					}
 

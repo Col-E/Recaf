@@ -328,6 +328,24 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
+	 * Any instruction that is matched by this should be safe to use as the last instruction in a method.
+	 * If the last instruction in a method yields {@code false} then there is dangling control flow and
+	 * the code is not verifier compatible.
+	 *
+	 * @param op
+	 * 		Instruction opcode.
+	 *
+	 * @return {@code true} when the opcode represents an instruction that
+	 * terminates the method flow, or consistently takes a branch.
+	 */
+	public static boolean isTerminalOrAlwaysTakeFlowControl(int op) {
+		return switch (op) {
+			case IRETURN, LRETURN, FRETURN, DRETURN, ARETURN, RETURN, ATHROW, GOTO -> true;
+			default -> false;
+		};
+	}
+
+	/**
 	 * @param insn
 	 * 		Instruction to check.
 	 *
@@ -354,6 +372,21 @@ public class AsmInsnUtil implements Opcodes {
 		while (next != null && isMetaData(next))
 			next = next.getNext();
 		return next;
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to begin from.
+	 *
+	 * @return Previous non-metadata instruction.
+	 * Can be {@code null} for no previous instruction at the start of a method.
+	 */
+	@Nullable
+	public static AbstractInsnNode getPreviousInsn(@Nonnull AbstractInsnNode insn) {
+		AbstractInsnNode prev = insn.getPrevious();
+		while (prev != null && isMetaData(prev))
+			prev = prev.getPrevious();
+		return prev;
 	}
 
 	/**
