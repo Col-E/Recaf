@@ -74,6 +74,23 @@ public class BlwUtil {
 	}
 
 	/**
+	 * @param instructions
+	 * 		Collection of ASM instruction.
+	 *
+	 * @return JASM text representation of BLW converted instance of the instructions.
+	 */
+	@Nonnull
+	public static String toString(@Nonnull Iterable<AbstractInsnNode> instructions) {
+		StringBuilder sb = new StringBuilder();
+		for (AbstractInsnNode instruction : instructions)
+			if (instruction.getType() != AbstractInsnNode.FRAME)
+				sb.append(toString(instruction)).append('\n');
+		if (sb.isEmpty())
+			return "";
+		return sb.substring(0, sb.length() - 1);
+	}
+
+	/**
 	 * @param insn
 	 * 		ASM instruction.
 	 *
