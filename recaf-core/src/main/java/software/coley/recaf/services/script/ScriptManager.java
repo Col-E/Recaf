@@ -69,7 +69,7 @@ public class ScriptManager implements Service {
 
 		// Parse tags from beginning of file
 		Map<String, String> tags = new HashMap<>();
-		int metaEnd = text.indexOf("==/Metadata==");
+		int metaEnd = Math.max(0, text.indexOf("==/Metadata=="));
 		int lineMetaEnd = StringUtil.count("\n", text.substring(0, metaEnd));
 		text.lines().limit(lineMetaEnd).forEach(line -> {
 			if (line.startsWith("//")) {
