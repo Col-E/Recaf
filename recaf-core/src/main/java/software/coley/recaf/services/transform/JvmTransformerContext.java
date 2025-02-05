@@ -83,9 +83,12 @@ public class JvmTransformerContext {
 	 *
 	 * @param inheritanceGraph
 	 * 		Inheritance graph tied to the workspace the transformed classes belong to.
+	 *
+	 * @throws TransformationException
+	 * 		When the classes cannot be written back to {@code byte[]} likely due to frame computation problems.
 	 */
 	@Nonnull
-	protected Map<ClassPathNode, JvmClassInfo> buildChangeMap(@Nonnull InheritanceGraph inheritanceGraph) {
+	protected Map<ClassPathNode, JvmClassInfo> buildChangeMap(@Nonnull InheritanceGraph inheritanceGraph) throws TransformationException {
 		ResourcePathNode resourcePath = PathNodes.resourcePath(workspace, resource);
 		Map<ClassPathNode, JvmClassInfo> map = new HashMap<>();
 		for (JvmClassData data : classData.values()) {
@@ -96,10 +99,14 @@ public class JvmTransformerContext {
 					int flags = recompute ? ClassWriter.COMPUTE_FRAMES : 0;
 					ClassReader reader = data.initialClass.getClassReader();
 					ClassWriter writer = new WorkspaceClassWriter(inheritanceGraph, reader, flags);
-					if (recompute)
-						data.node.accept(new FrameSkippingVisitor(writer));
-					else
-						data.node.accept(writer);
+					try {
+						if (recompute)
+							data.node.accept(new FrameSkippingVisitor(writer));
+						else
+							data.node.accept(writer);
+					} catch (Throwable t) {
+						throw new TransformationException("ClassNode --> byte[] failed for class '" + data.node.name + "'", t);
+					}
 					byte[] modifiedBytes = writer.toByteArray();
 
 					// Update output map
