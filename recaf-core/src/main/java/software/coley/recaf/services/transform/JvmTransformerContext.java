@@ -104,19 +104,19 @@ public class JvmTransformerContext {
 							data.node.accept(new FrameSkippingVisitor(writer));
 						else
 							data.node.accept(writer);
+
+						// Update output map
+						byte[] modifiedBytes = writer.toByteArray();
+						JvmClassInfo modifiedClass = data.initialClass.toJvmClassBuilder()
+								.adaptFrom(modifiedBytes)
+								.build();
+						ClassPathNode classPath = resourcePath.child(data.bundle)
+								.child(modifiedClass.getPackageName())
+								.child(modifiedClass);
+						map.put(classPath, modifiedClass);
 					} catch (Throwable t) {
 						throw new TransformationException("ClassNode --> byte[] failed for class '" + data.node.name + "'", t);
 					}
-					byte[] modifiedBytes = writer.toByteArray();
-
-					// Update output map
-					JvmClassInfo modifiedClass = data.initialClass.toJvmClassBuilder()
-							.adaptFrom(modifiedBytes)
-							.build();
-					ClassPathNode classPath = resourcePath.child(data.bundle)
-							.child(modifiedClass.getPackageName())
-							.child(modifiedClass);
-					map.put(classPath, modifiedClass);
 				} else {
 					// Update output map if the bytecode is not the same as the initial state
 					byte[] bytecode = data.getBytecode();
