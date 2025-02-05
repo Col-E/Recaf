@@ -1217,6 +1217,12 @@ class DeobfuscationTransformTest extends TestBase {
 					        iload i6
 					        ifne B
 					        return
+					        // This dead code can be found as a result of some obfuscators.
+					        // It can fool with our analysis of "can we remove this block and not have dangling code?"
+					        // so having it here to make sure this still passes is important.
+					        // See the internal comments in the goto-inlining transformer for more details.
+					        nop
+					        athrow
 					    L:
 					    }
 					}

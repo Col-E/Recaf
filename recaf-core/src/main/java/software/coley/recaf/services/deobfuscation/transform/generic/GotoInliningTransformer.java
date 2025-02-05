@@ -1,7 +1,8 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -12,10 +13,15 @@ import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
+import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -33,9 +39,25 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
  *
  * @author Matt Coley
  */
-@ApplicationScoped
+@Dependent
 public class GotoInliningTransformer implements JvmClassTransformer {
 	private static final int CATCH_VISIT_COUNT = 100;
+	private final InheritanceGraphService graphService;
+	private final WorkspaceManager workspaceManager;
+	private InheritanceGraph inheritanceGraph;
+
+	@Inject
+	public GotoInliningTransformer(@Nonnull WorkspaceManager workspaceManager, @Nonnull InheritanceGraphService graphService) {
+		this.workspaceManager = workspaceManager;
+		this.graphService = graphService;
+	}
+
+	@Override
+	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		inheritanceGraph = workspace == workspaceManager.getCurrent() ?
+				graphService.getCurrentWorkspaceInheritanceGraph() :
+				graphService.newInheritanceGraph(workspace);
+	}
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
@@ -48,6 +70,30 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 			InsnList instructions = method.instructions;
 			if (instructions == null)
 				continue;
+
+			// There are some obfuscators that put junk after the final 'return' instruction of methods.
+			//
+			// For example:
+			//    return
+			//    nop    // dead code removed by ASM
+			//    athrow
+			//
+			// In this transformer, we ensure that removing blocks near the end of a method does not result in dangling code.
+			// Without removing the dead code seen in the example, this transformer would see the 'athrow' and think it is
+			// ok to move a block containing the 'return' somewhere else. However, the 'athrow' there is not valid because
+			// there is nothing on the stack to throw.
+			//
+			// The simple fix is to do a dead-code removing pass before we run this transformer.
+			try {
+				Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
+				for (int i = instructions.size() - 1; i >= 0; i--) {
+					AbstractInsnNode insn = instructions.get(i);
+					if (frames[i] == null || insn.getOpcode() == NOP)
+						instructions.remove(insn);
+				}
+			} catch (Throwable t) {
+				throw new TransformationException("Error encountered when removing dead code before handling goto inlining", t);
+			}
 
 			// Count how often each label in the method is visited by control flow.
 			//  - We *never* want to mess around with try-catch range boundaries, so they get a large bump so we can
@@ -180,7 +226,6 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 			context.setNode(bundle, initialClassState, node);
 		}
 	}
-
 
 	@Nonnull
 	@Override
