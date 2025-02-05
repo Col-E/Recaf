@@ -98,7 +98,7 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 						// Abort if the current target isn't the initial GOTO destination label,
 						// and the current target is a label that has been visited more than once by control flow.
 						int targetOp = target.getOpcode();
-						if (target != jin.label && targetOp == -1 && jumpCount.getOrDefault(target, 0) > 0)
+						if (target != jin.label && targetOp == -1 && jumpCount.getOrDefault(target, 0) > 1)
 							break doInline;
 
 						// Abort if we see that relocating the GOTO destination's code would change the behavior
