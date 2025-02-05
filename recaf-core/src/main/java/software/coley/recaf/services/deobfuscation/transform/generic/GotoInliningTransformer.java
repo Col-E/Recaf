@@ -137,7 +137,8 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 					target = jin.label;
 					List<AbstractInsnNode> block = new ArrayList<>();
 					while (target != null) {
-						block.add(target);
+						if (target.getType() != AbstractInsnNode.FRAME)
+							block.add(target);
 						if (isGotBlockTerminator(target.getOpcode()))
 							break;
 						target = target.getNext();
@@ -145,8 +146,10 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 
 					// Cut and paste those instructions into a temporary list.
 					InsnList tempInsnList = new InsnList();
-					block.forEach(instructions::remove);
-					block.forEach(tempInsnList::add);
+					for (AbstractInsnNode blockInsn : block) {
+						instructions.remove(blockInsn);
+						tempInsnList.add(blockInsn);
+					}
 
 					// Insert the block after the GOTO, then remove the GOTO.
 					instructions.insert(jin, tempInsnList);
@@ -158,8 +161,10 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 				}
 			}
 		}
-		if (dirty)
+		if (dirty) {
+			context.setRecomputeFrames(className);
 			context.setNode(bundle, initialClassState, node);
+		}
 	}
 
 
