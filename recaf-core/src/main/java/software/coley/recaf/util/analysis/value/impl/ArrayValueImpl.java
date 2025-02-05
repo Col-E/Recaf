@@ -6,7 +6,6 @@ import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 
-import java.sql.Types;
 import java.util.OptionalInt;
 
 /**
@@ -21,14 +20,14 @@ public class ArrayValueImpl implements ArrayValue {
 	private final OptionalInt length;
 
 	public ArrayValueImpl(@Nonnull Type type, @Nonnull Nullness nullness) {
-		if (type.getSort() != Types.ARRAY) throw new IllegalStateException("Non-array type passed to array-value");
+		if (type.getSort() != Type.ARRAY) throw new IllegalStateException("Non-array type passed to array-value");
 		this.type = type;
 		this.nullness = nullness;
 		this.length = OptionalInt.empty();
 	}
 
 	public ArrayValueImpl(@Nonnull Type type, @Nonnull Nullness nullness, int length) {
-		if (type.getSort() != Types.ARRAY) throw new IllegalStateException("Non-array type passed to array-value");
+		if (type.getSort() != Type.ARRAY) throw new IllegalStateException("Non-array type passed to array-value");
 		this.type = type;
 		this.nullness = nullness;
 		this.length = OptionalInt.of(length);
