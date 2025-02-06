@@ -7,12 +7,14 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -141,6 +143,57 @@ public class AsmInsnUtil implements Opcodes {
 			case Type.LONG -> new VarInsnNode(LSTORE, index);
 			default -> new VarInsnNode(ASTORE, index);
 		};
+	}
+
+	/**
+	 * Checks in the given method for local vars that have label references
+	 * that do not exist in the method's instructions list.
+	 *
+	 * @param method
+	 * 		Method to fix local variables of.
+	 */
+	public static void fixMissingVariableLabels(@Nonnull MethodNode method) {
+		// Must not be abstract
+		InsnList instructions = method.instructions;
+		if (instructions == null)
+			return;
+
+		// Must have variables to fix
+		List<LocalVariableNode> variables = method.localVariables;
+		if (variables == null)
+			return;
+
+		// Find or create first/last labels
+		LabelNode firstLabel = null;
+		LabelNode lastLabel = null;
+		for (int i = 0; i < instructions.size(); i++)
+			if (instructions.get(i) instanceof LabelNode label) {
+				firstLabel = label;
+				break;
+			}
+		for (int i = instructions.size() - 1; i >= 0; i--)
+			if (instructions.get(i) instanceof LabelNode label) {
+				lastLabel = label;
+				break;
+			}
+		if (firstLabel == null)
+			instructions.insert(firstLabel = new LabelNode());
+		if (lastLabel == null || lastLabel == firstLabel)
+			instructions.add(lastLabel = new LabelNode());
+
+		// Find any variables that have invalid labels and reassign them if needed
+		for (LocalVariableNode variable : variables) {
+			int start = instructions.indexOf(variable.start);
+			int end = instructions.indexOf(variable.end);
+
+			// Variable start must be a valid label in the method, and occur before the end label
+			if (start < 0 || start > end)
+				variable.start = firstLabel;
+
+			// End label must be a valid label in the method
+			if (end < 0)
+				variable.end = lastLabel;
+		}
 	}
 
 	/**

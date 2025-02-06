@@ -66,7 +66,14 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 		boolean dirty = false;
 		String className = initialClassState.getName();
 		ClassNode node = context.getNode(bundle, initialClassState);
-		for (MethodNode method : node.methods) {
+		for (int m = 0; m < node.methods.size(); m++) {
+			// Because of the multiple "stages" we do, it's easier if we work on a copy of the method
+			// and then write back our copy if we ended up making relevant changes. This way, if we
+			// have changes from pre-processing, but there is no inlining work that gets done we can
+			// throw away the changes and not worry about the changes accidentally being kept.
+			MethodNode method = copyOf(node.methods.get(m));
+
+			// Skip if abstract.
 			InsnList instructions = method.instructions;
 			if (instructions == null)
 				continue;
@@ -120,6 +127,7 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 			}
 
 			// Check instructions for GOTOs that can be inlined.
+			boolean localDirty = false;
 			for (int i = 0; i < instructions.size(); i++) {
 				AbstractInsnNode insn = instructions.get(i);
 
@@ -214,17 +222,44 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 					// Insert the block after the GOTO, then remove the GOTO.
 					instructions.insert(jin, tempInsnList);
 					instructions.remove(jin);
-					dirty = true;
+					localDirty = true;
 
 					// Start over from the beginning.
 					i = 0;
 				}
+			}
+			if (localDirty) {
+				// Do another dead code removal pass.
+				try {
+					Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
+					for (int i = instructions.size() - 1; i >= 0; i--) {
+						AbstractInsnNode insn = instructions.get(i);
+						if (frames[i] == null || insn.getOpcode() == NOP)
+							instructions.remove(insn);
+					}
+				} catch (Throwable t) {
+					throw new TransformationException("Error encountered when removing dead code after handling goto inlining", t);
+				}
+
+				// Fix references to labels that no longer exist in local variable debug metadata.
+				fixMissingVariableLabels(method);
+				dirty = true;
+
+				// Update the class with our transformed copy of the method.
+				node.methods.set(m, method);
 			}
 		}
 		if (dirty) {
 			context.setRecomputeFrames(className);
 			context.setNode(bundle, initialClassState, node);
 		}
+	}
+
+	@Nonnull
+	private static MethodNode copyOf(@Nonnull MethodNode base) {
+		MethodNode copy = new MethodNode(base.access, base.name, base.desc, base.signature, base.exceptions.toArray(String[]::new));
+		base.accept(copy);
+		return copy;
 	}
 
 	@Nonnull
