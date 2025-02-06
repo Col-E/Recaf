@@ -36,6 +36,7 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 	private final InheritanceGraphService graphService;
 	private final WorkspaceManager workspaceManager;
 	private InheritanceGraph inheritanceGraph;
+	private JvmTransformerContext context;
 
 	@Inject
 	public DeadCodeRemovingTransformer(@Nonnull WorkspaceManager workspaceManager, @Nonnull InheritanceGraphService graphService) {
@@ -45,6 +46,8 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		this.context = context;
+
 		inheritanceGraph = workspace == workspaceManager.getCurrent() ?
 				graphService.getCurrentWorkspaceInheritanceGraph() :
 				graphService.newInheritanceGraph(workspace);
@@ -57,34 +60,49 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 		boolean dirty = false;
 		String className = initialClassState.getName();
 		ClassNode node = context.getNode(bundle, initialClassState);
-		for (MethodNode method : node.methods) {
-			InsnList instructions = method.instructions;
-			if (instructions == null)
-				continue;
-			try {
-				// Prune any dead code
-				Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
-				for (int i = instructions.size() - 1; i >= 0; i--) {
-					AbstractInsnNode insn = instructions.get(i);
-					if (frames[i] == null || insn.getOpcode() == NOP) {
-						instructions.remove(insn);
-						dirty = true;
-					}
-				}
-
-				// Ensure that after dead code removal (or any other transformers not cleaning up)
-				// that all variables have labels that reside in the method code list.
-				List<LocalVariableNode> variables = method.localVariables;
-				if (variables != null && variables.stream().anyMatch(l -> !instructions.contains(l.start) || !instructions.contains(l.end))) {
-					fixMissingVariableLabels(method);
-					dirty = true;
-				}
-			} catch (Throwable t) {
-				throw new TransformationException("Error encountered when removing dead code", t);
-			}
-		}
+		for (MethodNode method : node.methods)
+			dirty |= prune(node, method);
 		if (dirty)
 			context.setNode(bundle, initialClassState, node);
+	}
+
+	public boolean prune(@Nonnull ClassNode node, @Nonnull MethodNode method) throws TransformationException {
+		InsnList instructions = method.instructions;
+		if (instructions == null)
+			return false;
+		boolean dirty = false;
+		try {
+			// Prune any dead code
+			Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
+			for (int i = instructions.size() - 1; i >= 0; i--) {
+				AbstractInsnNode insn = instructions.get(i);
+				if (frames[i] == null || insn.getOpcode() == NOP) {
+					instructions.remove(insn);
+
+					// Remove try-catch ranges if their labels are within the dead-code range.
+					if (insn.getType() == AbstractInsnNode.LABEL)
+						method.tryCatchBlocks.removeIf(tryCatch -> {
+							if (insn == tryCatch.start) return true;
+							if (insn == tryCatch.end) return true;
+							return insn == tryCatch.handler;
+						});
+
+					// Mark as dirty.
+					dirty = true;
+				}
+			}
+
+			// Ensure that after dead code removal (or any other transformers not cleaning up)
+			// that all variables have labels that reside in the method code list.
+			List<LocalVariableNode> variables = method.localVariables;
+			if (variables != null && variables.stream().anyMatch(l -> !instructions.contains(l.start) || !instructions.contains(l.end))) {
+				fixMissingVariableLabels(method);
+				dirty = true;
+			}
+		} catch (Throwable t) {
+			throw new TransformationException("Error encountered when removing dead code", t);
+		}
+		return dirty;
 	}
 
 	@Nonnull

@@ -17,6 +17,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
+import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -487,18 +488,19 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 					tryCatchBlocks.remove(redundantBlock);
 
 				// Because the control flow has changes we will want to remove code that is no longer accessible (dead catch handlers)
-				frames = context.analyze(inheritanceGraph, node, method);
-				for (int i = instructions.size() - 1; i >= 0; i--) {
-					AbstractInsnNode insn = instructions.get(i);
-					if (frames[i] == null || insn.getOpcode() == NOP)
-						instructions.remove(insn);
-				}
+				context.pruneDeadCode(node, method);
 
 				dirty = true;
 			}
 		}
 		if (dirty)
 			context.setNode(bundle, initialClassState, node);
+	}
+
+	@Nonnull
+	@Override
+	public Set<Class<? extends ClassTransformer>> dependencies() {
+		return Collections.singleton(DeadCodeRemovingTransformer.class);
 	}
 
 	@Nonnull

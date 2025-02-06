@@ -15,6 +15,7 @@ import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -26,6 +27,8 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -203,13 +206,8 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 				// Clear any code that is no longer accessible. If we don't do this step ASM's auto-cleanup
 				// will likely leave some ugly artifacts like "athrow" in dead code regions.
 				if (localDirty) {
+					context.pruneDeadCode(node, method);
 					dirty = true;
-					frames = context.analyze(inheritanceGraph, node, method);
-					for (int i = instructions.size() - 1; i >= 0; i--) {
-						AbstractInsnNode insn = instructions.get(i);
-						if (frames[i] == null || insn.getOpcode() == NOP)
-							instructions.remove(insn);
-					}
 				}
 			} catch (Throwable t) {
 				throw new TransformationException("Error encountered when folding opaque predicates", t);
@@ -293,6 +291,12 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 			return true;
 		}
 		return false;
+	}
+
+	@Nonnull
+	@Override
+	public Set<Class<? extends ClassTransformer>> dependencies() {
+		return Collections.singleton(DeadCodeRemovingTransformer.class);
 	}
 
 	@Nonnull

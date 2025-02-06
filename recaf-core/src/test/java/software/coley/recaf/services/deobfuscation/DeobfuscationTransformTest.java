@@ -844,6 +844,39 @@ class DeobfuscationTransformTest extends TestBase {
 		}
 
 		@Test
+		void foldOpaquePredicateAlsoRemovesTryCatchesThatAreNowDeadCode() {
+			String asm = """
+					.method example ()V {
+					    exceptions: {
+					        { B, C, C, Ljava/lang/Exception; },
+					        { C, D, B, Ljava/lang/Exception; }
+					     },
+					    code: {
+					    A:
+					        // When this opaque predicate gets folded it will make the try-catch ranges into dead code.
+					        // The dead code filter will remove the contents of that code range, and thus the
+					        // try-catch declarations should also be removed from the method.
+					        iconst_0
+					        ifeq D
+					        aconst_null
+					    B:
+					        athrow
+					    C:
+					        athrow
+					    D:
+					        aload this
+					        invokespecial java/lang/Object.<init> ()V
+					        return
+					    E:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class, DeadCodeRemovingTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("exceptions:", dis), "Try-catch blocks should have been removed");
+			});
+		}
+
+		@Test
 		void foldUselessGoto() {
 			String asm = """
 					.method public static example ()V {

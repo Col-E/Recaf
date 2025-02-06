@@ -10,6 +10,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
+import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.util.analysis.ReAnalyzer;
@@ -180,6 +181,26 @@ public class JvmTransformerContext {
 		//  - interpreter.setInvokeVirtualLookup(...);
 		//  - interpreter.setGetStaticLookup(...);
 		return new ReAnalyzer(interpreter);
+	}
+
+	/**
+	 * Utility to invoke {@link DeadCodeRemovingTransformer} for a given method.
+	 * Requires the transformer to be provided to this context.
+	 *
+	 * @param declaringClass
+	 * 		Class declaring the method to clean up.
+	 * @param method
+	 * 		Method with dead code to remove.
+	 *
+	 * @return {@code true} when there were changes as a result of dead code removal.
+	 * {@code false} for no changes being made to the passed method.
+	 *
+	 * @throws TransformationException
+	 * 		When the {@link DeadCodeRemovingTransformer} was not provided to this context,
+	 * 		or if dead code removal encountered an error.
+	 */
+	public boolean pruneDeadCode(@Nonnull ClassNode declaringClass, @Nonnull MethodNode method) throws TransformationException {
+		return getJvmTransformer(DeadCodeRemovingTransformer.class).prune(declaringClass, method);
 	}
 
 	/**
