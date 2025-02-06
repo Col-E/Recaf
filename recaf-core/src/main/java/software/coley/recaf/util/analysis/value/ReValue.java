@@ -82,6 +82,29 @@ public sealed interface ReValue extends Value permits IntValue, FloatValue, Doub
 	}
 
 	/**
+	 * @param type
+	 * 		Type of value to create a new generic value for.
+	 *
+	 * @return Value of the given type with the default value <i>({@code 0} for primitives, {@code null} for objects/arrays)</i>.
+	 *
+	 * @throws IllegalValueException
+	 * 		When the type could not be mapped to a {@link ReValue}.
+	 */
+	@Nonnull
+	static ReValue ofTypeDefaultValue(@Nonnull Type type) throws IllegalValueException {
+		return switch (type.getSort()) {
+			case Type.VOID -> throw new IllegalValueException("Cannot create default value for 'void' type");
+			case Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> IntValue.VAL_0;
+			case Type.FLOAT -> FloatValue.VAL_0;
+			case Type.LONG -> LongValue.VAL_0;
+			case Type.DOUBLE -> DoubleValue.VAL_0;
+			case Type.ARRAY -> ArrayValue.of(type, Nullness.NULL);
+			case Type.OBJECT -> ObjectValue.object(type, Nullness.NULL);
+			default -> throw new IllegalValueException("Invalid type for new default value: " + type);
+		};
+	}
+
+	/**
 	 * @return {@code true} when the exact content is known.
 	 */
 	boolean hasKnownValue();

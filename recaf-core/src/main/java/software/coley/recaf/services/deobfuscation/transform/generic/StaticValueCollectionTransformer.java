@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -19,8 +20,10 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
+import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -172,9 +175,19 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 							valuesContainer.put(fieldName, fieldDesc, merged);
 						}
 					}
+
+					// Any static final fields that have not been assigned are assumed to contain their default values.
+					valuesContainer.commitRemainingAsDefaults(finalContainer);
 				} catch (Throwable t) {
 					throw new TransformationException("Error encountered when computing static constants", t);
 				}
+			}
+		} else {
+			// If there is no static initializer, then assume the values are defaults (o for primitives, null for objects)
+			try {
+				valuesContainer.commitRemainingAsDefaults(finalContainer);
+			} catch (IllegalValueException ex) {
+				throw new TransformationException("Error encountered when computing default constant values", ex);
 			}
 		}
 
@@ -201,6 +214,19 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 		for (AbstractInsnNode abstractInsnNode : method.instructions)
 			if (abstractInsnNode.getOpcode() == Opcodes.PUTSTATIC) return true;
 		return false;
+	}
+
+	/**
+	 * @param name
+	 * 		Field name.
+	 * @param desc
+	 * 		Field descriptor.
+	 *
+	 * @return Field key.
+	 */
+	@Nonnull
+	private static String key(@Nonnull String name, @Nonnull String desc) {
+		return name + ':' + desc;
 	}
 
 	/**
@@ -275,11 +301,6 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 				return false;
 			return finalFieldKeys.contains(key(name, desc));
 		}
-
-		@Nonnull
-		private static String key(@Nonnull String name, @Nonnull String desc) {
-			return name + " " + desc;
-		}
 	}
 
 	/**
@@ -289,17 +310,26 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 		private final Map<String, ReValue> staticFieldValues = new ConcurrentHashMap<>();
 
 		private void put(@Nonnull String name, @Nonnull String desc, @Nonnull ReValue value) {
-			staticFieldValues.put(getKey(name, desc), value);
+			staticFieldValues.put(key(name, desc), value);
 		}
 
 		@Nullable
 		private ReValue get(@Nonnull String name, @Nonnull String desc) {
-			return staticFieldValues.get(getKey(name, desc));
+			return staticFieldValues.get(key(name, desc));
 		}
 
-		@Nonnull
-		private static String getKey(@Nonnull String name, @Nonnull String desc) {
-			return name + ' ' + desc;
+		private void commitRemainingAsDefaults(@Nonnull EffectivelyFinalFields finalFields) throws IllegalValueException {
+			if (finalFields.finalFieldKeys == null)
+				return;
+
+			// By the point this is called, the final fields container will have committed any "maybe" candidates
+			// that are valid to being actually final. Thus, if we see anything in the final field set, we will
+			// initialize them with default values here.
+			for (String key : finalFields.finalFieldKeys)
+				if (!staticFieldValues.containsKey(key)) {
+					Type fieldType = Type.getType(key.substring(key.indexOf(':') + 1));
+					staticFieldValues.put(key, ReValue.ofTypeDefaultValue(fieldType));
+				}
 		}
 	}
 }
