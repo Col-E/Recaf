@@ -19,6 +19,7 @@ import software.coley.recaf.test.dummy.ClassWithInnerAndMembers;
 import software.coley.recaf.test.dummy.ClassWithLambda;
 import software.coley.recaf.test.dummy.ClassWithRequiredConstructor;
 import software.coley.recaf.test.dummy.DummyEnum;
+import software.coley.recaf.test.dummy.DummyRecord;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
@@ -35,6 +36,7 @@ class ExpressionCompilerTest extends TestBase {
 	static JvmClassInfo targetClass;
 	static JvmClassInfo targetCtorClass;
 	static JvmClassInfo targetEnum;
+	static JvmClassInfo targetRecord;
 	static JvmClassInfo targetOuterWithInner;
 	static JvmClassInfo targetClassWithLambda;
 
@@ -43,6 +45,7 @@ class ExpressionCompilerTest extends TestBase {
 		targetClass = TestClassUtils.fromRuntimeClass(ClassWithFieldsAndMethods.class);
 		targetCtorClass = TestClassUtils.fromRuntimeClass(ClassWithRequiredConstructor.class);
 		targetEnum = TestClassUtils.fromRuntimeClass(DummyEnum.class);
+		targetRecord = TestClassUtils.fromRuntimeClass(DummyRecord.class);
 		targetOuterWithInner = TestClassUtils.fromRuntimeClass(ClassWithInnerAndMembers.class);
 		targetClassWithLambda = TestClassUtils.fromRuntimeClass(ClassWithLambda.class);
 		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(targetClass, targetCtorClass, targetEnum));
@@ -97,6 +100,19 @@ class ExpressionCompilerTest extends TestBase {
 				int i2 = TWO.ordinal();
 				int i3 = THREE.ordinal();
 				int add = i1 + i2 + i3;
+				""");
+		assertSuccess(result);
+	}
+
+	@Test
+	void recordContext() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(targetRecord);
+		assembler.setMethodContext(targetRecord.getFirstDeclaredMethodByName("fooPlus"));
+		ExpressionResult result = compile(assembler, """
+				int plus = foo + other;
+				int mul = foo * other;
+				return String.valueOf(mul - plus);
 				""");
 		assertSuccess(result);
 	}

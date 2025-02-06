@@ -478,6 +478,10 @@ public abstract class ClassStubGenerator {
 		if (internalName.indexOf('.') >= 0)
 			throw new IllegalStateException("Saw source name format, expected internal name format");
 
+		// Extending record directly is not allowed
+		if ("java/lang/Record".equals(internalName))
+			return false;
+
 		// All package name portions and the class name must be valid names.
 		return StringUtil.fastSplit(internalName, true, '/').stream()
 				.allMatch(ClassStubGenerator::isSafeName);
