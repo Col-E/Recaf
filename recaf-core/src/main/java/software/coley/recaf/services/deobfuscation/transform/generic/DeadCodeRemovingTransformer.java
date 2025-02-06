@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.info.JvmClassInfo;
@@ -20,7 +21,10 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.List;
+
 import static org.objectweb.asm.Opcodes.NOP;
+import static software.coley.recaf.util.AsmInsnUtil.fixMissingVariableLabels;
 
 /**
  * A transformer that removes dead code.
@@ -58,6 +62,7 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 			if (instructions == null)
 				continue;
 			try {
+				// Prune any dead code
 				Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
 				for (int i = instructions.size() - 1; i >= 0; i--) {
 					AbstractInsnNode insn = instructions.get(i);
@@ -65,6 +70,14 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 						instructions.remove(insn);
 						dirty = true;
 					}
+				}
+
+				// Ensure that after dead code removal (or any other transformers not cleaning up)
+				// that all variables have labels that reside in the method code list.
+				List<LocalVariableNode> variables = method.localVariables;
+				if (variables != null && variables.stream().anyMatch(l -> !instructions.contains(l.start) || !instructions.contains(l.end))) {
+					fixMissingVariableLabels(method);
+					dirty = true;
 				}
 			} catch (Throwable t) {
 				throw new TransformationException("Error encountered when removing dead code", t);
