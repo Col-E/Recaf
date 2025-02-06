@@ -681,6 +681,8 @@ public class Editor extends BorderPane implements Closing {
 	@Nonnull
 	public <T> CompletableFuture<Void> schedule(@Nonnull ExecutorService supplierService, @Nullable T fallback,
 	                                            @Nonnull Supplier<T> supplier, @Nonnull Consumer<T> consumer) {
+		if (supplierService.isShutdown())
+			return CompletableFuture.completedFuture(null);
 		return CompletableFuture.supplyAsync(ThreadUtil.wrap(supplier, fallback), supplierService)
 				.thenAcceptAsync(ThreadUtil.wrap(consumer), FxThreadUtil.executor());
 	}
