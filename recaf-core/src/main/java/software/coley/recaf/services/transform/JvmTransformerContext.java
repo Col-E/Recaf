@@ -361,7 +361,12 @@ public class JvmTransformerContext {
 					}
 				}
 			}
-			return node;
+
+			// We always give back a copy so actions taken on this node are not affecting the cached instance
+			// unless a transformer explicitly commits the change.
+			ClassNode nodeCopy = new ClassNode();
+			node.accept(nodeCopy);
+			return nodeCopy;
 		}
 
 		/**
