@@ -47,10 +47,12 @@ public class WorkspaceLoadingDropListener implements FileDropListener {
 		if (files.isEmpty()) return;
 
 		if (config.createOnDragDrop() || !workspaceManager.hasCurrentWorkspace()) {
-			// Create new workspace from files
-			//  - The last path is actually the first file selected by the user when multiple files are selected
-			Path primary = files.getLast();
-			List<Path> supporting = files.size() > 1 ? files.subList(0, files.size() - 1) : Collections.emptyList();
+			// Windows sucks: https://superuser.com/questions/1696568/windows-explorer-file-order-in-the-clipboard
+			//  - We can get the last clicked file to always be first when dragging from explorer
+			//    but everything else will be in shuffled order, and we can't do anything about it.
+			//  - Example: Using 'everything' instead of explorer for selection, we cannot guarantee drag-n-drop order.
+			Path primary = files.getFirst();
+			List<Path> supporting = files.size() > 1 ? files.subList(1, files.size()) : Collections.emptyList();
 			pathLoadingManager.asyncNewWorkspace(primary, supporting, err -> {
 				logger.error("Failed to create new workspace from dropped files", err);
 			});
