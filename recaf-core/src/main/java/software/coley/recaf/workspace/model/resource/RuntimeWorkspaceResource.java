@@ -39,7 +39,6 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 	private static final Logger logger = Logging.get(RuntimeWorkspaceResource.class);
 	private static final Map<String, JvmClassInfo> cache = new ConcurrentHashMap<>();
 	private static final Set<String> stubClasses = ConcurrentHashMap.newKeySet();
-	private static RuntimeWorkspaceResource instance;
 	private final JvmClassBundle classes;
 	private final FileBundle files;
 
@@ -47,9 +46,7 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 	 * @return Instance of runtime workspace resource.
 	 */
 	public static RuntimeWorkspaceResource getInstance() {
-		if (instance == null)
-			instance = new RuntimeWorkspaceResource();
-		return instance;
+		return InstanceHolder.INSTANCE;
 	}
 
 	private RuntimeWorkspaceResource() {
@@ -239,5 +236,10 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 	@Override
 	public boolean isInternal() {
 		return true;
+	}
+
+	/** Statically initialized inner class used as a lightweight alternative to double-sync block. */
+	private static final class InstanceHolder {
+		private static final RuntimeWorkspaceResource INSTANCE = new RuntimeWorkspaceResource();
 	}
 }
