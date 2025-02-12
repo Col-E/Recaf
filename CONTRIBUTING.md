@@ -29,16 +29,16 @@ You can DM `invokecoley` on discord, or join the [Recaf discord](https://discord
 
 For example, you can contribute ideas, add translations, or write documentation:
 
-- [User documentation](https://github.com/Col-E/recaf-user-documentation)
-- [Developer documentation](https://github.com/Col-E/recaf-developer-documentation)
+- [Documentation source](https://github.com/Col-E/recaf-site)
+- [Documentation site](https://recaf.coley.software/)
 
 ## What should I know before getting started?
 
-It depends on what changes you are making. For instance, changing the user-interface requires very minimal or no reverse-engineering prior knowledge. If you do need JVM reversal knowledge to work on a feature you can check the [primer guide](PRIMER.md) which points to several good resources and outlines key details.
+It depends on what changes you are making. For instance, changing the user-interface requires very minimal or no reverse-engineering prior knowledge. If you do need JVM reversal knowledge to work on a feature you can check the [primer guide](PRIMER.md) which points to several good resources and outlines key details. For a general understanding of how Recaf works and how to begin creating contributions you can read our [getting started](https://recaf.coley.software/dev/getting-started.html) page as well.
 
 ## Is there a to-do list?
 
-Unfortunately the to-do list is scattered around a a few places. We're working on eventually consolidating everything into one place.
+Unfortunately the to-do list is scattered around a few places. We're working on eventually consolidating everything into one place.
 
 ## Reporting Bugs
 
