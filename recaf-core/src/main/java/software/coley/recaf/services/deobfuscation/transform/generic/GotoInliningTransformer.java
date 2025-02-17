@@ -48,16 +48,18 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 		String className = initialClassState.getName();
 		ClassNode node = context.getNode(bundle, initialClassState);
 		for (int m = 0; m < node.methods.size(); m++) {
+			MethodNode base = node.methods.get(m);
+
+			// Skip if abstract.
+			if (base.instructions == null)
+				continue;
+
 			// Because of the multiple "stages" we do, it's easier if we work on a copy of the method
 			// and then write back our copy if we ended up making relevant changes. This way, if we
 			// have changes from pre-processing, but there is no inlining work that gets done we can
 			// throw away the changes and not worry about the changes accidentally being kept.
-			MethodNode method = copyOf(node.methods.get(m));
-
-			// Skip if abstract.
+			MethodNode method = copyOf(base);
 			InsnList instructions = method.instructions;
-			if (instructions == null)
-				continue;
 
 			// There are some obfuscators that put junk after the final 'return' instruction of methods.
 			//
