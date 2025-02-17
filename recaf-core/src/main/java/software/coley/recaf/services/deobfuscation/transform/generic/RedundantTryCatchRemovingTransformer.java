@@ -65,7 +65,8 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 	private InheritanceGraph inheritanceGraph;
 
 	@Inject
-	public RedundantTryCatchRemovingTransformer(@Nonnull WorkspaceManager workspaceManager, @Nonnull InheritanceGraphService graphService) {
+	public RedundantTryCatchRemovingTransformer(@Nonnull WorkspaceManager workspaceManager,
+	                                            @Nonnull InheritanceGraphService graphService) {
 		this.workspaceManager = workspaceManager;
 		this.graphService = graphService;
 	}

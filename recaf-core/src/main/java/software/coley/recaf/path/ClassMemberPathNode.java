@@ -80,7 +80,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @param exceptionType
 	 * 		Thrown type to wrap into node.
 	 *
-	 * @return Path node of thrown type, with the current member as parent.
+	 * @return Path node of caught type, with the current member as parent.
 	 */
 	@Nonnull
 	public CatchPathNode childCatch(@Nonnull String exceptionType) {

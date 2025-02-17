@@ -39,6 +39,7 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
 @ApplicationScoped
 public class GotoInliningTransformer implements JvmClassTransformer {
 	private static final int CATCH_VISIT_COUNT = 100;
+	private static final boolean DO_WE_CARE_ABOUT_BACKWARDS_SWITCH_FLOW = false;
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
@@ -77,7 +78,7 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 			context.pruneDeadCode(node, method);
 
 			// Count how often each label in the method is visited by control flow.
-			//  - We *never* want to mess around with try-catch range boundaries, so they get a large bump so we can
+			//  - We *never* want to mess around with try-catch range boundaries, so they get a large bump, so we can
 			//    clearly see them while debugging.
 			Map<LabelNode, Integer> jumpCount = new IdentityHashMap<>();
 			for (int i = 0; i < instructions.size(); i++) {
@@ -152,9 +153,17 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 							}
 						}
 
+						// TODO: Maybe remove this? Need to do more research into when it complains.
+						if (DO_WE_CARE_ABOUT_BACKWARDS_SWITCH_FLOW) {
+							// There are some weird cases where you're not allowed to jump backwards in switch instructions,
+							// so it's better to abort if we see them so that we do not move them around in an illegal way.
+							if (targetOp == TABLESWITCH || targetOp == LOOKUPSWITCH)
+								break doInline;
+						}
+
 						// Break out of this while loop if the target instruction is the end of a method's control flow,
 						// or an always-branch instruction like goto/switch.
-						if (isGotBlockTerminator(targetOp))
+						if (isGotoBlockTerminator(targetOp))
 							break;
 
 						// Move forward.
@@ -167,7 +176,7 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 					while (target != null) {
 						if (target.getType() != AbstractInsnNode.FRAME)
 							block.add(target);
-						if (isGotBlockTerminator(target.getOpcode())) {
+						if (isGotoBlockTerminator(target.getOpcode())) {
 							// This is the end of the block. Check if inlining this would cause
 							// dangling code (no return at the end of the method)
 							AbstractInsnNode next = getNextInsn(target);
@@ -252,7 +261,7 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 	 * @return {@code true} when the opcode represents an instruction
 	 * that should mark the end of a {@code GOTO} destination block.
 	 */
-	private static boolean isGotBlockTerminator(int op) {
+	private static boolean isGotoBlockTerminator(int op) {
 		return isReturn(op) || op == GOTO || op == TABLESWITCH || op == LOOKUPSWITCH || op == ATHROW;
 	}
 }

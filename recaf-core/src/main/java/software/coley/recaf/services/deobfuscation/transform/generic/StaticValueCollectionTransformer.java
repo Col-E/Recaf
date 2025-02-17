@@ -20,7 +20,6 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
