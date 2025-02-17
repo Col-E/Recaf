@@ -8,7 +8,9 @@ import dev.xdark.blw.code.generic.GenericLabel;
 import dev.xdark.blw.code.instruction.BranchInstruction;
 import dev.xdark.blw.code.instruction.ConditionalJumpInstruction;
 import dev.xdark.blw.code.instruction.ImmediateJumpInstruction;
+import dev.xdark.blw.code.instruction.LookupSwitchInstruction;
 import dev.xdark.blw.code.instruction.SimpleInstruction;
+import dev.xdark.blw.code.instruction.TableSwitchInstruction;
 import dev.xdark.blw.code.instruction.VarInstruction;
 import dev.xdark.blw.code.instruction.VariableIncrementInstruction;
 import dev.xdark.blw.simulation.ExecutionEngines;
@@ -27,11 +29,14 @@ import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -66,6 +71,28 @@ public class BlwUtil {
 				yield jin.getOpcode() == Opcodes.GOTO ?
 						new ImmediateJumpInstruction(insn.getOpcode(), label) :
 						new ConditionalJumpInstruction(insn.getOpcode(), label);
+			}
+			case TableSwitchInsnNode tsin -> {
+				int min = tsin.min;
+				Label dflt = new GenericLabel();
+				dflt.setIndex(AsmInsnUtil.indexOf(tsin.dflt));
+				List<Label> targets = tsin.labels.stream().map(l -> {
+					Label target = new GenericLabel();
+					target.setIndex(AsmInsnUtil.indexOf(l));
+					return target;
+				}).toList();
+				yield new TableSwitchInstruction(min, dflt, targets);
+			}
+			case LookupSwitchInsnNode lsin -> {
+				int[] keys =lsin.keys.stream().mapToInt(i -> i).toArray();
+				Label dflt = new GenericLabel();
+				dflt.setIndex(AsmInsnUtil.indexOf(lsin.dflt));
+				List<Label> targets = lsin.labels.stream().map(l -> {
+					Label target = new GenericLabel();
+					target.setIndex(AsmInsnUtil.indexOf(l));
+					return target;
+				}).toList();
+				yield new LookupSwitchInstruction(keys, dflt, targets);
 			}
 			case LabelNode ln -> new LabelInstruction(AsmInsnUtil.indexOf(ln));
 			case FrameNode fr -> new SimpleInstruction(0);
@@ -117,7 +144,7 @@ public class BlwUtil {
 			labelNames = Map.of(index, "L" + index);
 		} else if (insn instanceof BranchInstruction branch) {
 			labelNames = branch.targetsStream()
-					.collect(Collectors.toMap(Label::getIndex, l -> "L" + l.getIndex()));
+					.collect(Collectors.toMap(Label::getIndex, l -> "L" + l.getIndex(), (a, b) -> a));
 		} else {
 			labelNames = Collections.emptyMap();
 		}
