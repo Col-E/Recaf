@@ -844,6 +844,49 @@ class DeobfuscationTransformTest extends TestBase {
 		}
 
 		@Test
+		void foldTableSwitchOfUnknownParameterIfIsEffectiveGoto() {
+			String asm = """
+					.method public static example (I)V {
+						parameters: { key },
+					    code: {
+					    A:
+					        iload key
+					        tableswitch {
+					            min: 0,
+					            max: 2,
+					            cases: { D, D, D },
+					            default: D
+					        }
+					    B:
+					        aconst_null
+					        athrow
+					    C:
+					        aconst_null
+					        athrow
+					    D:
+					        return
+					    E:
+					        aconst_null
+					        dup
+					        pop
+					        athrow
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+				// Switch should be replaced with a single goto
+				assertEquals(0, StringUtil.count("iload key", dis), "Expected to remove tableswitch argument");
+				assertEquals(0, StringUtil.count("tableswitch", dis), "Expected to remove tableswitch");
+				assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace tableswitch <target> with goto <target>");
+
+				// Dead code should be removed
+				assertEquals(0, StringUtil.count("aconst_null", dis), "Expected to remove dead aconst_null");
+				assertEquals(0, StringUtil.count("athrow", dis), "Expected to remove dead athrow");
+				assertEquals(0, StringUtil.count("pop", dis), "Expected to remove dead athrow");
+			});
+		}
+
+		@Test
 		void foldOpaquePredicateAlsoRemovesTryCatchesThatAreNowDeadCode() {
 			String asm = """
 					.method example ()V {
