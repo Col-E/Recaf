@@ -74,7 +74,16 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 				boolean localDirty = false;
 				Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
 				for (int i = 1; i < instructions.size() - 1; i++) {
+					AbstractInsnNode instruction = instructions.get(i);
+
+					// Skip if this isn't a control flow instruction.
+					// We are only flattening control flow here.
+					if (!isFlowControl(instruction))
+						continue;
+
 					// Skip if there is no frame for this instruction.
+					if (i >= frames.length)
+						continue; // Can happen if there is dead code at the end
 					Frame<ReValue> frame = frames[i];
 					if (frame == null || frame.getStackSize() == 0)
 						continue;
@@ -92,7 +101,6 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 
 					// Handle any control flow instruction and see if we know based on the frame contents if a specific
 					// path is always taken.
-					AbstractInsnNode instruction = instructions.get(i);
 					int insnType = instruction.getType();
 					if (insnType == AbstractInsnNode.JUMP_INSN) {
 						JumpInsnNode jin = (JumpInsnNode) instruction;
