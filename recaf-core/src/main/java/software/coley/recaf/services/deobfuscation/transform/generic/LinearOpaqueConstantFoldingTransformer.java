@@ -345,13 +345,15 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 		//  - static method calls with 0 args (context will determine if returned value of method is constant/known)
 		if (AsmInsnUtil.isConstValue(insn))
 			return true;
-		if (insn.getOpcode() >= ILOAD && insn.getOpcode() <= ALOAD)
+		int op = insn.getOpcode();
+		if (op >= ILOAD && op <= ALOAD)
 			return true;
-		if (insn instanceof FieldInsnNode)
+		if (op == GETSTATIC)
 			return true;
-		return insn instanceof MethodInsnNode min &&
-				min.desc.startsWith("()") &&
-				!min.desc.endsWith(")V");
+		return op == INVOKESTATIC
+				&& insn instanceof MethodInsnNode min
+				&& min.desc.startsWith("()")
+				&& !min.desc.endsWith(")V");
 	}
 
 	/**
