@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
@@ -42,7 +43,7 @@ public class StringValueImpl extends ObjectValueImpl implements StringValue {
 
 	@Nonnull
 	@Override
-	public ReValue mergeWith(@Nonnull ReValue other) {
+	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
 		if (other instanceof StringValue otherString) {
 			if (getText().isPresent() && otherString.getText().isPresent()) {
 				String s = getText().get();

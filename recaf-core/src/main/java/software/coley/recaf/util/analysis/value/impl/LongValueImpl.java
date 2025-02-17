@@ -1,7 +1,7 @@
 package software.coley.recaf.util.analysis.value.impl;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.util.analysis.value.IntValue;
+import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 
@@ -52,7 +52,7 @@ public class LongValueImpl implements LongValue {
 
 	@Nonnull
 	@Override
-	public ReValue mergeWith(@Nonnull ReValue other) {
+	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
 		if (other instanceof LongValue otherLong) {
 			if (value().isPresent() && otherLong.value().isPresent()) {
 				long i = value().getAsLong();
@@ -62,6 +62,6 @@ public class LongValueImpl implements LongValue {
 			}
 			return LongValue.UNKNOWN;
 		}
-		throw new IllegalStateException("Cannot merge with: " + other);
+		throw new IllegalValueException("Cannot merge with: " + other);
 	}
 }

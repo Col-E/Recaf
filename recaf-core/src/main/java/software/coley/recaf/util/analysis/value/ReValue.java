@@ -120,7 +120,10 @@ public sealed interface ReValue extends Value permits IntValue, FloatValue, Doub
 	 * 		Other value to merge with.
 	 *
 	 * @return Merged value.
+	 *
+	 * @throws IllegalValueException
+	 * 		When the given value cannot be merged with this one.
 	 */
 	@Nonnull
-	ReValue mergeWith(@Nonnull ReValue other);
+	ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException;
 }
