@@ -919,6 +919,26 @@ class DeobfuscationTransformTest extends TestBase {
 			});
 		}
 
+		/** Simple case used to cover base case in transformer impl */
+		@Test
+		void foldImmediateGotoNext() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        goto B
+					    B:
+					        return
+					    C:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(GotoInliningTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("goto", dis), "Expected to replace all goto <target> with inlining");
+				assertEquals(0, StringUtil.count("C:", dis), "Expected to simplify out 'C' label, only two labels needed in this example after inlining");
+			});
+		}
+
 		@Test
 		void foldUselessGoto() {
 			String asm = """
@@ -1033,6 +1053,47 @@ class DeobfuscationTransformTest extends TestBase {
 			validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class, GotoInliningTransformer.class), dis -> {
 				assertEquals(0, StringUtil.count("goto", dis), "Expected to replace all goto <target> with inlining");
 			});
+		}
+
+		@Test
+		void doNotFoldGotoCycle() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        goto A
+					    B:
+					    }
+					}
+					""";
+			validateNoTransformation(asm, List.of(GotoInliningTransformer.class));
+		}
+
+		@Test
+		void doNotFoldGotoOfTransitionBlockCycle() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        iconst_1
+					        pop
+					        // block "A" naturally flows into block "B"
+					    B:
+					        iconst_2
+					        pop
+					        // block "B" naturally flows into block "C"
+					    C:
+					        iconst_3
+					        ifne D
+					        // We should not inline block "B" here because "A" --> "B" would be broken if we did that.
+					        goto B
+					    D:
+					        return
+					    E:
+					    }
+					}
+					""";
+			validateNoTransformation(asm, List.of(GotoInliningTransformer.class));
 		}
 
 		@Test
