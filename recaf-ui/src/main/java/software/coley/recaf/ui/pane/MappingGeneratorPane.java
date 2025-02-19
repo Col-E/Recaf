@@ -299,9 +299,9 @@ public class MappingGeneratorPane extends StackPane {
 				// Update stats
 				IntermediateMappings mappings = cur.exportIntermediate();
 				int classes = mappings.getClasses().size();
-				int fields = mappings.getFields().size();
-				int methods = mappings.getMethods().size();
-				int variables = mappings.getVariables().size();
+				int fields = mappings.getFields().values().stream().mapToInt(List::size).sum();
+				int methods = mappings.getMethods().values().stream().mapToInt(List::size).sum();
+				int variables = mappings.getVariables().values().stream().mapToInt(List::size).sum();
 				String formatted = """
 						Mappings will rename:
 						 - %d classes
