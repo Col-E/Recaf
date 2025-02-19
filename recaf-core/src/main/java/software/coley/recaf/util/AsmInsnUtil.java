@@ -393,9 +393,37 @@ public class AsmInsnUtil implements Opcodes {
 	 */
 	public static boolean isTerminalOrAlwaysTakeFlowControl(int op) {
 		return switch (op) {
-			case IRETURN, LRETURN, FRETURN, DRETURN, ARETURN, RETURN, ATHROW, GOTO -> true;
+			case IRETURN, LRETURN, FRETURN, DRETURN, ARETURN, RETURN, ATHROW, TABLESWITCH, LOOKUPSWITCH, GOTO -> true;
 			default -> false;
 		};
+	}
+
+	/**
+	 * @param switchInsn
+	 * 		Switch instruction.
+	 *
+	 * @return {@code true} when all destinations are identical.
+	 */
+	public static boolean isSwitchEffectiveGoto(@Nonnull TableSwitchInsnNode switchInsn) {
+		LabelNode target = switchInsn.dflt;
+		for (LabelNode label : switchInsn.labels)
+			if (label != target)
+				return false;
+		return true;
+	}
+
+	/**
+	 * @param switchInsn
+	 * 		Switch instruction.
+	 *
+	 * @return {@code true} when all destinations are identical.
+	 */
+	public static boolean isSwitchEffectiveGoto(@Nonnull LookupSwitchInsnNode switchInsn) {
+		LabelNode target = switchInsn.dflt;
+		for (LabelNode label : switchInsn.labels)
+			if (label != target)
+				return false;
+		return true;
 	}
 
 	/**
