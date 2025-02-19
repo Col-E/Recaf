@@ -9,7 +9,6 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.ResourcePathNode;
-import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.MappingApplicationListener;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
@@ -40,9 +39,8 @@ import java.util.stream.Stream;
  *
  * @author Matt Coley
  */
-public class InheritanceGraph implements Service, WorkspaceModificationListener, WorkspaceCloseListener,
+public class InheritanceGraph implements WorkspaceModificationListener, WorkspaceCloseListener,
 		ResourceJvmClassListener, ResourceAndroidClassListener, MappingApplicationListener {
-	public static final String SERVICE_ID = "graph-inheritance";
 	/** Vertex used for classes that are not found in the workspace. */
 	private static final InheritanceVertex STUB = new InheritanceStubVertex();
 	private static final String OBJECT = "java/lang/Object";
@@ -50,7 +48,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	private final Map<String, InheritanceVertex> vertices = new ConcurrentHashMap<>();
 	private final Set<String> stubs = ConcurrentHashMap.newKeySet();
 	private final Function<String, InheritanceVertex> vertexProvider = createVertexProvider();
-	private final InheritanceGraphConfig config;
+	private final InheritanceGraphServiceConfig config;
 	private final Workspace workspace;
 
 	/**
@@ -61,7 +59,7 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 	 * @param workspace
 	 * 		Workspace to pull classes from.
 	 */
-	public InheritanceGraph(@Nonnull InheritanceGraphConfig config,
+	public InheritanceGraph(@Nonnull InheritanceGraphServiceConfig config,
 	                        @Nonnull Workspace workspace) {
 		this.config = config;
 		this.workspace = workspace;
@@ -473,18 +471,6 @@ public class InheritanceGraph implements Service, WorkspaceModificationListener,
 			InheritanceVertex vertex = vertices.get(name);
 			if (vertex != null) vertex.clearCachedVertices();
 		});
-	}
-
-	@Nonnull
-	@Override
-	public String getServiceId() {
-		return SERVICE_ID;
-	}
-
-	@Nonnull
-	@Override
-	public InheritanceGraphConfig getServiceConfig() {
-		return config;
 	}
 
 	private static class InheritanceStubVertex extends InheritanceVertex {

@@ -12,9 +12,9 @@ import software.coley.recaf.services.ServiceConfig;
  * @author Matt Coley
  */
 @ApplicationScoped
-public class InheritanceGraphConfig extends BasicConfigContainer implements ServiceConfig {
+public class InheritanceGraphServiceConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
-	public InheritanceGraphConfig() {
-		super(ConfigGroups.SERVICE_ANALYSIS, InheritanceGraph.SERVICE_ID + CONFIG_SUFFIX);
+	public InheritanceGraphServiceConfig() {
+		super(ConfigGroups.SERVICE_ANALYSIS, InheritanceGraphService.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }
