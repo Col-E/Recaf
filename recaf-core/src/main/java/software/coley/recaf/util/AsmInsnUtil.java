@@ -108,6 +108,26 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
+	 * @param op
+	 * 		Instruction opcode.
+	 *
+	 * @return {@code true} when it is any variable storing instruction.
+	 */
+	public static boolean isVarStore(int op) {
+		return op >= ISTORE && op <= ASTORE;
+	}
+
+	/**
+	 * @param op
+	 * 		Instruction opcode.
+	 *
+	 * @return {@code true} when it is any variable loading instruction.
+	 */
+	public static boolean isVarLoad(int op) {
+		return op >= ILOAD && op <= ALOAD;
+	}
+
+	/**
 	 * @param index
 	 * 		Variable index.
 	 * @param variableType

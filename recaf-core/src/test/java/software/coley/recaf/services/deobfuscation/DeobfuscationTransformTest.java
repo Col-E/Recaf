@@ -33,8 +33,10 @@ import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVara
 import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.StackOperationFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueCollectionTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformResult;
 import software.coley.recaf.services.transform.TransformationApplier;
@@ -884,6 +886,165 @@ class DeobfuscationTransformTest extends TestBase {
 				assertEquals(0, StringUtil.count("athrow", dis), "Expected to remove dead athrow");
 				assertEquals(0, StringUtil.count("pop", dis), "Expected to remove dead athrow");
 			});
+		}
+
+		/** Showcase pairing of {@link VariableFoldingTransformer} with {@link StackOperationFoldingTransformer} */
+		@Test
+		void foldVar() {
+			String asm = """
+					.method public static example ()I {
+					    code: {
+					    A:
+					        iconst_0
+					        istore zero
+					        bipush 50
+					        istore unused0
+					        bipush 51
+					        istore unused1
+					        bipush 52
+					        istore unused2
+					        bipush 53
+					        istore unused3
+					        bipush 54
+					        istore unused4
+					    B:
+					        iload zero
+					        ireturn
+					    C:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("istore unused", dis), "Expected to remove variable stores where no reads are used");
+				assertEquals(0, StringUtil.count("bipush", dis), "Expected to remove unused value pushes of variables");
+				assertEquals(0, StringUtil.count("zero", dis), "Expected to inline 'zero' variable");
+			});
+		}
+
+		/** Chose case {@link VariableFoldingTransformer} along with other flow-based cleanup transformers. */
+		@Test
+		void foldVarAndFlow() {
+			String asm = """
+					.method public static example ()I {
+					    code: {
+					    A:
+					        iconst_m1
+					        istore foo
+					        iconst_0
+					        istore foo
+					    B:
+					        iload foo
+					        ifeq C
+					        iload foo
+					        ireturn
+					    C:
+					        iload foo
+					        ireturn
+					    D:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(
+					VariableFoldingTransformer.class,
+					OpaquePredicateFoldingTransformer.class,
+					StackOperationFoldingTransformer.class,
+					GotoInliningTransformer.class
+			), dis -> {
+				assertEquals(1, StringUtil.count("iconst", dis), "Expected only one const");
+				assertEquals(1, StringUtil.count("ireturn", dis), "Expected only one return");
+				assertEquals(0, StringUtil.count("ifeq", dis), "Expected to fold opaque ifeq");
+				assertEquals(0, StringUtil.count("foo", dis), "Expected to fold redundant variable declaration");
+			});
+		}
+
+		/** Show {@link VariableFoldingTransformer} can inline when parameters are effectively unused/overwritten */
+		@Test
+		void foldVarsOfOverwrittenParameters() {
+			String asm = """
+					.method public static example (II)I {
+						parameters: { a, b },
+					    code: {
+					    A:
+					        iconst_0
+					        istore a
+					        iconst_0
+					        istore b
+					    B:
+					        iload a
+					        iload b
+					        iadd
+					        ireturn
+					    C:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("istore", dis), "Expected to remove redundant istore");
+				assertEquals(0, StringUtil.count("iload", dis), "Expected to inline redundant iload");
+				assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to have single iconst_0");
+			});
+		}
+
+		/** Show {@link VariableFoldingTransformer} isn't too aggressive */
+		@Test
+		void dontFoldVarsOfUsedParameters() {
+			String asm = """
+					.method public static example (II)I {
+						parameters: { a, b },
+					    code: {
+					    A:
+					        iconst_0
+					        istore c
+					    B:
+					        iload a
+					        iload b
+					        iadd
+					        istore c
+					    C:
+					        sipush 1000
+					        iload c
+					        if_icmpge B
+					    D:
+					        iload c
+					        ireturn
+					    E:
+					    }
+					}
+					""";
+			validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class));
+		}
+
+		/** Show {@link VariableFoldingTransformer} isn't too aggressive */
+		@Test
+		void dontFoldVarsOfUsedButOverwrittenParameters() {
+			String asm = """
+					.method public static example (II)I {
+						parameters: { a, b },
+					    code: {
+					    A:
+					        iconst_0
+					        istore c
+					    B:
+					        iload a
+					        iload b
+					        iadd
+					        istore c
+					    C:
+					        sipush 1000
+					        iload c
+					        if_icmpge B
+					    D:
+					        iconst_1
+					        istore a
+					        iconst_1
+					        istore b
+					        iload c
+					        ireturn
+					    E:
+					    }
+					}
+					""";
+			validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class));
 		}
 
 		@Test
