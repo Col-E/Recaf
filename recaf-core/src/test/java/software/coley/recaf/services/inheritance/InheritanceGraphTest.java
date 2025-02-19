@@ -2,6 +2,7 @@ package software.coley.recaf.services.inheritance;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Opcodes;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
@@ -12,8 +13,10 @@ import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -74,6 +77,7 @@ class InheritanceGraphTest extends TestBase {
 
 		// Check awareness of library methods
 		vertex = inheritanceGraph.getVertex(StringConsumer.class.getName().replace('.', '/'));
+		assertNotNull(vertex);
 		assertTrue(vertex.hasMethod("accept", "(Ljava/lang/Object;)V"));
 		assertTrue(vertex.hasMethod("accept", "(Ljava/lang/String;)V")); // Redirects to Object method
 		assertTrue(vertex.isLibraryMethod("accept", "(Ljava/lang/Object;)V")); // From Consumer<T>
@@ -142,5 +146,32 @@ class InheritanceGraphTest extends TestBase {
 				.map(InheritanceVertex::getValue)
 				.toList();
 		assertTrue(throwableClasses.contains(notFoodException), "Subtypes of 'Throwable' did not yield 'NotFoodException'");
+	}
+
+	@Test
+	void vertexUpdatedWithClassModifications() {
+		String appleName = Inheritance.Apple.class.getName().replace('.', '/');
+
+		// Get 'Apple' class and vertex.
+		JvmClassBundle bundle = workspace.getPrimaryResource().getJvmClassBundle();
+		JvmClassInfo classInfo = bundle.get(appleName);
+		InheritanceVertex vertex = inheritanceGraph.getVertex(appleName);
+
+		// Assert the vertex points to the same reference as the class info.
+		assertNotNull(vertex);
+		assertSame(classInfo, vertex.getValue(), "Expected vertex to point to class");
+
+		// Modify the class a bit and put it back into the workspace.
+		// We're only changing a single byte that doesn't matter so that it won't affect the other tests.
+		byte[] bytecodeCopy = Arrays.copyOf(classInfo.getBytecode(), classInfo.getBytecode().length);
+		bytecodeCopy[4] = Opcodes.V17;
+		JvmClassInfo classInfoUpdated = classInfo.toJvmClassBuilder().adaptFrom(bytecodeCopy).build();
+		bundle.put(classInfoUpdated);
+		assertNotSame(classInfo, classInfoUpdated);
+
+		// Assert the vertex now points to the updated class info instance.
+		InheritanceVertex vertexUpdated = inheritanceGraph.getVertex(appleName);
+		assertNotNull(vertexUpdated);
+		assertSame(classInfoUpdated, vertexUpdated.getValue(), "Expected updated vertex to point to updated class");
 	}
 }

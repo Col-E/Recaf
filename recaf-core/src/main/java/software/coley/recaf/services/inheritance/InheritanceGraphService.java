@@ -64,7 +64,7 @@ public class InheritanceGraphService implements Service {
 	 */
 	@Nonnull
 	public InheritanceGraph newInheritanceGraph(@Nonnull Workspace workspace) {
-		InheritanceGraph graph = new InheritanceGraph(config, workspace);
+		InheritanceGraph graph = new InheritanceGraph(workspace);
 		workspace.addWorkspaceModificationListener(graph);
 		return graph;
 	}
