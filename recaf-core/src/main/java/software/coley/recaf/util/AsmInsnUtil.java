@@ -83,10 +83,8 @@ public class AsmInsnUtil implements Opcodes {
 	 */
 	public static int indexOf(@Nonnull AbstractInsnNode insn) {
 		int i = 0;
-		while (insn != null) {
-			insn = insn.getPrevious();
+		while ((insn = insn.getPrevious()) != null)
 			i++;
-		}
 		return i;
 	}
 
