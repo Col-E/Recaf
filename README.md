@@ -34,6 +34,7 @@ An easy to use modern Java bytecode editor that abstracts away the complexities 
     - Specially crafted jar/zip files are read as the JVM does, bypassing sneaky tricks that can trick reverse engineering tools into showing the wrong data
     - Support for automatically renaming obfuscated classes and their members
     - Support for manually renaming classes and their members *_(And exporting these mappings to a variety of mapping formats for use in other tools)_*
+    - Bytecode transformers for simplifying common obfuscation strategies
 - Attach to running Java process with instrumentation capabilities
 - And much more
 
