@@ -978,7 +978,8 @@ class DeobfuscationTransformTest extends TestBase {
 					    }
 					}
 					""";
-			validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class), dis -> {
+			validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class,
+					LinearOpaqueConstantFoldingTransformer.class), dis -> {
 				assertEquals(0, StringUtil.count("istore", dis), "Expected to remove redundant istore");
 				assertEquals(0, StringUtil.count("iload", dis), "Expected to inline redundant iload");
 				assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to have single iconst_0");
@@ -1318,7 +1319,7 @@ class DeobfuscationTransformTest extends TestBase {
 	@Nested
 	class Regressions {
 		@Test
-		void gotoInlining1() {
+		void gotoInlining1a() {
 			String asm = """
 					.method static example ([I)V {
 					    parameters: { array },
@@ -1358,7 +1359,6 @@ class DeobfuscationTransformTest extends TestBase {
 					        iinc i 1
 					        goto W
 					    N:
-					        line 76
 					        getstatic java/lang/System.out Ljava/io/PrintStream;
 					        invokevirtual java/io/PrintStream.println ()V
 					    O:
@@ -1391,6 +1391,52 @@ class DeobfuscationTransformTest extends TestBase {
 					        invokespecial java/lang/StringBuilder.<init> ()V
 					        goto B
 					    Y:
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(GotoInliningTransformer.class, DeadCodeRemovingTransformer.class), dis -> {
+				assertEquals(1, StringUtil.count("goto", dis), "Only one goto should remain (the while loop handler)");
+			});
+		}
+
+		/** The same as {@link #gotoInlining1a()} but starting from an easier step. */
+		@Test
+		void gotoInlining1b() {
+			String asm = """
+					.method static example ([I)V {
+					    parameters: { array },
+					    code: {
+							  A:
+					              goto C
+					          B:
+					              getstatic java/lang/System.out Ljava/io/PrintStream;
+					              invokevirtual java/io/PrintStream.println ()V
+					              return
+					          C:
+					              aload array
+					              arraylength
+					              istore length
+					              iconst_0
+					              istore i
+					          D:
+					              iload i1
+					              iload i2
+					              if_icmpge B
+					              getstatic java/lang/System.out Ljava/io/PrintStream;
+					              new java/lang/StringBuilder
+					              dup
+					              invokespecial java/lang/StringBuilder.<init> ()V
+					              aload array
+					              iload i1
+					              iaload
+					              invokevirtual java/lang/StringBuilder.append (I)Ljava/lang/StringBuilder;
+					              ldc " "
+					              invokevirtual java/lang/StringBuilder.append (Ljava/lang/String;)Ljava/lang/StringBuilder;
+					              invokevirtual java/lang/StringBuilder.toString ()Ljava/lang/String;
+					              invokevirtual java/io/PrintStream.print (Ljava/lang/String;)V
+					              iinc i1 1
+					              goto D
+					          E:
 					    }
 					}
 					""";

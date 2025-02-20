@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
+import software.coley.recaf.RecafConstants;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
@@ -23,6 +24,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -79,32 +81,32 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 			// The simple fix is to do a dead-code removing pass before we run this transformer.
 			context.pruneDeadCode(node, method);
 
-			// Count how often each label in the method is visited by explicit control flow.
-			//  - We *never* want to mess around with try-catch range boundaries, so they get a large bump, so we can
-			//    clearly see them while debugging.
-			Map<LabelNode, Integer> visitCount = new IdentityHashMap<>();
+			// Record where labels are visited from. Start with explicit control flow jumps.
+			VisitCounters visitCounters = new VisitCounters();
 			for (int i = 0; i < instructions.size(); i++) {
 				AbstractInsnNode insn = instructions.get(i);
 				if (insn instanceof JumpInsnNode cast) {
-					visitCount.merge(cast.label, 1, Integer::sum);
+					visitCounters.of(cast.label).addExplicitSource(cast);
 				} else if (insn instanceof TableSwitchInsnNode cast) {
-					visitCount.merge(cast.dflt, 1, Integer::sum);
-					cast.labels.forEach(l -> visitCount.merge(l, 1, Integer::sum));
+					visitCounters.of(cast.dflt).addExplicitSource(cast);
+					cast.labels.forEach(l -> visitCounters.of(l).addExplicitSource(cast));
 				} else if (insn instanceof LookupSwitchInsnNode cast) {
-					visitCount.merge(cast.dflt, 1, Integer::sum);
-					cast.labels.forEach(l -> visitCount.merge(l, 1, Integer::sum));
-				}
-			}
-			if (method.tryCatchBlocks != null) {
-				for (TryCatchBlockNode tryCatch : method.tryCatchBlocks) {
-					visitCount.put(tryCatch.start, CATCH_VISIT_COUNT);
-					visitCount.put(tryCatch.end, CATCH_VISIT_COUNT);
-					visitCount.put(tryCatch.handler, CATCH_VISIT_COUNT);
+					visitCounters.of(cast.dflt).addExplicitSource(cast);
+					cast.labels.forEach(l -> visitCounters.of(l).addExplicitSource(cast));
 				}
 			}
 
-			// Now that explicit control flow is handled, lets record visitations for implicit flow.
-			// This just means if the code flows linearly from "A" into "B" then that will increment our count by one.
+			// Next record which labels are try-catch boundaries.
+			if (method.tryCatchBlocks != null) {
+				for (TryCatchBlockNode tryCatch : method.tryCatchBlocks) {
+					visitCounters.of(tryCatch.start).markTryStart();
+					visitCounters.of(tryCatch.end).markTryEnd();
+					visitCounters.of(tryCatch.start).markTryHandler();
+				}
+			}
+
+			// Lastly record implicit flow into labels.
+			// This just means if the code flows linearly from "A" into "B".
 			for (int i = 0; i < instructions.size(); i++) {
 				AbstractInsnNode insn = instructions.get(i);
 				if (insn instanceof LabelNode targetLabel) {
@@ -113,7 +115,7 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 					// If the target label has no previous instruction then it must be the first label of the method.
 					// Thus, it makes sense to say "yeah, we can flow here".
 					if (prev == null) {
-						visitCount.merge(targetLabel, 1, Integer::sum);
+						visitCounters.of(targetLabel).markImplicitFlow();
 						continue;
 					}
 
@@ -127,8 +129,8 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 
 						// If we encounter another label that is visited at least once while walking backwards
 						// then the flow should continue from there to our target label.
-						if (prev instanceof LabelNode prevLabel && visitCount.getOrDefault(prevLabel, 0) > 0) {
-							visitCount.merge(targetLabel, 1, Integer::sum);
+						if (prev instanceof LabelNode prevLabel && visitCounters.of(prevLabel).isVisited()) {
+							visitCounters.of(targetLabel).markImplicitFlow();
 							break;
 						}
 
@@ -138,14 +140,14 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 						// Same check that we had before the while loop. If we hit the start of the method,
 						// then of course we can flow to here.
 						if (prev == null) {
-							visitCount.merge(targetLabel, 1, Integer::sum);
+							visitCounters.of(targetLabel).markImplicitFlow();
 							break;
 						}
 					}
 				}
 			}
 
-			// Check instructions for GOTOs that can be inlined.
+			// Check for super-simple goto instruction patterns that can be inlined easily.
 			boolean localDirty = false;
 			for (int i = 0; i < instructions.size(); i++) {
 				AbstractInsnNode insn = instructions.get(i);
@@ -156,7 +158,7 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 
 				// Skip any jump target labels that are visited more than once.
 				JumpInsnNode jin = (JumpInsnNode) insn;
-				if (visitCount.get(jin.label) > 1)
+				if (visitCounters.of(jin.label).count() > 1)
 					continue;
 
 				// If the goto target label is just the next instruction then we can replace
@@ -164,40 +166,34 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 				if (jin.label == jin.getNext()) {
 					localDirty = true;
 					instructions.set(jin, new InsnNode(NOP));
-					visitCount.merge(jin.label, -1, Integer::sum);
-					continue;
+					visitCounters.of(jin.label).removeExplicitSource(jin);
 				}
+			}
 
-				// If the goto destination is immediately just another goto instruction, then we will
-				// replace this pattern:
-				//   goto A --> goto B --> B
-				// with:
-				//   goto B -------------> B
-				AbstractInsnNode nextInsn = getNextInsn(jin.label);
-				if (nextInsn != null && nextInsn.getOpcode() == GOTO) {
-					LabelNode nextTarget = ((JumpInsnNode) nextInsn).label;
-					instructions.set(jin, new JumpInsnNode(GOTO, nextTarget));
-					visitCount.merge(jin.label, -1, Integer::sum);
-					visitCount.merge(nextTarget, +1, Integer::sum);
+			// Check for goto instruction patterns that require more care.
+			//  - Cannot result in creating end-of-method fall-through.
+			//  - Cannot inline a block starting with a label that is flowed to both explicitly and implicitly.
+			//  - Cannot inline a block that would break try-catch range contracts.
+			for (int i = 0; i < instructions.size(); i++) {
+				AbstractInsnNode insn = instructions.get(i);
 
-					// Step backwards so we will revisit our replacement and see if it can be inlined further.
-					i--;
+				// Skip any non-goto instruction.
+				if (insn.getOpcode() != GOTO)
 					continue;
-				}
+
+				// Skip any jump target labels that are visited more than once.
+				JumpInsnNode jin = (JumpInsnNode) insn;
+				if (visitCounters.of(jin.label).count() > 1)
+					continue;
 
 				// Attempt to re-arrange the code at the goto's destination to be inline here.
 				doInline:
 				{
+					List<AbstractInsnNode> block = new ArrayList<>();
 					AbstractInsnNode target = jin.label;
 					while (target != null) {
 						// Abort if we loop back around.
 						if (target == jin)
-							break doInline;
-
-						// Abort if the current target instruction isn't the initial goto destination label,
-						// and the current target is a label that has been visited more than once by control flow.
-						int targetOp = target.getOpcode();
-						if (target != jin.label && targetOp == -1 && visitCount.getOrDefault(target, 0) > 1)
 							break doInline;
 
 						// Abort if we see that relocating the GOTO destination's code would change the behavior
@@ -223,6 +219,8 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 							}
 						}
 
+						int targetOp = target.getOpcode();
+
 						// TODO: Maybe remove this? Need to do more research into when it complains.
 						if (DO_WE_CARE_ABOUT_BACKWARDS_SWITCH_FLOW) {
 							// There are some weird cases where you're not allowed to jump backwards in switch instructions,
@@ -231,24 +229,15 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 								break doInline;
 						}
 
-						// Break out of this while loop if the target instruction is the end of a method's control flow,
-						// or an always-branch instruction like goto/switch.
-						if (isGotoBlockTerminator(targetOp))
-							break;
-
-						// Move forward.
-						target = target.getNext();
-					}
-
-					// Construct the list of instructions that represent the GOTO's destination block.
-					target = jin.label;
-					List<AbstractInsnNode> block = new ArrayList<>();
-					while (target != null) {
+						// Record this instruction as part of the block if it isn't metadata/junk.
 						if (target.getType() != AbstractInsnNode.FRAME)
 							block.add(target);
-						if (isGotoBlockTerminator(target.getOpcode())) {
-							// This is the end of the block. Check if inlining this would cause
-							// dangling code (no return at the end of the method)
+
+						// Break out of this while loop if the target instruction is the end of a method's control flow,
+						// or an always-branch instruction like goto/switch. This marks the end of our block.
+						// We will do some final checks to see if this block can be inlined.
+						if (isGotoBlockTerminator(targetOp)) {
+							// Check if inlining this would cause dangling code (no return at the end of the method)
 							AbstractInsnNode next = getNextInsn(target);
 							if (instructions.getLast() == next || next == null) {
 								// This block is the code at the end of the method.
@@ -259,9 +248,21 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 									break doInline;
 							}
 
-							// We're OK to inline this block
+							// Check if the current target instruction isn't the initial goto destination label,
+							// and the current target is a label that has been visited more than once by control flow
+							// originating from outside of this block.
+							for (AbstractInsnNode blockInsn : block) {
+								int blockInsnOp = blockInsn.getOpcode();
+								if (blockInsn != jin.label && blockInsnOp == -1
+										&& blockInsn instanceof LabelNode blockInsnLabel
+										&& visitCounters.of(blockInsnLabel).getExplicitFlowSourcesExcluding(block) > 1)
+									break doInline;
+							}
+
 							break;
 						}
+
+						// Move forward.
 						target = target.getNext();
 					}
 
@@ -277,8 +278,8 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 					instructions.remove(jin);
 					localDirty = true;
 
-					// Since we removed the original goto instruction, decrement the label's visit counter.
-					visitCount.merge(jin.label, -1, Integer::sum);
+					// Since we removed the original goto instruction, remove it from the label's visit counter.
+					visitCounters.of(jin.label).removeExplicitSource(jin);
 
 					// Start over from the beginning.
 					i = 0;
@@ -322,7 +323,12 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 	 */
 	@Nonnull
 	private static MethodNode copyOf(@Nonnull MethodNode base) {
-		MethodNode copy = new MethodNode(base.access, base.name, base.desc, base.signature, base.exceptions.toArray(String[]::new));
+		MethodNode copy = new MethodNode(RecafConstants.getAsmVersion(), base.access, base.name, base.desc, base.signature, base.exceptions.toArray(String[]::new)) {
+			@Override
+			public void visitFrame(int type, int numLocal, Object[] local, int numStack, Object[] stack) {
+				// Skip frames
+			}
+		};
 		base.accept(copy);
 		return copy;
 	}
@@ -336,5 +342,81 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 	 */
 	private static boolean isGotoBlockTerminator(int op) {
 		return isReturn(op) || op == GOTO || op == TABLESWITCH || op == LOOKUPSWITCH || op == ATHROW;
+	}
+
+	/**
+	 * Map of {@link LabelNode} to visit/flow data.
+	 */
+	private static class VisitCounters {
+		private final Map<LabelNode, VisitCounter> visitCounters = new IdentityHashMap<>();
+
+		@Nonnull
+		public VisitCounter of(@Nonnull LabelNode label) {
+			return visitCounters.computeIfAbsent(label, VisitCounter::new);
+		}
+	}
+
+	/**
+	 * Model of control flow interactions with a {@link LabelNode}.
+	 */
+	private static class VisitCounter {
+		private final LabelNode label;
+		private final Set<AbstractInsnNode> explicitFlowSources = Collections.newSetFromMap(new IdentityHashMap<>());
+		private boolean implicitFlow;
+		private boolean tryTarget;
+
+		private VisitCounter(@Nonnull LabelNode label) {
+			this.label = label;
+		}
+
+		public void addExplicitSource(@Nonnull AbstractInsnNode insn) {
+			explicitFlowSources.add(insn);
+		}
+
+		public void removeExplicitSource(@Nonnull AbstractInsnNode insn) {
+			explicitFlowSources.remove(insn);
+		}
+
+		public void markImplicitFlow() {
+			implicitFlow = true;
+		}
+
+		public boolean isVisited() {
+			if (!explicitFlowSources.isEmpty())
+				return true;
+			return implicitFlow || tryTarget;
+		}
+
+		public long getExplicitFlowSourcesExcluding(@Nonnull Collection<AbstractInsnNode> block) {
+			return explicitFlowSources.stream()
+					.filter(insn -> !block.contains(insn))
+					.count();
+		}
+
+		public int count() {
+			return explicitFlowSources.size() + (implicitFlow ? 1 : 0) + (tryTarget ? 1 : 0);
+		}
+
+		public void markTryStart() {
+			tryTarget = true;
+		}
+
+		public void markTryEnd() {
+			tryTarget = true;
+		}
+
+		public void markTryHandler() {
+			tryTarget = true;
+		}
+
+		@Override
+		public String toString() {
+			return "VisitCounter{" +
+					"label=" + indexOf(label) +
+					", explicitFlowSources=" + explicitFlowSources.size() +
+					", implicitFlow=" + implicitFlow +
+					", tryTarget=" + tryTarget +
+					'}';
+		}
 	}
 }
