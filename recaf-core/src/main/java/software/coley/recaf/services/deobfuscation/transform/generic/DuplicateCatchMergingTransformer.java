@@ -1,7 +1,7 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
@@ -35,7 +35,7 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
  *
  * @author Matt Coley
  */
-@ApplicationScoped
+@Dependent
 public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 	/**
 	 * Allows us to skip blocks that are too simple to bother merging.

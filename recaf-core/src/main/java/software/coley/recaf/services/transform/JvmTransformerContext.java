@@ -1,6 +1,7 @@
 package software.coley.recaf.services.transform;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
@@ -314,6 +315,9 @@ public class JvmTransformerContext {
 	}
 
 	/**
+	 * Get the {@link JvmClassTransformer} instance associated with this context, or throw an exception if no such
+	 * transformer is registered. If you are looking for an optional lookup use: {@link #getOptionalJvmTransformer(Class)}.
+	 *
 	 * @param key
 	 * 		Transformer class.
 	 * @param <T>
@@ -325,12 +329,34 @@ public class JvmTransformerContext {
 	 * 		When the transformer was not found within this context.
 	 */
 	@Nonnull
-	@SuppressWarnings("unchecked")
 	public <T extends JvmClassTransformer> T getJvmTransformer(Class<T> key) throws TransformationException {
-		JvmClassTransformer transformer = transformerMap.get(key);
+		T transformer = getOptionalJvmTransformer(key);
 		if (transformer == null)
 			throw new TransformationException("Transformation context attempted lookup of class '"
 					+ key.getSimpleName() + "' but did not have an associated entry");
+		return transformer;
+	}
+
+	/**
+	 * Get the {@link JvmClassTransformer} instance associated with this context, if it is registered.
+	 *
+	 * @param key
+	 * 		Transformer class.
+	 * @param <T>
+	 * 		Transformer type.
+	 *
+	 * @return Shared instance of the transformer within this context,
+	 * or {@code null} if no such transformer is registered to this context.
+	 */
+	@Nullable
+	@SuppressWarnings("unchecked")
+	public <T extends JvmClassTransformer> T getOptionalJvmTransformer(Class<T> key) {
+		// NOTE: Any Recaf-defined transformer must be @Dependent so that CDI doesn't give you proxy wrappers
+		// of the class. Our map is identity based, and if you do 'get(MyClass.class)' and we end up storing the
+		// proxy wrapper, then the lookup will fail even though the transformer is seemingly registered.
+		JvmClassTransformer transformer = transformerMap.get(key);
+		if (transformer == null)
+			return null;
 		return (T) transformer;
 	}
 

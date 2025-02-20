@@ -1,7 +1,7 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
@@ -20,7 +20,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  *
  * @author Matt Coley
  */
-@ApplicationScoped
+@Dependent
 public class IllegalVarargsRemovingTransformer implements JvmClassTransformer {
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,

@@ -1,7 +1,7 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -39,7 +39,7 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
  *
  * @author Matt Coley
  */
-@ApplicationScoped
+@Dependent
 public class GotoInliningTransformer implements JvmClassTransformer {
 	private static final int CATCH_VISIT_COUNT = 100;
 	private static final boolean DO_WE_CARE_ABOUT_BACKWARDS_SWITCH_FLOW = false;

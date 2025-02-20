@@ -1,6 +1,7 @@
 package software.coley.recaf.services.transform;
 
 import jakarta.annotation.Nonnull;
+import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.tree.ClassNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.workspace.model.Workspace;
@@ -9,6 +10,9 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
  * Outlines the base JVM transformation contract.
+ * <p/>
+ * <b>NOTE:</b> Internal transformers must be {@link Dependent} scoped so that they do not get proxied by CDI.
+ * See {@link JvmTransformerContext#getJvmTransformer(Class)}.
  *
  * @author Matt Coley
  */

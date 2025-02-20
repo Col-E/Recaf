@@ -2,6 +2,7 @@ package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
@@ -22,7 +23,7 @@ import static software.coley.recaf.util.AsmInsnUtil.POP;
  *
  * @author Matt Coley
  */
-@ApplicationScoped
+@Dependent
 public class StackOperationFoldingTransformer implements JvmClassTransformer {
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
