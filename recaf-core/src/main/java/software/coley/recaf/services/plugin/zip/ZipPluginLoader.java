@@ -146,11 +146,11 @@ public final class ZipPluginLoader implements PluginLoader {
 	}
 
 	@SafeVarargs
+	@SuppressWarnings("unchecked")
 	private static <V extends ElementValue, R> R extractValue(@Nonnull ElementValue value, Function<V, R> extractor, V... typeHint) throws PluginException {
 		Class<?> type = typeHint.getClass().getComponentType();
 		V v;
 		try {
-			//noinspection unchecked
 			v = ((Class<V>) type).cast(value);
 		} catch (ClassCastException ex) {
 			throw new PluginException("%s is not an instance of %s".formatted(value, type.getSimpleName()));

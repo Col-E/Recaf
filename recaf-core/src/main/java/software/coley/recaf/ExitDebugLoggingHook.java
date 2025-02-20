@@ -231,12 +231,12 @@ public class ExitDebugLoggingHook {
 		});
 	}
 
+	@SuppressWarnings("unchecked")
 	private static void dumpBuiltinClassLoader(ClassLoader loader) {
 		try {
 			Class<?> c = Class.forName("jdk.internal.loader.BuiltinClassLoader");
 			Field nameToModuleField = c.getDeclaredField("nameToModule");
 			nameToModuleField.setAccessible(true);
-			//noinspection unchecked
 			Map<String, ModuleReference> mdouleMap = (Map<String, ModuleReference>) nameToModuleField.get(loader);
 			for (Map.Entry<String, ModuleReference> e : mdouleMap.entrySet()) {
 				ModuleReference moduleReference = e.getValue();

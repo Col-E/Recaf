@@ -152,7 +152,6 @@ public final class MultiMapBuilder<K, V, C extends Collection<V>> {
 	 */
 	@SuppressWarnings("unchecked")
 	public MultiMap<K, V, C> build() {
-		//noinspection unchecked
 		return MultiMap.from((Map<K, C>) mapSupplier.get(), (Supplier<C>) collectionSupplier);
 	}
 
