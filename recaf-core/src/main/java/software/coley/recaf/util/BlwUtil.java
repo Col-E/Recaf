@@ -29,6 +29,7 @@ import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
@@ -84,7 +85,7 @@ public class BlwUtil {
 				yield new TableSwitchInstruction(min, dflt, targets);
 			}
 			case LookupSwitchInsnNode lsin -> {
-				int[] keys =lsin.keys.stream().mapToInt(i -> i).toArray();
+				int[] keys = lsin.keys.stream().mapToInt(i -> i).toArray();
 				Label dflt = new GenericLabel();
 				dflt.setIndex(AsmInsnUtil.indexOf(lsin.dflt));
 				List<Label> targets = lsin.labels.stream().map(l -> {
@@ -95,7 +96,8 @@ public class BlwUtil {
 				yield new LookupSwitchInstruction(keys, dflt, targets);
 			}
 			case LabelNode ln -> new LabelInstruction(AsmInsnUtil.indexOf(ln));
-			case FrameNode fr -> new SimpleInstruction(0);
+			case FrameNode fr -> new FrameInstruction();
+			case LineNumberNode ln -> new LineInstruction(ln.line);
 			default -> new SimpleInstruction(insn.getOpcode());
 		};
 	}
@@ -137,7 +139,13 @@ public class BlwUtil {
 	 */
 	@Nonnull
 	private static String toString(@Nonnull Instruction insn) {
-		// Special case for our converted model
+		// Special cases that don't have dedicated printer methods exposed in JASM.
+		if (insn instanceof LineInstruction line)
+			return "line " + line.line;
+		else if (insn instanceof FrameInstruction)
+			return "// frame";
+
+		// Collect label names from the instruction.
 		Map<Integer, String> labelNames;
 		if (insn instanceof LabelInstruction label) {
 			int index = label.getIndex();
@@ -165,6 +173,29 @@ public class BlwUtil {
 
 		// Cut off first 2 chars of unused indentation then cap off the max length.
 		return ctx.toString().substring(2).replace('\n', ' ');
+	}
+
+	/**
+	 * Dummy instruction to facilitate printing in {@link #toString(Instruction)}.
+	 */
+	private record FrameInstruction() implements Instruction {
+		@Override
+		public int opcode() {
+			return -1;
+		}
+	}
+
+	/**
+	 * Dummy instruction to facilitate printing in {@link #toString(Instruction)}.
+	 *
+	 * @param line
+	 * 		Line number.
+	 */
+	private record LineInstruction(int line) implements Instruction {
+		@Override
+		public int opcode() {
+			return -1;
+		}
 	}
 
 	/**
