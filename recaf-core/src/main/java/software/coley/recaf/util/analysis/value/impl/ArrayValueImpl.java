@@ -5,6 +5,7 @@ import org.objectweb.asm.Type;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
+import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.OptionalInt;
@@ -51,6 +52,8 @@ public class ArrayValueImpl implements ArrayValue {
 					return ArrayValue.of(type, nullness.mergeWith(otherArray.nullness()), dim);
 			}
 			return ArrayValue.of(type, nullness.mergeWith(otherArray.nullness()));
+		} else if (other instanceof ObjectValue otherObject) {
+			return ObjectValue.VAL_OBJECT;
 		}
 		throw new IllegalValueException("Cannot merge with: " + other);
 	}

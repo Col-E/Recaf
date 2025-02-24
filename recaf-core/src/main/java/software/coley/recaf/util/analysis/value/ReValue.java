@@ -8,6 +8,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.analysis.Value;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.ReInterpreter;
 
 /**
  * Base type of value capable of recording exact content
@@ -116,8 +117,12 @@ public sealed interface ReValue extends Value permits IntValue, FloatValue, Doub
 	Type type();
 
 	/**
+	 * Called from {@link ReInterpreter#merge(ReValue, ReValue)} only when our value's type is a looser type than the given other type.
+	 * For instance, if we are a {@code ArrayList} we could see {@code List} as the {@code other} value, but never the other way around.
+	 *
 	 * @param other
 	 * 		Other value to merge with.
+	 * 		It should be assumed that this other value's type is the same as, or a child type of our {@link #type()}.
 	 *
 	 * @return Merged value.
 	 *
