@@ -428,18 +428,21 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		@Override
 		public void visitEnd() {
 			super.visitEnd();
-			if (annotations != null)
-				withAnnotations(annotations);
-			if (fields != null)
-				withFields(fields);
-			if (methods != null)
-				withMethods(methods);
-			if (innerClasses != null)
-				withInnerClasses(innerClasses);
-			if (annotations != null)
-				withAnnotations(annotations);
-			if (typeAnnotations != null)
-				withTypeAnnotations(typeAnnotations);
+			if (fields == null)
+				fields = Collections.emptyList();
+			if (methods == null)
+				methods = Collections.emptyList();
+			if (innerClasses == null)
+				innerClasses = Collections.emptyList();
+			if (annotations == null)
+				annotations = Collections.emptyList();
+			if (typeAnnotations == null)
+				typeAnnotations = Collections.emptyList();
+			withAnnotations(annotations);
+			withTypeAnnotations(typeAnnotations);
+			withFields(fields);
+			withMethods(methods);
+			withInnerClasses(innerClasses);
 		}
 
 		/**
