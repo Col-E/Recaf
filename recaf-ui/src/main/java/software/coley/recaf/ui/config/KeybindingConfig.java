@@ -48,6 +48,8 @@ public class KeybindingConfig extends BasicConfigContainer {
 	private static final String ID_SAVE = "editor.save";
 	private static final String ID_RENAME = "editor.rename";
 	private static final String ID_GOTO = "editor.goto";
+	private static final String ID_EXPORT = "workspace.export";
+
 	private final BindingBundle bundle;
 
 	@Inject
@@ -61,7 +63,8 @@ public class KeybindingConfig extends BasicConfigContainer {
 				createBindForPlatform(ID_REPLACE, CONTROL, R),
 				createBindForPlatform(ID_SAVE, CONTROL, S),
 				createBindForPlatform(ID_RENAME, ALT, R),
-				createBindForPlatform(ID_GOTO, F3)
+				createBindForPlatform(ID_GOTO, F3),
+				createBindForPlatform(ID_EXPORT, CONTROL, E)
 		));
 		addValue(new BasicMapConfigValue<>("bundle", BindingBundle.class, String.class, Binding.class, bundle));
 
@@ -159,6 +162,14 @@ public class KeybindingConfig extends BasicConfigContainer {
 	@Nonnull
 	public Binding getGoto() {
 		return Objects.requireNonNull(bundle.get(ID_GOTO));
+	}
+
+	/**
+	 * @return Keybinding for exporting the current workspace.
+	 */
+	@Nonnull
+	public Binding getExport() {
+		return Objects.requireNonNull(bundle.get(ID_EXPORT));
 	}
 
 	/**

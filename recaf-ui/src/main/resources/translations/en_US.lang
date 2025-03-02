@@ -138,6 +138,7 @@ bind.editor.rename=Rename
 bind.editor.replace=Replace
 bind.editor.save=Save
 bind.quicknav=Quick nav
+bind.workspace.export=Export workspace
 
 ##### Dialog texts
 dialog.cancel=Cancel

@@ -30,6 +30,7 @@ import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.workspace.PathExportingManager;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -85,6 +86,8 @@ public class RecafApplication extends Application implements WorkspaceOpenListen
 				Stage quickNav = windowManager.getQuickNav();
 				quickNav.show();
 				quickNav.requestFocus();
+			} else if (keybindingConfig.getExport().match(event) && workspaceManager.hasCurrentWorkspace()) {
+				recaf.get(PathExportingManager.class).export(workspaceManager.getCurrent());
 			}
 		});
 		stage.setMinWidth(900 / scaleConfig.getScale());
