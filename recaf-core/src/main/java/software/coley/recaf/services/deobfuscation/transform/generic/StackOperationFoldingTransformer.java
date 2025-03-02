@@ -1,7 +1,6 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -38,7 +37,7 @@ public class StackOperationFoldingTransformer implements JvmClassTransformer {
 			if (instructions == null)
 				continue;
 
-			for (int i = instructions.size() - 2; i > 0; i--) {
+			for (int i = instructions.size() - 2; i >= 0; i--) {
 				AbstractInsnNode insn = instructions.get(i);
 
 				// TODO: Make this not shit, just getting this to work for the demo cases in the transformer tests.
