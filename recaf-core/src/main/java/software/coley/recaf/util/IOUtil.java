@@ -2,6 +2,15 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.info.ApkFileInfo;
+import software.coley.recaf.info.ArscFileInfo;
+import software.coley.recaf.info.BinaryXmlFileInfo;
+import software.coley.recaf.info.DexFileInfo;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.JModFileInfo;
+import software.coley.recaf.info.JarFileInfo;
+import software.coley.recaf.info.WarFileInfo;
+import software.coley.recaf.info.ZipFileInfo;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -424,6 +433,30 @@ public final class IOUtil {
 	public static String getExtension(Path path) {
 		return getExtension(path.getFileName().toString());
 	}
+
+	/**
+	 * Get the file extension from specific subtypes of {@link FileInfo}.
+	 *
+	 * @param file
+	 * 		File to get extension of.
+	 *
+	 * @return Extension associated with files of the given type, or {@code null} if no specific extension is known.
+	 */
+	@Nullable
+	public static String getExtensionFromFileInfo(@Nullable FileInfo file) {
+		return switch (file) {
+			case ApkFileInfo _ -> "apk";
+			case ArscFileInfo _ -> "arsc";
+			case BinaryXmlFileInfo _ -> "xml";
+			case DexFileInfo _ -> "dex";
+			case JarFileInfo _ -> "jar";
+			case JModFileInfo _ -> "jmod";
+			case WarFileInfo _ -> "war";
+			case ZipFileInfo _ -> "zip";
+			case null, default -> null;
+		};
+	}
+
 
 	/**
 	 * Transfers content of {@link InputStream} into {@link OutputStream}.
