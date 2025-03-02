@@ -16,6 +16,7 @@ import java.util.List;
  * @author Matt Coley
  */
 public class FileChooserBuilder {
+	private static final FileChooser.ExtensionFilter ALL_FILES_FILTER = new FileChooser.ExtensionFilter("All Files", "*.*");
 	private String title;
 	private String initialFileName;
 	private String fileExtensionFilterName;
@@ -152,8 +153,14 @@ public class FileChooserBuilder {
 		FileChooser chooser = new FileChooser();
 		if (initialFileName != null)
 			chooser.setInitialFileName(initialFileName);
-		if (fileExtensionFilterName != null && fileExtensions != null)
-			chooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter(fileExtensionFilterName, fileExtensions));
+		if (fileExtensionFilterName != null && fileExtensions != null) {
+			FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(fileExtensionFilterName, fileExtensions);
+			chooser.getExtensionFilters().addAll(filter, ALL_FILES_FILTER);
+			chooser.setSelectedExtensionFilter(filter);
+		} else {
+			chooser.getExtensionFilters().add(ALL_FILES_FILTER);
+			chooser.setSelectedExtensionFilter(ALL_FILES_FILTER);
+		}
 		if (initialDirectory != null && initialDirectory.isDirectory())
 			chooser.setInitialDirectory(initialDirectory);
 		if (title != null)

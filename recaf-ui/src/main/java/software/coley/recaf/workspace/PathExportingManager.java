@@ -25,6 +25,7 @@ import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.util.DirectoryChooserBuilder;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FileChooserBuilder;
+import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
@@ -121,10 +122,26 @@ public class PathExportingManager {
 					.build();
 			selectedPath = chooser.showDialog(null);
 		} else {
-			FileChooser chooser = new FileChooserBuilder()
+			FileChooserBuilder builder = new FileChooserBuilder()
 					.setInitialDirectory(lastExportDir)
-					.setTitle(Lang.get("dialog.file.export"))
-					.build();
+					.setTitle(Lang.get("dialog.file.export"));
+
+			if (primaryResource instanceof WorkspaceFileResource primaryFileResource) {
+				FileInfo backingFile = primaryFileResource.getFileInfo();
+
+				// Use original file name as initial prompt name.
+				String initialName = StringUtil.shortenPath(backingFile.getName());
+				builder.setInitialFileName(initialName);
+
+				// Mirror the original file type as an extension filter.
+				String extension = IOUtil.getExtension(initialName);
+				if (extension == null)
+					extension = IOUtil.getExtensionFromFileInfo(backingFile);
+				if (extension != null)
+					builder.setFileExtensionFilter(extension.toUpperCase(), "*." + extension.toLowerCase());
+			}
+
+			FileChooser chooser = builder.build();
 			selectedPath = chooser.showSaveDialog(null);
 		}
 
