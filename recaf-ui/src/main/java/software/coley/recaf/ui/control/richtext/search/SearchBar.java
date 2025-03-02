@@ -97,8 +97,8 @@ public class SearchBar implements EditorComponent, EventHandler<KeyEvent> {
 			}
 
 			// Grab focus
-			bar.requestSearchFocus();
 			bar.showReplace();
+			bar.replaceInput.requestFocus();
 		}
 	}
 
