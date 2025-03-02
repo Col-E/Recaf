@@ -985,6 +985,7 @@ public class StringUtil {
 					decoder.flush(charBuf);
 
 				// Check each character
+				int textChars = 0;
 				int arrayEnd = charBuf.position();
 				for (int i = 0; i < arrayEnd; i++) {
 					char c = charArray[i];
@@ -995,10 +996,16 @@ public class StringUtil {
 						case Character.PRIVATE_USE, Character.SURROGATE, Character.UNASSIGNED -> false;
 						default -> true;
 					};
-					if (isTextChar) totalTextChars++;
+					if (isTextChar) textChars++;
 				}
+				totalTextChars += textChars;
 				output.append(charArray, 0, arrayEnd);
 				totalChars += arrayEnd;
+
+				// If ay any point we see more than half of the temporary buffer full of non-text characters
+				// we're going to assume the rest of the content is also going to be garbage.
+				if (((double) textChars / arrayEnd) <= 0.5 )
+					return failedDecoding(data);
 
 				// If we overflowed in our result, we still have more to decode with this
 				// current input buffer, so we should clear the output buffer and continue as-is.
