@@ -7,20 +7,39 @@ import jakarta.inject.Inject;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.path.*;
+import software.coley.recaf.path.BundlePathNode;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.path.ResourcePathNode;
+import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.services.search.query.*;
-import software.coley.recaf.services.search.result.*;
+import software.coley.recaf.services.search.query.AndroidClassQuery;
+import software.coley.recaf.services.search.query.FileQuery;
+import software.coley.recaf.services.search.query.JvmClassQuery;
+import software.coley.recaf.services.search.query.NumberQuery;
+import software.coley.recaf.services.search.query.Query;
+import software.coley.recaf.services.search.query.ReferenceQuery;
+import software.coley.recaf.services.search.query.StringQuery;
+import software.coley.recaf.services.search.result.ClassReferenceResult;
+import software.coley.recaf.services.search.result.MemberReferenceResult;
+import software.coley.recaf.services.search.result.NumberResult;
+import software.coley.recaf.services.search.result.Result;
+import software.coley.recaf.services.search.result.Results;
+import software.coley.recaf.services.search.result.StringResult;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Stream;
 
 /**
  * Outline for running various searches.
@@ -114,73 +133,110 @@ public class SearchService implements Service {
 		// Run visitors on contents of workspace
 		ExecutorService service = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID + ":" + queries.hashCode());
 		WorkspacePathNode workspaceNode = PathNodes.workspacePath(workspace);
-		for (WorkspaceResource resource : workspace.getAllResources(false)) {
-			ResourcePathNode resourceNode = workspaceNode.child(resource);
-			// Visit android content
-			if (androidClassVisitor != null) {
-				for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
-					BundlePathNode bundleNode = resourceNode.child(bundle);
-					for (AndroidClassInfo classInfo : bundle) {
-						if (feedback.hasRequestedCancellation())
-							break;
-						if (!feedback.doVisitClass(classInfo))
-							continue;
-						ClassPathNode classPath = bundleNode
-								.child(classInfo.getPackageName())
-								.child(classInfo);
-						service.submit(() -> {
-							if (feedback.hasRequestedCancellation())
-								return;
-							androidClassVisitor.visit(getResultSink(results, feedback), classPath, classInfo);
-						});
-					}
-				}
-			}
+		for (WorkspaceResource resource : workspace.getAllResources(false))
+			searchResource(results, service, feedback, resource, workspaceNode,
+					androidClassVisitor, jvmClassVisitor, fileVisitor);
+		ThreadUtil.blockUntilComplete(service);
+		return results;
+	}
 
-			// Visit JVM content
-			if (jvmClassVisitor != null) {
-				resource.jvmClassBundleStream().forEach(bundle -> {
-					BundlePathNode bundlePathNode = resourceNode.child(bundle);
-					for (JvmClassInfo classInfo : bundle) {
-						if (feedback.hasRequestedCancellation())
-							break;
-						if (!feedback.doVisitClass(classInfo))
-							continue;
-						ClassPathNode classPath = bundlePathNode
-								.child(classInfo.getPackageName())
-								.child(classInfo);
-						service.submit(() -> {
-							if (feedback.hasRequestedCancellation())
-								return;
-							jvmClassVisitor.visit(getResultSink(results, feedback), classPath, classInfo);
-						});
-					}
-				});
-			}
+	/**
+	 * @param results
+	 * 		Result container to dump into.
+	 * @param service
+	 * 		Thread scheduler service.
+	 * @param feedback
+	 * 		Search feedback mechanism <i>(To allow user cancellation and such)</i>
+	 * @param resource
+	 * 		Resource to search within.
+	 * @param workspacePath
+	 * 		Root workspace path node.
+	 * @param androidClassVisitor
+	 * 		Android class search visitor.
+	 * 		Can be {@code null} to skip searching respective content.
+	 * @param jvmClassVisitor
+	 * 		JVM class search visitor.
+	 * 		Can be {@code null} to skip searching respective content.
+	 * @param fileVisitor
+	 * 		File search visitor.
+	 * 		Can be {@code null} to skip searching respective content.
+	 */
+	private static void searchResource(@Nonnull Results results,
+	                                   @Nonnull ExecutorService service,
+	                                   @Nonnull SearchFeedback feedback,
+	                                   @Nonnull WorkspaceResource resource,
+	                                   @Nonnull WorkspacePathNode workspacePath,
+	                                   @Nullable AndroidClassSearchVisitor androidClassVisitor,
+	                                   @Nullable JvmClassSearchVisitor jvmClassVisitor,
+	                                   @Nullable FileSearchVisitor fileVisitor) {
+		// Recursively search embedded resources.
+		for (WorkspaceFileResource embeddedResource : resource.getEmbeddedResources().values()) {
+			searchResource(results, service, feedback, embeddedResource, workspacePath,
+					androidClassVisitor, jvmClassVisitor, fileVisitor);
+		}
 
-			// Visit file content
-			if (fileVisitor != null) {
-				FileBundle fileBundle = resource.getFileBundle();
-				BundlePathNode bundleNode = resourceNode.child(fileBundle);
-				for (FileInfo fileInfo : fileBundle) {
+		// Visit android content
+		ResourcePathNode resourcePath = workspacePath.child(resource);
+		if (androidClassVisitor != null) {
+			for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
+				BundlePathNode bundlePath = resourcePath.child(bundle);
+				for (AndroidClassInfo classInfo : bundle) {
 					if (feedback.hasRequestedCancellation())
 						break;
-					if (!feedback.doVisitFile(fileInfo))
+					if (!feedback.doVisitClass(classInfo))
 						continue;
-					FilePathNode filePath = bundleNode
-							.child(fileInfo.getDirectoryName())
-							.child(fileInfo);
+					ClassPathNode classPath = bundlePath
+							.child(classInfo.getPackageName())
+							.child(classInfo);
 					service.submit(() -> {
 						if (feedback.hasRequestedCancellation())
 							return;
-						fileVisitor.visit(getResultSink(results, feedback), filePath, fileInfo);
+						androidClassVisitor.visit(getResultSink(results, feedback), classPath, classInfo);
 					});
 				}
 			}
 		}
 
-		ThreadUtil.blockUntilComplete(service);
-		return results;
+		// Visit JVM content
+		if (jvmClassVisitor != null) {
+			Stream.concat(resource.jvmClassBundleStream(), resource.versionedJvmClassBundleStream()).forEach(bundle -> {
+				BundlePathNode bundlePath = resourcePath.child(bundle);
+				for (JvmClassInfo classInfo : bundle) {
+					if (feedback.hasRequestedCancellation())
+						break;
+					if (!feedback.doVisitClass(classInfo))
+						continue;
+					ClassPathNode classPath = bundlePath
+							.child(classInfo.getPackageName())
+							.child(classInfo);
+					service.submit(() -> {
+						if (feedback.hasRequestedCancellation())
+							return;
+						jvmClassVisitor.visit(getResultSink(results, feedback), classPath, classInfo);
+					});
+				}
+			});
+		}
+
+		// Visit file content
+		if (fileVisitor != null) {
+			FileBundle fileBundle = resource.getFileBundle();
+			BundlePathNode bundlePath = resourcePath.child(fileBundle);
+			for (FileInfo fileInfo : fileBundle) {
+				if (feedback.hasRequestedCancellation())
+					break;
+				if (!feedback.doVisitFile(fileInfo))
+					continue;
+				FilePathNode filePath = bundlePath
+						.child(fileInfo.getDirectoryName())
+						.child(fileInfo);
+				service.submit(() -> {
+					if (feedback.hasRequestedCancellation())
+						return;
+					fileVisitor.visit(getResultSink(results, feedback), filePath, fileInfo);
+				});
+			}
+		}
 	}
 
 	@Nonnull
