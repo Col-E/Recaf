@@ -90,9 +90,6 @@ public class ResolverAdapter extends BasicResolver {
 			}
 		}
 
-		// TODO: If we get an unknown resolution, do we want to try the next parent up?
-		//  - Would mimic our behavior from before
-
 		// Resolve the content at the given position then adapt it.
 		Resolution resolution = resolveAt(position, model);
 		return adapt(resolution, model);
