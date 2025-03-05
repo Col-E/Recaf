@@ -330,6 +330,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 				} else {
 					unit = resultingUnit;
 					resolver = astService.newJavaResolver(workspace, resultingUnit);
+					resolver.setClassContext(getPath().getValue());
 
 					logger.debugging(l -> l.info("AST parsed successfully, took {}ms", diffMs));
 					astAvailabilityButton.setAvailable();

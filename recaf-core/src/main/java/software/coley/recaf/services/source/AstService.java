@@ -18,7 +18,6 @@ import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.util.ReflectUtil;
-import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -38,7 +37,6 @@ import software.coley.sourcesolver.resolve.entry.MethodEntry;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
