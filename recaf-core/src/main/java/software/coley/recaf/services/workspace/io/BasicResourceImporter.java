@@ -590,6 +590,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// We have to use a path because unless we implement our own module reader, the internal API
 		// only provides reader access via a path item.
 		Path pathToModuleFile = InputFilePathProperty.get(moduleInfo);
+		if (pathToModuleFile == null)
+			throw new IOException("Content of modules can only be read from path, which has not been set for this model");
 		ModulesIOUtil.stream(pathToModuleFile)
 				.forEach(entry -> {
 					// Follows the pattern: /<module-name>/<file-name>
