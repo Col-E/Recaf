@@ -33,7 +33,6 @@ import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TestEnvironment;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;

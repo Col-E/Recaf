@@ -23,7 +23,6 @@ public class EagerInitializationExtension implements Extension {
 	private static final EagerInitializationExtension INSTANCE = new EagerInitializationExtension();
 	private static final List<Bean<?>> applicationScopedEagerBeans = new ArrayList<>();
 	private static final List<Bean<?>> applicationScopedEagerBeansForUi = new ArrayList<>();
-	private static final List<Bean<?>> workspaceScopedEagerBeans = new ArrayList<>();
 	private static BeanManager beanManager;
 
 	private EagerInitializationExtension() {
@@ -54,16 +53,8 @@ public class EagerInitializationExtension implements Extension {
 	}
 
 	/**
-	 * @return Workspace scoped {@link EagerInitialization} beans.
-	 */
-	@Nonnull
-	public static List<Bean<?>> getWorkspaceScopedEagerBeans() {
-		return workspaceScopedEagerBeans;
-	}
-
-	/**
 	 * Called when a bean is discovered and processed.
-	 * We will record eager beans here so we can initialize them later.
+	 * We will record eager beans here so that we can initialize them later.
 	 *
 	 * @param event
 	 * 		CDI bean process event.

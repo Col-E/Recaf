@@ -2,7 +2,6 @@ package software.coley.recaf.info.properties.builtin;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.info.BinaryXmlFileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.properties.BasicProperty;
 

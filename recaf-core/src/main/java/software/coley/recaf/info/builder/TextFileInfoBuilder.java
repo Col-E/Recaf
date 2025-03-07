@@ -1,7 +1,6 @@
 package software.coley.recaf.info.builder;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import software.coley.recaf.info.BasicTextFileInfo;
 import software.coley.recaf.info.TextFileInfo;
 import software.coley.recaf.util.StringDecodingResult;

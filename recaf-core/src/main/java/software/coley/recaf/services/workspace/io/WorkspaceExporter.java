@@ -1,7 +1,6 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;

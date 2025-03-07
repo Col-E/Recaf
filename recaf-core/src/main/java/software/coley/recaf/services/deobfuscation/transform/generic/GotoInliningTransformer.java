@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.objectweb.asm.Opcodes.*;
 import static software.coley.recaf.util.AsmInsnUtil.*;
 
 /**

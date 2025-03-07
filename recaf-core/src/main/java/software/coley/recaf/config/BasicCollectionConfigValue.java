@@ -30,6 +30,7 @@ public class BasicCollectionConfigValue<T, C extends Collection<T>> implements C
 	 * @param observable
 	 * 		Observable of value.
 	 */
+	@SuppressWarnings("rawtypes")
 	public BasicCollectionConfigValue(@Nonnull String key,
 	                                  @Nonnull Class<? extends Collection> type,
 	                                  @Nonnull Class<T> itemType,

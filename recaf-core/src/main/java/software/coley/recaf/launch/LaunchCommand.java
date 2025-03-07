@@ -15,9 +15,7 @@ import java.io.File;
 import java.io.StringWriter;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 /**
  * Launch arguments for Recaf.

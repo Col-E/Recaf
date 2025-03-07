@@ -1,7 +1,6 @@
 package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
 
 import java.nio.charset.Charset;

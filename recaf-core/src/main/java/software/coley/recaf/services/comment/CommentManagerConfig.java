@@ -5,17 +5,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
-import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
-import software.coley.recaf.services.attach.AttachManager;
 import software.coley.recaf.services.decompile.Decompiler;
-import software.coley.recaf.services.file.RecafDirectoriesConfig;
-
-import javax.management.MBeanServerConnection;
-import java.nio.file.Path;
 
 /**
  * Config for {@link CommentManager}.

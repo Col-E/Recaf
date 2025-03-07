@@ -1,7 +1,6 @@
 package software.coley.recaf.services.script;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 
 import java.nio.file.Path;
 import java.util.Map;

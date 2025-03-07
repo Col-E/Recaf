@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * An media-player using JavaFX's {@link MediaPlayer} with the use of {@link RecafURLStreamHandlerProvider}
+ * A media-player using JavaFX's {@link MediaPlayer} with the use of {@link RecafURLStreamHandlerProvider}
  * which allows pulling audio from 'memory' via the current {@link Workspace}.
  *
  * @author Matt Coley

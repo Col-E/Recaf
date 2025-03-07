@@ -1,5 +1,6 @@
 package software.coley.recaf.util.io;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.ReflectUtil;
 
 import java.io.IOException;
@@ -31,7 +32,8 @@ public class ByteSources {
 	 *
 	 * @return Wrapped consumer.
 	 */
-	public static <E> Consumer<ByteSourceElement<E>> consume(ByteSourceConsumer<E> consumer) {
+	@Nonnull
+	public static <E> Consumer<ByteSourceElement<E>> consume(@Nonnull ByteSourceConsumer<E> consumer) {
 		return e -> {
 			try {
 				consumer.accept(e.getElement(), e.getByteSource());
@@ -53,7 +55,8 @@ public class ByteSources {
 	 *
 	 * @return New byte source.
 	 */
-	public static ByteSource wrap(byte[] bytes, int offset, int length) {
+	@Nonnull
+	public static ByteSource wrap(@Nonnull byte[] bytes, int offset, int length) {
 		return new ByteArraySource(bytes, offset, length);
 	}
 
@@ -65,7 +68,8 @@ public class ByteSources {
 	 *
 	 * @return New byte source.
 	 */
-	public static ByteSource wrap(byte[] bytes) {
+	@Nonnull
+	public static ByteSource wrap(@Nonnull byte[] bytes) {
 		return new ByteArraySource(bytes, 0, bytes.length);
 	}
 
@@ -77,7 +81,8 @@ public class ByteSources {
 	 *
 	 * @return New byte source.
 	 */
-	public static ByteSource forBuffer(ByteBuffer buffer) {
+	@Nonnull
+	public static ByteSource forBuffer(@Nonnull ByteBuffer buffer) {
 		return new ByteBufferSource(buffer);
 	}
 
@@ -89,7 +94,8 @@ public class ByteSources {
 	 *
 	 * @return New byte source.
 	 */
-	public static ByteSource forPath(Path path) {
+	@Nonnull
+	public static ByteSource forPath(@Nonnull Path path) {
 		return new PathByteSource(path);
 	}
 
@@ -101,7 +107,8 @@ public class ByteSources {
 	 *
 	 * @return New byte source.
 	 */
-	public static ByteSource forMemorySegment(MemorySegment data) {
+	@Nonnull
+	public static ByteSource forMemorySegment(@Nonnull MemorySegment data) {
 		return new MemorySegmentDataSource(data);
 	}
 }

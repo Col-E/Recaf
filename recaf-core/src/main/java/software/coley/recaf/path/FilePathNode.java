@@ -3,7 +3,6 @@ package software.coley.recaf.path;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
-import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 

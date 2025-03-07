@@ -11,7 +11,6 @@ import org.benf.cfr.reader.util.getopt.PermittedOptionProvider;
 import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigValue;
-import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.decompile.BaseDecompilerConfig;
 import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 import software.coley.recaf.util.ReflectUtil;

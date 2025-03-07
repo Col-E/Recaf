@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class ClassLoaderInternals {
 	/**
-	 * @return {@link jdk.internal.loader.URLClassPath} instance.
+	 * @return {@code jdk.internal.loader.URLClassPath} instance.
 	 *
 	 * @throws ReflectiveOperationException
 	 * 		When the internals change and the reflective look-ups fail.

@@ -4,7 +4,6 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import net.fabricmc.mappingio.format.proguard.ProGuardFileWriter;
-import net.fabricmc.mappingio.format.tiny.Tiny2FileWriter;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.util.StringUtil;

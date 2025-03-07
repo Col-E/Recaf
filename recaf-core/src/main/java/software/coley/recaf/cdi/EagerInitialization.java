@@ -26,9 +26,6 @@ public @interface EagerInitialization {
 	 * its dependencies being created as soon as the application begins. For beans dealing with UI capabilities this
 	 * will likely lead to problems. For those situations, use {@link InitializationStage#AFTER_UI_INIT} to delay
 	 * initialization until after the UI has been populated.
-	 * <br>
-	 * {@link WorkspaceScoped} beans should not need to ever change this value since they are only created/scoped to the
-	 * creation of new workspaces. When running the UI, a workspace will never be opened before the UI populates.
 	 *
 	 * @return When the initialization should occur.
 	 */

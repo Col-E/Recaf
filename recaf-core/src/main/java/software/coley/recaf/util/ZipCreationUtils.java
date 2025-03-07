@@ -113,7 +113,7 @@ public class ZipCreationUtils {
 	 * @return NIO time representation.
 	 */
 	public static FileTime winTimeToFileTime(long time) {
-		return FileTime.from(time / 10 + -11644473600000000L /* windows epoch */, TimeUnit.MICROSECONDS);
+		return FileTime.from(time / 10 - 11644473600000000L /* windows epoch */, TimeUnit.MICROSECONDS);
 	}
 
 	/**

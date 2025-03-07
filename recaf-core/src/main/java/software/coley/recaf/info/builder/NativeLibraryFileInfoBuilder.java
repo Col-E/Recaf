@@ -1,8 +1,6 @@
 package software.coley.recaf.info.builder;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.info.AudioFileInfo;
-import software.coley.recaf.info.BasicAudioFileInfo;
 import software.coley.recaf.info.BasicNativeLibraryFileInfo;
 import software.coley.recaf.info.NativeLibraryFileInfo;
 

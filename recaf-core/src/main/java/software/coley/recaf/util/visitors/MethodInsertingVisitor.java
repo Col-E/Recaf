@@ -3,7 +3,6 @@ package software.coley.recaf.util.visitors;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.RecafConstants;
 
