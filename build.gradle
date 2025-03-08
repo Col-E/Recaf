@@ -114,11 +114,11 @@ subprojects {
         reports.html.required = false
         reports.junitXml.required = true
 
-        // We want to cover all recaf classes, but not the test classes themselves.
+        // We want to cover all recaf classes, but not the test classes themselves (or auto-gen classes).
         // The exclusion list is applied after the inclusion list, so this ends up working out.
         jacoco {
             includes = ['software/coley/recaf/**']
-            excludes = ['software/coley/recaf/**Test']
+            excludes = ['software/coley/recaf/**Test**', 'software/coley/recaf/test/**', '**/**WeldClientProxy']
         }
     }
 
