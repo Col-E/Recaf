@@ -115,6 +115,7 @@ public class GsonProvider implements Service {
 	 *
 	 * @param type
 	 * 		Type definition for the type serializer being registered.
+	 * 		This type must be the exact-intended type. When a subtype is serialized this will not be used.
 	 * @param serializer
 	 * 		Serializer implementation for the given type.
 	 * @param <T>
