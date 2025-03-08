@@ -90,7 +90,7 @@ public class GsonProvider implements Service {
 	 *
 	 * @see GsonBuilder#registerTypeAdapter(Type, Object)
 	 */
-	public <T> void addTypeInstanceCreator(@Nonnull Class<T> type, @Nonnull InstanceCreator<T> creator) {
+	public <T> void addTypeInstanceCreator(@Nonnull Class<? extends T> type, @Nonnull InstanceCreator<? extends T> creator) {
 		register(type, creator);
 	}
 
@@ -106,7 +106,7 @@ public class GsonProvider implements Service {
 	 *
 	 * @see GsonBuilder#registerTypeAdapter(Type, Object)
 	 */
-	public <T> void addTypeDeserializer(@Nonnull Class<T> type, @Nonnull JsonDeserializer<T> deserializer) {
+	public <T> void addTypeDeserializer(@Nonnull Class<? extends T> type, @Nonnull JsonDeserializer<? extends T> deserializer) {
 		register(type, deserializer);
 	}
 
@@ -122,7 +122,7 @@ public class GsonProvider implements Service {
 	 *
 	 * @see GsonBuilder#registerTypeAdapter(Type, Object)
 	 */
-	public <T> void addTypeSerializer(@Nonnull Class<T> type, @Nonnull JsonSerializer<T> serializer) {
+	public <T> void addTypeSerializer(@Nonnull Class<? extends T> type, @Nonnull JsonSerializer<? extends T> serializer) {
 		register(type, serializer);
 	}
 
