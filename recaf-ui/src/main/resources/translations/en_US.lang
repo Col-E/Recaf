@@ -653,6 +653,7 @@ service.decompile.impl.decompiler-procyon-config.forcedCompilerTarget=Target lan
 service.decompile.impl.decompiler-procyon-config.includeErrorDiagnostics=Include error diagnostics
 service.decompile.impl.decompiler-procyon-config.includeLineNumbersInBytecode=Show debug line numbers (bytecode)
 service.decompile.impl.decompiler-procyon-config.isUnicodeOutputEnabled=Enable unicode in output
+service.decompile.impl.decompiler-procyon-config.languageTarget=Language target
 service.decompile.impl.decompiler-procyon-config.mergeVariables=Merge variables when possible
 service.decompile.impl.decompiler-procyon-config.retainPointlessSwitches=Retain useless switches
 service.decompile.impl.decompiler-procyon-config.retainRedundantCasts=Retain useless casts

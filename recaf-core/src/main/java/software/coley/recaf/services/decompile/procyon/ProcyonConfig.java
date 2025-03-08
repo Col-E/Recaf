@@ -3,6 +3,8 @@ package software.coley.recaf.services.decompile.procyon;
 import com.strobel.assembler.metadata.CompilerTarget;
 import com.strobel.decompiler.DecompilerSettings;
 import com.strobel.decompiler.languages.BytecodeOutputOptions;
+import com.strobel.decompiler.languages.Language;
+import com.strobel.decompiler.languages.Languages;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -41,6 +43,8 @@ public class ProcyonConfig extends BaseDecompilerConfig {
 	private final ObservableInteger textBlockLineMinimum = new ObservableInteger(3);
 	private final ObservableObject<CompilerTarget> forcedCompilerTarget = new ObservableObject<>(null);
 	private final ObservableObject<BytecodeOutputOptions> bytecodeOutputOptions = new ObservableObject<>(BytecodeOutputOptions.createDefault());
+	private final ObservableObject<Language> languageTarget = new ObservableObject<>(Languages.java());
+
 	@Inject
 	public ProcyonConfig() {
 		super("decompiler-procyon" + CONFIG_SUFFIX);
@@ -64,6 +68,7 @@ public class ProcyonConfig extends BaseDecompilerConfig {
 		addValue(new BasicConfigValue<>("textBlockLineMinimum", int.class, textBlockLineMinimum));
 		addValue(new BasicConfigValue<>("forcedCompilerTarget", CompilerTarget.class, forcedCompilerTarget));
 		addValue(new BasicConfigValue<>("bytecodeOutputOptions", BytecodeOutputOptions.class, bytecodeOutputOptions));
+		addValue(new BasicConfigValue<>("languageTarget", Language.class, languageTarget));
 		registerConfigValuesHashUpdates();
 	}
 
@@ -93,6 +98,7 @@ public class ProcyonConfig extends BaseDecompilerConfig {
 		decompilerSettings.setTextBlockLineMinimum(textBlockLineMinimum.getValue());
 		decompilerSettings.setForcedCompilerTarget(forcedCompilerTarget.getValue());
 		decompilerSettings.setBytecodeOutputOptions(bytecodeOutputOptions.getValue());
+		decompilerSettings.setLanguage(languageTarget.getValue());
 		return decompilerSettings;
 	}
 
@@ -194,5 +200,10 @@ public class ProcyonConfig extends BaseDecompilerConfig {
 	@Nonnull
 	public ObservableObject<BytecodeOutputOptions> getBytecodeOutputOptions() {
 		return bytecodeOutputOptions;
+	}
+
+	@Nonnull
+	public ObservableObject<Language> getLanguageTarget() {
+		return languageTarget;
 	}
 }
