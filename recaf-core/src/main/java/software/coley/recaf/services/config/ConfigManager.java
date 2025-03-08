@@ -9,12 +9,14 @@ import com.google.gson.stream.JsonWriter;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
+import software.coley.recaf.cdi.InitializationEvent;
 import software.coley.recaf.config.ConfigCollectionValue;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
@@ -28,7 +30,12 @@ import software.coley.recaf.util.TestEnvironment;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -55,6 +62,9 @@ public class ConfigManager implements Service {
 		this.gsonProvider = gsonProvider;
 		for (ConfigContainer container : containers)
 			registerContainer(container);
+	}
+
+	private void init(@Observes InitializationEvent event) {
 		load();
 	}
 
@@ -129,7 +139,7 @@ public class ConfigManager implements Service {
 				} catch (IllegalArgumentException e) {
 					logger.error("Could not find adapter for type: {}", value.getType(), e);
 				} catch (Exception e) {
-					logger.error("Failed to load config value: {}", id, e);
+					logger.error("Failed to load config value: {}.{}", key, id, e);
 				}
 			}
 
