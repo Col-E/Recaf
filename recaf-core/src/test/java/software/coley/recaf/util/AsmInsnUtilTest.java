@@ -243,7 +243,7 @@ class AsmInsnUtilTest {
 		assertTrue(isConstIntValue(new InsnNode(ICONST_5)));
 		assertTrue(isConstIntValue(new IntInsnNode(SIPUSH, 0)));
 		assertTrue(isConstIntValue(new IntInsnNode(BIPUSH, 0)));
-		assertFalse(isConstIntValue(new LdcInsnNode(100000)));
+		assertTrue(isConstIntValue(new LdcInsnNode(100000)));
 
 		// Non const-int values
 		assertFalse(isConstIntValue(new InsnNode(ACONST_NULL)));
