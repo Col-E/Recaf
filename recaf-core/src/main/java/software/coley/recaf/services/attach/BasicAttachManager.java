@@ -342,7 +342,7 @@ public class BasicAttachManager implements AttachManager {
 				try {
 					port = SocketAvailability.findAvailable();
 					String agentAbsolutePath = StringUtil.pathToAbsoluteString(getAgentJarPath());
-					String agentArgs = "port=" + port;
+					String agentArgs = "port=" + port+",notrampolines";
 					if (DevDetection.isDevEnv())
 						agentArgs += ",debug";
 					else
