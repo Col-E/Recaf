@@ -143,16 +143,19 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	List<InnerClassInfo> getInnerClasses();
 
 	/**
-	 * Gets a named inner class by the local name. Given the following example, you would pass {@code "Bar"}:
+	 * Gets a named inner class by the local name.
+	 * Given the following example, you would pass {@code "Bar"} or even {@code "FizzBuzz"}:
 	 * <pre>{@code
 	 * class Foo {
-	 *     class Bar {}
+	 *     class Bar {
+	 *         class FizzBuzz {}
+	 *     }
 	 * }
 	 * }</pre>
 	 * Because anonymous inner classes do not have a name declared, they cannot be yielded here.
 	 *
 	 * @param innerName
-	 * 		Local name of inner class in the scope of this class as its outer class.
+	 * 		Local name of inner class.
 	 *
 	 * @return Inner class of the matching name, or {@code null} if no such inner exists.
 	 */
