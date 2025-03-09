@@ -343,9 +343,9 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 		//  - variable loads (context will determine if value in variable is constant at the given position)
 		//  - static field gets (context will determine if value in field is constant/known)
 		//  - static method calls with 0 args (context will determine if returned value of method is constant/known)
-		if (AsmInsnUtil.isConstValue(insn))
-			return true;
 		int op = insn.getOpcode();
+		if (AsmInsnUtil.isConstValue(op))
+			return true;
 		if (op >= ILOAD && op <= ALOAD)
 			return true;
 		if (op == GETSTATIC)

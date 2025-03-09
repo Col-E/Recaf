@@ -38,6 +38,9 @@ public class AsmInsnUtil implements Opcodes {
 	 * 		Some method or field opcode.
 	 *
 	 * @return Relevant handle tag.
+	 *
+	 * @throws IllegalStateException
+	 * 		When the opcode does not have a respective handle tag.
 	 */
 	public static int opcodeToTag(int opcode) {
 		return switch (opcode) {
@@ -60,6 +63,9 @@ public class AsmInsnUtil implements Opcodes {
 	 * 		Some method or field handle tag.
 	 *
 	 * @return Relevant instruction opcode.
+	 *
+	 * @throws IllegalStateException
+	 * 		When the tag does not have a respective handle opcode.
 	 */
 	public static int tagToOpcode(int tag) {
 		return switch (tag) {
@@ -173,12 +179,12 @@ public class AsmInsnUtil implements Opcodes {
 	public static void fixMissingVariableLabels(@Nonnull MethodNode method) {
 		// Must not be abstract
 		InsnList instructions = method.instructions;
-		if (instructions == null)
+		if (instructions == null || instructions.size() == 0)
 			return;
 
 		// Must have variables to fix
 		List<LocalVariableNode> variables = method.localVariables;
-		if (variables == null)
+		if (variables == null || variables.isEmpty())
 			return;
 
 		// Find or create first/last labels
@@ -215,13 +221,12 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
-	 * @param insn
-	 * 		Instruction to check.
+	 * @param op
+	 * 		Instruction opcode.
 	 *
 	 * @return {@code true} if the instruction pushes a constant value onto the stack.
 	 */
-	public static boolean isConstValue(@Nonnull AbstractInsnNode insn) {
-		int op = insn.getOpcode();
+	public static boolean isConstValue(int op) {
 		return op >= ACONST_NULL && op <= LDC;
 	}
 
@@ -411,7 +416,7 @@ public class AsmInsnUtil implements Opcodes {
 	 */
 	public static boolean isTerminalOrAlwaysTakeFlowControl(int op) {
 		return switch (op) {
-			case IRETURN, LRETURN, FRETURN, DRETURN, ARETURN, RETURN, ATHROW, TABLESWITCH, LOOKUPSWITCH, GOTO -> true;
+			case IRETURN, LRETURN, FRETURN, DRETURN, ARETURN, RETURN, ATHROW, TABLESWITCH, LOOKUPSWITCH, GOTO, JSR -> true;
 			default -> false;
 		};
 	}
@@ -625,6 +630,7 @@ public class AsmInsnUtil implements Opcodes {
 				return 0;
 			if (op == GETFIELD)
 				return 1; // owner-value
+
 			if (op == PUTSTATIC)
 				return Type.getType(fin.desc).getSize(); // value (can be wide)
 			if (op == PUTFIELD)
