@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Tests {@link DuplicateCatchMergingTransformer} / {@link RedundantTryCatchRemovingTransformer}.
  */
 public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
+	/** Remove duplicate code among handler blocks where possible. */
 	@Test
 	void duplicateCatchHandlers() {
 		String asm = """
@@ -55,6 +56,7 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 		});
 	}
 
+	/** Remove a try-catch that will be impossible to occur. */
 	@Test
 	void redundantTryCatch() {
 		String asm = """
@@ -120,6 +122,7 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 	/** Ensures {@link RedundantTryCatchRemovingTransformer} is not too aggressive. */
 	@Test
 	void oneRedundantOneRelevantTryCatch() {
+		// The ClassNotFoundException is not relevant and should be removed
 		String asm = """
 				.method public static example ()V {
 					exceptions: {
@@ -161,6 +164,222 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 				    code: {
 				    A:
 				        invokestatic Example.throwing ()V
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+	}
+
+	/** Ensures {@link RedundantTryCatchRemovingTransformer} is not too aggressive. */
+	@Test
+	void keepThrowingNpe() {
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/NullPointerException; }
+				    },
+				    code: {
+				    A:
+				        aconst_null
+				        athrow
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+	}
+
+	/** Ensures {@link RedundantTryCatchRemovingTransformer} is not too aggressive. */
+	@Test
+	void keepDivideByZeroExceptions() {
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ArithmeticException; }
+				    },
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_0
+				        idiv
+				        pop
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+		asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ArithmeticException; }
+				    },
+				    code: {
+				    A:
+				        fconst_0
+				        fconst_0
+				        fdiv
+				        pop
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+		asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ArithmeticException; }
+				    },
+				    code: {
+				    A:
+				        lconst_0
+				        lconst_0
+				        ldiv
+				        pop2
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+		asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ArithmeticException; }
+				    },
+				    code: {
+				    A:
+				        dconst_0
+				        dconst_0
+				        ddiv
+				        pop2
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+	}
+
+	/** Ensures {@link RedundantTryCatchRemovingTransformer} is not too aggressive. */
+	@Test
+	void keepObviousNpeOnFieldAccess() {
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/NullPointerException; }
+				    },
+				    code: {
+				    A:
+				        // field owner context is null
+				        aconst_null
+				        iconst_0
+				        putfield Owner.intField I
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+		asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/NullPointerException; }
+				    },
+				    code: {
+				    A:
+				        // field owner context is null
+				        aconst_null
+				        getfield Owner.intField I
+				        pop
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+	}
+
+	/** Ensures {@link RedundantTryCatchRemovingTransformer} is not too aggressive. */
+	@Test
+	void keepAmbiguousNpeOnFieldAccess() {
+		String asm = """
+				.method public static example (LOwner;)V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/NullPointerException; }
+				    },
+				    code: {
+				    A:
+				        // field owner context is a parameter, and thus can be null or not-null
+				        aload 0
+				        iconst_0
+				        putfield Owner.intField I
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+		asm = """
+				.method public static example (LOwner;)V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/NullPointerException; }
+				    },
+				    code: {
+				    A:
+				        // field owner context is a parameter, and thus can be null or not-null
+				        aload 0
+				        getfield Owner.intField I
+				        pop
 				    B:
 				        goto END
 				    C:
