@@ -1,14 +1,27 @@
 package software.coley.recaf.info;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.test.dummy.*;
+import software.coley.recaf.test.dummy.AccessibleFields;
+import software.coley.recaf.test.dummy.AnnotationImpl;
+import software.coley.recaf.test.dummy.ClassWithAnonymousInner;
+import software.coley.recaf.test.dummy.ClassWithEmbeddedInners;
+import software.coley.recaf.test.dummy.ClassWithInner;
+import software.coley.recaf.test.dummy.MultipleInterfacesClass;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -70,7 +83,7 @@ class ClassInfoTest {
 
 		// Implicit annotation
 		assertEquals(1, annotationImpl.getInterfaces().size(), "Annotation should implement annotation type");
-		assertEquals("java/lang/annotation/Annotation", annotationImpl.getInterfaces().get(0),
+		assertEquals("java/lang/annotation/Annotation", annotationImpl.getInterfaces().getFirst(),
 				"Expected annotation interface");
 
 		// This one has 2 interfaces
@@ -230,6 +243,7 @@ class ClassInfoTest {
 
 	@Test
 	void getInnerClasses() {
+		assertEquals(5, classWithEmbeddedInners.getInnerClasses().size());
 		assertEquals(0, accessibleFields.getInnerClasses().size(), "Expected no inners");
 
 		// Normal inner
@@ -239,6 +253,22 @@ class ClassInfoTest {
 		// Anonymous inner
 		assertEquals(1, classWithAnonymousInner.getInnerClasses().size(), "Expected 1 inner");
 		assertEquals(1, classWithAnonymousInner$Inner.getInnerClasses().size(), "Expected 1 inner, of self");
+
+		// Get by name, and check for bad lookups
+		List<InnerClassInfo> inners = List.of(
+				Objects.requireNonNull(classWithEmbeddedInners.getInnerClassByInnerName("A")),
+				Objects.requireNonNull(classWithEmbeddedInners.getInnerClassByInnerName("B")),
+				Objects.requireNonNull(classWithEmbeddedInners.getInnerClassByInnerName("C")),
+				Objects.requireNonNull(classWithEmbeddedInners.getInnerClassByInnerName("D")),
+				Objects.requireNonNull(classWithEmbeddedInners.getInnerClassByInnerName("E"))
+		);
+		assertNull(classWithEmbeddedInners.getInnerClassByInnerName("Bogus"));
+		assertEquals(inners, classWithEmbeddedInners.getInnerClasses());
+
+		// Honestly, this is just to get code-coverage on the hashcode of inner class info
+		inners.stream().collect(Collectors.toMap(InnerClassInfo::getInnerName, Function.identity())).forEach((name, c) -> {
+			assertSame(c, classWithEmbeddedInners.getInnerClassByInnerName(name));
+		});
 	}
 
 	@Test
@@ -252,9 +282,9 @@ class ClassInfoTest {
 		// Normal case
 		assertEquals(5, accessibleFields.getFields().size());
 
-		// Non-static inner should have a reference to outer as synthetic field
-		// Not anymore! :V
-		// assertEquals(1, classWithInner$Inner.getFields().size());
+		// Non-static inner should have a reference to outer as synthetic field.
+		// At least, this used to be the case before nest-host attributes and such.
+		//  assertEquals(1, classWithInner$Inner.getFields().size());
 
 		// Despite how the format looks, they're not fields
 		assertEquals(0, annotationImpl.getFields().size());
@@ -294,7 +324,7 @@ class ClassInfoTest {
 	@Test
 	void mapClass() {
 		assertDoesNotThrow(() -> {
-			InnerClassInfo inner = classWithInner.mapClass(c -> c.getInnerClasses().get(0));
+			InnerClassInfo inner = classWithInner.mapClass(c -> c.getInnerClasses().getFirst());
 			assertNotNull(inner);
 		});
 	}
@@ -322,5 +352,26 @@ class ClassInfoTest {
 	@Test
 	void isAndroidClass() {
 		assertFalse(accessibleFields.isAndroidClass());
+	}
+
+	@Test
+	void equals() {
+		// Two different classes should be different/
+		assertNotEquals(accessibleFields, classWithInner);
+
+		// Builder copy with no changes should be equal.
+		JvmClassInfo accessibleFieldCopy = accessibleFields.toJvmClassBuilder().build();
+		assertEquals(accessibleFields, accessibleFieldCopy);
+		accessibleFieldCopy = new JvmClassInfoBuilder().adaptFrom(accessibleFields.getBytecode()).build();
+		assertEquals(accessibleFields, accessibleFieldCopy);
+
+		// Even a small change like the version const will make the class copy no longer equal.
+		byte[] accessibleFieldsBytecodeCopy = ArrayUtils.clone(accessibleFields.getBytecode());
+		accessibleFieldsBytecodeCopy[5] = Opcodes.V11; // Change the major version
+		accessibleFieldCopy = new JvmClassInfoBuilder().adaptFrom(accessibleFieldsBytecodeCopy).build();
+		assertNotEquals(accessibleFields, accessibleFieldCopy);
+
+		// Edge case, we try to compare a jvm-class to a non-jvm class
+		assertNotEquals(accessibleFields, new StubClassInfo(accessibleFields.getName()).asAndroidClass());
 	}
 }
