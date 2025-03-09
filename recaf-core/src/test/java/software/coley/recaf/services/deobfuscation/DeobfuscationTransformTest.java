@@ -846,6 +846,44 @@ class DeobfuscationTransformTest extends TestBase {
 		}
 
 		@Test
+		void foldOpaqueLookupSwitch() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        iconst_3
+					        lookupswitch {
+					            1: B,
+					            2: C,
+					            3: D,
+					            default: E
+					        }
+					    B:
+					        aconst_null
+					        athrow
+					    C:
+					        aconst_null
+					        athrow
+					    D:
+					        return
+					    E:
+					        aconst_null
+					        athrow
+					    }
+					}
+					""";
+			validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+				// Switch should be replaced with a single goto
+				assertEquals(0, StringUtil.count("lookupswitch", dis), "Expected to remove lookupswitch");
+				assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace lookupswitch <target> with goto <target>");
+
+				// Dead code should be removed
+				assertEquals(0, StringUtil.count("aconst_null", dis), "Expected to remove dead aconst_null");
+				assertEquals(0, StringUtil.count("athrow", dis), "Expected to remove dead athrow");
+			});
+		}
+
+		@Test
 		void foldTableSwitchOfUnknownParameterIfIsEffectiveGoto() {
 			String asm = """
 					.method public static example (I)V {
@@ -983,6 +1021,42 @@ class DeobfuscationTransformTest extends TestBase {
 				assertEquals(0, StringUtil.count("istore", dis), "Expected to remove redundant istore");
 				assertEquals(0, StringUtil.count("iload", dis), "Expected to inline redundant iload");
 				assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to have single iconst_0");
+			});
+		}
+
+		@Test
+		void repeatedSteps() {
+			String asm = """
+					.method public static example ()V {
+					    code: {
+					    A:
+					        iconst_1
+					        istore a
+					        iload a
+					        istore b
+					        iload b
+					        istore c
+					        iload c
+					        istore d
+					        iload d
+					        istore e
+					        iload a
+					        iload b
+					        iadd
+					        istore c
+					        iload c
+					        iload d
+					        iadd
+					        istore e
+					        return
+					    B:
+					    }
+					}
+					""";
+			validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("const", dis), "Expected to remove redundant iconst_0");
+				assertEquals(0, StringUtil.count("load", dis), "Expected to remove redundant iload");
+				assertEquals(0, StringUtil.count("store", dis), "Expected to remove redundant istore");
 			});
 		}
 
@@ -1619,7 +1693,7 @@ class DeobfuscationTransformTest extends TestBase {
 		if (PRINT_BEFORE_AFTER) System.out.println("======== BEFORE ========\n" + assembly);
 		boolean isFullBody = assembly.contains(".class");
 
-		// Run the transformer
+		// Run the transformer.
 		JvmClassInfo cls = assemble(assembly, isFullBody);
 		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
 		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
@@ -1629,6 +1703,31 @@ class DeobfuscationTransformTest extends TestBase {
 		String transformedDisassembly = disassembleTransformed(result, isFullBody);
 		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER ========\n" + transformedDisassembly);
 		assertionChecker.accept(transformedDisassembly);
+	}
+
+	private void validateAfterRepeatedAssembly(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,
+	                                           @Nonnull Consumer<String> assertionChecker) {
+		if (PRINT_BEFORE_AFTER) System.out.println("======== BEFORE ========\n" + assembly);
+		boolean isFullBody = assembly.contains(".class");
+
+		// Run the transformer until no changes are observed.
+		int passes = 0;
+		for (int i = 0; i < 10; i++) {
+			JvmClassInfo cls = assemble(assembly, isFullBody);
+			JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+
+			// No transform step should fail.
+			assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+
+			// Prepare for next transform step.
+			assembly = disassembleTransformed(result, isFullBody);
+			if (result.getTransformedClasses().isEmpty())
+				break;
+			passes++;
+		}
+		assertTrue(passes > 0, "There were no transformations");
+		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER ========\n" + assembly);
+		assertionChecker.accept(assembly);
 	}
 
 	private void validateMappingAfterAssembly(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,
