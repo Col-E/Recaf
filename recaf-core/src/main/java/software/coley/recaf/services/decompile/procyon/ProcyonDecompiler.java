@@ -75,7 +75,6 @@ public class ProcyonDecompiler extends AbstractJvmDecompiler {
 				new WorkspaceTypeLoader(workspace)
 		);
 		DecompilerSettings settings = config.toSettings();
-		settings.setLanguage(Languages.bytecodeAstUnoptimized());
 		settings.setTypeLoader(loader);
 		MetadataSystem system = new MetadataSystem(loader);
 		TypeReference ref = system.lookupType(name);
