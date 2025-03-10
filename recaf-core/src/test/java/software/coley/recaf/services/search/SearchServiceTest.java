@@ -16,6 +16,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.ThrowsPathNode;
 import software.coley.recaf.services.search.match.NumberPredicateProvider;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
+import software.coley.recaf.services.search.query.DeclarationQuery;
 import software.coley.recaf.services.search.query.NumberQuery;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
@@ -281,6 +282,24 @@ public class SearchServiceTest extends TestBase {
 					.filter(r -> r.getPath() instanceof LocalVariablePathNode)
 					.collect(Collectors.toSet());
 			assertEquals(1, varMatches.size());
+		}
+
+		@Test
+		void testMemberDeclarations() {
+			Results results = searchService.search(classesWorkspace, new DeclarationQuery(
+					strMatchProvider.newEndsWithPredicate("AccessibleFields"),
+					strMatchProvider.newEqualPredicate("CONSTANT_FIELD"),
+					strMatchProvider.newEqualPredicate("I")
+			));
+			assertEquals(1, results.size());
+
+			// Only 1 class in the provided workspace has an equals implemented
+			results = searchService.search(classesWorkspace, new DeclarationQuery(
+					null,
+					strMatchProvider.newEqualPredicate("equals"),
+					null
+			));
+			assertEquals(1, results.size());
 		}
 	}
 

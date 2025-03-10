@@ -4,9 +4,6 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
-
-import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
-
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
@@ -32,6 +29,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.List;
 
+import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
+
 /**
  * Basic implementation for {@link MethodContextMenuProviderFactory}.
  *
@@ -43,19 +42,19 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 
 	@Inject
 	public BasicMethodContextMenuProviderFactory(@Nonnull TextProviderService textService,
-												 @Nonnull IconProviderService iconService,
-												 @Nonnull Actions actions) {
+	                                             @Nonnull IconProviderService iconService,
+	                                             @Nonnull Actions actions) {
 		super(textService, iconService, actions);
 	}
 
 	@Nonnull
 	@Override
 	public ContextMenuProvider getMethodContextMenuProvider(@Nonnull ContextSource source,
-															@Nonnull Workspace workspace,
-															@Nonnull WorkspaceResource resource,
-															@Nonnull ClassBundle<? extends ClassInfo> bundle,
-															@Nonnull ClassInfo declaringClass,
-															@Nonnull MethodMember method) {
+	                                                        @Nonnull Workspace workspace,
+	                                                        @Nonnull WorkspaceResource resource,
+	                                                        @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                                        @Nonnull ClassInfo declaringClass,
+	                                                        @Nonnull MethodMember method) {
 		return () -> {
 			TextProvider nameProvider = textService.getMethodMemberTextProvider(workspace, resource, bundle, declaringClass, method);
 			IconProvider iconProvider = iconService.getClassMemberIconProvider(workspace, resource, bundle, declaringClass, method);
@@ -64,15 +63,15 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			var builder = new ContextMenuBuilder(menu, source).forMember(workspace, resource, bundle, declaringClass, method);
 
 			if (source.isReference()) {
-				builder.item("menu.goto.method", ARROW_RIGHT , () -> {
-							ClassPathNode classPath = PathNodes.classPath(workspace, resource, bundle, declaringClass);
-							try {
-								actions.gotoDeclaration(classPath)
-										.requestFocus(method);
-							} catch (IncompletePathException ex) {
-								logger.error("Cannot go to method due to incomplete path", ex);
-							}
-						});
+				builder.item("menu.goto.method", ARROW_RIGHT, () -> {
+					ClassPathNode classPath = PathNodes.classPath(workspace, resource, bundle, declaringClass);
+					try {
+						actions.gotoDeclaration(classPath)
+								.requestFocus(method);
+					} catch (IncompletePathException ex) {
+						logger.error("Cannot go to method due to incomplete path", ex);
+					}
+				});
 			} else {
 				// Edit menu
 				var edit = builder.submenu("menu.edit", EDIT);
@@ -81,7 +80,7 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 					JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
 					JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
 
-					edit.item("menu.edit.copy", COPY_FILE, () -> actions.copyMember(workspace, resource, jvmBundle,declaringJvmClass, method));
+					edit.item("menu.edit.copy", COPY_FILE, () -> actions.copyMember(workspace, resource, jvmBundle, declaringJvmClass, method));
 					if (!method.getName().equals("<init>")) // The conditions for optimally no-op'ing a constructor are a bit tricky, we'll just skip those for now.
 						edit.item("menu.edit.noop", CIRCLE_DASH, () -> actions.makeMethodsNoop(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
 					edit.item("menu.edit.delete", TRASH_CAN, () -> actions.deleteClassMethods(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
@@ -102,7 +101,7 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			if (declaringClass.isJvmClass()) {
 				JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
 				JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
-				view.item("menu.view.methodcallgraph", FLOW, () -> actions.openMethodCallGraph(workspace, resource, jvmBundle,declaringJvmClass, method));
+				view.item("menu.view.methodcallgraph", FLOW, () -> actions.openMethodCallGraph(workspace, resource, jvmBundle, declaringJvmClass, method));
 			}
 
 			// TODO: implement additional operations

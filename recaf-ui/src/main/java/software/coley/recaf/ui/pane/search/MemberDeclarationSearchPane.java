@@ -9,24 +9,24 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.search.SearchService;
 import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
+import software.coley.recaf.services.search.query.DeclarationQuery;
 import software.coley.recaf.services.search.query.Query;
-import software.coley.recaf.services.search.query.ReferenceQuery;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 
 /**
  * Member declaration search pane.
  *
  * @author Matt Coley
- * @see MemberDeclarationSearchPane
+ * @see MemberReferenceSearchPane
  */
 @Dependent
-public class MemberReferenceSearchPane extends AbstractMemberSearchPane {
+public class MemberDeclarationSearchPane extends AbstractMemberSearchPane {
 	@Inject
-	public MemberReferenceSearchPane(@Nonnull WorkspaceManager workspaceManager,
-	                                 @Nonnull SearchService searchService,
-	                                 @Nonnull CellConfigurationService configurationService,
-	                                 @Nonnull Actions actions,
-	                                 @Nonnull StringPredicateProvider stringPredicateProvider) {
+	public MemberDeclarationSearchPane(@Nonnull WorkspaceManager workspaceManager,
+	                                   @Nonnull SearchService searchService,
+	                                   @Nonnull CellConfigurationService configurationService,
+	                                   @Nonnull Actions actions,
+	                                   @Nonnull StringPredicateProvider stringPredicateProvider) {
 		super(workspaceManager, searchService, configurationService, actions, stringPredicateProvider);
 	}
 
@@ -35,6 +35,6 @@ public class MemberReferenceSearchPane extends AbstractMemberSearchPane {
 	protected Query newQuery(@Nullable StringPredicate ownerPredicate,
 	                         @Nullable StringPredicate namePredicate,
 	                         @Nullable StringPredicate descPredicate) {
-		return new ReferenceQuery(ownerPredicate, namePredicate, descPredicate);
+		return new DeclarationQuery(ownerPredicate, namePredicate, descPredicate);
 	}
 }

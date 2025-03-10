@@ -16,13 +16,16 @@ import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.search.query.AndroidClassQuery;
+import software.coley.recaf.services.search.query.DeclarationQuery;
 import software.coley.recaf.services.search.query.FileQuery;
 import software.coley.recaf.services.search.query.JvmClassQuery;
 import software.coley.recaf.services.search.query.NumberQuery;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
 import software.coley.recaf.services.search.query.StringQuery;
+import software.coley.recaf.services.search.result.ClassReference;
 import software.coley.recaf.services.search.result.ClassReferenceResult;
+import software.coley.recaf.services.search.result.MemberReference;
 import software.coley.recaf.services.search.result.MemberReferenceResult;
 import software.coley.recaf.services.search.result.NumberResult;
 import software.coley.recaf.services.search.result.Result;
@@ -47,6 +50,7 @@ import java.util.stream.Stream;
  * @author Matt Coley
  * @see NumberQuery
  * @see ReferenceQuery
+ * @see DeclarationQuery
  * @see StringQuery
  */
 @ApplicationScoped
@@ -250,14 +254,14 @@ public class SearchService implements Service {
 
 	@Nonnull
 	private static Result<?> createResult(@Nonnull PathNode<?> path, @Nonnull Object value) {
-		if (value instanceof Number)
-			return new NumberResult(path, (Number) value);
-		if (value instanceof String)
-			return new StringResult(path, (String) value);
-		if (value instanceof ClassReferenceResult.ClassReference)
-			return new ClassReferenceResult(path, (ClassReferenceResult.ClassReference) value);
-		if (value instanceof MemberReferenceResult.MemberReference)
-			return new MemberReferenceResult(path, (MemberReferenceResult.MemberReference) value);
+		if (value instanceof Number number)
+			return new NumberResult(path, number);
+		if (value instanceof String string)
+			return new StringResult(path, string);
+		if (value instanceof ClassReference reference)
+			return new ClassReferenceResult(path, reference);
+		if (value instanceof MemberReference reference)
+			return new MemberReferenceResult(path, reference);
 
 		// Unknown value type
 		throw new UnsupportedOperationException("Unsupported search result value type: " + value.getClass().getName());

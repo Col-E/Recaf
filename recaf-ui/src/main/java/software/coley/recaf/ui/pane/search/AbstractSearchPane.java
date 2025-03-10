@@ -221,6 +221,8 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	 * Feedback that passes results to a consumer.
 	 * <br>
 	 * Disables the collection of results into a single wrapper at the end of a search.
+	 * Since this is for live-only feedback, we won't use the resulting collection anyways, so we don't need to do
+	 * the extra work.
 	 */
 	private static class LiveOnlySearchFeedback extends CancellableSearchFeedback {
 		private final Consumer<Result<?>> resultConsumer;

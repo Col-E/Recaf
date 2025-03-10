@@ -69,6 +69,7 @@ menu.refactor.rename=Rename
 menu.search=Search
 menu.search.string=Strings
 menu.search.number=Numbers
+menu.search.class.member-declarations=Member declarations
 menu.search.class.member-references=Member references
 menu.search.class.type-references=Type references
 menu.search.method-overrides=Method overrides

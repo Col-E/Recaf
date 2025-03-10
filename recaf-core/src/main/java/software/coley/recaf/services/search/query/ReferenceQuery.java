@@ -2,8 +2,22 @@ package software.coley.recaf.services.search.query;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ConstantDynamic;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MultiANewArrayInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.slf4j.Logger;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.Logging;
@@ -22,8 +36,8 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
 import software.coley.recaf.services.search.ResultSink;
 import software.coley.recaf.services.search.match.StringPredicate;
-import software.coley.recaf.services.search.result.ClassReferenceResult;
-import software.coley.recaf.services.search.result.MemberReferenceResult;
+import software.coley.recaf.services.search.result.ClassReference;
+import software.coley.recaf.services.search.result.MemberReference;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.visitors.IndexCountingMethodVisitor;
@@ -68,7 +82,7 @@ public class ReferenceQuery implements JvmClassQuery {
 	 *        {@code null} to ignore matching against reference names.
 	 * @param descriptorPredicate
 	 * 		String matching predicate for comparison against reference descriptors.
-	 *        {@code null} to ignore matching against reference owner descriptors.
+	 *        {@code null} to ignore matching against reference descriptors.
 	 */
 	public ReferenceQuery(@Nullable StringPredicate ownerPredicate,
 	                      @Nullable StringPredicate namePredicate,
@@ -84,7 +98,6 @@ public class ReferenceQuery implements JvmClassQuery {
 		return StringUtil.isNullOrEmpty(className) || ownerPredicate.match(className);
 	}
 
-	//@SuppressWarnings("DataFlowIssue") // The class-ref check addresses this
 	private boolean isMemberRefMatch(@Nullable String owner, @Nullable String name, @Nullable String desc) {
 		if (classRefOnly) return false;
 
@@ -109,13 +122,13 @@ public class ReferenceQuery implements JvmClassQuery {
 	}
 
 	@Nonnull
-	private static ClassReferenceResult.ClassReference cref(@Nonnull String name) {
-		return new ClassReferenceResult.ClassReference(name);
+	private static ClassReference cref(@Nonnull String name) {
+		return new ClassReference(name);
 	}
 
 	@Nonnull
-	private static MemberReferenceResult.MemberReference mref(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
-		return new MemberReferenceResult.MemberReference(owner, name, desc);
+	private static MemberReference mref(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
+		return new MemberReference(owner, name, desc);
 	}
 
 	@Nonnull

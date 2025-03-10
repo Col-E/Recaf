@@ -20,7 +20,17 @@ import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.info.*;
+import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.AudioFileInfo;
+import software.coley.recaf.info.BinaryXmlFileInfo;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.ImageFileInfo;
+import software.coley.recaf.info.Info;
+import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.TextFileInfo;
+import software.coley.recaf.info.VideoFileInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
@@ -72,6 +82,7 @@ import software.coley.recaf.ui.pane.editing.media.VideoFilePane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
 import software.coley.recaf.ui.pane.search.AbstractSearchPane;
 import software.coley.recaf.ui.pane.search.ClassReferenceSearchPane;
+import software.coley.recaf.ui.pane.search.MemberDeclarationSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
 import software.coley.recaf.ui.pane.search.StringSearchPane;
@@ -152,6 +163,7 @@ public class Actions implements Service {
 	private final Instance<NumberSearchPane> numberSearchPaneProvider;
 	private final Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider;
 	private final Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider;
+	private final Instance<MemberDeclarationSearchPane> memberDeclarationSearchPaneProvider;
 	private final ActionsConfig config;
 
 	@Inject
@@ -181,7 +193,8 @@ public class Actions implements Service {
 	               @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
 	               @Nonnull Instance<MethodCallGraphsPane> callGraphsPaneProvider,
 	               @Nonnull Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider,
-	               @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider) {
+	               @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider,
+	               @Nonnull Instance<MemberDeclarationSearchPane> memberDeclarationSearchPaneProvider) {
 		this.config = config;
 		this.workspaceManager = workspaceManager;
 		this.navigationManager = navigationManager;
@@ -208,6 +221,7 @@ public class Actions implements Service {
 		this.callGraphsPaneProvider = callGraphsPaneProvider;
 		this.classReferenceSearchPaneProvider = classReferenceSearchPaneProvider;
 		this.memberReferenceSearchPaneProvider = memberReferenceSearchPaneProvider;
+		this.memberDeclarationSearchPaneProvider = memberDeclarationSearchPaneProvider;
 	}
 
 	/**
@@ -2294,6 +2308,14 @@ public class Actions implements Service {
 	@Nonnull
 	public MemberReferenceSearchPane openNewMemberReferenceSearch() {
 		return openSearchPane("menu.search.class.member-references", CarbonIcons.CODE_REFERENCE, memberReferenceSearchPaneProvider);
+	}
+
+	/**
+	 * @return New member-declaration search pane, opened in a new docking tab.
+	 */
+	@Nonnull
+	public MemberDeclarationSearchPane openNewMemberDeclarationSearch() {
+		return openSearchPane("menu.search.class.member-declarations", CarbonIcons.CODE, memberDeclarationSearchPaneProvider);
 	}
 
 	@Nonnull

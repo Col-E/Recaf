@@ -45,18 +45,18 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 
 	@Inject
 	public BasicClassContextMenuProviderFactory(@Nonnull TextProviderService textService,
-												@Nonnull IconProviderService iconService,
-												@Nonnull Actions actions) {
+	                                            @Nonnull IconProviderService iconService,
+	                                            @Nonnull Actions actions) {
 		super(textService, iconService, actions);
 	}
 
 	@Nonnull
 	@Override
 	public ContextMenuProvider getJvmClassInfoContextMenuProvider(@Nonnull ContextSource source,
-																  @Nonnull Workspace workspace,
-																  @Nonnull WorkspaceResource resource,
-																  @Nonnull JvmClassBundle bundle,
-																  @Nonnull JvmClassInfo info) {
+	                                                              @Nonnull Workspace workspace,
+	                                                              @Nonnull WorkspaceResource resource,
+	                                                              @Nonnull JvmClassBundle bundle,
+	                                                              @Nonnull JvmClassInfo info) {
 		return () -> {
 			ContextMenu menu = createMenu(source, workspace, resource, bundle, info);
 			populateJvmMenu(menu, source, workspace, resource, bundle, info);
@@ -67,10 +67,10 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 	@Nonnull
 	@Override
 	public ContextMenuProvider getAndroidClassInfoContextMenuProvider(@Nonnull ContextSource source,
-																	  @Nonnull Workspace workspace,
-																	  @Nonnull WorkspaceResource resource,
-																	  @Nonnull AndroidClassBundle bundle,
-																	  @Nonnull AndroidClassInfo info) {
+	                                                                  @Nonnull Workspace workspace,
+	                                                                  @Nonnull WorkspaceResource resource,
+	                                                                  @Nonnull AndroidClassBundle bundle,
+	                                                                  @Nonnull AndroidClassInfo info) {
 		return () -> {
 			ContextMenu menu = createMenu(source, workspace, resource, bundle, info);
 			populateAndroidMenu(menu, source, workspace, resource, bundle, info);
@@ -93,10 +93,10 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 	 * @return Initial menu header for the class.
 	 */
 	private ContextMenu createMenu(@Nonnull ContextSource source,
-								   @Nonnull Workspace workspace,
-								   @Nonnull WorkspaceResource resource,
-								   @Nonnull ClassBundle<? extends ClassInfo> bundle,
-								   @Nonnull ClassInfo info) {
+	                               @Nonnull Workspace workspace,
+	                               @Nonnull WorkspaceResource resource,
+	                               @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                               @Nonnull ClassInfo info) {
 		TextProvider nameProvider;
 		IconProvider iconProvider;
 		if (info.isJvmClass()) {
@@ -134,11 +134,11 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 	 * 		The class to create a menu for.
 	 */
 	private void populateJvmMenu(@Nonnull ContextMenu menu,
-								 @Nonnull ContextSource source,
-								 @Nonnull Workspace workspace,
-								 @Nonnull WorkspaceResource resource,
-								 @Nonnull JvmClassBundle bundle,
-								 @Nonnull JvmClassInfo info) {
+	                             @Nonnull ContextSource source,
+	                             @Nonnull Workspace workspace,
+	                             @Nonnull WorkspaceResource resource,
+	                             @Nonnull JvmClassBundle bundle,
+	                             @Nonnull JvmClassInfo info) {
 		var builder = new ContextMenuBuilder(menu, source).forInfo(workspace, resource, bundle, info);
 		if (source.isReference()) {
 			builder.infoItem("menu.goto.class", ARROW_RIGHT, actions::gotoDeclaration);
@@ -211,11 +211,11 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 	 * 		The class to create a menu for.
 	 */
 	private void populateAndroidMenu(@Nonnull ContextMenu menu,
-									 @Nonnull ContextSource source,
-									 @Nonnull Workspace workspace,
-									 @Nonnull WorkspaceResource resource,
-									 @Nonnull AndroidClassBundle bundle,
-									 @Nonnull AndroidClassInfo info) {
+	                                 @Nonnull ContextSource source,
+	                                 @Nonnull Workspace workspace,
+	                                 @Nonnull WorkspaceResource resource,
+	                                 @Nonnull AndroidClassBundle bundle,
+	                                 @Nonnull AndroidClassInfo info) {
 		// TODO: implement operations
 		//  - Edit
 		//    - (class assembler)
