@@ -113,6 +113,21 @@ public class StringUtil {
 	 * @param text
 	 * 		Input text.
 	 * @param cutoff
+	 * 		Index to match up to.
+	 *
+	 * @return Input text, up until the cut-off length.
+	 */
+	@Nonnull
+	public static String cutOff(@Nonnull String text, int cutoff) {
+		if (text.length() > cutoff)
+			return text.substring(0, cutoff);
+		return text;
+	}
+
+	/**
+	 * @param text
+	 * 		Input text.
+	 * @param cutoff
 	 * 		Character to match up to.
 	 *
 	 * @return Input text, up until the first cutoff sequence.
@@ -1004,7 +1019,7 @@ public class StringUtil {
 
 				// If ay any point we see more than half of the temporary buffer full of non-text characters
 				// we're going to assume the rest of the content is also going to be garbage.
-				if (((double) textChars / arrayEnd) <= 0.5 )
+				if (((double) textChars / arrayEnd) <= 0.5)
 					return failedDecoding(data);
 
 				// If we overflowed in our result, we still have more to decode with this

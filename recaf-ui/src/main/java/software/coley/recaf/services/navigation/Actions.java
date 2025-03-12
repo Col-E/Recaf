@@ -1631,7 +1631,7 @@ public class Actions implements Service {
 				name = StringUtil.shortenPath(classPathNode.getValue().getName());
 			else if (path instanceof ClassMemberPathNode classMemberPathNode)
 				name = classMemberPathNode.getValue().getName();
-			String title = "Assembler: " + name;
+			String title = "Assembler: " + EscapeUtil.escapeStandard(StringUtil.cutOff(name, 60));
 			Node graphic = new FontIconView(CarbonIcons.CODE);
 
 			// Create content for the tab.

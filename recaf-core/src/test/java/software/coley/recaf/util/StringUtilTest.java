@@ -103,6 +103,14 @@ class StringUtilTest {
 	}
 
 	@Test
+	void testCutOff() {
+		assertEquals("", StringUtil.cutOff("", 0));
+		assertEquals("", StringUtil.cutOff("", 1));
+		assertEquals("", StringUtil.cutOff("abcdefgd", 0));
+		assertEquals("abc", StringUtil.cutOff("abcdefg", 3));
+	}
+
+	@Test
 	void testCutOffAtFirst() {
 		// chars
 		assertEquals("", StringUtil.cutOffAtFirst("", 'd'));
