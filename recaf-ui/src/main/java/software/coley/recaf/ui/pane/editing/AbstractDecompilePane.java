@@ -226,6 +226,12 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 					resolver.setClassContext(getPath().getValue());
 					String modifiedSource = astService.applyMappings(unit, resolver, mappings);
 
+					// If there were no changes made then the AST service failed to make dynamic changes.
+					// This can happen when the classes being mapped are not in the workspace, but instead
+					// belong to 3rd party libraries not present in the workspace.
+					if (currentText.equals(modifiedSource))
+						return false;
+
 					// We want to get the difference between the current and modified text and update only
 					// the areas of the text that are modified. In most situations this will be much faster
 					// than re-assigning the whole text (which will require restyling the entire document)
