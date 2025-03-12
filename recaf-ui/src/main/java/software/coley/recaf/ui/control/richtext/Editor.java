@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.richtext;
 
+import com.google.common.collect.EvictingQueue;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
@@ -82,6 +83,7 @@ public class Editor extends BorderPane implements Closing {
 	private final ExecutorService syntaxPool = ThreadPoolFactory.newSingleThreadExecutor("syntax-highlight");
 	private final RootLineGraphicFactory rootLineGraphicFactory = new RootLineGraphicFactory(this);
 	private final EventStream<Change<Integer>> caretPosEventStream;
+	private final EvictingQueue<KeyCode> recentKeys = EvictingQueue.create(5);
 	private ReadOnlyStyledDocument<Collection<String>, String, Collection<String>> lastDocumentSnapshot;
 	private TabCompleter<?> tabCompleter;
 	private SyntaxHighlighter syntaxHighlighter;
@@ -112,6 +114,7 @@ public class Editor extends BorderPane implements Closing {
 		// Add event filter to hook tab usage.
 		codeArea.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
 			try {
+				recentKeys.add(e.getCode());
 				if (e.getCode() == KeyCode.TAB)
 					handleTab(e);
 				else if (e.getCode() == KeyCode.ENTER)
@@ -713,7 +716,8 @@ public class Editor extends BorderPane implements Closing {
 
 		// Abort if handling tab completion.
 		// Holding shift bypasses tab completion.
-		if (!event.isShiftDown() && handleTabCompletion(event))
+		boolean shiftMask = event.isShiftDown();
+		if (!shiftMask && handleTabCompletion(event))
 			return;
 
 		// If there is selected contents, newline should replace it.
@@ -755,13 +759,16 @@ public class Editor extends BorderPane implements Closing {
 
 		// Insert the indented newline + closing brace (if needed)
 		int caret = codeArea.getCaretPosition();
-		if (closingBrace == '\0') {
+		if (closingBrace == '\0' || !recentKeys.contains(KeyCode.OPEN_BRACKET)) {
 			codeArea.insertText(caret, '\n' + padding);
 		} else {
 			// Insert the '}' or ']' and move the caret between
 			codeArea.insertText(caret, '\n' + padding + '\n' + StringUtil.limit(padding, padding.length() - 1) + closingBrace);
 			codeArea.moveTo(caret + padding.length() + 1);
 		}
+
+		// Clear recent keys so that we reset the state of tracking for the open-bracket key.
+		recentKeys.clear();
 	}
 
 	/**
