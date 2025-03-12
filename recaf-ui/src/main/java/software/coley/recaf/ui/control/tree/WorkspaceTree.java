@@ -227,13 +227,13 @@ public class WorkspaceTree extends PathNodeTree implements
 	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 		// Workspace closed, disable tree.
 		if (isTargetWorkspace(workspace))
-			setDisable(true);
+			FxThreadUtil.run(() -> setDisable(true));
 	}
 
 	@Override
 	public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		if (isTargetWorkspace(workspace))
-			createResourceSubTree(library);
+			FxThreadUtil.run(() -> createResourceSubTree(library));
 	}
 
 	@Override
