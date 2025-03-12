@@ -84,7 +84,7 @@ public class JarSigningSummarizer implements ResourceSummarizer {
 		List<FileInfo> rsaFiles = new ArrayList<>();
 		for (FileInfo file : bundle) {
 			String name = file.getName();
-			if (name.matches("META-INF/[\\w-]+\\.(?:SF|RSA)")) {
+			if (name.matches("META-INF/[\\w-]+\\.(?:SF|RSA|DSA)")) {
 				if (name.endsWith(".SF")) {
 					sfFiles.add(file);
 				} else {
