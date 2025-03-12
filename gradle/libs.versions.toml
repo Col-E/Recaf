@@ -39,7 +39,7 @@ richtextfx = "0.11.3"
 treemapfx = "1.1.0"
 vineflower = "1.10.1"
 wordwrap = "0.1.12"
-sourcesolver = "1.1.1"
+sourcesolver = "1.1.2"
 # Plugins
 benmanes-versions = "0.42.0"
 gradle-coverage-report-aggregator = "1.3.2"
