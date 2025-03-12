@@ -15,7 +15,11 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
@@ -250,18 +254,22 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 		public TabAdapter(@Nonnull Orientation orientation, @Nonnull Tab tab) {
 			this.tab = tab;
 			Pane box;
+			int padSmall = 5;
+			int padBig = 10;
 			if (orientation == Orientation.VERTICAL) {
 				VBox vBox = new VBox();
-				vBox.setSpacing(5);
+				vBox.setSpacing(padSmall);
 				box = vBox;
 			} else {
 				HBox hBox = new HBox();
-				hBox.setSpacing(5);
+				hBox.setSpacing(padSmall);
 				box = hBox;
 			}
 			ObservableList<String> styleClasses = getStyleClass();
 			styleClasses.add("side-tab");
-			setPadding(new Insets(5));
+			setPadding(orientation == Orientation.HORIZONTAL ?
+					new Insets(padSmall, padBig, padSmall, padBig) :
+					new Insets(padBig, padSmall, padBig, padSmall));
 
 			// Layout & map content from tab
 			BorderPane graphicWrapper = new BorderPane();
@@ -301,9 +309,9 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 		 * 		support mapping operations.
 		 */
 		private ResizeGrip(@Nonnull DoubleProperty initialSize,
-						   @Nonnull Orientation orientation,
-						   @Nonnull DoubleSupplier sizeLookup,
-						   @Nonnull Consumer<DoubleProperty> consumer) {
+		                   @Nonnull Orientation orientation,
+		                   @Nonnull DoubleSupplier sizeLookup,
+		                   @Nonnull Consumer<DoubleProperty> consumer) {
 			AtomicInteger startPos = new AtomicInteger();
 			Pane box;
 			if (orientation == Orientation.VERTICAL) {
