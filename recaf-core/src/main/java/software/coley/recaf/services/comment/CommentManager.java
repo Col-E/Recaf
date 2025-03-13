@@ -9,7 +9,6 @@ import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.davidmoten.text.utils.WordWrap;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
@@ -180,12 +179,8 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 							replacement = "";
 						} else {
 							int wordWrapLimit = config.getWordWrappingLimit().getValue();
-							if (comment.length() > wordWrapLimit) {
-								comment = WordWrap.from(comment)
-										.breakWords(false)
-										.maxWidth(wordWrapLimit)
-										.wrap();
-							}
+							if (comment.length() > wordWrapLimit)
+								comment = StringUtil.wordWrap(comment, wordWrapLimit);
 
 							if (comment.contains("\n")) {
 								// The calculated indent includes the '\n' so we can just for-each the comment lines and prefix it.

@@ -708,6 +708,64 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param text
+	 * 		Text to word-wrap.
+	 * @param length
+	 * 		Max line length.
+	 *
+	 * @return String with max length enforced.
+	 */
+	@Nonnull
+	public static String wordWrap(@Nonnull String text, int length) {
+		StringBuilder sb = new StringBuilder();
+		StringBuilder line = new StringBuilder();
+		StringBuilder word = new StringBuilder();
+
+		// Add a trailing '\n' so we cleanup wrapping logic for the last line in the text.
+		char[] chars = (text + '\n').toCharArray();
+		for (char c : chars) {
+			if (Character.isWhitespace(c)) {
+				// Skip this, we only operate on newlines.
+				if (c == '\r') continue;
+
+				// Append word
+				if (!word.isEmpty()) {
+					String wordStr = word.toString();
+					word.setLength(0);
+					int newLineLength = line.length() + wordStr.length();
+					if (newLineLength >= length) {
+						sb.append(line.toString().trim()).append('\n');
+						line.setLength(0);
+					}
+					line.append(wordStr);
+				}
+
+				// Edge case handling for newlines
+				if (c == '\n') {
+					if (line.isEmpty()) {
+						sb.append('\n');
+					} else {
+						sb.append(line.toString().trim()).append('\n');
+						line.setLength(0);
+					}
+					continue;
+				}
+
+				// Append whitespace
+				if (line.length() >= length) {
+					sb.append(line.toString().trim()).append('\n');
+					line.setLength(0);
+				} else {
+					line.append(c);
+				}
+			} else {
+				word.append(c);
+			}
+		}
+		return sb.toString().trim();
+	}
+
+	/**
 	 * @param args
 	 * 		Input arguments.
 	 *

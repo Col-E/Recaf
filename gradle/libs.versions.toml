@@ -38,7 +38,6 @@ regex = "0.1.16"
 richtextfx = "0.11.3"
 treemapfx = "1.1.0"
 vineflower = "1.10.1"
-wordwrap = "0.1.12"
 sourcesolver = "1.1.2"
 # Plugins
 benmanes-versions = "0.42.0"
@@ -132,8 +131,6 @@ richtextfx = { module = "org.fxmisc.richtext:richtextfx", version.ref = "richtex
 treemapfx = { module = "software.coley:treemap-fx", version.ref = "treemapfx" }
 
 vineflower = { module = "org.vineflower:vineflower", version.ref = "vineflower" }
-
-wordwrap = { module = "com.github.davidmoten:word-wrap", version.ref = "wordwrap" }
 
 sourcesolver = { module = "software.coley:source-solver", version.ref = "sourcesolver" }
 

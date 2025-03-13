@@ -38,7 +38,6 @@ dependencies {
     api(libs.regex)
     api(libs.bundles.jasm)
     api(libs.vineflower)
-    api(libs.wordwrap)
     api(libs.sourcesolver)
 
     // We use Jackson as a test dependency so that we can convert Android API XML models into JSON.

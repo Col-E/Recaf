@@ -334,6 +334,20 @@ class StringUtilTest {
 	}
 
 	@Test
+	void testWordWrap() {
+		String text = assertDoesNotThrow(() -> Files.readString(Paths.get("src/testFixtures/resources/lorem-long-ascii.txt")));
+		int[] lengths = new int[] {25, 50, 75, 100, 200};
+		for (int length : lengths) {
+			String wrapped = StringUtil.wordWrap(text, length);
+			assertNotEquals(wrapped, text);
+
+			String[] lines = wrapped.split("\n");
+			for (String line : lines)
+				assertTrue(line.length() <= length);
+		}
+	}
+
+	@Test
 	void testIsAnyNullOrEmpty() {
 		assertTrue(StringUtil.isAnyNullOrEmpty("", "a", null));
 		assertTrue(StringUtil.isAnyNullOrEmpty("", "a"));
