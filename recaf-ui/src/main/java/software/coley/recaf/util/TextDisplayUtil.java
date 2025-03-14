@@ -15,7 +15,7 @@ public class TextDisplayUtil {
 	public static String shortenEscape(String string) {
 		if (string == null)
 			return null;
-		return EscapeUtil.escapeAll(StringUtil.shortenPath(string));
+		return EscapeUtil.escapeStandardAndUnicodeWhitespace(StringUtil.shortenPath(string));
 	}
 
 	/**
@@ -29,7 +29,7 @@ public class TextDisplayUtil {
 	public static String escapeLimit(String string, int limit) {
 		if (string == null)
 			return null;
-		String text = EscapeUtil.escapeAll(string);
+		String text = EscapeUtil.escapeStandardAndUnicodeWhitespace(string);
 		int max = Math.min(text.length(), limit);
 		text = StringUtil.limit(text, "...", max);
 		return text;

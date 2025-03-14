@@ -1,6 +1,5 @@
 package software.coley.recaf.util;
 
-import com.android.tools.r8.utils.TriFunction;
 import it.unimi.dsi.fastutil.chars.Char2ObjectArrayMap;
 import it.unimi.dsi.fastutil.chars.Char2ObjectMap;
 import it.unimi.dsi.fastutil.chars.CharSet;
@@ -28,10 +27,9 @@ public final class EscapeUtil {
 	public static final String ESCAPED_NEWLINE = "\\u000A";
 	public static final String ESCAPED_RETURN = "\\u000D";
 	public static final String ESCAPED_DOUBLE_QUOTE = "\\u0022";
-	public static final String ESCAPED_DOUBLE_SLASH = "\\u005C\\u005C";
+	public static final String ESCAPED_BACKWARDS_SLASH = "\\\\";
 
-	private EscapeUtil() {
-	}
+	private EscapeUtil() {}
 
 	/**
 	 * @param text
@@ -76,20 +74,6 @@ public final class EscapeUtil {
 	}
 
 	/**
-	 * Replaces any unicode-whitespace or common escapable sequence with an escaped sequence.
-	 * <br>
-	 * Combines both standard sequences and less common unicode whitespaces.
-	 *
-	 * @param input
-	 * 		Input text.
-	 *
-	 * @return String without escaped characters.
-	 */
-	public static String escapeAll(@Nullable String input) {
-		return visit(escapeStandard(input), EscapeUtil::computeUnescapeUnicode);
-	}
-
-	/**
 	 * Replaces any common escapable sequence with an escaped sequence.
 	 * <br>
 	 * For example: {@code \n}, {@code \r}, {@code \t}, {@code \}, and {@code "}
@@ -104,16 +88,32 @@ public final class EscapeUtil {
 	}
 
 	/**
-	 * Replaces all standard characters with unicode escapes.
+	 * Replaces any unicode-whitespace or common escapable sequence with an escaped sequence.
 	 * <br>
-	 * This includes both unicode and standard escapes, with a few extras.
+	 * Combines both standard sequences and less common unicode whitespaces.
 	 *
 	 * @param input
 	 * 		Input text.
 	 *
 	 * @return String without escaped characters.
 	 */
-	public static String escapeComplete(@Nullable String input) {
+	public static String escapeStandardAndUnicodeWhitespace(@Nullable String input) {
+		return visit(escapeStandard(input), EscapeUtil::computeUnescapeUnicode);
+	}
+
+	/**
+	 * Replaces any standard/unicode-whitespace escape targets with unicode escapes.
+	 * <br>
+	 * Combines both standard sequences and less common unicode whitespaces.
+	 * <br>
+	 * Even standard escape targets are escaped using unicode escapes.
+	 *
+	 * @param input
+	 * 		Input text.
+	 *
+	 * @return String without escaped characters.
+	 */
+	public static String escapeStandardAndUnicodeWhitespaceAlt(@Nullable String input) {
 		return visit(input, EscapeUtil::computeUnescapeUnicodeJasm);
 	}
 
@@ -125,7 +125,7 @@ public final class EscapeUtil {
 	 *
 	 * @return String with escaped characters.
 	 */
-	public static String unescapeAll(@Nullable String input) {
+	public static String unescapeStandardAndUnicodeWhitespace(@Nullable String input) {
 		return unescapeStandard(unescapeUnicode(input));
 	}
 
@@ -157,7 +157,7 @@ public final class EscapeUtil {
 		return visit(input, EscapeUtil::computeEscapeStandard);
 	}
 
-	private static String visit(@Nullable String input, @Nonnull TriFunction<String, Integer, StringBuilder, Integer> consumer) {
+	private static String visit(@Nullable String input, @Nonnull Visitor consumer) {
 		if (input == null)
 			return null;
 		int len = input.length();
@@ -169,6 +169,7 @@ public final class EscapeUtil {
 				// Nothing consumed, not an escaped character
 				char c1 = input.charAt(cursor++);
 				builder.append(c1);
+
 				// Does additional character need to be appended?
 				if (Character.isHighSurrogate(c1) && cursor < len) {
 					char c2 = input.charAt(cursor);
@@ -192,6 +193,7 @@ public final class EscapeUtil {
 		if (cursor >= input.length()) {
 			return 0;
 		}
+
 		// Check if next character finishes an unescaped value, 1 if so, 0 if not.
 		char current = input.charAt(cursor);
 		String escaped = WHITESPACE_TO_ESCAPE.get(current);
@@ -199,6 +201,7 @@ public final class EscapeUtil {
 			builder.append(escaped);
 			return 1;
 		}
+
 		// No replacement
 		return 0;
 	}
@@ -208,7 +211,7 @@ public final class EscapeUtil {
 		if (cursor >= input.length())
 			return 0;
 
-		// Check if next character is a space
+		// Check if character is a special char
 		char current = input.charAt(cursor);
 		String escaped = switch (current) {
 			case ' ' -> ESCAPED_SPACE;
@@ -216,7 +219,7 @@ public final class EscapeUtil {
 			case '\n' -> ESCAPED_NEWLINE;
 			case '\r' -> ESCAPED_RETURN;
 			case '\"' -> ESCAPED_DOUBLE_QUOTE;
-			case '/' -> ESCAPED_DOUBLE_SLASH;
+			case '\\' -> ESCAPED_BACKWARDS_SLASH;
 			default -> WHITESPACE_TO_ESCAPE.get(current);
 		};
 
@@ -266,17 +269,18 @@ public final class EscapeUtil {
 		}
 
 		// Check for double backslash in prefix "\\\\u" in "\\\\uXXXX"
-		boolean initialEscape = input.charAt(cursor) == '\\' && input.charAt(cursor + 1) == '\\';
+		char c1 = input.charAt(cursor);
+		char c2 = input.charAt(cursor + 1);
+		boolean initialEscape = c1 == '\\' && c2 == '\\';
 
 		// Check prefix "\\u" in "\\uXXXX"
-		if (!initialEscape) {
-			if (input.charAt(cursor) != '\\' || input.charAt(cursor + 1) != 'u') {
-				return 0;
-			}
+		if (!initialEscape && (c1 != '\\' || c2 != 'u')) {
+			return 0;
 		}
 
 		// Compute escape size, initial is 2 for the "\\u"
-		int len = 2;
+		final int initialLen = 2;
+		int len = initialLen;
 
 		// Combined:
 		// - Bounds check
@@ -309,6 +313,12 @@ public final class EscapeUtil {
 			}
 			return len + 4;
 		}
+
+		// If we didn't see any recognized pattern, just escape "\\\\" into "\\"
+		if (initialEscape && len == initialLen) {
+			return 1;
+		}
+
 		return 0;
 	}
 
@@ -338,9 +348,16 @@ public final class EscapeUtil {
 			case '\\':
 				builder.append('\\');
 				return 2;
+			case '"':
+				builder.append('"');
+				return 2;
 			default:
 				return 0;
 		}
+	}
+
+	private interface Visitor {
+		int apply(String input, int cursor, StringBuilder builder);
 	}
 
 	static void addWhitespace(char unescape, String escape) {
@@ -392,6 +409,9 @@ public final class EscapeUtil {
 			addWhitespace(i, "\\u" + String.format("%04X", (int) i));
 		}
 		addWhitespace((('ㅤ')), "\\u" + String.format("%04X", (int) 'ㅤ'));
+		addWhitespace((('\u1680')), "\\u" + String.format("%04X", (int) '\u1680'));
+		addWhitespace((('\u2800')), "\\u" + String.format("%04X", (int) '\u2800'));
+		addWhitespace((('\u3000')), "\\u" + String.format("%04X", (int) '\u3000'));
 		addWhitespace((('\u318F')), "\\u" + String.format("%04X", (int) '\u318F'));
 
 		// Populate char[] of whitespace characters.

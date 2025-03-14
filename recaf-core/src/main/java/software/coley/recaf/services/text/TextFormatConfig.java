@@ -107,7 +107,7 @@ public class TextFormatConfig extends BasicConfigContainer {
 	 */
 	public String filterEscape(@Nullable String string) {
 		if (string != null && escape.getValue())
-			return EscapeUtil.escapeAll(string);
+			return EscapeUtil.escapeStandardAndUnicodeWhitespace(string);
 		return string;
 	}
 

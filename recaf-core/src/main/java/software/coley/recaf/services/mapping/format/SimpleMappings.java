@@ -11,8 +11,8 @@ import software.coley.recaf.util.StringUtil;
 
 import java.util.Map;
 
-import static software.coley.recaf.util.EscapeUtil.escapeAll;
-import static software.coley.recaf.util.EscapeUtil.unescapeAll;
+import static software.coley.recaf.util.EscapeUtil.escapeStandardAndUnicodeWhitespace;
+import static software.coley.recaf.util.EscapeUtil.unescapeStandardAndUnicodeWhitespace;
 
 /**
  * Simple mappings file implementation where the old/new names are split by a space.
@@ -55,17 +55,17 @@ public class SimpleMappings extends AbstractMappingFileFormat {
 			if (line.trim().startsWith("#") || line.trim().isEmpty())
 				continue;
 			String[] args = line.split(" ");
-			String oldBaseName = unescapeAll(args[0]);
+			String oldBaseName = unescapeStandardAndUnicodeWhitespace(args[0]);
 			if (args.length >= 3) {
 				// Descriptor qualified field format
-				String desc = unescapeAll(args[1]);
-				String targetName = unescapeAll(args[2]);
+				String desc = unescapeStandardAndUnicodeWhitespace(args[1]);
+				String targetName = unescapeStandardAndUnicodeWhitespace(args[2]);
 				int dot = oldBaseName.lastIndexOf('.');
 				String oldClassName = oldBaseName.substring(0, dot);
 				String oldFieldName = oldBaseName.substring(dot + 1);
 				mappings.addField(oldClassName, desc, oldFieldName, targetName);
 			} else {
-				String newName = unescapeAll(args[1]);
+				String newName = unescapeStandardAndUnicodeWhitespace(args[1]);
 				int dot = oldBaseName.lastIndexOf('.');
 				if (dot > 0) {
 					// Indicates a member
@@ -95,16 +95,16 @@ public class SimpleMappings extends AbstractMappingFileFormat {
 		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {
 			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
-			String escapedOldClassName = escapeAll(oldClassName);
+			String escapedOldClassName = escapeStandardAndUnicodeWhitespace(oldClassName);
 			if (classMapping != null) {
 				String newClassName = classMapping.getNewName();
 				// BaseClass TargetClass
 				sb.append(escapedOldClassName).append(' ').append(newClassName).append("\n");
 			}
 			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
-				String oldFieldName = escapeAll(fieldMapping.getOldName());
-				String newFieldName = escapeAll(fieldMapping.getNewName());
-				String fieldDesc = escapeAll(fieldMapping.getDesc());
+				String oldFieldName = escapeStandardAndUnicodeWhitespace(fieldMapping.getOldName());
+				String newFieldName = escapeStandardAndUnicodeWhitespace(fieldMapping.getNewName());
+				String fieldDesc = escapeStandardAndUnicodeWhitespace(fieldMapping.getDesc());
 				if (fieldDesc != null) {
 					// BaseClass.baseField baseDesc targetField
 					sb.append(escapedOldClassName).append('.').append(oldFieldName)
@@ -117,9 +117,9 @@ public class SimpleMappings extends AbstractMappingFileFormat {
 				}
 			}
 			for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {
-				String oldMethodName = escapeAll(methodMapping.getOldName());
-				String newMethodName = escapeAll(methodMapping.getNewName());
-				String methodDesc = escapeAll(methodMapping.getDesc());
+				String oldMethodName = escapeStandardAndUnicodeWhitespace(methodMapping.getOldName());
+				String newMethodName = escapeStandardAndUnicodeWhitespace(methodMapping.getNewName());
+				String methodDesc = escapeStandardAndUnicodeWhitespace(methodMapping.getDesc());
 				// BaseClass.baseMethod(BaseMethodDesc) targetMethod
 				sb.append(escapedOldClassName).append('.').append(oldMethodName)
 						.append(methodDesc)

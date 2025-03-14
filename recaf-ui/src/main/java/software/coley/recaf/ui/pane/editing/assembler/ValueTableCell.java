@@ -36,7 +36,7 @@ public class ValueTableCell<S> extends TableCell<S, ValueTableCell.ValueWrapper>
 		Value value = wrapper.value;
 		String valueRep = value.valueAsString();
 		if (valueRep != null)
-			valueRep = EscapeUtil.escapeAll(valueRep);
+			valueRep = EscapeUtil.escapeStandardAndUnicodeWhitespace(valueRep);
 		setText(valueRep);
 
 		// If a prior frame/value exists, highlight changed items
