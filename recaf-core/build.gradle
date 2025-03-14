@@ -17,7 +17,6 @@ dependencies {
         exclude group: 'com.android.tools'
     }
     api(libs.diffutils)
-    api(libs.directories)
     api(libs.downgrader) {
         exclude group: 'org.ow2.asm'
         exclude group: 'org.slf4j'

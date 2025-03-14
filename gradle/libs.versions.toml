@@ -9,7 +9,6 @@ cdi-impl = "6.0.0.Final"
 cfr = "0.152"
 dex-translator = "1.1.1"
 diffutils = "4.15"
-directories = "26"
 docking = "1.2.3"
 downgrader = "1.1.2"
 extra-collections = "1.5.1"
@@ -71,8 +70,6 @@ cfr = { module = "org.benf:cfr", version.ref = "cfr" }
 dex-translator = { module = "software.coley:dex-translator", version.ref = "dex-translator" }
 
 diffutils = { module = "io.github.java-diff-utils:java-diff-utils", version.ref = "diffutils" }
-
-directories = { module = "dev.dirs:directories", version.ref = "directories" }
 
 docking = { module = "com.github.Col-E:tiwulfx-dock", version.ref = "docking" }
 
