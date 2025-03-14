@@ -57,6 +57,9 @@ public class Main {
 	 * 		Application arguments.
 	 */
 	public static void main(String[] args) {
+		// Make application name appear in Mac-OS's dock.
+		System.setProperty("apple.awt.application.name", "Recaf");
+
 		// Add a shutdown hook which dumps system information to console.
 		// Should provide useful information that users can copy/paste to us for diagnosing problems.
 		ExitDebugLoggingHook.register();
