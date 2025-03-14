@@ -398,6 +398,7 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 	 * The mapped content held by each content item transitions from red to green with more mapping progress.
 	 */
 	private class ContextualClassTreeContent implements TreeContent, ContextSource {
+		private static final Effect GLOW = new Glow();
 		private final ClassPathNode path;
 		private final double weight;
 		private Node node;
@@ -429,13 +430,15 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 				ClassInfo classInfo = path.getValue();
 				String text = configurationService.textOf(path);
 				Node graphic = configurationService.graphicOf(path);
-				ContextMenu contextMenu = configurationService.contextMenuOf(this, path);
 				Label label = new Label(text);
 				label.setGraphic(graphic);
 				label.setMouseTransparent(true);
-				Effect effect = new Glow();
 				BorderPane wrapper = new BorderPane(label);
-				wrapper.setOnContextMenuRequested(e -> contextMenu.show(wrapper, e.getScreenX(), e.getScreenY()));
+				wrapper.setOnContextMenuRequested(e -> {
+					ContextMenu contextMenu = configurationService.contextMenuOf(this, path);
+					if (contextMenu != null)
+						contextMenu.show(wrapper, e.getScreenX(), e.getScreenY());
+				});
 				wrapper.setOnMouseExited(e -> wrapper.setEffect(null));
 
 				// Track number of mapped members
@@ -479,7 +482,7 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 				}
 				SelectionInfo selectionInfo = new SelectionInfo(path, fields, mappedFields, methods, mappedMethods);
 				wrapper.setOnMouseEntered(e -> {
-					wrapper.setEffect(effect);
+					wrapper.setEffect(GLOW);
 					selectedPath.set(selectionInfo);
 				});
 				node = wrapper;
