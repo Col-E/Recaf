@@ -10,6 +10,7 @@ import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
@@ -139,6 +140,7 @@ public class FxPlayer extends Player implements AudioSpectrumListener {
 			fProtocols.setAccessible(true);
 			List<String> protocols = ReflectUtil.quietGet(manager, fProtocols);
 			protocols.add(RecafURLStreamHandlerProvider.recafFile);
+
 			// Inject protocol name into platform impl
 			Class<?> platformImpl = Class.forName("com.sun.media.jfxmediaimpl.platform.gstreamer.GSTPlatform");
 			fProtocols = platformImpl.getDeclaredField("PROTOCOLS");
@@ -147,8 +149,12 @@ public class FxPlayer extends Player implements AudioSpectrumListener {
 			String[] protocolArrayPlus = new String[protocolArray.length + 1];
 			System.arraycopy(protocolArray, 0, protocolArrayPlus, 0, protocolArray.length);
 			protocolArrayPlus[protocolArray.length] = RecafURLStreamHandlerProvider.recafFile;
-			// Required for newer versions of Java
-			ReflectUtil.unsafePut(fProtocols, protocolArrayPlus);
+
+			// Required for newer versions of Java.
+			// Ignore the compiler warning about 'invokeExact being confused' - its correct as-is.
+			MethodHandle setter = ReflectUtil.lookup()
+					.findStaticSetter(platformImpl, fProtocols.getName(), fProtocols.getType());
+			setter.invokeExact(protocolArrayPlus);
 		} catch (Throwable t) {
 			throw new IllegalStateException("Could not hijack platforms to support recaf URI protocol", t);
 		}

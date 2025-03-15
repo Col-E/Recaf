@@ -4,14 +4,13 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.SystemInformation;
 import software.coley.recaf.analytics.logging.Logging;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import static software.coley.recaf.util.JigsawUtil.*;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility to patch away access restrictions.
@@ -31,7 +30,7 @@ class AccessPatcher {
 	/**
 	 * Patches JDK access restrictions.
 	 */
-	public static void patch() {
+	static void patch() {
 		if (patched) return;
 		try {
 			logger.debug("Opening access to all packages");
@@ -51,29 +50,28 @@ class AccessPatcher {
 	 */
 	private static void openPackages() {
 		try {
-			Method export = Module.class.getDeclaredMethod("implAddOpens", String.class);
-			setMethodModifiers(export, Modifier.PUBLIC);
-			HashSet<Module> modules = new HashSet<>();
-			Class<?> classBase = JigsawUtil.class;
-			Module base = getClassModule(classBase);
-			if (base.getLayer() != null)
-				modules.addAll(base.getLayer().modules());
+			Class<?> context = AccessPatcher.class;
+			Set<Module> modules = new HashSet<>();
+			Module base = context.getModule();
+			ModuleLayer baseLayer = base.getLayer();
+			if (baseLayer != null)
+				modules.addAll(baseLayer.modules());
 			modules.addAll(ModuleLayer.boot().modules());
-			for (ClassLoader cl = classBase.getClassLoader(); cl != null; cl = cl.getParent()) {
-				modules.add(getLoaderModule(cl));
-			}
+			for (ClassLoader cl = context.getClassLoader(); cl != null; cl = cl.getParent())
+				modules.add(cl.getUnnamedModule());
+			MethodHandle export = ReflectUtil.lookup().findVirtual(Module.class, "implAddOpens", MethodType.methodType(void.class, String.class));
 			for (Module module : modules) {
 				for (String name : module.getPackages()) {
 					try {
-						export.invoke(module, name);
+						export.invokeExact(module, name);
 					} catch (Exception ex) {
 						logger.error("Could not export package {} in module {}", name, module);
 						logger.error("Root cause: ", ex);
 					}
 				}
 			}
-		} catch (Exception ex) {
-			throw new IllegalStateException("Could not export packages", ex);
+		} catch (Throwable t) {
+			throw new IllegalStateException("Could not export packages", t);
 		}
 	}
 
@@ -85,39 +83,14 @@ class AccessPatcher {
 		try {
 			klass = Class.forName("jdk.internal.reflect.Reflection", true, null);
 		} catch (ClassNotFoundException ex) {
-			throw new RuntimeException("Unable to locate 'jdk.internal.reflect.Reflection' class", ex);
+			throw new IllegalStateException("Unable to locate 'jdk.internal.reflect.Reflection' class", ex);
 		}
 		try {
-			Field[] fields;
-			try {
-				Method m = Class.class.getDeclaredMethod("getDeclaredFieldsImpl");
-				m.setAccessible(true);
-				fields = (Field[]) m.invoke(klass);
-			} catch (NoSuchMethodException | InvocationTargetException ex) {
-				try {
-					Method m = Class.class.getDeclaredMethod("getDeclaredFields0", Boolean.TYPE);
-					m.setAccessible(true);
-					fields = (Field[]) m.invoke(klass, false);
-				} catch (InvocationTargetException | NoSuchMethodException ex1) {
-					ex.addSuppressed(ex1);
-					throw new RuntimeException("Unable to get all class fields", ex);
-				}
-			}
-			int c = 0;
-			for (Field field : fields) {
-				String name = field.getName();
-				if ("fieldFilterMap".equals(name) || "methodFilterMap".equals(name)) {
-					field.setAccessible(true);
-					field.set(null, new HashMap<>(0));
-					if (++c == 2) {
-						return;
-					}
-				}
-			}
-			throw new RuntimeException("One of field patches did not apply properly. " +
-					"Expected to patch two fields, but patched: " + c);
-		} catch (IllegalAccessException ex) {
-			throw new RuntimeException("Unable to patch reflection filters", ex);
+			MethodHandles.Lookup lookup = ReflectUtil.lookup();
+			lookup.findStaticSetter(klass, "fieldFilterMap", Map.class).invokeExact((Map<?, ?>) new HashMap<>());
+			lookup.findStaticSetter(klass, "methodFilterMap", Map.class).invokeExact((Map<?, ?>) new HashMap<>());
+		} catch (Throwable t) {
+			throw new IllegalStateException("Unable to patch reflection filters", t);
 		}
 	}
 }

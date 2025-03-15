@@ -2,8 +2,9 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import sun.misc.Unsafe;
+import sun.reflect.ReflectionFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -18,11 +19,11 @@ import java.util.Map;
  * @author xDark
  */
 public final class ReflectUtil {
-	private static final Unsafe unsafe = UnsafeUtil.get();
 	private static final Map<Class<?>, ThrowableGetter<?>> GETTERS = new HashMap<>();
 	private static final Map<Class<?>, ThrowableSetter<?>> SETTERS = new HashMap<>();
 	private static final ThrowableGetter<?> DEFAULT_GETTER = ReflectUtil::get;
 	private static final ThrowableSetter<?> DEFAULT_SETTER = ReflectUtil::set;
+	private static MethodHandles.Lookup trustedLookup;
 
 	/**
 	 * Deny all constructions.
@@ -36,6 +37,27 @@ public final class ReflectUtil {
 	public static void patch() {
 		// Intentionally empty. The patching happens in the static initializer, which the caller will trigger
 		// by calling this method.
+	}
+
+	/**
+	 * @return Trusted lookup with all-access permissions.
+	 */
+	@Nonnull
+	public static MethodHandles.Lookup lookup() {
+		if (trustedLookup != null)
+			return trustedLookup;
+		try {
+			Constructor<MethodHandles.Lookup> lookupCtor = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class);
+			Constructor<?> ctor = ReflectionFactory.getReflectionFactory()
+					.newConstructorForSerialization(MethodHandles.Lookup.class, lookupCtor);
+			MethodHandles.Lookup lookup = (MethodHandles.Lookup) ctor.newInstance(MethodHandles.class);
+			trustedLookup = (MethodHandles.Lookup) lookup
+					.findStaticGetter(MethodHandles.Lookup.class, "IMPL_LOOKUP", MethodHandles.Lookup.class)
+					.invokeExact();
+			return trustedLookup;
+		} catch (Throwable t) {
+			throw new IllegalStateException(t);
+		}
 	}
 
 	/**
@@ -167,132 +189,6 @@ public final class ReflectUtil {
 		} catch (ReflectiveOperationException ex) {
 			throw new IllegalStateException("Invoke failure: " + type.getName(), ex);
 		}
-	}
-
-	/**
-	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
-	 *
-	 * @param field
-	 * 		Field to set.
-	 * @param value
-	 * 		Value to set.
-	 */
-	public static void unsafePut(Field field, Object value) {
-		Object fieldBase = unsafe.staticFieldBase(field);
-		long fieldOffset = unsafe.staticFieldOffset(field);
-		unsafe.putObject(fieldBase, fieldOffset, value);
-	}
-
-	/**
-	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
-	 *
-	 * @param field
-	 * 		Field to set.
-	 * @param value
-	 * 		Value to set.
-	 */
-	public static void unsafePut(Field field, boolean value) {
-		Object fieldBase = unsafe.staticFieldBase(field);
-		long fieldOffset = unsafe.staticFieldOffset(field);
-		unsafe.putBoolean(fieldBase, fieldOffset, value);
-	}
-
-	/**
-	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
-	 *
-	 * @param field
-	 * 		Field to set.
-	 * @param value
-	 * 		Value to set.
-	 */
-	public static void unsafePut(Field field, byte value) {
-		Object fieldBase = unsafe.staticFieldBase(field);
-		long fieldOffset = unsafe.staticFieldOffset(field);
-		unsafe.putByte(fieldBase, fieldOffset, value);
-	}
-
-	/**
-	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
-	 *
-	 * @param field
-	 * 		Field to set.
-	 * @param value
-	 * 		Value to set.
-	 */
-	public static void unsafePut(Field field, short value) {
-		Object fieldBase = unsafe.staticFieldBase(field);
-		long fieldOffset = unsafe.staticFieldOffset(field);
-		unsafe.putShort(fieldBase, fieldOffset, value);
-	}
-
-	/**
-	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
-	 *
-	 * @param field
-	 * 		Field to set.
-	 * @param value
-	 * 		Value to set.
-	 */
-	public static void unsafePut(Field field, char value) {
-		Object fieldBase = unsafe.staticFieldBase(field);
-		long fieldOffset = unsafe.staticFieldOffset(field);
-		unsafe.putChar(fieldBase, fieldOffset, value);
-	}
-
-	/**
-	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
-	 *
-	 * @param field
-	 * 		Field to set.
-	 * @param value
-	 * 		Value to set.
-	 */
-	public static void unsafePut(Field field, int value) {
-		Object fieldBase = unsafe.staticFieldBase(field);
-		long fieldOffset = unsafe.staticFieldOffset(field);
-		unsafe.putInt(fieldBase, fieldOffset, value);
-	}
-
-	/**
-	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
-	 *
-	 * @param field
-	 * 		Field to set.
-	 * @param value
-	 * 		Value to set.
-	 */
-	public static void unsafePut(Field field, float value) {
-		Object fieldBase = unsafe.staticFieldBase(field);
-		long fieldOffset = unsafe.staticFieldOffset(field);
-		unsafe.putFloat(fieldBase, fieldOffset, value);
-	}
-
-	/**
-	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
-	 *
-	 * @param field
-	 * 		Field to set.
-	 * @param value
-	 * 		Value to set.
-	 */
-	public static void unsafePut(Field field, double value) {
-		Object fieldBase = unsafe.staticFieldBase(field);
-		long fieldOffset = unsafe.staticFieldOffset(field);
-		unsafe.putDouble(fieldBase, fieldOffset, value);
-	}
-
-	/**
-	 * Referenced type must be loaded, see {@link Class#forName(String, boolean, ClassLoader)}.
-	 *
-	 * @param field
-	 * 		Field to set.
-	 * @param value
-	 * 		Value to set.
-	 */
-	public static void unsafePut(Field field, long value) {
-		Object fieldBase = unsafe.staticFieldBase(field);
-		long fieldOffset = unsafe.staticFieldOffset(field);
-		unsafe.putLong(fieldBase, fieldOffset, value);
 	}
 
 	/**
