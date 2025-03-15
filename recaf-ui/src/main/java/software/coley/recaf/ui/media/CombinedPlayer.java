@@ -35,9 +35,33 @@ public class CombinedPlayer extends Player {
 	}
 
 	@Override
+	public void seek(double millis) {
+		if (currentPlayer != null)
+			currentPlayer.seek(millis);
+	}
+
+	@Override
 	public void stop() {
 		if (currentPlayer != null)
 			currentPlayer.stop();
+	}
+
+	@Override
+	public void reset() {
+		if (currentPlayer != null)
+			currentPlayer.reset();
+	}
+
+	@Override
+	public void dispose() {
+		if (currentPlayer != null)
+			currentPlayer.dispose();
+	}
+
+	@Override
+	public void addPlaybackListener(Runnable r) {
+		if (currentPlayer != null)
+			currentPlayer.addPlaybackListener(r);
 	}
 
 	@Override

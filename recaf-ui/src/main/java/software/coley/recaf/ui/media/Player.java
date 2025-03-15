@@ -12,7 +12,7 @@ import java.io.IOException;
  * @see CombinedPlayer
  */
 public abstract class Player {
-	private SpectrumListener listener;
+	private SpectrumListener spectrumListener;
 
 	/**
 	 * Play the track.
@@ -25,6 +25,14 @@ public abstract class Player {
 	public abstract void pause();
 
 	/**
+	 * Seek to the given time (in millis).
+	 *
+	 * @param millis
+	 * 		Time to seek to.
+	 */
+	public abstract void seek(double millis);
+
+	/**
 	 * Stop the track.
 	 */
 	public abstract void stop();
@@ -32,15 +40,26 @@ public abstract class Player {
 	/**
 	 * Stop the track and clear references.
 	 */
-	public void reset() {
-		stop();
-	}
+	public abstract void reset();
+
+	/**
+	 * Clean up resources.
+	 */
+	public abstract void dispose();
+
+	/**
+	 * Adds a playback listener.
+	 *
+	 * @param r
+	 * 		Runnable to call when the playback state changes.
+	 */
+	public abstract void addPlaybackListener(Runnable r);
 
 	/**
 	 * @return Current spectrum listener.
 	 */
 	public SpectrumListener getSpectrumListener() {
-		return listener;
+		return spectrumListener;
 	}
 
 	/**
@@ -48,7 +67,7 @@ public abstract class Player {
 	 * 		New spectrum listener.
 	 */
 	public void setSpectrumListener(SpectrumListener listener) {
-		this.listener = listener;
+		this.spectrumListener = listener;
 	}
 
 	/**

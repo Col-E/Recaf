@@ -37,6 +37,7 @@ public class AudioPane extends MediaPane {
 	@Inject
 	public AudioPane() {
 		setCenter(canvas);
+
 		// Makes the spike slightly softer looking
 		// The combination of the faint blur and bloom prevent the 'creeping glow' that occurs with just the bloom
 		// when used on lower resolutions.
