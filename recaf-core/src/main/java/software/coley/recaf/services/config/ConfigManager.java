@@ -15,7 +15,6 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.cdi.InitializationEvent;
 import software.coley.recaf.config.ConfigCollectionValue;
 import software.coley.recaf.config.ConfigContainer;
@@ -44,7 +43,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Coley
  */
 @ApplicationScoped
-@EagerInitialization // Eager so that all config containers will be up-to-date when injected
 public class ConfigManager implements Service {
 	public static final String SERVICE_ID = "config-manager";
 	private static final Logger logger = Logging.get(ConfigManager.class);
