@@ -7,6 +7,7 @@ import software.coley.recaf.info.annotation.AnnotationElement;
 import software.coley.recaf.info.annotation.AnnotationEnumReference;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.services.text.TextFormatConfig;
+import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.Types;
 
@@ -105,7 +106,7 @@ public class PrintUtils {
 		switch (value) {
 			case String str -> {
 				// String value
-				return '"' + str + '"';
+				return '"' + EscapeUtil.escapeStandard(str) + '"';
 			}
 			case Type type -> {
 				// Class value
