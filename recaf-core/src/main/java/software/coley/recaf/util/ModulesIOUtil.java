@@ -20,7 +20,7 @@ import java.util.stream.Stream;
  * @author xDark
  */
 public class ModulesIOUtil {
-	private static final MethodHandles.Lookup lookup = LookupUtil.lookup();
+	private static final MethodHandles.Lookup lookup = ReflectUtil.lookup();
 
 	/**
 	 * @param modulesFilePath

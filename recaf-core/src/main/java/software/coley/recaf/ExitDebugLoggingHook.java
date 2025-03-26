@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.util.JavaVersion;
-import software.coley.recaf.util.LookupUtil;
+import software.coley.recaf.util.ReflectUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,7 +49,7 @@ public class ExitDebugLoggingHook {
 	 * Register the shutdown hook.
 	 */
 	public static void register() {
-		lookup = LookupUtil.lookup();
+		lookup = ReflectUtil.lookup();
 		try {
 			// We use this instead of the Runtime shutdown hook thread because this will run on the same thread
 			// as the call to System.exit(int)

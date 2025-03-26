@@ -12,7 +12,7 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.services.phantom.PhantomGenerationException;
 import software.coley.recaf.services.phantom.PhantomGenerator;
-import software.coley.recaf.util.LookupUtil;
+import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -250,7 +250,7 @@ public class JavacCompiler implements Service {
 	static {
 		// Lookup oldest supported version
 		try {
-			MethodHandles.Lookup lookup = LookupUtil.lookup();
+			MethodHandles.Lookup lookup = ReflectUtil.lookup();
 			Class<?> target = Class.forName("com.sun.tools.javac.jvm.Target");
 			MethodHandle min = lookup.findStaticGetter(target, "MIN", target);
 			Object minTarget = min.invoke();
