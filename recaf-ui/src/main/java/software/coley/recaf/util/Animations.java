@@ -68,18 +68,23 @@ public class Animations {
 	}
 
 	private static void animate(Node node, long millis, int r, int g, int b) {
+		InnerShadow innerShadow = new InnerShadow();
+		innerShadow.setBlurType(BlurType.ONE_PASS_BOX);
+		innerShadow.setChoke(1);
+		innerShadow.setRadius(5);
 		DoubleProperty dblProp = new SimpleDoubleProperty(1);
 		dblProp.addListener((ob, o, n) -> {
-			InnerShadow innerShadow = new InnerShadow();
-			innerShadow.setBlurType(BlurType.ONE_PASS_BOX);
-			innerShadow.setChoke(1);
-			innerShadow.setRadius(5);
-			innerShadow.setColor(Color.rgb(r, g, b, n.doubleValue()));
-			node.setEffect(innerShadow);
+			double opacity = n.doubleValue();
+			if (opacity > 0.1) {
+				innerShadow.setColor(Color.rgb(r, g, b, opacity));
+			} else {
+				node.setEffect(null);
+			}
 		});
-		Timeline timeline = new Timeline();
+		Timeline timeline = new Timeline(15 /* Reduced framerate for less scene updates */);
 		KeyValue kv = new KeyValue(dblProp, 0);
 		KeyFrame kf = new KeyFrame(Duration.millis(millis), kv);
+		node.setEffect(innerShadow);
 		timeline.getKeyFrames().add(kf);
 		timeline.play();
 	}
