@@ -152,6 +152,10 @@ public class VineflowerConfig extends BaseDecompilerConfig {
 			if (value.getValue() instanceof Boolean bool)
 				properties.put(key, bool ? "1" : "0");
 		});
+
+		// We NEVER want kotlin output. It will break our AST parser.
+		properties.put("kt-enable", "0");
+
 		return properties;
 	}
 
