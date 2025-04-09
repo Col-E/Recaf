@@ -56,7 +56,7 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 	public InheritancePane(@Nonnull InheritanceGraphService graphService,
 	                       @Nonnull CellConfigurationService configurationService) {
 		this.inheritanceGraphLookup = () -> Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
-		contentType.addListener((ob, old, cur) -> service.submit(this::regenerateTree));
+		contentType.addListener((ob, old, cur) -> scheduleRegenerateTree());
 
 		// Configure tree.
 		tree.setShowRoot(true);
@@ -77,6 +77,14 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 		// Layout
 		getChildren().addAll(tree, toggle);
 		setMinWidth(235);
+	}
+
+	/**
+	 * Schedule tree regeneration.
+	 */
+	private void scheduleRegenerateTree() {
+		if (!service.isShutdown())
+			service.submit(this::regenerateTree);
 	}
 
 	/**
@@ -183,7 +191,7 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 		if (path instanceof ClassPathNode classPath) {
 			this.path = classPath;
 			workspace = path.getValueOfType(Workspace.class);
-			service.submit(this::regenerateTree);
+			scheduleRegenerateTree();
 		}
 	}
 
@@ -195,6 +203,7 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 
 	@Override
 	public void disable() {
+		service.shutdownNow();
 		setDisable(true);
 		tree.setRoot(null);
 	}

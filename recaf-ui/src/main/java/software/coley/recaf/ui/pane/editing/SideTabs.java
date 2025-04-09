@@ -229,6 +229,8 @@ public class SideTabs extends BorderPane implements UpdatableNavigable {
 
 	@Override
 	public void disable() {
+		for (Navigable child : getNavigableChildren())
+			child.disable();
 		setDisable(true);
 	}
 
