@@ -135,8 +135,8 @@ public class SearchServiceTest extends TestBase {
 			// Used only in constant-value attribute for field 'CONSTANT_FIELD'
 			Results results = searchService.search(classesWorkspace, new NumberQuery(numMatchProvider.newEqualsPredicate(16)));
 			for (Result<?> result : results) {
-				if (result.getPath() instanceof ClassMemberPathNode memberPath) {
-					ClassMember declaredMember = memberPath.getValue();
+				ClassMember declaredMember = result.getPath().getValueOfType(ClassMember.class);
+				if (declaredMember != null) {
 					assertTrue(declaredMember.isField());
 					assertEquals("CONSTANT_FIELD", declaredMember.getName());
 					assertEquals("I", declaredMember.getDescriptor());

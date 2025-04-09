@@ -49,7 +49,7 @@ public interface SyntaxHighlighter extends EditorComponent {
 	 * @return Expanded range to style.
 	 * By default, returns the given range.
 	 *
-	 * @see SyntaxUtil#getRangeForRestyle(PlainTextChange, Editor) Usage of this method.
+	 * @see SyntaxUtil#getRangeForRestyle(String, StyleSpans, SyntaxHighlighter, PlainTextChange) Usage of this method.
 	 */
 	@Nonnull
 	default IntRange expandRange(@Nonnull String text, int initialStart, int initialEnd) {
