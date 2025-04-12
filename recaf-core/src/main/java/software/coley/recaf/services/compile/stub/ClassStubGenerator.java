@@ -69,9 +69,9 @@ public abstract class ClassStubGenerator {
 		this.workspace = workspace;
 		this.classAccess = classAccess;
 		this.className = isSafeInternalClassName(className) ? className : "obfuscated_class";
-		this.superName = superName != null && isSafeInternalClassName(superName) ? superName : null;
+		this.superName = isSafeReferencableName(superName) ? superName : null;
 		this.implementing = implementing.stream()
-				.filter(ClassStubGenerator::isSafeInternalClassName)
+				.filter(this::isSafeReferencableName)
 				.toList();
 		this.fields = fields;
 		this.methods = methods;
@@ -283,6 +283,8 @@ public abstract class ClassStubGenerator {
 				// If we don't know the parent type, we cannot generate a valid constructor.
 				ClassPathNode superPath = superName == null ? null : workspace.findJvmClass(superName);
 				if (superPath == null && superName != null)
+					// Generally this shouldn't happen since we filter the super-name in the constructor.
+					// But just in case we'll keep this error handling here.
 					throw new ExpressionCompileException("Cannot generate 'super(...)' for constructor, " +
 							"missing type information for: " + superName);
 				if (superPath != null) {
@@ -440,6 +442,24 @@ public abstract class ClassStubGenerator {
 			return type instanceof ArrayType arrayType
 					&& arrayType.rootComponentType() instanceof InstanceType instanceType
 					&& workspace.findClass(instanceType.internalName()) == null;
+	}
+
+	/**
+	 * @param name
+	 * 		Class name to check.
+	 *
+	 * @return The class name if it is safe to reference, otherwise {@code null}.
+	 */
+	private boolean isSafeReferencableName(@Nullable String name) {
+		if (name == null)
+			return false;
+
+		// Must be well-formed
+		if (!isSafeInternalClassName(name))
+			return false;
+
+		// Must be found in the workspace
+		return workspace.findClass(name) != null;
 	}
 
 	/**
