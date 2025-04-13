@@ -138,7 +138,7 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 			passes++;
 		}
 		assertTrue(passes > 0, "There were no transformations");
-		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER ========\n" + assembly);
+		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER x" + passes + " PASSES ========\n" + assembly);
 		assertionChecker.accept(assembly);
 	}
 

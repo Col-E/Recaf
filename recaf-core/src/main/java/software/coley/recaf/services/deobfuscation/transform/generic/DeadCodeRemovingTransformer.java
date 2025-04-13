@@ -74,9 +74,16 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 		try {
 			// Prune any dead code
 			Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
-			for (int i = instructions.size() - 1; i >= 0; i--) {
+			int end = instructions.size() - 1;
+			for (int i = end; i >= 0; i--) {
 				AbstractInsnNode insn = instructions.get(i);
 				if (frames[i] == null || insn.getOpcode() == NOP) {
+					// Don't prune the tail label even if it is "dead" because the last method instruction
+					// is terminal like 'return' or 'athrow'. The label will just get added back automatically
+					// and cause the transform process to loop on repeat.
+					if (i == end && insn.getType() == AbstractInsnNode.LABEL)
+						continue;
+
 					instructions.remove(insn);
 
 					// Remove try-catch ranges if their labels are within the dead-code range.
