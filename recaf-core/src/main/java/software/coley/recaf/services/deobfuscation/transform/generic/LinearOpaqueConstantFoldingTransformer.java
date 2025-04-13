@@ -341,6 +341,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 		// The following cases are supported:
 		//  - constants
 		//  - variable loads (context will determine if value in variable is constant at the given position)
+		//  - dup / dup2
 		//  - static field gets (context will determine if value in field is constant/known)
 		//  - static method calls with 0 args (context will determine if returned value of method is constant/known)
 		int op = insn.getOpcode();
@@ -349,6 +350,8 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 		if (op >= ILOAD && op <= ALOAD)
 			return true;
 		if (op == GETSTATIC)
+			return true;
+		if (op == DUP || op == DUP2)
 			return true;
 		return op == INVOKESTATIC
 				&& insn instanceof MethodInsnNode min
