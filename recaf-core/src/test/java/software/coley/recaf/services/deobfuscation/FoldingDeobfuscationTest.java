@@ -36,6 +36,18 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				        iconst_m1
 				        isub
 				        // -1 --1 --> 0
+				        iconst_1
+				        ior
+				        // 1 | 0 --> 1
+				        iconst_1
+				        ishl
+				        // 1 << 1 --> 2
+				        iconst_1
+				        ishr
+				        // 2 >> 1 --> 1
+				        iconst_2
+				        iand
+				        // 1 & 2 --> 0
 				        ireturn
 				    B:
 				    }
@@ -140,14 +152,89 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
-	void foldConversions() {
+	void foldConvertInt2Float() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 10
+				        i2f
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("i2f", dis), "Expected to fold conversion");
+			assertEquals(1, StringUtil.count("ldc 10.0F", dis), "Expected to fold to converted value");
+		});
+	}
+
+	@Test
+	void foldConvertLong2Float() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 100000000000000000L
+				        l2f
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("l2f", dis), "Expected to fold conversion");
+			assertEquals(1, StringUtil.count("ldc " + StringUtil.toString(100000000000000000F) + "F", dis),
+					"Expected to fold to converted value");
+		});
+	}
+
+	@Test
+	void foldConvertDouble2Float() {
 		String asm = """
 				.method public static example ()I {
 				    code: {
 				    A:
 				        ldc 5.125
-				        d2l
-				        l2f
+				        d2f
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("d2f", dis), "Expected to fold conversion");
+			assertEquals(1, StringUtil.count("ldc 5.125F", dis), "Expected to fold to converted value");
+		});
+	}
+
+	@Test
+	void foldConvertLong2Int() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 100000000000000000L
+				        l2i
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("l2i", dis), "Expected to fold conversion");
+			assertEquals(1, StringUtil.count("ldc " + (int) 100000000000000000L, dis), "Expected to fold to converted value");
+		});
+	}
+
+	@Test
+	void foldConvertFloat2Int() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 100000000000000000F
 				        f2i
 				        ireturn
 				    B:
@@ -155,7 +242,43 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				}
 				""";
 		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
-			assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to 5");
+			assertEquals(0, StringUtil.count("f2i", dis), "Expected to fold conversion");
+			assertEquals(1, StringUtil.count("ldc " + (int) 100000000000000000F, dis), "Expected to fold to converted value");
+		});
+	}
+
+	@Test
+	void foldConvertDouble2Int() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 10000000000000000000000000000000.0
+				        d2i
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("d2i", dis), "Expected to fold conversion");
+			assertEquals(1, StringUtil.count("ldc " + (int) 10000000000000000000000000000000.0, dis), "Expected to fold to converted value");
+		});
+
+		asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 0.95
+				        d2i
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("d2i", dis), "Expected to fold conversion");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to converted value");
 		});
 	}
 
@@ -176,6 +299,38 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_m1", dis), "Expected to fold to -1");
 		});
+
+		asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 321L
+				        ldc 123L
+				        lcmp
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
+		});
+
+		asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 321L
+				        dup2
+				        lcmp
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to 0");
+		});
 	}
 
 	@Test
@@ -195,6 +350,38 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_m1", dis), "Expected to fold to -1");
 		});
+
+		asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				    	ldc 321.0F
+				        ldc 123.0F
+				        fcmpl
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
+		});
+
+		asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				    	ldc 321.0F
+				        ldc 321.0F
+				        fcmpl
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to 0");
+		});
 	}
 
 	@Test
@@ -213,6 +400,38 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				""";
 		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_m1", dis), "Expected to fold to -1");
+		});
+
+		asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 321.0
+				        ldc 123.0
+				        dcmpl
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
+		});
+
+		asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc 321.0
+				        ldc 321.0
+				        dcmpl
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to 0");
 		});
 	}
 

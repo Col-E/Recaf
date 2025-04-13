@@ -18,6 +18,7 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +32,33 @@ import java.util.Random;
 public class StringUtil {
 	public static final String[] EMPTY_STRING_ARRAY = new String[0];
 	private static final int[] EMPTY_INT_ARRAY = new int[0];
+	private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#");
+
+	static {
+		DECIMAL_FORMAT.setMaximumFractionDigits(10);
+	}
+
+	/**
+	 * @param value
+	 * 		Value to print.
+	 *
+	 * @return Whole number toString form of the given number.
+	 */
+	@Nonnull
+	public static String toString(double value) {
+		return DECIMAL_FORMAT.format(value);
+	}
+
+	/**
+	 * @param value
+	 * 		Value to print.
+	 *
+	 * @return Whole number toString form of the given number.
+	 */
+	@Nonnull
+	public static String toString(float value) {
+		return DECIMAL_FORMAT.format(value);
+	}
 
 	/**
 	 * @param input
