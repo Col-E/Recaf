@@ -119,7 +119,7 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 
 					// Skip if stack top is not known.
 					ReValue stackTop = frame.getStack(frame.getStackSize() - 1);
-					if (!stackTop.hasKnownValue())
+					if (!stackTop.hasKnownValue() && !(stackTop instanceof ObjectValue ov && ov.isNull()))
 						continue;
 
 					// Get instruction of the top stack's contributing instruction.
@@ -160,7 +160,7 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 							if (frame.getStackSize() < 2)
 								continue;
 							ReValue stack2ndTop = frame.getStack(frame.getStackSize() - 2);
-							if (!stack2ndTop.hasKnownValue())
+							if (!stack2ndTop.hasKnownValue()&& !(stack2ndTop instanceof ObjectValue ov && ov.isNull()))
 								continue;
 
 							// Skip if the other argument to compare with is not immediately backed by

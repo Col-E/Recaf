@@ -263,6 +263,200 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
+	void foldOpaqueIflt() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_m1
+				        iflt C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("iflt", dis), "Expected to remove iflt");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace iflt <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfle() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        ifle C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("iflt", dis), "Expected to remove ifle");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace ifle <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfgt() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_1
+				        ifgt C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("iflt", dis), "Expected to remove ifgt");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace ifgt <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfge() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        ifge C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("ifge", dis), "Expected to remove ifge");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace ifge <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfnull() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        aconst_null
+				        ifnull C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("ifnull", dis), "Expected to remove ifnull");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace ifnull <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfnonnull() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        ldc ""
+				        ifnonnull C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("ifnull", dis), "Expected to remove ifnonnull");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace ifnonnull <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfIcmpeq() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_0
+				        if_icmpeq C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_icmpeq", dis), "Expected to remove if_icmpeq");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace if_icmpeq <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfIcmpne() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        if_icmpne C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_icmpne", dis), "Expected to remove if_icmpne");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace if_icmpne <target> with goto <target>");
+		});
+	}
+
+	@Test
 	void foldOpaqueIfIcmplt() {
 		String asm = """
 				.method public static example ()V {
@@ -284,6 +478,177 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("if_icmplt", dis), "Expected to remove if_icmplt");
 			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace if_icmplt <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfIcmpge() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_3
+				        iconst_3
+				        if_icmpge C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_icmpge", dis), "Expected to remove if_icmpge");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace if_icmpge <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfIcmpgt() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_5
+				        iconst_3
+				        if_icmpgt C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_icmpgt", dis), "Expected to remove if_icmpgt");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace if_icmpgt <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfIcmple() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_3
+				        iconst_3
+				        if_icmple C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_icmple", dis), "Expected to remove if_icmple");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace if_icmple <target> with goto <target>");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfAcmpeq() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        aconst_null
+				        dup
+				        if_acmpeq C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_acmpeq", dis), "Expected to remove if_acmpeq");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace if_acmpeq <target> with goto <target>");
+		});
+
+		// Fall-through case
+		asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        aconst_null
+				        ldc "not_null"
+				        if_acmpeq C
+				    B:
+				        return
+				    C:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_acmpeq", dis), "Expected to remove if_acmpeq");
+			assertEquals(0, StringUtil.count("aconst_null", dis), "Expected to optimize out all code");
+		});
+	}
+
+	@Test
+	void foldOpaqueIfAcmpne() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        aconst_null
+				        ldc "not null"
+				        if_acmpne C
+				    B:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    C:
+				        return
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_acmpne", dis), "Expected to remove if_acmpne");
+			assertEquals(1, StringUtil.count("goto", dis), "Expected to replace if_acmpne <target> with goto <target>");
+		});
+
+		// Fall-through case
+		asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        aconst_null
+				        dup
+				        if_acmpne C
+				    B:
+				        return
+				    C:
+				        // Should be skipped over by transformer
+				        aconst_null
+				        athrow
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_acmpne", dis), "Expected to remove if_acmpne");
+			assertEquals(0, StringUtil.count("aconst_null", dis), "Expected to optimize out all code");
 		});
 	}
 
@@ -363,6 +728,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		});
 	}
 
+	/** @see #foldLookupSwitchOfUnknownParameterIfIsEffectiveGoto() */
 	@Test
 	void foldTableSwitchOfUnknownParameterIfIsEffectiveGoto() {
 		String asm = """
@@ -398,6 +764,50 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 			assertEquals(0, StringUtil.count("iload key", dis), "Expected to remove tableswitch argument");
 			assertEquals(0, StringUtil.count("tableswitch", dis), "Expected to remove tableswitch");
 			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace tableswitch <target> with goto <target>");
+
+			// Dead code should be removed
+			assertEquals(0, StringUtil.count("aconst_null", dis), "Expected to remove dead aconst_null");
+			assertEquals(0, StringUtil.count("athrow", dis), "Expected to remove dead athrow");
+			assertEquals(0, StringUtil.count("pop", dis), "Expected to remove dead athrow");
+		});
+	}
+
+	/** @see #foldTableSwitchOfUnknownParameterIfIsEffectiveGoto() */
+	@Test
+	void foldLookupSwitchOfUnknownParameterIfIsEffectiveGoto() {
+		String asm = """
+				.method public static example (I)V {
+					parameters: { key },
+				    code: {
+				    A:
+				        iload key
+				        lookupswitch {
+				            1: D,
+				            2: D,
+				            3: D,
+				            default: D
+				        }
+				    B:
+				        aconst_null
+				        athrow
+				    C:
+				        aconst_null
+				        athrow
+				    D:
+				        return
+				    E:
+				        aconst_null
+				        dup
+				        pop
+				        athrow
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			// Switch should be replaced with a single goto
+			assertEquals(0, StringUtil.count("iload key", dis), "Expected to remove lookupswitch argument");
+			assertEquals(0, StringUtil.count("lookupswitch", dis), "Expected to remove lookupswitch");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace lookupswitch <target> with goto <target>");
 
 			// Dead code should be removed
 			assertEquals(0, StringUtil.count("aconst_null", dis), "Expected to remove dead aconst_null");
