@@ -544,8 +544,16 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		// Null types correspond to UNINITIALIZED_VALUE.
 		if (type1 == null || type2 == null)
 			return UninitializedValue.UNINITIALIZED_VALUE;
-		if (type1.equals(type2))
-			return value1;
+
+		// If the types are the same, we should merge their tracked value state.
+		if (type1.equals(type2)) {
+			try {
+				return value1.mergeWith(value2);
+			} catch (IllegalValueException t) {
+				logger.error("Failed ReValue merge of of same type", t);
+				throw new IllegalStateException("Failed ReValue merge of of same type", t);
+			}
+		}
 
 		// The merge of a primitive type with a different type is the type of uninitialized values.
 		if (type1.getSort() != Type.OBJECT && type1.getSort() != Type.ARRAY)
@@ -597,6 +605,7 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			} catch (Throwable t) {
 				logger.error("Failed ReValue merge of {} and {}",
 						value1.getClass().getSimpleName(), value2.getClass().getSimpleName(), t);
+				throw new IllegalStateException("Failed ReValue merge of of same type", t);
 			}
 		}
 
