@@ -8,6 +8,7 @@ import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
+import software.coley.recaf.util.analysis.value.UninitializedValue;
 
 import java.util.Optional;
 
@@ -44,7 +45,9 @@ public class StringValueImpl extends ObjectValueImpl implements StringValue {
 	@Nonnull
 	@Override
 	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
-		if (other instanceof StringValue otherString) {
+		if (other == UninitializedValue.UNINITIALIZED_VALUE)
+			return other;
+		else if (other instanceof StringValue otherString) {
 			if (getText().isPresent() && otherString.getText().isPresent()) {
 				String s = getText().get();
 				String otherS = otherString.getText().get();

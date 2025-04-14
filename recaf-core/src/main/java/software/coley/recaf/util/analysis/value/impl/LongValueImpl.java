@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.UninitializedValue;
 
 import java.util.OptionalLong;
 
@@ -53,7 +54,9 @@ public class LongValueImpl implements LongValue {
 	@Nonnull
 	@Override
 	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
-		if (other instanceof LongValue otherLong) {
+		if (other == UninitializedValue.UNINITIALIZED_VALUE)
+			return other;
+		else if (other instanceof LongValue otherLong) {
 			if (value().isPresent() && otherLong.value().isPresent()) {
 				long i = value().getAsLong();
 				long otherI = otherLong.value().getAsLong();

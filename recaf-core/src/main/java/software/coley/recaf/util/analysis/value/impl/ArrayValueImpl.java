@@ -7,6 +7,7 @@ import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.UninitializedValue;
 
 import java.util.OptionalInt;
 
@@ -44,7 +45,9 @@ public class ArrayValueImpl implements ArrayValue {
 	@Nonnull
 	@Override
 	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
-		if (other instanceof ArrayValue otherArray) {
+		if (other == UninitializedValue.UNINITIALIZED_VALUE)
+			return other;
+		else if (other instanceof ArrayValue otherArray) {
 			if (getFirstDimensionLength().isPresent() && otherArray.getFirstDimensionLength().isPresent()) {
 				int dim = getFirstDimensionLength().getAsInt();
 				int otherDim = otherArray.getFirstDimensionLength().getAsInt();

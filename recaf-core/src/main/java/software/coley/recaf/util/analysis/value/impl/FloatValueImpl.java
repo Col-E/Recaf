@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.UninitializedValue;
 
 import java.util.OptionalDouble;
 
@@ -57,7 +58,9 @@ public class FloatValueImpl implements FloatValue {
 	@Nonnull
 	@Override
 	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
-		if (other instanceof FloatValue otherFloat) {
+		if (other == UninitializedValue.UNINITIALIZED_VALUE)
+			return other;
+		else if (other instanceof FloatValue otherFloat) {
 			if (value().isPresent() && otherFloat.value().isPresent()) {
 				double f = value().getAsDouble();
 				double otherF = otherFloat.value().getAsDouble();

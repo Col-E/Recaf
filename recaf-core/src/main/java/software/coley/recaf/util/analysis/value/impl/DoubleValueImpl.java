@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.UninitializedValue;
 
 import java.util.OptionalDouble;
 
@@ -53,7 +54,9 @@ public class DoubleValueImpl implements DoubleValue {
 	@Nonnull
 	@Override
 	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
-		if (other instanceof DoubleValue otherDouble) {
+		if (other == UninitializedValue.UNINITIALIZED_VALUE)
+			return other;
+		else if (other instanceof DoubleValue otherDouble) {
 			if (value().isPresent() && otherDouble.value().isPresent()) {
 				double d = value().getAsDouble();
 				double otherD = otherDouble.value().getAsDouble();

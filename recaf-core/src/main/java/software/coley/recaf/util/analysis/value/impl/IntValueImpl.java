@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.UninitializedValue;
 
 import java.util.OptionalInt;
 
@@ -53,7 +54,9 @@ public class IntValueImpl implements IntValue {
 	@Nonnull
 	@Override
 	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
-		if (other instanceof IntValue otherInt) {
+		if (other == UninitializedValue.UNINITIALIZED_VALUE)
+			return other;
+		else if (other instanceof IntValue otherInt) {
 			if (value().isPresent() && otherInt.value().isPresent()) {
 				int i = value().getAsInt();
 				int otherI = otherInt.value().getAsInt();

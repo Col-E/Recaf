@@ -22,6 +22,6 @@ public class UninitializedValueImpl implements UninitializedValue {
 	@Nonnull
 	@Override
 	public ReValue mergeWith(@Nonnull ReValue other) {
-		return UNINITIALIZED_VALUE;
+		return this;
 	}
 }

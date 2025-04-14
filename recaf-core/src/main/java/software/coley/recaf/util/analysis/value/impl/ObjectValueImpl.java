@@ -6,6 +6,7 @@ import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.UninitializedValue;
 
 /**
  * Object value holder implementation.
@@ -35,7 +36,9 @@ public class ObjectValueImpl implements ObjectValue {
 	@Nonnull
 	@Override
 	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
-		if (other instanceof ObjectValue otherObject)
+		if (other == UninitializedValue.UNINITIALIZED_VALUE)
+			return other;
+		else if (other instanceof ObjectValue otherObject)
 			return ObjectValue.object(type, nullness().mergeWith(otherObject.nullness()));
 		throw new IllegalValueException("Cannot merge with: " + other);
 	}

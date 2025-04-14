@@ -35,6 +35,7 @@ import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
+import software.coley.recaf.util.analysis.value.UninitializedValue;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -283,7 +284,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 				mergedValue = IntValue.UNKNOWN;
 			else if (mergedValue instanceof IntValue mergedIntValue)
 				mergedValue = mergedIntValue.add(iinc.incr);
-			else
+			else if (mergedValue != UninitializedValue.UNINITIALIZED_VALUE)
 				throw new IllegalValueException("Cannot merge iinc into value: " + mergedValue);
 		}
 
