@@ -140,7 +140,7 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 								case IFEQ ->
 										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isEqualTo(0));
 								case IFNE ->
-										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> !v.isEqualTo(0));
+										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isNotEqualTo(0));
 								case IFLT ->
 										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isLessThan(0));
 								case IFGE ->
@@ -174,7 +174,7 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 								case IF_ICMPEQ ->
 										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isEqualTo);
 								case IF_ICMPNE ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, (a, b) -> !a.isEqualTo(b));
+										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isNotEqualTo);
 								case IF_ICMPLT ->
 										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isLessThan);
 								case IF_ICMPGE ->

@@ -23,6 +23,7 @@ import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -508,6 +509,39 @@ public class AsmInsnUtil implements Opcodes {
 			next = getNextInsn(jin.label);
 		}
 		return next;
+	}
+
+	/**
+	 * Primarily used for debugging and passing to {@link BlwUtil#toString(Iterable)}.
+	 *
+	 * @param insn
+	 * 		Midpoint instruction.
+	 * @param back
+	 * 		Steps backwards to take and include in the output.
+	 * @param forward
+	 * 		Steps forward to take and include in the output.
+	 *
+	 * @return List of instructions surrounding the given instruction.
+	 */
+	@Nonnull
+	public static List<AbstractInsnNode> getSurrounding(@Nonnull AbstractInsnNode insn, int back, int forward) {
+		List<AbstractInsnNode> list = new ArrayList<>(back + forward + 1);
+		AbstractInsnNode t = insn;
+		for (int i = 0; i < back; i++) {
+			t = getPreviousInsn(t);
+			if (t == null)
+				break;
+			list.addFirst(t);
+		}
+		t = insn;
+		list.add(t);
+		for (int i = 0; i < forward; i++) {
+			t = getNextInsn(t);
+			if (t == null)
+				break;
+			list.add(t);
+		}
+		return list;
 	}
 
 	/**
