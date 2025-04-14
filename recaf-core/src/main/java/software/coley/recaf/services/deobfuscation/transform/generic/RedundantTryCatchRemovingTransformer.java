@@ -421,6 +421,14 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							}
 							case ATHROW: {
 								Frame<ReValue> frame = frames[i];
+
+								// Ensure the 'athrow' is actually used. If there is no associated frame
+								// then it is dead code and shouldn't be reachable. This means we don't
+								// need to treat it as a potential throwing behavior participant.
+								if (frame == null)
+									break;
+
+								// Check for specific kinds of exceptions.
 								ReValue top = frame.getStack(frame.getStackSize() - 1);
 								if (top instanceof ObjectValue ov) {
 									// Check for NPE handling.
