@@ -129,6 +129,14 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 			JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
 
 			// No transform step should fail.
+			result.getTransformerFailures().forEach((path, failureMap) -> {
+				System.err.println(path.getValue().getName());
+				failureMap.forEach((transformer, error) -> {
+					System.err.println(transformer.getSimpleName());
+					error.printStackTrace(System.err);
+					System.err.println();
+				});
+			});
 			assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
 
 			// Prepare for next transform step.
