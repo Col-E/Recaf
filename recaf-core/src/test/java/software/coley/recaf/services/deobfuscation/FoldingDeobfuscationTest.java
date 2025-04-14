@@ -166,7 +166,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				""";
 		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("i2f", dis), "Expected to fold conversion");
-			assertEquals(1, StringUtil.count("ldc 10.0F", dis), "Expected to fold to converted value");
+			assertEquals(1, StringUtil.count("ldc 10F", dis), "Expected to fold to converted value");
 		});
 	}
 
