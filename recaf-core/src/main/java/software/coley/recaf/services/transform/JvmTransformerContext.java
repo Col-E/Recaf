@@ -45,6 +45,7 @@ public class JvmTransformerContext {
 	private final Set<String> recomputeFrameClasses = new HashSet<>();
 	private final Workspace workspace;
 	private final WorkspaceResource resource;
+	private boolean transformerDidWork;
 
 	/**
 	 * Constructs a new context from an array of transformers.
@@ -259,6 +260,7 @@ public class JvmTransformerContext {
 	 * @see #getNode(JvmClassBundle, JvmClassInfo)
 	 */
 	public void setNode(@Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo info, @Nonnull ClassNode node) {
+		transformerDidWork = true;
 		getJvmClassData(bundle, info).setNode(node);
 	}
 
@@ -276,6 +278,7 @@ public class JvmTransformerContext {
 	 * @see #getBytecode(JvmClassBundle, JvmClassInfo)
 	 */
 	public void setBytecode(@Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo info, @Nonnull byte[] bytecode) {
+		transformerDidWork = true;
 		getJvmClassData(bundle, info).setBytecode(bytecode);
 	}
 
@@ -358,6 +361,28 @@ public class JvmTransformerContext {
 		if (transformer == null)
 			return null;
 		return (T) transformer;
+	}
+
+	/**
+	 * Called before any transformer operates with this context.
+	 * <br>
+	 * Clears any state associated with the operation of transformers.
+	 *
+	 * @see #didTransformerDoWork()
+	 */
+	protected void resetTransformerTracking() {
+		// Any transformation application should call this before the transformer methods operate on data.
+		transformerDidWork = false;
+	}
+
+	/**
+	 * Used to check if a {@link ClassTransformer} did work after its {@code transform} has been executed with
+	 * this context being used as a parameter.
+	 *
+	 * @return {@code true} if the last transformer ran did work with this context.
+	 */
+	protected boolean didTransformerDoWork() {
+		return transformerDidWork;
 	}
 
 	@Nonnull

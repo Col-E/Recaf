@@ -72,6 +72,7 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
 		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
 		assertTrue(result.getTransformedClasses().isEmpty(), "There were unexpected transformations applied");
+		assertTrue(result.getModifiedClassesPerTransformer().isEmpty(), "There were unexpected transformations applied");
 	}
 
 	protected void validateBeforeAfterDecompile(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers,

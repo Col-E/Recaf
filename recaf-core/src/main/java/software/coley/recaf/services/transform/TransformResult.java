@@ -5,6 +5,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -24,6 +25,17 @@ public interface TransformResult<CT extends ClassTransformer, CI extends ClassIn
 	 */
 	@Nonnull
 	IntermediateMappings getMappingsToApply();
+
+	/**
+	 * Shows which classes have been modified by which transformers.
+	 * <p>
+	 * The paths to the classes in the map are to the <i>original</i>
+	 * state of the class and do not have modified {@link ClassInfo} contents.
+	 *
+	 * @return Map of transformers to the paths of classes they have modified.
+	 */
+	@Nonnull
+	Map<Class<? extends CT>, Collection<ClassPathNode>> getModifiedClassesPerTransformer();
 
 	/**
 	 * @return Map of classes, to their maps of transformer-associated exceptions.

@@ -19,8 +19,11 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,6 +101,9 @@ public class TransformationApplier {
 		// Map to hold transformation errors for each class:transformer
 		Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> transformJvmFailures = new HashMap<>();
 
+		// Map to hold transformers to the paths of classes they have modified.
+		Map<Class<?extends JvmClassTransformer>, Collection<ClassPathNode>> transformerToModifiedClasses = new IdentityHashMap<>();
+
 		// Build the transformer context and apply all transformations in order
 		List<JvmClassTransformer> transformers = queue.getTransformers();
 		WorkspaceResource resource = workspace.getPrimaryResource();
@@ -122,7 +128,13 @@ public class TransformationApplier {
 						return;
 
 					try {
+						context.resetTransformerTracking();
 						transformer.transform(context, workspace, resource, bundle, cls);
+						if (context.didTransformerDoWork()) {
+							// Transformer modified this class, record the interaction
+							ClassPathNode path = bundlePathNode.child(cls.getPackageName()).child(cls);
+							transformerToModifiedClasses.computeIfAbsent(transformer.getClass(), t -> new HashSet<>()).add(path);
+						}
 					} catch (Throwable t) {
 						logger.error("Transformer '{}' failed on class '{}'", transformer.name(), cls.getName(), t);
 						ClassPathNode path = bundlePathNode.child(cls.getPackageName()).child(cls);
@@ -152,6 +164,12 @@ public class TransformationApplier {
 			@Override
 			public IntermediateMappings getMappingsToApply() {
 				return context.getMappings();
+			}
+
+			@Nonnull
+			@Override
+			public Map<Class<? extends JvmClassTransformer>, Collection<ClassPathNode>> getModifiedClassesPerTransformer() {
+				return transformerToModifiedClasses;
 			}
 
 			@Override
