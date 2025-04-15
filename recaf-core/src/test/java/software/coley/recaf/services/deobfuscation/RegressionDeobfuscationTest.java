@@ -6,7 +6,6 @@ import software.coley.recaf.services.deobfuscation.transform.generic.GotoInlinin
 import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
-import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -355,6 +354,82 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				}
 				""";
 		validateNoTransformation(asm, List.of(GotoInliningTransformer.class));
+	}
+
+	/**
+	 * Bug from {@link VariableFoldingTransformer} where {@code IINC} on a variable initially assigned to {@code 0}
+	 * wouldn't properly change the tracked state of the variable at the given slot. It usually indicates something
+	 * like a for loop counter. We would want to change the state to "unknown" since a loop counter can have more than
+	 * a single value during its lifespan in the relevant bytecode ranges.
+	 * <br>
+	 * If we properly track {@code IINC} handling, this should see no transformations.
+	 */
+	@Test
+	void variableFoldingWithIinc() {
+		String asm = """
+				.method public equals (Ljava/lang/Object;)Z {
+				    parameters: { this, object },
+				    code: {
+				    A:
+				        aload object
+				        aload this
+				        if_acmpne D
+				    B:
+				        iconst_1
+				        ireturn
+				    D:
+				        aload object
+				        checkcast Example
+				        astore that
+				    E:
+				        aload this
+				        invokevirtual Example.size ()I
+				        istore size
+				    F:
+				        aload that
+				        invokevirtual Example.size ()I
+				        iload size
+				        if_icmpeq H
+				    G:
+				        iconst_0
+				        ireturn
+				    H:
+				        iconst_0
+				        istore i
+				    I:
+				        iload i
+				        iload size
+				        if_icmpge M
+				    J:
+				        aload this
+				        getfield Example.array [I
+				        aload this
+				        getfield Example.start I
+				        iload i
+				        iadd
+				        iaload
+				        aload that
+				        getfield Example.array [I
+				        aload that
+				        getfield Example.start I
+				        iload i
+				        iadd
+				        iaload
+				        if_icmpeq L
+				    K:
+				        iconst_0
+				        ireturn
+				    L:
+				        iinc i 1
+				        goto I
+				    M:
+				        iconst_1
+				        ireturn
+				    N:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class));
 	}
 
 	/**

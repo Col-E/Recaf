@@ -281,9 +281,9 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 
 		public void mergeState(@Nonnull IincInsnNode iinc) throws IllegalValueException {
 			if (mergedValue == null)
-				mergedValue = IntValue.UNKNOWN;
+				mergeState(IntValue.UNKNOWN);
 			else if (mergedValue instanceof IntValue mergedIntValue)
-				mergedValue = mergedIntValue.add(iinc.incr);
+				mergeState(mergedIntValue.add(iinc.incr));
 			else if (mergedValue != UninitializedValue.UNINITIALIZED_VALUE)
 				throw new IllegalValueException("Cannot merge iinc into value: " + mergedValue);
 		}
