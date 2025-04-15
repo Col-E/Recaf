@@ -2,26 +2,31 @@ package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Inject;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LocalVariableNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.services.inheritance.InheritanceGraph;
-import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 import static org.objectweb.asm.Opcodes.NOP;
 import static software.coley.recaf.util.AsmInsnUtil.fixMissingVariableLabels;
@@ -33,26 +38,6 @@ import static software.coley.recaf.util.AsmInsnUtil.fixMissingVariableLabels;
  */
 @Dependent
 public class DeadCodeRemovingTransformer implements JvmClassTransformer {
-	private final InheritanceGraphService graphService;
-	private final WorkspaceManager workspaceManager;
-	private InheritanceGraph inheritanceGraph;
-	private JvmTransformerContext context;
-
-	@Inject
-	public DeadCodeRemovingTransformer(@Nonnull WorkspaceManager workspaceManager, @Nonnull InheritanceGraphService graphService) {
-		this.workspaceManager = workspaceManager;
-		this.graphService = graphService;
-	}
-
-	@Override
-	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
-		this.context = context;
-
-		inheritanceGraph = workspace == workspaceManager.getCurrent() ?
-				graphService.getCurrentWorkspaceInheritanceGraph() :
-				graphService.newInheritanceGraph(workspace);
-	}
-
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
@@ -68,16 +53,23 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 
 	public boolean prune(@Nonnull ClassNode node, @Nonnull MethodNode method) throws TransformationException {
 		InsnList instructions = method.instructions;
-		if (instructions == null)
+		if (instructions == null || instructions.size() == 0)
 			return false;
 		boolean dirty = false;
 		try {
-			// Prune any dead code
-			Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
+			// Compute which instructions are visited by walking the method's control flow.
+			Set<AbstractInsnNode> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+			List<AbstractInsnNode> flowStarts = new ArrayList<>();
+			flowStarts.add(instructions.getFirst());
+			for (TryCatchBlockNode block : method.tryCatchBlocks)
+				flowStarts.add(block.handler);
+			visit(visited, flowStarts);
+
+			// Prune any instructions not visited.
 			int end = instructions.size() - 1;
 			for (int i = end; i >= 0; i--) {
 				AbstractInsnNode insn = instructions.get(i);
-				if (frames[i] == null || insn.getOpcode() == NOP) {
+				if (!visited.contains(insn) || insn.getOpcode() == NOP) {
 					// Don't prune the tail label even if it is "dead" because the last method instruction
 					// is terminal like 'return' or 'athrow'. The label will just get added back automatically
 					// and cause the transform process to loop on repeat.
@@ -110,6 +102,43 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 			throw new TransformationException("Error encountered when removing dead code", t);
 		}
 		return dirty;
+	}
+
+	private static void visit(@Nonnull Set<AbstractInsnNode> visited, @Nonnull List<AbstractInsnNode> startingPoints) {
+		Queue<AbstractInsnNode> todo = new ArrayDeque<>(startingPoints);
+		while (!todo.isEmpty()) {
+			AbstractInsnNode insn = todo.remove();
+			while (insn != null && visited.add(insn)) {
+				handleNext:
+				{
+					switch (insn.getType()) {
+						case AbstractInsnNode.INSN -> {
+							if (AsmInsnUtil.isTerminalOrAlwaysTakeFlowControl(insn.getOpcode()))
+								break handleNext;
+						}
+						case AbstractInsnNode.JUMP_INSN -> {
+							JumpInsnNode jin = (JumpInsnNode) insn;
+							todo.add(jin.label);
+							if (AsmInsnUtil.isTerminalOrAlwaysTakeFlowControl(jin.getOpcode()))
+								break handleNext;
+						}
+						case AbstractInsnNode.TABLESWITCH_INSN -> {
+							TableSwitchInsnNode tsin = (TableSwitchInsnNode) insn;
+							todo.add(tsin.dflt);
+							todo.addAll(tsin.labels);
+							break handleNext;
+						}
+						case AbstractInsnNode.LOOKUPSWITCH_INSN -> {
+							LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) insn;
+							todo.add(lsin.dflt);
+							todo.addAll(lsin.labels);
+							break handleNext;
+						}
+					}
+					insn = insn.getNext();
+				}
+			}
+		}
 	}
 
 	@Nonnull
