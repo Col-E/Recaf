@@ -190,7 +190,7 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 				        aconst_null
 				        athrow
 				    B:
-				        goto END
+				        // Dead code space, block 'A' always throws so no need to put a jump to end here.
 				    C:
 				        invokevirtual java/lang/Throwable.printStackTrace ()V
 				        goto END
