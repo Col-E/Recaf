@@ -3,7 +3,13 @@ package software.coley.recaf.services.deobfuscation;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
+import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.analysis.ReInterpreter;
+import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.List;
 
@@ -270,5 +276,60 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 			// Just needs to pass, dead-code remover's analysis process
 			// failing would indicate this has failed with an exception
 		});
+	}
+
+	/**
+	 * If {@link ReInterpreter#merge(ReValue, ReValue)} is implemented incorrectly, some transformers relying on
+	 * frame analysis with {@link ReValue} contents may incorrectly assume they should make optimizations.
+	 * <p>
+	 * This example shows an if-else control flow based on some value stored in a local variable. That switch key
+	 * is unknown at the start, so any branch taken can modify the local variable state. This means we should
+	 * end up at the if-else control flow with an unknown value <i>(Or at the very least, not a single known value)</i>.
+	 * Because of this, no specific path in this if-else should be optimized away.
+	 * <p>
+	 * If we see any transforms take place here, something is broken.
+	 */
+	@Test
+	void frameMergeIncorrectlyLeadsToImproperOptimization() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        getstatic Example.key I
+				        lookupswitch {
+						    1: B,
+						    2: C,
+						    3: D,
+						    default: E
+						}
+				    B:
+				        iconst_0
+				        istore foo
+				        goto F
+				    C:
+				        iconst_1
+				        istore foo
+				        goto F
+				    D:
+				        iconst_2
+				        istore foo
+				        goto F
+				    E:
+				        iconst_3
+				        istore foo
+				        goto F
+				    F:
+				        iload foo
+				        ifeq G
+				        invokestatic Example.nonzero ()V
+				        return
+				    G:
+				        invokestatic Example.zero ()V
+				        return
+				    Z:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class, OpaquePredicateFoldingTransformer.class));
 	}
 }
