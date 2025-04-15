@@ -99,7 +99,7 @@ public class TransformationApplier {
 		TransformerQueue queue = buildQueue(cast(transformerClasses));
 
 		// Map to hold transformation errors for each class:transformer
-		Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> transformJvmFailures = new HashMap<>();
+		Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> transformJvmFailures = new IdentityHashMap<>();
 
 		// Map to hold transformers to the paths of classes they have modified.
 		Map<Class<?extends JvmClassTransformer>, Collection<ClassPathNode>> transformerToModifiedClasses = new IdentityHashMap<>();
@@ -133,12 +133,13 @@ public class TransformationApplier {
 						if (context.didTransformerDoWork()) {
 							// Transformer modified this class, record the interaction
 							ClassPathNode path = bundlePathNode.child(cls.getPackageName()).child(cls);
-							transformerToModifiedClasses.computeIfAbsent(transformer.getClass(), t -> new HashSet<>()).add(path);
+							transformerToModifiedClasses.computeIfAbsent(transformer.getClass(),
+									t -> Collections.newSetFromMap(new IdentityHashMap<>())).add(path);
 						}
 					} catch (Throwable t) {
 						logger.error("Transformer '{}' failed on class '{}'", transformer.name(), cls.getName(), t);
 						ClassPathNode path = bundlePathNode.child(cls.getPackageName()).child(cls);
-						var transformerToThrowable = transformJvmFailures.computeIfAbsent(path, p -> new HashMap<>());
+						var transformerToThrowable = transformJvmFailures.computeIfAbsent(path, p -> new IdentityHashMap<>());
 						transformerToThrowable.put(transformer.getClass(), t);
 					}
 				});

@@ -93,7 +93,7 @@ public class JvmTransformerContext {
 	@Nonnull
 	protected Map<ClassPathNode, JvmClassInfo> buildChangeMap(@Nonnull InheritanceGraph inheritanceGraph) throws TransformationException {
 		ResourcePathNode resourcePath = PathNodes.resourcePath(workspace, resource);
-		Map<ClassPathNode, JvmClassInfo> map = new HashMap<>();
+		Map<ClassPathNode, JvmClassInfo> map = new IdentityHashMap<>();
 		for (JvmClassData data : classData.values()) {
 			if (data.isDirty()) {
 				if (data.node != null) {
