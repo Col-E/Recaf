@@ -279,6 +279,85 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	/**
+	 * Bug from improper label visitation tracking in {@link GotoInliningTransformer} due to improper catch block
+	 * tracking.
+	 */
+	@Test
+	void gotoInlining3() {
+		String asm = """
+				.method public execute (Lorg/apache/http/HttpHost;Lorg/apache/http/HttpRequest;Lorg/apache/http/client/ResponseHandler;Lorg/apache/http/protocol/HttpContext;)Ljava/lang/Object; {
+				    parameters: { this, host, request, handler, context },
+				    exceptions: {
+				        { B, C, D, Lorg/apache/http/client/ClientProtocolException; },
+				        { E, F, G, Ljava/lang/Exception; },
+				        { B, C, I, * },
+				        { D, J, I, * }
+				     },
+				    code: {
+				    A:
+				        aload this
+				        aload host
+				        aload request
+				        aload context
+				        invokevirtual org/apache/http/impl/client/CloseableHttpClient.execute (Lorg/apache/http/HttpHost;Lorg/apache/http/HttpRequest;Lorg/apache/http/protocol/HttpContext;)Lorg/apache/http/client/methods/CloseableHttpResponse;
+				        astore response
+				    B:
+				        // try-start:   range=[B-C] handler=D:org/apache/http/client/ClientProtocolException
+				        // try-start:   range=[B-C] handler=I:*
+				        aload handler
+				        aload response
+				        invokeinterface org/apache/http/client/ResponseHandler.handleResponse (Lorg/apache/http/HttpResponse;)Ljava/lang/Object;
+				        astore protoError
+				        aload response
+				        invokeinterface org/apache/http/client/methods/CloseableHttpResponse.getEntity ()Lorg/apache/http/HttpEntity;
+				        astore entity
+				        aload entity
+				        invokestatic org/apache/http/util/EntityUtils.consume (Lorg/apache/http/HttpEntity;)V
+				        aload protoError
+				        astore ex
+				    C:
+				        // try-end:     range=[B-C] handler=D:org/apache/http/client/ClientProtocolException
+				        // try-end:     range=[B-C] handler=I:*
+				        aload response
+				        invokeinterface org/apache/http/client/methods/CloseableHttpResponse.close ()V
+				        aload ex
+				        areturn
+				    D:
+				        // try-handler: range=[B-C] handler=D:org/apache/http/client/ClientProtocolException
+				        // try-start:   range=[D-J] handler=I:*
+				        astore protoError
+				        aload response
+				        invokeinterface org/apache/http/client/methods/CloseableHttpResponse.getEntity ()Lorg/apache/http/HttpEntity;
+				        astore entity
+				    E:
+				        // try-start:   range=[E-F] handler=G:java/lang/Exception
+				        aload entity
+				        invokestatic org/apache/http/util/EntityUtils.consume (Lorg/apache/http/HttpEntity;)V
+				    F:
+				        // try-end:     range=[E-F] handler=G:java/lang/Exception
+				        goto H
+				    G:
+				        // try-handler: range=[E-F] handler=G:java/lang/Exception
+				        astore ex
+				    H:
+				        aload protoError
+				        athrow
+				    I:
+				        // try-handler: range=[B-C] handler=I:*
+				        // try-handler: range=[D-J] handler=I:*
+				        astore t
+				    J:
+				        // try-end:     range=[D-J] handler=I:*
+				        aload t
+				        athrow
+				    K:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(GotoInliningTransformer.class));
+	}
+
+	/**
 	 * If {@link ReInterpreter#merge(ReValue, ReValue)} is implemented incorrectly, some transformers relying on
 	 * frame analysis with {@link ReValue} contents may incorrectly assume they should make optimizations.
 	 * <p>

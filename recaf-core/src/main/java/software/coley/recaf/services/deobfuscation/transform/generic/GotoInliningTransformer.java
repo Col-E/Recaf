@@ -100,7 +100,7 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 				for (TryCatchBlockNode tryCatch : method.tryCatchBlocks) {
 					visitCounters.of(tryCatch.start).markTryStart();
 					visitCounters.of(tryCatch.end).markTryEnd();
-					visitCounters.of(tryCatch.start).markTryHandler();
+					visitCounters.of(tryCatch.handler).markTryHandler();
 				}
 			}
 
