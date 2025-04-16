@@ -394,7 +394,7 @@ public class AsmInsnUtil implements Opcodes {
 	 * @param insn
 	 * 		Instruction to check.
 	 *
-	 * @return {@code true} if the instruction modified the control flow.
+	 * @return {@code true} if the instruction modifies the control flow.
 	 */
 	public static boolean isFlowControl(@Nonnull AbstractInsnNode insn) {
 		int type = insn.getType();
