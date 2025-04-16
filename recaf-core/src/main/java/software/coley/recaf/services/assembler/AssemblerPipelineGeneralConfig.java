@@ -3,6 +3,7 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.config.BasicConfigContainer;
@@ -19,6 +20,7 @@ import software.coley.recaf.services.ServiceConfig;
 public class AssemblerPipelineGeneralConfig extends BasicConfigContainer implements ServiceConfig {
 	private final ObservableString disassemblyIndent = new ObservableString("    ");
 	private final ObservableInteger disassemblyAstParseDelay = new ObservableInteger(100);
+	private final ObservableBoolean useWholeFloatingNumbers = new ObservableBoolean(true);
 
 	@Inject
 	public AssemblerPipelineGeneralConfig() {
@@ -26,6 +28,7 @@ public class AssemblerPipelineGeneralConfig extends BasicConfigContainer impleme
 
 		addValue(new BasicConfigValue<>("disassembly-indent", String.class, disassemblyIndent));
 		addValue(new BasicConfigValue<>("disassembly-ast-parse-delay", int.class, disassemblyAstParseDelay));
+		addValue(new BasicConfigValue<>("disassembly-whole-floating", boolean.class, useWholeFloatingNumbers));
 	}
 
 	/**
@@ -42,5 +45,13 @@ public class AssemblerPipelineGeneralConfig extends BasicConfigContainer impleme
 	@Nonnull
 	public ObservableInteger getDisassemblyAstParseDelay() {
 		return disassemblyAstParseDelay;
+	}
+
+	/**
+	 * @return {@code true} to prefer {@code 10000000000} over {@link 1e10}.
+	 */
+	@Nonnull
+	public ObservableBoolean getUseWholeFloatingNumbers() {
+		return useWholeFloatingNumbers;
 	}
 }

@@ -46,6 +46,10 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 	private void refreshContext() {
 		context = new PrintContext<>(generalConfig.getDisassemblyIndent().getValue());
 
+		// 10000000000 vs 1E10
+		if (generalConfig.getUseWholeFloatingNumbers().getValue())
+			context.setForceWholeNumberRepresentation(true);
+
 		// Enable comments that outline where try-catch ranges begin/end.
 		if (pipelineConfig instanceof JvmAssemblerPipelineConfig jvmConfig && jvmConfig.emitTryRangeComments())
 			context.setDebugTryCatchRanges(true);

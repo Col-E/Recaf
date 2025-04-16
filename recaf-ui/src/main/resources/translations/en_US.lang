@@ -526,6 +526,7 @@ service.assembler=Assembler
 service.assembler.assembler-pipeline.general-config=Common
 service.assembler.assembler-pipeline.general-config.disassembly-ast-parse-delay=AST parse delay
 service.assembler.assembler-pipeline.general-config.disassembly-indent=Indentation
+service.assembler.assembler-pipeline.general-config.disassembly-whole-floating=Standard notation floating points
 service.assembler.dalvik-assembler-config=Dalvik
 service.assembler.dalvik-assembler-config.value-analysis=Enable value analysis
 service.assembler.dalvik-assembler-config.simulate-jvm-calls=Simulate common JVM calls

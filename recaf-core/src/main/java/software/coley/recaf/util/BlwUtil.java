@@ -158,6 +158,7 @@ public class BlwUtil {
 		}
 
 		PrintContext<?> ctx = new PrintContext<>("");
+		ctx.setForceWholeNumberRepresentation(true);
 		Variables emptyVariables = new Variables(Collections.emptyNavigableMap(), Collections.emptyList());
 		InstructionPrinter printer = new InstructionPrinter(ctx.code(), null, emptyVariables, labelNames);
 
