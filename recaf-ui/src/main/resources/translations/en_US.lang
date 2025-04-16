@@ -139,6 +139,7 @@ bind.editor.rename=Rename
 bind.editor.replace=Replace
 bind.editor.save=Save
 bind.editor.undo=Undo
+bind.editor.closetab=Close current tab
 bind.quicknav=Quick nav
 bind.workspace.export=Export workspace
 

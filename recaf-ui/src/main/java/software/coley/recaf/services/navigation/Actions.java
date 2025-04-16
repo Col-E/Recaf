@@ -12,6 +12,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -57,6 +58,7 @@ import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.graph.MethodCallGraphsPane;
 import software.coley.recaf.ui.control.popup.AddMemberPopup;
@@ -166,10 +168,12 @@ public class Actions implements Service {
 	private final Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider;
 	private final Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider;
 	private final Instance<MemberDeclarationSearchPane> memberDeclarationSearchPaneProvider;
+	private final KeybindingConfig keybindingConfig;
 	private final ActionsConfig config;
 
 	@Inject
 	public Actions(@Nonnull ActionsConfig config,
+	               @Nonnull KeybindingConfig keybindingConfig,
 	               @Nonnull WorkspaceManager workspaceManager,
 	               @Nonnull NavigationManager navigationManager,
 	               @Nonnull DockingManager dockingManager,
@@ -198,6 +202,7 @@ public class Actions implements Service {
 	               @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider,
 	               @Nonnull Instance<MemberDeclarationSearchPane> memberDeclarationSearchPaneProvider) {
 		this.config = config;
+		this.keybindingConfig = keybindingConfig;
 		this.workspaceManager = workspaceManager;
 		this.navigationManager = navigationManager;
 		this.dockingManager = dockingManager;
@@ -2318,14 +2323,12 @@ public class Actions implements Service {
 				.findFirst().orElse(null);
 		T content = paneProvider.get();
 		if (region != null) {
-			DockingTab tab = region.createTab(getBinding(titleId), content);
-			tab.setGraphic(new FontIconView(icon));
+			DockingTab tab = createTab(region, getBinding(titleId), new FontIconView(icon), content);
 			tab.select();
 			FxThreadUtil.run(() -> SceneUtils.focus(content));
 		} else {
 			region = dockingManager.newRegion();
-			DockingTab tab = region.createTab(getBinding(titleId), content);
-			tab.setGraphic(new FontIconView(icon));
+			DockingTab tab = createTab(region, getBinding(titleId), new FontIconView(icon), content);
 			RecafScene scene = new RecafScene(region);
 			Stage window = windowFactory.createAnonymousStage(scene, getBinding("menu.search"), 800, 400);
 			window.show();
@@ -2456,12 +2459,16 @@ public class Actions implements Service {
 	 * @return Created tab.
 	 */
 	@Nonnull
-	private static DockingTab createTab(@Nonnull DockingRegion region,
-	                                    @Nonnull String title,
-	                                    @Nonnull Node graphic,
-	                                    @Nonnull Node content) {
+	private DockingTab createTab(@Nonnull DockingRegion region,
+	                             @Nonnull String title,
+	                             @Nonnull Node graphic,
+	                             @Nonnull Node content) {
 		DockingTab tab = region.createTab(title, content);
 		tab.setGraphic(graphic);
+		content.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (tab.isClosable() && keybindingConfig.getCloseTab().match(e))
+				tab.close();
+		});
 		return tab;
 	}
 
@@ -2480,12 +2487,16 @@ public class Actions implements Service {
 	 * @return Created tab.
 	 */
 	@Nonnull
-	private static DockingTab createTab(@Nonnull DockingRegion region,
-	                                    @Nonnull ObservableValue<String> title,
-	                                    @Nonnull Node graphic,
-	                                    @Nonnull Node content) {
+	private DockingTab createTab(@Nonnull DockingRegion region,
+	                             @Nonnull ObservableValue<String> title,
+	                             @Nonnull Node graphic,
+	                             @Nonnull Node content) {
 		DockingTab tab = region.createTab(title, content);
 		tab.setGraphic(graphic);
+		content.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (tab.isClosable() && keybindingConfig.getCloseTab().match(e))
+				tab.close();
+		});
 		return tab;
 	}
 

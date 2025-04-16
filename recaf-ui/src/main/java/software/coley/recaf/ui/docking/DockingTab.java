@@ -8,7 +8,6 @@ import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import software.coley.recaf.util.FxThreadUtil;
 
 /**
  * {@link Tab} extension to track additional information required for {@link DockingManager} operations.
@@ -104,6 +103,15 @@ public class DockingTab extends DetachableTab {
 				// consider such cases and throws an exception.
 				ObservableList<Tab> tabList = tabPane.getTabs();
 				if (tabPane.getScene() != null) {
+					// Select next available tab.
+					int i = tabList.indexOf(this);
+					if (i > 0 && tabList.get(i - 1) instanceof DockingTab prevTab)
+						prevTab.select();
+					else if (tabList.size() > 1 && tabList.get(i + 1) instanceof DockingTab nextTab) {
+						nextTab.select();
+					}
+
+					// Remove this tab.
 					tabList.remove(this);
 					priorRegion = null;
 				}

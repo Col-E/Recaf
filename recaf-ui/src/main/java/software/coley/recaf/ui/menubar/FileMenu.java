@@ -119,9 +119,10 @@ public class FileMenu extends WorkspaceAwareMenu {
 	@Override
 	protected void workspaceStateChanged() {
 		// Add
-		Workspace current = workspaceManager.getCurrent();
-		if (current != null)
+		if (workspaceManager.hasCurrentWorkspace()) {
+			Workspace current = workspaceManager.getCurrent();
 			recentFilesConfig.addWorkspace(current);
+		}
 
 		// Refresh
 		refreshRecent();
@@ -215,10 +216,10 @@ public class FileMenu extends WorkspaceAwareMenu {
 		// Create the window for the wizard and display it.
 		Stage stage = new WizardStage(List.of(pageSupporting), () -> {
 			// Validate workspace is open.
-			Workspace current = workspaceManager.getCurrent();
-			if (current == null) throw new IllegalStateException("Cannot add resources, no workspace is open!");
+			if (!workspaceManager.hasCurrentWorkspace()) throw new IllegalStateException("Cannot add resources, no workspace is open!");
 
 			// Pass paths to loader.
+			Workspace current = workspaceManager.getCurrent();
 			List<Path> supportingPaths = pageSupporting.getPaths();
 			pathLoadingManager.asyncAddSupportingResourcesToWorkspace(current, supportingPaths, ex -> {
 				Toolkit.getDefaultToolkit().beep();
@@ -259,6 +260,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 	 * Display the workspace summary / current information.
 	 */
 	private void openSummary() {
+		// TODO: Move this into 'Actions' class and fill in the tab's context menu
 		WorkspaceInformationPane informationPane = infoPaneProvider.get();
 		DockingRegion dockInfo = dockingManager.getPrimaryRegion();
 		DetachableTab infoTab = dockInfo.createTab(Lang.getBinding("workspace.info"), informationPane);
