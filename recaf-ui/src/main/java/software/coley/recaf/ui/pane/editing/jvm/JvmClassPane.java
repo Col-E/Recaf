@@ -28,8 +28,10 @@ public class JvmClassPane extends ClassPane {
 	                    @Nonnull SideTabsInjector sideTabsInjector,
 	                    @Nonnull Instance<JvmDecompilerPane> decompilerProvider) {
 		sideTabsInjector.injectLater(this);
-		this.hexConfig = hexConfig;
+
 		editorType = config.getDefaultJvmEditor().getValue();
+
+		this.hexConfig = hexConfig;
 		this.decompilerProvider = decompilerProvider;
 	}
 

@@ -106,9 +106,13 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 
 		// Setup keybindings
 		setOnKeyPressed(e -> {
-			if (keys.getSave().match(e))
+			if (keys.getSave().match(e)) {
 				save();
-			else if (keys.getRename().match(e)) {
+			} else if (keys.getUndo().match(e)) {
+				Bundle<?> bundle = path.getValueOfType(Bundle.class);
+				if (bundle != null)
+					bundle.decrementHistory(path.getValue().getName());
+			} else if (keys.getRename().match(e)) {
 				// Resolve what the caret position has, then handle renaming on the generic result.
 				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
 				if (result != null)

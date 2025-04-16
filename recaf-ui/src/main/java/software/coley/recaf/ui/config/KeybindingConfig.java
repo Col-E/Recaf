@@ -46,6 +46,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 	private static final String ID_FIND = "editor.find";
 	private static final String ID_REPLACE = "editor.replace";
 	private static final String ID_SAVE = "editor.save";
+	private static final String ID_UNDO = "editor.undo";
 	private static final String ID_RENAME = "editor.rename";
 	private static final String ID_GOTO = "editor.goto";
 	private static final String ID_EXPORT = "workspace.export";
@@ -62,6 +63,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 				createBindForPlatform(ID_FIND, CONTROL, F),
 				createBindForPlatform(ID_REPLACE, CONTROL, R),
 				createBindForPlatform(ID_SAVE, CONTROL, S),
+				createBindForPlatform(ID_UNDO, CONTROL, U),
 				createBindForPlatform(ID_RENAME, ALT, R),
 				createBindForPlatform(ID_GOTO, F3),
 				createBindForPlatform(ID_EXPORT, CONTROL, E)
@@ -142,6 +144,14 @@ public class KeybindingConfig extends BasicConfigContainer {
 	@Nonnull
 	public Binding getSave() {
 		return Objects.requireNonNull(bundle.get(ID_SAVE));
+	}
+
+	/**
+	 * @return Keybinding to undo the last saved state within a {@link ClassPane} or {@link FilePane}.
+	 */
+	@Nonnull
+	public Binding getUndo() {
+		return Objects.requireNonNull(bundle.get(ID_UNDO));
 	}
 
 	/**

@@ -69,6 +69,8 @@ import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.pane.CommentEditPane;
 import software.coley.recaf.ui.pane.DocumentationPane;
+import software.coley.recaf.ui.pane.editing.AbstractContentPane;
+import software.coley.recaf.ui.pane.editing.android.AndroidClassEditorType;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
 import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
@@ -344,19 +346,7 @@ public class Actions implements Service {
 					tab.setGraphic(updatedGraphic);
 				});
 			});
-			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
-			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
-			mode.getItems().addAll(
-					action("menu.mode.class.decompile", CarbonIcons.CODE,
-							() -> content.setEditorType(JvmClassEditorType.DECOMPILE)),
-					action("menu.mode.file.hex", CarbonIcons.NUMBER_0,
-							() -> content.setEditorType(JvmClassEditorType.HEX))
-			);
-			items.add(mode);
-			addCopyPathAction(menu, info);
-			addCloseActions(menu, tab);
-			tab.setContextMenu(menu);
+			setupInfoTabContextMenu(info, content, tab);
 			return tab;
 		});
 	}
@@ -405,7 +395,7 @@ public class Actions implements Service {
 					tab.setGraphic(updatedGraphic);
 				});
 			});
-			setupInfoTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, content, tab);
 			return tab;
 		});
 	}
@@ -492,7 +482,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, content, tab);
 			return tab;
 		});
 	}
@@ -583,7 +573,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, content, tab);
 			return tab;
 		});
 	}
@@ -622,7 +612,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, content, tab);
 			return tab;
 		});
 	}
@@ -661,7 +651,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, content, tab);
 			return tab;
 		});
 	}
@@ -700,7 +690,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, tab);
+			setupInfoTabContextMenu(info, content, tab);
 			return tab;
 		});
 	}
@@ -778,7 +768,10 @@ public class Actions implements Service {
 
 		// Build the tab.
 		DockingTab tab = createTab(targetRegion, title, graphic, content);
-		setupInfoTabContextMenu(classInfo, tab);
+		ContextMenu menu = new ContextMenu();
+		ObservableList<MenuItem> items = menu.getItems();
+		addCloseActions(menu, tab);
+		tab.setContextMenu(menu);
 		return tab;
 	}
 
@@ -2381,9 +2374,56 @@ public class Actions implements Service {
 		return (Navigable) tab.getContent();
 	}
 
-	private static void setupInfoTabContextMenu(@Nonnull Info info, @Nonnull DockingTab tab) {
+	private void setupInfoTabContextMenu(@Nonnull Info info, @Nonnull AbstractContentPane<?> contentPane, @Nonnull DockingTab tab) {
 		ContextMenu menu = new ContextMenu();
 		ObservableList<MenuItem> items = menu.getItems();
+
+		if (info instanceof JvmClassInfo classInfo && contentPane instanceof JvmClassPane content) {
+			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
+			mode.getItems().addAll(
+					action("menu.mode.class.decompile", CarbonIcons.CODE,
+							() -> content.setEditorType(JvmClassEditorType.DECOMPILE)),
+					action("menu.mode.file.hex", CarbonIcons.NUMBER_0,
+							() -> content.setEditorType(JvmClassEditorType.HEX))
+			);
+			items.add(mode);
+		} else if (info instanceof AndroidClassInfo classInfo && contentPane instanceof AndroidClassPane content) {
+			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
+			mode.getItems().addAll(
+					action("menu.mode.class.decompile", CarbonIcons.CODE,
+							() -> content.setEditorType(AndroidClassEditorType.DECOMPILE)),
+					action("menu.mode.file.smali", CarbonIcons.NUMBER_0,
+							() -> content.setEditorType(AndroidClassEditorType.SMALI))
+			);
+			items.add(mode);
+		} else if (info instanceof ImageFileInfo fileInfo) {
+			// TODO: We need to copy-paste this a number of times for all the different file info types
+			//  and let each toggle between "automatic" (native editor) and hex. The way that it is done
+			//  here works but isn't exactly pretty and lets users replace the current pane they have open
+			//  with the same kind of pane. Having some abstraction model to alleviate the copy-paste and this
+			//  replacement-of-self problem would be nice.
+			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
+			mode.getItems().addAll(
+					action("menu.mode.file.auto", CarbonIcons.IMAGE, () -> {
+						ImageFilePane content = imagePaneProvider.get();
+						if (tab.getContent() instanceof AbstractContentPane<?> existing && existing.getPath() != null) {
+							content.onUpdatePath(existing.getPath());
+							existing.disable();
+						}
+						tab.setContent(content);
+					}),
+					action("menu.mode.file.hex", CarbonIcons.CODE, () -> {
+						HexFilePane content = hexPaneProvider.get();
+						if (tab.getContent() instanceof AbstractContentPane<?> existing && existing.getPath() != null) {
+							content.onUpdatePath(existing.getPath());
+							existing.disable();
+						}
+						tab.setContent(content);
+					})
+			);
+			items.add(mode);
+		}
+
 		addCopyPathAction(menu, info);
 		addCloseActions(menu, tab);
 		tab.setContextMenu(menu);

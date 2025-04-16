@@ -133,13 +133,22 @@ public class HexEditor extends BorderPane {
 	 * <p/>
 	 * Delegates to the user provided action via {@link #setCommitAction(Consumer)}.
 	 */
-	public void commit() {
+	public boolean commit() {
 		if (data == null) {
 			logger.warn("Tried to commit hex-view contents without assocated data.");
-			return;
+			return false;
 		}
-		if (commitAction != null) commitAction.accept(data);
-		else logger.warn("Tried to commit hex-view contents without commit action specified.");
+		if (commitAction == null) {
+			logger.warn("Tried to commit hex-view contents without commit action specified.");
+			return false;
+		}
+		try {
+			commitAction.accept(data);
+			return true;
+		} catch (Exception ex) {
+			logger.error("Failed to commit hex-view contents", ex);
+			return false;
+		}
 	}
 
 	/**

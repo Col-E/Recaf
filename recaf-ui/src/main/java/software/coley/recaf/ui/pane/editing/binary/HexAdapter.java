@@ -37,6 +37,21 @@ public class HexAdapter extends BorderPane implements UpdatableNavigable {
 		setCenter(editor = new HexEditor(config));
 	}
 
+	/**
+	 * Delegates to the hex editor commit action.
+	 * <br>
+	 * Updates the {@link ClassInfo} or {@link FileInfo} represented by the {@link #path} in the workspace.
+	 */
+	public void save() {
+		if (editor.commit()) {
+			// TODO: Animating on the hex editor is rather jarring
+			//  vs on other controls like a text editor...
+			Animations.animateSuccess(editor, 1000);
+		} else {
+			Animations.animateFailure(editor, 1000);
+		}
+	}
+
 	@Nonnull
 	@Override
 	public PathNode<?> getPath() {

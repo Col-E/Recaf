@@ -20,6 +20,7 @@ import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
+import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 
 import java.util.Collection;
@@ -54,6 +55,11 @@ public class TextPane extends BorderPane implements FileNavigable, UpdatableNavi
 		setOnKeyPressed(e -> {
 			if (keys.getSave().match(e))
 				ThreadUtil.run(this::save);
+			else if (keys.getUndo().match(e)) {
+				Bundle<?> bundle = path.getValueOfType(Bundle.class);
+				if (bundle != null)
+					bundle.decrementHistory(path.getValue().getName());
+			}
 		});
 
 		// Layout
