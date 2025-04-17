@@ -14,6 +14,9 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -72,6 +75,14 @@ public class WorkspaceBuilderPane extends BorderPane {
 	                            @Nonnull RecentFilesConfig recentFilesConfig,
 	                            @Nonnull Workspace workspace,
 	                            @Nonnull Runnable onComplete) {
+		// Allow pasting file paths to append to the paths list.
+		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (e.isControlDown() && e.getCode() == KeyCode.V) {
+				for (File file : Clipboard.getSystemClipboard().getFiles())
+					addPath(file.toPath());
+			}
+		});
+
 		// Add dropped files to the paths list.
 		DragAndDrop.installFileSupport(this, (region, event, files) -> {
 			for (Path path : files) {
@@ -200,14 +211,18 @@ public class WorkspaceBuilderPane extends BorderPane {
 	public WorkspaceBuilderPane(@Nonnull PathLoadingManager pathLoadingManager,
 	                            @Nonnull RecentFilesConfig recentFilesConfig,
 	                            @Nonnull Runnable onComplete) {
+		// Allow pasting file paths to append to the paths list.
+		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (e.isControlDown() && e.getCode() == KeyCode.V) {
+				for (File file : Clipboard.getSystemClipboard().getFiles())
+					addPath(file.toPath());
+			}
+		});
+
 		// Add dropped files to the paths list.
 		DragAndDrop.installFileSupport(this, (region, event, files) -> {
-			for (Path path : files) {
-				if (paths.isEmpty())
-					primary.set(path);
-				if (!paths.contains(path))
-					paths.add(path);
-			}
+			for (Path path : files)
+				addPath(path);
 		});
 
 		// Create the vertical list of paths.
@@ -330,6 +345,17 @@ public class WorkspaceBuilderPane extends BorderPane {
 	}
 
 	/**
+	 * @param path
+	 * 		Path to add.
+	 */
+	private void addPath(@Nonnull Path path) {
+		if (paths.isEmpty())
+			primary.set(path);
+		if (!paths.contains(path))
+			paths.add(path);
+	}
+
+	/**
 	 * Assigns the temporary list, one ordered, to the child list container.
 	 *
 	 * @param temp
@@ -398,7 +424,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 					paths.add(i + off, path);
 				}
 			});
-			up.getStyleClass().addAll(Styles.CENTER_PILL);
+			up.getStyleClass().add(showPrimary ? Styles.CENTER_PILL : Styles.LEFT_PILL);
 			down.getStyleClass().addAll(Styles.RIGHT_PILL);
 			up.visibleProperty().bind(primary.isNotEqualTo(path));
 			down.visibleProperty().bind(primary.isNotEqualTo(path));
