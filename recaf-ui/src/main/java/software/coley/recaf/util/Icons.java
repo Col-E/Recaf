@@ -3,7 +3,11 @@ package software.coley.recaf.util;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.scene.Node;
-import javafx.scene.image.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelBuffer;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.WritableImage;
 import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.ui.control.IconView;
 
@@ -87,6 +91,32 @@ public class Icons {
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();
+
+	/**
+	 * @param extension
+	 * 		Some file extension name.
+	 *
+	 * @return Icon path to use with other methods in this class,
+	 */
+	@Nonnull
+	public static String getIconPathForFileExtension(@Nullable String extension) {
+		if (extension == null)
+			return FILE_BINARY;
+		return switch (extension.toLowerCase()) {
+			case "class" -> FILE_CLASS;
+			case "txt", "properties", "mf" -> FILE_TEXT;
+			case "java", "css", "xml", "json", "yml" -> FILE_CODE;
+			case "zip" -> FILE_ZIP;
+			case "apk", "dex" -> ANDROID;
+			case "jar", "war" -> FILE_JAR;
+			case "mp3", "wav", "ogg" -> FILE_AUDIO;
+			case "mov", "mp4" -> FILE_VIDEO;
+			case "png", "jpg", "jpeg", "gif" -> FILE_IMAGE;
+			case "exe" -> FILE_PROGRAM;
+			case "dll", "so", "dylib" -> FILE_LIBRARY;
+			default -> FILE_BINARY;
+		};
+	}
 
 	/**
 	 * Returns {@link ImageView} that uses cached image for rendering.

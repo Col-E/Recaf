@@ -166,6 +166,7 @@ dialog.search.member-descriptor=Member descriptor
 dialog.title.primary=Primary resource
 dialog.title.supporting=Supporting resources
 dialog.title.nochanges=Export without changes?
+dialog.file.primary=Primary
 dialog.file.open=Open
 dialog.file.open.directory=Directories
 dialog.file.open.file=Files
@@ -305,12 +306,6 @@ dialog.error.loadsupport.content=The error was:
 dialog.error.attach.title=Failed to attach to JVM
 dialog.error.attach.header=An error occurred when connecting to the remote JVM
 dialog.error.attach.content=The error was:
-
-## Wizard
-wizard.chooseaction=Choose an action
-wizard.selectprimary=Select primary resource
-wizard.currentworkspace=Current workspace
-
 
 ##### Panels
 ## Welcome

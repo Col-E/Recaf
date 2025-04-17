@@ -15,25 +15,27 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.window.WindowManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.ClosableActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.popup.OpenUrlPopup;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.DockingRegion;
+import software.coley.recaf.ui.pane.WorkspaceBuilderPane;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
-import software.coley.recaf.ui.wizard.MultiPathWizardPage;
-import software.coley.recaf.ui.wizard.SinglePathWizardPage;
-import software.coley.recaf.ui.wizard.WizardStage;
+import software.coley.recaf.ui.window.RecafScene;
+import software.coley.recaf.ui.window.RecafStage;
 import software.coley.recaf.util.ErrorDialogs;
+import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.PathExportingManager;
 import software.coley.recaf.workspace.PathLoadingManager;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.awt.*;
+import java.awt.Toolkit;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -63,19 +65,19 @@ public class FileMenu extends WorkspaceAwareMenu {
 
 	@Inject
 	public FileMenu(@Nonnull WorkspaceManager workspaceManager,
-					@Nonnull PathLoadingManager pathLoadingManager,
-					@Nonnull PathExportingManager pathExportingManager,
-					@Nonnull Instance<WorkspaceInformationPane> infoPaneProvider,
-					@Nonnull Instance<OpenUrlPopup> openUrlProvider,
-					@Nonnull DockingManager dockingManager,
-					@Nonnull WindowManager windowManager,
-					@Nonnull RecentFilesConfig recentFilesConfig) {
+	                @Nonnull PathLoadingManager pathLoadingManager,
+	                @Nonnull PathExportingManager pathExportingManager,
+	                @Nonnull Instance<WorkspaceInformationPane> infoPaneProvider,
+	                @Nonnull Instance<OpenUrlPopup> openUrlProvider,
+	                @Nonnull DockingManager dockingManager,
+	                @Nonnull WindowManager windowManager,
+	                @Nonnull RecentFilesConfig recentFilesConfig) {
 		super(workspaceManager);
 		this.workspaceManager = workspaceManager;
 		this.pathLoadingManager = pathLoadingManager;
 		this.pathExportingManager = pathExportingManager;
 		this.infoPaneProvider = infoPaneProvider;
-		this.openUrlProvider=openUrlProvider;
+		this.openUrlProvider = openUrlProvider;
 		this.dockingManager = dockingManager;
 		this.windowManager = windowManager;
 		this.recentFilesConfig = recentFilesConfig;
@@ -146,7 +148,8 @@ public class FileMenu extends WorkspaceAwareMenu {
 			Runnable remove = () -> recentWorkspaces.remove(model);
 			if (model.canLoadWorkspace()) {
 				// Workspace can be loaded
-				Node graphic = Icons.getIconView(Icons.FILE_JAR); // TODO: Derive proper icon
+				String extension = IOUtil.getExtension(model.primary().path());
+				Node graphic = Icons.getIconView(Icons.getIconPathForFileExtension(extension));
 				menuRecent.getItems().add(new ClosableActionMenuItem(title, graphic, () -> {
 					// Get paths from model
 					Path primaryPath = Paths.get(model.primary().path());
@@ -180,29 +183,12 @@ public class FileMenu extends WorkspaceAwareMenu {
 	 * Display the workspace wizard.
 	 */
 	private void openWorkspace() {
-		SinglePathWizardPage pagePrimary = new SinglePathWizardPage(getBinding("dialog.title.primary"), recentFilesConfig);
-		MultiPathWizardPage pageSupporting = new MultiPathWizardPage(getBinding("dialog.title.supporting"), recentFilesConfig);
-
-		// Create the window for the wizard and display it.
-		Stage stage = new WizardStage(List.of(pagePrimary, pageSupporting), () -> {
-			Path primaryPath = pagePrimary.getPath();
-			List<Path> supportingPaths = pageSupporting.getPaths();
-
-			// Pass paths to loader.
-			pathLoadingManager.asyncNewWorkspace(primaryPath, supportingPaths, ex -> {
-				Toolkit.getDefaultToolkit().beep();
-				logger.error("Failed to load workspace from selected files. Primary file: {}",
-						primaryPath.getFileName().toString(), ex);
-				ErrorDialogs.show(
-						getBinding("dialog.error.loadworkspace.title"),
-						getBinding("dialog.error.loadworkspace.header"),
-						getBinding("dialog.error.loadworkspace.content"),
-						ex
-				);
-			});
-		});
-		stage.setMinWidth(630);
-		stage.setMinHeight(390);
+		Stage stage = new RecafStage();
+		WorkspaceBuilderPane root = new WorkspaceBuilderPane(pathLoadingManager, recentFilesConfig, () -> FxThreadUtil.run(stage::close));
+		stage.titleProperty().bind(Lang.getBinding("dialog.title.create-workspace"));
+		stage.setScene(new RecafScene(root));
+		stage.setMinWidth(650);
+		stage.setMinHeight(400);
 		stage.show();
 		windowManager.registerAnonymous(stage);
 	}
@@ -211,29 +197,14 @@ public class FileMenu extends WorkspaceAwareMenu {
 	 * Display a wizard for adding additional resources.
 	 */
 	private void addToWorkspace() {
-		MultiPathWizardPage pageSupporting = new MultiPathWizardPage(getBinding("dialog.title.supporting"), recentFilesConfig);
-
-		// Create the window for the wizard and display it.
-		Stage stage = new WizardStage(List.of(pageSupporting), () -> {
-			// Validate workspace is open.
-			if (!workspaceManager.hasCurrentWorkspace()) throw new IllegalStateException("Cannot add resources, no workspace is open!");
-
-			// Pass paths to loader.
-			Workspace current = workspaceManager.getCurrent();
-			List<Path> supportingPaths = pageSupporting.getPaths();
-			pathLoadingManager.asyncAddSupportingResourcesToWorkspace(current, supportingPaths, ex -> {
-				Toolkit.getDefaultToolkit().beep();
-				logger.error("Failed to load supporting resources from selected files.", ex);
-				ErrorDialogs.show(
-						getBinding("dialog.error.loadsupport.title"),
-						getBinding("dialog.error.loadsupport.header"),
-						getBinding("dialog.error.loadsupport.content"),
-						ex
-				);
-			});
-		});
-		stage.setMinWidth(630);
-		stage.setMinHeight(390);
+		if (!workspaceManager.hasCurrentWorkspace())
+			return;
+		Stage stage = new RecafStage();
+		WorkspaceBuilderPane root = new WorkspaceBuilderPane(pathLoadingManager, recentFilesConfig, workspaceManager.getCurrent(), () -> FxThreadUtil.run(stage::close));
+		stage.titleProperty().bind(Lang.getBinding("dialog.title.create-workspace"));
+		stage.setScene(new RecafScene(root));
+		stage.setMinWidth(650);
+		stage.setMinHeight(400);
 		stage.show();
 		windowManager.registerAnonymous(stage);
 	}
