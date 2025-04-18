@@ -32,6 +32,8 @@ public interface SearchFeedback {
 	}
 
 	/**
+	 * Called before checking a given class's contents against some search query.
+	 *
 	 * @param cls
 	 * 		Class to consider for visitation.
 	 *
@@ -43,6 +45,8 @@ public interface SearchFeedback {
 	}
 
 	/**
+	 * Called before checking a given file's contents against some search query.
+	 *
 	 * @param file
 	 * 		File to consider for visitation.
 	 *
@@ -54,6 +58,8 @@ public interface SearchFeedback {
 	}
 
 	/**
+	 * Called when a search query finds a matching result.
+	 *
 	 * @param result
 	 * 		Result to consider.
 	 *
