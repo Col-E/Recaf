@@ -148,6 +148,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 * 		Classes already visited in population.
 	 */
 	private void populateParentToChildLookup(@Nonnull ClassInfo info, @Nonnull Set<ClassInfo> visited) {
+		// Since we have observed this class to exist, we will remove the "stub" placeholder for this name.
 		stubs.remove(info.getName());
 
 		// Skip if already visited
