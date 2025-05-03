@@ -44,10 +44,10 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	public void add(@Nonnull Problem problem) {
 		List<Problem> list;
 		synchronized (problems) {list = problems.computeIfAbsent(problem.line(), k -> new ArrayList<>());}
-		int index = Lists.sortedInsertIndex(list, problem);
-		list.add(index, problem);
-		Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
-				(listener, t) -> logger.error("Exception thrown when adding problem to tracking", t));
+
+		if (Lists.sortedInsert(list, problem))
+			Unchecked.checkedForEach(listeners, ProblemInvalidationListener::onProblemInvalidation,
+					(listener, t) -> logger.error("Exception thrown when adding problem to tracking", t));
 	}
 
 	/**
@@ -140,7 +140,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 */
 	@Nonnull
 	public List<Problem> getProblemsOnLine(int line) {
-		synchronized (problems) { return problems.getOrDefault(line, Collections.emptyList()); }
+		synchronized (problems) {return problems.getOrDefault(line, Collections.emptyList());}
 	}
 
 	/**

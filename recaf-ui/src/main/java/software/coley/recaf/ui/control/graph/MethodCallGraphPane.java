@@ -290,8 +290,7 @@ public class MethodCallGraphPane extends BorderPane implements ClassNavigable, U
 								})
 								.filter(i -> {
 									if (i.getValue() == null) return false;
-									int insert = Lists.sortedInsertIndex(Unchecked.cast(item.getChildren()), i);
-									item.getChildren().add(insert, i);
+									Lists.sortedInsert(Unchecked.cast(item.getChildren()), i);
 									return !i.recursive;
 								}).collect(Collectors.toList());
 						if (!newTodo.isEmpty() && depth < MAX_TREE_DEPTH) {

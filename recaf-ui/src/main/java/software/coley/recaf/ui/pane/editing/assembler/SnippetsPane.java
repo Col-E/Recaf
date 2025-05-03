@@ -16,7 +16,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.effect.Glow;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -249,8 +254,7 @@ public class SnippetsPane extends StackPane implements SnippetListener, Navigabl
 
 	@Override
 	public void onSnippetAdded(@Nonnull Snippet snippet) {
-		int index = Lists.sortedInsertIndex(Snippet.NAME_COMPARATOR, snippetList, snippet);
-		snippetList.add(index, snippet);
+		Lists.sortedInsert(Snippet.NAME_COMPARATOR, snippetList, snippet);
 	}
 
 	@Override
