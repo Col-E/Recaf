@@ -332,6 +332,19 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
+	public Set<Class<? extends ClassTransformer>> recommendedPredecessors() {
+		return Set.of(
+				// Folding opaque constants like "1 + 1" into "2"
+				LinearOpaqueConstantFoldingTransformer.class,
+				// Folding static constants into inline-usages (some obfuscators use fields to store opaque flow values)
+				StaticValueInliningTransformer.class,
+				// Folding constant values stored in variables
+				VariableFoldingTransformer.class
+		);
+	}
+
+	@Nonnull
+	@Override
 	public Set<Class<? extends ClassTransformer>> dependencies() {
 		return Collections.singleton(DeadCodeRemovingTransformer.class);
 	}

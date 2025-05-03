@@ -12,6 +12,7 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -139,6 +140,14 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 				}
 			}
 		}
+	}
+
+	@Nonnull
+	@Override
+	public Set<Class<? extends ClassTransformer>> recommendedPredecessors() {
+		// Having opaque predicates replaced with direct GOTO or fall-through
+		// will allow  this transformer to properly detect dead code.
+		return Collections.singleton(OpaquePredicateFoldingTransformer.class);
 	}
 
 	@Nonnull

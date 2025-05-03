@@ -21,6 +21,7 @@ import software.coley.collections.Unchecked;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -41,6 +42,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -213,6 +215,14 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		}
 		if (dirty)
 			context.setNode(bundle, initialClassState, node);
+	}
+
+	@Nonnull
+	@Override
+	public Set<Class<? extends ClassTransformer>> recommendedSuccessors() {
+		// This transformer results in the creation of a lot of POP/POP2 instructions.
+		// The stack-operation folding transformer can clean up afterward.
+		return Collections.singleton(StackOperationFoldingTransformer.class);
 	}
 
 	@Nonnull

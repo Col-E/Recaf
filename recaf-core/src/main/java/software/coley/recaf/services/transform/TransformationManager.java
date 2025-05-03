@@ -15,6 +15,7 @@ import software.coley.recaf.services.Service;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -85,6 +86,14 @@ public class TransformationManager implements Service {
 	 */
 	public <T extends JvmClassTransformer> void unregisterJvmClassTransformer(@Nonnull Class<T> transformerClass) {
 		jvmTransformerSuppliers.remove(Unchecked.cast(transformerClass));
+	}
+
+	/**
+	 * @return Set of registered {@link JvmClassTransformer} classes.
+	 */
+	@Nonnull
+	public Set<Class<? extends JvmClassTransformer>> getJvmClassTransformers() {
+		return jvmTransformerSuppliers.keySet();
 	}
 
 	@Nonnull
