@@ -117,9 +117,7 @@ public class Lang {
 
 				@Override
 				protected synchronized String computeValue() {
-					String translated = Lang.get(currentTranslation.get(), translationKey);
-					translated = translated.replace("\\n", "\n");
-					return translated;
+					return Lang.get(currentTranslation.get(), translationKey);
 				}
 			};
 		});
@@ -303,7 +301,7 @@ public class Lang {
 				value = get(DEFAULT_TRANSLATIONS, translationKey);
 			}
 		}
-		return value;
+		return value.replace("\\n", "\n");
 	}
 
 	/**
