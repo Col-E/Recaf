@@ -70,11 +70,22 @@ class MappingApplierTest extends TestBase {
 				OverlapCaller.class
 		));
 		resource = workspace.getPrimaryResource();
-		workspaceManager.setCurrent(workspace);
+
+		// Get and initialize the aggregate mapping manager
 		aggregateMappingManager = recaf.get(AggregateMappingManager.class);
-		inheritanceGraph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
+		aggregateMappingManager.toString();
+
+		// Get and initialize the inheritance graph service
+		InheritanceGraphService graphService = recaf.get(InheritanceGraphService.class);
+		graphService.toString();
+
+		// Get inherit graph for the
 		mappingGenerator = recaf.get(MappingGenerator.class);
 		mappingApplierService = recaf.get(MappingApplierService.class);
+
+		// Set the workspace
+		workspaceManager.setCurrent(workspace);
+		inheritanceGraph = graphService.getCurrentWorkspaceInheritanceGraph();
 	}
 
 	@Test

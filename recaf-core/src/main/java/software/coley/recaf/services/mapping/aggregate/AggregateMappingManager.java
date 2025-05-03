@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
@@ -23,6 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Coley
  * @author Marius Renner
  */
+@EagerInitialization
 @ApplicationScoped
 public class AggregateMappingManager implements Service {
 	public static final String SERVICE_ID = "mapping-aggregator";
