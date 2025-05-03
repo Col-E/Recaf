@@ -35,6 +35,10 @@ public class LinkedClass implements ClassInfo<JvmClassInfo> {
 
 		superClassLookup = MemoizedFunctions.memoize((String superName) -> {
 			JvmClassInfo superClass = lookup.apply(superName);
+			if (superClass == null) {
+				logger.debugging(l -> l.warn("Lookup failed for super-class: {}", superName));
+				return null;
+			}
 			return new LinkedClass(lookup, superClass);
 		});
 
