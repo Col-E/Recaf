@@ -67,6 +67,29 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 		WorkspaceResource primaryResource = workspace.getPrimaryResource();
 		primaryResource.addResourceJvmClassListener(this);
 		primaryResource.addResourceAndroidClassListener(this);
+		workspace.addWorkspaceModificationListener(new WorkspaceModificationListener() {
+			@Override
+			public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+				library.jvmClassBundleStreamRecursive()
+						.flatMap(Bundle::stream)
+						.forEach(c -> populateParentToChildLookup(c));
+				library.androidClassBundleStreamRecursive()
+						.flatMap(Bundle::stream)
+						.forEach(c -> populateParentToChildLookup(c));
+				refreshChildLookup();
+			}
+
+			@Override
+			public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+				library.jvmClassBundleStreamRecursive()
+						.flatMap(Bundle::stream)
+						.forEach(c -> removeClass(c));
+				library.androidClassBundleStreamRecursive()
+						.flatMap(Bundle::stream)
+						.forEach(c -> removeClass(c));
+				refreshChildLookup();
+			}
+		});
 
 		// Populate downwards (parent --> child) lookup
 		refreshChildLookup();
@@ -123,6 +146,8 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 * 		Classes already visited in population.
 	 */
 	private void populateParentToChildLookup(@Nonnull ClassInfo info, @Nonnull Set<ClassInfo> visited) {
+		stubs.remove(info.getName());
+
 		// Skip if already visited
 		if (!visited.add(info))
 			return;
@@ -133,6 +158,10 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 
 		// Add direct parent
 		String name = info.getName();
+		InheritanceVertex vertex = getVertex(name);
+		if (vertex != null)
+			vertex.clearCachedVertices();
+
 		String superName = info.getSuperName();
 		if (superName != null) {
 			populateParentToChildLookup(name, superName);
