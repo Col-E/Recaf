@@ -33,6 +33,7 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * JVM assembler pipeline implementation.
@@ -119,14 +120,7 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 		return new InheritanceChecker() {
 			@Override
 			public boolean isSubclassOf(String child, String parent) {
-				InheritanceVertex childVertex = inheritanceGraph.getVertex(child);
-				InheritanceVertex parentVertex = inheritanceGraph.getVertex(parent);
-
-				if (childVertex == null || parentVertex == null) {
-					return false;
-				}
-
-				return childVertex.isChildOf(parentVertex);
+				return inheritanceGraph.isAssignableFrom(parent, child);
 			}
 
 			@Override

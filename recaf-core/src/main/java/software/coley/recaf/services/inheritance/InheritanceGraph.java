@@ -14,11 +14,13 @@ import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -296,15 +298,26 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 * @return {@code true} when {@code first.isAssignableFrom(second)}.
 	 */
 	public boolean isAssignableFrom(@Nonnull String first, @Nonnull String second) {
-		// Base/edge case
+		// Any Object can be assigned from T.
 		if (OBJECT.equals(first))
 			return true;
 
+		// Any T can be assigned from T.
+		if (first.equals(second))
+			return true;
+
+		// Any non-Object T cannot be assigned from Object.
+		if (second.equals(OBJECT))
+			return false;
+
 		// Lookup vertex for the child type, and see if any parent contains the supposed super/interface type.
 		InheritanceVertex secondVertex = getVertex(second);
-		if (secondVertex == null)
-			return false;
-		return secondVertex.allParents().anyMatch(v -> v.getName().equals(first));
+		if (secondVertex != null && secondVertex.hasParent(second))
+			return true;
+
+		// Lookup vertex for the parent type, and see if any child contains the supposed type.
+		InheritanceVertex firstVertex = getVertex(first);
+		return firstVertex != null && firstVertex.hasChild(second);
 	}
 
 	/**
@@ -317,13 +330,42 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	 */
 	@Nonnull
 	public String getCommon(@Nonnull String first, @Nonnull String second) {
-		// Full upwards hierarchy for the first
-		InheritanceVertex vertex = getVertex(first);
-		if (vertex == null || OBJECT.equals(first) || OBJECT.equals(second))
+		// Easy base cases
+		if (OBJECT.equals(first) || OBJECT.equals(second))
 			return OBJECT;
+		if (first.equals(second))
+			return first;
 
-		SequencedSet<String> firstParents = vertex.allParents()
-				.map(InheritanceVertex::getName)
+		// Try with the first name
+		InheritanceVertex vertex = getVertex(first);
+		if (vertex != null)
+			return getCommon(vertex, first, second);
+
+		// Try again but with the other name
+		vertex = getVertex(second);
+		if (vertex != null)
+			return getCommon(vertex, second, first);
+
+		// Neither is resolvable
+		return OBJECT;
+	}
+
+	/**
+	 * @param firstVertex
+	 * 		Vertex of the {@code first} name.
+	 * @param first
+	 * 		First class name.
+	 * @param second
+	 * 		Second class name.
+	 *
+	 * @return Common parent of the classes.
+	 */
+	@Nonnull
+	private String getCommon(@Nonnull InheritanceVertex firstVertex, @Nonnull String first, @Nonnull String second) {
+		// Full upwards hierarchy for the first
+		SequencedSet<String> firstParents = firstVertex.allParents()
+				.map(InheritanceVertex::getParentAndCurrentNames)
+				.flatMap(Collection::stream)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 		firstParents.add(first);
 
@@ -342,14 +384,16 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 			// Item to fetch parents of
 			String next = queue.poll();
 			if (next == null || next.equals(OBJECT))
-				break;
+				continue;
 
 			InheritanceVertex nextVertex = getVertex(next);
 			if (nextVertex == null)
-				break;
+				continue;
 
 			for (String parent : nextVertex.getParents().stream()
-					.map(InheritanceVertex::getName).toList()) {
+					.map(InheritanceVertex::getParentAndCurrentNames)
+					.flatMap(Collection::stream)
+					.toList()) {
 				if (!parent.equals(OBJECT)) {
 					// Parent in the set of visited classes? Then its valid.
 					if (firstParents.contains(parent))
@@ -359,6 +403,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 				}
 			}
 		} while (!queue.isEmpty());
+
 		// Fallback option
 		return OBJECT;
 	}

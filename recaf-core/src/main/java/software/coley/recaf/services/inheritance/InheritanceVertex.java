@@ -1,6 +1,7 @@
 package software.coley.recaf.services.inheritance;
 
 import jakarta.annotation.Nonnull;
+import software.coley.collections.Lists;
 import software.coley.collections.Sets;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
@@ -12,6 +13,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -252,11 +254,23 @@ public class InheritanceVertex {
 	 * @return {@code true} when this vertex has the given parent.
 	 */
 	public boolean hasParent(@Nonnull String name) {
-		for (InheritanceVertex parent : getAllParents())
+		// This first check serves multiple purposes.
+		// - The name comparison on the wrapped class's parent/interfaces is faster
+		//   than walking the graph to find the same names in wrapped vertices
+		// - This will cover cases where the given parent is not in the workspace
+		//   but is a direct parent of a class that is in the workspace
+		ClassInfo cls = getValue();
+		if (name.equals(cls.getSuperName()) || cls.getInterfaces().contains(name))
+			return true;
+
+		// Check all parents for a matching name, or the same check as above but for the parent.
+		return allParents().anyMatch(parent -> {
 			if (name.equals(parent.getName()))
 				return true;
 
-		return false;
+			ClassInfo parentCls = parent.getValue();
+			return name.equals(parentCls.getSuperName()) || parentCls.getInterfaces().contains(name);
+		});
 	}
 
 	/**
@@ -421,6 +435,24 @@ public class InheritanceVertex {
 	@Nonnull
 	public String getName() {
 		return value.getName();
+	}
+
+	/**
+	 * @return List of the {@link #getValue() wrapped class's} super class name, and any implemented interfaces.
+	 */
+	@Nonnull
+	public List<String> getParentNames() {
+		return value.getSuperName() != null ?
+				Lists.add(value.getInterfaces(), value.getSuperName()) :
+				value.getInterfaces();
+	}
+
+	/**
+	 * @return Combined list of {@link #getName()} and {@link #getParentNames()}.
+	 */
+	@Nonnull
+	public List<String> getParentAndCurrentNames() {
+		return Lists.add(getParentNames(), getName());
 	}
 
 	/**
