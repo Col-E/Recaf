@@ -4335,7 +4335,7 @@ Add support for NO_HEADER tweak in tables .table-view.no-header > .column-header
   -color-input-bg-focused: -color-bg-default;
   -color-input-border-focused: -color-accent-emphasis;
   -color-input-bg-readonly: -color-bg-subtle;
-  -color-input-bg-highlight: -color-accent-subtle;
+  -color-input-bg-highlight: -color-accent-muted;
   -color-input-fg-highlight: -color-fg-default;
   -fx-background-color: -color-input-border, -color-input-bg;
   -fx-background-insets: 0, 1px;
