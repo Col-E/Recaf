@@ -12,6 +12,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -100,6 +101,21 @@ public class AddMemberPopup extends RecafStage {
 
 		nameInput.setPromptText(Lang.get("dialog.input.name"));
 		descInput.setPromptText(Lang.get("dialog.input.desc"));
+
+		nameInput.setOnKeyPressed(e -> {
+			if (e.getCode() == KeyCode.ENTER && !add.isDisable()) {
+			 	accept(memberConsumer);
+			} else if (e.getCode() == KeyCode.ESCAPE) {
+				hide();
+			}
+		});
+		descInput.setOnKeyPressed(e -> {
+			if (e.getCode() == KeyCode.ENTER && !add.isDisable()) {
+				 accept(memberConsumer);
+			} else if (e.getCode() == KeyCode.ESCAPE) {
+				hide();
+			}
+		});
 
 		// Layout
 		HBox controlButtons = new HBox(add, cancel);

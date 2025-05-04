@@ -2,10 +2,12 @@ package software.coley.recaf.ui.control.popup;
 
 import atlantafx.base.controls.Spacer;
 import jakarta.annotation.Nonnull;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.TreeItem;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -51,6 +53,16 @@ public class OverrideMethodPopup extends RecafStage {
 		tree.setRoot(rootItem);
 		tree.getStyleClass().add("border-muted");
 
+		// Keyboard accept/cancel
+		ObservableValue<Boolean> disable = tree.getSelectionModel().selectedItemProperty().map(i -> !(i.getValue() instanceof ClassMemberPathNode));
+		tree.setOnKeyPressed(e -> {
+			if (e.getCode() == KeyCode.ENTER && !disable.getValue()) {
+				accept(memberConsumer);
+			} else if (e.getCode() == KeyCode.ESCAPE) {
+				hide();
+			}
+		});
+
 		// Setup tree contents
 		InheritanceVertex vertex = inheritanceGraph.getVertex(targetClass.getName());
 		if (vertex != null) {
@@ -71,7 +83,7 @@ public class OverrideMethodPopup extends RecafStage {
 
 		Button acceptButton = new ActionButton(new FontIconView(CHECKMARK, Color.LAWNGREEN), () -> accept(memberConsumer));
 		Button cancelButton = new ActionButton(new FontIconView(CLOSE, Color.RED), this::hide);
-		acceptButton.disableProperty().bind(tree.getSelectionModel().selectedItemProperty().map(i -> !(i.getValue() instanceof ClassMemberPathNode)));
+		acceptButton.disableProperty().bind(disable);
 		HBox buttons = new HBox(acceptButton, new Spacer(), cancelButton);
 		VBox layout = new VBox(tree, buttons);
 		layout.setSpacing(10);
