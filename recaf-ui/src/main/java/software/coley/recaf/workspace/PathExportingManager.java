@@ -65,11 +65,11 @@ public class PathExportingManager {
 	 */
 	public void exportCurrent() {
 		// Validate current workspace.
-		Workspace current = workspaceManager.getCurrent();
-		if (current == null) throw new IllegalStateException("Tried to export when no workspace was active!");
+		if (!workspaceManager.hasCurrentWorkspace())
+			throw new IllegalStateException("Tried to export when no workspace was active!");
 
 		// And export it.
-		export(current);
+		export(workspaceManager.getCurrent());
 	}
 
 	/**

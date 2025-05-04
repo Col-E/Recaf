@@ -427,10 +427,9 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	 */
 	@Nullable
 	public WorkspaceComments getCurrentWorkspaceComments() {
-		Workspace current = workspaceManager.getCurrent();
-		if (current == null)
+		if (!workspaceManager.hasCurrentWorkspace())
 			return null;
-		return getOrCreateWorkspaceComments(current);
+		return getOrCreateWorkspaceComments(workspaceManager.getCurrent());
 	}
 
 	/**
