@@ -56,6 +56,7 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.AbstractSearchBar;
 import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.RegexUtil;
@@ -324,7 +325,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
-			results.list.clear();
+			FxThreadUtil.run(results.list::clear);
 		}
 	}
 
