@@ -77,6 +77,7 @@ import software.coley.recaf.ui.control.BoundIntSpinner;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.BoundTextField;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.ReorderableListCell;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
@@ -967,10 +968,11 @@ public class MappingGeneratorPane extends StackPane {
 	/**
 	 * List cell to render {@link FilterWithConfigNode}.
 	 */
-	private static class ConfiguredFilterCell extends ListCell<FilterWithConfigNode<?>> {
+	private static class ConfiguredFilterCell extends ReorderableListCell<FilterWithConfigNode<?>> {
 		@Override
 		protected void updateItem(FilterWithConfigNode<?> item, boolean empty) {
 			super.updateItem(item, empty);
+
 			StringProperty property = textProperty();
 			if (empty || item == null) {
 				property.unbind();
