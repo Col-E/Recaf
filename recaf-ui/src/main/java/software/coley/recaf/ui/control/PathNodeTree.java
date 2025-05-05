@@ -51,15 +51,26 @@ public class PathNodeTree extends TreeView<PathNode<?>> {
 					TreeItems.recurseClose(this, selected);
 			} else if (code == KeyCode.ENTER) {
 				TreeItem<PathNode<?>> selected = getSelectionModel().getSelectedItem();
-				if (selected != null) {
-					try {
-						actions.gotoDeclaration(selected.getValue());
-					} catch (IncompletePathException ignored) {
-						// ignored
-					}
-				}
+				if (selected != null)
+					handleEnter(actions, selected);
 			}
 		});
+	}
+
+	/**
+	 * Called when the user presses {@link KeyCode#ENTER} on a given path.
+	 *
+	 * @param actions
+	 * 		Actions service to handle opening {@link PathNode} items.
+	 * @param selected
+	 * 		Selected item holding a {@link PathNode}.
+	 */
+	protected void handleEnter(@Nonnull Actions actions, @Nonnull TreeItem<PathNode<?>> selected) {
+		try {
+			actions.gotoDeclaration(selected.getValue());
+		} catch (IncompletePathException ignored) {
+			// ignored
+		}
 	}
 
 	/**
