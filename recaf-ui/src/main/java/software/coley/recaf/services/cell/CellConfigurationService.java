@@ -25,7 +25,23 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.path.*;
+import software.coley.recaf.path.AnnotationPathNode;
+import software.coley.recaf.path.AssemblerPathNode;
+import software.coley.recaf.path.BundlePathNode;
+import software.coley.recaf.path.CatchPathNode;
+import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.EmbeddedResourceContainerPathNode;
+import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.IncompletePathException;
+import software.coley.recaf.path.InnerClassPathNode;
+import software.coley.recaf.path.InstructionPathNode;
+import software.coley.recaf.path.LineNumberPathNode;
+import software.coley.recaf.path.LocalVariablePathNode;
+import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.ResourcePathNode;
+import software.coley.recaf.path.ThrowsPathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.cell.context.ContextMenuProviderService;
 import software.coley.recaf.services.cell.context.ContextSource;
@@ -128,7 +144,11 @@ public class CellConfigurationService implements Service {
 			configureStyle(cell, item);
 			cell.setText(textOf(item));
 			cell.setGraphic(graphicOf(item));
-			cell.setOnMouseClicked(contextMenuHandlerOf(cell, item, source));
+			cell.setOnMouseClicked(e -> {
+				contextMenuHandlerOf(cell, item, source).handle(e);
+				if (cell instanceof TreeCell<?> treeCell)
+					clickHandlerOf(treeCell, item, true).handle(e);
+			});
 		});
 	}
 
@@ -613,23 +633,8 @@ public class CellConfigurationService implements Service {
 		return e -> {
 			if (e.getButton() == MouseButton.SECONDARY) {
 				// Lazily populate context menus when secondary click is prompted.
-				if (cell.getContextMenu() == null) cell.setContextMenu(contextMenuOf(source, item));
-			} else {
-				// Handle primary mouse actions.
-				if (cell instanceof TreeCell<?> treeCell) {
-					if (e.getButton() == MouseButton.PRIMARY) {
-						// Double-clicking leafs should 'open' their content.
-						// Branches should recursively open.
-						TreeItem<?> treeItem = treeCell.getTreeItem();
-						if (e.getClickCount() == 2 && treeItem != null)
-							if (treeItem.isLeaf())
-								openPath(item);
-							else if (treeItem.isExpanded()) // Looks odd, but results in less rapid re-closures
-								TreeItems.recurseOpen(treeItem);
-							else
-								TreeItems.recurseClose(treeCell.getTreeView(), treeItem);
-					}
-				}
+				if (cell.getContextMenu() == null)
+					cell.setContextMenu(contextMenuOf(source, item));
 			}
 		};
 	}
@@ -761,6 +766,39 @@ public class CellConfigurationService implements Service {
 
 		// No menu
 		return null;
+	}
+
+	/**
+	 * @param cell
+	 * 		Cell to apply click handling to.
+	 * @param item
+	 * 		Content within the cell.
+	 * @param gotoNavigation
+	 * 		Flag to include {@link Actions#gotoDeclaration(PathNode)} behavior on double-click.
+	 *
+	 * @return An event handler for {@link Node#setOnMouseClicked(EventHandler)}
+	 * that handles generic click interactions with tree cells.
+	 */
+	@Nonnull
+	public EventHandler<? super MouseEvent> clickHandlerOf(@Nonnull TreeCell<?> cell, @Nonnull PathNode<?> item, boolean gotoNavigation) {
+		return e -> {
+			if (e.getButton() == MouseButton.PRIMARY) {
+				// Double-clicking leafs should 'open' their content.
+				// Branches should recursively open.
+				TreeItem<?> treeItem = cell.getTreeItem();
+				if (e.getClickCount() == 2 && treeItem != null)
+					if (treeItem.isLeaf()) {
+						if (gotoNavigation) openPath(item);
+					}
+					// I know that it looks odd, that we recurse-open when its already expanded
+					// but in-practice this results in a more consistent desired behavior and less rapid re-closures.
+					else if (treeItem.isExpanded()) {
+						TreeItems.recurseOpen(treeItem);
+					} else {
+						TreeItems.recurseClose(cell.getTreeView(), treeItem);
+					}
+			}
+		};
 	}
 
 	@Nonnull

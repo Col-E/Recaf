@@ -37,7 +37,7 @@ public class PathNodeTree extends TreeView<PathNode<?>> {
 	 */
 	public PathNodeTree(@Nonnull CellConfigurationService configurationService, @Nonnull Actions actions) {
 		setShowRoot(false);
-		setCellFactory(param -> new WorkspaceTreeCell(contextSourceObjectProperty.get(), configurationService));
+		setCellFactory(param -> buildCell(configurationService));
 		getStyleClass().addAll(Tweaks.EDGE_TO_EDGE, Styles.DENSE);
 		setOnKeyPressed(e -> {
 			KeyCode code = e.getCode();
@@ -60,6 +60,17 @@ public class PathNodeTree extends TreeView<PathNode<?>> {
 				}
 			}
 		});
+	}
+
+	/**
+	 * @param configurationService
+	 * 		Cell service to configure tree cell rendering and population.
+	 *
+	 * @return New tree cell to represent an item in this tree.
+	 */
+	@Nonnull
+	protected WorkspaceTreeCell buildCell(@Nonnull CellConfigurationService configurationService) {
+		return new WorkspaceTreeCell(contextSourceObjectProperty.get(), configurationService);
 	}
 
 	/**

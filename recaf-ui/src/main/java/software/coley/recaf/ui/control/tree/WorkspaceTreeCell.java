@@ -14,8 +14,8 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
-	private final Function<PathNode<?>, ContextSource> sourceFunc;
-	private final CellConfigurationService configurationService;
+	protected final Function<PathNode<?>, ContextSource> sourceFunc;
+	protected final CellConfigurationService configurationService;
 
 	/**
 	 * @param source
@@ -48,6 +48,17 @@ public class WorkspaceTreeCell extends TreeCell<PathNode<?>> {
 		configurationService.reset(this);
 
 		// Apply new cell properties if the item is valid.
-		if (!empty && item != null) configurationService.configure(this, item, sourceFunc.apply(item));
+		if (!empty && item != null)
+			populate(item);
+	}
+
+	/**
+	 * Called when this cell is updated to hold a new {@link PathNode}.
+	 *
+	 * @param path
+	 * 		Path to represent in this cell.
+	 */
+	protected void populate(@Nonnull PathNode<?> path) {
+		configurationService.configure(this, path, sourceFunc.apply(path));
 	}
 }
