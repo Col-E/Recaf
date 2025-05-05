@@ -4,6 +4,7 @@ lang.name=English
 ##### General items
 ## Main and context menus
 menu.analysis=Analysis
+menu.analysis.deobfuscation=Deobfuscation
 menu.analysis.list-comments=View comments
 menu.analysis.comment=Comment
 menu.association.override=Override language
@@ -185,6 +186,10 @@ dialog.title.update-workspace=Handle workspace input
 dialog.title.close-workspace=Close workspace?
 dialog.option.create-workspace=Create new workspace
 dialog.option.update-workspace=Add to workspace
+
+## Select class/file
+dialog.title.select-class=Select class
+dialog.title.select-file=Select file
 
 ## Copy class/file
 dialog.title.copy-class=Copy class
@@ -437,6 +442,23 @@ help.recaf=Recaf
 help.recaf.sub=Information about Recaf
 help.copy=Copy information to clipboard
 help.opendir=Open Recaf directory
+
+## Deobfuscation
+deobf=Deobfuscation
+deobf.selection.title=Select transformers
+deobf.order.title=Order transformers
+deobf.order.hint=Select transformers on the left\nChange their order via dragging here
+deobf.order.pre=Missing recommended predecessors
+deobf.order.suc=Missing recommended successors
+deobf.preview.title=Preview
+deobf.preview.pick=Pick preview class
+deobf.preview.noselection=// No class is selected, pick a class to preview\n// the transformation before & after states
+deobf.tree.generic=Generic
+deobf.tree.generic.anticrasher=Anti-Crasher
+deobf.tree.generic.optimize=Optimization
+deobf.tree.generic.restoration=Restoration
+deobf.tree.specific=Specific
+deobf.apply=Transform workspace
 
 ## Mapping generator
 mapgen=Mapping generator
@@ -830,6 +852,8 @@ misc.enabled=Enabled
 misc.disabled=Disabled
 misc.download=Download
 misc.download.invalid-url=Invalid URL
+misc.before=Before
+misc.after=After
 misc.load=Load
 misc.clear=Clear
 misc.export=Export
