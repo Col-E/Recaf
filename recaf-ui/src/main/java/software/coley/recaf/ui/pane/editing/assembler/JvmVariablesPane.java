@@ -4,6 +4,7 @@ import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
 import atlantafx.base.theme.Tweaks;
 import dev.xdark.blw.type.ClassType;
+import dev.xdark.blw.type.Types;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
@@ -13,9 +14,11 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.paint.Color;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTCode;
 import me.darknet.assembler.ast.primitive.ASTIdentifier;
@@ -27,6 +30,7 @@ import me.darknet.assembler.compile.analysis.frame.Frame;
 import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
 import org.fxmisc.richtext.CodeArea;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.reactfx.Change;
 import org.reactfx.EventStreams;
 import org.slf4j.Logger;
@@ -34,6 +38,8 @@ import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.text.TextFormatConfig;
+import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.IconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphicFactory;
@@ -45,6 +51,7 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -62,6 +69,7 @@ import java.util.function.Consumer;
  */
 @Dependent
 public class JvmVariablesPane extends AstBuildConsumerComponent {
+	private static final ClassType INVALID_VAR_TYPE_MARKER = Types.VOID;
 	private static final Logger logger = Logging.get(JvmVariablesPane.class);
 	private final SimpleObjectProperty<Object> notifyQueue = new SimpleObjectProperty<>(new Object());
 	private final TableView<VariableData> table = new TableView<>();
@@ -81,6 +89,10 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 		columnUsage.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().usage()));
 		columnType.setCellFactory(param -> new TypeTableCell<>(cellConfigurationService, formatConfig, workspace));
 		columnUsage.setCellFactory(param -> new TableCell<>() {
+			{
+				setContentDisplay(ContentDisplay.RIGHT);
+			}
+
 			@Override
 			protected void updateItem(AstUsages usages, boolean empty) {
 				super.updateItem(usages, empty);
@@ -91,6 +103,20 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 				} else {
 					String usageFmt = "%d reads, %d writes".formatted(usages.readers().size(), usages.writers().size());
 					setText(usageFmt);
+
+					// Put a warning symbol on variables that are read from before ever being written to.
+					//  - Parameters are implicitly treated as being written to
+					List<ASTElement> list = usages.readersAndWriters()
+							.sorted(Comparator.comparing(ASTElement::location))
+							.toList();
+					if (!list.isEmpty() && !usages.isParameter() && usages.readers().contains(list.getFirst())) {
+						BoundLabel warning = new BoundLabel(Lang.getBinding("assembler.variables.read-before-write"),
+								new FontIconView(CarbonIcons.WARNING, Color.YELLOW));
+						warning.getStyleClass().add(Styles.WARNING);
+						setGraphic(warning);
+					} else {
+						setGraphic(null);
+					}
 				}
 			}
 		});
@@ -226,15 +252,18 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 					return;
 				for (ASTIdentifier parameter : astMethod.parameters()) {
 					String literalName = parameter.literal();
-					variableUsages.putIfAbsent(literalName, emptyUsage);
+					variableUsages.putIfAbsent(literalName, emptyUsage.asParameter());
 				}
 				ASTCode code = astMethod.code();
 				if (code == null)
 					return;
 				for (ASTInstruction instruction : code.instructions()) {
 					String insnName = instruction.identifier().content();
+					if (insnName == null)
+						continue;
 					boolean isLoad = insnName.endsWith("load");
-					if (((isLoad || insnName.endsWith("store")) && insnName.charAt(1) != 'a') || insnName.equals("iinc")) {
+					boolean isStore = insnName.endsWith("store");
+					if (((isLoad || isStore) && insnName.charAt(1) != 'a') || insnName.equals("iinc")) {
 						List<ASTElement> arguments = instruction.arguments();
 						if (!arguments.isEmpty()) {
 							ASTElement arg = arguments.get(0);
@@ -268,15 +297,23 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 			// Linked map for ordering
 			Map<String, VariableData> variables = new LinkedHashMap<>();
 
-			// In JASM variables are un-scoped, so the last frame will have all entries.
+			// In JASM variables are un-scoped, so the last frame should have all entries.
 			analysisResults.frames().values().stream()
 					.flatMap(Frame::locals)
 					.distinct()
 					.forEach(local -> {
 						String localName = local.name();
-						variables.put(localName, VariableData.adaptFrom(local,
-								variableUsages.getOrDefault(localName, emptyUsage)));
+						VariableData data = VariableData.adaptFrom(local, variableUsages.getOrDefault(localName, emptyUsage));
+						variables.put(localName, data);
 					});
+
+			// In some cases, the last frame may not have some entries.
+			// This generally means there is either a problem with the code or with JASM.
+			// Either way, reporting them here with a bogus type is good for diagnosing the issue.
+			variableUsages.forEach((name, usage) -> {
+				if (!variables.containsKey(name))
+					variables.put(name, new VariableData(name, INVALID_VAR_TYPE_MARKER, usage));
+			});
 
 			// Add all found items to the table.
 			items.addAll(variables.values());

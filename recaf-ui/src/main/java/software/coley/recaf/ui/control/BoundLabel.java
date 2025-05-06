@@ -3,6 +3,7 @@ package software.coley.recaf.ui.control;
 import jakarta.annotation.Nonnull;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 
 /**
@@ -17,6 +18,17 @@ public class BoundLabel extends Label implements Tooltipable {
 	 */
 	public BoundLabel(@Nonnull ObservableValue<String> binding) {
 		textProperty().bind(binding);
+	}
+
+	/**
+	 * @param binding
+	 * 		Text binding.
+	 * @param graphic
+	 * 		Label display icon.
+	 */
+	public BoundLabel(@Nonnull ObservableValue<String> binding, @Nonnull Node graphic) {
+		textProperty().bind(binding);
+		setGraphic(graphic);
 	}
 
 	/**

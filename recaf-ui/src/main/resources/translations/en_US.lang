@@ -415,6 +415,7 @@ assembler.variables.type=Type
 assembler.variables.usage=Usages
 assembler.variables.value=Value
 assembler.variables.empty=<Requires compiling at least once>
+assembler.variables.read-before-write=Read before written to
 assembler.suggestions.none=No suggestions
 
 ## Comments
