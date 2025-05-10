@@ -13,19 +13,20 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNodes;
-import software.coley.recaf.path.ResourcePathNode;
-import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.Comparator;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
-import java.util.Optional;
+import java.util.Queue;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -186,15 +187,23 @@ public interface Workspace extends Closing {
 	 */
 	@Nullable
 	default ClassPathNode findJvmClass(boolean includeInternal, @Nonnull String name) {
-		for (WorkspaceResource resource : getAllResources(includeInternal)) {
-			Optional<ClassPathNode> path = resource.jvmClassBundleStreamRecursive()
-					.filter(bundle -> bundle.get(name) != null)
-					.findFirst()
-					.map(bundle -> {
-						JvmClassInfo classInfo = bundle.get(name);
-						return PathNodes.classPath(this, resource, bundle, classInfo);
-					});
-			if (path.isPresent()) return path.get();
+		Queue<WorkspaceResource> resourceQueue = new ArrayDeque<>(getAllResources(includeInternal));
+		while (!resourceQueue.isEmpty()) {
+			WorkspaceResource resource = resourceQueue.remove();
+
+			// Check JVM bundles for class by the given name
+			JvmClassBundle bundle = resource.getJvmClassBundle();
+			JvmClassInfo classInfo = bundle.get(name);
+			if (classInfo != null)
+				return PathNodes.classPath(this, resource, bundle, classInfo);
+			for (VersionedJvmClassBundle versionedBundle : resource.getVersionedJvmClassBundles().values()) {
+				classInfo = versionedBundle.get(name);
+				if (classInfo != null)
+					return PathNodes.classPath(this, resource, versionedBundle, classInfo);
+			}
+
+			// Queue up embedded resources
+			resourceQueue.addAll(resource.getEmbeddedResources().values());
 		}
 		return null;
 	}
@@ -216,7 +225,7 @@ public interface Workspace extends Closing {
 
 	/**
 	 * Searches for a class by the given name in the target version bundle within the
-	 * {@link WorkspaceResource#getVersionedJvmClassBundles()}of all resources in the workspace
+	 * {@link WorkspaceResource#getVersionedJvmClassBundles()} of all resources in the workspace
 	 * <i>(Including embedded resources in other resources)</i>.
 	 *
 	 * @param name
@@ -230,15 +239,23 @@ public interface Workspace extends Closing {
 	@Nullable
 	default ClassPathNode findVersionedJvmClass(@Nonnull String name, int version) {
 		// Internal resources don't have versioned classes, so we won't iterate over those.
-		for (WorkspaceResource resource : getAllResources(false)) {
-			Optional<ClassPathNode> path = resource.versionedJvmClassBundleStreamRecursive()
-					.filter(bundle -> bundle.version() <= version && bundle.get(name) != null)
-					.sorted(Comparator.comparingInt(VersionedJvmClassBundle::version).thenComparing(VersionedJvmClassBundle::hashCode))
-					.map(bundle -> {
-						JvmClassInfo classInfo = bundle.get(name);
-						return PathNodes.classPath(this, resource, bundle, classInfo);
-					}).findFirst();
-			if (path.isPresent()) return path.get();
+		Queue<WorkspaceResource> resourceQueue = new ArrayDeque<>(getAllResources(false));
+		while (!resourceQueue.isEmpty()) {
+			WorkspaceResource resource = resourceQueue.remove();
+
+			// Check versioned bundles for class by the given name, in descending order from the given version.
+			NavigableMap<Integer, VersionedJvmClassBundle> versionedBundleMap = resource.getVersionedJvmClassBundles();
+			Map.Entry<Integer, VersionedJvmClassBundle> entry = versionedBundleMap.floorEntry(version);
+			while (entry != null) {
+				VersionedJvmClassBundle versionedBundle = entry.getValue();
+				JvmClassInfo classInfo = versionedBundle.get(name);
+				if (classInfo != null)
+					return PathNodes.classPath(this, resource, versionedBundle, classInfo);
+				entry = versionedBundleMap.floorEntry(entry.getKey() - 1);
+			}
+
+			// Queue up embedded resources.
+			resourceQueue.addAll(resource.getEmbeddedResources().values());
 		}
 		return null;
 	}
@@ -255,14 +272,19 @@ public interface Workspace extends Closing {
 	@Nullable
 	default ClassPathNode findAndroidClass(@Nonnull String name) {
 		// Internal resources don't have android classes, so we won't iterate over those.
-		for (WorkspaceResource resource : getAllResources(false)) {
-			Optional<ClassPathNode> path = resource.androidClassBundleStreamRecursive()
-					.filter(bundle -> bundle.get(name) != null)
-					.map(bundle -> {
-						AndroidClassInfo classInfo = bundle.get(name);
-						return PathNodes.classPath(this, resource, bundle, classInfo);
-					}).findFirst();
-			if (path.isPresent()) return path.get();
+		Queue<WorkspaceResource> resourceQueue = new ArrayDeque<>(getAllResources(false));
+		while (!resourceQueue.isEmpty()) {
+			WorkspaceResource resource = resourceQueue.remove();
+
+			// Check all android bundles (dex files).
+			for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
+				AndroidClassInfo classInfo = bundle.get(name);
+				if (classInfo != null)
+					return PathNodes.classPath(this, resource, bundle, classInfo);
+			}
+
+			// Queue up embedded resources.
+			resourceQueue.addAll(resource.getEmbeddedResources().values());
 		}
 		return null;
 	}
@@ -287,13 +309,23 @@ public interface Workspace extends Closing {
 		} else {
 			cmp = name + "/";
 		}
-		for (WorkspaceResource resource : getAllResources(false)) {
+
+		// We *may* want to allow specifying 'internal=true' some time later, but for now I haven't had
+		// a particular use case for that.
+		Queue<WorkspaceResource> resourceQueue = new ArrayDeque<>(getAllResources(false));
+		while (!resourceQueue.isEmpty()) {
+			WorkspaceResource resource = resourceQueue.remove();
+
+			// Check all class bundles for entries that contain the package name.
 			for (ClassBundle<? extends ClassInfo> bundle : resource.classBundleStream().toList()) {
 				for (String key : bundle.keySet()) {
 					if (key.startsWith(cmp))
 						return PathNodes.directoryPath(this, resource, bundle, name);
 				}
 			}
+
+			// Queue up embedded resources.
+			resourceQueue.addAll(resource.getEmbeddedResources().values());
 		}
 		return null;
 	}
@@ -321,7 +353,6 @@ public interface Workspace extends Closing {
 	default SortedSet<ClassPathNode> findClasses(boolean includeInternal, @Nonnull Predicate<ClassInfo> filter) {
 		SortedSet<ClassPathNode> result = new TreeSet<>();
 		result.addAll(findJvmClasses(includeInternal, Unchecked.cast(filter)));
-		result.addAll(findVersionedJvmClasses(Unchecked.cast(filter)));
 		result.addAll(findAndroidClasses(Unchecked.cast(filter)));
 		return result;
 	}
@@ -361,20 +392,34 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default Stream<ClassPathNode> jvmClassesStream(boolean includeInternal) {
-		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
 		return allResourcesStream(includeInternal)
 				.flatMap(resource -> {
-					Stream<ClassPathNode> stream = null;
-					List<JvmClassBundle> bundles = Stream.concat(resource.jvmClassBundleStreamRecursive(), resource.versionedJvmClassBundleStreamRecursive()).toList();
-					for (JvmClassBundle bundle : bundles) {
-						BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
-						Stream<ClassPathNode> localStream = bundle.values()
-								.stream()
-								.map(cls -> bundlePath.child(cls.getPackageName()).child(cls));
-						if (stream == null) stream = localStream;
-						else stream = Stream.concat(stream, localStream);
+					Function<WorkspaceResource, Stream<ClassPathNode>> streamBuilder = res -> {
+						Stream<ClassPathNode> stream = null;
+						List<JvmClassBundle> bundles = new ArrayList<>();
+						bundles.add(res.getJvmClassBundle());
+						bundles.addAll(res.getVersionedJvmClassBundles().values());
+						for (JvmClassBundle bundle : bundles) {
+							BundlePathNode bundlePath = PathNodes.bundlePath(this, res, bundle);
+							Stream<ClassPathNode> localStream = bundle.values()
+									.stream()
+									.map(cls -> bundlePath.child(cls.getPackageName()).child(cls));
+							if (stream == null) stream = localStream;
+							else stream = Stream.concat(stream, localStream);
+						}
+						return stream;
+					};
+					Stream<ClassPathNode> stream = streamBuilder.apply(resource);
+
+					// Visit embedded resources
+					Queue<WorkspaceFileResource> embeddedResources = new ArrayDeque<>(resource.getEmbeddedResources().values());
+					while (!embeddedResources.isEmpty()) {
+						WorkspaceFileResource embeddedResource = embeddedResources.remove();
+						stream = Stream.concat(stream, streamBuilder.apply(embeddedResource));
+						embeddedResources.addAll(embeddedResource.getEmbeddedResources().values());
 					}
-					return stream == null ? Stream.empty() : stream;
+
+					return stream;
 				});
 	}
 
@@ -383,20 +428,32 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default Stream<ClassPathNode> androidClassesStream() {
-		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-
 		// Internal resources don't have android classes, so we won't iterate over those.
 		return allResourcesStream(false)
 				.flatMap(resource -> {
-					Stream<ClassPathNode> stream = null;
-					for (AndroidClassBundle bundle : resource.androidClassBundleStreamRecursive().toList()) {
-						BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
-						Stream<ClassPathNode> localStream = bundle.values()
-								.stream()
-								.map(cls -> bundlePath.child(cls.getPackageName()).child(cls));
-						stream = stream == null ? localStream : Stream.concat(stream, localStream);
+					Function<WorkspaceResource, Stream<ClassPathNode>> streamBuilder = res -> {
+						Stream<ClassPathNode> stream = null;
+						for (AndroidClassBundle bundle : res.getAndroidClassBundles().values()) {
+							BundlePathNode bundlePath = PathNodes.bundlePath(this, res, bundle);
+							Stream<ClassPathNode> localStream = bundle.values()
+									.stream()
+									.map(cls -> bundlePath.child(cls.getPackageName()).child(cls));
+							if (stream == null) stream = localStream;
+							else stream = Stream.concat(stream, localStream);
+						}
+						return stream == null ? Stream.empty() : stream;
+					};
+					Stream<ClassPathNode> stream = streamBuilder.apply(resource);
+
+					// Visit embedded resources
+					Queue<WorkspaceFileResource> embeddedResources = new ArrayDeque<>(resource.getEmbeddedResources().values());
+					while (!embeddedResources.isEmpty()) {
+						WorkspaceFileResource embeddedResource = embeddedResources.remove();
+						stream = Stream.concat(stream, streamBuilder.apply(embeddedResource));
+						embeddedResources.addAll(embeddedResource.getEmbeddedResources().values());
 					}
-					return stream == null ? Stream.empty() : stream;
+
+					return stream;
 				});
 	}
 
@@ -405,20 +462,27 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default Stream<FilePathNode> filesStream() {
-		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-
 		// Internal resources don't have files, so we won't iterate over those.
 		return allResourcesStream(false)
 				.flatMap(resource -> {
-					Stream<FilePathNode> stream = null;
-					for (FileBundle bundle : resource.fileBundleStreamRecursive().toList()) {
-						BundlePathNode bundlePath = workspacePath.child(resource).child(bundle);
-						Stream<FilePathNode> localStream = bundle.values()
+					Function<WorkspaceResource, Stream<FilePathNode>> streamBuilder = res -> {
+						FileBundle bundle = res.getFileBundle();
+						BundlePathNode bundlePath = PathNodes.bundlePath(this, res, bundle);
+						return bundle.values()
 								.stream()
 								.map(cls -> bundlePath.child(cls.getDirectoryName()).child(cls));
-						stream = stream == null ? localStream : Stream.concat(stream, localStream);
+					};
+					Stream<FilePathNode> stream = streamBuilder.apply(resource);
+
+					// Visit embedded resources
+					Queue<WorkspaceFileResource> embeddedResources = new ArrayDeque<>(resource.getEmbeddedResources().values());
+					while (!embeddedResources.isEmpty()) {
+						WorkspaceFileResource embeddedResource = embeddedResources.remove();
+						stream = Stream.concat(stream, streamBuilder.apply(embeddedResource));
+						embeddedResources.addAll(embeddedResource.getEmbeddedResources().values());
 					}
-					return stream == null ? Stream.empty() : stream;
+
+					return stream;
 				});
 	}
 
@@ -443,36 +507,9 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default SortedSet<ClassPathNode> findJvmClasses(boolean includeInternal, @Nonnull Predicate<JvmClassInfo> filter) {
-		return jvmClassesStream(includeInternal).filter(node -> filter.test((JvmClassInfo) node.getValue()))
+		return jvmClassesStream(includeInternal)
+				.filter(node -> filter.test((JvmClassInfo) node.getValue()))
 				.collect(Collectors.toCollection(TreeSet::new));
-	}
-
-	/**
-	 * @param filter
-	 * 		JVM class filter.
-	 *
-	 * @return Classes matching the given filter.
-	 */
-	@Nonnull
-	default SortedSet<ClassPathNode> findVersionedJvmClasses(@Nonnull Predicate<JvmClassInfo> filter) {
-		SortedSet<ClassPathNode> results = new TreeSet<>();
-		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-
-		// Internal resources don't have versioned classes, so we won't iterate over those.
-		for (WorkspaceResource resource : getAllResources(false)) {
-			ResourcePathNode resourcePath = workspacePath.child(resource);
-			for (JvmClassBundle bundle : resource.getVersionedJvmClassBundles().values()) {
-				BundlePathNode bundlePath = resourcePath.child(bundle);
-				for (JvmClassInfo classInfo : bundle.values()) {
-					if (filter.test(classInfo)) {
-						results.add(bundlePath
-								.child(classInfo.getPackageName())
-								.child(classInfo));
-					}
-				}
-			}
-		}
-		return results;
 	}
 
 	/**
@@ -483,24 +520,9 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default SortedSet<ClassPathNode> findAndroidClasses(@Nonnull Predicate<AndroidClassInfo> filter) {
-		SortedSet<ClassPathNode> results = new TreeSet<>();
-		WorkspacePathNode workspacePath = PathNodes.workspacePath(this);
-
-		// Internal resources don't have android classes, so we won't iterate over those.
-		for (WorkspaceResource resource : getAllResources(false)) {
-			ResourcePathNode resourcePath = workspacePath.child(resource);
-			for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
-				BundlePathNode bundlePath = resourcePath.child(bundle);
-				for (AndroidClassInfo classInfo : bundle.values()) {
-					if (filter.test(classInfo)) {
-						results.add(bundlePath
-								.child(classInfo.getPackageName())
-								.child(classInfo));
-					}
-				}
-			}
-		}
-		return results;
+		return androidClassesStream()
+				.filter(node -> filter.test((AndroidClassInfo) node.getValue()))
+				.collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -512,16 +534,19 @@ public interface Workspace extends Closing {
 	@Nullable
 	default FilePathNode findFile(@Nonnull String name) {
 		// Internal resources don't have files, so we won't iterate over those.
-		for (WorkspaceResource resource : getAllResources(false)) {
-			Optional<FilePathNode> path = resource.fileBundleStreamRecursive()
-					.filter(bundle -> bundle.get(name) != null)
-					.findFirst()
-					.map(bundle -> {
-						FileInfo fileInfo = bundle.get(name);
-						return PathNodes.filePath(this, resource, bundle, fileInfo);
-					});
-			if (path.isPresent()) return path.get();
+		Queue<WorkspaceResource> resourceQueue = new ArrayDeque<>(getAllResources(false));
+		while (!resourceQueue.isEmpty()) {
+			WorkspaceResource resource = resourceQueue.remove();
+
+			FileBundle bundle = resource.getFileBundle();
+			FileInfo fileInfo = bundle.get(name);
+			if (fileInfo != null)
+				return PathNodes.filePath(this, resource, bundle, fileInfo);
+
+			// Queue up embedded resources.
+			resourceQueue.addAll(resource.getEmbeddedResources().values());
 		}
+
 		return null;
 	}
 
@@ -533,7 +558,8 @@ public interface Workspace extends Closing {
 	 */
 	@Nonnull
 	default SortedSet<FilePathNode> findFiles(@Nonnull Predicate<FileInfo> filter) {
-		return filesStream().filter(node -> filter.test(node.getValue()))
+		return filesStream()
+				.filter(node -> filter.test(node.getValue()))
 				.collect(Collectors.toCollection(TreeSet::new));
 	}
 }

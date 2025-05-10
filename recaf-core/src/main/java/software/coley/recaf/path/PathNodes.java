@@ -54,7 +54,16 @@ public class PathNodes {
 	@Nonnull
 	public static ResourcePathNode resourcePath(@Nonnull Workspace workspace,
 												@Nonnull WorkspaceResource resource) {
-		return workspacePath(workspace).child(resource);
+		// Base case, resource is top-level in the workspace.
+		WorkspaceResource containingResource = resource.getContainingResource();
+		if (containingResource == null)
+			return workspacePath(workspace).child(resource);
+
+		// Resource is embedded, so we need to represent the path a bit differently.
+		WorkspaceResource rootResource = containingResource;
+		while (rootResource.getContainingResource() != null)
+			rootResource = rootResource.getContainingResource();
+		return workspacePath(workspace).child(rootResource).embeddedChildContainer().child(resource);
 	}
 
 	/**

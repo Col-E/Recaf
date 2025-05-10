@@ -119,11 +119,13 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	@Nullable
 	@SuppressWarnings("unchecked")
 	default <T, I extends PathNode<? extends T>> I getPathOfType(@Nonnull Class<T> type) {
-		if (type.isAssignableFrom(getValueType()))
-			return (I) this;
-		PathNode<?> parent = getParent();
-		if (parent == null) return null;
-		return parent.getPathOfType(type);
+		PathNode<?> path = this;
+		while (path != null) {
+			if (type.isAssignableFrom(path.getValueType()))
+				return (I) path;
+			path = path.getParent();
+		}
+		return null;
 	}
 
 	/**
@@ -140,11 +142,13 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	@Nullable
 	@SuppressWarnings("unchecked")
 	default <T> T getValueOfType(@Nonnull Class<T> type) {
-		if (type.isAssignableFrom(getValueType()))
-			return (T) getValue();
-		PathNode<?> parent = getParent();
-		if (parent == null) return null;
-		return parent.getValueOfType(type);
+		PathNode<?> path = this;
+		while (path != null) {
+			if (type.isAssignableFrom(path.getValueType()))
+				return (T) path.getValue();
+			path = path.getParent();
+		}
+		return null;
 	}
 
 	/**

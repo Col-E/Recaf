@@ -143,13 +143,13 @@ class WorkspaceModelTest {
 			Workspace workspace = new BasicWorkspace(primary, List.of(supporting));
 
 			// Find a class in the primary resource
-			ClassPathNode result = findClass(workspace, AccessibleFields.class);
+			ClassPathNode result = findClass(workspace, AccessibleFields.class, false);
 			assertNotNull(result);
 			assertSame(primary, result.getValueOfType(WorkspaceResource.class));
 			assertSame(workspace, result.getValueOfType(Workspace.class));
 
 			// Find a class in the secondary resource
-			result = findClass(workspace, ClassWithExceptions.class);
+			result = findClass(workspace, ClassWithExceptions.class, false);
 			assertNotNull(result);
 			assertSame(supporting, result.getValueOfType(WorkspaceResource.class));
 			assertSame(workspace, result.getValueOfType(Workspace.class));
@@ -161,7 +161,7 @@ class WorkspaceModelTest {
 			Workspace workspace = new BasicWorkspace(primary);
 
 			// Find a class that exists in the runtime, but not explicitly in the provided resources of the workspace
-			ClassPathNode result = findClass(workspace, String.class);
+			ClassPathNode result = findClass(workspace, String.class, true);
 			assertNotNull(result);
 			assertSame(RuntimeWorkspaceResource.getInstance(), result.getValueOfType(WorkspaceResource.class));
 			assertSame(workspace, result.getValueOfType(Workspace.class));
@@ -180,17 +180,19 @@ class WorkspaceModelTest {
 			Workspace workspace = new BasicWorkspace(primary);
 
 			// Find a class in the primary resource's embedded resource
-			ClassPathNode result = findClass(workspace, AccessibleFields.class);
+			ClassPathNode result = findClass(workspace, AccessibleFields.class, false);
 			assertNotNull(result);
 
-			// The path is "normalized" in a way that leads to the "primary" resource being listed in the path.
-			// However, the bundle is still the correct directly related one.
+
+			// The path should have:
+			// - The resource be the embedded one
+			// - The bundle be the embedded one's jvm bundle
 			var bundle = result.getValueOfType(Bundle.class);
 			assertNotNull(bundle);
-			assertSame(primary, result.getValueOfType(WorkspaceResource.class));
+			assertSame(embeddedResource, result.getValueOfType(WorkspaceResource.class));
 			assertSame(embeddedResource.getJvmClassBundle(), bundle);
 
-			// We can undo the "normalization" by doing a bundle lookup.
+			// Should be able to resolve the embedded resource by also doing a bundle resolution on the primary resource.
 			assertSame(embeddedResource, primary.resolveBundleContainer(bundle));
 			assertSame(primary, embeddedResource.getContainingResource());
 		}
@@ -202,14 +204,16 @@ class WorkspaceModelTest {
 			//   > ...
 			//    > 5.jar
 			//      - AccessibleFields.class
+			WorkspaceFileResource deepestResource = new WorkspaceFileResourceBuilder()
+					.withFileInfo(new StubFileInfo("5.jar"))
+					.withJvmClassBundle(fromClasses(AccessibleFields.class))
+					.build();
 			WorkspaceFileResourceBuilder embeddedBuilder =
 					new WorkspaceFileResourceBuilder().withFileInfo(new StubFileInfo("1.jar")).withEmbeddedResources(Map.of("2.jar",
 							new WorkspaceFileResourceBuilder().withFileInfo(new StubFileInfo("2.jar")).withEmbeddedResources(Map.of("3.jar",
 									new WorkspaceFileResourceBuilder().withFileInfo(new StubFileInfo("3.jar")).withEmbeddedResources(Map.of("4.jar",
 											new WorkspaceFileResourceBuilder().withFileInfo(new StubFileInfo("4.jar")).withEmbeddedResources(Map.of("5.jar",
-													new WorkspaceFileResourceBuilder().withFileInfo(new StubFileInfo("5.jar")).withJvmClassBundle(fromClasses(
-															AccessibleFields.class
-													)).build())
+													deepestResource)
 											).build())
 									).build())
 							).build())
@@ -224,20 +228,23 @@ class WorkspaceModelTest {
 					.build();
 			Workspace workspace = new BasicWorkspace(primary, Collections.emptyList(), false);
 
-			// Find a class in the primary resource's embedded resource
-			ClassPathNode result = findClass(workspace, AccessibleFields.class);
+			// Find a class in the primary resource's embedded resource.
+			ClassPathNode result = findClass(workspace, AccessibleFields.class, false);
 			assertNotNull(result);
 
-			// From the prior test, we know about normalization and how to find the true embedded resource the class resides in.
+			// Bundle/resource should belong to the deepest embedded resource.
 			var bundle = result.getValueOfType(Bundle.class);
 			assertNotNull(bundle);
 			WorkspaceResource valueOfType = result.getValueOfType(WorkspaceResource.class);
-			assertSame(primary, valueOfType);
-			var resolvedBundleContainer = ((WorkspaceFileResource) primary.resolveBundleContainer(bundle));
+			assertSame(deepestResource, valueOfType);
+
+			// We should be able to also find the deepest embedded resource from the primary resource
+			// if we have a reference to the deepest bundle.
+			var resolvedBundleContainer = (WorkspaceFileResource) (primary.resolveBundleContainer(bundle));
 			assertNotNull(resolvedBundleContainer);
 			assertEquals("5.jar", resolvedBundleContainer.getFileInfo().getName());
 
-			// The predicate-based find operation should yield the same path
+			// The predicate-based find operation should yield the same path.
 			SortedSet<ClassPathNode> allClassPaths = workspace.findClasses(c -> true);
 			assertEquals(1, allClassPaths.size());
 			assertEquals(result, allClassPaths.first());
@@ -248,12 +255,14 @@ class WorkspaceModelTest {
 		 * 		Workspace to search in.
 		 * @param type
 		 * 		Class to look for.
+		 * @param includeInternal
+		 * 		Flag to include internal workspace resources in the search.
 		 *
 		 * @return Path to resource in the workspace.
 		 */
 		@Nullable
-		private static ClassPathNode findClass(@Nonnull Workspace workspace, @Nonnull Class<?> type) {
-			return workspace.findClass(type.getName().replace('.', '/'));
+		private static ClassPathNode findClass(@Nonnull Workspace workspace, @Nonnull Class<?> type, boolean includeInternal) {
+			return workspace.findClass(includeInternal, type.getName().replace('.', '/'));
 		}
 	}
 }
