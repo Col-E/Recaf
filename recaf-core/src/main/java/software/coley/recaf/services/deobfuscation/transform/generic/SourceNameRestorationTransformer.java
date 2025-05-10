@@ -13,10 +13,8 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.lang.classfile.attribute.SourceFileAttribute;
-
 /**
- * A transformer that creates mappings to rename obfuscated classes based on any remaining {@link SourceFileAttribute}.
+ * A transformer that creates mappings to rename obfuscated classes based on any remaining {@code SourceFile} attribute.
  *
  * @author Matt Coley
  */
