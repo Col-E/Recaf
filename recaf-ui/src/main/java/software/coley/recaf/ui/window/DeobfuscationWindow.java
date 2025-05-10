@@ -348,7 +348,7 @@ public class DeobfuscationWindow extends RecafStage {
 					working.set(true);
 					JvmTransformResult result = applier.transformJvm(list);
 					result.apply();
-					hide();
+					FxThreadUtil.run(this::hide);
 				} catch (TransformationException e) {
 					// TODO: A tooltip or something showing would also be nice to have here since this is in a separate
 					//  window which could mean the user cannot see the logging pane output.
