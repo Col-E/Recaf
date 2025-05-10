@@ -194,6 +194,22 @@ public class AggregatedMappings extends IntermediateMappings {
 		return null;
 	}
 
+	/**
+	 * @param desc
+	 * 		Descriptor with remapped type names.
+	 *
+	 * @return Descriptor with pre-mapped/original type names.
+	 */
+	@Nullable
+	public String applyReverseMappings(@Nullable String desc) {
+		if (desc == null)
+			return null;
+		else if (desc.charAt(0) == '(')
+			return reverseMapper.mapMethodDesc(desc);
+		else
+			return reverseMapper.mapDesc(desc);
+	}
+
 	@Override
 	public void addClass(@Nonnull String oldName, @Nonnull String newName) {
 		super.addClass(oldName, newName);
@@ -327,16 +343,6 @@ public class AggregatedMappings extends IntermediateMappings {
 		}
 		 */
 		return bridged;
-	}
-
-	@Nullable
-	private String applyReverseMappings(@Nullable String desc) {
-		if (desc == null)
-			return null;
-		else if (desc.charAt(0) == '(')
-			return reverseMapper.mapMethodDesc(desc);
-		else
-			return reverseMapper.mapDesc(desc);
 	}
 
 	@Nonnull

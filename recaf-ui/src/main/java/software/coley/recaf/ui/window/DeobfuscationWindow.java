@@ -44,6 +44,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.GotoInlinin
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalAnnotationRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.KotlinNameRestorationTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
@@ -141,6 +142,7 @@ public class DeobfuscationWindow extends RecafStage {
 			TreeItem<Selection> restoration = new TreeItem<>(new Selection.Category("deobf.tree.generic.restoration", CarbonIcons.AI_RESULTS));
 			restoration.getChildren().addAll(of(
 					EnumNameRestorationTransformer.class,
+					KotlinNameRestorationTransformer.class,
 					SourceNameRestorationTransformer.class
 			));
 			generic.getChildren().addAll(

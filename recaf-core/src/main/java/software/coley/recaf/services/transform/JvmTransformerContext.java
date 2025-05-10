@@ -13,7 +13,7 @@ import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
-import software.coley.recaf.services.mapping.IntermediateMappings;
+import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -26,7 +26,6 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -40,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class JvmTransformerContext {
 	private final Map<Class<? extends JvmClassTransformer>, JvmClassTransformer> transformerMap;
-	private final IntermediateMappings mappings = new IntermediateMappings();
+	private final AggregatedMappings mappings;
 	private final Map<String, JvmClassData> classData = new ConcurrentHashMap<>();
 	private final Set<String> recomputeFrameClasses = new HashSet<>();
 	private final Workspace workspace;
@@ -75,6 +74,10 @@ public class JvmTransformerContext {
 		this.transformerMap = buildMap(transformers);
 		this.workspace = workspace;
 		this.resource = resource;
+
+		// We will use aggregated mappings for the reverse-mapping utility it offers.
+		// Some transformers that aim to provide mappings will find this very handy.
+		mappings = new AggregatedMappings(workspace);
 	}
 
 	/**
@@ -313,7 +316,7 @@ public class JvmTransformerContext {
 	 * @return Mappings to apply upon transformation completion.
 	 */
 	@Nonnull
-	public IntermediateMappings getMappings() {
+	public AggregatedMappings getMappings() {
 		return mappings;
 	}
 

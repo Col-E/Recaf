@@ -34,14 +34,14 @@ public class SourceNameRestorationTransformer implements JvmClassTransformer {
 		// Extract the source-file attribute contents, see if its reasonable
 		// and then add it to the mappings.
 		initialClassState.getClassReader().accept(new SkippingClassVisitor() {
-			private static final Pattern SOURCE_NAME_PATTERN = RegexUtil.pattern("\\w{1, 50}\\.java");
+			private static final Pattern SOURCE_NAME_PATTERN = RegexUtil.pattern("\\w{1, 50}\\.(?:java|kt)");
 
 			@Override
 			public void visitSource(String source, String debug) {
 				if (source == null || source.isBlank() || !SOURCE_NAME_PATTERN.matches(source))
 					return;
 				String name = initialClassState.getName();
-				String sourceName = source.substring(0, source.lastIndexOf(".java"));
+				String sourceName = source.substring(0, Math.max(source.lastIndexOf(".java"), source.lastIndexOf(".kt")));
 				String packageName = initialClassState.getPackageName();
 				String restoredName = packageName == null ? sourceName : packageName + '/' + sourceName;
 				context.getMappings().addClass(name, restoredName);
