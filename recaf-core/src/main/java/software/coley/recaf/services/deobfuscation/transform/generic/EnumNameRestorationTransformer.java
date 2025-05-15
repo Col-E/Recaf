@@ -18,6 +18,10 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
+
 import static org.objectweb.asm.Opcodes.*;
 import static software.coley.recaf.util.AsmInsnUtil.getNextFollowGoto;
 import static software.coley.recaf.util.AsmInsnUtil.isConstIntValue;
@@ -83,9 +87,10 @@ public class EnumNameRestorationTransformer implements JvmClassTransformer {
 		String invokeOwner = invokeInsn.owner;
 		String invokeName = invokeInsn.name;
 		String invokeDesc = invokeInsn.desc;
+		Set<AbstractInsnNode> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 		if (invokeOwner.equals(enumOwner) && invokeDesc.equals("()" + valuesDesc)) {
 			AbstractInsnNode next = getNextFollowGoto(invokeInsn);
-			while (next != null && next.getOpcode() != PUTSTATIC)
+			while (next != null && next.getOpcode() != PUTSTATIC && visited.add(next))
 				next = getNextFollowGoto(next);
 			if (next != null && next.getOpcode() == PUTSTATIC) {
 				FieldInsnNode assignmentInsn = (FieldInsnNode) next;
@@ -109,8 +114,9 @@ public class EnumNameRestorationTransformer implements JvmClassTransformer {
 		if (indexInsn == null || !isConstIntValue(indexInsn))
 			return;
 
+		Set<AbstractInsnNode> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 		AbstractInsnNode next = getNextFollowGoto(indexInsn);
-		while (next != null && next.getOpcode() != PUTSTATIC)
+		while (next != null && next.getOpcode() != PUTSTATIC && visited.add(next))
 			next = getNextFollowGoto(next);
 		if (next != null && next.getOpcode() == PUTSTATIC) {
 			FieldInsnNode assignmentInsn = (FieldInsnNode) next;
