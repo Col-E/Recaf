@@ -24,17 +24,16 @@ public class IllegalSignatureRemovingTransformer implements JvmClassTransformer 
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
-		// The model will lazily compute if all the signatures in the class are valid.
-		// If any one is invalid, we can modify it with the removing visitor.
-		if (!initialClassState.hasValidSignatures()) {
-			// Adapt the class bytes by removing any illegal signature.
-			ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
-			ClassWriter writer = new ClassWriter(reader, 0);
-			IllegalSignatureRemovingVisitor remover = new IllegalSignatureRemovingVisitor(writer);
-			reader.accept(remover, 0);
-			if (remover.hasDetectedIllegalSignatures()) // Should always occur given the circumstances
-				context.setBytecode(bundle, initialClassState, writer.toByteArray());
-		}
+		// Adapt the class bytes by removing any illegal signature.
+		ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
+		ClassWriter writer = new ClassWriter(reader, 0);
+
+		IllegalSignatureRemovingVisitor remover = new IllegalSignatureRemovingVisitor(writer);
+		reader.accept(remover, 0);
+
+		// If the visitor did work, update the class.
+		if (remover.hasDetectedIllegalSignatures())
+			context.setBytecode(bundle, initialClassState, writer.toByteArray());
 	}
 
 	@Nonnull

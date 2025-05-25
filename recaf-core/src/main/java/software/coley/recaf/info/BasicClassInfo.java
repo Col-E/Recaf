@@ -125,49 +125,6 @@ public abstract class BasicClassInfo implements ClassInfo {
 	}
 
 	@Override
-	public boolean hasValidSignatures() {
-		// Check cached value.
-		if (sigCheck != SIGS_UNKNOWN) return sigCheck == SIGS_VALID;
-
-		// Check class level signature.
-		String classSignature = getSignature();
-		if (classSignature != null && !Types.isValidClassSignature(classSignature)) {
-			sigCheck = SIGS_INVALID;
-			return false;
-		}
-
-		// Check field signatures.
-		for (FieldMember field : getFields()) {
-			String fieldSignature = field.getSignature();
-			if (fieldSignature != null && !Types.isValidFieldSignature(field.getSignature())) {
-				sigCheck = SIGS_INVALID;
-				return false;
-			}
-		}
-
-		// Check method signatures.
-		for (MethodMember method : getMethods()) {
-			String methodSignature = method.getSignature();
-			if (methodSignature != null && !Types.isValidMethodSignature(methodSignature)) {
-				sigCheck = SIGS_INVALID;
-				return false;
-			}
-
-			// And local variables.
-			for (LocalVariable variable : method.getLocalVariables()) {
-				String localSignature = variable.getSignature();
-				if (localSignature != null && !Types.isValidMethodSignature(localSignature)) {
-					sigCheck = SIGS_INVALID;
-					return false;
-				}
-			}
-		}
-
-		sigCheck = SIGS_VALID;
-		return true;
-	}
-
-	@Override
 	public String getSourceFileName() {
 		return sourceFileName;
 	}
