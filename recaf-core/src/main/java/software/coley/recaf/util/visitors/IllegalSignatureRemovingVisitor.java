@@ -6,6 +6,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.RecordComponentVisitor;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.util.Types;
 
@@ -51,6 +52,21 @@ public class IllegalSignatureRemovingVisitor extends ClassVisitor {
 				super.visitLocalVariable(name, desc, map(signature, Types.SignatureContext.FIELD), start, end, index);
 			}
 		};
+	}
+
+	@Override
+	public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+		return super.visitRecordComponent(name, descriptor, map(signature, Types.SignatureContext.METHOD));
+	}
+
+	@Override
+	public void visitPermittedSubclass(String permittedSubclass) {
+		// While not a signature, its metadata not used at runtime that can confuse RE tools.
+		if (!Types.isValidDesc(permittedSubclass)) {
+			detected = true;
+			return;
+		}
+		super.visitPermittedSubclass(permittedSubclass);
 	}
 
 	@Nullable
