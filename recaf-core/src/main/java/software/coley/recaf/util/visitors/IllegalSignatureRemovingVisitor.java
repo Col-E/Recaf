@@ -56,7 +56,7 @@ public class IllegalSignatureRemovingVisitor extends ClassVisitor {
 
 	@Override
 	public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
-		return super.visitRecordComponent(name, descriptor, map(signature, Types.SignatureContext.METHOD));
+		return super.visitRecordComponent(name, descriptor, map(signature, Types.SignatureContext.FIELD));
 	}
 
 	@Override

@@ -180,7 +180,7 @@ public class MappingApplier {
 		ClassReader reader = classInfo.getClassReader();
 		ClassWriter writer = new ClassWriter(reader, 0);
 		WorkspaceClassRemapper remapVisitor = new WorkspaceClassRemapper(writer, workspace, mappings);
-		ClassVisitor cv = classInfo.hasValidSignatures() ? remapVisitor : new IllegalSignatureRemovingVisitor(remapVisitor); // Because ASM crashes otherwise.
+		ClassVisitor cv = new IllegalSignatureRemovingVisitor(remapVisitor); // Wrap because ASM crashes otherwise with obfuscated inputs.
 		reader.accept(cv, 0);
 
 		// Update class if it has any modified references
