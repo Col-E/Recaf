@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -19,6 +20,10 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
+import software.coley.bentofx.dockable.Dockable;
+import software.coley.bentofx.dockable.DockableIconFactory;
+import software.coley.bentofx.path.DockablePath;
+import software.coley.bentofx.space.TabbedDockSpace;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
@@ -48,6 +53,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.cell.CellConfigurationService;
+import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
@@ -67,10 +73,9 @@ import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
 import software.coley.recaf.ui.control.popup.OverrideMethodPopup;
 import software.coley.recaf.ui.docking.DockingManager;
-import software.coley.recaf.ui.docking.DockingRegion;
-import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.ui.pane.CommentEditPane;
 import software.coley.recaf.ui.pane.DocumentationPane;
+import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassEditorType;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
@@ -90,12 +95,10 @@ import software.coley.recaf.ui.pane.search.MemberDeclarationSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
 import software.coley.recaf.ui.pane.search.StringSearchPane;
-import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.SceneUtils;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.visitors.ClassAnnotationRemovingVisitor;
 import software.coley.recaf.util.visitors.FieldAnnotationRemovingVisitor;
@@ -161,6 +164,7 @@ public class Actions implements Service {
 	private final Instance<VideoFilePane> videoPaneProvider;
 	private final Instance<HexFilePane> hexPaneProvider;
 	private final Instance<AssemblerPane> assemblerPaneProvider;
+	private final Instance<WorkspaceInformationPane> infoPaneProvider;
 	private final Instance<CommentEditPane> documentationPaneProvider;
 	private final Instance<MethodCallGraphsPane> callGraphsPaneProvider;
 	private final Instance<StringSearchPane> stringSearchPaneProvider;
@@ -194,6 +198,7 @@ public class Actions implements Service {
 	               @Nonnull Instance<VideoFilePane> videoPaneProvider,
 	               @Nonnull Instance<HexFilePane> hexPaneProvider,
 	               @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
+	               @Nonnull Instance<WorkspaceInformationPane> infoPaneProvider,
 	               @Nonnull Instance<CommentEditPane> documentationPaneProvider,
 	               @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
 	               @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
@@ -222,6 +227,7 @@ public class Actions implements Service {
 		this.videoPaneProvider = videoPaneProvider;
 		this.hexPaneProvider = hexPaneProvider;
 		this.assemblerPaneProvider = assemblerPaneProvider;
+		this.infoPaneProvider = infoPaneProvider;
 		this.documentationPaneProvider = documentationPaneProvider;
 		this.stringSearchPaneProvider = stringSearchPaneProvider;
 		this.numberSearchPaneProvider = numberSearchPaneProvider;
@@ -331,28 +337,29 @@ public class Actions implements Service {
 		return (ClassNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, info).makeText();
-			Node graphic = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			IconProvider iconProvider = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, info);
+			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
 			if (title == null) throw new IllegalStateException("Missing title");
-			if (graphic == null) throw new IllegalStateException("Missing graphic");
 
 			// Create content for the tab.
 			JvmClassPane content = jvmPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
 			content.addPathUpdateListener(updatedPath -> {
 				// Update tab graphic in case backing class details change.
 				JvmClassInfo updatedInfo = updatedPath.getValue().asJvmClass();
 				String updatedTitle = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, updatedInfo).makeText();
-				Node updatedGraphic = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, updatedInfo).makeIcon();
+				IconProvider updatedIconProvider = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, updatedInfo);
+				DockableIconFactory updatedGraphicFactory = d -> Objects.requireNonNull(updatedIconProvider.makeIcon(), "Missing graphic");
 				FxThreadUtil.run(() -> {
-					tab.setText(updatedTitle);
-					tab.setGraphic(updatedGraphic);
+					dockable.withTitle(updatedTitle);
+					dockable.withIconFactory(updatedGraphicFactory);
 				});
 			});
-			setupInfoTabContextMenu(info, content, tab);
-			return tab;
+			setupInfoContextMenu(info, content, dockable);
+			return dockable;
 		});
 	}
 
@@ -380,28 +387,29 @@ public class Actions implements Service {
 		return (ClassNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getAndroidClassInfoTextProvider(workspace, resource, bundle, info).makeText();
-			Node graphic = iconService.getAndroidClassInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			IconProvider iconProvider = iconService.getAndroidClassInfoIconProvider(workspace, resource, bundle, info);
+			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
 			if (title == null) throw new IllegalStateException("Missing title");
-			if (graphic == null) throw new IllegalStateException("Missing graphic");
 
 			// Create content for the tab.
 			AndroidClassPane content = androidPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
 			content.addPathUpdateListener(updatedPath -> {
 				// Update tab graphic in case backing class details change.
 				AndroidClassInfo updatedInfo = updatedPath.getValue().asAndroidClass();
 				String updatedTitle = textService.getAndroidClassInfoTextProvider(workspace, resource, bundle, updatedInfo).makeText();
-				Node updatedGraphic = iconService.getAndroidClassInfoIconProvider(workspace, resource, bundle, updatedInfo).makeIcon();
+				IconProvider updatedIconProvider = iconService.getAndroidClassInfoIconProvider(workspace, resource, bundle, updatedInfo);
+				DockableIconFactory updatedGraphicFactory = d -> Objects.requireNonNull(updatedIconProvider.makeIcon(), "Missing graphic");
 				FxThreadUtil.run(() -> {
-					tab.setText(updatedTitle);
-					tab.setGraphic(updatedGraphic);
+					dockable.withTitle(updatedTitle);
+					dockable.withIconFactory(updatedGraphicFactory);
 				});
 			});
-			setupInfoTabContextMenu(info, content, tab);
-			return tab;
+			setupInfoContextMenu(info, content, dockable);
+			return dockable;
 		});
 	}
 
@@ -477,18 +485,18 @@ public class Actions implements Service {
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
+			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
 			if (title == null) throw new IllegalStateException("Missing title");
-			if (graphic == null) throw new IllegalStateException("Missing graphic");
 
 			// Create content for the tab.
 			BinaryXmlFilePane content = binaryXmlPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, content, tab);
-			return tab;
+			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			setupInfoContextMenu(info, content, dockable);
+			return dockable;
 		});
 	}
 
@@ -516,31 +524,32 @@ public class Actions implements Service {
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
+			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
 			if (title == null) throw new IllegalStateException("Missing title");
-			if (graphic == null) throw new IllegalStateException("Missing graphic");
 
 			// Create content for the tab.
 			TextFilePane content = textPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
-			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
-			mode.getItems().addAll(
-					action("menu.mode.file.text", CarbonIcons.CODE,
-							() -> content.setEditorType(TextEditorType.TEXT)),
-					action("menu.mode.file.hex", CarbonIcons.NUMBER_0,
-							() -> content.setEditorType(TextEditorType.HEX))
-			);
-			items.add(mode);
-			addCopyPathAction(menu, info);
-			addCloseActions(menu, tab);
-			tab.setContextMenu(menu);
-
-			return tab;
+			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			dockable.withCachedContextMenu(true).withContextMenuFactory(d -> {
+				ContextMenu menu = new ContextMenu();
+				ObservableList<MenuItem> items = menu.getItems();
+				Menu mode = menu("menu.mode", CarbonIcons.VIEW);
+				mode.getItems().addAll(
+						action("menu.mode.file.text", CarbonIcons.CODE,
+								() -> content.setEditorType(TextEditorType.TEXT)),
+						action("menu.mode.file.hex", CarbonIcons.NUMBER_0,
+								() -> content.setEditorType(TextEditorType.HEX))
+				);
+				items.add(mode);
+				addCopyPathAction(menu, info);
+				addCloseActions(menu, dockable);
+				return menu;
+			});
+			return dockable;
 		});
 	}
 
@@ -568,18 +577,18 @@ public class Actions implements Service {
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
+			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
 			if (title == null) throw new IllegalStateException("Missing title");
-			if (graphic == null) throw new IllegalStateException("Missing graphic");
 
 			// Create content for the tab.
 			ImageFilePane content = imagePaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, content, tab);
-			return tab;
+			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			setupInfoContextMenu(info, content, dockable);
+			return dockable;
 		});
 	}
 
@@ -607,18 +616,18 @@ public class Actions implements Service {
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
+			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
 			if (title == null) throw new IllegalStateException("Missing title");
-			if (graphic == null) throw new IllegalStateException("Missing graphic");
 
 			// Create content for the tab.
 			AudioFilePane content = audioPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, content, tab);
-			return tab;
+			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			setupInfoContextMenu(info, content, dockable);
+			return dockable;
 		});
 	}
 
@@ -646,18 +655,18 @@ public class Actions implements Service {
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
+			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
 			if (title == null) throw new IllegalStateException("Missing title");
-			if (graphic == null) throw new IllegalStateException("Missing graphic");
 
 			// Create content for the tab.
 			VideoFilePane content = videoPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, content, tab);
-			return tab;
+			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			setupInfoContextMenu(info, content, dockable);
+			return dockable;
 		});
 	}
 
@@ -685,18 +694,18 @@ public class Actions implements Service {
 		return (FileNavigable) getOrCreatePathContent(path, () -> {
 			// Create text/graphic for the tab to create.
 			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			Node graphic = iconService.getFileInfoIconProvider(workspace, resource, bundle, info).makeIcon();
+			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
+			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
 			if (title == null) throw new IllegalStateException("Missing title");
-			if (graphic == null) throw new IllegalStateException("Missing graphic");
 
 			// Create content for the tab.
 			HexFilePane content = hexPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			DockingTab tab = createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
-			setupInfoTabContextMenu(info, content, tab);
-			return tab;
+			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			setupInfoContextMenu(info, content, dockable);
+			return dockable;
 		});
 	}
 
@@ -721,9 +730,9 @@ public class Actions implements Service {
 
 			// Create text/graphic for the tab to create.
 			String title = textService.getClassInfoTextProvider(workspace, resource, bundle, info).makeText();
-			Node graphic = new FontIconView(CarbonIcons.BOOKMARK_FILLED);
+			DockableIconFactory graphicFactory = d -> new FontIconView(CarbonIcons.BOOKMARK_FILLED);
 			if (title == null) throw new IllegalStateException("Missing title");
-			return createCommentEditTab(path, title, graphic, info);
+			return createCommentEditDockable(path, title, graphicFactory, info);
 		});
 	}
 
@@ -752,32 +761,52 @@ public class Actions implements Service {
 			// Create text/graphic for the tab to create.
 			ClassInfo classInfo = path.getParent().getValue();
 			String title = textService.getMemberTextProvider(workspace, resource, bundle, classInfo, member).makeText();
-			Node graphic = new FontIconView(CarbonIcons.BOOKMARK_FILLED);
+			DockableIconFactory graphicFactory = d -> new FontIconView(CarbonIcons.BOOKMARK_FILLED);
 			if (title == null) throw new IllegalStateException("Missing title");
-			return createCommentEditTab(path, title, graphic, classInfo);
+			return createCommentEditDockable(path, title, graphicFactory, classInfo);
 		});
 	}
 
 	@Nonnull
-	private DockingTab createCommentEditTab(@Nonnull PathNode<?> path, @Nonnull String title,
-	                                        @Nonnull Node graphic, @Nonnull ClassInfo classInfo) {
-		// Create content for the tab.
+	private Dockable createCommentEditDockable(@Nonnull PathNode<?> path, @Nonnull String title,
+	                                           @Nonnull DockableIconFactory graphicFactory, @Nonnull ClassInfo classInfo) {
+		// Create content for the dockable.
 		CommentEditPane content = documentationPaneProvider.get();
 		content.onUpdatePath(path);
 
 		// Place the tab in a region with other comments if possible.
-		DockingRegion targetRegion = dockingManager.getDockTabs().stream()
-				.filter(t -> t.getContent() instanceof DocumentationPane)
-				.map(DockingTab::getRegion)
-				.findFirst().orElse(dockingManager.getPrimaryRegion());
+		DockablePath docPanePath = null;
+		for (DockablePath dockablePath : dockingManager.getBento().getAllDockables()) {
+			Dockable dockable = dockablePath.dockable();
+			Node node = dockable.nodeProperty().get();
+			if (node instanceof DocumentationPane) {
+				docPanePath = dockablePath;
+				break;
+			}
+		}
+		TabbedDockSpace space = docPanePath != null ?
+				(TabbedDockSpace) docPanePath.space() :
+				dockingManager.getPrimaryTabbedSpace();
 
-		// Build the tab.
-		DockingTab tab = createTab(targetRegion, title, graphic, content);
-		ContextMenu menu = new ContextMenu();
-		ObservableList<MenuItem> items = menu.getItems();
-		addCloseActions(menu, tab);
-		tab.setContextMenu(menu);
-		return tab;
+		// Build the dockable.
+		Dockable dockable = createDockable(space, title, graphicFactory, content);
+		space.addDockable(dockable);
+		dockable.withCachedContextMenu(true).withContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			ObservableList<MenuItem> items = menu.getItems();
+			addCloseActions(menu, dockable);
+			return menu;
+		});
+		return dockable;
+	}
+
+	/**
+	 * Display the workspace summary / current information.
+	 */
+	public void openSummary() {
+		WorkspaceInformationPane informationPane = infoPaneProvider.get();
+		createDockable(dockingManager.getPrimaryTabbedSpace(), getBinding("workspace.info"),
+				d -> new FontIconView(CarbonIcons.INFORMATION), informationPane);
 	}
 
 	/**
@@ -1630,14 +1659,14 @@ public class Actions implements Service {
 			else if (path instanceof ClassMemberPathNode classMemberPathNode)
 				name = classMemberPathNode.getValue().getName();
 			String title = "Assembler: " + EscapeUtil.escapeStandard(StringUtil.cutOff(name, 60));
-			Node graphic = new FontIconView(CarbonIcons.CODE);
+			DockableIconFactory graphicFactory = d -> new FontIconView(CarbonIcons.CODE);
 
 			// Create content for the tab.
 			AssemblerPane content = assemblerPaneProvider.get();
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			return createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			return createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
 		});
 	}
 
@@ -1667,14 +1696,14 @@ public class Actions implements Service {
 		return createContent(() -> {
 			// Create text/graphic for the tab to create.
 			String title = Lang.get("menu.view.methodcallgraph") + ": " + method.getName();
-			Node graphic = new FontIconView(CarbonIcons.FLOW);
+			DockableIconFactory graphicFactory = d -> new FontIconView(CarbonIcons.FLOW);
 
 			// Create content for the tab.
 			MethodCallGraphsPane content = callGraphsPaneProvider.get();
 			content.onUpdatePath(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method));
 
 			// Build the tab.
-			return createTab(dockingManager.getPrimaryRegion(), title, graphic, content);
+			return createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
 		});
 	}
 
@@ -2318,21 +2347,27 @@ public class Actions implements Service {
 
 	@Nonnull
 	private <T extends AbstractSearchPane> T openSearchPane(@Nonnull String titleId, @Nonnull Ikon icon, @Nonnull Instance<T> paneProvider) {
-		DockingRegion region = dockingManager.getRegions().stream()
-				.filter(r -> r.getDockTabs().stream().anyMatch(t -> t.getContent() instanceof AbstractSearchPane))
-				.findFirst().orElse(null);
+		// Place the tab in a region with other comments if possible.
+		DockablePath searchPath = null;
+		for (DockablePath dockablePath : dockingManager.getBento().getAllDockables()) {
+			Dockable dockable = dockablePath.dockable();
+			Node node = dockable.nodeProperty().get();
+			if (node instanceof AbstractSearchPane) {
+				searchPath = dockablePath;
+				break;
+			}
+		}
+		TabbedDockSpace space = searchPath == null ? null : (TabbedDockSpace) searchPath.space();
+
 		T content = paneProvider.get();
-		if (region != null) {
-			DockingTab tab = createTab(region, getBinding(titleId), new FontIconView(icon), content);
-			tab.select();
-			FxThreadUtil.run(() -> SceneUtils.focus(content));
+		if (space != null) {
+			createDockable(space, getBinding(titleId), d -> new FontIconView(icon), content);
 		} else {
-			region = dockingManager.newRegion();
-			DockingTab tab = createTab(region, getBinding(titleId), new FontIconView(icon), content);
-			RecafScene scene = new RecafScene(region);
-			Stage window = windowFactory.createAnonymousStage(scene, getBinding("menu.search"), 800, 400);
-			window.show();
-			window.requestFocus();
+			Dockable dockable = createDockable(null, getBinding(titleId), d -> new FontIconView(icon), content);
+			Scene originScene = dockingManager.getPrimaryTabbedSpace().getBackingRegion().getScene();
+			Stage stage = dockingManager.getBento().newStageForDockable(originScene, dockable, 800, 400);
+			stage.show();
+			stage.requestFocus();
 		}
 		return content;
 	}
@@ -2341,13 +2376,13 @@ public class Actions implements Service {
 	 * Looks for the {@link Navigable} component representing the path and returns it if found.
 	 * If no such component exists, it should be generated by the passed supplier, which then gets returned.
 	 * <br>
-	 * The tab containing the {@link Navigable} component is selected when returned.
+	 * The dockable containing the {@link Navigable} component is selected when returned.
 	 *
 	 * @param path
 	 * 		Path to navigate to.
 	 * @param factory
-	 * 		Factory to create a tab for displaying content located at the given path,
-	 * 		should a tab for the content not already exist.
+	 * 		Factory to create a dockable for displaying content located at the given path,
+	 * 		should a dockable for the content not already exist.
 	 * 		<br>
 	 * 		<b>NOTE:</b> It is required/assumed that the {@link Tab#getContent()} is a
 	 * 		component implementing {@link Navigable}.
@@ -2355,149 +2390,158 @@ public class Actions implements Service {
 	 * @return Navigable content representing content of the path.
 	 */
 	@Nonnull
-	public Navigable getOrCreatePathContent(@Nonnull PathNode<?> path, @Nonnull Supplier<DockingTab> factory) {
+	public Navigable getOrCreatePathContent(@Nonnull PathNode<?> path, @Nonnull Supplier<Dockable> factory) {
 		List<Navigable> children = navigationManager.getNavigableChildrenByPath(path);
-		if (children.isEmpty()) {
-			return createContent(factory);
-		} else {
-			// Content by path is already open.
-			Navigable navigable = children.getFirst();
-			selectTab(navigable);
-			navigable.requestFocus();
-			return navigable;
-		}
+		Navigable navigable = children.isEmpty() ? createContent(factory) : children.getFirst();
+		selectTab(navigable);
+		navigable.requestFocus();
+		return navigable;
 	}
 
 	@Nonnull
-	private static Navigable createContent(@Nonnull Supplier<DockingTab> factory) {
-		// Create the tab for the content, then display it.
-		DockingTab tab = factory.get();
-		tab.select();
-		SceneUtils.focus(tab.getRegion().getScene());
-		return (Navigable) tab.getContent();
+	private Navigable createContent(@Nonnull Supplier<Dockable> factory) {
+		// Create the dockable for the content, then display it.
+		Dockable dockable = factory.get();
+		Navigable navigable = (Navigable) dockable.getNode();
+		selectTab(navigable);
+		navigable.requestFocus();
+		return navigable;
 	}
 
-	private void setupInfoTabContextMenu(@Nonnull Info info, @Nonnull AbstractContentPane<?> contentPane, @Nonnull DockingTab tab) {
-		ContextMenu menu = new ContextMenu();
-		ObservableList<MenuItem> items = menu.getItems();
+	private void setupInfoContextMenu(@Nonnull Info info,
+	                                  @Nonnull AbstractContentPane<?> contentPane,
+	                                  @Nonnull Dockable dockable) {
+		dockable.withCachedContextMenu(true).withContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			ObservableList<MenuItem> items = menu.getItems();
 
-		if (info instanceof JvmClassInfo classInfo && contentPane instanceof JvmClassPane content) {
-			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
-			mode.getItems().addAll(
-					action("menu.mode.class.decompile", CarbonIcons.CODE,
-							() -> content.setEditorType(JvmClassEditorType.DECOMPILE)),
-					action("menu.mode.file.hex", CarbonIcons.NUMBER_0,
-							() -> content.setEditorType(JvmClassEditorType.HEX))
-			);
-			items.add(mode);
-		} else if (info instanceof AndroidClassInfo classInfo && contentPane instanceof AndroidClassPane content) {
-			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
-			mode.getItems().addAll(
-					action("menu.mode.class.decompile", CarbonIcons.CODE,
-							() -> content.setEditorType(AndroidClassEditorType.DECOMPILE)),
-					action("menu.mode.file.smali", CarbonIcons.NUMBER_0,
-							() -> content.setEditorType(AndroidClassEditorType.SMALI))
-			);
-			items.add(mode);
-		} else if (info instanceof ImageFileInfo fileInfo) {
-			// TODO: We need to copy-paste this a number of times for all the different file info types
-			//  and let each toggle between "automatic" (native editor) and hex. The way that it is done
-			//  here works but isn't exactly pretty and lets users replace the current pane they have open
-			//  with the same kind of pane. Having some abstraction model to alleviate the copy-paste and this
-			//  replacement-of-self problem would be nice.
-			Menu mode = menu("menu.mode", CarbonIcons.VIEW);
-			mode.getItems().addAll(
-					action("menu.mode.file.auto", CarbonIcons.IMAGE, () -> {
-						ImageFilePane content = imagePaneProvider.get();
-						if (tab.getContent() instanceof AbstractContentPane<?> existing && existing.getPath() != null) {
-							content.onUpdatePath(existing.getPath());
-							existing.disable();
-						}
-						tab.setContent(content);
-					}),
-					action("menu.mode.file.hex", CarbonIcons.CODE, () -> {
-						HexFilePane content = hexPaneProvider.get();
-						if (tab.getContent() instanceof AbstractContentPane<?> existing && existing.getPath() != null) {
-							content.onUpdatePath(existing.getPath());
-							existing.disable();
-						}
-						tab.setContent(content);
-					})
-			);
-			items.add(mode);
-		}
+			if (info instanceof JvmClassInfo classInfo && contentPane instanceof JvmClassPane content) {
+				Menu mode = menu("menu.mode", CarbonIcons.VIEW);
+				mode.getItems().addAll(
+						action("menu.mode.class.decompile", CarbonIcons.CODE,
+								() -> content.setEditorType(JvmClassEditorType.DECOMPILE)),
+						action("menu.mode.file.hex", CarbonIcons.NUMBER_0,
+								() -> content.setEditorType(JvmClassEditorType.HEX))
+				);
+				items.add(mode);
+			} else if (info instanceof AndroidClassInfo classInfo && contentPane instanceof AndroidClassPane content) {
+				Menu mode = menu("menu.mode", CarbonIcons.VIEW);
+				mode.getItems().addAll(
+						action("menu.mode.class.decompile", CarbonIcons.CODE,
+								() -> content.setEditorType(AndroidClassEditorType.DECOMPILE)),
+						action("menu.mode.file.smali", CarbonIcons.NUMBER_0,
+								() -> content.setEditorType(AndroidClassEditorType.SMALI))
+				);
+				items.add(mode);
+			} else if (info instanceof ImageFileInfo fileInfo) {
+				// TODO: We need to copy-paste this a number of times for all the different file info types
+				//  and let each toggle between "automatic" (native editor) and hex. The way that it is done
+				//  here works but isn't exactly pretty and lets users replace the current pane they have open
+				//  with the same kind of pane. Having some abstraction model to alleviate the copy-paste and this
+				//  replacement-of-self problem would be nice.
+				Menu mode = menu("menu.mode", CarbonIcons.VIEW);
+				mode.getItems().addAll(
+						action("menu.mode.file.auto", CarbonIcons.IMAGE, () -> {
+							ImageFilePane content = imagePaneProvider.get();
+							if (d.getNode() instanceof AbstractContentPane<?> existing && existing.getPath() != null) {
+								content.onUpdatePath(existing.getPath());
+								existing.disable();
+							}
+							d.setNode(content);
+						}),
+						action("menu.mode.file.hex", CarbonIcons.CODE, () -> {
+							HexFilePane content = hexPaneProvider.get();
+							if (d.getNode() instanceof AbstractContentPane<?> existing && existing.getPath() != null) {
+								content.onUpdatePath(existing.getPath());
+								existing.disable();
+							}
+							d.setNode(content);
+						})
+				);
+				items.add(mode);
+			}
 
-		addCopyPathAction(menu, info);
-		addCloseActions(menu, tab);
-		tab.setContextMenu(menu);
+			addCopyPathAction(menu, info);
+			addCloseActions(menu, d);
+			return menu;
+		});
 	}
 
 
 	/**
-	 * Selects the containing {@link DockingTab} that contains the content.
+	 * Selects the containing {@link Dockable} that contains the navigable content.
 	 *
 	 * @param navigable
-	 * 		Navigable content to select in its containing {@link DockingRegion}.
+	 * 		Navigable content to select in its containing {@link TabbedDockSpace}.
 	 */
-	private static void selectTab(Navigable navigable) {
-		if (navigable instanceof Node node)
-			SceneUtils.focus(node);
+	private void selectTab(@Nullable Navigable navigable) {
+		if (navigable == null)
+			return;
+		Dockable dockable = navigationManager.lookupDockable(navigable);
+		if (dockable != null)
+			dockable.inSpace(s -> s.selectDockable(dockable));
 	}
 
 	/**
-	 * Shorthand for tab-creation + graphic setting.
+	 * Shorthand for dockable-creation + graphic setting.
 	 *
-	 * @param region
-	 * 		Parent region to spawn in.
+	 * @param space
+	 * 		Parent tabbed space to spawn in.
 	 * @param title
-	 * 		Tab title.
-	 * @param graphic
-	 * 		Tab graphic.
-	 * @param content
-	 * 		Tab content.
+	 * 		Dockable title.
+	 * @param graphicFactory
+	 * 		Dockable graphic factory.
+	 * @param node
+	 * 		Dockable content.
 	 *
-	 * @return Created tab.
+	 * @return Created dockable.
 	 */
 	@Nonnull
-	private DockingTab createTab(@Nonnull DockingRegion region,
-	                             @Nonnull String title,
-	                             @Nonnull Node graphic,
-	                             @Nonnull Node content) {
-		DockingTab tab = region.createTab(title, content);
-		tab.setGraphic(graphic);
-		content.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (tab.isClosable() && keybindingConfig.getCloseTab().match(e))
-				tab.close();
+	private Dockable createDockable(@Nullable TabbedDockSpace space,
+	                                @Nonnull String title,
+	                                @Nonnull DockableIconFactory graphicFactory,
+	                                @Nonnull Node node) {
+		Dockable dockable = dockingManager.newDockable(title, graphicFactory, node);
+		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (dockable.closableProperty().get() && keybindingConfig.getCloseTab().match(e))
+				dockable.inSpace(s -> s.closeDockable(dockable));
 		});
-		return tab;
+		if (space != null) {
+			space.addDockable(dockable);
+			space.selectDockable(dockable);
+		}
+		return dockable;
 	}
 
 	/**
-	 * Shorthand for tab-creation + graphic setting.
+	 * Shorthand for dockable-creation + graphic setting.
 	 *
-	 * @param region
-	 * 		Parent region to spawn in.
+	 * @param space
+	 * 		Parent tabbed space to spawn in.
 	 * @param title
-	 * 		Tab title.
-	 * @param graphic
-	 * 		Tab graphic.
-	 * @param content
-	 * 		Tab content.
+	 * 		Dockable title.
+	 * @param graphicFactory
+	 * 		Dockable graphic factory.
+	 * @param node
+	 * 		Dockable content.
 	 *
-	 * @return Created tab.
+	 * @return Created dockable.
 	 */
 	@Nonnull
-	private DockingTab createTab(@Nonnull DockingRegion region,
-	                             @Nonnull ObservableValue<String> title,
-	                             @Nonnull Node graphic,
-	                             @Nonnull Node content) {
-		DockingTab tab = region.createTab(title, content);
-		tab.setGraphic(graphic);
-		content.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (tab.isClosable() && keybindingConfig.getCloseTab().match(e))
-				tab.close();
+	private Dockable createDockable(@Nullable TabbedDockSpace space,
+	                                @Nonnull ObservableValue<String> title,
+	                                @Nonnull DockableIconFactory graphicFactory,
+	                                @Nonnull Node node) {
+		Dockable dockable = dockingManager.newTranslatableDockable(title, graphicFactory, node);
+		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (dockable.closableProperty().get() && keybindingConfig.getCloseTab().match(e))
+				dockable.inSpace(s -> s.closeDockable(dockable));
 		});
-		return tab;
+		if (space != null) {
+			space.addDockable(dockable);
+			space.selectDockable(dockable);
+		}
+		return dockable;
 	}
 
 
@@ -2525,23 +2569,27 @@ public class Actions implements Service {
 	 *
 	 * @param menu
 	 * 		Menu to add to.
-	 * @param tab
-	 * 		Tab reference.
+	 * @param dockable
+	 * 		Dockable reference.
 	 */
-	private static void addCloseActions(@Nonnull ContextMenu menu, @Nonnull DockingTab tab) {
+	private static void addCloseActions(@Nonnull ContextMenu menu, @Nonnull Dockable dockable) {
 		menu.getItems().addAll(
-				action("menu.tab.close", CarbonIcons.CLOSE, tab::close),
+				action("menu.tab.close", CarbonIcons.CLOSE, () -> dockable.inSpace(space -> space.closeDockable(dockable))),
 				action("menu.tab.closeothers", CarbonIcons.CLOSE, () -> {
-					Unchecked.checkedForEach(tab.getRegion().getDockTabs(), regionTab -> {
-						if (regionTab != tab)
-							regionTab.close();
-					}, (regionTab, error) -> {
-						logger.error("Failed to close tab '{}'", regionTab.getText(), error);
+					dockable.inSpace(space -> {
+						Unchecked.checkedForEach(space.getDockables(), d -> {
+							if (d != dockable)
+								space.closeDockable(d);
+						}, (d, error) -> {
+							logger.error("Failed to close tab '{}'", d.getTitle(), error);
+						});
 					});
 				}),
 				action("menu.tab.closeall", CarbonIcons.CLOSE, () -> {
-					Unchecked.checkedForEach(tab.getRegion().getDockTabs(), DockingTab::close, (regionTab, error) -> {
-						logger.error("Failed to close tab '{}'", regionTab.getText(), error);
+					dockable.inSpace(space -> {
+						Unchecked.checkedForEach(space.getDockables(), space::closeDockable, (d, error) -> {
+							logger.error("Failed to close tab '{}'", d.getTitle(), error);
+						});
 					});
 				})
 		);

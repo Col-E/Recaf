@@ -39,6 +39,9 @@ public class MediaHacker {
 	 */
 	@Nonnull
 	public static Media create(@Nonnull String path) throws IOException {
+		// TODO: Maybe hack into JarFileFactory#fileCache and go through the regular URL constructor for Media
+		//  - set the url to be cached to facilitate looking up in that cache
+		//  - clear the file cache when workspace is closed
 		String uriPath = RecafURLStreamHandlerProvider.fileUri(path);
 		try {
 			// We need to bypass the constructor due to how URI is handled normally preventing normal usage of our

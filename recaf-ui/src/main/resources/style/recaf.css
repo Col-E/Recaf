@@ -432,7 +432,6 @@ Text {
   -fx-graphic-text-gap: 6px;
   -fx-text-fill: -color-button-fg;
   -fx-alignment: CENTER;
-  -fx-effect: dropshadow(gaussian, -color-button-shadow, 3px, -2, 0, 1);
   -fx-padding: 6px 12px 6px 12px;
 }
 .button .font-icon, .button .ikonli-font-icon {
@@ -474,7 +473,6 @@ Text {
 .button:hover {
   -fx-background-color: -color-button-border-hover, -color-button-bg-hover;
   -fx-text-fill: -color-button-fg-hover;
-  -fx-opacity: 0.9;
 }
 .button:hover:focused {
   -fx-background-color: -color-button-border-focused, -color-button-bg-hover;
@@ -1609,7 +1607,7 @@ Add support for NO_HEADER tweak in tables .table-view.no-header > .column-header
   -fx-background-color: transparent;
   -fx-background-insets: 0 0 1px 0;
   -fx-background-radius: 0px;
-  -fx-padding: 10 14 10 14;
+  -fx-padding: 6 9 6 9;
   -fx-effect: none;
 }
 .menu-bar > .container > .menu-button > .label {

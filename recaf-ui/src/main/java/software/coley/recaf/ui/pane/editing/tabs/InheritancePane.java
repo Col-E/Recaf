@@ -76,7 +76,6 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 
 		// Layout
 		getChildren().addAll(tree, toggle);
-		setMinWidth(235);
 	}
 
 	/**

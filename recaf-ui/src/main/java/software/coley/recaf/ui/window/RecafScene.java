@@ -32,6 +32,6 @@ public class RecafScene extends Scene {
 	}
 
 	private void addStyleSheets() {
-		getStylesheets().add("/style/tweaks.css");
+		getStylesheets().addAll("/style/docking.css", "/style/tweaks.css");
 	}
 }

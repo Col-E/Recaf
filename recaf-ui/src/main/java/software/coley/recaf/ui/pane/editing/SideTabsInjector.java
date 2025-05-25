@@ -12,7 +12,6 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.ClassNavigable;
-import software.coley.recaf.ui.control.BoundTab;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.ui.pane.editing.tabs.InheritancePane;
 import software.coley.recaf.ui.pane.editing.tabs.KotlinMetadataPane;
@@ -24,7 +23,7 @@ import software.coley.recaf.util.kotlin.model.KtClass;
 import java.util.function.Consumer;
 
 /**
- * Injector for adding common {@link SideTabs} content to {@link AbstractContentPane} instances.
+ * Injector for adding common tool tab content to {@link AbstractContentPane} instances.
  *
  * @author Matt Coley
  */
@@ -93,24 +92,15 @@ public class SideTabsInjector {
 			fieldsAndMethodsPane.setupSelectionNavigationListener(classNavigable);
 
 			// Setup side-tabs
-			pane.addSideTab(new BoundTab(Lang.getBinding("fieldsandmethods.title"),
-					Icons.getIconView(Icons.FIELD_N_METHOD),
-					fieldsAndMethodsPane
-			));
-			pane.addSideTab(new BoundTab(Lang.getBinding("hierarchy.title"),
-					CarbonIcons.FLOW,
-					inheritancePane
-			));
+			pane.addSideTab(Lang.getBinding("fieldsandmethods.title"), d -> Icons.getIconView(Icons.FIELD_N_METHOD), fieldsAndMethodsPane);
+			pane.addSideTab(Lang.getBinding("hierarchy.title"), CarbonIcons.FLOW, inheritancePane);
 
 			// Add kotlin metadata tab if metadata is found.
 			KtClass metadata = KotlinMetadata.extractKtModel(classNavigable.getClassPath().getValue());
 			if (metadata != null) {
 				KotlinMetadataPane kotlinMetadataPane = kotlinPaneProvider.get();
 				kotlinMetadataPane.setMetadata(metadata);
-				pane.addSideTab(new BoundTab(Lang.getBinding("kotlinmetadata.title"),
-						Icons.getIconView(Icons.KOTLIN_FLAT),
-						kotlinMetadataPane
-				));
+				pane.addSideTab(Lang.getBinding("kotlinmetadata.title"), d -> Icons.getIconView(Icons.KOTLIN_FLAT), kotlinMetadataPane);
 			}
 		} else {
 			logger.warn("Called 'injectClassTabs' for non-class navigable content");

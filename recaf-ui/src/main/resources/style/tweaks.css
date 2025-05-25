@@ -3,13 +3,6 @@
     -fx-padding: 5px;
 }
 
-
-/* Fix for TiwulFX relying on Modena values while we use AtlantaFX */
-.adjacent-drop {
-	-fx-background-color: -color-accent-2;
-	-fx-border-color: -color-accent-8;
-}
-
 .dark-scroll-pane > .viewport {
    -fx-background-color: -color-bg-inset;
 }
@@ -17,20 +10,6 @@
 /* For the file menu items with nested nodes. We don't want any padding so the whole menu is clickable */
 .closable-menu-item {
     -fx-padding: 0;
-}
-
-/* AtlantaFX tweaks to split-pane default behavior/style to fit the docking UI style more. */
-.split-pane {
-    -fx-background-color: transparent;
-    -fx-background-insets: 5px;
-}
-.split-pane > .split-pane-divider,
-.split-pane > .split-pane-divider:pressed,
-.split-pane > .split-pane-divider:pressed > .horizontal-grabber,
-.split-pane > .split-pane-divider:pressed > .vertical-grabber {
-    -fx-background-color: transparent;
-    -fx-background-insets: 6px;
-    -fx-padding: 2px;
 }
 
 /* AtlantaFX tweaks */
@@ -108,59 +87,6 @@
 .round-container-multi {
     -fx-border-radius: 1em;
     -fx-background-radius: 1em;
-}
-
-/* Visual tweak to tab-pane separator */
-.tab-pane {
-    -fx-padding: 0px;
-    -fx-border-color: -color-border-muted;
-    -fx-border-width: 1px;
-    -fx-border-insets: 1px; /* removing this causes some issues with our split-pane changes */
-}
-.tab-pane.floating > .tab-header-area {
-    -fx-background-color: -color-border-muted, -color-bg-inset;
-    -fx-background-insets: 0, 0 0 1px 0;
-}
-.tab-pane:focused > .tab-header-area > .headers-region > .tab:selected {
-    -fx-background-color: -color-accent-4, -color-base-9;
-    -fx-background-insets: 0, 0 0 2px 0;
-}
-
-/* Custom tab-pane for display in editor views */
-.side-tab-pane {
-    -fx-background-color: -color-bg-overlay;
-    -fx-border-color: -color-base-6;
-}
-.side-tab-pane:vertical {
-    -fx-border-width: 0 0 0 1px;
-}
-.side-tab-content {
-    -fx-background-color: -color-bg-overlay;
-    -fx-border-color: -color-base-6;
-}
-.side-tab-pane:vertical .side-tab-content {
-    -fx-border-width: 0 0 0 1px;
-}
-.side-tab-pane:horizontal .side-tab-content {
-    -fx-border-width: 1px 0 0 0;
-}
-.side-tab-grip {
-    -fx-background-color: -color-bg-inset;
-    -fx-border-color: -color-base-6;
-}
-.side-tab-pane:vertical .side-tab-grip {
-    -fx-border-width: 0 0 0 1px;
-}
-.side-tab-pane:horizontal .side-tab-grip {
-    -fx-border-width: 1px 0 0 0;
-}
-.side-tab {
-    -fx-background-color: -color-bg-overlay;
-}
-.side-tab:hover,
-.side-tab:selected,
-.side-tab:focused {
-    -fx-background-color: -color-base-8;
 }
 
 /* Used at top of editor control */

@@ -1,6 +1,5 @@
 package software.coley.recaf.ui.menubar;
 
-import com.panemu.tiwulfx.control.dock.DetachableTab;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
@@ -14,6 +13,7 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
@@ -21,7 +21,6 @@ import software.coley.recaf.ui.control.ClosableActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.popup.OpenUrlPopup;
 import software.coley.recaf.ui.docking.DockingManager;
-import software.coley.recaf.ui.docking.DockingRegion;
 import software.coley.recaf.ui.pane.WorkspaceBuilderPane;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.ui.window.RecafScene;
@@ -60,6 +59,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 	private final Instance<OpenUrlPopup> openUrlProvider;
 	private final DockingManager dockingManager;
 	private final WindowManager windowManager;
+	private final Actions actions;
 	// config
 	private final RecentFilesConfig recentFilesConfig;
 
@@ -71,6 +71,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 	                @Nonnull Instance<OpenUrlPopup> openUrlProvider,
 	                @Nonnull DockingManager dockingManager,
 	                @Nonnull WindowManager windowManager,
+	                @Nonnull Actions actions,
 	                @Nonnull RecentFilesConfig recentFilesConfig) {
 		super(workspaceManager);
 		this.workspaceManager = workspaceManager;
@@ -80,6 +81,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 		this.openUrlProvider = openUrlProvider;
 		this.dockingManager = dockingManager;
 		this.windowManager = windowManager;
+		this.actions = actions;
 		this.recentFilesConfig = recentFilesConfig;
 
 		textProperty().bind(getBinding("menu.file"));
@@ -91,7 +93,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 		MenuItem itemAddToWorkspace = action("menu.file.addtoworkspace", CarbonIcons.WORKSPACE_IMPORT, this::addToWorkspace);
 		MenuItem itemExportPrimary = action("menu.file.exportapp", CarbonIcons.EXPORT, this::exportCurrent);
 		MenuItem itemViewChanges = action("menu.file.modifications", CarbonIcons.COMPARE, this::openChangeViewer);
-		MenuItem itemViewSummary = action("menu.file.summary", CarbonIcons.INFORMATION, this::openSummary);
+		MenuItem itemViewSummary = action("menu.file.summary", CarbonIcons.INFORMATION, actions::openSummary);
 		MenuItem itemClose = action("menu.file.close", CarbonIcons.TRASH_CAN, this::closeWorkspace);
 		itemAddToWorkspace.disableProperty().bind(hasWorkspace.not());
 		itemExportPrimary.disableProperty().bind(hasWorkspace.not().and(hasAgentWorkspace.not()));
@@ -225,18 +227,6 @@ public class FileMenu extends WorkspaceAwareMenu {
 		OpenUrlPopup popup = openUrlProvider.get();
 		popup.show();
 		popup.requestInputFocus();
-	}
-
-	/**
-	 * Display the workspace summary / current information.
-	 */
-	private void openSummary() {
-		// TODO: Move this into 'Actions' class and fill in the tab's context menu
-		WorkspaceInformationPane informationPane = infoPaneProvider.get();
-		DockingRegion dockInfo = dockingManager.getPrimaryRegion();
-		DetachableTab infoTab = dockInfo.createTab(Lang.getBinding("workspace.info"), informationPane);
-		infoTab.getTabPane().getSelectionModel().select(infoTab);
-		infoTab.setGraphic(new FontIconView(CarbonIcons.INFORMATION));
 	}
 
 	/**

@@ -1,7 +1,6 @@
 package software.coley.recaf.ui.pane;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Pos;
@@ -12,6 +11,7 @@ import javafx.scene.layout.StackPane;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.context.ContextSource;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.tree.TreeFiltering;
@@ -19,14 +19,14 @@ import software.coley.recaf.ui.control.tree.WorkspaceTree;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
 import software.coley.recaf.ui.dnd.DragAndDrop;
 import software.coley.recaf.ui.dnd.WorkspaceLoadingDropListener;
+import software.coley.recaf.ui.docking.DockingLayoutManager;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.workspace.model.Workspace;
 
 /**
  * Pane to display the current workspace in a navigable tree layout.
  *
  * @author Matt Coley
- * @see WorkspaceRootPane
+ * @see DockingLayoutManager
  */
 @Dependent
 public class WorkspaceExplorerPane extends BorderPane {
@@ -37,13 +37,13 @@ public class WorkspaceExplorerPane extends BorderPane {
 	 * 		Workspace drag-and-drop listener.
 	 * @param workspaceTree
 	 * 		Tree to display workspace with.
-	 * @param workspace
-	 * 		Current workspace, if any.
+	 * @param workspaceManager
+	 * 		Manager to pull in current workspace from.
 	 */
 	@Inject
 	public WorkspaceExplorerPane(@Nonnull WorkspaceLoadingDropListener listener,
 	                             @Nonnull WorkspaceTree workspaceTree,
-	                             @Nullable Workspace workspace) {
+	                             @Nonnull WorkspaceManager workspaceManager) {
 		this.workspaceTree = workspaceTree;
 
 		// As we are the explorer pane, these items should be treated as declarations and not references.
@@ -63,8 +63,8 @@ public class WorkspaceExplorerPane extends BorderPane {
 		setBottom(workspaceTreeFilterPane);
 
 		// Populate tree
-		if (workspace != null)
-			workspaceTree.createWorkspaceRoot(workspace);
+		if (workspaceManager.hasCurrentWorkspace())
+			workspaceTree.createWorkspaceRoot(workspaceManager.getCurrent());
 
 		// Add label to indicate when filter pane input results in the tree being empty.
 		// This should help out users if they forget they have something in the search bar and the tree looks empty.

@@ -1,6 +1,7 @@
 package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -9,6 +10,8 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import org.slf4j.Logger;
+import software.coley.bentofx.dockable.Dockable;
+import software.coley.bentofx.path.DockablePath;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
@@ -28,7 +31,6 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.docking.DockingManager;
-import software.coley.recaf.ui.docking.DockingTab;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.WorkspaceModificationListener;
@@ -51,7 +53,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Tracks available {@link Navigable} content currently open in the UI.
  * <br>
- * This is done by tracking the content of {@link DockingTab} instances when they are {@link Navigable}.
+ * This is done by tracking the content of {@link Dockable} instances when they are {@link Navigable}.
  * This component is itself {@link Navigable} which means if we use these tracked instances as our
  * {@link #getNavigableChildren()} we can do dynamic look-ups with {@link #getNavigableChildrenByPath(PathNode)}
  * to discover any currently open content.
@@ -63,11 +65,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class NavigationManager implements Navigable, Service {
 	public static final String ID = "navigation";
 	private static final Logger logger = Logging.get(NavigationManager.class);
-	private final List<Navigable> children = new CopyOnWriteArrayList<>();
 	private final List<NavigableAddListener> addListeners = new CopyOnWriteArrayList<>();
 	private final List<NavigableRemoveListener> removeListeners = new CopyOnWriteArrayList<>();
-	private final Map<Navigable, DockingTab> childrenToTab = Collections.synchronizedMap(new IdentityHashMap<>());
-	private final Map<DockingTab, NavigableSpy> tabToSpy = Collections.synchronizedMap(new IdentityHashMap<>());
+	private final Map<Navigable, Dockable> childrenToDockable = Collections.synchronizedMap(new IdentityHashMap<>());
+	private final Map<Dockable, NavigableSpy> dockableToSpy = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final Forwarding forwarding = new Forwarding();
 	private final NavigationManagerConfig config;
 	private PathNode<?> path = new DummyInitialNode();
@@ -79,12 +80,12 @@ public class NavigationManager implements Navigable, Service {
 		this.config = config;
 
 		// Track what navigable content is available.
-		dockingManager.addTabCreationListener((parent, tab) -> {
-			ObjectProperty<Node> contentProperty = tab.contentProperty();
+		dockingManager.getBento().addDockableOpenListener((path, dockable) -> {
+			ObjectProperty<Node> contentProperty = dockable.nodeProperty();
 
 			// Create spy for the tab.
-			NavigableSpy spy = new NavigableSpy(tab);
-			tabToSpy.put(tab, spy);
+			NavigableSpy spy = new NavigableSpy(dockable);
+			dockableToSpy.put(dockable, spy);
 
 			// Add listener, so if content changes we are made aware of the changes.
 			contentProperty.addListener(spy);
@@ -92,38 +93,46 @@ public class NavigationManager implements Navigable, Service {
 			// Record initial value.
 			spy.changed(contentProperty, null, contentProperty.getValue());
 		});
-		dockingManager.addTabClosureListener(((parent, tab) -> {
+		dockingManager.getBento().addDockableCloseListener((path, dockable) -> {
 			// The tab is closed, remove its spy lookup.
-			NavigableSpy spy = tabToSpy.remove(tab);
+			NavigableSpy spy = dockableToSpy.remove(dockable);
 			if (spy == null) {
-				logger.warn("Tab {} was closed, but had no associated content spy instance", tab.getText());
+				logger.warn("Tab {} was closed, but had no associated content spy instance", dockable.getTitle());
 				return;
 			}
 
 			// Remove content from navigation tracking.
-			spy.remove(tab.getContent());
+			spy.remove(dockable.nodeProperty().get());
 
 			// Remove the listener from the tab.
-			tab.contentProperty().removeListener(spy);
-		}));
+			dockable.nodeProperty().removeListener(spy);
+		});
 
 		// When the workspace closes, close all associated children.
 		workspaceManager.addWorkspaceCloseListener(workspace -> FxThreadUtil.run(() -> {
-			for (Navigable child : children) {
+			for (Navigable child : childrenToDockable.keySet()) {
 				child.disable();
-				DockingTab dockingTab = childrenToTab.get(child);
-				if (dockingTab != null)
-					dockingTab.close();
+
+				Dockable dockable = childrenToDockable.get(child);
+				if (dockable == null) {
+					logger.warn("Navigation manager children-to-dockable map did not have value for key: {}", child.getPath());
+					continue;
+				}
+
+				DockablePath path = dockingManager.getBento().findDockable(dockable);
+				if (path == null) {
+					logger.warn("Navigation manager couldn't invoke dockable.onClose() since dockable path could not be resolved for: {}", dockable.getTitle());
+					continue;
+				}
+
+				// Trigger on-close handler
+				path.space().closeDockable(dockable);
 			}
 
 			// Validate all child references have been removed.
-			if (!children.isEmpty()) {
-				logger.warn("Navigation manager children list was not empty after workspace closure");
-				children.clear();
-			}
-			if (!childrenToTab.isEmpty()) {
-				logger.warn("Navigation manager children-to-tab map was not empty after workspace closure");
-				childrenToTab.clear();
+			if (!childrenToDockable.isEmpty()) {
+				logger.warn("Navigation manager children-to-dockable map was not empty after workspace closure");
+				childrenToDockable.clear();
 			}
 
 			// Remove the path reference to the old workspace.
@@ -131,11 +140,11 @@ public class NavigationManager implements Navigable, Service {
 			path = new DummyInitialNode();
 
 			// Force close any remaining tabs that hold navigable content.
-			for (DockingTab tab : dockingManager.getDockTabs()) {
-				if (tab.getContent() instanceof Navigable navigable) {
+			for (DockablePath path : dockingManager.getBento().getAllDockables()) {
+				Dockable dockable = path.dockable();
+				if (dockable.nodeProperty().get() instanceof Navigable navigable) {
 					navigable.disable();
-					tab.setClosable(true);
-					tab.close();
+					path.space().closeDockable(dockable);
 				}
 			}
 		}));
@@ -167,6 +176,19 @@ public class NavigationManager implements Navigable, Service {
 			for (WorkspaceResource resource : workspace.getAllResources(false))
 				resource.addListener(forwarding);
 		});
+	}
+
+	/**
+	 * Looks up which {@link Dockable} has the given navigable as its {@link Dockable#nodeProperty()}.
+	 *
+	 * @param navigable
+	 * 		Some navigable UI element.
+	 *
+	 * @return The dockable holding the navigable element, if any exists.
+	 */
+	@Nullable
+	public Dockable lookupDockable(@Nonnull Navigable navigable) {
+		return childrenToDockable.get(navigable);
 	}
 
 	/**
@@ -218,7 +240,7 @@ public class NavigationManager implements Navigable, Service {
 	@Nonnull
 	@Override
 	public Collection<Navigable> getNavigableChildren() {
-		return Collections.unmodifiableCollection(children);
+		return Collections.unmodifiableCollection(childrenToDockable.keySet());
 	}
 
 	@Override
@@ -244,13 +266,13 @@ public class NavigationManager implements Navigable, Service {
 	}
 
 	/**
-	 * Listener to update {@link #children}.
+	 * Listener to update {@link #childrenToDockable}.
 	 */
 	private class NavigableSpy implements ChangeListener<Node> {
-		private final DockingTab tab;
+		private final Dockable dockable;
 
-		public NavigableSpy(DockingTab tab) {
-			this.tab = tab;
+		public NavigableSpy(@Nonnull Dockable dockable) {
+			this.dockable = dockable;
 		}
 
 		@Override
@@ -259,19 +281,17 @@ public class NavigationManager implements Navigable, Service {
 			add(newValue);
 		}
 
-		void add(Node value) {
+		void add(@Nullable Node value) {
 			if (value instanceof Navigable navigable && navigable.isTrackable()) {
-				children.add(navigable);
-				childrenToTab.put(navigable, tab);
+				childrenToDockable.put(navigable, dockable);
 				Unchecked.checkedForEach(addListeners, listener -> listener.onAdd(navigable),
 						(listener, t) -> logger.error("Exception thrown when handling navigable added '{}'", navigable.getClass().getName(), t));
 			}
 		}
 
-		void remove(Node value) {
+		void remove(@Nullable Node value) {
 			if (value instanceof Navigable navigable) {
-				children.remove(navigable);
-				childrenToTab.remove(navigable);
+				childrenToDockable.remove(navigable);
 				Unchecked.checkedForEach(removeListeners, listener -> listener.onRemove(navigable),
 						(listener, t) -> logger.error("Exception thrown when handling navigable removed '{}'", navigable.getClass().getName(), t));
 
