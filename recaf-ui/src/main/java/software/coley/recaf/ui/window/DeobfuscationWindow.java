@@ -37,6 +37,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.decompile.DecompilerManager;
+import software.coley.recaf.services.deobfuscation.transform.generic.CycleClassRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCatchMergingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.EnumNameRestorationTransformer;
@@ -123,6 +124,7 @@ public class DeobfuscationWindow extends RecafStage {
 			TreeItem<Selection> generic = new TreeItem<>(new Selection.Category("deobf.tree.generic", CarbonIcons.CIRCLE_DASH));
 			TreeItem<Selection> anti = new TreeItem<>(new Selection.Category("deobf.tree.generic.anticrasher", CarbonIcons.DEBUG));
 			anti.getChildren().addAll(of(
+					CycleClassRemovingTransformer.class,
 					IllegalAnnotationRemovingTransformer.class,
 					IllegalSignatureRemovingTransformer.class,
 					IllegalVarargsRemovingTransformer.class

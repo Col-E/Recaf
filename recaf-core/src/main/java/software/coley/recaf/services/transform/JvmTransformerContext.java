@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JvmTransformerContext {
 	private final Map<Class<? extends JvmClassTransformer>, JvmClassTransformer> transformerMap;
 	private final AggregatedMappings mappings;
+	private final Set<String> classesToRemove = new HashSet<>();
 	private final Map<String, JvmClassData> classData = new ConcurrentHashMap<>();
 	private final Set<String> recomputeFrameClasses = new HashSet<>();
 	private final Workspace workspace;
@@ -283,6 +284,28 @@ public class JvmTransformerContext {
 	public void setBytecode(@Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo info, @Nonnull byte[] bytecode) {
 		transformerDidWork = true;
 		getJvmClassData(bundle, info).setBytecode(bytecode);
+	}
+
+	/**
+	 * Marks a class for removal in the workspace.
+	 *
+	 * @param info
+	 * 		The class model in the workspace.
+	 *
+	 * @see #getClassesToRemove()
+	 */
+	public void markClassForRemoval(@Nonnull JvmClassInfo info) {
+		classesToRemove.add(info.getName());
+	}
+
+	/**
+	 * @return Names of classes marked for removal.
+	 *
+	 * @see #markClassForRemoval(JvmClassInfo)
+	 */
+	@Nonnull
+	public Set<String> getClassesToRemove() {
+		return Collections.unmodifiableSet(classesToRemove);
 	}
 
 	/**
