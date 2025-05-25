@@ -47,6 +47,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSign
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.KotlinNameRestorationTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.LongAnnotationRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.SourceNameRestorationTransformer;
@@ -125,6 +126,7 @@ public class DeobfuscationWindow extends RecafStage {
 			TreeItem<Selection> anti = new TreeItem<>(new Selection.Category("deobf.tree.generic.anticrasher", CarbonIcons.DEBUG));
 			anti.getChildren().addAll(of(
 					CycleClassRemovingTransformer.class,
+					LongAnnotationRemovingTransformer.class,
 					IllegalAnnotationRemovingTransformer.class,
 					IllegalSignatureRemovingTransformer.class,
 					IllegalVarargsRemovingTransformer.class
