@@ -6,6 +6,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.TypePath;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.util.Types;
@@ -43,6 +44,12 @@ public class IllegalAnnotationRemovingVisitor extends ClassVisitor {
 	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
 		return new MethodIllegalAnnoRemover(mv);
+	}
+
+	@Override
+	public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+		RecordComponentVisitor rcv = super.visitRecordComponent(name, descriptor, signature);
+		return new RecordIllegalAnnoRemover(rcv);
 	}
 
 	@Override
@@ -158,6 +165,26 @@ public class IllegalAnnotationRemovingVisitor extends ClassVisitor {
 			if (!isValidAnnotationDesc(descriptor))
 				return null;
 			return new IllegalSubAnnoRemover(super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, descriptor, visible));
+		}
+	}
+
+	private class RecordIllegalAnnoRemover extends RecordComponentVisitor {
+		public RecordIllegalAnnoRemover(@Nullable RecordComponentVisitor rcv) {
+			super(RecafConstants.getAsmVersion(), rcv);
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+			if (!isValidAnnotationDesc(descriptor))
+				return null;
+			return new IllegalSubAnnoRemover(super.visitAnnotation(descriptor, visible));
+		}
+
+		@Override
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+			if (!isValidAnnotationDesc(descriptor))
+				return null;
+			return new IllegalSubAnnoRemover(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible));
 		}
 	}
 }
