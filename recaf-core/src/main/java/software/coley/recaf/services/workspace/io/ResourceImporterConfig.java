@@ -16,6 +16,8 @@ import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
+import java.util.List;
+
 /**
  * Config for {@link ResourceImporter}.
  *
@@ -26,6 +28,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	private final ObservableObject<ZipStrategy> zipStrategy = new ObservableObject<>(ZipStrategy.JVM);
 	private final ObservableBoolean skipRevisitedCenToLocalLinks = new ObservableBoolean(true);
 	private final ObservableBoolean allowBasicJvmBaseOffsetZeroCheck = new ObservableBoolean(true);
+	private final ObservableBoolean ignoreNaiveFileLengths = new ObservableBoolean(false);
 
 	@Inject
 	public ResourceImporterConfig() {
@@ -34,6 +37,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 		addValue(new BasicConfigValue<>("zip-strategy", ZipStrategy.class, zipStrategy));
 		addValue(new BasicConfigValue<>("skip-revisited-cen-to-local-links", boolean.class, skipRevisitedCenToLocalLinks));
 		addValue(new BasicConfigValue<>("allow-basic-base-offset-zero-check", boolean.class, allowBasicJvmBaseOffsetZeroCheck));
+		addValue(new BasicConfigValue<>("ignore-naive-file-lengths", boolean.class, ignoreNaiveFileLengths));
 	}
 
 	/**
@@ -82,6 +86,18 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	}
 
 	/**
+	 * Post-processes naively read zip archives to expand file data to the next zip structure boundary.
+	 * This is necessary in some cases where an archive composed entirely of local file headers has bogus
+	 * file length values <i>(such as zero)</i> when file data appears after the file name in the zip structure.
+	 *
+	 * @return {@code true} to ignore the reported file lengths when using {@link ZipStrategy#NAIVE}.
+	 */
+	@Nonnull
+	public ObservableBoolean getIgnoreNaiveFileLengths() {
+		return ignoreNaiveFileLengths;
+	}
+
+	/**
 	 * @return Mapping of input bytes to a ZIP archive model.
 	 */
 	@Nonnull
@@ -92,7 +108,24 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 					allowBasicJvmBaseOffsetZeroCheck.getValue()));
 		if (strategy == ZipStrategy.STANDARD)
 			return ZipIO::readStandard;
-		return ZipIO::readNaive;
+		return input -> {
+			ZipArchive archive = ZipIO.readNaive(input);
+			if (ignoreNaiveFileLengths.getValue()) {
+				List<LocalFileHeader> items = archive.getLocalFiles();
+				for (int i = 0; i < items.size(); i++) {
+					LocalFileHeader lfh = items.get(i);
+					long nextStart = i < items.size() - 1 ?
+							items.get(i + 1).offset() :
+							input.length;
+					long expectedEnd = lfh.offset() + lfh.length();
+					if (expectedEnd < nextStart) {
+						// TODO: Subtract nextStart here if data-descriptor is present
+						lfh.setFileDataEndOffset(nextStart);
+					}
+				}
+			}
+			return archive;
+		};
 	}
 
 	/**
