@@ -78,16 +78,20 @@ public class MappingMenu extends WorkspaceAwareMenu {
 
 		// Use a shared file-chooser for mapping menu actions.
 		// That way there is some continuity when working with mappings.
-		FileChooser chooser = new FileChooserBuilder()
+		FileChooser chooserOpen = new FileChooserBuilder()
 				.setInitialDirectory(recentFiles.getLastWorkspaceOpenDirectory())
 				.setTitle(Lang.get("dialog.file.open"))
+				.build();
+		FileChooser chooserExport = new FileChooserBuilder()
+				.setInitialDirectory(recentFiles.getLastWorkspaceOpenDirectory())
+				.setTitle(Lang.get("dialog.file.save"))
 				.build();
 
 		Map<MappingFileFormat, MenuItem> formatToExportAsItems = new IdentityHashMap<>();
 		for (String formatName : formatManager.getMappingFileFormats()) {
 			apply.getItems().add(actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
 				// Show the prompt, load the mappings text ant attempt to load them.
-				File file = chooser.showOpenDialog(windowManager.getMainWindow());
+				File file = chooserOpen.showOpenDialog(windowManager.getMainWindow());
 				if (file != null) {
 					importPool.submit(() -> {
 						try {
@@ -112,7 +116,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 			if (tmpFormat.supportsExportText()) {
 				ActionMenuItem exportAsItem = actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
 					// Show the prompt, write current mappings to the given path.
-					File file = chooser.showSaveDialog(windowManager.getMainWindow());
+					File file = chooserExport.showSaveDialog(windowManager.getMainWindow());
 					if (file != null) {
 						exportPool.submit(() -> {
 							try {
