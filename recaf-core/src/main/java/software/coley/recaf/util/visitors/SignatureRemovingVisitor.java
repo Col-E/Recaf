@@ -5,6 +5,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.RecordComponentVisitor;
 import software.coley.recaf.RecafConstants;
 
 /**
@@ -40,5 +41,10 @@ public class SignatureRemovingVisitor extends ClassVisitor {
 				super.visitLocalVariable(name, desc, null, start, end, index);
 			}
 		};
+	}
+
+	@Override
+	public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String s) {
+		return super.visitRecordComponent(name, descriptor, null);
 	}
 }
