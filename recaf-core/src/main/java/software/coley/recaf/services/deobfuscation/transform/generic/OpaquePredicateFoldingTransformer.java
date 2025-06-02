@@ -56,9 +56,7 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
-		inheritanceGraph = workspace == workspaceManager.getCurrent() ?
-				graphService.getCurrentWorkspaceInheritanceGraph() :
-				graphService.newInheritanceGraph(workspace);
+		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
 	}
 
 	@Override
@@ -160,7 +158,7 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 							if (frame.getStackSize() < 2)
 								continue;
 							ReValue stack2ndTop = frame.getStack(frame.getStackSize() - 2);
-							if (!stack2ndTop.hasKnownValue()&& !(stack2ndTop instanceof ObjectValue ov && ov.isNull()))
+							if (!stack2ndTop.hasKnownValue() && !(stack2ndTop instanceof ObjectValue ov && ov.isNull()))
 								continue;
 
 							// Skip if the other argument to compare with is not immediately backed by
