@@ -42,8 +42,10 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.awt.Toolkit;
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,12 +78,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 	                            @Nonnull Workspace workspace,
 	                            @Nonnull Runnable onComplete) {
 		// Allow pasting file paths to append to the paths list.
-		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (e.isControlDown() && e.getCode() == KeyCode.V) {
-				for (File file : Clipboard.getSystemClipboard().getFiles())
-					addPath(file.toPath());
-			}
-		});
+		addEventFilter(KeyEvent.KEY_PRESSED, this::handlePaste);
 
 		// Add dropped files to the paths list.
 		DragAndDrop.installFileSupport(this, (region, event, files) -> {
@@ -212,12 +209,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 	                            @Nonnull RecentFilesConfig recentFilesConfig,
 	                            @Nonnull Runnable onComplete) {
 		// Allow pasting file paths to append to the paths list.
-		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (e.isControlDown() && e.getCode() == KeyCode.V) {
-				for (File file : Clipboard.getSystemClipboard().getFiles())
-					addPath(file.toPath());
-			}
-		});
+		addEventFilter(KeyEvent.KEY_PRESSED, this::handlePaste);
 
 		// Add dropped files to the paths list.
 		DragAndDrop.installFileSupport(this, (region, event, files) -> {
@@ -342,6 +334,46 @@ public class WorkspaceBuilderPane extends BorderPane {
 		getStyleClass().addAll(Styles.BG_INSET);
 		buttons.getStyleClass().addAll(Styles.BG_DEFAULT);
 		buttons.setStyle("-fx-border-color: -color-border-muted; -fx-border-width: 1px 0 0 0;");
+	}
+
+	/**
+	 * Handle adding files via the clipboard when pasting.
+	 *
+	 * @param e
+	 * 		Key press event.
+	 */
+	private void handlePaste(KeyEvent e) {
+		if (e.isControlDown() && e.getCode() == KeyCode.V) {
+			Clipboard clipboard = Clipboard.getSystemClipboard();
+
+			// Handle files
+			for (File file : clipboard.getFiles())
+				addPath(file.toPath());
+
+			// Handle text which may be a path/url to a file
+			String url = clipboard.getUrl();
+			String string = clipboard.getString();
+			if (string != null) {
+				// Check if it is a file path
+				if (new File(string).exists())
+					addPath(Paths.get(string));
+
+				// Check if it is a file uri
+				url = string;
+			}
+			try {
+				URI u = URI.create(url);
+				if ("file".equals(u.getScheme())) {
+					String host = u.getHost();
+					if (host != null)
+						return;
+					String path = u.getPath();
+					File filePath = new File(path);
+					if (filePath.exists())
+						addPath(filePath.toPath());
+				}
+			} catch (IllegalArgumentException _) {}
+		}
 	}
 
 	/**
