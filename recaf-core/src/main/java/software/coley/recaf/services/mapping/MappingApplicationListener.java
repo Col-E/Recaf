@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.workspace.model.Workspace;
 
 /**
  * Used to intercept application state before and after {@link MappingResults#apply()}.
@@ -11,14 +12,18 @@ import jakarta.annotation.Nonnull;
  */
 public interface MappingApplicationListener {
 	/**
+	 * @param workspace
+	 * 		Workspace the mappings are applied to.
 	 * @param mappingResults
 	 * 		Mapping results to be applied.
 	 */
-	void onPreApply(@Nonnull MappingResults mappingResults);
+	void onPreApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults);
 
 	/**
+	 * @param workspace
+	 * 		Workspace the mappings are applied to.
 	 * @param mappingResults
 	 * 		Mapping results that were applied.
 	 */
-	void onPostApply(@Nonnull MappingResults mappingResults);
+	void onPostApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults);
 }

@@ -54,7 +54,7 @@ public class MappingApplierService implements Service {
 	public MappingApplier inWorkspace(@Nonnull Workspace workspace) {
 		if (workspace == workspaceManager.getCurrent())
 			return Objects.requireNonNull(inCurrentWorkspace(), "Failed to access current workspace for mapping application");
-		return new MappingApplier(workspace, inheritanceGraphService.newInheritanceGraph(workspace), null, null);
+		return new MappingApplier(workspace, inheritanceGraphService.newInheritanceGraph(workspace), listeners, null);
 	}
 
 	/**

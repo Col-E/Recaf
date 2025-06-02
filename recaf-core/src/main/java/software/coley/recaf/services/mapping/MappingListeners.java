@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -44,7 +45,8 @@ public class MappingListeners implements Service {
 	 * 		Listener to add.
 	 */
 	public synchronized void addMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
-		mappingApplicationListeners.add(listener);
+		if (!mappingApplicationListeners.contains(listener))
+			mappingApplicationListeners.add(listener);
 	}
 
 	/**
@@ -75,14 +77,14 @@ public class MappingListeners implements Service {
 		// Bundle multiple listeners.
 		return new MappingApplicationListener() {
 			@Override
-			public void onPreApply(@Nonnull MappingResults mappingResults) {
-				Unchecked.checkedForEach(listeners, listener -> listener.onPreApply(mappingResults),
+			public void onPreApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
+				Unchecked.checkedForEach(listeners, listener -> listener.onPreApply(workspace, mappingResults),
 						(listener, t) -> logger.error("Exception thrown before applying mappings", t));
 			}
 
 			@Override
-			public void onPostApply(@Nonnull MappingResults mappingResults) {
-				Unchecked.checkedForEach(listeners, listener -> listener.onPostApply(mappingResults),
+			public void onPostApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
+				Unchecked.checkedForEach(listeners, listener -> listener.onPostApply(workspace, mappingResults),
 						(listener, t) -> logger.error("Exception thrown after applying mappings", t));
 			}
 		};
