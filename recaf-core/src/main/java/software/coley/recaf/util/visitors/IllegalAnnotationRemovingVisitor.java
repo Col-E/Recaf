@@ -17,6 +17,8 @@ import software.coley.recaf.util.Types;
  * @author Matt Coley
  */
 public class IllegalAnnotationRemovingVisitor extends ClassVisitor {
+	/** No reasonable annotation structure used in a valid API should have a depth of 10 levels. */
+	private static final int MAX_DEPTH = 10;
 	private boolean detected;
 
 	/**
@@ -83,20 +85,35 @@ public class IllegalAnnotationRemovingVisitor extends ClassVisitor {
 	}
 
 	private class IllegalSubAnnoRemover extends AnnotationVisitor {
+		private final int depth;
+
 		protected IllegalSubAnnoRemover(@Nullable AnnotationVisitor av) {
+			this(av, 0);
+		}
+
+		private IllegalSubAnnoRemover(@Nullable AnnotationVisitor av, int depth) {
 			super(RecafConstants.getAsmVersion(), av);
+			this.depth = depth;
 		}
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
 			if (!isValidAnnotationDesc(descriptor))
 				return null;
-			return new IllegalSubAnnoRemover(super.visitAnnotation(name, descriptor));
+			if (depth > MAX_DEPTH) {
+				detected = true;
+				return null;
+			}
+			return new IllegalSubAnnoRemover(super.visitAnnotation(name, descriptor), depth + 1);
 		}
 
 		@Override
 		public AnnotationVisitor visitArray(String name) {
-			return new IllegalSubAnnoRemover(super.visitArray(name));
+			if (depth > MAX_DEPTH) {
+				detected = true;
+				return null;
+			}
+			return new IllegalSubAnnoRemover(super.visitArray(name), depth + 1);
 		}
 	}
 
