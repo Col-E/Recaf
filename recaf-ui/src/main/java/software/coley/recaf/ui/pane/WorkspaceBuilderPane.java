@@ -82,10 +82,8 @@ public class WorkspaceBuilderPane extends BorderPane {
 
 		// Add dropped files to the paths list.
 		DragAndDrop.installFileSupport(this, (region, event, files) -> {
-			for (Path path : files) {
-				if (!paths.contains(path))
-					paths.add(path);
-			}
+			for (Path path : files)
+				addPath(path);
 		});
 
 		// Create the vertical list of paths.
@@ -146,10 +144,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 			if (file != null) {
 				String parent = file.getParent();
 				if (parent != null) recentFilesConfig.getLastWorkspaceOpenDirectory().setValue(parent);
-
-				Path path = file.toPath();
-				if (!paths.contains(path))
-					paths.add(path);
+				addPath(file.toPath());
 			}
 		});
 		ActionButton addFile = new ActionButton(CarbonIcons.DOCUMENT_ADD, Lang.getBinding("dialog.file.open.file"), () -> {
@@ -164,10 +159,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 			if (file != null) {
 				String parent = file.getParent();
 				if (parent != null) recentFilesConfig.getLastWorkspaceOpenDirectory().setValue(parent);
-
-				Path path = file.toPath();
-				if (!paths.contains(path))
-					paths.add(path);
+				addPath(file.toPath());
 			}
 		});
 		addDir.getStyleClass().addAll(Styles.BUTTON_OUTLINED, Styles.LEFT_PILL);
@@ -287,10 +279,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 			if (file != null) {
 				String parent = file.getParent();
 				if (parent != null) recentFilesConfig.getLastWorkspaceOpenDirectory().setValue(parent);
-
-				Path path = file.toPath();
-				if (!paths.contains(path))
-					paths.add(path);
+				addPath(file.toPath());
 			}
 		});
 		ActionButton addFile = new ActionButton(CarbonIcons.DOCUMENT_ADD, Lang.getBinding("dialog.file.open.file"), () -> {
@@ -305,10 +294,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 			if (file != null) {
 				String parent = file.getParent();
 				if (parent != null) recentFilesConfig.getLastWorkspaceOpenDirectory().setValue(parent);
-
-				Path path = file.toPath();
-				if (!paths.contains(path))
-					paths.add(path);
+				addPath(file.toPath());
 			}
 		});
 		addDir.getStyleClass().addAll(Styles.BUTTON_OUTLINED, Styles.LEFT_PILL);
@@ -381,10 +367,11 @@ public class WorkspaceBuilderPane extends BorderPane {
 	 * 		Path to add.
 	 */
 	private void addPath(@Nonnull Path path) {
-		if (paths.isEmpty())
-			primary.set(path);
-		if (!paths.contains(path))
+		if (!paths.contains(path)) {
+			if (paths.isEmpty())
+				primary.set(path);
 			paths.add(path);
+		}
 	}
 
 	/**
@@ -426,7 +413,8 @@ public class WorkspaceBuilderPane extends BorderPane {
 			// Button to remove this path from the inputs.
 			ActionButton remove = new ActionButton(CarbonIcons.TRASH_CAN, Lang.getBinding("misc.remove"), () -> {
 				paths.remove(path);
-				if (primary.get().equals(path))
+				Path primaryPath = primary.get();
+				if (primaryPath != null && primaryPath.equals(path))
 					primary.set(null);
 			});
 			remove.setMinWidth(100);
