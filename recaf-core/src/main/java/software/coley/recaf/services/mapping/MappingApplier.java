@@ -80,7 +80,7 @@ public class MappingApplier {
 	                                     @Nonnull Collection<JvmClassInfo> classes) {
 		mappings = enrich(mappings);
 		MappingApplicationListener listener = listeners == null ? null : listeners.createBundledMappingApplicationListener();
-		MappingResults results = new MappingResults(mappings, listener);
+		MappingResults results = new MappingResults(workspace, mappings, listener);
 		if (aggregateMappingManager != null)
 			results.withAggregateManager(aggregateMappingManager);
 
@@ -107,7 +107,7 @@ public class MappingApplier {
 	public MappingResults applyToPrimaryResource(@Nonnull Mappings mappings) {
 		mappings = enrich(mappings);
 		MappingApplicationListener listener = listeners == null ? null : listeners.createBundledMappingApplicationListener();
-		MappingResults results = new MappingResults(mappings, listener);
+		MappingResults results = new MappingResults(workspace, mappings, listener);
 		if (aggregateMappingManager != null)
 			results.withAggregateManager(aggregateMappingManager);
 

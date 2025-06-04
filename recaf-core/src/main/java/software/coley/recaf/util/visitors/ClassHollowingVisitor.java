@@ -2,7 +2,16 @@ package software.coley.recaf.util.visitors;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.RecordComponentVisitor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 import software.coley.recaf.RecafConstants;
 
 import java.lang.reflect.Modifier;
@@ -71,6 +80,12 @@ public class ClassHollowingVisitor extends ClassVisitor {
 		boolean isAbstract = Modifier.isAbstract(access);
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 		return new MethodHollower(mv, isAbstract, Type.getReturnType(desc));
+	}
+
+	@Override
+	public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+		RecordComponentVisitor rv = super.visitRecordComponent(name, descriptor, signature);
+		return new RecordComponentHollower(rv);
 	}
 
 	/**
@@ -293,6 +308,33 @@ public class ClassHollowingVisitor extends ClassVisitor {
 		public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc,
 		                                                 boolean visible) {
 			// Skip
+			return null;
+		}
+	}
+
+	/**
+	 * Visitor that removes
+	 */
+	public class RecordComponentHollower extends RecordComponentVisitor {
+		/**
+		 * @param rv
+		 * 		Parent record component visitor.
+		 */
+		public RecordComponentHollower(RecordComponentVisitor rv) {
+			super(RecafConstants.getAsmVersion(), rv);
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+			if (keptItems.contains(Item.ANNOTATIONS))
+				return super.visitAnnotation(descriptor, visible);
+			return null;
+		}
+
+		@Override
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+			if (keptItems.contains(Item.ANNOTATIONS))
+				return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
 			return null;
 		}
 	}

@@ -56,9 +56,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
-		inheritanceGraph = workspace == workspaceManager.getCurrent() ?
-				graphService.getCurrentWorkspaceInheritanceGraph() :
-				graphService.newInheritanceGraph(workspace);
+		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
 	}
 
 	@Override

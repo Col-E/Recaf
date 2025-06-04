@@ -210,9 +210,12 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 		// Register mapping listeners so that when types & members are renamed the comments are migrated.
 		mappingListeners.addMappingApplicationListener(new MappingApplicationListener() {
 			@Override
-			public void onPreApply(@Nonnull MappingResults mappingResults) {
+			public void onPreApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
+				// Mappings must apply to the current workspace.
 				WorkspaceComments comments = getCurrentWorkspaceComments();
 				if (comments == null)
+					return;
+				if (workspaceManager.getCurrent() != workspace)
 					return;
 
 				// There are comments that may need to be updated.
@@ -283,7 +286,7 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 			}
 
 			@Override
-			public void onPostApply(@Nonnull MappingResults mappingResults) {
+			public void onPostApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
 				// no-op
 			}
 		});

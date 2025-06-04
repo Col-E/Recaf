@@ -73,9 +73,7 @@ public class AssemblerPipelineManager implements Service {
 	 */
 	@Nonnull
 	public JvmAssemblerPipeline newJvmAssemblerPipeline(@Nonnull Workspace workspace) {
-		InheritanceGraph graph = workspace == workspaceManager.getCurrent() ?
-				graphService.getCurrentWorkspaceInheritanceGraph() :
-				graphService.newInheritanceGraph(workspace);
+		InheritanceGraph graph = graphService.getOrCreateInheritanceGraph(workspace);
 		return new JvmAssemblerPipeline(workspace, Objects.requireNonNull(graph), config, jvmConfig);
 	}
 

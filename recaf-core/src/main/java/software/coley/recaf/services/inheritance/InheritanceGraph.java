@@ -69,29 +69,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 		WorkspaceResource primaryResource = workspace.getPrimaryResource();
 		primaryResource.addResourceJvmClassListener(this);
 		primaryResource.addResourceAndroidClassListener(this);
-		workspace.addWorkspaceModificationListener(new WorkspaceModificationListener() {
-			@Override
-			public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-				library.jvmClassBundleStreamRecursive()
-						.flatMap(Bundle::stream)
-						.forEach(c -> populateParentToChildLookup(c));
-				library.androidClassBundleStreamRecursive()
-						.flatMap(Bundle::stream)
-						.forEach(c -> populateParentToChildLookup(c));
-				refreshChildLookup();
-			}
-
-			@Override
-			public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-				library.jvmClassBundleStreamRecursive()
-						.flatMap(Bundle::stream)
-						.forEach(c -> removeClass(c));
-				library.androidClassBundleStreamRecursive()
-						.flatMap(Bundle::stream)
-						.forEach(c -> removeClass(c));
-				refreshChildLookup();
-			}
-		});
+		workspace.addWorkspaceModificationListener(this);
 
 		// Populate downwards (parent --> child) lookup
 		refreshChildLookup();
@@ -507,12 +485,25 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 
 	@Override
 	public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+		Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+		library.jvmClassBundleStreamRecursive()
+				.flatMap(Bundle::stream)
+				.forEach(c -> populateParentToChildLookup(c, visited));
+		library.androidClassBundleStreamRecursive()
+				.flatMap(Bundle::stream)
+				.forEach(c -> populateParentToChildLookup(c, visited));
 		refreshChildLookup();
 	}
 
 	@Override
 	public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-		// no-op
+		library.jvmClassBundleStreamRecursive()
+				.flatMap(Bundle::stream)
+				.forEach(this::removeClass);
+		library.androidClassBundleStreamRecursive()
+				.flatMap(Bundle::stream)
+				.forEach(this::removeClass);
+		refreshChildLookup();
 	}
 
 	@Override
@@ -523,12 +514,16 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	}
 
 	@Override
-	public void onPreApply(@Nonnull MappingResults mappingResults) {
+	public void onPreApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
 		// no-op
 	}
 
 	@Override
-	public void onPostApply(@Nonnull MappingResults mappingResults) {
+	public void onPostApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
+		// Must apply to the graph's associated workspace.
+		if (this.workspace != workspace)
+			return;
+
 		// Remove vertices and lookups of items that no longer exist.
 		mappingResults.getPreMappingPaths().forEach((name, path) -> {
 			// If we see a 'stub' from the vertex creator, we know it is no longer
@@ -542,18 +537,15 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 
 		// While applying mappings, the graph does not perfectly refresh, so we need to clear out some state
 		// so that when the graph is used again the correct information will be fetched.
+		Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 		mappingResults.getPostMappingPaths().forEach((name, path) -> {
 			// Stub information for classes we know exist in the workspace should be removed.
 			stubs.remove(name);
 
 			// Refresh the parent-->children mapping.
 			parentToChild.remove(name);
-			ClassInfo postPath = path.getValue();
-			populateParentToChildLookup(postPath);
-
-			// Clear cached parents inside the vertex.
-			InheritanceVertex vertex = vertices.get(name);
-			if (vertex != null) vertex.clearCachedVertices();
+			ClassInfo postClass = path.getValue();
+			populateParentToChildLookup(postClass, visited);
 		});
 	}
 

@@ -17,13 +17,13 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
- * Provides support for providing context menus for a variety of item types.
+ * Provides support for providing contextual right click menus for a variety of item types.
  * For instance, the menus of {@link WorkspaceTreeCell} instances.
  * <br>
  * The menus displayed in the UI can be adapted out by supplying your own
@@ -49,17 +49,17 @@ public class ContextMenuProviderService implements Service {
 	public static final String SERVICE_ID = "cell-menus";
 	private final ContextMenuProviderServiceConfig config;
 	// Adapters
-	private final Set<ClassContextMenuAdapter> classContextMenuAdapters = new HashSet<>();
-	private final Set<FileContextMenuAdapter> fileContextMenuAdapters = new HashSet<>();
-	private final Set<InnerClassContextMenuAdapter> innerClassContextMenuAdapters = new HashSet<>();
-	private final Set<FieldContextMenuAdapter> fieldContextMenuAdapters = new HashSet<>();
-	private final Set<MethodContextMenuAdapter> methodContextMenuAdapters = new HashSet<>();
-	private final Set<AnnotationContextMenuAdapter> annotationContextMenuAdapters = new HashSet<>();
-	private final Set<PackageContextMenuAdapter> packageContextMenuAdapters = new HashSet<>();
-	private final Set<DirectoryContextMenuAdapter> directoryContextMenuAdapters = new HashSet<>();
-	private final Set<BundleContextMenuAdapter> bundleContextMenuAdapters = new HashSet<>();
-	private final Set<ResourceContextMenuAdapter> resourceContextMenuAdapters = new HashSet<>();
-	private final Set<AssemblerContextMenuAdapter> assemblerContextMenuAdapters = new HashSet<>();
+	private final List<ClassContextMenuAdapter> classContextMenuAdapters = new ArrayList<>();
+	private final List<FileContextMenuAdapter> fileContextMenuAdapters = new ArrayList<>();
+	private final List<InnerClassContextMenuAdapter> innerClassContextMenuAdapters = new ArrayList<>();
+	private final List<FieldContextMenuAdapter> fieldContextMenuAdapters = new ArrayList<>();
+	private final List<MethodContextMenuAdapter> methodContextMenuAdapters = new ArrayList<>();
+	private final List<AnnotationContextMenuAdapter> annotationContextMenuAdapters = new ArrayList<>();
+	private final List<PackageContextMenuAdapter> packageContextMenuAdapters = new ArrayList<>();
+	private final List<DirectoryContextMenuAdapter> directoryContextMenuAdapters = new ArrayList<>();
+	private final List<BundleContextMenuAdapter> bundleContextMenuAdapters = new ArrayList<>();
+	private final List<ResourceContextMenuAdapter> resourceContextMenuAdapters = new ArrayList<>();
+	private final List<AssemblerContextMenuAdapter> assemblerContextMenuAdapters = new ArrayList<>();
 	// Defaults
 	private final ClassContextMenuProviderFactory classContextMenuDefault;
 	private final FileContextMenuProviderFactory fileContextMenuDefault;

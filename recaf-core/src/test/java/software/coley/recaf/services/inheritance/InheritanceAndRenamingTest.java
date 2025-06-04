@@ -8,6 +8,7 @@ import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingApplierService;
+import software.coley.recaf.services.mapping.MappingListeners;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
@@ -25,37 +26,35 @@ import static org.objectweb.asm.Opcodes.V1_8;
  * Tests for {@link InheritanceGraph} and interactions with {@link MappingApplier}.
  */
 class InheritanceAndRenamingTest extends TestBase {
-	static Workspace workspace;
-	static InheritanceGraph inheritanceGraph;
+	private static final int CLASS_COUNT = 10;
 	static MappingApplierService mappingApplierService;
-	static JvmClassInfo[] generatedClasses;
+	static InheritanceGraphService inheritanceGraphService;
+	static MappingListeners mappingListeners;
 
 	@BeforeAll
 	static void setup() {
-		generatedClasses = IntStream.rangeClosed(1, 5).mapToObj(i -> {
+		inheritanceGraphService = recaf.get(InheritanceGraphService.class);
+		mappingApplierService = recaf.get(MappingApplierService.class);
+		mappingListeners = recaf.get(MappingListeners.class);
+	}
+
+	@Test
+	void verifyLinearInterfaces() {
+		JvmClassInfo[] generatedClasses = IntStream.rangeClosed(1, CLASS_COUNT).mapToObj(i -> {
 			String[] interfaces = i == 1 ? null : new String[]{"I" + (i - 1)};
 			ClassWriter cw = new ClassWriter(0);
 			cw.visit(V1_8, ACC_INTERFACE, "I" + i, null, "java/lang/Object", interfaces);
 			return new JvmClassInfoBuilder(cw.toByteArray()).build();
 		}).toList().toArray(JvmClassInfo[]::new);
 
-		// Create workspace with the inheritance classes
+		// Create workspace + graph with the generated interfaces
 		BasicJvmClassBundle classes = TestClassUtils.fromClasses(generatedClasses);
-		workspace = TestClassUtils.fromBundle(classes);
-		workspaceManager.setCurrent(workspace);
+		Workspace workspace = TestClassUtils.fromBundle(classes);
+		InheritanceGraph inheritanceGraph = inheritanceGraphService.newInheritanceGraph(workspace);
+		mappingListeners.addMappingApplicationListener(inheritanceGraph);
 
-		// Get graph
-		inheritanceGraph = recaf.get(InheritanceGraphService.class).getCurrentWorkspaceInheritanceGraph();
-		inheritanceGraph.toString(); // Force immediate init.
-
-		// Get mapping applier
-		mappingApplierService = recaf.get(MappingApplierService.class);
-	}
-
-	@Test
-	void test() {
 		// Verify initial state
-		for (int i = 1; i <= 5; i++) {
+		for (int i = 1; i <= CLASS_COUNT; i++) {
 			String name = "I" + i;
 			InheritanceVertex vertex = inheritanceGraph.getVertex(name);
 			assertNotNull(vertex, "Graph missing '" + name + "'");
@@ -63,13 +62,13 @@ class InheritanceAndRenamingTest extends TestBase {
 
 		// Remap classes
 		IntermediateMappings mappings = new IntermediateMappings();
-		for (int i = 1; i <= 5; i++)
+		for (int i = 1; i <= CLASS_COUNT; i++)
 			mappings.addClass("I" + i, "R" + i);
-		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
+		MappingResults results = mappingApplierService.inWorkspace(workspace).applyToPrimaryResource(mappings);
 		results.apply();
 
-		// Very old classes are removed from the graph
-		for (int i = 1; i <= 5; i++) {
+		// Verify old classes are removed from the graph
+		for (int i = 1; i <= CLASS_COUNT; i++) {
 			String name = "I" + i;
 			InheritanceVertex vertex = inheritanceGraph.getVertex(name);
 			assertNull(vertex, "Graph contains pre-mapped '" + name + "'");
@@ -77,7 +76,7 @@ class InheritanceAndRenamingTest extends TestBase {
 
 		// Verify the new classes are added to the graph
 		InheritanceVertex objectVertex = inheritanceGraph.getVertex("java/lang/Object");
-		for (int i = 1; i <= 5; i++) {
+		for (int i = 1; i <= CLASS_COUNT; i++) {
 			String name = "R" + i;
 			InheritanceVertex vertex = inheritanceGraph.getVertex(name);
 			assertNotNull(vertex, "Graph missing post-mapped '" + name + "'");

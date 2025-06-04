@@ -6,6 +6,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.TypePath;
 import software.coley.recaf.RecafConstants;
 
@@ -155,6 +156,33 @@ public class DuplicateAnnotationRemovingVisitor extends ClassVisitor {
 		public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start, Label[] end, int[] index, String descriptor, boolean visible) {
 			if (mVarTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, descriptor)))
 				return super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, descriptor, visible);
+
+			detected = true;
+			return null;
+		}
+	}
+
+	private class RecordDupAnnoRemover extends RecordComponentVisitor {
+		private final Set<String> rAnnosVisited = new HashSet<>();
+		private final Set<TypeAnnoInfo> rTypeAnnosVisited = new HashSet<>();
+
+		protected RecordDupAnnoRemover(@Nullable RecordComponentVisitor rv) {
+			super(RecafConstants.getAsmVersion(), rv);
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+			if (rAnnosVisited.add(descriptor))
+				return super.visitAnnotation(descriptor, visible);
+
+			detected = true;
+			return null;
+		}
+
+		@Override
+		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+			if (rTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, descriptor)))
+				return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
 
 			detected = true;
 			return null;

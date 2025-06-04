@@ -36,16 +36,20 @@ public class MappingResults {
 	private final Map<String, ClassPathNode> preMappingPaths = new HashMap<>();
 	private final Map<String, ClassPathNode> postMappingPaths = new HashMap<>();
 	private final MappingApplicationListener applicationHandler;
+	private final Workspace workspace;
 	private final Mappings mappings;
 	private AggregateMappingManager aggregateMappingManager;
 
 	/**
+	 * @param workspace
+	 * 		The workspace the mappings are being applied to.
 	 * @param mappings
 	 * 		The mappings implementation used in the operation.
 	 * @param applicationHandler
 	 * 		Optional handler for intercepting post/pre mapping states.
 	 */
-	public MappingResults(@Nonnull Mappings mappings, @Nullable MappingApplicationListener applicationHandler) {
+	public MappingResults(@Nonnull Workspace workspace, @Nonnull Mappings mappings, @Nullable MappingApplicationListener applicationHandler) {
+		this.workspace = workspace;
 		this.mappings = mappings;
 		this.applicationHandler = applicationHandler;
 	}
@@ -110,7 +114,7 @@ public class MappingResults {
 		// Pass to handler to notify of application of mappings has started.
 		if (applicationHandler != null)
 			try {
-				applicationHandler.onPreApply(this);
+				applicationHandler.onPreApply(workspace, this);
 			} catch (Throwable t) {
 				logger.error("Mapping application handler failed on pre-application", t);
 			}
@@ -151,7 +155,7 @@ public class MappingResults {
 		// Pass to handler again to notify of application of mappings has completed/
 		if (applicationHandler != null)
 			try {
-				applicationHandler.onPostApply(this);
+				applicationHandler.onPostApply(workspace, this);
 			} catch (Throwable t) {
 				logger.error("Mapping application handler failed on post-application", t);
 			}

@@ -42,8 +42,10 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.awt.Toolkit;
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,19 +78,12 @@ public class WorkspaceBuilderPane extends BorderPane {
 	                            @Nonnull Workspace workspace,
 	                            @Nonnull Runnable onComplete) {
 		// Allow pasting file paths to append to the paths list.
-		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (e.isControlDown() && e.getCode() == KeyCode.V) {
-				for (File file : Clipboard.getSystemClipboard().getFiles())
-					addPath(file.toPath());
-			}
-		});
+		addEventFilter(KeyEvent.KEY_PRESSED, this::handlePaste);
 
 		// Add dropped files to the paths list.
 		DragAndDrop.installFileSupport(this, (region, event, files) -> {
-			for (Path path : files) {
-				if (!paths.contains(path))
-					paths.add(path);
-			}
+			for (Path path : files)
+				addPath(path);
 		});
 
 		// Create the vertical list of paths.
@@ -149,10 +144,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 			if (file != null) {
 				String parent = file.getParent();
 				if (parent != null) recentFilesConfig.getLastWorkspaceOpenDirectory().setValue(parent);
-
-				Path path = file.toPath();
-				if (!paths.contains(path))
-					paths.add(path);
+				addPath(file.toPath());
 			}
 		});
 		ActionButton addFile = new ActionButton(CarbonIcons.DOCUMENT_ADD, Lang.getBinding("dialog.file.open.file"), () -> {
@@ -167,10 +159,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 			if (file != null) {
 				String parent = file.getParent();
 				if (parent != null) recentFilesConfig.getLastWorkspaceOpenDirectory().setValue(parent);
-
-				Path path = file.toPath();
-				if (!paths.contains(path))
-					paths.add(path);
+				addPath(file.toPath());
 			}
 		});
 		addDir.getStyleClass().addAll(Styles.BUTTON_OUTLINED, Styles.LEFT_PILL);
@@ -212,12 +201,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 	                            @Nonnull RecentFilesConfig recentFilesConfig,
 	                            @Nonnull Runnable onComplete) {
 		// Allow pasting file paths to append to the paths list.
-		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (e.isControlDown() && e.getCode() == KeyCode.V) {
-				for (File file : Clipboard.getSystemClipboard().getFiles())
-					addPath(file.toPath());
-			}
-		});
+		addEventFilter(KeyEvent.KEY_PRESSED, this::handlePaste);
 
 		// Add dropped files to the paths list.
 		DragAndDrop.installFileSupport(this, (region, event, files) -> {
@@ -295,10 +279,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 			if (file != null) {
 				String parent = file.getParent();
 				if (parent != null) recentFilesConfig.getLastWorkspaceOpenDirectory().setValue(parent);
-
-				Path path = file.toPath();
-				if (!paths.contains(path))
-					paths.add(path);
+				addPath(file.toPath());
 			}
 		});
 		ActionButton addFile = new ActionButton(CarbonIcons.DOCUMENT_ADD, Lang.getBinding("dialog.file.open.file"), () -> {
@@ -313,10 +294,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 			if (file != null) {
 				String parent = file.getParent();
 				if (parent != null) recentFilesConfig.getLastWorkspaceOpenDirectory().setValue(parent);
-
-				Path path = file.toPath();
-				if (!paths.contains(path))
-					paths.add(path);
+				addPath(file.toPath());
 			}
 		});
 		addDir.getStyleClass().addAll(Styles.BUTTON_OUTLINED, Styles.LEFT_PILL);
@@ -345,14 +323,55 @@ public class WorkspaceBuilderPane extends BorderPane {
 	}
 
 	/**
+	 * Handle adding files via the clipboard when pasting.
+	 *
+	 * @param e
+	 * 		Key press event.
+	 */
+	private void handlePaste(KeyEvent e) {
+		if (e.isControlDown() && e.getCode() == KeyCode.V) {
+			Clipboard clipboard = Clipboard.getSystemClipboard();
+
+			// Handle files
+			for (File file : clipboard.getFiles())
+				addPath(file.toPath());
+
+			// Handle text which may be a path/url to a file
+			String url = clipboard.getUrl();
+			String string = clipboard.getString();
+			if (string != null) {
+				// Check if it is a file path
+				if (new File(string).exists())
+					addPath(Paths.get(string));
+
+				// Check if it is a file uri
+				url = string;
+			}
+			try {
+				URI u = URI.create(url);
+				if ("file".equals(u.getScheme())) {
+					String host = u.getHost();
+					if (host != null)
+						return;
+					String path = u.getPath();
+					File filePath = new File(path);
+					if (filePath.exists())
+						addPath(filePath.toPath());
+				}
+			} catch (IllegalArgumentException _) {}
+		}
+	}
+
+	/**
 	 * @param path
 	 * 		Path to add.
 	 */
 	private void addPath(@Nonnull Path path) {
-		if (paths.isEmpty())
-			primary.set(path);
-		if (!paths.contains(path))
+		if (!paths.contains(path)) {
+			if (paths.isEmpty())
+				primary.set(path);
 			paths.add(path);
+		}
 	}
 
 	/**
@@ -394,7 +413,8 @@ public class WorkspaceBuilderPane extends BorderPane {
 			// Button to remove this path from the inputs.
 			ActionButton remove = new ActionButton(CarbonIcons.TRASH_CAN, Lang.getBinding("misc.remove"), () -> {
 				paths.remove(path);
-				if (primary.get().equals(path))
+				Path primaryPath = primary.get();
+				if (primaryPath != null && primaryPath.equals(path))
 					primary.set(null);
 			});
 			remove.setMinWidth(100);
