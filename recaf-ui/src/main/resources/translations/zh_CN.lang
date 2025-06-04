@@ -4,6 +4,7 @@ lang.name=简体中文
 ##### General items
 ## Main and context menus
 menu.analysis=分析
+menu.analysis.deobfuscation=反混淆
 menu.analysis.list-comments=查看注释
 menu.analysis.comment=注释
 menu.association.override=覆盖语言
@@ -63,6 +64,7 @@ menu.refactor.rename=重命名
 menu.search=搜索
 menu.search.string=字符串
 menu.search.number=数字
+menu.search.class.member-declarations=成员声明
 menu.search.class.member-references=成员引用
 menu.search.class.type-references=类型引用
 menu.search.method-overrides=方法覆盖
@@ -398,6 +400,23 @@ help.recaf.sub=关于Recaf的信息
 help.copy=将信息复制到剪贴板
 help.opendir=打开Recaf目录
 
+## Deobfuscation
+deobf=反混淆
+deobf.selection.title=选择转换器
+deobf.order.title=调整转换器顺序
+deobf.order.hint=在左侧选择变压器\n通过拖动来调整转换器的运行顺序
+deobf.order.pre=缺少推荐的前置转换器
+deobf.order.suc=缺少推荐的后置转换器
+deobf.preview.title=预览
+deobf.preview.pick=选择预览的类
+deobf.preview.noselection=// 未选择任何类，请选择一个类进行预览\n// 以查看转换前后的状态
+deobf.tree.generic=通用
+deobf.tree.generic.anticrasher=防崩溃
+deobf.tree.generic.optimize=优化
+deobf.tree.generic.restoration=恢复
+deobf.tree.specific=特定的
+deobf.apply=在工作区应用变换器
+
 ## Mapping generator
 mapgen=映射生成器
 mapgen.genimpl=命名规则
@@ -466,6 +485,7 @@ service.analysis.search-config=搜索
 service.analysis.entry-points=条目点
 service.analysis.entry-points.none=未找到条目
 service.analysis.anti-decompile=反-反编译
+service.analysis.anti-decompile.illegal-attr=非法属性
 service.analysis.anti-decompile.illegal-name=方法名称
 service.analysis.anti-decompile.label-patch=修补 %d 受影响的类
 service.assembler=汇编
