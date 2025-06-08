@@ -1,4 +1,5 @@
 [versions]
+acc-agent = "1.0.4"
 assertj = "3.27.3"
 asm = "9.8"
 atlantafx = "2.0.1"
@@ -47,6 +48,8 @@ shadow = "8.3.5"
 peterabeles-gversion = "1.10.3"
 
 [libraries]
+acc-agent = { module = "software.coley:javafx-access-agent", version.ref = "acc-agent" }
+
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
