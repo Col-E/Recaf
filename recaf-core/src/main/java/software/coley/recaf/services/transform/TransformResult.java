@@ -7,6 +7,7 @@ import software.coley.recaf.services.mapping.IntermediateMappings;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Intermediate holder of transformations of workspace classes.
@@ -53,4 +54,10 @@ public interface TransformResult<CT extends ClassTransformer, CI extends ClassIn
 	 */
 	@Nonnull
 	Map<ClassPathNode, CI> getTransformedClasses();
+
+	/**
+	 * @return Set of paths to classes that will be removed.
+	 */
+	@Nonnull
+	Set<ClassPathNode> getClassesToRemove();
 }

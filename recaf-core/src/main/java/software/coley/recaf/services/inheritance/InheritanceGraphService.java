@@ -64,9 +64,7 @@ public class InheritanceGraphService implements Service {
 	 */
 	@Nonnull
 	public InheritanceGraph newInheritanceGraph(@Nonnull Workspace workspace) {
-		InheritanceGraph graph = new InheritanceGraph(workspace);
-		workspace.addWorkspaceModificationListener(graph);
-		return graph;
+		return new InheritanceGraph(workspace);
 	}
 
 	/**
@@ -79,12 +77,9 @@ public class InheritanceGraphService implements Service {
 			return null;
 
 		if (currentWorkspaceGraph == null) {
-			Workspace workspace = workspaceManager.getCurrent();
-			InheritanceGraph graph = newInheritanceGraph(workspace);
-			currentWorkspaceGraph = graph;
-
-			// Add listener to handle updating the graph when renaming is applied to the current workspace.
+			InheritanceGraph graph = newInheritanceGraph(workspaceManager.getCurrent());
 			mappingListeners.addMappingApplicationListener(graph);
+			currentWorkspaceGraph = graph;
 		}
 
 		return currentWorkspaceGraph;

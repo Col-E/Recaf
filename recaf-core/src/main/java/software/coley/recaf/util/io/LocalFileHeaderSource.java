@@ -71,21 +71,29 @@ public final class LocalFileHeaderSource implements ByteSource {
 	}
 
 	private MemorySegment decompress() throws IOException {
-		MemorySegment decompressed = this.decompressed;
-		if (decompressed == null) {
-			// From: https://cs.android.com/android/_/android/platform/frameworks/base/+/b3559643b946829933a76ed45750d13edfefad30:tools/aapt/ZipFile.cpp;l=436
-			//  - If the compression mode given fails, it will get treated as STORED as a fallback
-			if (isAndroid) {
-				try {
-					return this.decompressed = ZipCompressions.decompress(fileHeader);
-				} catch (IOException ex) {
-					return this.decompressed = fileHeader.getFileData();
+		try {
+			MemorySegment decompressed = this.decompressed;
+			if (decompressed == null) {
+				// From: https://cs.android.com/android/_/android/platform/frameworks/base/+/b3559643b946829933a76ed45750d13edfefad30:tools/aapt/ZipFile.cpp;l=436
+				//  - If the compression mode given fails, it will get treated as STORED as a fallback
+				if (isAndroid) {
+					try {
+						return this.decompressed = ZipCompressions.decompress(fileHeader);
+					} catch (IOException ex) {
+						return this.decompressed = fileHeader.getFileData();
+					}
 				}
-			}
 
-			// In other cases, malformed content should throw an exception and be handled by the caller.
-			return this.decompressed = ZipCompressions.decompress(fileHeader);
+				// In other cases, malformed content should throw an exception and be handled by the caller.
+				return this.decompressed = ZipCompressions.decompress(fileHeader);
+			}
+			return decompressed;
+		} catch (OutOfMemoryError error) {
+			// This is cringe, I know. However, in practice it will immediately free the memory
+			// used in the failed decompression. In a profile you'll the heap look like a saw-tooth with this.
+			// Without, the heap just grows. It may go down a little, but not to the baseline of just calling gc().
+			System.gc();
+			throw new IOException("Insufficient memory to decompress '" + fileHeader.getFileNameAsString() + "'", error);
 		}
-		return decompressed;
 	}
 }

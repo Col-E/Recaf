@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -166,9 +167,15 @@ public class InheritanceVertex {
 	 * @return {@code true} when a parent of this vertex, is this vertex.
 	 */
 	public boolean isLoop() {
+		// Our vertex model silently drops cycles to prevent infinite loops, so what we
+		// do instead is check if any of the vertices in the graph for this class extend
+		// or implement the current vertex's class.
 		String name = getName();
-		return allParents()
-				.anyMatch(v -> name.equals(v.getName()));
+		Predicate<InheritanceVertex> extendsName = v -> {
+			ClassInfo cls = v.getValue();
+			return name.equals(cls.getSuperName()) || cls.getInterfaces().contains(name);
+		};
+		return extendsName.test(this) || allParents().anyMatch(extendsName);
 	}
 
 	/**

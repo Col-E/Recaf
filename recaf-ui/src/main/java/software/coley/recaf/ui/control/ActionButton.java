@@ -11,6 +11,7 @@ import org.kordamp.ikonli.Ikon;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -118,10 +119,24 @@ public class ActionButton extends Button implements Tooltipable {
 	 */
 	@Nonnull
 	public ActionButton async() {
+		return async(service);
+	}
+
+	/**
+	 * Run the provided action asynchronously.
+	 * Do note that this will no longer run the action on the FX thread.
+	 *
+	 * @param executor
+	 * 		Executor to run the action on.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public ActionButton async(@Nonnull Executor executor) {
 		EventHandler<ActionEvent> onAction = getOnAction();
 		if (onAction == null)
 			throw new IllegalArgumentException("No action set");
-		setOnAction(e -> CompletableFuture.runAsync(() -> onAction.handle(e), service));
+		setOnAction(e -> CompletableFuture.runAsync(() -> onAction.handle(e), executor));
 		return this;
 	}
 

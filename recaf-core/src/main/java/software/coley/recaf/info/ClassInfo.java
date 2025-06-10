@@ -81,16 +81,6 @@ public interface ClassInfo extends Info, Annotated, Accessed, Named {
 	String getSignature();
 
 	/**
-	 * @return {@code true} when the {@link #getSignature() class signature} and all
-	 * {@link #getFields() fields} and {@link #getMethods() methods} have valid {@link ClassMember#getSignature() signatures}.
-	 * {@code false} when any of those values is malformed.
-	 *
-	 * @see IllegalSignatureRemovingVisitor Visitor for removing invalid signatures on JVM classes.
-	 * @see Types#isValidSignature(String, Types.SignatureContext) Method for checking validity of a generic signature.
-	 */
-	boolean hasValidSignatures();
-
-	/**
 	 * @return Name of outer class that this is declared in, if this is an inner class.
 	 * {@code null} when this class is not an inner class.
 	 */

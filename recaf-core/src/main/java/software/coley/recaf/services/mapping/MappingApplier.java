@@ -80,7 +80,7 @@ public class MappingApplier {
 	                                     @Nonnull Collection<JvmClassInfo> classes) {
 		mappings = enrich(mappings);
 		MappingApplicationListener listener = listeners == null ? null : listeners.createBundledMappingApplicationListener();
-		MappingResults results = new MappingResults(mappings, listener);
+		MappingResults results = new MappingResults(workspace, mappings, listener);
 		if (aggregateMappingManager != null)
 			results.withAggregateManager(aggregateMappingManager);
 
@@ -107,7 +107,7 @@ public class MappingApplier {
 	public MappingResults applyToPrimaryResource(@Nonnull Mappings mappings) {
 		mappings = enrich(mappings);
 		MappingApplicationListener listener = listeners == null ? null : listeners.createBundledMappingApplicationListener();
-		MappingResults results = new MappingResults(mappings, listener);
+		MappingResults results = new MappingResults(workspace, mappings, listener);
 		if (aggregateMappingManager != null)
 			results.withAggregateManager(aggregateMappingManager);
 
@@ -180,7 +180,7 @@ public class MappingApplier {
 		ClassReader reader = classInfo.getClassReader();
 		ClassWriter writer = new ClassWriter(reader, 0);
 		WorkspaceClassRemapper remapVisitor = new WorkspaceClassRemapper(writer, workspace, mappings);
-		ClassVisitor cv = classInfo.hasValidSignatures() ? remapVisitor : new IllegalSignatureRemovingVisitor(remapVisitor); // Because ASM crashes otherwise.
+		ClassVisitor cv = new IllegalSignatureRemovingVisitor(remapVisitor); // Wrap because ASM crashes otherwise with obfuscated inputs.
 		reader.accept(cv, 0);
 
 		// Update class if it has any modified references

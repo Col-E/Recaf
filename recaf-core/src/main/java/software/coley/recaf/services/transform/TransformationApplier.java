@@ -15,18 +15,18 @@ import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static software.coley.collections.Unchecked.cast;
 import static software.coley.collections.Unchecked.checkedForEach;
@@ -102,7 +102,7 @@ public class TransformationApplier {
 		Map<ClassPathNode, Map<Class<? extends JvmClassTransformer>, Throwable>> transformJvmFailures = new IdentityHashMap<>();
 
 		// Map to hold transformers to the paths of classes they have modified.
-		Map<Class<?extends JvmClassTransformer>, Collection<ClassPathNode>> transformerToModifiedClasses = new IdentityHashMap<>();
+		Map<Class<? extends JvmClassTransformer>, Collection<ClassPathNode>> transformerToModifiedClasses = new IdentityHashMap<>();
 
 		// Build the transformer context and apply all transformations in order
 		List<JvmClassTransformer> transformers = queue.getTransformers();
@@ -163,6 +163,14 @@ public class TransformationApplier {
 
 			@Nonnull
 			@Override
+			public Set<ClassPathNode> getClassesToRemove() {
+				return context.getClassesToRemove().stream()
+						.map(workspace::findJvmClass)
+						.collect(Collectors.toSet());
+			}
+
+			@Nonnull
+			@Override
 			public IntermediateMappings getMappingsToApply() {
 				return context.getMappings();
 			}
@@ -181,6 +189,13 @@ public class TransformationApplier {
 					if (bundle != null)
 						bundle.put(cls);
 				}, (path, cls, t) -> logger.error("Exception thrown handling transform application", t));
+
+				// Delete classes that are marked for removal
+				for (ClassPathNode path : getClassesToRemove()) {
+					JvmClassBundle bundle = path.getValueOfType(JvmClassBundle.class);
+					if (bundle != null)
+						bundle.remove(path.getValue().getName());
+				}
 
 				// Apply mappings if they exist
 				IntermediateMappings mappings = context.getMappings();

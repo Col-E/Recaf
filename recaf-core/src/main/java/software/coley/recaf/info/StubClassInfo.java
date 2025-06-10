@@ -61,11 +61,6 @@ public class StubClassInfo implements ClassInfo {
 		return null;
 	}
 
-	@Override
-	public boolean hasValidSignatures() {
-		return true;
-	}
-
 	@Nullable
 	@Override
 	public String getOuterClassName() {
