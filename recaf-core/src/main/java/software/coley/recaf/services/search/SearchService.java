@@ -141,6 +141,10 @@ public class SearchService implements Service {
 			searchResource(results, service, feedback, resource, workspaceNode,
 					androidClassVisitor, jvmClassVisitor, fileVisitor);
 		ThreadUtil.blockUntilComplete(service);
+
+		// Notify feedback of search completion
+		feedback.onCompletion();
+
 		return results;
 	}
 

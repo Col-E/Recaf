@@ -2,6 +2,7 @@ package software.coley.recaf.ui.pane.search;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import javafx.animation.AnimationTimer;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
@@ -23,6 +24,7 @@ import software.coley.recaf.ui.control.PathNodeTree;
 import software.coley.recaf.ui.control.tree.TreeItems;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.threading.Batch;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
@@ -59,9 +61,9 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	 * 		Action service to assist stylizing the output tree model.
 	 */
 	public AbstractSearchPane(@Nonnull WorkspaceManager workspaceManager,
-							  @Nonnull SearchService searchService,
-							  @Nonnull CellConfigurationService configurationService,
-							  @Nonnull Actions actions) {
+	                          @Nonnull SearchService searchService,
+	                          @Nonnull CellConfigurationService configurationService,
+	                          @Nonnull Actions actions) {
 		this.workspaceManager = workspaceManager;
 		this.searchService = searchService;
 		this.configurationService = configurationService;
@@ -130,7 +132,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		tree.setOnMousePressed(e -> {
 			if (e.getClickCount() == 2 && e.isPrimaryButtonDown()) {
 				var item = tree.getSelectionModel().getSelectedItem();
-				if (item.isLeaf()) {
+				if (item != null && item.isLeaf()) {
 					try {
 						actions.gotoDeclaration(item.getValue());
 					} catch (IncompletePathException ignored) {
@@ -180,11 +182,8 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		CancellableSearchFeedback feedback;
 		if (liveResults.get()) {
 			feedback = new LiveOnlySearchFeedback(result -> {
-				// Search is multi-threaded, so we will want to lock on the root to prevent concurrent-modification errors
-				synchronized (root) {
-					WorkspaceTreeNode node = WorkspaceTreeNode.getOrInsertIntoTree(root, result.getPath(), false);
-					TreeItems.expandParents(node);
-				}
+				WorkspaceTreeNode node = WorkspaceTreeNode.getOrInsertIntoTree(root, result.getPath(), false);
+				TreeItems.expandParents(node);
 			});
 			CompletableFuture.runAsync(() -> searchService.search(workspace, query, feedback));
 		} else {
@@ -218,23 +217,52 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	}
 
 	/**
-	 * Feedback that passes results to a consumer.
+	 * Feedback that incrementally updates the search results tree.
 	 * <br>
 	 * Disables the collection of results into a single wrapper at the end of a search.
 	 * Since this is for live-only feedback, we won't use the resulting collection anyways, so we don't need to do
 	 * the extra work.
 	 */
 	private static class LiveOnlySearchFeedback extends CancellableSearchFeedback {
+		private final Batch batch = FxThreadUtil.batch();
+		private final AnimationTimer batchTimer = new AnimationTimer() {
+			private static final long BATCH_INTERVAL_MS = 1000 / 20;
+			private long last;
+
+			@Override
+			public void handle(long now) {
+				if (now - last > BATCH_INTERVAL_MS) {
+					publishResults();
+					last = now;
+				}
+			}
+		};
 		private final Consumer<Result<?>> resultConsumer;
 
 		private LiveOnlySearchFeedback(@Nonnull Consumer<Result<?>> resultConsumer) {
 			this.resultConsumer = resultConsumer;
+			batchTimer.start();
 		}
 
 		@Override
 		public boolean doAcceptResult(@Nonnull Result<?> result) {
-			resultConsumer.accept(result);
+			batch.add(() -> resultConsumer.accept(result));
+			try {
+				Thread.sleep(20);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 			return false;
+		}
+
+		@Override
+		public void onCompletion() {
+			batchTimer.stop();
+			publishResults();
+		}
+
+		private void publishResults() {
+			batch.execute();
 		}
 	}
 }

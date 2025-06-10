@@ -69,4 +69,9 @@ public interface SearchFeedback {
 	default boolean doAcceptResult(@Nonnull Result<?> result) {
 		return true;
 	}
+
+	/**
+	 * Called when the search query completes.
+	 */
+	default void onCompletion() {}
 }

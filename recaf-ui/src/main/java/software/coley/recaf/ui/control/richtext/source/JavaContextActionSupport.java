@@ -490,23 +490,23 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		 * Called when AST unit is good to use.
 		 */
 		private void setAvailable() {
-			setVisible(false);
+			FxThreadUtil.run(() -> setVisible(false));
 		}
 
 		/**
 		 * Called when an AST unit exists, but a new one is being made.
 		 */
 		private void setNewParseInProgress() {
-			setVisible(true);
-			setOnAction(e -> {
-				Popover popover = new Popover();
-				popover.setContentNode(new BoundLabel(Lang.getBinding("java.parse-state.new-progress-details")));
-				popover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);
-				popover.show(this);
-			});
 			FxThreadUtil.run(() -> {
+				setOnAction(e -> {
+					Popover popover = new Popover();
+					popover.setContentNode(new BoundLabel(Lang.getBinding("java.parse-state.new-progress-details")));
+					popover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);
+					popover.show(this);
+				});
 				textProperty().unbind();
 				textProperty().bind(Lang.getBinding("java.parse-state.new-progress"));
+				setVisible(true);
 			});
 		}
 
@@ -514,11 +514,11 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		 * Called when a new AST unit was requested, but nothing was returned by the parser.
 		 */
 		private void setUnavailable() {
-			setVisible(true);
-			setOnAction(null);
 			FxThreadUtil.run(() -> {
+				setOnAction(null);
 				textProperty().unbind();
 				textProperty().bind(Lang.getBinding("java.parse-state.error"));
+				setVisible(true);
 			});
 		}
 
@@ -529,25 +529,25 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		 * 		The exception result from the parser.
 		 */
 		private void setParserError(@Nonnull Throwable error) {
-			setVisible(true);
-			setOnAction(e -> {
-				BoundLabel title = new BoundLabel(Lang.getBinding("java.parse-state.error-details"));
-
-				String exceptionType = error.getClass().getSimpleName();
-				String message = error.getMessage();
-
-				TextArea errorTextArea = new TextArea();
-				errorTextArea.setEditable(false);
-				errorTextArea.setText(exceptionType + "\n" + "=".repeat(exceptionType.length()) + "\n" + message);
-
-				Popover popover = new Popover();
-				popover.setContentNode(new VBox(title, errorTextArea));
-				popover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);
-				popover.show(this);
-			});
 			FxThreadUtil.run(() -> {
 				textProperty().unbind();
 				textProperty().bind(Lang.getBinding("java.parse-state.error"));
+				setOnAction(e -> {
+					BoundLabel title = new BoundLabel(Lang.getBinding("java.parse-state.error-details"));
+
+					String exceptionType = error.getClass().getSimpleName();
+					String message = error.getMessage();
+
+					TextArea errorTextArea = new TextArea();
+					errorTextArea.setEditable(false);
+					errorTextArea.setText(exceptionType + "\n" + "=".repeat(exceptionType.length()) + "\n" + message);
+
+					Popover popover = new Popover();
+					popover.setContentNode(new VBox(title, errorTextArea));
+					popover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);
+					popover.show(this);
+				});
+				setVisible(true);
 			});
 		}
 	}
