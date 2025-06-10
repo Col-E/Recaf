@@ -9,7 +9,7 @@ def javaFxIncludeInDist = System.getProperty('skip_jfx_bundle') == null
 
 javafx {
     version = javaFxVersion
-    modules = ['javafx.controls', 'javafx.media', 'javafx.swing']
+    modules = ['javafx.controls', 'javafx.media']
 }
 
 dependencies {
