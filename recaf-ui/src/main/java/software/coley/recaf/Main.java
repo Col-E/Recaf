@@ -146,11 +146,27 @@ public class Main {
 	 * Configure the JavaFX access logging agent.
 	 * The logging is only active when the agent is passed as a launch argument to Recaf.
 	 * <br>
-	 * Example usage: {@code -javaagent:javafx-access-agent.jar=software/}
+	 * Example usage: {@code -javaagent:javafx-access-agent.jar=software/;org/;com/;javafx/}
 	 */
 	private static void initFxAccessAgent() {
-		AccessCheck.addAccessCheckListener((className, methodName, lineNumber, threadName, calledMethodSignature) ->
-				System.err.printf("[thread:%s] %s.%s (line %d) - %s\n", threadName, className, methodName, lineNumber, calledMethodSignature));
+		AccessCheck.addAccessCheckListener((className, methodName, lineNumber, threadName, calledMethodSignature) -> {
+			// Some kinds of operations are safe and can be ignored.
+			if (calledMethodSignature != null) {
+				// Skip on constructors
+				if (calledMethodSignature.contains("<"))
+					return;
+
+				// Skip on get operations
+				if (calledMethodSignature.contains("#get"))
+					return;
+
+				// Skip on things that will be operated on later
+				if (calledMethodSignature.contains("#setOn") || calledMethodSignature.contains("#addListener"))
+					return;
+			}
+
+			System.err.printf("[thread:%s] %s.%s (line %d) - %s\n", threadName, className, methodName, lineNumber, calledMethodSignature);
+		});
 	}
 
 	/**
