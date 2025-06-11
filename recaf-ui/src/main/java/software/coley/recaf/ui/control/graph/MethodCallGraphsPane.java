@@ -8,6 +8,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
@@ -21,6 +22,7 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.text.TextFormatConfig;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -59,6 +61,7 @@ public class MethodCallGraphsPane extends TabPane implements ClassNavigable, Upd
 		Tab tab = new Tab();
 		tab.setContent(new MethodCallGraphPane(workspace, callGraph, configurationService, format, actions, mode, methodInfoObservable));
 		tab.textProperty().bind(Lang.getBinding("menu.view.methodcallgraph." + mode.name().toLowerCase()));
+		tab.setGraphic(new FontIconView(mode == MethodCallGraphPane.CallGraphMode.CALLS ? CarbonIcons.LOGOUT : CarbonIcons.LOGIN));
 		tab.setClosable(false);
 		return tab;
 	}

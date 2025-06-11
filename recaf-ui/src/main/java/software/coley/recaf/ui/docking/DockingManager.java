@@ -3,251 +3,251 @@ package software.coley.recaf.ui.docking;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.Node;
+import org.kordamp.ikonli.Ikon;
 import org.slf4j.Logger;
-import software.coley.collections.Unchecked;
+import software.coley.bentofx.Bento;
+import software.coley.bentofx.dockable.Dockable;
+import software.coley.bentofx.dockable.DockableIconFactory;
+import software.coley.bentofx.layout.DockLayout;
+import software.coley.bentofx.path.SpacePath;
+import software.coley.bentofx.space.DockSpace;
+import software.coley.bentofx.space.TabbedDockSpace;
+import software.coley.bentofx.util.DragDropStage;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.ui.docking.listener.TabClosureListener;
-import software.coley.recaf.ui.docking.listener.TabCreationListener;
-import software.coley.recaf.ui.docking.listener.TabMoveListener;
-import software.coley.recaf.ui.docking.listener.TabSelectionListener;
+import software.coley.recaf.services.navigation.NavigationManager;
+import software.coley.recaf.services.window.WindowManager;
+import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.window.RecafScene;
+import software.coley.recaf.util.Lang;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Supplier;
+import java.util.UUID;
 
 /**
- * Manages open docking regions and tabs.
+ * Facilitates creation and inspection of dockable UI content.
  *
  * @author Matt Coley
+ * @see DockingLayoutManager
+ * @see NavigationManager
  */
 @ApplicationScoped
 public class DockingManager {
 	private static final Logger logger = Logging.get(DockingManager.class);
-	private final DockingRegionFactory factory = new DockingRegionFactory(this);
-	private final DockingRegion primaryRegion;
-	private final List<DockingRegion> regions = new CopyOnWriteArrayList<>();
-	private final List<TabSelectionListener> tabSelectionListeners = new CopyOnWriteArrayList<>();
-	private final List<TabCreationListener> tabCreationListeners = new CopyOnWriteArrayList<>();
-	private final List<TabClosureListener> tabClosureListeners = new CopyOnWriteArrayList<>();
-	private final List<TabMoveListener> tabMoveListeners = new CopyOnWriteArrayList<>();
 
+	private static final int GROUP_TOOLS = 1;
+
+	private final Bento bento = Bento.newBento();
+
+	/**
+	 * @param windowManager
+	 * 		Window manager to notify of docking created windows.
+	 */
 	@Inject
-	public DockingManager() {
-		primaryRegion = newRegion();
-		primaryRegion.setCloseIfEmpty(false);
+	public DockingManager(@Nonnull WindowManager windowManager) {
+		// Stages created via our docking framework need to be tracked in the window manager.
+		bento.setStageFactory(originScene -> {
+			DragDropStage stage = new DragDropStage(true);
+			windowManager.register("dnd-" + UUID.randomUUID(), stage);
+			return stage;
+		});
+		bento.setSceneFactory(RecafScene::new);
 	}
 
 	/**
-	 * The primary region is where tabs should open by default.
-	 * It is locked to the main window where the initial workspace info is displayed.
-	 * Compared to an IDE, this would occupy the same space where open classes are shown.
-	 *
-	 * @return Primary region.
+	 * @return Backing bento docking instance.
 	 */
 	@Nonnull
-	public DockingRegion getPrimaryRegion() {
-		return primaryRegion;
+	public Bento getBento() {
+		return bento;
 	}
 
 	/**
-	 * @return All current docking regions.
+	 * @param identifier
+	 * 		The identifier of some {@link DockSpace} to find and replace.
+	 * @param supplier
+	 * 		Supplier of a {@link DockSpace} to replace the existing space with.
+	 *
+	 * @return {@code true} when the existing space was found and replaced.
+	 */
+	public boolean replace(@Nonnull String identifier, @Nonnull SpaceSupplier supplier) {
+		return bento.replaceSpace(identifier, supplier::get);
+	}
+
+	/**
+	 * @param identifier
+	 * 		The identifier of some {@link DockLayout} to find and replace.
+	 * @param supplier
+	 * 		Supplier of a {@link DockLayout} to replace the existing layout with.
+	 *
+	 * @return {@code true} when the existing layout was found and replaced.
+	 */
+	public boolean replace(@Nonnull String identifier, @Nonnull LayoutSupplier supplier) {
+		return bento.replaceLayout(identifier, supplier::get);
+	}
+
+	/**
+	 * The primary space is where content in the workspace is displayed when opened.
+	 * Opening classes and files should place content in here.
+	 *
+	 * @return The primary tabbed space where most content is placed in the UI.
 	 */
 	@Nonnull
-	public List<DockingRegion> getRegions() {
-		return regions;
+	public TabbedDockSpace getPrimaryTabbedSpace() {
+		SpacePath path = bento.findSpace(DockingLayoutManager.ID_SPACE_WORKSPACE_PRIMARY);
+		if (path != null && path.space() instanceof TabbedDockSpace tc)
+			return tc;
+		throw new IllegalStateException("Primary TabbedContent space could not be found");
 	}
 
 	/**
-	 * @return All current docking tabs.
+	 * Creates a {@link Dockable} that is assigned to the {@link #GROUP_TOOLS} group.
+	 *
+	 * @param translationKey
+	 * 		Dockable title translation key.
+	 * @param icon
+	 * 		Dockable icon.
+	 * @param content
+	 * 		Dockable content to display.
+	 *
+	 * @return Created dockable.
 	 */
 	@Nonnull
-	public List<DockingTab> getDockTabs() {
-		return regions.stream().flatMap(r -> r.getDockTabs().stream()).toList();
+	public Dockable newToolDockable(@Nonnull String translationKey, @Nonnull Ikon icon, @Nonnull Node content) {
+		return newToolDockable(translationKey, d -> new FontIconView(icon), content);
 	}
 
+
 	/**
-	 * @return New region.
+	 * Creates a {@link Dockable} that is assigned to the {@link #GROUP_TOOLS} group.
+	 *
+	 * @param translationKey
+	 * 		Dockable title translation key.
+	 * @param iconFactory
+	 * 		Dockable icon factory.
+	 * @param content
+	 * 		Dockable content to display.
+	 *
+	 * @return Created dockable.
 	 */
 	@Nonnull
-	public DockingRegion newRegion() {
-		// The docking region constructor should handle registration in the regions list.
-		DockingRegion region = factory.create();
-		factory.init(region);
-		return region;
+	public Dockable newToolDockable(@Nonnull String translationKey, @Nonnull DockableIconFactory iconFactory, @Nonnull Node content) {
+		return bento.newDockableBuilder()
+				.withTitle(Lang.getBinding(translationKey))
+				.withNode(content)
+				.withIconFactory(iconFactory)
+				.withClosable(false)
+				.withDragGroup(GROUP_TOOLS)
+				.withIdentifier(translationKey)
+				.build();
 	}
 
 	/**
-	 * Package-private so {@link DockingRegion#DockingRegion(DockingManager)} has access.
+	 * Creates a {@link Dockable}.
 	 *
-	 * @param region
-	 * 		Region to register.
-	 */
-	void registerRegion(@Nonnull DockingRegion region) {
-		if (!regions.contains(region))
-			regions.add(region);
-	}
-
-	/**
-	 * Configured by {@link DockingRegionFactory} this method is called when a {@link DockingRegion} is closed.
+	 * @param title
+	 * 		Dockable title.
+	 * @param icon
+	 * 		Dockable icon.
+	 * @param content
+	 * 		Dockable content to display.
 	 *
-	 * @param region
-	 * 		Region being closed.
+	 * @return Created dockable.
+	 */
+	@Nonnull
+	public Dockable newDockable(@Nonnull String title, @Nonnull Ikon icon, @Nonnull Node content) {
+		return newDockable(title, d -> new FontIconView(icon), content);
+	}
+
+	/**
+	 * Creates a {@link Dockable}.
 	 *
-	 * @return {@code true} when region closure was a success.
-	 * {@code false} when a region denied closure.
-	 */
-	boolean onRegionClose(@Nonnull DockingRegion region) {
-		// Close any tabs that are closable.
-		// If there are tabs that cannot be closed, deny region closure.
-		boolean allowClosure = true;
-		for (DockingTab tab : new ArrayList<>(region.getDockTabs()))
-			if (tab.isClosable())
-				tab.close();
-			else
-				allowClosure = false;
-		if (!allowClosure)
-			return false;
-
-		// Update internal state.
-		regions.remove(region);
-
-		// Needed in case a window containing the region gets closed.
-		for (DockingTab tab : new ArrayList<>(region.getDockTabs()))
-			tab.close();
-
-		// Tell the region it is closed, removing its reference to this docking manager.
-		region.onClose();
-
-		// Closure allowed.
-		return true;
-	}
-
-	/**
-	 * Configured by {@link DockingRegion#createTab(Supplier)}, called when a tab is created.
+	 * @param title
+	 * 		Dockable title.
+	 * @param iconFactory
+	 * 		Dockable icon factory.
+	 * @param content
+	 * 		Dockable content to display.
 	 *
-	 * @param parent
-	 * 		Parent region.
-	 * @param tab
-	 * 		Tab created.
+	 * @return Created dockable.
 	 */
-	void onTabCreate(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
-		Unchecked.checkedForEach(tabCreationListeners, listener -> listener.onCreate(parent, tab),
-				(listener, t) -> logger.error("Exception thrown when opening tab '{}'", tab.getText(), t));
+	@Nonnull
+	public Dockable newDockable(@Nonnull String title, @Nonnull DockableIconFactory iconFactory, @Nonnull Node content) {
+		return bento.newDockableBuilder()
+				.withTitle(title)
+				.withNode(content)
+				.withIconFactory(iconFactory)
+				.build();
 	}
 
 	/**
-	 * Configured by {@link DockingRegion#createTab(Supplier)}, called when a tab is closed.
+	 * Creates a {@link Dockable}.
 	 *
-	 * @param parent
-	 * 		Parent region.
-	 * @param tab
-	 * 		Tab created.
-	 */
-	void onTabClose(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
-		// TODO: In some cases the listeners need to be called on the FX thread
-		Unchecked.checkedForEach(tabClosureListeners, listener -> listener.onClose(parent, tab),
-				(listener, t) -> logger.error("Exception thrown when closing tab '{}'", tab.getText(), t));
-	}
-
-	/**
-	 * Configured by {@link DockingRegion#createTab(Supplier)}, called when a tab is
-	 * moved between {@link DockingRegion}s.
+	 * @param translationKey
+	 * 		Dockable title translation key.
+	 * @param icon
+	 * 		Dockable icon.
+	 * @param content
+	 * 		Dockable content to display.
 	 *
-	 * @param oldRegion
-	 * 		Prior parent region.
-	 * @param newRegion
-	 * 		New parent region.
-	 * @param tab
-	 * 		Tab created.
+	 * @return Created dockable.
 	 */
-	void onTabMove(@Nonnull DockingRegion oldRegion, @Nonnull DockingRegion newRegion, @Nonnull DockingTab tab) {
-		Unchecked.checkedForEach(tabMoveListeners, listener -> listener.onMove(oldRegion, newRegion, tab),
-				(listener, t) -> logger.error("Exception thrown when moving tab '{}'", tab.getText(), t));
+	@Nonnull
+	public Dockable newTranslatableDockable(@Nonnull String translationKey, @Nonnull Ikon icon, @Nonnull Node content) {
+		return newTranslatableDockable(translationKey, d -> new FontIconView(icon), content);
 	}
 
 	/**
-	 * Configured by {@link DockingRegion#createTab(Supplier)}, called when a tab is selected.
+	 * Creates a {@link Dockable}.
 	 *
-	 * @param parent
-	 * 		Parent region.
-	 * @param tab
-	 * 		Tab created.
-	 */
-	void onTabSelection(@Nonnull DockingRegion parent, @Nonnull DockingTab tab) {
-		Unchecked.checkedForEach(tabSelectionListeners, listener -> listener.onSelection(parent, tab),
-				(listener, t) -> logger.error("Exception thrown when selecting tab '{}'", tab.getText(), t));
-	}
-
-	/**
-	 * @param listener
-	 * 		Listener to add.
-	 */
-	public void addTabSelectionListener(@Nonnull TabSelectionListener listener) {
-		tabSelectionListeners.add(listener);
-	}
-
-	/**
-	 * @param listener
-	 * 		Listener to remove.
+	 * @param translationKey
+	 * 		Dockable title translation key.
+	 * @param iconFactory
+	 * 		Dockable icon factory.
+	 * @param content
+	 * 		Dockable content to display.
 	 *
-	 * @return {@code true} upon removal. {@code false} when listener wasn't present.
+	 * @return Created dockable.
 	 */
-	public boolean removeTabSelectionListener(@Nonnull TabSelectionListener listener) {
-		return tabSelectionListeners.remove(listener);
+	@Nonnull
+	public Dockable newTranslatableDockable(@Nonnull String translationKey, @Nonnull DockableIconFactory iconFactory, @Nonnull Node content) {
+		return newTranslatableDockable(Lang.getBinding(translationKey), iconFactory, content);
 	}
 
 	/**
-	 * @param listener
-	 * 		Listener to add.
-	 */
-	public void addTabCreationListener(@Nonnull TabCreationListener listener) {
-		tabCreationListeners.add(listener);
-	}
-
-	/**
-	 * @param listener
-	 * 		Listener to remove.
+	 * Creates a {@link Dockable}.
 	 *
-	 * @return {@code true} upon removal. {@code false} when listener wasn't present.
-	 */
-	public boolean removeTabCreationListener(@Nonnull TabCreationListener listener) {
-		return tabCreationListeners.remove(listener);
-	}
-
-	/**
-	 * @param listener
-	 * 		Listener to add.
-	 */
-	public void addTabClosureListener(@Nonnull TabClosureListener listener) {
-		tabClosureListeners.add(listener);
-	}
-
-	/**
-	 * @param listener
-	 * 		Listener to remove.
+	 * @param titleBinding
+	 * 		Dockable title translation binding.
+	 * @param iconFactory
+	 * 		Dockable icon factory.
+	 * @param content
+	 * 		Dockable content to display.
 	 *
-	 * @return {@code true} upon removal. {@code false} when listener wasn't present.
+	 * @return Created dockable.
 	 */
-	public boolean removeTabClosureListener(@Nonnull TabClosureListener listener) {
-		return tabClosureListeners.remove(listener);
+	@Nonnull
+	public Dockable newTranslatableDockable(@Nonnull ObservableValue<String> titleBinding, @Nonnull DockableIconFactory iconFactory, @Nonnull Node content) {
+		return bento.newDockableBuilder()
+				.withTitle(titleBinding)
+				.withNode(content)
+				.withIconFactory(iconFactory)
+				.build();
 	}
 
 	/**
-	 * @param listener
-	 * 		Listener to add.
+	 * Supplier of a {@link DockSpace}.
 	 */
-	public void addTabMoveListener(@Nonnull TabMoveListener listener) {
-		tabMoveListeners.add(listener);
+	public interface SpaceSupplier {
+		@Nonnull
+		DockSpace get();
 	}
 
 	/**
-	 * @param listener
-	 * 		Listener to remove.
-	 *
-	 * @return {@code true} upon removal. {@code false} when listener wasn't present.
+	 * Supplier of a {@link DockLayout}.
 	 */
-	public boolean removeTabMoveListener(@Nonnull TabMoveListener listener) {
-		return tabMoveListeners.remove(listener);
+	public interface LayoutSupplier {
+		@Nonnull
+		DockLayout get();
 	}
 }

@@ -61,7 +61,7 @@ public class Lang {
 	public static void setCurrentTranslations(String translationsKey) {
 		if (translations.containsKey(translationsKey)) {
 			currentTranslationMap = translations.getOrDefault(translationsKey, Collections.emptyMap());
-			currentTranslation.set(translationsKey);
+			FxThreadUtil.set(currentTranslation, translationsKey);
 		} else {
 			logger.warn("Tried to set translations to '{}', but no entries for the translations were found!", translationsKey);
 			// For case it fails to load, use default.

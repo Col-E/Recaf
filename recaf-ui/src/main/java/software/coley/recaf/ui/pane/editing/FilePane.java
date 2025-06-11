@@ -31,7 +31,7 @@ public abstract class FilePane extends AbstractContentPane<FilePathNode> impleme
 			pathUpdateListeners.forEach(listener -> listener.accept(filePath));
 
 			// Initialize UI if it has not been done yet.
-			if (getCenter() == null)
+			if (!hasDisplay())
 				generateDisplay();
 
 			// Notify children of change.

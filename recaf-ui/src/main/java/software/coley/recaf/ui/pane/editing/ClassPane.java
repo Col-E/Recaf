@@ -50,7 +50,7 @@ public abstract class ClassPane extends AbstractContentPane<ClassPathNode> imple
 					(listener, t) -> logger.error("Exception thrown when handling class-pane path update callback", t));
 
 			// Initialize UI if it has not been done yet.
-			if (getCenter() == null)
+			if (!hasDisplay())
 				generateDisplay();
 
 			// Notify children of change.

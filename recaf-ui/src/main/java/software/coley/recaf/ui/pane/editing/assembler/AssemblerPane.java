@@ -3,6 +3,7 @@ package software.coley.recaf.ui.pane.editing.assembler;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.geometry.Side;
 import javafx.scene.Node;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.specific.ASTClass;
@@ -99,8 +100,12 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull InheritanceGraphService graphService,
 						 @Nonnull CellConfigurationService cellConfigurationService,
 	                     @Nonnull TabCompletionConfig tabCompletionConfig) {
+		super(Side.BOTTOM);
+
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
+
+		assemblerToolTabs.setOwner(this);
 
 		int timeToWait = pipelineManager.getServiceConfig().getDisassemblyAstParseDelay().getValue();
 
@@ -231,7 +236,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	protected void generateDisplay() {
 		if (!hasDisplay()) {
 			setDisplay(editor);
-			setBottom(assemblerToolTabs.getTabs());
 
 			// Trigger a disassembly so the initial text is set in the editor.
 			disassemble().whenComplete((unused, error) -> {

@@ -97,7 +97,6 @@ public class KotlinMetadataPane extends BorderPane implements Navigable {
 		labelWrapper.getStyleClass().add("workspace-filter-pane"); // Style used for top-border separator
 		setCenter(tree);
 		setBottom(labelWrapper);
-		setMinWidth(235);
 	}
 
 	/**

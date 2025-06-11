@@ -76,7 +76,6 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 
 		// Layout
 		getChildren().addAll(tree, toggle);
-		setMinWidth(235);
 	}
 
 	/**
@@ -110,12 +109,14 @@ public class InheritancePane extends StackPane implements UpdatableNavigable {
 		}
 
 		// Create the appropriate tree model and assign it.
-		WorkspaceTreeNode root = new WorkspaceTreeNode(path);
-		if (contentType.get() == TreeContent.CHILDREN)
-			createChildren(root, vertex);
-		else
-			createParents(root, vertex);
-		FxThreadUtil.run(() -> tree.setRoot(root));
+		FxThreadUtil.run(() -> {
+			WorkspaceTreeNode root = new WorkspaceTreeNode(path);
+			if (contentType.get() == TreeContent.CHILDREN)
+				createChildren(root, vertex);
+			else
+				createParents(root, vertex);
+			tree.setRoot(root);
+		});
 	}
 
 	/**

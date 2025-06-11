@@ -1,16 +1,34 @@
 package software.coley.recaf.ui.pane.editing;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Orientation;
+import javafx.geometry.Side;
 import javafx.scene.Node;
-import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
+import org.kordamp.ikonli.Ikon;
+import software.coley.bentofx.Bento;
+import software.coley.bentofx.builder.LayoutBuilder;
+import software.coley.bentofx.builder.SingleSpaceArgs;
+import software.coley.bentofx.builder.TabbedSpaceArgs;
+import software.coley.bentofx.dockable.Dockable;
+import software.coley.bentofx.dockable.DockableIconFactory;
+import software.coley.bentofx.header.Header;
+import software.coley.bentofx.impl.ImplBento;
+import software.coley.bentofx.layout.LeafDockLayout;
+import software.coley.bentofx.layout.RootDockLayout;
+import software.coley.bentofx.layout.SplitDockLayout;
+import software.coley.bentofx.path.SpacePath;
+import software.coley.bentofx.space.TabbedDockSpace;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.control.FontIconView;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,10 +46,53 @@ import java.util.function.Consumer;
  * @see ClassPane For {@link ClassInfo}
  */
 public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderPane implements UpdatableNavigable {
+	private static final String TOOL_TABS_ID = "tool-tabs";
+	/** We use a separate instance because the side-tabs of this pane are not intended to be tracked by our docking manger. */
+	private final ImplBento bento = (ImplBento) Bento.newBento();
+	/** Wrapper to hold {@link #displayWrapper} and {@link Dockable} side tabs. Split according to {@link #toolTabSide}. */
+	private final SplitDockLayout displaySplit;
+	/** Side of the UI to place additional tools on. */
+	private final Side toolTabSide;
+	/** Wrapper to hold display for provided content. See {@link #generateDisplay()} */
+	private final BorderPane displayWrapper = new BorderPane();
 	protected final List<Consumer<P>> pathUpdateListeners = new CopyOnWriteArrayList<>();
 	protected final List<Navigable> children = new ArrayList<>();
-	protected SideTabs sideTabs;
 	protected P path;
+
+	/**
+	 * New content pane. Any additional tools registered via {@link #addSideTab(Dockable)} will be placed on the right.
+	 */
+	protected AbstractContentPane() {
+		this(Side.RIGHT);
+	}
+
+	/**
+	 * New content pane.
+	 *
+	 * @param toolTabSide
+	 * 		Side to place additional tools registered via {@link #addSideTab(Dockable)}.
+	 */
+	protected AbstractContentPane(@Nonnull Side toolTabSide) {
+		this.toolTabSide = toolTabSide;
+
+		LayoutBuilder builder = bento.newLayoutBuilder();
+		Dockable dockable = bento.newDockableBuilder().withNode(displayWrapper).withCanBeDragged(false).withDragGroup(-1).build();
+		LeafDockLayout displayLayout = builder.leaf(builder.single(new SingleSpaceArgs().setSide(null).setDockable(dockable)));
+
+		displaySplit = builder.split(toolTabSide.isHorizontal() ? Orientation.VERTICAL : Orientation.HORIZONTAL, displayLayout);
+
+		RootDockLayout root = builder.root(displaySplit);
+		Region rootRegion = root.getBackingRegion();
+		rootRegion.getStyleClass().add("embedded-bento");
+		switch (toolTabSide) {
+			case TOP -> rootRegion.pseudoClassStateChanged(Header.PSEUDO_SIDE_TOP, true);
+			case BOTTOM -> rootRegion.pseudoClassStateChanged(Header.PSEUDO_SIDE_BOTTOM, true);
+			case LEFT -> rootRegion.pseudoClassStateChanged(Header.PSEUDO_SIDE_LEFT, true);
+			case RIGHT -> rootRegion.pseudoClassStateChanged(Header.PSEUDO_SIDE_RIGHT, true);
+		}
+		setCenter(rootRegion);
+		bento.registerRoot(root);
+	}
 
 	/**
 	 * @param targetType
@@ -51,22 +112,30 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	}
 
 	/**
+	 * @return Current display
+	 */
+	@Nullable
+	public Node getDisplay() {
+		return displayWrapper.getCenter();
+	}
+
+	/**
 	 * Clear the display.
 	 */
 	protected void clearDisplay() {
 		// Remove navigable child.
-		if (getCenter() instanceof Navigable navigable)
+		if (displayWrapper.getCenter() instanceof Navigable navigable)
 			children.remove(navigable);
 
 		// Remove display node.
-		setCenter(null);
+		displayWrapper.setCenter(null);
 	}
 
 	/**
 	 * @return {@code true} when there is a current displayed node.
 	 */
 	protected boolean hasDisplay() {
-		return getCenter() != null;
+		return getDisplay() != null;
 	}
 
 	/**
@@ -75,7 +144,7 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	 */
 	protected void setDisplay(Node node) {
 		// Remove old navigable child.
-		Node old = getCenter();
+		Node old = displayWrapper.getCenter();
 		if (old instanceof Navigable navigableOld)
 			children.remove(navigableOld);
 
@@ -84,7 +153,7 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 			children.add(navigableNode);
 
 		// Set display node.
-		setCenter(node);
+		displayWrapper.setCenter(node);
 	}
 
 	/**
@@ -96,7 +165,7 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 		generateDisplay();
 
 		// Refresh UI with path
-		if (getCenter() instanceof UpdatableNavigable updatable) {
+		if (displayWrapper.getCenter() instanceof UpdatableNavigable updatable) {
 			PathNode<?> currentPath = getPath();
 			if (currentPath != null)
 				updatable.onUpdatePath(currentPath);
@@ -110,19 +179,86 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	protected abstract void generateDisplay();
 
 	/**
-	 * @param tab
-	 * 		Tab to add to the side panel.
+	 * Adds a new side tab to this pane.
+	 *
+	 * @param binding
+	 * 		Side tab title binding.
+	 * @param icon
+	 * 		Side tab icon.
+	 * @param content
+	 * 		Side tab content to display.
 	 */
-	public void addSideTab(@Nonnull Tab tab) {
-		// Lazily create/add side-tabs to UI.
-		if (sideTabs == null) {
-			sideTabs = new SideTabs(Orientation.VERTICAL);
-			children.add(sideTabs);
-			setRight(sideTabs);
-		}
+	public void addSideTab(@Nonnull ObservableValue<String> binding, @Nonnull Ikon icon, @Nullable Node content) {
+		addSideTab(binding, d -> new FontIconView(icon), content);
+	}
 
-		// Add the given tab.
-		sideTabs.getTabs().add(tab);
+	/**
+	 * Adds a new side tab to this pane.
+	 *
+	 * @param binding
+	 * 		Side tab title binding.
+	 * @param iconFactory
+	 * 		Side tab icon factory.
+	 * @param content
+	 * 		Side tab content to display.
+	 */
+	public void addSideTab(@Nonnull ObservableValue<String> binding, @Nonnull DockableIconFactory iconFactory, @Nullable Node content) {
+		Dockable dockable = bento.newDockableBuilder()
+				.withDragGroup(-1) // Prevent being used as a drag-drop target
+				.withCanBeDragged(false) // Prevent being used as a drag-drop initiator
+				.withClosable(false)
+				.withTitle(binding)
+				.withIconFactory(iconFactory)
+				.withNode(content)
+				.build();
+		addSideTab(dockable);
+	}
+
+	/**
+	 * Adds a new side tab to this pane.
+	 *
+	 * @param dockable
+	 * 		Side tab model.
+	 */
+	public void addSideTab(@Nonnull Dockable dockable) {
+		if (displaySplit.getChildLayouts().size() < 2) {
+			LayoutBuilder builder = bento.newLayoutBuilder();
+			TabbedDockSpace space = builder.tabbed(new TabbedSpaceArgs()
+					.setCanSplit(false)
+					.setSide(toolTabSide)
+					.setIdentifier(TOOL_TABS_ID)
+					.addDockables(dockable));
+			LeafDockLayout leaf = builder.fitLeaf(space);
+			switch (toolTabSide) {
+				case TOP, LEFT -> displaySplit.addChildLayout(0, leaf);
+				case BOTTOM, RIGHT -> displaySplit.addChildLayout(leaf);
+			}
+			displaySplit.setChildCollapsed(leaf, true);
+			switch (toolTabSide) {
+				case TOP, LEFT -> displaySplit.setChildSize(leaf, 232);
+				case BOTTOM, RIGHT -> displaySplit.setChildSize(leaf, 180);
+			}
+		} else {
+			SpacePath path = bento.findSpace(TOOL_TABS_ID);
+			if (path != null && path.space() instanceof TabbedDockSpace space) {
+				space.addDockable(dockable);
+				space.selectDockable(space.getDockables().getFirst());
+			}
+		}
+		if (dockable.getNode() instanceof Navigable dockableNode)
+			children.add(dockableNode);
+	}
+
+	/**
+	 * Clears all side tabs from this pane.
+	 */
+	public void clearSideTabs() {
+		SpacePath path = bento.findSpace(TOOL_TABS_ID);
+		if (path != null && path.space() instanceof TabbedDockSpace space) {
+			for (Dockable dockable : new ArrayList<>(space.getDockables())) {
+				space.closeDockable(dockable);
+			}
+		}
 	}
 
 	/**

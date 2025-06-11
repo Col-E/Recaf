@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -68,7 +69,7 @@ public class ResourceSummaryService implements Service {
 			boolean lastSummarizerAppended = false;
 			for (ResourceSummarizer summarizer : new TreeSet<>(summarizers.values())) {
 				if (lastSummarizerAppended)
-					consumer.appendSummary(new Separator());
+					FxThreadUtil.run(() -> consumer.appendSummary(new Separator()));
 				try {
 					lastSummarizerAppended = summarizer.summarize(workspace, resource, consumer);
 				} catch (Throwable t) {

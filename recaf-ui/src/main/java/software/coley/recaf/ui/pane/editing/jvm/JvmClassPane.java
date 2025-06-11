@@ -58,7 +58,7 @@ public class JvmClassPane extends ClassPane {
 	protected void generateDisplay() {
 		// If you want to swap out the display, first clear the existing one.
 		// Clearing is done automatically when changing the editor type.
-		if (getCenter() != null)
+		if (hasDisplay())
 			return;
 
 		// Update content in pane.

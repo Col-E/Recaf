@@ -3,6 +3,7 @@ package software.coley.recaf;
 import jakarta.enterprise.inject.spi.Bean;
 import org.slf4j.Logger;
 import picocli.CommandLine;
+import software.coley.fxaccess.AccessCheck;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.cdi.EagerInitializationExtension;
@@ -120,6 +121,7 @@ public class Main {
 			initPlugins();
 			fireInitEvent();
 		} else {
+			initFxAccessAgent();
 			initTranslations();
 			initPlugins();
 			fireInitEvent();
@@ -138,6 +140,33 @@ public class Main {
 		System.setProperty("sun.java2d.uiScale", String.format("%.0f%%", 100 * scale));
 		System.setProperty("glass.win.uiScale", String.valueOf(scale));
 		System.setProperty("glass.gtk.uiScale", String.valueOf(scale));
+	}
+
+	/**
+	 * Configure the JavaFX access logging agent.
+	 * The logging is only active when the agent is passed as a launch argument to Recaf.
+	 * <br>
+	 * Example usage: {@code -javaagent:javafx-access-agent.jar=software/;org/;com/;javafx/}
+	 */
+	private static void initFxAccessAgent() {
+		AccessCheck.addAccessCheckListener((className, methodName, lineNumber, threadName, calledMethodSignature) -> {
+			// Some kinds of operations are safe and can be ignored.
+			if (calledMethodSignature != null) {
+				// Skip on constructors
+				if (calledMethodSignature.contains("<"))
+					return;
+
+				// Skip on get operations
+				if (calledMethodSignature.contains("#get"))
+					return;
+
+				// Skip on things that will be operated on later
+				if (calledMethodSignature.contains("#setOn") || calledMethodSignature.contains("#addListener"))
+					return;
+			}
+
+			System.err.printf("[thread:%s] %s.%s (line %d) - %s\n", threadName, className, methodName, lineNumber, calledMethodSignature);
+		});
 	}
 
 	/**

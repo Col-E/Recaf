@@ -23,11 +23,11 @@ import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProviderService;
-import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.ResourceSummaryService;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.docking.DockingLayoutManager;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
@@ -44,8 +44,8 @@ import java.util.concurrent.CompletableFuture;
  * Pane to display summary data about the loaded {@link Workspace} when opened.
  *
  * @author Matt Coley
- * @see WorkspaceRootPane Parent display.
- * @see ResourceSummaryService Manages content to display here via discovered {@link ResourceSummarizer} types.
+ * @see DockingLayoutManager
+ * @see ResourceSummaryService
  */
 @Dependent
 public class WorkspaceInformationPane extends StackPane implements Navigable {

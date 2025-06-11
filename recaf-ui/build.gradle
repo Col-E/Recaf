@@ -16,6 +16,7 @@ dependencies {
     implementation project(':recaf-core')
     testImplementation(testFixtures(project(":recaf-core")))
 
+    implementation(libs.acc.agent)
     implementation(libs.atlantafx)
     implementation(libs.docking)
     implementation(libs.bundles.ikonli)

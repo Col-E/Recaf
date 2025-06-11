@@ -1,8 +1,13 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.application.Platform;
+import javafx.beans.property.Property;
+import javafx.beans.value.ObservableValue;
+import javafx.beans.value.WritableValue;
 import software.coley.recaf.RecafApplication;
+import software.coley.recaf.util.threading.Batch;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 
@@ -60,6 +65,36 @@ public class FxThreadUtil {
 	}
 
 	/**
+	 * Assign a property value on the FX thread.
+	 *
+	 * @param property
+	 * 		Property to update.
+	 * @param value
+	 * 		Value to assign to the property.
+	 * @param <T>
+	 * 		Property value type.
+	 */
+	public static <T> void set(@Nonnull WritableValue<T> property, @Nullable T value) {
+		run(() -> property.setValue(value));
+	}
+
+	/**
+	 * Binds a property value on the FX thread.
+	 *
+	 * @param property
+	 * 		Property to bind.
+	 * @param value
+	 * 		Value to bind the property to.
+	 * @param <T>
+	 * 		Property value type.
+	 */
+	public static <T> void bind(@Nonnull Property<T> property, @Nullable ObservableValue<T> value) {
+		// Binding will fire off event handlers if the given value does not match the current property value.
+		// When this is done off the FX thread it can be unsafe.
+		run(() -> property.bind(value));
+	}
+
+	/**
 	 * @return JFX threaded executor.
 	 */
 	@Nonnull
@@ -75,5 +110,47 @@ public class FxThreadUtil {
 		for (Runnable runnable : preInitQueue)
 			run(runnable);
 		preInitQueue.clear();
+	}
+
+	/**
+	 * @return New execution chain.
+	 */
+	@Nonnull
+	public static Batch batch() {
+		return new FxBatch();
+	}
+
+	/**
+	 * Batch implementation that executes all tasks on the FX thread.
+	 */
+	private static class FxBatch implements Batch {
+		private final List<Runnable> tasks = new ArrayList<>();
+
+		@Override
+		public void add(@Nonnull Runnable runnable) {
+			synchronized (tasks) {
+				tasks.add(runnable);
+			}
+		}
+
+		@Override
+		public void clear() {
+			synchronized (tasks) {
+				tasks.clear();
+			}
+		}
+
+		@Override
+		public void execute() {
+			run(this::fire);
+		}
+
+		private void fire() {
+			synchronized (tasks) {
+				for (Runnable task : tasks)
+					task.run();
+				tasks.clear();
+			}
+		}
 	}
 }
