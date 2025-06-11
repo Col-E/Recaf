@@ -59,6 +59,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * to discover any currently open content.
  *
  * @author Matt Coley
+ * @see DockingManager
  */
 @EagerInitialization(InitializationStage.AFTER_UI_INIT)
 @ApplicationScoped

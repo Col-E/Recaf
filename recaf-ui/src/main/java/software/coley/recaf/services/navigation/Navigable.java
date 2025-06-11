@@ -9,6 +9,7 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.ui.docking.DockingManager;
+import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,7 +17,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Outline of navigable content. UI components implement this type can be discovered via path-based look-ups.
+ * Outline of navigable content <i>(IE, content in the {@link Workspace} such as classes and files)</i>.
+ * UI components implement this type can be discovered via {@link PathNode} look-ups.
  *
  * @author Matt Coley
  * @see NavigationManager Tracker of all open {@link Navigable} content.

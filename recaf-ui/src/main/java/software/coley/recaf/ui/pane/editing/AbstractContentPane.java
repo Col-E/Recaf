@@ -47,18 +47,31 @@ import java.util.function.Consumer;
  */
 public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderPane implements UpdatableNavigable {
 	private static final String TOOL_TABS_ID = "tool-tabs";
+	/** We use a separate instance because the side-tabs of this pane are not intended to be tracked by our docking manger. */
 	private final ImplBento bento = (ImplBento) Bento.newBento();
-	private final BorderPane displayWrapper = new BorderPane();
+	/** Wrapper to hold {@link #displayWrapper} and {@link Dockable} side tabs. Split according to {@link #toolTabSide}. */
 	private final SplitDockLayout displaySplit;
+	/** Side of the UI to place additional tools on. */
 	private final Side toolTabSide;
+	/** Wrapper to hold display for provided content. See {@link #generateDisplay()} */
+	private final BorderPane displayWrapper = new BorderPane();
 	protected final List<Consumer<P>> pathUpdateListeners = new CopyOnWriteArrayList<>();
 	protected final List<Navigable> children = new ArrayList<>();
 	protected P path;
 
+	/**
+	 * New content pane. Any additional tools registered via {@link #addSideTab(Dockable)} will be placed on the right.
+	 */
 	protected AbstractContentPane() {
 		this(Side.RIGHT);
 	}
 
+	/**
+	 * New content pane.
+	 *
+	 * @param toolTabSide
+	 * 		Side to place additional tools registered via {@link #addSideTab(Dockable)}.
+	 */
 	protected AbstractContentPane(@Nonnull Side toolTabSide) {
 		this.toolTabSide = toolTabSide;
 
@@ -165,27 +178,48 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	 */
 	protected abstract void generateDisplay();
 
+	/**
+	 * Adds a new side tab to this pane.
+	 *
+	 * @param binding
+	 * 		Side tab title binding.
+	 * @param icon
+	 * 		Side tab icon.
+	 * @param content
+	 * 		Side tab content to display.
+	 */
 	public void addSideTab(@Nonnull ObservableValue<String> binding, @Nonnull Ikon icon, @Nullable Node content) {
 		addSideTab(binding, d -> new FontIconView(icon), content);
 	}
 
+	/**
+	 * Adds a new side tab to this pane.
+	 *
+	 * @param binding
+	 * 		Side tab title binding.
+	 * @param iconFactory
+	 * 		Side tab icon factory.
+	 * @param content
+	 * 		Side tab content to display.
+	 */
 	public void addSideTab(@Nonnull ObservableValue<String> binding, @Nonnull DockableIconFactory iconFactory, @Nullable Node content) {
-		Dockable dockable = dockable(binding, iconFactory, content);
-		addSideTab(dockable);
-	}
-
-	@Nonnull
-	private Dockable dockable(@Nonnull ObservableValue<String> binding, @Nonnull DockableIconFactory iconFactory, @Nullable Node content) {
-		return bento.newDockableBuilder()
-				.withCanBeDragged(false)
+		Dockable dockable = bento.newDockableBuilder()
+				.withDragGroup(-1) // Prevent being used as a drag-drop target
+				.withCanBeDragged(false) // Prevent being used as a drag-drop initiator
 				.withClosable(false)
-				.withDragGroup(-1)
 				.withTitle(binding)
 				.withIconFactory(iconFactory)
 				.withNode(content)
 				.build();
+		addSideTab(dockable);
 	}
 
+	/**
+	 * Adds a new side tab to this pane.
+	 *
+	 * @param dockable
+	 * 		Side tab model.
+	 */
 	public void addSideTab(@Nonnull Dockable dockable) {
 		if (displaySplit.getChildLayouts().size() < 2) {
 			LayoutBuilder builder = bento.newLayoutBuilder();
@@ -215,6 +249,9 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 			children.add(dockableNode);
 	}
 
+	/**
+	 * Clears all side tabs from this pane.
+	 */
 	public void clearSideTabs() {
 		SpacePath path = bento.findSpace(TOOL_TABS_ID);
 		if (path != null && path.space() instanceof TabbedDockSpace space) {

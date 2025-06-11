@@ -1,13 +1,11 @@
 package software.coley.recaf.ui.docking;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.geometry.Orientation;
 import javafx.geometry.Side;
-import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -24,8 +22,8 @@ import software.coley.bentofx.layout.RootDockLayout;
 import software.coley.bentofx.layout.SplitDockLayout;
 import software.coley.bentofx.space.DockSpace;
 import software.coley.bentofx.space.TabbedDockSpace;
-import software.coley.bentofx.space.TabbedSpaceMenuFactory;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.services.navigation.NavigationManager;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.WorkspaceOpenListener;
@@ -39,6 +37,18 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 
+/**
+ * Manages updates to the UI layout.
+ * <p/>
+ * This currently covers:
+ * <ul>
+ *     <li>Displaying {@link WelcomePane} when no workspace is open</li>
+ *     <li>Displaying {@link WorkspaceExplorerPane} when a workspace is open</li>
+ * </ul>
+ *
+ * @see DockingManager
+ * @see NavigationManager
+ */
 @ApplicationScoped
 public class DockingLayoutManager {
 	private static final Logger logger = Logging.get(DockingLayoutManager.class);
@@ -121,29 +131,9 @@ public class DockingLayoutManager {
 								.setIdentifier(ID_SPACE_WORKSPACE_TOOLS)
 								.setCanSplit(false)
 								.addDockables(dockingManager.newToolDockable("workspace.title", CarbonIcons.TREE_VIEW, workspaceExplorerProvider.get()))
-								.setMenuFactory(space -> {
-									ContextMenu menu = new ContextMenu();
-									addSideItems(menu, space);
-									return menu;
-								})
+								.setMenuFactory(this::buildMenu)
 				))
 		);
-	}
-
-	private static void addSideItems(@Nonnull ContextMenu menu, @Nonnull TabbedDockSpace tabbed) {
-		// TODO: Move this to common location, and make other things use it
-		for (Side side : Side.values()) {
-			FontIconView sideIcon = switch (side) {
-				case TOP -> new FontIconView(CarbonIcons.OPEN_PANEL_FILLED_TOP);
-				case BOTTOM -> new FontIconView(CarbonIcons.OPEN_PANEL_FILLED_BOTTOM);
-				case LEFT -> new FontIconView(CarbonIcons.OPEN_PANEL_FILLED_LEFT);
-				case RIGHT -> new FontIconView(CarbonIcons.OPEN_PANEL_FILLED_RIGHT);
-			};
-			Label graphic = new Label(side == tabbed.sideProperty().get() ? "✓" : " ", sideIcon);
-			MenuItem item = new ActionMenuItem(Lang.getBinding("misc.direction." + side.name().toLowerCase()), graphic,
-					() -> tabbed.sideProperty().set(side));
-			menu.getItems().add(item);
-		}
 	}
 
 	@Nonnull
@@ -194,9 +184,35 @@ public class DockingLayoutManager {
 						.setIdentifier(ID_SPACE_TOOLS_BOTTOM)
 						.setSide(Side.BOTTOM)
 						.setCanSplit(false)
+						.setMenuFactory(this::buildMenu)
 						.addDockables(dockingManager.newToolDockable("logging.title", CarbonIcons.TERMINAL, loggingPaneProvider.get()))
 				)).setResizeWithParent(false)
 		);
+	}
+
+	@Nonnull
+	private ContextMenu buildMenu(@Nonnull TabbedDockSpace space) {
+		// TODO: Reworking bento for tabbed space to be a dockable-destination would
+		//  allow us to inspect the state of the space being collapsed or not.
+		//   - May want to not add the side options while closed
+		ContextMenu menu = new ContextMenu();
+		addSideOptions(menu, space);
+		return menu;
+	}
+
+	private static void addSideOptions(@Nonnull ContextMenu menu, @Nonnull TabbedDockSpace space) {
+		for (Side side : Side.values()) {
+			FontIconView sideIcon = switch (side) {
+				case TOP -> new FontIconView(CarbonIcons.OPEN_PANEL_FILLED_TOP);
+				case BOTTOM -> new FontIconView(CarbonIcons.OPEN_PANEL_FILLED_BOTTOM);
+				case LEFT -> new FontIconView(CarbonIcons.OPEN_PANEL_FILLED_LEFT);
+				case RIGHT -> new FontIconView(CarbonIcons.OPEN_PANEL_FILLED_RIGHT);
+			};
+			Label graphic = new Label(side == space.sideProperty().get() ? "✓" : " ", sideIcon);
+			MenuItem item = new ActionMenuItem(Lang.getBinding("misc.direction." + side.name().toLowerCase()), graphic,
+					() -> space.sideProperty().set(side));
+			menu.getItems().add(item);
+		}
 	}
 
 	private class ListenerHost implements WorkspaceOpenListener, WorkspaceCloseListener {
