@@ -20,6 +20,7 @@ import software.coley.bentofx.layout.DockLayout;
 import software.coley.bentofx.layout.LeafDockLayout;
 import software.coley.bentofx.layout.RootDockLayout;
 import software.coley.bentofx.layout.SplitDockLayout;
+import software.coley.bentofx.path.LayoutPath;
 import software.coley.bentofx.space.DockSpace;
 import software.coley.bentofx.space.TabbedDockSpace;
 import software.coley.recaf.analytics.logging.Logging;
@@ -53,6 +54,10 @@ import software.coley.recaf.workspace.model.Workspace;
 public class DockingLayoutManager {
 	private static final Logger logger = Logging.get(DockingLayoutManager.class);
 
+	/** Size in px for {@link #newBottom()} */
+	private static final int BOTTOM_SIZE = 100;
+	/** Split layout holding {@link #ID_LAYOUT_ROOT_TOP} and {@link #ID_LAYOUT_ROOT_BOTTOM} */
+	public static final String ID_LAYOUT_ROOT_SPLIT = "layout-root-split";
 	/** Top half of the main UI at initial layout. */
 	public static final String ID_LAYOUT_ROOT_TOP = "layout-root-top";
 	/** Bottom half of the main UI at initial layout. */
@@ -98,9 +103,11 @@ public class DockingLayoutManager {
 		DockLayout top = newEmptyTop();
 		DockLayout bottom = newBottom();
 		root = builder.root(builder.split(new SplitLayoutArgs()
+				.setIdentifier(ID_LAYOUT_ROOT_SPLIT)
 				.setOrientation(Orientation.VERTICAL)
-				.setChildrenSizes(-1, 150)
-				.addChildren(top, bottom)));
+				.setChildrenSizes(-1, BOTTOM_SIZE)
+				.addChildren(top, bottom)
+		));
 	}
 
 	@Nonnull
@@ -169,7 +176,7 @@ public class DockingLayoutManager {
 		return builder.split(new SplitLayoutArgs()
 				.setOrientation(Orientation.HORIZONTAL)
 				.setIdentifier(ID_LAYOUT_ROOT_TOP)
-				.setChildrenSizes(200)
+				.setChildrenSizes(200, -1)
 				.addChildren(newWorkspaceExplorerLayout(), newWorkspacePrimaryLayout())
 		);
 	}
@@ -219,7 +226,15 @@ public class DockingLayoutManager {
 		@Override
 		public void onWorkspaceOpened(@Nonnull Workspace workspace) {
 			FxThreadUtil.run(() -> {
-				if (!dockingManager.replace(ID_LAYOUT_ROOT_TOP, DockingLayoutManager.this::newWorkspaceTop)) {
+				if (dockingManager.replace(ID_LAYOUT_ROOT_TOP, DockingLayoutManager.this::newWorkspaceTop)) {
+					// TODO: This forced resize isn't needed if "replace" works as intended
+					//  - however this currently doesnt update the size (unless I wrap with "delayedRun") which is bad
+					LayoutPath path = dockingManager.getBento().findLayout(ID_LAYOUT_ROOT_SPLIT);
+					if (path != null && path.tailLayout() instanceof SplitDockLayout split) {
+						DockLayout child = split.getChildLayouts().getLast();
+						split.setChildSize(child, BOTTOM_SIZE);
+					}
+				} else {
 					logger.error("Failed replacing root on workspace open");
 				}
 			});
