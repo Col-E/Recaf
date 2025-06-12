@@ -6,15 +6,28 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.Ikon;
@@ -27,14 +40,17 @@ import software.coley.recaf.services.attach.AttachManager;
 import software.coley.recaf.services.attach.JmxBeanServerConnection;
 import software.coley.recaf.services.attach.NamedMBeanInfo;
 import software.coley.recaf.services.attach.PostScanListener;
-import software.coley.recaf.ui.control.ActionButton;
-import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.ui.window.RemoteVirtualMachinesWindow;
-import software.coley.recaf.util.ErrorDialogs;
-import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.ui.control.ActionButton;
+import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.window.RemoteVirtualMachinesWindow;
+import software.coley.recaf.util.DesktopUtil;
+import software.coley.recaf.util.ErrorDialogs;
+import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
@@ -43,7 +59,15 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanFeatureInfo;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -59,6 +83,7 @@ import static software.coley.recaf.util.Lang.getBinding;
 public class RemoteVirtualMachinesPane extends BorderPane implements PostScanListener, WorkspaceCloseListener {
 	private static final Logger logger = Logging.get(RemoteVirtualMachinesPane.class);
 	private final ObservableObject<VirtualMachineDescriptor> connectedVm = new ObservableObject<>(null);
+	private final BooleanProperty hasVms = new SimpleBooleanProperty(true);
 	private final Map<VirtualMachineDescriptor, VmPane> vmCellMap = new HashMap<>();
 	private final Map<VirtualMachineDescriptor, Button> vmButtonMap = new HashMap<>();
 	private final VBox vmButtonsList = new VBox();
@@ -69,14 +94,14 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 
 	@Inject
 	public RemoteVirtualMachinesPane(@Nonnull AttachManager attachManager,
-									 @Nonnull WorkspaceManager workspaceManager) {
+	                                 @Nonnull WorkspaceManager workspaceManager) {
 		this.attachManager = attachManager;
 		this.workspaceManager = workspaceManager;
 
-		// Register this class as scan listener so we can update the UI live as updates come in.
+		// Register this class as scan listener so that we can update the UI live as updates come in.
 		attachManager.addPostScanListener(this);
 
-		// Register this class as a close listener so we can know when the current attached resource is closed.
+		// Register this class as a close listener so that we can know when the current attached resource is closed.
 		// We'll reset any UI state after doing this associated with being connected.
 		workspaceManager.addWorkspaceCloseListener(this);
 
@@ -91,7 +116,44 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 	 * Sets up the UI, and binds passive scanning to only occur while this pane is displayed.
 	 */
 	private void initialize() {
+		// Make a display to notify users there are no available virtual machines to attach to.
+		// This will only show when we have nothing to show.
+		BoundLabel novmTitle = new BoundLabel(getBinding("attach.no-vms"));
+		Hyperlink jepLink = new Hyperlink("JEP 451: Disallow the Dynamic Loading of Agents");
+		Hyperlink disableLink = new Hyperlink("Bypassing \"-XX:+DisableAttachMechanism\"");
+		jepLink.setPadding(new Insets(0, 0, 0, 10));
+		jepLink.setOnAction(e -> {
+			try {
+				DesktopUtil.showDocument(new URI("https://openjdk.org/jeps/451"));
+			} catch (Exception ex) {
+				logger.error("Failed to open link", ex);
+			}
+		});
+		disableLink.setPadding(new Insets(0, 0, 0, 10));
+		disableLink.setOnAction(e -> {
+			try {
+				DesktopUtil.showDocument(new URI("https://stackoverflow.com/questions/42495455/how-can-i-bypass-a-xxdisableattachmechanism-java-vm-option"));
+			} catch (Exception ex) {
+				logger.error("Failed to open link", ex);
+			}
+		});
+		novmTitle.getStyleClass().add(Styles.TITLE_2);
+		GridPane noVmOverlay = new GridPane();
+		noVmOverlay.setAlignment(Pos.CENTER);
+		noVmOverlay.setPadding(new Insets(20));
+		noVmOverlay.setVgap(10);
+		noVmOverlay.getStyleClass().addAll(Styles.ELEVATED_1, Styles.BG_INSET);
+		noVmOverlay.add(novmTitle, 0, noVmOverlay.getRowCount());
+		noVmOverlay.add(new BoundLabel(Lang.getBinding("attach.no-vms.detail")), 0, noVmOverlay.getRowCount());
+		noVmOverlay.add(new Separator(), 0, noVmOverlay.getRowCount());
+		noVmOverlay.add(new BoundLabel(Lang.getBinding("attach.problem.disable-attach")), 0, noVmOverlay.getRowCount());
+		noVmOverlay.add(disableLink, 0, noVmOverlay.getRowCount());
+		noVmOverlay.add(new BoundLabel(Lang.getBinding("attach.problem.java-21")), 0, noVmOverlay.getRowCount());
+		noVmOverlay.add(jepLink, 0, noVmOverlay.getRowCount());
+		noVmOverlay.visibleProperty().bind(hasVms.not());
+
 		// Layout
+		StackPane stack = new StackPane();
 		vmButtonsList.setPadding(new Insets(5));
 		vmButtonsList.setAlignment(Pos.TOP_LEFT);
 		vmButtonsList.setSpacing(5);
@@ -100,7 +162,8 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 		SplitPane split = new SplitPane(scroll, vmDisplayPane);
 		SplitPane.setResizableWithParent(scroll, false);
 		split.setDividerPositions(0.3);
-		setCenter(split);
+		stack.getChildren().addAll(split, noVmOverlay);
+		setCenter(stack);
 	}
 
 	/**
@@ -145,7 +208,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 
 	@Override
 	public void onScanCompleted(@Nonnull Set<VirtualMachineDescriptor> added,
-								@Nonnull Set<VirtualMachineDescriptor> removed) {
+	                            @Nonnull Set<VirtualMachineDescriptor> removed) {
 		FxThreadUtil.run(() -> {
 			// Add new VM's found
 			for (VirtualMachineDescriptor descriptor : added) {
@@ -189,6 +252,9 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 				VmPane cell = vmCellMap.remove(descriptor);
 				if (cell != null) cell.setDisable(true);
 			}
+
+			// Refresh tracking properties.
+			FxThreadUtil.set(hasVms, !vmCellMap.isEmpty());
 
 			// Refresh current cell.
 			if (currentVmPane != null && !currentVmPane.isDisabled())
@@ -490,7 +556,7 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 		 * 		Supplier to the current bean info.
 		 */
 		private record JmxWrapper(Ikon icon, String langKey,
-								  UncheckedSupplier<NamedMBeanInfo> beanSupplier) {
+		                          UncheckedSupplier<NamedMBeanInfo> beanSupplier) {
 		}
 	}
 }

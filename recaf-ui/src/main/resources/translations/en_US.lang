@@ -331,6 +331,10 @@ workspace.info-progress=Analyzing workspace contents...
 ## Attach
 attach.unsupported=Attach failed to initialize
 attach.unsupported.detail=The attach agent failed to self-extract.
+attach.no-vms=No attachable JVMs found
+attach.no-vms.detail=There are currently no Java virtual machines that are available to attach to.
+attach.problem.disable-attach=If you are attempting to connect to a Java process that uses -XX:+DisableAttachMechanism please see:
+attach.problem.java-21=If you are attempting to connect to a Java 21+ process please see:
 attach.connect=Connect
 attach.tab.properties=Properties
 attach.tab.classloading=Classes
