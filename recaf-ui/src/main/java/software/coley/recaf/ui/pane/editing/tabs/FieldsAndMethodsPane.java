@@ -5,18 +5,26 @@ import atlantafx.base.theme.Tweaks;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -38,6 +46,7 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.KeybindingConfig;
+import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.BoundMultiToggleIcon;
 import software.coley.recaf.ui.control.BoundToggleIcon;
 import software.coley.recaf.ui.control.FontIconView;
@@ -62,13 +71,14 @@ import java.util.function.Function;
  */
 @Dependent
 public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, UpdatableNavigable {
-	private final SimpleStringProperty nameFilter = new SimpleStringProperty();
-	private final SimpleBooleanProperty nameFilterCaseSensitivity = new SimpleBooleanProperty();
-	private final SimpleBooleanProperty showSynthetics = new SimpleBooleanProperty(true);
-	private final SimpleObjectProperty<MemberType> memberType = new SimpleObjectProperty<>(MemberType.ALL);
-	private final SimpleObjectProperty<Visibility> visibility = new SimpleObjectProperty<>(Visibility.ALL);
-	private final SimpleBooleanProperty sortAlphabetically = new SimpleBooleanProperty();
-	private final SimpleBooleanProperty sortByVisibility = new SimpleBooleanProperty();
+	private final BooleanProperty isEmpty = new SimpleBooleanProperty();
+	private final StringProperty nameFilter = new SimpleStringProperty();
+	private final BooleanProperty nameFilterCaseSensitivity = new SimpleBooleanProperty();
+	private final BooleanProperty showSynthetics = new SimpleBooleanProperty(true);
+	private final ObjectProperty<MemberType> memberType = new SimpleObjectProperty<>(MemberType.ALL);
+	private final ObjectProperty<Visibility> visibility = new SimpleObjectProperty<>(Visibility.ALL);
+	private final BooleanProperty sortAlphabetically = new SimpleBooleanProperty();
+	private final BooleanProperty sortByVisibility = new SimpleBooleanProperty();
 	private final TreeView<PathNode<?>> tree = new TreeView<>();
 	private boolean navigationLock;
 	private ClassPathNode path;
@@ -90,9 +100,18 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		});
 
 		// Layout
+		GridPane emptyOverlay = new GridPane();
+		emptyOverlay.setAlignment(Pos.CENTER);
+		emptyOverlay.setPadding(new Insets(20));
+		emptyOverlay.setVgap(10);
+		emptyOverlay.getStyleClass().addAll(Styles.ELEVATED_1, Styles.BG_INSET);
+		emptyOverlay.add(new BoundLabel(Lang.getBinding("fieldsandmethods.empty")), 0, emptyOverlay.getRowCount());
+		emptyOverlay.visibleProperty().bind(isEmpty);
+		StackPane wrapper = new StackPane(tree, emptyOverlay);
 		VBox box = new VBox(createButtonBar(), createFilterBar());
 		box.setFillWidth(true);
-		setCenter(tree);
+		box.disableProperty().bind(isEmpty);
+		setCenter(wrapper);
 		setBottom(box);
 	}
 
@@ -293,7 +312,10 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 				ClassMemberPathNode memberNode = classPath.child(method);
 				root.addAndSortChild(new WorkspaceTreeNode(memberNode));
 			}
-			FxThreadUtil.run(() -> tree.setRoot(root));
+			FxThreadUtil.run(() -> {
+				isEmpty.set(root.getSourceChildren().isEmpty());
+				tree.setRoot(root);
+			});
 		}
 	}
 
