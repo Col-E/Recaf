@@ -1,42 +1,53 @@
-/* Transparent split-pane except for the grabber node */
-.bento .split-pane {
-    -fx-background-color: transparent;
+.container-leaf {
+    -fx-border-width: 1px;
+    -fx-border-color: -color-border-default;
+}
+
+.container-branch {
+    -fx-background-insets: 0;
     -fx-padding: 0;
 }
-.bento .split-pane > .split-pane-divider {
+
+.container-branch > .split-pane-divider {
     -fx-background-color: transparent;
     -fx-padding: 0 2px 0 2px;
 }
-.bento .split-pane > .split-pane-divider > .horizontal-grabber {
+
+.container-branch > .split-pane-divider > .horizontal-grabber {
     -fx-background-color: -color-base-6;
     -fx-padding: 5px 1px 5px 1px;
 }
-.bento .split-pane > .split-pane-divider > .vertical-grabber {
+
+.container-branch > .split-pane-divider > .vertical-grabber {
     -fx-background-color: -color-base-6;
     -fx-padding: 1px 5px 1px 5px;
 }
-.bento .split-pane > .split-pane-divider:hover > .horizontal-grabber,
-.bento .split-pane > .split-pane-divider:hover > .vertical-grabber {
-    -fx-background-color: -color-accent-7;
+
+.container-branch > .split-pane-divider:hover {
 }
-.bento .split-pane > .split-pane-divider:pressed > .horizontal-grabber,
-.bento .split-pane > .split-pane-divider:pressed > .vertical-grabber {
+
+.container-branch > .split-pane-divider:pressed {
+}
+
+.container-branch > .split-pane-divider:disabled {
+}
+
+.container-branch > .split-pane-divider:hover > .horizontal-grabber,
+.container-branch > .split-pane-divider:hover > .vertical-grabber {
     -fx-background-color: -color-accent-emphasis;
 }
 
-/* Put a border around any space. */
-.bento .layout-leaf {
-    -fx-border-width: 1px;
-    -fx-border-color: -color-border-subtle;
+.container-branch > .split-pane-divider:pressed > .horizontal-grabber,
+.container-branch > .split-pane-divider:pressed > .vertical-grabber {
+    -fx-background-color: -color-accent-fg;
 }
 
-/* HeaderView */
-.header-view {
-    -fx-border-width: 0px;
-    -fx-background-color: -color-bg-overlay;
+/* HeaderPane */
+.header-pane {
 }
+
 /* The "x" button on closable headers */
-.header-view .close-button {
+.header-pane .close-button {
     -fx-effect: none;
     -fx-opacity: 0.5;
     -fx-background-insets: 0;
@@ -45,170 +56,209 @@
     -fx-border-width: 0px;
     -fx-padding: 0 2px 0 2px;
 }
-.header-view .close-button:hover {
-    -fx-background-color:  -color-border-default;
+
+.header-pane .header:selected .close-button:hover {
+    -fx-background-color: -color-bg-subtle;
 }
+
+.header-pane .header .close-button:hover {
+    -fx-background-color: -color-bg-default;
+}
+
 /* The "▼" and "≡" buttons in HeaderView */
-.header-view .corner-button {
+.header-pane .corner-button {
+    -fx-effect: none;
     -fx-background-insets: 0, 1px;
     -fx-background-radius: 0px;
     -fx-background-color: -color-border-default, -color-bg-overlay;
     -fx-border-width: 0px;
 }
-.header-view .corner-button:hover {
+
+.header-pane .corner-button:hover {
     -fx-background-color: -color-border-default, -color-bg-default;
 }
-.header-view:top .corner-button {
+
+.header-pane:top .corner-button {
     -fx-background-insets: 0, 0 0 1px 1px;
 }
-.header-view:bottom .corner-button {
+
+.header-pane:bottom .corner-button {
     -fx-background-insets: 0, 1px 0 0 1px;
 }
-.header-view:left .corner-button {
+
+.header-pane:left .corner-button {
     -fx-background-insets: 0, 1px 1px 0 0;
 }
-.header-view:right .corner-button {
+
+.header-pane:right .corner-button {
     -fx-background-insets: 0, 1px 0 0 1px;
 }
-.header-view:top .corner-button,
-.header-view:bottom .corner-button {
-    -fx-padding: 0 9px 0 10px;
+
+.button-bar {
+    -fx-spacing: -1;
+    -fx-padding: 0;
 }
-.header-view:left .corner-button,
-.header-view:right .corner-button {
-    /* TODO: We only have this in the explorer pane right now where its correct, but this may need to be generalized */
-    -fx-padding: 6px 0 7px 0;
+
+.button-bar:vertical {
+    -fx-fill-height: true;
 }
-.header-view:top .button-bar,
-.header-view:bottom .button-bar {
-    -fx-border-width: 0 1px 0 0; /* Needed since the right 'border' of the parent is otherwise occluded */
-    -fx-border-color: -color-border-default;
+
+.button-bar:horizontal {
+    -fx-fill-width: true;
 }
-.header-view:left .button-bar,
-.header-view:right .button-bar {
-    -fx-border-width: 0; /* Unlike the top/bottom, bordering is not needed in these cases */
+
+/* HeaderRegion (Wrapper) */
+.header-region-wrapper {
 }
-.header-view:top .button-bar,
-.header-view:bottom .button-bar {
-    -fx-translate-x: 1; /* Hack for alignment issue with fake 'border' */
+
+.header-pane:top .header-region-wrapper {
+}
+
+.header-pane:bottom .header-region-wrapper {
+}
+
+.header-pane:left .header-region-wrapper {
+}
+
+.header-pane:right .header-region-wrapper {
 }
 
 /* HeaderRegion */
 .header-region {
     -fx-background-color: -color-border-default, -color-bg-overlay;
 }
+
 .header-region:top {
     -fx-background-insets: 0, 0 0 1px 0;
 }
+
 .header-region:bottom {
     -fx-background-insets: 0, 1px 0 0 0;
 }
+
 .header-region:left {
     -fx-background-insets: 0, 0 1px 0 0;
 }
+
 .header-region:right {
     -fx-background-insets: 0, 0 0 0 1px;
 }
-.header-region .node-wrapper {}
+
+.header-region .node-wrapper {
+}
 
 /* Header */
 .header {
     -fx-background-color: -color-border-default, -color-bg-overlay;
 }
+
 .header:top {
-    -fx-padding: 0.3em 0.6em 0.3em 0.6em;
     -fx-background-insets: 0, 0 0 1px 0;
 }
+
 .header:bottom {
-    -fx-padding: 0.3em 0.6em 0.3em 0.6em;
     -fx-background-insets: 0, 1px 0 0 0;
 }
+
 .header:left {
-    -fx-padding: 0.3em 0.4em 0.3em 0.4em;
     -fx-background-insets: 0, 0 1px 0 0;
 }
+
 .header:right {
-    -fx-padding: 0.3em 0.4em 0.3em 0.4em;
     -fx-background-insets: 0, 0 0 0 1px;
 }
+
 .header:hover {
     -fx-background-color: -color-border-subtle, -color-bg-subtle;
 }
-.header-view .header:selected {
-    -fx-background-color: -color-bg-inset, -color-bg-default;
+
+.header-pane .header:selected {
+    -fx-background-color: -color-border-default, -color-bg-default;
 }
-.header-view:active .header:selected {
+
+.header-pane:active .header:selected {
     -fx-background-color: -color-accent-4, -color-bg-default;
 }
+
 .header:selected:top {
     -fx-background-insets: 0, 0 0 2px 0;
 }
+
 .header:selected:bottom {
     -fx-background-insets: 0, 2px 0 0 0;
 }
+
 .header:selected:left {
     -fx-background-insets: 0, 0 2px 0 0;
 }
+
 .header:selected:right {
     -fx-background-insets: 0, 0 0 0 2px;
 }
 
 /* Collapsed */
-.layout:collapsed .header { -fx-background-color: -color-bg-overlay; }
-.layout:collapsed .header-view { -fx-background-color: -color-bg-overlay; }
-.layout:collapsed .header-region { -fx-background-color: -color-bg-overlay; }
-.layout:collapsed .corner-button { -fx-background-color: -color-bg-overlay; }
-.layout:collapsed .corner-button:hover { -fx-background-color: -color-bg-subtle; }
-
-/* Embedded context */
-.embedded-bento .layout-leaf {
-    /* Don't show the standard leaf border as this is embedded inside one of those already */
-    -fx-border-width: 0;
-}
-.embedded-bento .header-region {
+.container:collapsed .header {
     -fx-background-color: -color-bg-overlay;
 }
-.embedded-bento .header:top,
-.embedded-bento .header-region:top {
-    -fx-background-color: -color-border-muted, -color-bg-overlay;
-    -fx-background-insets: 0, 0 0 1px 0;
+
+.container:collapsed .header-pane {
+    -fx-background-color: -color-bg-overlay;
 }
-.embedded-bento .header:bottom,
-.embedded-bento .header-region:bottom {
-    -fx-background-color: -color-border-muted, -color-bg-overlay;
-    -fx-background-insets: 0, 1px 0 0 0;
+
+.container:collapsed .header-region {
+    -fx-background-color: -color-bg-overlay;
 }
-.embedded-bento .header:left,
-.embedded-bento .header-region:left {
-    -fx-background-color: -color-border-muted, -color-bg-overlay;
-    -fx-background-insets: 0, 0 1px 0 0;
-}
-.embedded-bento .header:right,
-.embedded-bento .header-region:right {
-    -fx-background-color: -color-border-muted, -color-bg-overlay;
-    -fx-background-insets: 0, 0 0 0 1px;
-}
-.embedded-bento .header:hover {
-    -fx-background-color: -color-border-muted, -color-bg-subtle;
-}
-.embedded-bento:top .split-pane > .split-pane-divider {
-    -fx-background-color: -color-border-default, -color-bg-inset;
-    -fx-background-insets: 0, 0 0 1px 0;
-}
-.embedded-bento:bottom .split-pane > .split-pane-divider {
-    -fx-background-color: -color-border-default, -color-bg-inset;
-    -fx-background-insets: 0, 1px 0 0 0 ;
-}
-.embedded-bento:left .split-pane > .split-pane-divider {
-    -fx-background-color: -color-border-default, -color-bg-inset;
-    -fx-background-insets: 0, 0 1px 0 0;
-}
-.embedded-bento:right .split-pane > .split-pane-divider {
-    -fx-background-color: -color-border-default, -color-bg-inset;
-    -fx-background-insets: 0, 0 0 0 1px;
+
+.container:collapsed .corner-button {
+    -fx-background-color: -color-bg-overlay;
+    -fx-border-width: 0;
 }
 
 /* Misc */
 .dock-ghost-zone {
     -fx-opacity: 0.3;
+}
+
+/* Embedded context */
+.embedded-bento .container-leaf {
+    -fx-border-width: 0px;
+}
+
+.embedded-bento:top > .split-pane-divider {
+    -fx-opacity: 1.0;
+    -fx-background-color: -color-border-default, -color-bg-default;
+    -fx-background-insets: 0, 0 0 1px 0;
+}
+
+.embedded-bento:bottom > .split-pane-divider {
+    -fx-opacity: 1.0;
+    -fx-background-color: -color-border-default, -color-bg-default;
+    -fx-background-insets: 0, 1px 0 0 0;
+}
+
+.embedded-bento:left > .split-pane-divider {
+    -fx-opacity: 1.0;
+    -fx-background-color: -color-border-default, -color-bg-default;
+    -fx-background-insets: 0, 0 1px 0 0;
+}
+
+.embedded-bento:right > .split-pane-divider {
+    -fx-opacity: 1.0;
+    -fx-background-color: -color-border-default, -color-bg-default;
+    -fx-background-insets: 0, 0 0 0 1px;
+}
+
+.embedded-bento .header,
+.embedded-bento .header:top,
+.embedded-bento .header:bottom,
+.embedded-bento .header:left,
+.embedded-bento .header:right,
+.embedded-bento .header-region:top,
+.embedded-bento .header-region:bottom,
+.embedded-bento .header-region:left,
+.embedded-bento .header-region:right,
+.embedded-bento .container:collapsed .header,
+.embedded-bento .container:collapsed .header-region {
+    -fx-background-color: -color-bg-overlay;
+    -fx-background-insets: 0;
 }

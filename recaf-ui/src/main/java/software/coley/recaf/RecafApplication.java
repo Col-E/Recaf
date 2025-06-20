@@ -48,7 +48,7 @@ public class RecafApplication extends Application {
 		// Layout
 		BorderPane wrapper = new BorderPane();
 		wrapper.setTop(menu);
-		wrapper.setCenter(dockingLayoutManager.getRoot().getBackingRegion());
+		wrapper.setCenter(dockingLayoutManager.getRoot().asRegion());
 		wrapper.getStyleClass().addAll("padded", "bg-inset");
 
 		// Display

@@ -22,8 +22,8 @@ import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.dockable.DockableIconFactory;
+import software.coley.bentofx.layout.container.DockContainerLeaf;
 import software.coley.bentofx.path.DockablePath;
-import software.coley.bentofx.space.TabbedDockSpace;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
@@ -346,7 +346,7 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 			content.addPathUpdateListener(updatedPath -> {
 				// Update tab graphic in case backing class details change.
 				JvmClassInfo updatedInfo = updatedPath.getValue().asJvmClass();
@@ -354,8 +354,8 @@ public class Actions implements Service {
 				IconProvider updatedIconProvider = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, updatedInfo);
 				DockableIconFactory updatedGraphicFactory = d -> Objects.requireNonNull(updatedIconProvider.makeIcon(), "Missing graphic");
 				FxThreadUtil.run(() -> {
-					dockable.withTitle(updatedTitle);
-					dockable.withIconFactory(updatedGraphicFactory);
+					dockable.setTitle(updatedTitle);
+					dockable.setIconFactory(updatedGraphicFactory);
 				});
 			});
 			setupInfoContextMenu(info, content, dockable);
@@ -396,7 +396,7 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 			content.addPathUpdateListener(updatedPath -> {
 				// Update tab graphic in case backing class details change.
 				AndroidClassInfo updatedInfo = updatedPath.getValue().asAndroidClass();
@@ -404,8 +404,8 @@ public class Actions implements Service {
 				IconProvider updatedIconProvider = iconService.getAndroidClassInfoIconProvider(workspace, resource, bundle, updatedInfo);
 				DockableIconFactory updatedGraphicFactory = d -> Objects.requireNonNull(updatedIconProvider.makeIcon(), "Missing graphic");
 				FxThreadUtil.run(() -> {
-					dockable.withTitle(updatedTitle);
-					dockable.withIconFactory(updatedGraphicFactory);
+					dockable.setTitle(updatedTitle);
+					dockable.setIconFactory(updatedGraphicFactory);
 				});
 			});
 			setupInfoContextMenu(info, content, dockable);
@@ -494,7 +494,7 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -533,8 +533,8 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
-			dockable.withCachedContextMenu(true).withContextMenuFactory(d -> {
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.setContextMenuFactory(d -> {
 				ContextMenu menu = new ContextMenu();
 				ObservableList<MenuItem> items = menu.getItems();
 				Menu mode = menu("menu.mode", CarbonIcons.VIEW);
@@ -586,7 +586,7 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -625,7 +625,7 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -664,7 +664,7 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -703,7 +703,7 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -775,23 +775,14 @@ public class Actions implements Service {
 		content.onUpdatePath(path);
 
 		// Place the tab in a region with other comments if possible.
-		DockablePath docPanePath = null;
-		for (DockablePath dockablePath : dockingManager.getBento().getAllDockables()) {
-			Dockable dockable = dockablePath.dockable();
-			Node node = dockable.nodeProperty().get();
-			if (node instanceof DocumentationPane) {
-				docPanePath = dockablePath;
-				break;
-			}
-		}
-		TabbedDockSpace space = docPanePath != null ?
-				(TabbedDockSpace) docPanePath.space() :
-				dockingManager.getPrimaryTabbedSpace();
+		DockablePath searchPath = dockingManager.getBento()
+				.search().dockable(d -> d.getNode() instanceof DocumentationPane);
+		DockContainerLeaf container = searchPath == null ? dockingManager.getPrimaryDockingContainer() : searchPath.leafContainer();
 
 		// Build the dockable.
-		Dockable dockable = createDockable(space, title, graphicFactory, content);
-		space.addDockable(dockable);
-		dockable.withCachedContextMenu(true).withContextMenuFactory(d -> {
+		Dockable dockable = createDockable(container, title, graphicFactory, content);
+		container.addDockable(dockable);
+		dockable.setContextMenuFactory(d -> {
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
 			addCloseActions(menu, dockable);
@@ -805,7 +796,7 @@ public class Actions implements Service {
 	 */
 	public void openSummary() {
 		WorkspaceInformationPane informationPane = infoPaneProvider.get();
-		createDockable(dockingManager.getPrimaryTabbedSpace(), getBinding("workspace.info"),
+		createDockable(dockingManager.getPrimaryDockingContainer(), getBinding("workspace.info"),
 				d -> new FontIconView(CarbonIcons.INFORMATION), informationPane);
 	}
 
@@ -1666,7 +1657,7 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			return createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			return createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 		});
 	}
 
@@ -1703,7 +1694,7 @@ public class Actions implements Service {
 			content.onUpdatePath(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method));
 
 			// Build the tab.
-			return createDockable(dockingManager.getPrimaryTabbedSpace(), title, graphicFactory, content);
+			return createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 		});
 	}
 
@@ -2348,24 +2339,17 @@ public class Actions implements Service {
 	@Nonnull
 	private <T extends AbstractSearchPane> T openSearchPane(@Nonnull String titleId, @Nonnull Ikon icon, @Nonnull Instance<T> paneProvider) {
 		// Place the tab in a region with other comments if possible.
-		DockablePath searchPath = null;
-		for (DockablePath dockablePath : dockingManager.getBento().getAllDockables()) {
-			Dockable dockable = dockablePath.dockable();
-			Node node = dockable.nodeProperty().get();
-			if (node instanceof AbstractSearchPane) {
-				searchPath = dockablePath;
-				break;
-			}
-		}
-		TabbedDockSpace space = searchPath == null ? null : (TabbedDockSpace) searchPath.space();
+		DockablePath searchPath = dockingManager.getBento()
+				.search().dockable(d -> d.getNode() instanceof AbstractSearchPane);
+		DockContainerLeaf container = searchPath == null ? null : searchPath.leafContainer();
 
 		T content = paneProvider.get();
-		if (space != null) {
-			createDockable(space, getBinding(titleId), d -> new FontIconView(icon), content);
+		if (container != null) {
+			createDockable(container, getBinding(titleId), d -> new FontIconView(icon), content);
 		} else {
 			Dockable dockable = createDockable(null, getBinding(titleId), d -> new FontIconView(icon), content);
-			Scene originScene = dockingManager.getPrimaryTabbedSpace().getBackingRegion().getScene();
-			Stage stage = dockingManager.getBento().newStageForDockable(originScene, dockable, 800, 400);
+			Scene originScene = dockingManager.getPrimaryDockingContainer().asRegion().getScene();
+			Stage stage = dockingManager.getBento().stageBuilding().newStageForDockable(originScene, dockable, 800, 400);
 			stage.show();
 			stage.requestFocus();
 		}
@@ -2402,7 +2386,7 @@ public class Actions implements Service {
 	private Navigable createContent(@Nonnull Supplier<Dockable> factory) {
 		// Create the dockable for the content, then display it.
 		Dockable dockable = factory.get();
-		Navigable navigable = (Navigable) dockable.getNode();
+		Navigable navigable = (Navigable) Objects.requireNonNull(dockable.getNode());
 		selectTab(navigable);
 		navigable.requestFocus();
 		return navigable;
@@ -2411,7 +2395,7 @@ public class Actions implements Service {
 	private void setupInfoContextMenu(@Nonnull Info info,
 	                                  @Nonnull AbstractContentPane<?> contentPane,
 	                                  @Nonnull Dockable dockable) {
-		dockable.withCachedContextMenu(true).withContextMenuFactory(d -> {
+		dockable.setContextMenuFactory(d -> {
 			ContextMenu menu = new ContextMenu();
 			ObservableList<MenuItem> items = menu.getItems();
 
@@ -2472,21 +2456,21 @@ public class Actions implements Service {
 	 * Selects the containing {@link Dockable} that contains the navigable content.
 	 *
 	 * @param navigable
-	 * 		Navigable content to select in its containing {@link TabbedDockSpace}.
+	 * 		Navigable content to select in its containing {@link DockContainerLeaf}.
 	 */
 	private void selectTab(@Nullable Navigable navigable) {
 		if (navigable == null)
 			return;
 		Dockable dockable = navigationManager.lookupDockable(navigable);
 		if (dockable != null)
-			dockable.inSpace(s -> s.selectDockable(dockable));
+			dockable.inContainer(DockContainerLeaf::selectDockable);
 	}
 
 	/**
 	 * Shorthand for dockable-creation + graphic setting.
 	 *
-	 * @param space
-	 * 		Parent tabbed space to spawn in.
+	 * @param container
+	 * 		Parent container to spawn in.
 	 * @param title
 	 * 		Dockable title.
 	 * @param graphicFactory
@@ -2497,18 +2481,18 @@ public class Actions implements Service {
 	 * @return Created dockable.
 	 */
 	@Nonnull
-	private Dockable createDockable(@Nullable TabbedDockSpace space,
+	private Dockable createDockable(@Nullable DockContainerLeaf container,
 	                                @Nonnull String title,
 	                                @Nonnull DockableIconFactory graphicFactory,
 	                                @Nonnull Node node) {
 		Dockable dockable = dockingManager.newDockable(title, graphicFactory, node);
 		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (dockable.closableProperty().get() && keybindingConfig.getCloseTab().match(e))
-				dockable.inSpace(s -> s.closeDockable(dockable));
+			if (keybindingConfig.getCloseTab().match(e))
+				dockable.inContainer(DockContainerLeaf::closeDockable);
 		});
-		if (space != null) {
-			space.addDockable(dockable);
-			space.selectDockable(dockable);
+		if (container != null) {
+			container.addDockable(dockable);
+			container.selectDockable(dockable);
 		}
 		return dockable;
 	}
@@ -2516,8 +2500,8 @@ public class Actions implements Service {
 	/**
 	 * Shorthand for dockable-creation + graphic setting.
 	 *
-	 * @param space
-	 * 		Parent tabbed space to spawn in.
+	 * @param container
+	 * 		Parent container to spawn in.
 	 * @param title
 	 * 		Dockable title.
 	 * @param graphicFactory
@@ -2528,18 +2512,18 @@ public class Actions implements Service {
 	 * @return Created dockable.
 	 */
 	@Nonnull
-	private Dockable createDockable(@Nullable TabbedDockSpace space,
+	private Dockable createDockable(@Nullable DockContainerLeaf container,
 	                                @Nonnull ObservableValue<String> title,
 	                                @Nonnull DockableIconFactory graphicFactory,
 	                                @Nonnull Node node) {
 		Dockable dockable = dockingManager.newTranslatableDockable(title, graphicFactory, node);
 		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (dockable.closableProperty().get() && keybindingConfig.getCloseTab().match(e))
-				dockable.inSpace(s -> s.closeDockable(dockable));
+			if (keybindingConfig.getCloseTab().match(e))
+				dockable.inContainer(DockContainerLeaf::closeDockable);
 		});
-		if (space != null) {
-			space.addDockable(dockable);
-			space.selectDockable(dockable);
+		if (container != null) {
+			container.addDockable(dockable);
+			container.selectDockable(dockable);
 		}
 		return dockable;
 	}
@@ -2574,20 +2558,20 @@ public class Actions implements Service {
 	 */
 	private static void addCloseActions(@Nonnull ContextMenu menu, @Nonnull Dockable dockable) {
 		menu.getItems().addAll(
-				action("menu.tab.close", CarbonIcons.CLOSE, () -> dockable.inSpace(space -> space.closeDockable(dockable))),
+				action("menu.tab.close", CarbonIcons.CLOSE, () -> dockable.inContainer(DockContainerLeaf::closeDockable)),
 				action("menu.tab.closeothers", CarbonIcons.CLOSE, () -> {
-					dockable.inSpace(space -> {
-						Unchecked.checkedForEach(space.getDockables(), d -> {
+					dockable.inContainer(container -> {
+						Unchecked.checkedForEach(container.getDockables(), d -> {
 							if (d != dockable)
-								space.closeDockable(d);
+								container.closeDockable(d);
 						}, (d, error) -> {
 							logger.error("Failed to close tab '{}'", d.getTitle(), error);
 						});
 					});
 				}),
 				action("menu.tab.closeall", CarbonIcons.CLOSE, () -> {
-					dockable.inSpace(space -> {
-						Unchecked.checkedForEach(space.getDockables(), space::closeDockable, (d, error) -> {
+					dockable.inContainer(container -> {
+						Unchecked.checkedForEach(container.getDockables(), container::closeDockable, (d, error) -> {
 							logger.error("Failed to close tab '{}'", d.getTitle(), error);
 						});
 					});

@@ -42,6 +42,7 @@ import software.coley.recaf.workspace.model.resource.ResourceFileListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -81,7 +82,7 @@ public class NavigationManager implements Navigable, Service {
 		this.config = config;
 
 		// Track what navigable content is available.
-		dockingManager.getBento().addDockableOpenListener((path, dockable) -> {
+		dockingManager.getBento().events().addDockableOpenListener((path, dockable) -> {
 			ObjectProperty<Node> contentProperty = dockable.nodeProperty();
 
 			// Create spy for the tab.
@@ -94,7 +95,7 @@ public class NavigationManager implements Navigable, Service {
 			// Record initial value.
 			spy.changed(contentProperty, null, contentProperty.getValue());
 		});
-		dockingManager.getBento().addDockableCloseListener((path, dockable) -> {
+		dockingManager.getBento().events().addDockableCloseListener((path, dockable) -> {
 			// The tab is closed, remove its spy lookup.
 			NavigableSpy spy = dockableToSpy.remove(dockable);
 			if (spy == null) {
@@ -111,7 +112,7 @@ public class NavigationManager implements Navigable, Service {
 
 		// When the workspace closes, close all associated children.
 		workspaceManager.addWorkspaceCloseListener(workspace -> FxThreadUtil.run(() -> {
-			for (Navigable child : childrenToDockable.keySet()) {
+			for (Navigable child : new ArrayList<>(childrenToDockable.keySet())) {
 				child.disable();
 
 				Dockable dockable = childrenToDockable.get(child);
@@ -120,14 +121,17 @@ public class NavigationManager implements Navigable, Service {
 					continue;
 				}
 
-				DockablePath path = dockingManager.getBento().findDockable(dockable);
+				DockablePath path = dockable.getPath();
 				if (path == null) {
 					logger.warn("Navigation manager couldn't invoke dockable.onClose() since dockable path could not be resolved for: {}", dockable.getTitle());
+
+					// Still need to remove it from the map to prevent leakage.
+					dockableToSpy.remove(dockable);
 					continue;
 				}
 
 				// Trigger on-close handler
-				path.space().closeDockable(dockable);
+				path.leafContainer().closeDockable(dockable);
 			}
 
 			// Validate all child references have been removed.
@@ -141,11 +145,11 @@ public class NavigationManager implements Navigable, Service {
 			path = new DummyInitialNode();
 
 			// Force close any remaining tabs that hold navigable content.
-			for (DockablePath path : dockingManager.getBento().getAllDockables()) {
+			for (DockablePath path : dockingManager.getBento().search().allDockables()) {
 				Dockable dockable = path.dockable();
 				if (dockable.nodeProperty().get() instanceof Navigable navigable) {
 					navigable.disable();
-					path.space().closeDockable(dockable);
+					path.leafContainer().closeDockable(dockable);
 				}
 			}
 		}));

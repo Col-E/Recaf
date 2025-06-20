@@ -6,22 +6,18 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Orientation;
 import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import org.kordamp.ikonli.Ikon;
 import software.coley.bentofx.Bento;
-import software.coley.bentofx.builder.LayoutBuilder;
-import software.coley.bentofx.builder.SingleSpaceArgs;
-import software.coley.bentofx.builder.TabbedSpaceArgs;
+import software.coley.bentofx.building.DockBuilding;
 import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.dockable.DockableIconFactory;
-import software.coley.bentofx.header.Header;
-import software.coley.bentofx.impl.ImplBento;
-import software.coley.bentofx.layout.LeafDockLayout;
-import software.coley.bentofx.layout.RootDockLayout;
-import software.coley.bentofx.layout.SplitDockLayout;
-import software.coley.bentofx.path.SpacePath;
-import software.coley.bentofx.space.TabbedDockSpace;
+import software.coley.bentofx.layout.container.DockContainerLeaf;
+import software.coley.bentofx.layout.container.DockContainerRootBranch;
+import software.coley.bentofx.path.DockContainerPath;
+import software.coley.bentofx.util.BentoStates;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
@@ -48,9 +44,9 @@ import java.util.function.Consumer;
 public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderPane implements UpdatableNavigable {
 	private static final String TOOL_TABS_ID = "tool-tabs";
 	/** We use a separate instance because the side-tabs of this pane are not intended to be tracked by our docking manger. */
-	private final ImplBento bento = (ImplBento) Bento.newBento();
+	private final Bento bento = new Bento();
 	/** Wrapper to hold {@link #displayWrapper} and {@link Dockable} side tabs. Split according to {@link #toolTabSide}. */
-	private final SplitDockLayout displaySplit;
+	private final DockContainerRootBranch displaySplit;
 	/** Side of the UI to place additional tools on. */
 	private final Side toolTabSide;
 	/** Wrapper to hold display for provided content. See {@link #generateDisplay()} */
@@ -75,23 +71,38 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	protected AbstractContentPane(@Nonnull Side toolTabSide) {
 		this.toolTabSide = toolTabSide;
 
-		LayoutBuilder builder = bento.newLayoutBuilder();
-		Dockable dockable = bento.newDockableBuilder().withNode(displayWrapper).withCanBeDragged(false).withDragGroup(-1).build();
-		LeafDockLayout displayLayout = builder.leaf(builder.single(new SingleSpaceArgs().setSide(null).setDockable(dockable)));
+		DockBuilding builder = bento.dockBuilding();
+		Dockable dockable = builder.dockable();
+		dockable.setNode(displayWrapper);
+		dockable.setCanBeDragged(false);
+		dockable.setClosable(false);
+		dockable.setDragGroup(-1);
 
-		displaySplit = builder.split(toolTabSide.isHorizontal() ? Orientation.VERTICAL : Orientation.HORIZONTAL, displayLayout);
+		// The display container contains the primary content display.
+		//
+		// We set the container's side to 'null' to prevent the rendering of headers
+		// for the wrapper dockable we made above.
+		DockContainerLeaf displayContainer = builder.leaf();
+		displayContainer.setSide(null);
+		displayContainer.addDockable(dockable);
 
-		RootDockLayout root = builder.root(displaySplit);
-		Region rootRegion = root.getBackingRegion();
+		displaySplit = builder.root();
+		displaySplit.addContainer(displayContainer);
+		if (toolTabSide.isHorizontal())
+			displaySplit.setOrientation(Orientation.VERTICAL);
+
+		// Register so we can search the hierarchy (used later for tool-tabs) before scene graph population
+		bento.registerRoot(displaySplit);
+
+		Region rootRegion = displaySplit.asRegion();
 		rootRegion.getStyleClass().add("embedded-bento");
 		switch (toolTabSide) {
-			case TOP -> rootRegion.pseudoClassStateChanged(Header.PSEUDO_SIDE_TOP, true);
-			case BOTTOM -> rootRegion.pseudoClassStateChanged(Header.PSEUDO_SIDE_BOTTOM, true);
-			case LEFT -> rootRegion.pseudoClassStateChanged(Header.PSEUDO_SIDE_LEFT, true);
-			case RIGHT -> rootRegion.pseudoClassStateChanged(Header.PSEUDO_SIDE_RIGHT, true);
+			case TOP -> rootRegion.pseudoClassStateChanged(BentoStates.PSEUDO_SIDE_TOP, true);
+			case BOTTOM -> rootRegion.pseudoClassStateChanged(BentoStates.PSEUDO_SIDE_BOTTOM, true);
+			case LEFT -> rootRegion.pseudoClassStateChanged(BentoStates.PSEUDO_SIDE_LEFT, true);
+			case RIGHT -> rootRegion.pseudoClassStateChanged(BentoStates.PSEUDO_SIDE_RIGHT, true);
 		}
 		setCenter(rootRegion);
-		bento.registerRoot(root);
 	}
 
 	/**
@@ -203,14 +214,13 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	 * 		Side tab content to display.
 	 */
 	public void addSideTab(@Nonnull ObservableValue<String> binding, @Nonnull DockableIconFactory iconFactory, @Nullable Node content) {
-		Dockable dockable = bento.newDockableBuilder()
-				.withDragGroup(-1) // Prevent being used as a drag-drop target
-				.withCanBeDragged(false) // Prevent being used as a drag-drop initiator
-				.withClosable(false)
-				.withTitle(binding)
-				.withIconFactory(iconFactory)
-				.withNode(content)
-				.build();
+		Dockable dockable = bento.dockBuilding().dockable();
+		dockable.setDragGroup(-1);// Prevent being used as a drag-drop target
+		dockable.setCanBeDragged(false); // Prevent being used as a drag-drop
+		dockable.setClosable(false);
+		dockable.setIconFactory(iconFactory);
+		dockable.setNode(content);
+		dockable.titleProperty().bind(binding);
 		addSideTab(dockable);
 	}
 
@@ -221,30 +231,33 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	 * 		Side tab model.
 	 */
 	public void addSideTab(@Nonnull Dockable dockable) {
-		if (displaySplit.getChildLayouts().size() < 2) {
-			LayoutBuilder builder = bento.newLayoutBuilder();
-			TabbedDockSpace space = builder.tabbed(new TabbedSpaceArgs()
-					.setCanSplit(false)
-					.setSide(toolTabSide)
-					.setIdentifier(TOOL_TABS_ID)
-					.addDockables(dockable));
-			LeafDockLayout leaf = builder.fitLeaf(space);
+		if (displaySplit.getChildContainers().size() < 2) {
+			DockBuilding builder = bento.dockBuilding();
+
+			DockContainerLeaf leaf = builder.leaf(TOOL_TABS_ID);
+			leaf.setCanSplit(false);
+			leaf.setSide(toolTabSide);
+			leaf.addDockable(dockable);
+			SplitPane.setResizableWithParent(leaf.asRegion(), false);
+
 			switch (toolTabSide) {
-				case TOP, LEFT -> displaySplit.addChildLayout(0, leaf);
-				case BOTTOM, RIGHT -> displaySplit.addChildLayout(leaf);
+				case TOP, LEFT -> {
+					displaySplit.addContainer(0, leaf);
+					displaySplit.setContainerSizePx(leaf, 232);
+				}
+				case BOTTOM, RIGHT -> {
+					displaySplit.addContainer(leaf);
+					displaySplit.setContainerSizePx(leaf, 180);
+				}
 			}
-			displaySplit.setChildCollapsed(leaf, true);
-			switch (toolTabSide) {
-				case TOP, LEFT -> displaySplit.setChildSize(leaf, 232);
-				case BOTTOM, RIGHT -> displaySplit.setChildSize(leaf, 180);
-			}
+
+			displaySplit.setContainerCollapsed(leaf, true);
 		} else {
-			SpacePath path = bento.findSpace(TOOL_TABS_ID);
-			if (path != null && path.space() instanceof TabbedDockSpace space) {
-				space.addDockable(dockable);
-				space.selectDockable(space.getDockables().getFirst());
-			}
+			DockContainerPath path = bento.search().container(TOOL_TABS_ID);
+			if (path != null && path.tailContainer() instanceof DockContainerLeaf leaf)
+				leaf.addDockable(dockable);
 		}
+
 		if (dockable.getNode() instanceof Navigable dockableNode)
 			children.add(dockableNode);
 	}
@@ -253,10 +266,10 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	 * Clears all side tabs from this pane.
 	 */
 	public void clearSideTabs() {
-		SpacePath path = bento.findSpace(TOOL_TABS_ID);
-		if (path != null && path.space() instanceof TabbedDockSpace space) {
-			for (Dockable dockable : new ArrayList<>(space.getDockables())) {
-				space.closeDockable(dockable);
+		DockContainerPath path = bento.search().container(TOOL_TABS_ID);
+		if (path != null && path.tailContainer() instanceof DockContainerLeaf leaf) {
+			for (Dockable dockable : new ArrayList<>(leaf.getDockables())) {
+				leaf.closeDockable(dockable);
 			}
 		}
 	}

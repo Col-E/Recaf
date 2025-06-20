@@ -1,5 +1,5 @@
 /*
-This file is auto-generated.
+This file is *mostly* auto-generated.
 Please maintain changes on the original SCSS files: https://github.com/Col-E/atlantafx
  - Branch: recaf-theme-2x (default)
 */
@@ -306,7 +306,7 @@ Text {
 }
 
 .bg-inset {
-  -fx-background-color: -color-bg-inset;
+  -fx-background-color: -color-bg-inset !important;
 }
 
 .bg-subtle {

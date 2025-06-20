@@ -7,8 +7,8 @@ import jakarta.inject.Inject;
 import javafx.scene.Node;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.bentofx.dockable.Dockable;
+import software.coley.bentofx.layout.container.DockContainerLeaf;
 import software.coley.bentofx.path.DockablePath;
-import software.coley.bentofx.space.DockSpace;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.ActionMenuItem;
@@ -79,11 +79,11 @@ public class AnalysisMenu extends WorkspaceAwareMenu {
 	private void openCommentList() {
 		// Check for tabs with the panel already open.
 		DockablePath docPanePath = null;
-		for (DockablePath path : dockingManager.getBento().getAllDockables()) {
+		for (DockablePath path : dockingManager.getBento().search().allDockables()) {
 			Dockable dockable = path.dockable();
 			Node node = dockable.nodeProperty().get();
 			if (node instanceof CommentListPane) {
-				path.space().selectDockable(dockable);
+				path.leafContainer().selectDockable(dockable);
 				FxThreadUtil.run(() -> {
 					node.requestFocus();
 					Animations.animateNotice(node, 1000);
@@ -95,8 +95,8 @@ public class AnalysisMenu extends WorkspaceAwareMenu {
 		}
 
 		// Not already open, gotta open a new one.
-		DockSpace space = docPanePath != null ? docPanePath.space() : dockingManager.getPrimaryTabbedSpace();
+		DockContainerLeaf leaf = docPanePath != null ? docPanePath.leafContainer() : dockingManager.getPrimaryDockingContainer();
 		Dockable dockable = dockingManager.newTranslatableDockable("menu.analysis.list-comments", CarbonIcons.CHAT, commentListPaneProvider.get());
-		space.addDockable(dockable);
+		leaf.addDockable(dockable);
 	}
 }
