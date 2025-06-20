@@ -65,6 +65,8 @@ public class KotlinMetadata {
 		KtClassKind kind = KtClassKind.fromKindInt(visitor.getKind());
 		int extraFlags = visitor.getExtraInt();
 		String fqName = cls.hasFqName() ? resolver.resolve(cls.getFqName()) : null;
+		if (fqName != null)
+			fqName = fqName.replace('.', '$');
 		List<KtType> superTypes = cls.getSupertypeList().stream()
 				.map(t -> mapType(resolver, t))
 				.toList();
@@ -221,6 +223,7 @@ public class KotlinMetadata {
 			name = res.resolve(type.getTypeAliasName());
 		else
 			name = "Unknown";
+		name = name.replace('.', '$');
 		List<KtType> arguments = newList(type.getArgumentCount());
 		for (var argument : type.getArgumentList())
 			arguments.add(mapType(res, argument.getType()));
