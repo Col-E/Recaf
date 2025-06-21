@@ -204,6 +204,10 @@ public class ResolverAdapter extends BasicResolver {
 					return AstResolveResult.reference(path);
 			}
 		}
+		// TODO: To support operating on method parameters we need to update source-solver
+		//  to have a resolution model on parameters. Then we may also want to have a generic
+		//  local variable solver for similar capabilities. This would let us create mappings
+		//  in the UI for variables which would be nice.
 
 		return null;
 	}
