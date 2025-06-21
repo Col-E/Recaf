@@ -6,8 +6,8 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.TextFileInfo;
 import software.coley.recaf.ui.pane.editing.FilePane;
-import software.coley.recaf.ui.pane.editing.binary.HexAdapter;
-import software.coley.recaf.ui.pane.editing.hex.HexConfig;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexAdapter;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexConfig;
 import software.coley.recaf.ui.pane.editing.jvm.TextEditorType;
 
 /**

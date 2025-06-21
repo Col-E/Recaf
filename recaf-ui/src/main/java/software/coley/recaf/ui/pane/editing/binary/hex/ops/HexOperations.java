@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.hex.ops;
+package software.coley.recaf.ui.pane.editing.binary.hex.ops;
 
 import jakarta.annotation.Nonnull;
 import javafx.event.EventHandler;

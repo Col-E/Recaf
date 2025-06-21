@@ -1,12 +1,12 @@
-package software.coley.recaf.ui.pane.editing.hex.cell;
+package software.coley.recaf.ui.pane.editing.binary.hex.cell;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.TextFormatter;
-import software.coley.recaf.ui.pane.editing.hex.HexUtil;
-import software.coley.recaf.ui.pane.editing.hex.ops.HexOperations;
+import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexOperations;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;

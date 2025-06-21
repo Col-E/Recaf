@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.hex;
+package software.coley.recaf.ui.pane.editing.binary.hex;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -20,11 +20,11 @@ import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
-import software.coley.recaf.ui.pane.editing.hex.cell.HexRow;
-import software.coley.recaf.ui.pane.editing.hex.cell.HexRowHeader;
-import software.coley.recaf.ui.pane.editing.hex.ops.HexAccess;
-import software.coley.recaf.ui.pane.editing.hex.ops.HexNavigation;
-import software.coley.recaf.ui.pane.editing.hex.ops.HexOperations;
+import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexAccess;
+import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexNavigation;
+import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexOperations;
+import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRow;
+import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRowHeader;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.NodeEvents;
 

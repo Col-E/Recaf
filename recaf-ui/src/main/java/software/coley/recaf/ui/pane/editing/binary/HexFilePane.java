@@ -7,7 +7,8 @@ import javafx.scene.input.KeyEvent;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.pane.editing.FilePane;
-import software.coley.recaf.ui.pane.editing.hex.HexConfig;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexAdapter;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexConfig;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 

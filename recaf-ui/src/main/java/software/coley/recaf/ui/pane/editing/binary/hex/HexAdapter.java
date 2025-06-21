@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.binary;
+package software.coley.recaf.ui.pane.editing.binary.hex;
 
 import jakarta.annotation.Nonnull;
 import javafx.scene.layout.BorderPane;
@@ -13,8 +13,6 @@ import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
-import software.coley.recaf.ui.pane.editing.hex.HexConfig;
-import software.coley.recaf.ui.pane.editing.hex.HexEditor;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.model.bundle.FileBundle;

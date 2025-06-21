@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.hex.cell;
+package software.coley.recaf.ui.pane.editing.binary.hex.cell;
 
 import atlantafx.base.controls.Spacer;
 import jakarta.annotation.Nonnull;
@@ -12,10 +12,10 @@ import javafx.scene.layout.HBox;
 import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
 import software.coley.collections.Unchecked;
-import software.coley.recaf.ui.pane.editing.hex.HexConfig;
-import software.coley.recaf.ui.pane.editing.hex.HexUtil;
-import software.coley.recaf.ui.pane.editing.hex.ops.HexAccess;
-import software.coley.recaf.ui.pane.editing.hex.ops.HexOperations;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexConfig;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexUtil;
+import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexAccess;
+import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexOperations;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.ArrayList;

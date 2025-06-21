@@ -8,8 +8,8 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.ui.config.ClassEditingConfig;
 import software.coley.recaf.ui.pane.editing.ClassPane;
 import software.coley.recaf.ui.pane.editing.SideTabsInjector;
-import software.coley.recaf.ui.pane.editing.binary.HexAdapter;
-import software.coley.recaf.ui.pane.editing.hex.HexConfig;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexAdapter;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexConfig;
 
 /**
  * Displays {@link JvmClassInfo} in a configurable manner.

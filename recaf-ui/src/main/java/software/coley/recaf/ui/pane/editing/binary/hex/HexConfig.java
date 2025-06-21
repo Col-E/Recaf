@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.hex;
+package software.coley.recaf.ui.pane.editing.binary.hex;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;

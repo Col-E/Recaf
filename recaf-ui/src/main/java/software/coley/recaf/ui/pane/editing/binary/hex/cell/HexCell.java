@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.hex.cell;
+package software.coley.recaf.ui.pane.editing.binary.hex.cell;
 
 import jakarta.annotation.Nonnull;
 import javafx.scene.Node;

@@ -1,10 +1,10 @@
-package software.coley.recaf.ui.pane.editing.hex.cell;
+package software.coley.recaf.ui.pane.editing.binary.hex.cell;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.scene.control.TextFormatter;
-import software.coley.recaf.ui.pane.editing.hex.HexUtil;
-import software.coley.recaf.ui.pane.editing.hex.ops.HexOperations;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexUtil;
+import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexOperations;
 
 /**
  * Hex cell for displaying a single byte as a hex string.
