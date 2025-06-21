@@ -4,11 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import software.coley.recaf.info.AudioFileInfo;
-import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.ImageFileInfo;
 import software.coley.recaf.ui.pane.editing.FilePane;
-import software.coley.recaf.ui.pane.editing.image.ImagePane;
 
 /**
  * File pane for {@link ImageFileInfo}.

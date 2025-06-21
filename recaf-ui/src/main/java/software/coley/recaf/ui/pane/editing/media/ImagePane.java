@@ -1,10 +1,9 @@
-package software.coley.recaf.ui.pane.editing.image;
+package software.coley.recaf.ui.pane.editing.media;
 
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
