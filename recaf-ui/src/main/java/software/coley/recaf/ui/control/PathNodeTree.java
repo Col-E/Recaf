@@ -66,10 +66,17 @@ public class PathNodeTree extends TreeView<PathNode<?>> {
 	 * 		Selected item holding a {@link PathNode}.
 	 */
 	protected void handleEnter(@Nonnull Actions actions, @Nonnull TreeItem<PathNode<?>> selected) {
-		try {
-			actions.gotoDeclaration(selected.getValue());
-		} catch (IncompletePathException ignored) {
-			// ignored
+		if (selected.isLeaf()) {
+			try {
+				actions.gotoDeclaration(selected.getValue());
+			} catch (IncompletePathException ignored) {
+				// ignored
+			}
+		} else {
+			if (selected.isExpanded())
+				TreeItems.recurseClose(this, selected);
+			else
+				TreeItems.recurseOpen(selected);
 		}
 	}
 
