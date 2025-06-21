@@ -152,6 +152,7 @@ public class DockingLayoutManager {
 		leaf.addDockables(
 				dockingManager.newToolDockable("logging.title", CarbonIcons.TERMINAL, loggingPaneProvider.get())
 		);
+		SplitPane.setResizableWithParent(leaf, false);
 		return leaf;
 	}
 
