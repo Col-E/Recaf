@@ -295,16 +295,6 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		}
 
 		@Override
-		public void install(@Nonnull Editor editor) {
-			// no-op, outer class has all the data we need
-		}
-
-		@Override
-		public void uninstall(@Nonnull Editor editor) {
-			// no-op
-		}
-
-		@Override
 		public void apply(@Nonnull LineContainer container, int paragraph) {
 			List<LabelData> localModel = model;
 
