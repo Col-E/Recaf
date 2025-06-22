@@ -331,7 +331,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 				//
 				// Suggestions:
 				//  - Increase timeout
-				//  - Change decompilers
+				//  - Change decompilers in 'config' or bottom right (i)
 				//  - Deobfuscate heavily obfuscated code and try again
 				//
 				// Reminder:
