@@ -11,7 +11,14 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import org.kordamp.ikonli.Ikon;
 import software.coley.bentofx.Bento;
+import software.coley.bentofx.building.ContentWrapperFactory;
 import software.coley.bentofx.building.DockBuilding;
+import software.coley.bentofx.building.HeaderFactory;
+import software.coley.bentofx.building.HeadersFactory;
+import software.coley.bentofx.control.ContentWrapper;
+import software.coley.bentofx.control.Header;
+import software.coley.bentofx.control.HeaderPane;
+import software.coley.bentofx.control.Headers;
 import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.dockable.DockableIconFactory;
 import software.coley.bentofx.layout.container.DockContainerLeaf;
@@ -25,6 +32,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.docking.EmbeddedBento;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +52,7 @@ import java.util.function.Consumer;
 public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderPane implements UpdatableNavigable {
 	private static final String TOOL_TABS_ID = "tool-tabs";
 	/** We use a separate instance because the side-tabs of this pane are not intended to be tracked by our docking manger. */
-	private final Bento bento = new Bento();
+	private final Bento bento = new EmbeddedBento();
 	/** Wrapper to hold {@link #displayWrapper} and {@link Dockable} side tabs. Split according to {@link #toolTabSide}. */
 	private final DockContainerRootBranch displaySplit;
 	/** Side of the UI to place additional tools on. */
@@ -91,11 +99,11 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 		if (toolTabSide.isHorizontal())
 			displaySplit.setOrientation(Orientation.VERTICAL);
 
-		// Register so we can search the hierarchy (used later for tool-tabs) before scene graph population
+		// Register so we can search the hierarchy (used later for tool-tabs) before scene graph population.
 		bento.registerRoot(displaySplit);
 
+		// Register the side pseudo-state so we can have side-specific UI styling.
 		Region rootRegion = displaySplit.asRegion();
-		rootRegion.getStyleClass().add("embedded-bento");
 		switch (toolTabSide) {
 			case TOP -> rootRegion.pseudoClassStateChanged(BentoStates.PSEUDO_SIDE_TOP, true);
 			case BOTTOM -> rootRegion.pseudoClassStateChanged(BentoStates.PSEUDO_SIDE_BOTTOM, true);
