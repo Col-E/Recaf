@@ -320,7 +320,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		public void apply(@Nonnull StackPane container, int paragraph) {
 			List<LabelData> localModel = model;
 
-			double indent = ControlFlowLines.this.editor.computeWhitespacePrefixWidth(paragraph) - 3 /* padding so lines aren't right up against text */;
+			double indent = editor.computeWhitespacePrefixWidth(paragraph) - 3 /* padding so lines aren't right up against text */;
 			double width = containerWidth + indent;
 			double height = containerHeight + 2;
 			Canvas canvas = new Canvas(width, height);
@@ -392,7 +392,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				int parallelLines = Math.max(1, labelData.computeOverlapping(model).size());
 				int lineSlot = labelData.lineSlot().get();
 				int offsetIndex = lineSlot % offsets.length;
-				int horizontalOffset = offsets[offsetIndex];
+				int horizontalOffset = offsetIndex >= 0 && offsetIndex < offsets.length ? offsets[offsetIndex] : 1;
 				double hue = 360.0 / parallelLines * lineSlot;
 				Color color = createColor(hue);
 
