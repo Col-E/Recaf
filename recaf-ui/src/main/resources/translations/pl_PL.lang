@@ -1,4 +1,5 @@
 menu.analysis=Analizy
+menu.analysis.summary=Pokaż podsumowanie
 menu.analysis.list-comments=Podejrzyj komentarze
 menu.analysis.comment=Komentarz
 menu.association.override=Nadpisz język
@@ -17,7 +18,6 @@ menu.file.openurl=Otwórz z URL
 menu.file.exportapp=Eksportuj aplikację
 menu.file.exportworkspace=Eksportuj konfigurację obszaru roboczego
 menu.file.modifications=Pokaż modyfikacje
-menu.file.summary=Pokaż podsumowanie
 menu.file.recent=Ostatnie
 menu.file.close=Zamknij
 menu.file.quit=Zakończ

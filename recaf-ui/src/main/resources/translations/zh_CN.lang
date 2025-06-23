@@ -4,6 +4,7 @@ lang.name=简体中文
 ##### General items
 ## Main and context menus
 menu.analysis=分析
+menu.analysis.summary=查看摘要
 menu.analysis.deobfuscation=反混淆
 menu.analysis.list-comments=查看注释
 menu.analysis.comment=注释
@@ -23,7 +24,6 @@ menu.file.openurl=从URL打开
 menu.file.exportapp=导出应用
 menu.file.exportworkspace=导出工作空间配置
 menu.file.modifications=查看修改
-menu.file.summary=查看摘要
 menu.file.recent=最近
 menu.file.close=关闭
 menu.file.quit=退出

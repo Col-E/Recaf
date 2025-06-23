@@ -4,6 +4,7 @@ lang.name=English
 ##### General items
 ## Main and context menus
 menu.analysis=Analysis
+menu.analysis.summary=View summary
 menu.analysis.deobfuscation=Deobfuscation
 menu.analysis.list-comments=View comments
 menu.analysis.comment=Comment
@@ -23,7 +24,6 @@ menu.file.openurl=Open from URL
 menu.file.exportapp=Export application
 menu.file.exportworkspace=Export workspace config
 menu.file.modifications=View modifications
-menu.file.summary=View summary
 menu.file.recent=Recent
 menu.file.close=Close
 menu.file.quit=Quit
