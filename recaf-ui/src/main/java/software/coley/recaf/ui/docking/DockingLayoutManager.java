@@ -19,6 +19,7 @@ import software.coley.bentofx.layout.container.DockContainerLeaf;
 import software.coley.bentofx.layout.container.DockContainerRootBranch;
 import software.coley.bentofx.path.DockContainerPath;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.services.info.summary.ResourceSummaryServiceConfig;
 import software.coley.recaf.services.navigation.NavigationManager;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
@@ -69,18 +70,22 @@ public class DockingLayoutManager {
 	private final Instance<WorkspaceExplorerPane> workspaceExplorerProvider;
 	private final DockContainerRootBranch root;
 
+	private final ResourceSummaryServiceConfig resourceSummaryConfig;
+
 	@Inject
 	public DockingLayoutManager(@Nonnull DockingManager dockingManager,
-	                            @Nonnull WorkspaceManager workspaceManager,
-	                            @Nonnull Instance<LoggingPane> loggingPaneProvider,
-	                            @Nonnull Instance<WelcomePane> welcomePaneProvider,
-	                            @Nonnull Instance<WorkspaceInformationPane> workspaceInfoProvider,
-	                            @Nonnull Instance<WorkspaceExplorerPane> workspaceExplorerProvider) {
+								@Nonnull WorkspaceManager workspaceManager,
+								@Nonnull Instance<LoggingPane> loggingPaneProvider,
+								@Nonnull Instance<WelcomePane> welcomePaneProvider,
+								@Nonnull Instance<WorkspaceInformationPane> workspaceInfoProvider,
+								@Nonnull Instance<WorkspaceExplorerPane> workspaceExplorerProvider,
+								@Nonnull ResourceSummaryServiceConfig resourceSummaryConfig) {
 		this.dockingManager = dockingManager;
 		this.loggingPaneProvider = loggingPaneProvider;
 		this.welcomePaneProvider = welcomePaneProvider;
 		this.workspaceInfoProvider = workspaceInfoProvider;
 		this.workspaceExplorerProvider = workspaceExplorerProvider;
+		this.resourceSummaryConfig = resourceSummaryConfig;
 
 		// Register listener
 		ListenerHost host = new ListenerHost();
@@ -132,9 +137,13 @@ public class DockingLayoutManager {
 		DockContainerLeaf primary = dockingManager.getBento().dockBuilding().leaf(ID_CONTAINER_WORKSPACE_PRIMARY);
 		primary.setPruneWhenEmpty(false);
 		primary.setMenuFactory(this::buildMenu);
-		primary.addDockables(
-				dockingManager.newTranslatableDockable("workspace.info", CarbonIcons.INFORMATION, workspaceInfoProvider.get())
-		);
+
+		// If user don't want to see the summary, just skip
+		if(resourceSummaryConfig.getSummerizeInOpen().getValue()){
+			primary.addDockables(
+					dockingManager.newTranslatableDockable("workspace.info", CarbonIcons.INFORMATION, workspaceInfoProvider.get())
+			);
+		}
 
 		// Combining the two into a branch
 		DockContainerBranch branch = dockingManager.getBento().dockBuilding().branch(ID_CONTAINER_ROOT_TOP);
