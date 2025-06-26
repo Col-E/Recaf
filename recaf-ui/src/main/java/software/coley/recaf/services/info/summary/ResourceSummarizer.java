@@ -1,6 +1,7 @@
 package software.coley.recaf.services.info.summary;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -11,6 +12,11 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 public interface ResourceSummarizer extends Comparable<ResourceSummarizer> {
 	/**
+	 * Computes summary information about the given workspace.
+	 * <p/>
+	 * When implementations of this method need to display output
+	 * all UI creation should be wrapped in {@link FxThreadUtil#run(Runnable)}.
+	 *
 	 * @param workspace
 	 * 		Containing workspace.
 	 * @param resource
@@ -22,8 +28,8 @@ public interface ResourceSummarizer extends Comparable<ResourceSummarizer> {
 	 * {@code false} when summarization was skipped.
 	 */
 	boolean summarize(@Nonnull Workspace workspace,
-				   @Nonnull WorkspaceResource resource,
-				   @Nonnull SummaryConsumer consumer);
+	                  @Nonnull WorkspaceResource resource,
+	                  @Nonnull SummaryConsumer consumer);
 
 	/**
 	 * @return Summarizer identity.
