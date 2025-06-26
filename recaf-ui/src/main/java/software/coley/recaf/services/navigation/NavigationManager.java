@@ -14,8 +14,6 @@ import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.path.DockablePath;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.cdi.EagerInitialization;
-import software.coley.recaf.cdi.InitializationStage;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -62,7 +60,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Coley
  * @see DockingManager
  */
-@EagerInitialization(InitializationStage.AFTER_UI_INIT)
 @ApplicationScoped
 public class NavigationManager implements Navigable, Service {
 	public static final String ID = "navigation";
@@ -131,6 +128,8 @@ public class NavigationManager implements Navigable, Service {
 				}
 
 				// Trigger on-close handler
+				if (!dockable.isClosable())
+					dockable.setClosable(true);
 				path.leafContainer().closeDockable(dockable);
 			}
 
@@ -147,7 +146,7 @@ public class NavigationManager implements Navigable, Service {
 			// Force close any remaining tabs that hold navigable content.
 			for (DockablePath path : dockingManager.getBento().search().allDockables()) {
 				Dockable dockable = path.dockable();
-				if (dockable.nodeProperty().get() instanceof Navigable navigable) {
+				if (dockable.getNode() instanceof Navigable navigable) {
 					navigable.disable();
 					path.leafContainer().closeDockable(dockable);
 				}

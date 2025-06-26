@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.pane;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Pos;
@@ -10,7 +11,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.context.ContextSource;
+import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
@@ -20,7 +23,13 @@ import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
 import software.coley.recaf.ui.dnd.DragAndDrop;
 import software.coley.recaf.ui.dnd.WorkspaceLoadingDropListener;
 import software.coley.recaf.ui.docking.DockingLayoutManager;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.workspace.model.EmptyWorkspace;
+import software.coley.recaf.workspace.model.Workspace;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Pane to display the current workspace in a navigable tree layout.
@@ -29,8 +38,9 @@ import software.coley.recaf.util.Lang;
  * @see DockingLayoutManager
  */
 @Dependent
-public class WorkspaceExplorerPane extends BorderPane {
+public class WorkspaceExplorerPane extends BorderPane implements Navigable {
 	private final WorkspaceTree workspaceTree;
+	private final Workspace workspace;
 
 	/**
 	 * @param listener
@@ -63,8 +73,9 @@ public class WorkspaceExplorerPane extends BorderPane {
 		setBottom(workspaceTreeFilterPane);
 
 		// Populate tree
+		workspace = workspaceManager.getCurrent();
 		if (workspaceManager.hasCurrentWorkspace())
-			workspaceTree.createWorkspaceRoot(workspaceManager.getCurrent());
+			workspaceTree.createWorkspaceRoot(workspace);
 
 		// Add label to indicate when filter pane input results in the tree being empty.
 		// This should help out users if they forget they have something in the search bar and the tree looks empty.
@@ -91,5 +102,25 @@ public class WorkspaceExplorerPane extends BorderPane {
 	@Nonnull
 	public WorkspaceTree getWorkspaceTree() {
 		return workspaceTree;
+	}
+
+	@Nullable
+	@Override
+	public PathNode<?> getPath() {
+		return PathNodes.workspacePath(workspace);
+	}
+
+	@Nonnull
+	@Override
+	public Collection<Navigable> getNavigableChildren() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public void disable() {
+		FxThreadUtil.run(() -> {
+			workspaceTree.setRoot(null);
+			setDisable(true);
+		});
 	}
 }
