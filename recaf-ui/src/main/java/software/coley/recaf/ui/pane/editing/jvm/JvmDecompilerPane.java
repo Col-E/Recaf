@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.TitledPane;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -118,6 +119,20 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 				if (result != null)
 					actions.rename(result.path());
 			} else if (keys.getGoto().match(e)) {
+				// Resolve what the caret position has, then handle navigating to the resulting path.
+				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
+				if (result != null) {
+					try {
+						actions.gotoDeclaration(result.path());
+					} catch (IncompletePathException ex) {
+						// Should realistically never happen
+						logger.warn("Cannot goto location, path incomplete", ex);
+					}
+				}
+			}
+		});
+		setOnMouseClicked(e -> {
+			if (e.getButton() == MouseButton.PRIMARY && e.isControlDown()) {
 				// Resolve what the caret position has, then handle navigating to the resulting path.
 				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
 				if (result != null) {

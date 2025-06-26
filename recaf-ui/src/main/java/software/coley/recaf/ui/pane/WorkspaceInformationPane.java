@@ -124,7 +124,7 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 
 	@Override
 	public void disable() {
-		setDisable(true);
+		FxThreadUtil.run(() -> setDisable(true));
 	}
 
 	private static class Grid extends GridPane implements SummaryConsumer {

@@ -6,6 +6,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import software.coley.recaf.cdi.UiInitializationEvent;
+import software.coley.recaf.services.navigation.NavigationManager;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.RecafTheme;
@@ -34,6 +35,10 @@ public class RecafApplication extends Application {
 
 		// Setup global style
 		setUserAgentStylesheet(new RecafTheme().getUserAgentStylesheet());
+
+		// Initialize the navigation manager before we get the services below.
+		// We want it to get a head start on initalization.
+		recaf.get(NavigationManager.class).requestFocus();
 
 		// Get services
 		DockingLayoutManager dockingLayoutManager = recaf.get(DockingLayoutManager.class);

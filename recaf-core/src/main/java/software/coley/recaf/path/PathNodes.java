@@ -14,6 +14,9 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * Utility methods for constructing paths.
  * <p/>
@@ -53,7 +56,7 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static ResourcePathNode resourcePath(@Nonnull Workspace workspace,
-												@Nonnull WorkspaceResource resource) {
+	                                            @Nonnull WorkspaceResource resource) {
 		// Base case, resource is top-level in the workspace.
 		WorkspaceResource containingResource = resource.getContainingResource();
 		if (containingResource == null)
@@ -78,8 +81,8 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static BundlePathNode bundlePath(@Nonnull Workspace workspace,
-											@Nonnull WorkspaceResource resource,
-											@Nonnull Bundle<?> bundle) {
+	                                        @Nonnull WorkspaceResource resource,
+	                                        @Nonnull Bundle<?> bundle) {
 		return resourcePath(workspace, resource).child(bundle);
 	}
 
@@ -97,9 +100,9 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static DirectoryPathNode directoryPath(@Nonnull Workspace workspace,
-												  @Nonnull WorkspaceResource resource,
-												  @Nonnull Bundle<?> bundle,
-												  @Nullable String directory) {
+	                                              @Nonnull WorkspaceResource resource,
+	                                              @Nonnull Bundle<?> bundle,
+	                                              @Nullable String directory) {
 		return bundlePath(workspace, resource, bundle).child(directory);
 	}
 
@@ -117,9 +120,9 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static ClassPathNode classPath(@Nonnull Workspace workspace,
-										  @Nonnull WorkspaceResource resource,
-										  @Nonnull Bundle<?> bundle,
-										  @Nonnull ClassInfo cls) {
+	                                      @Nonnull WorkspaceResource resource,
+	                                      @Nonnull Bundle<?> bundle,
+	                                      @Nonnull ClassInfo cls) {
 		return directoryPath(workspace, resource, bundle, cls.getPackageName()).child(cls);
 	}
 
@@ -139,10 +142,10 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static ClassMemberPathNode memberPath(@Nonnull Workspace workspace,
-												 @Nonnull WorkspaceResource resource,
-												 @Nonnull Bundle<?> bundle,
-												 @Nonnull ClassInfo cls,
-												 @Nonnull ClassMember member) {
+	                                             @Nonnull WorkspaceResource resource,
+	                                             @Nonnull Bundle<?> bundle,
+	                                             @Nonnull ClassInfo cls,
+	                                             @Nonnull ClassMember member) {
 		return classPath(workspace, resource, bundle, cls).child(member);
 	}
 
@@ -164,11 +167,11 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static AnnotationPathNode annotationPath(@Nonnull Workspace workspace,
-													@Nonnull WorkspaceResource resource,
-													@Nonnull Bundle<?> bundle,
-													@Nonnull ClassInfo cls,
-													@Nonnull ClassMember member,
-													@Nonnull AnnotationInfo annotation) {
+	                                                @Nonnull WorkspaceResource resource,
+	                                                @Nonnull Bundle<?> bundle,
+	                                                @Nonnull ClassInfo cls,
+	                                                @Nonnull ClassMember member,
+	                                                @Nonnull AnnotationInfo annotation) {
 		return memberPath(workspace, resource, bundle, cls, member).childAnnotation(annotation);
 	}
 
@@ -190,11 +193,11 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static LocalVariablePathNode variablePath(@Nonnull Workspace workspace,
-													 @Nonnull WorkspaceResource resource,
-													 @Nonnull Bundle<?> bundle,
-													 @Nonnull ClassInfo cls,
-													 @Nonnull MethodMember method,
-													 @Nonnull LocalVariable variable) {
+	                                                 @Nonnull WorkspaceResource resource,
+	                                                 @Nonnull Bundle<?> bundle,
+	                                                 @Nonnull ClassInfo cls,
+	                                                 @Nonnull MethodMember method,
+	                                                 @Nonnull LocalVariable variable) {
 		return memberPath(workspace, resource, bundle, cls, method).childVariable(variable);
 	}
 
@@ -218,12 +221,12 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static InstructionPathNode instructionPath(@Nonnull Workspace workspace,
-													  @Nonnull WorkspaceResource resource,
-													  @Nonnull Bundle<?> bundle,
-													  @Nonnull ClassInfo cls,
-													  @Nonnull MethodMember method,
-													  @Nonnull AbstractInsnNode insn,
-													  int index) {
+	                                                  @Nonnull WorkspaceResource resource,
+	                                                  @Nonnull Bundle<?> bundle,
+	                                                  @Nonnull ClassInfo cls,
+	                                                  @Nonnull MethodMember method,
+	                                                  @Nonnull AbstractInsnNode insn,
+	                                                  int index) {
 		return memberPath(workspace, resource, bundle, cls, method).childInsn(insn, index);
 	}
 
@@ -245,11 +248,11 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static ThrowsPathNode throwsPath(@Nonnull Workspace workspace,
-											@Nonnull WorkspaceResource resource,
-											@Nonnull Bundle<?> bundle,
-											@Nonnull ClassInfo cls,
-											@Nonnull MethodMember method,
-											@Nonnull String thrownType) {
+	                                        @Nonnull WorkspaceResource resource,
+	                                        @Nonnull Bundle<?> bundle,
+	                                        @Nonnull ClassInfo cls,
+	                                        @Nonnull MethodMember method,
+	                                        @Nonnull String thrownType) {
 		return memberPath(workspace, resource, bundle, cls, method).childThrows(thrownType);
 	}
 
@@ -271,11 +274,11 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static CatchPathNode catchPath(@Nonnull Workspace workspace,
-										  @Nonnull WorkspaceResource resource,
-										  @Nonnull Bundle<?> bundle,
-										  @Nonnull ClassInfo cls,
-										  @Nonnull MethodMember method,
-										  @Nonnull String caughtType) {
+	                                      @Nonnull WorkspaceResource resource,
+	                                      @Nonnull Bundle<?> bundle,
+	                                      @Nonnull ClassInfo cls,
+	                                      @Nonnull MethodMember method,
+	                                      @Nonnull String caughtType) {
 		return memberPath(workspace, resource, bundle, cls, method).childCatch(caughtType);
 	}
 
@@ -295,10 +298,10 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static InnerClassPathNode innerClassPath(@Nonnull Workspace workspace,
-													@Nonnull WorkspaceResource resource,
-													@Nonnull Bundle<?> bundle,
-													@Nonnull ClassInfo cls,
-													@Nonnull InnerClassInfo innerCls) {
+	                                                @Nonnull WorkspaceResource resource,
+	                                                @Nonnull Bundle<?> bundle,
+	                                                @Nonnull ClassInfo cls,
+	                                                @Nonnull InnerClassInfo innerCls) {
 		return classPath(workspace, resource, bundle, cls).child(innerCls);
 	}
 
@@ -318,10 +321,10 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static AnnotationPathNode annotationPath(@Nonnull Workspace workspace,
-													@Nonnull WorkspaceResource resource,
-													@Nonnull Bundle<?> bundle,
-													@Nonnull ClassInfo cls,
-													@Nonnull AnnotationInfo annotation) {
+	                                                @Nonnull WorkspaceResource resource,
+	                                                @Nonnull Bundle<?> bundle,
+	                                                @Nonnull ClassInfo cls,
+	                                                @Nonnull AnnotationInfo annotation) {
 		return classPath(workspace, resource, bundle, cls).child(annotation);
 	}
 
@@ -339,9 +342,49 @@ public class PathNodes {
 	 */
 	@Nonnull
 	public static FilePathNode filePath(@Nonnull Workspace workspace,
-										@Nonnull WorkspaceResource resource,
-										@Nonnull Bundle<?> bundle,
-										@Nonnull FileInfo file) {
+	                                    @Nonnull WorkspaceResource resource,
+	                                    @Nonnull Bundle<?> bundle,
+	                                    @Nonnull FileInfo file) {
 		return directoryPath(workspace, resource, bundle, file.getDirectoryName()).child(file);
+	}
+
+	/**
+	 * @param identifier
+	 * 		Unique identifier for this path.
+	 *
+	 * @return Path of unique identifier.
+	 */
+	@Nonnull
+	public static PathNode<?> unique(@Nonnull String identifier) {
+		return new ArbitraryStringPathNode(identifier);
+	}
+
+	/**
+	 * A path node that just holds an arbitrary string.
+	 * <p/>
+	 * Intended for use in the UI where displayed panels are intended to be navigable for tracking, not actually
+	 * navigable in terms of their relationship to some location in a workspace.
+	 *
+	 * @see #unique(String)
+	 */
+	private static class ArbitraryStringPathNode extends AbstractPathNode<Object, Object> {
+		/**
+		 * @param value
+		 * 		Value instance.
+		 */
+		protected ArbitraryStringPathNode(@Nonnull String value) {
+			super("uid", null, value);
+		}
+
+		@Nonnull
+		@Override
+		public Set<String> directParentTypeIds() {
+			return Collections.emptySet();
+		}
+
+		@Override
+		public int localCompare(PathNode<?> o) {
+			return 0;
+		}
 	}
 }

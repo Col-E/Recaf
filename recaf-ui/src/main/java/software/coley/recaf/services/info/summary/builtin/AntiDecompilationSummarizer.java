@@ -94,47 +94,48 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 		if (!hasIllegalNames && !hasTransformations)
 			return false;
 
-		// Create UI to apply patches
-		ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("anti-decompile-patching");
-		Label title = new BoundLabel(Lang.getBinding("service.analysis.anti-decompile"));
-		title.getStyleClass().addAll(Styles.TITLE_4);
-		consumer.appendSummary(title);
-		if (hasTransformations) {
-			int transformCount = transformResult.getTransformedClasses().size() + transformResult.getClassesToRemove().size();
-			Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", transformCount));
-			Button action = new ActionButton(CarbonIcons.CLEAN, Lang.format("service.analysis.anti-decompile.illegal-attr", transformCount), transformResult::apply)
-					.width(BUTTON_WIDTH).once().async(service);
-			consumer.appendSummary(box(action, label));
-		}
-		if (hasIllegalNames) {
-			Button action = new ActionButton(CarbonIcons.LICENSE_MAINTENANCE, Lang.getBinding("service.analysis.anti-decompile.illegal-name"), () -> {
-				CompletableFuture.runAsync(() -> {
-					MappingGeneratorPane mappingGeneratorPane = generatorPaneProvider.get();
-					mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeNonAsciiNames());
-					mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeKeywordNames());
-					mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeWhitespaceNames());
-					mappingGeneratorPane.generate();
-					RecafScene scene = new RecafScene(mappingGeneratorPane);
-					FxThreadUtil.run(() -> {
-						Stage window = windowFactory.createAnonymousStage(scene, getBinding("mapgen"), 800, 400);
-						window.show();
-						window.requestFocus();
+		// We have actions to take, create UI to apply patches.
+		FxThreadUtil.run(() -> {
+			ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("anti-decompile-patching");
+			Label title = new BoundLabel(Lang.getBinding("service.analysis.anti-decompile"));
+			title.getStyleClass().addAll(Styles.TITLE_4);
+			consumer.appendSummary(title);
+			if (hasTransformations) {
+				int transformCount = transformResult.getTransformedClasses().size() + transformResult.getClassesToRemove().size();
+				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", transformCount));
+				Button action = new ActionButton(CarbonIcons.CLEAN, Lang.format("service.analysis.anti-decompile.illegal-attr", transformCount), transformResult::apply)
+						.width(BUTTON_WIDTH).once().async(service);
+				consumer.appendSummary(box(action, label));
+			}
+			if (hasIllegalNames) {
+				Button action = new ActionButton(CarbonIcons.LICENSE_MAINTENANCE, Lang.getBinding("service.analysis.anti-decompile.illegal-name"), () -> {
+					CompletableFuture.runAsync(() -> {
+						MappingGeneratorPane mappingGeneratorPane = generatorPaneProvider.get();
+						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeNonAsciiNames());
+						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeKeywordNames());
+						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeWhitespaceNames());
+						mappingGeneratorPane.generate();
+						RecafScene scene = new RecafScene(mappingGeneratorPane);
+						FxThreadUtil.run(() -> {
+							Stage window = windowFactory.createAnonymousStage(scene, getBinding("mapgen"), 800, 400);
+							window.show();
+							window.requestFocus();
 
-						// Because our service is application scoped, the injected mapping generator panes won't
-						// be automatically destroyed until all of Recaf is closed. Thus, for optimal GC usage we
-						// need to manually invoke the destruction of our injected mapping generator panes.
-						// We can do this when the stage is closed.
-						window.setOnHidden(e -> generatorPaneProvider.destroy(mappingGeneratorPane));
+							// Because our service is application scoped, the injected mapping generator panes won't
+							// be automatically destroyed until all of Recaf is closed. Thus, for optimal GC usage we
+							// need to manually invoke the destruction of our injected mapping generator panes.
+							// We can do this when the stage is closed.
+							window.setOnHidden(e -> generatorPaneProvider.destroy(mappingGeneratorPane));
+						});
+					}, service).exceptionally(t -> {
+						logger.error("Failed to open mapping viewer", t);
+						return null;
 					});
-				}, service).exceptionally(t -> {
-					logger.error("Failed to open mapping viewer", t);
-					return null;
-				});
-			}).width(BUTTON_WIDTH);
-
-			Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", illegalNameCount));
-			consumer.appendSummary(box(action, label));
-		}
+				}).width(BUTTON_WIDTH);
+				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", illegalNameCount));
+				consumer.appendSummary(box(action, label));
+			}
+		});
 		return true;
 	}
 

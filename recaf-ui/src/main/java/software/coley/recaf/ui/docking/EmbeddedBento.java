@@ -29,6 +29,7 @@ public class EmbeddedBento extends Bento {
 	 * New embedded bento.
 	 */
 	public EmbeddedBento() {
+		// Construct without configuring drag-drop support
 		controlsBuilding().setContentWrapperFactory(container -> new ContentWrapper(container) {
 			@Override
 			protected void setupDragDrop(@Nonnull DockContainerLeaf container) {
@@ -41,29 +42,9 @@ public class EmbeddedBento extends Bento {
 				// no-op
 			}
 		});
+
 		// Construct without initializing drag-drop event handling
-		controlsBuilding().setHeaderFactory(new HeaderFactory() {
-			@Nonnull
-			@Override
-			public Header newHeader(@Nonnull Dockable dockable, @Nonnull HeaderPane parentPane) {
-				Header header = new Header(dockable, parentPane);
-
-				// TODO: This can be removed when we pull in Bento 0.9.1+
-				header.setOnMouseClicked(e -> {
-					if (e.getButton() == MouseButton.PRIMARY) {
-						DockContainerLeaf container = parentPane.getContainer();
-						if (container.getSelectedDockable() == dockable || container.isCollapsed()) {
-							container.toggleCollapse(dockable);
-						} else if (container.getSelectedDockable() != dockable) {
-							container.selectDockable(dockable);
-							parentPane.requestFocus();
-						}
-					}
-				});
-
-				return header;
-			}
-		});
+		controlsBuilding().setHeaderFactory(Header::new);
 	}
 
 	@Override
