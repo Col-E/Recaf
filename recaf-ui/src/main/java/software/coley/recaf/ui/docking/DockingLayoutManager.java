@@ -13,11 +13,11 @@ import javafx.scene.control.SplitPane;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.bentofx.building.DockBuilding;
+import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.layout.DockContainer;
 import software.coley.bentofx.layout.container.DockContainerBranch;
 import software.coley.bentofx.layout.container.DockContainerLeaf;
 import software.coley.bentofx.layout.container.DockContainerRootBranch;
-import software.coley.bentofx.path.DockContainerPath;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.navigation.NavigationManager;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
@@ -106,12 +106,14 @@ public class DockingLayoutManager {
 
 	@Nonnull
 	private DockContainerLeaf newWelcomeContainer() {
+		Dockable welcome = dockingManager.newTranslatableDockable("welcome.title", CarbonIcons.EARTH_FILLED, welcomePaneProvider.get());
+		welcome.setClosable(false);
+
 		DockContainerLeaf leaf = dockingManager.getBento().dockBuilding().leaf(ID_CONTAINER_ROOT_TOP);
 		leaf.setCanSplit(false);
+		leaf.setPruneWhenEmpty(false);
 		leaf.setMenuFactory(this::buildMenu);
-		leaf.addDockables(
-				dockingManager.newTranslatableDockable("welcome.title", CarbonIcons.EARTH_FILLED, welcomePaneProvider.get())
-		);
+		leaf.addDockable(welcome);
 		return leaf;
 	}
 
@@ -140,6 +142,12 @@ public class DockingLayoutManager {
 		DockContainerBranch branch = dockingManager.getBento().dockBuilding().branch(ID_CONTAINER_ROOT_TOP);
 		branch.addContainers(explorer, primary);
 		branch.setContainerSizePx(explorer, 200);
+
+		// We don't prune when empty because it breaks the 'replace top' container logic we have when
+		// new workspaces get opened or existing ones get closed. As long as the top exists we can always
+		// show new content (welcome display, or new workspace display) when needed.
+		branch.setPruneWhenEmpty(false);
+
 		return branch;
 	}
 
@@ -184,26 +192,16 @@ public class DockingLayoutManager {
 		@Override
 		public void onWorkspaceOpened(@Nonnull Workspace workspace) {
 			FxThreadUtil.run(() -> {
-				if (dockingManager.replace(ID_CONTAINER_ROOT_TOP, DockingLayoutManager.this::newWorkspaceContainer)) {
-					// TODO: This forced resize isn't needed if "replace" works as intended
-					//  - however this currently doesnt update the size (unless I wrap with "delayedRun") which is bad
-					DockContainerPath path = dockingManager.getBento().search().container(ID_CONTAINER_ROOT_SPLIT);
-					if (path != null && path.tailContainer() instanceof DockContainerBranch split) {
-						DockContainer child = split.getChildContainers().getLast();
-						split.setContainerSizePx(child, BOTTOM_SIZE);
-					}
-				} else {
+				if (!dockingManager.replace(ID_CONTAINER_ROOT_TOP, DockingLayoutManager.this::newWorkspaceContainer))
 					logger.error("Failed replacing root on workspace open");
-				}
 			});
 		}
 
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 			FxThreadUtil.run(() -> {
-				if (!dockingManager.replace(ID_CONTAINER_ROOT_TOP, DockingLayoutManager.this::newWelcomeContainer)) {
+				if (!dockingManager.replace(ID_CONTAINER_ROOT_TOP, DockingLayoutManager.this::newWelcomeContainer))
 					logger.error("Failed replacing root on workspace close");
-				}
 			});
 		}
 	}
