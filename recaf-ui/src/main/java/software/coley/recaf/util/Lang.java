@@ -7,9 +7,14 @@ import javafx.beans.value.ObservableValue;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -335,9 +340,11 @@ public class Lang {
 		String userLanguage = Locale.getDefault().getLanguage();
 		String userLanguageKey = userLanguage + "_" + userCountry;
 		setSystemLanguage(userLanguageKey);
+
 		// Then set the jvm to use to avoid the locale bug
 		//  - https://mattryall.net/blog/the-infamous-turkish-locale-bug
 		Locale.setDefault(Locale.US);
+
 		// Load provided translations
 		SelfReferenceUtil.initializeFromContext(Lang.class);
 		SelfReferenceUtil selfReferenceUtil = SelfReferenceUtil.getInstance();
@@ -353,8 +360,11 @@ public class Lang {
 				load(translationName, translationPath.getURL().openStream());
 				translationKeys.add(translationName);
 				logger.info("Loaded translations '{}'", translationName);
-			} catch (IOException e) {
-				logger.info("Failed to load translations '{}'", translationName, e);
+			} catch (Throwable t) {
+				logger.error("Failed to load translations '{}'", translationName, t);
+
+				// Throw to kill the main thread so that we don't show the UI in this broken state.
+				throw new IllegalStateException("Failed to read translations, please check the integrity of the Recaf jar file", t);
 			}
 		}
 

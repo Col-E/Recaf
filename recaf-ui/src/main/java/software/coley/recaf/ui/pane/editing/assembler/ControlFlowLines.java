@@ -514,7 +514,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				}
 			}
 		}
-		
+
 		public void cleanup() {
 			recyclers.clear();
 			switchDestinations.clear();
