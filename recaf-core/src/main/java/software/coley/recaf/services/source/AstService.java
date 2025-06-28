@@ -422,6 +422,7 @@ public class AstService implements Service {
 
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
+			entryPoolCache.invalidate(workspace);
 			currentWorkspacePool = EmptyEntryPool.INSTANCE;
 		}
 	}

@@ -77,7 +77,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 				owner.addSideTab(Lang.getBinding("assembler.variables.title"), CarbonIcons.LIST_BOXES, variablesPane);
 				owner.addSideTab(Lang.getBinding("assembler.playground.title"), CarbonIcons.CODE, expressionPane);
 				owner.addSideTab(Lang.getBinding("assembler.snippets.title"), CarbonIcons.BOOK, snippetsPane);
-				// Note: There is intentionally no tab for the jump arrow pane at the moment
+				// Note: There is intentionally no tab for the control flow lines at the moment
 			});
 		} else if (classInPath.isAndroidClass()) {
 			// Create contents for Android classes

@@ -6,6 +6,7 @@ import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -16,6 +17,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import software.coley.recaf.path.PathNode;
@@ -124,7 +126,10 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 
 	@Override
 	public void disable() {
-		FxThreadUtil.run(() -> setDisable(true));
+		FxThreadUtil.run(() -> {
+			getChildren().clear();
+			setDisable(true);
+		});
 	}
 
 	private static class Grid extends GridPane implements SummaryConsumer {

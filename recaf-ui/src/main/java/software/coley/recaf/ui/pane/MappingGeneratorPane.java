@@ -28,7 +28,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.SplitPane;
@@ -60,7 +59,18 @@ import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.format.EnigmaMappings;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
-import software.coley.recaf.services.mapping.gen.filter.*;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeClassesFilter;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeExistingMappedFilter;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeModifiersNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeClassesFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeLongNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeModifiersNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.naming.DeconflictingNameGenerator;
 import software.coley.recaf.services.mapping.gen.naming.IncrementingNameGeneratorProvider;
 import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
@@ -68,6 +78,7 @@ import software.coley.recaf.services.mapping.gen.naming.NameGeneratorProvider;
 import software.coley.recaf.services.mapping.gen.naming.NameGeneratorProviders;
 import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.ActionMenuItem;
@@ -127,7 +138,7 @@ public class MappingGeneratorPane extends StackPane {
 	private final Pane previewGroup;
 
 	@Inject
-	public MappingGeneratorPane(@Nonnull Workspace workspace,
+	public MappingGeneratorPane(@Nonnull WorkspaceManager workspaceManager,
 	                            @Nonnull NameGeneratorProviders nameGeneratorProviders,
 	                            @Nonnull StringPredicateProvider stringPredicateProvider,
 	                            @Nonnull MappingGenerator mappingGenerator,
@@ -136,8 +147,7 @@ public class MappingGeneratorPane extends StackPane {
 	                            @Nonnull AggregateMappingManager aggregateMappingManager,
 	                            @Nonnull MappingApplierService mappingApplierService,
 	                            @Nonnull Instance<SearchBar> searchBarProvider) {
-
-		this.workspace = workspace;
+		this.workspace = workspaceManager.getCurrent();
 		this.nameGeneratorProviders = nameGeneratorProviders;
 		this.stringPredicateProvider = stringPredicateProvider;
 		this.mappingGenerator = mappingGenerator;
@@ -159,7 +169,7 @@ public class MappingGeneratorPane extends StackPane {
 
 		// Layout and wrap up.
 		SplitPane horizontalWrapper = new SplitPane(filterGroup, previewGroup);
-		horizontalWrapper.setDividerPositions(1); // Counter-intuitive, this correctly places the divider to not suffocate the filter-group
+		horizontalWrapper.setDividerPositions(0.5);
 		SplitPane.setResizableWithParent(filterGroup, false);
 
 		getChildren().addAll(modal, horizontalWrapper);
@@ -173,6 +183,7 @@ public class MappingGeneratorPane extends StackPane {
 		FxThreadUtil.run(() -> {
 			mappingsToApply.setValue(null);
 			previewGroup.getChildren().clear();
+			filters.getItems().clear();
 			getChildren().clear();
 		});
 	}
@@ -978,7 +989,9 @@ public class MappingGeneratorPane extends StackPane {
 				property.unbind();
 				setText(null);
 			} else {
-				property.bind(item.display().map(display -> (getIndex() + 1) + ". " + display));
+				// Hoisting this out so that the synthetic arg to the lambda is a 'int' and not 'item'
+				final int index = (getIndex() + 1);
+				property.bind(item.display().map(display -> index + ". " + display));
 			}
 		}
 	}

@@ -4,11 +4,13 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.benf.cfr.reader.api.CfrDriver;
+import org.benf.cfr.reader.bytecode.analysis.structured.statement.StructuredComment;
 import org.benf.cfr.reader.util.CfrVersionInfo;
 import org.benf.cfr.reader.util.DecompilerComment;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.AbstractJvmDecompiler;
 import software.coley.recaf.services.decompile.DecompileResult;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -29,13 +31,17 @@ public class CfrDecompiler extends AbstractJvmDecompiler {
 	/**
 	 * New CFR decompiler instance.
 	 *
+	 * @param workspaceManager
+	 * 		Workspace manager.
 	 * @param config
 	 * 		Config instance.
 	 */
 	@Inject
-	public CfrDecompiler(@Nonnull CfrConfig config) {
+	public CfrDecompiler(@Nonnull WorkspaceManager workspaceManager, @Nonnull CfrConfig config) {
 		super(NAME, CfrVersionInfo.VERSION, config);
 		this.config = config;
+
+		workspaceManager.addWorkspaceCloseListener(workspace -> cleanup());
 
 		// TODO: Update CFR when https://github.com/leibnitz27/cfr/issues/361 is fixed
 	}
@@ -70,6 +76,13 @@ public class CfrDecompiler extends AbstractJvmDecompiler {
 	@Override
 	public CfrConfig getConfig() {
 		return (CfrConfig) super.getConfig();
+	}
+
+	private static void cleanup() {
+		// Some CFR code through a chain of events assigns a container to this constant, and it
+		// holds a reference to our ClassSource which has the workspace data in it.
+		// That causes a memory leak, so we clear the container here after each decomp.
+		StructuredComment.EMPTY_COMMENT.setContainer(null);
 	}
 
 	private static String filter(String decompile) {

@@ -165,7 +165,7 @@ public class Actions implements Service {
 	private final Instance<HexFilePane> hexPaneProvider;
 	private final Instance<AssemblerPane> assemblerPaneProvider;
 	private final Instance<WorkspaceInformationPane> infoPaneProvider;
-	private final Instance<CommentEditPane> documentationPaneProvider;
+	private final Instance<CommentEditPane> commentPaneProvider;
 	private final Instance<MethodCallGraphsPane> callGraphsPaneProvider;
 	private final Instance<StringSearchPane> stringSearchPaneProvider;
 	private final Instance<NumberSearchPane> numberSearchPaneProvider;
@@ -199,7 +199,7 @@ public class Actions implements Service {
 	               @Nonnull Instance<HexFilePane> hexPaneProvider,
 	               @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
 	               @Nonnull Instance<WorkspaceInformationPane> infoPaneProvider,
-	               @Nonnull Instance<CommentEditPane> documentationPaneProvider,
+	               @Nonnull Instance<CommentEditPane> commentPaneProvider,
 	               @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
 	               @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
 	               @Nonnull Instance<MethodCallGraphsPane> callGraphsPaneProvider,
@@ -228,7 +228,7 @@ public class Actions implements Service {
 		this.hexPaneProvider = hexPaneProvider;
 		this.assemblerPaneProvider = assemblerPaneProvider;
 		this.infoPaneProvider = infoPaneProvider;
-		this.documentationPaneProvider = documentationPaneProvider;
+		this.commentPaneProvider = commentPaneProvider;
 		this.stringSearchPaneProvider = stringSearchPaneProvider;
 		this.numberSearchPaneProvider = numberSearchPaneProvider;
 		this.callGraphsPaneProvider = callGraphsPaneProvider;
@@ -347,6 +347,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> jvmPaneProvider.destroy(content));
 			content.addPathUpdateListener(updatedPath -> {
 				// Update tab graphic in case backing class details change.
 				JvmClassInfo updatedInfo = updatedPath.getValue().asJvmClass();
@@ -397,6 +398,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> androidPaneProvider.destroy(content));
 			content.addPathUpdateListener(updatedPath -> {
 				// Update tab graphic in case backing class details change.
 				AndroidClassInfo updatedInfo = updatedPath.getValue().asAndroidClass();
@@ -495,6 +497,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> binaryXmlPaneProvider.destroy(content));
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -534,6 +537,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> textPaneProvider.destroy(content));
 			dockable.setContextMenuFactory(d -> {
 				ContextMenu menu = new ContextMenu();
 				ObservableList<MenuItem> items = menu.getItems();
@@ -587,6 +591,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> imagePaneProvider.destroy(content));
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -626,6 +631,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> audioPaneProvider.destroy(content));
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -665,6 +671,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> videoPaneProvider.destroy(content));
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -704,6 +711,7 @@ public class Actions implements Service {
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> hexPaneProvider.destroy(content));
 			setupInfoContextMenu(info, content, dockable);
 			return dockable;
 		});
@@ -771,7 +779,7 @@ public class Actions implements Service {
 	private Dockable createCommentEditDockable(@Nonnull PathNode<?> path, @Nonnull String title,
 	                                           @Nonnull DockableIconFactory graphicFactory, @Nonnull ClassInfo classInfo) {
 		// Create content for the dockable.
-		CommentEditPane content = documentationPaneProvider.get();
+		CommentEditPane content = commentPaneProvider.get();
 		content.onUpdatePath(path);
 
 		// Place the tab in a region with other comments if possible.
@@ -781,6 +789,7 @@ public class Actions implements Service {
 
 		// Build the dockable.
 		Dockable dockable = createDockable(container, title, graphicFactory, content);
+		dockable.addCloseListener((_, _) -> commentPaneProvider.destroy(content));
 		container.addDockable(dockable);
 		dockable.setContextMenuFactory(d -> {
 			ContextMenu menu = new ContextMenu();
@@ -795,9 +804,10 @@ public class Actions implements Service {
 	 * Display the workspace summary / current information.
 	 */
 	public void openSummary() {
-		WorkspaceInformationPane informationPane = infoPaneProvider.get();
-		createDockable(dockingManager.getPrimaryDockingContainer(), getBinding("workspace.info"),
-				d -> new FontIconView(CarbonIcons.INFORMATION), informationPane);
+		WorkspaceInformationPane content = infoPaneProvider.get();
+		Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), getBinding("workspace.info"),
+				d -> new FontIconView(CarbonIcons.INFORMATION), content);
+		dockable.addCloseListener((_, _) -> infoPaneProvider.destroy(content));
 	}
 
 	/**
@@ -1657,7 +1667,9 @@ public class Actions implements Service {
 			content.onUpdatePath(path);
 
 			// Build the tab.
-			return createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> assemblerPaneProvider.destroy(content));
+			return dockable;
 		});
 	}
 
@@ -1694,7 +1706,9 @@ public class Actions implements Service {
 			content.onUpdatePath(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method));
 
 			// Build the tab.
-			return createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
+			dockable.addCloseListener((_, _) -> callGraphsPaneProvider.destroy(content));
+			return dockable;
 		});
 	}
 
@@ -2344,15 +2358,17 @@ public class Actions implements Service {
 		DockContainerLeaf container = searchPath == null ? null : searchPath.leafContainer();
 
 		T content = paneProvider.get();
+		Dockable dockable;
 		if (container != null) {
-			createDockable(container, getBinding(titleId), d -> new FontIconView(icon), content);
+			dockable = createDockable(container, getBinding(titleId), d -> new FontIconView(icon), content);
 		} else {
-			Dockable dockable = createDockable(null, getBinding(titleId), d -> new FontIconView(icon), content);
+			dockable = createDockable(null, getBinding(titleId), d -> new FontIconView(icon), content);
 			Scene originScene = dockingManager.getPrimaryDockingContainer().asRegion().getScene();
 			Stage stage = dockingManager.getBento().stageBuilding().newStageForDockable(originScene, dockable, 800, 400);
 			stage.show();
 			stage.requestFocus();
 		}
+		dockable.addCloseListener((_, _) -> paneProvider.destroy(content));
 		return content;
 	}
 
@@ -2431,6 +2447,7 @@ public class Actions implements Service {
 								content.onUpdatePath(existing.getPath());
 								existing.disable();
 							}
+							d.addCloseListener((_, _) -> imagePaneProvider.destroy(content));
 							d.setNode(content);
 						}),
 						action("menu.mode.file.hex", CarbonIcons.CODE, () -> {
@@ -2439,6 +2456,7 @@ public class Actions implements Service {
 								content.onUpdatePath(existing.getPath());
 								existing.disable();
 							}
+							d.addCloseListener((_, _) -> hexPaneProvider.destroy(content));
 							d.setNode(content);
 						})
 				);

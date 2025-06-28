@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import software.coley.bentofx.control.PixelCanvas;
 import software.coley.collections.box.Box;
 import software.coley.collections.box.IntBox;
+import software.coley.observables.AbstractObservable;
+import software.coley.observables.ChangeListener;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
@@ -68,34 +70,48 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 	private final ObservableBoolean drawLines = new ObservableBoolean(false);
 	private final ControlFlowLineFactory arrowFactory = new ControlFlowLineFactory();
 	private final ControlFlowLinesConfig config;
+	private final ListenerHost redrawListener = new ListenerHost();
 	private List<LabelData> model = Collections.emptyList();
-
 
 	@Inject
 	public ControlFlowLines(@Nonnull ControlFlowLinesConfig config) {
 		this.config = config;
-
-		Runnable redraw = () -> {if (editor != null) editor.redrawParagraphGraphics();};
-		drawLines.addChangeListener((ob, old, cur) -> redraw.run());
-		currentInstructionSelection.addChangeListener((ob, old, cur) -> redraw.run());
-		config.getConnectionMode().addChangeListener((ob, old, cur) -> redraw.run());
-		config.getRenderMode().addChangeListener((ob, old, cur) -> redraw.run());
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void install(@Nonnull Editor editor) {
 		super.install(editor);
 
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(arrowFactory);
 		editor.getCaretPosEventStream().addObserver(onCaretMove);
+
+		drawLines.addChangeListener(redrawListener);
+		currentInstructionSelection.addChangeListener(redrawListener);
+		config.getConnectionMode().addChangeListener(redrawListener);
+		config.getRenderMode().addChangeListener(redrawListener);
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void uninstall(@Nonnull Editor editor) {
 		super.uninstall(editor);
 
 		editor.getRootLineGraphicFactory().removeLineGraphicFactory(arrowFactory);
 		editor.getCaretPosEventStream().removeObserver(onCaretMove);
+
+		drawLines.removeChangeListener(redrawListener);
+		currentInstructionSelection.removeChangeListener(redrawListener);
+		config.getConnectionMode().removeChangeListener(redrawListener);
+		config.getRenderMode().removeChangeListener(redrawListener);
+	}
+
+	@Override
+	public void disable() {
+		super.disable();
+
+		if (editor != null)
+			uninstall(editor);
 	}
 
 	@Override
@@ -522,6 +538,14 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 					node.setEffect(adjust);
 				}
 			};
+		}
+	}
+
+	@SuppressWarnings("rawtypes")
+	private class ListenerHost implements ChangeListener {
+		@Override
+		public void changed(AbstractObservable abstractObservable, Object o, Object t1) {
+			if (editor != null) editor.redrawParagraphGraphics();
 		}
 	}
 }

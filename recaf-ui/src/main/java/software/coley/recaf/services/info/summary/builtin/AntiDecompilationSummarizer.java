@@ -36,6 +36,7 @@ import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.pane.MappingGeneratorPane;
+import software.coley.recaf.ui.window.MappingGeneratorWindow;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
@@ -64,14 +65,14 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 			new IncludeWhitespaceNameFilter(new IncludeNonAsciiNameFilter(new IncludeKeywordNameFilter(null)));
 	private static final Logger logger = Logging.get(AntiDecompilationSummarizer.class);
 	private final TransformationApplierService transformationApplierService;
-	private final Instance<MappingGeneratorPane> generatorPaneProvider;
+	private final Instance<MappingGeneratorWindow> generatorWindowProvider;
 	private final WindowFactory windowFactory;
 
 	@Inject
 	public AntiDecompilationSummarizer(@Nonnull TransformationApplierService transformationApplierService,
-	                                   @Nonnull Instance<MappingGeneratorPane> generatorPaneProvider,
+	                                   @Nonnull Instance<MappingGeneratorWindow> generatorWindowProvider,
 	                                   @Nonnull WindowFactory windowFactory) {
-		this.generatorPaneProvider = generatorPaneProvider;
+		this.generatorWindowProvider = generatorWindowProvider;
 		this.transformationApplierService = transformationApplierService;
 		this.windowFactory = windowFactory;
 	}
@@ -110,24 +111,18 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 			if (hasIllegalNames) {
 				Button action = new ActionButton(CarbonIcons.LICENSE_MAINTENANCE, Lang.getBinding("service.analysis.anti-decompile.illegal-name"), () -> {
 					CompletableFuture.runAsync(() -> {
-						MappingGeneratorPane mappingGeneratorPane = generatorPaneProvider.get();
+						MappingGeneratorWindow window = generatorWindowProvider.get();
+
+						MappingGeneratorPane mappingGeneratorPane = window.getGeneratorPane();
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeNonAsciiNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeKeywordNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeWhitespaceNames());
 						mappingGeneratorPane.generate();
-						RecafScene scene = new RecafScene(mappingGeneratorPane);
-						FxThreadUtil.run(() -> {
-							Stage window = windowFactory.createAnonymousStage(scene, getBinding("mapgen"), 800, 400);
-							window.show();
-							window.requestFocus();
 
-							// Because our service is application scoped, the injected mapping generator panes won't
-							// be automatically destroyed until all of Recaf is closed. Thus, for optimal GC usage we
-							// need to manually invoke the destruction of our injected mapping generator panes.
-							// We can do this when the stage is closed.
-							window.setOnHidden(e -> generatorPaneProvider.destroy(mappingGeneratorPane));
-						});
-					}, service).exceptionally(t -> {
+						window.setOnCloseRequest(e -> generatorWindowProvider.destroy(window));
+						window.show();
+						window.requestFocus();
+					}, FxThreadUtil.executor()).exceptionally(t -> {
 						logger.error("Failed to open mapping viewer", t);
 						return null;
 					});
