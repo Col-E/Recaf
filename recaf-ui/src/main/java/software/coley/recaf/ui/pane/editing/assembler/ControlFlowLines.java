@@ -375,16 +375,15 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 						// The label data writers will be targeting the label identifier children in the AST
 						// so if we walk the switch instruction's children we can see if the current label data
 						// references one of those elements.
-						ArrayList<ASTElement> elements = switchDestinations;
+						ArrayList<ASTElement> destinations = switchDestinations;
+						destinations.clear();
 						value.walk(e -> {
-							elements.add(e);
-							elements.ensureCapacity(e.children().size() + 1);
+							destinations.add(e);
+							destinations.ensureCapacity(e.children().size() + 1);
 							return true;
 						});
-						if (labelData.usage().readersAndWriters().noneMatch(elements::contains)) {
-							elements.clear();
+						if (labelData.usage().readersAndWriters().noneMatch(destinations::contains))
 							continue;
-						}
 					} else if (labelData.usage().readersAndWriters().noneMatch(m -> m.equals(value))) {
 						// Anything else like a label declaration or a jump instruction mentioning a label
 						// can be handled with a basic equality check against all the usage readers/writers.
