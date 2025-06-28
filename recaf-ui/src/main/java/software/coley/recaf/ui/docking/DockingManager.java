@@ -4,11 +4,14 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Orientation;
+import javafx.geometry.Side;
 import javafx.scene.Node;
 import org.kordamp.ikonli.Ikon;
 import org.slf4j.Logger;
 import software.coley.bentofx.Bento;
 import software.coley.bentofx.control.DragDropStage;
+import software.coley.bentofx.control.Headers;
 import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.dockable.DockableIconFactory;
 import software.coley.bentofx.layout.DockContainer;
@@ -54,6 +57,9 @@ public class DockingManager {
 			content.getStyleClass().add("bg-inset");
 			return new RecafScene(content, width, height);
 		});
+
+		// Due to how we style the headers, we want the drawing to be clipped.
+		bento.controlsBuilding().setHeadersFactory(ClippedHeaders::new);
 	}
 
 	/**
@@ -223,5 +229,23 @@ public class DockingManager {
 		dockable.setNode(content);
 		dockable.setIconFactory(iconFactory);
 		return dockable;
+	}
+
+	/**
+	 * Headers impl that configures render clipping.
+	 */
+	private static class ClippedHeaders extends Headers {
+		/**
+		 * @param container
+		 * 		Parent container.
+		 * @param orientation
+		 * 		Which axis to layout children on.
+		 * @param side
+		 * 		Side in the parent container where tabs are displayed.
+		 */
+		private ClippedHeaders(@Nonnull DockContainerLeaf container, @Nonnull Orientation orientation, @Nonnull Side side) {
+			super(container, orientation, side);
+			setupClip();
+		}
 	}
 }
