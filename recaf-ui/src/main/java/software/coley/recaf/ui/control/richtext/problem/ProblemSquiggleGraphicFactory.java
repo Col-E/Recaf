@@ -1,10 +1,11 @@
 package software.coley.recaf.ui.control.richtext.problem;
 
 import jakarta.annotation.Nonnull;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import software.coley.bentofx.control.PixelCanvas;
+import software.coley.bentofx.control.canvas.PixelCanvas;
+import software.coley.bentofx.control.canvas.PixelPainter;
+import software.coley.bentofx.control.canvas.PixelPainterIntArgb;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
 import software.coley.recaf.util.Colors;
@@ -19,12 +20,14 @@ import java.util.List;
  * @see ProblemTracking
  */
 public class ProblemSquiggleGraphicFactory extends AbstractTextBoundLineGraphicFactory {
+	private final PixelPainter<?> pixelPainter = new PixelPainterIntArgb();
+
 	public ProblemSquiggleGraphicFactory() {
 		super(LineGraphicFactory.P_LINE_PROBLEM_SQUIGGLES);
 	}
 
 	@Override
-	protected void apply(StackPane pane, int paragraph) {
+	protected void apply(@Nonnull StackPane pane, int paragraph) {
 		if (editor.getProblemTracking() == null)
 			return;
 
@@ -55,7 +58,7 @@ public class ProblemSquiggleGraphicFactory extends AbstractTextBoundLineGraphicF
 		int errorWidth = (int) (toEnd - toStart);
 
 		// Create the overlay
-		PixelCanvas canvas = new PixelCanvas(errorWidth, containerHeight);
+		PixelCanvas canvas = new PixelCanvas(pixelPainter, errorWidth, containerHeight);
 		canvas.setManaged(false);
 		canvas.setMouseTransparent(true);
 		canvas.resize(errorWidth, containerHeight);
@@ -65,9 +68,6 @@ public class ProblemSquiggleGraphicFactory extends AbstractTextBoundLineGraphicF
 		pane.getChildren().add(canvas);
 
 		drawWaves(canvas, problem.level() == ProblemLevel.WARN, errorWidth);
-
-		Tooltip tooltip = new Tooltip(problem.message());
-		Tooltip.install(canvas, tooltip);
 	}
 
 	/**

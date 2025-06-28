@@ -4,6 +4,9 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.analytics.SystemInformation;
 
 import java.awt.Dimension;
+import java.awt.DisplayMode;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,14 +19,23 @@ import java.net.URI;
  * @author Matt Coley
  */
 public class DesktopUtil {
-	private static final Dimension screenSize;
+	private static final Dimension primaryScreenSize;
+	private static final Dimension largestScreenSize;
 
 	/**
-	 * @return Screen dimensions.
+	 * @return Screen dimensions of the primary monitor.
 	 */
 	@Nonnull
-	public static Dimension getScreenSize() {
-		return screenSize;
+	public static Dimension getPrimaryScreenSize() {
+		return primaryScreenSize;
+	}
+
+	/**
+	 * @return Largest pairing of any monitor's width and height.
+	 */
+	@Nonnull
+	public static Dimension getLargestScreenSize() {
+		return largestScreenSize;
 	}
 
 	/**
@@ -59,7 +71,18 @@ public class DesktopUtil {
 
 	static {
 		try {
-			screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+			Toolkit kit = Toolkit.getDefaultToolkit();
+			primaryScreenSize = kit.getScreenSize();
+			int width = 1;
+			int heigth = 1;
+			for (GraphicsDevice screenDevice : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+				DisplayMode display = screenDevice.getDisplayMode();
+				if (width < display.getWidth())
+					width = display.getWidth();
+				if (heigth < display.getHeight())
+					heigth = display.getHeight();
+			}
+			largestScreenSize = new Dimension(width, heigth);
 		} catch (Exception ex) {
 			throw new IllegalStateException("Could not get screen size", ex);
 		}
