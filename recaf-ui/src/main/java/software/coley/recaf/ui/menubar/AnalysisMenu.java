@@ -46,7 +46,7 @@ public class AnalysisMenu extends WorkspaceAwareMenu {
 	                    @Nonnull WindowManager windowManager,
 	                    @Nonnull Instance<CommentListPane> commentListPaneProvider,
 	                    @Nonnull Instance<DeobfuscationWindow> deobfuscationWindowProvider,
-						@Nonnull Actions actions) {
+	                    @Nonnull Actions actions) {
 		super(workspaceManager);
 
 		this.dockingManager = dockingManager;

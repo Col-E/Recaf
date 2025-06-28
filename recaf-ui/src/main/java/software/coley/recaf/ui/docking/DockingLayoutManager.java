@@ -69,7 +69,6 @@ public class DockingLayoutManager {
 	private final Instance<WorkspaceInformationPane> workspaceInfoProvider;
 	private final Instance<WorkspaceExplorerPane> workspaceExplorerProvider;
 	private final DockContainerRootBranch root;
-
 	private final ResourceSummaryServiceConfig resourceSummaryConfig;
 
 	@Inject
@@ -141,7 +140,7 @@ public class DockingLayoutManager {
 		primary.setMenuFactory(this::buildMenu);
 
 		// If user don't want to see the summary, just skip
-		if(resourceSummaryConfig.getSummerizeInOpen().getValue()){
+		if (resourceSummaryConfig.getSummarizeOnOpen().getValue()) {
 			primary.addDockables(
 					dockingManager.newTranslatableDockable("workspace.info", CarbonIcons.INFORMATION, workspaceInfoProvider.get())
 			);
