@@ -57,4 +57,18 @@ public class Colors {
 				colorA.getSaturation() + step * (colorB.getSaturation() - colorA.getSaturation()),
 				colorA.getBrightness() + step * (colorB.getBrightness() - colorA.getBrightness()));
 	}
+
+	/**
+	 * @param color
+	 * 		Color to convert.
+	 *
+	 * @return ARGB of color.
+	 */
+	public static int argb(@Nonnull Color color) {
+		int a = (int) (color.getOpacity() * 255);
+		int r = (int) (color.getRed() * 255);
+		int g = (int) (color.getGreen() * 255);
+		int b = (int) (color.getBlue() * 255);
+		return a << 24 | r << 16 | g << 8 | b;
+	}
 }

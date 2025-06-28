@@ -6,9 +6,13 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.animation.Interpolator;
 import javafx.animation.Transition;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.effect.*;
+import javafx.scene.Node;
+import javafx.scene.effect.Blend;
+import javafx.scene.effect.BlendMode;
+import javafx.scene.effect.Bloom;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.Effect;
+import javafx.scene.effect.Glow;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -23,6 +27,7 @@ import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.util.Location;
 import org.reactfx.Change;
 import org.slf4j.Logger;
+import software.coley.bentofx.control.PixelCanvas;
 import software.coley.collections.box.Box;
 import software.coley.collections.box.IntBox;
 import software.coley.observables.ObservableBoolean;
@@ -32,9 +37,18 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
+import software.coley.recaf.util.Colors;
 import software.coley.recaf.util.FxThreadUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -289,9 +303,8 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 
 			// Populate offsets
 			int j = 0;
-			for (int i = 0; i < offsets.length; i++) {
+			for (int i = 0; i < offsets.length; i++)
 				offsets[i] = 1 + (i * 3);
-			}
 		}
 
 		@Override
@@ -311,12 +324,12 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 			List<LabelData> localModel = model;
 
 			double indent = editor.computeWhitespacePrefixWidth(paragraph) - 3 /* padding so lines aren't right up against text */;
-			double width = containerWidth + indent;
+			double width = containerWidth + Math.min(100, indent); // Limit dimensions of canvas
 			double height = containerHeight + 2;
-			Canvas canvas = new Canvas(width, height);
+			PixelCanvas canvas = new PixelCanvas((int) width, (int) height);
 			canvas.setManaged(false);
 			canvas.setMouseTransparent(true);
-			canvas.setTranslateY(-1);
+			canvas.resize(width, height);
 
 			// Setup canvas styling for the render mode.
 			var renderMode = config.getRenderMode().getValue();
@@ -336,8 +349,6 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				setupRainbowAnimation(effect, canvas).play();
 			}
 
-			GraphicsContext gc = canvas.getGraphicsContext2D();
-			gc.setLineWidth(1);
 			container.getChildren().add(canvas);
 
 			for (LabelData labelData : localModel) {
@@ -384,7 +395,8 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				int offsetIndex = lineSlot % offsets.length;
 				int horizontalOffset = offsetIndex >= 0 && offsetIndex < offsets.length ? offsets[offsetIndex] : 1;
 				double hue = 360.0 / parallelLines * lineSlot;
-				Color color = createColor(hue);
+				int color = createColor(hue);
+				final int lineWidth = 1;
 
 				// Mask for tracking which portions of the jump lines have been drawn.
 				BitSet shapeMask = new BitSet(3);
@@ -399,8 +411,6 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 					int referenceLine = referenceLoc.line() - 1;
 					boolean isBackReference = referenceLine > declarationLine;
 
-					gc.setStroke(color);
-					gc.beginPath();
 					boolean multiLine = labelData.countRefsOnLine(referenceLine) > 0;
 					double targetY = multiLine ? horizontalOffset : height / 2;
 					if (referenceLine == paragraph) {
@@ -412,75 +422,65 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 							// Shape: └
 							if (!shapeMask.get(MASK_NORTH)) {
 								// Top section
-								gc.moveTo(horizontalOffset, 0);
-								gc.lineTo(horizontalOffset, targetY);
+								canvas.drawVerticalLine(horizontalOffset, 0, targetY, lineWidth, color);
 								shapeMask.set(MASK_NORTH);
 							}
 						} else {
 							// Shape: ┌
 							if (!shapeMask.get(MASK_SOUTH)) {
 								// Bottom section
-								gc.moveTo(horizontalOffset, height);
-								gc.lineTo(horizontalOffset, targetY);
+								canvas.drawVerticalLine(horizontalOffset, targetY, height - targetY, lineWidth, color);
 								shapeMask.set(MASK_SOUTH);
 							}
 						}
 						if (!shapeMask.get(MASK_EAST)) {
 							// Right section
-							gc.moveTo(horizontalOffset, targetY);
-							gc.lineTo(width, targetY);
+							canvas.drawHorizontalLine(horizontalOffset, targetY, width - horizontalOffset, lineWidth, color);
 							shapeMask.set(MASK_EAST);
 						}
-						gc.stroke();
+						canvas.commit();
 					} else if (paragraph == declarationLine) {
 						// Right section
 						if (isBackReference) {
 							// Shape: ┌
 							if (!shapeMask.get(MASK_SOUTH)) {
 								// Bottom section
-								gc.moveTo(horizontalOffset, height);
-								gc.lineTo(horizontalOffset, targetY);
+								canvas.drawVerticalLine(horizontalOffset, targetY, height - targetY, lineWidth, color);
 								shapeMask.set(MASK_SOUTH);
 							}
 						} else {
 							// Shape: └
 							if (!shapeMask.get(MASK_NORTH)) {
 								// Top section
-								gc.moveTo(horizontalOffset, 0);
-								gc.lineTo(horizontalOffset, targetY);
+								canvas.drawVerticalLine(horizontalOffset, 0, targetY, lineWidth, color);
 								shapeMask.set(MASK_NORTH);
 							}
 						}
 						if (!shapeMask.get(MASK_EAST)) {
 							// Right section
-							gc.moveTo(horizontalOffset, targetY);
-							gc.lineTo(width, targetY);
+							canvas.drawHorizontalLine(horizontalOffset, targetY, width - horizontalOffset, lineWidth, color);
 							shapeMask.set(MASK_EAST);
 						}
-						gc.stroke();
+						canvas.commit();
 					} else if ((isBackReference && (paragraph > declarationLine && paragraph < referenceLine)) ||
 							(!isBackReference && (paragraph < declarationLine && paragraph > referenceLine))) {
 						if (!shapeMask.get(MASK_NORTH)) {
 							// Top section
-							gc.moveTo(horizontalOffset, 0);
-							gc.lineTo(horizontalOffset, height / 2);
+							canvas.drawVerticalLine(horizontalOffset, 0, height / 2, lineWidth, color);
 							shapeMask.set(MASK_NORTH);
 						}
 						if (!shapeMask.get(MASK_SOUTH)) {
 							// Bottom section
-							gc.moveTo(horizontalOffset, height / 2);
-							gc.lineTo(horizontalOffset, height);
+							canvas.drawVerticalLine(horizontalOffset, height / 2, height / 2, lineWidth, color);
 							shapeMask.set(MASK_SOUTH);
 						}
-						gc.stroke();
+						canvas.commit();
 					}
-					gc.closePath();
 				}
 			}
 		}
 
-		@Nonnull
-		private static Color createColor(double hue) {
+		private static int createColor(double hue) {
 			Color color = Color.hsb(hue, 1.0, 1.0);
 
 			// Ensure the color is actually bright enough.
@@ -498,11 +498,11 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				i++;
 			}
 
-			return color;
+			return Colors.argb(color);
 		}
 
 		@Nonnull
-		private Transition setupRainbowAnimation(@Nonnull Effect effect, @Nonnull Canvas canvas) {
+		private Transition setupRainbowAnimation(@Nonnull Effect effect, @Nonnull Node node) {
 			return new Transition() {
 				{
 					setInterpolator(Interpolator.LINEAR);
@@ -519,7 +519,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 					float hue = Math.abs((4 * diff / rainbowHueRotationDurationMillis) - 2) - 1;
 					ColorAdjust adjust = new ColorAdjust(hue, 0.0, 0.0, 0.0);
 					adjust.setInput(effect);
-					canvas.setEffect(adjust);
+					node.setEffect(adjust);
 				}
 			};
 		}

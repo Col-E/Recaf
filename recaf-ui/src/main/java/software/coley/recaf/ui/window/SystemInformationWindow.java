@@ -27,6 +27,6 @@ public class SystemInformationWindow extends AbstractIdentifiableStage {
 		setMinHeight(300);
 		ScrollPane scroll = new ScrollPane(infoPane);
 		scroll.setFitToWidth(true);
-		setScene(new RecafScene(new BorderPane(scroll), 500, 710));
+		setScene(new RecafScene(new BorderPane(scroll), 540, 710));
 	}
 }
