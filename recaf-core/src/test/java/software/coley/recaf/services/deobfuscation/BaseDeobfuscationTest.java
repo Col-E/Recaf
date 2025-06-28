@@ -25,6 +25,7 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformResult;
 import software.coley.recaf.services.transform.TransformationApplier;
 import software.coley.recaf.services.transform.TransformationApplierService;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
@@ -53,7 +54,7 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 	@BeforeAll
 	static void setupServices() {
 		transformationApplierService = recaf.get(TransformationApplierService.class);
-		decompiler = new CfrDecompiler(new CfrConfig());
+		decompiler = new CfrDecompiler(recaf.get(WorkspaceManager.class), new CfrConfig());
 	}
 
 	@BeforeEach

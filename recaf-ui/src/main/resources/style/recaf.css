@@ -3,6 +3,30 @@ This file is *mostly* auto-generated.
 Please maintain changes on the original SCSS files: https://github.com/Col-E/atlantafx
  - Branch: recaf-theme-2x (default)
 */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: normal;
+  src: local('JetBrains Mono'), url('../fonts/JetBrainsMono.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: bold;
+  src: local('JetBrains Mono'), url('../fonts/JetBrainsMono-Bold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: italic;
+  font-weight: normal;
+  src: local('JetBrains Mono'), url('../fonts/JetBrainsMono-Italic.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: italic;
+  font-weight: bold;
+  src: local('JetBrains Mono'), url('../fonts/JetBrainsMono-BoldItalic.ttf') format('truetype');
+}
 .root {
   -color-dark: rgb(0, 0, 0);
   -color-light: rgb(255, 255, 255);
@@ -243,7 +267,7 @@ Text {
   -fx-border-insets: 10px 0 10px 0;
 }
 .bb-code .code {
-  -fx-font-family: monospace;
+  -fx-font-family: 'JetBrains Mono';
   -fx-border-color: -color-border-default;
   -fx-border-width: 1;
   -fx-background-color: -color-bg-subtle;

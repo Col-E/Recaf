@@ -5,12 +5,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import me.darknet.assembler.compiler.ClassRepresentation;
 import me.darknet.assembler.compiler.ClassResult;
+import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -21,6 +24,7 @@ import java.util.Objects;
  *
  * @author Justus Garbe
  */
+@EagerInitialization
 @ApplicationScoped
 public class AssemblerPipelineManager implements Service {
 	public static final String SERVICE_ID = "assembler-pipeline";
@@ -29,6 +33,7 @@ public class AssemblerPipelineManager implements Service {
 	private final JvmAssemblerPipelineConfig jvmConfig;
 	private final AndroidAssemblerPipelineConfig androidConfig;
 	private final AssemblerPipelineGeneralConfig config;
+	private JvmAssemblerPipeline currentJvmPipeline;
 
 	@Inject
 	public AssemblerPipelineManager(@Nonnull WorkspaceManager workspaceManager,
@@ -41,6 +46,10 @@ public class AssemblerPipelineManager implements Service {
 		this.config = config;
 		this.jvmConfig = jvmConfig;
 		this.androidConfig = androidConfig;
+
+		ListenerHost host = new ListenerHost();
+		workspaceManager.addWorkspaceOpenListener(host);
+		workspaceManager.addWorkspaceCloseListener(host);
 	}
 
 	/**
@@ -73,6 +82,9 @@ public class AssemblerPipelineManager implements Service {
 	 */
 	@Nonnull
 	public JvmAssemblerPipeline newJvmAssemblerPipeline(@Nonnull Workspace workspace) {
+		if (currentJvmPipeline != null && workspace == workspaceManager.getCurrent())
+			return currentJvmPipeline;
+
 		InheritanceGraph graph = graphService.getOrCreateInheritanceGraph(workspace);
 		return new JvmAssemblerPipeline(workspace, Objects.requireNonNull(graph), config, jvmConfig);
 	}
@@ -98,5 +110,20 @@ public class AssemblerPipelineManager implements Service {
 	@Override
 	public AssemblerPipelineGeneralConfig getServiceConfig() {
 		return config;
+	}
+
+	private class ListenerHost implements WorkspaceOpenListener, WorkspaceCloseListener {
+		@Override
+		public void onWorkspaceOpened(@Nonnull Workspace workspace) {
+			currentJvmPipeline = newJvmAssemblerPipeline(workspace);
+		}
+
+		@Override
+		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
+			if (currentJvmPipeline != null) {
+				currentJvmPipeline.close();
+				currentJvmPipeline = null;
+			}
+		}
 	}
 }

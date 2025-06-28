@@ -1,7 +1,6 @@
 package software.coley.recaf.ui.control.richtext.linegraphics;
 
 import jakarta.annotation.Nonnull;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -39,7 +38,6 @@ public class LineNumberFactory extends AbstractLineGraphicFactory {
 		if (codeArea == null) return;
 
 		Label label = new Label(format(paragraph + 1, computeDigits(codeArea.getParagraphs().size())));
-		label.getStyleClass().add("bg");
 		HBox.setHgrow(label, Priority.ALWAYS);
 		container.addHorizontal(label);
 	}

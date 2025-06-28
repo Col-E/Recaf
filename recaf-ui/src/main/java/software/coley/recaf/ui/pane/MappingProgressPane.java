@@ -136,11 +136,13 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 		});
 
 		workspaceManager.addWorkspaceCloseListener(workspace -> {
-			// The pending update can be cleared once the workspace is closed.
+			// The pending update + mappings can be cleared once the workspace is closed.
 			pendingUpdate = null;
+			mappings = null;
 
 			// And the tree content can be cleared.
 			treeContentListDelegate.clear();
+			treeContentList.clear();
 
 			// Clear selection, as it holds a path which contains workspace references,
 			// which can prevent GC from freeing it.

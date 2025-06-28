@@ -3,10 +3,20 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.ElementType;
-import me.darknet.assembler.compiler.*;
+import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compiler.ClassResult;
+import me.darknet.assembler.compiler.Compiler;
+import me.darknet.assembler.compiler.CompilerOptions;
+import me.darknet.assembler.compiler.InheritanceChecker;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
-import me.darknet.assembler.printer.*;
+import me.darknet.assembler.printer.AnnotationHolder;
+import me.darknet.assembler.printer.AnnotationPrinter;
+import me.darknet.assembler.printer.ClassPrinter;
+import me.darknet.assembler.printer.PrintContext;
+import me.darknet.assembler.printer.Printer;
+import software.coley.observables.AbstractObservable;
+import software.coley.observables.ChangeListener;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
@@ -15,6 +25,7 @@ import software.coley.recaf.path.AnnotationPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.List;
 
@@ -33,14 +44,15 @@ import java.util.List;
 public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassResult, I extends ClassRepresentation> implements AssemblerPipeline<C, R, I> {
 	protected final AssemblerPipelineConfig pipelineConfig;
 	private final AssemblerPipelineGeneralConfig generalConfig;
+	private final ListenerHost indentListener = new ListenerHost();
 	protected PrintContext<?> context;
 
 	public AbstractAssemblerPipeline(@Nonnull AssemblerPipelineGeneralConfig generalConfig,
-									 @Nonnull AssemblerPipelineConfig pipelineConfig) {
+	                                 @Nonnull AssemblerPipelineConfig pipelineConfig) {
 		this.generalConfig = generalConfig;
 		this.pipelineConfig = pipelineConfig;
 
-		generalConfig.getDisassemblyIndent().addChangeListener((ob, old, current) -> refreshContext());
+		generalConfig.getDisassemblyIndent().addChangeListener(indentListener);
 	}
 
 	private void refreshContext() {
@@ -191,9 +203,23 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 		return context.toString();
 	}
 
+	/**
+	 * Called when the associated {@link Workspace} for this pipeline is closed.
+	 */
+	public void close() {
+		generalConfig.getDisassemblyIndent().removeChangeListener(indentListener);
+	}
+
 	@Nonnull
 	@Override
 	public AssemblerPipelineConfig getConfig() {
 		return pipelineConfig;
+	}
+
+	private class ListenerHost implements ChangeListener<String> {
+		@Override
+		public void changed(AbstractObservable<? extends String> abstractObservable, String s, String t1) {
+			refreshContext();
+		}
 	}
 }

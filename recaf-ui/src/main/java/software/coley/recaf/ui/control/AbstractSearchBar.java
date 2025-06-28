@@ -180,7 +180,7 @@ public abstract class AbstractSearchBar extends VBox {
 	protected void onSearchInputKeyPress(@Nonnull KeyEvent e) {
 		// Clear old searches if there are too many
 		while (pastSearches.size() > MAX_HISTORY)
-			pastSearches.remove(pastSearches.size() - 1);
+			pastSearches.removeLast();
 	}
 
 	/**

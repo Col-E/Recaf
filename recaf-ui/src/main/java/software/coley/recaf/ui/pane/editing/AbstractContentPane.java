@@ -51,7 +51,7 @@ import java.util.function.Consumer;
  */
 public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderPane implements UpdatableNavigable {
 	private static final String TOOL_TABS_ID = "tool-tabs";
-	/** We use a separate instance because the side-tabs of this pane are not intended to be tracked by our docking manger. */
+	/** We use a separate instance because the side-tabs of this pane are not intended to be tracked by our docking manager. */
 	private final Bento bento = new EmbeddedBento();
 	/** Wrapper to hold {@link #displayWrapper} and {@link Dockable} side tabs. Split according to {@link #toolTabSide}. */
 	private final DockContainerRootBranch displaySplit;

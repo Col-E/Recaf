@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.pane;
 
+import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -103,10 +104,8 @@ public class SystemInformationPane extends GridPane {
 	@Override
 	public void addRow(int rowIndex, Node... children) {
 		super.addRow(rowIndex, children);
-		if (children[0].getClass() == Label.class) {
-			children[0].getStyleClass().add("b");
-			children[1].getStyleClass().add("monospace");
-		}
+		if (children[0].getClass() == Label.class)
+			children[0].getStyleClass().add(Styles.TEXT_BOLD);
 	}
 
 	/**

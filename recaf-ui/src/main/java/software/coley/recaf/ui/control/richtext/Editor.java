@@ -621,7 +621,7 @@ public class Editor extends BorderPane implements Closing {
 
 		// we never reached the character
 		if (index < character) {
-			double charWidth = 0L;
+			double charWidth;
 			if (lastNode == null)
 				charWidth = 1.7;
 			else

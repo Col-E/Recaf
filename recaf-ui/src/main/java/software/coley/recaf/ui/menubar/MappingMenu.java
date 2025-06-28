@@ -12,22 +12,18 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingApplierService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
-import software.coley.recaf.services.mapping.aggregate.AggregatedMappingsListener;
 import software.coley.recaf.services.mapping.format.MappingFileFormat;
 import software.coley.recaf.services.mapping.format.MappingFormatManager;
-import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.ui.pane.MappingGeneratorPane;
-import software.coley.recaf.ui.window.RecafScene;
+import software.coley.recaf.ui.window.MappingGeneratorWindow;
 import software.coley.recaf.util.FileChooserBuilder;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
@@ -54,21 +50,18 @@ public class MappingMenu extends WorkspaceAwareMenu {
 	private final ExecutorService exportPool = ThreadPoolFactory.newSingleThreadExecutor("mapping-export");
 	private final ExecutorService importPool = ThreadPoolFactory.newSingleThreadExecutor("mapping-import");
 	private final WindowManager windowManager;
-	private final WindowFactory windowFactory;
 
 	@Inject
 	public MappingMenu(@Nonnull WindowManager windowManager,
-	                   @Nonnull WindowFactory windowFactory,
 	                   @Nonnull WorkspaceManager workspaceManager,
 	                   @Nonnull AggregateMappingManager aggregateMappingManager,
 	                   @Nonnull MappingFormatManager formatManager,
 	                   @Nonnull MappingApplierService mappingApplierService,
-	                   @Nonnull Instance<MappingGeneratorPane> generatorPaneInstance,
+	                   @Nonnull Instance<MappingGeneratorWindow> generatorWindowProvider,
 	                   @Nonnull RecentFilesConfig recentFiles) {
 		super(workspaceManager);
 
 		this.windowManager = windowManager;
-		this.windowFactory = windowFactory;
 
 		textProperty().bind(getBinding("menu.mappings"));
 		setGraphic(new FontIconView(CarbonIcons.MAP_BOUNDARY));
@@ -156,7 +149,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 		getItems().add(export);
 
 		getItems().add(action("menu.mappings.generate", CarbonIcons.LICENSE_MAINTENANCE,
-				() -> openGenerate(generatorPaneInstance)));
+				() -> openGenerate(generatorWindowProvider)));
 		getItems().add(action("menu.mappings.view", CarbonIcons.VIEW, this::openView));
 
 		// Disable if attached via agent, or there is no workspace
@@ -177,11 +170,12 @@ public class MappingMenu extends WorkspaceAwareMenu {
 		});
 	}
 
-	private void openGenerate(@Nonnull Instance<MappingGeneratorPane> generatorPaneInstance) {
-		RecafScene scene = new RecafScene(generatorPaneInstance.get());
-		Stage window = windowFactory.createAnonymousStage(scene, getBinding("mapgen"), 800, 400);
+	private void openGenerate(@Nonnull Instance<MappingGeneratorWindow> generatorWindowProvider) {
+		MappingGeneratorWindow window = generatorWindowProvider.get();
+		window.setOnCloseRequest(e -> generatorWindowProvider.destroy(window));
 		window.show();
 		window.requestFocus();
+		windowManager.registerAnonymous(window);
 	}
 
 	private void openView() {
