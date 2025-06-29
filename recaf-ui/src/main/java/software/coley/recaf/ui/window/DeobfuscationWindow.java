@@ -13,20 +13,8 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.scene.text.TextAlignment;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -81,6 +69,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import software.coley.recaf.services.assembler.AssemblerPipelineManager;
+import software.coley.recaf.services.assembler.JvmAssemblerPipeline;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.DirectoryPathNode;
 
 /**
  * Pane for previewing deobfuscation transformers.
@@ -96,6 +88,7 @@ public class DeobfuscationWindow extends RecafStage {
 	private final ObservableList<CategorizedTransformer> transformerOrder = FXCollections.observableArrayList();
 	private final BooleanProperty hasSelection = new SimpleBooleanProperty();
 	private final WorkspaceManager workspaceManager;
+	private final AssemblerPipelineManager assemblerPipelineManager;
 
 	@Inject
 	@SuppressWarnings("unchecked")
@@ -107,11 +100,13 @@ public class DeobfuscationWindow extends RecafStage {
 	                           @Nonnull CellConfigurationService configurationService,
 	                           @Nonnull Actions actions,
 	                           @Nonnull WorkspaceExplorerConfig explorerConfig,
-	                           @Nonnull Instance<SearchBar> searchBarProvider) {
+	                           @Nonnull Instance<SearchBar> searchBarProvider,
+	                           @Nonnull AssemblerPipelineManager assemblerPipelineManager) {
 		this.transformationManager = transformationManager;
 		this.transformationApplierService = transformationApplierService;
 		this.workspaceManager = workspaceManager;
 		this.decompilerManager = decompilerManager;
+		this.assemblerPipelineManager = assemblerPipelineManager;
 
 		BorderPane transformerTreePane = new BorderPane();
 		{
@@ -316,12 +311,36 @@ public class DeobfuscationWindow extends RecafStage {
 			title.getStyleClass().add(Styles.TITLE_4);
 			title.setPadding(new Insets(0, 0, 5, 5));
 
+			HBox titleBox = new HBox();
+			titleBox.setAlignment(Pos.CENTER_LEFT);
+			titleBox.getChildren().add(title);
+
+			TransformPreview beforePreview = new TransformPreview(languageAssociation, searchBarProvider.get(), false);
+			TransformPreview afterPreview = new TransformPreview(languageAssociation, searchBarProvider.get(), true);
+
+			// Create a shared toggleButton and add it to the title bar
+			ToggleButton toggleButton = new ToggleButton();
+			toggleButton.setText(Lang.get("deobf.preview.switch-decompiler"));
+			toggleButton.setSelected(true);
+			toggleButton.selectedProperty().addListener((obs, oldVal, newVal) -> {
+				boolean showAssembly = newVal;
+				toggleButton.setText(showAssembly ? Lang.get("deobf.preview.switch-decompiler") : Lang.get("deobf.preview.disassemble-decompiler"));
+				// update preview
+				beforePreview.setShowAssembly(showAssembly);
+				afterPreview.setShowAssembly(showAssembly);
+			});
+
+			// Use Region elastic padding to push the toggleButton to the far right
+			Region spacer = new Region();
+			HBox.setHgrow(spacer, Priority.ALWAYS);
+			titleBox.getChildren().add(spacer);
+			titleBox.getChildren().add(toggleButton);
+			titleBox.setSpacing(10);
+
 			Tab beforeTab = new Tab();
 			Tab afterTab = new Tab();
 			beforeTab.setClosable(false);
 			afterTab.setClosable(false);
-			TransformPreview beforePreview = new TransformPreview(languageAssociation, searchBarProvider.get(), false);
-			TransformPreview afterPreview = new TransformPreview(languageAssociation, searchBarProvider.get(), true);
 			beforeTab.setContent(beforePreview);
 			afterTab.setContent(afterPreview);
 			beforeTab.textProperty().bind(Lang.getBinding("misc.before"));
@@ -374,7 +393,7 @@ public class DeobfuscationWindow extends RecafStage {
 			StackPane wrapper = new StackPane(tabs, tools);
 			StackPane.setMargin(tools, new Insets(20));
 			wrapper.setAlignment(Pos.BOTTOM_RIGHT);
-			transformPreviewPane.setTop(title);
+			transformPreviewPane.setTop(titleBox);
 			transformPreviewPane.setCenter(wrapper);
 			transformPreviewPane.setBottom(tools);
 		}
@@ -417,6 +436,7 @@ public class DeobfuscationWindow extends RecafStage {
 		private final boolean andApply;
 		private final Editor editor;
 		private ClassInfo classInfo;
+		private boolean showAssembly = true;
 
 		private TransformPreview(@Nonnull FileTypeSyntaxAssociationService languageAssociation, @Nonnull SearchBar searchBar, boolean andApply) {
 			this.andApply = andApply;
@@ -431,6 +451,11 @@ public class DeobfuscationWindow extends RecafStage {
 
 		public void setClassInfo(@Nonnull ClassInfo classInfo) {
 			this.classInfo = classInfo;
+		}
+
+		public void setShowAssembly(boolean showAssembly) {
+			this.showAssembly = showAssembly;
+			decompile();
 		}
 
 		private void decompile() {
@@ -462,15 +487,36 @@ public class DeobfuscationWindow extends RecafStage {
 				}
 			}
 
-			// TODO: Pull out common decompile code with "AbstractDecompilePane" to do this more aesthetically
-			//  - And by that I mean include the animation
-			//  - And the error handling
-			//  - But not the rest of the unrelated "editing" capabilities of the "AbstractDecompilePane"
-			decompilerManager.decompile(workspaceManager.getCurrent(), jvmClass).whenCompleteAsync((result, error) -> {
-				if (result != null) {
-					editor.setText(result.getText());
+			if (showAssembly) {
+				// disassemble view
+				try {
+					JvmAssemblerPipeline pipeline = assemblerPipelineManager.newJvmAssemblerPipeline(workspaceManager.getCurrent());
+					String packageName = jvmClass.getPackageName();
+					DirectoryPathNode dirNode = new DirectoryPathNode(packageName);
+					ClassPathNode path = new ClassPathNode(dirNode, jvmClass);
+					var result = pipeline.disassemble(path);
+					if (result.isOk()) {
+						editor.setText(result.get());
+					} else {
+						editor.setText("// Failed to disassemble: " + result.errors());
+					}
+				} catch (Exception e) {
+					editor.setText("// Exception during disassembly: " + e.getMessage());
 				}
-			}, FxThreadUtil.executor());
+			} else {
+				// TODO: Pull out common decompile code with "AbstractDecompilePane" to do this more aesthetically
+				//  - And by that I mean include the animation
+				//  - And the error handling
+				//  - But not the rest of the unrelated "editing" capabilities of the "AbstractDecompilePane"
+				// decompiler view
+				decompilerManager.decompile(workspaceManager.getCurrent(), jvmClass).whenCompleteAsync((result, error) -> {
+					if (result != null) {
+						editor.setText(result.getText());
+					} else if (error != null) {
+						editor.setText("// Decompile error: " + error.getMessage());
+					}
+				}, FxThreadUtil.executor());
+			}
 		}
 	}
 
