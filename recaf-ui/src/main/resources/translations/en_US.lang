@@ -458,6 +458,7 @@ deobf.order.pre=Missing recommended predecessors
 deobf.order.suc=Missing recommended successors
 deobf.preview.title=Preview
 deobf.preview.pick=Pick preview class
+deobf.preview.toggle-mode=Switch preview mode
 deobf.preview.noselection=// No class is selected, pick a class to preview\n// the transformation before & after states
 deobf.tree.generic=Generic
 deobf.tree.generic.anticrasher=Anti-Crasher

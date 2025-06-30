@@ -3,6 +3,7 @@ package software.coley.recaf.ui.window;
 import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -28,6 +29,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
+import me.darknet.assembler.error.Error;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
@@ -35,6 +37,9 @@ import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.services.assembler.AssemblerPipelineManager;
+import software.coley.recaf.services.assembler.JvmAssemblerPipeline;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.deobfuscation.transform.generic.CycleClassRemovingTransformer;
@@ -65,6 +70,7 @@ import software.coley.recaf.services.transform.TransformationApplierService;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.services.transform.TransformationManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.BoundLabel;
@@ -72,10 +78,12 @@ import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.ReorderableListCell;
 import software.coley.recaf.ui.control.popup.ClassSelectionPopup;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +101,7 @@ public class DeobfuscationWindow extends RecafStage {
 	private final TransformationManager transformationManager;
 	private final TransformationApplierService transformationApplierService;
 	private final DecompilerManager decompilerManager;
+	private final AssemblerPipelineManager assemblerPipelineManager;
 	private final ObservableList<CategorizedTransformer> transformerOrder = FXCollections.observableArrayList();
 	private final BooleanProperty hasSelection = new SimpleBooleanProperty();
 	private final WorkspaceManager workspaceManager;
@@ -103,6 +112,7 @@ public class DeobfuscationWindow extends RecafStage {
 	                           @Nonnull TransformationApplierService transformationApplierService,
 	                           @Nonnull WorkspaceManager workspaceManager,
 	                           @Nonnull DecompilerManager decompilerManager,
+	                           @Nonnull AssemblerPipelineManager assemblerPipelineManager,
 	                           @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                           @Nonnull CellConfigurationService configurationService,
 	                           @Nonnull Actions actions,
@@ -112,6 +122,7 @@ public class DeobfuscationWindow extends RecafStage {
 		this.transformationApplierService = transformationApplierService;
 		this.workspaceManager = workspaceManager;
 		this.decompilerManager = decompilerManager;
+		this.assemblerPipelineManager = assemblerPipelineManager;
 
 		BorderPane transformerTreePane = new BorderPane();
 		{
@@ -241,6 +252,8 @@ public class DeobfuscationWindow extends RecafStage {
 					} else {
 						// TODO: If we add "CompositeTransformer" to our system (a transformer that wraps several others in a specific order)
 						//  then this logic will need to be updated to "unroll" those wrapped transformers.
+						//   - However, if they transformers have a proper dependencies ordering (or dont care about order) then we can
+						//     just have a composite add each in their own dependencies
 						int index = getIndex();
 						List<? extends Class<? extends ClassTransformer>> transformerClasses = transformerOrder.stream()
 								.map(t -> t.transformer().transformer().getClass())
@@ -320,8 +333,8 @@ public class DeobfuscationWindow extends RecafStage {
 			Tab afterTab = new Tab();
 			beforeTab.setClosable(false);
 			afterTab.setClosable(false);
-			TransformPreview beforePreview = new TransformPreview(languageAssociation, searchBarProvider.get(), false);
-			TransformPreview afterPreview = new TransformPreview(languageAssociation, searchBarProvider.get(), true);
+			TransformPreview beforePreview = new TransformPreview(languageAssociation, searchBarProvider, false);
+			TransformPreview afterPreview = new TransformPreview(languageAssociation, searchBarProvider, true);
 			beforeTab.setContent(beforePreview);
 			afterTab.setContent(afterPreview);
 			beforeTab.textProperty().bind(Lang.getBinding("misc.before"));
@@ -338,9 +351,13 @@ public class DeobfuscationWindow extends RecafStage {
 					beforePreview.setClassInfo(selection);
 					afterPreview.setClassInfo(selection);
 
-					beforePreview.decompile();
-					afterPreview.decompile();
+					beforePreview.updatePreview();
+					afterPreview.updatePreview();
 				}).showAndWait();
+			});
+			Button togglePreview = new ActionButton(CarbonIcons.ARROWS_HORIZONTAL, Lang.getBinding("deobf.preview.toggle-mode"), () -> {
+				beforePreview.togglePreviewMode();
+				afterPreview.togglePreviewMode();
 			});
 			BooleanProperty working = new SimpleBooleanProperty();
 			Button applyToWorkspace = new ActionButton(CarbonIcons.PLAY, Lang.getBinding("deobf.apply"), () -> {
@@ -366,11 +383,11 @@ public class DeobfuscationWindow extends RecafStage {
 			}).async();
 			applyToWorkspace.disableProperty().bind(hasSelection.not().or(working));
 			transformerOrder.addListener((ListChangeListener<CategorizedTransformer>) change -> {
-				beforePreview.decompile();
-				afterPreview.decompile();
+				beforePreview.updatePreview();
+				afterPreview.updatePreview();
 			});
 
-			HBox tools = new HBox(pickClass, new Spacer(), applyToWorkspace);
+			HBox tools = new HBox(pickClass, new Spacer(), togglePreview, new Spacer(), applyToWorkspace);
 			StackPane wrapper = new StackPane(tabs, tools);
 			StackPane.setMargin(tools, new Insets(20));
 			wrapper.setAlignment(Pos.BOTTOM_RIGHT);
@@ -415,30 +432,115 @@ public class DeobfuscationWindow extends RecafStage {
 
 	private class TransformPreview extends BorderPane {
 		private final boolean andApply;
-		private final Editor editor;
+		private final Editor editorDecompile;
+		private final Editor editorAssembly;
 		private ClassInfo classInfo;
 
-		private TransformPreview(@Nonnull FileTypeSyntaxAssociationService languageAssociation, @Nonnull SearchBar searchBar, boolean andApply) {
+		private TransformPreview(@Nonnull FileTypeSyntaxAssociationService languageAssociation, @Nonnull Instance<SearchBar> searchBarProvider, boolean andApply) {
 			this.andApply = andApply;
 
-			editor = new Editor();
-			languageAssociation.configureEditorSyntax("java", editor);
-			searchBar.install(editor);
-			setCenter(editor);
+			editorDecompile = new Editor();
+			editorDecompile.setSelectedBracketTracking(new SelectedBracketTracking());
+			editorDecompile.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
+			editorDecompile.getCodeArea().setEditable(false);
+			languageAssociation.configureEditorSyntax("java", editorDecompile);
 
-			decompile();
+			editorAssembly = new Editor();
+			editorAssembly.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
+			editorAssembly.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
+			editorAssembly.setSelectedBracketTracking(new SelectedBracketTracking());
+			editorAssembly.getCodeArea().setEditable(false);
+			languageAssociation.configureEditorSyntax("jasm", editorAssembly);
+
+			SearchBar searchBar1 = searchBarProvider.get();
+			SearchBar searchBar2 = searchBarProvider.get();
+			searchBar1.install(editorDecompile);
+			searchBar2.install(editorAssembly);
+
+			// TODO: Make it a preference which is shown first
+			setCenter(editorDecompile);
+
+			updatePreview();
 		}
 
 		public void setClassInfo(@Nonnull ClassInfo classInfo) {
 			this.classInfo = classInfo;
 		}
 
-		private void decompile() {
+		public void togglePreviewMode() {
+			if (isDecompilePreview()) {
+				setCenter(editorAssembly);
+				disassemble();
+			} else {
+				setCenter(editorDecompile);
+				updatePreview();
+			}
+		}
+
+		public boolean isDecompilePreview() {
+			return getCenter() == editorDecompile;
+		}
+
+		private void updatePreview() {
+			if (isDecompilePreview())
+				decompile();
+			else
+				disassemble();
+		}
+
+		private void disassemble() {
 			if (classInfo == null) {
-				editor.setText(Lang.get("deobf.preview.noselection"));
+				String text = Lang.get("deobf.preview.noselection");
+				editorAssembly.setText(text);
 				return;
 			}
 
+			JvmClassInfo jvmClass = getProcessedClass();
+			if (jvmClass == null) return;
+
+			Workspace workspace = workspaceManager.getCurrent();
+			String className = jvmClass.getName();
+			ClassPathNode path = workspace.findClass(className);
+			if (path == null) {
+				logger.error("Couldn't find class {} in workspace for deobfuscation preview", className);
+				return;
+			}
+			path = Objects.requireNonNull(path.getParent()).child(jvmClass);
+			JvmAssemblerPipeline pipeline = assemblerPipelineManager.newJvmAssemblerPipeline(workspace);
+			pipeline.disassemble(path)
+					.ifOk(disassembly -> FxThreadUtil.run(() -> editorAssembly.setText(disassembly)))
+					.ifErr((errors) -> {
+						String errorListStr = errors.stream().map(Error::toString).collect(Collectors.joining("\n - "));
+						logger.warn("Errors processing {} for deobfuscation preview:\n - {}", className, errorListStr);
+					});
+		}
+
+		private void decompile() {
+			if (classInfo == null) {
+				String text = Lang.get("deobf.preview.noselection");
+				editorDecompile.setText(text);
+				return;
+			}
+
+			JvmClassInfo jvmClass = getProcessedClass();
+			if (jvmClass == null) return;
+
+			// TODO: Pull out common decompile code with "AbstractDecompilePane" to do this more aesthetically
+			//  - And by that I mean include the animation
+			//  - And the error handling for decompilation failures
+			//  - But not the rest of the unrelated "editing" capabilities of the "AbstractDecompilePane"
+			decompilerManager.decompile(workspaceManager.getCurrent(), jvmClass).whenCompleteAsync((result, error) -> {
+				if (result != null) {
+					editorDecompile.setText(result.getText());
+				}
+			}, FxThreadUtil.executor());
+		}
+
+		/**
+		 * @return Processed output class to preview.
+		 */
+		@Nullable
+		private JvmClassInfo getProcessedClass() {
 			JvmClassInfo jvmClass = classInfo.asJvmClass();
 
 			if (andApply) {
@@ -456,21 +558,13 @@ public class DeobfuscationWindow extends RecafStage {
 					if (!result.getTransformedClasses().isEmpty())
 						jvmClass = result.getTransformedClasses().values().iterator().next();
 				} catch (TransformationException e) {
-					editor.setText("// Failed to transform: " + e.getMessage() + "\n"
+					editorDecompile.setText("// Failed to transform: " + e.getMessage() + "\n"
 							+ "// " + StringUtil.traceToString(e).replace("\n", "\n// "));
-					return;
+					return null;
 				}
 			}
 
-			// TODO: Pull out common decompile code with "AbstractDecompilePane" to do this more aesthetically
-			//  - And by that I mean include the animation
-			//  - And the error handling
-			//  - But not the rest of the unrelated "editing" capabilities of the "AbstractDecompilePane"
-			decompilerManager.decompile(workspaceManager.getCurrent(), jvmClass).whenCompleteAsync((result, error) -> {
-				if (result != null) {
-					editor.setText(result.getText());
-				}
-			}, FxThreadUtil.executor());
+			return jvmClass;
 		}
 	}
 

@@ -8,6 +8,7 @@ import javafx.scene.Node;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.bentofx.dockable.Dockable;
+import software.coley.bentofx.dockable.DockableCloseListener;
 import software.coley.bentofx.layout.container.DockContainerLeaf;
 import software.coley.bentofx.path.DockablePath;
 import software.coley.recaf.services.navigation.Actions;
@@ -105,8 +106,10 @@ public class AnalysisMenu extends WorkspaceAwareMenu {
 		}
 
 		// Not already open, gotta open a new one.
-		DockContainerLeaf leaf = docPanePath != null ? docPanePath.leafContainer() : dockingManager.getPrimaryDockingContainer();
-		Dockable dockable = dockingManager.newTranslatableDockable("menu.analysis.list-comments", CarbonIcons.CHAT, commentListPaneProvider.get());
-		leaf.addDockable(dockable);
+		DockContainerLeaf container = docPanePath != null ? docPanePath.leafContainer() : dockingManager.getPrimaryDockingContainer();
+		CommentListPane content = commentListPaneProvider.get();
+		Dockable dockable = dockingManager.newTranslatableDockable("menu.analysis.list-comments", CarbonIcons.CHAT, content);
+		dockable.addCloseListener((_, _) -> commentListPaneProvider.destroy(content));
+		container.addDockable(dockable);
 	}
 }
