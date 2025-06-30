@@ -71,7 +71,6 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 			if (instructions == null)
 				continue;
 			try {
-				boolean localDirty = false;
 				Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
 				for (int i = 1; i < method.instructions.size() - 1; i++) {
 					// We must know the contents of the next frame, and it must have 1 or more values on the stack.
@@ -152,7 +151,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 							method.instructions.set(instruction, replacement);
 							method.instructions.set(argument2, new InsnNode(NOP));
 							method.instructions.set(argument1, new InsnNode(NOP));
-							localDirty = true;
+							dirty = true;
 							break;
 						}
 						case INEG:
@@ -190,7 +189,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 							// Replace the argument and operation instructions with the replacement const value.
 							method.instructions.set(instruction, replacement);
 							method.instructions.set(argument, new InsnNode(NOP));
-							localDirty = true;
+							dirty = true;
 							break;
 						}
 						case INVOKESPECIAL:
@@ -233,7 +232,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 							method.instructions.set(instruction, replacement);
 							for (AbstractInsnNode argument : argumentInstructions)
 								method.instructions.set(argument, new InsnNode(NOP));
-							localDirty = true;
+							dirty = true;
 							break;
 						}
 						case GETSTATIC:
@@ -272,7 +271,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 								method.instructions.set(instruction, replacement);
 								method.instructions.set(argumentValue, new InsnNode(NOP));
 								method.instructions.set(argumentContext, new InsnNode(NOP));
-								localDirty = true;
+								dirty = true;
 							} else {
 								// Get instruction of the top stack's contributing instruction.
 								// It must also be a value producing instruction.
@@ -290,21 +289,11 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 								// Replace the argument and field instructions with the replacement const value.
 								method.instructions.set(instruction, replacement);
 								method.instructions.set(argumentValue, new InsnNode(NOP));
-								localDirty = true;
+								dirty = true;
 								break;
 							}
 							break;
 						}
-					}
-				}
-
-				// We replace instructions with NOP in the code above because it reduces the headache of managing
-				// the proper index of instructions. Now that we are done, we'll prune any NOP instructions.
-				if (localDirty) {
-					dirty = true;
-					for (AbstractInsnNode insn : method.instructions.toArray()) {
-						if (insn.getOpcode() == NOP)
-							method.instructions.remove(insn);
 					}
 				}
 			} catch (Throwable t) {
