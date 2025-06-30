@@ -17,6 +17,7 @@ import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -34,6 +35,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -147,10 +149,45 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 							if (replacement == null)
 								continue;
 
-							// Replace the arguments and operation instructions with the replacement const value.
+							// fix dup/dup2
+							boolean arg1IsDup = argument1.getOpcode() == DUP || argument1.getOpcode() == DUP2;
+							boolean arg2IsDup = argument2.getOpcode() == DUP || argument2.getOpcode() == DUP2;
+							if (arg1IsDup) {
+								// in the dup or dup2 position replace it with the value
+								AbstractInsnNode orig1 = argument1.getPrevious();
+								while (orig1 != null && orig1.getOpcode() == NOP)
+									orig1 = orig1.getPrevious();
+								if (orig1 != null && isSupportedValueProducer(orig1)) {
+									AbstractInsnNode restore = toInsn(nextFrame.getStack(nextFrame.getStackSize() - 3));
+									if (restore != null) {
+										method.instructions.set(argument1, restore);
+									} else {
+										method.instructions.set(argument1, new InsnNode(NOP));
+									}
+								} else {
+									method.instructions.set(argument1, new InsnNode(NOP));
+								}
+							} else {
+								method.instructions.set(argument1, new InsnNode(NOP));
+							}
+							if (arg2IsDup) {
+								AbstractInsnNode orig2 = argument2.getPrevious();
+								while (orig2 != null && orig2.getOpcode() == NOP)
+									orig2 = orig2.getPrevious();
+								if (orig2 != null && isSupportedValueProducer(orig2)) {
+									AbstractInsnNode restore = toInsn(nextFrame.getStack(nextFrame.getStackSize() - 2));
+									if (restore != null) {
+										method.instructions.set(argument2, restore);
+									} else {
+										method.instructions.set(argument2, new InsnNode(NOP));
+									}
+								} else {
+									method.instructions.set(argument2, new InsnNode(NOP));
+								}
+							} else {
+								method.instructions.set(argument2, new InsnNode(NOP));
+							}
 							method.instructions.set(instruction, replacement);
-							method.instructions.set(argument2, new InsnNode(NOP));
-							method.instructions.set(argument1, new InsnNode(NOP));
 							dirty = true;
 							break;
 						}
@@ -369,5 +406,11 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 			case StringValue stringValue -> new LdcInsnNode(stringValue.getText().get());
 			default -> null;
 		};
+	}
+
+	@Nonnull
+	@Override
+	public Set<Class<? extends ClassTransformer>> recommendedSuccessors() {
+		return Set.of(NopRemovingTransformer.class);
 	}
 }

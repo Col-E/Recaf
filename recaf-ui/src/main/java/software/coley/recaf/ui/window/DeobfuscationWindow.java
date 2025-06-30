@@ -42,24 +42,7 @@ import software.coley.recaf.services.assembler.AssemblerPipelineManager;
 import software.coley.recaf.services.assembler.JvmAssemblerPipeline;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.decompile.DecompilerManager;
-import software.coley.recaf.services.deobfuscation.transform.generic.CycleClassRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateAnnotationRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCatchMergingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.EnumNameRestorationTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.IllegalAnnotationRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.KotlinNameRestorationTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.LongAnnotationRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.SourceNameRestorationTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.StackOperationFoldingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.*;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.transform.ClassTransformer;
@@ -150,6 +133,7 @@ public class DeobfuscationWindow extends RecafStage {
 					DuplicateCatchMergingTransformer.class,
 					GotoInliningTransformer.class,
 					LinearOpaqueConstantFoldingTransformer.class,
+					NopRemovingTransformer.class,
 					OpaquePredicateFoldingTransformer.class,
 					RedundantTryCatchRemovingTransformer.class,
 					StackOperationFoldingTransformer.class,
