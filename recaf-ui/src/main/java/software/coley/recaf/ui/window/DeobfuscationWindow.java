@@ -399,7 +399,7 @@ public class DeobfuscationWindow extends RecafStage {
 		SplitPane split = new SplitPane(transformerTreePane, transformerOrderPane, transformPreviewPane);
 		SplitPane.setResizableWithParent(transformerTreePane, false);
 		SplitPane.setResizableWithParent(transformerOrderPane, false);
-		split.setDividerPositions(0.35, 0.7);
+		split.setDividerPositions(0.3, 0.6);
 		split.setPadding(new Insets(4));
 		transformerTreePane.setPadding(new Insets(4));
 		transformerOrderPane.setPadding(new Insets(4));
