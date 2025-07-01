@@ -129,6 +129,7 @@ public non-sealed interface LongValue extends ReValue {
 		OptionalLong value = value();
 		OptionalLong otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsLong() * otherValue.getAsLong());
+		if (isEqualTo(0) || other.isEqualTo(0)) return VAL_0;
 		return UNKNOWN;
 	}
 
@@ -149,6 +150,7 @@ public non-sealed interface LongValue extends ReValue {
 		OptionalLong value = value();
 		OptionalLong otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsLong() & otherValue.getAsLong());
+		if (isEqualTo(0) || other.isEqualTo(0)) return VAL_0;
 		return UNKNOWN;
 	}
 
@@ -157,6 +159,7 @@ public non-sealed interface LongValue extends ReValue {
 		OptionalLong value = value();
 		OptionalLong otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsLong() | otherValue.getAsLong());
+		if (isEqualTo(-1) || other.isEqualTo(-1)) return VAL_M1;
 		return UNKNOWN;
 	}
 
@@ -182,6 +185,7 @@ public non-sealed interface LongValue extends ReValue {
 		OptionalLong value = value();
 		OptionalLong otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsLong() % otherValue.getAsLong());
+		if (other.isEqualTo(1)) return VAL_0;
 		return UNKNOWN;
 	}
 

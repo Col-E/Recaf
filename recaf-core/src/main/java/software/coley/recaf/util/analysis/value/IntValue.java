@@ -221,6 +221,7 @@ public non-sealed interface IntValue extends ReValue {
 		OptionalInt value = value();
 		OptionalInt otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsInt() * otherValue.getAsInt());
+		if (isEqualTo(0) || other.isEqualTo(0)) return VAL_0;
 		return UNKNOWN;
 	}
 
@@ -241,6 +242,7 @@ public non-sealed interface IntValue extends ReValue {
 		OptionalInt value = value();
 		OptionalInt otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsInt() & otherValue.getAsInt());
+		if (isEqualTo(0) || other.isEqualTo(0)) return VAL_0;
 		return UNKNOWN;
 	}
 
@@ -249,6 +251,7 @@ public non-sealed interface IntValue extends ReValue {
 		OptionalInt value = value();
 		OptionalInt otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsInt() | otherValue.getAsInt());
+		if (isEqualTo(-1) || other.isEqualTo(-1)) return VAL_M1;
 		return UNKNOWN;
 	}
 
@@ -265,6 +268,7 @@ public non-sealed interface IntValue extends ReValue {
 		OptionalInt value = value();
 		OptionalInt otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsInt() % otherValue.getAsInt());
+		if (other.isEqualTo(1)) return VAL_0;
 		return UNKNOWN;
 	}
 

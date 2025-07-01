@@ -135,6 +135,7 @@ public non-sealed interface FloatValue extends ReValue {
 		OptionalDouble otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent())
 			return of((float) (value.getAsDouble() * otherValue.getAsDouble()));
+		if (isEqualTo(0) || other.isEqualTo(0)) return VAL_0;
 		return UNKNOWN;
 	}
 

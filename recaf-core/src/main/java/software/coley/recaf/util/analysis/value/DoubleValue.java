@@ -128,6 +128,7 @@ public non-sealed interface DoubleValue extends ReValue {
 		OptionalDouble value = value();
 		OptionalDouble otherValue = other.value();
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsDouble() * otherValue.getAsDouble());
+		if (isEqualTo(0) || other.isEqualTo(0)) return VAL_0;
 		return UNKNOWN;
 	}
 
