@@ -417,7 +417,8 @@ public class AsmInsnUtil implements Opcodes {
 	 */
 	public static boolean isTerminalOrAlwaysTakeFlowControl(int op) {
 		return switch (op) {
-			case IRETURN, LRETURN, FRETURN, DRETURN, ARETURN, RETURN, ATHROW, TABLESWITCH, LOOKUPSWITCH, GOTO, JSR -> true;
+			case IRETURN, LRETURN, FRETURN, DRETURN, ARETURN, RETURN, ATHROW, TABLESWITCH, LOOKUPSWITCH, GOTO, JSR ->
+					true;
 			default -> false;
 		};
 	}
@@ -624,7 +625,10 @@ public class AsmInsnUtil implements Opcodes {
 
 	/**
 	 * Computes the size of stack items consumed for the given operation of the instruction.
-	 * This considers {@code long} and {@code double} types taking two spaces.
+	 * <ul>
+	 *     <li>This considers {@code long} and {@code double} types taking two spaces.</li>
+	 *     <li>This considers {@code dup} like instructions to not <i>"consume"</i> values.</li>
+	 * </ul>
 	 *
 	 * @param insn
 	 * 		Instruction to compute for.

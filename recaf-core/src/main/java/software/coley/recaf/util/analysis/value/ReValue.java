@@ -106,6 +106,25 @@ public sealed interface ReValue extends Value permits IntValue, FloatValue, Doub
 	}
 
 	/**
+	 * @param value
+	 * 		Some value that may be a primitive.
+	 * @param v
+	 * 		Primitive value to compare against.
+	 *
+	 * @return {@code true} when the value is a primitive,
+	 * and the primitive value is equal to the given literal value.
+	 */
+	static boolean isPrimitiveEqualTo(@Nonnull ReValue value, int v) {
+		return switch (value) {
+			case DoubleValue x -> x.isEqualTo(v);
+			case FloatValue x -> x.isEqualTo(v);
+			case IntValue x -> x.isEqualTo(v);
+			case LongValue x -> x.isEqualTo(v);
+			case ObjectValue _, UninitializedValue _ -> false;
+		};
+	}
+
+	/**
 	 * @return {@code true} when the exact content is known.
 	 */
 	boolean hasKnownValue();
