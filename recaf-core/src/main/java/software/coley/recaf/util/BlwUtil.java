@@ -173,7 +173,7 @@ public class BlwUtil {
 		}
 
 		// Cut off first 2 chars of unused indentation then cap off the max length.
-		return ctx.toString().substring(2).replace('\n', ' ');
+		return ctx.toString().substring(2).replace('\n', ' ').trim();
 	}
 
 	/**
