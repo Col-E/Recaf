@@ -1,0 +1,892 @@
+## Language name
+lang.name=日本語
+
+##### General items
+## Main and context menus
+menu.analysis=解析
+menu.analysis.summary=概要
+menu.analysis.deobfuscation=難読化を解除
+menu.analysis.list-comments=コメントの一覧表示
+menu.analysis.comment=コメント
+menu.association.override=言語をオーバライド
+menu.association.none=構成の割り当てなし
+menu.config=設定
+menu.config.edit=編集
+menu.config.export=エクスポート
+menu.config.import=インポート
+menu.file=ファイル
+menu.file.attach=リモートにアタッチ
+menu.file.addtoworkspace=ワークスペースに追加
+menu.file.decompileall=全てのクラスを逆コンパイル
+menu.file.decompileall.path=出力パス:
+menu.file.openworkspace=ワークスペースを開く
+menu.file.openurl=URL から開く
+menu.file.exportapp=アプリケーションをエクスポート
+menu.file.exportworkspace=ワークスペースの設定をエクスポート
+menu.file.modifications=変更を表示
+menu.file.recent=最近のファイル
+menu.file.close=ファイルを閉じる
+menu.file.quit=終了
+menu.goto.class=クラスに移動
+menu.goto.field=フィールドに移動
+menu.goto.method=メソッドに移動
+menu.goto.instruction=命令に移動
+menu.goto.file=ファイルに移動
+menu.goto.label=ラベルに移動
+menu.edit=編集
+menu.edit.add.field=フィールドを追加
+menu.edit.add.method=メソッドを追加
+menu.edit.add.annotation=アノテーションを追加
+menu.edit.override.method=メソッドをオーバライド
+menu.edit.remove.field=フィールドを削除
+menu.edit.remove.method=メソッドを削除
+menu.edit.remove.annotation=アノテーションを削除
+menu.edit.assemble.class=アセンブラでクラスを編集
+menu.edit.assemble.field=アセンブラでフィールドを編集
+menu.edit.assemble.method=アセンブラでメソッドを編集
+menu.edit.remove=削除
+menu.edit.copy=コピー
+menu.edit.delete=削除
+menu.edit.noop=No-OP にする
+menu.edit.changeversion=クラスのバージョンを変更
+menu.edit.changeversion.up=アップグレード
+menu.edit.changeversion.down=ダウングレード
+menu.export.class=クラスをエクスポート
+menu.export.file=ファイルをエクスポート
+menu.export.classes=すべてのクラスをエクスポート
+menu.export.files=すべてのファイルをエクスポート
+menu.export.package=パッケージをエクスポート
+menu.export.directory=ディレクトリをエクスポート
+menu.help=ヘルプ
+menu.help.discord=Discord
+menu.help.docs=オンラインのユーザ向けドキュメント
+menu.help.docsdev=オンラインの開発者向けドキュメント
+menu.help.github=Github
+menu.help.issues=Issue トラッカー
+menu.help.sysinfo=システム情報
+menu.refactor=リファクタリング
+menu.refactor.move=移動
+menu.refactor.rename=名前の変更
+menu.search=検索
+menu.search.string=文字列
+menu.search.number=数値
+menu.search.class.member-declarations=メンバの定義
+menu.search.class.member-references=メンバの参照
+menu.search.class.type-references=型の参照
+menu.search.method-overrides=メソッドのオーバライド
+menu.search.method-references=参照を表示
+menu.search.field-references=フィールドの参照
+menu.search.noresults=結果がありませんでした
+menu.mappings=マッピング
+menu.mappings.apply=適用
+menu.mappings.export=エクスポート
+menu.mappings.export.unsupported=%s (サポートされていません)
+menu.mappings.generate=生成
+menu.mappings.view=現在のマッピング
+menu.scripting=スクリプト
+menu.scripting.list=スクリプトを実行
+menu.scripting.none-found=スクリプトがありません
+menu.scripting.manage=スクリプトを管理
+menu.scripting.new=新規作成
+menu.scripting.edit=編集
+menu.scripting.browse=参照
+menu.scripting.save=保存
+menu.scripting.execute=実行
+menu.scripting.editor=スクリプト・エディタ
+menu.scripting.author=作成者
+menu.scripting.version=バージョン
+menu.view=表示
+menu.view.hierarchy=クラスの階層
+menu.view.hierarchy.children=子
+menu.view.hierarchy.parents=親
+menu.view.methodcfg=制御フローのグラフ
+menu.view.methodcallgraph=呼び出しグラフ
+menu.view.methodcallgraph.calls=呼び出し先
+menu.view.methodcallgraph.callers=呼び出し元
+menu.view.methodcallgraph.focus=メソッドにフォーカス
+menu.tab.close=現在のタブを閉じる
+menu.tab.closeothers=このタブ以外を閉じる
+menu.tab.closeall=すべてのタブを閉じる
+menu.tab.copypath=パスをコピー
+menu.image.resetscale=拡大・縮小をリセット
+menu.image.center=中央に拡大
+menu.hex.copyas=コピー
+menu.mode=表示を変更
+menu.mode.class.auto=自動
+menu.mode.class.decompile=逆コンパイル
+menu.mode.file.auto=自動
+menu.mode.file.text=テキスト
+menu.mode.file.hex=１６進数
+menu.mode.diff.decompile=逆コンパイル
+menu.mode.diff.disassemble=逆アセンブル
+menu.vm=仮想化
+menu.vm.optimize=最適化
+menu.vm.run=実行
+menu.plugin=プラグイン
+menu.plugin.manage=プラグインを管理
+menu.plugin.installed=インストール済み
+menu.plugin.remote=リモート
+menu.plugin.browse=プラグインを閲覧
+menu.plugin.enabled=有効
+menu.plugin.uninstall=アンインストール
+menu.plugin.uninstall.warning=本当にこのプラグインをアンインストールしますか？
+
+##### Keybinds
+bind.inputprompt.initial=<入力待ち>
+bind.inputprompt.finish=<エンタ・キーで確定>
+bind.editor.find=探す
+bind.editor.goto=移動
+bind.editor.rename=名前の変更
+bind.editor.replace=置換
+bind.editor.save=保存
+bind.editor.undo=もとに戻す
+bind.editor.closetab=現在のタブを閉じる
+bind.quicknav=クイック・ナビゲーション
+bind.workspace.export=ワークスペースのエクスポート
+
+##### Dialog texts
+dialog.cancel=キャンセル
+dialog.close=閉じる
+dialog.confirm=確認
+dialog.finish=完了
+dialog.next=次へ
+dialog.previous=前へ
+dialog.dismiss=閉じる
+dialog.configure=設定
+dialog.warning=警告
+dialog.restart=この設定を有効化するには Recaf を再起動する必要があります。\n本当に適用しますか？
+dialog.unknownextension=不明な拡張子です。ファイルの種類の割り当てを変更しますか？
+
+## Search
+dialog.search.type=型の名前
+dialog.search.member-owner=メンバの所有者の名前
+dialog.search.member-name=メンバの名前
+dialog.search.member-descriptor=メンバのディスクリプタ
+
+## File chooser
+dialog.title.primary=プライマリ・リソース
+dialog.title.supporting=任意のリソース
+dialog.title.nochanges=変更がない状態でのエクスポート
+dialog.file.primary=プライマリ
+dialog.file.open=開く
+dialog.file.open.directory=ディレクトリ
+dialog.file.open.file=ファイル
+dialog.file.export=エクスポート
+dialog.file.save=保存
+dialog.file.nothing=何も選択されていません
+dialog.file.nochanges=何も変更がありませんが，本当にエクスポートしますか？
+dialog.filefilter.any=すべての種類
+dialog.filefilter.mapping=マッピング
+dialog.filefilter.input=アプリケーション
+dialog.filefilter.workspace=ワークスペース
+
+## File drop items
+dialog.title.create-workspace=ワークスペースの作成
+dialog.title.update-workspace=ワークスペースの更新
+dialog.title.close-workspace=ワークスペースを閉じますか？
+dialog.option.create-workspace=新規作成
+dialog.option.update-workspace=ワークスペースに追加
+
+## Select class/file
+dialog.title.select-class=クラスを選択
+dialog.title.select-file=ファイルを選択
+
+## Copy class/file
+dialog.title.copy-class=クラスをコピー
+dialog.title.copy-directory=ディレクトリをコピー
+dialog.title.copy-package=パッケージをコピー
+dialog.title.copy-field=フィールドをコピー
+dialog.title.copy-file=ファイルをコピー
+dialog.title.copy-method=メソッドをコピー
+dialog.header.copy-class=コピーしたクラスに新しい名前を付けてください。
+dialog.header.copy-directory=コピーしたディレクトリに新しい名前を付けてください。
+dialog.header.copy-package=コピーしたパッケージに新しい名前を付けてください。
+dialog.header.copy-field=コピーしたフィールドに新しい名前を付けてください。
+dialog.header.copy-field-error=同じ名前のフィールドが既に存在します。\n別の名前を選択してください。
+dialog.header.copy-file=コピーしたファイルに新しい名前を付けてください。
+dialog.header.copy-method=コピーしたメソッドに新しい名前を付けてください。
+dialog.header.copy-method-error=同じ名前のメソッドが既に存在します。\n別の名前を選択してください。
+
+## Delete class/file
+dialog.title.delete-class=クラスを削除
+dialog.title.delete-directory=ディレクトリを削除
+dialog.title.delete-field=フィールドを削除
+dialog.title.delete-file=ファイルを削除
+dialog.title.delete-method=メソッドを削除
+dialog.title.delete-package=パッケージを削除
+dialog.title.delete-resource=リソースを削除
+dialog.header.delete-class=クラス %s を本当に削除しますか？
+dialog.header.delete-directory=ディレクトリ %s を本当に削除しますか？
+dialog.header.delete-field=フィールド %s を本当に削除しますか？
+dialog.header.delete-file=ファイル %s を本当に削除しますか？
+dialog.header.delete-method=メソッド %s を本当に削除しますか？
+dialog.header.delete-package=パッケージ %s を本当に削除しますか？
+dialog.header.delete-resource=本当にリソース %s を本当に削除しますか？
+
+## Rename class/file
+dialog.title.rename-class=クラスの名前を変更
+dialog.title.rename-class-warning=警告
+dialog.title.rename-directory=ディレクトリの名前を変更
+dialog.title.rename-field=フィールドの名前を変更
+dialog.title.rename-file=ファイルの名前を変更
+dialog.title.rename-file-warning=警告
+dialog.title.rename-method=メソッドの名前を変更
+dialog.title.rename-package=パッケージの名前を変更
+dialog.header.rename-class=クラスの新しい名前を入力してください。
+dialog.header.rename-class-error=その名前のクラスは既に存在します。\n別の名前を選択してください。
+dialog.header.rename-package=パッケージの新しい名前を入力してください。
+dialog.header.rename-package-error=その名前のパッケージは既に存在します。\n別の名前を選択してください。
+dialog.header.rename-package-warning=その名前のパッケージは既に存在します。\n一部のファイルを上書きする可能性があります。
+dialog.header.rename-directory=ディレクトリの新しい名前を入力してください。
+dialog.header.rename-directory-error=その名前のディレクトリは既に存在します。\n別の名前を選択してください。
+dialog.header.rename-directory-warning=その名前のディレクトリは既に存在します。\n一部のファイルを上書きする可能性があります。
+dialog.header.rename-field=フィールドの新しい名前を入力してください。
+dialog.header.rename-field-error=その名前のフィールドは既に存在します。\n別の名前を選択してください。
+dialog.header.rename-file=ファイルの新しい名前を入力してください。
+dialog.header.rename-file-error=その名前のファイルは既に存在します。\n別の名前を選択してください。
+dialog.header.rename-method=メソッドの新しい名前を入力してください。
+dialog.header.rename-method-error=その名前のメソッドは既に存在します。\n別の名前を選択してください。
+
+## Move class/file
+dialog.title.move-class=移動先のパッケージを選択
+dialog.title.move-directory=移動先の親ディレクトリを選択
+dialog.title.move-file=移動先のディレクトリを選択
+dialog.title.move-package=移動先の親パッケージを選択
+dialog.header.move-class=クラスを別のパッケージに移動します。
+dialog.header.move-directory=ディレクトリを別の親ディレクトリに移動します。
+dialog.header.move-file=ファイルを別のディレクトリに移動します。
+dialog.header.move-package=パッケージを別の親パッケージに移動します。
+
+## Add members
+dialog.title.add-field=フィールドを追加
+dialog.title.add-method=メソッドを追加
+dialog.title.override-method=メソッドをオーバライド
+dialog.input.name=名前
+dialog.input.desc=ディスクリプタ
+dialog.warn.illegal-name==不正な名前
+dialog.warn.illegal-desc=不正なディスクリプタ
+dialog.warn.field-conflict=その名前のフィールドは既に存在します。\n別の名前を選択してください。
+dialog.warn.method-conflict=その名前のメソッドは既に存在します。\n別の名前を選択してください。
+
+## VM actions
+dialog.title.vm-invoke-args=メソッド呼び出しの仮想化
+dialog.title.vm-peephole-invoke-args=仮想化された詳細な最適化
+dialog.vm.execute=実行
+dialog.vm.optimize=最適化
+dialog.vm.create-dummy=ダミーを使う
+dialog.vm.create-null=null を使う
+
+## Hex dialogs
+dialog.hex.title.insertcount=挿入
+dialog.hex.header.insertcount=挿入するバイト数を入力してください
+
+# Base Converter dialog
+dialog.conv.title.literal=数値リテラル
+dialog.conv.title.expression=数値の式
+
+## Quick nav
+dialog.quicknav=クイック・ナビゲーション
+dialog.quicknav.tab.classes=クラス
+dialog.quicknav.tab.members=メンバ
+dialog.quicknav.tab.files=ファイル
+dialog.quicknav.tab.text=文字列
+dialog.quicknav.tab.commented=コメント
+
+## Error dialog
+dialog.error.exportclass.title=クラスのエクスポートに失敗しました
+dialog.error.exportclass.header=エクスポート先への書き込み中にエラーが発生しました
+dialog.error.exportclass.content=エラーの内容:
+dialog.error.exportfile.title=ファイルのエクスポートに失敗しました
+dialog.error.exportfile.header=エクスポート先への書き込み中にエラーが発生しました
+dialog.error.exportfile.content=エラーの内容:
+dialog.error.exportworkspace.title=ワークスペースのエクスポートに失敗しました
+dialog.error.exportworkspace.header=エクスポート先への書き込み中にエラーが発生しました
+dialog.error.exportworkspace.content=エラーの内容:
+dialog.error.loadworkspace.title=ワークスペースの読み込みに失敗しました
+dialog.error.loadworkspace.header=選択したファイルの読み込み中にエラーが発生しました
+dialog.error.loadworkspace.content=エラーの内容:
+dialog.error.loadsupport.title=サポートファイルの読み込みに失敗しました
+dialog.error.loadsupport.header=選択したサポートファイルの読み込み中にエラーが発生しました
+dialog.error.loadsupport.content=エラーの内容:
+dialog.error.attach.title=リモート JVM への接続に失敗しました
+dialog.error.attach.header=リモート JVM への接続中にエラーが発生しました
+dialog.error.attach.content=エラーの内容:
+
+##### Panels
+## Welcome
+welcome.title=ようこそ
+welcome.discord.title=Discord に参加する
+welcome.discord.description=Recaf には，より早いペースの議論や様々なプログラミングの話題のための Discord サーバがあります。
+welcome.documentation.title=ドキュメント
+welcome.documentation.description=ドキュメントを読んで Recaf のさまざまな機能の使い方を学びましょう。
+welcome.github.title=Recaf on GitHub
+welcome.github.description=ソース・コードや未解決の問題などについては Recaf の GitHub リポジトリで確認できます。
+
+## Workspace
+workspace.title=ワークスペース
+workspace.filter-prompt=フィルタ: クラスやファイルの名前を入力してください…
+workspace.info=情報
+workspace.info-progress=ワークスペースの内容を解析しています…
+
+## Attach
+attach.unsupported=アタッチの初期化に失敗しました。
+attach.unsupported.detail=アタッチ・エージェントの自己展開に失敗しました。
+attach.no-vms=アタッチ可能な JVM が見つかりません
+attach.no-vms.detail=現在アタッチが可能な Java Virtual Machine はありません。
+attach.problem.disable-attach=-XX:+DisableAttachMechanism オプションが有効になっている Java プロセスにアタッチしようとしている場合は，以下を参照してください:
+attach.problem.java-21=Java 21 以降を使用しているプロセスにアタッチしようとしている場合は，以下を参照してください:
+attach.connect=接続
+attach.tab.properties=プロパティ
+attach.tab.classloading=クラス
+attach.tab.compilation=コンパイル情報
+attach.tab.system=システム
+attach.tab.runtime=ランタイム
+attach.tab.thread=スレッド
+
+## Changes view
+modifications.none=アイテムの変更履歴がありません
+modifications.title=変更の一覧
+
+## Java area
+java.decompiling=クラスを逆コンパイルしています…
+java.unparsable=OpenRewrite はソース・コードの解釈に失敗しました。コンテキスト・アクションは「フィールドとメソッド」細部タブでのみ確認できます。
+java.parse-state.error=解析エラー
+java.parse-state.error-details=解析に失敗したため，右クリックのコンテキスト・アクションは使用できません。\n代わりに「フィールドとメソッド」細部タブを確認できます。
+java.parse-state.initial=解析しています…
+java.parse-state.initial-details=解析をしている間は，右クリックのコンテキスト・アクションを使用できません。\nその間は代わりに「フィールドとメソッド」細部タブを確認できます。
+java.parse-state.new-progress=再解析中…
+java.parse-state.new-progress-details=変更を検出したため，再解析を行っています。\n新しいモデルが構築されている間は，古いモデルを使用できます。\nその間は代わりに「フィールドとメソッド」細部タブを確認できます。
+java.parse-state.none=解析する内容がありません
+java.decompile-failure=クラスの逆コンパイルに失敗しました。次のいずれかの操作お試しください：\n- 逆コンパイラを切り替える\n- アセンブラまたは別のビューでクラスを開く\n- クラスの難読化を解除して再試行する
+java.decompile-failure.brief=クラスの逆コンパイルに失敗しました。
+java.savewitherrors=エラーが発生する変更が初めて検出されました。\nこれらは通常，逆コンパイルされたコードが正しい Java ソース・コードではないことが原因です。\n変更を保存する前に，これらのエラーを解決しなければなりません。\n\n次の操作をお試しください：\n- 「設定」または画面右下の (i) で逆コンパイラを変更する。\n- 赤いエラー・ボックスにマウスを合わせるか，画面上部のエラー・ボックスをクリックして，エラーの内容を確認する。\nクラスを変更するには，再コンパイルではなくアセンブラを使用します。
+java.savewitherrors.title=再コンパイルのエラー
+java.decompiler=逆コンパイラ
+java.targetversion=ターゲット・バージョン
+java.targetversion.auto=クラス・ファイルに合わせる
+java.targetdownsampleversion=後方互換バージョン
+java.targetdownsampleversion.disabled=無効
+java.targetdebug=デバッグ情報を含めてコンパイル
+java.info=クラス情報
+java.info.version=クラスのバージョン
+java.info.sourcefile=ソース・ファイル
+
+## Search bar
+find.replace=置換
+find.replaceall=すべて置換
+find.regexinvalid=無効な正規表現です。
+find.regexreplace=置換するテキスト
+
+## Fields and methods
+fieldsandmethods.title=フィールドとメソッド
+fieldsandmethods.empty=クラスにメンバがありません
+fieldsandmethods.showoutlinedtypes=メンバの種類を表示
+fieldsandmethods.showoutlinedsynths=コンパイラによって生成されたメンバを表示
+fieldsandmethods.showoutlinedvisibility=メンバの可視性でフィルタする
+fieldsandmethods.showoutlinedmembertype=メンバの種類でフィルタする
+fieldsandmethods.outlinedvisibilityiconposition=可視性アイコンの場所
+fieldsandmethods.sortalphabetically=アルファベット順でソート
+fieldsandmethods.sortbyvisibility=可視性順でソート
+fieldsandmethods.filter.prompt=フィルタ: メンバの名前や型を入力してください…
+
+## Hierarchy
+hierarchy.title=継承
+hierarchy.children=子
+hierarchy.parents=親
+
+## Kotlin Metadata
+kotlinmetadata.title=@メタデータ
+kotlinmetadata.orderwarning=重要：各項目はクラスファイルで定義された順序通りには表示されません。
+
+## Logging
+logging.title=ログ
+
+## Assembler
+assembler.problem.0=エラーなし
+assembler.problem.1=１つのエラー
+assembler.problem.N=N 個のエラー
+assembler.title=アセンブラ
+assembler.analysis.title=解析
+assembler.analysis.stack=スタック
+assembler.analysis.variables=変数
+assembler.analysis.type=型
+assembler.analysis.value=値
+assembler.playground.title=バイト・コードに変換
+assembler.playground.comment=// ここに Java ソース・コードを入力して，自動的にバイト・コードに変換します。\n// 現在のクラスのフィールドやメソッド，および現在のメソッドの引数や変数にアクセスできます。
+assembler.snippets.title=スニペット
+assembler.variables.title=定義された変数
+assembler.variables.name=変数の名前
+assembler.variables.type=型
+assembler.variables.usage=使用箇所
+assembler.variables.value=値
+assembler.variables.empty=<少なくとも１度はコンパイルしてください>
+assembler.variables.read-before-write=書き込む前に読み込む必要があります。
+assembler.suggestions.none=提案はありません
+
+## Comments
+comments.search.prompt=コメントを検索…
+
+## Search
+search.run=検索
+search.results=結果
+search.text=テキストの出現箇所
+search.textmode=テキストの検索モード
+search.number=数値
+search.numbermode=数値の検索モード
+search.refowner=メンバの所有者
+search.refname=メンバの名前
+search.refdesc=メンバのディスクリプタ
+
+## Help
+help.system=システム
+help.system.sub=OS についての情報です。
+help.java=Java
+help.java.sub=JVM についての情報です。
+help.javafx=JavaFX
+help.javafx.sub=JavaFX UI についての情報です。
+help.recaf=Recaf
+help.recaf.sub=Recaf についての情報です。
+help.copy=情報をクリップ・ボードにコピー
+help.opendir=Recaf のインストール先を開く
+
+## Deobfuscation
+deobf=難読化の解除
+deobf.selection.title=トランスフォーマを選択
+deobf.order.title=適用するトランスフォーマの順序
+deobf.order.hint=左側のトランスフォーマを選択してください。\nここにドラックして適用する順序を変更します。
+deobf.order.pre=推奨されている先行タスクを追加してください
+deobf.order.suc=後=推奨されている後続タスクを追加してください
+deobf.preview.title=プレビュー
+deobf.preview.pick=プレビューをするクラスを選択
+deobf.preview.toggle-mode=プレビュー・モードを切り替え
+deobf.preview.noselection=// クラスが選択されていません。プレビューをするクラスを選択してください。\n// 変換前後の状態
+deobf.tree.generic=一般
+deobf.tree.generic.anticrasher=クラッシャー対策
+deobf.tree.generic.optimize=最適化
+deobf.tree.generic.restoration=復元
+deobf.tree.specific=詳細な操作
+deobf.apply=ワークスペースに適用
+
+## Mapping generator
+mapgen=マッピングの生成
+mapgen.genimpl=命名規則
+mapgen.filter.name=名前
+mapgen.filter.class-name=クラス名
+mapgen.filter.owner-name=所有者名
+mapgen.filter.field-name=フィールド名
+mapgen.filter.method-name=メソッド名
+mapgen.filter.variable-name=変数名
+mapgen.filters=フィルタ
+mapgen.filters.add=フィルタを追加
+mapgen.filters.edit=選択したフィルタを編集
+mapgen.filters.delete=選択したフィルタを削除
+mapgen.filters.type=フィルタ…
+mapgen.filter.modifiers.tooltip=修飾子は空白で区切ります。
+mapgen.filter.excludealreadymapped=すでにマッピングされているものを除外
+mapgen.filter.excludemodifier=修飾子を除外する
+mapgen.filter.excludeclasses=クラスを除外する
+mapgen.filter.excludename=名前を除外する
+mapgen.filter.excludeclass=クラスで除外
+mapgen.filter.excludefield=フィールドで除外
+mapgen.filter.excludemethod=メソッドで除外
+mapgen.filter.includemodifier=修飾子を含める
+mapgen.filter.includeclass=クラスを含める
+mapgen.filter.includefield=フィールドを含める
+mapgen.filter.includemethod=メソッドを含める
+mapgen.filter.includevariable=変数を含める
+mapgen.filter.includewhitespacenames=空白の名前を含める
+mapgen.filter.includenonasciinames=非 ASCII の名前を含める
+mapgen.filter.includekeywords=キーワードを含める
+mapgen.filter.includelong=長い名前を含める
+mapgen.filter.includename=名前を含める
+mapgen.filter.includeclasses=クラスを含める
+mapgen.title.newfilter=新しいフィルタ
+mapgen.header.newfilter=新しい入力内容
+mapgen.preview.empty=生成されたマッピングの統計がここに表示されます\n\n\n
+mapgen.configure=構成
+mapgen.configure.nothing=構成するものは何もありません
+mapgen.generate=生成
+mapgen.apply=適用
+
+## Mapping view
+mapprog=マッピング進行度
+mapprog.metric.size=クラス・ファイルの数
+mapprog.metric.membercount=フィールドとメソッドの数
+
+##### Tree
+tree.classes=クラス
+tree.files=ファイル
+tree.defaultpackage=(デフォルト・パッケージ)
+tree.defaultdirectory=(ルート・ディレクトリ)
+tree.prompt=ファイルをドラッグ＆ドロップしてください
+tree.hidelibs=ライブラリを非表示
+tree.phantoms=生成されたファントム
+tree.embedded-resources=埋め込まれています
+
+##### Services
+service=サービス
+service.analysis=解析
+service.analysis.comments-config=コメント
+service.analysis.comments-config.enable-display=デコンパイル結果にコメントを表示する
+service.analysis.comments-config.word-wrapping-limit=折り返しの文字数制限
+service.analysis.info-summary-config=ワークスペースの概要
+service.analysis.info-summary-config.summarize-on-open=ワークスペースを開いたときに概要を表示する
+service.analysis.graph-calls-config=呼び出しグラフ
+service.analysis.graph-inheritance-config=継承グラフ
+service.analysis.jphantom-generator-config=JPhantom
+service.analysis.jphantom-generator-config.generate-workspace-phantoms=ファントムを生成してワークスペースに追加する
+service.analysis.search-config=検索
+service.analysis.entry-points=エントリ・ポイント
+service.analysis.entry-points.none=エントリ・ポイントがみつかりません
+service.analysis.anti-decompile=逆コンパイル対策
+service.analysis.anti-decompile.illegal-attr=不正な属性
+service.analysis.anti-decompile.illegal-name=不正な名前
+service.analysis.anti-decompile.label-patch=影響を受ける %d クラスにパッチを適用する
+service.analysis.signature-info=シグニチャ情報
+service.assembler=アセンブラ
+service.assembler.assembler-pipeline.general-config=一般
+service.assembler.assembler-pipeline.general-config.disassembly-ast-parse-delay=AST 解析の遅延
+service.assembler.assembler-pipeline.general-config.disassembly-indent=インデント
+service.assembler.assembler-pipeline.general-config.disassembly-whole-floating=浮動小数点数の標準表記
+service.assembler.dalvik-assembler-config=Dalvik
+service.assembler.dalvik-assembler-config.value-analysis=値の解析を有効化する
+service.assembler.dalvik-assembler-config.simulate-jvm-calls=一般的な JVM の呼び出しをシュミレーション
+service.assembler.jvm-assembler-config=JVM
+service.assembler.jvm-assembler-config.value-analysis=値の解析を有効化する
+service.assembler.jvm-assembler-config.simulate-jvm-calls=一般的な JVM の呼び出しをシュミレーション
+service.assembler.jvm-assembler-config.try-range-comments=try-catch の範囲をコメントで表示する
+service.assembler.flow-lines-config=制御フローライン
+service.assembler.flow-lines-config.connection-mode=接続モード
+service.assembler.flow-lines-config.render-mode=描画モード
+service.compile=コンパイル
+service.compile.java-compiler-config=javac
+service.compile.java-compiler-config.generate-phantoms=欠落しているクラスを生成する
+service.compile.java-compiler-config.default-emit-debug=デバッグ情報をデフォルトで含める
+service.compile.java-compiler-config.default-compile-target-version=デフォルトのターゲット・クラス・バージョン
+service.compile.java-compiler-config.default-downsample-target-version=デフォルトの後方互換・クラス・バージョン
+service.debug=アタッチ/デバッグ
+service.debug.attach-config=アタッチの設定
+service.debug.attach-config.attach-jmx-bean-agent=JMX Bean エージェントをアタッチする
+service.debug.attach-config.passive-scanning=パッシブ・スキャンを有効化する
+service.config-manager-config=設定管理
+service.decompile=逆コンパイル
+service.decompile.decompilers-config=逆コンパイルの管理
+service.decompile.decompilers-config.pref-android-decompiler=アンドロイド用に使う逆コンパイラ
+service.decompile.decompilers-config.pref-jvm-decompiler=Java クラス用に使う逆コンパイラ
+service.decompile.decompilers-config.cache-decompilations=逆コンパイル結果をキャッシュする
+service.decompile.decompilers-config.filter-annotations-duplicate=重複したアノテーションを表示しない
+service.decompile.decompilers-config.filter-annotations-illegal=不正なアノテーションを表示しない
+service.decompile.decompilers-config.filter-annotations-long=長いアノテーションを表示しない
+service.decompile.decompilers-config.filter-annotations-long-limit=アノテーションの文字数制限
+service.decompile.decompilers-config.filter-hollow=空のクラスを表示しない
+service.decompile.decompilers-config.filter-illegal-signatures=間違ったシグニチャを持つメンバを表示しない
+service.decompile.decompilers-config.filter-names-ascii=非 ASCII の名前を表示しない
+service.decompile.decompilers-config.filter-strip-debug=変数やジェネリクスなどのデバッグ情報を表示しない
+service.decompile.impl=逆コンパイラ
+service.decompile.impl.decompiler-cfr-config=CFR
+service.decompile.impl.decompiler-cfr-config.aexagg=可能な限り例外を拡張して統合する
+service.decompile.impl.decompiler-cfr-config.aexagg2=可能な限り例外を拡張して統合する（セマンティクスが変わる可能性があります）
+service.decompile.impl.decompiler-cfr-config.aggressivedocopy=不可能なジャンプからループへのコードを最初にクローンする
+service.decompile.impl.decompiler-cfr-config.aggressivedoextension=不可能なジャンプを最初に do ループで畳む
+service.decompile.impl.decompiler-cfr-config.aggressiveduff=Duff's Device 風 switch 文を追加制御込みで折りたたむ
+service.decompile.impl.decompiler-cfr-config.aggressivesizethreshold=簡略化を積極的に行う命令数のしきい値
+service.decompile.impl.decompiler-cfr-config.allowmalformedswitch=不正な形式の switch 文を許可する
+service.decompile.impl.decompiler-cfr-config.antiobf=さまざまな難読化を解除する
+service.decompile.impl.decompiler-cfr-config.arrayiter=配列ループを読みやすくする
+service.decompile.impl.decompiler-cfr-config.collectioniter=コレクションのループを読みやすくする
+service.decompile.impl.decompiler-cfr-config.commentmonitors=モニタをコメントに置換する - 全く分からない場合に便利です
+service.decompile.impl.decompiler-cfr-config.comments=逆コンパイラの状態やフォールバックフラグ等をコメントで表示する
+service.decompile.impl.decompiler-cfr-config.constobf=定数の難読化を解除する
+service.decompile.impl.decompiler-cfr-config.decodeenumswitch=列挙型の switch 文を読みやすくする
+service.decompile.impl.decompiler-cfr-config.decodefinally=finally ブロックを読みやすくする
+service.decompile.impl.decompiler-cfr-config.decodelambdas=ラムダ式を読みやすくする
+service.decompile.impl.decompiler-cfr-config.decodestringswitch=文字列の switch 文を読みやすくする
+service.decompile.impl.decompiler-cfr-config.eclipse=Eclipse 用の適切な処理の変換を有効化する
+service.decompile.impl.decompiler-cfr-config.elidescala=Scala が生成した無意味な出力を表示しない
+service.decompile.impl.decompiler-cfr-config.forbidanonymousclasses=匿名クラスを許可しない
+service.decompile.impl.decompiler-cfr-config.forbidmethodscopedclasses=メソッド内のクラスを許可しない
+service.decompile.impl.decompiler-cfr-config.forceclassfilever=逆コンパイルされるクラス・ファイルのバージョンを強制する
+service.decompile.impl.decompiler-cfr-config.forcecondpropagate=決定論的ジャンプの結果を定数割り当てに強制する
+service.decompile.impl.decompiler-cfr-config.forceexceptionprune=セマンティクスが変わらない場合に，ネストされた try-catch を削除する
+service.decompile.impl.decompiler-cfr-config.forcereturningifs=if 文のジャンプ地点まで強制的に移動する
+service.decompile.impl.decompiler-cfr-config.forcetopsort=基本ブロック・ソートを強制する - 通常は難読化が行われている場合にのみ有効です。
+service.decompile.impl.decompiler-cfr-config.forcetopsortaggress=非常に積極的に基本ブロック・ソートを強制する
+service.decompile.impl.decompiler-cfr-config.forcetopsortnopull=トップ・ソートに try ブロックを使わないように矯正する
+service.decompile.impl.decompiler-cfr-config.forloopaggcapture=ブロックの中身に関係していないように見えたとしても，ループ内で積極的に変数を更新することを強制する
+service.decompile.impl.decompiler-cfr-config.hidebridgemethods=ブリッジしているメソッドを非表示にする
+service.decompile.impl.decompiler-cfr-config.hidelangimports=java.lang.* のインポートを非表示にする
+service.decompile.impl.decompiler-cfr-config.hidelongstrings=非常に長い文字列を非表示にする - 難読化ツールが文字列に偽のコードを埋め込んだ場合に便利です。
+service.decompile.impl.decompiler-cfr-config.hideutf=UTF-8 文字を非表示にする - 生の文字を表示する代わりに引用符で囲みます。
+service.decompile.impl.decompiler-cfr-config.ignoreexceptions=完全に無視される例外を非表示にする - 警告：セマンティクスが変わるため危険です！
+service.decompile.impl.decompiler-cfr-config.ignoreexceptionsalways=例外情報を完全に無視する - 警告：セマンティクスが変わるため危険です！
+service.decompile.impl.decompiler-cfr-config.innerclasses=内部クラスを逆コンパイルする
+service.decompile.impl.decompiler-cfr-config.instanceofpattern=instanfeof パターンを再構築する
+service.decompile.impl.decompiler-cfr-config.j14classobj=java 1.4 のクラス・オブジェクトを再構築する
+service.decompile.impl.decompiler-cfr-config.labelledblocks=ラベル付きブロック（不明瞭な goto 文など）の生成を許可する
+service.decompile.impl.decompiler-cfr-config.lenient=例外を通常スローするような状況を許容する
+service.decompile.impl.decompiler-cfr-config.liftconstructorinit=すべてのコンストラクタに共通する変数の初期化を，メンバの初期化に集約する
+service.decompile.impl.decompiler-cfr-config.obfattr=属性の難読化を解除する
+service.decompile.impl.decompiler-cfr-config.obfcontrol=制御フローの難読化を解除する
+service.decompile.impl.decompiler-cfr-config.override=適切な @Override アノテーションを自動で付与する
+service.decompile.impl.decompiler-cfr-config.previewfeatures=クラスが 'javac --enable-preview' でコンパイルされている場合に，プレビュー機能を逆コンパイルする
+service.decompile.impl.decompiler-cfr-config.pullcodecase=積極的にコードを case 文に引き出す
+service.decompile.impl.decompiler-cfr-config.recordtypes=レコード型を再構築する
+service.decompile.impl.decompiler-cfr-config.recover=逆コンパイルが失敗した場合に，可能な限り復元する
+service.decompile.impl.decompiler-cfr-config.recovertypeclash=分析によって型の衝突が検出された場合に，可能な限り復元する
+service.decompile.impl.decompiler-cfr-config.recovertypehints=最初のパスからイテレータの型を可能な限り復元する
+service.decompile.impl.decompiler-cfr-config.reducecondscope=if 文のスコープを可能な限り縮小する
+service.decompile.impl.decompiler-cfr-config.relinkconst=定数を可能な限り再リンクする - フィールドへのインライン参照がある場合は，その解除を試みる
+service.decompile.impl.decompiler-cfr-config.relinkconststring=定数文字列を再リンクする - static final な定数と一致する文字列へのローカルな参照がある場合は，その定数を使用する
+service.decompile.impl.decompiler-cfr-config.removebadgenerics=明らかに不正なジェネリクスを非表示にする
+service.decompile.impl.decompiler-cfr-config.removeboilerplate=定型的な関数を削除する - デフォルト・コンストラクタや，ラムダのデシリアライズなど
+service.decompile.impl.decompiler-cfr-config.removedeadconditionals=到達不能なコードを削除する
+service.decompile.impl.decompiler-cfr-config.removedeadmethods=必要のないメソッドを削除する - デフォルト・コンストラクタなど
+service.decompile.impl.decompiler-cfr-config.removeinnerclasssynthetics=内部クラス内の暗黙的な外部クラスへの参照を削除する
+service.decompile.impl.decompiler-cfr-config.renamedupmembers=あいまいな・重複しているフィールドの名前を変更する
+service.decompile.impl.decompiler-cfr-config.renameenumidents=通常の名前と一致しない Enum 識別子の名前を変更する
+service.decompile.impl.decompiler-cfr-config.renameillegalidents=有効な Java 識別子ではない名前を変更する
+service.decompile.impl.decompiler-cfr-config.renamesmallmembers=小さいメンバの名前を変更する - 注意：これによりリフレクションを使用しているコードが壊れる可能性があります。
+service.decompile.impl.decompiler-cfr-config.sealed=シールドされたクラスを再構築する
+service.decompile.impl.decompiler-cfr-config.showinferrable=引数で暗示されていない場合に，明示的な型引数を表示する
+service.decompile.impl.decompiler-cfr-config.showversion=使っている CFR のバージョンをヘッダーに表示する（デグレードのテスト時にオフにすると便利です）
+service.decompile.impl.decompiler-cfr-config.skipbatchinnerclasses=多数のファイルを処理するときに，（内部クラスは外部クラスの一部として処理するので）内部クラスをスキップする
+service.decompile.impl.decompiler-cfr-config.staticinitreturn=静的イニシャライザの戻り値を削除する
+service.decompile.impl.decompiler-cfr-config.stringbuffer=new StringBuffer().append.append.append を string + string + string に変換する
+service.decompile.impl.decompiler-cfr-config.stringbuilder=new StringBuilder().append.append.append を string + string + string に変換する
+service.decompile.impl.decompiler-cfr-config.stringconcat=StringConcatFactor の使用箇所を string + string + string に変換する
+service.decompile.impl.decompiler-cfr-config.sugarasserts=assert 文を再構築する
+service.decompile.impl.decompiler-cfr-config.sugarboxing=ボクシングされた型をプリミティブ型に可能な限り変換する
+service.decompile.impl.decompiler-cfr-config.sugarenums=列挙型の switch 文を再構築する
+service.decompile.impl.decompiler-cfr-config.sugarretrolambda=古いラムダ式を再構築する
+service.decompile.impl.decompiler-cfr-config.switchexpression=switch 式を再構築する
+service.decompile.impl.decompiler-cfr-config.tidymonitors=モニタのサポート用コードを削除する（e.g. モニタを終了するためだけの catch ブロックなど）
+service.decompile.impl.decompiler-cfr-config.tryresources=try-with-resources を再構築する
+service.decompile.impl.decompiler-cfr-config.usenametable=ローカル変数の名前をテーブルから取得する
+service.decompile.impl.decompiler-cfr-config.usesignatures=明らかに誤っている場合に，ディスクリプタに加えてシグニチャを使用する
+service.decompile.impl.decompiler-cfr-config.version=現在の CFR のバージョンを表示する
+service.decompile.impl.decompiler-procyon-config=Procyon
+service.decompile.impl.decompiler-procyon-config.alwaysGenerateExceptionVariableForCatchBlocks=catch ブロックの例外変数を常に生成する
+service.decompile.impl.decompiler-procyon-config.arePreviewFeaturesEnabled=プレビュー機能を有効にする
+service.decompile.impl.decompiler-procyon-config.bytecodeOutputOptions=バイト・コード出力オプション
+service.decompile.impl.decompiler-procyon-config.disableForEachTransforms=forEach の変換を無効にする
+service.decompile.impl.decompiler-procyon-config.excludeNestedTypes=ネストされた型を除外する
+service.decompile.impl.decompiler-procyon-config.flattenSwitchBlocks=フラットな switch ブロックを生成する
+service.decompile.impl.decompiler-procyon-config.forceExplicitImports=明示的なインポートを強制する
+service.decompile.impl.decompiler-procyon-config.forceExplicitTypeArguments=明示的な型引数を強制する
+service.decompile.impl.decompiler-procyon-config.forceFullyQualifiedReferences=完全修飾名を強制する
+service.decompile.impl.decompiler-procyon-config.forcedCompilerTarget=ターゲット・バージョンを強制する
+service.decompile.impl.decompiler-procyon-config.includeErrorDiagnostics=エラー診断を含める
+service.decompile.impl.decompiler-procyon-config.includeLineNumbersInBytecode=デバッグ用の行番号をバイト・コードに含める
+service.decompile.impl.decompiler-procyon-config.isUnicodeOutputEnabled=出力に Unicode を使用する
+service.decompile.impl.decompiler-procyon-config.languageTarget=言語・ターゲット
+service.decompile.impl.decompiler-procyon-config.mergeVariables=変数をマージする
+service.decompile.impl.decompiler-procyon-config.retainPointlessSwitches=無意味な switch 文を保持する
+service.decompile.impl.decompiler-procyon-config.retainRedundantCasts=冗長なキャストを保持する
+service.decompile.impl.decompiler-procyon-config.showDebugLineNumbers=デバッグ用の行番号を表示する
+service.decompile.impl.decompiler-procyon-config.showSyntheticMembers=synthetic メンバを表示する
+service.decompile.impl.decompiler-procyon-config.simplifyMemberReferences=メンバ参照を簡略化する
+service.decompile.impl.decompiler-procyon-config.textBlockLineMinimum=テキスト・ブロックの最小行数
+service.decompile.impl.decompiler-vineflower-config=Vineflower
+service.decompile.impl.decompiler-vineflower-config.logging-level=ログ・レベル
+service.decompile.impl.decompiler-vineflower-config.remove-bridge=ブリッジ・メソッドを削除する
+service.decompile.impl.decompiler-vineflower-config.remove-synthetic=synthetic メソッドとフィールドを削除する
+service.decompile.impl.decompiler-vineflower-config.decompile-inner=内部クラスを逆コンパイルsる
+service.decompile.impl.decompiler-vineflower-config.decompile-java4=Java 4 以前のクラス参照を逆コンパイルする
+service.decompile.impl.decompiler-vineflower-config.decompile-assert=assert 文を逆コンパイルする
+service.decompile.impl.decompiler-vineflower-config.hide-empty-super=空の super() 呼び出しを非表示にする
+service.decompile.impl.decompiler-vineflower-config.hide-default-constructor=デフォルト・コンストラクタを非表示にする
+service.decompile.impl.decompiler-vineflower-config.decompile-generics=ジェネリクスを逆コンパイルする
+service.decompile.impl.decompiler-vineflower-config.incorporate-returns=try-catch ブロックに return 文を組み込む
+service.decompile.impl.decompiler-vineflower-config.ensure-synchronized-monitors=synchronized ブロックのモニタを確実に組み込む
+service.decompile.impl.decompiler-vineflower-config.decompile-enums=列挙型を逆コンパイルする
+service.decompile.impl.decompiler-vineflower-config.decompile-preview=プレビュー機能を逆コンパイルする
+service.decompile.impl.decompiler-vineflower-config.remove-getclass=getClass() 呼び出しを削除する
+service.decompile.impl.decompiler-vineflower-config.keep-literals=リテラルをありのままに保持する
+service.decompile.impl.decompiler-vineflower-config.boolean-as-int=真偽値を 0 または 1 として扱う
+service.decompile.impl.decompiler-vineflower-config.ascii-strings=ASCII 文字列を使用する
+service.decompile.impl.decompiler-vineflower-config.synthetic-not-set=synthetic フィールドを設定しない
+service.decompile.impl.decompiler-vineflower-config.undefined-as-object=未定義のパラメタを Object として扱う
+service.decompile.impl.decompiler-vineflower-config.use-lvt-names=LVT 名を使用する
+service.decompile.impl.decompiler-vineflower-config.use-method-parameters=メソッド・パラメータを使用する
+service.decompile.impl.decompiler-vineflower-config.remove-empty-try-catch=空の try-catch ブロックを削除する
+service.decompile.impl.decompiler-vineflower-config.decompile-finally=finally ブロックを逆コンパイルする
+service.decompile.impl.decompiler-vineflower-config.lambda-to-anonymous-class=ラムダ式を匿名クラスに変換する
+service.decompile.impl.decompiler-vineflower-config.bytecode-source-mapping=バイト・コードからソースへのマッピングを生成する
+service.decompile.impl.decompiler-vineflower-config.__dump_original_lines__=コードの元の行をダンプする
+service.decompile.impl.decompiler-vineflower-config.ignore-invalid-bytecode=間違ったバイト・コードを無視する
+service.decompile.impl.decompiler-vineflower-config.verify-anonymous-classes=匿名クラスを検証する
+service.decompile.impl.decompiler-vineflower-config.ternary-constant-simplification=三項演算子の簡略化
+service.decompile.impl.decompiler-vineflower-config.pattern-matching=パターン・マッチング
+service.decompile.impl.decompiler-vineflower-config.try-loop-fix=try-loop を修正する
+service.decompile.impl.decompiler-vineflower-config.ternary-in-if=[実験的] 三項演算子を if 文に変換する
+service.decompile.impl.decompiler-vineflower-config.decompile-switch-expressions=switch 式を逆コンパイルする
+service.decompile.impl.decompiler-vineflower-config.show-hidden-statements=[デバッグ用] 隠されたステートメントを表示する
+service.decompile.impl.decompiler-vineflower-config.override-annotation=アノテーションを上書きする
+service.decompile.impl.decompiler-vineflower-config.simplify-stack=2 つのスタックを 1 つにまとめる
+service.decompile.impl.decompiler-vineflower-config.verify-merges=[実験的] 変数のマージを検証する
+service.decompile.impl.decompiler-vineflower-config.include-classpath=クラス・パス全体を含める
+service.decompile.impl.decompiler-vineflower-config.include-runtime=JVM ランタイムを含める
+service.decompile.impl.decompiler-vineflower-config.explicit-generics=明示的なジェネリクスを使用する
+service.decompile.impl.decompiler-vineflower-config.inline-simple-lambdas=シンプルなラムダ式をインライン化する
+service.decompile.impl.decompiler-vineflower-config.log-level=ログ・レベル
+service.decompile.impl.decompiler-vineflower-config.max-time-per-method=[非推奨] メソッドごとの最大時間
+service.decompile.impl.decompiler-vineflower-config.rename-members=メンバの名前を変更する
+service.decompile.impl.decompiler-vineflower-config.user-renamer-class=ユーザ・再命名クラス
+service.decompile.impl.decompiler-vineflower-config.new-line-separator=[非推奨] 改行文字
+service.decompile.impl.decompiler-vineflower-config.indent-string=インデント文字列
+service.decompile.impl.decompiler-vineflower-config.preferred-line-length=１行の長さ
+service.decompile.impl.decompiler-vineflower-config.banner=バナー
+service.decompile.impl.decompiler-vineflower-config.error-message=エラー・メッセージ
+service.decompile.impl.decompiler-vineflower-config.thread-count=使用するスレッド数
+service.decompile.impl.decompiler-vineflower-config.skip-extra-files=追加のファイルをスキップする
+service.decompile.impl.decompiler-vineflower-config.warn-inconsistent-inner-attributes=内部属性の不整合を警告する
+service.decompile.impl.decompiler-vineflower-config.dump-bytecode-on-error=エラー時にバイト・コードをダンプする
+service.decompile.impl.decompiler-vineflower-config.dump-exception-on-error=エラー時に例外をダンプする
+service.decompile.impl.decompiler-vineflower-config.decompiler-comments=逆コンパイラのコメント
+service.decompile.impl.decompiler-vineflower-config.sourcefile-comments=ソース・ファイルのコメント
+service.decompile.impl.decompiler-vineflower-config.decompile-complex-constant-dynamic=複雑な ConstantDynamic を逆コンパイルする
+service.decompile.impl.decompiler-vineflower-config.force-jsr-inline=JSR 命令をインライン化する
+service.decompile.impl.decompiler-vineflower-config.dump-text-tokens=テキスト・トークンをダンプする
+service.decompile.impl.decompiler-vineflower-config.remove-imports=インポートを削除する
+service.decompile.impl.decompiler-vineflower-config.mark-corresponding-synthetics=対応する synthetic をマークする
+service.io=入出力
+service.io.directories-config=ディレクトリ
+service.io.export-config=エクスポート
+service.io.export-config.bundle-supporting-resources=サポート・ファイルをバンドルに含める
+service.io.export-config.compression=出力内容の圧縮方法
+service.io.export-config.create-zip-dir-entries=出力に ZIP ディレクトリ・エントリを作成する
+service.io.export-config.warn-no-changes=変更を加えずにエクスポートしたときに警告を表示する
+service.io.gson-provider-config=Json
+service.io.gson-provider-config.pretty-print=出力を整形する
+service.io.info-importer-config=内容のインポート
+service.io.info-importer-config.skip-class-asm-validation=クラス・ファイルの検証をスキップする
+service.io.info-importer-config.skip-class-code=クラス・ファイルのコードをスキップする
+service.io.recent-workspaces-config=最近のワークスペース
+service.io.recent-workspaces-config.last-workspace-export-path=最後のワークスペースのエクスポート先
+service.io.recent-workspaces-config.last-workspace-open-path=最後のワークスペースのオープン先
+service.io.recent-workspaces-config.max-recent-workspaces=最近のワークスペースの最大数
+service.io.recent-workspaces-config.recent-workspaces=最近のワークスペース
+service.io.recent-workspaces-config.last-class-export-path=最後のクラスのエクスポート先
+service.io.resource-importer-config=アーカイブ形式のインポート
+service.io.resource-importer-config.zip-strategy=ZIP の読み込み方法
+service.io.resource-importer-config.allow-basic-base-offset-zero-check=JVM 方式での読み込み時に基本オフセットが 0 のチェックを許可する
+service.io.resource-importer-config.skip-revisited-cen-to-local-links=JVM 方式での読み込み時に，CEN からローカルへのリンクをスキップする
+service.io.resource-importer-config.ignore-naive-file-lengths=Naive 方式での読み込み時に，ファイル長のチェックを無視する
+service.mapping=マッピング
+service.mapping.mapping-aggregator-config=マッピングの集約
+service.mapping.mapping-formats-config=マッピングの形式
+service.mapping.mapping-generator-config=マッピングの生成
+service.mapping.name-gen-provider=名前の生成
+service.mapping.name-gen-provider.alphabet=アルファベット
+service.mapping.name-gen-provider.alphabet.alphabet=使用するアルファベット文字
+service.mapping.name-gen-provider.alphabet.length=最小の長さ
+service.plugin=プラグイン
+service.plugin.plugin-manager-config=プラグインの管理
+service.plugin.plugin-manager-config.scan-on-start=起動時にプラグインを読み込む
+service.plugin.script-manager-config=スクリプトの管理
+service.plugin.script-manager-config.file-watching=スクリプト・ディレクトリの変更を監視する
+service.ui=ユーザ・インタフェース
+service.ui.bind-config=バインディング
+service.ui.bind-config.bundle=バインディング・マップ
+service.ui.class-editing-config=クラスの編集
+service.ui.class-editing-config.default-android-editor=デフォルトの Android クラスのエディタ
+service.ui.class-editing-config.default-jvm-editor=デフォルトの JVM クラスのエディタ
+service.ui.decompile-pane-config=逆コンパイル・パネル
+service.ui.decompile-pane-config.timeout-seconds=逆コンパイラのタイムアウト（秒）
+service.ui.decompile-pane-config.mapping-acceleration=再マッピング処理を高速化
+service.ui.hex-config=HEX エディタ
+service.ui.hex-config.row-length=カラム数
+service.ui.hex-config.row-split-interval=行の分割間隔
+service.ui.hex-config.show-address=アドレスを表示する
+service.ui.hex-config.show-ascii=ASCII を表示する
+service.ui.member-format-config=フィールドとメソッドの表示形式
+service.ui.member-format-config.name-type-display=名前と型の表示方式
+service.ui.tab-completion-config=タブ補完
+service.ui.text-format-config=テキスト形式
+service.ui.tab-completion-config.enabled-in-assembler=アセンブラで有効にする
+service.ui.tab-completion-config.max-completion-length=最大の補完文字数
+service.ui.tab-completion-config.max-completion-rows=最大の補完行数
+service.ui.tab-completion-config.popup-position=カーソルに対するポップアップの位置
+service.ui.text-format-config.escape=テキストのエスケープを有効にする
+service.ui.text-format-config.max-length=表示する最大の文字数
+service.ui.text-format-config.shorten=テキストを短縮する
+service.ui.file-type-syntax-association-config=ファイル・タイプの割り当て
+service.ui.file-type-syntax-association-config.extensions-to-langs=拡張子と言語
+service.ui.snippets-config=スニペット
+service.ui.window-manager-config=ウィンドウ管理
+service.ui.window-scale-config=ウィンドウの拡大
+service.ui.window-scale-config.scale=拡大率
+service.ui.workspace-explorer-config=ワーク・スペース
+service.ui.workspace-explorer-config.drag-drop-action=ドラッグ＆ドロップ時の挙動
+service.ui.workspace-explorer-config.max-tree-dir-depth=最大ディレクトリ深度
+service.ui.language-config=言語
+service.ui.language-config.current=現在の言語
+
+### Matcher translations
+number.match.equal=value == n
+number.match.not=value != n
+number.match.gt=value > n
+number.match.gte=value >= n
+number.match.lt=value < n
+number.match.lte=value <= n
+number.match.gt-lt=min < value < max
+number.match.gte-lt=min <= value < max
+number.match.gt-lte=min < value <= max
+number.match.gte-lte=min < value <= max
+number.match.any-of=numbers.contains(value)
+string.match.anything=すべて
+string.match.zilch=なし
+string.match.contains=str.contains(value)
+string.match.contains-ic=str.containsIgnoreCase(value)
+string.match.ends=str.endsWith(value)
+string.match.ends-ic=str.endsWithIgnoreCase(value)
+string.match.equal=str.equals(value)
+string.match.equal-ic=str.equalsIgnoreCase(value)
+string.match.regex-full=str.matches(value)
+string.match.regex-partial=str.matchesPartially(value)
+string.match.starts=str.startsWith(value)
+string.match.starts-ic=str.startsWithIgnoreCase(value)
+
+### Misc stuff
+misc.acknowledge=了解
+misc.all=すべて
+misc.none=なし
+misc.done=完了
+misc.ignored=無視
+misc.enabled=有効
+misc.disabled=無効
+misc.download=ダウンロード
+misc.download.invalid-url=不正な URL です。
+misc.before=前へ
+misc.after=次へ
+misc.load=読み込む
+misc.clear=消去
+misc.export=エクスポート
+misc.remove=削除
+misc.removed=削除されました
+misc.casesensitive=大文字と小文字を区別
+misc.path=パス
+misc.regex=正規表現
+misc.member.field=フィールド
+misc.member.method=メソッド
+misc.member.field-n-method=フィールドとメソッド
+misc.member.inner-class=内部クラス
+misc.member.inner-interface=内部インタフェース
+misc.member.inner-enum=内部列挙型
+misc.member.inner-annotation=内部アノテーション
+misc.accessflag.visibility.public=Public
+misc.accessflag.visibility.protected=Protected
+misc.accessflag.visibility.private=Private
+misc.accessflag.visibility.package=Package
+misc.direction.up=上方向
+misc.direction.down=下方向
+misc.direction.left=左方向
+misc.direction.right=右方向
+misc.direction.top=上方
+misc.direction.bottom=下方
+misc.position.top=上部
+misc.position.bottom=下部
+misc.position.left=左部
+misc.position.right=右部
+misc.position.center=中央
+misc.position.middle=中間
