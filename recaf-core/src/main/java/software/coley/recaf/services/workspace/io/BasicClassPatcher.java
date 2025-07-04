@@ -8,8 +8,11 @@ import software.coley.cafedude.InvalidClassException;
 import software.coley.cafedude.classfile.ClassFile;
 import software.coley.cafedude.classfile.behavior.AttributeHolder;
 import software.coley.cafedude.classfile.constant.CpUtf8;
+import software.coley.cafedude.io.ClassBuilder;
 import software.coley.cafedude.io.ClassFileReader;
 import software.coley.cafedude.io.ClassFileWriter;
+import software.coley.cafedude.io.FallbackInstructionReader;
+import software.coley.cafedude.transform.IllegalRewritingInstructionsReader;
 import software.coley.cafedude.transform.IllegalStrippingTransformer;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.util.Types;
@@ -30,7 +33,7 @@ public class BasicClassPatcher implements ClassPatcher {
 	public byte[] patch(@Nullable String name, @Nonnull byte[] code) throws IOException {
 		try {
 			// Patch via CafeDude
-			ClassFileReader reader = new ClassFileReader();
+			ClassFileReader reader = new ClassFileReaderExt();
 			ClassFile classFile = reader.read(code);
 			if (name == null) name = classFile.getName();
 			new IllegalStrippingTransformerExt(classFile).transform();
@@ -43,6 +46,21 @@ public class BasicClassPatcher implements ClassPatcher {
 			if (name == null) name = "<no-name-given>";
 			logger.error("CafeDude failed to patch '{}'", name, t);
 			throw new IOException(t);
+		}
+	}
+
+	/**
+	 * Extended class file reader that plugs into {@link IllegalRewritingInstructionsReader}.
+	 */
+	private static class ClassFileReaderExt extends ClassFileReader {
+		private FallbackInstructionReader fallback;
+
+		@Nonnull
+		@Override
+		public FallbackInstructionReader getFallbackInstructionReader(@Nonnull ClassBuilder builder) {
+			if (fallback == null)
+				fallback = new IllegalRewritingInstructionsReader(builder.getPool(), builder.getVersionMajor());
+			return fallback;
 		}
 	}
 
