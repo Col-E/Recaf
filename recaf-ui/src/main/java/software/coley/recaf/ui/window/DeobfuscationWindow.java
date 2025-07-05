@@ -549,6 +549,7 @@ public class DeobfuscationWindow extends RecafStage {
 					TransformationApplier applier = transformationApplierService.newApplierForCurrentWorkspace();
 					if (applier == null)
 						throw new TransformationException("No workspace is open");
+					applier.setMaxPasses(5); // TODO: Make this an input
 					JvmTransformResult result = applier
 							.transformJvm(transformers, (_, _, _, targetClass) -> targetClass.getName().equals(classInfo.getName()));
 					result.getTransformerFailures().forEach((_, map) -> map.forEach((transformer, error) -> {
