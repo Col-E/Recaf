@@ -32,8 +32,8 @@ import javafx.scene.text.TextAlignment;
 import me.darknet.assembler.error.Error;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
-import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
+import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -96,7 +96,7 @@ import java.util.stream.Collectors;
  */
 @Dependent
 public class DeobfuscationWindow extends RecafStage {
-	private static final Logger logger = Logging.get(DeobfuscationWindow.class);
+	private static final DebuggingLogger logger = Logging.get(DeobfuscationWindow.class);
 	private final TransformationManager transformationManager;
 	private final TransformationApplierService transformationApplierService;
 	private final DecompilerManager decompilerManager;
@@ -483,7 +483,7 @@ public class DeobfuscationWindow extends RecafStage {
 
 		private void disassemble() {
 			if (classInfo == null) {
-				String text = Lang.get("deobf.preview.noselection");
+				String text = "// Preview: Disassembly\n" + Lang.get("deobf.preview.noselection");
 				editorAssembly.setText(text);
 				return;
 			}
@@ -510,7 +510,7 @@ public class DeobfuscationWindow extends RecafStage {
 
 		private void decompile() {
 			if (classInfo == null) {
-				String text = Lang.get("deobf.preview.noselection");
+				String text = "// Preview: Decompile\n" + Lang.get("deobf.preview.noselection");
 				editorDecompile.setText(text);
 				return;
 			}
@@ -551,6 +551,9 @@ public class DeobfuscationWindow extends RecafStage {
 						throw new TransformationException("No workspace is open");
 					JvmTransformResult result = applier
 							.transformJvm(transformers, (_, _, _, targetClass) -> targetClass.getName().equals(classInfo.getName()));
+					result.getTransformerFailures().forEach((_, map) -> map.forEach((transformer, error) -> {
+						logger.debugging(l -> l.warn("Transformer '{}' failure: ", transformer.getSimpleName(), error));
+					}));
 					if (!result.getTransformedClasses().isEmpty())
 						jvmClass = result.getTransformedClasses().values().iterator().next();
 				} catch (TransformationException e) {
