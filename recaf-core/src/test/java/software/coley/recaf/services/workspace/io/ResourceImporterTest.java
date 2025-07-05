@@ -12,6 +12,7 @@ import software.coley.recaf.info.properties.builtin.ZipCommentProperty;
 import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
+import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.util.ZipCreationUtils;
@@ -40,7 +41,7 @@ class ResourceImporterTest {
 	@BeforeAll
 	static void setup() {
 		importer = new BasicResourceImporter(
-				new BasicInfoImporter(new InfoImporterConfig(), new BasicClassPatcher()),
+				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
 				new ResourceImporterConfig()
 		);
 	}

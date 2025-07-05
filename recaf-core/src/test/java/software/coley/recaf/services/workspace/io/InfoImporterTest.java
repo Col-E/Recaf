@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
+import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
@@ -28,7 +29,7 @@ class InfoImporterTest {
 
 	@BeforeAll
 	static void setup() {
-		importer = new BasicInfoImporter(new InfoImporterConfig(), mockedPatcher);
+		importer = new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), mockedPatcher);
 	}
 
 	@Test

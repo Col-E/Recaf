@@ -5,6 +5,7 @@ import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JarFileInfo;
+import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.util.ZipCreationUtils;
@@ -34,7 +35,7 @@ class WorkspaceExporterTest {
 	@BeforeAll
 	static void setup() {
 		importer = new BasicResourceImporter(
-				new BasicInfoImporter(new InfoImporterConfig(), new BasicClassPatcher()),
+				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
 				new ResourceImporterConfig()
 		);
 	}
