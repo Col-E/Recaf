@@ -466,13 +466,8 @@ public class DeobfuscationWindow extends RecafStage {
 		}
 
 		public void togglePreviewMode() {
-			if (isDecompilePreview()) {
-				setCenter(editorAssembly);
-				disassemble();
-			} else {
-				setCenter(editorDecompile);
-				updatePreview();
-			}
+			setCenter(isDecompilePreview() ? editorAssembly : editorDecompile);
+			updatePreview();
 		}
 
 		public boolean isDecompilePreview() {
@@ -530,6 +525,9 @@ public class DeobfuscationWindow extends RecafStage {
 			decompilerManager.decompile(workspaceManager.getCurrent(), jvmClass).whenCompleteAsync((result, error) -> {
 				if (result != null) {
 					editorDecompile.setText(result.getText());
+				} else if (error != null) {
+					String trace = StringUtil.traceToString(error);
+					editorDecompile.setText("/*\nDecompilation failure\n" + trace + "\n*/");
 				}
 			}, FxThreadUtil.executor());
 		}
