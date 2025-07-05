@@ -60,6 +60,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTr
 import software.coley.recaf.services.deobfuscation.transform.generic.SourceNameRestorationTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.VariableTableNormalizingTransformer;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.transform.ClassTransformer;
@@ -154,7 +155,8 @@ public class DeobfuscationWindow extends RecafStage {
 					OpaquePredicateFoldingTransformer.class,
 					RedundantTryCatchRemovingTransformer.class,
 					StaticValueInliningTransformer.class,
-					VariableFoldingTransformer.class
+					VariableFoldingTransformer.class,
+					VariableTableNormalizingTransformer.class
 			));
 			TreeItem<Selection> restoration = new TreeItem<>(new Selection.Category("deobf.tree.generic.restoration", CarbonIcons.AI_RESULTS));
 			restoration.getChildren().addAll(of(
