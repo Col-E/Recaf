@@ -395,6 +395,10 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 					nextFrame.getStack(nextFrame.getStackSize() - 1);
 			AbstractInsnNode replacement = toInsn(topValue);
 			if (replacement == null) {
+				// Skip if this isn't an operation we can support
+				 if (frame.getStackSize() < 2)
+				 	continue;
+
 				// We don't know the result of the operation. But if it is something we know is redundant
 				// we will want to remove it anyways. For instance:
 				//  x * 1 = x

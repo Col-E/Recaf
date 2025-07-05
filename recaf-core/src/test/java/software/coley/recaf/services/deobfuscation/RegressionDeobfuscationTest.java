@@ -486,4 +486,20 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				""";
 		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class, OpaquePredicateFoldingTransformer.class));
 	}
+
+	@Test
+	void singleStackNoLocalsDoesNotAIOOBEConstantFolding() {
+		String asm = """
+				.method public static example ()Ljava/lang/Object; {
+				    code: {
+				    A:
+				        getstatic Foo.foo I
+				        newarray int
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(LinearOpaqueConstantFoldingTransformer.class));
+	}
 }
