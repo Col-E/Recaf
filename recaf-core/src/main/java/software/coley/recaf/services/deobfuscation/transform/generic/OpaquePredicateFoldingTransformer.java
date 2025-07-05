@@ -20,6 +20,7 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -122,8 +123,8 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 
 					// Get instruction of the top stack's contributing instruction.
 					// It must also be a value producing instruction.
-					AbstractInsnNode prevInstruction = instructions.get(i - 1);
-					if (!isValueProducerOrTopDup(prevInstruction))
+					AbstractInsnNode prevInstruction = AsmInsnUtil.getPreviousInsn(instruction);
+					if (prevInstruction == null || !isValueProducerOrTopDup(prevInstruction))
 						continue;
 
 					// Handle any control flow instruction and see if we know based on the frame contents if a specific
