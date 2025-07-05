@@ -136,7 +136,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 			int opcode = instruction.getOpcode();
 			switch (opcode) {
 				case DUP -> {
-					if (frame.getStackSize() < 1)
+					if (getSlotsOccupied(frame) < 1)
 						continue;
 					ReValue top = frame.getStack(frame.getStackSize() - 1);
 					if (top.hasKnownValue()) {
@@ -148,40 +148,42 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 					}
 				}
 				case DUP2 -> {
-					if (frame.getStackSize() < 2)
+					if (getSlotsOccupied(frame) < 2)
 						continue;
+					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), DUP2);
+					if (arguments != null && arguments.combinedIntermediates().isEmpty()) {
+						if (arguments.argument2().sameAs(arguments.argument1())) {
+							// Arguments are same since input is wide (long/double)
+							AbstractInsnNode arg = arguments.argument2().insn();
+							if (isSupportedValueProducer(arg)) {
+								instructions.set(instruction, arg.clone(Collections.emptyMap()));
+								dirty = true;
+							}
+						} else {
+							// Two separate arguments
+							AbstractInsnNode arg1 = arguments.argument1().insn();
+							AbstractInsnNode arg2 = arguments.argument2().insn();
+							instructions.insert(instruction, arg2.clone(Collections.emptyMap()));
+							instructions.set(instruction, arg1.clone(Collections.emptyMap()));
+							insertions += 1;
+							dirty = true;
+						}
 
-					// TODO: This impl assumes dup2 on two ints
-					//  - Need to also count dup2 on a single long
-
-					ReValue top = frame.getStack(frame.getStackSize() - 1);
-					ReValue topM1 = frame.getStack(frame.getStackSize() - 2);
-					if (top.hasKnownValue() && topM1.hasKnownValue()) {
-						instructions.insert(instruction, toInsn(top));
-						instructions.set(instruction, toInsn(topM1));
-						insertions += 1;
-						dirty = true;
-					} else if (isSupportedValueProducer(instruction.getPrevious())
-							&& isSupportedValueProducer(instruction.getPrevious().getPrevious())) {
-						instructions.insert(instruction, instruction.getPrevious().clone(Collections.emptyMap()));
-						instructions.set(instruction, instruction.getPrevious().getPrevious().clone(Collections.emptyMap()));
-						insertions += 1;
-						dirty = true;
 					}
 				}
 				case DUP_X1 -> {
-					if (frame.getStackSize() < 2)
+					if (getSlotsOccupied(frame) < 2)
 						continue;
 					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), DUP2_X1);
 					if (arguments != null && arguments.combinedIntermediates().isEmpty()) {
-						instructions.insertBefore(arguments.argument1.insn(), arguments.argument2().insn().clone(Collections.emptyMap()));
+						instructions.insertBefore(arguments.argument1().insn(), arguments.argument2().insn().clone(Collections.emptyMap()));
 						instructions.set(instruction, new InsnNode(NOP));
 						insertions += 1;
 						dirty = true;
 					}
 				}
 				case DUP_X2 -> {
-					if (frame.getStackSize() < 3)
+					if (getSlotsOccupied(frame) < 3)
 						continue;
 					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), DUP2_X1);
 					if (arguments != null && arguments.combinedIntermediates().isEmpty()) {
@@ -195,28 +197,38 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 					}
 				}
 				case DUP2_X1 -> {
-					if (frame.getStackSize() < 2)
+					if (getSlotsOccupied(frame) < 2)
 						continue;
 					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), DUP2_X1);
-					if (arguments == null)
+					if (arguments == null || !arguments.combinedIntermediates().isEmpty())
 						continue;
 					Argument prior = collectArgument(arguments.argument1().insn().getPrevious());
 					if (prior == null)
 						continue;
 
-					ReValue top = frame.getStack(frame.getStackSize() - 1);
-					ReValue topM1 = frame.getStack(frame.getStackSize() - 2);
-					if (top.hasKnownValue() && topM1.hasKnownValue()) {
-						AbstractInsnNode insn = prior.insn();
-						instructions.insertBefore(insn, toInsn(topM1));
-						instructions.insertBefore(insn, toInsn(top));
+					AbstractInsnNode target = prior.insn();
+					if (arguments.argument2().sameAs(arguments.argument1())) {
+						// Arguments are same since input is wide (long/double)
+						AbstractInsnNode arg = arguments.argument2().insn();
+						if (isSupportedValueProducer(arg)) {
+							instructions.insertBefore(target, arg.clone(Collections.emptyMap()));
+							instructions.set(instruction, new InsnNode(NOP));
+							insertions += 1;
+							dirty = true;
+						}
+					} else {
+						// Two separate arguments
+						AbstractInsnNode arg1 = arguments.argument1().insn();
+						AbstractInsnNode arg2 = arguments.argument2().insn();
+						instructions.insertBefore(target, arg1.clone(Collections.emptyMap()));
+						instructions.insertBefore(target, arg2.clone(Collections.emptyMap()));
 						instructions.set(instruction, new InsnNode(NOP));
 						insertions += 2;
 						dirty = true;
 					}
 				}
 				case DUP2_X2 -> {
-					if (frame.getStackSize() < 2)
+					if (getSlotsOccupied(frame) < 2)
 						continue;
 					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), DUP2_X1);
 					if (arguments == null || !arguments.combinedIntermediates().isEmpty())
@@ -225,23 +237,29 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 					if (prior == null || !prior.combinedIntermediates().isEmpty())
 						continue;
 
-					ReValue top = frame.getStack(frame.getStackSize() - 1);
-					ReValue topM1 = frame.getStack(frame.getStackSize() - 2);
-
-					// TODO: All of these probably need to be updated to explicitly handle the different cases of
-					//  wide vs narrow types
-
-					if (top.hasKnownValue() && topM1.hasKnownValue()) {
-						AbstractInsnNode insn = prior.argument1().insn();
-						instructions.insertBefore(insn, toInsn(topM1));
-						instructions.insertBefore(insn, toInsn(top));
+					AbstractInsnNode target = prior.argument1().insn();
+					if (arguments.argument2().sameAs(arguments.argument1())) {
+						// Arguments are same since input is wide (long/double)
+						AbstractInsnNode arg = arguments.argument2().insn();
+						if (isSupportedValueProducer(arg)) {
+							instructions.insertBefore(target, arg.clone(Collections.emptyMap()));
+							instructions.set(instruction, new InsnNode(NOP));
+							insertions += 1;
+							dirty = true;
+						}
+					} else {
+						// Two separate arguments
+						AbstractInsnNode arg1 = arguments.argument1().insn();
+						AbstractInsnNode arg2 = arguments.argument2().insn();
+						instructions.insertBefore(target, arg1.clone(Collections.emptyMap()));
+						instructions.insertBefore(target, arg2.clone(Collections.emptyMap()));
 						instructions.set(instruction, new InsnNode(NOP));
 						insertions += 2;
 						dirty = true;
 					}
 				}
 				case POP -> {
-					if (frame.getStackSize() < 1)
+					if (getSlotsOccupied(frame) < 1)
 						continue;
 					Argument argument = collectArgument(instruction.getPrevious());
 					if (argument != null && argument.intermediates().isEmpty()) {
@@ -251,7 +269,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 					}
 				}
 				case POP2 -> {
-					if (frame.getStackSize() < 2)
+					if (getSlotsOccupied(frame) < 2)
 						continue;
 					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), POP2);
 					if (arguments != null && arguments.combinedIntermediates().isEmpty()) {
@@ -261,7 +279,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 					}
 				}
 				case SWAP -> {
-					if (frame.getStackSize() < 2)
+					if (getSlotsOccupied(frame) < 2)
 						continue;
 					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), POP2);
 					if (arguments != null && arguments.combinedIntermediates().isEmpty()) {
@@ -538,6 +556,22 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 			case StringValue stringValue -> new LdcInsnNode(stringValue.getText().get());
 			default -> null;
 		};
+	}
+
+	/**
+	 * @param frame
+	 * 		Frame to count true stack size of <i>(in terms of occupied slots)</i>
+	 *
+	 * @return Number of stack slots occupied in the frame.
+	 */
+	private static int getSlotsOccupied(@Nonnull Frame<ReValue> frame) {
+		int valueCount = frame.getStackSize();
+		int slots = 0;
+		for (int i = 0; i < valueCount; i++) {
+			ReValue value = frame.getStack(i);
+			slots += value.getSize();
+		}
+		return slots;
 	}
 
 	/**
