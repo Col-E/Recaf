@@ -220,6 +220,68 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
+	void foldLongWithDup2NotConfusedByPrecedingIntOnStack() {
+		// Ensures that the stack dup2 operation folds correctly:
+		//  [int, long] --> [int, long, long]
+		// The preceding int shouldn't confuse the fold logic.
+		String asm = """
+				.method public static example ()J {
+				    code: {
+				    A:
+				        iconst_0
+				        // 1L + 1L = 2L
+				        lconst_1
+				        dup2
+				        ladd
+				        // Store var so that we can pop the int off the stack
+				        lstore tmp
+				        pop
+				        lload tmp
+				        lreturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("lconst_1", dis), "Expected to fold inputs");
+			assertEquals(0, StringUtil.count("dup2", dis), "Expected to stack operation");
+			assertEquals(0, StringUtil.count("ladd", dis), "Expected to operation");
+			assertEquals(1, StringUtil.count("ldc 2L", dis), "Expected to fold stack operation to 2L");
+		});
+	}
+
+	@Test
+	void foldLongWithDup2X1NotConfusedByPrecedingIntOnStack() {
+		// Ensures that the stack dup2_x1 operation folds correctly:
+		//  [int, long] --> [long, int, long]
+		// The preceding int shouldn't confuse the stack simplification logic.
+		// This in turn will allow the value folding step to fold the whole method.
+		String asm = """
+				.method public static example ()J {
+				    code: {
+				    A:
+				        iconst_0
+				        lconst_1
+				        dup2_x1
+				        // Store var so that we can pop the int off the stack
+				        lstore tmp
+				        pop
+				        lconst_1
+				        ladd
+				        // The duplicated long below the int should be all that remains
+				        lreturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("lconst_1", dis), "Expected to fold inputs");
+			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to fold inputs");
+			assertEquals(1, StringUtil.count("ldc 2L", dis), "Expected to fold stack operation to 2L");
+		});
+	}
+
+	@Test
 	void foldPopsToNothing() {
 		String asm = """
 				.method public static example ()V {

@@ -317,7 +317,8 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 	                                     @Nonnull MethodNode method, @Nonnull InsnList instructions) throws TransformationException {
 		boolean dirty = false;
 		Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
-		for (int i = 1; i < instructions.size() - 1; i++) {
+		int endIndex = instructions.size() - 1;
+		for (int i = 1; i < endIndex; i++) {
 			AbstractInsnNode instruction = instructions.get(i);
 			int opcode = instruction.getOpcode();
 
@@ -326,11 +327,17 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 			if (sizeConsumed == 0 || (opcode >= POP && opcode <= DUP2_X2))
 				continue;
 
-			// Collect values on the top of the stack.
-			// The values should satisfy the amount of slots consumed by this instruction (per above).
+			// Return instructions consume values off the stack but unlike operations do not produce an outcome.
+			boolean isReturn = AsmInsnUtil.isReturn(opcode) && opcode != RETURN;
+
+			// Grab the current and next frame for later. We want to pull values from these to determine
+			// if operations on constant inputs can be inlined.
+			// However, a "return" isn't an operation, so we have an edge case handling those.
 			Frame<ReValue> frame = frames[i];
+			if (frame == null)
+				continue;
 			Frame<ReValue> nextFrame = frames[i + 1];
-			if (frame == null || nextFrame == null || nextFrame.getStackSize() <= 0)
+			if ((nextFrame == null || nextFrame.getStackSize() <= 0) && !isReturn)
 				continue;
 
 			// Walk backwards from this point and try and find a sequence of instructions that
@@ -368,14 +375,24 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 
 			// Skip if the completed sequence isn't a viable candidate for folding.
 			// - Explicitly marked as invalid
-			// - Does not have a positive stack effect (the final operation result should push a value)
 			// - Too small
 			// - The sequence isn't balanced, or requires a larger scope to include all "contributing" instructions
-			if (!validSequence || netStackChange < 1 || sequence.size() < 2 || shouldContinueSequence(sequence))
+			if (!validSequence || sequence.size() < 2 || shouldContinueSequence(sequence))
 				continue;
 
+			// Additionally if the sequence does NOT end with 'xreturn' then it should
+			// have a positive stack effect (the final operation result should push a value).
+			if (netStackChange < (isReturn ? 0 : 1))
+				continue;
+
+			// Keep the return instruction in the sequence.
+			if (isReturn && AsmInsnUtil.isReturn(sequence.getLast()))
+				sequence.removeLast();
+
 			// Replace the operation with a constant value, or simplified instruction pattern.
-			ReValue topValue = nextFrame.getStack(nextFrame.getStackSize() - 1);
+			ReValue topValue = isReturn ?
+					frame.getStack(frame.getStackSize() - 1) :
+					nextFrame.getStack(nextFrame.getStackSize() - 1);
 			AbstractInsnNode replacement = toInsn(topValue);
 			if (replacement == null) {
 				// We don't know the result of the operation. But if it is something we know is redundant
@@ -438,7 +455,15 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 			// operation instruction with one that pushes a constant value of the result in its place.
 			for (AbstractInsnNode item : sequence)
 				instructions.set(item, new InsnNode(NOP));
-			instructions.set(instructions.get(i), replacement);
+			if (isReturn) {
+				// We know the sequence size must be >= 2, so the instruction before
+				// the return should have been replaced with a nop, and is safe to replace
+				// with our constant.
+				AbstractInsnNode old = instructions.get(i - 1);
+				instructions.set(old, replacement);
+			} else {
+				instructions.set(instructions.get(i), replacement);
+			}
 			dirty = true;
 		}
 		return dirty;
