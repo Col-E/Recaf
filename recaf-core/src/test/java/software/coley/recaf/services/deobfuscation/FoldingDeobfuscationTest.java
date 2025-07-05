@@ -6,7 +6,6 @@ import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRem
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.StackOperationFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
 import software.coley.recaf.util.StringUtil;
 
@@ -1886,7 +1885,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		});
 	}
 
-	/** Showcase pairing of {@link VariableFoldingTransformer} with {@link StackOperationFoldingTransformer} */
+	/** Showcase pairing of {@link VariableFoldingTransformer} with {@link LinearOpaqueConstantFoldingTransformer} */
 	@Test
 	void foldVar() {
 		String asm = """
@@ -1912,7 +1911,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("istore unused", dis), "Expected to remove variable stores where no reads are used");
 			assertEquals(0, StringUtil.count("bipush", dis), "Expected to remove unused value pushes of variables");
 			assertEquals(0, StringUtil.count("zero", dis), "Expected to inline 'zero' variable");
@@ -1945,7 +1944,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		validateAfterAssembly(asm, List.of(
 				VariableFoldingTransformer.class,
 				OpaquePredicateFoldingTransformer.class,
-				StackOperationFoldingTransformer.class,
+				LinearOpaqueConstantFoldingTransformer.class,
 				GotoInliningTransformer.class
 		), dis -> {
 			assertEquals(1, StringUtil.count("iconst", dis), "Expected only one const");
@@ -1976,7 +1975,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class,
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class,
 				LinearOpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("istore", dis), "Expected to remove redundant istore");
 			assertEquals(0, StringUtil.count("iload", dis), "Expected to inline redundant iload");
@@ -2013,7 +2012,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("const", dis), "Expected to remove redundant iconst_0");
 			assertEquals(0, StringUtil.count("load", dis), "Expected to remove redundant iload");
 			assertEquals(0, StringUtil.count("store", dis), "Expected to remove redundant istore");
@@ -2046,7 +2045,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class));
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class));
 	}
 
 	/** Show {@link VariableFoldingTransformer} isn't too aggressive */
@@ -2079,7 +2078,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, StackOperationFoldingTransformer.class));
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class));
 	}
 
 	@Test

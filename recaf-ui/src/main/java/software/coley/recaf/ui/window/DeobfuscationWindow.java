@@ -57,7 +57,6 @@ import software.coley.recaf.services.deobfuscation.transform.generic.LongAnnotat
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.SourceNameRestorationTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.StackOperationFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
@@ -152,7 +151,6 @@ public class DeobfuscationWindow extends RecafStage {
 					LinearOpaqueConstantFoldingTransformer.class,
 					OpaquePredicateFoldingTransformer.class,
 					RedundantTryCatchRemovingTransformer.class,
-					StackOperationFoldingTransformer.class,
 					StaticValueInliningTransformer.class,
 					VariableFoldingTransformer.class
 			));

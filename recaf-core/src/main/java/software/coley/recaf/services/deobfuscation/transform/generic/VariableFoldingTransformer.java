@@ -25,7 +25,6 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.DoubleValue;
@@ -52,20 +51,17 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
 /**
  * A transformer that folds redundant variable use.
  * <br>
- * You should use {@link StackOperationFoldingTransformer} after using this for {@code POP} cleanup.
+ * You should use {@link LinearOpaqueConstantFoldingTransformer} after using this for {@code POP} cleanup.
  *
  * @author Matt Coley
  */
 @Dependent
 public class VariableFoldingTransformer implements JvmClassTransformer {
 	private final InheritanceGraphService graphService;
-	private final WorkspaceManager workspaceManager;
 	private InheritanceGraph inheritanceGraph;
 
 	@Inject
-	public VariableFoldingTransformer(@Nonnull WorkspaceManager workspaceManager,
-	                                  @Nonnull InheritanceGraphService graphService) {
-		this.workspaceManager = workspaceManager;
+	public VariableFoldingTransformer(@Nonnull InheritanceGraphService graphService) {
 		this.graphService = graphService;
 	}
 
@@ -220,7 +216,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 	public Set<Class<? extends ClassTransformer>> recommendedSuccessors() {
 		// This transformer results in the creation of a lot of POP/POP2 instructions.
 		// The stack-operation folding transformer can clean up afterward.
-		return Collections.singleton(StackOperationFoldingTransformer.class);
+		return Collections.singleton(LinearOpaqueConstantFoldingTransformer.class);
 	}
 
 	@Nonnull

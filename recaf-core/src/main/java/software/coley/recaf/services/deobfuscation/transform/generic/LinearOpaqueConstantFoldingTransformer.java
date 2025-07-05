@@ -614,7 +614,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 	 * @return Wrapper containing the arguments <i>(and their instructions)</i> if found. Otherwise {@code null}.
 	 */
 	@Nullable
-	private static BinaryOperationArguments getBinaryOperationArguments(@Nonnull AbstractInsnNode insnBeforeOp, int binOperationOpcode) {
+	public static BinaryOperationArguments getBinaryOperationArguments(@Nonnull AbstractInsnNode insnBeforeOp, int binOperationOpcode) {
 		// Get instruction of the top stack's contributing instruction.
 		Argument argument2 = collectArgument(insnBeforeOp);
 		if (argument2 == null)
@@ -689,7 +689,7 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 	 * @return Wrapper containing the instruction if it is a value producer was found. Otherwise {@code null}.
 	 */
 	@Nullable
-	private static Argument collectArgument(@Nullable AbstractInsnNode insnBeforeOp) {
+	public static Argument collectArgument(@Nullable AbstractInsnNode insnBeforeOp) {
 		if (insnBeforeOp == null)
 			return null;
 		List<AbstractInsnNode> intermediates = null;
@@ -825,8 +825,8 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 	 * @param combinedIntermediates
 	 * 		Track any intermediate instructions between the operation instruction and the argument's instructions.
 	 */
-	private record BinaryOperationArguments(@Nonnull Argument argument2, @Nonnull Argument argument1,
-	                                        @Nonnull List<AbstractInsnNode> combinedIntermediates) {
+	public record BinaryOperationArguments(@Nonnull Argument argument2, @Nonnull Argument argument1,
+	                                       @Nonnull List<AbstractInsnNode> combinedIntermediates) {
 		/**
 		 * Replace the instructions from the wrapped arguments with {@code nop}
 		 * or other value providing instructions if the stack state necessitates it.
@@ -857,26 +857,44 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 	 * @param intermediateStackConsumption
 	 * 		Track any intermediate instructions between the operation instruction and the argument instruction.
 	 */
-	private record Argument(@Nonnull AbstractInsnNode insn,
-	                        @Nonnull List<AbstractInsnNode> intermediates,
-	                        int intermediateStackConsumption) {
-		boolean hasIntermediates() {
+	public record Argument(@Nonnull AbstractInsnNode insn,
+	                       @Nonnull List<AbstractInsnNode> intermediates,
+	                       int intermediateStackConsumption) {
+		/**
+		 * @return {@code true} when {@link #intermediates()} is empty.
+		 */
+		public boolean hasIntermediates() {
 			return !intermediates.isEmpty();
 		}
 
-		boolean sameAs(@Nonnull Argument other) {
+		/**
+		 * @param other
+		 * 		Some other argument.
+		 *
+		 * @return {@code true} when both this and the other arg wrap the same instruction.
+		 */
+		public boolean sameAs(@Nonnull Argument other) {
 			return insn == other.insn;
 		}
 
+		/**
+		 * @param other
+		 * 		Some other argument.
+		 *
+		 * @return Combined stack consumption of this and the other argument.
+		 */
 		public int getCombinedStackConsumption(@Nonnull Argument other) {
-			int baselineConsumption = sameAs(other) ?
+			return sameAs(other) ?
 					intermediateStackConsumption :
 					intermediateStackConsumption + other.intermediateStackConsumption;
-			// int subTopStackValuesToConsume1 = providesStackValuesBeneathTop() ? AsmInsnUtil.getSizeProduced(insn) : 0;
-			// int subTopStackValuesToConsume2 = other.providesStackValuesBeneathTop() ? AsmInsnUtil.getSizeProduced(other.insn) : 0;
-			return baselineConsumption;//+ subTopStackValuesToConsume1 + subTopStackValuesToConsume2;
 		}
 
+		/**
+		 * @param other
+		 * 		Some other argument.
+		 *
+		 * @return Combined intermediates of both this and the other argument.
+		 */
 		@Nonnull
 		public List<AbstractInsnNode> getCombinedIntermediates(@Nonnull Argument other) {
 			if (!hasIntermediates() && !other.hasIntermediates())
