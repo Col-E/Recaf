@@ -23,6 +23,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateAn
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalAnnotationRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LongAnnotationRemovingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.LongExceptionRemovingTransformer;
 import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
@@ -152,7 +153,10 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 					DuplicateAnnotationRemovingTransformer.class,
 
 					// Remove annoying long annotations
-					LongAnnotationRemovingTransformer.class
+					LongAnnotationRemovingTransformer.class,
+
+					// Remove annoying long exceptions
+					LongExceptionRemovingTransformer.class
 			));
 		} catch (TransformationException ex) {
 			logger.error("Failed applying anti-decompilation transformers", ex);

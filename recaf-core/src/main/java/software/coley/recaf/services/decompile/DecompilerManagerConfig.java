@@ -29,6 +29,8 @@ public class DecompilerManagerConfig extends BasicConfigContainer implements Ser
 	private final ObservableBoolean filterDuplicateAnnotations = new ObservableBoolean(false);
 	private final ObservableBoolean filterLongAnnotations = new ObservableBoolean(false);
 	private final ObservableInteger filterLongAnnotationsLength = new ObservableInteger(256);
+	private final ObservableBoolean filterLongExceptions = new ObservableBoolean(false);
+	private final ObservableInteger filterLongExceptionsLength = new ObservableInteger(256);
 	private final ObservableBoolean filterSignatures = new ObservableBoolean(false);
 	private final ObservableBoolean filterNonAsciiNames = new ObservableBoolean(false);
 
@@ -45,6 +47,8 @@ public class DecompilerManagerConfig extends BasicConfigContainer implements Ser
 		addValue(new BasicConfigValue<>("filter-annotations-duplicate", boolean.class, filterDuplicateAnnotations));
 		addValue(new BasicConfigValue<>("filter-annotations-long", boolean.class, filterLongAnnotations));
 		addValue(new BasicConfigValue<>("filter-annotations-long-limit", int.class, filterLongAnnotationsLength));
+		addValue(new BasicConfigValue<>("filter-exceptions-long", boolean.class, filterLongExceptions));
+		addValue(new BasicConfigValue<>("filter-exceptions-long-limit", int.class, filterLongExceptionsLength));
 		addValue(new BasicConfigValue<>("filter-illegal-signatures", boolean.class, filterSignatures));
 		addValue(new BasicConfigValue<>("filter-names-ascii", boolean.class, filterNonAsciiNames));
 	}
@@ -119,6 +123,22 @@ public class DecompilerManagerConfig extends BasicConfigContainer implements Ser
 	@Nonnull
 	public ObservableInteger getFilterLongAnnotationsLength() {
 		return filterLongAnnotationsLength;
+	}
+
+	/**
+	 * @return {@code true} to filter out long named exceptions.
+	 */
+	@Nonnull
+	public ObservableBoolean getFilterLongExceptions() {
+		return filterLongExceptions;
+	}
+
+	/**
+	 * @return Max name length to allowed for {@link #getFilterLongExceptions()}.
+	 */
+	@Nonnull
+	public ObservableInteger getFilterLongExceptionsLength() {
+		return filterLongExceptionsLength;
 	}
 
 	/**
