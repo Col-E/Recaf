@@ -5,6 +5,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRem
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.analysis.ReInterpreter;
@@ -485,6 +486,183 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				}
 				""";
 		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class, OpaquePredicateFoldingTransformer.class));
+	}
+
+	@Test
+	void multiStepInteractionsOfVariousFoldingTransformers() {
+		String asm = """
+				.method public example ()Ljava/lang/String; {
+				    parameters: { this },
+				    exceptions: {
+				        { E, F, G, Ljava/lang/RuntimeException; },
+				        { G, H, G, Ljava/lang/RuntimeException; }
+				     },
+				    code: {
+				    A:
+				        sipush 6197
+				        sipush 1729
+				        iand
+				        tableswitch {
+				            min: 0,
+				            max: 3,
+				            cases: { C, D, B },
+				            default: B
+				        }
+				    B:
+				        aconst_null
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        nop
+				        nop
+				        athrow
+				    C:
+				        aconst_null
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        athrow
+				        nop
+				        athrow
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        athrow
+				        nop
+				        nop
+				        nop
+				        nop
+				        athrow
+				        nop
+				        nop
+				        athrow
+				    D:
+				        goto E
+				    E:
+				        ldc 191946085
+				        ldc 191943797
+				        iand
+				        aconst_null
+				        ifnull I
+				        aconst_null
+				        athrow
+				    F:
+				        nop
+				        nop
+				        athrow
+				    G:
+				        dup
+				        invokevirtual java/lang/RuntimeException.printStackTrace ()V
+				        checkcast java/lang/Throwable
+				        athrow
+				    H:
+				        nop
+				        nop
+				        athrow
+				    I:
+				        lookupswitch {
+				            191943781: K,
+				            1241362125: J,
+				            default: J
+				        }
+				    J:
+				        aconst_null
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        nop
+				        athrow
+				        nop
+				        nop
+				        athrow
+				    K:
+				        goto L
+				        nop
+				        nop
+				        athrow
+				        nop
+				        nop
+				        athrow
+				    L:
+				        aload this
+				        getfield Foo.value Ljava/lang/String;
+				        areturn
+				    M:
+				    }
+				}
+				""";
+		// This sample does not work in a single pass, it needs multiple to properly fold everything.
+		// Any breakage in one transformer will affect the others.
+		validateAfterRepeatedAssembly(asm, List.of(
+				VariableFoldingTransformer.class,
+				LinearOpaqueConstantFoldingTransformer.class,
+				StaticValueInliningTransformer.class,
+				GotoInliningTransformer.class,
+				OpaquePredicateFoldingTransformer.class,
+				DeadCodeRemovingTransformer.class
+		), dis -> {
+			assertEquals(0, StringUtil.count("goto", dis), "All goto instructions should be inlined");
+			assertEquals(0, StringUtil.count("switch", dis), "All switch instructions should be inlined");
+			assertEquals(0, StringUtil.count("athrow", dis), "All athrow instructions should removed");
+			assertEquals(0, StringUtil.count("aconst_null", dis), "All athrow instructions should removed");
+			assertEquals(0, StringUtil.count("ldc", dis), "All ldc instructions should removed");
+		});
 	}
 
 	@Test
