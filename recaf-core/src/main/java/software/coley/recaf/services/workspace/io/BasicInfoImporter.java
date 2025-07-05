@@ -23,6 +23,7 @@ import software.coley.recaf.info.builder.VideoFileInfoBuilder;
 import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.IllegalClassSuspectProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
+import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
@@ -40,11 +41,13 @@ public class BasicInfoImporter implements InfoImporter {
 	private static final Logger logger = Logging.get(BasicInfoImporter.class);
 	private final ClassPatcher classPatcher;
 	private final InfoImporterConfig config;
+	private final TextFormatConfig formatConfig;
 
 	@Inject
-	public BasicInfoImporter(@Nonnull InfoImporterConfig config, @Nonnull ClassPatcher classPatcher) {
-		this.classPatcher = classPatcher;
+	public BasicInfoImporter(@Nonnull InfoImporterConfig config, @Nonnull TextFormatConfig formatConfig, @Nonnull ClassPatcher classPatcher) {
 		this.config = config;
+		this.formatConfig = formatConfig;
+		this.classPatcher = classPatcher;
 	}
 
 	@Nonnull
@@ -77,7 +80,7 @@ public class BasicInfoImporter implements InfoImporter {
 								.skipValidationChecks(false)
 								.build();
 					} catch (Throwable t1) {
-						logger.error("CafeDude patching output is still non-compliant with ASM for file: {}", name);
+						logger.error("CafeDude patching output is still non-compliant with ASM for file: {}", formatConfig.filter(name));
 						return new FileInfoBuilder<>()
 								.withRawContent(data)
 								.withName(name)
