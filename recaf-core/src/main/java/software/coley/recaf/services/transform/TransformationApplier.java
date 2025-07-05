@@ -2,8 +2,8 @@ package software.coley.recaf.services.transform;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.slf4j.Logger;
 import software.coley.collections.Sets;
+import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.BundlePathNode;
@@ -15,7 +15,6 @@ import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingApplier;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -26,6 +25,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static software.coley.collections.Unchecked.cast;
@@ -38,11 +38,12 @@ import static software.coley.collections.Unchecked.checkedForEach;
  * @see TransformationManager
  */
 public class TransformationApplier {
-	private static final Logger logger = Logging.get(TransformationApplier.class);
+	private static final DebuggingLogger logger = Logging.get(TransformationApplier.class);
 	private final TransformationManager transformationManager;
 	private final InheritanceGraph inheritanceGraph;
 	private final MappingApplier mappingApplier;
 	private final Workspace workspace;
+	private int maxPasses = 1;
 
 	/**
 	 * @param transformationManager
@@ -62,6 +63,21 @@ public class TransformationApplier {
 		this.inheritanceGraph = inheritanceGraph;
 		this.mappingApplier = mappingApplier;
 		this.workspace = workspace;
+	}
+
+	/**
+	 * @return Maximum number of times to repeat transformations.
+	 */
+	public int getMaxPasses() {
+		return Math.max(1, maxPasses);
+	}
+
+	/**
+	 * @param maxPasses
+	 * 		Maximum number of times to repeat transformations
+	 */
+	public void setMaxPasses(int maxPasses) {
+		this.maxPasses = maxPasses;
 	}
 
 	/**
@@ -121,28 +137,44 @@ public class TransformationApplier {
 		}
 		resource.jvmClassBundleStreamRecursive().forEach(bundle -> {
 			BundlePathNode bundlePathNode = resourcePath.child(bundle);
-			for (JvmClassTransformer transformer : transformers) {
-				bundle.forEach(cls -> {
-					// Skip if the class does not pass the predicate
-					if (predicate != null && !predicate.shouldTransform(workspace, resource, bundle, cls))
-						return;
+			for (int pass = 1; pass <= getMaxPasses(); pass++) {
+				AtomicBoolean anyWorkDone = new AtomicBoolean(false);
+				for (JvmClassTransformer transformer : transformers) {
+					final int currentPass = pass;
+					bundle.forEach(cls -> {
+						// Skip if the class does not pass the predicate
+						if (predicate != null && !predicate.shouldTransform(workspace, resource, bundle, cls))
+							return;
 
-					try {
-						context.resetTransformerTracking();
-						transformer.transform(context, workspace, resource, bundle, cls);
-						if (context.didTransformerDoWork()) {
-							// Transformer modified this class, record the interaction
+						try {
+							context.resetTransformerTracking();
+							transformer.transform(context, workspace, resource, bundle, cls);
+							if (context.didTransformerDoWork()) {
+								// Transformer modified this class, record the interaction
+								anyWorkDone.set(true);
+								Collection<ClassPathNode> paths = transformerToModifiedClasses.computeIfAbsent(transformer.getClass(),
+										t -> Collections.newSetFromMap(new IdentityHashMap<>()));
+
+								// Only keep one path (since we may have repeated passes)
+								if (paths.stream().noneMatch(p -> p.getValue().getName().equals(cls.getName()))) {
+									ClassPathNode path = bundlePathNode.child(cls.getPackageName()).child(cls);
+									paths.add(path);
+								}
+							}
+							logger.debugging(l -> l.debug("Pass {}: Transformer {} didWork={}",
+									currentPass, transformer.getClass().getSimpleName(), context.didTransformerDoWork()));
+						} catch (Throwable t) {
+							logger.error("Transformer '{}' failed on class '{}'", transformer.name(), cls.getName(), t);
 							ClassPathNode path = bundlePathNode.child(cls.getPackageName()).child(cls);
-							transformerToModifiedClasses.computeIfAbsent(transformer.getClass(),
-									t -> Collections.newSetFromMap(new IdentityHashMap<>())).add(path);
+							var transformerToThrowable = transformJvmFailures.computeIfAbsent(path, p -> new IdentityHashMap<>());
+							transformerToThrowable.put(transformer.getClass(), t);
 						}
-					} catch (Throwable t) {
-						logger.error("Transformer '{}' failed on class '{}'", transformer.name(), cls.getName(), t);
-						ClassPathNode path = bundlePathNode.child(cls.getPackageName()).child(cls);
-						var transformerToThrowable = transformJvmFailures.computeIfAbsent(path, p -> new IdentityHashMap<>());
-						transformerToThrowable.put(transformer.getClass(), t);
-					}
-				});
+					});
+				}
+
+				// Break if no work has been done this pass.
+				if (!anyWorkDone.get())
+					break;
 			}
 		});
 

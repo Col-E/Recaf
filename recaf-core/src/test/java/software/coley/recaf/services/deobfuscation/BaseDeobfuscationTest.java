@@ -47,7 +47,6 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 	private static final String CLASS_NAME = "Example";
 	private static JvmAssemblerPipeline assembler;
 	private static TransformationApplierService transformationApplierService;
-	private static TransformationApplier transformationApplier;
 	private static JvmDecompiler decompiler;
 	private static Workspace workspace;
 
@@ -62,7 +61,6 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 		workspace = new BasicWorkspace(new WorkspaceResourceBuilder().build());
 		workspaceManager.setCurrentIgnoringConditions(workspace);
 		assembler = recaf.get(AssemblerPipelineManager.class).newJvmAssemblerPipeline(workspace);
-		transformationApplier = transformationApplierService.newApplierForCurrentWorkspace();
 	}
 
 	protected void validateNoTransformation(@Nonnull String assembly, @Nonnull List<Class<? extends JvmClassTransformer>> transformers) {
@@ -70,7 +68,7 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 		JvmClassInfo cls = assemble(assembly, isFullBody);
 
 		// Transforming should not actually result in any changes
-		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(transformers));
 		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
 		assertTrue(result.getTransformedClasses().isEmpty(), "There were unexpected transformations applied");
 		assertTrue(result.getModifiedClassesPerTransformer().isEmpty(), "There were unexpected transformations applied");
@@ -87,7 +85,7 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 		assertTrue(initialDecompile.contains(expectedBefore));
 
 		// Run the transformer
-		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(transformers));
 		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
 		assertEquals(1, result.getTransformedClasses().size(), "Expected transformation to be applied");
 
@@ -109,7 +107,7 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 
 		// Run the transformer.
 		JvmClassInfo cls = assemble(assembly, isFullBody);
-		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(transformers));
 		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
 		assertEquals(1, result.getTransformedClasses().size(), "Expected transformation to be applied");
 
@@ -125,30 +123,27 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 		boolean isFullBody = assembly.contains(".class");
 
 		// Run the transformer until no changes are observed.
-		int passes = 0;
-		for (int i = 0; i < 10; i++) {
-			JvmClassInfo cls = assemble(assembly, isFullBody);
-			JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+		JvmClassInfo cls = assemble(assembly, isFullBody);
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier(10).transformJvm(transformers));
 
-			// No transform step should fail.
-			result.getTransformerFailures().forEach((path, failureMap) -> {
-				System.err.println(path.getValue().getName());
-				failureMap.forEach((transformer, error) -> {
-					System.err.println(transformer.getSimpleName());
-					error.printStackTrace(System.err);
-					System.err.println();
-				});
+		// No transform step should fail.
+		result.getTransformerFailures().forEach((path, failureMap) -> {
+			System.err.println(path.getValue().getName());
+			failureMap.forEach((transformer, error) -> {
+				System.err.println(transformer.getSimpleName());
+				error.printStackTrace(System.err);
+				System.err.println();
 			});
-			assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		});
 
-			// Prepare for next transform step.
-			assembly = disassembleTransformed(result, isFullBody);
-			if (result.getTransformedClasses().isEmpty())
-				break;
-			passes++;
-		}
-		assertTrue(passes > 0, "There were no transformations");
-		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER x" + passes + " PASSES ========\n" + assembly);
+		// Validate output has been transformed without any errors.
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertEquals(1, result.getTransformedClasses().size(), "Expected transformation to be applied");
+
+		// Update the assembly to hold the transformed output.
+		// Validate the new disassembly matches our assertion checker's assumptions.
+		assembly = disassembleTransformed(result, isFullBody);
+		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER ========\n" + assembly);
 		assertionChecker.accept(assembly);
 	}
 
@@ -159,7 +154,7 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 
 		// Run the transformer
 		JvmClassInfo cls = assemble(assembly, isFullBody);
-		JvmTransformResult result = assertDoesNotThrow(() -> transformationApplier.transformJvm(transformers));
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(transformers));
 		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
 		assertFalse(result.getMappingsToApply().isEmpty(), "Expected transformation to register mappings");
 
@@ -230,5 +225,18 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 		JvmClassInfo cls = new JvmClassInfoBuilder(representation.classFile()).build();
 		bundle.put(cls);
 		return cls;
+	}
+
+	@Nonnull
+	protected TransformationApplier newApplier() {
+		return newApplier(1);
+	}
+
+	@Nonnull
+	protected TransformationApplier newApplier(int passCount) {
+		TransformationApplier applier = transformationApplierService.newApplierForCurrentWorkspace();
+		assertNotNull(applier);
+		applier.setMaxPasses(passCount);
+		return applier;
 	}
 }

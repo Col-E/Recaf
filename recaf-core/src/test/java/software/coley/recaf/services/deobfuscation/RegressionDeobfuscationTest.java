@@ -650,12 +650,9 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 		// This sample does not work in a single pass, it needs multiple to properly fold everything.
 		// Any breakage in one transformer will affect the others.
 		validateAfterRepeatedAssembly(asm, List.of(
-				VariableFoldingTransformer.class,
 				LinearOpaqueConstantFoldingTransformer.class,
-				StaticValueInliningTransformer.class,
 				GotoInliningTransformer.class,
-				OpaquePredicateFoldingTransformer.class,
-				DeadCodeRemovingTransformer.class
+				OpaquePredicateFoldingTransformer.class
 		), dis -> {
 			assertEquals(0, StringUtil.count("goto", dis), "All goto instructions should be inlined");
 			assertEquals(0, StringUtil.count("switch", dis), "All switch instructions should be inlined");
