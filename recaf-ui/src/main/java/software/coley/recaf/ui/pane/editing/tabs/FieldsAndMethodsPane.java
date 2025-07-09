@@ -20,6 +20,7 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -124,7 +125,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	 */
 	public void setupSelectionNavigationListener(@Nonnull ClassNavigable navigableClass) {
 		tree.setOnMouseClicked(mouseEvent -> {
-			if (mouseEvent.getClickCount() == 2) {
+			if (mouseEvent.getClickCount() == 2 || (mouseEvent.isControlDown() && mouseEvent.getButton() == MouseButton.PRIMARY)) {
 				TreeItem<PathNode<?>> selectedItem = tree.getSelectionModel().getSelectedItem();
 				if (!navigationLock && selectedItem != null && selectedItem.getValue() instanceof ClassMemberPathNode memberPathNode) {
 					navigationLock = true;
