@@ -55,6 +55,13 @@ public class MemberDisplayFormatConfig extends BasicConfigContainer {
 	}
 
 	@Nonnull
+	public String getDisplay(@Nonnull String name, @Nonnull String desc) {
+		if (desc.charAt(0) == '(')
+			return getMethodDisplay(name, desc);
+		return getFieldDisplay(name, desc);
+	}
+
+	@Nonnull
 	public String getFieldDisplay(@Nonnull String name, @Nonnull String desc) {
 		return switch (nameTypeDisplay.getValue()) {
 			case NAME_ONLY -> name;
@@ -69,6 +76,14 @@ public class MemberDisplayFormatConfig extends BasicConfigContainer {
 			case NAME_ONLY -> name;
 			case NAME_AND_RAW_DESCRIPTOR -> name + desc;
 			case NAME_AND_PRETTY_DESCRIPTOR -> name + " " + Types.pretty(Type.getMethodType(desc));
+		};
+	}
+
+	@Nonnull
+	public String getDescriptorDisplay(@Nonnull String desc) {
+		return switch (nameTypeDisplay.getValue()) {
+			case NAME_ONLY, NAME_AND_RAW_DESCRIPTOR ->  desc;
+			case NAME_AND_PRETTY_DESCRIPTOR -> Types.pretty(Type.getType(desc));
 		};
 	}
 

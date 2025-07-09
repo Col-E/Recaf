@@ -114,6 +114,7 @@ menu.hex.copyas=Copy as...
 menu.mode=Change view
 menu.mode.class.auto=Automatic
 menu.mode.class.decompile=Decompile
+menu.mode.class.low-level=Low level
 menu.mode.file.auto=Automatic
 menu.mode.file.text=Text
 menu.mode.file.hex=Hex

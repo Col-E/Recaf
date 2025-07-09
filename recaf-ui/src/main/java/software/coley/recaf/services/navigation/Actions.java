@@ -2420,6 +2420,8 @@ public class Actions implements Service {
 				mode.getItems().addAll(
 						action("menu.mode.class.decompile", CarbonIcons.CODE,
 								() -> content.setEditorType(JvmClassEditorType.DECOMPILE)),
+						action("menu.mode.class.low-level", CarbonIcons.MICROSCOPE,
+								() -> content.setEditorType(JvmClassEditorType.LOW_LEVEL)),
 						action("menu.mode.file.hex", CarbonIcons.NUMBER_0,
 								() -> content.setEditorType(JvmClassEditorType.HEX))
 				);

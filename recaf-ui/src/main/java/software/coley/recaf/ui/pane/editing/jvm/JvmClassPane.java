@@ -10,6 +10,7 @@ import software.coley.recaf.ui.pane.editing.ClassPane;
 import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.binary.hex.HexAdapter;
 import software.coley.recaf.ui.pane.editing.binary.hex.HexConfig;
+import software.coley.recaf.ui.pane.editing.jvm.lowlevel.JvmLowLevelPane;
 
 /**
  * Displays {@link JvmClassInfo} in a configurable manner.
@@ -19,6 +20,7 @@ import software.coley.recaf.ui.pane.editing.binary.hex.HexConfig;
 @Dependent
 public class JvmClassPane extends ClassPane {
 	private final Instance<JvmDecompilerPane> decompilerProvider;
+	private final Instance<JvmLowLevelPane> lowLevelProvider;
 	private final HexConfig hexConfig;
 	private JvmClassEditorType editorType;
 
@@ -26,13 +28,15 @@ public class JvmClassPane extends ClassPane {
 	public JvmClassPane(@Nonnull ClassEditingConfig config,
 	                    @Nonnull HexConfig hexConfig,
 	                    @Nonnull SideTabsInjector sideTabsInjector,
-	                    @Nonnull Instance<JvmDecompilerPane> decompilerProvider) {
+	                    @Nonnull Instance<JvmDecompilerPane> decompilerProvider,
+	                    @Nonnull Instance<JvmLowLevelPane> lowLevelProvider) {
+		this.hexConfig = hexConfig;
+		this.decompilerProvider = decompilerProvider;
+		this.lowLevelProvider = lowLevelProvider;
+
 		sideTabsInjector.injectLater(this);
 
 		editorType = config.getDefaultJvmEditor().getValue();
-
-		this.hexConfig = hexConfig;
-		this.decompilerProvider = decompilerProvider;
 	}
 
 	/**
@@ -66,6 +70,7 @@ public class JvmClassPane extends ClassPane {
 		JvmClassEditorType type = getEditorType();
 		switch (type) {
 			case DECOMPILE -> setDisplay(decompilerProvider.get());
+			case LOW_LEVEL -> setDisplay(lowLevelProvider.get());
 			case HEX -> setDisplay(new HexAdapter(hexConfig));
 			default -> throw new IllegalStateException("Unknown editor type: " + type.name());
 		}

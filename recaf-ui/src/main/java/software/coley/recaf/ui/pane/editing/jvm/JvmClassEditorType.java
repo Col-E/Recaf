@@ -7,5 +7,6 @@ package software.coley.recaf.ui.pane.editing.jvm;
  */
 public enum JvmClassEditorType {
 	DECOMPILE,
+	LOW_LEVEL,
 	HEX
 }

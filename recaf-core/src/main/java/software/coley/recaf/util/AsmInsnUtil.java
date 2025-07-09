@@ -2,6 +2,7 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import me.darknet.assembler.util.BlwOpcodes;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -24,7 +25,9 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * ASM instruction utilities.
@@ -32,6 +35,23 @@ import java.util.List;
  * @author Matt Coley
  */
 public class AsmInsnUtil implements Opcodes {
+	private static final Map<Integer, String> opcodeToName = new HashMap<>();
+
+	static {
+		BlwOpcodes.getOpcodes().forEach((name, op) -> opcodeToName.put(op, name));
+	}
+
+	/**
+	 * @param opcode
+	 * 		Some opcode.
+	 *
+	 * @return Name of opcode.
+	 */
+	@Nonnull
+	public static String getInsnName(int opcode) {
+		return opcodeToName.getOrDefault(opcode, "unknown");
+	}
+
 	/**
 	 * Convert an instruction opcode to a {@link Handle} tag.
 	 *
