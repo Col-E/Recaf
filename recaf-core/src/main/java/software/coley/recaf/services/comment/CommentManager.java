@@ -103,7 +103,7 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 				ClassReader reader = new ClassReader(bytecode);
 				ClassWriter writer = new ClassWriter(reader, 0);
 				CommentInsertingVisitor inserter = new CommentInsertingVisitor(classComments, classPath, writer);
-				reader.accept(inserter, 0);
+				reader.accept(inserter, initialClassInfo.getClassReaderFlags());
 				if (inserter.getInsertions() > 0)
 					return writer.toByteArray();
 				return bytecode;

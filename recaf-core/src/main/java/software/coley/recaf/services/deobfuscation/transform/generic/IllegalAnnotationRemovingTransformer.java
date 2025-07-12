@@ -29,7 +29,7 @@ public class IllegalAnnotationRemovingTransformer implements JvmClassTransformer
 		ClassWriter writer = new ClassWriter(reader, 0);
 
 		IllegalAnnotationRemovingVisitor remover = new IllegalAnnotationRemovingVisitor(writer);
-		reader.accept(remover, 0);
+		reader.accept(remover, initialClassState.getClassReaderFlags());
 
 		// If the visitor did work, update the class.
 		if (remover.hasDetectedIllegalAnnotations())

@@ -29,7 +29,7 @@ public class IllegalSignatureRemovingTransformer implements JvmClassTransformer 
 		ClassWriter writer = new ClassWriter(reader, 0);
 
 		IllegalSignatureRemovingVisitor remover = new IllegalSignatureRemovingVisitor(writer);
-		reader.accept(remover, 0);
+		reader.accept(remover, initialClassState.getClassReaderFlags());
 
 		// If the visitor did work, update the class.
 		if (remover.hasDetectedIllegalSignatures())

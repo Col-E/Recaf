@@ -104,7 +104,7 @@ public class ChangeClassVersionForAllPopup extends RecafStage {
 								MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
 								return new JSRInlinerAdapter(mv, access, name, descriptor, signature, exceptions);
 							}
-						}, 0);
+						}, classInfo.getClassReaderFlags());
 						result = new JvmClassInfoBuilder(writer.toByteArray()).build();
 					} else {
 						// No special handling needed, just update the version value.

@@ -32,7 +32,7 @@ public class LongExceptionRemovingTransformer implements JvmClassTransformer {
 		ClassWriter writer = new ClassWriter(0);
 
 		LongExceptionRemovingVisitor remover = new LongExceptionRemovingVisitor(writer, LONG_EXCEPTION);
-		reader.accept(remover, 0);
+		reader.accept(remover, initialClassState.getClassReaderFlags());
 
 		// If the visitor did work, update the class.
 		if (remover.hasDetectedLongExceptions())

@@ -1493,7 +1493,7 @@ public class Actions implements Service {
 			ClassReader reader = declaringClass.getClassReader();
 			ClassWriter writer = new ClassWriter(reader, 0);
 			MemberCopyingVisitor copier = new MemberCopyingVisitor(writer, member, newName);
-			reader.accept(copier, 0);
+			reader.accept(copier, declaringClass.getClassReaderFlags());
 			bundle.put(new JvmClassInfoBuilder(writer.toByteArray()).build());
 		};
 		NamePopup popup = new NamePopup(copyTask).withInitialName(originalName);
@@ -2006,7 +2006,7 @@ public class Actions implements Service {
 		ClassReader reader = declaringClass.getClassReader();
 		ClassWriter writer = new ClassWriter(reader, 0);
 		MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, FieldPredicate.of(fields));
-		reader.accept(visitor, 0);
+		reader.accept(visitor, declaringClass.getClassReaderFlags());
 		bundle.put(declaringClass.toJvmClassBuilder()
 				.adaptFrom(writer.toByteArray())
 				.build());
@@ -2058,7 +2058,7 @@ public class Actions implements Service {
 		ClassReader reader = declaringClass.getClassReader();
 		ClassWriter writer = new ClassWriter(reader, 0);
 		MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, MethodPredicate.of(methods));
-		reader.accept(visitor, 0);
+		reader.accept(visitor, declaringClass.getClassReaderFlags());
 		bundle.put(declaringClass.toJvmClassBuilder()
 				.adaptFrom(writer.toByteArray())
 				.build());
@@ -2146,7 +2146,7 @@ public class Actions implements Service {
 		new AddMemberPopup(member -> {
 			ClassReader reader = info.getClassReader();
 			ClassWriter writer = new ClassWriter(reader, 0);
-			reader.accept(new MemberStubAddingVisitor(writer, member), 0);
+			reader.accept(new MemberStubAddingVisitor(writer, member), info.getClassReaderFlags());
 			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
 					.adaptFrom(writer.toByteArray())
 					.build();
@@ -2180,7 +2180,7 @@ public class Actions implements Service {
 		new AddMemberPopup(member -> {
 			ClassReader reader = info.getClassReader();
 			ClassWriter writer = new ClassWriter(reader, 0);
-			reader.accept(new MemberStubAddingVisitor(writer, member), 0);
+			reader.accept(new MemberStubAddingVisitor(writer, member),  info.getClassReaderFlags());
 			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
 					.adaptFrom(writer.toByteArray())
 					.build();
@@ -2215,7 +2215,7 @@ public class Actions implements Service {
 		new OverrideMethodPopup(this, cellConfigurationService, inheritanceGraph, workspace, info, (methodOwner, method) -> {
 			ClassReader reader = info.getClassReader();
 			ClassWriter writer = new ClassWriter(reader, 0);
-			reader.accept(new MemberStubAddingVisitor(writer, method), 0);
+			reader.accept(new MemberStubAddingVisitor(writer, method),  info.getClassReaderFlags());
 			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
 					.adaptFrom(writer.toByteArray())
 					.build();
@@ -2252,7 +2252,7 @@ public class Actions implements Service {
 		ClassReader reader = declaringClass.getClassReader();
 		ClassWriter writer = new ClassWriter(reader, 0);
 		MethodNoopingVisitor visitor = new MethodNoopingVisitor(writer, MethodPredicate.of(methods));
-		reader.accept(visitor, 0);
+		reader.accept(visitor, declaringClass.getClassReaderFlags());
 		bundle.put(declaringClass.toJvmClassBuilder()
 				.adaptFrom(writer.toByteArray())
 				.build());
@@ -2287,7 +2287,7 @@ public class Actions implements Service {
 			if (annotated instanceof JvmClassInfo target) {
 				ClassReader reader = target.getClassReader();
 				ClassWriter writer = new ClassWriter(reader, 0);
-				reader.accept(new ClassAnnotationRemovingVisitor(writer, annotationTypes), 0);
+				reader.accept(new ClassAnnotationRemovingVisitor(writer, annotationTypes), target.getClassReaderFlags());
 				JvmClassInfo updatedClass = new JvmClassInfoBuilder(writer.toByteArray()).build();
 				bundle.put(cast(updatedClass));
 			} else if (annotated instanceof ClassMember member && member.getDeclaringClass() instanceof JvmClassInfo target) {
@@ -2295,10 +2295,10 @@ public class Actions implements Service {
 				ClassWriter writer = new ClassWriter(reader, 0);
 				if (member.isField()) {
 					FieldMember field = (FieldMember) member;
-					reader.accept(FieldAnnotationRemovingVisitor.forClass(writer, annotationTypes, field), 0);
+					reader.accept(FieldAnnotationRemovingVisitor.forClass(writer, annotationTypes, field), target.getClassReaderFlags());
 				} else {
 					MethodMember method = (MethodMember) member;
-					reader.accept(MethodAnnotationRemovingVisitor.forClass(writer, annotationTypes, method), 0);
+					reader.accept(MethodAnnotationRemovingVisitor.forClass(writer, annotationTypes, method), target.getClassReaderFlags());
 				}
 				JvmClassInfo updatedClass = new JvmClassInfoBuilder(writer.toByteArray()).build();
 				bundle.put(cast(updatedClass));

@@ -2,11 +2,13 @@ package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import software.coley.cafedude.classfile.ConstantPoolConstants;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.builtin.ReferencedClassesProperty;
 import software.coley.recaf.info.properties.builtin.StringDefinitionsProperty;
+import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.visitors.TypeVisitor;
 
@@ -55,6 +57,17 @@ public interface JvmClassInfo extends ClassInfo {
 	 */
 	@Nonnull
 	ClassReader getClassReader();
+
+	/**
+	 * @return Default flags to use with {@link #getClassReader()}
+	 */
+	default int getClassReaderFlags() {
+		// There are some old classes with stack-frame data.
+		// These aren't strictly required on old classes, and ASM dies when re-writing them (
+		// - MethodWriter.visitFrame checks for pre Java 6 and throws
+		return getVersion() <= Opcodes.V1_5 ?
+				ClassReader.SKIP_FRAMES : 0;
+	}
 
 	/**
 	 * @return Set of all classes referenced in the constant pool.

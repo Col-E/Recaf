@@ -44,7 +44,7 @@ public class IllegalVarargsRemovingTransformer implements JvmClassTransformer {
 			ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
 			ClassWriter writer = new ClassWriter(reader, 0);
 			IllegalVarargsRemovingVisitor remover = new IllegalVarargsRemovingVisitor(writer);
-			reader.accept(remover, 0);
+			reader.accept(remover, initialClassState.getClassReaderFlags());
 			if (remover.hasDetectedIllegalVarargs()) // Should always occur given the circumstances
 				context.setBytecode(bundle, initialClassState, writer.toByteArray());
 		}
