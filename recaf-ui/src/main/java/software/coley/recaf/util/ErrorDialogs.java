@@ -3,6 +3,7 @@ package software.coley.recaf.util;
 import javafx.beans.binding.StringBinding;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
+import javafx.stage.Stage;
 
 /**
  * Util for displaying error dialogs.
@@ -56,6 +57,8 @@ public class ErrorDialogs {
 		// Set expandable Exception into the dialog pane.
 		alert.getDialogPane().setExpandableContent(textArea);
 		alert.getDialogPane().setExpanded(true);
+		Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		alert.showAndWait();
 	}
 
@@ -64,6 +67,8 @@ public class ErrorDialogs {
 		alert.titleProperty().bind(title);
 		alert.headerTextProperty().bind(header);
 		alert.contentTextProperty().bind(content);
+		Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		return alert;
 	}
 
@@ -72,6 +77,8 @@ public class ErrorDialogs {
 		alert.setTitle(title);
 		alert.setHeaderText(header);
 		alert.setContentText(content);
+		Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		return alert;
 	}
 }

@@ -421,8 +421,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				try {
 					AndroidClassBundle dexBundle = DexIOUtil.read(infoSource);
 					androidClassBundles.put(pathName, dexBundle);
-				} catch (IOException ex) {
-					logger.error("Failed to read embedded DEX '{}'", pathName, ex);
+				} catch (Throwable t) {
+					logger.error("Failed to read embedded DEX '{}'", pathName, t);
 					files.initialPut(fileInfo);
 				}
 				return;
@@ -436,8 +436,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					WorkspaceFileResource embeddedResource = handleZip(embeddedResourceBuilder,
 							fileInfo.asZipFile(), infoSource);
 					embeddedResources.put(pathName, embeddedResource);
-				} catch (IOException ex) {
-					logger.error("Failed to read embedded ZIP '{}'", pathName, ex);
+				} catch (Throwable t) {
+					logger.error("Failed to read embedded ZIP '{}'", pathName, t);
 					files.initialPut(fileInfo);
 				}
 				return;
@@ -451,8 +451,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					WorkspaceFileResource embeddedResource =
 							(WorkspaceFileResource) handleModules(embeddedResourceBuilder, (ModulesFileInfo) fileInfo);
 					embeddedResources.put(pathName, embeddedResource);
-				} catch (IOException ex) {
-					logger.error("Failed to read embedded ZIP '{}'", pathName, ex);
+				} catch (Throwable t) {
+					logger.error("Failed to read embedded ZIP '{}'", pathName, t);
 					files.initialPut(fileInfo);
 				}
 				return;

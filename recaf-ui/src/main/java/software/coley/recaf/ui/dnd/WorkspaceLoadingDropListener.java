@@ -10,6 +10,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.pane.WelcomePane;
 import software.coley.recaf.ui.pane.WorkspaceExplorerPane;
+import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.workspace.PathLoadingManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 
@@ -17,6 +18,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+
+import static software.coley.recaf.util.Lang.getBinding;
 
 /**
  * Listener implementation to handle drag-and-drop to load workspace content.
@@ -42,7 +45,7 @@ public class WorkspaceLoadingDropListener implements FileDropListener {
 	}
 
 	@Override
-	public void onDragDrop(@Nonnull Region region, @Nonnull DragEvent event, @Nonnull List<Path> files) throws IOException {
+	public void onDragDrop(@Nonnull Region region, @Nonnull DragEvent event, @Nonnull List<Path> files) {
 		// Sanity check input
 		if (files.isEmpty()) return;
 
@@ -55,11 +58,23 @@ public class WorkspaceLoadingDropListener implements FileDropListener {
 			List<Path> supporting = files.size() > 1 ? files.subList(1, files.size()) : Collections.emptyList();
 			pathLoadingManager.asyncNewWorkspace(primary, supporting, err -> {
 				logger.error("Failed to create new workspace from dropped files", err);
+				ErrorDialogs.show(
+						getBinding("dialog.error.loadworkspace.title"),
+						getBinding("dialog.error.loadworkspace.header"),
+						getBinding("dialog.error.loadworkspace.content"),
+						err
+				);
 			});
 		} else if (workspaceManager.hasCurrentWorkspace() && config.appendOnDragDrop()) {
 			// Append files to current workspace
 			pathLoadingManager.asyncAddSupportingResourcesToWorkspace(workspaceManager.getCurrent(), files, err -> {
 				logger.error("Failed to add supporting resources from dropped files", err);
+				ErrorDialogs.show(
+						getBinding("dialog.error.loadworkspace.title"),
+						getBinding("dialog.error.loadworkspace.header"),
+						getBinding("dialog.error.loadworkspace.content"),
+						err
+				);
 			});
 		}
 	}
