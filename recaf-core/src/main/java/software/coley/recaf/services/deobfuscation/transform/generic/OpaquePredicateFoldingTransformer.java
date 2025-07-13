@@ -34,7 +34,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import static org.objectweb.asm.Opcodes.*;
-import static software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer.isSupportedValueProducer;
+import static software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer.isSupportedValueProducer;
 import static software.coley.recaf.util.AsmInsnUtil.isFlowControl;
 import static software.coley.recaf.util.AsmInsnUtil.isSwitchEffectiveGoto;
 
@@ -342,7 +342,7 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 	public Set<Class<? extends ClassTransformer>> recommendedPredecessors() {
 		return Set.of(
 				// Folding opaque constants like "1 + 1" into "2"
-				LinearOpaqueConstantFoldingTransformer.class,
+				OpaqueConstantFoldingTransformer.class,
 				// Folding static constants into inline-usages (some obfuscators use fields to store opaque flow values)
 				StaticValueInliningTransformer.class,
 				// Folding constant values stored in variables

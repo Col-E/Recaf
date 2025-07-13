@@ -3,9 +3,8 @@ package software.coley.recaf.services.deobfuscation;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.StaticValueInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.analysis.ReInterpreter;
@@ -485,7 +484,7 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class, OpaquePredicateFoldingTransformer.class));
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class, OpaquePredicateFoldingTransformer.class));
 	}
 
 	@Test
@@ -650,7 +649,7 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 		// This sample does not work in a single pass, it needs multiple to properly fold everything.
 		// Any breakage in one transformer will affect the others.
 		validateAfterRepeatedAssembly(asm, List.of(
-				LinearOpaqueConstantFoldingTransformer.class,
+				OpaqueConstantFoldingTransformer.class,
 				GotoInliningTransformer.class,
 				OpaquePredicateFoldingTransformer.class
 		), dis -> {
@@ -675,6 +674,6 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(LinearOpaqueConstantFoldingTransformer.class));
+		validateNoTransformation(asm, List.of(OpaqueConstantFoldingTransformer.class));
 	}
 }

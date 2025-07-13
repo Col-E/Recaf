@@ -51,7 +51,7 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
 /**
  * A transformer that folds redundant variable use.
  * <br>
- * You should use {@link LinearOpaqueConstantFoldingTransformer} after using this for {@code POP} cleanup.
+ * You should use {@link OpaqueConstantFoldingTransformer} after using this for {@code POP} cleanup.
  *
  * @author Matt Coley
  */
@@ -216,7 +216,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 	public Set<Class<? extends ClassTransformer>> recommendedSuccessors() {
 		// This transformer results in the creation of a lot of POP/POP2 instructions.
 		// The stack-operation folding transformer can clean up afterward.
-		return Collections.singleton(LinearOpaqueConstantFoldingTransformer.class);
+		return Collections.singleton(OpaqueConstantFoldingTransformer.class);
 	}
 
 	@Nonnull

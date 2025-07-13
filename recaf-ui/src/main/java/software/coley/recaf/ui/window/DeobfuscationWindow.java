@@ -52,7 +52,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.IllegalAnno
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.KotlinNameRestorationTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LongAnnotationRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LongExceptionRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
@@ -152,7 +152,7 @@ public class DeobfuscationWindow extends RecafStage {
 					DeadCodeRemovingTransformer.class,
 					DuplicateCatchMergingTransformer.class,
 					GotoInliningTransformer.class,
-					LinearOpaqueConstantFoldingTransformer.class,
+					OpaqueConstantFoldingTransformer.class,
 					OpaquePredicateFoldingTransformer.class,
 					RedundantTryCatchRemovingTransformer.class,
 					StaticValueInliningTransformer.class,

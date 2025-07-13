@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.LinearOpaqueConstantFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
 import software.coley.recaf.util.StringUtil;
@@ -52,7 +52,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to 0");
 		});
 	}
@@ -83,7 +83,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("fconst_0", dis), "Expected to fold to 0F");
 		});
 	}
@@ -114,7 +114,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("dconst_0", dis), "Expected to fold to 0.0");
 		});
 	}
@@ -145,7 +145,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("lconst_0", dis), "Expected to fold to 0L");
 		});
 	}
@@ -165,7 +165,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("swap", dis), "Expected to stack operation");
 			assertEquals(0, StringUtil.count("ishl", dis), "Expected to math operation");
@@ -187,7 +187,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("swap", dis), "Expected to stack operation");
 			assertEquals(0, StringUtil.count("ishl", dis), "Expected to math operation");
@@ -210,7 +210,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("swap", dis), "Expected to stack operation");
 			assertEquals(0, StringUtil.count("ishl", dis), "Expected to math operation");
@@ -241,7 +241,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("lconst_1", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("dup2", dis), "Expected to stack operation");
 			assertEquals(0, StringUtil.count("ladd", dis), "Expected to operation");
@@ -273,7 +273,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("lconst_1", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to fold inputs");
 			assertEquals(1, StringUtil.count("ldc 2L", dis), "Expected to fold stack operation to 2L");
@@ -296,7 +296,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to remove redundant popped values");
 			assertEquals(0, StringUtil.count("pop", dis), "Expected to remove pop operations");
 		});
@@ -318,7 +318,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to remove redundant popped values");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to remove redundant popped values");
 			assertEquals(0, StringUtil.count("pop", dis), "Expected to remove pop operations");
@@ -342,7 +342,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to remove redundant popped values");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to remove redundant popped values");
 			assertEquals(0, StringUtil.count("pop", dis), "Expected to remove pop operations");
@@ -367,7 +367,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to remove redundant popped values");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to remove redundant popped values");
 			assertEquals(0, StringUtil.count("pop", dis), "Expected to remove pop operations");
@@ -393,7 +393,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to remove redundant popped values");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to remove redundant popped values");
 			assertEquals(0, StringUtil.count("pop", dis), "Expected to remove pop operations");
@@ -417,7 +417,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("swap", dis), "Expected to fold stack swapping");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold addition");
@@ -442,7 +442,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to fold stack duplication");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold addition");
@@ -467,7 +467,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to fold stack duplication");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold addition");
@@ -494,7 +494,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst_1", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to fold stack duplication");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold addition");
@@ -520,7 +520,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to fold stack duplication");
 			assertEquals(0, StringUtil.count("pop", dis), "Expected to fold stack popping");
@@ -544,7 +544,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst_1", dis), "Expected to fold inputs");
 			assertEquals(1, StringUtil.count("iconst_2", dis), "Expected to fold to 2 from 1+1");
 		});
@@ -572,7 +572,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to fold stack duplication");
 			assertEquals(0, StringUtil.count("pop", dis), "Expected to fold stack popping");
@@ -598,7 +598,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to fold stack duplication");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold addition");
@@ -625,7 +625,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to fold stack duplication");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold addition");
@@ -649,7 +649,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to fold redundant operation inputs");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold redundant operation");
 		});
@@ -667,7 +667,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to fold redundant operation inputs");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold redundant operation");
 		});
@@ -686,28 +686,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
-			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to fold redundant operation inputs");
-			assertEquals(0, StringUtil.count("swap", dis), "Expected to fold redundant input swapping");
-			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold redundant operation");
-		});
-
-		asm = """
-				.method public static example (I)I {
-					parameters: { a },
-					code: {
-				    A:
-				        iload a
-				        iconst_0
-				        swap
-				        swap
-				        iadd
-				        ireturn
-				    B:
-				    }
-				}
-				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to fold redundant operation inputs");
 			assertEquals(0, StringUtil.count("swap", dis), "Expected to fold redundant input swapping");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold redundant operation");
@@ -722,6 +701,27 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				        iconst_0
 				        swap
 				        swap
+				        iadd
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to fold redundant operation inputs");
+			assertEquals(0, StringUtil.count("swap", dis), "Expected to fold redundant input swapping");
+			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold redundant operation");
+		});
+
+		asm = """
+				.method public static example (I)I {
+					parameters: { a },
+					code: {
+				    A:
+				        iload a
+				        iconst_0
+				        swap
+				        swap
 				        swap
 				        iadd
 				        ireturn
@@ -729,7 +729,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to fold redundant operation inputs");
 			assertEquals(0, StringUtil.count("swap", dis), "Expected to fold redundant input swapping");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold redundant operation");
@@ -751,7 +751,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iload", dis), "Expected to fold redundant operation inputs");
 			assertEquals(0, StringUtil.count("imul", dis), "Expected to fold redundant operation");
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep zero as output");
@@ -777,7 +777,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iload", dis), "Expected to fold redundant operation inputs");
 			assertEquals(0, StringUtil.count("imul", dis), "Expected to fold redundant operation");
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep zero as output");
@@ -802,7 +802,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iload", dis), "Expected to fold redundant operation inputs");
 			assertEquals(0, StringUtil.count("imul", dis), "Expected to fold redundant operation");
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep zero as output");
@@ -936,7 +936,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateBeforeAfterDecompile(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), "return (", "return 0;");
+		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "return (", "return 0;");
 	}
 
 	@Test
@@ -958,13 +958,13 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst", dis), "Expected to fold redundant inputs");
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to fold redundant operations");
 			assertEquals(0, StringUtil.count("imul", dis), "Expected to fold redundant operations");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to fold redundant operations");
 		});
-		validateBeforeAfterDecompile(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), "return ", "return a;");
+		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "return ", "return a;");
 	}
 
 	@Test
@@ -992,13 +992,13 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iload", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("imul", dis), "Expected to fold redundant operations");
 			assertEquals(0, StringUtil.count("dup", dis), "Expected to fold redundant operations");
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to 0");
 		});
-		validateBeforeAfterDecompile(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), "return ", "return 0;");
+		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "return ", "return 0;");
 	}
 
 	@Test
@@ -1014,7 +1014,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("i2f", dis), "Expected to fold conversion");
 			assertEquals(1, StringUtil.count("ldc 10F", dis), "Expected to fold to converted value");
 		});
@@ -1033,7 +1033,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("l2f", dis), "Expected to fold conversion");
 			assertEquals(1, StringUtil.count("ldc " + StringUtil.toString(100000000000000000F) + "F", dis),
 					"Expected to fold to converted value");
@@ -1053,7 +1053,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("d2f", dis), "Expected to fold conversion");
 			assertEquals(1, StringUtil.count("ldc 5.125F", dis), "Expected to fold to converted value");
 		});
@@ -1072,7 +1072,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("l2i", dis), "Expected to fold conversion");
 			assertEquals(1, StringUtil.count("ldc " + (int) 100000000000000000L, dis), "Expected to fold to converted value");
 		});
@@ -1091,7 +1091,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("f2i", dis), "Expected to fold conversion");
 			assertEquals(1, StringUtil.count("ldc " + (int) 100000000000000000F, dis), "Expected to fold to converted value");
 		});
@@ -1110,7 +1110,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("d2i", dis), "Expected to fold conversion");
 			assertEquals(1, StringUtil.count("ldc " + (int) 10000000000000000000000000000000.0, dis), "Expected to fold to converted value");
 		});
@@ -1126,7 +1126,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("d2i", dis), "Expected to fold conversion");
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to converted value");
 		});
@@ -1146,7 +1146,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_m1", dis), "Expected to fold to -1");
 		});
 
@@ -1162,7 +1162,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
 		});
 
@@ -1178,7 +1178,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to 0");
 		});
 	}
@@ -1197,7 +1197,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_m1", dis), "Expected to fold to -1");
 		});
 
@@ -1213,7 +1213,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
 		});
 
@@ -1229,7 +1229,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to 0");
 		});
 	}
@@ -1248,7 +1248,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_m1", dis), "Expected to fold to -1");
 		});
 
@@ -1264,7 +1264,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
 		});
 
@@ -1280,7 +1280,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to fold to 0");
 		});
 	}
@@ -1300,7 +1300,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
 			assertEquals(0, StringUtil.count("iconst_5", dis), "Expected to prune argument");
 			assertEquals(0, StringUtil.count("Math.min", dis), "Expected to prune method call");
@@ -1885,7 +1885,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		});
 	}
 
-	/** Showcase pairing of {@link VariableFoldingTransformer} with {@link LinearOpaqueConstantFoldingTransformer} */
+	/** Showcase pairing of {@link VariableFoldingTransformer} with {@link OpaqueConstantFoldingTransformer} */
 	@Test
 	void foldVar() {
 		String asm = """
@@ -1911,7 +1911,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("istore unused", dis), "Expected to remove variable stores where no reads are used");
 			assertEquals(0, StringUtil.count("bipush", dis), "Expected to remove unused value pushes of variables");
 			assertEquals(0, StringUtil.count("zero", dis), "Expected to inline 'zero' variable");
@@ -1944,7 +1944,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		validateAfterAssembly(asm, List.of(
 				VariableFoldingTransformer.class,
 				OpaquePredicateFoldingTransformer.class,
-				LinearOpaqueConstantFoldingTransformer.class,
+				OpaqueConstantFoldingTransformer.class,
 				GotoInliningTransformer.class
 		), dis -> {
 			assertEquals(1, StringUtil.count("iconst", dis), "Expected only one const");
@@ -1975,8 +1975,8 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class,
-				LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class,
+				OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("istore", dis), "Expected to remove redundant istore");
 			assertEquals(0, StringUtil.count("iload", dis), "Expected to inline redundant iload");
 			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to have single iconst_0");
@@ -2012,7 +2012,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("const", dis), "Expected to remove redundant iconst_0");
 			assertEquals(0, StringUtil.count("load", dis), "Expected to remove redundant iload");
 			assertEquals(0, StringUtil.count("store", dis), "Expected to remove redundant istore");
@@ -2045,7 +2045,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class));
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class));
 	}
 
 	/** Show {@link VariableFoldingTransformer} isn't too aggressive */
@@ -2078,7 +2078,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, LinearOpaqueConstantFoldingTransformer.class));
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class));
 	}
 
 	@Test

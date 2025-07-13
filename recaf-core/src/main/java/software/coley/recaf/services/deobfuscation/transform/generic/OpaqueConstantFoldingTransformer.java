@@ -48,14 +48,14 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Matt Coley
  */
 @Dependent
-public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransformer {
+public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	private static final int[] ARG_1_SIZE = new int[255];
 	private static final int[] ARG_2_SIZE = new int[255];
 	private final InheritanceGraphService graphService;
 	private InheritanceGraph inheritanceGraph;
 
 	@Inject
-	public LinearOpaqueConstantFoldingTransformer(@Nonnull InheritanceGraphService graphService) {
+	public OpaqueConstantFoldingTransformer(@Nonnull InheritanceGraphService graphService) {
 		this.graphService = graphService;
 	}
 
