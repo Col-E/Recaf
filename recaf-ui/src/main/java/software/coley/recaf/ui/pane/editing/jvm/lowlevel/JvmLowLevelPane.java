@@ -750,7 +750,39 @@ public class JvmLowLevelPane extends BorderPane implements ClassNavigable, Updat
 			case SourceDebugExtensionAttribute attr -> { /* single value */ }
 			case SourceFileAttribute attr -> { /* single value */ }
 			case SourceIdAttribute attr -> { /* single value */ }
-			case StackMapTableAttribute attr -> {} // TODO: Update CafeDude to make stack-map stuff sealed
+			case StackMapTableAttribute attr -> {
+				List<StackMapTableAttribute.StackMapFrame> frames = attr.getFrames();
+				for (int j = 0; j < frames.size(); j++) {
+					child.item("[" + j + "]", frames.get(j),
+							i -> switch (i) {
+								case StackMapTableAttribute.AppendFrame appendFrame -> "APPEND: " + i.getFrameType();
+								case StackMapTableAttribute.ChopFrame chopFrame -> "CHOP: " + i.getFrameType();
+								case StackMapTableAttribute.FullFrame fullFrame -> "FULL: " + i.getFrameType();
+								case StackMapTableAttribute.SameFrame sameFrame -> "SAME: " + i.getFrameType();
+								case StackMapTableAttribute.SameFrameExtended sameFrameExtended ->
+										"SAME_EXTENDED: " + i.getFrameType();
+								case StackMapTableAttribute.SameLocalsOneStackItem sameLocalsOneStackItem ->
+										"SAME_LOCALS_ONE_STACK: " + i.getFrameType();
+								case StackMapTableAttribute.SameLocalsOneStackItemExtended sameLocalsOneStackItemExtended ->
+										"SAME_LOCALS_ONE_STACK_EXTENDED: " + i.getFrameType();
+							},
+							i -> switch (i) {
+								case StackMapTableAttribute.AppendFrame appendFrame ->
+										new FontIconView(CarbonIcons.SUB_VOLUME);
+								case StackMapTableAttribute.ChopFrame chopFrame ->
+										new FontIconView(CarbonIcons.CUT_IN_HALF);
+								case StackMapTableAttribute.FullFrame fullFrame -> new FontIconView(CarbonIcons.STOP);
+								case StackMapTableAttribute.SameFrame sameFrame -> new FontIconView(CarbonIcons.COPY);
+								case StackMapTableAttribute.SameFrameExtended sameFrameExtended ->
+										new FontIconView(CarbonIcons.COPY);
+								case StackMapTableAttribute.SameLocalsOneStackItem sameLocalsOneStackItem ->
+										new FontIconView(CarbonIcons.COPY);
+								case StackMapTableAttribute.SameLocalsOneStackItemExtended sameLocalsOneStackItemExtended ->
+										new FontIconView(CarbonIcons.COPY);
+							},
+							i -> null);
+				}
+			}
 			case SyntheticAttribute attr -> { /* empty */ }
 		}
 
