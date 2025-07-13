@@ -440,7 +440,8 @@ public class DeobfuscationWindow extends RecafStage {
 		private final Editor editorAssembly;
 		private ClassInfo classInfo;
 
-		private TransformPreview(@Nonnull FileTypeSyntaxAssociationService languageAssociation, @Nonnull Instance<SearchBar> searchBarProvider, boolean andApply) {
+		private TransformPreview(@Nonnull FileTypeSyntaxAssociationService languageAssociation,
+		                         @Nonnull Instance<SearchBar> searchBarProvider, boolean andApply) {
 			this.andApply = andApply;
 
 			editorDecompile = new Editor();
@@ -449,6 +450,7 @@ public class DeobfuscationWindow extends RecafStage {
 			editorDecompile.getCodeArea().setEditable(false);
 			languageAssociation.configureEditorSyntax("java", editorDecompile);
 
+			// TODO: Control flow lines would also be nice to have here
 			editorAssembly = new Editor();
 			editorAssembly.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
 			editorAssembly.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
