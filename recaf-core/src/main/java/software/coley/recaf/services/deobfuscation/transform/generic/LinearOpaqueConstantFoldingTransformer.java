@@ -16,6 +16,7 @@ import software.coley.collections.Lists;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -36,12 +37,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.*;
 
 /**
- * A transformer that folds <i>basic</i> linear constant usages.
+ * A transformer that folds sequences of computed values into constants.
  *
  * @author Matt Coley
  */
@@ -527,6 +529,13 @@ public class LinearOpaqueConstantFoldingTransformer implements JvmClassTransform
 	@Override
 	public String name() {
 		return "Opaque constant folding";
+	}
+
+	@Nonnull
+	@Override
+	public Set<Class<? extends ClassTransformer>> recommendedPredecessors() {
+		// Basic goto obf will prevent this transformer from handling "obvious" cases.
+		return Collections.singleton(GotoInliningTransformer.class);
 	}
 
 	/**
