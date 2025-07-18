@@ -518,6 +518,10 @@ public abstract class ClassStubGenerator {
 		if (name.indexOf('/') >= 0)
 			throw new IllegalStateException("Saw internal name format, expected source name format");
 
+		// Strip array dimensions
+		if (name.endsWith("[]"))
+			name = name.substring(0, name.indexOf('['));
+
 		// Allow primitives
 		if (software.coley.recaf.util.Types.isPrimitiveClassName(name))
 			return true;
