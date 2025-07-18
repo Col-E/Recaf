@@ -227,8 +227,16 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		// If we are doing validation checks, delegating the reader to a writer should catch most issues
 		// that would normally crash ASM. It is the caller's responsibility to error handle ASM failing
 		// if such failures occur.
-		adapter = new ClassBuilderAdapter(skipValidationChecks ? null : new ClassWriter(reader, 0));
-		reader.accept(adapter, flags);
+		if (skipValidationChecks) {
+			adapter = new ClassBuilderAdapter(null);
+			reader.accept(adapter, flags);
+		} else {
+			ClassWriter cw = new ClassWriter(reader, 0);
+			adapter = new ClassBuilderAdapter(cw);
+			reader.accept(adapter, flags);
+			cw.toByteArray();
+		}
+
 		return withBytecode(reader.b);
 	}
 
@@ -388,7 +396,8 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-			return new FieldBuilderAdapter(access, name, descriptor, signature, value) {
+			FieldVisitor fv = super.visitField(access, name, descriptor, signature, value);
+			return new FieldBuilderAdapter(fv, access, name, descriptor, signature, value) {
 
 				@Override
 				public void visitAttribute(Attribute attribute) {
@@ -401,13 +410,15 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 					if (fields == null)
 						fields = new ArrayList<>();
 					fields.add(getFieldMember());
+					super.visitEnd();
 				}
 			};
 		}
 
 		@Override
 		public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-			return new MethodBuilderAdapter(access, name, descriptor, signature, exceptions) {
+			MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+			return new MethodBuilderAdapter(mv, access, name, descriptor, signature, exceptions) {
 
 				@Override
 				public void visitAttribute(Attribute attribute) {
@@ -477,9 +488,9 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	private static class FieldBuilderAdapter extends FieldVisitor {
 		private final BasicFieldMember fieldMember;
 
-		public FieldBuilderAdapter(int access, String name, String descriptor,
+		public FieldBuilderAdapter(FieldVisitor fv, int access, String name, String descriptor,
 		                           String signature, Object value) {
-			super(getAsmVersion());
+			super(getAsmVersion(), fv);
 			fieldMember = new BasicFieldMember(name, descriptor, signature, access, value);
 		}
 
@@ -507,9 +518,9 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		private int parameterIndex;
 		private int parameterSlot;
 
-		public MethodBuilderAdapter(int access, String name, String descriptor,
+		public MethodBuilderAdapter(MethodVisitor mv, int access, String name, String descriptor,
 		                            String signature, String[] exceptions) {
-			super(getAsmVersion());
+			super(getAsmVersion(), mv);
 			List<String> exceptionList = exceptions == null ? Collections.emptyList() : Arrays.asList(exceptions);
 			methodMember = new BasicMethodMember(name, descriptor, signature, access, exceptionList);
 			methodDescriptor = Type.getMethodType(descriptor);
@@ -529,7 +540,8 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-			methodMember.addLocalVariable(new BasicLocalVariable(index, name, descriptor, signature));
+			if (name != null && descriptor != null)
+				methodMember.addLocalVariable(new BasicLocalVariable(index, name, descriptor, signature));
 			super.visitLocalVariable(name, descriptor, signature, start, end, index);
 		}
 
