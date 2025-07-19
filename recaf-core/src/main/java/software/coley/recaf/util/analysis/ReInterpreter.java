@@ -509,12 +509,15 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			return newValue(returnType);
 		} else {
 			MethodInsnNode method = (MethodInsnNode) insn;
-			if (opcode == INVOKESTATIC && invokeStaticLookup != null && values.stream().allMatch(ReValue::hasKnownValue)) {
-				return invokeStaticLookup.get(method, values);
-			} else if (opcode == INVOKEVIRTUAL && invokeVirtualLookup != null && values.stream().allMatch(ReValue::hasKnownValue)) {
-				return invokeVirtualLookup.get(method, values.getFirst(), values.subList(1, values.size()));
+			Type returnType = Type.getReturnType(method.desc);
+			if (returnType.getSort() != Type.VOID) {
+				if (opcode == INVOKESTATIC && invokeStaticLookup != null && values.stream().allMatch(ReValue::hasKnownValue)) {
+					return invokeStaticLookup.get(method, values);
+				} else if ((opcode == INVOKEVIRTUAL || opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL)
+						&& invokeVirtualLookup != null && values.stream().allMatch(ReValue::hasKnownValue)) {
+					return invokeVirtualLookup.get(method, values.getFirst(), values.subList(1, values.size()));
+				}
 			}
-			Type returnType = Type.getReturnType(((MethodInsnNode) insn).desc);
 			return newValue(returnType);
 		}
 	}

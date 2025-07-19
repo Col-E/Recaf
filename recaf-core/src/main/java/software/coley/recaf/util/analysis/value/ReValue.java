@@ -30,6 +30,9 @@ public sealed interface ReValue extends Value permits IntValue, FloatValue, Doub
 	@Nonnull
 	static ReValue ofConstant(@Nullable Object value) throws IllegalValueException {
 		return switch (value) {
+			case Character c -> IntValue.of(c);
+			case Byte b -> IntValue.of(b);
+			case Short s -> IntValue.of(s);
 			case Integer i -> IntValue.of(i);
 			case Float f -> FloatValue.of(f);
 			case Long l -> LongValue.of(l);

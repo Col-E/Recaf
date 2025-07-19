@@ -16,6 +16,9 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
+import software.coley.recaf.util.analysis.lookup.BasicGetFieldLookup;
+import software.coley.recaf.util.analysis.lookup.BasicInvokeStaticLookup;
+import software.coley.recaf.util.analysis.lookup.BasicInvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.visitors.FrameSkippingVisitor;
 import software.coley.recaf.util.visitors.WorkspaceClassWriter;
@@ -182,10 +185,9 @@ public class JvmTransformerContext {
 	                              @Nonnull ClassNode cls,
 	                              @Nonnull MethodNode method) {
 		ReInterpreter interpreter = new ReInterpreter(inheritanceGraph);
-		// TODO: A fleshed out implementation for each to facilitate:
-		//  - interpreter.setInvokeStaticLookup(...);
-		//  - interpreter.setInvokeVirtualLookup(...);
-		//  - interpreter.setGetStaticLookup(...);
+		interpreter.setInvokeVirtualLookup(new BasicInvokeVirtualLookup());
+		interpreter.setInvokeStaticLookup(new BasicInvokeStaticLookup());
+		interpreter.setGetStaticLookup(new BasicGetFieldLookup());
 		return new ReAnalyzer(interpreter);
 	}
 

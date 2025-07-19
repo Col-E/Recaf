@@ -1,6 +1,5 @@
 package software.coley.recaf.services.deobfuscation;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
@@ -1286,14 +1285,13 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
-	@Disabled("Requires an impl for the ReInterpreter lookups")
-	void foldMethodCalls() {
+	void foldCommonStaticMethodCalls() {
 		String asm = """
 				.method public static example ()I {
 				    code: {
 				    A:
-				        iconst_1
-				        iconst_5
+				        getstatic java/lang/Byte.BYTES I
+				        getstatic java/lang/Long.BYTES I
 				        invokestatic java/lang/Math.min (II)I
 				        ireturn
 				    B:
@@ -1302,8 +1300,46 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				""";
 		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to fold to 1");
-			assertEquals(0, StringUtil.count("iconst_5", dis), "Expected to prune argument");
-			assertEquals(0, StringUtil.count("Math.min", dis), "Expected to prune method call");
+			assertEquals(0, StringUtil.count("iconst_5", dis), "Expected to fold argument");
+			assertEquals(0, StringUtil.count("Math.min", dis), "Expected to fold method call");
+		});
+	}
+
+	@Test
+	void foldStringInstanceMethodCalls() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc "12345"
+				        invokevirtual java/lang/String.length ()I
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to 5");
+			assertEquals(0, StringUtil.count("ldc", dis), "Expected to fold original string");
+			assertEquals(0, StringUtil.count("invoke", dis), "Expected to fold method call");
+		});
+
+		asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc "0123456789"
+				        ldc "5"
+				        invokevirtual java/lang/String.indexOf (Ljava/lang/String;)I
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to 5");
+			assertEquals(0, StringUtil.count("ldc", dis), "Expected to fold original string");
+			assertEquals(0, StringUtil.count("invoke", dis), "Expected to fold method call");
 		});
 	}
 
