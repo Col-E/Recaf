@@ -511,6 +511,8 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			MethodInsnNode method = (MethodInsnNode) insn;
 			Type returnType = Type.getReturnType(method.desc);
 			if (returnType.getSort() != Type.VOID) {
+				// We only support "lookups" as values are immutable.
+				// Something like System.arraycopy(...) isn't supported here.
 				if (opcode == INVOKESTATIC && invokeStaticLookup != null && values.stream().allMatch(ReValue::hasKnownValue)) {
 					return invokeStaticLookup.get(method, values);
 				} else if ((opcode == INVOKEVIRTUAL || opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL)

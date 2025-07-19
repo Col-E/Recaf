@@ -19,9 +19,9 @@ import java.util.Objects;
  *
  * @author Matt Coley
  */
-public class BasicGetFieldLookup implements GetStaticLookup {
+public class BasicGetStaticLookup implements GetStaticLookup {
 	private static final Map<String, ReValue> CONST_FIELDS = new HashMap<>();
-	private static final Logger logger = Logging.get(BasicGetFieldLookup.class);
+	private static final Logger logger = Logging.get(BasicGetStaticLookup.class);
 
 	@Nonnull
 	@Override

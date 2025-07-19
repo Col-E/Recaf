@@ -16,9 +16,13 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
-import software.coley.recaf.util.analysis.lookup.BasicGetFieldLookup;
+import software.coley.recaf.util.analysis.lookup.BasicGetStaticLookup;
 import software.coley.recaf.util.analysis.lookup.BasicInvokeStaticLookup;
 import software.coley.recaf.util.analysis.lookup.BasicInvokeVirtualLookup;
+import software.coley.recaf.util.analysis.lookup.GetFieldLookup;
+import software.coley.recaf.util.analysis.lookup.GetStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.visitors.FrameSkippingVisitor;
 import software.coley.recaf.util.visitors.WorkspaceClassWriter;
@@ -34,6 +38,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Context for holding a number of JVM class transformers and shared state for transformation.
@@ -48,6 +53,10 @@ public class JvmTransformerContext {
 	private final Set<String> recomputeFrameClasses = new HashSet<>();
 	private final Workspace workspace;
 	private final WorkspaceResource resource;
+	private Supplier<GetFieldLookup> getFieldLookupSupplier = () -> null;
+	private Supplier<GetStaticLookup> getStaticLookupSupplier = BasicGetStaticLookup::new;
+	private Supplier<InvokeVirtualLookup> invokeVirtualLookupSupplier = BasicInvokeVirtualLookup::new;
+	private Supplier<InvokeStaticLookup> invokeStaticLookupSupplier = BasicInvokeStaticLookup::new;
 	private boolean transformerDidWork;
 
 	/**
@@ -185,9 +194,10 @@ public class JvmTransformerContext {
 	                              @Nonnull ClassNode cls,
 	                              @Nonnull MethodNode method) {
 		ReInterpreter interpreter = new ReInterpreter(inheritanceGraph);
-		interpreter.setInvokeVirtualLookup(new BasicInvokeVirtualLookup());
-		interpreter.setInvokeStaticLookup(new BasicInvokeStaticLookup());
-		interpreter.setGetStaticLookup(new BasicGetFieldLookup());
+		interpreter.setGetFieldLookup(getFieldLookupSupplier.get());
+		interpreter.setGetStaticLookup(getStaticLookupSupplier.get());
+		interpreter.setInvokeVirtualLookup(invokeVirtualLookupSupplier.get());
+		interpreter.setInvokeStaticLookup(invokeStaticLookupSupplier.get());
 		return new ReAnalyzer(interpreter);
 	}
 
@@ -389,6 +399,46 @@ public class JvmTransformerContext {
 		if (transformer == null)
 			return null;
 		return (T) transformer;
+	}
+
+	/**
+	 * @param supplier
+	 * 		Supplier for {@link GetFieldLookup} to be used with {@link #newAnalyzer(InheritanceGraph, ClassNode, MethodNode)}.
+	 */
+	public void setGetFieldLookupSupplier(@Nullable Supplier<GetFieldLookup> supplier) {
+		if (supplier == null)
+			supplier = () -> null;
+		getFieldLookupSupplier = supplier;
+	}
+
+	/**
+	 * @param supplier
+	 * 		Supplier for {@link GetStaticLookup} to be used with {@link #newAnalyzer(InheritanceGraph, ClassNode, MethodNode)}.
+	 */
+	public void setGetStaticLookupSupplier(@Nullable Supplier<GetStaticLookup> supplier) {
+		if (supplier == null)
+			supplier = () -> null;
+		getStaticLookupSupplier = supplier;
+	}
+
+	/**
+	 * @param supplier
+	 * 		Supplier for {@link InvokeVirtualLookup} to be used with {@link #newAnalyzer(InheritanceGraph, ClassNode, MethodNode)}.
+	 */
+	public void setInvokeVirtualLookupSupplier(@Nullable Supplier<InvokeVirtualLookup> supplier) {
+		if (supplier == null)
+			supplier = () -> null;
+		invokeVirtualLookupSupplier = supplier;
+	}
+
+	/**
+	 * @param supplier
+	 * 		Supplier for {@link InvokeStaticLookup} to be used with {@link #newAnalyzer(InheritanceGraph, ClassNode, MethodNode)}.
+	 */
+	public void setInvokeStaticLookupSupplier(@Nullable Supplier<InvokeStaticLookup> supplier) {
+		if (supplier == null)
+			supplier = () -> null;
+		invokeStaticLookupSupplier = supplier;
 	}
 
 	/**
