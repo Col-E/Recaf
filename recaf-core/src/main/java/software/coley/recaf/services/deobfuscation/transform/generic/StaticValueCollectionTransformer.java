@@ -20,8 +20,10 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
+import software.coley.recaf.util.analysis.lookup.GetStaticLookup;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.workspace.model.Workspace;
@@ -30,16 +32,21 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A transformer that collects values of {@code static final} field assignments.
+ * <ul>
+ *     <li>Intended to be used in combination with {@link StaticValueInliningTransformer}.</li>
+ *     <li>Can also be used as a {@link GetStaticLookup}</li>
+ * </ul>
  *
  * @author Matt Coley
  */
 @Dependent
-public class StaticValueCollectionTransformer implements JvmClassTransformer {
+public class StaticValueCollectionTransformer implements JvmClassTransformer, GetStaticLookup {
 	private final Map<String, StaticValues> classValues = new ConcurrentHashMap<>();
 	private final Map<String, EffectivelyFinalFields> classFinals = new ConcurrentHashMap<>();
 	private final InheritanceGraphService graphService;
@@ -68,6 +75,21 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer {
 		if (values == null)
 			return null;
 		return values.get(fieldName, fieldDesc);
+	}
+
+	@Nonnull
+	@Override
+	public ReValue get(@Nonnull FieldInsnNode field) {
+		ReValue value = getStaticValue(field.owner, field.name, field.desc);
+		if (value == null) {
+			try {
+				return Objects.requireNonNull(ReValue.ofType(Type.getType(field.desc), Nullness.UNKNOWN));
+			} catch (Exception ex) {
+				// Should never fail since fields cannot have illegal types like primitive void.
+				throw new IllegalStateException(ex);
+			}
+		}
+		return value;
 	}
 
 	@Override
