@@ -11,10 +11,12 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * Outline of navigable content <i>(IE, content in the {@link Workspace} such as classes and files)</i>.
@@ -37,6 +39,29 @@ public interface Navigable {
 	 */
 	@Nonnull
 	Collection<Navigable> getNavigableChildren();
+
+	/**
+	 * Search for a given navigable type in the {@link #getNavigableChildren()}.
+	 *
+	 * @param childType
+	 * 		Child class to search for.
+	 * @param <N>
+	 * 		Inferred child type.
+	 *
+	 * @return Instance of child.
+	 */
+	@Nullable
+	@SuppressWarnings("unchecked")
+	default <N extends Navigable> N getNavigableChild(@Nonnull Class<N> childType) {
+		Queue<Navigable> queue = new ArrayDeque<>(getNavigableChildren());
+		while (!queue.isEmpty()) {
+			Navigable child = queue.remove();
+			if (childType.isAssignableFrom(child.getClass()))
+				return (N) child;
+			queue.addAll(child.getNavigableChildren());
+		}
+		return null;
+	}
 
 	/**
 	 * Requests focus of this navigable component.
