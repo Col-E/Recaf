@@ -10,6 +10,7 @@ import software.coley.lljzip.format.model.LocalFileHeader;
 import software.coley.lljzip.format.model.ZipArchive;
 import software.coley.lljzip.format.read.JvmZipReader;
 import software.coley.observables.ObservableBoolean;
+import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
@@ -29,6 +30,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	private final ObservableBoolean skipRevisitedCenToLocalLinks = new ObservableBoolean(true);
 	private final ObservableBoolean allowBasicJvmBaseOffsetZeroCheck = new ObservableBoolean(true);
 	private final ObservableBoolean ignoreNaiveFileLengths = new ObservableBoolean(false);
+	private final ObservableInteger maxEmbeddedZipDepth = new ObservableInteger(3);
 
 	@Inject
 	public ResourceImporterConfig() {
@@ -38,6 +40,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 		addValue(new BasicConfigValue<>("skip-revisited-cen-to-local-links", boolean.class, skipRevisitedCenToLocalLinks));
 		addValue(new BasicConfigValue<>("allow-basic-base-offset-zero-check", boolean.class, allowBasicJvmBaseOffsetZeroCheck));
 		addValue(new BasicConfigValue<>("ignore-naive-file-lengths", boolean.class, ignoreNaiveFileLengths));
+		addValue(new BasicConfigValue<>("max-embedded-zip-depth", int.class, maxEmbeddedZipDepth));
 	}
 
 	/**
@@ -95,6 +98,15 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	@Nonnull
 	public ObservableBoolean getIgnoreNaiveFileLengths() {
 		return ignoreNaiveFileLengths;
+	}
+
+	/**
+	 * @return Maximum level of embedded resources to populate.
+	 * Any further embedded contents will be treated as arbitrary binary files.
+	 */
+	@Nonnull
+	public ObservableInteger getMaxEmbeddedZipDepth() {
+		return maxEmbeddedZipDepth;
 	}
 
 	/**

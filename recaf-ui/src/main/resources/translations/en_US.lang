@@ -786,6 +786,7 @@ service.io.resource-importer-config.zip-strategy=ZIP parsing strategy
 service.io.resource-importer-config.allow-basic-base-offset-zero-check=Default to check 0 as zip beginning with JVM strategy
 service.io.resource-importer-config.skip-revisited-cen-to-local-links=Skip duplicate CEN-to-LOC entries with JVM strategy
 service.io.resource-importer-config.ignore-naive-file-lengths=Ignore reported file lengths with Naive strategy
+service.io.resource-importer-config.max-embedded-zip-depth=Max embedded zip traversal depth
 service.mapping=Mapping
 service.mapping.mapping-aggregator-config=Mapping aggregation
 service.mapping.mapping-formats-config=Mapping formats

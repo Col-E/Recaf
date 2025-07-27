@@ -76,7 +76,6 @@ import java.util.TreeMap;
  */
 @ApplicationScoped
 public class BasicResourceImporter implements ResourceImporter, Service {
-	private static final int MAX_ZIP_DEPTH = 3;
 	private static final Logger logger = Logging.get(BasicResourceImporter.class);
 	private final InfoImporter infoImporter;
 	private final ResourceImporterConfig config;
@@ -200,6 +199,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		}
 
 		// Build model from the contained files in the ZIP
+		int maxZipDepth = config.getMaxEmbeddedZipDepth().getValue();
 		archive.getLocalFiles().forEach(header -> {
 			LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
 			String entryName = header.getFileNameAsString();
@@ -243,8 +243,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					return;
 				} else if (Arrays.stream(Thread.currentThread().getStackTrace())
 						.filter(trace -> trace.getMethodName().equals("handleZip"))
-						.count() > MAX_ZIP_DEPTH) {
-					logger.warn("Skip extracting embedded ZIP after {} levels: {}", MAX_ZIP_DEPTH, entryName);
+						.count() > maxZipDepth) {
+					logger.warn("Skip extracting embedded ZIP after {} levels: {}", maxZipDepth, entryName);
 					return;
 				}
 			}
