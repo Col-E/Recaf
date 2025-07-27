@@ -2,6 +2,7 @@ package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.collections.Lists;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
@@ -27,6 +28,19 @@ public class IntermediateMappings implements Mappings {
 	protected final Map<String, List<FieldMapping>> fields = new HashMap<>();
 	protected final Map<String, List<MethodMapping>> methods = new HashMap<>();
 	protected final Map<String, List<VariableMapping>> variables = new HashMap<>();
+
+	/**
+	 * Copies all values from the given mappings into this instance.
+	 *
+	 * @param other
+	 * 		Another intermediate mappings instance.
+	 */
+	public void putAll(@Nonnull IntermediateMappings other) {
+		classes.putAll(other.classes);
+		other.fields.forEach((className, otherFields) -> fields.merge(className, otherFields, Lists::combine));
+		other.methods.forEach((className, otherMethods) -> methods.merge(className, otherMethods, Lists::combine));
+		other.variables.forEach((className, otherVariables) -> variables.merge(className, otherVariables, Lists::combine));
+	}
 
 	/**
 	 * @param oldName
