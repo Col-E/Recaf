@@ -495,6 +495,7 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 	public ReValue ternaryOperation(@Nonnull AbstractInsnNode insn, @Nonnull ReValue value1, @Nonnull ReValue value2, ReValue value3) {
 		// We don't track array operations, but this would cover:
 		//  IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, BASTORE, CASTORE, SASTORE
+		// Load operations are handled in 'binaryOperation'
 		return null;
 	}
 
