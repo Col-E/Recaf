@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Side;
@@ -583,5 +584,13 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			if (!errors.isEmpty())
 				editor.redrawParagraphGraphics();
 		});
+	}
+
+	/**
+	 * @return Editor control holding the assembly contents.
+	 */
+	@Nonnull
+	public Editor getEditor() {
+		return editor;
 	}
 }
