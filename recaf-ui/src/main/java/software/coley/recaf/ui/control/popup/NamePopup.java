@@ -149,6 +149,25 @@ public class NamePopup extends RecafStage {
 	 * @return Self.
 	 */
 	@Nonnull
+	public NamePopup forClassCreation(@Nonnull ClassBundle<?> bundle) {
+		titleProperty().bind(Lang.getBinding("dialog.title.create-class"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.create-class-error"));
+
+		// Bind conflict property
+		nameConflict.bind(nameInput.textProperty().map(bundle::containsKey));
+		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
+		output.visibleProperty().bind(nameConflict);
+		return this;
+	}
+
+	/**
+	 * @param bundle
+	 * 		Target bundle the class will reside in.
+	 * 		Used to check for name overlap.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
 	public NamePopup forClassCopy(@Nonnull ClassBundle<?> bundle) {
 		titleProperty().bind(Lang.getBinding("dialog.title.copy-class"));
 		output.textProperty().bind(Lang.getBinding("dialog.header.rename-class-error"));

@@ -21,8 +21,6 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
-import static org.kordamp.ikonli.carbonicons.CarbonIcons.TAG_EDIT;
-import static software.coley.recaf.util.Menus.action;
 
 /**
  * Basic implementation for {@link PackageContextMenuProviderFactory}.
@@ -34,18 +32,18 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 		implements PackageContextMenuProviderFactory {
 	@Inject
 	public BasicPackageContextMenuProviderFactory(@Nonnull TextProviderService textService,
-												  @Nonnull IconProviderService iconService,
-												  @Nonnull Actions actions) {
+	                                              @Nonnull IconProviderService iconService,
+	                                              @Nonnull Actions actions) {
 		super(textService, iconService, actions);
 	}
 
 	@Nonnull
 	@Override
 	public ContextMenuProvider getPackageContextMenuProvider(@Nonnull ContextSource source,
-															 @Nonnull Workspace workspace,
-															 @Nonnull WorkspaceResource resource,
-															 @Nonnull ClassBundle<? extends ClassInfo> bundle,
-															 @Nonnull String packageName) {
+	                                                         @Nonnull Workspace workspace,
+	                                                         @Nonnull WorkspaceResource resource,
+	                                                         @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                                         @Nonnull String packageName) {
 		return () -> {
 			TextProvider nameProvider = textService.getPackageTextProvider(workspace, resource, bundle, packageName);
 			IconProvider iconProvider = iconService.getPackageIconProvider(workspace, resource, bundle, packageName);
@@ -56,8 +54,10 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 			if (source.isDeclaration()) {
 				if (bundle instanceof JvmClassBundle) {
 					var jvmBuilder = builder.cast(JvmClassBundle.class);
-					jvmBuilder.directoryItem("menu.edit.copy", COPY_FILE, actions::copyPackage);
-					jvmBuilder.directoryItem("menu.edit.delete", TRASH_CAN, actions::deletePackage);
+					var edit = jvmBuilder.submenu("menu.edit", EDIT);
+					edit.directoryItem("menu.edit.newclass", ADD_ALT, actions::newClass);
+					edit.directoryItem("menu.edit.copy", COPY_FILE, actions::copyPackage);
+					edit.directoryItem("menu.edit.delete", TRASH_CAN, actions::deletePackage);
 
 					var refactor = jvmBuilder.submenu("menu.refactor", PAINT_BRUSH);
 					refactor.directoryItem("menu.refactor.move", STACKED_MOVE, actions::movePackage);

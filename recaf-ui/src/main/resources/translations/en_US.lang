@@ -51,6 +51,7 @@ menu.edit.noop=Make no-op
 menu.edit.changeversion=Change class versions
 menu.edit.changeversion.up=Upgrade
 menu.edit.changeversion.down=Downgrade
+menu.edit.newclass=New class
 menu.export.class=Export class
 menu.export.file=Export file
 menu.export.classes=Export classes

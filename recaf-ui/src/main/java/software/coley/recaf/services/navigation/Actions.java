@@ -19,6 +19,7 @@ import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.dockable.DockableIconFactory;
@@ -1418,6 +1419,37 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * Prompts the user to give a name for the new class.
+	 * Creates the class in the workspace and then opens it.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param packageName
+	 * 		Package to place the class in initially.
+	 */
+	public void newClass(@Nonnull Workspace workspace,
+	                     @Nonnull WorkspaceResource resource,
+	                     @Nonnull JvmClassBundle bundle,
+	                     @Nonnull String packageName) {
+		new NamePopup(name -> {
+			ClassWriter cw = new ClassWriter(0);
+			cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null);
+			cw.visitEnd();
+
+			JvmClassInfo info = new JvmClassInfoBuilder(cw.toByteArray()).build();
+			bundle.put(info);
+
+			FxThreadUtil.run(() -> gotoDeclaration(workspace, resource, bundle, info));
+		}).withInitialName(packageName.isBlank() ? "ClassName" : packageName + "/ClassName")
+				.forClassCreation(bundle)
+				.show();
+	}
+
+	/**
 	 * Prompts the user to give a new name for the copied class.
 	 * Inner classes also get copied.
 	 *
@@ -1616,15 +1648,12 @@ public class Actions implements Service {
 	}
 
 	/**
-	 * Brings a {@link ClassNavigable} component representing the given class into focus.
-	 * If no such component exists, one is created.
-	 * <br>
-	 * Automatically calls the type-specific goto-declaration handling.
+	 * Opens an {@link AssemblerPane} for a class, field, or method at the given path.
 	 *
 	 * @param path
-	 * 		Path containing a class to open.
+	 * 		Path containing a class, field, or method to open.
 	 *
-	 * @return Navigable content representing class content of the path.
+	 * @return Navigable content with an assembler for the given class, field, or method.
 	 *
 	 * @throws IncompletePathException
 	 * 		When the path is missing parent elements.
@@ -2180,7 +2209,7 @@ public class Actions implements Service {
 		new AddMemberPopup(member -> {
 			ClassReader reader = info.getClassReader();
 			ClassWriter writer = new ClassWriter(reader, 0);
-			reader.accept(new MemberStubAddingVisitor(writer, member),  info.getClassReaderFlags());
+			reader.accept(new MemberStubAddingVisitor(writer, member), info.getClassReaderFlags());
 			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
 					.adaptFrom(writer.toByteArray())
 					.build();
@@ -2215,7 +2244,7 @@ public class Actions implements Service {
 		new OverrideMethodPopup(this, cellConfigurationService, inheritanceGraph, workspace, info, (methodOwner, method) -> {
 			ClassReader reader = info.getClassReader();
 			ClassWriter writer = new ClassWriter(reader, 0);
-			reader.accept(new MemberStubAddingVisitor(writer, method),  info.getClassReaderFlags());
+			reader.accept(new MemberStubAddingVisitor(writer, method), info.getClassReaderFlags());
 			JvmClassInfo updatedInfo = info.toJvmClassBuilder()
 					.adaptFrom(writer.toByteArray())
 					.build();
