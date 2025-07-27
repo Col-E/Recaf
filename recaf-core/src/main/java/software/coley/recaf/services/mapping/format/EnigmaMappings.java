@@ -11,9 +11,13 @@ import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Enigma mappings file implementation.
@@ -42,6 +46,47 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 */
 	public EnigmaMappings() {
 		super(NAME, true, true);
+	}
+
+	/**
+	 * Parses an Enigma file, or Enigma directory containing multiple enigma mapping files, suffixed with {@code .mapping}.
+	 * <br>
+	 * See for instance: <a href="https://github.com/FabricMC/yarn/mappings">FabricMC/yarn</a>
+	 *
+	 * @param path
+	 * 		Root file/directory of enigma mappings.
+	 *
+	 * @return Intermediate mappings from parsed enigma file/directory.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When reading the mappings encounters any failure.
+	 */
+	@Nonnull
+	public IntermediateMappings parse(@Nonnull Path path) throws InvalidMappingException {
+		if (Files.isRegularFile(path)) {
+			try {
+				return parse(Files.readString(path));
+			} catch (IOException ex) {
+				throw new InvalidMappingException(ex);
+			}
+		}
+
+		IntermediateMappings sum = new IntermediateMappings();
+		try (Stream<Path> files = Files.walk(path).filter(p -> p.getFileName().toString().endsWith(".mapping"))) {
+			files.forEach(p -> {
+				try {
+					String fileContents = Files.readString(p);
+					IntermediateMappings mappings = parse(fileContents);
+					sum.putAll(mappings);
+				} catch (Exception ex) {
+					// Rethrow so outer catch will handle
+					throw new IllegalStateException(ex);
+				}
+			});
+		} catch (Throwable ex) {
+			throw new InvalidMappingException("Failed to walk enigma directory: " + path, ex);
+		}
+		return sum;
 	}
 
 	@Nonnull

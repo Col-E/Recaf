@@ -23,4 +23,14 @@ public class InvalidMappingException extends Exception {
 	public InvalidMappingException(@Nonnull String message) {
 		super(message);
 	}
+
+	/**
+	 * @param message
+	 * 		Detail message for why the mappings are invalid.
+	 * @param cause
+	 * 		Cause for mapping parse/write failure.
+	 */
+	public InvalidMappingException(@Nonnull String message, @Nonnull Throwable cause) {
+		super(message, cause);
+	}
 }
