@@ -136,6 +136,7 @@ public class MappingGeneratorPane extends StackPane {
 	private final ModalPane modal = new ModalPane();
 	private final MappingApplierService mappingApplierService;
 	private final Pane previewGroup;
+	private Runnable applyCallback;
 
 	@Inject
 	public MappingGeneratorPane(@Nonnull WorkspaceManager workspaceManager,
@@ -282,6 +283,9 @@ public class MappingGeneratorPane extends StackPane {
 
 		// Clear property now that the mappings have been applied
 		mappingsToApply.set(null);
+
+		// Notify listeners
+		if (applyCallback != null) applyCallback.run();
 	}
 
 	@Nonnull
@@ -470,6 +474,14 @@ public class MappingGeneratorPane extends StackPane {
 			if (onDone != null)
 				onDone.run();
 		}
+	}
+
+	/**
+	 * @param applyCallback
+	 * 		Callback to run when the generated mapping are successfully applied.
+	 */
+	public void setApplyCallback(@Nullable Runnable applyCallback) {
+		this.applyCallback = applyCallback;
 	}
 
 	@Nonnull

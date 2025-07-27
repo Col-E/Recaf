@@ -192,6 +192,11 @@ dialog.option.update-workspace=Add to workspace
 dialog.title.select-class=Select class
 dialog.title.select-file=Select file
 
+## Create class/file
+dialog.title.create-class=Create class
+dialog.header.create-class-error=The class name already exists.\nPlease choose a different name.
+
+
 ## Copy class/file
 dialog.title.copy-class=Copy class
 dialog.title.copy-directory=Copy directory
@@ -467,6 +472,12 @@ deobf.tree.generic.optimize=Optimization
 deobf.tree.generic.restoration=Restoration
 deobf.tree.specific=Specific
 deobf.apply=Transform workspace
+
+## Mapping application
+mapapply=Apply mappings
+mapapply.pick.file=Choose mappings file
+mapapply.pick.dir=Choose mappings directory
+mapapply.settings.unique=Assume unique keys, ignore inheritance
 
 ## Mapping generator
 mapgen=Mapping generator

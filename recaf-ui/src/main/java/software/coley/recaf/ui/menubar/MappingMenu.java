@@ -1,40 +1,36 @@
 package software.coley.recaf.ui.menubar;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.stage.FileChooser;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.mapping.MappingApplierService;
-import software.coley.recaf.services.mapping.MappingResults;
+import software.coley.recaf.services.mapping.MappingHelper;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
-import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.format.MappingFileFormat;
 import software.coley.recaf.services.mapping.format.MappingFormatManager;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
-import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.window.MappingApplicationWindow;
 import software.coley.recaf.ui.window.MappingGeneratorWindow;
-import software.coley.recaf.util.FileChooserBuilder;
+import software.coley.recaf.util.FileChooserBundle;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
 
 import static software.coley.recaf.util.Lang.getBinding;
 import static software.coley.recaf.util.Menus.*;
@@ -47,95 +43,43 @@ import static software.coley.recaf.util.Menus.*;
 @Dependent
 public class MappingMenu extends WorkspaceAwareMenu {
 	private static final Logger logger = Logging.get(MappingMenu.class);
-	private final ExecutorService exportPool = ThreadPoolFactory.newSingleThreadExecutor("mapping-export");
-	private final ExecutorService importPool = ThreadPoolFactory.newSingleThreadExecutor("mapping-import");
 	private final WindowManager windowManager;
+	private final MappingFormatManager formatManager;
+	private final MappingHelper mappingHelper;
 
 	@Inject
 	public MappingMenu(@Nonnull WindowManager windowManager,
 	                   @Nonnull WorkspaceManager workspaceManager,
 	                   @Nonnull AggregateMappingManager aggregateMappingManager,
 	                   @Nonnull MappingFormatManager formatManager,
-	                   @Nonnull MappingApplierService mappingApplierService,
+	                   @Nonnull MappingHelper mappingHelper,
 	                   @Nonnull Instance<MappingGeneratorWindow> generatorWindowProvider,
+	                   @Nonnull Instance<MappingApplicationWindow> applyWindowProvider,
 	                   @Nonnull RecentFilesConfig recentFiles) {
 		super(workspaceManager);
 
 		this.windowManager = windowManager;
+		this.formatManager = formatManager;
+		this.mappingHelper = mappingHelper;
 
 		textProperty().bind(getBinding("menu.mappings"));
 		setGraphic(new FontIconView(CarbonIcons.MAP_BOUNDARY));
 
+		FileChooserBundle choosers = FileChooserBundle.fromRecent(recentFiles);
+
 		Menu apply = menu("menu.mappings.apply", CarbonIcons.DOCUMENT_IMPORT);
 		Menu export = menu("menu.mappings.export", CarbonIcons.DOCUMENT_EXPORT);
-
-		// Use a shared file-chooser for mapping menu actions.
-		// That way there is some continuity when working with mappings.
-		FileChooser chooserOpen = new FileChooserBuilder()
-				.setInitialDirectory(recentFiles.getLastWorkspaceOpenDirectory())
-				.setTitle(Lang.get("dialog.file.open"))
-				.build();
-		FileChooser chooserExport = new FileChooserBuilder()
-				.setInitialDirectory(recentFiles.getLastWorkspaceOpenDirectory())
-				.setTitle(Lang.get("dialog.file.save"))
-				.build();
-
 		Map<MappingFileFormat, MenuItem> formatToExportAsItems = new IdentityHashMap<>();
 		for (String formatName : formatManager.getMappingFileFormats()) {
-			apply.getItems().add(actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
-				// Show the prompt, load the mappings text ant attempt to load them.
-				File file = chooserOpen.showOpenDialog(windowManager.getMainWindow());
-				if (file != null) {
-					importPool.submit(() -> {
-						try {
-							MappingFileFormat format = formatManager.createFormatInstance(formatName);
-							String mappingsText = Files.readString(file.toPath());
-							IntermediateMappings parsedMappings = format.parse(mappingsText);
-							logger.info("Loaded mappings from {} in {} format", file.getName(), formatName);
-
-							MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(parsedMappings);
-							results.apply();
-							logger.info("Applied mappings from {} - Updated {} classes", file.getName(), results.getPostMappingPaths().size());
-						} catch (Exception ex) {
-							logger.error("Failed to read {} mappings from {}", formatName, file.getName(), ex);
-						}
-					});
-				}
-			}));
-
-			// Temp instance to check for export support.
+			// Temp instance to check for special cases.
 			MappingFileFormat tmpFormat = formatManager.createFormatInstance(formatName);
 			if (tmpFormat == null) continue;
+
+			MappingMenuItems mappingItems = createMappingItems(formatName, choosers);
+			apply.getItems().add(mappingItems.importAsItem());
 			if (tmpFormat.supportsExportText()) {
-				ActionMenuItem exportAsItem = actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
-					// Show the prompt, write current mappings to the given path.
-					File file = chooserExport.showSaveDialog(windowManager.getMainWindow());
-					if (file != null) {
-						exportPool.submit(() -> {
-							try {
-								AggregatedMappings mappings = Objects.requireNonNull(aggregateMappingManager.getAggregatedMappings());
-								MappingFileFormat format = formatManager.createFormatInstance(formatName);
-								if (format != null) {
-									String mappingsText = format.exportText(mappings);
-									if (mappingsText != null) {
-										Files.writeString(file.toPath(), mappingsText);
-										logger.info("Exporting mappings to {} in {} format", file.getName(), formatName);
-									} else {
-										// We already checked for export support, so this should never happen
-										throw new IllegalStateException("Mapping export shouldn't be null for format: " + formatName);
-									}
-								} else {
-									throw new IllegalStateException("Format was unregistered: " + formatName);
-								}
-							} catch (Exception ex) {
-								logger.error("Failed to write mappings in {} format to {}",
-										formatName, file.getName(), ex);
-							}
-						});
-					}
-				});
-				export.getItems().add(exportAsItem);
-				formatToExportAsItems.put(tmpFormat, exportAsItem);
+				export.getItems().add(mappingItems.exportAsItem());
+				formatToExportAsItems.put(tmpFormat, mappingItems.exportAsItem());
 			} else {
 				MenuItem item = new MenuItem();
 				item.textProperty().bind(Lang.formatLiterals("menu.mappings.export.unsupported", formatName));
@@ -145,12 +89,12 @@ public class MappingMenu extends WorkspaceAwareMenu {
 			}
 		}
 
-		getItems().add(apply);
-		getItems().add(export);
-
-		getItems().add(action("menu.mappings.generate", CarbonIcons.LICENSE_MAINTENANCE,
-				() -> openGenerate(generatorWindowProvider)));
-		getItems().add(action("menu.mappings.view", CarbonIcons.VIEW, this::openView));
+		getItems().addAll(apply, export,
+				action("menu.mappings.generate", CarbonIcons.LICENSE_MAINTENANCE, () -> openGenerate(generatorWindowProvider)),
+				action("menu.mappings.view", CarbonIcons.VIEW, this::openView),
+				new SeparatorMenuItem(),
+				action("menu.mappings.apply", CarbonIcons.LICENSE_GLOBAL, () -> openApply(applyWindowProvider))
+		);
 
 		// Disable if attached via agent, or there is no workspace
 		disableProperty().bind(hasAgentWorkspace.or(hasWorkspace.not()));
@@ -170,6 +114,33 @@ public class MappingMenu extends WorkspaceAwareMenu {
 		});
 	}
 
+	@Nonnull
+	private MappingMenuItems createMappingItems(@Nonnull String formatName,
+	                                            @Nonnull FileChooserBundle choosers) {
+		MappingFileFormat format = Objects.requireNonNull(formatManager.createFormatInstance(formatName),
+				"Failed creating mapping format instance for: " + formatName);
+		MenuItem importAsItem = actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
+			// Show the prompt, load the mappings text ant attempt to load them.
+			File file = choosers.showFileOpen(windowManager.getMainWindow());
+			if (file != null) {
+				try {
+					IntermediateMappings mappings = mappingHelper.parse(format, file.toPath());
+					mappingHelper.applyMappings(format, mappings);
+				} catch (Throwable t) {
+					logger.error("Failed importing mappings from {}", file.getName(), t);
+				}
+			}
+		});
+		MenuItem exportAsItem = actionLiteral(formatName, CarbonIcons.LICENSE, () -> {
+			// Show the prompt, write current mappings to the given path.
+			File file = choosers.showFileExport(windowManager.getMainWindow());
+			if (file != null) {
+				mappingHelper.exportMappingsFile(format, file.toPath());
+			}
+		});
+		return new MappingMenuItems(importAsItem, exportAsItem);
+	}
+
 	private void openGenerate(@Nonnull Instance<MappingGeneratorWindow> generatorWindowProvider) {
 		MappingGeneratorWindow window = generatorWindowProvider.get();
 		window.setOnCloseRequest(e -> generatorWindowProvider.destroy(window));
@@ -183,4 +154,14 @@ public class MappingMenu extends WorkspaceAwareMenu {
 		window.show();
 		window.requestFocus();
 	}
+
+	private void openApply(@Nonnull Instance<MappingApplicationWindow> applyWindowProvider) {
+		MappingApplicationWindow window = applyWindowProvider.get();
+		window.setOnCloseRequest(e -> applyWindowProvider.destroy(window));
+		window.show();
+		window.requestFocus();
+		windowManager.registerAnonymous(window);
+	}
+
+	private record MappingMenuItems(@Nonnull MenuItem importAsItem, @Nullable MenuItem exportAsItem) {}
 }

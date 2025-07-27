@@ -22,8 +22,8 @@ public class MappingGeneratorWindow extends RecafStage {
 
 	@Inject
 	public MappingGeneratorWindow(@Nonnull MappingGeneratorPane generatorPane) {
-		// TODO: When the generator pane "apply" is pressed we should close this window
 		this.generatorPane = generatorPane;
+		generatorPane.setApplyCallback(this::close);
 
 		// Layout
 		titleProperty().bind(Lang.getBinding("mapgen"));

@@ -14,6 +14,7 @@ import java.util.List;
  * Builder for {@link FileChooser} which filters out invalid inputs.
  *
  * @author Matt Coley
+ * @see FileChooserBundle
  */
 public class FileChooserBuilder {
 	private static final FileChooser.ExtensionFilter ALL_FILES_FILTER = new FileChooser.ExtensionFilter("All Files", "*.*");

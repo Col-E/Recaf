@@ -3,6 +3,8 @@ package software.coley.recaf.ui.window;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.pane.MappingProgressPane;
 import software.coley.recaf.util.Lang;
@@ -21,6 +23,12 @@ public class MappingProgressWindow extends AbstractIdentifiableStage {
 
 		// Bind mapping preview updates to the window visibility
 		previewPane.activeProperty().bind(showingProperty());
+
+		// Add event filter to handle closing the window when escape is pressed.
+		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (e.getCode() == KeyCode.ESCAPE)
+				hide();
+		});
 
 		// Layout
 		titleProperty().bind(Lang.getBinding("mapprog"));
