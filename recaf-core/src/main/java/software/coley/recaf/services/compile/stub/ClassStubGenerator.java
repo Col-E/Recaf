@@ -211,10 +211,14 @@ public abstract class ClassStubGenerator {
 			if (doSkipMethod(name, localMethodType))
 				continue;
 
-			// Skip enum's 'valueOf'
+			// Skip enum's 'valueOf' + 'values'
 			if (isEnum &&
 					name.equals("valueOf") &&
 					descriptor.equals("(Ljava/lang/String;)L" + className + ";"))
+				continue;
+			if (isEnum &&
+					name.equals("values") &&
+					descriptor.equals("()[L" + className + ";"))
 				continue;
 
 			// Skip stubbing of methods with bad return types / bad parameter types.

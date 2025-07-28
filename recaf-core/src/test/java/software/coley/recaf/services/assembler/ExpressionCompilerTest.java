@@ -350,8 +350,11 @@ class ExpressionCompilerTest extends TestBase {
 	}
 
 	private static void assertSuccess(@Nonnull ExpressionResult result) {
+		List<CompilerDiagnostic> diagnostics = result.getDiagnostics();
+		for (CompilerDiagnostic diagnostic : diagnostics)
+			System.err.println(diagnostic);
 		assertNull(result.getException(), "Exception thrown when compiling: " + result.getException());
-		assertTrue(result.getDiagnostics().isEmpty(), "There were " + result.getDiagnostics().size() + " compiler messages");
+		assertTrue(diagnostics.isEmpty(), "There were " + diagnostics.size() + " compiler messages");
 		assertTrue(result.wasSuccess(), "Missing assembler output");
 	}
 
