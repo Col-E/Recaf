@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @SuppressWarnings("all")
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE_PARAMETER})
+@Target({ElementType.TYPE, ElementType.TYPE_PARAMETER, ElementType.TYPE_USE, ElementType.PARAMETER})
 public @interface TypeAnnotationImpl {
 	String value();
 }
