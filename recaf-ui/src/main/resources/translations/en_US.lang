@@ -80,6 +80,7 @@ menu.search.field-references=Field references
 menu.search.noresults=No results
 menu.mappings=Mappings
 menu.mappings.apply=Apply
+menu.mappings.apply-advanced=Advanced apply
 menu.mappings.export=Export
 menu.mappings.export.unsupported=%s (Unsupported)
 menu.mappings.generate=Generate

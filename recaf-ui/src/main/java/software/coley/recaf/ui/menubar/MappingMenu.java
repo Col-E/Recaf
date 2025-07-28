@@ -93,7 +93,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 				action("menu.mappings.generate", CarbonIcons.LICENSE_MAINTENANCE, () -> openGenerate(generatorWindowProvider)),
 				action("menu.mappings.view", CarbonIcons.VIEW, this::openView),
 				new SeparatorMenuItem(),
-				action("menu.mappings.apply", CarbonIcons.LICENSE_GLOBAL, () -> openApply(applyWindowProvider))
+				action("menu.mappings.apply-advanced", CarbonIcons.LICENSE_GLOBAL, () -> openApply(applyWindowProvider))
 		);
 
 		// Disable if attached via agent, or there is no workspace
