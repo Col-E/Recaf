@@ -1436,6 +1436,8 @@ public class Actions implements Service {
 	                     @Nonnull JvmClassBundle bundle,
 	                     @Nonnull String packageName) {
 		new NamePopup(name -> {
+			// TODO: We probably also want to configure the version
+			//  - There are ways the user can do this themselves atm, but it would be nice to offer providing it
 			ClassWriter cw = new ClassWriter(0);
 			cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null);
 			cw.visitEnd();
