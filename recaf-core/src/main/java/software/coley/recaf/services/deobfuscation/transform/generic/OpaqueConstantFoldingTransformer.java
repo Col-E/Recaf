@@ -142,8 +142,11 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 						continue;
 					ReValue top = frame.getStack(frame.getStackSize() - 1);
 					if (top.hasKnownValue()) {
-						instructions.set(instruction, toInsn(top));
-						dirty = true;
+						AbstractInsnNode replacement = toInsn(top);
+						if (replacement != null) {
+							instructions.set(instruction, replacement);
+							dirty = true;
+						}
 					} else if (isSupportedValueProducer(instruction.getPrevious())) {
 						instructions.set(instruction, instruction.getPrevious().clone(Collections.emptyMap()));
 						dirty = true;
