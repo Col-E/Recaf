@@ -75,6 +75,7 @@ import software.coley.recaf.ui.control.popup.NamePopup;
 import software.coley.recaf.ui.control.popup.OverrideMethodPopup;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.pane.CommentEditPane;
+import software.coley.recaf.ui.pane.CommentListPane;
 import software.coley.recaf.ui.pane.DocumentationPane;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
@@ -96,6 +97,7 @@ import software.coley.recaf.ui.pane.search.MemberDeclarationSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
 import software.coley.recaf.ui.pane.search.StringSearchPane;
+import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.FxThreadUtil;
@@ -167,6 +169,7 @@ public class Actions implements Service {
 	private final Instance<AssemblerPane> assemblerPaneProvider;
 	private final Instance<WorkspaceInformationPane> infoPaneProvider;
 	private final Instance<CommentEditPane> commentPaneProvider;
+	private final Instance<CommentListPane> commentListPaneProvider;
 	private final Instance<MethodCallGraphsPane> callGraphsPaneProvider;
 	private final Instance<StringSearchPane> stringSearchPaneProvider;
 	private final Instance<NumberSearchPane> numberSearchPaneProvider;
@@ -201,6 +204,7 @@ public class Actions implements Service {
 	               @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
 	               @Nonnull Instance<WorkspaceInformationPane> infoPaneProvider,
 	               @Nonnull Instance<CommentEditPane> commentPaneProvider,
+	               @Nonnull Instance<CommentListPane> commentListPaneProvider,
 	               @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
 	               @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
 	               @Nonnull Instance<MethodCallGraphsPane> callGraphsPaneProvider,
@@ -230,6 +234,7 @@ public class Actions implements Service {
 		this.assemblerPaneProvider = assemblerPaneProvider;
 		this.infoPaneProvider = infoPaneProvider;
 		this.commentPaneProvider = commentPaneProvider;
+		this.commentListPaneProvider = commentListPaneProvider;
 		this.stringSearchPaneProvider = stringSearchPaneProvider;
 		this.numberSearchPaneProvider = numberSearchPaneProvider;
 		this.callGraphsPaneProvider = callGraphsPaneProvider;
@@ -798,7 +803,40 @@ public class Actions implements Service {
 			addCloseActions(menu, dockable);
 			return menu;
 		});
+
+		selectTab(content);
+		content.requestFocus();
+
 		return dockable;
+	}
+
+	public void openCommentList() {
+		// Check for tabs with the panel already open.
+		DockablePath docPanePath = null;
+		for (DockablePath path : dockingManager.getBento().search().allDockables()) {
+			Dockable dockable = path.dockable();
+			Node node = dockable.nodeProperty().get();
+			if (node instanceof CommentListPane) {
+				path.leafContainer().selectDockable(dockable);
+				FxThreadUtil.run(() -> {
+					node.requestFocus();
+					Animations.animateNotice(node, 1000);
+				});
+				return;
+			} else if (node instanceof DocumentationPane) {
+				docPanePath = path;
+			}
+		}
+
+		// Not already open, gotta open a new one.
+		DockContainerLeaf container = docPanePath != null ? docPanePath.leafContainer() : dockingManager.getPrimaryDockingContainer();
+		CommentListPane content = commentListPaneProvider.get();
+		Dockable dockable = dockingManager.newTranslatableDockable("menu.analysis.list-comments", CarbonIcons.CHAT, content);
+		dockable.addCloseListener((_, _) -> commentListPaneProvider.destroy(content));
+		container.addDockable(dockable);
+
+		container.selectDockable(dockable);
+		content.requestFocus();
 	}
 
 	/**
