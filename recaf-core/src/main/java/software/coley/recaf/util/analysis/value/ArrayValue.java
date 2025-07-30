@@ -1,10 +1,14 @@
 package software.coley.recaf.util.analysis.value;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 
+import java.util.Arrays;
 import java.util.OptionalInt;
 
 /**
@@ -63,6 +67,46 @@ public interface ArrayValue extends ObjectValue {
 		return new ArrayValueImpl(type, nullness, length);
 	}
 
+	/**
+	 * @param type
+	 * 		Array type.
+	 * @param dimensions
+	 * 		Dimensions of the array to create.
+	 *
+	 * @return Array value created from a {@link Opcodes#MULTIANEWARRAY} instruction.
+	 */
+	@Nonnull
+	static ReValue multiANewArray(@Nonnull Type type, @Nonnull int[] dimensions) {
+		int length = dimensions[0];
+		if (dimensions.length == 1)
+			return of(type, Nullness.NOT_NULL, length);
+		return new ArrayValueImpl(type, Nullness.NOT_NULL, length,
+				i -> multiANewArray(Types.undimension(type), Arrays.copyOfRange(dimensions, 1, dimensions.length))
+		);
+	}
+
+	/**
+	 * @param index
+	 * 		Index to assign value at.
+	 * @param value
+	 * 		Value to assign.
+	 *
+	 * @return New array with the given value assigned at the given index.
+	 */
+	@Nonnull
+	ArrayValue setValue(int index, @Nonnull ReValue value);
+
+	/**
+	 * @param originalValue
+	 * 		Some value.
+	 * @param updatedValue
+	 * 		Some updated version of the value.
+	 *
+	 * @return New array with the given original value replaced with the updated value.
+	 */
+	@Nonnull
+	ArrayValue updatedCopyIfContained(@Nonnull ReValue originalValue, @Nonnull ReValue updatedValue);
+
 	@Override
 	default boolean hasKnownValue() {
 		return false;
@@ -116,4 +160,13 @@ public interface ArrayValue extends ObjectValue {
 	 */
 	@Nonnull
 	OptionalInt getFirstDimensionLength();
+
+	/**
+	 * @param index
+	 * 		Index within {@link #getFirstDimensionLength()}.
+	 *
+	 * @return Value, if known, at the given index. Otherwise, a {@link ReValue} of the array's element type..
+	 */
+	@Nullable
+	ReValue getValue(int index);
 }

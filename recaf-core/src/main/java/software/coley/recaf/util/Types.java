@@ -143,6 +143,19 @@ public class Types {
 	}
 
 	/**
+	 * @param arrayType
+	 * 		Some array type.
+	 *
+	 * @return The type when removing one dimension from the array.
+	 */
+	@Nonnull
+	public static Type undimension(@Nonnull Type arrayType) {
+		if (arrayType.getSort() != Type.ARRAY)
+			throw new IllegalStateException("Not an array: " + arrayType);
+		return Type.getType(arrayType.getDescriptor().substring(1));
+	}
+
+	/**
 	 * @param methodType
 	 * 		Parsed method descriptor type.
 	 *

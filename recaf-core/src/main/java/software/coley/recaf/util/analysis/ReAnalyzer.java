@@ -2,6 +2,7 @@ package software.coley.recaf.util.analysis;
 
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.util.analysis.value.ReValue;
 
 /**
@@ -27,5 +28,15 @@ public class ReAnalyzer extends Analyzer<ReValue> {
 	@Nonnull
 	public ReInterpreter getInterpreter() {
 		return interpreter;
+	}
+
+	@Override
+	protected Frame<ReValue> newFrame(int numLocals, int numStack) {
+		return new ReFrame(numLocals, numStack);
+	}
+
+	@Override
+	protected Frame<ReValue> newFrame(Frame<? extends ReValue> frame) {
+		return new ReFrame(frame);
 	}
 }

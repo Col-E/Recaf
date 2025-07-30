@@ -1344,6 +1344,69 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
+	void foldRedundant1DIntArray() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        // return new int[] { 5 }[0];
+						iconst_1
+						newarray int
+						dup
+						iconst_0
+						iconst_5
+						iastore
+						iconst_0
+						iaload
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("array", dis), "Expected to fold redundant array");
+			assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to 5");
+		});
+	}
+
+	@Test
+	void foldRedundant2DIntArray() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        // int[][] array = new int[4][3];
+					    iconst_4
+					    iconst_3
+					    multianewarray [[I 2
+					    astore array
+					    
+					    // array[1][2] = 5;
+					    aload array
+					    iconst_1
+					    aaload
+					    iconst_2
+					    iconst_5
+					    iastore
+					    
+					    // return array[1][2];
+					    aload array
+					    iconst_1
+					    aaload
+					    iconst_2
+					    iaload
+					    ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("array", dis), "Expected to fold redundant array");
+			assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to 5");
+		});
+	}
+
+	@Test
 	void foldOpaqueIfeq() {
 		String asm = """
 				.method public static example ()V {

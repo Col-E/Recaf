@@ -347,19 +347,24 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			case BALOAD:
 			case CALOAD:
 			case SALOAD:
-				// We aren't tracking array contents, so nothing to do here.
+				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
+					return array.getValue(index.value().getAsInt());
 				return IntValue.UNKNOWN;
 			case FALOAD:
-				// We aren't tracking array contents, so nothing to do here.
+				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
+					return array.getValue(index.value().getAsInt());
 				return FloatValue.UNKNOWN;
 			case LALOAD:
-				// We aren't tracking array contents, so nothing to do here.
+				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
+					return array.getValue(index.value().getAsInt());
 				return LongValue.UNKNOWN;
 			case DALOAD:
-				// We aren't tracking array contents, so nothing to do here.
+				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
+					return array.getValue(index.value().getAsInt());
 				return DoubleValue.UNKNOWN;
 			case AALOAD:
-				// We aren't tracking array contents, so nothing to do here.
+				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
+					return array.getValue(index.value().getAsInt());
 				return ObjectValue.VAL_OBJECT_MAYBE_NULL;
 			case IADD:
 				if (value1 instanceof IntValue i1 && value2 instanceof IntValue i2) return i1.add(i2);
@@ -492,11 +497,14 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 	}
 
 	@Override
-	public ReValue ternaryOperation(@Nonnull AbstractInsnNode insn, @Nonnull ReValue value1, @Nonnull ReValue value2, ReValue value3) {
-		// We don't track array operations, but this would cover:
+	public ReValue ternaryOperation(@Nonnull AbstractInsnNode insn, @Nonnull ReValue value1, @Nonnull ReValue value2, @Nonnull ReValue value3) {
+		// This method covers the following instructions:
 		//  IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, BASTORE, CASTORE, SASTORE
-		// Load operations are handled in 'binaryOperation'
-		return null;
+		// It will always be an array-store operation.
+		// NOTE: Load operations are handled in 'binaryOperation'
+		if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
+			return array.setValue(index.value().getAsInt(), value3);
+		return value1;
 	}
 
 	@Override
@@ -504,7 +512,21 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		int opcode = insn.getOpcode();
 		if (opcode == MULTIANEWARRAY) {
 			Type type = Type.getType(((MultiANewArrayInsnNode) insn).desc);
-			return newValue(type, Nullness.NOT_NULL);
+
+			// Extract dimensions from passed values.
+			// Unknown values will be negative, which we will sanity check for.
+			int[] dimensions = values.stream()
+					.mapToInt(v -> v instanceof IntValue intValue && intValue.value().isPresent() ?
+							intValue.value().getAsInt() : -1)
+					.toArray();
+			if (dimensions.length == 0) // Sanity check, should never occur.
+				return newValue(type, Nullness.NOT_NULL);
+			for (int dimension : dimensions)
+				if (dimension < 0) // Validate dimensions are valid
+					return newValue(type, Nullness.NOT_NULL);
+
+			// Make array of known dimensions.
+			return ArrayValue.multiANewArray(type, dimensions);
 		} else if (opcode == INVOKEDYNAMIC) {
 			Type returnType = Type.getReturnType(((InvokeDynamicInsnNode) insn).desc);
 			return newValue(returnType);
