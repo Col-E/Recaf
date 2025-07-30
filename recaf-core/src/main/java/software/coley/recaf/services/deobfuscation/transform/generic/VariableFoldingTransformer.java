@@ -14,7 +14,9 @@ import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.collections.Unchecked;
@@ -111,6 +113,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 			Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
 			try {
 				boolean controlFlowObserved = false;
+				boolean throwingObserved = false;
 				for (int i = 0; i < instructions.size(); i++) {
 					AbstractInsnNode insn = instructions.get(i);
 					int op = insn.getOpcode();
@@ -137,7 +140,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 						// If we're moving forward in the method from the beginning, and haven't seen
 						// the variable being used yet or any kind of control flow, then we can safely
 						// just replace the state with the value on the stack instead of merging it.
-						if (state.getReadsUpTo(i).isEmpty() && !controlFlowObserved)
+						if (state.getReadsUpTo(i).isEmpty() && !controlFlowObserved && !throwingObserved)
 							state.setState(top);
 						else
 							state.mergeState(top);
@@ -155,9 +158,32 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 						state.mergeState(iinc);
 					}
 
-					// Other state tracking which can change how we merge state
-					else if (isFlowControl(insn)) {
+					// Other state tracking which can change how we merge state.
+					else if (!controlFlowObserved && isFlowControl(insn))
+						// Control flow means somewhere else in the method the variable can be mutated.
 						controlFlowObserved = true;
+					else if (!throwingObserved) {
+						// TODO: Rather than just saying "throwing observed" it may be better to detail
+						//  points in the code where exceptions can be thrown. That way there can still
+						//  be some inlining in areas not affected by the potential of skipping "try { ... }" contents.
+						//  - This works for now though. It won't inline reads that could be inlined in some edge cases
+						//    but at the benefit of reducing incorrectly inlined cases due to possible throwing operations
+						//    interrupting the control flow of assigning multiple values to a variable.
+						TryCatchBlockNode tryBlock = getContainingTryBlock(method, insn);
+						if (tryBlock != null) {
+							// Instance field interactions can throw NPE.
+							if ((op == GETFIELD || op == PUTFIELD)
+									&& (tryBlock.type == null
+									|| tryBlock.type.equals("java/lang/Throwable")
+									|| tryBlock.type.equals("java/lang/Exception")
+									|| tryBlock.type.equals("java/lang/NullPointerException")))
+								throwingObserved = true;
+
+							// Most external method calls can throw *anything* so without expensive
+							// throwing analysis we'll just assume it can happen.
+							if (insn instanceof MethodInsnNode)
+								throwingObserved = true;
+						}
 					}
 				}
 			} catch (IllegalValueException ex) {
@@ -173,25 +199,20 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 					Type varType = getTypeForVarInsn(vin);
 					LocalAccessState state = states.get(key(vin.var, varType.getSort()));
 					if (state != null && state.isEffectiveConstant()) {
-						Frame<ReValue> frame = frames[i];
-						if (frame == null)
-							continue; // Skip dead code
-						ReValue localValue = frame.getLocal(vin.var);
-						if (localValue.hasKnownValue()) {
-							AbstractInsnNode replacement = switch (localValue) {
-								case DoubleValue doubleValue -> doubleToInsn(doubleValue.value().getAsDouble());
-								case FloatValue floatValue -> floatToInsn((float) floatValue.value().getAsDouble());
-								case IntValue intValue -> intToInsn(intValue.value().getAsInt());
-								case LongValue longValue -> longToInsn(longValue.value().getAsLong());
-								case StringValue stringValue -> new LdcInsnNode(stringValue.getText().get());
-								default -> null;
-							};
+						// Get replacement value of known state constant.
+						AbstractInsnNode replacement = switch (state.mergedValue) {
+							case DoubleValue doubleValue -> doubleToInsn(doubleValue.value().getAsDouble());
+							case FloatValue floatValue -> floatToInsn((float) floatValue.value().getAsDouble());
+							case IntValue intValue -> intToInsn(intValue.value().getAsInt());
+							case LongValue longValue -> longToInsn(longValue.value().getAsLong());
+							case StringValue stringValue -> new LdcInsnNode(stringValue.getText().get());
+							default -> null;
+						};
 
-							// Mark dirty if the instruction was replaced.
-							if (replacement != null) {
-								instructions.set(vin, replacement);
-								dirty = true;
-							}
+						// Mark dirty if the instruction was replaced.
+						if (replacement != null) {
+							instructions.set(vin, replacement);
+							dirty = true;
 						}
 					}
 				} else if (isVarStore(op) && insn instanceof VarInsnNode vin) {

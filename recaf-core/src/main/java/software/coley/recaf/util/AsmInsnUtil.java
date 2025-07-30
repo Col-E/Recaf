@@ -566,6 +566,26 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
+	 * @param method
+	 * 		Containing method of the instruction.
+	 * @param insn
+	 * 		Instruction to search for.
+	 *
+	 * @return The {@link TryCatchBlockNode} of a try start-end range containing the given instruction.
+	 */
+	@Nullable
+	public static TryCatchBlockNode getContainingTryBlock(@Nonnull MethodNode method, @Nonnull AbstractInsnNode insn) {
+		for (TryCatchBlockNode block : method.tryCatchBlocks) {
+			AbstractInsnNode i = block.start;
+			while (i != null && i != block.end && i != insn)
+				i = i.getNext();
+			if (i == insn)
+				return block;
+		}
+		return null;
+	}
+
+	/**
 	 * Check if the given block of instructions has a catch block handler target.
 	 * <p/>
 	 * When {@code includeFirstInsn=true} this will include match the first instruction of the block if it is

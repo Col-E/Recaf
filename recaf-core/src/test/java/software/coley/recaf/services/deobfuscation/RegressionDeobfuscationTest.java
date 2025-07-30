@@ -12,7 +12,7 @@ import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * An assortment of deobfuscation tests, specifically to ensure weird bugs that occurred at one point do not come back.
@@ -426,6 +426,125 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				        iconst_1
 				        ireturn
 				    N:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class));
+	}
+
+	/**
+	 * This case has "xyz" always be "1" when read, so it should fold.
+	 */
+	@Test
+	void variableFoldingWithCatchThatHasNoThrowableContents() {
+		String asm = """
+				.method public example ()I {
+				    parameters: { this },
+				    exceptions: { { B, C, D, Ljava/lang/Throwable; } },
+				    code: {
+				    A:
+				        iconst_0
+				        istore xyz
+				    B:
+				        iconst_1
+				        istore xyz
+				    C:
+				        goto E
+				    D:
+				        // handler
+				        pop
+				        iload xyz
+				        ireturn
+				    E:
+				        iload xyz
+				        ireturn
+				    F:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class) , dis -> {
+			assertFalse(dis.contains("xyz"), "Should have folded all variable stores/reads");
+		});
+	}
+
+	/**
+	 * This case has "xyz" change inside a "try" block, with a possibly throwing
+	 * method before the new value is assigned. Depending on if the called method
+	 * throws or not, the "xyz" value will be changed.
+	 */
+	@Test
+	void variableFoldingWithCatchThatCanThrow() {
+		String asm = """
+				.method public example ()I {
+				    parameters: { this },
+				    exceptions: { { B, C, D, Ljava/lang/Throwable; } },
+				    code: {
+				    A:
+				        iconst_0
+				        istore xyz
+				    B:
+				        // Method can throw, so "xyz" later on can be either "0" or "1"
+				        invokestatic Example.throwError ()V
+				        iconst_1
+				        istore xyz
+				    C:
+				        goto E
+				    D:
+				        // handler, pop exception off stack
+				        pop
+				        // In this basic case, this should always be "0"
+				        iload xyz
+				        ireturn
+				    E:
+				        // In this basic case, this should always be "1"
+				        iload xyz
+				        ireturn
+				    F:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class));
+	}
+
+	/**
+	 * Advanced case of {@link #variableFoldingWithCatchThatCanThrow()}.
+	 * <br>
+	 * Multiple calls to throwing methods, with variable assignments after.
+	 */
+	@Test
+	void variableFoldingWithCatchThatCanThrowAdvanced() {
+		String asm = """
+				.method public example ()I {
+				    parameters: { this },
+				    exceptions: { { B, C, D, Ljava/lang/Throwable; } },
+				    code: {
+				    A:
+				        iconst_0
+				        istore xyz
+				    B:
+				        // Method can throw, so "xyz" later on can be any "0-3" value.
+				        invokestatic Example.throwError1 ()V
+				        iconst_1
+				        istore xyz
+				        invokestatic Example.throwError2 ()V
+				        iconst_2
+				        istore xyz
+				        invokestatic Example.throwError3 ()V
+				        iconst_3
+				        istore xyz
+				    C:
+				        goto E
+				    D:
+				        // handler, pop exception off stack
+				        pop
+				        // In this advanced case, this should be "0", "1", or "2"
+				        iload xyz
+				        ireturn
+				    E:
+				        // In this advanced case, this should always be "3"
+				        iload xyz
+				        ireturn
+				    F:
 				    }
 				}
 				""";
