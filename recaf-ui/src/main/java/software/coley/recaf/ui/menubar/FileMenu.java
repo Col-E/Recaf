@@ -200,7 +200,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 			return;
 		Stage stage = new RecafStage();
 		WorkspaceBuilderPane root = new WorkspaceBuilderPane(pathLoadingManager, recentFilesConfig, workspaceManager.getCurrent(), () -> FxThreadUtil.run(stage::close));
-		stage.titleProperty().bind(Lang.getBinding("dialog.title.create-workspace"));
+		stage.titleProperty().bind(Lang.getBinding("menu.file.addtoworkspace"));
 		stage.setScene(new RecafScene(root));
 		stage.setMinWidth(650);
 		stage.setMinHeight(400);
