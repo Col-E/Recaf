@@ -26,7 +26,7 @@ jlinker = "1.0.7"
 jphantom = "1.4.4"
 junit = "5.11.4"
 jsvg = "1.6.1"
-lljzip = "2.7.2"
+lljzip = "2.8.1"
 logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.7.0"
 mockito = "5.15.2"

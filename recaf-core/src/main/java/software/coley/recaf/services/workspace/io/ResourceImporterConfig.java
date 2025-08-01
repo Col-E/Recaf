@@ -5,10 +5,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.collections.func.UncheckedFunction;
 import software.coley.lljzip.ZipIO;
+import software.coley.lljzip.format.ZipPatterns;
 import software.coley.lljzip.format.model.CentralDirectoryFileHeader;
 import software.coley.lljzip.format.model.LocalFileHeader;
 import software.coley.lljzip.format.model.ZipArchive;
+import software.coley.lljzip.format.read.ForwardScanZipReader;
 import software.coley.lljzip.format.read.JvmZipReader;
+import software.coley.lljzip.format.read.NaiveLocalFileZipReader;
+import software.coley.lljzip.format.read.SimpleZipPartAllocator;
+import software.coley.lljzip.format.read.ZipPartAllocator;
+import software.coley.lljzip.util.MemorySegmentUtil;
+import software.coley.lljzip.util.data.MemorySegmentData;
+import software.coley.lljzip.util.data.StringData;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
 import software.coley.observables.ObservableObject;
@@ -17,7 +25,9 @@ import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
-import java.util.List;
+import java.lang.foreign.MemorySegment;
+
+import static software.coley.lljzip.util.MemorySegmentUtil.readLongSlice;
 
 /**
  * Config for {@link ResourceImporter}.
@@ -29,7 +39,8 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	private final ObservableObject<ZipStrategy> zipStrategy = new ObservableObject<>(ZipStrategy.JVM);
 	private final ObservableBoolean skipRevisitedCenToLocalLinks = new ObservableBoolean(true);
 	private final ObservableBoolean allowBasicJvmBaseOffsetZeroCheck = new ObservableBoolean(true);
-	private final ObservableBoolean ignoreNaiveFileLengths = new ObservableBoolean(false);
+	private final ObservableBoolean ignoreFileLengths = new ObservableBoolean(false);
+	private final ObservableBoolean adoptStandardCenFileNames = new ObservableBoolean(false);
 	private final ObservableInteger maxEmbeddedZipDepth = new ObservableInteger(3);
 
 	@Inject
@@ -39,7 +50,8 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 		addValue(new BasicConfigValue<>("zip-strategy", ZipStrategy.class, zipStrategy));
 		addValue(new BasicConfigValue<>("skip-revisited-cen-to-local-links", boolean.class, skipRevisitedCenToLocalLinks));
 		addValue(new BasicConfigValue<>("allow-basic-base-offset-zero-check", boolean.class, allowBasicJvmBaseOffsetZeroCheck));
-		addValue(new BasicConfigValue<>("ignore-naive-file-lengths", boolean.class, ignoreNaiveFileLengths));
+		addValue(new BasicConfigValue<>("ignore-file-lengths", boolean.class, ignoreFileLengths));
+		addValue(new BasicConfigValue<>("adapt-standard-cen-file-names", boolean.class, adoptStandardCenFileNames));
 		addValue(new BasicConfigValue<>("max-embedded-zip-depth", int.class, maxEmbeddedZipDepth));
 	}
 
@@ -96,8 +108,8 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	 * @return {@code true} to ignore the reported file lengths when using {@link ZipStrategy#NAIVE}.
 	 */
 	@Nonnull
-	public ObservableBoolean getIgnoreNaiveFileLengths() {
-		return ignoreNaiveFileLengths;
+	public ObservableBoolean getIgnoreFileLengths() {
+		return ignoreFileLengths;
 	}
 
 	/**
@@ -116,28 +128,62 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	public UncheckedFunction<byte[], ZipArchive> mapping() {
 		ZipStrategy strategy = zipStrategy.getValue();
 		if (strategy == ZipStrategy.JVM)
-			return input -> ZipIO.read(input, new JvmZipReader(skipRevisitedCenToLocalLinks.getValue(),
-					allowBasicJvmBaseOffsetZeroCheck.getValue()));
+			return newJvmMapping();
 		if (strategy == ZipStrategy.STANDARD)
-			return ZipIO::readStandard;
-		return input -> {
-			ZipArchive archive = ZipIO.readNaive(input);
-			if (ignoreNaiveFileLengths.getValue()) {
-				List<LocalFileHeader> items = archive.getLocalFiles();
-				for (int i = 0; i < items.size(); i++) {
-					LocalFileHeader lfh = items.get(i);
-					long nextStart = i < items.size() - 1 ?
-							items.get(i + 1).offset() :
-							input.length;
-					long expectedEnd = lfh.offset() + lfh.length();
-					if (expectedEnd < nextStart) {
-						// TODO: Subtract nextStart here if data-descriptor is present
-						lfh.setFileDataEndOffset(nextStart);
-					}
+			return newStandardMapping();
+		return newNaiveMapping();
+	}
+
+	@Nonnull
+	private UncheckedFunction<byte[], ZipArchive> newNaiveMapping() {
+		return input -> ZipIO.read(input, new NaiveLocalFileZipReader(newPartAllocator()));
+	}
+
+	@Nonnull
+	private UncheckedFunction<byte[], ZipArchive> newStandardMapping() {
+		return input -> ZipIO.read(input, new ForwardScanZipReader(newPartAllocator()) {
+			@Override
+			public void postProcessLocalFileHeader(@Nonnull LocalFileHeader file) {
+				if (adoptStandardCenFileNames.getValue()) {
+					CentralDirectoryFileHeader directoryFileHeader = file.getLinkedDirectoryFileHeader();
+					if (directoryFileHeader != null)
+						file.setFileName(StringData.of(directoryFileHeader.getFileNameAsString()));
 				}
 			}
-			return archive;
-		};
+		});
+	}
+
+	@Nonnull
+	private UncheckedFunction<byte[], ZipArchive> newJvmMapping() {
+		return input -> ZipIO.read(input, new JvmZipReader(skipRevisitedCenToLocalLinks.getValue(), allowBasicJvmBaseOffsetZeroCheck.getValue()));
+	}
+
+	/**
+	 * @return Part allocator for Naive/Standard strategies.
+	 */
+	@Nonnull
+	private ZipPartAllocator newPartAllocator() {
+		if (ignoreFileLengths.getValue()) {
+			return new SimpleZipPartAllocator() {
+				@Nonnull
+				@Override
+				public LocalFileHeader newLocalFileHeader() {
+					return new LocalFileHeader() {
+						@Nonnull
+						@Override
+						protected MemorySegmentData readFileData(@Nonnull MemorySegment data, long headerOffset) {
+							long localOffset = MIN_FIXED_SIZE + getFileNameLength() + getExtraFieldLength();
+							long nextStart = MemorySegmentUtil.indexOfQuad(data, headerOffset + localOffset, ZipPatterns.LOCAL_FILE_HEADER_QUAD);
+							long fileDataLength = nextStart > headerOffset ?
+									nextStart - (headerOffset + localOffset) :
+									data.byteSize() - (headerOffset + localOffset);
+							return MemorySegmentData.of(readLongSlice(data, headerOffset, localOffset, fileDataLength));
+						}
+					};
+				}
+			};
+		}
+		return new SimpleZipPartAllocator();
 	}
 
 	/**
