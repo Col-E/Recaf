@@ -35,7 +35,8 @@ picocli = "4.7.6"
 procyon = "0.6.0"
 reactfx = { strictly = "2.0-M5" } # won't get updates, dead
 regex = "0.1.16"
-richtextfx = "0.11.3"
+# richtextfx = "0.11.3"
+richtextfx = "970ff0ed13"
 treemapfx = "1.1.0"
 vineflower = "1.10.1"
 sourcesolver = "1.1.5"
@@ -126,7 +127,8 @@ reactfx = { module = "org.reactfx:reactfx", version.ref = "reactfx" }
 
 regex = { module = "com.github.tommyettinger:regexodus", version.ref = "regex" }
 
-richtextfx = { module = "org.fxmisc.richtext:richtextfx", version.ref = "richtextfx" }
+# richtextfx = { module = "org.fxmisc.richtext:richtextfx", version.ref = "richtextfx" }
+richtextfx = { module = "com.github.Col-E:RichTextFX", version.ref = "richtextfx" }
 
 treemapfx = { module = "software.coley:treemap-fx", version.ref = "treemapfx" }
 
