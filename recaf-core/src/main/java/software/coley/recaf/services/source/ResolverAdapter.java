@@ -15,6 +15,7 @@ import software.coley.sourcesolver.model.ErroneousModel;
 import software.coley.sourcesolver.model.MethodBodyModel;
 import software.coley.sourcesolver.model.MethodModel;
 import software.coley.sourcesolver.model.Model;
+import software.coley.sourcesolver.model.ModifiersModel;
 import software.coley.sourcesolver.model.TypeModel;
 import software.coley.sourcesolver.model.VariableModel;
 import software.coley.sourcesolver.resolve.BasicResolver;
@@ -174,6 +175,10 @@ public class ResolverAdapter extends BasicResolver {
 						&& declaredClass.resolve(this) instanceof ClassResolution declaredClassResolution
 						&& declaredClassResolution.matches(methodResolution.getOwnerResolution())
 						&& methodResolution.matches(declaredClassResolution.getDeclaredMemberResolution(methodEntry))) {
+					return AstResolveResult.declared(methodPath);
+				} else if (target instanceof ModifiersModel
+						&& target.getParent() instanceof MethodModel parentMethod
+						&& parentMethod.isStaticInitializer()) {
 					return AstResolveResult.declared(methodPath);
 				}
 			return AstResolveResult.reference(methodPath);
