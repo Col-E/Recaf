@@ -13,6 +13,7 @@ import software.coley.sourcesolver.model.ClassModel;
 import software.coley.sourcesolver.model.CompilationUnitModel;
 import software.coley.sourcesolver.model.ErroneousModel;
 import software.coley.sourcesolver.model.MethodBodyModel;
+import software.coley.sourcesolver.model.MethodModel;
 import software.coley.sourcesolver.model.Model;
 import software.coley.sourcesolver.model.TypeModel;
 import software.coley.sourcesolver.model.VariableModel;
@@ -164,12 +165,17 @@ public class ResolverAdapter extends BasicResolver {
 			if (methodPath == null)
 				return null;
 
-			// Determine if it's a declaration or reference.
-			//  - Check if any declared class's methods have the target model in their range (the name and such, not the body)
+			// The model we resolved is a declaration if:
+			//  - It is a 'MethodModel' that resolves to the same method
+			//  - The declaring class must define a method of the same name/type
 			for (ClassModel declaredClass : getUnit().getRecursiveChildrenOfType(ClassModel.class))
-				if (declaredClass.resolve(this) instanceof ClassResolution declaredClassResolution && declaredClassResolution.matches(methodResolution.getOwnerResolution()))
-					if (methodResolution.matches(declaredClassResolution.getDeclaredMemberResolution(methodEntry)))
-						return AstResolveResult.declared(methodPath);
+				if (target instanceof MethodModel targetMethod
+						&& targetMethod.resolve(this).equals(methodResolution)
+						&& declaredClass.resolve(this) instanceof ClassResolution declaredClassResolution
+						&& declaredClassResolution.matches(methodResolution.getOwnerResolution())
+						&& methodResolution.matches(declaredClassResolution.getDeclaredMemberResolution(methodEntry))) {
+					return AstResolveResult.declared(methodPath);
+				}
 			return AstResolveResult.reference(methodPath);
 		} else if (resolution instanceof MultiMemberResolution multiMemberResolution) {
 			// Used in static star import contexts such as 'Math.*' or single method static imports such as 'Math.min'.
