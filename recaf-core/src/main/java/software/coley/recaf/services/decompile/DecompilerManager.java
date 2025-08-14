@@ -379,11 +379,11 @@ public class DecompilerManager implements Service {
 			}
 			if (config.getFilterSignatures().getValue()) {
 				if (cv == null) cv = cw.get();
-				cv = new SyntheticRemovingVisitor(cv);
+				cv = new IllegalSignatureRemovingVisitor(cv);
 			}
 			if (config.getFilterSynthetics().getValue()) {
 				if (cv == null) cv = cw.get();
-				cv = new IllegalSignatureRemovingVisitor(cv);
+				cv = new SyntheticRemovingVisitor(cv);
 			}
 			if (config.getFilterDebug().getValue() && cv == null)
 				cv = cw.get();
