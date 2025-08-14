@@ -32,6 +32,7 @@ public class DecompilerManagerConfig extends BasicConfigContainer implements Ser
 	private final ObservableBoolean filterLongExceptions = new ObservableBoolean(false);
 	private final ObservableInteger filterLongExceptionsLength = new ObservableInteger(256);
 	private final ObservableBoolean filterSignatures = new ObservableBoolean(false);
+	private final ObservableBoolean filterSynthetics = new ObservableBoolean(false);
 	private final ObservableBoolean filterNonAsciiNames = new ObservableBoolean(false);
 
 	@Inject
@@ -50,6 +51,7 @@ public class DecompilerManagerConfig extends BasicConfigContainer implements Ser
 		addValue(new BasicConfigValue<>("filter-exceptions-long", boolean.class, filterLongExceptions));
 		addValue(new BasicConfigValue<>("filter-exceptions-long-limit", int.class, filterLongExceptionsLength));
 		addValue(new BasicConfigValue<>("filter-illegal-signatures", boolean.class, filterSignatures));
+		addValue(new BasicConfigValue<>("filter-synthetics", boolean.class, filterSignatures));
 		addValue(new BasicConfigValue<>("filter-names-ascii", boolean.class, filterNonAsciiNames));
 	}
 
@@ -147,6 +149,14 @@ public class DecompilerManagerConfig extends BasicConfigContainer implements Ser
 	@Nonnull
 	public ObservableBoolean getFilterSignatures() {
 		return filterSignatures;
+	}
+
+	/**
+	 * @return {@code true} to strip out synthetic/bridge modifiers from classes, fields, and methods.
+	 */
+	@Nonnull
+	public ObservableBoolean getFilterSynthetics() {
+		return filterSynthetics;
 	}
 
 	/**

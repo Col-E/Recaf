@@ -596,6 +596,7 @@ service.decompile.decompilers-config.filter-exceptions-long=Filter long exceptio
 service.decompile.decompilers-config.filter-exceptions-long-limit=Long exceptions limit
 service.decompile.decompilers-config.filter-hollow=Filter class content (hollow)
 service.decompile.decompilers-config.filter-illegal-signatures=Filter illegal signatures
+service.decompile.decompilers-config.filter-synthetics=Filter synthetic flags
 service.decompile.decompilers-config.filter-names-ascii=Filter non-ascii names
 service.decompile.decompilers-config.filter-strip-debug=Filter debug data (vars, generics)
 service.decompile.impl=Implementations
