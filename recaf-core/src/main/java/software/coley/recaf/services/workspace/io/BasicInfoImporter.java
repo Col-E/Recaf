@@ -10,6 +10,7 @@ import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.ArscFileInfoBuilder;
 import software.coley.recaf.info.builder.AudioFileInfoBuilder;
 import software.coley.recaf.info.builder.BinaryXmlFileInfoBuilder;
@@ -58,39 +59,12 @@ public class BasicInfoImporter implements InfoImporter {
 		// Check for Java classes
 		if (matchesClass(data)) {
 			try {
-				int readerFlags = config.doSkipCodeParing() ? ClassReader.SKIP_CODE : 0;
-
-				// If we're skipping validation, any ASM parse failures will result in the class
-				// being treated as a file instead (see catch block)
-				if (config.doSkipAsmValidation())
-					return new JvmClassInfoBuilder(data, readerFlags).build();
-
-				// If we are doing validation, disable skipping ASM checks.
-				try {
-					return new JvmClassInfoBuilder()
-							.skipValidationChecks(false)
-							.adaptFrom(data, readerFlags)
-							.build();
-				} catch (Throwable t) {
-					// Patch if not compatible with ASM
-					byte[] patched = classPatcher.patch(name, data);
-					logger.debug("CafeDude patched class: {}", name);
-					try {
-						return new JvmClassInfoBuilder(patched, readerFlags)
-								.skipValidationChecks(false)
-								.build();
-					} catch (Throwable t1) {
-						logger.error("CafeDude patching output is still non-compliant with ASM for file: {}", formatConfig.filter(name));
-						return new FileInfoBuilder<>()
-								.withRawContent(data)
-								.withName(name)
-								.build();
-					}
-				}
+				return readClass(name, data);
 			} catch (Throwable t) {
-				// Invalid class, either some new edge case we need to add to CafeDude, or the file
-				// isn't a class, but the structure models it close enough to look like one at a glance.
-				// It may be unpacked later.
+				// Invalid class. There are a few possibilities here:
+				// - The user has disabled patching in their settings and opened an obfuscated file that kills ASM.
+				// - There is a pattern in the file very similar to a class file, but it is not actually a class file.
+				// - There is an edge case we need to add to CafeDude to allow complete patching.
 				return new FileInfoBuilder<>()
 						.withRawContent(data)
 						.withName(name)
@@ -195,6 +169,51 @@ public class BasicInfoImporter implements InfoImporter {
 		}
 		return null;
 	}
+
+	@Nonnull
+	private Info readClass(@Nonnull String name, @Nonnull byte[] data) throws Throwable {
+		var patchingMode = config.getClassPatchMode();
+
+		// If we're skipping validation just parse the class file as-is and don't run validation checks.
+		// Because the validation steps are skipped problems that would otherwise be caught and patched with
+		// higher tier patch modes will occur when opening the class later. Users must accept this responsibility
+		// if they want the boost in workspace load speeds.
+		if (patchingMode == InfoImporterConfig.ClassPatchMode.SKIP_FILTER)
+			return new JvmClassInfoBuilder(data, ClassReader.SKIP_CODE).build();
+
+		// If we're always validating, patch the class and try and parse the patched output.
+		// Any ASM parse failures imply patching has failed, and the class will be treated as a file instead (see catch block in calling methods)
+		if (patchingMode == InfoImporterConfig.ClassPatchMode.ALWAYS_FILTER) {
+			byte[] patched = classPatcher.patch(name, data);
+			return new JvmClassInfoBuilder(patched, 0)
+					.skipValidationChecks(false)
+					.build();
+		}
+
+		// We're doing a check-then-filter. If ASM reads the class as-is without issue, keep the result.
+		// Otherwise, patch when we encounter parse problems and try again.
+		int readerFlags = patchingMode == InfoImporterConfig.ClassPatchMode.CHECK_ADVANCED_THEN_FILTER ? ClassReader.SKIP_CODE : 0;
+		try {
+			return new JvmClassInfoBuilder()
+					.skipValidationChecks(false)
+					.adaptFrom(data, readerFlags)
+					.build();
+		} catch (Throwable t) {
+			// Patch if not compatible with ASM
+			byte[] patched = classPatcher.patch(name, data);
+			try {
+				JvmClassInfo patchedClassInfo = new JvmClassInfoBuilder(patched, readerFlags)
+						.skipValidationChecks(false)
+						.build();
+				logger.debug("CafeDude patched class: {}", name);
+				return patchedClassInfo;
+			} catch (Throwable t1) {
+				logger.error("CafeDude patching output is still non-compliant with ASM for file: {}", formatConfig.filter(name));
+				throw t1;
+			}
+		}
+	}
+
 
 	/**
 	 * Check if the byte array is prefixed by the class file magic header.

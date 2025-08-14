@@ -1,13 +1,13 @@
 package software.coley.recaf.services.workspace.io;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import software.coley.observables.ObservableBoolean;
+import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
-import software.coley.recaf.info.member.LocalVariable;
-import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
@@ -17,34 +17,47 @@ import software.coley.recaf.services.ServiceConfig;
  */
 @ApplicationScoped
 public class InfoImporterConfig extends BasicConfigContainer implements ServiceConfig {
-	private final ObservableBoolean skipClassAsmValidation = new ObservableBoolean(false);
-	private final ObservableBoolean skipCodeParing = new ObservableBoolean(true);
+	private final ObservableObject<ClassPatchMode> classPatchMode = new ObservableObject<>(ClassPatchMode.CHECK_BASIC_THEN_FILTER);
 
 	@Inject
 	public InfoImporterConfig() {
 		super(ConfigGroups.SERVICE_IO, InfoImporter.SERVICE_ID + CONFIG_SUFFIX);
-		addValue(new BasicConfigValue<>("skip-class-asm-validation", boolean.class, skipClassAsmValidation));
-		addValue(new BasicConfigValue<>("skip-class-code", boolean.class, skipCodeParing));
+		addValue(new BasicConfigValue<>("class-patch-mode", ClassPatchMode.class, classPatchMode));
 	}
 
 	/**
-	 * You better know what you're doing if you disable this. The default is {@code false} because
-	 * otherwise there will be errors when invalid classes are found.
+	 * You better know what you're doing if you choose a lower tier value on this.
+	 * The default is {@link ClassPatchMode#CHECK_BASIC_THEN_FILTER} because otherwise
+	 * there will be errors when invalid classes are found. However, in some cases
+	 * it may be beneficial to use {@link ClassPatchMode#ALWAYS_FILTER}.
+	 * Only use {@link ClassPatchMode#SKIP_FILTER} when looking at unobfuscated classes.
 	 *
-	 * @return {@code true} to skip validation of classes when importing classes.
+	 * @return Class patch validation mode.
 	 */
-	public boolean doSkipAsmValidation() {
-		return skipClassAsmValidation.getValue();
+	@Nonnull
+	public ClassPatchMode getClassPatchMode() {
+		return classPatchMode.getValue();
 	}
 
 	/**
-	 * Skips parsing method code when importing.
-	 * This results in not populating {@link LocalVariable} values in {@link MethodMember}s.
-	 * Enabling this saves a decent bit of time, around ~25% of the input processing time on my machine.
-	 *
-	 * @return {@code true} to skip parsing method code attributes when importing classes.
+	 * Level of class pre-processing to take when importing {@link ClassInfo} types.
 	 */
-	public boolean doSkipCodeParing() {
-		return skipCodeParing.getValue();
+	public enum ClassPatchMode {
+		/**
+		 * Always pre-process classes.
+		 */
+		ALWAYS_FILTER,
+		/**
+		 * Check thoroughly for problems in class files before pre-processing them.
+		 */
+		CHECK_ADVANCED_THEN_FILTER,
+		/**
+		 * Check quickly for problems in class files before pre-processing them.
+		 */
+		CHECK_BASIC_THEN_FILTER,
+		/**
+		 * Do not pre-process classes.
+		 */
+		SKIP_FILTER
 	}
 }
