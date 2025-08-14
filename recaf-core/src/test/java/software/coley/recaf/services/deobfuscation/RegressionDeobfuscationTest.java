@@ -462,7 +462,7 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class) , dis -> {
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
 			assertFalse(dis.contains("xyz"), "Should have folded all variable stores/reads");
 		});
 	}
@@ -794,5 +794,59 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				}
 				""";
 		validateNoTransformation(asm, List.of(OpaqueConstantFoldingTransformer.class));
+	}
+
+	@Test
+	void opaqueConstantFoldingLongShift() {
+		String asm = """
+				.method public static example ()J {
+				    code: {
+				    A:
+				        ldc 1000000L
+				        iconst_5
+				        lushr
+				        lreturn
+				    H:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			// Expected folded value
+			assertTrue(dis.contains("31250L"));
+		});
+
+		asm = """
+				.method public static example ()J {
+				    code: {
+				    A:
+				        ldc 1000000L
+				        iconst_5
+				        lshr
+				        lreturn
+				    H:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			// Expected folded value
+			assertTrue(dis.contains("31250L"));
+		});
+
+		asm = """
+				.method public static example ()J {
+				    code: {
+				    A:
+				        ldc 1000000L
+				        iconst_5
+				        lshl
+				        lreturn
+				    H:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			// Expected folded value
+			assertTrue(dis.contains("32000000L"));
+		});
 	}
 }

@@ -810,14 +810,15 @@ public class AsmInsnUtil implements Opcodes {
 			case IXOR:
 			case IOR:
 				return 2; // value1, value2
+			case LUSHR:
+			case LSHR:
+			case LSHL:
+				return 3; // wide-value1, value2
 			case DREM:
 			case DDIV:
 			case DMUL:
 			case DSUB:
 			case DADD:
-			case LUSHR:
-			case LSHR:
-			case LSHL:
 			case LREM:
 			case LDIV:
 			case LMUL:
