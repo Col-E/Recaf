@@ -6,6 +6,7 @@ import software.coley.recaf.util.StringUtil;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.function.Function;
 
 /**
@@ -17,7 +18,9 @@ public class BasicLookupGenerator {
 	static boolean emitStatic = false;
 	static Class<?>[] emitTargets = new Class[]{
 			System.class,
+			Arrays.class,
 			String.class,
+			CharSequence.class,
 			Math.class,
 			Boolean.class,
 			Byte.class,
@@ -306,7 +309,7 @@ public class BasicLookupGenerator {
 		while (cls.isArray())
 			cls = cls.getComponentType();
 		if (cls == void.class) return false;
-		return cls.isPrimitive() || cls == String.class;
+		return cls.isPrimitive() || cls == String.class || cls == CharSequence.class;
 	}
 
 	@Nonnull
@@ -334,7 +337,7 @@ public class BasicLookupGenerator {
 		if (cls == long.class) return "j";
 		if (cls == float.class) return "f";
 		if (cls == double.class) return "d";
-		if (cls.isArray()) return "arr";
+		if (cls.isArray()) return "arr" + toMapper(cls.componentType());
 		return "x";
 	}
 }

@@ -27,6 +27,8 @@ public class Types {
 	public static final Type ARRAY_1D_FLOAT = Type.getObjectType("[F");
 	public static final Type ARRAY_1D_DOUBLE = Type.getObjectType("[D");
 	public static final Type ARRAY_1D_LONG = Type.getObjectType("[J");
+	public static final Type ARRAY_1D_OBJECT = Type.getObjectType("[Ljava/lang/Object;");
+	public static final Type ARRAY_1D_STRING = Type.getObjectType("[Ljava/lang/String;");
 	public static final Type[] PRIMITIVES = new Type[]{
 			Type.VOID_TYPE,
 			Type.BOOLEAN_TYPE,

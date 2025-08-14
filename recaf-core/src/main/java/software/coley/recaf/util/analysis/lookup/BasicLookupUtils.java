@@ -2,6 +2,8 @@ package software.coley.recaf.util.analysis.lookup;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.util.Types;
+import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
@@ -10,8 +12,10 @@ import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
+import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 /**
  * Common utilities for lookup implementations to convert between JVM values and interpreter values.
@@ -46,18 +50,6 @@ public class BasicLookupUtils {
 	@SuppressWarnings("all")
 	protected static String str(@Nonnull StringValue value) {return value.getText().get();}
 
-	protected static char[] arr(@Nonnull ArrayValue value) {
-		/* TODO: Uncomment when array-value tracks items
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		int length = dimLength.getAsInt();
-		char[] chars = new char[length];
-		for (int i = 0; i < length; i++)
-			chars[i] = c(value.getValueAt(i));
-		return chars;
-		 */
-		throw new UnsupportedOperationException("Should not reach here");
-	}
-
 	@Nonnull
 	protected static IntValue z(boolean value) {return IntValue.of(value ? 1 : 0);}
 
@@ -86,57 +78,195 @@ public class BasicLookupUtils {
 	protected static StringValue str(@Nullable String value) {return ObjectValue.string(value);}
 
 	@Nonnull
-	protected static ArrayValue arr(@Nullable boolean[] value) {
-		// TODO: Implement
-		return ArrayValue.VAL_BOOLEANS;
+	protected static StringValue str(@Nullable CharSequence value) {return str(value == null ? null : value.toString());}
+
+	protected static boolean[] arrz(@Nonnull ArrayValue value) {
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		boolean[] booleans = new boolean[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
+				booleans[i] = z(iiv);
+		}
+		return booleans;
+	}
+
+	protected static byte[] arrb(@Nonnull ArrayValue value) {
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		byte[] bytes = new byte[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
+				bytes[i] = b(iiv);
+		}
+		return bytes;
+	}
+
+	protected static short[] arrs(@Nonnull ArrayValue value) {
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		short[] shorts = new short[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
+				shorts[i] = s(iiv);
+		}
+		return shorts;
+	}
+
+	protected static char[] arrc(@Nonnull ArrayValue value) {
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		char[] chars = new char[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
+				chars[i] = c(iiv);
+		}
+		return chars;
+	}
+
+	protected static int[] arri(@Nonnull ArrayValue value) {
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		int[] ints = new int[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
+				ints[i] = i(iiv);
+		}
+		return ints;
+	}
+
+	protected static float[] arrf(@Nonnull ArrayValue value) {
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		float[] floats = new float[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof FloatValue fv && fv.hasKnownValue())
+				floats[i] = f(fv);
+		}
+		return floats;
+	}
+
+	protected static double[] arrd(@Nonnull ArrayValue value) {
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		double[] doubles = new double[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof DoubleValue dv && dv.hasKnownValue())
+				doubles[i] = d(dv);
+		}
+		return doubles;
+	}
+
+	protected static long[] arrj(@Nonnull ArrayValue value) {
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		long[] longs = new long[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof LongValue lv && lv.hasKnownValue())
+				longs[i] = j(lv);
+		}
+		return longs;
+	}
+
+	protected static String[] arrstr(@Nonnull ArrayValue value) {
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		String[] strings = new String[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof StringValue sv && sv.hasKnownValue())
+				strings[i] = str(sv);
+		}
+		return strings;
 	}
 
 	@Nonnull
-	protected static ArrayValue arr(@Nullable byte[] value) {
-		// TODO: Implement
-		return ArrayValue.VAL_BYTES;
+	protected static ArrayValue arrz(@Nullable boolean[] value) {
+		if (value == null)
+			return ArrayValue.VAL_BOOLEANS_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_BOOLEAN, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index] ? 1 : 0));
 	}
 
 	@Nonnull
-	protected static ArrayValue arr(@Nullable short[] value) {
-		// TODO: Implement
-		return ArrayValue.VAL_SHORTS;
+	protected static ArrayValue arrb(@Nullable byte[] value) {
+		if (value == null)
+			return ArrayValue.VAL_BYTES_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_BYTE, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index]));
 	}
 
 	@Nonnull
-	protected static ArrayValue arr(@Nullable char[] value) {
-		// TODO: Implement
-		return ArrayValue.VAL_CHARS;
+	protected static ArrayValue arrs(@Nullable short[] value) {
+		if (value == null)
+			return ArrayValue.VAL_SHORTS_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_SHORT, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index]));
 	}
 
 	@Nonnull
-	protected static ArrayValue arr(@Nullable int[] value) {
-		// TODO: Implement
-		return ArrayValue.VAL_INTS;
+	protected static ArrayValue arrc(@Nullable char[] value) {
+		if (value == null)
+			return ArrayValue.VAL_CHARS_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_CHAR, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index]));
 	}
 
 	@Nonnull
-	protected static ArrayValue arr(@Nullable long[] value) {
-		// TODO: Implement
-		return ArrayValue.VAL_LONGS;
+	protected static ArrayValue arri(@Nullable int[] value) {
+		if (value == null)
+			return ArrayValue.VAL_INTS_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_INT, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index]));
 	}
 
 	@Nonnull
-	protected static ArrayValue arr(@Nullable float[] value) {
-		// TODO: Implement
-		return ArrayValue.VAL_FLOATS;
+	protected static ArrayValue arrj(@Nullable long[] value) {
+		if (value == null)
+			return ArrayValue.VAL_LONGS_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_LONG, Nullness.NOT_NULL, value.length, index -> LongValue.of(value[index]));
 	}
 
 	@Nonnull
-	protected static ArrayValue arr(@Nullable double[] value) {
-		// TODO: Implement
-		return ArrayValue.VAL_DOUBLES;
+	protected static ArrayValue arrf(@Nullable float[] value) {
+		if (value == null)
+			return ArrayValue.VAL_FLOATS_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_FLOAT, Nullness.NOT_NULL, value.length, index -> FloatValue.of(value[index]));
 	}
 
 	@Nonnull
-	protected static ArrayValue arr(@Nullable String[] value) {
-		// TODO: Implement
-		return ArrayValue.VAL_STRINGS;
+	protected static ArrayValue arrd(@Nullable double[] value) {
+		if (value == null)
+			return ArrayValue.VAL_DOUBLES_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_DOUBLE, Nullness.NOT_NULL, value.length, index -> DoubleValue.of(value[index]));
+	}
+
+	@Nonnull
+	protected static ArrayValue arrstr(@Nullable String[] value) {
+		if (value == null)
+			return ArrayValue.VAL_STRINGS_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.NOT_NULL, value.length, index -> ObjectValue.string(value[index]));
 	}
 
 	@SuppressWarnings("unchecked")
