@@ -4,11 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.Nullness;
-import software.coley.recaf.util.analysis.value.IllegalValueException;
-import software.coley.recaf.util.analysis.value.ObjectValue;
-import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
-import software.coley.recaf.util.analysis.value.UninitializedValue;
 
 import java.util.Optional;
 
@@ -17,46 +13,30 @@ import java.util.Optional;
  *
  * @author Matt Coley
  */
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class StringValueImpl extends ObjectValueImpl implements StringValue {
-	private final Optional<String> text;
-
+public class StringValueImpl extends ObjectValueBoxImpl<String> implements StringValue {
 	public StringValueImpl(@Nonnull Nullness nullness) {
 		super(Types.STRING_TYPE, nullness);
-		text = Optional.empty();
 	}
 
-	public StringValueImpl(@Nullable String text) {
-		super(Types.STRING_TYPE, text != null ? Nullness.NOT_NULL : Nullness.UNKNOWN);
-		this.text = Optional.ofNullable(text);
+	public StringValueImpl(@Nullable String value) {
+		super(Types.STRING_TYPE, value);
+	}
+
+	@Nonnull
+	@Override
+	protected ObjectValueBoxImpl<String> wrap(@Nullable String value) {
+		return new StringValueImpl(value);
+	}
+
+	@Nonnull
+	@Override
+	protected ObjectValueBoxImpl<String> wrapUnknown(@Nonnull Nullness nullness) {
+		return new StringValueImpl(nullness);
 	}
 
 	@Nonnull
 	@Override
 	public Optional<String> getText() {
-		return text;
-	}
-
-	@Override
-	public boolean hasKnownValue() {
-		return nullness() == Nullness.NOT_NULL && text.isPresent();
-	}
-
-	@Nonnull
-	@Override
-	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
-		if (other == UninitializedValue.UNINITIALIZED_VALUE)
-			return other;
-		else if (other instanceof StringValue otherString) {
-			if (getText().isPresent() && otherString.getText().isPresent()) {
-				String s = getText().get();
-				String otherS = otherString.getText().get();
-				if (s.equals(otherS))
-					return ObjectValue.string(s);
-			}
-		}
-
-		// Fall back to object merge logic
-		return super.mergeWith(other);
+		return value();
 	}
 }

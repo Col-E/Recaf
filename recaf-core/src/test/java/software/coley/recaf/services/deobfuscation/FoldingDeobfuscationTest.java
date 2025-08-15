@@ -1446,6 +1446,53 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
+	void simulatingThrowingMethodDoesNotFold() {
+		String asm = """
+				.method public static example ()[C {
+				    code: {
+				    A:
+				        ldc "abc"
+				        invokevirtual java/lang/String.toCharArray ()[C
+				        iconst_m1
+				        iconst_m1
+				        invokestatic java/util/Arrays.copyOfRange ([CII)[C
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(OpaqueConstantFoldingTransformer.class));
+	}
+
+	@Test
+	void foldFormattedString() {
+		// Has Object[] parameter with values that we want to fold
+		String asm = """
+				.method public static example ()Ljava/lang/String; {
+				    code: {
+				    A:
+				        ldc "Hello %s - Number %d"
+				        iconst_2
+				        anewarray java/lang/Object
+				        dup
+				        iconst_0
+				        ldc "Name"
+				        aastore
+				        dup
+				        iconst_1
+				        bipush 32
+				        invokestatic java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+				        aastore
+				        invokevirtual java/lang/String.formatted ([Ljava/lang/Object;)Ljava/lang/String;
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "", "");
+	}
+
+	@Test
 	void foldRedundant1DIntArray() {
 		String asm = """
 				.method public static example ()I {

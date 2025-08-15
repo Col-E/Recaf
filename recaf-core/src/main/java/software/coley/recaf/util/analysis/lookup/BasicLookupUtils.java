@@ -13,6 +13,14 @@ import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
+import software.coley.recaf.util.analysis.value.impl.BoxedByteValueImpl;
+import software.coley.recaf.util.analysis.value.impl.BoxedCharacterValueImpl;
+import software.coley.recaf.util.analysis.value.impl.BoxedDoubleValueImpl;
+import software.coley.recaf.util.analysis.value.impl.BoxedFloatValueImpl;
+import software.coley.recaf.util.analysis.value.impl.BoxedIntegerValueImpl;
+import software.coley.recaf.util.analysis.value.impl.BoxedLongValueImpl;
+import software.coley.recaf.util.analysis.value.impl.BoxedShortValueImpl;
+import software.coley.recaf.util.analysis.value.impl.ObjectValueBoxImpl;
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -50,6 +58,23 @@ public class BasicLookupUtils {
 	@SuppressWarnings("all")
 	protected static String str(@Nonnull StringValue value) {return value.getText().get();}
 
+	@SuppressWarnings("all")
+	protected static <T> T obj(@Nonnull ObjectValue value) {
+		// Map null to null
+		if (value.isNull())
+			return null;
+
+		// Unwrap strings
+		if (value instanceof StringValue string)
+			return (T) str(string);
+
+		// Unwrap boxed values
+		if (value instanceof ObjectValueBoxImpl<?> box)
+			return (T) box.unbox();
+
+		throw new IllegalArgumentException("Unsupported object unwrap: " + value);
+	}
+
 	@Nonnull
 	protected static IntValue z(boolean value) {return IntValue.of(value ? 1 : 0);}
 
@@ -80,7 +105,38 @@ public class BasicLookupUtils {
 	@Nonnull
 	protected static StringValue str(@Nullable CharSequence value) {return str(value == null ? null : value.toString());}
 
+	@Nonnull
+	protected static ObjectValue obj(@Nullable Object value) {
+		// This isn't exactly perfect, as we lose type info with this conversion.
+		if (value == null)
+			return ObjectValue.VAL_OBJECT_NULL;
+
+		// String-like
+		if (value instanceof CharSequence string)
+			return str(string);
+
+		// Primitive boxes
+		if (value instanceof Integer i)
+			return new BoxedIntegerValueImpl(i);
+		if (value instanceof Long l)
+			return new BoxedLongValueImpl(l);
+		if (value instanceof Byte b)
+			return new BoxedByteValueImpl(b);
+		if (value instanceof Float f)
+			return new BoxedFloatValueImpl(f);
+		if (value instanceof Double d)
+			return new BoxedDoubleValueImpl(d);
+		if (value instanceof Character c)
+			return new BoxedCharacterValueImpl(c);
+		if (value instanceof Short s)
+			return new BoxedShortValueImpl(s);
+
+		throw new IllegalArgumentException("Unsupported Object wrap: " + value);
+	}
+
 	protected static boolean[] arrz(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
 		OptionalInt dimLength = value.getFirstDimensionLength();
 		if (dimLength.isEmpty() || !value.hasKnownValue())
 			throw new IllegalArgumentException();
@@ -95,6 +151,8 @@ public class BasicLookupUtils {
 	}
 
 	protected static byte[] arrb(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
 		OptionalInt dimLength = value.getFirstDimensionLength();
 		if (dimLength.isEmpty() || !value.hasKnownValue())
 			throw new IllegalArgumentException();
@@ -109,6 +167,8 @@ public class BasicLookupUtils {
 	}
 
 	protected static short[] arrs(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
 		OptionalInt dimLength = value.getFirstDimensionLength();
 		if (dimLength.isEmpty() || !value.hasKnownValue())
 			throw new IllegalArgumentException();
@@ -123,6 +183,8 @@ public class BasicLookupUtils {
 	}
 
 	protected static char[] arrc(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
 		OptionalInt dimLength = value.getFirstDimensionLength();
 		if (dimLength.isEmpty() || !value.hasKnownValue())
 			throw new IllegalArgumentException();
@@ -137,6 +199,8 @@ public class BasicLookupUtils {
 	}
 
 	protected static int[] arri(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
 		OptionalInt dimLength = value.getFirstDimensionLength();
 		if (dimLength.isEmpty() || !value.hasKnownValue())
 			throw new IllegalArgumentException();
@@ -151,6 +215,8 @@ public class BasicLookupUtils {
 	}
 
 	protected static float[] arrf(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
 		OptionalInt dimLength = value.getFirstDimensionLength();
 		if (dimLength.isEmpty() || !value.hasKnownValue())
 			throw new IllegalArgumentException();
@@ -165,6 +231,8 @@ public class BasicLookupUtils {
 	}
 
 	protected static double[] arrd(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
 		OptionalInt dimLength = value.getFirstDimensionLength();
 		if (dimLength.isEmpty() || !value.hasKnownValue())
 			throw new IllegalArgumentException();
@@ -179,6 +247,8 @@ public class BasicLookupUtils {
 	}
 
 	protected static long[] arrj(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
 		OptionalInt dimLength = value.getFirstDimensionLength();
 		if (dimLength.isEmpty() || !value.hasKnownValue())
 			throw new IllegalArgumentException();
@@ -193,6 +263,8 @@ public class BasicLookupUtils {
 	}
 
 	protected static String[] arrstr(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
 		OptionalInt dimLength = value.getFirstDimensionLength();
 		if (dimLength.isEmpty() || !value.hasKnownValue())
 			throw new IllegalArgumentException();
@@ -204,6 +276,22 @@ public class BasicLookupUtils {
 				strings[i] = str(sv);
 		}
 		return strings;
+	}
+
+	protected static Object[] arrobj(@Nonnull ArrayValue value) {
+		if (value.isNull())
+			return null;
+		OptionalInt dimLength = value.getFirstDimensionLength();
+		if (dimLength.isEmpty() || !value.hasKnownValue())
+			throw new IllegalArgumentException();
+		int length = dimLength.getAsInt();
+		Object[] objects = new Object[length];
+		for (int i = 0; i < length; i++) {
+			ReValue iv = value.getValue(i);
+			if (iv instanceof ObjectValue sv && sv.hasKnownValue())
+				objects[i] = obj(sv);
+		}
+		return objects;
 	}
 
 	@Nonnull
@@ -263,10 +351,24 @@ public class BasicLookupUtils {
 	}
 
 	@Nonnull
+	protected static ArrayValue arrstr(@Nullable CharSequence[] value) {
+		if (value == null)
+			return ArrayValue.VAL_STRINGS_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.NOT_NULL, value.length, index -> ObjectValue.string(String.valueOf(value[index])));
+	}
+
+	@Nonnull
 	protected static ArrayValue arrstr(@Nullable String[] value) {
 		if (value == null)
 			return ArrayValue.VAL_STRINGS_NULL;
 		return new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.NOT_NULL, value.length, index -> ObjectValue.string(value[index]));
+	}
+
+	@Nonnull
+	protected static ArrayValue arrobj(@Nullable Object[] value) {
+		if (value == null)
+			return ArrayValue.VAL_OBJECTS_NULL;
+		return new ArrayValueImpl(Types.ARRAY_1D_OBJECT, Nullness.NOT_NULL, value.length, index -> obj(value[index]));
 	}
 
 	@SuppressWarnings("unchecked")

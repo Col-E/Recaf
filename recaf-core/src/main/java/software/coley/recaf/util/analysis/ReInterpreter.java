@@ -321,6 +321,8 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 				};
 			case ANEWARRAY: {
 				Type arrayType = Type.getType("[" + Type.getObjectType(((TypeInsnNode) insn).desc));
+				if (value instanceof IntValue iv && iv.hasKnownValue())
+					return ArrayValue.of(arrayType, Nullness.NOT_NULL, iv.value().getAsInt());
 				return newValue(arrayType, Nullness.NOT_NULL);
 			}
 			case ARRAYLENGTH:

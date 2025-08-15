@@ -129,6 +129,8 @@ public sealed interface ReValue extends Value permits IntValue, FloatValue, Doub
 
 	/**
 	 * @return {@code true} when the exact content is known.
+	 * {@code null} does not count if this is an {@link ObjectValue}
+	 * and for that you should use {@link ObjectValue#isNull()}.
 	 */
 	boolean hasKnownValue();
 

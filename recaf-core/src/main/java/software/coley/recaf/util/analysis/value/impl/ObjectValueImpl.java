@@ -24,7 +24,7 @@ public class ObjectValueImpl implements ObjectValue {
 
 	@Override
 	public boolean hasKnownValue() {
-		return false;
+		return nullness == Nullness.NULL;
 	}
 
 	@Nonnull

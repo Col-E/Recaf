@@ -3,10 +3,12 @@ package software.coley.recaf.util.analysis.lookup;
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.Type;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.Types;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -30,7 +32,8 @@ public class BasicLookupGenerator {
 			Long.class,
 			Float.class,
 			Double.class,
-			Number.class
+			Number.class,
+			Objects.class
 	};
 
 	/**
@@ -112,7 +115,10 @@ public class BasicLookupGenerator {
 		};
 		Function<Integer, String> parameterizer = i -> {
 			// Does not need to be adjusted for virtual vs static, already done in usage
-			return toMapper(parameterTypes[i]);
+			Class<?> parameterType = parameterTypes[i];
+			String mapped = toMapper(parameterType);
+
+			return mapped;
 		};
 
 		// METHODS.put("java/lang/Math.max(II)I",
@@ -233,7 +239,6 @@ public class BasicLookupGenerator {
 						.append(namer.apply(4)).append(", ")
 						.append(namer.apply(5)).append(", ")
 						.append(namer.apply(6)).append(") -> ");
-				;
 			}
 		}
 
@@ -309,7 +314,9 @@ public class BasicLookupGenerator {
 		while (cls.isArray())
 			cls = cls.getComponentType();
 		if (cls == void.class) return false;
-		return cls.isPrimitive() || cls == String.class || cls == CharSequence.class;
+		return cls.isPrimitive() || cls == String.class || cls == CharSequence.class
+				|| cls == Object.class
+				|| Types.isBoxedPrimitive(Type.getDescriptor(cls));
 	}
 
 	@Nonnull
@@ -319,11 +326,12 @@ public class BasicLookupGenerator {
 		} else if (cls.isPrimitive()) {
 			if (cls == short.class || cls == char.class || cls == byte.class || cls == boolean.class)
 				return "IntValue";
-			return StringUtil.uppercaseFirstChar(cls.getName()) + "Value";
+			return StringUtil.uppercaseFirstChar(cls.getSimpleName()) + "Value";
 		} else if (cls == String.class || cls == CharSequence.class) {
 			return "StringValue";
+		} else {
+			return "ObjectValue";
 		}
-		throw new IllegalStateException();
 	}
 
 	@Nonnull
@@ -338,6 +346,7 @@ public class BasicLookupGenerator {
 		if (cls == float.class) return "f";
 		if (cls == double.class) return "d";
 		if (cls.isArray()) return "arr" + toMapper(cls.componentType());
-		return "x";
+		if (cls != Object.class) return "BasicLookupUtils.<" + cls.getSimpleName() + ">obj";
+		return "obj";
 	}
 }

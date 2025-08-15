@@ -138,7 +138,7 @@ public class ArrayValueImpl implements ArrayValue {
 	public boolean hasKnownValue() {
 		return nullness == Nullness.NOT_NULL
 				&& length.isPresent()
-				&& contents != null && contents.stream().allMatch(ReValue::hasKnownValue);
+				&& contents != null && contents.stream().allMatch(v -> v.hasKnownValue() || v instanceof ObjectValue ro && ro.isNull());
 	}
 
 	@Nonnull
