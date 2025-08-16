@@ -118,9 +118,8 @@ public class InstructionSearchPane extends AbstractSearchPane {
 
 		// Add an initial line, and a button to facilitate adding additional lines
 		lines.add(new Line(TOP_UID, new SimpleStringProperty(), new SimpleStringProperty()));
-		Button addLine = new ActionButton(CarbonIcons.ADD_ALT, Lang.getBinding("dialog.search.add-instruction-line"), () -> {
-			lines.add(new Line(UUID.randomUUID(), new SimpleStringProperty(), new SimpleStringProperty()));
-		});
+		Button addLine = new ActionButton(CarbonIcons.ADD_ALT,
+				() -> lines.add(new Line(UUID.randomUUID(), new SimpleStringProperty(), new SimpleStringProperty())));
 		input.addRow(0, addLine);
 		setInputs(input);
 	}
