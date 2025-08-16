@@ -17,6 +17,7 @@ import software.coley.recaf.path.ThrowsPathNode;
 import software.coley.recaf.services.search.match.NumberPredicateProvider;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.services.search.query.DeclarationQuery;
+import software.coley.recaf.services.search.query.InstructionQuery;
 import software.coley.recaf.services.search.query.NumberQuery;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
@@ -36,6 +37,7 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -127,6 +129,16 @@ public class SearchServiceTest extends TestBase {
 			assertEquals(1, results.size());
 
 			results = searchService.search(classesWorkspace, new StringQuery(strMatchProvider.newPartialRegexPredicate("\\w+\\s\\w+")));
+			assertEquals(1, results.size());
+		}
+
+		@Test
+		void testInsnSearch() {
+			Results results = searchService.search(classesWorkspace, new InstructionQuery(List.of(
+					strMatchProvider.newEqualPredicate("getstatic java/lang/System.out Ljava/io/PrintStream;"),
+					strMatchProvider.newEqualPredicate("ldc \"Hello world\""),
+					strMatchProvider.newEqualPredicate("invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V")
+			)));
 			assertEquals(1, results.size());
 		}
 

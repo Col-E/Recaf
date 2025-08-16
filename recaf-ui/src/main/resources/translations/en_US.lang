@@ -74,6 +74,7 @@ menu.search.number=Numbers
 menu.search.class.member-declarations=Member declarations
 menu.search.class.member-references=Member references
 menu.search.class.type-references=Type references
+menu.search.class.instruction=Instruction disassembly
 menu.search.method-overrides=Method overrides
 menu.search.method-references=Method references
 menu.search.field-references=Field references
@@ -165,6 +166,7 @@ dialog.search.type=Type name
 dialog.search.member-owner=Member owner type
 dialog.search.member-name=Member name
 dialog.search.member-descriptor=Member descriptor
+dialog.search.add-instruction-line=Add instruction line
 
 ## File chooser
 dialog.title.primary=Primary resource

@@ -32,6 +32,7 @@ public class SearchMenu extends WorkspaceAwareMenu {
 		getItems().add(action("menu.search.class.type-references", CarbonIcons.CODE_REFERENCE, actions::openNewClassReferenceSearch));
 		getItems().add(action("menu.search.class.member-references", CarbonIcons.CODE_REFERENCE, actions::openNewMemberReferenceSearch));
 		getItems().add(action("menu.search.class.member-declarations", CarbonIcons.CODE, actions::openNewMemberDeclarationSearch));
+		getItems().add(action("menu.search.class.instruction", CarbonIcons.CODE, actions::openNewInstructionSearch));
 
 		disableProperty().bind(hasWorkspace.not());
 	}

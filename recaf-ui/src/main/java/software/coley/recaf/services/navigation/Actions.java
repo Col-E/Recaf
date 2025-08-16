@@ -93,6 +93,7 @@ import software.coley.recaf.ui.pane.editing.media.VideoFilePane;
 import software.coley.recaf.ui.pane.editing.text.TextFilePane;
 import software.coley.recaf.ui.pane.search.AbstractSearchPane;
 import software.coley.recaf.ui.pane.search.ClassReferenceSearchPane;
+import software.coley.recaf.ui.pane.search.InstructionSearchPane;
 import software.coley.recaf.ui.pane.search.MemberDeclarationSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
@@ -176,6 +177,7 @@ public class Actions implements Service {
 	private final Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider;
 	private final Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider;
 	private final Instance<MemberDeclarationSearchPane> memberDeclarationSearchPaneProvider;
+	private final Instance<InstructionSearchPane> instructionSearchPaneProvider;
 	private final KeybindingConfig keybindingConfig;
 	private final ActionsConfig config;
 
@@ -210,7 +212,8 @@ public class Actions implements Service {
 	               @Nonnull Instance<MethodCallGraphsPane> callGraphsPaneProvider,
 	               @Nonnull Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider,
 	               @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider,
-	               @Nonnull Instance<MemberDeclarationSearchPane> memberDeclarationSearchPaneProvider) {
+	               @Nonnull Instance<MemberDeclarationSearchPane> memberDeclarationSearchPaneProvider,
+	               @Nonnull Instance<InstructionSearchPane> instructionSearchPaneProvider) {
 		this.config = config;
 		this.keybindingConfig = keybindingConfig;
 		this.workspaceManager = workspaceManager;
@@ -241,6 +244,7 @@ public class Actions implements Service {
 		this.classReferenceSearchPaneProvider = classReferenceSearchPaneProvider;
 		this.memberReferenceSearchPaneProvider = memberReferenceSearchPaneProvider;
 		this.memberDeclarationSearchPaneProvider = memberDeclarationSearchPaneProvider;
+		this.instructionSearchPaneProvider = instructionSearchPaneProvider;
 	}
 
 	/**
@@ -2417,6 +2421,14 @@ public class Actions implements Service {
 	@Nonnull
 	public MemberDeclarationSearchPane openNewMemberDeclarationSearch() {
 		return openSearchPane("menu.search.class.member-declarations", CarbonIcons.CODE, memberDeclarationSearchPaneProvider);
+	}
+
+	/**
+	 * @return New instruction search pane, opened in a new docking tab.
+	 */
+	@Nonnull
+	public InstructionSearchPane openNewInstructionSearch() {
+		return openSearchPane("menu.search.class.instruction", CarbonIcons.CODE, instructionSearchPaneProvider);
 	}
 
 	@Nonnull
