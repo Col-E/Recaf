@@ -52,9 +52,9 @@ import software.coley.recaf.services.deobfuscation.transform.generic.IllegalAnno
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.KotlinNameRestorationTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LongAnnotationRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.LongExceptionRemovingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.SourceNameRestorationTransformer;
@@ -84,6 +84,9 @@ import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.threading.Batch;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;
@@ -99,6 +102,7 @@ import java.util.stream.Collectors;
 @Dependent
 public class DeobfuscationWindow extends RecafStage {
 	private static final int MAX_PASSES = 5; // TODO: Make this an input
+	private static final Batch deobfuscationBatch = ThreadUtil.batch(ThreadPoolFactory.newSingleThreadExecutor("deobfuscation-preview"));
 	private static final DebuggingLogger logger = Logging.get(DeobfuscationWindow.class);
 	private final TransformationManager transformationManager;
 	private final TransformationApplierService transformationApplierService;
@@ -483,10 +487,19 @@ public class DeobfuscationWindow extends RecafStage {
 		}
 
 		private void updatePreview() {
-			if (isDecompilePreview())
-				decompile();
-			else
-				disassemble();
+			// TODO: We can't really stop expensive decompilations, they don't check for interrupts on the current thread
+			//  and we have no good way of force killing them (rip Thread.stop) so the best we can really do is only
+			//  allow one of these tasks to run at a time, with one next 'pending' task.
+			//  While a task is executing we update what is the next 'pending' task when we call this method.
+			//  Once the current task is done, or there is nothing running we make the 'pending' the current task and run it.
+			deobfuscationBatch.add(() -> {
+				deobfuscationBatch.clear();
+				if (isDecompilePreview())
+					decompile();
+				else
+					disassemble();
+			});
+			deobfuscationBatch.executeNewest();
 		}
 
 		private void disassemble() {
