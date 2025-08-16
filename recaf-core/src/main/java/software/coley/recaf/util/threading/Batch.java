@@ -14,13 +14,38 @@ public interface Batch {
 	void execute();
 
 	/**
+	 * Run the oldest added task. This will remove the task once executed.
+	 */
+	void executeOldest();
+
+	/**
+	 * Run the newest added task. This will remove the task once executed.
+	 */
+	void executeNewest();
+
+	/**
 	 * @param runnable
 	 * 		Task to execute.
 	 */
 	void add(@Nonnull Runnable runnable);
 
 	/**
-	 * Clears tasks.
+	 * Removes all tasks.
 	 */
 	void clear();
+
+	/**
+	 * Removes the oldest task.
+	 */
+	void removeOldest();
+
+	/**
+	 * Removes the newest task.
+	 */
+	void removeNewest();
+
+	/**
+	 * @return {@code true} when there are no tasks in the batch.
+	 */
+	boolean isEmpty();
 }

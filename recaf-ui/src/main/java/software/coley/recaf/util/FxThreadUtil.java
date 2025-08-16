@@ -8,6 +8,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableValue;
 import software.coley.recaf.RecafApplication;
 import software.coley.recaf.util.threading.Batch;
+import software.coley.recaf.util.threading.DirectBatch;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 
@@ -113,44 +114,10 @@ public class FxThreadUtil {
 	}
 
 	/**
-	 * @return New execution chain.
+	 * @return New task batch that executes all actions on the FX thread.
 	 */
 	@Nonnull
 	public static Batch batch() {
-		return new FxBatch();
-	}
-
-	/**
-	 * Batch implementation that executes all tasks on the FX thread.
-	 */
-	private static class FxBatch implements Batch {
-		private final List<Runnable> tasks = new ArrayList<>();
-
-		@Override
-		public void add(@Nonnull Runnable runnable) {
-			synchronized (tasks) {
-				tasks.add(runnable);
-			}
-		}
-
-		@Override
-		public void clear() {
-			synchronized (tasks) {
-				tasks.clear();
-			}
-		}
-
-		@Override
-		public void execute() {
-			run(this::fire);
-		}
-
-		private void fire() {
-			synchronized (tasks) {
-				for (Runnable task : tasks)
-					task.run();
-				tasks.clear();
-			}
-		}
+		return ThreadUtil.batch(jfxExecutor);
 	}
 }

@@ -5,7 +5,16 @@ import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -361,5 +370,43 @@ public class ThreadUtil {
 	public static void shutdown() {
 		logger.trace("Shutting misc executors");
 		scheduledService.shutdown();
+	}
+
+	/**
+	 * @return New task batch that executes all actions through the given executor.
+	 */
+	@Nonnull
+	public static Batch batch(@Nonnull Executor executor) {
+		return new ExecutorBatch(executor);
+	}
+
+	/**
+	 * Batch implementation that executes all tasks on a given executor.
+	 */
+	private static class ExecutorBatch extends DirectBatch {
+		private final Executor executor;
+
+		private ExecutorBatch(@Nonnull Executor executor) {
+			this.executor = executor;
+		}
+
+		@Override
+		public void execute() {
+			submit(super::execute);
+		}
+
+		@Override
+		public void executeOldest() {
+			submit(super::executeOldest);
+		}
+
+		@Override
+		public void executeNewest() {
+			submit(super::executeNewest);
+		}
+
+		private void submit(@Nonnull Runnable execution) {
+			executor.execute(execution);
+		}
 	}
 }
