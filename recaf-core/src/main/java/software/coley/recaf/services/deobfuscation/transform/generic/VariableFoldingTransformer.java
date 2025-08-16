@@ -29,6 +29,7 @@ import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
@@ -218,10 +219,11 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 				} else if (isVarStore(op) && insn instanceof VarInsnNode vin) {
 					// Remove variable writes if:
 					// - They are never read from
+					// - They are inlinable values (arrays for instance cannot be inlined as a single value providing instruction)
 					// - They are read from, but only used with a single known constant value (which we inline above).
 					Type varType = getTypeForVarInsn(vin);
 					LocalAccessState state = states.get(key(vin.var, varType.getSort()));
-					if (state != null && (state.getReads().isEmpty() || state.isEffectiveConstant())) {
+					if (state != null && state.isInlinableValue() && (state.getReads().isEmpty() || state.isEffectiveConstant())) {
 						instructions.set(vin, new InsnNode(varType.getSize() == 1 ? POP : POP2));
 						dirty = true;
 					}
@@ -271,6 +273,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		private SortedSet<LocalAccess> reads;
 		private SortedSet<LocalAccess> writes;
 		private ReValue mergedValue;
+		private boolean isArray;
 
 		private LocalAccessState(int index) {
 			this(index, null);
@@ -294,13 +297,19 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		}
 
 		public void setState(@Nonnull ReValue value) {
+			if (value instanceof ArrayValue)
+				isArray = true;
 			mergedValue = value;
 		}
 
 		public void mergeState(@Nonnull ReValue value) throws IllegalValueException {
+			if (value instanceof ArrayValue)
+				isArray = true;
 			if (mergedValue == null)
 				mergedValue = value;
 			else
+				// TODO: Type checking we normally do in ReInterpreter not done here
+				//  IE: A String can be "mergeWith" an Integer which throws an exception
 				mergedValue = mergedValue.mergeWith(value);
 		}
 
@@ -344,6 +353,13 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		 */
 		public boolean isEffectiveConstant() {
 			return mergedValue != null && mergedValue.hasKnownValue();
+		}
+
+		/**
+		 * @return {@code true} when the {@link #mergedValue} represents an inlinable value.
+		 */
+		public boolean isInlinableValue() {
+			return !isArray;
 		}
 	}
 

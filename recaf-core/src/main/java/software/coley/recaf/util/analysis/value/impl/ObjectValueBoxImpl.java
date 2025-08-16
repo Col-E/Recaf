@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import org.objectweb.asm.Type;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
+import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
 
@@ -86,6 +87,8 @@ public abstract class ObjectValueBoxImpl<T> extends ObjectValueImpl {
 					return wrap(v);
 			}
 			return wrapUnknown(nullness().mergeWith(otherBoxed.nullness()));
+		} else if (other instanceof ObjectValue otherObject) {
+			return ObjectValue.object(type(), nullness().mergeWith(otherObject.nullness()));
 		}
 		throw new IllegalValueException("Cannot merge with: " + other);
 	}
