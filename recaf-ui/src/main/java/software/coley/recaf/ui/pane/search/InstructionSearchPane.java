@@ -37,6 +37,7 @@ import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.ToStringConverter;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -52,6 +53,7 @@ import static software.coley.recaf.services.search.match.StringPredicateProvider
  */
 @Dependent
 public class InstructionSearchPane extends AbstractSearchPane {
+	private static final UUID TOP_UID = UUID.randomUUID();
 	private final StringPredicateProvider stringPredicateProvider;
 	private final ObservableList<Line> lines = FXCollections.observableArrayList();
 
@@ -83,26 +85,31 @@ public class InstructionSearchPane extends AbstractSearchPane {
 					StringProperty stringValue = line.text();
 					StringProperty stringPredicateId = line.predicateId();
 					TextField textField = new TextField();
-					textField.setId(line.uuid().toString());
+					textField.setId("text-" + line.uuid());
 					stringValue.bind(textField.textProperty());
 					ComboBox<String> modeCombo = new BoundBiDiComboBox<>(stringPredicateId, stringPredicates,
 							ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
+					modeCombo.setId("id-" + line.uuid());
 					modeCombo.getSelectionModel().select(StringPredicateProvider.KEY_CONTAINS);
 					EventStreams.changesOf(stringValue)
 							.or(EventStreams.changesOf(stringPredicateId))
 							.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
 							.addObserver(unused -> search());
 					GridPane.setHgrow(textField, Priority.ALWAYS);
-					input.addRow(input.getRowCount(), textField, modeCombo, new ActionButton(CarbonIcons.TRASH_CAN, () -> lines.remove(line)));
+					if (line.uuid() == TOP_UID) {
+						input.addRow(input.getRowCount(), textField, modeCombo);
+					} else {
+						ActionButton delete = new ActionButton(CarbonIcons.TRASH_CAN, () -> lines.remove(line));
+						delete.setId("delete-" + line.uuid());
+						input.addRow(input.getRowCount(), textField, modeCombo, delete);
+					}
 				}
 				for (Line line : change.getRemoved()) {
-					for (Node child : input.getChildrenUnmodifiable()) {
-						if (line.uuid().toString().equals(child.getId())) {
-							Integer nodeRow = GridPane.getRowIndex(child);
-							if (nodeRow != null) {
-								input.getRowConstraints().remove(nodeRow.intValue());
-								break;
-							}
+					String lineUid = line.uuid().toString();
+					for (Node child : new ArrayList<>(input.getChildrenUnmodifiable())) {
+						String childId = child.getId();
+						if (childId != null && childId.contains(lineUid)) {
+							input.getChildren().remove(child);
 						}
 					}
 				}
@@ -110,7 +117,7 @@ public class InstructionSearchPane extends AbstractSearchPane {
 		});
 
 		// Add an initial line, and a button to facilitate adding additional lines
-		lines.add(new Line(UUID.randomUUID(), new SimpleStringProperty(), new SimpleStringProperty()));
+		lines.add(new Line(TOP_UID, new SimpleStringProperty(), new SimpleStringProperty()));
 		Button addLine = new ActionButton(CarbonIcons.ADD_ALT, Lang.getBinding("dialog.search.add-instruction-line"), () -> {
 			lines.add(new Line(UUID.randomUUID(), new SimpleStringProperty(), new SimpleStringProperty()));
 		});
