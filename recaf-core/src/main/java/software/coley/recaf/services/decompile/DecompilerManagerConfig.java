@@ -51,7 +51,7 @@ public class DecompilerManagerConfig extends BasicConfigContainer implements Ser
 		addValue(new BasicConfigValue<>("filter-exceptions-long", boolean.class, filterLongExceptions));
 		addValue(new BasicConfigValue<>("filter-exceptions-long-limit", int.class, filterLongExceptionsLength));
 		addValue(new BasicConfigValue<>("filter-illegal-signatures", boolean.class, filterSignatures));
-		addValue(new BasicConfigValue<>("filter-synthetics", boolean.class, filterSignatures));
+		addValue(new BasicConfigValue<>("filter-synthetics", boolean.class, filterSynthetics));
 		addValue(new BasicConfigValue<>("filter-names-ascii", boolean.class, filterNonAsciiNames));
 	}
 
