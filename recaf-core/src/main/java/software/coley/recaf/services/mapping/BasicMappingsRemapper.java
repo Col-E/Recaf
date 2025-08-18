@@ -96,6 +96,9 @@ public class BasicMappingsRemapper extends Remapper {
 
 	@Override
 	public String mapDesc(String descriptor) {
+		if (descriptor == null || descriptor.isEmpty()) {
+			return descriptor;
+		}
 		if (descriptor.charAt(0) == '(') {
 			return mapMethodDesc(descriptor);
 		}
