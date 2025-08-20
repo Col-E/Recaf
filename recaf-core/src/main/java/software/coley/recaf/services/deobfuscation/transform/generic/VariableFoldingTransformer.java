@@ -38,7 +38,6 @@ import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
-import software.coley.recaf.util.analysis.value.UninitializedValue;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -113,6 +112,8 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 			// Populate the rest of the state from the method code.
 			Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
 			try {
+				// TODO: It would be smarter to track where we see these observations
+				//  - Variables can check if the observations occur outside of their scope and thus are irrelevant
 				boolean controlFlowObserved = false;
 				boolean throwingObserved = false;
 				for (int i = 0; i < instructions.size(); i++) {
@@ -156,7 +157,16 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 						// Edge case: iinc counts as a read and write at the same time.
 						state.addRead(i, iinc);
 						state.addWrite(i, iinc);
-						state.mergeState(iinc);
+
+						// If we're moving forward in the method from the beginning,
+						// and haven't seen any kind of control flow, then we can safely
+						// just replace the state with the incremented value.
+						if (state.mergedValue instanceof IntValue mergedIntValue &&
+								state.getReadsUpTo(i).isEmpty() && !controlFlowObserved && !throwingObserved) {
+							state.setState(mergedIntValue.add(iinc.incr));
+						} else {
+							state.mergeState(IntValue.UNKNOWN);
+						}
 					}
 
 					// Other state tracking which can change how we merge state.
@@ -225,6 +235,15 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 					LocalAccessState state = states.get(key(vin.var, varType.getSort()));
 					if (state != null && state.isInlinableValue() && (state.getReads().isEmpty() || state.isEffectiveConstant())) {
 						instructions.set(vin, new InsnNode(varType.getSize() == 1 ? POP : POP2));
+						dirty = true;
+					}
+				} else if (op == IINC && insn instanceof IincInsnNode iinc) {
+					// Remove variable increments if:
+					// - They value is known at all points of variable use
+					// - They value is read from, but only by other iinc operations
+					LocalAccessState state = states.get(key(iinc.var, Type.INT));
+					if (state != null && state.isEffectiveConstant() || state.getReads().stream().noneMatch(r -> r.instruction.getOpcode() != IINC)) {
+						instructions.set(iinc, new InsnNode(NOP));
 						dirty = true;
 					}
 				}
@@ -311,15 +330,6 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 				// TODO: Type checking we normally do in ReInterpreter not done here
 				//  IE: A String can be "mergeWith" an Integer which throws an exception
 				mergedValue = mergedValue.mergeWith(value);
-		}
-
-		public void mergeState(@Nonnull IincInsnNode iinc) throws IllegalValueException {
-			if (mergedValue == null)
-				mergeState(IntValue.UNKNOWN);
-			else if (mergedValue instanceof IntValue mergedIntValue)
-				mergeState(mergedIntValue.add(iinc.incr));
-			else if (mergedValue != UninitializedValue.UNINITIALIZED_VALUE)
-				throw new IllegalValueException("Cannot merge iinc into value: " + mergedValue);
 		}
 
 		@Nonnull

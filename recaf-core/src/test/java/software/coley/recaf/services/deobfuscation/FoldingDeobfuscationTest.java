@@ -2232,6 +2232,59 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
+	void foldUnusedIincWithVariableFolding() {
+		// The variable folding transformer will not clean up the "iconst_0, pop, nop" sequence
+		// as that is the role of the constant folding transformer, but when we decompile the
+		// bytecode it should be smart enough to figure out the value has been folded to const 4.
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        iconst_0
+				        istore a
+				        iinc a 4
+						iload a
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateBeforeAfterDecompile(asm, List.of(VariableFoldingTransformer.class), "return a += 4;", "return 4;");
+	}
+
+	@Test
+	void foldUnusedIincWithConstantFolding() {
+		// As opposed to the variable folding transformer, this will one-shot the entire sequence and handle
+		// all cleanup in a single pass.
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        iconst_0
+				        istore a
+				        iinc a 1
+				        iload a
+				        iconst_1
+				        iadd
+				        istore a
+				        iinc a 2
+						iload a
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to remove initial 0 value");
+			assertEquals(0, StringUtil.count("istore", dis), "Expected to remove redundant istore");
+			assertEquals(0, StringUtil.count("iinc", dis), "Expected to remove redundant iinc");
+			assertEquals(0, StringUtil.count("iadd", dis), "Expected to remove redundant iadd");
+			assertEquals(0, StringUtil.count("iload", dis), "Expected to inline redundant iload");
+			assertEquals(1, StringUtil.count("iconst_4", dis), "Expected to have single iconst_4");
+		});
+	}
+
+	@Test
 	void repeatedSteps() {
 		String asm = """
 				.method public static example ()V {

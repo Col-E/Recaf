@@ -19,7 +19,6 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
@@ -46,12 +45,10 @@ import static software.coley.recaf.util.AsmInsnUtil.isSwitchEffectiveGoto;
 @Dependent
 public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 	private final InheritanceGraphService graphService;
-	private final WorkspaceManager workspaceManager;
 	private InheritanceGraph inheritanceGraph;
 
 	@Inject
-	public OpaquePredicateFoldingTransformer(@Nonnull WorkspaceManager workspaceManager, @Nonnull InheritanceGraphService graphService) {
-		this.workspaceManager = workspaceManager;
+	public OpaquePredicateFoldingTransformer(@Nonnull InheritanceGraphService graphService) {
 		this.graphService = graphService;
 	}
 
