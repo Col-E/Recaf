@@ -24,11 +24,14 @@ public class BoundIntSpinner extends Spinner<Integer> implements Tooltipable {
 	 * 		property.
 	 */
 	public BoundIntSpinner(@Nonnull IntegerProperty value) {
-		setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(Integer.MIN_VALUE, Integer.MAX_VALUE, value.get()));
+		final int initialValue = value.get();
+		final String initialValueStr = Integer.toString(initialValue);
+
+		setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(Integer.MIN_VALUE, Integer.MAX_VALUE, initialValue));
 		setEditable(true);
 		setMaxWidth(Double.MAX_VALUE);
-		getEditor().setText(Integer.toString(value.getValue())); // TODO: This does not seem to stick
-		getEditor().setTextFormatter(new TextFormatter<>(new IntegerStringConverter(), 0, BoundIntSpinner::handleChange));
+		getEditor().setText(initialValueStr);
+		getEditor().setTextFormatter(new TextFormatter<>(new IntegerStringConverter(), initialValue, BoundIntSpinner::handleChange));
 		value.bind(valueProperty());
 	}
 
