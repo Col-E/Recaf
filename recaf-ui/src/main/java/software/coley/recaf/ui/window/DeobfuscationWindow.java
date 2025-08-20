@@ -8,7 +8,11 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -74,6 +78,7 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.control.ActionButton;
+import software.coley.recaf.ui.control.BoundIntSpinner;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.ReorderableListCell;
@@ -101,7 +106,6 @@ import java.util.stream.Collectors;
  */
 @Dependent
 public class DeobfuscationWindow extends RecafStage {
-	private static final int MAX_PASSES = 5; // TODO: Make this an input
 	private static final Batch deobfuscationBatch = ThreadUtil.batch(ThreadPoolFactory.newSingleThreadExecutor("deobfuscation-preview"));
 	private static final DebuggingLogger logger = Logging.get(DeobfuscationWindow.class);
 	private final TransformationManager transformationManager;
@@ -110,6 +114,7 @@ public class DeobfuscationWindow extends RecafStage {
 	private final AssemblerPipelineManager assemblerPipelineManager;
 	private final ObservableList<CategorizedTransformer> transformerOrder = FXCollections.observableArrayList();
 	private final BooleanProperty hasSelection = new SimpleBooleanProperty();
+	private final IntegerProperty maxPasses = new SimpleIntegerProperty(5);
 	private final WorkspaceManager workspaceManager;
 
 	@Inject
@@ -351,6 +356,7 @@ public class DeobfuscationWindow extends RecafStage {
 			TabPane tabs = new TabPane(beforeTab, afterTab);
 			tabs.getSelectionModel().select(afterTab);
 
+			BoundIntSpinner maxPassesSpinner = new BoundIntSpinner(maxPasses);
 			Button pickClass = new ActionButton(CarbonIcons.ADD, Lang.getBinding("deobf.preview.pick"), () -> {
 				new ClassSelectionPopup(actions, configurationService, explorerConfig, workspaceManager.getCurrent(), path -> {
 					ClassInfo selection = path.getValue();
@@ -378,7 +384,7 @@ public class DeobfuscationWindow extends RecafStage {
 						.toList());
 				try {
 					working.set(true);
-					applier.setMaxPasses(MAX_PASSES);
+					applier.setMaxPasses(maxPasses.get());
 					JvmTransformResult result = applier.transformJvm(list);
 					result.apply();
 					FxThreadUtil.run(this::hide);
@@ -394,8 +400,17 @@ public class DeobfuscationWindow extends RecafStage {
 				beforePreview.updatePreview();
 				afterPreview.updatePreview();
 			});
+			maxPasses.addListener((ob, old, cur) -> {
+				beforePreview.updatePreview();
+				afterPreview.updatePreview();
+			});
 
-			HBox tools = new HBox(pickClass, new Spacer(), togglePreview, new Spacer(), applyToWorkspace);
+			BoundLabel passesLabel = new BoundLabel(Lang.getBinding("deobf.max-passes"));
+			passesLabel.setTextAlignment(TextAlignment.CENTER);
+			passesLabel.setPadding(new Insets(5));
+			HBox tools = new HBox(pickClass, new Spacer(), togglePreview, new Spacer(),
+					maxPassesSpinner, passesLabel, applyToWorkspace);
+			tools.setAlignment(Pos.CENTER);
 			StackPane wrapper = new StackPane(tabs, tools);
 			StackPane.setMargin(tools, new Insets(20));
 			wrapper.setAlignment(Pos.BOTTOM_RIGHT);
@@ -570,7 +585,7 @@ public class DeobfuscationWindow extends RecafStage {
 					TransformationApplier applier = transformationApplierService.newApplierForCurrentWorkspace();
 					if (applier == null)
 						throw new TransformationException("No workspace is open");
-					applier.setMaxPasses(MAX_PASSES);
+					applier.setMaxPasses(maxPasses.get());
 					JvmTransformResult result = applier
 							.transformJvm(transformers, (_, _, _, targetClass) -> targetClass.getName().equals(classInfo.getName()));
 					result.getTransformerFailures().forEach((_, map) -> map.forEach((transformer, error) -> {

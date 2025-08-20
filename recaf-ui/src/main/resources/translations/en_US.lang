@@ -465,6 +465,7 @@ deobf.order.title=Order transformers
 deobf.order.hint=Select transformers on the left\nChange their order via dragging here
 deobf.order.pre=Missing recommended predecessors
 deobf.order.suc=Missing recommended successors
+deobf.max-passes=Max transform passes
 deobf.preview.title=Preview
 deobf.preview.pick=Pick preview class
 deobf.preview.toggle-mode=Switch preview mode
