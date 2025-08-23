@@ -39,9 +39,7 @@ public class LaunchArguments {
 	 * 		Literal args used to launch recaf.
 	 */
 	public void setRawArgs(@Nonnull String[] args) {
-		// Only allow setting it once.
-		if (this.args == null)
-			this.args = args;
+		this.args = args;
 	}
 
 	/**
