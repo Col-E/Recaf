@@ -71,7 +71,10 @@ public class Main {
 		// Handle arguments.
 		LaunchCommand launchArgValues = new LaunchCommand();
 		try {
-			CommandLine.populateCommand(launchArgValues, args);
+			CommandLine cmd = new CommandLine(launchArgValues);
+			cmd.setStopAtPositional(true);
+			cmd.setStopAtUnmatched(true);
+			cmd.parseArgs(args);
 			if (launchArgValues.call())
 				return;
 		} catch (Exception ex) {
