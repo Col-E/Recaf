@@ -9,7 +9,6 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigGroups;
-import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.PlatformType;
@@ -102,7 +101,7 @@ public class RecafDirectoriesConfig extends BasicConfigContainer implements Conf
 	}
 
 	/**
-	 * Set via {@link LaunchCommand} to facilitate plugin development. Usually not set otherwise.
+	 * Set via launch arguments to facilitate plugin development. Usually not set otherwise.
 	 *
 	 * @return Directory where extra plugins are stored. Can be {@code null}.
 	 */

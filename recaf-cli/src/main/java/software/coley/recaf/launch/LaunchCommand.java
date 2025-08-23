@@ -6,8 +6,10 @@ import jakarta.enterprise.inject.spi.BeanManager;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import software.coley.recaf.Bootstrap;
+import software.coley.recaf.Recaf;
 import software.coley.recaf.RecafBuildConfig;
 import software.coley.recaf.analytics.SystemInformation;
+import software.coley.recaf.cli.command.RecafCommand;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.StringUtil;
 
@@ -25,7 +27,7 @@ import java.util.concurrent.Callable;
  */
 @Command(name = "recaf", mixinStandardHelpOptions = true, version = RecafBuildConfig.VERSION,
 		description = "Recaf: The modern Java reverse engineering tool.")
-public class LaunchCommand implements Callable<Boolean> {
+public class LaunchCommand implements Callable<Boolean>, RecafCommand {
 	@Option(names = {"-i", "--input"}, description = "Input to load into a workspace on startup.")
 	private File input;
 	@Option(names = {"-s", "--script"}, description = "Script to run on startup.")
@@ -42,6 +44,8 @@ public class LaunchCommand implements Callable<Boolean> {
 	private boolean listServices;
 	@Option(names = {"-p", "--listprops"}, description = "Display system properties.")
 	private boolean dumpProperties;
+
+	private Recaf recaf;
 
 	@Override
 	public Boolean call() throws Exception {
@@ -69,7 +73,7 @@ public class LaunchCommand implements Callable<Boolean> {
 		}
 		if (listServices) {
 			try {
-				BeanManager beanManager = Bootstrap.get().getContainer().getBeanManager();
+				BeanManager beanManager = recaf.getContainer().getBeanManager();
 				List<Bean<?>> beans = beanManager.getBeans(Service.class).stream()
 						.sorted(Comparator.comparing(o -> o.getBeanClass().getName()))
 						.toList();
@@ -114,5 +118,10 @@ public class LaunchCommand implements Callable<Boolean> {
 	 */
 	public boolean isHeadless() {
 		return headless;
+	}
+
+	@Override
+	public void setRecaf(Recaf recaf) {
+		this.recaf = recaf;
 	}
 }

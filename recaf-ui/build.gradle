@@ -13,6 +13,7 @@ javafx {
 }
 
 dependencies {
+    implementation project(':recaf-cli')
     implementation project(':recaf-core')
     testImplementation(testFixtures(project(":recaf-core")))
 
@@ -41,6 +42,9 @@ jar {
 }
 
 shadowJar {
+    doFirst {
+        println "Shadow JAR output file: ${shadowJar.archiveFile.get().asFile}"
+    }
     exclude "META-INF/maven/**"
     exclude "META-INF/rewrite/**"
     exclude "META-INF/proguard/*"

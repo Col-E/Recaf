@@ -2,7 +2,6 @@ package software.coley.recaf;
 
 import jakarta.enterprise.inject.spi.Bean;
 import org.slf4j.Logger;
-import picocli.CommandLine;
 import software.coley.fxaccess.AccessCheck;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitialization;
@@ -58,58 +57,49 @@ public class Main {
 	 * 		Application arguments.
 	 */
 	public static void main(String[] args) {
-		// Make application name appear in Mac-OS's dock.
-		System.setProperty("apple.awt.application.name", "Recaf");
+		software.coley.recaf.cli.Main cli = new software.coley.recaf.cli.Main();
+		int exitCode = cli.run(args);
 
-		// Add a shutdown hook which dumps system information to console.
-		// Should provide useful information that users can copy/paste to us for diagnosing problems.
-		ExitDebugLoggingHook.register();
+		if (cli.shouldLaunchUi()) {
+			// Make application name appear in Mac-OS's dock.
+			System.setProperty("apple.awt.application.name", "Recaf");
 
-		// Add a class reference for our UI module.
-		Bootstrap.setWeldConsumer(weld -> weld.addPackage(true, Main.class));
+			// Add a shutdown hook which dumps system information to console.
+			// Should provide useful information that users can copy/paste to us for diagnosing problems.
+			ExitDebugLoggingHook.register();
 
-		// Handle arguments.
-		LaunchCommand launchArgValues = new LaunchCommand();
-		try {
-			CommandLine.populateCommand(launchArgValues, args);
-			if (launchArgValues.call())
-				return;
-		} catch (Exception ex) {
-			CommandLine.usage(launchArgValues, System.out);
-			return;
-		}
+			// Add a class reference for our UI module.
+			Bootstrap.setWeldConsumer(weld -> weld.addPackage(true, Main.class));
 
-		// Validate the JFX environment is available if not running in headless mode.
-		// Abort if not available.
-		if (!launchArgValues.isHeadless()) {
+
+			// Validate the JFX environment is available if not running in headless mode.
+			// Abort if not available.
 			int validationCode = JFXValidation.validateJFX();
 			if (validationCode != 0) {
 				ExitDebugLoggingHook.exit(validationCode);
 				return;
 			}
-		}
 
-		// Validate we're on a JDK and not a JRE
-		JdkValidation.validateJdk();
 
-		// Invoke the bootstrapper, initializing the UI once the container is built.
-		recaf = Bootstrap.get();
-		launchArgs = recaf.get(LaunchArguments.class);
-		launchArgs.setCommand(launchArgValues);
-		launchArgs.setRawArgs(args);
+			// Validate we're on a JDK and not a JRE
+			JdkValidation.validateJdk();
 
-		// Set up the launch-handler bean to load inputs if specified by the launch arguments.
-		Bean<?> bean = recaf.getContainer().getBeanContainer().getBeans(LaunchHandler.class).iterator().next();
-		if (launchArgValues.isHeadless()) {
-			LaunchHandler.task = Main::initHandleInputs;
-			EagerInitializationExtension.getApplicationScopedEagerBeans().add(bean);
-		} else {
+			// Invoke the bootstrapper, initializing the UI once the container is built.
+			recaf = Bootstrap.get();
+			launchArgs = recaf.get(LaunchArguments.class);
+
+			// Set up the launch-handler bean to load inputs if specified by the launch arguments.
+			Bean<?> bean = recaf.getContainer().getBeanContainer().getBeans(LaunchHandler.class).iterator().next();
+
 			// Run input handling in the background so that it does not block the UI
 			LaunchHandler.task = () -> CompletableFuture.runAsync(Main::initHandleInputs, ThreadUtil.executor());
 			EagerInitializationExtension.getApplicationScopedEagerBeansForUi().add(bean);
-		}
 
-		initialize();
+
+			initialize();
+		} else {
+			System.exit(exitCode);
+		}
 	}
 
 	/**
@@ -117,17 +107,12 @@ public class Main {
 	 */
 	private static void initialize() {
 		initLogging();
-		if (launchArgs.isHeadless()) {
-			initPlugins();
-			fireInitEvent();
-		} else {
-			initFxAccessAgent();
-			initTranslations();
-			initPlugins();
-			fireInitEvent();
-			initScale(); // Needs to init after the init-event so config is loaded
-			RecafApplication.launch(RecafApplication.class, launchArgs.getArgs());
-		}
+		initFxAccessAgent();
+		initTranslations();
+		initPlugins();
+		fireInitEvent();
+		initScale(); // Needs to init after the init-event so config is loaded
+		RecafApplication.launch(RecafApplication.class, launchArgs.getArgs());
 	}
 
 	/**

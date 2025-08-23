@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api project(':recaf-core')
+    testImplementation(testFixtures(project(":recaf-core")))
+
+    // PicoCLI for command line parsing
+    api libs.picocli
+    annotationProcessor libs.picocli.codegen
+}

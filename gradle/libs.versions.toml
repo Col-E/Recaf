@@ -120,6 +120,7 @@ mockito = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 natural-order = { module = "net.grey-panther:natural-comparator", version.ref = "natural-order" }
 
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
+picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
 
 procyon = { module = "org.bitbucket.mstrobel:procyon-compilertools", version.ref = "procyon" }
 
