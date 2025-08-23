@@ -101,7 +101,7 @@ public class Logging {
 		// We do it this way so the file path can be set at runtime.
 		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 		FileAppender fileAppender = new FileAppender<>();
-		fileAppender.addFilter(new RecafLoggingFilter());
+		fileAppender.addFilter(new RecafLoggingFilter(ch.qos.logback.classic.Level.ALL));
 		fileAppender.setFile(path.toString());
 		fileAppender.setContext(loggerContext);
 		fileAppender.setPrudent(true);

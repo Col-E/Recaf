@@ -1,5 +1,6 @@
 package software.coley.recaf.launch;
 
+import ch.qos.logback.classic.Level;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
@@ -8,6 +9,7 @@ import picocli.CommandLine.Option;
 import software.coley.recaf.Bootstrap;
 import software.coley.recaf.RecafBuildConfig;
 import software.coley.recaf.analytics.SystemInformation;
+import software.coley.recaf.analytics.logging.RecafLoggingFilter;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.StringUtil;
 
@@ -36,6 +38,8 @@ public class LaunchCommand implements Callable<Boolean> {
 	private File extraPluginDirectory;
 	@Option(names = {"-h", "--headless"}, description = "Flag to skip over initializing the UI. Should be paired with -i or -s.")
 	private boolean headless;
+	@Option(names = {"-q", "--silent"}, description = "Disable slf4j logging to std-out.")
+	private boolean silent;
 	@Option(names = {"-v", "--version"}, description = "Display the version information.")
 	private boolean version;
 	@Option(names = {"-l", "--listservices"}, description = "Display the version information.")
@@ -46,6 +50,8 @@ public class LaunchCommand implements Callable<Boolean> {
 	@Override
 	public Boolean call() throws Exception {
 		boolean ret = false;
+		if (silent)
+			RecafLoggingFilter.defaultLevel = Level.OFF;
 		if (dataDir != null)
 			System.setProperty("RECAF_DIR", dataDir.getAbsolutePath());
 		if (extraPluginDirectory != null)

@@ -33,9 +33,7 @@ class AccessPatcher {
 	static void patch() {
 		if (patched) return;
 		try {
-			logger.debug("Opening access to all packages");
 			openPackages();
-			logger.debug("Patching package reflection restrictions");
 			patchReflectionFilters();
 		} catch (Throwable t) {
 			logger.error("Failed access patching on Java " + SystemInformation.JAVA_VERSION +
