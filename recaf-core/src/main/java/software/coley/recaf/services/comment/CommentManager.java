@@ -424,8 +424,7 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	}
 
 	/**
-	 * @return Comments container for the current workspace, if any comments exist.
-	 * If there are no comments, then {@code null}.
+	 * @return Comments container for the current workspace.
 	 * If there is no current workspace, then {@code null}.
 	 */
 	@Nullable
