@@ -226,7 +226,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	private static class LiveOnlySearchFeedback extends CancellableSearchFeedback {
 		private final Batch batch = FxThreadUtil.batch();
 		private final AnimationTimer batchTimer = new AnimationTimer() {
-			private static final long BATCH_INTERVAL_MS = 1000 / 20;
+			private static final long BATCH_INTERVAL_MS = 1000 / 4;
 			private long last;
 
 			@Override
@@ -247,11 +247,6 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		@Override
 		public boolean doAcceptResult(@Nonnull Result<?> result) {
 			batch.add(() -> resultConsumer.accept(result));
-			try {
-				Thread.sleep(20);
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
 			return false;
 		}
 
