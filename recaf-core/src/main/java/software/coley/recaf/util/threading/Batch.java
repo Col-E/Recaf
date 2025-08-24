@@ -48,4 +48,9 @@ public interface Batch {
 	 * @return {@code true} when there are no tasks in the batch.
 	 */
 	boolean isEmpty();
+
+	/**
+	 * @return Number of pending tasks.
+	 */
+	int size();
 }

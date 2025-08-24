@@ -80,4 +80,11 @@ public class DirectBatch implements Batch {
 			return tasks.isEmpty();
 		}
 	}
+
+	@Override
+	public int size() {
+		synchronized (tasks) {
+			return tasks.size();
+		}
+	}
 }
