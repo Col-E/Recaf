@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -295,7 +296,7 @@ public class Lang {
 	 */
 	@Nonnull
 	public static String get(@Nonnull String translations, @Nonnull String translationKey) {
-		Map<String, String> map = Lang.translations.getOrDefault(translations, currentTranslationMap);
+		Map<String, String> map = Objects.requireNonNullElseGet(Lang.translations.getOrDefault(translations, currentTranslationMap), Collections::emptyMap);
 		String value = map.get(translationKey);
 		if (value == null) {
 			// Fallback to English if possible.

@@ -149,8 +149,9 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		// This can mean a new label as added, new reference to one, etc.
 		// This could result in new line shapes, so redrawing them all is wise.
 		List<LabelData> newModel = model;
-		if (!Objects.equals(oldModel, newModel))
-			FxThreadUtil.run(() -> editor.redrawParagraphGraphics());
+		Editor editor = this.editor;
+		if (editor != null && !Objects.equals(oldModel, newModel))
+			FxThreadUtil.run(editor::redrawParagraphGraphics);
 	}
 
 	/**

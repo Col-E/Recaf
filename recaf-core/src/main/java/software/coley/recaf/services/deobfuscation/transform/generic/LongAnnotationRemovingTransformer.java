@@ -22,7 +22,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class LongAnnotationRemovingTransformer implements JvmClassTransformer {
-	private static final int LONG_ANNO = 300;
+	private static final int LONG_ANNO = 150;
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,

@@ -20,7 +20,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class LongExceptionRemovingTransformer implements JvmClassTransformer {
-	private static final int LONG_EXCEPTION = 300;
+	private static final int LONG_EXCEPTION = 150;
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
