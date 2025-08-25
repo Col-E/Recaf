@@ -11,8 +11,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -106,7 +104,6 @@ import java.util.stream.Collectors;
  */
 @Dependent
 public class DeobfuscationWindow extends RecafStage {
-	private static final Batch deobfuscationBatch = ThreadUtil.batch(ThreadPoolFactory.newSingleThreadExecutor("deobfuscation-preview"));
 	private static final DebuggingLogger logger = Logging.get(DeobfuscationWindow.class);
 	private final TransformationManager transformationManager;
 	private final TransformationApplierService transformationApplierService;
@@ -454,6 +451,7 @@ public class DeobfuscationWindow extends RecafStage {
 	}
 
 	private class TransformPreview extends BorderPane {
+		private final Batch deobfuscationBatch = ThreadUtil.batch(ThreadPoolFactory.newSingleThreadExecutor("deobfuscation-preview"));
 		private final boolean andApply;
 		private final Editor editorDecompile;
 		private final Editor editorAssembly;
