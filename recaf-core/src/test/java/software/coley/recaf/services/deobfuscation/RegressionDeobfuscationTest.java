@@ -5,6 +5,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRem
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.analysis.ReInterpreter;
@@ -629,70 +630,8 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				    B:
 				        aconst_null
 				        athrow
-				        nop
-				        nop
-				        athrow
-				        nop
-				        nop
-				        athrow
 				    C:
 				        aconst_null
-				        athrow
-				        nop
-				        nop
-				        athrow
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        athrow
-				        nop
-				        athrow
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        athrow
-				        nop
-				        nop
-				        nop
-				        nop
-				        athrow
-				        nop
-				        nop
 				        athrow
 				    D:
 				        goto E
@@ -726,37 +665,8 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				    J:
 				        aconst_null
 				        athrow
-				        nop
-				        nop
-				        athrow
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        nop
-				        athrow
-				        nop
-				        nop
-				        athrow
 				    K:
 				        goto L
-				        nop
-				        nop
-				        athrow
-				        nop
-				        nop
-				        athrow
 				    L:
 				        aload this
 				        getfield Foo.value Ljava/lang/String;
@@ -768,6 +678,7 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 		// This sample does not work in a single pass, it needs multiple to properly fold everything.
 		// Any breakage in one transformer will affect the others.
 		validateAfterRepeatedAssembly(asm, List.of(
+				RedundantTryCatchRemovingTransformer.class,
 				OpaqueConstantFoldingTransformer.class,
 				GotoInliningTransformer.class,
 				OpaquePredicateFoldingTransformer.class

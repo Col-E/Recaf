@@ -10,8 +10,7 @@ import software.coley.recaf.util.StringUtil;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	@Test
@@ -2410,8 +2409,116 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class, DeadCodeRemovingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class /* Dead code pass implicitly added */), dis -> {
 			assertEquals(0, StringUtil.count("exceptions:", dis), "Try-catch blocks should have been removed");
+		});
+
+		// Jump to try end will remove it
+		asm = """
+				.method public static example ()Ljava/lang/String; {
+				    exceptions: {
+				        { B, D, E, Ljava/lang/Exception; }
+				    },
+				    code: {
+				    A:
+				        goto D
+				    B:
+				        invokestatic Foo.b ()Ljava/lang/String;
+				    C:
+				        invokestatic Foo.c ()Ljava/lang/String;
+				    D:
+				        goto F
+				    E:
+				        pop
+				    F:
+				        aconst_null
+				        areturn
+				    G:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(DeadCodeRemovingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("exceptions:", dis), "Try-catch blocks should have been removed");
+			assertFalse(dis.contains("Foo.b"), "Expected to remove dead method call");
+			assertFalse(dis.contains("Foo.c"), "Expected to remove dead method call");
+			assertFalse(dis.contains("pop"), "Expected to remove dead handler pop");
+		});
+	}
+
+	@Test
+	void dontFoldTryCatchThatIsNotDeadCode() {
+		String asm = """
+				.method public static example ()Ljava/lang/String; {
+				    exceptions: {
+				        { A, B, C, Ljava/lang/Exception; }
+				    },
+				    code: {
+				    A:
+				        invokestatic Foo.get ()Ljava/lang/String;
+				    B:
+				        athrow
+				    C:
+				        aconst_null
+				        areturn
+				    D:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(DeadCodeRemovingTransformer.class));
+
+		asm = """
+				.method public static example ()Ljava/lang/String; {
+				    exceptions: {
+				        { A, B, C, Ljava/lang/Exception; }
+				    },
+				    code: {
+				    A:
+				        invokestatic Foo.get ()Ljava/lang/String;
+				        areturn
+				    B:
+				        nop
+				    C:
+				        aconst_null
+				        areturn
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(DeadCodeRemovingTransformer.class), dis -> {
+			assertTrue(dis.contains("Ljava/lang/Exception;"), "Expected to keep exception");
+			assertTrue(dis.contains("Foo.get"), "Expected to keep method call");
+			assertTrue(dis.contains("aconst_null"), "Expected to keep handler");
+			assertFalse(dis.contains("nop"), "Expected to remove dead code");
+		});
+
+		asm = """
+				.method public static example ()Ljava/lang/String; {
+				    exceptions: {
+				        { B, D, E, Ljava/lang/Exception; }
+				    },
+				    code: {
+				    A:
+				        goto C
+				    B:
+				        invokestatic Foo.dead ()V
+				    C:
+				        invokestatic Foo.get ()Ljava/lang/String;
+				    D:
+				        goto F
+				    E:
+				        pop
+				        aconst_null
+				    F:
+				        areturn
+				    G:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(DeadCodeRemovingTransformer.class), dis -> {
+			assertTrue(dis.contains("Ljava/lang/Exception;"), "Expected to keep exception");
+			assertFalse(dis.contains("Foo.dead"), "Expected to remove dead method call");
+			assertTrue(dis.contains("Foo.get"), "Expected to keep method call");
+			assertTrue(dis.contains("pop"), "Expected to keep handler pop");
 		});
 	}
 
