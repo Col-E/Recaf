@@ -6,6 +6,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -56,14 +57,30 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 		InsnList instructions = method.instructions;
 		if (instructions == null || instructions.size() == 0)
 			return false;
+
+		// Collect try blocks and the instructions within the start-end range (exclusive)
+		List<TryCatch> tryCatches = new ArrayList<>(method.tryCatchBlocks.size());
+		for (TryCatchBlockNode block : method.tryCatchBlocks) {
+			List<AbstractInsnNode> blockInsns = new ArrayList<>();
+			AbstractInsnNode insn = block.start;
+			LabelNode end = block.end;
+			while (insn != null) {
+				insn = insn.getNext();
+				if (insn == end || insn == null)
+					break;
+				blockInsns.add(insn);
+			}
+			tryCatches.add(new TryCatch(block, blockInsns));
+		}
+
 		boolean dirty = false;
 		try {
 			// Compute which instructions are visited by walking the method's control flow.
 			Set<AbstractInsnNode> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 			List<AbstractInsnNode> flowStarts = new ArrayList<>();
 			flowStarts.add(instructions.getFirst());
-			for (TryCatchBlockNode block : method.tryCatchBlocks)
-				flowStarts.add(block.handler);
+			for (TryCatch tryCatch : tryCatches)
+				flowStarts.add(tryCatch.block.handler);
 			visit(visited, flowStarts);
 
 			// Prune any instructions not visited.
@@ -77,18 +94,30 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 					if (i == end && insn.getType() == AbstractInsnNode.LABEL)
 						continue;
 
+					// Keep try-catch labels for now.
+					if (insn.getType() == AbstractInsnNode.LABEL && method.tryCatchBlocks.stream().anyMatch(tryCatch -> {
+						if (insn == tryCatch.start) return true;
+						if (insn == tryCatch.end) return true;
+						return insn == tryCatch.handler;
+					})) continue;
+
+					// Remove instruction from method.
 					instructions.remove(insn);
 
-					// Remove try-catch ranges if their labels are within the dead-code range.
-					if (insn.getType() == AbstractInsnNode.LABEL)
-						method.tryCatchBlocks.removeIf(tryCatch -> {
-							if (insn == tryCatch.start) return true;
-							if (insn == tryCatch.end) return true;
-							return insn == tryCatch.handler;
-						});
+					// Remove from any catch block's visited instructions.
+					for (TryCatch tryCatch : tryCatches)
+						tryCatch.visitedInstructions.remove(insn);
 
 					// Mark as dirty.
 					dirty = true;
+				}
+			}
+
+			// If we have removed all the instructions of a try block's start-end range (because they're dead code)
+			// then the try-catch block entry can be removed.
+			for (TryCatch tryCatch : tryCatches) {
+				if (tryCatch.visitedInstructions.isEmpty()) {
+					method.tryCatchBlocks.remove(tryCatch.block);
 				}
 			}
 
@@ -154,5 +183,11 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 	@Override
 	public String name() {
 		return "Dead code removal";
+	}
+
+	record TryCatch(@Nonnull TryCatchBlockNode block, @Nonnull List<AbstractInsnNode> visitedInstructions) {
+		boolean hasInsn(@Nonnull AbstractInsnNode insn) {
+			return visitedInstructions.contains(insn);
+		}
 	}
 }
