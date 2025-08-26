@@ -102,6 +102,13 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 					int lastThrowable = Integer.MIN_VALUE;
 
 					for (int i = start; i < end; i++) {
+						// Ensure the instruction is actually used. If there is no associated frame
+						// then it is dead code and shouldn't be reachable. This means we don't
+						// need to treat it as a potential throwing behavior participant.
+						Frame<ReValue> frame = frames[i];
+						if (frame == null)
+							continue;
+
 						ThrowingBehavior behavior = ThrowingBehavior.NONE;
 						AbstractInsnNode insn = instructions.get(i);
 						int op = insn.getOpcode();
@@ -112,7 +119,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							case LALOAD:
 							case SALOAD:
 							case AALOAD: {
-								Frame<ReValue> frame = frames[i];
 								ReValue indexValue = frame.getStack(frame.getStackSize() - 1);
 								ReValue arrayValue = frame.getStack(frame.getStackSize() - 2);
 
@@ -154,7 +160,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							case LASTORE:
 							case SASTORE:
 							case AASTORE: {
-								Frame<ReValue> frame = frames[i];
 								ReValue toStoreValue = frame.getStack(frame.getStackSize() - 1);
 								ReValue indexValue = frame.getStack(frame.getStackSize() - 2);
 								ReValue arrayValue = frame.getStack(frame.getStackSize() - 3);
@@ -222,7 +227,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							}
 							case NEWARRAY:
 							case ANEWARRAY: {
-								Frame<ReValue> frame = frames[i];
 								ReValue arraySize = frame.getStack(frame.getStackSize() - 1);
 
 								// New array cannot be negative.
@@ -241,7 +245,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 								break;
 							}
 							case MULTIANEWARRAY: {
-								Frame<ReValue> frame = frames[i];
 								MultiANewArrayInsnNode manain = (MultiANewArrayInsnNode) insn;
 
 								// New array cannot be negative.
@@ -265,7 +268,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							case ARRAYLENGTH:
 							case MONITORENTER: {
 								// Check if the array/monitor is known to be null.
-								Frame<ReValue> frame = frames[i];
 								ReValue arrayOrMonitorValue = frame.getStack(frame.getStackSize() - 1);
 								if (arrayOrMonitorValue instanceof ObjectValue ov && ov.isNull() && doesHandleException(tryCatch, EX_NPE)) {
 									behavior = ThrowingBehavior.ALWAYS;
@@ -283,7 +285,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							}
 							case MONITOREXIT: {
 								// Check if the monitor is known to be null.
-								Frame<ReValue> frame = frames[i];
 								ReValue monitorValue = frame.getStack(frame.getStackSize() - 1);
 								if (monitorValue instanceof ObjectValue ov && ov.isNull() && doesHandleException(tryCatch, EX_NPE)) {
 									behavior = ThrowingBehavior.ALWAYS;
@@ -316,7 +317,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							case CHECKCAST: {
 								// Check if cast is guaranteed to fail
 								TypeInsnNode tin = (TypeInsnNode) insn;
-								Frame<ReValue> frame = frames[i];
 								ReValue value = frame.getStack(frame.getStackSize() - 1);
 								if (value instanceof ObjectValue ov) {
 									Type stackType = ov.type();
@@ -339,7 +339,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							}
 							case GETFIELD: {
 								// Check if the field owner instance is known to be null.
-								Frame<ReValue> frame = frames[i];
 								ReValue owner = frame.getStack(frame.getStackSize() - 1);
 								if (owner instanceof ObjectValue ov && ov.isNull() && doesHandleException(tryCatch, EX_NPE)) {
 									behavior = ThrowingBehavior.ALWAYS;
@@ -357,7 +356,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							}
 							case PUTFIELD: {
 								// Check if the field owner instance is known to be null.
-								Frame<ReValue> frame = frames[i];
 								ReValue owner = frame.getStack(frame.getStackSize() - 2);
 								if (owner instanceof ObjectValue ov && ov.isNull() && doesHandleException(tryCatch, EX_NPE)) {
 									behavior = ThrowingBehavior.ALWAYS;
@@ -383,7 +381,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 							case LREM: {
 								// Check if "[v1, v2] --> v1/v2" will throw an error (divide by zero) where v2 is the stack top.
 								// If we know v2 is non-zero we're safe from arithmetic exceptions.
-								Frame<ReValue> frame = frames[i];
 								ReValue divisor = frame.getStack(frame.getStackSize() - 1);
 								if (divisor.hasKnownValue() && doesHandleException(tryCatch, EX_AE)) {
 									if (((divisor instanceof IntValue iv && iv.isEqualTo(0))
@@ -418,14 +415,6 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 								break;
 							}
 							case ATHROW: {
-								Frame<ReValue> frame = frames[i];
-
-								// Ensure the 'athrow' is actually used. If there is no associated frame
-								// then it is dead code and shouldn't be reachable. This means we don't
-								// need to treat it as a potential throwing behavior participant.
-								if (frame == null)
-									break;
-
 								// Check for specific kinds of exceptions.
 								ReValue top = frame.getStack(frame.getStackSize() - 1);
 								if (top instanceof ObjectValue ov) {
