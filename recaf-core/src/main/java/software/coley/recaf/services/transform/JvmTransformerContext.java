@@ -307,7 +307,19 @@ public class JvmTransformerContext {
 	 * @see #getClassesToRemove()
 	 */
 	public void markClassForRemoval(@Nonnull JvmClassInfo info) {
-		classesToRemove.add(info.getName());
+		markClassForRemoval(info.getName());
+	}
+
+	/**
+	 * Marks a class for removal in the workspace.
+	 *
+	 * @param name
+	 * 		Internal class name.
+	 *
+	 * @see #getClassesToRemove()
+	 */
+	public void markClassForRemoval(@Nonnull String name) {
+		classesToRemove.add(name);
 	}
 
 	/**

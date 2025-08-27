@@ -27,6 +27,7 @@ import software.coley.recaf.services.transform.TransformationApplier;
 import software.coley.recaf.services.transform.TransformationApplierService;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.test.TestBase;
+import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -44,7 +45,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public abstract class BaseDeobfuscationTest extends TestBase {
 	private static final boolean PRINT_BEFORE_AFTER = true;
-	private static final String CLASS_NAME = "Example";
+	protected static final String CLASS_NAME = "Example";
+	protected static final String EXCEPTION_NAME = "BogusException";
 	private static JvmAssemblerPipeline assembler;
 	private static TransformationApplierService transformationApplierService;
 	private static JvmDecompiler decompiler;
@@ -59,6 +61,7 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 	@BeforeEach
 	void setupWorkspace() {
 		workspace = new BasicWorkspace(new WorkspaceResourceBuilder().build());
+		workspace.getPrimaryResource().getJvmClassBundle().put(TestClassUtils.createClass(EXCEPTION_NAME, n -> n.superName = "java/lang/Exception"));
 		workspaceManager.setCurrentIgnoringConditions(workspace);
 		assembler = recaf.get(AssemblerPipelineManager.class).newJvmAssemblerPipeline(workspace);
 	}

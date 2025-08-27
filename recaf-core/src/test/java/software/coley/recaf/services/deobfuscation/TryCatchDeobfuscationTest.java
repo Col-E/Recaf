@@ -7,7 +7,7 @@ import software.coley.recaf.util.StringUtil;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests {@link DuplicateCatchMergingTransformer} / {@link RedundantTryCatchRemovingTransformer}.
@@ -84,6 +84,85 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 			assertEquals(0, StringUtil.count("exceptions:", dis), "Should have removed exception ranges");
 			assertEquals(0, StringUtil.count("printStackTrace", dis), "Should have removed catch block contents");
 			assertEquals(0, StringUtil.count("astore", dis), "Should have removed catch block contents");
+		});
+	}
+
+	@Test
+	void redundantCatchOfTypeNeverThrownInWorkspace() {
+		// If we observe 'BogusException' defined in the workspace and know it is never actually constructed
+		// then any exception block with it is ALSO never going to be handled. These can be removed.
+		String asm = """
+				.method public static example ()V {
+				    exceptions: {
+				        { A, B, C, L\0; }
+				    },
+				    code: {
+					A:
+					    invokestatic Foo.foo ()V
+					B:
+					    return
+					C:
+					    pop
+					    return
+					D:
+				    }
+				}
+				""".replace("\0", EXCEPTION_NAME);
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+			assertFalse(dis.contains("exceptions:"), "Expected removal of exceptions");
+			assertFalse(dis.contains("pop"), "Expected removal of handler block");
+			assertEquals(1, StringUtil.count("return", dis), "Expected dead code to collapse into single return");
+			assertTrue(dis.contains("Foo.foo"), "Expected to keep method call");
+		});
+
+		// However, if we see an exception type that is not explicitly defined in our workspace's primary resource,
+		// such as a library, then we cannot safely assume it cannot be thrown without expensive call-graph walking.
+		// So we won't bother with these cases.
+		asm = """
+				.method public static example ()V {
+				    exceptions: {
+				        { A, B, C, Lcom/example/Foo; }
+				    },
+				    code: {
+					A:
+					    invokestatic Foo.foo ()V
+					B:
+						return
+					C:
+					    pop
+					    return
+					D:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+
+		// If we have BOTH exceptions then we should remove the 'BogusException' entry but keep the
+		// handler block as-is since it is still utilized by the third party 'Foo' exception.
+		asm = """
+				.method public static example ()V {
+				    exceptions: {
+				        { A, B, C, Lcom/example/Foo; },
+				        { A, B, C, L\0; }
+				    },
+				    code: {
+					A:
+					    invokestatic Foo.foo ()V
+					B:
+						return
+					C:
+					    pop
+					    return
+					D:
+				    }
+				}
+				""".replace("\0", EXCEPTION_NAME);
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+			assertTrue(dis.contains("{ A, B, C, Lcom/example/Foo; }"), "Expected to keep 'Foo' exception");
+			assertFalse(dis.contains(EXCEPTION_NAME), "Expected to remove '" + EXCEPTION_NAME + "' exception");
+			assertTrue(dis.contains("pop"), "Expected keep handler block for 'Foo' use");
+			assertEquals(2, StringUtil.count("return", dis), "Expected to keep both returns");
+			assertTrue(dis.contains("Foo.foo"), "Expected to keep method call");
 		});
 	}
 
