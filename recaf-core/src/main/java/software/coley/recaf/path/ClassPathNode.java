@@ -22,10 +22,6 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	 * Type identifier for class nodes.
 	 */
 	public static final String TYPE_ID = "class";
-	/**
-	 * Name hash for faster {@link #equals(Object)} comparison
-	 */
-	private int nameHash = Integer.MIN_VALUE;
 
 	/**
 	 * Node without parent.
@@ -161,17 +157,13 @@ public class ClassPathNode extends AbstractPathNode<String, ClassInfo> {
 	@Override
 	public boolean equals(Object o) {
 		// If the class names are the same and the parent paths are also equal, then this path points to the same location.
-		if (o instanceof ClassPathNode otherPath)
-			return nameHash() == otherPath.nameHash() && Objects.equals(getParent(), otherPath.getParent());
+		if (o instanceof ClassPathNode otherPath) {
+			String name = getValue().getName();
+			String otherName = otherPath.getValue().getName();
+			return name.hashCode() == otherName.hashCode() // Hash check first which is very fast, and the result is cached.
+					&& name.equals(otherName) // Sanity check for matching items to prevent hash collisions.
+					&& Objects.equals(getParent(), otherPath.getParent()); // Parents must also match.
+		}
 		return false;
-	}
-
-	private int nameHash() {
-		// Having many 'equals' calls with string comparisons is slow.
-		// Instead, we compute the hash of the name and do much faster int comparisons.
-		// In practice when using the search UI this moves the bottleneck to the 'instanceof' check.
-		if (nameHash == Integer.MIN_VALUE)
-			nameHash = getValue().getName().hashCode();
-		return nameHash;
 	}
 }
