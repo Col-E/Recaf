@@ -96,6 +96,7 @@ subprojects {
             testImplementation(libs.mockito)
             testImplementation(libs.assertj)
             testRuntimeOnly(libs.junit.engine)
+            testRuntimeOnly(libs.junit.launcher)
         }
     }
 
