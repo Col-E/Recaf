@@ -5,13 +5,15 @@ import com.github.weisj.jsvg.parser.SVGLoader;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.scene.Node;
-import javafx.scene.image.*;
+import javafx.scene.image.ImageView;
 import software.coley.recaf.ui.control.IconView;
 
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,9 +33,7 @@ public class SVG {
 	private static final Map<String, SVGDocument> DOCUMENT_CACHE = new ConcurrentHashMap<>();
 
 	static {
-		EMPTY_DOCUMENT = new SVGLoader()
-				.load(new ByteArrayInputStream(("<svg width=\"0\" height=\"0\" xmlns=\"http://www.w3.org/2000/svg\">" +
-						"</svg>").getBytes(StandardCharsets.UTF_8)));
+		EMPTY_DOCUMENT = read(new ByteArrayInputStream(("<svg width=\"0\" height=\"0\" xmlns=\"http://www.w3.org/2000/svg\"></svg>").getBytes(StandardCharsets.UTF_8)));
 	}
 
 	/**
@@ -108,14 +108,7 @@ public class SVG {
 	@Nonnull
 	public static Node ofFile(@Nonnull String path, int width, int height,
 	                          @Nullable Map<RenderingHints.Key, Object> renderingHints) {
-		SVGDocument document = DOCUMENT_CACHE.computeIfAbsent(path, p -> {
-			try (InputStream is = ResourceUtil.resource(path)) {
-				SVGLoader loader = new SVGLoader();
-				return loader.load(is);
-			} catch (Exception ex) {
-				return EMPTY_DOCUMENT;
-			}
-		});
+		SVGDocument document = DOCUMENT_CACHE.computeIfAbsent(path, SVG::read);
 
 		// Render to image
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -127,5 +120,36 @@ public class SVG {
 
 		// Convert to FX compatible image
 		return new ImageView(Icons.convertToFxImage(image));
+	}
+
+	@Nonnull
+	private static SVGDocument read(@Nonnull String path) {
+		try (InputStream is = ResourceUtil.resource(path)) {
+			return read(is);
+		} catch (Exception ex) {
+			return EMPTY_DOCUMENT;
+		}
+	}
+
+	@Nonnull
+	private static SVGDocument read(@Nullable InputStream is) {
+		if (is == null)
+			throw new IllegalStateException();
+
+		// The optimal code for this is:
+		//   return new SVGLoader().load(is);
+		// But JDK 24+ complains that @NotNull from THEIR CODE is missing in OUR classpath
+		// even though it is not directly referenced in OUR CODE. What I really don't get
+		// is that this is only a problem HERE with JSVG, despite this annotation being used
+		// in other libraries without issue.
+		// This is slower, but we also cache the results, so I don't care.
+		// See: https://github.com/Col-E/Recaf/issues/933
+		try {
+			SVGLoader loader = new SVGLoader();
+			Method m = SVGLoader.class.getDeclaredMethod("load", InputStream.class);
+			return (SVGDocument) m.invoke(loader, is);
+		} catch (Throwable t) {
+			throw new IllegalStateException(t);
+		}
 	}
 }
