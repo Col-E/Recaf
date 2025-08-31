@@ -28,16 +28,11 @@ import software.coley.bentofx.path.DockablePath;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
-import software.coley.recaf.info.AudioFileInfo;
-import software.coley.recaf.info.BinaryXmlFileInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.info.ImageFileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.info.TextFileInfo;
-import software.coley.recaf.info.VideoFileInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
@@ -79,18 +74,13 @@ import software.coley.recaf.ui.pane.CommentListPane;
 import software.coley.recaf.ui.pane.DocumentationPane;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
+import software.coley.recaf.ui.pane.editing.FileDisplayMode;
+import software.coley.recaf.ui.pane.editing.FilePane;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassEditorType;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
-import software.coley.recaf.ui.pane.editing.binary.BinaryXmlFilePane;
-import software.coley.recaf.ui.pane.editing.binary.HexFilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassEditorType;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
-import software.coley.recaf.ui.pane.editing.jvm.TextEditorType;
-import software.coley.recaf.ui.pane.editing.media.AudioFilePane;
-import software.coley.recaf.ui.pane.editing.media.ImageFilePane;
-import software.coley.recaf.ui.pane.editing.media.VideoFilePane;
-import software.coley.recaf.ui.pane.editing.text.TextFilePane;
 import software.coley.recaf.ui.pane.search.AbstractSearchPane;
 import software.coley.recaf.ui.pane.search.ClassReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.InstructionSearchPane;
@@ -161,12 +151,7 @@ public class Actions implements Service {
 	private final InheritanceGraphService inheritanceGraphService;
 	private final Instance<JvmClassPane> jvmPaneProvider;
 	private final Instance<AndroidClassPane> androidPaneProvider;
-	private final Instance<BinaryXmlFilePane> binaryXmlPaneProvider;
-	private final Instance<TextFilePane> textPaneProvider;
-	private final Instance<ImageFilePane> imagePaneProvider;
-	private final Instance<AudioFilePane> audioPaneProvider;
-	private final Instance<VideoFilePane> videoPaneProvider;
-	private final Instance<HexFilePane> hexPaneProvider;
+	private final Instance<FilePane> filePaneProvider;
 	private final Instance<AssemblerPane> assemblerPaneProvider;
 	private final Instance<WorkspaceInformationPane> infoPaneProvider;
 	private final Instance<CommentEditPane> commentPaneProvider;
@@ -197,12 +182,7 @@ public class Actions implements Service {
 	               @Nonnull Instance<MappingApplier> applierProvider,
 	               @Nonnull Instance<JvmClassPane> jvmPaneProvider,
 	               @Nonnull Instance<AndroidClassPane> androidPaneProvider,
-	               @Nonnull Instance<BinaryXmlFilePane> binaryXmlPaneProvider,
-	               @Nonnull Instance<TextFilePane> textPaneProvider,
-	               @Nonnull Instance<ImageFilePane> imagePaneProvider,
-	               @Nonnull Instance<AudioFilePane> audioPaneProvider,
-	               @Nonnull Instance<VideoFilePane> videoPaneProvider,
-	               @Nonnull Instance<HexFilePane> hexPaneProvider,
+	               @Nonnull Instance<FilePane> filePaneProvider,
 	               @Nonnull Instance<AssemblerPane> assemblerPaneProvider,
 	               @Nonnull Instance<WorkspaceInformationPane> infoPaneProvider,
 	               @Nonnull Instance<CommentEditPane> commentPaneProvider,
@@ -228,12 +208,7 @@ public class Actions implements Service {
 		this.inheritanceGraphService = inheritanceGraphService;
 		this.jvmPaneProvider = jvmPaneProvider;
 		this.androidPaneProvider = androidPaneProvider;
-		this.binaryXmlPaneProvider = binaryXmlPaneProvider;
-		this.textPaneProvider = textPaneProvider;
-		this.imagePaneProvider = imagePaneProvider;
-		this.audioPaneProvider = audioPaneProvider;
-		this.videoPaneProvider = videoPaneProvider;
-		this.hexPaneProvider = hexPaneProvider;
+		this.filePaneProvider = filePaneProvider;
 		this.assemblerPaneProvider = assemblerPaneProvider;
 		this.infoPaneProvider = infoPaneProvider;
 		this.commentPaneProvider = commentPaneProvider;
@@ -458,233 +433,7 @@ public class Actions implements Service {
 			throw new IncompletePathException(ClassBundle.class);
 		}
 
-		// Handle text vs binary
-		if (info.isTextFile()) {
-			return gotoDeclaration(workspace, resource, bundle, info.asTextFile());
-		} else if (info.isImageFile()) {
-			return gotoDeclaration(workspace, resource, bundle, info.asImageFile());
-		} else if (info instanceof BinaryXmlFileInfo binaryXml) {
-			return gotoDeclaration(workspace, resource, bundle, binaryXml);
-		} else if (info.isAudioFile()) {
-			return gotoDeclaration(workspace, resource, bundle, info.asAudioFile());
-		} else if (info.isVideoFile()) {
-			return gotoDeclaration(workspace, resource, bundle, info.asVideoFile());
-		}
 		return gotoDeclaration(workspace, resource, bundle, info.asFile());
-	}
-
-	/**
-	 * Brings a {@link FileNavigable} component representing the given binary XML file into focus.
-	 * If no such component exists, one is created.
-	 *
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param info
-	 * 		Binary XML file to go to.
-	 *
-	 * @return Navigable content representing binary XML file content of the path.
-	 */
-	@Nonnull
-	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-	                                     @Nonnull WorkspaceResource resource,
-	                                     @Nonnull FileBundle bundle,
-	                                     @Nonnull BinaryXmlFileInfo info) {
-		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
-		return (FileNavigable) getOrCreatePathContent(path, () -> {
-			// Create text/graphic for the tab to create.
-			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
-			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
-			if (title == null) throw new IllegalStateException("Missing title");
-
-			// Create content for the tab.
-			BinaryXmlFilePane content = binaryXmlPaneProvider.get();
-			content.onUpdatePath(path);
-
-			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
-			dockable.addCloseListener((_, _) -> binaryXmlPaneProvider.destroy(content));
-			setupInfoContextMenu(info, content, dockable);
-			return dockable;
-		});
-	}
-
-	/**
-	 * Brings a {@link FileNavigable} component representing the given text file into focus.
-	 * If no such component exists, one is created.
-	 *
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param info
-	 * 		Text file to go to.
-	 *
-	 * @return Navigable content representing text file content of the path.
-	 */
-	@Nonnull
-	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-	                                     @Nonnull WorkspaceResource resource,
-	                                     @Nonnull FileBundle bundle,
-	                                     @Nonnull TextFileInfo info) {
-		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
-		return (FileNavigable) getOrCreatePathContent(path, () -> {
-			// Create text/graphic for the tab to create.
-			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
-			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
-			if (title == null) throw new IllegalStateException("Missing title");
-
-			// Create content for the tab.
-			TextFilePane content = textPaneProvider.get();
-			content.onUpdatePath(path);
-
-			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
-			dockable.addCloseListener((_, _) -> textPaneProvider.destroy(content));
-			dockable.setContextMenuFactory(d -> {
-				ContextMenu menu = new ContextMenu();
-				ObservableList<MenuItem> items = menu.getItems();
-				Menu mode = menu("menu.mode", CarbonIcons.VIEW);
-				mode.getItems().addAll(
-						action("menu.mode.file.text", CarbonIcons.CODE,
-								() -> content.setEditorType(TextEditorType.TEXT)),
-						action("menu.mode.file.hex", CarbonIcons.NUMBER_0,
-								() -> content.setEditorType(TextEditorType.HEX))
-				);
-				items.add(mode);
-				addCopyPathAction(menu, info);
-				addCloseActions(menu, dockable);
-				return menu;
-			});
-			return dockable;
-		});
-	}
-
-	/**
-	 * Brings a {@link FileNavigable} component representing the given image file into focus.
-	 * If no such component exists, one is created.
-	 *
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param info
-	 * 		Image file to go to.
-	 *
-	 * @return Navigable content representing image file content of the path.
-	 */
-	@Nonnull
-	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-	                                     @Nonnull WorkspaceResource resource,
-	                                     @Nonnull FileBundle bundle,
-	                                     @Nonnull ImageFileInfo info) {
-		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
-		return (FileNavigable) getOrCreatePathContent(path, () -> {
-			// Create text/graphic for the tab to create.
-			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
-			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
-			if (title == null) throw new IllegalStateException("Missing title");
-
-			// Create content for the tab.
-			ImageFilePane content = imagePaneProvider.get();
-			content.onUpdatePath(path);
-
-			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
-			dockable.addCloseListener((_, _) -> imagePaneProvider.destroy(content));
-			setupInfoContextMenu(info, content, dockable);
-			return dockable;
-		});
-	}
-
-	/**
-	 * Brings a {@link FileNavigable} component representing the given audio file into focus.
-	 * If no such component exists, one is created.
-	 *
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param info
-	 * 		Audio file to go to.
-	 *
-	 * @return Navigable content representing audio file content of the path.
-	 */
-	@Nonnull
-	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-	                                     @Nonnull WorkspaceResource resource,
-	                                     @Nonnull FileBundle bundle,
-	                                     @Nonnull AudioFileInfo info) {
-		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
-		return (FileNavigable) getOrCreatePathContent(path, () -> {
-			// Create text/graphic for the tab to create.
-			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
-			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
-			if (title == null) throw new IllegalStateException("Missing title");
-
-			// Create content for the tab.
-			AudioFilePane content = audioPaneProvider.get();
-			content.onUpdatePath(path);
-
-			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
-			dockable.addCloseListener((_, _) -> audioPaneProvider.destroy(content));
-			setupInfoContextMenu(info, content, dockable);
-			return dockable;
-		});
-	}
-
-	/**
-	 * Brings a {@link FileNavigable} component representing the given video file into focus.
-	 * If no such component exists, one is created.
-	 *
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param info
-	 * 		Video file to go to.
-	 *
-	 * @return Navigable content representing video file content of the path.
-	 */
-	@Nonnull
-	public FileNavigable gotoDeclaration(@Nonnull Workspace workspace,
-	                                     @Nonnull WorkspaceResource resource,
-	                                     @Nonnull FileBundle bundle,
-	                                     @Nonnull VideoFileInfo info) {
-		FilePathNode path = PathNodes.filePath(workspace, resource, bundle, info);
-		return (FileNavigable) getOrCreatePathContent(path, () -> {
-			// Create text/graphic for the tab to create.
-			String title = textService.getFileInfoTextProvider(workspace, resource, bundle, info).makeText();
-			IconProvider iconProvider = iconService.getFileInfoIconProvider(workspace, resource, bundle, info);
-			DockableIconFactory graphicFactory = d -> Objects.requireNonNull(iconProvider.makeIcon(), "Missing graphic");
-			if (title == null) throw new IllegalStateException("Missing title");
-
-			// Create content for the tab.
-			VideoFilePane content = videoPaneProvider.get();
-			content.onUpdatePath(path);
-
-			// Build the tab.
-			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
-			dockable.addCloseListener((_, _) -> videoPaneProvider.destroy(content));
-			setupInfoContextMenu(info, content, dockable);
-			return dockable;
-		});
 	}
 
 	/**
@@ -716,13 +465,14 @@ public class Actions implements Service {
 			if (title == null) throw new IllegalStateException("Missing title");
 
 			// Create content for the tab.
-			HexFilePane content = hexPaneProvider.get();
+			FilePane content = filePaneProvider.get();
+			content.setupForFileType(info);
 			content.onUpdatePath(path);
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
-			dockable.addCloseListener((_, _) -> hexPaneProvider.destroy(content));
-			setupInfoContextMenu(info, content, dockable);
+			dockable.addCloseListener((_, _) -> filePaneProvider.destroy(content));
+			setupInfoContextMenu(info, content, dockable, menu -> addFilePaneOptions(menu, content));
 			return dockable;
 		});
 	}
@@ -2492,10 +2242,20 @@ public class Actions implements Service {
 	private void setupInfoContextMenu(@Nonnull Info info,
 	                                  @Nonnull AbstractContentPane<?> contentPane,
 	                                  @Nonnull Dockable dockable) {
+		setupInfoContextMenu(info, contentPane, dockable, null);
+	}
+
+	private void setupInfoContextMenu(@Nonnull Info info,
+	                                  @Nonnull AbstractContentPane<?> contentPane,
+	                                  @Nonnull Dockable dockable,
+	                                  @Nullable Consumer<ContextMenu> menuAdapter) {
 		dockable.setContextMenuFactory(d -> {
 			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
 
+			if (menuAdapter != null)
+				menuAdapter.accept(menu);
+
+			ObservableList<MenuItem> items = menu.getItems();
 			if (info instanceof JvmClassInfo classInfo && contentPane instanceof JvmClassPane content) {
 				Menu mode = menu("menu.mode", CarbonIcons.VIEW);
 				mode.getItems().addAll(
@@ -2516,38 +2276,11 @@ public class Actions implements Service {
 								() -> content.setEditorType(AndroidClassEditorType.SMALI))
 				);
 				items.add(mode);
-			} else if (info instanceof ImageFileInfo fileInfo) {
-				// TODO: We need to copy-paste this a number of times for all the different file info types
-				//  and let each toggle between "automatic" (native editor) and hex. The way that it is done
-				//  here works but isn't exactly pretty and lets users replace the current pane they have open
-				//  with the same kind of pane. Having some abstraction model to alleviate the copy-paste and this
-				//  replacement-of-self problem would be nice.
-				Menu mode = menu("menu.mode", CarbonIcons.VIEW);
-				mode.getItems().addAll(
-						action("menu.mode.file.auto", CarbonIcons.IMAGE, () -> {
-							ImageFilePane content = imagePaneProvider.get();
-							if (d.getNode() instanceof AbstractContentPane<?> existing && existing.getPath() != null) {
-								content.onUpdatePath(existing.getPath());
-								existing.disable();
-							}
-							d.addCloseListener((_, _) -> imagePaneProvider.destroy(content));
-							d.setNode(content);
-						}),
-						action("menu.mode.file.hex", CarbonIcons.CODE, () -> {
-							HexFilePane content = hexPaneProvider.get();
-							if (d.getNode() instanceof AbstractContentPane<?> existing && existing.getPath() != null) {
-								content.onUpdatePath(existing.getPath());
-								existing.disable();
-							}
-							d.addCloseListener((_, _) -> hexPaneProvider.destroy(content));
-							d.setNode(content);
-						})
-				);
-				items.add(mode);
 			}
 
 			addCopyPathAction(menu, info);
 			addCloseActions(menu, d);
+
 			return menu;
 		});
 	}
@@ -2629,6 +2362,23 @@ public class Actions implements Service {
 		return dockable;
 	}
 
+	/**
+	 * Adds 'mode' switches for supported file display modes in the given file pane.
+	 *
+	 * @param menu
+	 * 		Menu to add items to.
+	 * @param content
+	 * 		File pane to pull supported display modes from.
+	 */
+	private static void addFilePaneOptions(@Nonnull ContextMenu menu, @Nonnull FilePane content) {
+		List<FileDisplayMode> fileDisplayModes = content.getFileDisplayModes();
+		if (fileDisplayModes.size() > 1) {
+			Menu modeMenu = menu("menu.mode", CarbonIcons.VIEW);
+			for (FileDisplayMode mode : fileDisplayModes)
+				modeMenu.getItems().add(action(mode.getKey(), mode.newIcon(), () -> content.setFileDisplayMode(mode)));
+			menu.getItems().add(modeMenu);
+		}
+	}
 
 	/**
 	 * Adds 'copy path' action to the given menu, with a following separator assuming other items will be added next.

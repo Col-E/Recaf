@@ -22,6 +22,7 @@ instrument-server = "1.5.0"
 jackson = "2.18.2"
 jakarta-annotation = "3.0.0"
 jasm = "c5a2c90503"
+jelf = "0.10.0"
 jlinker = "1.0.7"
 jphantom = "1.4.4"
 junit = "5.11.4"
@@ -32,6 +33,7 @@ mapping-io = "0.7.0"
 mockito = "5.15.2"
 natural-order = "1.1"
 picocli = "4.7.6"
+pe = "2.2.3"
 procyon = "0.6.0"
 reactfx = { strictly = "2.0-M5" } # won't get updates, dead
 regex = "0.1.16"
@@ -99,6 +101,8 @@ jakarta-annotation = { module = "jakarta.annotation:jakarta.annotation-api", ver
 jasm-composistion-jvm = { module = "com.github.jumanji144.Jasm:jasm-composition-jvm", version.ref = "jasm" }
 jasm-core = { module = "com.github.jumanji144.Jasm:jasm-core", version.ref = "jasm" }
 
+jelf = { module = "net.fornwall:jelf", version.ref = "jelf" }
+
 jlinker = { module = "com.github.xxDark:jlinker", version.ref = "jlinker" }
 
 jphantom = { module = "com.github.Col-E:jphantom", version.ref = "jphantom" }
@@ -120,6 +124,8 @@ mockito = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 natural-order = { module = "net.grey-panther:natural-comparator", version.ref = "natural-order" }
 
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
+
+pe = { module = "com.github.cademtz:JavaPeParser", version.ref = "pe" }
 
 procyon = { module = "org.bitbucket.mstrobel:procyon-compilertools", version.ref = "procyon" }
 
