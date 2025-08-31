@@ -27,7 +27,7 @@ jlinker = "1.0.7"
 jphantom = "1.4.4"
 junit = "5.13.4"
 junit-launch = "1.13.4"
-jsvg = "1.6.1"
+jsvg = "1.7.2"
 lljzip = "2.8.1"
 logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
 mapping-io = "0.7.0"

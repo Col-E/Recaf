@@ -54,7 +54,7 @@ subprojects {
     // gradlew -q javaToolchains - see the list of detected toolchains.
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(22)
+            languageVersion = JavaLanguageVersion.of(System.getenv('TARGET_VERSION') ?: '22')
         }
     }
 
