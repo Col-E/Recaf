@@ -100,7 +100,7 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                 consumer.appendSummary(title);
 
                 if (!finalMcVersion.isEmpty()) {
-                    consumer.appendSummary(new Label(Lang.getBinding("service.analysis.minecraft-version").get() + finalMcVersion));
+                    consumer.appendSummary(new Label(Lang.getBinding("service.analysis.minecraft-version").get() + " " + finalMcVersion));
                 } else {
                     consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.minecraft-version-unknown")));
                 }
@@ -174,7 +174,7 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                 consumer.appendSummary(title);
 
                 if (!finalMcVersion.isEmpty()) {
-                    consumer.appendSummary(new Label(Lang.getBinding("service.analysis.minecraft-version").get() + finalMcVersion));
+                    consumer.appendSummary(new Label(Lang.getBinding("service.analysis.minecraft-version").get() + " " + finalMcVersion));
                 } else {
                     consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.minecraft-version-unknown")));
                 }
