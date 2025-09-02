@@ -83,7 +83,7 @@ public abstract class ObjectValueBoxImpl<T> extends ObjectValueImpl {
 			if (type().equals(otherBoxed.type()) && value().isPresent() && otherBoxed.value().isPresent()) {
 				T v = value().get();
 				T otherV = (T) otherBoxed.value().get();
-				if (Objects.equals(v, otherBoxed))
+				if (Objects.equals(v, otherV))
 					return wrap(v);
 			}
 			return wrapUnknown(nullness().mergeWith(otherBoxed.nullness()));
