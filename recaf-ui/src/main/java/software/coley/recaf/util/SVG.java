@@ -1,6 +1,7 @@
 package software.coley.recaf.util;
 
 import com.github.weisj.jsvg.SVGDocument;
+import com.github.weisj.jsvg.parser.LoaderContext;
 import com.github.weisj.jsvg.parser.SVGLoader;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -13,9 +14,9 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -134,22 +135,10 @@ public class SVG {
 	@Nonnull
 	private static SVGDocument read(@Nullable InputStream is) {
 		if (is == null)
-			throw new IllegalStateException();
-
-		// The optimal code for this is:
-		//   return new SVGLoader().load(is);
-		// But JDK 24+ complains that @NotNull from THEIR CODE is missing in OUR classpath
-		// even though it is not directly referenced in OUR CODE. What I really don't get
-		// is that this is only a problem HERE with JSVG, despite this annotation being used
-		// in other libraries without issue.
-		// This is slower, but we also cache the results, so I don't care.
+			throw new IllegalStateException("No input stream for SVG input content");
+		// In case this bugs out again when building with Java 24+, just use reflection to call 'load'
 		// See: https://github.com/Col-E/Recaf/issues/933
-		try {
-			SVGLoader loader = new SVGLoader();
-			Method m = SVGLoader.class.getDeclaredMethod("load", InputStream.class);
-			return (SVGDocument) m.invoke(loader, is);
-		} catch (Throwable t) {
-			throw new IllegalStateException(t);
-		}
+		SVGDocument document = new SVGLoader().load(is, null, LoaderContext.createDefault());
+		return Objects.requireNonNull(document, "Load failed to yield SVG document instance");
 	}
 }
