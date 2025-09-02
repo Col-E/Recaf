@@ -118,6 +118,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeNonAsciiNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeKeywordNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeWhitespaceNames());
+						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeLongName(400));
 						mappingGeneratorPane.generate();
 
 						window.setOnCloseRequest(e -> generatorWindowProvider.destroy(window));
