@@ -7,8 +7,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.IkonHandler;
+import org.kordamp.ikonli.IkonResolver;
+import org.kordamp.ikonli.IkonResolverProvider;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.kordamp.ikonli.javafx.IkonResolver;
+import org.kordamp.ikonli.javafx.JavaFXFontLoader;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +22,7 @@ import java.util.Map;
  * @author Matt Coley
  */
 public class FontIconView extends Text {
-	private static final IkonResolver resolver = IkonResolver.getInstance();
+	private static final IkonResolver resolver = IkonResolverProvider.getInstance(JavaFXFontLoader.getInstance());
 	private static final Map<Integer, IkonHandler> codeToHandler = new HashMap<>();
 
 	/**
