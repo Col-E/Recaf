@@ -898,7 +898,6 @@ public class AstServiceTest extends TestBase {
 		}
 
 		@Test
-		@Disabled("Resolving the exact member reference of static import not directly supported by OpenRewrite")
 		void renameMember_MethodNameStaticallyImported() {
 			String source = """
 					package software.coley.recaf.test.dummy;

@@ -363,7 +363,7 @@ modifications.title=Modifications
 
 ## Java area
 java.decompiling=Decompiling class...
-java.unparsable=OpenRewrite failed to interpret source, context actions only available 'Fields & Methods' side tab
+java.unparsable=SourceSolver failed to interpret source, context actions only available 'Fields & Methods' side tab
 java.parse-state.error=Parser error
 java.parse-state.error-details=Right click context actions are not available since the parse failed.\nYou can use the 'Fields & Methods' side tab in the meantime.
 java.parse-state.initial=Parsing in progress...
