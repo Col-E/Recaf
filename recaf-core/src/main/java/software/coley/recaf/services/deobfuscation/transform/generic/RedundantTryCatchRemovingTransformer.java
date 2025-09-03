@@ -260,6 +260,7 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 						case FALOAD:
 						case LALOAD:
 						case SALOAD:
+						case BALOAD:
 						case AALOAD: {
 							ReValue indexValue = frame.getStack(frame.getStackSize() - 1);
 							ReValue arrayValue = frame.getStack(frame.getStackSize() - 2);
@@ -298,6 +299,7 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 						}
 						case IASTORE:
 						case DASTORE:
+						case BASTORE:
 						case FASTORE:
 						case LASTORE:
 						case SASTORE:
