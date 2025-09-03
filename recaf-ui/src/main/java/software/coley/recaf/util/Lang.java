@@ -186,29 +186,6 @@ public class Lang {
 	 * @return JavaFX string binding for specific translation key with arguments.
 	 */
 	@Nonnull
-	public static StringBinding formatLiterals(@Nonnull String translationKey, Object... args) {
-		StringBinding root = getBinding(translationKey);
-		return new SynchronizedStringBinding() {
-			{
-				bind(root);
-			}
-
-			@Override
-			protected synchronized String computeValue() {
-				return String.format(root.getValue(), args);
-			}
-		};
-	}
-
-	/**
-	 * @param translationKey
-	 * 		Key name.
-	 * @param args
-	 * 		Format arguments.
-	 *
-	 * @return JavaFX string binding for specific translation key with arguments.
-	 */
-	@Nonnull
 	public static StringBinding format(@Nonnull String translationKey, Object... args) {
 		StringBinding root = getBinding(translationKey);
 		return new SynchronizedStringBinding() {
