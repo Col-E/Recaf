@@ -2,15 +2,12 @@ package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.RecordComponentVisitor;
-import software.coley.recaf.RecafConstants;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.RecordComponentNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
@@ -31,10 +28,26 @@ public class UnknownAttributeRemovingTransformer implements JvmClassTransformer 
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
-		ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
-		ClassWriter writer = new ClassWriter(reader, 0);
-		reader.accept(new UnknownAttributeRemovingVisitor(writer), 0);
-		context.setBytecode(bundle, initialClassState, writer.toByteArray());
+		if (context.isNode(bundle, initialClassState)) {
+			ClassNode node = context.getNode(bundle, initialClassState);
+			if (node.attrs != null)
+				node.attrs.clear();
+			for (FieldNode field : node.fields)
+				if (field.attrs != null)
+					field.attrs.clear();
+			for (MethodNode method : node.methods)
+				if (method.attrs != null)
+					method.attrs.clear();
+			if (node.recordComponents != null)
+				for (RecordComponentNode recordComponent : node.recordComponents)
+					if (recordComponent.attrs != null)
+						recordComponent.attrs.clear();
+		} else {
+			ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
+			ClassWriter writer = new ClassWriter(reader, 0);
+			reader.accept(new UnknownAttributeRemovingVisitor(writer), 0);
+			context.setBytecode(bundle, initialClassState, writer.toByteArray());
+		}
 	}
 
 	@Nonnull

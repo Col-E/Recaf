@@ -222,6 +222,19 @@ public class JvmTransformerContext {
 	}
 
 	/**
+	 * @param bundle
+	 * 		Bundle containing the class.
+	 * @param info
+	 * 		The class's model in the workspace.
+	 *
+	 * @return {@code true} when the context currently has the class represented as a node <i>(vs raw {@code byte[]})</i.>
+	 */
+	public boolean isNode(@Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo info) {
+		JvmClassData data = getJvmClassData(bundle, info);
+		return data.node != null;
+	}
+
+	/**
 	 * Gets the current ASM node representation of the given class.
 	 * <p/>
 	 * Transformers can update the <i>"current"</i> state of the node via
