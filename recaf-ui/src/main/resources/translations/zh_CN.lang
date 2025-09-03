@@ -363,7 +363,7 @@ modifications.title=修改
 
 ## Java area
 java.decompiling=正在反编译类...
-java.unparsable=OpenRewrite无法解释源代码,上下文操作仅在'字段和方法'侧边栏可用
+java.unparsable=SourceSolver无法解释源代码,上下文操作仅在'字段和方法'侧边栏可用
 java.parse-state.error=解析器错误
 java.parse-state.error-details=由于解析失败,右键上下文操作不可用.\n您可以暂时使用'字段和方法'侧边栏.
 java.parse-state.initial=解析进行中...
