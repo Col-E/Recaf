@@ -39,6 +39,9 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
     private final TextProviderService textService;
     private final IconProviderService iconService;
     private final Actions actions;
+    private String loaderName = "";
+    private String mcVersion = "";
+    private final List<String> mainClasses = new ArrayList<>();
 
     @Inject
     public MinecraftModSummarizer(@Nonnull TextProviderService textService,
@@ -54,21 +57,40 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                              @Nonnull WorkspaceResource resource,
                              @Nonnull SummaryConsumer consumer) {
         Batch batch = FxThreadUtil.batch();
-        boolean foundAny = false;
 
-        // Add title
-        batch.add(() -> {
-            Label title = new BoundLabel(Lang.getBinding("service.analysis.minecraft-mod-info"));
-            title.getStyleClass().addAll(Styles.TITLE_4);
-            consumer.appendSummary(title);
-        });
+        loaderName = "";
+        mcVersion = "";
+        mainClasses.clear();
 
         // 1. Try to find Fabric mod information
+        boolean foundAny = detectFabricMod(resource);
+
+        // 2. Try to find Forge mod information
+        foundAny |= detectLowVersionForgeMod(resource);
+        foundAny |= detectHighVersionForgeMod(resource);
+
+        if (foundAny) {
+            renderSummary(workspace, resource, consumer, batch);
+        } else {
+            batch.add(() -> consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.no-minecraft-mod-found"))));
+        }
+
+        batch.execute();
+        return foundAny;
+    }
+
+    /**
+     * Find a class in the resource by its name.
+     * Converts dot notation to slash notation for lookup.
+     */
+    private JvmClassInfo findClassInResource(@Nonnull WorkspaceResource resource, String className) {
+        String classPath = className.replace('.', '/');
+        return resource.getJvmClassBundle().get(classPath);
+    }
+
+    private boolean detectFabricMod(@Nonnull WorkspaceResource resource) {
         FileInfo fabricFileInfo = resource.getFileBundle().get("fabric.mod.json");
         if (fabricFileInfo != null) {
-            foundAny = true;
-            String mcVersion = "";
-            List<String> mainClasses = new ArrayList<>();
 
             try {
                 String jsonText = fabricFileInfo.asTextFile().getText();
@@ -83,8 +105,7 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                             String mainClass = mainArray.get(i).getAsString();
                             mainClasses.add(mainClass);
                         }
-                    }
-                    else if (entrypoints.has("client") && entrypoints.get("client").isJsonArray()) {
+                    } else if (entrypoints.has("client") && entrypoints.get("client").isJsonArray()) {
                         JsonArray clientArray = entrypoints.getAsJsonArray("client");
                         for (int i = 0; i < clientArray.size(); i++) {
                             String mainClass = clientArray.get(i).getAsString();
@@ -102,15 +123,15 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                 if (json.has("depends")) {
                     JsonObject depends = json.getAsJsonObject("depends");
                     if (depends.has("minecraft")) {
-                        if(!depends.get("minecraft").isJsonArray()){
+                        if (!depends.get("minecraft").isJsonArray()) {
                             mcVersion = depends.get("minecraft").getAsString();
                         } else {
                             // sometimes the minecraft version is an array
                             // we connect them with ', '
                             JsonArray mcArray = depends.getAsJsonArray("minecraft");
-                            if(!mcArray.isEmpty()){
+                            if (!mcArray.isEmpty()) {
                                 StringBuilder sb = new StringBuilder(mcArray.get(0).getAsString());
-                                for(int i = 1; i < mcArray.size(); i++) {
+                                for (int i = 1; i < mcArray.size(); i++) {
                                     sb.append(", ").append(mcArray.get(i).getAsString());
                                 }
                                 mcVersion = sb.toString();
@@ -122,51 +143,17 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                 // Ignore JSON parsing errors
             }
 
-            String finalMcVersion = mcVersion;
-            batch.add(() -> {
-                Label title = new BoundLabel(Lang.getBinding("service.analysis.is-fabric-mod"));
-                consumer.appendSummary(title);
+            loaderName = Lang.getBinding("service.analysis.is-fabric-mod").get();
 
-                if (!finalMcVersion.isEmpty()) {
-                    consumer.appendSummary(new BoundLabel(Lang.format("service.analysis.minecraft-version", finalMcVersion)));
-                } else {
-                    consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.minecraft-version-unknown")));
-                }
-
-                if (!mainClasses.isEmpty()) {
-                    consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.entry-points")));
-                    for (String mainClass : mainClasses) {
-                        // Try to find the main class in JVM class bundle
-                        JvmClassInfo classInfo = findClassInResource(resource, mainClass);
-                        if (classInfo != null) {
-                            // Found class, create label with icon
-                            String classDisplay = textService.getJvmClassInfoTextProvider(workspace, resource,
-                                    resource.getJvmClassBundle(), classInfo).makeText();
-                            Node classIcon = iconService.getJvmClassInfoIconProvider(workspace, resource,
-                                    resource.getJvmClassBundle(), classInfo).makeIcon();
-                            Label classLabel = new Label(classDisplay, classIcon);
-                            classLabel.setCursor(Cursor.HAND);
-                            classLabel.setOnMouseEntered(e -> classLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
-                            classLabel.setOnMouseExited(e -> classLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
-                            classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, resource,
-                                    resource.getJvmClassBundle(), classInfo));
-                            consumer.appendSummary(classLabel);
-                        }
-                    }
-                } else {
-                    consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.entry-points.none")));
-                }
-            });
-
+            return true;
         }
+        return false;
+    }
 
-        // 2. Try to find Forge mod information
+    private boolean detectLowVersionForgeMod(@Nonnull WorkspaceResource resource) {
         FileInfo forgeFileInfo = resource.getFileBundle().get("mcmod.info");
         if (forgeFileInfo != null) {
-            foundAny = true;
-            String mcVersion = "";
-            List<String> corePlugins = new ArrayList<>();
-
+            // reference: https://docs.minecraftforge.net/en/1.13.x/gettingstarted/structuring/
             try {
                 // Parse mcmod.info to get mcversion
                 String jsonText = forgeFileInfo.asTextFile().getText();
@@ -189,65 +176,74 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                     Manifest mf = new Manifest(new ByteArrayInputStream(manifest.getBytes()));
                     String corePlugin = mf.getMainAttributes().getValue("FMLCorePlugin");
                     if (corePlugin != null && !corePlugin.isEmpty()) {
-                        corePlugins.add(corePlugin);
+                        mainClasses.add(corePlugin);
                     }
                 } catch (Exception e) {
                     // Ignore manifest parsing errors
                 }
             }
 
-            String finalMcVersion = mcVersion;
-            batch.add(() -> {
-                Label title = new BoundLabel(Lang.getBinding("service.analysis.is-forge-mod"));
-                consumer.appendSummary(title);
-
-                if (!finalMcVersion.isEmpty()) {
-                    consumer.appendSummary(new BoundLabel(Lang.format("service.analysis.minecraft-version", finalMcVersion)));
-                } else {
-                    consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.minecraft-version-unknown")));
-                }
-
-                if (!corePlugins.isEmpty()) {
-                    consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.entry-points")));
-                    for (String corePlugin : corePlugins) {
-                        // Try to find the core plugin class in JVM class bundle
-                        JvmClassInfo classInfo = findClassInResource(resource, corePlugin);
-                        if (classInfo != null) {
-                            // Found class, create label with icon
-                            String classDisplay = textService.getJvmClassInfoTextProvider(workspace, resource,
-                                    resource.getJvmClassBundle(), classInfo).makeText();
-                            Node classIcon = iconService.getJvmClassInfoIconProvider(workspace, resource,
-                                    resource.getJvmClassBundle(), classInfo).makeIcon();
-                            Label classLabel = new Label(classDisplay, classIcon);
-                            classLabel.setCursor(Cursor.HAND);
-                            classLabel.setOnMouseEntered(e -> classLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
-                            classLabel.setOnMouseExited(e -> classLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
-                            classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, resource,
-                                    resource.getJvmClassBundle(), classInfo));
-                            consumer.appendSummary(classLabel);
-                        }
-                    }
-
-                } else {
-                    consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.entry-points.none")));
-                }
-            });
+            loaderName = Lang.getBinding("service.analysis.is-forge-mod").get();
+            return true;
         }
-
-        if (!foundAny) {
-            batch.add(() -> consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.no-minecraft-mod-found"))));
-        }
-
-        batch.execute();
-        return foundAny;
+        return false;
     }
 
-    /**
-     * Find a class in the resource by its name.
-     * Converts dot notation to slash notation for lookup.
-     */
-    private JvmClassInfo findClassInResource(WorkspaceResource resource, String className) {
-        String classPath = className.replace('.', '/');
-        return resource.getJvmClassBundle().get(classPath);
+    private boolean detectHighVersionForgeMod(@Nonnull WorkspaceResource resource) {
+        FileInfo forgeFileInfo = resource.getFileBundle().get("META-INF/mods.toml");
+        if (forgeFileInfo != null) {
+            // reference: https://mcforge.readthedocs.io/en/latest/gettingstarted/modfiles/
+
+            return true;
+        }
+        return false;
+    }
+
+    private void renderSummary(@Nonnull Workspace workspace,
+                               @Nonnull WorkspaceResource resource,
+                               @Nonnull SummaryConsumer consumer,
+                               @Nonnull Batch batch) {
+        // Add title
+        batch.add(() -> {
+            Label title = new BoundLabel(Lang.getBinding("service.analysis.minecraft-mod-info"));
+            title.getStyleClass().addAll(Styles.TITLE_4);
+            consumer.appendSummary(title);
+        });
+
+
+        batch.add(() -> {
+            Label title = new Label(loaderName);
+            consumer.appendSummary(title);
+
+            if (!mcVersion.isEmpty()) {
+                consumer.appendSummary(new BoundLabel(Lang.format("service.analysis.minecraft-version", mcVersion)));
+            } else {
+                consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.minecraft-version-unknown")));
+            }
+
+            if (!mainClasses.isEmpty()) {
+                consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.entry-points")));
+                for (String mainClass : mainClasses) {
+                    // Try to find the main class in JVM class bundle
+                    JvmClassInfo classInfo = findClassInResource(resource, mainClass);
+                    if (classInfo != null) {
+                        // Found class, create label with icon
+                        String classDisplay = textService.getJvmClassInfoTextProvider(workspace, resource,
+                                resource.getJvmClassBundle(), classInfo).makeText();
+                        Node classIcon = iconService.getJvmClassInfoIconProvider(workspace, resource,
+                                resource.getJvmClassBundle(), classInfo).makeIcon();
+                        Label classLabel = new Label(classDisplay, classIcon);
+                        classLabel.setCursor(Cursor.HAND);
+                        classLabel.setOnMouseEntered(e -> classLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
+                        classLabel.setOnMouseExited(e -> classLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
+                        classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, resource,
+                                resource.getJvmClassBundle(), classInfo));
+                        consumer.appendSummary(classLabel);
+                    }
+                }
+            } else {
+                consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.entry-points.none")));
+            }
+        });
     }
 }
