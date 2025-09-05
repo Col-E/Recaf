@@ -73,12 +73,27 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
             try {
                 String jsonText = fabricFileInfo.asTextFile().getText();
                 JsonObject json = JsonParser.parseString(jsonText).getAsJsonObject();
+                // reference: https://fabricmc.net/wiki/documentation:fabricmodjson
+                // we need consider 'main', 'client', 'server'
                 if (json.has("entrypoints")) {
                     JsonObject entrypoints = json.getAsJsonObject("entrypoints");
-                    if (entrypoints.has("main")) {
+                    if (entrypoints.has("main") && entrypoints.get("main").isJsonArray()) {
                         JsonArray mainArray = entrypoints.getAsJsonArray("main");
                         for (int i = 0; i < mainArray.size(); i++) {
                             String mainClass = mainArray.get(i).getAsString();
+                            mainClasses.add(mainClass);
+                        }
+                    }
+                    else if (entrypoints.has("client") && entrypoints.get("client").isJsonArray()) {
+                        JsonArray clientArray = entrypoints.getAsJsonArray("client");
+                        for (int i = 0; i < clientArray.size(); i++) {
+                            String mainClass = clientArray.get(i).getAsString();
+                            mainClasses.add(mainClass);
+                        }
+                    } else if (entrypoints.has("server") && entrypoints.get("server").isJsonArray()) {
+                        JsonArray serverArray = entrypoints.getAsJsonArray("server");
+                        for (int i = 0; i < serverArray.size(); i++) {
+                            String mainClass = serverArray.get(i).getAsString();
                             mainClasses.add(mainClass);
                         }
                     }
@@ -87,7 +102,20 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                 if (json.has("depends")) {
                     JsonObject depends = json.getAsJsonObject("depends");
                     if (depends.has("minecraft")) {
-                        mcVersion = depends.get("minecraft").getAsString();
+                        if(!depends.get("minecraft").isJsonArray()){
+                            mcVersion = depends.get("minecraft").getAsString();
+                        } else {
+                            // sometimes the minecraft version is an array
+                            // we connect them with ', '
+                            JsonArray mcArray = depends.getAsJsonArray("minecraft");
+                            if(!mcArray.isEmpty()){
+                                StringBuilder sb = new StringBuilder(mcArray.get(0).getAsString());
+                                for(int i = 1; i < mcArray.size(); i++) {
+                                    sb.append(", ").append(mcArray.get(i).getAsString());
+                                }
+                                mcVersion = sb.toString();
+                            }
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -100,7 +128,7 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                 consumer.appendSummary(title);
 
                 if (!finalMcVersion.isEmpty()) {
-                    consumer.appendSummary(new Label(Lang.getBinding("service.analysis.minecraft-version").get() + " " + finalMcVersion));
+                    consumer.appendSummary(new BoundLabel(Lang.format("service.analysis.minecraft-version", finalMcVersion)));
                 } else {
                     consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.minecraft-version-unknown")));
                 }
@@ -174,7 +202,7 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
                 consumer.appendSummary(title);
 
                 if (!finalMcVersion.isEmpty()) {
-                    consumer.appendSummary(new Label(Lang.getBinding("service.analysis.minecraft-version").get() + " " + finalMcVersion));
+                    consumer.appendSummary(new BoundLabel(Lang.format("service.analysis.minecraft-version", finalMcVersion)));
                 } else {
                     consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.minecraft-version-unknown")));
                 }
