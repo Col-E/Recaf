@@ -4,6 +4,7 @@ import atlantafx.base.theme.Styles;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.moandjiezana.toml.Toml;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -27,6 +28,9 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.jar.Manifest;
 
 /**
@@ -192,7 +196,59 @@ public class MinecraftModSummarizer implements ResourceSummarizer {
     private boolean detectHighVersionForgeMod(@Nonnull WorkspaceResource resource) {
         FileInfo forgeFileInfo = resource.getFileBundle().get("META-INF/mods.toml");
         if (forgeFileInfo != null) {
+            loaderName = Lang.getBinding("service.analysis.is-forge-mod").get();
+
             // reference: https://mcforge.readthedocs.io/en/latest/gettingstarted/modfiles/
+            // 1. find modId in the [[mods]] section
+            String modId = "";
+            Toml toml = new Toml();
+            try {
+                toml.read(forgeFileInfo.asTextFile().getText());
+                List<Object> mods = toml.getList("mods");
+                if (mods != null && !mods.isEmpty()) {
+                    Object firstMod = mods.getFirst();
+                    if (firstMod instanceof Map<?, ?> map) {
+                        if (map.containsKey("modId")) {
+                            modId = map.get("modId").toString();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // Ignore TOML parsing errors
+            }
+
+            // 2. find versionRange in the [[dependencies.<modId>]] section and the modId of this must is "minecraft"
+            if (!modId.isEmpty()) {
+                try {
+                    List<Object> dependencies = toml.getList("dependencies." + modId);
+                    if (dependencies != null && !dependencies.isEmpty()) {
+                        for (Object dep : dependencies) {
+                            if (dep instanceof Map<?, ?> map) {
+                                if (map.containsKey("modId") && map.get("modId").toString().equals("minecraft")) {
+                                    if (map.containsKey("versionRange")) {
+                                        mcVersion = map.get("versionRange").toString();
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    // Ignore TOML parsing errors
+                }
+            }
+
+            // we can not find main class in mods.toml, so we scan all class files for @Mod annotation
+            resource.jvmClassBundleStream().forEach(bundle -> {
+                bundle.forEach(cls -> {
+                    Supplier<JvmClassInfo> classLookup = () -> Objects.requireNonNullElse(bundle.get(cls.getName()), cls);
+                    classLookup.get().getAnnotations().forEach(annotationInfo -> {
+                        if (annotationInfo.getDescriptor().equals("Lnet/minecraftforge/fml/common/Mod;")) {
+                            mainClasses.add(cls.getName());
+                        }
+                    });
+                });
+            });
 
             return true;
         }
