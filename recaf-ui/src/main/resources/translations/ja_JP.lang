@@ -349,7 +349,7 @@ modifications.title=変更の一覧
 
 ## Java area
 java.decompiling=クラスを逆コンパイルしています…
-java.unparsable=OpenRewrite はソース・コードの解釈に失敗しました。コンテキスト・アクションは「フィールドとメソッド」細部タブでのみ確認できます。
+java.unparsable=SourceSolver はソース・コードの解釈に失敗しました。コンテキスト・アクションは「フィールドとメソッド」細部タブでのみ確認できます。
 java.parse-state.error=解析エラー
 java.parse-state.error-details=解析に失敗したため，右クリックのコンテキスト・アクションは使用できません。\n代わりに「フィールドとメソッド」細部タブを確認できます。
 java.parse-state.initial=解析しています…

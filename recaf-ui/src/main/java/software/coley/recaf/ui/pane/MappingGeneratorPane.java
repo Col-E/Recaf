@@ -903,6 +903,12 @@ public class MappingGeneratorPane extends StackPane {
 		private final BooleanProperty methods = new SimpleBooleanProperty(true);
 		private final BooleanProperty variables = new SimpleBooleanProperty(true);
 
+		public IncludeLongName() {}
+
+		public IncludeLongName(int maxLength) {
+			length.set(maxLength);
+		}
+
 		@Nonnull
 		@Override
 		public ObservableValue<String> display() {

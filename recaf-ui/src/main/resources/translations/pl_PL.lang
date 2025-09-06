@@ -320,7 +320,7 @@ modifications.title=Modyfikacje
 
 ## Obszar Javy
 java.decompiling=Dekompilowanie klasy...
-java.unparsable=OpenRewrite nie zinterpretował źródła, akcje kontekstowe dostępne tylko na karcie bocznej "Pola i metody"
+java.unparsable=SourceSolver nie zinterpretował źródła, akcje kontekstowe dostępne tylko na karcie bocznej "Pola i metody"
 java.parse-state.error=Błąd parsowania
 java.parse-state.error-details=Akcje kontekstowe (prawy przycisk myszy) nie są dostępne, ponieważ parsowanie nie powiodło się.\nMożesz w międzyczasie użyć karty bocznej "Pola i metody".
 java.parse-state.initial=Trwa parsowanie...

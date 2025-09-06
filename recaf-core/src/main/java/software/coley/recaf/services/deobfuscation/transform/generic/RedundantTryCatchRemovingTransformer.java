@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.MultiANewArrayInsnNode;
@@ -16,7 +17,6 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.services.assembler.ExpressionCompileException;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
@@ -43,10 +43,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -93,12 +96,67 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 			if (method.instructions == null || method.tryCatchBlocks == null || method.tryCatchBlocks.isEmpty())
 				continue;
 
-			dirty |= pass0PruneNeverThrown(context, workspace, node, method);
-			dirty |= pass1PruneNeverThrowingOrDuplicate(context, node, method);
-			dirty |= pass2ConvertOpaqueThrowToDirectFlow();
+			dirty |= pass0PruneIgnoredHandlers(context, node, method);
+			dirty |= pass1PruneNeverThrown(context, workspace, node, method);
+			dirty |= pass2PruneNeverThrowingOrDuplicate(context, node, method);
 		}
 		if (dirty)
 			context.setNode(bundle, initialClassState, node);
+	}
+
+	/**
+	 * Remove try-catch blocks that cannot possibly be utilized at runtime.
+	 *
+	 * @param context
+	 * 		Transformer context.
+	 * @param node
+	 * 		Defining class.
+	 * @param method
+	 * 		Method to transform.
+	 *
+	 * @return {@code true} when one or more try-catch blocks have been removed.
+	 *
+	 * @throws TransformationException
+	 * 		Thrown when dead code after transformation could not be pruned.
+	 */
+	private boolean pass0PruneIgnoredHandlers(@Nonnull JvmTransformerContext context, @Nonnull ClassNode node, @Nonnull MethodNode method) throws TransformationException {
+		// Given the following {start, end, handler, ex-type} blocks:
+		//  { R, S, Q, * },
+		//  { R, S, C, * },
+		//  { R, S, S, Ljava/lang/ArrayIndexOutOfBoundsException; }
+		// Only the first is going to be used.
+		//  - It appears first, so it will be checked first by the JVM
+		//  - Its range covers all possible instructions of the other two try blocks
+		//  - Its handled type is more generic ("*" is catch-all)
+		// See: https://github.com/openjdk/jdk21u/blob/master/src/hotspot/share/oops/method.cpp#L227
+		//
+		// Process:
+		//  1. Collect try-catch handlers keyed by their range
+		//  2. Prune handlers of narrower types in the collection
+		//  3. Retain only remaining handlers in the collection
+		List<TryCatchBlockNode> blocks = new ArrayList<>(method.tryCatchBlocks);
+		Map<ThrowingRange, Handlers> handlersMap = new HashMap<>();
+		for (TryCatchBlockNode block : blocks) {
+			int start = AsmInsnUtil.indexOf(block.start);
+			int end = AsmInsnUtil.indexOf(block.end);
+			if (start < end) {
+				ThrowingRange range = new ThrowingRange(start, end);
+				handlersMap.computeIfAbsent(range, r -> new Handlers()).addBlock(block);
+			}
+		}
+		for (Handlers handlers : handlersMap.values())
+			handlers.prune(inheritanceGraph);
+		Set<TryCatchBlockNode> allHandlers = handlersMap.values()
+				.stream()
+				.flatMap(handlers -> handlers.blocks.stream())
+				.collect(Collectors.toSet());
+		if (method.tryCatchBlocks.retainAll(allHandlers)) {
+			// Removing handlers can mean blocks starting with an expected 'Throwable' on the stack are now invalid.
+			// These should be dead code though, so if we prune code that isn't visitable these should go away.
+			context.pruneDeadCode(node, method);
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -117,9 +175,10 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 	 * @return {@code true} when one or more try-catch blocks have been removed.
 	 *
 	 * @throws TransformationException
-	 * 		Thrown when the {@link ExpressionCompileException} cannot be found in the transformer context.
+	 * 		Thrown when the {@link ExceptionCollectionTransformer} cannot be found in the transformer context,
+	 * 		or when dead code couldn't be pruned.
 	 */
-	private boolean pass0PruneNeverThrown(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace, @Nonnull ClassNode node, @Nonnull MethodNode method) throws TransformationException {
+	private boolean pass1PruneNeverThrown(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace, @Nonnull ClassNode node, @Nonnull MethodNode method) throws TransformationException {
 		ExceptionCollectionTransformer exceptions = context.getJvmTransformer(ExceptionCollectionTransformer.class);
 
 		// Collect which blocks are candidates for removal.
@@ -228,7 +287,7 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 	 * @throws TransformationException
 	 * 		Thrown when code cannot be analyzed <i>(Needed for certain checks)</i>.
 	 */
-	private boolean pass1PruneNeverThrowingOrDuplicate(@Nonnull JvmTransformerContext context, @Nonnull ClassNode node, @Nonnull MethodNode method) throws TransformationException {
+	private boolean pass2PruneNeverThrowingOrDuplicate(@Nonnull JvmTransformerContext context, @Nonnull ClassNode node, @Nonnull MethodNode method) throws TransformationException {
 		InsnList instructions = method.instructions;
 		List<TryCatchBlockNode> tryCatchBlocks = method.tryCatchBlocks;
 		Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
@@ -260,6 +319,7 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 						case FALOAD:
 						case LALOAD:
 						case SALOAD:
+						case BALOAD:
 						case AALOAD: {
 							ReValue indexValue = frame.getStack(frame.getStackSize() - 1);
 							ReValue arrayValue = frame.getStack(frame.getStackSize() - 2);
@@ -298,6 +358,7 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 						}
 						case IASTORE:
 						case DASTORE:
+						case BASTORE:
 						case FASTORE:
 						case LASTORE:
 						case SASTORE:
@@ -633,7 +694,10 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 		return false;
 	}
 
-	private boolean pass2ConvertOpaqueThrowToDirectFlow() {
+	private boolean pass3ConvertOpaqueThrowToDirectFlow(@Nonnull JvmTransformerContext context, @Nonnull ClassNode node, @Nonnull MethodNode method) {
+		// TODO: Rather than make this a separate pass, I think we can work the intended behavior outlined here into the prior pass
+		if (true) return false;
+
 		// TODO: Look for try blocks that end in 'throw T' with a 'catch T' handler
 		//  - Must always take the path
 		//  - Not always direct, can be '1 / 0' with a 'catch MathError' handler
@@ -642,6 +706,30 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 		//     - Worst case, it relies on stack info from the thrown exception
 		//       (we can keep the 'new T' or replace the throwing '1 / 0' with 'new T')
 		//  - If found, replace the throwing code with a 'goto handler'
+		InsnList instructions = method.instructions;
+		for (TryCatchBlockNode tryCatch : new ArrayList<>(method.tryCatchBlocks)) {
+			int start = instructions.indexOf(tryCatch.start);
+			int end = instructions.indexOf(tryCatch.end);
+
+			// TODO: Validate that the block WILL flow into a 'throw' case
+			//  - Same code as prior pass?
+			boolean willThrow = true;
+			Set<AbstractInsnNode> throwingInstructions = Collections.newSetFromMap(new IdentityHashMap<>());
+			for (int i = start; i < end; i++) {
+				// TODO: Mark willThow false if control flow leads to path where no-100% throwing behavior is observed
+			}
+
+			// If the try range of the block WILL throw, we can replace the offending instructions with jumps to the handler block
+			if (willThrow && !throwingInstructions.isEmpty()) {
+				for (AbstractInsnNode thrower : throwingInstructions) {
+					// TODO: If exception is not already on stack top, replace with junk exception (null is not a good replacement)
+					instructions.insertBefore(thrower, new InsnNode(ACONST_NULL));
+					instructions.insertBefore(thrower, new JumpInsnNode(GOTO, tryCatch.handler));
+				}
+				method.tryCatchBlocks.remove(tryCatch);
+			}
+		}
+
 		return false;
 	}
 
@@ -738,6 +826,16 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 	private record Block(@Nullable String type, int start, int end, int handler) {}
 
 	/**
+	 * Range of some code.
+	 *
+	 * @param start
+	 * 		Start label.
+	 * @param end
+	 * 		End label.
+	 */
+	private record Range(@Nonnull LabelNode start, @Nonnull LabelNode end) {}
+
+	/**
 	 * Range of instructions that can possibly throw exceptions.
 	 *
 	 * @param first
@@ -749,6 +847,52 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 		@Nonnull
 		public ThrowingRange merge(@Nonnull ThrowingRange other) {
 			return new ThrowingRange(Math.min(first, other.first), Math.max(last, other.last));
+		}
+	}
+
+	/**
+	 * Collection of try catch blocks.
+	 *
+	 * @param blocks
+	 * 		Wrapped list of blocks.
+	 * @param seenTypes
+	 * 		Observed types handled by the blocks.
+	 */
+	private record Handlers(@Nonnull List<TryCatchBlockNode> blocks, @Nonnull Set<String> seenTypes) {
+		private Handlers() {
+			this(new ArrayList<>(), new HashSet<>());
+		}
+
+		/**
+		 * @param block
+		 * 		Block to add.
+		 */
+		public void addBlock(@Nonnull TryCatchBlockNode block) {
+			blocks.add(block);
+		}
+
+		/**
+		 * Remove entries from {@link #blocks} that are redundant.
+		 *
+		 * @param graph
+		 * 		Inheritance graph for classes in the workspace.
+		 */
+		public void prune(@Nonnull InheritanceGraph graph) {
+			Iterator<TryCatchBlockNode> it = blocks.iterator();
+			while (it.hasNext()) {
+				TryCatchBlockNode block = it.next();
+				String handledType = Objects.requireNonNullElse(block.type, "java/lang/Object");
+				inner:
+				{
+					for (String seenType : seenTypes) {
+						if (graph.isAssignableFrom(seenType, handledType)) {
+							it.remove();
+							break inner;
+						}
+					}
+					seenTypes.add(handledType);
+				}
+			}
 		}
 	}
 }

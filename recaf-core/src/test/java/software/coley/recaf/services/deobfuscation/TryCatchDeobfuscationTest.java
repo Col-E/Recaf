@@ -1,5 +1,6 @@
 package software.coley.recaf.services.deobfuscation;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCatchMergingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
@@ -84,6 +85,75 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 			assertEquals(0, StringUtil.count("exceptions:", dis), "Should have removed exception ranges");
 			assertEquals(0, StringUtil.count("printStackTrace", dis), "Should have removed catch block contents");
 			assertEquals(0, StringUtil.count("astore", dis), "Should have removed catch block contents");
+		});
+	}
+
+	@Test
+	void removeCatchBlocksNotUsableAtRuntime() {
+		// The JVM will use the first of "duplicate" blocks like this.
+		// More details about this behavior can be found in the redundant catch removing transformer.
+		String asm = """
+				.method public static example (I[B)V {
+					parameters: { index, array },
+					exceptions: {
+				        { A, B, C, * },
+				        { A, B, D, * },
+				        { A, B, C, Ljava/lang/ArrayIndexOutOfBoundsException; }
+				    },
+				    code: {
+				    A:
+				        aload array
+				        iload index
+				        baload
+				        pop
+				    B:
+				        goto END
+				    C:
+				        pop
+				        goto END
+				    D:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("{ A, B, C, * }", dis), "Expected to keep first try-catch");
+			assertEquals(0, StringUtil.count("{ A, B, D, * }", dis), "Expected to drop second try-catch");
+			assertEquals(0, StringUtil.count("ArrayIndexOutOfBoundsException", dis), "Expected to drop third try-catch");
+			assertEquals(0, StringUtil.count("printStackTrace", dis), "Expected to prune dead code of removed D handler");
+		});
+	}
+
+	@Test
+	@Disabled
+	void convertAlwaysThrowIntoDirectControlFlow() {
+		// TODO: Implement redundant transformer pass for this
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/Exception; }
+				    },
+				    code: {
+				    A:
+				        aconst_null
+				        athrow
+				    B:
+				        invokestatic Foo.skipped ()V
+				        goto END
+				    C:
+				        invokestatic Foo.prepop ()V
+				        pop
+				        invokestatic Foo.postpop ()V
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+
 		});
 	}
 

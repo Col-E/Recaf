@@ -1397,6 +1397,38 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 			assertEquals(0, StringUtil.count("ldc", dis), "Expected to fold original string");
 			assertEquals(0, StringUtil.count("invoke", dis), "Expected to fold method call");
 		});
+
+		// Found in a random sample, the control flow was resulting in the code under label 'C' being revisited.
+		// The merge code in our analysis for strings was wrong, which prevented this from being combined.
+		// This test ensures that bad frame merge is no longer an issue.
+		asm = """
+				.method public static example ([B)Ljava/lang/String; {
+					parameters: { data },
+				    code: {
+				    A:
+				        iconst_0
+				        istore counter
+				    B:
+				        iload counter
+				        aload data
+				        arraylength
+				        if_icmpge C
+				        iinc counter 1
+				        goto B
+				    C:
+				        ldc "UTF-"
+				        ldc "8"
+				        invokevirtual java/lang/String.concat (Ljava/lang/String;)Ljava/lang/String;
+				    D:
+				        areturn
+				    E:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("ldc \"UTF-8\"", dis), "Expected to fold to single string");
+			assertEquals(0, StringUtil.count("invoke", dis), "Expected to remove method calls");
+		});
 	}
 
 	@Test

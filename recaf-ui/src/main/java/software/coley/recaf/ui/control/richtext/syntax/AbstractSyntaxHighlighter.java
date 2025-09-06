@@ -82,7 +82,7 @@ public abstract class AbstractSyntaxHighlighter implements SyntaxHighlighter {
 			// If this line has more spans than allowed, do not yield the results, as that would cause UI slowdowns.
 			if (spanCount > maxSpansPerLineLocal) {
 				logger.warn("Skipping syntax computation, input of {} spans on line {}, max-per-line is {}", spanCount, currentLine + 1, maxSpans);
-				return StyleSpans.singleton(Collections.emptyList(), start - end);
+				return StyleSpans.singleton(Collections.emptyList(), end - start);
 			}
 
 			// Move current offset forward by the size of the span.

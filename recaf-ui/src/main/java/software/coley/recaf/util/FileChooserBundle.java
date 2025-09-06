@@ -113,7 +113,7 @@ public class FileChooserBundle {
 	 */
 	@Nullable
 	public File showFileExport(@Nullable Window window) {
-		File file = fileExport.showOpenDialog(window);
+		File file = fileExport.showSaveDialog(window);
 		if (file != null)
 			fileExport.setInitialDirectory(file.getParentFile());
 		if (fileExportListener != null)

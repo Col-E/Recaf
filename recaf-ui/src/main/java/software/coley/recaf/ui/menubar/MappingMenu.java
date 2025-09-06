@@ -82,7 +82,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 				formatToExportAsItems.put(tmpFormat, mappingItems.exportAsItem());
 			} else {
 				MenuItem item = new MenuItem();
-				item.textProperty().bind(Lang.formatLiterals("menu.mappings.export.unsupported", formatName));
+				item.textProperty().bind(Lang.format("menu.mappings.export.unsupported", formatName));
 				item.setGraphic(new FontIconView(CarbonIcons.CLOSE));
 				item.setDisable(true);
 				export.getItems().add(item);

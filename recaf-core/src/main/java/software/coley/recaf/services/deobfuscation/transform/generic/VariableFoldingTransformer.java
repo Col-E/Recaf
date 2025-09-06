@@ -242,7 +242,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 					// - They value is known at all points of variable use
 					// - They value is read from, but only by other iinc operations
 					LocalAccessState state = states.get(key(iinc.var, Type.INT));
-					if (state != null && state.isEffectiveConstant() || state.getReads().stream().noneMatch(r -> r.instruction.getOpcode() != IINC)) {
+					if (state != null && (state.isEffectiveConstant() || state.getReads().stream().noneMatch(r -> r.instruction.getOpcode() != IINC))) {
 						instructions.set(iinc, new InsnNode(NOP));
 						dirty = true;
 					}
