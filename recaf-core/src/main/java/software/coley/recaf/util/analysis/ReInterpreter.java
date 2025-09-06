@@ -60,6 +60,26 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		this.inheritanceGraph = inheritanceGraph;
 	}
 
+	@Nullable
+	public GetStaticLookup getGetStaticLookup() {
+		return getStaticLookup;
+	}
+
+	@Nullable
+	public GetFieldLookup getGetFieldLookup() {
+		return getFieldLookup;
+	}
+
+	@Nullable
+	public InvokeStaticLookup getInvokeStaticLookup() {
+		return invokeStaticLookup;
+	}
+
+	@Nullable
+	public InvokeVirtualLookup getInvokeVirtualLookup() {
+		return invokeVirtualLookup;
+	}
+
 	public void setGetStaticLookup(@Nullable GetStaticLookup getStaticLookup) {
 		this.getStaticLookup = getStaticLookup;
 	}
