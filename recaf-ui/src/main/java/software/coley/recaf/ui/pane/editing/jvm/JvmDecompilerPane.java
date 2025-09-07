@@ -57,9 +57,11 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -230,11 +232,36 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 					}
 				} while (recurseAddInners);
 
-				// Ensure all names in the compilation exist in the previous inner classes info
-				if (!realInners.isEmpty() && compilations.keySet().stream().anyMatch(name -> !name.equals(infoName) && !realInners.containsKey(name))) {
-					logger.warn("Please only rename inner classes via mapping operations.");
-					Animations.animateWarn(this, 1000);
-					return;
+				// Abort if we cannot ensure this compilation includes renaming of inner classes.
+				Set<String> notInCompilation;
+				Set<String> notInExisting;
+				if (!realInners.isEmpty()) {
+					// Collect inner class names from the compilation.
+					Set<String> compiledInnerNames = new HashSet<>(compilations.keySet());
+					compiledInnerNames.remove(infoName);
+
+					// Collect names that do not exist in the before/after states.
+					notInCompilation = new HashSet<>();
+					notInExisting = new HashSet<>();
+					for (String existingInner : realInners.keySet())
+						if (!compiledInnerNames.remove(existingInner))
+							notInCompilation.add(existingInner);
+					for (String compiledInnerName : compiledInnerNames)
+						if (!realInners.containsKey(compiledInnerName))
+							notInExisting.add(compiledInnerName);
+
+					// If we see names in both collections (that are not anonymous inner classes)
+					// we cannot safely know if this is a result of renaming or not.
+					// But if we see only insertions or only removals that is totally fine.
+					if (notInCompilation.stream().anyMatch(JvmDecompilerPane::isNotAnonymousInnerClass) &&
+							notInExisting.stream().anyMatch(JvmDecompilerPane::isNotAnonymousInnerClass)) {
+						logger.warn("Please only rename inner classes via mapping operations.");
+						Animations.animateWarn(this, 1000);
+						return;
+					}
+				} else {
+					notInCompilation = Collections.emptySet();
+					notInExisting = Collections.emptySet();
 				}
 
 				// Compilation map has contents, update the workspace.
@@ -247,6 +274,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 						newInfo = info.toJvmClassBuilder()
 								.adaptFrom(bytecode)
 								.build();
+						path = Objects.requireNonNull(path.getParent(), "Class missing parent in path").child(newInfo);
 					} else {
 						// Handle inner classes.
 						JvmClassInfo originalClass = bundle.get(name);
@@ -272,6 +300,8 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 					// Update the class in the bundle.
 					bundle.put(newInfo);
 				});
+				for (String removedClass : notInCompilation)
+					bundle.remove(removedClass);
 				updateLock.set(false);
 			} else {
 				// Handle compile-result failure, or uncaught thrown exception.
@@ -353,6 +383,29 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 			config.getAcknowledgedSaveWithErrors().setValue(true);
 			overlayModal.hide();
 		});
+	}
+
+	/**
+	 * @param name
+	 * 		Internal class name.
+	 *
+	 * @return {@code true} when it appears to not be a top-level anonymous inner class.
+	 */
+	private static boolean isNotAnonymousInnerClass(@Nonnull String name) {
+		return !isAnonymousInnerClass(name);
+	}
+
+	/**
+	 * @param name
+	 * 		Internal class name.
+	 *
+	 * @return {@code true} when it appears to be a top-level anonymous inner class.
+	 */
+	private static boolean isAnonymousInnerClass(@Nonnull String name) {
+		// We should only see numeric names in anonymous inner classes coming from javac
+		// so the first inner split's next character should be a good enough check.
+		int firstInnerSplit = name.indexOf('$');
+		return firstInnerSplit > 0 && firstInnerSplit + 1 < name.length() && Character.isDigit(name.charAt(firstInnerSplit + 1));
 	}
 
 	/**
