@@ -26,7 +26,7 @@ public class BasicGetStaticLookup implements GetStaticLookup {
 	@Nonnull
 	@Override
 	public ReValue get(@Nonnull FieldInsnNode field) {
-		String key = field.owner + "." + field.name;
+		String key = getKey(field);
 		ReValue value = CONST_FIELDS.get(key);
 		if (value == null) {
 			try {
@@ -36,6 +36,16 @@ public class BasicGetStaticLookup implements GetStaticLookup {
 			}
 		}
 		return Objects.requireNonNull(value);
+	}
+
+	@Override
+	public boolean hasLookup(@Nonnull FieldInsnNode field) {
+		return CONST_FIELDS.containsKey(getKey(field));
+	}
+
+	@Nonnull
+	private static String getKey(@Nonnull FieldInsnNode field) {
+		return field.owner + "." + field.name;
 	}
 
 	static {

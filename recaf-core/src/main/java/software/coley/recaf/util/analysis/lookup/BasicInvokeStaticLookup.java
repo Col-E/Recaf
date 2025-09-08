@@ -37,7 +37,7 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 	@Nonnull
 	@Override
 	public ReValue get(@Nonnull MethodInsnNode method, @Nonnull List<? extends ReValue> values) {
-		String key = method.owner + "." + method.name + method.desc;
+		String key = getKey(method);
 		Func func = METHODS.get(key);
 		ReValue value = null;
 		if (func != null)
@@ -56,6 +56,16 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 			}
 		}
 		return Objects.requireNonNull(value);
+	}
+
+	@Override
+	public boolean hasLookup(@Nonnull MethodInsnNode method) {
+		return METHODS.containsKey(getKey(method));
+	}
+
+	@Nonnull
+	private static String getKey(@Nonnull MethodInsnNode method) {
+		return method.owner + "." + method.name + method.desc;
 	}
 
 	static {

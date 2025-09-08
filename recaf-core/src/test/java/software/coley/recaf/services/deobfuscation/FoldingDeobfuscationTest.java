@@ -1,6 +1,7 @@
 package software.coley.recaf.services.deobfuscation;
 
 import org.junit.jupiter.api.Test;
+import software.coley.recaf.services.deobfuscation.transform.generic.CallInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
@@ -1521,6 +1522,69 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				}
 				""";
 		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "", "");
+	}
+
+	@Test
+	void foldStaticCallToXorString() {
+		String asm = """
+				.super java/lang/Object
+				.class Example {
+					.method static example ()V {
+					    code: {
+					    A:
+					        getstatic java/lang/System.out Ljava/io/PrintStream;
+					        ldc "㘯㘂㘋㘋㘈㙇㘐㘈㘕㘋㘃"
+					        ldc 0b11011001100111
+					        invokestatic Example.decrypt (Ljava/lang/String;I)Ljava/lang/String;
+					        invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
+					    B:
+					        return
+					    C:
+					    }
+					}
+					.method static decrypt (Ljava/lang/String;I)Ljava/lang/String; {
+					    parameters: { input, xor },
+					    code: {
+					    A:
+					        aload input
+					        invokevirtual java/lang/String.length ()I
+					        istore length
+					    B:
+					        iload length
+					        newarray char
+					        astore chars
+					    C:
+					        iconst_0
+					        istore i
+					    D:
+					        iload i
+					        iload length
+					        if_icmpge G
+					    E:
+					        aload chars
+					        iload i
+					        aload input
+					        iload i
+					        invokevirtual java/lang/String.charAt (I)C
+					        iload xor
+					        ixor
+					        i2c
+					        castore
+					    F:
+					        iinc i 1
+					        goto D
+					    G:
+					        aload chars
+					        invokestatic java/lang/String.valueOf ([C)Ljava/lang/String;
+					        areturn
+					    H:
+					    }
+					}
+				}
+				""";
+		validateBeforeAfterDecompile(asm, List.of(CallInliningTransformer.class),
+				"System.out.println(Example.decrypt(\"\\u362f\\u3602\\u360b\\u360b\\u3608\\u3647\\u3610\\u3608\\u3615\\u360b\\u3603\", 13927));",
+				"System.out.println(\"Hello world\");");
 	}
 
 	@Test

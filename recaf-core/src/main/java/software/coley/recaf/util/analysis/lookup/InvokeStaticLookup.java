@@ -23,4 +23,12 @@ public interface InvokeStaticLookup {
 	 */
 	@Nonnull
 	ReValue get(@Nonnull MethodInsnNode method, @Nonnull List<? extends ReValue> values);
+
+	/**
+	 * @param method
+	 * 		Method reference.
+	 *
+	 * @return {@code true} when this lookup can provide a value via {@link #get(MethodInsnNode, List)}.
+	 */
+	boolean hasLookup(@Nonnull MethodInsnNode method);
 }

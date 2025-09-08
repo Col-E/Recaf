@@ -26,4 +26,12 @@ public interface InvokeVirtualLookup {
 	 */
 	@Nonnull
 	ReValue get(@Nonnull MethodInsnNode method, @Nonnull ReValue context, @Nonnull List<? extends ReValue> values);
+
+	/**
+	 * @param method
+	 * 		Method reference.
+	 *
+	 * @return {@code true} when this lookup can provide a value via {@link #get(MethodInsnNode, ReValue, List)}.
+	 */
+	boolean hasLookup(@Nonnull MethodInsnNode method);
 }

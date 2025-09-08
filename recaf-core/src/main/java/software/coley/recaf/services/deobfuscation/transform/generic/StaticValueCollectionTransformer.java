@@ -93,6 +93,11 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Ge
 	}
 
 	@Override
+	public boolean hasLookup(@Nonnull FieldInsnNode field) {
+		return getStaticValue(field.owner, field.name, field.desc) != null;
+	}
+
+	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
 	}

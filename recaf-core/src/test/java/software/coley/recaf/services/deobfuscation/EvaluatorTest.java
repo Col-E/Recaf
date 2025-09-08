@@ -1,6 +1,7 @@
 package software.coley.recaf.services.deobfuscation;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
@@ -8,6 +9,7 @@ import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.analysis.ReEvaluationException;
 import software.coley.recaf.util.analysis.ReEvaluator;
+import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -58,7 +60,7 @@ public class EvaluatorTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		ReValue retVal = evaluate(src, "decrypt", "(I)Ljava/lang/String;",
+		ReValue retVal = evaluate(src, "decrypt", "(I)Ljava/lang/String;", null,
 				List.of(IntValue.of(26)));
 		if (retVal instanceof StringValue str)
 			assertEquals("abcdefghijklmnopqrstuvwxyz", str.getText().orElse(null));
@@ -108,7 +110,7 @@ public class EvaluatorTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		ReValue retVal = evaluate(src, "decrypt", "(Ljava/lang/String;I)Ljava/lang/String;",
+		ReValue retVal = evaluate(src, "decrypt", "(Ljava/lang/String;I)Ljava/lang/String;", null,
 				List.of(ObjectValue.string("㘯㘂㘋㘋㘈㙇㘐㘈㘕㘋㘃"), IntValue.of(0b11011001100111)));
 		if (retVal instanceof StringValue str)
 			assertEquals("Hello world", str.getText().orElse(null));
@@ -117,10 +119,12 @@ public class EvaluatorTest extends BaseDeobfuscationTest {
 	}
 
 	@Nonnull
-	private ReValue evaluate(@Nonnull String src, @Nonnull String name, @Nonnull String desc, @Nonnull List<ReValue> parameters) throws ReEvaluationException {
+	private ReValue evaluate(@Nonnull String src, @Nonnull String name, @Nonnull String desc,
+	                         @Nullable ReValue classInstance, @Nonnull List<ReValue> parameters) throws ReEvaluationException {
 		JvmClassInfo assembled = assemble(src, false);
 		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(assembled));
 		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
-		return ReEvaluator.evaluate(workspace, ctx.newInterpreter(new InheritanceGraph(workspace)), CLASS_NAME, name, desc, parameters);
+		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
+		return new ReEvaluator(workspace, interpreter, 1000).evaluate(CLASS_NAME, name, desc, classInstance, parameters);
 	}
 }

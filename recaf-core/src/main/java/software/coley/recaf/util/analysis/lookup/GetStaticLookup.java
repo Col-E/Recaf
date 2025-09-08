@@ -18,4 +18,12 @@ public interface GetStaticLookup {
 	 */
 	@Nonnull
 	ReValue get(@Nonnull FieldInsnNode field);
+
+	/**
+	 * @param field
+	 * 		Field reference.
+	 *
+	 * @return {@code true} when this lookup can provide a value via {@link #get(FieldInsnNode)}.
+	 */
+	boolean hasLookup(@Nonnull FieldInsnNode field);
 }

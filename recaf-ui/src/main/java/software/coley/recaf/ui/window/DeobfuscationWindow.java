@@ -44,6 +44,7 @@ import software.coley.recaf.services.assembler.AssemblerPipelineManager;
 import software.coley.recaf.services.assembler.JvmAssemblerPipeline;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.decompile.DecompilerManager;
+import software.coley.recaf.services.deobfuscation.transform.generic.CallInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.CycleClassRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateAnnotationRemovingTransformer;
@@ -159,6 +160,7 @@ public class DeobfuscationWindow extends RecafStage {
 			));
 			TreeItem<Selection> optimize = new TreeItem<>(new Selection.Category("deobf.tree.generic.optimize", CarbonIcons.CLEAN));
 			optimize.getChildren().addAll(of(
+					CallInliningTransformer.class,
 					DeadCodeRemovingTransformer.class,
 					DuplicateCatchMergingTransformer.class,
 					GotoInliningTransformer.class,

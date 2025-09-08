@@ -583,7 +583,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	 */
 	@Nullable
 	@SuppressWarnings("OptionalGetWithoutIsPresent")
-	private static AbstractInsnNode toInsn(@Nonnull ReValue value) {
+	public static AbstractInsnNode toInsn(@Nonnull ReValue value) {
 		// Skip if value is not known.
 		if (!value.hasKnownValue())
 			return null;

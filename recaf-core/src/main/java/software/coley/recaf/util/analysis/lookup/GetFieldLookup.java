@@ -21,4 +21,12 @@ public interface GetFieldLookup {
 	 */
 	@Nonnull
 	ReValue get(@Nonnull FieldInsnNode field, @Nonnull ReValue context);
+
+	/**
+	 * @param field
+	 * 		Field reference.
+	 *
+	 * @return {@code true} when this lookup can provide a value via {@link #get(FieldInsnNode, ReValue)}.
+	 */
+	boolean hasLookup(@Nonnull FieldInsnNode field);
 }

@@ -1,25 +1,38 @@
 package software.coley.recaf.util.analysis;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ConstantDynamic;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Interpreter;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.BlwUtil;
+import software.coley.recaf.util.analysis.lookup.GetFieldLookup;
+import software.coley.recaf.util.analysis.lookup.GetStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.visitors.MemberFilteringVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.List;
@@ -32,19 +45,83 @@ import java.util.function.Predicate;
  * @author Matt Coley
  */
 public class ReEvaluator {
-	private static final int MAX_ITERATIONS = 10_000;
+	private final Workspace workspace;
+	private final ReInterpreter interpreter;
+	private final int maxSteps;
 
 	/**
 	 * @param workspace
 	 * 		Workspace to pull classes from.
 	 * @param interpreter
 	 * 		Interpreter to evaluate instructions with.
+	 * @param maxSteps
+	 * 		Maximum number of steps to allow when evaluating a method.
+	 */
+	public ReEvaluator(@Nonnull Workspace workspace, @Nonnull ReInterpreter interpreter, int maxSteps) {
+		this.workspace = workspace;
+		this.interpreter = interpreter;
+		this.maxSteps = maxSteps;
+	}
+
+	/**
 	 * @param className
 	 * 		Name of class defining the target method.
 	 * @param methodName
 	 * 		Name of the target method.
 	 * @param methodDescriptor
 	 * 		Descriptor of the target method.
+	 *
+	 * @return {@code true} when all instructions in the method can be evaluated.
+	 */
+	public boolean canEvaluate(@Nonnull String className,
+	                           @Nonnull String methodName,
+	                           @Nonnull String methodDescriptor) {
+		// Find class in workspace.
+		ClassPathNode classPath = workspace.findClass(className);
+		if (classPath == null)
+			return false;
+
+		// Ensure method exists in class.
+		JvmClassInfo jvmClass = classPath.getValue().asJvmClass();
+		MethodMember method = jvmClass.getDeclaredMethod(methodName, methodDescriptor);
+		if (method == null)
+			return false;
+
+		// Extract method-node model and delegate to evaluate check.
+		ClassNode node = new ClassNode();
+		jvmClass.getClassReader().accept(new MemberFilteringVisitor(node, method), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+		return node.methods.size() == 1 && canEvaluate(node.methods.getFirst());
+	}
+
+	/**
+	 * @param method
+	 * 		Method to check for evaluation support.
+	 *
+	 * @return {@code true} when all instructions in the method can be evaluated.
+	 */
+	public boolean canEvaluate(@Nonnull MethodNode method) {
+		// Cannot be abstract / have no instructions.
+		if (method.instructions == null)
+			return false;
+
+		// Must not have any unsupported instructions
+		ExecutingFrame frame = new ExecutingFrame(method);
+		for (AbstractInsnNode instruction : method.instructions)
+			if (!frame.canEvaluate(instruction, interpreter))
+				return false;
+		return true;
+	}
+
+	/**
+	 * @param className
+	 * 		Name of class defining the target method.
+	 * @param methodName
+	 * 		Name of the target method.
+	 * @param methodDescriptor
+	 * 		Descriptor of the target method.
+	 * @param classInstance
+	 * 		Instance of {@code this} for instance methods.
+	 * 		Can be {@code null} for {@code static} methods.
 	 * @param parameters
 	 * 		Parameters to pass to the target method.
 	 *
@@ -54,12 +131,11 @@ public class ReEvaluator {
 	 * 		When the target method could not be evaluated.
 	 */
 	@Nonnull
-	public static ReValue evaluate(@Nonnull Workspace workspace,
-	                               @Nonnull ReInterpreter interpreter,
-	                               @Nonnull String className,
-	                               @Nonnull String methodName,
-	                               @Nonnull String methodDescriptor,
-	                               @Nonnull List<ReValue> parameters) throws ReEvaluationException {
+	public ReValue evaluate(@Nonnull String className,
+	                        @Nonnull String methodName,
+	                        @Nonnull String methodDescriptor,
+	                        @Nullable ReValue classInstance,
+	                        @Nonnull List<ReValue> parameters) throws ReEvaluationException {
 		Type methodType = Type.getMethodType(methodDescriptor);
 		if (methodType.getReturnType() == Type.VOID_TYPE)
 			throw new ReEvaluationException("Method must yield a value");
@@ -76,24 +152,21 @@ public class ReEvaluator {
 		ClassReader reader = classInfo.getClassReader();
 		reader.accept(classNode, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
 
-		for (MethodNode methodNode : classNode.methods) {
-			if (methodName.equals(methodNode.name) && methodDescriptor.equals(methodNode.desc)) {
-				return evaluate(workspace, interpreter, classNode, methodNode, parameters);
-			}
-		}
+		for (MethodNode methodNode : classNode.methods)
+			if (methodName.equals(methodNode.name) && methodDescriptor.equals(methodNode.desc))
+				return evaluate(classNode, methodNode, classInstance, parameters);
 
 		throw new ReEvaluationException("Method exists in class model, but not in tree node representation");
 	}
 
 	/**
-	 * @param workspace
-	 * 		Workspace to pull classes from.
-	 * @param interpreter
-	 * 		Interpreter to evaluate instructions with.
 	 * @param classNode
 	 * 		Class defining the target method.
 	 * @param methodNode
 	 * 		Target method.
+	 * @param classInstance
+	 * 		Instance of {@code this} for instance methods.
+	 * 		Can be {@code null} for {@code static} methods.
 	 * @param parameters
 	 * 		Parameters to pass to the target method.
 	 *
@@ -103,11 +176,14 @@ public class ReEvaluator {
 	 * 		When the target method could not be evaluated.
 	 */
 	@Nonnull
-	public static ReValue evaluate(@Nonnull Workspace workspace,
-	                               @Nonnull ReInterpreter interpreter,
-	                               @Nonnull ClassNode classNode,
-	                               @Nonnull MethodNode methodNode,
-	                               @Nonnull List<ReValue> parameters) throws ReEvaluationException {
+	public ReValue evaluate(@Nonnull ClassNode classNode,
+	                        @Nonnull MethodNode methodNode,
+	                        @Nullable ReValue classInstance,
+	                        @Nonnull List<ReValue> parameters) throws ReEvaluationException {
+		// Must support evaluation
+		if (!canEvaluate(methodNode))
+			throw new ReEvaluationException("Target method does not support evaluation: " + classNode.name + "." + methodNode.name + methodNode.desc);
+
 		// Sanity check parameters
 		Type methodType = Type.getMethodType(methodNode.desc);
 		if (parameters.size() != methodType.getArgumentCount())
@@ -126,12 +202,12 @@ public class ReEvaluator {
 		for (int i = 0; i < methodNode.maxLocals; i++)
 			frame.setLocal(i, i < parameters.size() ? parameters.get(i) : interpreter.newEmptyValue(i));
 		if (!AccessFlag.isStatic(methodNode.access))
-			frame.setLocal(0, interpreter.newValue(Type.getObjectType(classNode.name), Nullness.NOT_NULL));
+			frame.setLocal(0, classInstance);
 
 		// Handle execution
 		InsnList instructions = methodNode.instructions;
 		AbstractInsnNode pc = instructions.getFirst();
-		int it = MAX_ITERATIONS;
+		int it = maxSteps;
 		while (it > 0) {
 			try {
 				pc = frame.evaluate(pc, interpreter);
@@ -142,7 +218,7 @@ public class ReEvaluator {
 			}
 			it--;
 		}
-		throw new ReEvaluationException("Method did not yield an value in " + MAX_ITERATIONS + " steps");
+		throw new ReEvaluationException("Method did not yield an value in " + maxSteps + " steps");
 	}
 
 	/**
@@ -151,13 +227,75 @@ public class ReEvaluator {
 	private static class ExecutingFrame extends ReFrame implements Opcodes {
 		private AbstractInsnNode next;
 		private ReValue returnValue;
+		private boolean isStatic;
 
 		public ExecutingFrame(@Nonnull MethodNode method) {
 			super(method.maxLocals, method.maxStack);
+			isStatic = AccessFlag.isStatic(method.access);
 		}
 
+		/**
+		 * @param insn
+		 * 		Instruction to evaluate.
+		 * @param interpreter
+		 * 		Interpreter to evaluate with.
+		 *
+		 * @return {@code true} when the given instruction can be evaluated via {@link #evaluate(AbstractInsnNode, ReInterpreter)}.
+		 */
+		public boolean canEvaluate(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter) {
+			return switch (insn.getOpcode()) {
+				case JSR, RET, // Legacy instructions
+						INVOKEDYNAMIC, // Dynamic linking not supported
+						ATHROW, // Need to finish control-flow handling for this
+						NEW, PUTFIELD, // Need to make form of instance tracking for these
+						PUTSTATIC // Need to wrap interpreter with one that also has support for this
+						-> false;
+				case ALOAD -> {
+					// Local variable 'this' is not supported until we make some form of instance tracking
+					int local = ((VarInsnNode) insn).var;
+					yield isStatic || local != 0;
+				}
+				case LDC -> {
+					// Dynamic linking + method handles not supported
+					Object cst = ((LdcInsnNode) insn).cst;
+					yield !(cst instanceof ConstantDynamic || cst instanceof Handle);
+				}
+				// Methods + Fields must have lookup support
+				case INVOKEINTERFACE, INVOKESPECIAL, INVOKEVIRTUAL -> {
+					InvokeVirtualLookup lookup = interpreter.getInvokeVirtualLookup();
+					yield lookup != null && lookup.hasLookup((MethodInsnNode) insn);
+				}
+				case INVOKESTATIC -> {
+					InvokeStaticLookup lookup = interpreter.getInvokeStaticLookup();
+					yield lookup != null && lookup.hasLookup((MethodInsnNode) insn);
+				}
+				case GETFIELD -> {
+					GetFieldLookup lookup = interpreter.getGetFieldLookup();
+					yield lookup != null && lookup.hasLookup((FieldInsnNode) insn);
+				}
+				case GETSTATIC -> {
+					GetStaticLookup lookup = interpreter.getGetStaticLookup();
+					yield lookup != null && lookup.hasLookup((FieldInsnNode) insn);
+				}
+				default -> true;
+			};
+		}
+
+		/**
+		 * Wrapper for {@link #execute(AbstractInsnNode, Interpreter)}.
+		 *
+		 * @param insn
+		 * 		Instruction to evaluate.
+		 * @param interpreter
+		 * 		Interpreter to evaluate with.
+		 *
+		 * @return Next instruction to evaluate <i>(following control flow rules)</i>.
+		 *
+		 * @throws AnalyzerException
+		 * 		When the instruction cannot be evaluated.
+		 */
 		@Nonnull
-		public AbstractInsnNode evaluate(AbstractInsnNode insn, Interpreter<ReValue> interpreter) throws AnalyzerException {
+		public AbstractInsnNode evaluate(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter) throws AnalyzerException {
 			return switch (insn.getOpcode()) {
 				case GOTO -> ((JumpInsnNode) insn).label;
 				case IFEQ -> conditional(insn, i -> i.isEqualTo(0));
