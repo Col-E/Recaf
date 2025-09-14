@@ -39,7 +39,7 @@ procyon = "0.6.0"
 reactfx = { strictly = "2.0-M5" } # won't get updates, dead
 regex = "0.1.19"
 # richtextfx = "0.11.3"
-richtextfx = "970ff0ed13"
+richtextfx = "cbdcbd1440"
 treemapfx = "1.1.0"
 vineflower = "1.11.1"
 sourcesolver = "1.1.5"
