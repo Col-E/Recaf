@@ -1,7 +1,7 @@
 package software.coley.recaf.services.deobfuscation;
 
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.services.deobfuscation.transform.generic.CallInliningTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.CallResultInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
@@ -1582,7 +1582,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 					}
 				}
 				""";
-		validateBeforeAfterDecompile(asm, List.of(CallInliningTransformer.class),
+		validateBeforeAfterDecompile(asm, List.of(CallResultInliningTransformer.class),
 				"System.out.println(Example.decrypt(\"\\u362f\\u3602\\u360b\\u360b\\u3608\\u3647\\u3610\\u3608\\u3615\\u360b\\u3603\", 13927));",
 				"System.out.println(\"Hello world\");");
 	}

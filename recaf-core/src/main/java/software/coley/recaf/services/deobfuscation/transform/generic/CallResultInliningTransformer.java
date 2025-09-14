@@ -41,7 +41,7 @@ import java.util.Set;
  * @author Matt Coley
  */
 @Dependent
-public class CallInliningTransformer implements JvmClassTransformer {
+public class CallResultInliningTransformer implements JvmClassTransformer {
 	private final static int MAX_STEPS = 20_000; // TODO: Make configurable
 	private final InheritanceGraphService graphService;
 	private final Object2BooleanMap<String> canBeEvaluatedMap = new Object2BooleanArrayMap<>();
@@ -49,7 +49,7 @@ public class CallInliningTransformer implements JvmClassTransformer {
 	private ReEvaluator evaluator;
 
 	@Inject
-	public CallInliningTransformer(@Nonnull InheritanceGraphService graphService) {
+	public CallResultInliningTransformer(@Nonnull InheritanceGraphService graphService) {
 		this.graphService = graphService;
 	}
 
@@ -129,7 +129,7 @@ public class CallInliningTransformer implements JvmClassTransformer {
 	@Nonnull
 	@Override
 	public String name() {
-		return "Call inlining";
+		return "Call result inlining";
 	}
 
 	private boolean canEvaluate(@Nonnull MethodInsnNode min) {
