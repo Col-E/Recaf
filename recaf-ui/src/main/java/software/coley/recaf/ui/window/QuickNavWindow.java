@@ -15,6 +15,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.OverrunStyle;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -291,6 +292,17 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				hide();
 		});
 
+		// And event filter to tabs to handle "a-z" and "0-9" delegating to current displayed search input field.
+		for (Tab tab : tabs.getTabs()) {
+			tabs.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+				if (!tab.isSelected() || e.getTarget() != tabs)
+					return;
+				KeyCode code = e.getCode();
+				if ((code.isLetterKey() || code.isDigitKey()) && tab.getContent() instanceof ContentPaneBase content)
+					content.focusSearchBar();
+			});
+		}
+
 		// Layout
 		titleProperty().bind(Lang.getBinding("dialog.quicknav"));
 		setMinWidth(300);
@@ -304,12 +316,19 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	 */
 	private static class ContentPaneBase extends BorderPane implements WorkspaceCloseListener {
 		protected final PathResultsPane<?> results;
+		protected AbstractSearchBar searchBar;
 
 		protected ContentPaneBase(@Nonnull PathResultsPane<?> results) {
 			this.results = results;
 		}
 
+		protected void focusSearchBar() {
+			if (searchBar != null)
+				searchBar.requestSearchFocus();
+		}
+
 		protected void setSearchBar(@Nonnull AbstractSearchBar searchBar) {
+			this.searchBar = searchBar;
 			setTop(searchBar);
 
 			// Register event filter which will allow jumping from the search bar to other controls.
