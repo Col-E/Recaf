@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
 import atlantafx.base.controls.Spacer;
+import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import jakarta.annotation.Nonnull;
@@ -54,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,8 +71,8 @@ import java.util.function.Consumer;
 @Dependent
 public class ControlFlowLines extends AstBuildConsumerComponent {
 	private static final Logger logger = Logging.get(ControlFlowLines.class);
-	private static final Set<String> INSN_SET = Set.of("goto", "ifnull", "ifnonnull", "ifeq", "ifne", "ifle", "ifge", "iflt", "ifgt",
-			"if_acmpeq", "if_acmpne", "if_icmpeq", "if_icmpge", "if_icmpgt", "if_icmple", "if_icmplt", "if_icmpne");
+	private static final Set<String> FLOW_INSN_SET = Set.of("goto", "ifnull", "ifnonnull", "ifeq", "ifne", "ifle", "ifge", "iflt", "ifgt",
+			"if_acmpeq", "if_acmpne", "if_icmpeq", "if_icmpge", "if_icmpgt", "if_icmple", "if_icmplt", "if_icmpne", "jsr");
 	private static final Set<String> SWITCH_INSNS = Set.of("tableswitch", "lookupswitch");
 	private final Consumer<Change<Integer>> onCaretMove = this::onCaretMove;
 	private final ObservableObject<ASTInstruction> currentInstructionSelection = new ObservableObject<>(null);
@@ -176,7 +178,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 			} else if (current != null) {
 				String insnName = current.identifier().content();
 				List<ASTElement> arguments = current.arguments();
-				if (!arguments.isEmpty() && INSN_SET.contains(insnName) || SWITCH_INSNS.contains(insnName)) {
+				if (!arguments.isEmpty() && FLOW_INSN_SET.contains(insnName) || SWITCH_INSNS.contains(insnName)) {
 					hasSelection = true;
 				}
 			}
@@ -225,16 +227,39 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		}
 
 		// Collect all label usage information from the AST.
+		Map<String, AstUsages> labelUsages = collectLabelReferences();
+		model = labelUsages.entrySet().stream()
+				.filter(e -> !e.getValue().readers().isEmpty()) // Must have a label declaration
+				.map(e -> new LabelData(e.getKey(), e.getValue(), new Int2IntArrayMap(), new IntBox(-1), new Box<>()))
+				.sorted(Comparator.comparing(LabelData::name))
+				.toList();
+		model.forEach(data -> {
+			List<LabelData> overlapping = data.computeOverlapping(model);
+			IntBox slot = data.lineSlot();
+			int slotIndex = 0;
+			while (true) {
+				incr:
+				{
+					for (LabelData d : overlapping) {
+						if (slotIndex == d.lineSlot().get()) {
+							slotIndex++;
+							break incr;
+						}
+					}
+					break;
+				}
+			}
+			slot.set(slotIndex);
+		});
+	}
+
+	@Nonnull
+	private Map<String, AstUsages> collectLabelReferences() {
 		AstUsages emptyUsage = AstUsages.EMPTY_USAGE;
-		Map<String, AstUsages> labelUsages = new HashMap<>();
-		BiConsumer<String, ASTElement> readUpdater = (name, element) -> {
-			AstUsages existing = labelUsages.getOrDefault(name, emptyUsage);
-			labelUsages.put(name, existing.withNewRead(element));
-		};
-		BiConsumer<String, ASTElement> writeUpdater = (name, element) -> {
-			AstUsages existing = labelUsages.getOrDefault(name, emptyUsage);
-			labelUsages.put(name, existing.withNewWrite(element));
-		};
+		Map<String, List<ASTElement>> labelReads = new HashMap<>();
+		Map<String, List<ASTElement>> labelWrites = new HashMap<>();
+		BiConsumer<String, ASTElement> readUpdater = (name, element) -> labelReads.computeIfAbsent(name, n -> new ArrayList<>()).add(element);
+		BiConsumer<String, ASTElement> writeUpdater = (name, element) -> labelWrites.computeIfAbsent(name, n -> new ArrayList<>()).add(element);
 		if (astElements != null) {
 			Consumer<ASTMethod> methodConsumer = astMethod -> {
 				if (currentMethod != null && !Objects.equals(currentMethod.getName(), astMethod.getName().literal()))
@@ -249,7 +274,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 						String insnName = instruction.identifier().content();
 						List<ASTElement> arguments = instruction.arguments();
 						if (!arguments.isEmpty()) {
-							if (INSN_SET.contains(insnName)) {
+							if (FLOW_INSN_SET.contains(insnName)) {
 								writeUpdater.accept(arguments.getLast().content(), instruction);
 							} else if ("tableswitch".equals(insnName)) {
 								if (!instruction.arguments().isEmpty() && instruction.arguments().getFirst() instanceof ASTObject switchObj) {
@@ -283,29 +308,19 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				}
 			}
 		}
-		model = labelUsages.entrySet().stream()
-				.filter(e -> !e.getValue().readers().isEmpty()) // Must have a label declaration
-				.map(e -> new LabelData(e.getKey(), e.getValue(), new IntBox(-1), new Box<>()))
-				.sorted(Comparator.comparing(LabelData::name))
-				.toList();
-		model.forEach(data -> {
-			List<LabelData> overlapping = data.computeOverlapping(model);
-			IntBox slot = data.lineSlot();
-			int slotIndex = 0;
-			while (true) {
-				incr:
-				{
-					for (LabelData d : overlapping) {
-						if (slotIndex == d.lineSlot().get()) {
-							slotIndex++;
-							break incr;
-						}
-					}
-					break;
-				}
-			}
-			slot.set(slotIndex);
-		});
+		Set<String> keys = new HashSet<>();
+		keys.addAll(labelReads.keySet());
+		keys.addAll(labelWrites.keySet());
+		Map<String, AstUsages> labelUsages = new HashMap<>();
+		for (String key : keys) {
+			List<ASTElement> reads = labelReads.get(key);
+			List<ASTElement> writes = labelWrites.get(key);
+			labelUsages.put(key, new AstUsages(
+					Objects.requireNonNullElse(reads, Collections.emptyList()),
+					Objects.requireNonNullElse(writes, Collections.emptyList()),
+					false));
+		}
+		return labelUsages;
 	}
 
 	private void clearData() {
