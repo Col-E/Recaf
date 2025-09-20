@@ -227,7 +227,7 @@ public class ReEvaluator {
 	private static class ExecutingFrame extends ReFrame implements Opcodes {
 		private AbstractInsnNode next;
 		private ReValue returnValue;
-		private boolean isStatic;
+		private final boolean isStatic;
 
 		public ExecutingFrame(@Nonnull MethodNode method) {
 			super(method.maxLocals, method.maxStack);
