@@ -553,7 +553,6 @@ public class Actions implements Service {
 		container.addDockable(dockable);
 		dockable.setContextMenuFactory(d -> {
 			ContextMenu menu = new ContextMenu();
-			ObservableList<MenuItem> items = menu.getItems();
 			addCloseActions(menu, dockable);
 			return menu;
 		});
@@ -1492,6 +1491,19 @@ public class Actions implements Service {
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
 			dockable.addCloseListener((_, _) -> assemblerPaneProvider.destroy(content));
+
+			// Class assemblers should have full context menus of a class.
+			// Member assemblers should the basic close actions.
+			if (path instanceof ClassPathNode)
+				setupInfoContextMenu(info, content, dockable);
+			else {
+				dockable.setContextMenuFactory(d -> {
+					ContextMenu menu = new ContextMenu();
+					addCloseActions(menu, d);
+					return menu;
+				});
+			}
+
 			return dockable;
 		});
 	}

@@ -431,7 +431,29 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			problemTracking.removeByPhase(ProblemPhase.BUILD);
 
 			try {
-				pipeline.assemble(lastConcreteAst, path).ifOk(result -> {
+				// The 'path' field may not hold the up-to-date class in the workspace.
+				//
+				// We want to look up the current version of the class to pass to the assembler pipeline
+				// so that we don't overwrite the current class with whatever state happens to be in this path instance.
+				//
+				// Note: The path isn't updated in this pane because that may mess with the UX - which we want to avoid.
+				final PathNode<?> localPath;
+				if (path instanceof ClassMemberPathNode memberPath) {
+					ClassPathNode localClassPath = Objects.requireNonNull(memberPath.getParent(), "Member path missing parent");
+					ClassInfo classInfo = localClassPath.getValue();
+					ClassMember member = memberPath.getValue();
+					Workspace workspace = Objects.requireNonNull(memberPath.getValueOfType(Workspace.class), "Member path missing workspace");
+					ClassPathNode newClassPath = Objects.requireNonNull(workspace.findClass(classInfo.getName()), "Member parent no longer defined in workspace");
+					localPath = newClassPath.child(member);
+				} else if (path instanceof ClassPathNode classPath) {
+					ClassInfo classInfo = classPath.getValue();
+					Workspace workspace = Objects.requireNonNull(classPath.getValueOfType(Workspace.class), "Class path missing workspace");
+					localPath = Objects.requireNonNull(workspace.findClass(classInfo.getName()), "Class no longer defined in workspace");
+				} else {
+					throw new IllegalStateException("Unsupported assembler path type: " + path);
+				}
+
+				pipeline.assemble(lastConcreteAst, localPath).ifOk(result -> {
 					ClassRepresentation representation = result.representation();
 
 					lastResult = result;
@@ -450,7 +472,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 						// Update the local path value, this will also inform sub-components of the new content.
 						// The update-lock must be set so that we don't trigger a disassembly (which would trigger an endless loop)
 						updateLock.set(true);
-						if (path instanceof ClassPathNode classPath) {
+						if (localPath instanceof ClassPathNode classPath) {
 							// Only update if the class name was untouched.
 							if (assembledClass.getName().equals(classPath.getValue().getName())) {
 								ClassPathNode newPath = classPath.getParent().child(assembledClass);
@@ -462,7 +484,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 										"Use Recaf's refactoring capabilities to rename classes.", sourceAst.location());
 								processErrors(List.of(err), ProblemPhase.BUILD);
 							}
-						} else if (path instanceof ClassMemberPathNode memberPath) {
+						} else if (localPath instanceof ClassMemberPathNode memberPath) {
 							ClassMember oldMember = memberPath.getValue();
 							ClassMember newMember;
 							String memberType;

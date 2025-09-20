@@ -52,7 +52,7 @@ public interface Navigable {
 	 */
 	@Nullable
 	@SuppressWarnings("unchecked")
-	default <N extends Navigable> N getNavigableChild(@Nonnull Class<N> childType) {
+	default <N extends Navigable> N getNavigableChildOfType(@Nonnull Class<N> childType) {
 		Queue<Navigable> queue = new ArrayDeque<>(getNavigableChildren());
 		while (!queue.isEmpty()) {
 			Navigable child = queue.remove();
@@ -61,6 +61,30 @@ public interface Navigable {
 			queue.addAll(child.getNavigableChildren());
 		}
 		return null;
+	}
+
+	/**
+	 * Search for a given navigable type in the {@link #getNavigableChildren()}.
+	 *
+	 * @param childType
+	 * 		Child class to search for.
+	 * @param <N>
+	 * 		Inferred child type.
+	 *
+	 * @return All child instances of the given type.
+	 */
+	@Nonnull
+	@SuppressWarnings("unchecked")
+	default <N extends Navigable> List<N> getNavigableChildrenOfType(@Nonnull Class<N> childType) {
+		List<N> children = new ArrayList<>();
+		Queue<Navigable> queue = new ArrayDeque<>(getNavigableChildren());
+		while (!queue.isEmpty()) {
+			Navigable child = queue.remove();
+			if (childType.isAssignableFrom(child.getClass()))
+				children.add((N) child);
+			queue.addAll(child.getNavigableChildren());
+		}
+		return children;
 	}
 
 	/**
