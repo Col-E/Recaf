@@ -162,8 +162,8 @@ public class MappingsAdapter implements Mappings {
 		for (Map.Entry<MappingKey, String> entry : new TreeMap<>(mappings).entrySet()) {
 			MappingKey key = entry.getKey();
 			String newName = entry.getValue();
-			if (key instanceof ClassMappingKey) {
-				intermediate.addClass(((ClassMappingKey) key).getName(), newName);
+			if (key instanceof ClassMappingKey ck) {
+				intermediate.addClass(ck.getName(), newName);
 			} else if (key instanceof MethodMappingKey mk) {
 				intermediate.addMethod(mk.getOwner(), mk.getDesc(), mk.getName(), newName);
 			} else if (key instanceof FieldMappingKey fk) {
@@ -198,6 +198,8 @@ public class MappingsAdapter implements Mappings {
 	 * @return The first mapping match in a parent class found by the lookup function.
 	 */
 	private String findInParent(String owner, Function<String, ? extends MappingKey> lookup) {
+		// TODO: Diamond class hierarchy doesn't work with this.
+		//  We need to visit the whole family tree.
 		InheritanceVertex vertex = inheritanceGraph.getVertex(owner);
 		if (vertex == null)
 			return null;

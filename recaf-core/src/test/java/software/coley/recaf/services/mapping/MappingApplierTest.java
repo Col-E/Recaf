@@ -3,6 +3,7 @@ package software.coley.recaf.services.mapping;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -60,6 +61,10 @@ class MappingApplierTest extends TestBase {
 				//
 				DummyEnum.class,
 				DummyEnumPrinter.class,
+				//
+				DiamondA.class,
+				DiamondB.class,
+				DiamondC.class,
 				//
 				AnnotationImpl.class,
 				ClassWithAnnotation.class,
@@ -294,6 +299,29 @@ class MappingApplierTest extends TestBase {
 
 		// Assert that the method is still runnable.
 		runMapped(OverlapCaller.class, "run");
+	}
+
+	@Test
+	@Disabled("Need to update hierarchy scanning in MappingsAdapter")
+	void applyDiamond() {
+		String diamondA = DiamondA.class.getName().replace('.', '/');
+		String diamondB = DiamondB.class.getName().replace('.', '/');
+		String diamondC = DiamondC.class.getName().replace('.', '/');
+
+		// Create mappings for all classes but the runner 'OverlapCaller'
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addMethod(diamondA, "()V", "diamond", "foo");
+
+		// Preview the mapping operation
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
+
+		// The "diamond()V" in the interface, and disconnected super class DiamondB, should both be mapped
+		ClassInfo postA = results.getPostMappingClass(diamondA);
+		ClassInfo postB = results.getPostMappingClass(diamondB);
+		ClassInfo postC = results.getPostMappingClass(diamondC);
+		assertNotNull(postA, "DiamondA should be remapped");
+		assertNotNull(postB, "DiamondB should be remapped");
+		assertNull(postC, "DiamondA should not be remapped");
 	}
 
 	private String runMapped(Class<?> cls, String methodName) {
