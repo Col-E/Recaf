@@ -1,7 +1,7 @@
 [versions]
 acc-agent = "1.0.4"
 assertj = "3.27.3"
-asm = "9.8"
+asm = "9.8" # https://gitlab.ow2.org/asm/asm/-/merge_requests/431/diffs (Need to address this when updating to 9.9)
 atlantafx = "2.1.0"
 binary-resources = "31.3.0-alpha01.8"
 cafedude = "2.6.5"
@@ -21,7 +21,7 @@ image-io-ext-ico = "3.0.2"
 instrument-server = "1.5.0"
 jackson = "2.18.2"
 jakarta-annotation = "3.0.0"
-jasm = "c5a2c90503"
+jasm = "8c01286a57"
 jelf = "0.10.0"
 jlinker = "1.0.7" # We could update, but I don't feel like rewriting the callgraph
 jphantom = "1.4.4"
