@@ -15,10 +15,7 @@ import software.coley.recaf.test.dummy.ClassWithStaticInit;
 import software.coley.recaf.test.dummy.DummyEmptyMap;
 import software.coley.recaf.test.dummy.DummyEnum;
 import software.coley.recaf.test.dummy.InvisAnnotationImpl;
-import software.coley.recaf.util.ClasspathUtil;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
-
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,11 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Tests for {@link FallbackDecompiler}
  */
 class FallbackDecompilerTest {
-	static TextFormatConfig textConfig = new TextFormatConfig();
-
-	public static Stream<String> penis() {
-		return ClasspathUtil.getSystemClassSet().stream();
-	}
+	static final TextFormatConfig textConfig = new TextFormatConfig();
 
 	@Test
 	void fieldModifiers() {
