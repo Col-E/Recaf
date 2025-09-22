@@ -12,6 +12,16 @@
       "sub-rules": []
     },
     {
+      "name": "MultiLineComment",
+      "regex": "/[*](?:.|\\n)+?\\*/",
+      "backtrack-mark": "/*",
+      "advance-mark": "*/",
+      "classes": [
+        "comment-multi"
+      ],
+      "sub-rules": []
+    },
+    {
       "name": "Constants",
       "regex": "\\b0(?:[xX][0-9a-fA-F]+|b[01]+|[0-7]+)\\b|\\b(?:[\\d_]+\\.\\d+|[\\d_]+)(?:[eE]-?[\\d_]+)?[fFdDlL]?\\b|\\b(?:true|false|null|NaN|\\+Infinity|\\-Infinity)\\b|'[\\\\]?.'",
       "classes": [

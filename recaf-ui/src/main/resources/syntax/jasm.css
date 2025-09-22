@@ -13,3 +13,7 @@
 .code-area .comment-line {
 	-fx-fill: rgb(175, 175, 215);
 }
+
+.code-area .comment-multi {
+    -fx-fill: rgb(155, 155, 215);
+}
