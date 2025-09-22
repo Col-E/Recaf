@@ -600,6 +600,11 @@ public class Actions implements Service {
 		Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), getBinding("workspace.info"),
 				d -> new FontIconView(CarbonIcons.INFORMATION), content);
 		dockable.addCloseListener((_, _) -> infoPaneProvider.destroy(content));
+		dockable.setContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			addCloseActions(menu, d);
+			return menu;
+		});
 	}
 
 	/**
@@ -2212,6 +2217,11 @@ public class Actions implements Service {
 			stage.requestFocus();
 		}
 		dockable.addCloseListener((_, _) -> paneProvider.destroy(content));
+		dockable.setContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			addCloseActions(menu, d);
+			return menu;
+		});
 		return content;
 	}
 

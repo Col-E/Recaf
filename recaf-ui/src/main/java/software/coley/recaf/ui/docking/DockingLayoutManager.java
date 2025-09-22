@@ -20,6 +20,7 @@ import software.coley.bentofx.layout.container.DockContainerLeaf;
 import software.coley.bentofx.layout.container.DockContainerRootBranch;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.info.summary.ResourceSummaryServiceConfig;
+import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.NavigationManager;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
@@ -66,25 +67,26 @@ public class DockingLayoutManager {
 	public static final String ID_CONTAINER_WORKSPACE_PRIMARY = "layout-workspace-primary";
 
 	private final DockingManager dockingManager;
+	private final Actions actions;
 	private final Instance<LoggingPane> loggingPaneProvider;
 	private final Instance<WelcomePane> welcomePaneProvider;
-	private final Instance<WorkspaceInformationPane> workspaceInfoProvider;
 	private final Instance<WorkspaceExplorerPane> workspaceExplorerProvider;
 	private final DockContainerRootBranch root;
 	private final ResourceSummaryServiceConfig resourceSummaryConfig;
 
 	@Inject
 	public DockingLayoutManager(@Nonnull DockingManager dockingManager,
-								@Nonnull WorkspaceManager workspaceManager,
-								@Nonnull Instance<LoggingPane> loggingPaneProvider,
-								@Nonnull Instance<WelcomePane> welcomePaneProvider,
-								@Nonnull Instance<WorkspaceInformationPane> workspaceInfoProvider,
-								@Nonnull Instance<WorkspaceExplorerPane> workspaceExplorerProvider,
-								@Nonnull ResourceSummaryServiceConfig resourceSummaryConfig) {
+	                            @Nonnull WorkspaceManager workspaceManager,
+	                            @Nonnull Actions actions,
+	                            @Nonnull Instance<LoggingPane> loggingPaneProvider,
+	                            @Nonnull Instance<WelcomePane> welcomePaneProvider,
+	                            @Nonnull Instance<WorkspaceInformationPane> workspaceInfoProvider,
+	                            @Nonnull Instance<WorkspaceExplorerPane> workspaceExplorerProvider,
+	                            @Nonnull ResourceSummaryServiceConfig resourceSummaryConfig) {
 		this.dockingManager = dockingManager;
+		this.actions = actions;
 		this.loggingPaneProvider = loggingPaneProvider;
 		this.welcomePaneProvider = welcomePaneProvider;
-		this.workspaceInfoProvider = workspaceInfoProvider;
 		this.workspaceExplorerProvider = workspaceExplorerProvider;
 		this.resourceSummaryConfig = resourceSummaryConfig;
 
@@ -141,13 +143,6 @@ public class DockingLayoutManager {
 		primary.setPruneWhenEmpty(false);
 		primary.setMenuFactory(this::buildMenu);
 
-		// If user don't want to see the summary, just skip
-		if (resourceSummaryConfig.getSummarizeOnOpen().getValue()) {
-			primary.addDockables(
-					dockingManager.newTranslatableDockable("workspace.info", CarbonIcons.INFORMATION, workspaceInfoProvider.get())
-			);
-		}
-
 		// Combining the two into a branch
 		DockContainerBranch branch = dockingManager.getBento().dockBuilding().branch(ID_CONTAINER_ROOT_TOP);
 		branch.addContainers(explorer, primary);
@@ -202,8 +197,11 @@ public class DockingLayoutManager {
 		@Override
 		public void onWorkspaceOpened(@Nonnull Workspace workspace) {
 			FxThreadUtil.run(() -> {
-				if (!dockingManager.replace(ID_CONTAINER_ROOT_TOP, DockingLayoutManager.this::newWorkspaceContainer))
+				if (dockingManager.replace(ID_CONTAINER_ROOT_TOP, DockingLayoutManager.this::newWorkspaceContainer)) {
+					if (resourceSummaryConfig.getSummarizeOnOpen().getValue()) actions.openSummary();
+				} else {
 					logger.error("Failed replacing root on workspace open");
+				}
 			});
 		}
 
