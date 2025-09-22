@@ -23,6 +23,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -368,15 +369,18 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 						keyColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()));
 						TableColumn<String, String> valueColumn = new TableColumn<>("Value");
 						valueColumn.setCellValueFactory(param -> new SimpleStringProperty(Objects.toString(lastProperties.get(param.getValue()))));
+						valueColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
 						ObservableList<TableColumn<String, ?>> columns = propertyTable.getColumns();
 						columns.add(keyColumn);
 						columns.add(valueColumn);
 
+						propertyTable.setEditable(true);
 						propertyTable.getStyleClass().addAll(Styles.STRIPED, Tweaks.EDGE_TO_EDGE);
 						propertyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 						keyColumn.setMaxWidth(1f * Integer.MAX_VALUE * 25);
 						valueColumn.setMaxWidth(1f * Integer.MAX_VALUE * 75);
+						valueColumn.setEditable(true); // Allow double-clicking to allow interaction with the value text
 
 						setCenter(propertyTable);
 					}
