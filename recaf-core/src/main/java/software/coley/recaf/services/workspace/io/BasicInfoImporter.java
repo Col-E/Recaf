@@ -179,7 +179,8 @@ public class BasicInfoImporter implements InfoImporter {
 		// higher tier patch modes will occur when opening the class later. Users must accept this responsibility
 		// if they want the boost in workspace load speeds.
 		if (patchingMode == InfoImporterConfig.ClassPatchMode.SKIP_FILTER)
-			return new JvmClassInfoBuilder(data, ClassReader.SKIP_CODE).build();
+			// We still do not use 'SKIP_CODE' since we want the info models to have things like variable metadata.
+			return new JvmClassInfoBuilder(data, 0).build();
 
 		// If we're always validating, patch the class and try and parse the patched output.
 		// Any ASM parse failures imply patching has failed, and the class will be treated as a file instead (see catch block in calling methods)
