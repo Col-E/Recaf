@@ -140,6 +140,15 @@ public class FileMenu extends WorkspaceAwareMenu {
 				String extension = IOUtil.getExtension(model.primary().path());
 				Node graphic = Icons.getIconView(Icons.getIconPathForFileExtension(extension));
 				menuRecent.getItems().add(new ClosableActionMenuItem(title, graphic, () -> {
+					// If the model can no longer be loaded remove it.
+					if (!model.canLoadWorkspace()) {
+						Toolkit.getDefaultToolkit().beep();
+						remove.run();
+						logger.warn("Recent workspace for '{}' cannot be found", title);
+						refreshRecent();
+						return;
+					}
+
 					// Get paths from model
 					Path primaryPath = Paths.get(model.primary().path());
 					List<Path> supportingPaths = model.libraries().stream()
@@ -150,6 +159,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 					pathLoadingManager.asyncNewWorkspace(primaryPath, supportingPaths, ex -> {
 						Toolkit.getDefaultToolkit().beep();
 						recentWorkspaces.remove(model);
+						refreshRecent();
 						logger.error("Failed to open recent workspace for '{}'", title, ex);
 						ErrorDialogs.show(
 								getBinding("dialog.error.loadworkspace.title"),
