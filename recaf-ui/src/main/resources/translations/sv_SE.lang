@@ -240,12 +240,6 @@ wizard.currentworkspace=Aktuell arbetsmiljö
 ##### Panels
 ## Welcome
 welcome.title=Välkommen
-welcome.discord.title=Gå med i Discord
-welcome.discord.description=Recaf har en Discord-grupp för snabbare diskussioner och varierat programmeringssnack
-welcome.documentation.title=Dokumentation
-welcome.documentation.description=Läs dokumentationen för att lära dig hur du använder Recafs olika funktioner
-welcome.github.title=Recaf på Github
-welcome.github.description=Kolla in projektets sida på GitHub: Källkod, öppna ärenden och mer
 
 ## Workspace
 workspace.title=Arbetsmiljö

@@ -204,12 +204,6 @@ wizard.currentworkspace=Aktuální pracovní prostor
 ##### Panels
 ## Welcome
 welcome.title=Vítejte
-welcome.discord.title=Připojte se na Discord
-welcome.discord.description=Recaf má skupinu na Discordu pro rychlejší diskuse a různé programátorské řeči.
-welcome.documentation.title=Dokumentace
-welcome.documentation.description=Přečtěte si dokumentaci a zjistěte, jak používat různé funkce Recafu.
-welcome.github.title=Recaf na GitHubu
-welcome.github.description=Podívejte se na stránku projektu na GitHubu: zdrojový kód, otevřené problémy a další informace.
 
 ## Workspace
 workspace.title=Pracovní prostor

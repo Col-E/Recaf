@@ -329,12 +329,6 @@ dialog.error.attach.content=错误为:
 ##### Panels
 ## Welcome
 welcome.title=欢迎
-welcome.discord.title=加入Discord
-welcome.discord.description=Recaf有一个Discord群组,用于更快速的讨论和各种编程交流
-welcome.documentation.title=文档
-welcome.documentation.description=阅读文档以了解如何使用Recaf的各种功能
-welcome.github.title=Recaf的Github
-welcome.github.description=查看GitHub上的项目页面:源代码、开放的问题等
 
 ## Workspace
 workspace.title=工作区

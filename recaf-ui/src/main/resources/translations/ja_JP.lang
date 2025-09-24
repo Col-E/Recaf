@@ -315,12 +315,6 @@ dialog.error.attach.content=エラーの内容:
 ##### Panels
 ## Welcome
 welcome.title=ようこそ
-welcome.discord.title=Discord に参加する
-welcome.discord.description=Recaf には，より早いペースの議論や様々なプログラミングの話題のための Discord サーバがあります。
-welcome.documentation.title=ドキュメント
-welcome.documentation.description=ドキュメントを読んで Recaf のさまざまな機能の使い方を学びましょう。
-welcome.github.title=Recaf on GitHub
-welcome.github.description=ソース・コードや未解決の問題などについては Recaf の GitHub リポジトリで確認できます。
 
 ## Workspace
 workspace.title=ワークスペース

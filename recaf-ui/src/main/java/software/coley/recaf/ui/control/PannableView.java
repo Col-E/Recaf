@@ -24,6 +24,7 @@ public class PannableView extends Pane {
 	private double initTranslateY;
 	private double translateX;
 	private double translateY;
+	private boolean allowZoom = true;
 
 	/**
 	 * @param node
@@ -40,7 +41,7 @@ public class PannableView extends Pane {
 			}
 		});
 		setOnMouseReleased(e -> {
-			setCursor(Cursor.HAND);
+			setCursor(null);
 		});
 		setOnMouseDragged(e -> {
 			if (e.getButton() == MouseButton.PRIMARY) {
@@ -55,9 +56,27 @@ public class PannableView extends Pane {
 		});
 		setOnScroll(e -> {
 			// Handle zoom on the actual node itself, rather than on our wrapper
-			zoom(node, e);
+			if (allowZoom)
+				zoom(node, e);
 			e.consume();
 		});
+	}
+
+	/**
+	 * @return {@code true} when scroll-wheel allows zooming in/out on the contained view.
+	 * {@code false} when zooming is disabled.
+	 */
+	public boolean isAllowZoom() {
+		return allowZoom;
+	}
+
+	/**
+	 * @param allowZoom
+	 *        {@code true} to allow scroll-wheel to zoom in/out on the contained view.
+	 *        {@code false} to disable zooming.
+	 */
+	public void setAllowZoom(boolean allowZoom) {
+		this.allowZoom = allowZoom;
 	}
 
 	/**
@@ -71,7 +90,6 @@ public class PannableView extends Pane {
 	public void setInitTranslation(double x, double y) {
 		initTranslateX = x;
 		initTranslateY = y;
-		resetTranslation();
 	}
 
 	/**
@@ -81,8 +99,8 @@ public class PannableView extends Pane {
 		translateX = initTranslateX;
 		translateY = initTranslateY;
 
-	    nodeWrapper.setTranslateX(initTranslateX);
-	    nodeWrapper.setTranslateY(initTranslateY);
+		nodeWrapper.setTranslateX(initTranslateX);
+		nodeWrapper.setTranslateY(initTranslateY);
 
 		Node node = nodeWrapper.getCenter();
 		node.setTranslateX(0);

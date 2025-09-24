@@ -88,6 +88,11 @@ public class Icons {
 	public static final String SORT_VISIBILITY = "icons/sort-visibility.png";
 	public static final String PHANTOM = "icons/phantom.png";
 	public static final String KOTLIN_FLAT = "icons/kotlin-flat.png";
+	// Duke
+	public static final String DUKE_THINK = "icons/duke_think.png";
+	public static final String DUKE_THUMBS = "icons/duke_thumbs.png";
+	public static final String DUKE_TUMBLE = "icons/duke_tumble.png";
+	public static final String DUKE_WAVE = "icons/duke_wave.png";
 
 	private static final Map<String, Image> IMAGE_CACHE = new ConcurrentHashMap<>();
 	private static final Map<String, Image> SCALED_IMAGE_CACHE = new ConcurrentHashMap<>();

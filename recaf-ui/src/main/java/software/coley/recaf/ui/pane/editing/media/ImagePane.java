@@ -132,6 +132,7 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 							double y = hp - hc;
 
 							imagePanner.setInitTranslation(x, y);
+							imagePanner.resetTranslation();
 							return true;
 						}
 						return false;

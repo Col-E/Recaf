@@ -329,12 +329,19 @@ dialog.error.attach.content=The error was:
 ##### Panels
 ## Welcome
 welcome.title=Welcome
-welcome.discord.title=Join the Discord
-welcome.discord.description=Recaf has a discord group for faster-pace discussions and assorted programming talk
-welcome.documentation.title=Documentation
-welcome.documentation.description=Read the docs to learn how to use Recaf's various features
-welcome.github.title=Recaf on Github
-welcome.github.description=Check out the project page on GitHub: Source code, open issues, and more
+welcome.links=Links
+welcome.links.home=Recaf: Home
+welcome.links.docs-user=User Documentation
+welcome.links.docs-dev=Developer Documentation
+welcome.links.github=Github: Source + Bug/Feature Tracker
+welcome.links.discord=Discord
+welcome.links.jvms=Java Virtual Machine Specification
+welcome.links.jvms.class=Class File Format
+welcome.links.jvms.instructions=JVM Instruction Set
+welcome.dnd=You can drag & drop files on this screen to open them.
+welcome.dayssince=days since build
+welcome.norecent=No recent workspaces
+
 
 ## Workspace
 workspace.title=Workspace

@@ -291,12 +291,6 @@ wizard.currentworkspace=Aktualny obszar roboczy
 # Panele
 ## Powitanie
 welcome.title=Witaj
-welcome.discord.title=Dołącz do Discorda
-welcome.discord.description=Recaf ma grupę na Discordzie do szybszych dyskusji i rozmów o programowaniu
-welcome.documentation.title=Dokumentacja
-welcome.documentation.description=Przeczytaj dokumentację, aby dowiedzieć się, jak korzystać z różnych funkcji Recafa
-welcome.github.title=Recaf na Githubie
-welcome.github.description=Sprawdź stronę projektu na GitHubie: kod źródłowy, otwarte problemy i więcej
 
 ## Obszar roboczy
 workspace.title=Obszar roboczy

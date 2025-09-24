@@ -207,12 +207,6 @@ wizard.currentworkspace=Aktuelle Arbeitsumgebung
 ##### Panels
 ## Welcome
 welcome.title=Willkommen
-welcome.discord.title=Treten Sie dem Discord-Server bei
-welcome.discord.description=Recaf hat einen Discord-Server, um sich mit anderen Recaf-Benutzern zu treffen.
-welcome.documentation.title=Dokumentation
-welcome.documentation.description=Lesen Sie die Dokumentation, um sich über die Funktionen der Anwendung zu informieren.
-welcome.github.title=Recaf auf Github
-welcome.github.description=Sehen Sie sich die Projektseite auf GitHub an: Quellcode, Problemhilfe und mehr.
 
 ## Workspace
 workspace.title=Arbeitsumgebung
