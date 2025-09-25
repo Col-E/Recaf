@@ -5,6 +5,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -79,8 +80,9 @@ public class WelcomePane extends BorderPane implements Navigable {
 		recentsPane.setPadding(new Insets(10));
 		dndPane.setPadding(new Insets(10));
 		{
+			String sha = RecafBuildConfig.GIT_SHA;
 			Label title = new Label("Recaf " + RecafBuildConfig.VERSION);
-			Label subtitle = new Label("Build " + RecafBuildConfig.GIT_REVISION + " - " + RecafBuildConfig.GIT_DATE);
+			Hyperlink subtitle = new BoundHyperlink(new SimpleStringProperty("Build " + sha.substring(0, 7) + " - " + RecafBuildConfig.GIT_DATE), null, "https://github.com/Col-E/Recaf/commit/" + sha);
 			Label outdated = new Label(Duration.ofMillis(System.currentTimeMillis() - RecafBuildConfig.BUILD_UNIX_TIME).toDays() + " " + Lang.get("welcome.dayssince"));
 			title.getStyleClass().add(Styles.TITLE_2);
 			outdated.getStyleClass().add(Styles.TEXT_SUBTLE);
