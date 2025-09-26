@@ -2,8 +2,6 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import atlantafx.base.controls.Spacer;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -16,7 +14,6 @@ import javafx.scene.effect.Bloom;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.effect.Effect;
 import javafx.scene.effect.Glow;
-import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -34,7 +31,6 @@ import org.slf4j.Logger;
 import software.coley.bentofx.control.canvas.PixelCanvas;
 import software.coley.bentofx.control.canvas.PixelPainter;
 import software.coley.bentofx.control.canvas.PixelPainterIntArgb;
-import software.coley.collections.Unchecked;
 import software.coley.collections.box.Box;
 import software.coley.collections.box.IntBox;
 import software.coley.observables.AbstractObservable;
@@ -47,9 +43,8 @@ import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphic
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.util.Colors;
-import software.coley.recaf.util.DesktopUtil;
 import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.NumberUtil;
+import software.coley.recaf.util.threading.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -166,55 +162,59 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 	 * 		Caret pos change.
 	 */
 	private void onCaretMove(@Nonnull Change<Integer> caretChange) {
-		try {
-			// Find selected instruction (can be null)
-			Box<ASTInstruction> selected = extracted();
-
-			// Check if the selection was a label or supported instruction.
-			ASTInstruction current = selected.get();
-			boolean hasSelection = false;
-			if (current instanceof ASTLabel) {
-				hasSelection = true;
-			} else if (current != null) {
-				String insnName = current.identifier().content();
-				List<ASTElement> arguments = current.arguments();
-				if (!arguments.isEmpty() && FLOW_INSN_SET.contains(insnName) || SWITCH_INSNS.contains(insnName)) {
+		// Find the selected element off of the FX thread, then update our selection and line draw states on the FX thread.
+		CompletableFuture.supplyAsync(this::findSelected, ThreadUtil.executor()).thenAcceptAsync(selected -> {
+			try {
+				// Check if the selection was a label or supported instruction.
+				ASTInstruction current = selected.get();
+				boolean hasSelection = false;
+				if (current instanceof ASTLabel) {
 					hasSelection = true;
+				} else if (current != null) {
+					String insnName = current.identifier().content();
+					List<ASTElement> arguments = current.arguments();
+					if (!arguments.isEmpty() && FLOW_INSN_SET.contains(insnName) || SWITCH_INSNS.contains(insnName)) {
+						hasSelection = true;
+					}
 				}
+				currentInstructionSelection.setValue(current);
+				drawLines.setValue(hasSelection);
+			} catch (Throwable t) {
+				logger.error("Error updating control flow line targets", t);
 			}
-			currentInstructionSelection.setValue(current);
-			drawLines.setValue(hasSelection);
-		} catch (Throwable t) {
-			logger.error("Error updating control flow line targets", t);
-		}
+		}, FxThreadUtil.executor());
 	}
 
 	@Nonnull
-	private Box<ASTInstruction> extracted() {
+	private Box<ASTInstruction> findSelected() {
 		Box<ASTInstruction> selected = new Box<>();
-		int pos = editor.getCodeArea().getCaretPosition();
-		int line = editor.getCodeArea().getCurrentParagraph() + 1;
-		for (ASTElement element : astElements) {
-			if (element == null)
-				continue;
-			if (element.range().within(pos)) {
-				element.walk(ast -> {
-					if (ast instanceof ASTInstruction instruction) {
-						Location location = ast.location();
-						if (location != null && location.line() == line)
-							selected.set(instruction);
-						else {
-							String identifier = instruction.identifier().content();
-							if (("tableswitch".equals(identifier)
-									|| "lookupswitch".equals(identifier))
-									&& ast.range().within(pos)) {
+		try {
+			int pos = editor.getCodeArea().getCaretPosition();
+			int line = editor.getCodeArea().getCurrentParagraph() + 1;
+			for (ASTElement element : astElements) {
+				if (element == null)
+					continue;
+				if (element.range().within(pos)) {
+					element.walk(ast -> {
+						if (ast instanceof ASTInstruction instruction) {
+							Location location = ast.location();
+							if (location != null && location.line() == line)
 								selected.set(instruction);
+							else {
+								String identifier = instruction.identifier().content();
+								if (("tableswitch".equals(identifier)
+										|| "lookupswitch".equals(identifier))
+										&& ast.range().within(pos)) {
+									selected.set(instruction);
+								}
 							}
 						}
-					}
-					return !selected.isSet();
-				});
+						return !selected.isSet();
+					});
+				}
 			}
+		} catch (Throwable t) {
+			logger.warn("Error finding selected AST element", t);
 		}
 		return selected;
 	}
@@ -336,7 +336,6 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		private static final int MASK_SOUTH = 2;
 		private static final int MASK_EAST = 4;
 		private final ArrayList<ASTElement> switchDestinations = new ArrayList<>(64);
-		private final Int2ObjectMap<ImageRecycler> recyclers = new Int2ObjectArrayMap<>();
 		private final int[] offsets = new int[containerWidth];
 		private final long rainbowHueRotationDurationMillis = 3000;
 		private final PixelPainter<?> pixelPainter = new PixelPainterIntArgb();
@@ -409,10 +408,11 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 
 				// If we've gotten to this point we will need a canvas to draw the lines on.
 				if (canvas == null) {
-					canvas = new CachingPixelCanvas(pixelPainter, (int) width, (int) height);
+					canvas = new PixelCanvas(pixelPainter, (int) width, (int) height);
 					canvas.setManaged(false);
 					canvas.setMouseTransparent(true);
 					canvas.resize(width, height);
+					canvas.clear();
 
 					// Setup canvas styling for the render mode.
 					var renderMode = config.getRenderMode().getValue();
@@ -531,7 +531,6 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		}
 
 		public void cleanup() {
-			recyclers.clear();
 			switchDestinations.clear();
 		}
 
@@ -577,87 +576,6 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 					node.setEffect(adjust);
 				}
 			};
-		}
-
-		/**
-		 * @param width
-		 * 		Image width.
-		 * @param height
-		 * 		Image height.
-		 *
-		 * @return An image recycler for the given dimensions.
-		 */
-		@Nonnull
-		private ImageRecycler getRecycler(int width, int height) {
-			int key = width << 16 | height;
-			return recyclers.computeIfAbsent(key, i -> new ImageRecycler(width, height));
-		}
-
-		/**
-		 * Ring buffer of {@link WritableImage} keyed to a specific width/height.
-		 */
-		private static class ImageRecycler {
-			private static final int MAX_IMAGE_BUFFER;
-			private final List<WritableImage> images = new ArrayList<>(MAX_IMAGE_BUFFER);
-			private final int width, height;
-			private int index;
-
-			static {
-				// Each row is ~18px so if we divide the screen height by that amount we should
-				// get the number of images needed to not visually show that they're recycled.
-				//
-				// Of course, we want to have some leeway, so we'll round ~18px down a bit.
-				// And if the UI scale property is assigned, we'll also accommodate for that.
-				Number scale = Unchecked.getOr(() -> NumberUtil.parse(System.getProperty("sun.java2d.uiScale", "1.0")), 1);
-				double scaledHeight = DesktopUtil.getLargestScreenSize().height * scale.doubleValue();
-				final double rowHeight = 15D;
-				final double minRows = 72; // I have ~60 rows on a 1080p monitor so this is probably common enough fallback.
-				MAX_IMAGE_BUFFER = (int) Math.max(minRows, scaledHeight / rowHeight);
-			}
-
-			/**
-			 * @param width
-			 * 		Width of images to create.
-			 * @param height
-			 * 		Height of images to create.
-			 */
-			public ImageRecycler(int width, int height) {
-				this.width = width;
-				this.height = height;
-			}
-
-			/**
-			 * @return Next available image.
-			 */
-			@Nonnull
-			public WritableImage next() {
-				if (index >= MAX_IMAGE_BUFFER)
-					index = 0;
-				WritableImage image;
-				if (index >= images.size()) {
-					image = new WritableImage(width, height);
-					images.add(image);
-				} else {
-					image = images.get(index);
-				}
-				index++;
-				return image;
-			}
-		}
-
-		/**
-		 * Canvas implementation that recycles backing images via {@link ImageRecycler}.
-		 */
-		private class CachingPixelCanvas extends PixelCanvas {
-			public CachingPixelCanvas(@Nonnull PixelPainter<?> pixelPainter, int width, int height) {
-				super(pixelPainter, width, height);
-			}
-
-			@Nonnull
-			@Override
-			protected WritableImage newImage(int width, int height) {
-				return getRecycler(width, height).next();
-			}
 		}
 	}
 

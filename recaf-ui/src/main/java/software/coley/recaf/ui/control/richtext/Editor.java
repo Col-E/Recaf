@@ -54,6 +54,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -241,8 +242,8 @@ public class Editor extends BorderPane implements Closing {
 	 * <b>Must be called on FX thread.</b>
 	 */
 	public void redrawParagraphGraphics() {
-		int startParagraphIndex = Math.max(0, codeArea.firstVisibleParToAllParIndex() - 1);
-		int endParagraphIndex = Math.min(codeArea.getParagraphs().size() - 1, codeArea.lastVisibleParToAllParIndex());
+		int startParagraphIndex = Math.max(0, virtualFlow.getFirstVisibleIndex() - 1);
+		int endParagraphIndex = Math.min(codeArea.getParagraphs().size() - 1, virtualFlow.getLastVisibleIndex());
 		for (int i = startParagraphIndex; i <= endParagraphIndex; i++)
 			codeArea.recreateParagraphGraphic(i);
 	}
@@ -529,15 +530,17 @@ public class Editor extends BorderPane implements Closing {
 	 *
 	 * @return List of text nodes in the paragraph.
 	 */
+	@Nonnull
 	public List<Text> getTextNodes(int paragraph) {
 		// Get the cell from the given paragraph. It should exist since we're
 		// initializing a paragraph graphic for it.
-		Cell<?, ?> cell = virtualCellList.get(paragraph);
-		if (cell == null) return Collections.emptyList();
+		Optional<Cell<?, ?>> cell = virtualCellList.getIfMemoized(paragraph);
+		if (cell.isEmpty())
+			return Collections.emptyList();
 
 		// ParagraphBox is private in RichTextFX, but we just need to get the children so
 		// casting to region suffices.
-		Region paragraphBox = (Region) cell.getNode();
+		Region paragraphBox = (Region) cell.get().getNode();
 		ObservableList<Node> paragraphBoxChildren = paragraphBox.getChildrenUnmodifiable();
 
 		if (paragraphBoxChildren.isEmpty())
