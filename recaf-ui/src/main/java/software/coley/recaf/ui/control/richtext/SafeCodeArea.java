@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.richtext;
 
+import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
 
 /**
@@ -19,6 +20,18 @@ public class SafeCodeArea extends CodeArea {
 		}
 
 		return super.offsetToPosition(charOffset, bias);
+	}
+
+	@Override
+	public CharacterHit hit(double x, double y) {
+		try {
+			// Possible race condition of a virtual cell not being made 'present' yet
+			// so the virtual-flow hit-test throws a NoSuchElementException.
+			return super.hit(x, y);
+		} catch (Throwable t) {
+			// There's not a great way to recover, but 0 is always a safe value.
+			return CharacterHit.insertionAt(0);
+		}
 	}
 
 	@Override
