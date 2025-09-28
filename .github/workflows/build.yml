@@ -110,8 +110,8 @@ jobs:
           java-version: 22
       # The project version extract NEEDS to have the gradle wrapper already downloaded.
       # So we have a dummy step here just to initialize it.
-      - name: Download Gradle wrapper
-        run: ./gradlew --version
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
       # Set environment variable for the project version: "var_to_set=$(command_to_run)" >> sink
       #  - For maven:  echo "PROJECT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       #  - For gradle: echo "PROJECT_VERSION=$(./gradlew properties | grep -Po '(?<=version: ).*')" >> $GITHUB_ENV
