@@ -37,8 +37,8 @@ jobs:
           check-latest: true
       # The project version extract NEEDS to have the gradle wrapper already downloaded.
       # So we have a dummy step here just to initialize it.
-      - name: Download Gradle wrapper
-        run: ./gradlew --version
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
       # Run the tests and upload results/coverage
       - name: Run tests
         run: ./gradlew test
