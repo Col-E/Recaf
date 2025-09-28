@@ -60,6 +60,8 @@ public class Keywords {
 				"private",
 				"protected",
 				"public",
+				"record",
+				"return",
 				"static",
 				"strictfp",
 				"super",
