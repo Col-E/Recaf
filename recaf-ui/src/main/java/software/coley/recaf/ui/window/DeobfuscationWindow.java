@@ -53,6 +53,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.EnumNameRes
 import software.coley.recaf.services.deobfuscation.transform.generic.FrameRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalAnnotationRemovingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.IllegalNameMappingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.IllegalVarargsRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.KotlinNameRestorationTransformer;
@@ -155,6 +156,7 @@ public class DeobfuscationWindow extends RecafStage {
 					FrameRemovingTransformer.class,
 					IllegalAnnotationRemovingTransformer.class,
 					IllegalSignatureRemovingTransformer.class,
+					IllegalNameMappingTransformer.class,
 					IllegalVarargsRemovingTransformer.class,
 					UnknownAttributeRemovingTransformer.class
 			));
