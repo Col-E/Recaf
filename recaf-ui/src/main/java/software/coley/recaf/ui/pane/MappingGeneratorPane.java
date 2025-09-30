@@ -925,7 +925,7 @@ public class MappingGeneratorPane extends StackPane {
 
 		@Override
 		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {
-			sink.accept(Lang.getBinding("mapgen.filter.includelong"), new BoundIntSpinner(length));
+			sink.accept(Lang.getBinding("mapgen.filter.includelong"), new BoundIntSpinner(length, 1, Integer.MAX_VALUE));
 			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includeclass"), classes));
 			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includefield"), fields));
 			sink.accept(null, new BoundCheckBox(Lang.getBinding("mapgen.filter.includemethod"), methods));
