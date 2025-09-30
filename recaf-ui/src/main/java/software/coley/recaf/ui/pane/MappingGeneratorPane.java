@@ -69,6 +69,7 @@ import software.coley.recaf.services.mapping.gen.filter.IncludeLongNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeModifiersNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeNonJavaIdentifierNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.naming.DeconflictingNameGenerator;
@@ -415,6 +416,7 @@ public class MappingGeneratorPane extends StackPane {
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includemodifier", IncludeModifiers::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includewhitespacenames", IncludeWhitespaceNames::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includenonasciinames", IncludeNonAsciiNames::new),
+				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includenonjavaidentifiers", IncludeNonJavaIdentifierNames::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includekeywords", IncludeKeywordNames::new)
 		);
 
@@ -966,6 +968,27 @@ public class MappingGeneratorPane extends StackPane {
 		@Override
 		protected Function<NameGeneratorFilter, IncludeNonAsciiNameFilter> makeProvider() {
 			return IncludeNonAsciiNameFilter::new;
+		}
+
+		@Override
+		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {
+		}
+	}
+
+	/**
+	 * Config node for {@link IncludeNonJavaIdentifierNameFilter}.
+	 */
+	public static class IncludeNonJavaIdentifierNames extends FilterWithConfigNode<IncludeNonJavaIdentifierNameFilter> {
+		@Nonnull
+		@Override
+		public ObservableValue<String> display() {
+			return Lang.getBinding("mapgen.filter.includenonjavaidentifiers");
+		}
+
+		@Nonnull
+		@Override
+		protected Function<NameGeneratorFilter, IncludeNonJavaIdentifierNameFilter> makeProvider() {
+			return IncludeNonJavaIdentifierNameFilter::new;
 		}
 
 		@Override

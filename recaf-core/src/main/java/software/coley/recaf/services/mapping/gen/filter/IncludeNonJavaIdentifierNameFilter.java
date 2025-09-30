@@ -9,59 +9,67 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.List;
-import java.util.Set;
-
-import static software.coley.recaf.util.Keywords.getKeywords;
 
 /**
- * Filter that includes names that contain <i>(when split by boundary characters)</i> reserved Java keywords.
+ * Filter that includes names that do not comply with {@link Character#isJavaIdentifierStart(char)} and {@link Character#isJavaIdentifierPart(char)}.
  *
  * @author Matt Coley
  */
-public class IncludeKeywordNameFilter extends NameGeneratorFilter {
+public class IncludeNonJavaIdentifierNameFilter extends NameGeneratorFilter {
 	/**
 	 * @param next
 	 * 		Next filter to link. Chaining filters allows for {@code thisFilter && nextFilter}.
 	 */
-	public IncludeKeywordNameFilter(@Nullable NameGeneratorFilter next) {
+	public IncludeNonJavaIdentifierNameFilter(@Nullable NameGeneratorFilter next) {
 		super(next, false);
 	}
 
 	@Override
 	public boolean shouldMapClass(@Nonnull ClassInfo info) {
 		String name = info.getName();
-		if (containsKeyword(name))
+		if (isInvalidName(name))
 			return true;
 		return super.shouldMapClass(info);
 	}
 
 	@Override
 	public boolean shouldMapField(@Nonnull ClassInfo owner, @Nonnull FieldMember info) {
-		if (containsKeyword(info.getName()))
+		if (isInvalidName(info.getName()))
 			return true;
 		return super.shouldMapField(owner, info);
 	}
 
 	@Override
 	public boolean shouldMapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember info) {
-		if (containsKeyword(info.getName()))
+		if (isInvalidName(info.getName()))
 			return true;
 		return super.shouldMapMethod(owner, info);
 	}
 
 	@Override
 	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
-		if (containsKeyword(variable.getName()))
+		if (isInvalidName(variable.getName()))
 			return true;
 		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
 	}
 
-	private static boolean containsKeyword(@Nonnull String name) {
-		Set<String> keywords = getKeywords();
+	private static boolean isInvalidName(@Nonnull String name) {
 		List<String> parts = StringUtil.fastSplitNonIdentifier(name);
 		for (String part : parts) {
-			if (keywords.contains(part))
+			int length = part.length();
+			if (length == 0)
 				return true;
+			else if (length == 1)
+				return !Character.isJavaIdentifierStart(part.charAt(0));
+			else {
+				char[] chars = part.toCharArray();
+				if (!Character.isJavaIdentifierStart(chars[0]))
+					return true;
+				for (int i = 1; i < chars.length; i++) {
+					if (!Character.isJavaIdentifierPart(chars[i]))
+						return true;
+				}
+			}
 		}
 		return false;
 	}

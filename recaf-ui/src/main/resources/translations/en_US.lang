@@ -525,6 +525,7 @@ mapgen.filter.includevariable=Include on variables
 mapgen.filter.includewhitespacenames=Include whitespaces
 mapgen.filter.includenonasciinames=Include non-ascii
 mapgen.filter.includekeywords=Include keywords
+mapgen.filter.includenonjavaidentifiers=Include non-java identifiers
 mapgen.filter.includelong=Include long names
 mapgen.filter.includename=Include names
 mapgen.filter.includeclasses=Include classes

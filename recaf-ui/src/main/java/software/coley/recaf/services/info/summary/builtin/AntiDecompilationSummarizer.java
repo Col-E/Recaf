@@ -28,6 +28,7 @@ import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeNonJavaIdentifierNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.transform.JvmTransformResult;
@@ -63,7 +64,7 @@ import static software.coley.recaf.util.Lang.getBinding;
 public class AntiDecompilationSummarizer implements ResourceSummarizer {
 	private static final int BUTTON_WIDTH = 210;
 	private static final NameGeneratorFilter ILLEGAL_NAME_FILTER =
-			new IncludeWhitespaceNameFilter(new IncludeNonAsciiNameFilter(new IncludeKeywordNameFilter(null)));
+			new IncludeWhitespaceNameFilter(new IncludeNonAsciiNameFilter(new IncludeKeywordNameFilter(new IncludeNonJavaIdentifierNameFilter(null))));
 	private static final Logger logger = Logging.get(AntiDecompilationSummarizer.class);
 	private final TransformationApplierService transformationApplierService;
 	private final Instance<MappingGeneratorWindow> generatorWindowProvider;
@@ -118,6 +119,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeNonAsciiNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeKeywordNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeWhitespaceNames());
+						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeNonJavaIdentifierNames());
 						mappingGeneratorPane.addConfiguredFilter(new MappingGeneratorPane.IncludeLongName(400));
 						mappingGeneratorPane.generate();
 

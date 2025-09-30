@@ -111,6 +111,30 @@ public class StringUtil {
 
 	/**
 	 * @param input
+	 * 		Some text to split by all non-identifier <i>({@link Character#isJavaIdentifierPart(char)})</i> characters.
+	 *
+	 * @return List of strings between the split characters.
+	 */
+	@Nonnull
+	public static List<String> fastSplitNonIdentifier(@Nonnull String input) {
+		StringBuilder sb = new StringBuilder();
+		ArrayList<String> words = new ArrayList<>();
+		words.ensureCapacity(input.length() / 5);
+		char[] strArray = input.toCharArray();
+		for (char c : strArray) {
+			if (!Character.isJavaIdentifierPart(c)) {
+				if (!sb.isEmpty()) words.add(sb.toString());
+				sb.setLength(0);
+			} else {
+				sb.append(c);
+			}
+		}
+		if (!sb.isEmpty()) words.add(sb.toString());
+		return words;
+	}
+
+	/**
+	 * @param input
 	 * 		Some text containing newlines.
 	 *
 	 * @return Input split by newline.

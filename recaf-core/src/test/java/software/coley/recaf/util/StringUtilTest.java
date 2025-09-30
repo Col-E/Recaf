@@ -47,6 +47,22 @@ class StringUtilTest {
 	}
 
 	@Test
+	void fastSplitNonIdentifier() {
+		assertEquals(List.of("a", "b", "c", "d"), StringUtil.fastSplitNonIdentifier("a/b/c/d"));
+		assertEquals(List.of("a", "b", "c", "d"), StringUtil.fastSplitNonIdentifier("a b c d"));
+		assertEquals(List.of("a", "b", "c", "d"), StringUtil.fastSplitNonIdentifier("/a/b/c/d/"));
+		assertEquals(List.of("a", "b", "c", "d"), StringUtil.fastSplitNonIdentifier(" a b c d "));
+		assertEquals(Collections.emptyList(), StringUtil.fastSplitNonIdentifier("/"));
+		assertEquals(Collections.emptyList(), StringUtil.fastSplitNonIdentifier("//"));
+		assertEquals(Collections.emptyList(), StringUtil.fastSplitNonIdentifier("///"));
+		assertEquals(Collections.emptyList(), StringUtil.fastSplitNonIdentifier(" "));
+		assertEquals(Collections.emptyList(), StringUtil.fastSplitNonIdentifier("  "));
+		assertEquals(Collections.emptyList(), StringUtil.fastSplitNonIdentifier("   "));
+		assertEquals(List.of("if", "true", "while", "condition", "a", "b", "c", "continue"),
+				StringUtil.fastSplitNonIdentifier("if(true){while(condition||-a*+b<c){continue;}}"));
+	}
+
+	@Test
 	void testGetTabAdjustedLength() {
 		assertEquals(4, StringUtil.getTabAdjustedLength("\t", 4));
 		assertEquals(4, StringUtil.getTabAdjustedLength(" \t", 4));
