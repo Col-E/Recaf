@@ -1,12 +1,14 @@
 package software.coley.recaf.services.deobfuscation;
 
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
+import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -705,6 +707,41 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				}
 				""";
 		validateNoTransformation(asm, List.of(OpaqueConstantFoldingTransformer.class));
+	}
+
+	/**
+	 * This got addressed by not using {@link AsmInsnUtil#getSizeConsumed(AbstractInsnNode)} and
+	 * {@link AsmInsnUtil#getSizeProduced(AbstractInsnNode)} by default for computing foldable sequences
+	 * in {@link OpaqueConstantFoldingTransformer}. Instead, we do a simple 'this' and 'next' stack size
+	 * diff via {@link org.objectweb.asm.tree.analysis.Frame#getStackSize()}.
+	 */
+	@Test
+	void i2lConfusesConstantFoldingStackBalanceAndSkipsFoldableSequence() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        invokestatic Example.foo ()V
+				        iconst_0
+				        // Begin foldable
+				        ldc -114812231
+				        i2l
+				        ldc -8456834448885618340L
+				        lxor
+				        // End foldable
+				        invokestatic Example.bar (IJ)I
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("ldc -114812231"), "Failed to fold sequence");
+			assertFalse(dis.contains("i2l"), "Failed to fold sequence");
+			assertFalse(dis.contains("ldc -8456834448885618340L"), "Failed to fold sequence");
+			assertFalse(dis.contains("lxor"), "Failed to fold sequence");
+			assertTrue(dis.contains("ldc 8456834448930567141L"), "Failed to fold sequence into expected value");
+		});
 	}
 
 	/**

@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -22,6 +23,9 @@ import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.BlwUtil;
+import software.coley.recaf.util.analysis.ReEvaluationException;
+import software.coley.recaf.util.analysis.ReEvaluator;
+import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IntValue;
@@ -36,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -365,9 +370,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 				}
 
 				// Update the net stack size change.
-				int consumed = AsmInsnUtil.getSizeConsumed(insn);
-				int produced = AsmInsnUtil.getSizeProduced(insn);
-				int stackDiff = produced - consumed;
+				int stackDiff = computeInstructionStackDifference(frames, j, insn);
 				netStackChange += stackDiff;
 
 				// Step backwards.
@@ -533,6 +536,37 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 		// Evaluation failed, this is to be expected as some cases cannot always be evaluated.
 		return topValue;
+	}
+
+	/**
+	 * @param frames
+	 * 		Method stack frames.
+	 * @param i
+	 * 		Index in the stack frames of the given instruction.
+	 * @param insn
+	 * 		The instruction to evaluate for stack size differences after execution.
+	 *
+	 * @return Stack size difference after execution.
+	 */
+	private static int computeInstructionStackDifference(@Nonnull Frame<ReValue>[] frames, int i, @Nonnull AbstractInsnNode insn) {
+		// Ideally we just check the size difference between this frame and the next frame.
+		// Not all frames exist in the array, as dead code gets skipped by ASM's analyzer.
+		Frame<ReValue> thisFrame = frames[i];
+		Frame<ReValue> nextFrame = frames[i + 1];
+		if (thisFrame != null && nextFrame != null) {
+			int jsize = thisFrame.getStackSize();
+			int jsizeNext = nextFrame.getStackSize();
+			return jsizeNext - jsize;
+		}
+
+		// This is our fallback. These utility methods are not ideal because they follow the JVM spec.
+		// I know, that sounds ridiculous. But ASM's analyzer treats long/double as a single slot.
+		// These size methods will treat long/double as two slots. The discrepancy can lead to us not
+		// properly evaluating sequence lengths. This generally shouldn't ever be an issue unless we're
+		// looking at dead code regions (which make the frame null checks above fail).
+		int consumed = AsmInsnUtil.getSizeConsumed(insn);
+		int produced = AsmInsnUtil.getSizeProduced(insn);
+		return produced - consumed;
 	}
 
 	/**
