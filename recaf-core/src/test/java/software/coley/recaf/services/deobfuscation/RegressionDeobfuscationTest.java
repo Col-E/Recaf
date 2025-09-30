@@ -706,4 +706,55 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				""";
 		validateNoTransformation(asm, List.of(OpaqueConstantFoldingTransformer.class));
 	}
+
+	/**
+	 * This example shows how <i>"Get the value from the next frame"</i> can fail.
+	 * This was fixed by using a fallback computation when the next frame's value is unknown for a given
+	 * sequence of foldable instructions.
+	 */
+	@Test
+	void backwardsJumpConfusesConstantFoldingKnownStackReplacement() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        bipush 50
+				        goto C
+				    B:
+				        // Begin foldable --> 30
+				        bipush 15
+				        bipush 15
+				        iadd
+				        // End foldable
+				    C:
+				        // Stack top is either 50 or 30 depending on where we came from
+				        //
+				        // Begin foldable --> 10
+				        iconst_5
+				        iconst_5
+				        iadd
+				        iadd
+				        // End foldable
+				        //
+				        // This backwards jump to C creates a scenario where we revisit C.
+				        // - A will jump to C with 50 on the stack.
+				        // - B will naturally flow into C with 30 on the stack.
+				        // - This jumps back to B so the control flow over C has two possible stack top values
+				        lookupswitch {
+						    55: B,
+						    default: D
+						}
+					D:
+				        return
+				    E:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("iconst_5"), "Failed to fold sequence"); // The easy case
+			assertFalse(dis.contains("bipush 15"), "Failed to fold sequence"); // The edge case
+			assertTrue(dis.contains("bipush 10"), "Failed to fold easy-case sequence into expected value");
+			assertTrue(dis.contains("bipush 30"), "Failed to fold edge-case sequence into expected value");
+		});
+	}
 }

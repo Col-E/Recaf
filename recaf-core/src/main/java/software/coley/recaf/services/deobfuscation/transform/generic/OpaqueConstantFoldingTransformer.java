@@ -398,11 +398,19 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			ReValue topValue = isReturn ?
 					frame.getStack(frame.getStackSize() - 1) :
 					nextFrame.getStack(nextFrame.getStackSize() - 1);
+
+			// In some cases where the next instruction is a label targeted by backwards jumps from dummy/dead code
+			// the analyzer can get fooled into merging an unknown state into something that should be known.
+			// When this happens we can evaluate our sequence and see what the result should be.
+			if (!isReturn && !topValue.hasKnownValue()) {
+				topValue = evaluateTopFromSequence(context, method, sequence, topValue, frames, j);
+			}
+
 			AbstractInsnNode replacement = toInsn(topValue);
 			if (replacement == null) {
 				// Skip if this isn't an operation we can support
-				 if (frame.getStackSize() < 2)
-				 	continue;
+				if (frame.getStackSize() < 2)
+					continue;
 
 				// We don't know the result of the operation. But if it is something we know is redundant
 				// we will want to remove it anyways. For instance:
@@ -476,6 +484,55 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			dirty = true;
 		}
 		return dirty;
+	}
+
+	/**
+	 * Attempts to evaluate the given sequence of instructions to find the resulting value.
+	 *
+	 * @param context
+	 * 		Transformer context.
+	 * @param method
+	 * 		Method hosting the sequence of instructions.
+	 * @param sequence
+	 * 		Sequence of instructions to evaluate.
+	 * @param topValue
+	 * 		The existing top value that has an unknown value.
+	 * @param frames
+	 * 		The method stack frames.
+	 * @param sequenceStartIndex
+	 * 		The stack frame index where the sequence begins at.
+	 *
+	 * @return Top stack value after executing the given sequence of instructions.
+	 */
+	@Nonnull
+	private ReValue evaluateTopFromSequence(@Nonnull JvmTransformerContext context,
+	                                        @Nonnull MethodNode method,
+	                                        @Nonnull List<AbstractInsnNode> sequence,
+	                                        @Nonnull ReValue topValue,
+	                                        @Nonnull Frame<ReValue>[] frames,
+	                                        int sequenceStartIndex) {
+		// Need to wrap a copy of the instructions in its own InsnList
+		// so that instructions have 'getNext()' and 'getPrevious()' set properly.
+		Map<LabelNode, LabelNode> clonedLabels = Collections.emptyMap();
+		InsnList block = new InsnList();
+		for (AbstractInsnNode insn : sequence)
+			block.add(insn.clone(clonedLabels));
+
+		// Setup evaluator. We generally only support linear folding, so having the execution step limit
+		// match the sequence length with a little leeway should be alright.
+		final int maxSteps = sequence.size() + 10;
+		ReFrame initialBlockFrame = (ReFrame) frames[Math.max(0, sequenceStartIndex)];
+		ReEvaluator evaluator = new ReEvaluator(context.getWorkspace(), context.newInterpreter(inheritanceGraph), maxSteps);
+
+		// Evaluate the sequence and return the result.
+		try {
+			ReValue result = evaluator.evaluateBlock(block, initialBlockFrame, method.access);
+			if (Objects.equals(result.type(), topValue.type())) // Sanity check
+				return result;
+		} catch (ReEvaluationException ignored) {}
+
+		// Evaluation failed, this is to be expected as some cases cannot always be evaluated.
+		return topValue;
 	}
 
 	/**
