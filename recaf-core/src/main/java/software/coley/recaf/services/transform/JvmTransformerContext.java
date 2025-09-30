@@ -12,6 +12,7 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.FrameRemovingTransformer;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.util.analysis.ReAnalyzer;
@@ -393,6 +394,14 @@ public class JvmTransformerContext {
 	}
 
 	/**
+	 * @return Workspace containing the classes to transform.
+	 */
+	@Nonnull
+	public Workspace getWorkspace() {
+		return workspace;
+	}
+
+	/**
 	 * Get the {@link JvmClassTransformer} instance associated with this context, or throw an exception if no such
 	 * transformer is registered. If you are looking for an optional lookup use: {@link #getOptionalJvmTransformer(Class)}.
 	 *
@@ -516,7 +525,7 @@ public class JvmTransformerContext {
 	/**
 	 * Container of per-class transformation state.
 	 */
-	private static class JvmClassData {
+	private class JvmClassData {
 		private final JvmClassBundle bundle;
 		private final JvmClassInfo initialClass;
 		private volatile byte[] bytecode;
@@ -544,7 +553,9 @@ public class JvmTransformerContext {
 				synchronized (this) {
 					if (node == null) {
 						node = new ClassNode();
-						new ClassReader(bytecode).accept(node, 0);
+						int readerFlags = getOptionalJvmTransformer(FrameRemovingTransformer.class) == null ?
+								0 : ClassReader.SKIP_FRAMES; // Can bypass reading frames if this transformer is active.
+						new ClassReader(bytecode).accept(node, readerFlags);
 					}
 				}
 			}
