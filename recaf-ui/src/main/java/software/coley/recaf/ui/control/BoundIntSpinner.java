@@ -21,13 +21,25 @@ public class BoundIntSpinner extends Spinner<Integer> implements Tooltipable {
 
 	/**
 	 * @param value
-	 * 		property.
+	 * 		Property.
 	 */
 	public BoundIntSpinner(@Nonnull IntegerProperty value) {
+		this(value, Integer.MIN_VALUE, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * @param value
+	 * 		Property.
+	 * @param min
+	 * 		Property min value.
+	 * @param max
+	 * 		Property max value.
+	 */
+	public BoundIntSpinner(@Nonnull IntegerProperty value, int min, int max) {
 		final int initialValue = value.get();
 		final String initialValueStr = Integer.toString(initialValue);
 
-		setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(Integer.MIN_VALUE, Integer.MAX_VALUE, initialValue));
+		setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(min, max, initialValue));
 		setEditable(true);
 		setMaxWidth(Double.MAX_VALUE);
 		getEditor().setText(initialValueStr);

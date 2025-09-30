@@ -359,7 +359,7 @@ public class DeobfuscationWindow extends RecafStage {
 			TabPane tabs = new TabPane(beforeTab, afterTab);
 			tabs.getSelectionModel().select(afterTab);
 
-			BoundIntSpinner maxPassesSpinner = new BoundIntSpinner(maxPasses);
+			BoundIntSpinner maxPassesSpinner = new BoundIntSpinner(maxPasses, 1, 50);
 			Button pickClass = new ActionButton(CarbonIcons.ADD, Lang.getBinding("deobf.preview.pick"), () -> {
 				new ClassSelectionPopup(actions, configurationService, explorerConfig, workspaceManager.getCurrent(), path -> {
 					ClassInfo selection = path.getValue();
