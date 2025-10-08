@@ -238,6 +238,8 @@ public class ReEvaluator {
 					return frame.returnValue;
 			} catch (AnalyzerException e) {
 				throw new ReEvaluationException(e, "Failed executing instruction: " + BlwUtil.toString(pc));
+			} catch (NoNextException e) {
+				throw new ReEvaluationException(e, "Execution falls through end");
 			}
 			it--;
 		}
@@ -278,12 +280,17 @@ public class ReEvaluator {
 		while (it > 0) {
 			try {
 				pc = frame.evaluate(pc, interpreter);
+
+				// Check if return instruction assigned a value.
 				if (frame.returnValue != null)
 					return frame.returnValue;
-				if (!instructionBlock.contains(pc))
-					return frame.getStack(frame.getStackSize() - 1);
 			} catch (AnalyzerException e) {
 				throw new ReEvaluationException(e, "Failed executing instruction: " + BlwUtil.toString(pc));
+			} catch (NoNextException e) {
+				// If there is no next instruction from the given block, then control flow has exited the block.
+				// The intended use case for this is to be given incomplete segments of code and see what's on the
+				// top at the end, so we will yield that here.
+				return frame.getStack(frame.getStackSize() - 1);
 			}
 			it--;
 		}
@@ -366,10 +373,12 @@ public class ReEvaluator {
 		 *
 		 * @throws AnalyzerException
 		 * 		When the instruction cannot be evaluated.
+		 * @throws NoNextException
+		 * 		When there is no next instruction to execute.
 		 */
 		@Nonnull
-		public AbstractInsnNode evaluate(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter) throws AnalyzerException {
-			return switch (insn.getOpcode()) {
+		public AbstractInsnNode evaluate(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter) throws AnalyzerException, NoNextException {
+			AbstractInsnNode next = switch (insn.getOpcode()) {
 				case GOTO -> ((JumpInsnNode) insn).label;
 				case IFEQ -> conditional(insn, i -> i.isEqualTo(0));
 				case IFNE -> conditional(insn, i -> i.isNotEqualTo(0));
@@ -470,6 +479,9 @@ public class ReEvaluator {
 					yield insn.getNext();
 				}
 			};
+			if (next == null)
+				throw NoNextException.INSTANCE;
+			return next;
 		}
 
 		@Nonnull
@@ -497,6 +509,19 @@ public class ReEvaluator {
 		@Nonnull
 		public ReValue peek(int offset) {
 			return getStack(getStackSize() - 1 - offset);
+		}
+	}
+
+	/** Dummy exception to signal out-of-bounds flow in the evaluate methos. */
+	private static class NoNextException extends Exception {
+		private static final NoNextException INSTANCE = new NoNextException();
+
+		private NoNextException() {}
+
+		@Override
+		public synchronized Throwable fillInStackTrace() {
+			// Don't care.
+			return this;
 		}
 	}
 }
