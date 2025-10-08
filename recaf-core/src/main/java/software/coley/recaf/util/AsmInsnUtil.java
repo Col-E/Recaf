@@ -396,7 +396,9 @@ public class AsmInsnUtil implements Opcodes {
 	 *
 	 * @return {@code true} when it is a return operation.
 	 */
-	public static boolean isReturn(@Nonnull AbstractInsnNode insn) {
+	public static boolean isReturn(@Nullable AbstractInsnNode insn) {
+		if (insn == null)
+			return false;
 		return isReturn(insn.getOpcode());
 	}
 
@@ -417,9 +419,23 @@ public class AsmInsnUtil implements Opcodes {
 	 * @param insn
 	 * 		Instruction to check.
 	 *
+	 * @return {@code true} when it is a label.
+	 */
+	public static boolean isLabel(@Nullable AbstractInsnNode insn) {
+		if (insn == null)
+			return false;
+		return insn.getType() == AbstractInsnNode.LABEL;
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
 	 * @return {@code true} if the instruction modifies the control flow.
 	 */
-	public static boolean isFlowControl(@Nonnull AbstractInsnNode insn) {
+	public static boolean isFlowControl(@Nullable AbstractInsnNode insn) {
+		if (insn == null)
+			return false;
 		int type = insn.getType();
 		return type == AbstractInsnNode.JUMP_INSN ||
 				type == AbstractInsnNode.TABLESWITCH_INSN ||
