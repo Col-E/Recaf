@@ -357,16 +357,20 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			boolean validSequence = true;
 			int netStackChange = 0;
 			int j = i;
-			List<AbstractInsnNode> sequence = new ArrayList<>();
+			sequence.clear();
 			while (j >= 0) {
 				AbstractInsnNode insn = instructions.get(j);
 				int insnOp = insn.getOpcode();
 				if (insnOp != NOP && insnOp != -1) // Skip adding NOP/Labels
-					sequence.addFirst(insn);
+					sequence.add(insn);
 
 				// Abort if we observe control flow. Both outbound and inbound breaks sequences.
 				// If there is obfuscated control flow that is redundant use a control flow flattening transformer first.
-				if (AsmInsnUtil.isFlowControl(insn) || AsmInsnUtil.hasInboundFlowReferences(method, Collections.singletonList(insn))) {
+				if (isFlowControl(insn)) {
+					validSequence = false;
+					break;
+				}
+				if (insn.getType() == AbstractInsnNode.LABEL && hasInboundFlowReferences(method, Collections.singletonList(insn))) {
 					validSequence = false;
 					break;
 				}
@@ -382,6 +386,9 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 				if (netStackChange >= 1)
 					break;
 			}
+
+			// Doing 'List.add' + 'reverse' is faster than 'List.addFirst' on large inputs.
+			Collections.reverse(sequence);
 
 			// Skip if the completed sequence isn't a viable candidate for folding.
 			// - Explicitly marked as invalid
