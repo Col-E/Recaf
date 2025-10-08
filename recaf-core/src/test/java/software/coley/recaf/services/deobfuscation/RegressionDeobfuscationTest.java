@@ -788,8 +788,8 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				}
 				""";
 		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
-			assertFalse(dis.contains("iconst_5"), "Failed to fold sequence"); // The easy case
-			assertFalse(dis.contains("bipush 15"), "Failed to fold sequence"); // The edge case
+			assertFalse(dis.contains("iconst_5"), "Failed to fold easy sequence"); // The easy case
+			assertFalse(dis.contains("bipush 15"), "Failed to fold edge sequence"); // The edge case
 			assertTrue(dis.contains("bipush 10"), "Failed to fold easy-case sequence into expected value");
 			assertTrue(dis.contains("bipush 30"), "Failed to fold edge-case sequence into expected value");
 		});
