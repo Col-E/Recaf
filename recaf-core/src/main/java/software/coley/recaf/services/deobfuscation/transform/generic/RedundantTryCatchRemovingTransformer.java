@@ -99,6 +99,7 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 			dirty |= pass0PruneIgnoredHandlers(context, node, method);
 			dirty |= pass1PruneNeverThrown(context, workspace, node, method);
 			dirty |= pass2PruneNeverThrowingOrDuplicate(context, node, method);
+			dirty |= pass3CombineAdjacentTriesWithSameHandler(context, node, method);
 		}
 		if (dirty)
 			context.setNode(bundle, initialClassState, node);
@@ -730,6 +731,25 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 			}
 		}
 
+		return false;
+	}
+
+	private boolean pass3CombineAdjacentTriesWithSameHandler(@Nonnull JvmTransformerContext context, @Nonnull ClassNode node, @Nonnull MethodNode method) {
+		// TODO: If there are a series of touching ranges (may be separated by non-throwing instructions)
+		//       that all point to the same handler, they can be merged into one try-catch with the discovered catch handler types.
+		//       We cannot use the common type since that could lead to 'Throwable' which would change semantics.
+		//   Example:
+		//      try-handler: range=[A-B] handler=D:*
+		//      try-handler: range=[B-C] handler=D:*
+		//      try-handler: range=[C-D] handler=D:*
+		//      --- D handler ----
+		//      try-handler: range=[E-F] handler=D:*
+		//      try-handler: range=[F-G] handler=D:*
+		//      try-handler: range=[G-H] handler=D:*
+		//   Would become:
+		//      try-handler: range=[A-D] handler=D:*
+		//      --- D handler ----
+		//      try-handler: range=[E-H] handler=D:*
 		return false;
 	}
 
