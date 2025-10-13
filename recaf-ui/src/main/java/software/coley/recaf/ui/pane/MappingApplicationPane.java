@@ -4,6 +4,7 @@ import atlantafx.base.controls.Spacer;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -35,6 +36,7 @@ import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.FileChooserBundle;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
@@ -54,6 +56,7 @@ public class MappingApplicationPane extends BorderPane {
 	private final FileTypeSyntaxAssociationService languageAssociation;
 	private final WorkspaceManager workspaceManager;
 	private final RecentFilesConfig recentFilesConfig;
+	private final Instance<SearchBar> searchBarProvider;
 	private Runnable applyCallback;
 
 	@Inject
@@ -61,12 +64,14 @@ public class MappingApplicationPane extends BorderPane {
 	                              @Nonnull MappingHelper mappingHelper,
 	                              @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                              @Nonnull WorkspaceManager workspaceManager,
-	                              @Nonnull RecentFilesConfig recentFilesConfig) {
+	                              @Nonnull RecentFilesConfig recentFilesConfig,
+	                              @Nonnull Instance<SearchBar> searchBarProvider) {
 		this.formatManager = formatManager;
 		this.mappingHelper = mappingHelper;
 		this.languageAssociation = languageAssociation;
 		this.workspaceManager = workspaceManager;
 		this.recentFilesConfig = recentFilesConfig;
+		this.searchBarProvider = searchBarProvider;
 
 		setBottom(createButtonBar());
 		setCenter(createDisplay());
@@ -84,6 +89,9 @@ public class MappingApplicationPane extends BorderPane {
 		editor.getCodeArea().setEditable(false);
 		editor.setText("No mappings loaded");
 		languageAssociation.configureEditorSyntax("enigma", editor);
+
+		SearchBar searchBar = searchBarProvider.get();
+		searchBar.install(editor);
 
 		mappingsProperty.addListener((ob, old, cur) -> {
 			if (cur == null) {
