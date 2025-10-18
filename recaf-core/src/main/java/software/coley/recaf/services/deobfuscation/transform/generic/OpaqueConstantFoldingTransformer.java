@@ -403,8 +403,14 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 				continue;
 
 			// Keep the return instruction in the sequence.
-			if (isReturn && isReturn(sequence.getLast()))
+			if (isReturn && isReturn(sequence.getLast())) {
 				sequence.removeLast();
+
+				// Removing the return can put us under the limit. In this case, there is nothing to fold.
+				// There is just a value and then the return.
+				if (sequence.size() < 2)
+					continue;
+			}
 
 			// Replace the operation with a constant value, or simplified instruction pattern.
 			ReValue topValue = isReturn ?
