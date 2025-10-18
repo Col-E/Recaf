@@ -795,6 +795,295 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 		});
 	}
 
+	/**
+	 * A snippet of DashO obfuscation. Includes a series of opaque jumps with some loop-backs in dead code.
+	 * There's also sequences that set up the stack before those jumps which also have variable state side effects.
+	 * These two issues have caused issues with opaque folding transformers in the past.
+	 */
+	@Test
+	void dashFlow() {
+		String asm = """
+				.method private static example ()Ljava/lang/String; {
+				    code: {
+				    A:
+				        ldc "example-text-to-decrypt"
+				        bipush 15
+				        goto P
+				    B:
+				        goto C
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    C:
+				        iadd
+				        idiv
+				        iinc i0 14
+				        ldc "22"
+				        astore v1
+				        goto AB
+				    D:
+				        goto E
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    E:
+				        iconst_4
+				        dup
+				        iconst_0
+				        istore i0
+				        ldc "0"
+				        astore v1
+				        goto M
+				    F:
+				        goto G
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    G:
+				        iinc i0 6
+				        iconst_0
+				        iconst_0
+				        goto T
+				    H:
+				        goto I
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    I:
+				        iinc i0 15
+				        pop
+				        iconst_1
+				        goto R
+				    J:
+				        goto K
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    K:
+				        iadd
+				        iadd
+				        iinc i0 8
+				        ldc "22"
+				        astore v1
+				        goto S
+				    L:
+				        aload v1
+				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
+				        tableswitch {
+				            min: 0,
+				            max: 1,
+				            cases: { U },
+				            default: H
+				        }
+				    M:
+				        aload v1
+				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
+				        tableswitch {
+				            min: 0,
+				            max: 1,
+				            cases: { J },
+				            default: AA
+				        }
+				    N:
+				        goto O
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    O:
+				        bipush 15
+				        dup
+				        iconst_0
+				        istore i0
+				        ldc "0"
+				        astore v1
+				        goto T
+				    P:
+				        goto Q
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    Q:
+				        iconst_m1
+				        istore i0
+				        ldc "0"
+				        iinc i0 1
+				        astore v1
+				        goto L
+				    R:
+				        iload i0
+				        tableswitch {
+				            min: 0,
+				            max: 1,
+				            cases: { W },
+				            default: D
+				        }
+				    S:
+				        iload i0
+				        tableswitch {
+				            min: 0,
+				            max: 1,
+				            cases: { F },
+				            default: N
+				        }
+				    T:
+				        aload v1
+				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
+				        tableswitch {
+				            min: 0,
+				            max: 1,
+				            cases: { B },
+				            default: Y
+				        }
+				    U:
+				        goto V
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    V:
+				        bipush 11
+				        imul
+				        iinc i0 5
+				        ldc "22"
+				        astore v1
+				        goto R
+				    W:
+				        goto X
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    X:
+				        iinc i0 9
+				        iconst_1
+				        iconst_1
+				        goto M
+				    Y:
+				        goto Z
+				        athrow
+				        nop
+				        nop
+				        athrow
+				        athrow
+				    Z:
+				        iinc i0 13
+				        pop
+				        pop
+				        goto AB
+				    AA:
+				        iinc i0 8
+				        pop
+				        pop
+				        goto S
+				    AB:
+				        invokestatic Example.decrypt (Ljava/lang/String;I)Ljava/lang/String;
+				        nop
+				        areturn
+				    AC:
+				    }
+				}
+				""";
+		validateAfterRepeatedAssembly(asm, List.of(
+				GotoInliningTransformer.class,
+				VariableFoldingTransformer.class,
+				OpaqueConstantFoldingTransformer.class,
+				OpaquePredicateFoldingTransformer.class
+		), dis -> {
+			// Flow should be removed
+			assertFalse(dis.contains("goto"));
+			assertFalse(dis.contains("switch"));
+			assertFalse(dis.contains("if"));
+
+			// Variable reads/writes should be removed
+			assertFalse(dis.contains("iinc"));
+			assertFalse(dis.contains("store"));
+			assertFalse(dis.contains("load"));
+
+			// It should be just:
+			//   return decrypt(const-text, const-key);
+			assertFalse(dis.contains("C:"), "Method should be simplified enough to fit between two labels [A-B]");
+		});
+	}
+
+	/**
+	 * A mocked up sample that has been hand-crafted to mimic DashO.
+	 * The block of code in 'A' before the switch modifies state that is required later for proper folding.
+	 * This test ensures transformers don't overly optimize earlier code that can prevent later sections
+	 * from being properly folded.
+	 */
+	@Test
+	void mockDashFlow() {
+		String asm = """
+				.method private static example (I)Ljava/lang/String; {
+					parameters: { foo },
+				    code: {
+				    A:
+				        iconst_0
+				        istore i
+				        ldc "0"
+				        iconst_1
+				        istore foo
+				        iinc i 1
+				        astore s
+				        aload s
+				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
+				        tableswitch {
+				            min: 0,
+				            max: 1,
+				            cases: { B },
+				            default: X
+				        }
+				    B:
+				        iload foo
+				        ifeq X
+				    C:
+				        iload i
+				        tableswitch {
+				            min: 0,
+				            max: 1,
+				            cases: { X },
+				            default: D
+				        }
+				    D:
+				        ldc "win"
+				        areturn
+				    X:
+				        iinc foo 1
+				        iload foo
+				        ifne B
+				        ldc "fail"
+				        areturn
+				    Z:
+				    }
+				}
+				""";
+		validateAfterRepeatedAssembly(asm, List.of(
+				GotoInliningTransformer.class,
+				VariableFoldingTransformer.class,
+				OpaqueConstantFoldingTransformer.class,
+				OpaquePredicateFoldingTransformer.class
+		), dis -> {
+			assertFalse(dis.contains("switch"));
+			assertFalse(dis.contains("iinc"));
+		});
+	}
+
 	@Test
 	void perf() {
 		String asm = """
