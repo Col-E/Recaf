@@ -73,7 +73,8 @@ public class Keywords {
 				// "transitive",
 				// "var",
 				// "varargs",
-				"volatile"
+				"volatile",
+				"yield"
 		));
 		// Primitive types
 		keywords.addAll(Arrays.asList(
