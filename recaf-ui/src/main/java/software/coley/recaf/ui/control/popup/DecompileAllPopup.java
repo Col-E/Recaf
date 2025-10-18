@@ -28,7 +28,11 @@ import software.coley.recaf.ui.control.ObservableComboBox;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
-import software.coley.recaf.util.*;
+import software.coley.recaf.util.FileChooserBuilder;
+import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -42,6 +46,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 /**
  * Popup for initiating decompilation of all classes, saved to a specified location.
@@ -54,6 +59,7 @@ public class DecompileAllPopup extends RecafStage {
 	private final ObjectProperty<Path> pathProperty = new SimpleObjectProperty<>();
 	private final ObservableObject<JvmDecompiler> decompilerProperty;
 	private final BooleanProperty inProgressProperty = new SimpleBooleanProperty();
+	private Predicate<String> namePredicate = name -> true;
 	private JvmClassBundle targetBundle;
 
 	@Inject
@@ -98,7 +104,11 @@ public class DecompileAllPopup extends RecafStage {
 
 					// Skip special case classes like 'module-info' and 'package-info'
 					String name = cls.getName();
-					return cls.getSuperName() != null || (!name.equals("module-info") && !name.endsWith("package-info"));
+					if (cls.getSuperName() == null || name.equals("module-info") || name.endsWith("package-info"))
+						return false;
+
+					// Pass to name predicate for final say
+					return namePredicate.test(name);
 				}).toList();
 
 				// Determine delta of each decompilation
@@ -148,6 +158,12 @@ public class DecompileAllPopup extends RecafStage {
 		});
 		decompileButton.disableProperty().bind(pathProperty.isNull().or(inProgressProperty));
 
+		// Hide when done
+		progress.progressProperty().addListener((ob, old, cur) -> {
+			if (cur.doubleValue() >= 1)
+				hide();
+		});
+
 		// Layout
 		GridPane layout = new GridPane(8, 8);
 		GridPane.setFillWidth(progress, true);
@@ -187,5 +203,13 @@ public class DecompileAllPopup extends RecafStage {
 	 */
 	public void setTargetBundle(@Nonnull JvmClassBundle targetBundle) {
 		this.targetBundle = targetBundle;
+	}
+
+	/**
+	 * @param namePredicate
+	 * 		Name predicate for whitelisting names.
+	 */
+	public void setNamePredicate(@Nonnull Predicate<String> namePredicate) {
+		this.namePredicate = namePredicate;
 	}
 }
