@@ -6,12 +6,14 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.collections.Lists;
 import software.coley.recaf.info.JvmClassInfo;
@@ -38,6 +40,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -358,6 +361,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			int netStackChange = 0;
 			int j = i;
 			sequence.clear();
+			Map<Integer, ReValue> sequenceVarWrites = new HashMap<>();
 			while (j >= 0) {
 				AbstractInsnNode insn = instructions.get(j);
 				int insnOp = insn.getOpcode();
@@ -373,6 +377,24 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 				if (insn.getType() == AbstractInsnNode.LABEL && hasInboundFlowReferences(method, Collections.singletonList(insn))) {
 					validSequence = false;
 					break;
+				}
+
+				// Record variable side effects.
+				// Because j steps backwards the first encountered write will be the only thing we need to ensure
+				// is kept after folding the sequence.
+				Frame<ReValue> jframe = frames[j];
+				if (isVarStore(insnOp) && insn instanceof VarInsnNode vin) {
+					int index = vin.var;
+					ReValue stack = frame.getStack(frame.getStackSize() - 1);
+					if (!stack.hasKnownValue())
+						break;
+					sequenceVarWrites.putIfAbsent(index, stack);
+				} else if (insn instanceof IincInsnNode iinc) {
+					int index = iinc.var;
+					ReValue local = frame.getLocal(index);
+					if (!local.hasKnownValue() || !(local instanceof IntValue intLocal))
+						break;
+					sequenceVarWrites.putIfAbsent(index, intLocal.add(iinc.incr));
 				}
 
 				// Update the net stack size change.
@@ -438,6 +460,15 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					instructions.set(old, replacement);
 				} else {
 					instructions.set(instructions.get(i), replacement);
+
+					// Insert variable writes to ensure their states are not affected by our inlining.
+					sequenceVarWrites.forEach((index, value) -> {
+						AbstractInsnNode varReplacement = toInsn(value);
+						VarInsnNode varStore = createVarStore(index, Objects.requireNonNull(value.type(), "Missing var type"));
+						instructions.insertBefore(replacement, varReplacement);
+						instructions.insertBefore(replacement, varStore);
+					});
+					i += sequenceVarWrites.size() * 2;
 				}
 				dirty = true;
 			} else {
