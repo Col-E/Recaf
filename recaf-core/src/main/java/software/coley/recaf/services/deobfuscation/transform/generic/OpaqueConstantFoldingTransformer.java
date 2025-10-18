@@ -437,7 +437,11 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			} else {
 				// If we don't have a replacement (since the end state cannot be resolved) see if we can at least
 				// fold redundant operations like "x = x * 1".
-				dirty |= foldRedundantOperations(instructions, instruction, frame);
+				if (foldRedundantOperations(instructions, instruction, frame)) {
+					dirty = true;
+				} else {
+					i += sequence.size() - 1;
+				}
 			}
 		}
 		return dirty;

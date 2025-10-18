@@ -794,4 +794,21 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 			assertTrue(dis.contains("bipush 30"), "Failed to fold edge-case sequence into expected value");
 		});
 	}
+
+	@Test
+	void perf() {
+		String asm = """
+				.method public static example (I)I {
+					parameters: { foo },
+				    code: {
+				    A:
+				        iload foo
+				\0
+				        ireturn
+				    E:
+				    }
+				}
+				""".replace("\0", "        iconst_1\n        iadd\n".repeat(20_000));
+		validateNoTransformation(asm, List.of(OpaqueConstantFoldingTransformer.class));
+	}
 }
