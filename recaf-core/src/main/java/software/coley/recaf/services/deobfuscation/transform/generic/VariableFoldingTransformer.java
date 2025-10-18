@@ -234,7 +234,16 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 					Type varType = getTypeForVarInsn(vin);
 					LocalAccessState state = states.get(key(vin.var, varType.getSort()));
 					if (state != null && state.isInlinableValue() && (state.getReads().isEmpty() || state.isEffectiveConstant())) {
-						instructions.set(vin, new InsnNode(varType.getSize() == 1 ? POP : POP2));
+						AbstractInsnNode previous = insn.getPrevious();
+						if (OpaqueConstantFoldingTransformer.isSupportedValueProducer(previous)) {
+							// If the previous instruction is a supported value producer (consumes nothing on the stack, provides a supported value)
+							// then we can just nop both this store and the producer.
+							instructions.set(previous, new InsnNode(NOP));
+							instructions.set(vin, new InsnNode(NOP));
+						} else {
+							// The previous instruction cannot be safely replaced, so we just replace the store with a pop.
+							instructions.set(vin, new InsnNode(varType.getSize() == 1 ? POP : POP2));
+						}
 						dirty = true;
 					}
 				} else if (op == IINC && insn instanceof IincInsnNode iinc) {
