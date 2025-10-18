@@ -273,7 +273,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class, VariableFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("lconst_1", dis), "Expected to fold inputs");
 			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to fold inputs");
 			assertEquals(1, StringUtil.count("ldc 2L", dis), "Expected to fold stack operation to 2L");
@@ -1644,7 +1644,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class, VariableFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("array", dis), "Expected to fold redundant array");
 			assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to 5");
 		});
@@ -2349,8 +2349,8 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 
 	@Test
 	void foldUnusedIincWithConstantFolding() {
-		// As opposed to the variable folding transformer, this will one-shot the entire sequence and handle
-		// all cleanup in a single pass.
+		// Constant folding will collapse all steps of this, but keep the perceived side-effects of variable writes.
+		// Those residual variable writes will be cleaned up with the variable folding transformer.
 		String asm = """
 				.method public static example ()I {
 				    code: {
@@ -2369,7 +2369,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class, VariableFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("iconst_0", dis), "Expected to remove initial 0 value");
 			assertEquals(0, StringUtil.count("istore", dis), "Expected to remove redundant istore");
 			assertEquals(0, StringUtil.count("iinc", dis), "Expected to remove redundant iinc");
@@ -2749,7 +2749,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class, GotoInliningTransformer.class), dis -> {
+		validateAfterRepeatedAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class, GotoInliningTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("goto", dis), "Expected to replace all goto <target> with inlining");
 		});
 	}
