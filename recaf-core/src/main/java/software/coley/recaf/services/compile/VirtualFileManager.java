@@ -3,7 +3,11 @@ package software.coley.recaf.services.compile;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileManager;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -36,7 +40,7 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 
 	@Override
 	public Iterable<JavaFileObject> list(@Nonnull Location location, @Nonnull String packageName,
-										 @Nonnull Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
+	                                     @Nonnull Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
 		Iterable<JavaFileObject> list = super.list(location, packageName, kinds, recurse);
 		if (StandardLocation.CLASS_PATH.equals(location) && kinds.contains(JavaFileObject.Kind.CLASS)) {
 			String formatted = packageName.isEmpty() ? "" : packageName.replace('.', '/') + '/';
@@ -48,7 +52,7 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 						name.indexOf('/', formatted.length()) == -1;
 			}
 			return () -> new ClassPathIterator(list.iterator(), virtualClasspath.stream()
-					.flatMap(resource -> resource.getJvmClassBundle().entrySet().stream())
+					.flatMap(resource -> resource.jvmClassBundleStream().flatMap(b -> b.entrySet().stream()))
 					.filter(entry -> check.test(entry.getKey()))
 					.<JavaFileObject>map(entry -> new ResourceVirtualJavaFileObject(entry.getKey(),
 							entry.getValue().getBytecode(), JavaFileObject.Kind.CLASS))

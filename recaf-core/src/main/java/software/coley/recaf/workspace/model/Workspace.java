@@ -192,11 +192,13 @@ public interface Workspace extends Closing {
 			WorkspaceResource resource = resourceQueue.remove();
 
 			// Check JVM bundles for class by the given name
-			JvmClassBundle bundle = resource.getJvmClassBundle();
-			JvmClassInfo classInfo = bundle.get(name);
-			if (classInfo != null)
-				return PathNodes.classPath(this, resource, bundle, classInfo);
-			for (VersionedJvmClassBundle versionedBundle : resource.getVersionedJvmClassBundles().values()) {
+			JvmClassInfo classInfo;
+			for (JvmClassBundle bundle : resource.jvmClassBundleStream().toList()) {
+				classInfo = bundle.get(name);
+				if (classInfo != null)
+					return PathNodes.classPath(this, resource, bundle, classInfo);
+			}
+			for (VersionedJvmClassBundle versionedBundle : resource.versionedJvmClassBundleStream().toList()) {
 				classInfo = versionedBundle.get(name);
 				if (classInfo != null)
 					return PathNodes.classPath(this, resource, versionedBundle, classInfo);
@@ -397,8 +399,8 @@ public interface Workspace extends Closing {
 					Function<WorkspaceResource, Stream<ClassPathNode>> streamBuilder = res -> {
 						Stream<ClassPathNode> stream = null;
 						List<JvmClassBundle> bundles = new ArrayList<>();
-						bundles.add(res.getJvmClassBundle());
-						bundles.addAll(res.getVersionedJvmClassBundles().values());
+						bundles.addAll(res.jvmClassBundleStream().toList());
+						bundles.addAll(res.versionedJvmClassBundleStream().toList());
 						for (JvmClassBundle bundle : bundles) {
 							BundlePathNode bundlePath = PathNodes.bundlePath(this, res, bundle);
 							Stream<ClassPathNode> localStream = bundle.values()

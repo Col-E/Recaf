@@ -29,7 +29,7 @@ public class LibrarySource extends BaseSource {
 	@Override
 	public Entries getEntries() {
 		List<Entry> entries = workspace.getAllResources(false).stream()
-				.map(WorkspaceResource::getJvmClassBundle)
+				.flatMap(WorkspaceResource::jvmClassBundleStream)
 				.flatMap(c -> c.keySet().stream())
 				.map(className -> new Entry(className, Entry.BASE_VERSION))
 				.collect(Collectors.toList());
