@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
+import javafx.stage.WindowEvent;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.services.cell.icon.IconProviderService;
@@ -63,11 +64,13 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 				builder.item("menu.export.classes", DOCUMENT_EXPORT, () -> actions.exportClasses(workspace, resource, jvmBundle));
 				builder.item("menu.file.decompileall", DOCUMENT_EXPORT, () -> {
 					DecompileAllPopup popup = decompileAllPaneProvider.get();
+					popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, e -> decompileAllPaneProvider.destroy(popup));
 					popup.setTargetBundle(jvmBundle);
 					popup.show();
 				});
 				builder.item("menu.edit.changeversion", ARROWS_VERTICAL, () -> {
 					ChangeClassVersionForAllPopup popup = changeClassVersionProvider.get();
+					popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, e -> changeClassVersionProvider.destroy(popup));
 					popup.setTargetBundle(jvmBundle);
 					popup.show();
 				});
