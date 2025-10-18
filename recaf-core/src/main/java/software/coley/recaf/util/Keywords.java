@@ -56,6 +56,7 @@ public class Keywords {
 				// "mandated",
 				// "module",
 				"native",
+				"new",
 				// "open",
 				"private",
 				"protected",
