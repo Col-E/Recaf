@@ -155,17 +155,15 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 				if (insn.getOpcode() != GOTO)
 					continue;
 
-				// Skip any jump target labels that are visited more than once.
-				JumpInsnNode jin = (JumpInsnNode) insn;
-				if (visitCounters.of(jin.label).count() > 1)
-					continue;
-
 				// If the goto target label is just the next instruction then we can replace
 				// the goto with a nop. The dead code pass later on will clean these up.
-				if (jin.label == jin.getNext()) {
+				JumpInsnNode jin = (JumpInsnNode) insn;
+				VisitCounter counter = visitCounters.of(jin.label);
+				if (jin.label == jin.getNext() && !counter.isTryTarget()) {
 					localDirty = true;
 					instructions.set(jin, new InsnNode(NOP));
-					visitCounters.of(jin.label).removeExplicitSource(jin);
+					counter.removeExplicitSource(jin);
+					counter.markImplicitFlow();
 				}
 			}
 
@@ -384,6 +382,14 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 			if (!explicitFlowSources.isEmpty())
 				return true;
 			return implicitFlow || tryTarget;
+		}
+
+		public boolean isImplicitFlow() {
+			return implicitFlow;
+		}
+
+		public boolean isTryTarget() {
+			return tryTarget;
 		}
 
 		public long getExplicitFlowSourcesExcluding(@Nonnull Collection<AbstractInsnNode> block) {
