@@ -52,7 +52,7 @@ public abstract class AbstractSyntaxHighlighter implements SyntaxHighlighter {
 		int spanCount = spans.getSpanCount();
 		if (spanCount > maxSpans) {
 			logger.warn("Skipping syntax computation, input of {} spans, max is {}", spanCount, maxSpans);
-			return StyleSpans.singleton(Collections.emptyList(), start - end);
+			return StyleSpans.singleton(Collections.emptyList(), end - start);
 		}
 
 		// The more problematic "lag" comes when a single line holds many spans.
