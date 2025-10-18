@@ -106,6 +106,11 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 					if (!isFlowControl(instruction))
 						continue;
 
+					// Skip goto, branch is always taken.
+					// Use the goto inliner if you want to clean these up.
+					if (instruction.getOpcode() == GOTO)
+						continue;
+
 					// Skip if there is no frame for this instruction.
 					if (i >= frames.length)
 						continue; // Can happen if there is dead code at the end
@@ -120,6 +125,7 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 
 					// Get instruction of the top stack's contributing instruction.
 					// It must also be a value producing instruction.
+					// If this is something that isn't value producing, another transformer needs to simplify it first.
 					AbstractInsnNode prevInstruction = AsmInsnUtil.getPreviousInsn(instruction);
 					if (prevInstruction == null || !isValueProducerOrTopDup(prevInstruction))
 						continue;
