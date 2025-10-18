@@ -310,7 +310,7 @@ public class ReEvaluator {
 		}
 
 		public ExecutingFrame(int maxLocals, int maxStack, int access) {
-			super(maxLocals, maxStack);
+			super(null, maxLocals, maxStack);
 			isStatic = AccessFlag.isStatic(access);
 		}
 
