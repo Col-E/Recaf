@@ -26,6 +26,11 @@ public interface ClassComments {
 	Instant getLastUpdatedTime();
 
 	/**
+	 * @return {@code true} when any comments exist on this class, or any of its declared members.
+	 */
+	boolean hasComments();
+
+	/**
 	 * @return Class comment, if any.
 	 */
 	@Nullable

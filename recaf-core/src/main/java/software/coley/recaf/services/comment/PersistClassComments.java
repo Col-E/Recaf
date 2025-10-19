@@ -32,6 +32,13 @@ public class PersistClassComments implements ClassComments {
 		return lastUpdatedTime;
 	}
 
+	@Override
+	public boolean hasComments() {
+		return classComment != null
+				|| fieldComments.values().stream().anyMatch(s -> s != null && !s.isBlank())
+				|| methodComments.values().stream().anyMatch(s -> s != null && !s.isBlank());
+	}
+
 	@Nullable
 	@Override
 	public String getClassComment() {

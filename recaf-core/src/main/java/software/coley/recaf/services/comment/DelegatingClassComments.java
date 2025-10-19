@@ -55,6 +55,11 @@ public class DelegatingClassComments implements ClassComments {
 		return delegate.getLastUpdatedTime();
 	}
 
+	@Override
+	public boolean hasComments() {
+		return delegate.hasComments();
+	}
+
 	@Nullable
 	@Override
 	public String getClassComment() {

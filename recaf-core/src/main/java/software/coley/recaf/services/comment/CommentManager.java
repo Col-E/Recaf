@@ -40,8 +40,10 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -334,9 +336,28 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	 */
 	@PreDestroy
 	private void onShutdown() {
-		// Skip persist in test environment
+		// Skip persist in test environment.
 		if (TestEnvironment.isTestEnv())
 			return;
+
+		// Remove entries that are empty.
+		Set<String> empty = new HashSet<>();
+		persistMap.forEach((key, workspaceComments) -> {
+			if (workspaceComments.classKeys().isEmpty()) {
+				empty.add(key);
+			} else {
+				boolean isEmpty = true;
+				for (ClassComments classComments : workspaceComments) {
+					if (classComments.hasComments()) {
+						isEmpty = false;
+						break;
+					}
+				}
+				if (isEmpty)
+					empty.add(key);
+			}
+		});
+		empty.forEach(persistMap::remove);
 
 		try {
 			Gson gson = gsonProvider.getGson();
@@ -432,6 +453,18 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 		if (!workspaceManager.hasCurrentWorkspace())
 			return null;
 		return getOrCreateWorkspaceComments(workspaceManager.getCurrent());
+	}
+
+	/**
+	 * @param workspace
+	 * 		Workspace to remove comments of.
+	 *
+	 * @return {@code true} if a workspace was found and removed.
+	 * {@code false} if no comments existed for the workspace.
+	 */
+	public boolean removeWorkspaceComments(@Nonnull Workspace workspace) {
+		String input = CommentKey.workspaceInput(workspace);
+		return persistMap.remove(input) != null || delegatingMap.remove(input) != null;
 	}
 
 	/**
