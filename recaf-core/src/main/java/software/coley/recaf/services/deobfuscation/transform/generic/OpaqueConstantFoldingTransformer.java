@@ -333,6 +333,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		List<AbstractInsnNode> sequence = new ArrayList<>();
 		Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
 		int endIndex = instructions.size() - 1;
+		int unknownState = -1;
 		for (int i = 1; i < endIndex; i++) {
 			AbstractInsnNode instruction = instructions.get(i);
 			int opcode = instruction.getOpcode();
@@ -367,6 +368,15 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 				int insnOp = insn.getOpcode();
 				if (insnOp != NOP && insnOp != -1) // Skip adding NOP/Labels
 					sequence.add(insn);
+
+				// Abort if we've walked backwards into instructions where we observed an unknown stack state.
+				if (j < unknownState) {
+					// Move the unknown state forward since up to this point the stack is unbalanced
+					// and thus this point relies on the prior point.
+					unknownState = i;
+					validSequence = false;
+					break;
+				}
 
 				// Abort if we observe control flow. Both outbound and inbound breaks sequences.
 				// If there is obfuscated control flow that is redundant use a control flow flattening transformer first.
@@ -477,7 +487,14 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 				if (foldRedundantOperations(instructions, instruction, frame)) {
 					dirty = true;
 				} else {
-					i += sequence.size() - 1;
+					int stackSize = frame.getStackSize();
+					for (int s = 0; s < stackSize; s++) {
+						ReValue stack = frame.getStack(s);
+						if (!stack.hasKnownValue()) {
+							unknownState = i;
+							break;
+						}
+					}
 				}
 			}
 		}
