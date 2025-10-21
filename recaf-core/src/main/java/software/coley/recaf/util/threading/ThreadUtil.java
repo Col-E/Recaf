@@ -69,6 +69,7 @@ public class ThreadUtil {
 				action.run();
 				future.complete(null);
 			} catch (Throwable t) {
+				logger.error("Unhandled exception on thread '{}'", Thread.currentThread().getName(), t);
 				future.completeExceptionally(t);
 			}
 		}, delayMs, TimeUnit.MILLISECONDS);
