@@ -33,6 +33,7 @@ import software.coley.recaf.workspace.PathLoadingManager;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.awt.Toolkit;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -137,8 +138,11 @@ public class FileMenu extends WorkspaceAwareMenu {
 			Runnable remove = () -> recentWorkspaces.remove(model);
 			if (model.canLoadWorkspace()) {
 				// Workspace can be loaded
-				String extension = IOUtil.getExtension(model.primary().path());
-				Node graphic = Icons.getIconView(Icons.getIconPathForFileExtension(extension));
+				String primaryPathString = model.primary().path();
+				String extension = IOUtil.getExtension(primaryPathString);
+				Node graphic = new File(primaryPathString).isDirectory() ?
+						Icons.getIconView(Icons.FOLDER) :
+						Icons.getIconView(Icons.getIconPathForFileExtension(extension));
 				menuRecent.getItems().add(new ClosableActionMenuItem(title, graphic, () -> {
 					// If the model can no longer be loaded remove it.
 					if (!model.canLoadWorkspace()) {
@@ -150,7 +154,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 					}
 
 					// Get paths from model
-					Path primaryPath = Paths.get(model.primary().path());
+					Path primaryPath = Paths.get(primaryPathString);
 					List<Path> supportingPaths = model.libraries().stream()
 							.map(resource -> Paths.get(resource.path()))
 							.toList();
@@ -224,6 +228,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 		OpenUrlPopup popup = openUrlProvider.get();
 		popup.show();
 		popup.requestInputFocus();
+		popup.setOnHiding(e -> openUrlProvider.destroy(popup));
 	}
 
 	/**

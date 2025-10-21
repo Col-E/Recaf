@@ -37,6 +37,7 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.PathLoadingManager;
 
 import java.awt.Toolkit;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -127,8 +128,11 @@ public class WelcomePane extends BorderPane implements Navigable {
 			if (models.isEmpty())
 				recentsPane.getChildren().add(new BoundLabel(Lang.getBinding("welcome.norecent")));
 			for (RecentFilesConfig.WorkspaceModel model : models) {
-				String extension = IOUtil.getExtension(model.primary().path());
-				Node graphic = Icons.getIconView(Icons.getIconPathForFileExtension(extension));
+				String primaryPathString = model.primary().path();
+				String extension = IOUtil.getExtension(primaryPathString);
+				Node graphic = new File(primaryPathString).isDirectory() ?
+						Icons.getIconView(Icons.FOLDER) :
+						Icons.getIconView(Icons.getIconPathForFileExtension(extension));
 
 				Hyperlink entry = new Hyperlink(model.primary().getSimpleName(), graphic);
 				entry.setOnAction(e -> load(pathLoadingManager, model));
