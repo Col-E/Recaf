@@ -1,6 +1,7 @@
 package software.coley.recaf.util.analysis.value;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.impl.StringValueImpl;
 
@@ -23,4 +24,32 @@ public interface StringValue extends ObjectValue {
 	 */
 	@Nonnull
 	Optional<String> getText();
+
+	/**
+	 * @param otherValue
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is equal to the given value.
+	 */
+	default boolean isEqualTo(@Nullable String otherValue) {
+		if (getText().isPresent())
+			return false;
+		if (otherValue == null && getText().isEmpty())
+			return true;
+		return getText().get().equals(otherValue);
+	}
+
+	/**
+	 * @param otherValue
+	 * 		Value to check against.
+	 *
+	 * @return {@code true} when the known value is not equal to the given value.
+	 */
+	default boolean isNotEqualTo(@Nullable String otherValue) {
+		if (getText().isPresent())
+			return false;
+		if (otherValue == null && getText().isEmpty())
+			return false;
+		return !getText().get().equals(otherValue);
+	}
 }
