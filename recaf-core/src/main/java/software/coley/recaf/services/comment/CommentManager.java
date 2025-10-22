@@ -185,8 +185,10 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 								comment = StringUtil.wordWrap(comment, wordWrapLimit);
 
 							if (comment.contains("\n")) {
-								// The calculated indent includes the '\n' so we can just for-each the comment lines and prefix it.
-								String indent = code.substring(Math.max(0, code.lastIndexOf("\n", commentIndex)), commentIndex);
+								// The indent starts after the '\n' so that in cases where there isn't a '\n' found we
+								// will consistently insert one.
+								int indentBegin = Math.max(0, code.lastIndexOf("\n", commentIndex) + 1);
+								String indent = '\n' + code.substring(indentBegin, commentIndex);
 								StringBuilder sb = new StringBuilder("/**");
 								comment.lines().forEach(line -> sb.append(indent).append(" * ").append(line));
 								sb.append(indent).append(" */");
