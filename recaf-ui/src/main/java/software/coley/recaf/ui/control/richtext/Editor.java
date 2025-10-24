@@ -104,8 +104,7 @@ public class Editor extends BorderPane implements Closing {
 		Object virtualCellManager = Unchecked.get(() -> ReflectUtil.quietGet(virtualFlow, VirtualFlow.class.getDeclaredField("cellListManager")));
 		virtualCellList = ReflectUtil.quietInvoke(virtualCellManager.getClass(), virtualCellManager, "getLazyCellList", new Class[0], new Object[0]);
 
-		// Initial layout / style.
-		getStylesheets().add("/style/code-editor.css");
+		// Initial layout.
 		setCenter(stackPane);
 		stackPane.getChildren().add(codeScrollWrapper);
 

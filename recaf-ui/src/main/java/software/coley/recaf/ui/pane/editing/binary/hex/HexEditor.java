@@ -55,8 +55,6 @@ public class HexEditor extends BorderPane {
 	@Inject
 	public HexEditor(@Nonnull HexConfig config) {
 		this.config = config;
-		getStylesheets().add("/style/code-editor.css");
-		getStylesheets().add("/style/hex.css");
 		getStyleClass().add("hex-view");
 		flow = VirtualFlow.createVertical(rows, row -> new HexRow(config, rowCount, ops, row));
 		flow.setFocusTraversable(true);

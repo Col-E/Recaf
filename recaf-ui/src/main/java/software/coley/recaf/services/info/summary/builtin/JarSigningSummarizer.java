@@ -103,7 +103,6 @@ public class JarSigningSummarizer implements ResourceSummarizer {
 		for (FileInfo rsaFile : rsaFiles) {
 			try {
 				CodeArea area = new CodeArea();
-				area.getStylesheets().add("/style/code-editor.css");
 				area.getStyleClass().addAll("background-dark", "border-muted");
 				Collection<? extends Certificate> certificates = CERTIFICATE_FACTORY.generateCertificates(new ByteArrayInputStream(rsaFile.getRawContent()));
 				for (Certificate certificate : certificates) {
