@@ -69,8 +69,10 @@ public class RecafApplication extends Application {
 				recaf.get(PathExportingManager.class).export(workspaceManager.getCurrent());
 			}
 		});
-		stage.setMinWidth(900 / scaleConfig.getScale());
-		stage.setMinHeight(600 / scaleConfig.getScale());
+		stage.setMinWidth(450 / scaleConfig.getScale());
+		stage.setMinHeight(200 / scaleConfig.getScale());
+		stage.setWidth(900 / scaleConfig.getScale());
+		stage.setHeight(620 / scaleConfig.getScale());
 		stage.setScene(scene);
 		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		stage.setTitle("Recaf");

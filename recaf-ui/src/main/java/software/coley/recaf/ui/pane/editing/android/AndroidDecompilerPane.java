@@ -13,6 +13,7 @@ import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationS
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.services.source.AstService;
+import software.coley.recaf.services.tutorial.TutorialConfig;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
@@ -31,7 +32,8 @@ public class AndroidDecompilerPane extends AbstractDecompilePane {
 	private static final Logger logger = Logging.get(AndroidDecompilerPane.class);
 
 	@Inject
-	public AndroidDecompilerPane(@Nonnull DecompilerPaneConfig config,
+	public AndroidDecompilerPane(@Nonnull DecompilerPaneConfig decompilerConfig,
+								 @Nonnull TutorialConfig tutorialConfig,
 	                             @Nonnull KeybindingConfig keys,
 	                             @Nonnull SearchBar searchBar,
 	                             @Nonnull ToolsContainerComponent toolsContainer,
@@ -40,10 +42,10 @@ public class AndroidDecompilerPane extends AbstractDecompilePane {
 	                             @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                             @Nonnull DecompilerManager decompilerManager,
 	                             @Nonnull Actions actions) {
-		super(config, searchBar, astService, contextActionSupport, languageAssociation, decompilerManager);
+		super(decompilerConfig, tutorialConfig, searchBar, astService, contextActionSupport, languageAssociation, decompilerManager);
 
 		// Install tools container with configurator
-		new AndroidDecompilerPaneConfigurator(toolsContainer, config, decompiler, decompilerManager);
+		new AndroidDecompilerPaneConfigurator(toolsContainer, decompilerConfig, decompiler, decompilerManager);
 		new AndroidClassInfoProvider(toolsContainer, this);
 		installToolsContainer(toolsContainer);
 

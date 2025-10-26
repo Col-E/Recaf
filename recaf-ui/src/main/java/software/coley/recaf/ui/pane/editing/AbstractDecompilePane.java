@@ -39,6 +39,7 @@ import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.AstMapper;
 import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.services.source.ResolverAdapter;
+import software.coley.recaf.services.tutorial.TutorialConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
@@ -81,11 +82,13 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	protected final AstService astService;
 	protected final JavaContextActionSupport contextActionSupport;
 	protected final DecompilerManager decompilerManager;
-	protected final DecompilerPaneConfig config;
+	protected final DecompilerPaneConfig decompileConfig;
+	protected final TutorialConfig tutorialConfig;
 	protected final Editor editor;
 	protected ClassPathNode path;
 
-	protected AbstractDecompilePane(@Nonnull DecompilerPaneConfig config,
+	protected AbstractDecompilePane(@Nonnull DecompilerPaneConfig decompileConfig,
+	                                @Nonnull TutorialConfig tutorialConfig,
 	                                @Nonnull SearchBar searchBar,
 	                                @Nonnull AstService astService,
 	                                @Nonnull JavaContextActionSupport contextActionSupport,
@@ -94,7 +97,8 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		this.astService = astService;
 		this.contextActionSupport = contextActionSupport;
 		this.decompilerManager = decompilerManager;
-		this.config = config;
+		this.decompileConfig = decompileConfig;
+		this.tutorialConfig = tutorialConfig;
 
 		decompiler.setValue(decompilerManager.getTargetJvmDecompiler());
 		decompiler.addChangeListener((ob, old, cur) -> decompile());
@@ -174,7 +178,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 
 			// Check if we can update the text efficiently with a remapper.
 			// If not, then schedule a decompilation instead.
-			if (!config.getUseMappingAcceleration().getValue() || !handleRemapUpdate(classInfo))
+			if (!decompileConfig.getUseMappingAcceleration().getValue() || !handleRemapUpdate(classInfo))
 				decompile();
 		}
 	}
@@ -275,7 +279,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		decompileInProgress.setValue(true);
 		editor.setMouseTransparent(true);
 		decompilerManager.decompile(decompiler.getValue(), workspace, classInfo)
-				.completeOnTimeout(timeoutResult(), config.getTimeoutSeconds().getValue(), TimeUnit.SECONDS)
+				.completeOnTimeout(timeoutResult(), decompileConfig.getTimeoutSeconds().getValue(), TimeUnit.SECONDS)
 				.whenCompleteAsync((result, throwable) -> {
 					editor.setMouseTransparent(false);
 					decompileInProgress.setValue(false);
@@ -339,7 +343,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 				""".formatted(info.getName(),
 				info.getBytecode().length,
 				jvmDecompiler.getName(), jvmDecompiler.getVersion(),
-				config.getTimeoutSeconds().getValue()
+				decompileConfig.getTimeoutSeconds().getValue()
 		));
 	}
 

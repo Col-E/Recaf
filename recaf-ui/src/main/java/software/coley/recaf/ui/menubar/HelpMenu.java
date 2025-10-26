@@ -8,10 +8,13 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.services.tutorial.TutorialWorkspaceBuilder;
 import software.coley.recaf.services.window.WindowManager;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.DesktopUtil;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.threading.ThreadUtil;
 
 import java.net.URI;
 
@@ -26,21 +29,35 @@ import static software.coley.recaf.util.Menus.action;
 @Dependent
 public class HelpMenu extends Menu {
 	private static final Logger logger = Logging.get(HelpMenu.class);
+	private final TutorialWorkspaceBuilder tutorialWorkspaceBuilder;
+	private final WorkspaceManager workspaceManager;
 	private final WindowManager windowManager;
 
 	@Inject
-	public HelpMenu(@Nonnull WindowManager windowManager) {
+	public HelpMenu(@Nonnull WindowManager windowManager,
+	                @Nonnull WorkspaceManager workspaceManager,
+	                @Nonnull TutorialWorkspaceBuilder tutorialWorkspaceBuilder) {
+		this.tutorialWorkspaceBuilder =tutorialWorkspaceBuilder;
+		this.workspaceManager = workspaceManager;
 		this.windowManager = windowManager;
 
 		textProperty().bind(getBinding("menu.help"));
 		setGraphic(new FontIconView(CarbonIcons.HELP));
 
+		getItems().add(action("menu.help.tutorial", CarbonIcons.PEDESTRIAN_CHILD, this::openTutorial));
 		getItems().add(action("menu.help.sysinfo", CarbonIcons.INFORMATION, this::openSystem));
 		getItems().add(action("menu.help.docs", CarbonIcons.NOTEBOOK_REFERENCE, this::openDocumentation));
 		getItems().add(action("menu.help.docsdev", CarbonIcons.NOTEBOOK_REFERENCE, this::openDeveloperDocumentation));
 		getItems().add(action("menu.help.github", CarbonIcons.LOGO_GITHUB, this::openGithub));
 		getItems().add(action("menu.help.issues", CarbonIcons.LOGO_GITHUB, this::openGithubIssues));
 		getItems().add(action("menu.help.discord", Icons.DISCORD, this::openDiscord));
+	}
+
+	/**
+	 * Display the tutorial workspace.
+	 */
+	private void openTutorial() {
+		ThreadUtil.run(() -> workspaceManager.setCurrent(tutorialWorkspaceBuilder.generateWorkspace()));
 	}
 
 	/**

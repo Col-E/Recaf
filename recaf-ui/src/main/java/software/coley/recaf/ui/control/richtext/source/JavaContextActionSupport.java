@@ -4,6 +4,7 @@ import atlantafx.base.controls.Popover;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.control.Button;
@@ -15,6 +16,7 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
@@ -33,6 +35,7 @@ import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.services.source.ResolverAdapter;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -71,6 +74,7 @@ import java.util.concurrent.Future;
  * @author Matt Coley
  * @see FieldsAndMethodsPane#setupSelectionNavigationListener(ClassNavigable) Originating call for {@link #select(ClassMember)}.
  * @see AssemblerContextActionSupport Alternative for context actions on assembly sources.
+ * @see JavaContextActionManager Manager for adding select/resolve listeners.
  */
 @Dependent
 public class JavaContextActionSupport implements EditorComponent, UpdatableNavigable, Closing {
@@ -80,6 +84,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private final NavigableMap<Integer, Integer> offsetMap = new TreeMap<>();
 	private final AstAvailabilityButton astAvailabilityButton = new AstAvailabilityButton();
 	private final CellConfigurationService cellConfigurationService;
+	private final JavaContextActionManager contextManager;
 	private final Workspace workspace;
 	private final AstService astService;
 	private final Parser parser;
@@ -95,12 +100,21 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 
 	@Inject
 	public JavaContextActionSupport(@Nonnull CellConfigurationService cellConfigurationService,
+	                                @Nonnull JavaContextActionManager contextManager,
 	                                @Nonnull AstService astService,
-	                                @Nonnull Workspace workspace) {
+	                                @Nonnull WorkspaceManager workspace) {
 		this.cellConfigurationService = cellConfigurationService;
+		this.contextManager = contextManager;
 		this.astService = astService;
-		this.workspace = workspace;
+		this.workspace = workspace.getCurrent();
 		parser = astService.getSharedJavaParser();
+	}
+
+	@PreDestroy
+	private void cleanup() {
+		lastFuture.cancel(true);
+		queuedSelectionTask = null;
+		parseThreadPool.close();
 	}
 
 	/**
@@ -221,6 +235,9 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 						}
 					}
 				}
+				Unchecked.checkedForEach(contextManager.getSelectListeners(),
+						listener -> listener.onSelect(path.child(member)),
+						(listener, t) -> logger.error("Exception thrown on select listener '{}'", listener.getClass(), t));
 			} catch (Throwable t) {
 				logger.error("Unhandled exception in Java context support - select '{}'", member.getName(), t);
 			}
@@ -256,7 +273,14 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private AstResolveResult resolvePosition(int pos, boolean doOffset) {
 		if (unit == null || resolver == null) return null;
 		if (doOffset) pos = offset(pos);
-		return resolver.resolveThenAdapt(pos);
+		AstResolveResult result = resolver.resolveThenAdapt(pos);
+		if (result != null) {
+			int finalPos = pos;
+			Unchecked.checkedForEach(contextManager.getResolveListeners(),
+					listener -> listener.onResolve(result, finalPos),
+					(listener, t) -> logger.error("Exception thrown on resolve listener '{}'", listener.getClass(), t));
+		}
+		return result;
 	}
 
 	/**

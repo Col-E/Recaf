@@ -22,14 +22,12 @@ import software.coley.recaf.util.DevDetection;
 public class DecompilerPaneConfig extends BasicConfigContainer {
 	private final ObservableInteger timeoutSeconds = new ObservableInteger(60);
 	private final ObservableBoolean useMappingAcceleration = new ObservableBoolean(false);
-	private final ObservableBoolean acknowledgedSaveWithErrors = new ObservableBoolean(DevDetection.isDevEnv());
 
 	@Inject
 	public DecompilerPaneConfig() {
 		super(ConfigGroups.SERVICE_UI, "decompile-pane" + CONFIG_SUFFIX);
 		addValue(new BasicConfigValue<>("timeout-seconds", int.class, timeoutSeconds));
 		addValue(new BasicConfigValue<>("mapping-acceleration", boolean.class, useMappingAcceleration));
-		addValue(new BasicConfigValue<>("acknowledged-save-with-errors", boolean.class, acknowledgedSaveWithErrors, true));
 	}
 
 	/**
@@ -38,14 +36,6 @@ public class DecompilerPaneConfig extends BasicConfigContainer {
 	@Nonnull
 	public ObservableInteger getTimeoutSeconds() {
 		return timeoutSeconds;
-	}
-
-	/**
-	 * @return Flag indicating if the user has acknowledged they cannot save with errors.
-	 */
-	@Nonnull
-	public ObservableBoolean getAcknowledgedSaveWithErrors() {
-		return acknowledgedSaveWithErrors;
 	}
 
 	/**

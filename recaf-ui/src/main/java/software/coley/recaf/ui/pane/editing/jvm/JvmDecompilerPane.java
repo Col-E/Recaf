@@ -36,6 +36,8 @@ import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationS
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.services.source.AstService;
+import software.coley.recaf.services.tutorial.TutorialConfig;
+import software.coley.recaf.services.tutorial.TutorialWorkspace;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
@@ -85,7 +87,8 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	private final JavacCompiler javac;
 
 	@Inject
-	public JvmDecompilerPane(@Nonnull DecompilerPaneConfig config,
+	public JvmDecompilerPane(@Nonnull DecompilerPaneConfig decompileConfig,
+	                         @Nonnull TutorialConfig tutorialConfig,
 	                         @Nonnull KeybindingConfig keys,
 	                         @Nonnull SearchBar searchBar,
 	                         @Nonnull ToolsContainerComponent toolsContainer,
@@ -96,14 +99,14 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	                         @Nonnull JavacCompiler javac,
 	                         @Nonnull JavacCompilerConfig javacConfig,
 	                         @Nonnull Actions actions) {
-		super(config, searchBar, astService, contextActionSupport, languageAssociation, decompilerManager);
+		super(decompileConfig, tutorialConfig, searchBar, astService, contextActionSupport, languageAssociation, decompilerManager);
 		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
 		this.javacTarget = new ObservableInteger(javacConfig.getDefaultTargetVersion().getValue());
 		this.javacDownsampleTarget = new ObservableInteger(javacConfig.getDefaultDownsampleTargetVersion().getValue());
 		this.javac = javac;
 
 		// Install tools container with configurator
-		new JvmDecompilerPaneConfigurator(toolsContainer, config, decompiler, javacTarget, javacDownsampleTarget, javacDebug, decompilerManager);
+		new JvmDecompilerPaneConfigurator(toolsContainer, decompileConfig, decompiler, javacTarget, javacDownsampleTarget, javacDebug, decompilerManager);
 		new JvmClassInfoProvider(toolsContainer, this);
 		installToolsContainer(toolsContainer);
 
@@ -313,8 +316,8 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 					for (CompilerDiagnostic diagnostic : result.getDiagnostics())
 						problemTracking.add(Problem.fromDiagnostic(diagnostic));
 
-					// For first-timers, tell them you cannot save with errors.
-					if (!config.getAcknowledgedSaveWithErrors().getValue())
+					// For first-timers (excluding when the tutorial is open), tell them you cannot save with errors.
+					if (!tutorialConfig.getAcknowledgedSaveWithErrors().getValue() && !(workspace instanceof TutorialWorkspace))
 						showFirstTimeSaveWithErrors();
 				} else {
 					logger.error("Compilation encountered an error on class '{}'", infoName, throwable);
@@ -380,7 +383,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 
 		// When pressed, mark flag so prompt is not shown again.
 		acknowledge.setOnAction(e -> {
-			config.getAcknowledgedSaveWithErrors().setValue(true);
+			tutorialConfig.getAcknowledgedSaveWithErrors().setValue(true);
 			overlayModal.hide();
 		});
 	}

@@ -7,6 +7,7 @@ import software.coley.recaf.info.properties.builtin.InputFilePathProperty;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.services.tutorial.TutorialWorkspaceResource;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
@@ -99,17 +100,27 @@ public record CommentKey(int workspaceHash, int pathHash) {
 		// We want to generate a key based on some info that is consistent and re-producible over time.
 		// Ideally we can get a sort of 'source' of the loaded content from each primary resource of the given workspace.
 		WorkspaceResource resource = workspace.getPrimaryResource();
-		if (resource instanceof WorkspaceFileResource fileResource) {
-			// Hash based on file path of input, or file name if full path not known.
-			FileInfo fileInfo = fileResource.getFileInfo();
-			Path path = InputFilePathProperty.get(fileInfo);
-			return path == null ? fileInfo.getName() : path.toString();
-		} else if (resource instanceof WorkspaceDirectoryResource directoryResource) {
-			// Hash based on directory path of input.
-			return directoryResource.getDirectoryPath().toString();
-		} else if (resource instanceof WorkspaceRemoteVmResource remoteVmResource) {
-			// Hash based on VM id, which is generally consistent when re-running the same application.
-			return remoteVmResource.getVirtualMachine().id();
+		switch (resource) {
+			case WorkspaceFileResource fileResource -> {
+				// Hash based on file path of input, or file name if full path not known.
+				FileInfo fileInfo = fileResource.getFileInfo();
+				Path path = InputFilePathProperty.get(fileInfo);
+				return path == null ? fileInfo.getName() : path.toString();
+			}
+			case WorkspaceDirectoryResource directoryResource -> {
+				// Hash based on directory path of input.
+				return directoryResource.getDirectoryPath().toString();
+			}
+			case WorkspaceRemoteVmResource remoteVmResource -> {
+				// Hash based on VM id, which is generally consistent when re-running the same application.
+				return remoteVmResource.getVirtualMachine().id();
+			}
+			case TutorialWorkspaceResource tutorialResource -> {
+				// Constant name for the tutorial.
+				return TutorialWorkspaceResource.COMMENT_KEY;
+			}
+			default -> {
+			}
 		}
 
 		// Unsupported workspace content.

@@ -33,6 +33,7 @@ import software.coley.recaf.services.mapping.MappingApplicationListener;
 import software.coley.recaf.services.mapping.MappingListeners;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.Mappings;
+import software.coley.recaf.services.tutorial.TutorialWorkspaceResource;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.TestEnvironment;
@@ -341,6 +342,9 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 		// Skip persist in test environment.
 		if (TestEnvironment.isTestEnv())
 			return;
+
+		// Do not persist the tutorial workspace comments.
+		persistMap.remove(TutorialWorkspaceResource.COMMENT_KEY);
 
 		// Remove entries that are empty.
 		Set<String> empty = new HashSet<>();

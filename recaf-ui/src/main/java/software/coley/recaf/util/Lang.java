@@ -259,6 +259,7 @@ public class Lang {
 	 *
 	 * @return Translated value, based on {@link #getCurrentTranslations() current loaded mappings}.
 	 */
+	@Nonnull
 	public static String get(String translationKey) {
 		return get(getCurrentTranslations(), translationKey);
 	}

@@ -265,10 +265,6 @@ public class DeobfuscationWindow extends RecafStage {
 						setText(null);
 						setGraphic(null);
 					} else {
-						// TODO: If we add "CompositeTransformer" to our system (a transformer that wraps several others in a specific order)
-						//  then this logic will need to be updated to "unroll" those wrapped transformers.
-						//   - However, if they transformers have a proper dependencies ordering (or dont care about order) then we can
-						//     just have a composite add each in their own dependencies
 						int index = getIndex();
 						List<? extends Class<? extends ClassTransformer>> transformerClasses = transformerOrder.stream()
 								.map(t -> t.transformer().transformer().getClass())

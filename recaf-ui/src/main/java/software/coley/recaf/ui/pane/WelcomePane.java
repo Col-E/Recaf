@@ -22,6 +22,9 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.tutorial.TutorialConfig;
+import software.coley.recaf.services.tutorial.TutorialWorkspaceBuilder;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.BoundHyperlink;
 import software.coley.recaf.ui.control.BoundLabel;
@@ -34,6 +37,7 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.PathLoadingManager;
 
 import java.awt.Toolkit;
@@ -59,7 +63,10 @@ public class WelcomePane extends BorderPane implements Navigable {
 	@Inject
 	public WelcomePane(@Nonnull RecentFilesConfig recentFiles,
 	                   @Nonnull PathLoadingManager pathLoadingManager,
-	                   @Nonnull WorkspaceLoadingDropListener listener) {
+	                   @Nonnull WorkspaceLoadingDropListener listener,
+	                   @Nonnull WorkspaceManager workspaceManager,
+	                   @Nonnull TutorialConfig tutorialConfig,
+	                   @Nonnull TutorialWorkspaceBuilder tutorialWorkspaceBuilder) {
 		FileDropListener disablingListener = (region, event, files) -> {
 			// Disable when content is dragged over this panel while the workspace is loading.
 			// There's not a great feedback mechanism without a goofy timeout so this silly hack works for now.
@@ -76,10 +83,10 @@ public class WelcomePane extends BorderPane implements Navigable {
 		VBox versionPane = new VBox();
 		VBox linksPane = new VBox();
 		VBox recentsPane = new VBox();
-		VBox dndPane = new VBox();
+		VBox bottomPane = new VBox();
 		linksPane.setPadding(new Insets(10));
 		recentsPane.setPadding(new Insets(10));
-		dndPane.setPadding(new Insets(10));
+		bottomPane.setPadding(new Insets(10));
 		{
 			String sha = RecafBuildConfig.GIT_SHA;
 			Label title = new Label("Recaf " + RecafBuildConfig.VERSION);
@@ -139,18 +146,23 @@ public class WelcomePane extends BorderPane implements Navigable {
 				recentsPane.getChildren().add(entry);
 			}
 		}
-		{
-			BoundLabel label = new BoundLabel(getBinding("welcome.dnd"));
-			label.getStyleClass().add(Styles.TEXT_SUBTLE);
-			dndPane.getChildren().addAll(label);
-			dndPane.setAlignment(Pos.CENTER);
+		if (!tutorialConfig.getFinishedTutorial().getValue()) {
+			BoundLabel dndLabel = new BoundLabel(getBinding("welcome.dnd"));
+			dndLabel.getStyleClass().add(Styles.TEXT_SUBTLE);
+
+			Hyperlink tutorialLink = new BoundHyperlink(getBinding("welcome.tutorial"), null, () -> {
+				ThreadUtil.run(() -> workspaceManager.setCurrent(tutorialWorkspaceBuilder.generateWorkspace()));
+			});
+
+			bottomPane.getChildren().addAll(dndLabel, tutorialLink);
+			bottomPane.setAlignment(Pos.CENTER);
 		}
 		BorderPane middleWrapper = new BorderPane();
 		middleWrapper.setLeft(linksPane);
 		middleWrapper.setRight(recentsPane);
 		wrapper.setTop(versionPane);
 		wrapper.setCenter(middleWrapper);
-		wrapper.setBottom(dndPane);
+		wrapper.setBottom(bottomPane);
 
 
 		VBox content = new VBox(new Group(wrapper));
