@@ -75,6 +75,11 @@ sourceSets {
     }
 }
 
+clean {
+    // Delete the generated gversion class when cleaning
+    delete 'src/generated'
+}
+
 private boolean isBuildConfigUpToDate() {
     File buildConfigPath = project.file(gversion.srcDir +
             gversion.classPackage.replace('.', '/') + '/' +
