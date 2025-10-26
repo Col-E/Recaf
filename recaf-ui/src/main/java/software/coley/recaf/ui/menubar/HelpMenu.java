@@ -44,8 +44,8 @@ public class HelpMenu extends Menu {
 		textProperty().bind(getBinding("menu.help"));
 		setGraphic(new FontIconView(CarbonIcons.HELP));
 
-		getItems().add(action("menu.help.tutorial", CarbonIcons.PEDESTRIAN_CHILD, this::openTutorial));
 		getItems().add(action("menu.help.sysinfo", CarbonIcons.INFORMATION, this::openSystem));
+		getItems().add(action("menu.help.tutorial", CarbonIcons.PEDESTRIAN_CHILD, this::openTutorial));
 		getItems().add(action("menu.help.docs", CarbonIcons.NOTEBOOK_REFERENCE, this::openDocumentation));
 		getItems().add(action("menu.help.docsdev", CarbonIcons.NOTEBOOK_REFERENCE, this::openDeveloperDocumentation));
 		getItems().add(action("menu.help.github", CarbonIcons.LOGO_GITHUB, this::openGithub));
