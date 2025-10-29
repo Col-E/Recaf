@@ -23,23 +23,22 @@ public class Keywords {
 		return Collections.unmodifiableSet(keywords);
 	}
 
+	// Commented out items are 'keywords' but can be used as names.
 	static {
-		// Commented out items are 'keywords' but can be used as names.
-		keywords.addAll(Arrays.asList("abstract",
+		// Misc language constructs
+		keywords.addAll(Arrays.asList(
 				"assert",
 				"break",
 				// "bridge",
 				"case",
 				"catch",
 				"class",
-				"const",
 				"continue",
 				"default",
 				"do",
 				"else",
 				"enum",
 				"extends",
-				"final",
 				"finally",
 				"while",
 				"for",
@@ -51,29 +50,39 @@ public class Keywords {
 				"interface",
 				// "mandated",
 				// "module",
-				"native",
 				"new",
 				// "open",
+				"package",
+				"record",
+				"return",
+				"super",
+				"try",
+				"this",
+				"throw",
+				"throws"
+				// "var",
+				// "varargs",
+				// "yield"
+		));
+
+		// Modifiers
+		keywords.addAll(Arrays.asList(
+				"abstract",
+				"const",
+				"final",
+				"native",
 				"private",
 				"protected",
 				"public",
-				"record",
-				"return",
 				"static",
 				"strictfp",
-				"super",
 				"synchronized",
 				// "synthetic",
 				"transient",
-				"try",
-				"throw",
-				"throws",
 				// "transitive",
-				// "var",
-				// "varargs",
-				"volatile",
-				"yield"
+				"volatile"
 		));
+
 		// Primitive types
 		keywords.addAll(Arrays.asList(
 				"boolean",
@@ -84,7 +93,13 @@ public class Keywords {
 				"long",
 				"float",
 				"double",
-				"void",
+				"void"
+		));
+
+		// Primitive values
+		keywords.addAll(Arrays.asList(
+				"true",
+				"false",
 				"null"
 		));
 	}

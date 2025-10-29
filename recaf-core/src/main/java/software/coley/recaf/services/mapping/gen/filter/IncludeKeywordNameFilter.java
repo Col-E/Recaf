@@ -51,6 +51,9 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 
 	@Override
 	public boolean shouldMapLocalVariable(@Nonnull ClassInfo owner, @Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		// Edge case: 'this' is allowed only as local variable slot 0 on non-static methods.
+		if (!declaringMethod.hasStaticModifier() && variable.getIndex() == 0 && "this".equals(variable.getName()))
+			return false;
 		if (containsKeyword(variable.getName()))
 			return true;
 		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
