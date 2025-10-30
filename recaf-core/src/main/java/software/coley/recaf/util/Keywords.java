@@ -56,6 +56,7 @@ public class Keywords {
 				"record",
 				"return",
 				"super",
+				"switch",
 				"try",
 				"this",
 				"throw",
