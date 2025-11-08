@@ -6,6 +6,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
+import software.coley.recaf.RecafConstants;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.test.TestBase;
@@ -83,7 +84,7 @@ public class JavacCompilerTest extends TestBase {
 		JvmClassInfo classInfo = TestClassUtils.fromRuntimeClass(StringConsumer.class);
 		ClassReader reader = classInfo.getClassReader();
 		ClassWriter writer = new ClassWriter(reader, 0);
-		ClassRemapper mapper = new ClassRemapper(writer, new SimpleRemapper(classInfo.getName(), "dummy/StringConsumer"));
+		ClassRemapper mapper = new ClassRemapper(writer, new SimpleRemapper(RecafConstants.getAsmVersion(), classInfo.getName(), "dummy/StringConsumer"));
 		reader.accept(mapper, 0);
 		classInfo = new JvmClassInfoBuilder(writer.toByteArray()).build();
 

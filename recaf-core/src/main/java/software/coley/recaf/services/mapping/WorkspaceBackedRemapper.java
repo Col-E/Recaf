@@ -1,7 +1,6 @@
 package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
-import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import software.coley.recaf.info.ClassInfo;
@@ -19,7 +18,6 @@ import software.coley.recaf.workspace.model.Workspace;
 public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	private final Workspace workspace;
 
-
 	/**
 	 * @param workspace
 	 * 		Workspace to pull class info from when additional context is needed.
@@ -30,31 +28,6 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	                               @Nonnull Mappings mappings) {
 		super(mappings);
 		this.workspace = workspace;
-	}
-
-	@Override
-	public Object mapValue(Object value) {
-		// We need to adapt the invoke-dynamic mapping call from the base implementation of ASM's remapper.
-		// This is copied from the base implementation but adds the BSM + remapped args to the call so
-		// that it points to our enhanced 'mapInvokeDynamicMethodName' method.
-		if (value instanceof ConstantDynamic constantDynamic) {
-			int bootstrapMethodArgumentCount = constantDynamic.getBootstrapMethodArgumentCount();
-			Object[] remappedBootstrapMethodArguments = new Object[bootstrapMethodArgumentCount];
-			for (int i = 0; i < bootstrapMethodArgumentCount; ++i) {
-				remappedBootstrapMethodArguments[i] =
-						mapValue(constantDynamic.getBootstrapMethodArgument(i));
-			}
-
-			String descriptor = constantDynamic.getDescriptor();
-			return new ConstantDynamic(
-					mapInvokeDynamicMethodName(constantDynamic.getName(), descriptor, constantDynamic.getBootstrapMethod(), remappedBootstrapMethodArguments),
-					mapDesc(descriptor),
-					(Handle) mapValue(constantDynamic.getBootstrapMethod()),
-					remappedBootstrapMethodArguments);
-		}
-
-		// Other values can be handled by the base implementation
-		return super.mapValue(value);
 	}
 
 	@Override
@@ -81,7 +54,9 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public String mapInvokeDynamicMethodName(String name, String descriptor) {
+		// Deprecated in ASM 9.9 - Keeping this here for a bit to ensure nobody accidentally calls it.
 		throw new IllegalStateException("Enhanced 'mapInvokeDynamicMethodName(...)' usage required, missing handle arg");
 	}
 
@@ -98,6 +73,7 @@ public class WorkspaceBackedRemapper extends BasicMappingsRemapper {
 	 * @return New name of the method.
 	 */
 	@Nonnull
+	@Override
 	public String mapInvokeDynamicMethodName(@Nonnull String name, @Nonnull String descriptor, @Nonnull Handle bsm, @Nonnull Object[] bsmArguments) {
 		if (bsm.equals(Handles.META_FACTORY)) {
 			// Get the interface from the descriptor return type.

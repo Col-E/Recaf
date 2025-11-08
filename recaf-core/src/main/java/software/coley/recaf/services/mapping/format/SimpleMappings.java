@@ -17,7 +17,7 @@ import static software.coley.recaf.util.EscapeUtil.unescapeStandardAndUnicodeWhi
 /**
  * Simple mappings file implementation where the old/new names are split by a space.
  * The input format of the mappings is based on the format outlined by
- * {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(Map)}.
+ * {@link org.objectweb.asm.commons.SimpleRemapper#SimpleRemapper(int, Map)}.
  * <br>
  * Differences include:
  * <ul>

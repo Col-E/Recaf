@@ -1,7 +1,7 @@
 [versions]
 acc-agent = "1.0.4"
 assertj = "3.27.3"
-asm = "9.8" # https://gitlab.ow2.org/asm/asm/-/merge_requests/431/diffs (Need to address this when updating to 9.9)
+asm = "9.9"
 atlantafx = "2.1.0"
 binary-resources = "31.3.0-alpha01.8"
 cafedude = "2.6.5"

@@ -1,7 +1,9 @@
 package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.commons.Remapper;
+import software.coley.recaf.RecafConstants;
 
 /**
  * {@link Remapper} implementation that delegates to a provided {@link Mappings} and supports local variable renaming.
@@ -17,6 +19,8 @@ public class BasicMappingsRemapper extends Remapper {
 	 * 		Mappings to pull from.
 	 */
 	public BasicMappingsRemapper(@Nonnull Mappings mappings) {
+		super(RecafConstants.getAsmVersion());
+
 		this.mappings = mappings;
 	}
 
@@ -144,7 +148,7 @@ public class BasicMappingsRemapper extends Remapper {
 	}
 
 	@Override
-	public String mapInvokeDynamicMethodName(String name, String descriptor) {
+	public String mapInvokeDynamicMethodName(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
 		return name;
 	}
 
