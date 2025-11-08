@@ -174,6 +174,7 @@ public class DecompileAllPopup extends RecafStage {
 		decompileButton.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 		decompilerCombo.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 		progress.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+		decompilerLabel.setMinWidth(85); // Ensure the labels do not get squished when a large path is selected
 		layout.add(decompilerLabel, 0, 0);
 		layout.add(decompilerCombo, 1, 0);
 		layout.add(pathLabel, 0, 1);
