@@ -16,7 +16,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -29,6 +28,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.observables.ObservableObject;
 import software.coley.recaf.info.Accessed;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
@@ -47,6 +47,8 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.KeybindingConfig;
+import software.coley.recaf.ui.config.MemberDisplayFormatConfig;
+import software.coley.recaf.ui.config.MemberDisplayFormatConfig.Display;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.BoundMultiToggleIcon;
 import software.coley.recaf.ui.control.BoundToggleIcon;
@@ -80,14 +82,24 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	private final ObjectProperty<Visibility> visibility = new SimpleObjectProperty<>(Visibility.ALL);
 	private final BooleanProperty sortAlphabetically = new SimpleBooleanProperty();
 	private final BooleanProperty sortByVisibility = new SimpleBooleanProperty();
+	private final ObjectProperty<Display> nameTypeDisplay = new SimpleObjectProperty<>();
 	private final TreeView<PathNode<?>> tree = new TreeView<>();
 	private boolean navigationLock;
 	private ClassPathNode path;
 
 	@Inject
 	public FieldsAndMethodsPane(@Nonnull CellConfigurationService configurationService,
+	                            @Nonnull MemberDisplayFormatConfig displayFormatConfig,
 	                            @Nonnull KeybindingConfig keys,
 	                            @Nonnull Actions actions) {
+		// Setup global toggle for name-type display.
+		// - Does not immediately update other open panes which is unfortunate.
+		//   The code displaying name-type in cells is a bit deep and
+		//   wiring this local observable value into there feels wrong.
+		ObservableObject<Display> nameTypeDisplayConfig = displayFormatConfig.getNameTypeDisplay();
+		nameTypeDisplay.set(nameTypeDisplayConfig.getValue());
+		nameTypeDisplay.addListener((ob, old, cur) -> nameTypeDisplayConfig.setValue(cur));
+
 		// Configure tree.
 		tree.setShowRoot(false);
 		tree.setCellFactory(param -> new WorkspaceTreeCell(ContextSource.DECLARATION, configurationService));
@@ -239,14 +251,14 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Nonnull
 	private Node createButtonBar() {
-		ChangeListener listener = (ob, old, cur) -> refreshTreeFilter();
-		ChangeListener listener2 = (ob, old, cur) -> refreshTreeSort();
+		ChangeListener listenerFilter = (ob, old, cur) -> refreshTreeFilter();
+		ChangeListener listenerSort = (ob, old, cur) -> refreshTreeSort();
 
-		memberType.addListener(listener);
-		visibility.addListener(listener);
-		showSynthetics.addListener(listener);
-		sortAlphabetically.addListener(listener2);
-		sortByVisibility.addListener(listener2);
+		memberType.addListener(listenerFilter);
+		visibility.addListener(listenerFilter);
+		showSynthetics.addListener(listenerFilter);
+		sortAlphabetically.addListener(listenerSort);
+		sortByVisibility.addListener(listenerSort);
 
 		Button[] buttons = {
 				// Show synthetics
@@ -259,7 +271,13 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 						.withTooltip("fieldsandmethods.showoutlinedvisibility"),
 				// Sort alphabetically/visibility
 				new BoundToggleIcon(Icons.SORT_ALPHABETICAL, sortAlphabetically).withTooltip("fieldsandmethods.sortalphabetically"),
-				new BoundToggleIcon(Icons.SORT_VISIBILITY, sortByVisibility).withTooltip("fieldsandmethods.sortbyvisibility")
+				new BoundToggleIcon(Icons.SORT_VISIBILITY, sortByVisibility).withTooltip("fieldsandmethods.sortbyvisibility"),
+				// Descriptor display
+				new BoundMultiToggleIcon<>(Display.class, nameTypeDisplay, d -> switch (d) {
+					case NAME_ONLY -> new FontIconView(CarbonIcons.TEXT_FOOTNOTE);
+					case NAME_AND_RAW_DESCRIPTOR -> new FontIconView(CarbonIcons.TEXT_ALL_CAPS);
+					case NAME_AND_PRETTY_DESCRIPTOR -> new FontIconView(CarbonIcons.TEXT_SMALL_CAPS);
+				})
 		};
 		for (Button button : buttons)
 			button.setFocusTraversable(false);
