@@ -1,16 +1,19 @@
 package software.coley.recaf.services.compile;
 
 import jakarta.annotation.Nonnull;
-import net.raphimc.javadowngrader.JavaDowngrader;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.JavaDowngraderUtil;
+import software.coley.recaf.util.JavaVersion;
+import xyz.wagyourtail.jvmdg.ClassDowngrader;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Wrapper of a string-to-bytecode map with additional utility methods.
@@ -54,25 +57,14 @@ public class CompileMap extends TreeMap<String, byte[]> {
 	/**
 	 * Down sample all classes in the map to the target version.
 	 *
-	 * @param version
-	 * 		Target version to downsample to.
+	 * @param targetJavaVersion
+	 * 		Target version to downsample to. To target 8, simply pass {@code 8} <i>()</i>.
 	 */
-	public void downsample(int version) {
-		for (Map.Entry<String, byte[]> entry : new HashSet<>(entrySet())) {
-			String key = entry.getKey();
-			try {
-				ClassNode node = new ClassNode();
-				ClassReader reader = new ClassReader(entry.getValue());
-				reader.accept(node, 0);
-				if (node.version > version) {
-					JavaDowngrader.downgrade(node, version);
-					ClassWriter writer = new ClassWriter(reader, 0);
-					node.accept(writer);
-					put(key, writer.toByteArray());
-				}
-			} catch (Throwable t) {
-				logger.error("Failed down sampling '{}' to version {}", key, version, t);
-			}
+	public void downsample(int targetJavaVersion) {
+		try {
+			JavaDowngraderUtil.downgrade(targetJavaVersion, new HashMap<>(this), this::put);
+		} catch (IOException ex) {
+			logger.error("Failed down sampling to version {}",  targetJavaVersion, ex);
 		}
 	}
 }

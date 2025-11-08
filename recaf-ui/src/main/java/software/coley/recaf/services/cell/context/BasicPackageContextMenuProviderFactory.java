@@ -14,6 +14,7 @@ import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
+import software.coley.recaf.ui.control.popup.ChangeClassVersionPopup;
 import software.coley.recaf.ui.control.popup.DecompileAllPopup;
 import software.coley.recaf.ui.pane.search.ClassReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
@@ -59,12 +60,17 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 			var builder = new ContextMenuBuilder(menu, source).forDirectory(workspace, resource, bundle, packageName);
 
 			if (source.isDeclaration()) {
-				if (bundle instanceof JvmClassBundle) {
+				if (bundle instanceof JvmClassBundle jvmBundle) {
 					var jvmBuilder = builder.cast(JvmClassBundle.class);
 					var edit = jvmBuilder.submenu("menu.edit", EDIT);
 					edit.directoryItem("menu.edit.newclass", ADD_ALT, actions::newClass);
 					edit.directoryItem("menu.edit.copy", COPY_FILE, actions::copyPackage);
 					edit.directoryItem("menu.edit.delete", TRASH_CAN, actions::deletePackage);
+					edit.item("menu.edit.changeversion", ARROWS_VERTICAL, () -> {
+						ChangeClassVersionPopup popup = new ChangeClassVersionPopup();
+						popup.setTargetPackage(jvmBundle, packageName);
+						popup.show();
+					});
 
 					var refactor = jvmBuilder.submenu("menu.refactor", PAINT_BRUSH);
 					refactor.directoryItem("menu.refactor.move", STACKED_MOVE, actions::movePackage);
