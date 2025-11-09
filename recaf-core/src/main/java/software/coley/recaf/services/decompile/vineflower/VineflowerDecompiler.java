@@ -32,7 +32,7 @@ public class VineflowerDecompiler extends AbstractJvmDecompiler {
 	@Inject
 	public VineflowerDecompiler(@Nonnull VineflowerConfig config) {
 		// Change this version to be dynamic when / if the Vineflower authors make a function that returns the version...
-		super(NAME, "1.11.1", config);
+		super(NAME, "1.11.2", config);
 		this.config = config;
 		logger = new VineflowerLogger(config);
 	}
