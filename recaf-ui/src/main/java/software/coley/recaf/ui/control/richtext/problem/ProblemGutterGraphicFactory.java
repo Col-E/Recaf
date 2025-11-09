@@ -73,6 +73,7 @@ public class ProblemGutterGraphicFactory extends AbstractLineGraphicFactory  {
 			shape.setOpacity(0.33);
 
 			Tooltip tooltip = new Tooltip(formatTooltipMessage(problem));
+			tooltip.getStyleClass().add("mono-text");
 			tooltip.setGraphic(graphic);
 			switch (level) {
 				case ERROR -> tooltip.getStyleClass().add("error-text");

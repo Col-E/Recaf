@@ -38,6 +38,9 @@
 .warn-text {
     -fx-text-fill: yellow;
 }
+.mono-text {
+    -fx-font-family: 'JetBrains Mono';
+}
 
 /* Clearly separates filter from the workspace tree */
 .workspace-filter-pane {
