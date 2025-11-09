@@ -5,14 +5,18 @@ import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.properties.BasicProperty;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.NavigableSet;
+import java.util.Objects;
+import java.util.TreeSet;
 
 /**
  * Built in property to track what classes are referenced by this type.
  *
  * @author Matt Coley
  */
-public class ReferencedClassesProperty extends BasicProperty<SortedSet<String>> {
+public class ReferencedClassesProperty extends BasicProperty<NavigableSet<String>> {
 	public static final String KEY = "referenced-classes";
 
 	/**
@@ -39,9 +43,14 @@ public class ReferencedClassesProperty extends BasicProperty<SortedSet<String>> 
 	 * 		Info instance.
 	 * @param classes
 	 * 		Collection of referenced classes.
+	 *
+	 * @return Sorted set of referenced classes assigned.
 	 */
-	public static void set(@Nonnull ClassInfo info, @Nonnull Collection<String> classes) {
-		info.setProperty(new ReferencedClassesProperty(classes));
+	@Nonnull
+	public static NavigableSet<String> set(@Nonnull ClassInfo info, @Nonnull Collection<String> classes) {
+		ReferencedClassesProperty property = new ReferencedClassesProperty(classes);
+		info.setProperty(property);
+		return Objects.requireNonNull(property.value());
 	}
 
 	/**

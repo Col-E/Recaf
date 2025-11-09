@@ -127,8 +127,7 @@ public interface JvmClassInfo extends ClassInfo {
 				addType(t, classNames);
 		}), ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
 
-		ReferencedClassesProperty.set(this, classNames);
-		return Objects.requireNonNull(ReferencedClassesProperty.get(this));
+		return ReferencedClassesProperty.set(this, classNames);
 	}
 
 	private static void addMethodType(@Nonnull Type methodType, @Nonnull Set<String> classNames) {

@@ -337,13 +337,16 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			if (unit != null)
 				astAvailabilityButton.setNewParseInProgress();
 
-
 			// Parse the current source
 			long start = System.currentTimeMillis();
 			String classNameEsc = EscapeUtil.escapeStandardAndUnicodeWhitespace(className);
 			logger.debugging(l -> l.info("Starting AST parse..."));
 			try {
-				CompilationUnitModel resultingUnit = parser.parse(text);
+				CompilationUnitModel resultingUnit;
+				synchronized (parser) {
+					// Underlying javac internals are not thread safe so we synchronize on the parser here.
+					resultingUnit = parser.parse(text);
+				}
 				long diffMs = (System.currentTimeMillis() - start);
 				if (resultingUnit.getDeclaredClasses().isEmpty()) {
 					unit = null;
