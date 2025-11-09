@@ -170,7 +170,8 @@ public class KotlinMetadata {
 		try {
 			// Skip if visitor does not have data populated.
 			String[] data1 = visitor.getData1();
-			if (data1 == null)
+			String[] data2 = visitor.getData2();
+			if (data1 == null || data2 == null)
 				return null;
 
 			// Unpack "d1"
@@ -179,7 +180,6 @@ public class KotlinMetadata {
 			JvmProtoBuf.StringTableTypes types = JvmProtoBuf.StringTableTypes.parseDelimitedFrom(data1Stream, EXTENSIONS);
 
 			// Wrap with "d2" so the human-readable names can be extracted
-			String[] data2 = visitor.getData2();
 			MetadataNameResolver resolver = new MetadataNameResolver(types, data2);
 
 			// Parse unpacked "d1" based on the metadata kind
@@ -188,7 +188,8 @@ public class KotlinMetadata {
 					ProtoBuf.Class cls = ProtoBuf.Class.parseFrom(data1Stream, EXTENSIONS);
 					return new KotlinMetadata(cls, resolver, visitor);
 				}
-				case 2 /* File -> Package */ -> {
+				case 2 /* File -> Package */,
+				     5 /* Multi-file class part -> Package */ -> {
 					ProtoBuf.Package pkg = ProtoBuf.Package.parseFrom(data1Stream, EXTENSIONS);
 					return new KotlinMetadata(pkg, resolver, visitor);
 				}
