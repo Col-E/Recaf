@@ -31,6 +31,7 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Container for information extracted from Kotlin's {@code @Metadata} annotation.
@@ -44,43 +45,85 @@ public class KotlinMetadata {
 	public static final String METADATA_DESC = "Lkotlin/Metadata;";
 	private static final ExtensionRegistryLite EXTENSIONS = ExtensionRegistryLite.newInstance();
 	private static int parseFailCount;
-	private final ProtoBuf.Class cls;
-	private final MetadataNameResolver resolver;
-	private final KotlinMetadataVisitor visitor;
+	private final Supplier<KtClass> ktModelSupplier;
 
 	static {
 		MetadataUtils.register(EXTENSIONS);
 	}
 
+	private KotlinMetadata(@Nonnull MetadataNameResolver resolver,
+	                       @Nonnull KotlinMetadataVisitor visitor,
+	                       @Nonnull Supplier<KtClass> ktModelSupplier) {
+		this.ktModelSupplier = ktModelSupplier;
+	}
+
 	private KotlinMetadata(@Nonnull ProtoBuf.Class cls,
 	                       @Nonnull MetadataNameResolver resolver,
 	                       @Nonnull KotlinMetadataVisitor visitor) {
-		this.cls = cls;
-		this.resolver = resolver;
-		this.visitor = visitor;
+		this(resolver, visitor, () -> {
+			KtClassKind kind = KtClassKind.fromKindInt(visitor.getKind());
+			int extraFlags = visitor.getExtraInt();
+			String fqName = cls.hasFqName() ? resolver.resolve(cls.getFqName()) : visitor.getDefiningClass();
+			if (fqName != null)
+				fqName = fqName.replace('.', '$');
+			List<KtType> superTypes = cls.getSupertypeList().stream()
+					.map(t -> mapType(resolver, t))
+					.toList();
+			String companionObjectName = cls.hasCompanionObjectName() ? resolver.resolve(cls.getCompanionObjectName()) : null;
+			List<KtConstructor> constructors = newList(cls.getConstructorCount());
+			for (var constructor : cls.getConstructorList())
+				constructors.add(new KtConstructor(fqName, constructor.getValueParameterList().stream().map(vp -> mapParameter(resolver, vp)).toList()));
+			List<KtProperty> properties = newList(cls.getPropertyCount());
+			for (var property : cls.getPropertyList())
+				properties.add(mapProperty(resolver, property));
+			List<KtFunction> functions = newList(cls.getFunctionCount());
+			for (var function : cls.getFunctionList())
+				functions.add(mapFunction(resolver, function));
+			return new KtClass(kind, extraFlags, fqName, companionObjectName,
+					superTypes,
+					constructors,
+					properties,
+					functions);
+		});
+	}
+
+	private KotlinMetadata(@Nonnull ProtoBuf.Package pkg,
+	                       @Nonnull MetadataNameResolver resolver,
+	                       @Nonnull KotlinMetadataVisitor visitor) {
+		this(resolver, visitor, () -> {
+			KtClassKind kind = KtClassKind.fromKindInt(visitor.getKind());
+			int extraFlags = visitor.getExtraInt();
+			List<KtProperty> properties = newList(pkg.getPropertyCount());
+			for (var property : pkg.getPropertyList())
+				properties.add(mapProperty(resolver, property));
+			List<KtFunction> functions = newList(pkg.getFunctionCount());
+			for (var function : pkg.getFunctionList())
+				functions.add(mapFunction(resolver, function));
+			return new KtClass(kind, extraFlags, visitor.getDefiningClass(), null,
+					Collections.emptyList(),
+					Collections.emptyList(),
+					properties,
+					functions);
+		});
+	}
+
+	private KotlinMetadata(@Nonnull ProtoBuf.Function func,
+	                       @Nonnull MetadataNameResolver resolver,
+	                       @Nonnull KotlinMetadataVisitor visitor) {
+		this(resolver, visitor, () -> {
+			KtClassKind kind = KtClassKind.fromKindInt(visitor.getKind());
+			int extraFlags = visitor.getExtraInt();
+			return new KtClass(kind, extraFlags, visitor.getDefiningClass(), null,
+					Collections.emptyList(),
+					Collections.emptyList(),
+					Collections.emptyList(),
+					Collections.singletonList(mapFunction(resolver, func)));
+		});
 	}
 
 	@Nonnull
 	private KtClass extractKtModel() {
-		KtClassKind kind = KtClassKind.fromKindInt(visitor.getKind());
-		int extraFlags = visitor.getExtraInt();
-		String fqName = cls.hasFqName() ? resolver.resolve(cls.getFqName()) : null;
-		if (fqName != null)
-			fqName = fqName.replace('.', '$');
-		List<KtType> superTypes = cls.getSupertypeList().stream()
-				.map(t -> mapType(resolver, t))
-				.toList();
-		String companionObjectName = cls.hasCompanionObjectName() ? resolver.resolve(cls.getCompanionObjectName()) : null;
-		List<KtConstructor> constructors = newList(cls.getConstructorCount());
-		for (var constructor : cls.getConstructorList())
-			constructors.add(new KtConstructor(fqName, constructor.getValueParameterList().stream().map(vp -> mapParameter(resolver, vp)).toList()));
-		List<KtProperty> properties = newList(cls.getPropertyCount());
-		for (var property : cls.getPropertyList())
-			properties.add(mapProperty(resolver, property));
-		List<KtFunction> functions = newList(cls.getFunctionCount());
-		for (var function : cls.getFunctionList())
-			functions.add(mapFunction(resolver, function));
-		return new KtClass(kind, extraFlags, fqName, companionObjectName, superTypes, constructors, properties, functions);
+		return ktModelSupplier.get();
 	}
 
 	/**
@@ -102,13 +145,14 @@ public class KotlinMetadata {
 	 */
 	@Nullable
 	protected static KotlinMetadata extractMetadata(@Nonnull ClassReader reader) {
+		String className = reader.getClassName();
 		KotlinMetadata[] wrapper = new KotlinMetadata[1];
 		reader.accept(new ClassVisitor(RecafConstants.getAsmVersion()) {
 			@Override
 			public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
 				AnnotationVisitor visitor = super.visitAnnotation(descriptor, visible);
 				if (METADATA_DESC.equals(descriptor))
-					visitor = new KotlinMetadataVisitor(visitor, v -> wrapper[0] = extractMetadata(v));
+					visitor = new KotlinMetadataVisitor(className, visitor, v -> wrapper[0] = extractMetadata(v));
 				return visitor;
 			}
 		}, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG);
@@ -129,16 +173,31 @@ public class KotlinMetadata {
 			if (data1 == null)
 				return null;
 
-			// Parse "d1"
+			// Unpack "d1"
 			byte[] data1Decoded = BitEncoding.decodeBytes(data1);
 			ByteArrayInputStream data1Stream = new ByteArrayInputStream(data1Decoded);
 			JvmProtoBuf.StringTableTypes types = JvmProtoBuf.StringTableTypes.parseDelimitedFrom(data1Stream, EXTENSIONS);
-			ProtoBuf.Class cls = ProtoBuf.Class.parseFrom(data1Stream, EXTENSIONS);
 
 			// Wrap with "d2" so the human-readable names can be extracted
 			String[] data2 = visitor.getData2();
 			MetadataNameResolver resolver = new MetadataNameResolver(types, data2);
-			return new KotlinMetadata(cls, resolver, visitor);
+
+			// Parse unpacked "d1" based on the metadata kind
+			switch (visitor.getKind()) {
+				case 1 /* Class */ -> {
+					ProtoBuf.Class cls = ProtoBuf.Class.parseFrom(data1Stream, EXTENSIONS);
+					return new KotlinMetadata(cls, resolver, visitor);
+				}
+				case 2 /* File -> Package */ -> {
+					ProtoBuf.Package pkg = ProtoBuf.Package.parseFrom(data1Stream, EXTENSIONS);
+					return new KotlinMetadata(pkg, resolver, visitor);
+				}
+				case 3 /* Synthetic Class -> Lambda -> Function */ -> {
+					ProtoBuf.Function func = ProtoBuf.Function.parseFrom(data1Stream, EXTENSIONS);
+					return new KotlinMetadata(func, resolver, visitor);
+				}
+				default -> throw new UnsupportedOperationException("Unsupported @Metadata type: " + visitor.getKind());
+			}
 		} catch (Exception ex) {
 			// If the protobuf parser doesn't like the data, there's not really much that can be done about it.
 			if (parseFailCount++ < 5)

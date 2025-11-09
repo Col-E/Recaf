@@ -1,5 +1,8 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import org.jetbrains.kotlin.metadata.ProtoBuf;
 import org.objectweb.asm.AnnotationVisitor;
 import software.coley.recaf.RecafConstants;
 
@@ -23,6 +26,7 @@ public class KotlinMetadataVisitor extends AnnotationVisitor {
 	private static final String DATA2_NAME = "d2";
 	private static final String EXTRA_STRING_NAME = "xs";
 	private static final String EXTRA_INT_NAME = "xi";
+	private final String owner;
 	private final Consumer<KotlinMetadataVisitor> onComplete;
 	private int kind;
 	private String packageName;
@@ -36,13 +40,18 @@ public class KotlinMetadataVisitor extends AnnotationVisitor {
 	/**
 	 * New visitor.
 	 *
+	 * @param owner
+	 * 		Internal name of defining class.
 	 * @param visitor
 	 * 		Parent visitor.
 	 * @param onComplete
 	 * 		Action to run when annotation is completely read.
 	 */
-	public KotlinMetadataVisitor(AnnotationVisitor visitor, Consumer<KotlinMetadataVisitor> onComplete) {
+	public KotlinMetadataVisitor(@Nonnull String owner,
+	                             @Nullable AnnotationVisitor visitor,
+	                             @Nullable Consumer<KotlinMetadataVisitor> onComplete) {
 		super(RecafConstants.getAsmVersion(), visitor);
+		this.owner = owner;
 		this.onComplete = onComplete;
 	}
 
@@ -91,13 +100,21 @@ public class KotlinMetadataVisitor extends AnnotationVisitor {
 	}
 
 	/**
+	 * @return Name of the class with the {@code @Metadata} annotation.
+	 */
+	@Nonnull
+	public String getDefiningClass() {
+		return owner;
+	}
+
+	/**
 	 * The <i>"k"</i> field.
 	 * <br>
-	 * Possible values in order:
+	 * Possible values <i>(And how to parse them according to {@code kotlin/metadata/jvm/internal/JvmReadUtils.kt})</i> in order:
 	 * <ol>
-	 *      <li>Class</li>
-	 *      <li>File</li>
-	 *      <li>Synthetic class</li>
+	 *      <li>Class: {@link ProtoBuf.Class}</li>
+	 *      <li>File: {@link ProtoBuf.Package}</li>
+	 *      <li>Synthetic class: {@link ProtoBuf.Function} <i>(Lambda)</i></li>
 	 *      <li>Multi-file class facade</li>
 	 *      <li>Multi-file class part</li>
 	 * </ol>
