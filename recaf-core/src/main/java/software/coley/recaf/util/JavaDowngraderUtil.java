@@ -153,7 +153,7 @@ public class JavaDowngraderUtil {
 
 						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
 							if (owner.startsWith("xyz/wagyourtail/jvmdg/") && owner.contains("/stub/"))
-								referencedStubs.add(owner.replace('/', '.'));
+								referencedStubs.add(owner);
 						}
 					};
 				}
