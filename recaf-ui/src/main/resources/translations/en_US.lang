@@ -386,6 +386,7 @@ java.savewitherrors=It seems like this is your first time making changes that re
 java.savewitherrors.title=Regarding recompile errors
 java.decompiler=Decompiler
 java.targetversion=Compile target version
+java.targetversion.notice.down=Downgrading will add stub classes to emulate missing APIs
 java.targetversion.auto=Match class file version
 java.targetdownsampleversion=Downsample target version
 java.targetdownsampleversion.disabled=Disabled

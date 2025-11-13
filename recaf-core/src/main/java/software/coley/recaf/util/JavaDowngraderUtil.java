@@ -2,20 +2,29 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
+import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.util.visitors.WorkspaceClassWriter;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import xyz.wagyourtail.jvmdg.ClassDowngrader;
 import xyz.wagyourtail.jvmdg.cli.Flags;
 import xyz.wagyourtail.jvmdg.util.Pair;
+import xyz.wagyourtail.jvmdg.version.map.FullyQualifiedMemberNameAndDesc;
 import xyz.wagyourtail.jvmdg.version.map.MemberNameAndDesc;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +38,11 @@ import java.util.function.BiConsumer;
  */
 public class JavaDowngraderUtil {
 	private static final Logger logger = Logging.get(JavaDowngraderUtil.class);
+	private static final String[] undesirableStubs = {
+			// Array of stubs (owner;name;desc) that we do not want to pass back to callers.
+			"Lxyz/wagyourtail/jvmdg/j18/stub/java_base/J_L_System;getProperty;(Ljava/lang/String;)Ljava/lang/String;",
+			"Lxyz/wagyourtail/jvmdg/j18/stub/java_base/J_L_System;getProperties;()Ljava/util/Properties;"
+	};
 
 	/**
 	 * Downgrade the provided classes.
@@ -74,6 +88,8 @@ public class JavaDowngraderUtil {
 
 		Flags flags = new Flags();
 		flags.classVersion = targetClassVersion;
+		for (String undesirableStub : undesirableStubs)
+			flags.debugSkipStub.add(FullyQualifiedMemberNameAndDesc.of(undesirableStub));
 
 		try (ClassDowngrader downgrader = new RecafClassDowngrader(flags, inheritanceGraph)) {
 			int maxClassFileVersion = downgrader.maxVersion();
@@ -94,6 +110,7 @@ public class JavaDowngraderUtil {
 					try {
 						Map<String, byte[]> downgraded = downgrader.downgrade(new AtomicReference<>(className), classBytes, false,
 								key -> getBytes(maxClassFileVersion, classes, key));
+						fillStubClasses(downgraded);
 						if (downgraded != null)
 							downgraded.forEach(transformConsumer);
 					} catch (Throwable t) {
@@ -116,6 +133,40 @@ public class JavaDowngraderUtil {
 			}
 		}
 		return classBytes;
+	}
+
+	private static void fillStubClasses(@Nullable Map<String, byte[]> downgraded) {
+		if (downgraded == null || downgraded.isEmpty())
+			return;
+
+		// Find all referenced stubs from the downgraded classes.
+		Set<String> referencedStubs = new HashSet<>();
+		for (byte[] classBytes : downgraded.values()) {
+			ClassReader reader = new ClassReader(classBytes);
+			reader.accept(new ClassVisitor(RecafConstants.getAsmVersion()) {
+				public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+					return new MethodVisitor(RecafConstants.getAsmVersion()) {
+						public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+							if (owner.startsWith("xyz/wagyourtail/jvmdg/") && owner.contains("/stub/"))
+								referencedStubs.add(owner);
+						}
+
+						public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+							if (owner.startsWith("xyz/wagyourtail/jvmdg/") && owner.contains("/stub/"))
+								referencedStubs.add(owner.replace('/', '.'));
+						}
+					};
+				}
+			}, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+		}
+
+		// Add all referenced stubs to the downgraded output.
+		JvmClassBundle runtimeBundle = RuntimeWorkspaceResource.getInstance().getJvmClassBundle();
+		for (String referencedStub : referencedStubs) {
+			JvmClassInfo cls = runtimeBundle.get(referencedStub);
+			if (cls != null)
+				downgraded.put(cls.getName(), cls.getBytecode());
+		}
 	}
 
 	private static class RecafClassDowngrader extends ClassDowngrader {

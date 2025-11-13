@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.popup;
 
+import atlantafx.base.theme.Styles;
 import com.google.common.util.concurrent.AtomicDouble;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -243,8 +244,15 @@ public class ChangeClassVersionPopup extends RecafStage {
 
 		layout.add(labelVersion, 0, 0);
 		layout.add(versionCombo, 1, 0);
-		layout.add(applyButton, 0, 2, 2, 1);
-		layout.add(progressBar, 0, 3, 2, 1);
+
+		if (suffix.equals("down")) {
+			Label labelNotice = new BoundLabel(getBinding("java.targetversion.notice." + suffix));
+			labelNotice.getStyleClass().addAll(Styles.TEXT_SUBTLE, Styles.TEXT_ITALIC);
+			layout.add(labelNotice, 0, layout.getRowCount(), 2, 1);
+		}
+
+		layout.add(applyButton, 0, layout.getRowCount(), 2, 1);
+		layout.add(progressBar, 0, layout.getRowCount(), 2, 1);
 		layout.setPadding(new Insets(10));
 		layout.setAlignment(Pos.TOP_CENTER);
 		return layout;

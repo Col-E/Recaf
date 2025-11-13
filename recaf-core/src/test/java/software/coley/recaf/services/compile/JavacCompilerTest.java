@@ -72,7 +72,8 @@ public class JavacCompilerTest extends TestBase {
 							public static void main(String[] args) {
 								if (args.length < 1)
 									return;
-								String amount = args[0];
+								String amountProperty = System.getProperty(args[0]);
+								String amount = amountProperty;
 						
 								// List.of should be replaced since it was added in Java 9
 								List<String> values = new ArrayList<>(switch (amount) {
@@ -123,6 +124,10 @@ public class JavacCompilerTest extends TestBase {
 				};
 			}
 		}, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+
+		// Assert the necessary stubs were added
+		assertNotNull(result.getCompilations().get("xyz/wagyourtail/jvmdg/j9/stub/java_base/J_U_List"), "Missing stub for Java 9: List.of");
+		assertNotNull(result.getCompilations().get("xyz/wagyourtail/jvmdg/j21/stub/java_base/J_U_List"), "Missing stub for Java 21: List.removeLast");
 	}
 
 	@Test
