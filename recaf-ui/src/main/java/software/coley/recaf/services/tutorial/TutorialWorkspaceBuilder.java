@@ -47,11 +47,11 @@ import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
+import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.awt.Toolkit;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -346,15 +346,14 @@ public class TutorialWorkspaceBuilder {
 
 	@Nonnull
 	private static JvmClassInfo fromRuntimeClass(@Nonnull Class<?> c) {
-		try {
-			ClassReader reader = new ClassReader(c.getName());
-			ClassWriter cw = new ClassWriter(0);
-			ClassRemapper remapper = new ClassRemapper(cw, new BasicMappingsRemapper(chapterMappings));
-			reader.accept(remapper, 0);
-			return new JvmClassInfoBuilder(cw.toByteArray()).build();
-		} catch (IOException ex) {
-			throw new RuntimeException("Failed reading class: " + c.getName(), ex);
-		}
+		byte[] classBytes = RuntimeWorkspaceResource.getRuntimeClass(c);
+		if (classBytes == null)
+			throw new RuntimeException("Failed reading tutorial class: " + c.getName());
+
+		ClassWriter cw = new ClassWriter(0);
+		ClassRemapper remapper = new ClassRemapper(cw, new BasicMappingsRemapper(chapterMappings));
+		new ClassReader(classBytes).accept(remapper, 0);
+		return new JvmClassInfoBuilder(cw.toByteArray()).build();
 	}
 
 	private static final Mappings chapterMappings = new Mappings() {

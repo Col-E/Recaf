@@ -238,7 +238,7 @@ public class BasicAttachManager implements AttachManager {
 
 				// Using futures for attach in case one of the VM's decides to hang on response.
 				// Using 'orTimeout' we can prevent such hangs from affecting us.
-				attachFutures.add(ThreadUtil.run(() -> {
+				attachFutures.add(ThreadUtil.supply(() -> {
 					try {
 						AttachProvider provider = descriptor.provider();
 						return provider.attachVirtualMachine(descriptor);
@@ -252,7 +252,7 @@ public class BasicAttachManager implements AttachManager {
 						logger.error("Unhandled exception populating remote VM info", t);
 					}
 					return null;
-				}).orTimeout(500, TimeUnit.MILLISECONDS).thenAccept(machine -> {
+				}, null).orTimeout(500, TimeUnit.MILLISECONDS).thenAccept(machine -> {
 					// Get information from machine if it is available.
 					if (machine != null) {
 						virtualMachineMap.put(descriptor, machine);

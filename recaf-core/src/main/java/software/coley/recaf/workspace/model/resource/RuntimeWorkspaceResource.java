@@ -1,6 +1,7 @@
 package software.coley.recaf.workspace.model.resource;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -49,6 +50,32 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 		return InstanceHolder.INSTANCE;
 	}
 
+	/**
+	 * @param cls
+	 * 		Class to get bytecode of.
+	 *
+	 * @return Bytecode of class if found.
+	 */
+	@Nullable
+	public static byte[] getRuntimeClass(@Nonnull Class<?> cls) {
+		String name = cls.getName().replace('.', '/');
+		return getRuntimeClass(name);
+	}
+
+	/**
+	 * @param className
+	 * 		Name of class to get bytecode of.
+	 *
+	 * @return Bytecode of class if found.
+	 */
+	@Nullable
+	public static byte[] getRuntimeClass(@Nonnull String className) {
+		JvmClassInfo info = getInstance().getJvmClassBundle().get(className);
+		if (info == null)
+			return null;
+		return info.getBytecode();
+	}
+
 	private RuntimeWorkspaceResource() {
 		classes = new BasicJvmClassBundle() {
 			private final byte[] loadBuffer = IOUtil.newByteBuffer();
@@ -69,23 +96,15 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 					return null;
 
 				// Get the class bytes.
-				byte[] value = null;
-				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
-					if (in != null)
-						synchronized (loadBuffer) {
-							value = IOUtil.toByteArray(in, loadBuffer);
-						}
-				} catch (IOException ex) {
-					logger.error("Failed to fetch runtime bytecode of class: " + key, ex);
-				}
-				if (value == null) {
+				byte[] classBytes = getClassBytes(key);
+				if (classBytes == null) {
 					stubClasses.add(key);
 					return null;
 				}
 
 				// Try and parse the class and yield the result.
 				try {
-					JvmClassInfo info = new JvmClassInfoBuilder(value, ClassReader.SKIP_CODE).build();
+					JvmClassInfo info = new JvmClassInfoBuilder(classBytes, ClassReader.SKIP_CODE).build();
 					cache.put(key, info);
 					return info;
 				} catch (Throwable t) {
@@ -94,6 +113,34 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 					stubClasses.add(key);
 					return null;
 				}
+			}
+
+			@Nullable
+			private byte[] getClassBytes(@Nonnull String key) {
+				// First try doing a system lookup (for types like 'java/lang/String')
+				byte[] value = null;
+				try (InputStream in = ClassLoader.getSystemResourceAsStream(key + ".class")) {
+					if (in != null)
+						synchronized (loadBuffer) {
+							value = IOUtil.toByteArray(in, loadBuffer);
+						}
+				} catch (IOException ex) {
+					logger.error("Failed to fetch runtime (system-resource) bytecode of class: " + key, ex);
+				}
+
+				// Then try doing a classpath lookup (for types bundled into Recaf)
+				if (value == null) {
+					try (InputStream in = RuntimeWorkspaceResource.class.getResourceAsStream("/" + key + ".class")) {
+						if (in != null)
+							synchronized (loadBuffer) {
+								value = IOUtil.toByteArray(in, loadBuffer);
+							}
+					} catch (IOException ex) {
+						logger.error("Failed to fetch runtime (recaf-resource) bytecode of class: " + key, ex);
+					}
+				}
+
+				return value;
 			}
 
 			@Override
