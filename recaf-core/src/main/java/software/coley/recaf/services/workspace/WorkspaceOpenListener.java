@@ -1,6 +1,7 @@
 package software.coley.recaf.services.workspace;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -8,7 +9,7 @@ import software.coley.recaf.workspace.model.Workspace;
  *
  * @author Matt Coley
  */
-public interface WorkspaceOpenListener {
+public interface WorkspaceOpenListener extends PrioritySortable {
 	/**
 	 * Called when {@link WorkspaceManager#setCurrent(Workspace)} passes.
 	 *

@@ -6,13 +6,16 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
+import software.coley.collections.Lists;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.WorkspaceModificationListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -91,7 +94,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 
 	@Override
 	public void addWorkspaceOpenListener(@Nonnull WorkspaceOpenListener listener) {
-		openListeners.add(listener);
+		PrioritySortable.add(openListeners, listener);
 	}
 
 	@Override
@@ -107,7 +110,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 
 	@Override
 	public void addWorkspaceCloseListener(@Nonnull WorkspaceCloseListener listener) {
-		closeListeners.add(listener);
+		PrioritySortable.add(closeListeners, listener);
 	}
 
 	@Override

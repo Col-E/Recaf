@@ -394,13 +394,16 @@ public class DockingManager {
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 			// When a workspace is closed, show the welcome screen.
-			// TODO: Combining 'DockingManager' and 'DockingLayoutManager' made this fire earlier which
-			//  happens before 'NavigationManager' does. The nav manager closes this if we open it immediately.
-			//  - Need to have an order of operation system...
-			FxThreadUtil.delayedRun(25, () -> {
+			FxThreadUtil.run(() -> {
 				if (!bento.search().replaceContainer(ID_CONTAINER_ROOT_TOP, DockingManager.this::newWelcomeContainer))
 					logger.error("Failed replacing root on workspace close");
 			});
+		}
+
+		@Override
+		public int getPriority() {
+			// TODO: Arbitrary number to ensure this happens later than other close listeners
+			return 100;
 		}
 	}
 
