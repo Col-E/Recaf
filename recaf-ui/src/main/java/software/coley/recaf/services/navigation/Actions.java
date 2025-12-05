@@ -2200,7 +2200,7 @@ public class Actions implements Service {
 
 	@Nonnull
 	private <T extends AbstractSearchPane> T openSearchPane(@Nonnull String titleId, @Nonnull Ikon icon, @Nonnull Instance<T> paneProvider) {
-		// Place the tab in a region with other comments if possible.
+		// Place the tab in a region with other searches if possible.
 		DockablePath searchPath = dockingManager.getBento()
 				.search().dockable(d -> d.getNode() instanceof AbstractSearchPane);
 		DockContainerLeaf container = searchPath == null ? null : searchPath.leafContainer();

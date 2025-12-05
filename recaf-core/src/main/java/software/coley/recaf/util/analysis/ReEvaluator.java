@@ -101,7 +101,7 @@ public class ReEvaluator {
 	 */
 	public boolean canEvaluate(@Nonnull MethodNode method) {
 		// Cannot be abstract / have no instructions.
-		if (method.instructions == null)
+		if (method.instructions == null || method.instructions.size() == 0)
 			return false;
 
 		// Must not have any unsupported instructions

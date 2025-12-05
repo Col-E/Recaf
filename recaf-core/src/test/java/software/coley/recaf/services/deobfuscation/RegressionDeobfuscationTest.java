@@ -2,6 +2,7 @@ package software.coley.recaf.services.deobfuscation;
 
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import software.coley.recaf.services.deobfuscation.transform.generic.CallResultInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
@@ -433,6 +434,25 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				}
 				""";
 		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class));
+	}
+
+	@Test
+	void callInliningOfUnhandledCoreJdkClassesDoesNotFail() {
+		// Unknown values like 'Thread.currentThread()' shouldn't throw exceptions.
+		// Instead, nothing should happen at all here.
+		String asm = """
+				.method public test ()I {
+				    parameters: { this },
+				    code: {
+				    A:
+				        invokestatic java/lang/Thread.currentThread ()Ljava/lang/Thread;
+				        invokevirtual java/lang/Object.hashCode ()I
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(CallResultInliningTransformer.class));
 	}
 
 	/**
