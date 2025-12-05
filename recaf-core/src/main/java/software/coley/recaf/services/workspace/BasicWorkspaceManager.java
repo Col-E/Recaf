@@ -78,7 +78,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 
 	@Override
 	public void addWorkspaceCloseCondition(@Nonnull WorkspaceCloseCondition condition) {
-		closeConditions.add(condition);
+		PrioritySortable.add(closeConditions, condition);
 	}
 
 	@Override
@@ -126,7 +126,7 @@ public class BasicWorkspaceManager implements WorkspaceManager {
 
 	@Override
 	public void addDefaultWorkspaceModificationListeners(@Nonnull WorkspaceModificationListener listener) {
-		defaultModificationListeners.add(listener);
+		PrioritySortable.add(defaultModificationListeners, listener);
 	}
 
 	@Override

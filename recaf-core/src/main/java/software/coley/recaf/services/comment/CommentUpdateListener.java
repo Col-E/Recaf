@@ -2,6 +2,7 @@ package software.coley.recaf.services.comment;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 
@@ -10,7 +11,7 @@ import software.coley.recaf.path.ClassPathNode;
  *
  * @author Matt Coley
  */
-public interface CommentUpdateListener {
+public interface CommentUpdateListener extends PrioritySortable {
 	/**
 	 * @param path
 	 * 		Path to class commented.

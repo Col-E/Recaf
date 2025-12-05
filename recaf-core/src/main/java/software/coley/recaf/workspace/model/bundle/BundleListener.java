@@ -2,6 +2,7 @@ package software.coley.recaf.workspace.model.bundle;
 
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 
 /**
  * Listener for updates to contents within a {@link Bundle}.
@@ -11,7 +12,7 @@ import jakarta.annotation.Nonnull;
  *
  * @author Matt Coley
  */
-public interface BundleListener<I> {
+public interface BundleListener<I> extends PrioritySortable {
 	/**
 	 * @param key
 	 * 		Item key.

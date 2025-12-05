@@ -1,13 +1,14 @@
 package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 
 /**
  * Listener to observe {@link Navigable} components being added to the UI.
  *
  * @author Matt Coley
  */
-public interface NavigableAddListener {
+public interface NavigableAddListener extends PrioritySortable {
 	/**
 	 * Called when the {@link NavigationManager} observes a {@link Navigable} is added to the UI.
 	 * <p/>

@@ -2,6 +2,7 @@ package software.coley.recaf.ui.control.richtext.source;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.services.source.AstResolveResult;
@@ -27,7 +28,7 @@ public class JavaContextActionManager {
 	 * 		Listener to add.
 	 */
 	public void addResolveListener(@Nonnull ResolveListener listener) {
-		resolveListeners.add(listener);
+		PrioritySortable.add(resolveListeners, listener);
 	}
 
 	/**
@@ -43,7 +44,7 @@ public class JavaContextActionManager {
 	 * 		Listener to add.
 	 */
 	public void addSelectListener(@Nonnull SelectListener listener) {
-		selectListeners.add(listener);
+		PrioritySortable.add(selectListeners, listener);
 	}
 
 	/**
@@ -73,7 +74,7 @@ public class JavaContextActionManager {
 	/**
 	 * Listener for receiving context resolutions.
 	 */
-	public interface ResolveListener {
+	public interface ResolveListener extends PrioritySortable {
 		/**
 		 * @param result
 		 * 		Resolution result.
@@ -86,7 +87,7 @@ public class JavaContextActionManager {
 	/**
 	 * Listener for receiving {@link ClassMember} selections within the Java decompiler display.
 	 */
-	public interface SelectListener {
+	public interface SelectListener extends PrioritySortable {
 		/**
 		 * @param memberPath
 		 * 		Path of member selected.

@@ -17,7 +17,6 @@ import software.coley.recaf.ui.control.PathNodeTree;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.NodeEvents;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
  * Tree view for navigating a {@link Workspace}.
@@ -60,13 +59,9 @@ public class WorkspaceTree extends PathNodeTree implements WorkspaceCloseListene
 	 * 		Workspace to represent.
 	 */
 	public void createWorkspaceRoot(@Nullable Workspace workspace) {
-		Workspace oldWorkspace = this.workspace;
-		if (oldWorkspace != null && root != null) {
-			// Remove listeners on old workspace
-			oldWorkspace.removeWorkspaceModificationListener(root);
-			for (WorkspaceResource resource : oldWorkspace.getAllResources(false))
-				resource.removeListener(root);
-		}
+		// Remove listeners on old workspace root node
+		if (root != null)
+			root.removeWorkspaceListeners();
 
 		// Update workspace reference & populate root.
 		this.workspace = workspace;

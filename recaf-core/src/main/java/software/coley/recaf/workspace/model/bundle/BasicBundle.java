@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.workspace.model.resource.BasicWorkspaceResource;
 
@@ -153,7 +154,7 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 
 	@Override
 	public void addBundleListener(@Nonnull BundleListener<I> listener) {
-		listeners.add(listener);
+		PrioritySortable.add(listeners, listener);
 	}
 
 	@Override

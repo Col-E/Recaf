@@ -1,6 +1,7 @@
 package software.coley.recaf.services.config;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.config.ConfigContainer;
 
 /**
@@ -9,7 +10,7 @@ import software.coley.recaf.config.ConfigContainer;
  *
  * @author Matt Coley
  */
-public interface ManagedConfigListener {
+public interface ManagedConfigListener extends PrioritySortable {
 	/**
 	 * @param container
 	 * 		Registered config.

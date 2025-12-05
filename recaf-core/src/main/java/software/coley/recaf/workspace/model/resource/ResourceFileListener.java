@@ -1,6 +1,7 @@
 package software.coley.recaf.workspace.model.resource;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 
@@ -10,7 +11,7 @@ import software.coley.recaf.workspace.model.bundle.FileBundle;
  *
  * @author Matt Coley
  */
-public interface ResourceFileListener {
+public interface ResourceFileListener extends PrioritySortable {
 	/**
 	 * @param resource
 	 * 		Containing resource.

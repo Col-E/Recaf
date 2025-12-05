@@ -1,6 +1,7 @@
 package software.coley.recaf.workspace.model.resource;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
@@ -10,7 +11,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
  *
  * @author Matt Coley
  */
-public interface ResourceJvmClassListener {
+public interface ResourceJvmClassListener extends PrioritySortable {
 	/**
 	 * @param resource
 	 * 		Containing resource.

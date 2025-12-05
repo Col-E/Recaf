@@ -1,6 +1,7 @@
 package software.coley.recaf.workspace.model.resource;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 
@@ -10,7 +11,7 @@ import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
  *
  * @author Matt Coley
  */
-public interface ResourceAndroidClassListener {
+public interface ResourceAndroidClassListener extends PrioritySortable {
 	/**
 	 * @param resource
 	 * 		Containing resource.

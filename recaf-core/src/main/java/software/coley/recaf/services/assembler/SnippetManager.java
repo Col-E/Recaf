@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.services.Service;
 
 import java.util.List;
@@ -98,7 +99,7 @@ public class SnippetManager implements Service {
 	 * 		Listener to add.
 	 */
 	public void addSnippetListener(@Nonnull SnippetListener listener) {
-		listeners.add(listener);
+		PrioritySortable.add(listeners, listener);
 	}
 
 	/**

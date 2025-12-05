@@ -18,6 +18,7 @@ import software.coley.instrument.message.MessageFactory;
 import software.coley.instrument.sock.SocketAvailability;
 import software.coley.instrument.util.Discovery;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.util.DevDetection;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
@@ -422,7 +423,7 @@ public class BasicAttachManager implements AttachManager {
 
 	@Override
 	public void addPostScanListener(@Nonnull PostScanListener listener) {
-		postScanListeners.add(listener);
+		PrioritySortable.add(postScanListeners, listener);
 	}
 
 	@Override

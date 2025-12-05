@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -46,7 +47,7 @@ public class MappingListeners implements Service {
 	 */
 	public synchronized void addMappingApplicationListener(@Nonnull MappingApplicationListener listener) {
 		if (!mappingApplicationListeners.contains(listener))
-			mappingApplicationListeners.add(listener);
+			PrioritySortable.add(mappingApplicationListeners, listener);
 	}
 
 	/**

@@ -1,13 +1,14 @@
 package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 
 /**
  * Listener to observe {@link Navigable} components being removed from the UI.
  *
  * @author Matt Coley
  */
-public interface NavigableRemoveListener {
+public interface NavigableRemoveListener extends PrioritySortable {
 	/**
 	 * Called when the {@link NavigationManager} observes a {@link Navigable} is removed from the UI.
 	 * <p/>

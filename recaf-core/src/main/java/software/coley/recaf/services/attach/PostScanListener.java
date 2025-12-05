@@ -2,6 +2,7 @@ package software.coley.recaf.services.attach;
 
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 
 import java.util.Set;
 
@@ -10,7 +11,7 @@ import java.util.Set;
  *
  * @author Matt Coley
  */
-public interface PostScanListener {
+public interface PostScanListener extends PrioritySortable {
 	/**
 	 * Called when scan is completed.
 	 *

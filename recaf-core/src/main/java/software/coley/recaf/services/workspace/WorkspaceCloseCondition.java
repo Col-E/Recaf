@@ -1,6 +1,7 @@
 package software.coley.recaf.services.workspace;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -9,7 +10,7 @@ import software.coley.recaf.workspace.model.Workspace;
  *
  * @author Matt Coley
  */
-public interface WorkspaceCloseCondition {
+public interface WorkspaceCloseCondition extends PrioritySortable {
 	/**
 	 * @param current
 	 * 		Current workspace.

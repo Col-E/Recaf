@@ -4,7 +4,13 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
-import software.coley.recaf.info.*;
+import software.coley.recaf.behavior.PrioritySortable;
+import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.Info;
+import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
@@ -14,7 +20,11 @@ import software.coley.recaf.path.AssemblerPathData;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.*;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.Bundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
@@ -75,17 +85,17 @@ public class ContextMenuProviderService implements Service {
 
 	@Inject
 	public ContextMenuProviderService(@Nonnull ContextMenuProviderServiceConfig config,
-									  @Nonnull ClassContextMenuProviderFactory classContextMenuDefault,
-									  @Nonnull FileContextMenuProviderFactory fileContextMenuDefault,
-									  @Nonnull InnerClassContextMenuProviderFactory innerClassContextMenuDefault,
-									  @Nonnull FieldContextMenuProviderFactory fieldContextMenuDefault,
-									  @Nonnull MethodContextMenuProviderFactory methodContextMenuDefault,
-									  @Nonnull AnnotationContextMenuProviderFactory annotationContextMenuDefault,
-									  @Nonnull PackageContextMenuProviderFactory packageContextMenuDefault,
-									  @Nonnull DirectoryContextMenuProviderFactory directoryContextMenuDefault,
-									  @Nonnull BundleContextMenuProviderFactory bundleContextMenuDefault,
-									  @Nonnull ResourceContextMenuProviderFactory resourceContextMenuDefault,
-									  @Nonnull AssemblerContextMenuProviderFactory assemblerContextMenuDefault) {
+	                                  @Nonnull ClassContextMenuProviderFactory classContextMenuDefault,
+	                                  @Nonnull FileContextMenuProviderFactory fileContextMenuDefault,
+	                                  @Nonnull InnerClassContextMenuProviderFactory innerClassContextMenuDefault,
+	                                  @Nonnull FieldContextMenuProviderFactory fieldContextMenuDefault,
+	                                  @Nonnull MethodContextMenuProviderFactory methodContextMenuDefault,
+	                                  @Nonnull AnnotationContextMenuProviderFactory annotationContextMenuDefault,
+	                                  @Nonnull PackageContextMenuProviderFactory packageContextMenuDefault,
+	                                  @Nonnull DirectoryContextMenuProviderFactory directoryContextMenuDefault,
+	                                  @Nonnull BundleContextMenuProviderFactory bundleContextMenuDefault,
+	                                  @Nonnull ResourceContextMenuProviderFactory resourceContextMenuDefault,
+	                                  @Nonnull AssemblerContextMenuProviderFactory assemblerContextMenuDefault) {
 		this.config = config;
 
 		// Default factories
@@ -118,10 +128,10 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getJvmClassInfoContextMenuProvider(@Nonnull ContextSource source,
-																  @Nonnull Workspace workspace,
-																  @Nonnull WorkspaceResource resource,
-																  @Nonnull JvmClassBundle bundle,
-																  @Nonnull JvmClassInfo info) {
+	                                                              @Nonnull Workspace workspace,
+	                                                              @Nonnull WorkspaceResource resource,
+	                                                              @Nonnull JvmClassBundle bundle,
+	                                                              @Nonnull JvmClassInfo info) {
 		ContextMenuProvider provider = classContextMenuDefault.getJvmClassInfoContextMenuProvider(source, workspace, resource, bundle, info);
 		provider = adapt(provider, classContextMenuAdapters, (adapter, menu) -> adapter.adaptJvmClassMenu(menu, source, workspace, resource, bundle, info));
 		return provider;
@@ -145,10 +155,10 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getAndroidClassInfoContextMenuProvider(@Nonnull ContextSource source,
-																	  @Nonnull Workspace workspace,
-																	  @Nonnull WorkspaceResource resource,
-																	  @Nonnull AndroidClassBundle bundle,
-																	  @Nonnull AndroidClassInfo info) {
+	                                                                  @Nonnull Workspace workspace,
+	                                                                  @Nonnull WorkspaceResource resource,
+	                                                                  @Nonnull AndroidClassBundle bundle,
+	                                                                  @Nonnull AndroidClassInfo info) {
 		ContextMenuProvider provider = classContextMenuDefault.getAndroidClassInfoContextMenuProvider(source, workspace, resource, bundle, info);
 		provider = adapt(provider, classContextMenuAdapters, (adapter, menu) -> adapter.adaptAndroidClassMenu(menu, source, workspace, resource, bundle, info));
 		return provider;
@@ -172,11 +182,11 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getInnerClassInfoContextMenuProvider(@Nonnull ContextSource source,
-																	@Nonnull Workspace workspace,
-																	@Nonnull WorkspaceResource resource,
-																	@Nonnull ClassBundle<? extends ClassInfo> bundle,
-																	@Nonnull ClassInfo outerClass,
-																	@Nonnull InnerClassInfo inner) {
+	                                                                @Nonnull Workspace workspace,
+	                                                                @Nonnull WorkspaceResource resource,
+	                                                                @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                                                @Nonnull ClassInfo outerClass,
+	                                                                @Nonnull InnerClassInfo inner) {
 		ContextMenuProvider provider = innerClassContextMenuDefault.getInnerClassInfoContextMenuProvider(source, workspace, resource, bundle, outerClass, inner);
 		provider = adapt(provider, innerClassContextMenuAdapters, (adapter, menu) -> adapter.adaptInnerClassInfoContextMenu(menu, source, workspace, resource, bundle, outerClass, inner));
 		return provider;
@@ -202,11 +212,11 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getClassMemberContextMenuProvider(@Nonnull ContextSource source,
-																 @Nonnull Workspace workspace,
-																 @Nonnull WorkspaceResource resource,
-																 @Nonnull ClassBundle<? extends ClassInfo> bundle,
-																 @Nonnull ClassInfo declaringClass,
-																 @Nonnull ClassMember member) {
+	                                                             @Nonnull Workspace workspace,
+	                                                             @Nonnull WorkspaceResource resource,
+	                                                             @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                                             @Nonnull ClassInfo declaringClass,
+	                                                             @Nonnull ClassMember member) {
 		if (member.isField()) {
 			FieldMember field = (FieldMember) member;
 			ContextMenuProvider provider = fieldContextMenuDefault.getFieldContextMenuProvider(source, workspace, resource, bundle, declaringClass, field);
@@ -240,11 +250,11 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getAnnotationContextMenuProvider(@Nonnull ContextSource source,
-																@Nonnull Workspace workspace,
-																@Nonnull WorkspaceResource resource,
-																@Nonnull ClassBundle<? extends ClassInfo> bundle,
-																@Nonnull Annotated annotated,
-																@Nonnull AnnotationInfo annotation) {
+	                                                            @Nonnull Workspace workspace,
+	                                                            @Nonnull WorkspaceResource resource,
+	                                                            @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                                            @Nonnull Annotated annotated,
+	                                                            @Nonnull AnnotationInfo annotation) {
 		ContextMenuProvider provider = annotationContextMenuDefault.getAnnotationContextMenuProvider(source, workspace, resource, bundle, annotated, annotation);
 		provider = adapt(provider, annotationContextMenuAdapters, (adapter, menu) -> adapter.adaptAnnotationContextMenu(menu, source, workspace, resource, bundle, annotated, annotation));
 		return provider;
@@ -268,10 +278,10 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getFileInfoContextMenuProvider(@Nonnull ContextSource source,
-															  @Nonnull Workspace workspace,
-															  @Nonnull WorkspaceResource resource,
-															  @Nonnull FileBundle bundle,
-															  @Nonnull FileInfo info) {
+	                                                          @Nonnull Workspace workspace,
+	                                                          @Nonnull WorkspaceResource resource,
+	                                                          @Nonnull FileBundle bundle,
+	                                                          @Nonnull FileInfo info) {
 		ContextMenuProvider provider = fileContextMenuDefault.getFileInfoContextMenuProvider(source, workspace, resource, bundle, info);
 		provider = adapt(provider, fileContextMenuAdapters, (adapter, menu) -> adapter.adaptFileInfoContextMenu(menu, source, workspace, resource, bundle, info));
 		return provider;
@@ -295,10 +305,10 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getPackageContextMenuProvider(@Nonnull ContextSource source,
-															 @Nonnull Workspace workspace,
-															 @Nonnull WorkspaceResource resource,
-															 @Nonnull ClassBundle<? extends ClassInfo> bundle,
-															 @Nonnull String packageName) {
+	                                                         @Nonnull Workspace workspace,
+	                                                         @Nonnull WorkspaceResource resource,
+	                                                         @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                                         @Nonnull String packageName) {
 		ContextMenuProvider provider = packageContextMenuDefault.getPackageContextMenuProvider(source, workspace, resource, bundle, packageName);
 		provider = adapt(provider, packageContextMenuAdapters, (adapter, menu) -> adapter.adaptPackageContextMenu(menu, source, workspace, resource, bundle, packageName));
 		return provider;
@@ -322,10 +332,10 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getDirectoryContextMenuProvider(@Nonnull ContextSource source,
-															   @Nonnull Workspace workspace,
-															   @Nonnull WorkspaceResource resource,
-															   @Nonnull FileBundle bundle,
-															   @Nonnull String directoryName) {
+	                                                           @Nonnull Workspace workspace,
+	                                                           @Nonnull WorkspaceResource resource,
+	                                                           @Nonnull FileBundle bundle,
+	                                                           @Nonnull String directoryName) {
 		ContextMenuProvider provider = directoryContextMenuDefault.getDirectoryContextMenuProvider(source, workspace, resource, bundle, directoryName);
 		provider = adapt(provider, directoryContextMenuAdapters, (adapter, menu) -> adapter.adaptDirectoryContextMenu(menu, source, workspace, resource, bundle, directoryName));
 		return provider;
@@ -347,9 +357,9 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getBundleContextMenuProvider(@Nonnull ContextSource source,
-															@Nonnull Workspace workspace,
-															@Nonnull WorkspaceResource resource,
-															@Nonnull Bundle<? extends Info> bundle) {
+	                                                        @Nonnull Workspace workspace,
+	                                                        @Nonnull WorkspaceResource resource,
+	                                                        @Nonnull Bundle<? extends Info> bundle) {
 		ContextMenuProvider provider = bundleContextMenuDefault.getBundleContextMenuProvider(source, workspace, resource, bundle);
 		provider = adapt(provider, bundleContextMenuAdapters, (adapter, menu) -> adapter.adaptBundleContextMenu(menu, source, workspace, resource, bundle));
 		return provider;
@@ -369,8 +379,8 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getResourceContextMenuProvider(@Nonnull ContextSource source,
-															  @Nonnull Workspace workspace,
-															  @Nonnull WorkspaceResource resource) {
+	                                                          @Nonnull Workspace workspace,
+	                                                          @Nonnull WorkspaceResource resource) {
 		ContextMenuProvider provider = resourceContextMenuDefault.getResourceContextMenuProvider(source, workspace, resource);
 		provider = adapt(provider, resourceContextMenuAdapters, (adapter, menu) -> adapter.adaptResourceContextMenu(menu, source, workspace, resource));
 		return provider;
@@ -396,11 +406,11 @@ public class ContextMenuProviderService implements Service {
 	 */
 	@Nonnull
 	public ContextMenuProvider getAssemblerContextMenuProvider(@Nonnull ContextSource source,
-															   @Nonnull Workspace workspace,
-															   @Nonnull WorkspaceResource resource,
-															   @Nonnull ClassBundle<? extends ClassInfo> bundle,
-															   @Nonnull ClassInfo declaringClass,
-															   @Nonnull AssemblerPathData assemblerData) {
+	                                                           @Nonnull Workspace workspace,
+	                                                           @Nonnull WorkspaceResource resource,
+	                                                           @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                                           @Nonnull ClassInfo declaringClass,
+	                                                           @Nonnull AssemblerPathData assemblerData) {
 		ContextMenuProvider provider = assemblerContextMenuDefault.getAssemblerMenuProvider(source, workspace, resource, bundle, declaringClass, assemblerData);
 		provider = adapt(provider, assemblerContextMenuAdapters, (adapter, menu) -> adapter.adaptAssemblerMenu(menu, source, workspace, resource, bundle, declaringClass, assemblerData));
 		return provider;
@@ -413,7 +423,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addClassContextMenuAdapter(@Nonnull ClassContextMenuAdapter adapter) {
-		return classContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(classContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -433,7 +443,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addFileContextMenuAdapter(@Nonnull FileContextMenuAdapter adapter) {
-		return fileContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(fileContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -453,7 +463,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addInnerClassContextMenuAdapter(@Nonnull InnerClassContextMenuAdapter adapter) {
-		return innerClassContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(innerClassContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -473,7 +483,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addFieldContextMenuAdapter(@Nonnull FieldContextMenuAdapter adapter) {
-		return fieldContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(fieldContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -493,7 +503,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addMethodContextMenuAdapter(@Nonnull MethodContextMenuAdapter adapter) {
-		return methodContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(methodContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -513,7 +523,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addAnnotationContextMenuAdapter(@Nonnull AnnotationContextMenuAdapter adapter) {
-		return annotationContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(annotationContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -533,7 +543,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addPackageContextMenuAdapter(@Nonnull PackageContextMenuAdapter adapter) {
-		return packageContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(packageContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -553,7 +563,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addDirectoryContextMenuAdapter(@Nonnull DirectoryContextMenuAdapter adapter) {
-		return directoryContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(directoryContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -573,7 +583,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addBundleContextMenuAdapter(@Nonnull BundleContextMenuAdapter adapter) {
-		return bundleContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(bundleContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -593,7 +603,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addResourceContextMenuAdapter(@Nonnull ResourceContextMenuAdapter adapter) {
-		return resourceContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(resourceContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -613,7 +623,7 @@ public class ContextMenuProviderService implements Service {
 	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
 	 */
 	public boolean addAssemblerContextMenuAdapter(@Nonnull AssemblerContextMenuAdapter adapter) {
-		return assemblerContextMenuAdapters.add(adapter);
+		return PrioritySortable.add(assemblerContextMenuAdapters, adapter);
 	}
 
 	/**
@@ -728,8 +738,8 @@ public class ContextMenuProviderService implements Service {
 
 	@Nonnull
 	private static <T extends ContextMenuAdapter> ContextMenuProvider adapt(@Nonnull ContextMenuProvider provider,
-																			@Nonnull Collection<T> adapters,
-																			@Nonnull BiConsumer<T, ContextMenu> adapterConsumer) {
+	                                                                        @Nonnull Collection<T> adapters,
+	                                                                        @Nonnull BiConsumer<T, ContextMenu> adapterConsumer) {
 		for (T adapter : adapters) {
 			ContextMenuProvider currentProvider = provider;
 			provider = () -> {

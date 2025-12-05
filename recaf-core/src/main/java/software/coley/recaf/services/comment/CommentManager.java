@@ -14,6 +14,7 @@ import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -478,7 +479,7 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	 * 		Listener to add.
 	 */
 	public void addCommentListener(@Nonnull CommentUpdateListener listener) {
-		commentUpdateListeners.add(listener);
+		PrioritySortable.add(commentUpdateListeners, listener);
 	}
 
 	/**
@@ -494,7 +495,7 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	 * 		Listener to add.
 	 */
 	public void addCommentContainerListener(@Nonnull CommentContainerListener listener) {
-		commentContainerListeners.add(listener);
+		PrioritySortable.add(commentContainerListeners, listener);
 	}
 
 	/**

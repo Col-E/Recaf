@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
@@ -114,7 +115,7 @@ public class BasicWorkspace implements Workspace {
 
 	@Override
 	public void addWorkspaceModificationListener(@Nonnull WorkspaceModificationListener listener) {
-		modificationListeners.add(listener);
+		PrioritySortable.add(modificationListeners, listener);
 	}
 
 	@Override

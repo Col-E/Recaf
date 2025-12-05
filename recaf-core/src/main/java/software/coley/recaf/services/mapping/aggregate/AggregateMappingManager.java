@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.Mappings;
@@ -73,7 +74,7 @@ public class AggregateMappingManager implements Service {
 	 * 		Listener to add.
 	 */
 	public void addAggregatedMappingsListener(@Nonnull AggregatedMappingsListener listener) {
-		aggregateListeners.add(listener);
+		PrioritySortable.add(aggregateListeners, listener);
 	}
 
 	/**

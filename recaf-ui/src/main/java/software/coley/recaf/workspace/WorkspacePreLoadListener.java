@@ -1,6 +1,7 @@
 package software.coley.recaf.workspace;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.util.io.ByteSource;
 
 import java.net.URL;
@@ -22,7 +23,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public interface WorkspacePreLoadListener {
+public interface WorkspacePreLoadListener extends PrioritySortable {
 	/**
 	 * @param primaryPath
 	 * 		Path to the primary resource file.

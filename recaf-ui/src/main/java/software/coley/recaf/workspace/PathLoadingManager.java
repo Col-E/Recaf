@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.io.ResourceImporter;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
@@ -47,7 +48,7 @@ public class PathLoadingManager {
 	 * 		Listener to add.
 	 */
 	public void addPreLoadListener(@Nonnull WorkspacePreLoadListener listener) {
-		preLoadListeners.add(listener);
+		PrioritySortable.add(preLoadListeners, listener);
 	}
 
 	/**

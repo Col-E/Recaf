@@ -15,6 +15,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.cdi.InitializationEvent;
 import software.coley.recaf.config.ConfigCollectionValue;
 import software.coley.recaf.config.ConfigContainer;
@@ -203,7 +204,7 @@ public class ConfigManager implements Service {
 	 * 		Listener to add.
 	 */
 	public void addManagedConfigListener(@Nonnull ManagedConfigListener listener) {
-		listeners.add(listener);
+		PrioritySortable.add(listeners, listener);
 	}
 
 	/**

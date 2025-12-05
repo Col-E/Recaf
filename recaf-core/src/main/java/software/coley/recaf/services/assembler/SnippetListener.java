@@ -1,13 +1,14 @@
 package software.coley.recaf.services.assembler;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 
 /**
  * Listener for receiving updates when {@link Snippet} entries are added/updated/removed from {@link SnippetManager}.
  *
  * @author Matt Coley
  */
-public interface SnippetListener {
+public interface SnippetListener extends PrioritySortable {
 	/**
 	 * @param snippet
 	 * 		Newly added snippet.

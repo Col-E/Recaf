@@ -14,6 +14,7 @@ import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.path.DockablePath;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -202,7 +203,7 @@ public class NavigationManager implements Navigable, Service {
 	 * 		Listener to add.
 	 */
 	public void addNavigableAddListener(@Nonnull NavigableAddListener listener) {
-		addListeners.add(listener);
+		PrioritySortable.add(addListeners, listener);
 	}
 
 	/**
@@ -222,7 +223,7 @@ public class NavigationManager implements Navigable, Service {
 	 * 		Listener to add.
 	 */
 	public void addNavigableRemoveListener(@Nonnull NavigableRemoveListener listener) {
-		removeListeners.add(listener);
+		PrioritySortable.add(removeListeners, listener);
 	}
 
 	/**

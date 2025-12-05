@@ -10,6 +10,7 @@ import software.coley.collections.Lists;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 
@@ -118,7 +119,7 @@ public class ProblemTracking implements EditorComponent, Consumer<PlainTextChang
 	 * 		Listener to add.
 	 */
 	public void addListener(@Nonnull ProblemInvalidationListener listener) {
-		listeners.add(listener);
+		PrioritySortable.add(listeners, listener);
 	}
 
 	/**

@@ -5,13 +5,19 @@ import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.*;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.BasicBundle;
+import software.coley.recaf.workspace.model.bundle.BundleListener;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 
 import java.util.Collections;
 import java.util.List;
@@ -259,7 +265,7 @@ public class BasicWorkspaceResource extends BasicPropertyContainer implements Wo
 
 	@Override
 	public void addResourceJvmClassListener(ResourceJvmClassListener listener) {
-		jvmClassListeners.add(listener);
+		PrioritySortable.add(jvmClassListeners, listener);
 	}
 
 	@Override
@@ -269,7 +275,7 @@ public class BasicWorkspaceResource extends BasicPropertyContainer implements Wo
 
 	@Override
 	public void addResourceAndroidClassListener(ResourceAndroidClassListener listener) {
-		androidClassListeners.add(listener);
+		PrioritySortable.add(androidClassListeners, listener);
 	}
 
 	@Override
@@ -279,7 +285,7 @@ public class BasicWorkspaceResource extends BasicPropertyContainer implements Wo
 
 	@Override
 	public void addResourceFileListener(ResourceFileListener listener) {
-		fileListeners.add(listener);
+		PrioritySortable.add(fileListeners, listener);
 	}
 
 	@Override
@@ -296,8 +302,10 @@ public class BasicWorkspaceResource extends BasicPropertyContainer implements Wo
 		jvmClassListeners.clear();
 		androidClassListeners.clear();
 		fileListeners.clear();
+
 		// Close embedded resources
 		embeddedResources.values().forEach(WorkspaceResource::close);
+
 		// Close all bundles
 		bundleStream().forEach(Closing::close);
 	}

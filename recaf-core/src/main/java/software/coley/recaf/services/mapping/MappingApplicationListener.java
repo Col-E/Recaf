@@ -1,6 +1,7 @@
 package software.coley.recaf.services.mapping;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.workspace.model.Workspace;
 
 /**
@@ -10,7 +11,7 @@ import software.coley.recaf.workspace.model.Workspace;
  * @see MappingResults Can be added to the constuctor to affect a single mapping job.
  * @see MappingListeners Can be added in order to affect all mapping jobs.
  */
-public interface MappingApplicationListener {
+public interface MappingApplicationListener extends PrioritySortable {
 	/**
 	 * @param workspace
 	 * 		Workspace the mappings are applied to.
