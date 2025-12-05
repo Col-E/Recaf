@@ -150,12 +150,10 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					if (getSlotsOccupied(frame) < 1)
 						continue;
 					ReValue top = frame.getStack(frame.getStackSize() - 1);
-					if (top.hasKnownValue()) {
-						AbstractInsnNode replacement = toInsn(top);
-						if (replacement != null) {
-							instructions.set(instruction, replacement);
-							dirty = true;
-						}
+					AbstractInsnNode replacement = toInsn(top);
+					if (replacement != null) {
+						instructions.set(instruction, replacement);
+						dirty = true;
 					} else if (isSupportedValueProducer(instruction.getPrevious())) {
 						instructions.set(instruction, instruction.getPrevious().clone(Collections.emptyMap()));
 						dirty = true;

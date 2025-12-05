@@ -1,6 +1,7 @@
 package software.coley.recaf.services.deobfuscation;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.services.deobfuscation.transform.generic.CallResultInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
@@ -15,6 +16,7 @@ import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -730,6 +732,334 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	/**
+	 * The first pass of the constant folding transformer should let us know what the final value is.
+	 * Everything else should facilitate cleanup. The arrays are referenced a lot due to how arrays are
+	 * populated in Java. It's not like Dalvik where you can just push a fully constructed array in one go.
+	 * Because of this, we need to detect that these reads/writes are not actually useful and clean up where
+	 * necessary.
+	 *
+	 * @see #constFoldingAndVariableFoldingWillNotAggressivelyRemoveArrayConstructionsForArraysUsedElsewhere()
+	 */
+	@Test
+	void constFoldingAndVariableFoldingWillEventuallyCleanUpNoLongerUsedArrays() {
+		String asm = """
+				.method public static example ()I {
+				     code: {
+				     A:
+				         iconst_5
+				         newarray int
+				         astore a
+				     B:
+				         aload a
+				         iconst_0
+				         iconst_1
+				         iastore
+				     C:
+				         aload a
+				         iconst_1
+				         bipush 10
+				         iastore
+				     D:
+				         aload a
+				         iconst_2
+				         bipush 100
+				         iastore
+				     E:
+				         aload a
+				         iconst_3
+				         sipush 1000
+				         iastore
+				     F:
+				         aload a
+				         iconst_4
+				         sipush 10000
+				         iastore
+				     G:
+				         iconst_5
+				         newarray int
+				         astore b
+				     H:
+				         iconst_2
+				         aload a
+				         aload b
+				         arraylength
+				         iconst_2
+				         iushr
+				         iaload
+				         aload a
+				         arraylength
+				         idiv
+				         imul
+				         newarray int
+				         astore c
+				     I:
+				         aload c
+				         arraylength
+				         iconst_1
+				         iushr
+				         newarray int
+				         astore b
+				     J:
+				         aload b
+				         aload c
+				         iconst_0
+				         iaload
+				         aload a
+				         iconst_3
+				         iaload
+				         aload c
+				         arraylength
+				         iushr
+				         iastore
+				     K:
+				         aload b
+				         aload a
+				         iconst_0
+				         iaload
+				         aload b
+				         arraylength
+				         iconst_2
+				         ishl
+				         aload b
+				         aload a
+				         iconst_0
+				         iaload
+				         iconst_1
+				         iushr
+				         iaload
+				         iadd
+				         aload c
+				         arraylength
+				         ishl
+				         iconst_2
+				         ishr
+				         iastore
+				     L:
+				         aload c
+				         aload a
+				         iconst_1
+				         iaload
+				         bipush 10
+				         newarray int
+				         arraylength
+				         idiv
+				         aload a
+				         iconst_4
+				         iaload
+				         iastore
+				     M:
+				         aload c
+				         iconst_0
+				         aload c
+				         iconst_1
+				         iaload
+				         iconst_4
+				         ishr
+				         iastore
+				     N:
+				         aload c
+				         iconst_3
+				         aload a
+				         iconst_2
+				         newarray int
+				         arraylength
+				         iaload
+				         bipush 10
+				         imul
+				         iastore
+				     O:
+				         aload c
+				         iconst_2
+				         aload c
+				         iconst_3
+				         iaload
+				         iconst_1
+				         ishr
+				         iastore
+				     P:
+				         aload a
+				         iconst_0
+				         iaload
+				         istore a0
+				     Q:
+				         aload a
+				         iconst_1
+				         iaload
+				         istore a1
+				     R:
+				         aload a
+				         iconst_2
+				         iaload
+				         istore a2
+				     S:
+				         aload a
+				         iconst_3
+				         iaload
+				         istore a3
+				     T:
+				         aload a
+				         iconst_4
+				         iaload
+				         istore a4
+				     U:
+				         aload b
+				         iconst_0
+				         iaload
+				         istore b0
+				     V:
+				         aload b
+				         iconst_1
+				         iaload
+				         istore b1
+				     W:
+				         aload c
+				         iconst_0
+				         iaload
+				         istore c0
+				     X:
+				         aload c
+				         iconst_1
+				         iaload
+				         istore c1
+				     Y:
+				         aload c
+				         iconst_2
+				         iaload
+				         istore c2
+				     Z:
+				         aload c
+				         iconst_3
+				         iaload
+				         istore c3
+				     AA:
+				         bipush 11
+				         newarray int
+				         dup
+				         iconst_0
+				         iload a0
+				         iastore
+				         dup
+				         iconst_1
+				         iload a1
+				         iastore
+				         dup
+				         iconst_2
+				         iload a2
+				         iastore
+				         dup
+				         iconst_3
+				         iload a3
+				         iastore
+				         dup
+				         iconst_4
+				         iload a4
+				         iastore
+				         dup
+				         iconst_5
+				         iload b0
+				         iastore
+				         dup
+				         bipush 6
+				         iload b1
+				         iastore
+				         dup
+				         bipush 7
+				         iload c0
+				         iastore
+				         dup
+				         bipush 8
+				         iload c1
+				         iastore
+				         dup
+				         bipush 9
+				         iload c2
+				         iastore
+				         dup
+				         bipush 10
+				         iload c3
+				         iastore
+				         astore d
+				     AB:
+				         aload d
+				         invokestatic java/util/Arrays.hashCode ([I)I
+				         istore h
+				     AC:
+				         iload h
+				     AD:
+				         // -1239995153
+				         ireturn
+				     AE:
+				     }
+				}
+				""";
+		validateAfterRepeatedAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class, VariableFoldingTransformer.class), dis -> {
+			// Final result
+			assertTrue(dis.contains("ldc -1239995153"), "Failed to fold sequence");
+			// All we should have is just the final value and a return
+			assertFalse(dis.contains("iload"), "Failed to fold sequence");
+			assertFalse(dis.contains("istore"), "Failed to fold sequence");
+			assertFalse(dis.contains("iastore"), "Failed to fold sequence");
+			assertFalse(dis.contains("iaload"), "Failed to fold sequence");
+			assertFalse(dis.contains("invoke"), "Failed to fold sequence");
+			assertFalse(dis.contains("dup"), "Failed to fold sequence");
+			assertFalse(dis.contains("pop"), "Failed to fold sequence");
+		});
+	}
+
+	/**
+	 * Unlike {@link #constFoldingAndVariableFoldingWillEventuallyCleanUpNoLongerUsedArrays()} the array built here
+	 * is passed to some other method, so we need to keep the whole thing around.
+	 */
+	@Test
+	void constFoldingAndVariableFoldingWillNotAggressivelyRemoveArrayConstructionsForArraysUsedElsewhere() {
+		String asm = """
+				.method public static example ()I {
+				     code: {
+				     A:
+				         iconst_2
+				         newarray int
+				         astore a
+				     B:
+				         aload a
+				         iconst_0
+				         iconst_5
+				         iastore
+				     C:
+				         aload a
+				         iconst_1
+				         iconst_5
+				         iastore
+				     D:
+				         // This should be folded to 10
+				         aload a
+				         dup
+				         iconst_0
+				         iaload
+				         aload a
+				         iconst_1
+				         iaload
+				         iadd
+				     E:
+				         // This takes '10' and 'int[] a'
+				         // The array should not be deleted since it is used as a parameter here.
+				         invokestatic Example.consume (I[I)I
+				         ireturn
+				     F:
+				     }
+				}
+				""";
+		validateAfterRepeatedAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class, VariableFoldingTransformer.class), dis -> {
+			// The foldable part
+			assertTrue(dis.contains("bipush 10"), "Failed to fold sequence");
+			assertFalse(dis.contains("iaload"), "Failed to fold sequence");
+
+			// Keep the array construction parts
+			assertTrue(dis.contains("iconst_5"), "Should keep array value assignments");
+			assertTrue(dis.contains("iastore"), "Should keep array value assignments");
+		});
+	}
+
+	/**
 	 * This got addressed by not using {@link AsmInsnUtil#getSizeConsumed(AbstractInsnNode)} and
 	 * {@link AsmInsnUtil#getSizeProduced(AbstractInsnNode)} by default for computing foldable sequences
 	 * in {@link OpaqueConstantFoldingTransformer}. Instead, we do a simple 'this' and 'next' stack size
@@ -1104,8 +1434,12 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 		});
 	}
 
+	/**
+	 * Ensures the const-folder doesn't take too long to run.
+	 */
 	@Test
-	void perf() {
+	@Timeout(value = 1)
+	void constFolderDoesNotCatestrophicallyBacktrack() {
 		String asm = """
 				.method public static example (I)I {
 					parameters: { foo },
