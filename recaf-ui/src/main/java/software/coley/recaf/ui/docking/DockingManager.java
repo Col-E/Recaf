@@ -98,6 +98,12 @@ public class DockingManager {
 	                      @Nonnull Instance<WorkspaceInformationPane> workspaceInfoProvider,
 	                      @Nonnull Instance<WorkspaceExplorerPane> workspaceExplorerProvider,
 	                      @Nonnull ResourceSummaryServiceConfig resourceSummaryConfig) {
+		this.actions = actions;
+		this.loggingPaneProvider = loggingPaneProvider;
+		this.welcomePaneProvider = welcomePaneProvider;
+		this.workspaceExplorerProvider = workspaceExplorerProvider;
+		this.resourceSummaryConfig = resourceSummaryConfig;
+
 		// Stages created via our docking framework need to be tracked in the window manager.
 		bento.stageBuilding().setStageFactory(originScene -> {
 			DragDropStage stage = new DragDropStage(true);
@@ -111,12 +117,6 @@ public class DockingManager {
 
 		// Due to how we style the headers, we want the drawing to be clipped.
 		bento.controlsBuilding().setHeadersFactory(ClippedHeaders::new);
-
-		this.actions = actions;
-		this.loggingPaneProvider = loggingPaneProvider;
-		this.welcomePaneProvider = welcomePaneProvider;
-		this.workspaceExplorerProvider = workspaceExplorerProvider;
-		this.resourceSummaryConfig = resourceSummaryConfig;
 
 		// Register listener
 		ListenerHost host = new ListenerHost();
@@ -394,7 +394,10 @@ public class DockingManager {
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 			// When a workspace is closed, show the welcome screen.
-			FxThreadUtil.run(() -> {
+			// TODO: Combining 'DockingManager' and 'DockingLayoutManager' made this fire earlier which
+			//  happens before 'NavigationManager' does. The nav manager closes this if we open it immediately.
+			//  - Need to have an order of operation system...
+			FxThreadUtil.delayedRun(25, () -> {
 				if (!bento.search().replaceContainer(ID_CONTAINER_ROOT_TOP, DockingManager.this::newWelcomeContainer))
 					logger.error("Failed replacing root on workspace close");
 			});
