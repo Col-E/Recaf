@@ -231,10 +231,7 @@ public class TextProviderService implements Service {
 												   @Nonnull ClassInfo declaringClass,
 												   @Nonnull MethodMember declaringMethod,
 												   @Nonnull AbstractInsnNode insn) {
-		return () -> {
-
-			return formatConfig.filterMaxLength(BlwUtil.toString(insn));
-		};
+		return () -> formatConfig.filterMaxLength(BlwUtil.toString(insn));
 	}
 
 	/**
@@ -387,14 +384,12 @@ public class TextProviderService implements Service {
 				elements.forEach((key, element) -> {
 					Object value = element.getElementValue();
 					sb.append(key).append(" = ");
-					if (value instanceof String s)
-						sb.append('"').append(formatConfig.filter(s)).append('"');
-					else if (value instanceof ElementValue)
-						sb.append("{...}");
-					else if (value instanceof List)
-						sb.append("[...]");
-					else
-						sb.append('"').append(formatConfig.filter(String.valueOf(value))).append('"');
+					switch (value) {
+						case String s -> sb.append('"').append(formatConfig.filter(s)).append('"');
+						case ElementValue elementValue -> sb.append("{...}");
+						case List list -> sb.append("[...]");
+						default -> sb.append('"').append(formatConfig.filter(String.valueOf(value))).append('"');
+					}
 					sb.append(", ");
 				});
 				sb.setLength(sb.length() - 2);
@@ -520,18 +515,15 @@ public class TextProviderService implements Service {
 	@Nonnull
 	public TextProvider getResourceTextProvider(@Nonnull Workspace workspace,
 												@Nonnull WorkspaceResource resource) {
-		return () -> {
-			if (resource instanceof WorkspaceFileResource fileResource) {
+		return () -> switch (resource) {
+			case WorkspaceFileResource fileResource -> {
 				String name = fileResource.getFileInfo().getName();
-				return name.substring(name.lastIndexOf('/') + 1);
-			} else if (resource instanceof WorkspaceDirectoryResource directoryResource) {
-				return StringUtil.pathToNameString(directoryResource.getDirectoryPath());
-			} else if (resource instanceof WorkspaceRemoteVmResource remoteVmResource) {
-				return remoteVmResource.getVirtualMachine().id();
-			} else if (resource instanceof GeneratedPhantomWorkspaceResource) {
-				return Lang.get("tree.phantoms");
+				yield name.substring(name.lastIndexOf('/') + 1);
 			}
-			return resource.getClass().getSimpleName();
+			case WorkspaceDirectoryResource directoryResource -> StringUtil.pathToNameString(directoryResource.getDirectoryPath());
+			case WorkspaceRemoteVmResource remoteVmResource -> remoteVmResource.getVirtualMachine().id();
+			case GeneratedPhantomWorkspaceResource generatedPhantomWorkspaceResource -> Lang.get("tree.phantoms");
+			default -> resource.getClass().getSimpleName();
 		};
 	}
 

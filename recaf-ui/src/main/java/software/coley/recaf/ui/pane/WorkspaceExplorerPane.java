@@ -22,10 +22,9 @@ import software.coley.recaf.ui.control.tree.WorkspaceTree;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
 import software.coley.recaf.ui.dnd.DragAndDrop;
 import software.coley.recaf.ui.dnd.WorkspaceLoadingDropListener;
-import software.coley.recaf.ui.docking.DockingLayoutManager;
+import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
@@ -35,7 +34,7 @@ import java.util.Collections;
  * Pane to display the current workspace in a navigable tree layout.
  *
  * @author Matt Coley
- * @see DockingLayoutManager
+ * @see DockingManager
  */
 @Dependent
 public class WorkspaceExplorerPane extends BorderPane implements Navigable {

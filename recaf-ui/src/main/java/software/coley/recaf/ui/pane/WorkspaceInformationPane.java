@@ -6,7 +6,6 @@ import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -17,7 +16,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import software.coley.recaf.path.PathNode;
@@ -29,7 +27,7 @@ import software.coley.recaf.services.info.summary.ResourceSummaryService;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.ui.control.BoundLabel;
-import software.coley.recaf.ui.docking.DockingLayoutManager;
+import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
@@ -46,7 +44,7 @@ import java.util.concurrent.CompletableFuture;
  * Pane to display summary data about the loaded {@link Workspace} when opened.
  *
  * @author Matt Coley
- * @see DockingLayoutManager
+ * @see DockingManager
  * @see ResourceSummaryService
  */
 @Dependent

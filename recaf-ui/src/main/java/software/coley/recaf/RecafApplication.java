@@ -14,7 +14,7 @@ import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.config.WindowScaleConfig;
 import software.coley.recaf.ui.menubar.MainMenu;
 import software.coley.recaf.ui.pane.LoggingPane;
-import software.coley.recaf.ui.docking.DockingLayoutManager;
+import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
@@ -41,7 +41,7 @@ public class RecafApplication extends Application {
 		recaf.get(NavigationManager.class).requestFocus();
 
 		// Get services
-		DockingLayoutManager dockingLayoutManager = recaf.get(DockingLayoutManager.class);
+		DockingManager dockingManager = recaf.get(DockingManager.class);
 		KeybindingConfig keybindingConfig = recaf.get(KeybindingConfig.class);
 		WindowManager windowManager = recaf.get(WindowManager.class);
 		WorkspaceManager workspaceManager = recaf.get(WorkspaceManager.class);
@@ -53,7 +53,7 @@ public class RecafApplication extends Application {
 		// Layout
 		BorderPane wrapper = new BorderPane();
 		wrapper.setTop(menu);
-		wrapper.setCenter(dockingLayoutManager.getRoot().asRegion());
+		wrapper.setCenter(dockingManager.getRoot().asRegion());
 		wrapper.getStyleClass().addAll("padded", "bg-inset");
 
 		// Display

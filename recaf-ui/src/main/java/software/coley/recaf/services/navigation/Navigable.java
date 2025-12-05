@@ -24,6 +24,8 @@ import java.util.Queue;
  *
  * @author Matt Coley
  * @see NavigationManager Tracker of all open {@link Navigable} content.
+ * @see ClassNavigable
+ * @see FileNavigable
  */
 public interface Navigable {
 	/**
