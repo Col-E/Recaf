@@ -52,7 +52,7 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 						name.indexOf('/', formatted.length()) == -1;
 			}
 			return () -> new ClassPathIterator(list.iterator(), virtualClasspath.stream()
-					.flatMap(resource -> resource.jvmClassBundleStream().flatMap(b -> b.entrySet().stream()))
+					.flatMap(resource -> resource.jvmClassBundleStreamRecursive().flatMap(b -> b.entrySet().stream()))
 					.filter(entry -> check.test(entry.getKey()))
 					.<JavaFileObject>map(entry -> new ResourceVirtualJavaFileObject(entry.getKey(),
 							entry.getValue().getBytecode(), JavaFileObject.Kind.CLASS))

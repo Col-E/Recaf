@@ -115,7 +115,7 @@ public class MappingApplier {
 		Mappings finalMappings = mappings;
 		ExecutorService service = ThreadUtil.phasingService(applierThreadPool);
 		WorkspaceResource resource = workspace.getPrimaryResource();
-		Stream.concat(resource.jvmClassBundleStream(), resource.versionedJvmClassBundleStream()).forEach(bundle -> {
+		resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
 			bundle.forEach(classInfo -> {
 				service.execute(() -> dumpIntoResults(results, workspace, resource, bundle, classInfo, finalMappings));
 			});

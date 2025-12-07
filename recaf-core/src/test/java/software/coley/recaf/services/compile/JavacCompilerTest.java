@@ -10,14 +10,20 @@ import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.StubFileInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.util.JavaVersion;
+import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.resource.WorkspaceFileResourceBuilder;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -163,6 +169,17 @@ public class JavacCompilerTest extends TestBase {
 
 		// Put it into a workspace and try again. Should work now that it can pull the missing class from the workspace.
 		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(classInfo));
+		result = javac.compile(arguments, workspace, null);
+		assertEquals(0, result.getDiagnostics().size(), "There were unexpected diagnostic messages");
+		assertTrue(result.getCompilations().containsKey("HelloWorld"), "Class missing from compile map output");
+
+		// Put it into a workspace but as an embedded resource and try again. Should still work.
+		WorkspaceResource resource = new WorkspaceResourceBuilder()
+				.withEmbeddedResources(Map.of("embed.jar", new WorkspaceFileResourceBuilder()
+						.withFileInfo(new StubFileInfo("embed.jar"))
+						.withJvmClassBundle(TestClassUtils.fromClasses(classInfo)).build()))
+				.build();
+		workspace = new BasicWorkspace(resource);
 		result = javac.compile(arguments, workspace, null);
 		assertEquals(0, result.getDiagnostics().size(), "There were unexpected diagnostic messages");
 		assertTrue(result.getCompilations().containsKey("HelloWorld"), "Class missing from compile map output");

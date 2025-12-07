@@ -42,7 +42,6 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Stream;
 
 /**
  * Outline for running various searches.
@@ -207,7 +206,7 @@ public class SearchService implements Service {
 
 		// Visit JVM content
 		if (jvmClassVisitor != null) {
-			Stream.concat(resource.jvmClassBundleStream(), resource.versionedJvmClassBundleStream()).forEach(bundle -> {
+			resource.jvmAllClassBundleStream().forEach(bundle -> {
 				BundlePathNode bundlePath = resourcePath.child(bundle);
 				for (JvmClassInfo classInfo : bundle) {
 					if (feedback.hasRequestedCancellation())

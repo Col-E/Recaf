@@ -40,9 +40,9 @@ public class ClassSource extends BaseSource {
 
 	@Override
 	public Entries getEntries() {
-		// TODO: Bug in QF/VF makes it so that 'addLibrary' doesn't yield inner info for a class provided with 'addSource'
+		// TODO: Bug in Vineflower makes it so that 'addLibrary' doesn't yield inner info for a class provided with 'addSource'
 		//  So for now until this is fixed upstream we will also supply inners here.
-		//  This will make QF/VF decompile each inner class separately as well, but its the best fix for now without
+		//  This will make Vineflower decompile each inner class separately as well, but its the best fix for now without
 		//  too much of a perf hit.
 		List<Entry> entries = new ArrayList<>();
 		entries.add(new Entry(targetInfo.getName(), Entry.BASE_VERSION));

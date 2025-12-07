@@ -76,7 +76,7 @@ public class JPhantomGenerator implements PhantomGenerator {
 	@Override
 	public GeneratedPhantomWorkspaceResource createPhantomsForWorkspace(@Nonnull Workspace workspace) throws PhantomGenerationException {
 		// Extract all JVM classes from workspace
-		Map<String, JvmClassInfo> classMap = workspace.getPrimaryResource().jvmClassBundleStream()
+		Map<String, JvmClassInfo> classMap = workspace.getPrimaryResource().jvmAllClassBundleStreamRecursive()
 				.flatMap(Bundle::stream)
 				.collect(Collectors.toMap(Info::getName, Function.identity()));
 

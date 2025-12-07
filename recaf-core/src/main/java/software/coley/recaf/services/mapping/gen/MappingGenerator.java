@@ -73,10 +73,9 @@ public class MappingGenerator implements Service {
 		if (workspace != null)
 			mappings.enableClassLookup(workspace);
 		SortedMap<String, ClassInfo> classMap = new TreeMap<>();
-		resource.versionedJvmClassBundleStream()
+		resource.jvmAllClassBundleStreamRecursive()
 				.flatMap(Bundle::stream)
-				.forEach(c -> classMap.put(c.getName(), c));
-		classMap.putAll(resource.getJvmClassBundle());
+				.forEach(c -> classMap.putIfAbsent(c.getName(), c));
 
 		// Pull a class, create mappings for its inheritance family, then remove those classes from the map.
 		// When the map is empty everything has been run through the mapping generation process.

@@ -22,6 +22,7 @@ public class VineflowerDecompiler extends AbstractJvmDecompiler {
 	private final VineflowerConfig config;
 	private final IFernflowerLogger logger;
 	private final IResultSaver dummySaver = new DummyResultSaver();
+	private final WorkspaceEntriesCache workspaceEntriesCache = new WorkspaceEntriesCache();
 
 	/**
 	 * New Vineflower decompiler instance.
@@ -45,14 +46,12 @@ public class VineflowerDecompiler extends AbstractJvmDecompiler {
 		try {
 			ClassSource source = new ClassSource(workspace, info);
 			fernflower.addSource(source);
-			fernflower.addLibrary(new LibrarySource(workspace, info));
+			fernflower.addLibrary(new LibrarySource(workspaceEntriesCache.getCachedEntries(workspace), workspace, info));
 			fernflower.decompileContext();
 
 			String decompiled = source.getSink().getDecompiledOutput().get();
-
-			if (decompiled == null || decompiled.isEmpty()) {
+			if (decompiled == null || decompiled.isEmpty())
 				return new DecompileResult(new IllegalStateException("Missing decompilation output"), config.getHash());
-			}
 
 			return new DecompileResult(decompiled, config.getHash());
 		} catch (Exception e) {

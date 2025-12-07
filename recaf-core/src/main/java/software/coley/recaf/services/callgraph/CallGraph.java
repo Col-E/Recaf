@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Stream;
 
 /**
  * Represents method calls as a navigable graph.
@@ -138,11 +137,9 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 		// Initialize asynchronously, and mark 'isReady' if completed successfully
 		CompletableFuture.runAsync(() -> {
 			for (WorkspaceResource resource : workspace.getAllResources(false)) {
-				Stream.concat(resource.jvmClassBundleStream(),
-						resource.getVersionedJvmClassBundles().values().stream()).forEach(bundle -> {
-					for (JvmClassInfo jvmClass : bundle.values()) {
+				resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
+					for (JvmClassInfo jvmClass : bundle.values())
 						visit(jvmClass);
-					}
 				});
 			}
 		}, threadPool).whenComplete((unused, t) -> {
@@ -377,22 +374,18 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 	@Override
 	public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		// Visit all library classes
-		Stream.concat(library.jvmClassBundleStream(),
-				library.getVersionedJvmClassBundles().values().stream()).forEach(bundle -> {
-			for (JvmClassInfo jvmClass : bundle.values()) {
+		library.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
+			for (JvmClassInfo jvmClass : bundle.values())
 				onNewClass(library, bundle, jvmClass);
-			}
 		});
 	}
 
 	@Override
 	public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
 		// Remove all vertices from library
-		Stream.concat(library.jvmClassBundleStream(),
-				library.getVersionedJvmClassBundles().values().stream()).forEach(bundle -> {
-			for (JvmClassInfo jvmClass : bundle.values()) {
+		library.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
+			for (JvmClassInfo jvmClass : bundle.values())
 				onRemoveClass(library, bundle, jvmClass);
-			}
 		});
 	}
 

@@ -142,7 +142,7 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	}
 
 	/**
-	 * @return Stream of all JVM class bundles in the resource, and in any embedded resources
+	 * @return Stream of all JVM class bundles in the resource, and in any embedded resources.
 	 */
 	@Nonnull
 	default Stream<JvmClassBundle> jvmClassBundleStreamRecursive() {
@@ -159,12 +159,32 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	}
 
 	/**
-	 * @return Stream of all versioned JVM class bundles in the resource, and in any embedded resources
+	 * @return Stream of all versioned JVM class bundles in the resource, and in any embedded resources.
 	 */
 	@Nonnull
 	default Stream<VersionedJvmClassBundle> versionedJvmClassBundleStreamRecursive() {
 		return concat(versionedJvmClassBundleStream(), getEmbeddedResources().values().stream()
 				.flatMap(WorkspaceResource::versionedJvmClassBundleStreamRecursive));
+	}
+
+	/**
+	 * Use this if you don't want to manually concat the jvm and versioned-jvm bundle streams.
+	 *
+	 * @return Stream of all immediate and versioned JVM class bundles in the resource, and in any embedded resources.
+	 */
+	@Nonnull
+	default Stream<JvmClassBundle> jvmAllClassBundleStream() {
+		return concat(jvmClassBundleStream(), versionedJvmClassBundleStream());
+	}
+
+	/**
+	 * Use this if you don't want to manually concat the jvm and versioned-jvm bundle streams.
+	 *
+	 * @return Stream of all immediate and versioned JVM class bundles in the resource, and in any embedded resources.
+	 */
+	@Nonnull
+	default Stream<JvmClassBundle> jvmAllClassBundleStreamRecursive() {
+		return concat(jvmClassBundleStreamRecursive(), versionedJvmClassBundleStreamRecursive());
 	}
 
 	/**

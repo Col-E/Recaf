@@ -169,7 +169,7 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 
 	private int computeIllegalNames(@Nonnull WorkspaceResource resource) {
 		Set<JvmClassInfo> classesWithIllegalNames = Collections.newSetFromMap(new IdentityHashMap<>());
-		resource.jvmClassBundleStream().forEach(bundle -> {
+		resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
 			bundle.forEach(cls -> {
 				if (ILLEGAL_NAME_FILTER.shouldMapClass(cls)) {
 					classesWithIllegalNames.add(cls);

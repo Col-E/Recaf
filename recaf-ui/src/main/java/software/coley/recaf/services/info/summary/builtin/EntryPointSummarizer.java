@@ -62,7 +62,7 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 
 		// Visit JVM classes
 		int[] found = {0};
-		resource.jvmClassBundleStream().forEach(bundle -> {
+		resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
 			bundle.forEach(cls -> {
 				List<MethodMember> entryMethods = cls.getMethods().stream()
 						.filter(this::isJvmEntry)

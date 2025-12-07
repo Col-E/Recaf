@@ -135,7 +135,7 @@ public class TransformationApplier {
 				throw new TransformationException(message, t);
 			}
 		}
-		resource.jvmClassBundleStreamRecursive().forEach(bundle -> {
+		resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
 			BundlePathNode bundlePathNode = resourcePath.child(bundle);
 			for (int pass = 1; pass <= getMaxPasses(); pass++) {
 				AtomicBoolean anyWorkDone = new AtomicBoolean(false);
