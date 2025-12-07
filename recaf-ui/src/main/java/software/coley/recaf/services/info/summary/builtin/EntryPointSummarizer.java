@@ -22,8 +22,10 @@ import software.coley.recaf.util.threading.Batch;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.function.Supplier;
 
 import static java.lang.reflect.Modifier.PUBLIC;
@@ -62,46 +64,53 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 
 		// Visit JVM classes
 		int[] found = {0};
-		resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
-			bundle.forEach(cls -> {
-				List<MethodMember> entryMethods = cls.getMethods().stream()
-						.filter(this::isJvmEntry)
-						.toList();
-				if (!entryMethods.isEmpty()) {
-					found[0]++;
-					batch.add(() -> {
-						Supplier<JvmClassInfo> classLookup = () -> Objects.requireNonNullElse(bundle.get(cls.getName()), cls);
+		Queue<WorkspaceResource> resourceQueue = new ArrayDeque<>();
+		resourceQueue.add(resource);
+		while (!resourceQueue.isEmpty()) {
+			// Doing this queue because embedded resources need to properly know which resource they belong to.
+			WorkspaceResource currentResource = resourceQueue.remove();
+			currentResource.jvmAllClassBundleStream().forEach(bundle -> {
+				bundle.forEach(cls -> {
+					List<MethodMember> entryMethods = cls.getMethods().stream()
+							.filter(this::isJvmEntry)
+							.toList();
+					if (!entryMethods.isEmpty()) {
+						found[0]++;
+						batch.add(() -> {
+							Supplier<JvmClassInfo> classLookup = () -> Objects.requireNonNullElse(bundle.get(cls.getName()), cls);
 
-						// Add entry for class
-						String classDisplay = textService.getJvmClassInfoTextProvider(workspace, resource, bundle, cls).makeText();
-						Node classIcon = iconService.getJvmClassInfoIconProvider(workspace, resource, bundle, cls).makeIcon();
-						Label classLabel = new Label(classDisplay, classIcon);
-						classLabel.setCursor(Cursor.HAND);
-						classLabel.setOnMouseEntered(e -> classLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
-						classLabel.setOnMouseExited(e -> classLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
-						classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, resource, bundle, classLookup.get()));
-						consumer.appendSummary(classLabel);
+							// Add entry for class
+							String classDisplay = textService.getJvmClassInfoTextProvider(workspace, currentResource, bundle, cls).makeText();
+							Node classIcon = iconService.getJvmClassInfoIconProvider(workspace, currentResource, bundle, cls).makeIcon();
+							Label classLabel = new Label(classDisplay, classIcon);
+							classLabel.setCursor(Cursor.HAND);
+							classLabel.setOnMouseEntered(e -> classLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
+							classLabel.setOnMouseExited(e -> classLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
+							classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, currentResource, bundle, classLookup.get()));
+							consumer.appendSummary(classLabel);
 
-						// Add entries for methods
-						for (MethodMember method : entryMethods) {
-							String methodDisplay = textService.getMethodMemberTextProvider(workspace, resource, bundle, cls, method).makeText();
-							Node methodIcon = iconService.getClassMemberIconProvider(workspace, resource, bundle, cls, method).makeIcon();
-							Label methodLabel = new Label(methodDisplay);
-							methodLabel.setCursor(Cursor.HAND);
-							methodLabel.setGraphic(methodIcon);
-							methodLabel.setPadding(new Insets(2, 2, 2, 15));
-							methodLabel.setOnMouseEntered(e -> methodLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
-							methodLabel.setOnMouseExited(e -> methodLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
-							methodLabel.setOnMouseClicked(e -> {
-								actions.gotoDeclaration(workspace, resource, bundle, classLookup.get())
-										.requestFocus(method);
-							});
-							consumer.appendSummary(methodLabel);
-						}
-					});
-				}
+							// Add entries for methods
+							for (MethodMember method : entryMethods) {
+								String methodDisplay = textService.getMethodMemberTextProvider(workspace, currentResource, bundle, cls, method).makeText();
+								Node methodIcon = iconService.getClassMemberIconProvider(workspace, currentResource, bundle, cls, method).makeIcon();
+								Label methodLabel = new Label(methodDisplay);
+								methodLabel.setCursor(Cursor.HAND);
+								methodLabel.setGraphic(methodIcon);
+								methodLabel.setPadding(new Insets(2, 2, 2, 15));
+								methodLabel.setOnMouseEntered(e -> methodLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
+								methodLabel.setOnMouseExited(e -> methodLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
+								methodLabel.setOnMouseClicked(e -> {
+									actions.gotoDeclaration(workspace, currentResource, bundle, classLookup.get())
+											.requestFocus(method);
+								});
+								consumer.appendSummary(methodLabel);
+							}
+						});
+					}
+				});
 			});
-		});
+			resourceQueue.addAll(currentResource.getEmbeddedResources().values());
+		}
 
 		if (found[0] == 0)
 			batch.add(() -> consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.entry-points.none"))));
