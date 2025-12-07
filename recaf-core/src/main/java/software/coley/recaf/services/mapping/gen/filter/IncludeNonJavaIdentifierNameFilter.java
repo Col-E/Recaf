@@ -9,6 +9,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Filter that includes names that do not comply with {@link Character#isJavaIdentifierStart(char)} and {@link Character#isJavaIdentifierPart(char)}.
@@ -16,6 +17,8 @@ import java.util.List;
  * @author Matt Coley
  */
 public class IncludeNonJavaIdentifierNameFilter extends NameGeneratorFilter {
+	private static final Set<String> classExemptions = Set.of("package-info", "module-info");
+
 	/**
 	 * @param next
 	 * 		Next filter to link. Chaining filters allows for {@code thisFilter && nextFilter}.
@@ -27,6 +30,13 @@ public class IncludeNonJavaIdentifierNameFilter extends NameGeneratorFilter {
 	@Override
 	public boolean shouldMapClass(@Nonnull ClassInfo info) {
 		String name = info.getName();
+
+		// Filter out package/module-info classes
+		if (name.endsWith("package-info"))
+			name = name.substring(0, name.length() - "package-info".length());
+		else if (name.endsWith("module-info"))
+			name = name.substring(0, name.length() - "module-info".length());
+
 		if (isInvalidName(name))
 			return true;
 		return super.shouldMapClass(info);

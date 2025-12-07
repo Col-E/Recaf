@@ -13,20 +13,21 @@ import java.util.Set;
  * @author Matt Coley
  */
 public class Keywords {
-	private static final Set<String> keywords = new HashSet<>();
+	private static final Set<String> keywords;
 
 	/**
 	 * @return Set of reserved keywords.
 	 */
 	@Nonnull
 	public static Set<String> getKeywords() {
-		return Collections.unmodifiableSet(keywords);
+		return keywords;
 	}
 
 	// Commented out items are 'keywords' but can be used as names.
 	static {
 		// Misc language constructs
-		keywords.addAll(Arrays.asList(
+		Set<String> words = new HashSet<>();
+		words.addAll(Arrays.asList(
 				"assert",
 				"break",
 				// "bridge",
@@ -67,7 +68,7 @@ public class Keywords {
 		));
 
 		// Modifiers
-		keywords.addAll(Arrays.asList(
+		words.addAll(Arrays.asList(
 				"abstract",
 				"const",
 				"final",
@@ -85,7 +86,7 @@ public class Keywords {
 		));
 
 		// Primitive types
-		keywords.addAll(Arrays.asList(
+		words.addAll(Arrays.asList(
 				"boolean",
 				"byte",
 				"char",
@@ -98,10 +99,12 @@ public class Keywords {
 		));
 
 		// Primitive values
-		keywords.addAll(Arrays.asList(
+		words.addAll(Arrays.asList(
 				"true",
 				"false",
 				"null"
 		));
+
+		keywords = Collections.unmodifiableSet(words);
 	}
 }

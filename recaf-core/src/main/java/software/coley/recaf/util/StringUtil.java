@@ -94,8 +94,7 @@ public class StringUtil {
 	@Nonnull
 	public static List<String> fastSplit(@Nonnull String input, boolean includeEmpty, char split) {
 		StringBuilder sb = new StringBuilder();
-		ArrayList<String> words = new ArrayList<>();
-		words.ensureCapacity(input.length() / 5);
+		ArrayList<String> words = new ArrayList<>(input.length() / 5);
 		char[] strArray = input.toCharArray();
 		for (char c : strArray) {
 			if (c == split) {
@@ -118,8 +117,7 @@ public class StringUtil {
 	@Nonnull
 	public static List<String> fastSplitNonIdentifier(@Nonnull String input) {
 		StringBuilder sb = new StringBuilder();
-		ArrayList<String> words = new ArrayList<>();
-		words.ensureCapacity(input.length() / 5);
+		ArrayList<String> words = new ArrayList<>(input.length() / 5);
 		char[] strArray = input.toCharArray();
 		for (char c : strArray) {
 			if (!Character.isJavaIdentifierPart(c)) {

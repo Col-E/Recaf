@@ -61,8 +61,8 @@ public class IllegalSignatureRemovingVisitor extends ClassVisitor {
 
 	@Override
 	public void visitPermittedSubclass(String permittedSubclass) {
-		// While not a signature, its metadata not used at runtime that can confuse RE tools.
-		if (!Types.isValidDesc(permittedSubclass)) {
+		// While not a signature, its metadata is not used at runtime that can confuse RE tools.
+		if (permittedSubclass == null || permittedSubclass.isBlank() || Types.isPrimitive(permittedSubclass)) {
 			detected = true;
 			return;
 		}

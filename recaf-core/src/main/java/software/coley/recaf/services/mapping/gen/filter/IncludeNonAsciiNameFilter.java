@@ -64,6 +64,6 @@ public class IncludeNonAsciiNameFilter extends NameGeneratorFilter {
 
 	private static boolean shouldMap(String name) {
 		return name.codePoints()
-				.anyMatch(code -> (code < 0x21 || code > 0x7A) || Character.isWhitespace(code));
+				.anyMatch(code -> (code < 0x21 || code > 0x7A));
 	}
 }

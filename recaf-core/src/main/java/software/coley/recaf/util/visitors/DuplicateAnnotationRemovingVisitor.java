@@ -1,5 +1,6 @@
 package software.coley.recaf.util.visitors;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -61,7 +62,7 @@ public class DuplicateAnnotationRemovingVisitor extends ClassVisitor {
 
 	@Override
 	public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-		if (cTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, descriptor)))
+		if (cTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, typePath, descriptor)))
 			return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
 
 		detected = true;
@@ -87,7 +88,7 @@ public class DuplicateAnnotationRemovingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			if (fTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, descriptor)))
+			if (fTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, typePath, descriptor)))
 				return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
 
 			detected = true;
@@ -118,7 +119,7 @@ public class DuplicateAnnotationRemovingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			if (mTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, descriptor)))
+			if (mTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, typePath, descriptor)))
 				return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
 
 			detected = true;
@@ -136,7 +137,7 @@ public class DuplicateAnnotationRemovingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			if (mInsnTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, descriptor)))
+			if (mInsnTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, typePath, descriptor)))
 				return super.visitInsnAnnotation(typeRef, typePath, descriptor, visible);
 
 			detected = true;
@@ -145,7 +146,7 @@ public class DuplicateAnnotationRemovingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			if (mTryTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, descriptor)))
+			if (mTryTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, typePath, descriptor)))
 				return super.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible);
 
 			detected = true;
@@ -154,7 +155,7 @@ public class DuplicateAnnotationRemovingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start, Label[] end, int[] index, String descriptor, boolean visible) {
-			if (mVarTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, descriptor)))
+			if (mVarTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, typePath, descriptor)))
 				return super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, descriptor, visible);
 
 			detected = true;
@@ -181,7 +182,7 @@ public class DuplicateAnnotationRemovingVisitor extends ClassVisitor {
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-			if (rTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, descriptor)))
+			if (rTypeAnnosVisited.add(new TypeAnnoInfo(typeRef, typePath, descriptor)))
 				return super.visitTypeAnnotation(typeRef, typePath, descriptor, visible);
 
 			detected = true;
@@ -189,9 +190,13 @@ public class DuplicateAnnotationRemovingVisitor extends ClassVisitor {
 		}
 	}
 
-	private record ParamAnnoInfo(int param, String desc) {
+	private record ParamAnnoInfo(int param, @Nonnull String desc) {
 	}
 
-	private record TypeAnnoInfo(int typeRef, String desc) {
+	private record TypeAnnoInfo(int typeRef, @Nonnull String typePath, @Nonnull String desc) {
+		private TypeAnnoInfo(int typeRef, @Nullable TypePath typePath, @Nonnull String desc) {
+			// ASM didn't bother making a hashCode impl for typePath so we must toString() it
+			this(typeRef, typePath == null ? "" : typePath.toString(), desc);
+		}
 	}
 }

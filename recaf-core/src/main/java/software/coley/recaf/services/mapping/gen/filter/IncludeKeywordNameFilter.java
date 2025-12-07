@@ -19,6 +19,8 @@ import static software.coley.recaf.util.Keywords.getKeywords;
  * @author Matt Coley
  */
 public class IncludeKeywordNameFilter extends NameGeneratorFilter {
+	private static final Set<String> methodExemptions = Set.of("record");
+
 	/**
 	 * @param next
 	 * 		Next filter to link. Chaining filters allows for {@code thisFilter && nextFilter}.
@@ -44,7 +46,8 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 
 	@Override
 	public boolean shouldMapMethod(@Nonnull ClassInfo owner, @Nonnull MethodMember info) {
-		if (containsKeyword(info.getName()))
+		String name = info.getName();
+		if (containsKeyword(name) && !methodExemptions.contains(name))
 			return true;
 		return super.shouldMapMethod(owner, info);
 	}
@@ -61,7 +64,10 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 
 	private static boolean containsKeyword(@Nonnull String name) {
 		Set<String> keywords = getKeywords();
-		List<String> parts = StringUtil.fastSplitNonIdentifier(name);
+		String filtered = name.indexOf('-') > 0 ?
+				name.replace("package-info", "package_info").replace("module-info", "module_info") :
+				name;
+		List<String> parts = StringUtil.fastSplitNonIdentifier(filtered);
 		for (String part : parts) {
 			if (keywords.contains(part))
 				return true;
