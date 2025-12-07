@@ -90,8 +90,27 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 	 */
 	public boolean isPrimary() {
 		PathNode<Workspace> parent = getParent();
-		if (parent == null) return false;
+		if (parent == null)
+			return false;
 		return parent.getValue().getPrimaryResource() == getValue();
+	}
+
+	/**
+	 * @return {@code true} when this resource node, wraps the primary resource of a workspace or any resource embedded in the primary resource.
+	 */
+	public boolean isPrimaryOrEmbeddedInPrimary() {
+		PathNode<Workspace> parent = getParent();
+		if (parent == null)
+			return false;
+		Workspace workspace = parent.getValue();
+		WorkspaceResource primary = workspace.getPrimaryResource();
+		WorkspaceResource resource = getValue();
+		while (resource != null) {
+			if (primary == resource)
+				return true;
+			resource = resource.getContainingResource();
+		}
+		return false;
 	}
 
 	@Nonnull

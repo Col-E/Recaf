@@ -70,7 +70,9 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	 * @return {@code true} when the other path has the same {@link #getValue() local value}.
 	 */
 	default boolean hasEqualOrChildValue(@Nonnull PathNode<?> other) {
-		return this == other || getValue().equals(other.getValue());
+		V value = getValue();
+		Object otherValue = other.getValue();
+		return this == other || value == otherValue || value.equals(otherValue);
 	}
 
 	/**

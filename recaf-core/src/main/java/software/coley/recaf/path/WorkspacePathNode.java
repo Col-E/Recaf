@@ -32,11 +32,24 @@ public class WorkspacePathNode extends AbstractPathNode<Object, Workspace> {
 	 * @param resource
 	 * 		Resource to wrap into node.
 	 *
-	 * @return Path node of resource, with the current workspace as parent.
+	 * @return Path node of resource, with the current workspace as parent,
+	 * or a {@link EmbeddedResourceContainerPathNode} if the passed resource is an embedded resource.
 	 */
 	@Nonnull
 	public ResourcePathNode child(@Nonnull WorkspaceResource resource) {
-		return new ResourcePathNode(this, resource);
+		// Base case, resource is top-level in the workspace.
+		WorkspaceResource containingResource = resource.getContainingResource();
+		if (containingResource == null)
+			return new ResourcePathNode(this, resource);
+
+		// Resource is embedded, so we need to represent the path a bit differently.
+		// - Note: We flatten the representation of embedded resources here.
+		WorkspaceResource rootResource = containingResource;
+		while (rootResource.getContainingResource() != null)
+			rootResource = rootResource.getContainingResource();
+		return new ResourcePathNode(this, rootResource)
+				.embeddedChildContainer()
+				.child(resource);
 	}
 
 	@Nonnull

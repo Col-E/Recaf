@@ -415,7 +415,7 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 
 		// Map class to vertex.
 		ResourcePathNode resourcePath = result.getPathOfType(WorkspaceResource.class);
-		boolean isPrimary = resourcePath != null && resourcePath.isPrimary();
+		boolean isPrimary = resourcePath != null && resourcePath.isPrimaryOrEmbeddedInPrimary();
 		ClassInfo info = result.getValue();
 		return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, isPrimary);
 	}
