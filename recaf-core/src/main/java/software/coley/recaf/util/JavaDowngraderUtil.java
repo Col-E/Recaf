@@ -91,6 +91,15 @@ public class JavaDowngraderUtil {
 		for (String undesirableStub : undesirableStubs)
 			flags.debugSkipStub.add(FullyQualifiedMemberNameAndDesc.of(undesirableStub));
 
+		// Any stub that is beyond our runtime version is not supported...
+		//
+		// This is due to the downgrader loading stubs at runtime when inserting missing API's, but those stubs
+		// are compiled against the stubbed version minus one.
+		//
+		// If there is a stubbed API for Java 25, and we are running on Java 22 then stubs for 24 and 25 stubs will fail.
+		for (int i = JavaVersion.get() + JavaVersion.VERSION_OFFSET + 1; i < 100; i++)
+			flags.debugSkipStubs.add(i);
+
 		try (ClassDowngrader downgrader = new RecafClassDowngrader(flags, inheritanceGraph)) {
 			int maxClassFileVersion = downgrader.maxVersion();
 			classes.forEach((className, classBytes) -> {
