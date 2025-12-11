@@ -22,6 +22,9 @@ import software.coley.recaf.services.compile.CompilerResult;
 import software.coley.recaf.services.compile.JavacArguments;
 import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.compile.stub.ExpressionHostingClassStubGenerator;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.util.NumberUtil;
@@ -33,6 +36,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Compiles Java source expressions into JASM.
@@ -47,6 +51,7 @@ public class ExpressionCompiler {
 	private final JavacCompiler javac;
 	private final Workspace workspace;
 	private final AssemblerPipelineGeneralConfig assemblerConfig;
+	private final InheritanceGraph inheritanceGraph;
 	private int classAccess;
 	private String className;
 	private String superName;
@@ -61,9 +66,12 @@ public class ExpressionCompiler {
 	private List<LocalVariable> methodVariables;
 
 	@Inject
-	public ExpressionCompiler(@Nonnull Workspace workspace, @Nonnull JavacCompiler javac,
+	public ExpressionCompiler(@Nonnull WorkspaceManager workspaceManager,
+							  @Nonnull InheritanceGraphService inheritanceGraphService,
+	                          @Nonnull JavacCompiler javac,
 	                          @Nonnull AssemblerPipelineGeneralConfig assemblerConfig) {
-		this.workspace = workspace;
+		this.workspace = Objects.requireNonNull(workspaceManager.getCurrent(), "No open workspace");
+		this.inheritanceGraph = inheritanceGraphService.getCurrentWorkspaceInheritanceGraph();
 		this.javac = javac;
 		this.assemblerConfig = assemblerConfig;
 		clearContext();
@@ -161,7 +169,7 @@ public class ExpressionCompiler {
 		ExpressionHostingClassStubGenerator stubber;
 		String code;
 		try {
-			stubber = new ExpressionHostingClassStubGenerator(workspace, classAccess, className, superName, implementing,
+			stubber = new ExpressionHostingClassStubGenerator(workspace, inheritanceGraph, classAccess, className, superName, implementing,
 					fields, methods, innerClasses, methodFlags, methodName, methodType, methodVariables, expression);
 			code = stubber.generate();
 		} catch (ExpressionCompileException ex) {

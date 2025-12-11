@@ -18,6 +18,7 @@ import software.coley.recaf.test.dummy.ClassWithFieldsAndMethods;
 import software.coley.recaf.test.dummy.ClassWithInnerAndMembers;
 import software.coley.recaf.test.dummy.ClassWithLambda;
 import software.coley.recaf.test.dummy.ClassWithRequiredConstructor;
+import software.coley.recaf.test.dummy.ClassWithToString;
 import software.coley.recaf.test.dummy.DummyEnum;
 import software.coley.recaf.test.dummy.DummyRecord;
 import software.coley.recaf.workspace.model.Workspace;
@@ -35,6 +36,7 @@ class ExpressionCompilerTest extends TestBase {
 	static Workspace workspace;
 	static JvmClassInfo targetClass;
 	static JvmClassInfo targetCtorClass;
+	static JvmClassInfo targetToStringClass;
 	static JvmClassInfo targetEnum;
 	static JvmClassInfo targetRecord;
 	static JvmClassInfo targetOuterWithInner;
@@ -44,6 +46,7 @@ class ExpressionCompilerTest extends TestBase {
 	static void setup() throws IOException {
 		targetClass = TestClassUtils.fromRuntimeClass(ClassWithFieldsAndMethods.class);
 		targetCtorClass = TestClassUtils.fromRuntimeClass(ClassWithRequiredConstructor.class);
+		targetToStringClass = TestClassUtils.fromRuntimeClass(ClassWithToString.class);
 		targetEnum = TestClassUtils.fromRuntimeClass(DummyEnum.class);
 		targetRecord = TestClassUtils.fromRuntimeClass(DummyRecord.class);
 		targetOuterWithInner = TestClassUtils.fromRuntimeClass(ClassWithInnerAndMembers.class);
@@ -57,7 +60,7 @@ class ExpressionCompilerTest extends TestBase {
 		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		ExpressionResult result = compile(assembler, """
 				import java.util.Random;
-				    
+				
 				try {
 					Random random = new Random();
 				 	int a = random.nextInt(100);
@@ -174,6 +177,17 @@ class ExpressionCompilerTest extends TestBase {
 				System.out.println("bar: " + inner.bar);
 				inner.strings.add("something");
 				inner.innerToOuter();
+				""");
+		assertSuccess(result);
+	}
+
+	@Test
+	void overrideLibraryMethodDoesNotFail() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(targetToStringClass);
+		assembler.setMethodContext(targetToStringClass.getFirstDeclaredMethodByName("toString"));
+		ExpressionResult result = compile(assembler, """
+				return "string";
 				""");
 		assertSuccess(result);
 	}

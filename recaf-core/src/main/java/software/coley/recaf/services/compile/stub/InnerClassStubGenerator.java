@@ -7,6 +7,7 @@ import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.assembler.ExpressionCompileException;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.workspace.model.Workspace;
 
@@ -21,6 +22,8 @@ public class InnerClassStubGenerator extends ClassStubGenerator {
 	/**
 	 * @param workspace
 	 * 		Workspace to pull class information from.
+	 * @param inheritanceGraph
+	 * 		Inheritance graph of the workspace.
 	 * @param classAccess
 	 * 		Host class access modifiers.
 	 * @param className
@@ -37,6 +40,7 @@ public class InnerClassStubGenerator extends ClassStubGenerator {
 	 * 		Host class declared inner classes.
 	 */
 	public InnerClassStubGenerator(@Nonnull Workspace workspace,
+	                               @Nonnull InheritanceGraph inheritanceGraph,
 	                               int classAccess,
 	                               @Nonnull String className,
 	                               @Nullable String superName,
@@ -44,7 +48,7 @@ public class InnerClassStubGenerator extends ClassStubGenerator {
 	                               @Nonnull List<FieldMember> fields,
 	                               @Nonnull List<MethodMember> methods,
 	                               @Nonnull List<InnerClassInfo> innerClasses) {
-		super(workspace, classAccess, className, superName, implementing, fields, methods, innerClasses);
+		super(workspace, inheritanceGraph, classAccess, className, superName, implementing, fields, methods, innerClasses);
 	}
 
 	@Nonnull
@@ -64,12 +68,18 @@ public class InnerClassStubGenerator extends ClassStubGenerator {
 	@Nonnull
 	@Override
 	public String getLocalModifier() {
+		StringBuilder sb = new StringBuilder();
+
+		// I've seen this happen in Recaf but cannot reproduce a case outside.
+		// https://stackoverflow.com/questions/19481680/error-illegal-static-declaration-in-inner-class
+		if (AccessFlag.isStatic(classAccess))
+			sb.append("static");
 		if (AccessFlag.isAbstract(classAccess))
-			return "abstract";
+			sb.append(" abstract");
 
 		// If the inner class (this context) is not abstract, we do not want to force
 		// it to be abstract in order to allow expressions to do "new Inner()" and stuff.
-		return "";
+		return sb.toString().trim();
 	}
 
 	@Override

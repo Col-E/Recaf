@@ -19,6 +19,8 @@ import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.assembler.ExpressionCompileException;
 import software.coley.recaf.services.assembler.ExpressionCompiler;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.workspace.model.Workspace;
@@ -45,6 +47,8 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	/**
 	 * @param workspace
 	 * 		Workspace to pull class information from.
+	 * @param inheritanceGraph
+	 * 		Inheritance graph of the workspace.
 	 * @param classAccess
 	 * 		Host class access modifiers.
 	 * @param className
@@ -71,6 +75,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	 * 		The expression to insert into the target hosting method.
 	 */
 	public ExpressionHostingClassStubGenerator(@Nonnull Workspace workspace,
+	                                           @Nonnull InheritanceGraph inheritanceGraph,
 	                                           int classAccess,
 	                                           @Nonnull String className,
 	                                           @Nullable String superName,
@@ -83,7 +88,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	                                           @Nonnull MethodType methodType,
 	                                           @Nonnull List<LocalVariable> methodVariables,
 	                                           @Nonnull String expression) {
-		super(workspace, classAccess, className, superName, implementing, fields, methods, innerClasses);
+		super(workspace, inheritanceGraph, classAccess, className, superName, implementing, fields, methods, innerClasses);
 
 		// Map edge cases for disallowed names.
 		if (methodName.equals("<init>"))
@@ -262,8 +267,14 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 		if (code.substring(code.length() - 2).endsWith(", "))
 			code.setLength(code.length() - 2);
 
-		// Close off declaration and add a throws so the user doesn't need to specify try-catch.
-		code.append(") throws Throwable { " + ExpressionCompiler.EXPR_MARKER + " \n");
+		// Close off declaration and add a 'throws Throwable' so the user doesn't need to specify try-catch.
+		// If the method is a library method (something we cannot control, like Object.toString()) then
+		// unfortunately we cannot add the 'throws'.
+		InheritanceVertex classVertex = inheritanceGraph.getVertex(className);
+		if (classVertex != null && classVertex.isLibraryMethod(methodName, methodType.descriptor()))
+			code.append(") { " + ExpressionCompiler.EXPR_MARKER + " \n");
+		else
+			code.append(") throws Throwable { " + ExpressionCompiler.EXPR_MARKER + " \n");
 		code.append(expression);
 		code.append("}\n");
 	}

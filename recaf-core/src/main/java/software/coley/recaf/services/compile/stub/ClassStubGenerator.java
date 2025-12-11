@@ -16,11 +16,13 @@ import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.assembler.ExpressionCompileException;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.Keywords;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.lang.reflect.Modifier;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
  */
 public abstract class ClassStubGenerator {
 	protected final Workspace workspace;
+	protected final InheritanceGraph inheritanceGraph;
 	protected final int classAccess;
 	protected final String className;
 	protected final String superName;
@@ -43,6 +46,8 @@ public abstract class ClassStubGenerator {
 	/**
 	 * @param workspace
 	 * 		Workspace to pull class information from.
+	 * @param inheritanceGraph
+	 * 		Inheritance graph of the workspace.
 	 * @param classAccess
 	 * 		Host class access modifiers.
 	 * @param className
@@ -59,6 +64,7 @@ public abstract class ClassStubGenerator {
 	 * 		Host class declared inner classes.
 	 */
 	public ClassStubGenerator(@Nonnull Workspace workspace,
+	                          @Nonnull InheritanceGraph inheritanceGraph,
 	                          int classAccess,
 	                          @Nonnull String className,
 	                          @Nullable String superName,
@@ -67,6 +73,7 @@ public abstract class ClassStubGenerator {
 	                          @Nonnull List<MethodMember> methods,
 	                          @Nonnull List<InnerClassInfo> innerClasses) {
 		this.workspace = workspace;
+		this.inheritanceGraph = inheritanceGraph;
 		this.classAccess = classAccess;
 		this.className = isSafeInternalClassName(className) ? className : "obfuscated_class";
 		this.superName = isSafeReferencableName(superName) ? superName : null;
@@ -346,8 +353,10 @@ public abstract class ClassStubGenerator {
 			ClassPathNode innerClassPath = workspace.findClass(innerClassName);
 			if (innerClassPath != null) {
 				ClassInfo innerClassInfo = innerClassPath.getValue();
-				ClassStubGenerator generator = new InnerClassStubGenerator(workspace,
-						innerClassInfo.getAccess(),
+				ClassStubGenerator generator = new InnerClassStubGenerator(workspace, inheritanceGraph,
+						// Bitwise or the flags together since we need to know if the inner class is static.
+						// The inner class attribute will say whether it is or not, but the actual class will not.
+						innerClassInfo.getAccess() | (innerClass.getInnerAccess() & Modifier.STATIC),
 						innerClassInfo.getName(),
 						innerClassInfo.getSuperName(),
 						innerClassInfo.getInterfaces(),
