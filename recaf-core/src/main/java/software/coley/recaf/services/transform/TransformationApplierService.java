@@ -32,18 +32,21 @@ public class TransformationApplierService implements Service {
 	private final MappingApplierService mappingService;
 	private final WorkspaceManager workspaceManager;
 	private final TransformationApplierConfig config;
+	private final TransformationApplierConfig applierConfig;
 
 	@Inject
 	public TransformationApplierService(@Nonnull TransformationManager transformationManager,
 	                                    @Nonnull InheritanceGraphService graphService,
-										@Nonnull MappingApplierService mappingService,
+	                                    @Nonnull MappingApplierService mappingService,
 	                                    @Nonnull WorkspaceManager workspaceManager,
-	                                    @Nonnull TransformationApplierConfig config) {
+	                                    @Nonnull TransformationApplierConfig config,
+	                                    @Nonnull TransformationApplierConfig applierConfig) {
 		this.graphService = graphService;
 		this.mappingService = mappingService;
 		this.workspaceManager = workspaceManager;
 		this.transformationManager = transformationManager;
 		this.config = config;
+		this.applierConfig = applierConfig;
 	}
 
 	/**
@@ -94,7 +97,7 @@ public class TransformationApplierService implements Service {
 	@Nonnull
 	private TransformationApplier newApplier(@Nonnull Workspace workspace, @Nonnull InheritanceGraph inheritanceGraph,
 	                                         @Nonnull MappingApplier mappingApplier) {
-		return new TransformationApplier(transformationManager, inheritanceGraph, mappingApplier, workspace);
+		return new TransformationApplier(transformationManager, applierConfig, inheritanceGraph, mappingApplier, workspace);
 	}
 
 	@Nonnull

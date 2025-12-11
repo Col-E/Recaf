@@ -42,6 +42,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	private final ObservableBoolean ignoreFileLengths = new ObservableBoolean(false);
 	private final ObservableBoolean adoptStandardCenFileNames = new ObservableBoolean(false);
 	private final ObservableInteger maxEmbeddedZipDepth = new ObservableInteger(3);
+	private final ObservableBoolean parallelize = new ObservableBoolean(true);
 
 	@Inject
 	public ResourceImporterConfig() {
@@ -53,6 +54,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 		addValue(new BasicConfigValue<>("ignore-file-lengths", boolean.class, ignoreFileLengths));
 		addValue(new BasicConfigValue<>("adapt-standard-cen-file-names", boolean.class, adoptStandardCenFileNames));
 		addValue(new BasicConfigValue<>("max-embedded-zip-depth", int.class, maxEmbeddedZipDepth));
+		addValue(new BasicConfigValue<>("parallelize", boolean.class, parallelize));
 	}
 
 	/**
@@ -119,6 +121,14 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	@Nonnull
 	public ObservableInteger getMaxEmbeddedZipDepth() {
 		return maxEmbeddedZipDepth;
+	}
+
+	/**
+	 * @return {@code true} to enable parallelization of import logic.
+	 */
+	@Nonnull
+	public ObservableBoolean doParallelize() {
+		return parallelize;
 	}
 
 	/**

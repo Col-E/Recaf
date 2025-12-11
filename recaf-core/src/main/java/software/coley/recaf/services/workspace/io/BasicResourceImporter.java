@@ -210,7 +210,9 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 		// Build model from the contained files in the ZIP
 		int maxZipDepth = config.getMaxEmbeddedZipDepth().getValue();
-		try (ExecutorService service = ThreadPoolFactory.newFixedThreadPool("zip-import")) {
+		try (ExecutorService service = config.doParallelize().getValue() ?
+				ThreadPoolFactory.newFixedThreadPool("zip-import") :
+				ThreadPoolFactory.newSingleThreadExecutor("zip-import")) {
 			List<Callable<Void>> tasks = new ArrayList<>();
 			for (LocalFileHeader header : archive.getLocalFiles()) {
 				tasks.add(() -> {
@@ -294,7 +296,9 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		Map<String, WorkspaceFileResource> embeddedResources = new ConcurrentHashMap<>();
 
 		// Walk the directory
-		try (ExecutorService service = ThreadPoolFactory.newFixedThreadPool("directory-import")) {
+		try (ExecutorService service = config.doParallelize().getValue() ?
+				ThreadPoolFactory.newFixedThreadPool("directory-import") :
+				ThreadPoolFactory.newSingleThreadExecutor("directory-import")) {
 			List<Callable<Void>> tasks = new ArrayList<>();
 			Files.walkFileTree(directoryPath, new SimpleFileVisitor<>() {
 				@Override

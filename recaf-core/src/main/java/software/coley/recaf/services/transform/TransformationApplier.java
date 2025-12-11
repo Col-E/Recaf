@@ -44,6 +44,7 @@ import static software.coley.collections.Unchecked.checkedForEach;
 public class TransformationApplier {
 	private static final DebuggingLogger logger = Logging.get(TransformationApplier.class);
 	private final TransformationManager transformationManager;
+	private final TransformationApplierConfig transformApplyConfig;
 	private final InheritanceGraph inheritanceGraph;
 	private final MappingApplier mappingApplier;
 	private final Workspace workspace;
@@ -52,6 +53,8 @@ public class TransformationApplier {
 	/**
 	 * @param transformationManager
 	 * 		Manager to pull transformer instances from.
+	 * @param transformApplyConfig
+	 * 		Transformation applier config.
 	 * @param inheritanceGraph
 	 * 		Inheritance graph to use for frame computation <i>(Some transformers will trigger this)</i>.
 	 * @param mappingApplier
@@ -60,10 +63,12 @@ public class TransformationApplier {
 	 * 		Workspace with classes to transform.
 	 */
 	public TransformationApplier(@Nonnull TransformationManager transformationManager,
+	                             @Nonnull TransformationApplierConfig transformApplyConfig,
 	                             @Nonnull InheritanceGraph inheritanceGraph,
 	                             @Nonnull MappingApplier mappingApplier,
 	                             @Nonnull Workspace workspace) {
 		this.transformationManager = transformationManager;
+		this.transformApplyConfig = transformApplyConfig;
 		this.inheritanceGraph = inheritanceGraph;
 		this.mappingApplier = mappingApplier;
 		this.workspace = workspace;
@@ -141,7 +146,9 @@ public class TransformationApplier {
 		}
 		AtomicInteger finalPass = new AtomicInteger();
 		List<JvmClassTransformer> prunedTransformers = new ArrayList<>();
-		try (ExecutorService service = ThreadPoolFactory.newFixedThreadPool("transform-apply")) {
+		try (ExecutorService service = transformApplyConfig.doParallelize().getValue() ?
+				ThreadPoolFactory.newFixedThreadPool("transform-apply") :
+				ThreadPoolFactory.newSingleThreadExecutor("transform-apply")) {
 			resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
 				List<Callable<Void>> tasks = new ArrayList<>(bundle.size());
 				BundlePathNode bundlePathNode = resourcePath.child(bundle);
