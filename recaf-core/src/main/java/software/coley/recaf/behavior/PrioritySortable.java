@@ -13,9 +13,17 @@ import java.util.List;
 public interface PrioritySortable extends Comparable<PrioritySortable> {
 	/**
 	 * @return This item's priority value.
+	 * Negative values have higher priority.
+	 * Positive values have lower priority.
+	 *
+	 * @see PriorityKeys
 	 */
 	default int getPriority() {
-		return 0;
+		// Everything will default to '0' and the order of items is not guaranteed.
+		//
+		// The idea is that most things do not need a guaranteed run order, but for the few edge cases that do
+		// those specific cases will use higher/lower values to be moved to the front/end of the sorted list.
+		return PriorityKeys.DEFAULT;
 	}
 
 	@Override

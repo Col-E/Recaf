@@ -26,6 +26,7 @@ import software.coley.bentofx.layout.container.DockContainerBranch;
 import software.coley.bentofx.layout.container.DockContainerLeaf;
 import software.coley.bentofx.layout.container.DockContainerRootBranch;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.behavior.PriorityKeys;
 import software.coley.recaf.services.info.summary.ResourceSummaryServiceConfig;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.NavigationManager;
@@ -118,10 +119,9 @@ public class DockingManager {
 		// Due to how we style the headers, we want the drawing to be clipped.
 		bento.controlsBuilding().setHeadersFactory(ClippedHeaders::new);
 
-		// Register listener
-		ListenerHost host = new ListenerHost();
-		workspaceManager.addWorkspaceOpenListener(host);
-		workspaceManager.addWorkspaceCloseListener(host);
+		// Register listeners
+		workspaceManager.addWorkspaceOpenListener(new SummaryDisplayListener());
+		workspaceManager.addWorkspaceCloseListener(new WelcomeDisplayListener());
 
 		// Create root
 		DockBuilding builder = bento.dockBuilding();
@@ -162,6 +162,7 @@ public class DockingManager {
 		var path = bento.search().container(DockingManager.ID_CONTAINER_WORKSPACE_PRIMARY);
 		if (path != null && path.tailContainer() instanceof DockContainerLeaf leaf)
 			return leaf;
+		// TODO: Only fails when opening tutorial
 		throw new IllegalStateException("Primary docking leaf could not be found");
 	}
 
@@ -376,9 +377,9 @@ public class DockingManager {
 	}
 
 	/**
-	 * Listener implementation to delegate calls for respective events.
+	 * Listener to show the workspace summary page for opened workspaces.
 	 */
-	private class ListenerHost implements WorkspaceOpenListener, WorkspaceCloseListener {
+	private class SummaryDisplayListener implements WorkspaceOpenListener {
 		@Override
 		public void onWorkspaceOpened(@Nonnull Workspace workspace) {
 			// Replace root with a summary of the workspace when it is opened.
@@ -392,6 +393,19 @@ public class DockingManager {
 		}
 
 		@Override
+		public int getPriority() {
+			// This is set to run 'EARLIEST' so that other open listeners that use FX callbacks
+			// will register their callbacks after this one. This ensures the 'ID_CONTAINER_WORKSPACE_PRIMARY' is
+			// available when those other callbacks are executed.
+			return PriorityKeys.EARLIEST;
+		}
+	}
+
+	/**
+	 * Listener to show the welcome page when no workspace is open.
+	 */
+	private class WelcomeDisplayListener implements WorkspaceCloseListener {
+		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 			// When a workspace is closed, show the welcome screen.
 			FxThreadUtil.run(() -> {
@@ -402,8 +416,10 @@ public class DockingManager {
 
 		@Override
 		public int getPriority() {
-			// TODO: Arbitrary number to ensure this happens later than other close listeners
-			return 100;
+			// This is set to run 'LATEST' so that the replace operation happens AFTER the navigation manager
+			// handles closing UI content from the workspace being closed. If this happens too early then that logic
+			// in the navigation manager will close our 'welcome' page/container.
+			return PriorityKeys.LATEST;
 		}
 	}
 
