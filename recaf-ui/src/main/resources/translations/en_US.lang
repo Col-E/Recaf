@@ -822,6 +822,7 @@ service.plugin.plugin-manager-config=Plugin manager
 service.plugin.plugin-manager-config.scan-on-start=Load on startup
 service.plugin.script-manager-config=Script manager
 service.plugin.script-manager-config.file-watching=Passively scan scripts directory for changes
+service.transform=Transform
 service.transform.transformation-applier-config=Transformation Application
 service.transform.transformation-applier-config.parallelize=Enable multi-core transformer application
 service.ui=User interface
