@@ -1,13 +1,14 @@
 package software.coley.recaf.util;
 
-import it.unimi.dsi.fastutil.chars.Char2ObjectArrayMap;
 import it.unimi.dsi.fastutil.chars.Char2ObjectMap;
+import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.chars.CharSet;
-import it.unimi.dsi.fastutil.objects.Object2CharArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2CharMap;
+import it.unimi.dsi.fastutil.objects.Object2CharOpenHashMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
+import java.util.BitSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -17,10 +18,10 @@ import java.util.TreeSet;
  * @author xDark
  */
 public final class EscapeUtil {
-	private static final Char2ObjectMap<String> WHITESPACE_TO_ESCAPE = new Char2ObjectArrayMap<>();
-	private static final Object2CharMap<String> ESCAPE_TO_WHITESPACE = new Object2CharArrayMap<>(); // TODO: Shouldn't we use this?
+	private static final Char2ObjectMap<String> WHITESPACE_TO_ESCAPE = new Char2ObjectOpenHashMap<>();
+	private static final Object2CharMap<String> ESCAPE_TO_WHITESPACE = new Object2CharOpenHashMap<>(); // TODO: Shouldn't we use this?
 	private static final Set<String> WHITESPACE_STRINGS = new TreeSet<>();
-	private static final char[] WHITESPACE_CHARS;
+	private static final BitSet WHITESPACE_LOOKUP = new BitSet(Character.MAX_VALUE + 1);
 	public static final char TERMINATOR = '\0';
 	public static final String ESCAPED_SPACE = "\\u0020";
 	public static final String ESCAPED_TAB = "\\u0009";
@@ -38,10 +39,10 @@ public final class EscapeUtil {
 	 * @return {@code true} when text contains any whitespace characters.
 	 */
 	public static boolean containsWhitespace(@Nonnull String text) {
-		for (char whitespace : WHITESPACE_CHARS) {
-			if (text.indexOf(whitespace) != -1)
+		int len = text.length();
+		for (int i = 0; i < len; i++)
+			if (WHITESPACE_LOOKUP.get(text.charAt(i)))
 				return true;
-		}
 		return false;
 	}
 
@@ -52,7 +53,7 @@ public final class EscapeUtil {
 	 * @return {@code true} if it represents a whitespace character.
 	 */
 	public static boolean isWhitespaceChar(char c) {
-		return WHITESPACE_TO_ESCAPE.containsKey(c);
+		return WHITESPACE_LOOKUP.get(c);
 	}
 
 	/**
@@ -365,6 +366,7 @@ public final class EscapeUtil {
 		WHITESPACE_STRINGS.add(String.valueOf(unescape));
 		WHITESPACE_TO_ESCAPE.put(unescape, escape);
 		ESCAPE_TO_WHITESPACE.put(escape, unescape);
+		WHITESPACE_LOOKUP.set(unescape);
 	}
 
 	static {
@@ -413,11 +415,5 @@ public final class EscapeUtil {
 		addWhitespace((('\u2800')), "\\u" + String.format("%04X", (int) '\u2800'));
 		addWhitespace((('\u3000')), "\\u" + String.format("%04X", (int) '\u3000'));
 		addWhitespace((('\u318F')), "\\u" + String.format("%04X", (int) '\u318F'));
-
-		// Populate char[] of whitespace characters.
-		int i = 0;
-		WHITESPACE_CHARS = new char[WHITESPACE_STRINGS.size()];
-		for (Char2ObjectMap.Entry<String> entry : WHITESPACE_TO_ESCAPE.char2ObjectEntrySet())
-			WHITESPACE_CHARS[i++] = entry.getCharKey();
 	}
 }
