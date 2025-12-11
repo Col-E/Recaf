@@ -26,7 +26,7 @@ public class InheritanceGraphService implements Service {
 	private final InheritanceGraphServiceConfig config;
 	private final MappingListeners mappingListeners;
 	private final WorkspaceManager workspaceManager;
-	private InheritanceGraph currentWorkspaceGraph;
+	private volatile InheritanceGraph currentWorkspaceGraph;
 
 	@Inject
 	public InheritanceGraphService(@Nonnull WorkspaceManager workspaceManager,
@@ -76,10 +76,15 @@ public class InheritanceGraphService implements Service {
 		if (!workspaceManager.hasCurrentWorkspace())
 			return null;
 
+		// Building graphs can be expensive for large workspaces, so to prevent races we will double-check.
 		if (currentWorkspaceGraph == null) {
-			InheritanceGraph graph = newInheritanceGraph(workspaceManager.getCurrent());
-			mappingListeners.addMappingApplicationListener(graph);
-			currentWorkspaceGraph = graph;
+			synchronized (this) {
+				if (currentWorkspaceGraph == null) {
+					InheritanceGraph graph = newInheritanceGraph(workspaceManager.getCurrent());
+					mappingListeners.addMappingApplicationListener(graph);
+					currentWorkspaceGraph = graph;
+				}
+			}
 		}
 
 		return currentWorkspaceGraph;

@@ -13,10 +13,10 @@ import software.coley.recaf.services.mapping.data.VariableMapping;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Mappings implementation for internal tracking of aggregated mappings.
@@ -33,7 +33,7 @@ import java.util.Objects;
  * @author Marius Renner
  */
 public class AggregatedMappings extends IntermediateMappings {
-	private final Map<String, String> reverseOrderClassMapping = new HashMap<>();
+	private final Map<String, String> reverseOrderClassMapping = new ConcurrentHashMap<>();
 	private final WorkspaceBackedRemapper reverseMapper;
 	private boolean missingFieldDescriptors;
 

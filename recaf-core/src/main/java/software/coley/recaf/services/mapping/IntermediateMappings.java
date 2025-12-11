@@ -10,12 +10,12 @@ import software.coley.recaf.services.mapping.data.VariableMapping;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Collection of object representations of mappings.
@@ -24,10 +24,10 @@ import java.util.TreeSet;
  * @author Matt Coley
  */
 public class IntermediateMappings implements Mappings {
-	protected final Map<String, ClassMapping> classes = new HashMap<>();
-	protected final Map<String, List<FieldMapping>> fields = new HashMap<>();
-	protected final Map<String, List<MethodMapping>> methods = new HashMap<>();
-	protected final Map<String, List<VariableMapping>> variables = new HashMap<>();
+	protected final Map<String, ClassMapping> classes = new ConcurrentHashMap<>();
+	protected final Map<String, List<FieldMapping>> fields = new ConcurrentHashMap<>();
+	protected final Map<String, List<MethodMapping>> methods = new ConcurrentHashMap<>();
+	protected final Map<String, List<VariableMapping>> variables = new ConcurrentHashMap<>();
 
 	/**
 	 * Copies all values from the given mappings into this instance.
@@ -65,7 +65,7 @@ public class IntermediateMappings implements Mappings {
 	 */
 	public void addField(@Nonnull String ownerName, @Nullable String desc, @Nonnull String oldName, @Nonnull String newName) {
 		if (Objects.equals(oldName, newName)) return; // Skip identity mappings
-		fields.computeIfAbsent(ownerName, n -> new ArrayList<>())
+		fields.computeIfAbsent(ownerName, n -> Collections.synchronizedList(new ArrayList<>()))
 				.add(new FieldMapping(ownerName, oldName, desc, newName));
 	}
 
@@ -81,7 +81,7 @@ public class IntermediateMappings implements Mappings {
 	 */
 	public void addMethod(@Nonnull String ownerName, @Nonnull String desc, @Nonnull String oldName, @Nonnull String newName) {
 		if (Objects.equals(oldName, newName)) return; // Skip identity mappings
-		methods.computeIfAbsent(ownerName, n -> new ArrayList<>())
+		methods.computeIfAbsent(ownerName, n -> Collections.synchronizedList(new ArrayList<>()))
 				.add(new MethodMapping(ownerName, oldName, desc, newName));
 	}
 
@@ -106,7 +106,7 @@ public class IntermediateMappings implements Mappings {
 	                        @Nonnull String newName) {
 		if (Objects.equals(oldName, newName)) return; // Skip identity mappings
 		String key = varKey(ownerName, methodName, methodDesc);
-		variables.computeIfAbsent(key, n -> new ArrayList<>())
+		variables.computeIfAbsent(key, n -> Collections.synchronizedList(new ArrayList<>()))
 				.add(new VariableMapping(ownerName, methodName, methodDesc, desc, oldName, index, newName));
 	}
 

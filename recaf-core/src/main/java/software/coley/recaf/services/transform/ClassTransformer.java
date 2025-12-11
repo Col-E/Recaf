@@ -18,6 +18,14 @@ public interface ClassTransformer {
 	String name();
 
 	/**
+	 * @return {@code true} if this transformer should not be applied to following passes if in the current pass it reports no work being done.
+	 * {@code false} if this transformer should run in all passes.
+	 */
+	default boolean pruneAfterNoWork() {
+		return false;
+	}
+
+	/**
 	 * @return Set of transformer classes that are recommended to be run before this one, but not strictly required.
 	 *
 	 * @see #recommendedSuccessors()

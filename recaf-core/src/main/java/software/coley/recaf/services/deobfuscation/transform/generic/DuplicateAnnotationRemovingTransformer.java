@@ -42,4 +42,11 @@ public class DuplicateAnnotationRemovingTransformer implements JvmClassTransform
 	public String name() {
 		return "Duplicate annotation removal";
 	}
+
+	@Override
+	public boolean pruneAfterNoWork() {
+		// Other transformers should not introduce duplicate annotations,
+		// so once the work is done there is no need to re-process classes on following passes.
+		return true;
+	}
 }

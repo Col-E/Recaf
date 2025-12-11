@@ -43,7 +43,6 @@ public class CycleClassRemovingTransformer implements JvmClassTransformer {
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
-
 		InheritanceVertex vertex = inheritanceGraph.getVertex(initialClassState.getName());
 		if (vertex != null && vertex.isLoop())
 			context.markClassForRemoval(initialClassState);
@@ -53,5 +52,12 @@ public class CycleClassRemovingTransformer implements JvmClassTransformer {
 	@Override
 	public String name() {
 		return "Cycle class removal";
+	}
+
+	@Override
+	public boolean pruneAfterNoWork() {
+		// Other transformers should not introduce cyclic classes,
+		// so once the work is done there is no need to re-process classes on following passes.
+		return true;
 	}
 }

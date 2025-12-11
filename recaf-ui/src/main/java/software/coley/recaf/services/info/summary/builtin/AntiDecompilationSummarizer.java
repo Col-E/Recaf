@@ -11,7 +11,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -39,21 +38,20 @@ import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.pane.MappingGeneratorPane;
 import software.coley.recaf.ui.window.MappingGeneratorWindow;
-import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-
-import static software.coley.recaf.util.Lang.getBinding;
 
 /**
  * Summarizer that allows patching of common anti-decompilation tricks.
@@ -169,26 +167,48 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 
 	private int computeIllegalNames(@Nonnull WorkspaceResource resource) {
 		Set<JvmClassInfo> classesWithIllegalNames = Collections.newSetFromMap(new IdentityHashMap<>());
-		resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
-			bundle.forEach(cls -> {
-				if (ILLEGAL_NAME_FILTER.shouldMapClass(cls)) {
-					classesWithIllegalNames.add(cls);
-					return;
-				}
-				for (FieldMember field : cls.getFields()) {
-					if (ILLEGAL_NAME_FILTER.shouldMapField(cls, field)) {
-						classesWithIllegalNames.add(cls);
-						return;
-					}
-				}
-				for (MethodMember method : cls.getMethods()) {
-					if (ILLEGAL_NAME_FILTER.shouldMapMethod(cls, method)) {
-						classesWithIllegalNames.add(cls);
-						return;
-					}
-				}
+		try (ExecutorService service = ThreadPoolFactory.newFixedThreadPool("illegal-name-summary")) {
+			List<Callable<Void>> tasks = new ArrayList<>();
+			resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
+				bundle.forEach(cls -> {
+					// While this task is 'simple' it can be a lot of work for workspaces with 1000's of classes
+					// hence why each class is checked in parallel.
+					tasks.add(() -> {
+						if (ILLEGAL_NAME_FILTER.shouldMapClass(cls)) {
+							synchronized (classesWithIllegalNames) {
+								classesWithIllegalNames.add(cls);
+							}
+							return null;
+						}
+						for (FieldMember field : cls.getFields()) {
+							if (ILLEGAL_NAME_FILTER.shouldMapField(cls, field)) {
+								synchronized (classesWithIllegalNames) {
+									classesWithIllegalNames.add(cls);
+								}
+								return null;
+							}
+						}
+						for (MethodMember method : cls.getMethods()) {
+							if (ILLEGAL_NAME_FILTER.shouldMapMethod(cls, method)) {
+								synchronized (classesWithIllegalNames) {
+									classesWithIllegalNames.add(cls);
+								}
+								return null;
+							}
+						}
+						return null;
+					});
+				});
 			});
-		});
+
+			// Wait for all classes to be processed
+			try {
+				service.invokeAll(tasks);
+			} catch (InterruptedException ex) {
+				logger.error("Interrupted illegal name computation", ex);
+				return 0;
+			}
+		}
 		return classesWithIllegalNames.size();
 	}
 

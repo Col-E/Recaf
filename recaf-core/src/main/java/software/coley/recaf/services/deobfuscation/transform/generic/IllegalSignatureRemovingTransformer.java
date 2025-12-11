@@ -41,4 +41,11 @@ public class IllegalSignatureRemovingTransformer implements JvmClassTransformer 
 	public String name() {
 		return "Illegal signature removal";
 	}
+
+	@Override
+	public boolean pruneAfterNoWork() {
+		// Other transformers should not introduce junk signatures,
+		// so once the work is done there is no need to re-process classes on following passes.
+		return true;
+	}
 }
