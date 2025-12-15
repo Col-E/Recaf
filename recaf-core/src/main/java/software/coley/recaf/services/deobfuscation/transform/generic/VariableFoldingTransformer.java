@@ -10,7 +10,6 @@ import jakarta.inject.Inject;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -46,7 +45,6 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -260,7 +258,8 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 
 					// Remove variable writes + usages if:
 					// - The variable is a redundant copy of an existing other variable
-					for (int keyX : states.keySet()) {
+					// TODO: Enable this after fixing the 'doNotFoldVarUsedInComparisonIfOriginalPossiblyUpdates' test
+					if (false) for (int keyX : states.keySet()) {
 						// Check if the current store is redundant with another variable.
 						int slotX = slotFromKey(keyX);
 						if (slotX != vin.var && isRedundantStore(states, instructions, i, slotX, vin.var, varSort)) {
@@ -339,13 +338,8 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		if (!isMatchingStore(typeSort, writeVin.getOpcode()))
 			return false;
 
-		// Check if the prior instruction is a cast.
-		// We want to keep patterns like 'Collection -> List' being stored into new variables.
+		// Check if the prior instruction is the copy source of 'load x'.
 		AbstractInsnNode previousInsn = writeInsnY.getPrevious();
-		if (previousInsn == null || previousInsn.getOpcode() == CHECKCAST)
-			return false;
-
-		// Contents of both locals must be equal.
 		if (!(previousInsn instanceof VarInsnNode prevVin
 				&& isVarLoad(prevVin.getOpcode())
 				&& prevVin.var == slotX))
@@ -362,6 +356,10 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 				int var = vin.var;
 				int opcode = vin.getOpcode();
 				if ((var == slotX || var == slotY) && isVarStore(opcode))
+					return false;
+			} else if (insn instanceof IincInsnNode iinc) {
+				int var = iinc.var;
+				if ((var == slotX || var == slotY))
 					return false;
 			}
 		}

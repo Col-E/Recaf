@@ -2263,6 +2263,8 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
+	@Disabled
+	/** TODO: Enable after fixing {@link #doNotFoldVarUsedInComparisonIfOriginalPossiblyUpdates()} */
 	void foldVarWithRedundantCopyVariable() {
 		String asm = """
 				.method public example ()I {
@@ -2351,6 +2353,8 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
+	@Disabled
+	/** TODO: Enable after fixing {@link #doNotFoldVarUsedInComparisonIfOriginalPossiblyUpdates()} */
 	void foldVarWithWideRedundantCopyVariable() {
 		String asm = """
 				.method public static example (J)I {
@@ -2373,6 +2377,34 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("copy", dis), "Expected to remove variable references to redundant 'copy' var");
 		});
+	}
+
+	@Test
+	@Disabled
+	void doNotFoldVarUsedInComparisonIfOriginalPossiblyUpdates() {
+		String asm = """
+				.method public static example (I)I {
+					parameters: { a },
+				    code: {
+				    A:
+				        iload a
+				        istore b
+				        iload a
+				        invokestatic Example.lookup (I)I
+				        istore a
+				        iload a
+				        iload b
+				        if_icmpne B
+				        iload a
+				        ireturn
+				    B:
+				        iload b
+				        ireturn
+				    C:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class));
 	}
 
 	@Test
