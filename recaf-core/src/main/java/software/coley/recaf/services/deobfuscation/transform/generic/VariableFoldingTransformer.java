@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -28,6 +29,8 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.AccessFlag;
+import software.coley.recaf.util.AsmInsnUtil;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.DoubleValue;
@@ -43,8 +46,9 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.NavigableSet;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -125,7 +129,6 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 						Frame<ReValue> frame = frames[i];
 						if (frame == null)
 							continue; // Skip dead code
-						ReValue top = frame.getStack(frame.getStackSize() - 1);
 						LocalAccessState state = states.computeIfAbsent(key(vin.var, getTypeForVarInsn(vin).getSort()), k -> new LocalAccessState(vin.var));
 						state.addRead(i, vin);
 					}
@@ -135,13 +138,13 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 						Frame<ReValue> frame = frames[i];
 						if (frame == null)
 							continue; // Skip dead code
-						ReValue top = frame.getStack(frame.getStackSize() - 1);
 						LocalAccessState state = states.computeIfAbsent(key(vin.var, getTypeForVarInsn(vin).getSort()), k -> new LocalAccessState(vin.var));
 						state.addWrite(i, vin);
 
 						// If we're moving forward in the method from the beginning, and haven't seen
 						// the variable being used yet or any kind of control flow, then we can safely
 						// just replace the state with the value on the stack instead of merging it.
+						ReValue top = frame.getStack(frame.getStackSize() - 1);
 						if (state.getReadsUpTo(i).isEmpty() && !controlFlowObserved && !throwingObserved)
 							state.setState(top);
 						else
@@ -230,9 +233,11 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 					// Remove variable writes if:
 					// - They are never read from
 					// - They are inlinable values (arrays for instance cannot be inlined as a single value providing instruction)
-					// - They are read from, but only used with a single known constant value (which we inline above).
+					// - They are read from, but only used with a single known constant value (which we inline above)
 					Type varType = getTypeForVarInsn(vin);
-					LocalAccessState state = states.get(key(vin.var, varType.getSort()));
+					int varSort = varType.getSort();
+					int varKey = key(vin.var, varSort);
+					LocalAccessState state = states.get(varKey);
 					if (state != null && state.isInlinableValue() && (state.getReads().isEmpty() || state.isEffectiveConstant())) {
 						AbstractInsnNode previous = insn.getPrevious();
 						if (OpaqueConstantFoldingTransformer.isSupportedValueProducer(previous)) {
@@ -245,6 +250,36 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 							instructions.set(vin, new InsnNode(varType.getSize() == 1 ? POP : POP2));
 						}
 						dirty = true;
+					}
+
+					// Remove variable writes if:
+					// - This write is never read from, even if the variable is read from later after a different assignment.
+					//   Between the potential unused write (this one) and the following write preceding the first read
+					//   there must not be any control-flow altering instructions.
+					//    TODO: Implement this (probably requires better state tracking refactoring)
+
+					// Remove variable writes + usages if:
+					// - The variable is a redundant copy of an existing other variable
+					for (int keyX : states.keySet()) {
+						// Check if the current store is redundant with another variable.
+						int slotX = slotFromKey(keyX);
+						if (slotX != vin.var && isRedundantStore(states, instructions, i, slotX, vin.var, varSort)) {
+							LocalAccessState stateY = states.get(varKey);
+
+							// Replace usage of the redundant variable.
+							if (!stateY.getReads().isEmpty()) {
+								replaceRedundantVariableUsage(instructions, slotX, vin.var, varSort);
+								stateY.getReads().clear();
+							}
+
+							// Update the tracking state of the redundant variable.
+							stateY.getWrites().removeIf(l -> l.instruction == vin);
+
+							// Replace store instruction with POP.
+							if (instructions.indexOf(vin) >= 0)
+								instructions.set(vin, new InsnNode(Types.isWide(varType) ? POP2 : POP));
+							dirty = true;
+						}
 					}
 				} else if (op == IINC && insn instanceof IincInsnNode iinc) {
 					// Remove variable increments if:
@@ -260,6 +295,151 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		}
 		if (dirty)
 			context.setNode(bundle, initialClassState, node);
+	}
+
+	/**
+	 * Determines if a store operation to a variable is redundant, meaning it mirrors
+	 * the value of another variable, and neither variable is modified between their usage.
+	 *
+	 * @param states
+	 * 		Variable access states.
+	 * @param instructions
+	 * 		Method instructions.
+	 * @param slotX
+	 * 		The original variable index.
+	 * @param slotY
+	 * 		The target variable index to check for redundancy.
+	 * @param typeSort
+	 * 		The type sort of the variable, to handle all primitives + object types.
+	 *
+	 * @return {@code true} when the store to slotY is redundant.
+	 */
+	private static boolean isRedundantStore(@Nonnull Int2ObjectMap<LocalAccessState> states,
+	                                        @Nonnull InsnList instructions,
+	                                        int insnIndex, int slotX, int slotY, int typeSort) {
+		LocalAccessState stateX = states.get(key(slotX, typeSort));
+		LocalAccessState stateY = states.get(key(slotY, typeSort));
+
+		// If no state exists for either slot, we cannot conclude redundancy.
+		if (stateX == null || stateY == null)
+			return false;
+
+		// Redundancy only applies if there is a single write to Y.
+		NavigableSet<LocalAccess> writesToY = stateY.getWrites();
+		if (writesToY.size() != 1)
+			return false;
+
+		// Get the single write instruction to Y.
+		LocalAccess writeToY = writesToY.first();
+		AbstractInsnNode writeInsnY = writeToY.instruction;
+		if (!(writeInsnY instanceof VarInsnNode writeVin))
+			return false;
+
+		// Check if the instruction type matches the expected type.
+		if (!isMatchingStore(typeSort, writeVin.getOpcode()))
+			return false;
+
+		// Check if the prior instruction is a cast.
+		// We want to keep patterns like 'Collection -> List' being stored into new variables.
+		AbstractInsnNode previousInsn = writeInsnY.getPrevious();
+		if (previousInsn == null || previousInsn.getOpcode() == CHECKCAST)
+			return false;
+
+		// Contents of both locals must be equal.
+		if (!(previousInsn instanceof VarInsnNode prevVin
+				&& isVarLoad(prevVin.getOpcode())
+				&& prevVin.var == slotX))
+			return false;
+
+		// Verify there are no intervening writes to X or Y between the observed instructions.
+		int writeIndexY = instructions.indexOf(writeInsnY);
+		for (int i = instructions.indexOf(previousInsn) + 1; i < writeIndexY; i++) {
+			AbstractInsnNode insn = instructions.get(i);
+
+			// Check if there are any writes to X or Y in the scope.
+			// Any intermediate modification invalidates redundancy.
+			if (insn instanceof VarInsnNode vin) {
+				int var = vin.var;
+				int opcode = vin.getOpcode();
+				if ((var == slotX || var == slotY) && isVarStore(opcode))
+					return false;
+			}
+		}
+
+		// Check that X is defined before Y.
+		// A variable defined later cannot make an earlier variable redundant.
+		NavigableSet<LocalAccess> writesToX = stateX.getWrites();
+		if (writesToX.isEmpty())
+			return false;
+		LocalAccess firstWriteToX = writesToX.first(); // First write to X
+		int writeIndexX = instructions.indexOf(firstWriteToX.instruction);
+		if (writeIndexX >= writeIndexY)
+			return false;
+
+		// The store to Y is redundant. Every use case of it can be replaced with X.
+		return true;
+	}
+
+	/**
+	 * Replaces usage of the redundant variable with the original variable.
+	 *
+	 * @param instructions
+	 * 		Method instructions.
+	 * @param slotX
+	 * 		The original variable index.
+	 * @param slotY
+	 * 		The target variable index that is redundant.
+	 * @param typeSort
+	 * 		The variable's type sort.
+	 */
+	private static void replaceRedundantVariableUsage(@Nonnull InsnList instructions, int slotX, int slotY, int typeSort) {
+		AbstractInsnNode replacement = AsmInsnUtil.createVarLoad(slotX, typeSort);
+		for (int i = 0; i < instructions.size(); i++) {
+			AbstractInsnNode insn = instructions.get(i);
+			if (insn instanceof VarInsnNode vin && vin.var == slotY) {
+				int op = vin.getOpcode();
+				if (isVarLoad(op))
+					instructions.set(insn, replacement.clone(null));
+			}
+		}
+	}
+
+	/**
+	 * @param typeSort
+	 * 		The variable type sort.
+	 * @param opcode
+	 * 		The opcode to check.
+	 *
+	 * @return {@code true} if the opcode matches the respective store operation for the type.
+	 */
+	private static boolean isMatchingStore(int typeSort, int opcode) {
+		return switch (typeSort) {
+			case Type.INT -> opcode == ISTORE;
+			case Type.FLOAT -> opcode == FSTORE;
+			case Type.LONG -> opcode == LSTORE;
+			case Type.DOUBLE -> opcode == DSTORE;
+			case Type.OBJECT -> opcode == ASTORE;
+			default -> false;
+		};
+	}
+
+	/**
+	 * @param typeSort
+	 * 		The variable type sort.
+	 * @param opcode
+	 * 		The opcode to check.
+	 *
+	 * @return {@code true} if the opcode matches the respective load operation for the type.
+	 */
+	private static boolean isMatchingLoad(int typeSort, int opcode) {
+		return switch (typeSort) {
+			case Type.INT -> opcode == ILOAD;
+			case Type.FLOAT -> opcode == FLOAD;
+			case Type.LONG -> opcode == LLOAD;
+			case Type.DOUBLE -> opcode == DLOAD;
+			case Type.OBJECT -> opcode == ALOAD;
+			default -> false;
+		};
 	}
 
 	@Nonnull
@@ -289,6 +469,16 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 	}
 
 	/**
+	 * @param key
+	 * 		Key of typed variable.
+	 *
+	 * @return Variable index stored in the key.
+	 */
+	private static int slotFromKey(int key) {
+		return key & 0xFFFF;
+	}
+
+	/**
 	 * State tracking for when variables are read from and written to, along with the common merged value.
 	 * <br>
 	 * These states are keyed by {@link #key(int, int)} which ensures that multiple types can target the
@@ -298,8 +488,8 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 	 */
 	private static class LocalAccessState {
 		private final int index;
-		private SortedSet<LocalAccess> reads;
-		private SortedSet<LocalAccess> writes;
+		private NavigableSet<LocalAccess> reads;
+		private NavigableSet<LocalAccess> writes;
 		private ReValue mergedValue;
 		private boolean isArray;
 
@@ -342,14 +532,14 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		}
 
 		@Nonnull
-		public SortedSet<LocalAccess> getReads() {
+		public NavigableSet<LocalAccess> getReads() {
 			if (reads == null)
-				return Collections.emptySortedSet();
+				return Collections.emptyNavigableSet();
 			return reads;
 		}
 
 		@Nonnull
-		public SortedSet<LocalAccess> getReadsUpTo(int offset) {
+		public NavigableSet<LocalAccess> getReadsUpTo(int offset) {
 			// TODO: This is a linear check, which can be defeated by basic flow obfuscation
 			//  - We need to rewalk the control flow and find all the paths that lead to this instruction/offset
 			//    then get any local accesses that are along that path.
@@ -361,9 +551,17 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		}
 
 		@Nonnull
-		public SortedSet<LocalAccess> getWrites() {
+		public NavigableSet<LocalAccess> getWritesUpTo(int offset) {
+			// TODO: Same linear check problem as above
+			return getWrites().stream()
+					.filter(l -> l.offset < offset)
+					.collect(Collectors.toCollection(TreeSet::new));
+		}
+
+		@Nonnull
+		public NavigableSet<LocalAccess> getWrites() {
 			if (writes == null)
-				return Collections.emptySortedSet();
+				return Collections.emptyNavigableSet();
 			return writes;
 		}
 

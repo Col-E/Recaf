@@ -165,7 +165,20 @@ public class AsmInsnUtil implements Opcodes {
 	 */
 	@Nonnull
 	public static VarInsnNode createVarLoad(int index, @Nonnull Type variableType) {
-		return switch (variableType.getSort()) {
+		return createVarLoad(index, variableType.getSort());
+	}
+
+	/**
+	 * @param index
+	 * 		Variable index.
+	 * @param typeSort
+	 * 		Variable type sort.
+	 *
+	 * @return Load instruction for variable type at the given index.
+	 */
+	@Nonnull
+	public static VarInsnNode createVarLoad(int index, int typeSort) {
+		return switch (typeSort) {
 			case Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> new VarInsnNode(ILOAD, index);
 			case Type.FLOAT -> new VarInsnNode(FLOAD, index);
 			case Type.DOUBLE -> new VarInsnNode(DLOAD, index);

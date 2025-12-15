@@ -1,5 +1,6 @@
 package software.coley.recaf.services.deobfuscation;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.deobfuscation.transform.generic.CallResultInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
@@ -1624,7 +1625,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 					    iconst_3
 					    multianewarray [[I 2
 					    astore array
-					    
+				
 					    // array[1][2] = 5;
 					    aload array
 					    iconst_1
@@ -1632,7 +1633,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 					    iconst_2
 					    iconst_5
 					    iastore
-					    
+				
 					    // return array[1][2];
 					    aload array
 					    iconst_1
@@ -2261,6 +2262,188 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 		});
 	}
 
+	@Test
+	void foldVarWithRedundantCopyVariable() {
+		String asm = """
+				.method public example ()I {
+				    code: {
+				    A:
+				        aload this
+				        astore copy
+				        aload copy
+				        getfield Example.myInt I
+				        ireturn
+				    C:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("copy", dis), "Expected to remove variable references to redundant 'copy' var");
+		});
+
+		asm = """
+				.method public example ()I {
+				    code: {
+				    A:
+				        aload this
+				        astore copy
+				        aload copy
+				        dup
+				        getfield Example.myInt I
+				        swap
+				        getfield Example.myInt I
+				        iadd
+				        ireturn
+				    C:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("copy", dis), "Expected to remove variable references to redundant 'copy' var");
+			assertEquals(0, StringUtil.count("dup", dis), "Expected to remove 'dup'");
+		});
+
+		asm = """
+				.method public example ()I {
+				    code: {
+				    A:
+				        aload this
+				        astore copy
+				        aload copy
+				        getfield Example.myInt I
+				        aload copy
+				        getfield Example.myInt I
+				        iadd
+				        ireturn
+				    C:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("copy", dis), "Expected to remove variable references to redundant 'copy' var");
+		});
+
+		asm = """
+				.method public example ()I {
+				    code: {
+				    A:
+				        aload this
+				        astore copy1
+				        aload copy1
+				        astore copy2
+						aload copy2
+						astore copy3
+						aload copy3
+						astore copy4
+						aload copy4
+				        getfield Example.myInt I
+				        aload copy4
+				        getfield Example.myInt I
+				        iadd
+				        ireturn
+				    C:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("copy", dis), "Expected to remove variable references to redundant 'copy' var");
+		});
+	}
+
+	@Test
+	void foldVarWithWideRedundantCopyVariable() {
+		String asm = """
+				.method public static example (J)I {
+					parameters: { foo },
+				    code: {
+				    A:
+				        lload foo
+				        lstore copy2
+				
+				        lload copy2
+						lstore copy3
+				
+				        lload copy3
+				        l2i
+				        ireturn
+				    C:
+				    }
+				}
+				""";
+		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("copy", dis), "Expected to remove variable references to redundant 'copy' var");
+		});
+	}
+
+	@Test
+	@Disabled
+	void foldVarWithSeriesOfRedundantBackToBackCycledWrites() {
+		String asm = """
+				.method public example ()I {
+				    code: {
+				    A:
+				        aload this
+				        astore copy1
+				
+				        aload copy1
+				        astore copy1
+				
+				        aload copy1
+				        astore copy1
+				
+				        aload this
+				        astore copy2
+				
+				        aload copy2
+				        astore copy1
+				
+				        aload copy1
+				        getfield Example.myInt I
+				        aload copy2
+				        getfield Example.myInt I
+				        iadd
+				        ireturn
+				    C:
+				    }
+				}
+				""";
+		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("copy", dis), "Expected to remove variable references to redundant 'copy' var");
+		});
+	}
+
+	@Test
+	@Disabled
+	void foldVarRedundantInitialization() {
+		String asm = """
+				.method public static example (II)I {
+					parameters: { a, b },
+				    code: {
+				    A:
+				        iconst_0
+				        istore c
+				    B:
+				        iload a
+				        iload b
+				        iadd
+				        istore c
+				    C:
+				        sipush 1000
+				        iload c
+				        if_icmpge B
+				    D:
+				        iload c
+				        ireturn
+				    E:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("iconst_0", dis), "Initial c = 0 should be removed");
+			assertEquals(2, StringUtil.count("iload c", dis), "Should retain both 'iload c' cases");
+		});
+	}
+
 	/** Chose case {@link VariableFoldingTransformer} along with other flow-based cleanup transformers. */
 	@Test
 	void foldVarAndFlow() {
@@ -2417,64 +2600,40 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 
 	/** Show {@link VariableFoldingTransformer} isn't too aggressive */
 	@Test
-	void dontFoldVarsOfUsedParameters() {
-		String asm = """
-				.method public static example (II)I {
-					parameters: { a, b },
-				    code: {
-				    A:
-				        iconst_0
-				        istore c
-				    B:
-				        iload a
-				        iload b
-				        iadd
-				        istore c
-				    C:
-				        sipush 1000
-				        iload c
-				        if_icmpge B
-				    D:
-				        iload c
-				        ireturn
-				    E:
-				    }
-				}
-				""";
-		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class));
-	}
-
-	/** Show {@link VariableFoldingTransformer} isn't too aggressive */
-	@Test
 	void dontFoldVarsOfUsedButOverwrittenParameters() {
 		String asm = """
 				.method public static example (II)I {
 					parameters: { a, b },
 				    code: {
 				    A:
-				        iconst_0
-				        istore c
-				    B:
 				        iload a
-				        iload b
+				        iload a
 				        iadd
 				        istore c
-				    C:
+				    B:
+				        // Must be retained
 				        sipush 1000
 				        iload c
-				        if_icmpge B
-				    D:
+				        if_icmpge A
+				    C:
+				        // Can be folded but not the end of the world if not
 				        iconst_1
 				        istore a
 				        iconst_1
 				        istore b
+				    D:
+				        // Must be retained
 				        iload c
 				        ireturn
 				    E:
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class));
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(2, StringUtil.count("iload c", dis), "Should retain 'iload c'");
+			assertEquals(1, StringUtil.count("istore c", dis), "Should retain 'istore c'");
+			assertEquals(1, StringUtil.count("if_icmpge", dis), "Should retain 'if_icmpge' usage of var 'c'");
+		});
 	}
 
 	@Test
