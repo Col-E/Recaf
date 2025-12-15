@@ -134,6 +134,8 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 
 	private boolean canEvaluate(@Nonnull MethodInsnNode min) {
 		String key = min.owner + "." + min.name + min.desc;
-		return canBeEvaluatedMap.computeIfAbsent(key, k -> evaluator.canEvaluate(min.owner, min.name, min.desc));
+		synchronized (canBeEvaluatedMap) {
+			return canBeEvaluatedMap.computeIfAbsent(key, k -> evaluator.canEvaluate(min.owner, min.name, min.desc));
+		}
 	}
 }
