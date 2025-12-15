@@ -594,8 +594,8 @@ public class DeobfuscationWindow extends RecafStage {
 					if (!result.getTransformedClasses().isEmpty())
 						jvmClass = result.getTransformedClasses().values().iterator().next();
 				} catch (TransformationException e) {
-					editorDecompile.setText("// Failed to transform: " + e.getMessage() + "\n"
-							+ "// " + StringUtil.traceToString(e).replace("\n", "\n// "));
+					FxThreadUtil.run(() -> editorDecompile.setText("// Failed to transform: " + e.getMessage() + "\n"
+							+ "// " + StringUtil.traceToString(e).replace("\n", "\n// ")));
 					return null;
 				}
 			}
