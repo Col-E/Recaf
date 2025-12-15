@@ -1,6 +1,7 @@
 package software.coley.recaf.services.workspace.io;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.BasicNativeLibraryFileInfo;
 import software.coley.recaf.info.FileInfo;
@@ -230,7 +231,11 @@ class ResourceImporterTest {
 		assertArrayEquals(emptyBytes, resource.getFileBundle().iterator().next().getRawContent());
 	}
 
-	@Test
+	/**
+	 * This test is repeated to verify it wasn't successful on a race condition <i>(since our IO is multithreaded by default)</i>.
+	 * I know, this isn't an exhaustive/perfect test, but it is better than a single test run.
+	 */
+	@RepeatedTest(100)
 	void testAlwaysUseLastFileEntry() throws IOException {
 		String path = HelloWorld.class.getName().replace(".", "/");
 		byte[] bytes = new byte[]{1, 2, 3};
@@ -255,7 +260,7 @@ class ResourceImporterTest {
 		assertArrayEquals(bytes, resource.getFileBundle().iterator().next().getRawContent());
 	}
 
-	@Test
+	@RepeatedTest(100)
 	void testDeduplicateClasses() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
 		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();

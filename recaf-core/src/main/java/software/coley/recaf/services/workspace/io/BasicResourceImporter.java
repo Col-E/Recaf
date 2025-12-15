@@ -30,6 +30,7 @@ import software.coley.recaf.info.properties.builtin.ZipAccessTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipCommentProperty;
 import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
 import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
+import software.coley.recaf.info.properties.builtin.ZipEntryIndexProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
@@ -214,7 +215,10 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				ThreadPoolFactory.newFixedThreadPool("zip-import") :
 				ThreadPoolFactory.newSingleThreadExecutor("zip-import")) {
 			List<Callable<Void>> tasks = new ArrayList<>();
-			for (LocalFileHeader header : archive.getLocalFiles()) {
+			List<LocalFileHeader> localFiles = archive.getLocalFiles();
+			for (int i = 0; i < localFiles.size(); i++) {
+				int entryIndex = i;
+				LocalFileHeader header = localFiles.get(i);
 				tasks.add(() -> {
 					LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
 					String entryName = header.getFileNameAsString();
@@ -229,6 +233,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					Info info;
 					try {
 						info = infoImporter.readInfo(entryName, headerSource);
+						ZipEntryIndexProperty.set(info, entryIndex);
 					} catch (IOException ex) {
 						logger.error("IO error reading ZIP entry '{}' - skipping", entryName, ex);
 						return null;
@@ -339,7 +344,6 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				.build();
 	}
 
-	@SuppressWarnings("all") // Ignore synchronizing on parameter
 	private void addInfo(@Nonnull BasicJvmClassBundle classes,
 	                     @Nonnull BasicFileBundle files,
 	                     @Nonnull Map<String, AndroidClassBundle> androidClassBundles,
@@ -348,8 +352,6 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	                     @Nonnull ByteSource infoSource,
 	                     @Nonnull String pathName,
 	                     @Nonnull Info info) {
-		// TODO: The synchronization here should be more narrow to when each respective bundle/map is interacted with.
-		//  These are all concurrent maps (or sync
 		if (info.isClass()) {
 			addClassInfo(classes, files, versionedJvmClassBundles, pathName, info);
 		} else if (info.isFile()) {
@@ -527,12 +529,19 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Warn if there are duplicate file entries.
 		// Same cases for why this may occur are described above when handling classes.
 		// The JVM will always use the last item for duplicate entries anyways.
-		if (files.containsKey(pathName)) {
-			logger.warn("Multiple duplicate entries for file '{}', dropping older entry", pathName);
-		}
+		synchronized (files) {
+			FileInfo existingFile = files.get(pathName);
+			if (existingFile != null) {
+				int existingIndex = ZipEntryIndexProperty.getOr(existingFile, -1);
+				int newIndex = ZipEntryIndexProperty.getOr(fileInfo, -1);
+				if (newIndex < existingIndex)
+					return;
+				logger.warn("Multiple duplicate entries for file '{}', dropping older entry", pathName);
+			}
 
-		// Store in bundle.
-		files.initialPut(fileInfo);
+			// Store in bundle.
+			files.initialPut(fileInfo);
+		}
 	}
 
 	/**
