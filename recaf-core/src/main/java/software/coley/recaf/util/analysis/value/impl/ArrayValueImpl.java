@@ -77,13 +77,22 @@ public class ArrayValueImpl implements ArrayValue {
 	 * 		Array index to value function.
 	 */
 	public ArrayValueImpl(@Nonnull Type type, @Nonnull Nullness nullness, int length, @Nonnull IntFunction<ReValue> indexValueFunction) {
-		if (type.getSort() != Type.ARRAY) throw new IllegalStateException("Non-array type passed to array-value");
+		if (type.getSort() != Type.ARRAY)
+			throw new IllegalStateException("Non-array type passed to array-value");
 		this.type = type;
 		this.nullness = nullness;
-		this.length = OptionalInt.of(length);
-		this.contents = new ArrayList<>(length);
-		for (int i = 0; i < length; i++)
-			contents.add(indexValueFunction.apply(i));
+		if (length >= 0) {
+			this.length = OptionalInt.of(length);
+			this.contents = new ArrayList<>(length);
+			for (int i = 0; i < length; i++)
+				contents.add(indexValueFunction.apply(i));
+		} else {
+			// Array length is negative. So we have two possibilities:
+			// - We have a bug in our stack evaluation
+			// - We are looking at obfuscated code intentionally trying to throw exceptions
+			this.length = OptionalInt.empty();
+			this.contents = null;
+		}
 	}
 
 	@Nonnull
