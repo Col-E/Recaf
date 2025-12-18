@@ -7,6 +7,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -128,5 +129,18 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 			return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(name, otherName);
 		}
 		return 0;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		// If the directories are the same and the parent paths are also equal, then this path points to the same location.
+		if (o instanceof DirectoryPathNode otherPath) {
+			String dir = getValue();
+			String otherDir = otherPath.getValue();
+			return dir.hashCode() == otherDir.hashCode() // Hash check first which is very fast, and the result is cached.
+					&& dir.equals(otherDir) // Sanity check for matching items to prevent hash collisions.
+					&& Objects.equals(getParent(), otherPath.getParent()); // Parents must also match.
+		}
+		return false;
 	}
 }

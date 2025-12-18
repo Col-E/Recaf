@@ -10,6 +10,8 @@ import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.util.StringUtil;
 
+import java.util.List;
+
 /**
  * Tree item subtype for more convenience tree building operations.
  *
@@ -201,7 +203,6 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 * @return Inserted node.
 	 */
 	@Nonnull
-	@SuppressWarnings("deprecation")
 	public static WorkspaceTreeNode getOrInsertIntoTree(@Nonnull WorkspaceTreeNode node, @Nonnull PathNode<?> path, boolean sorted) {
 		// Edge case handling for directory nodes.
 		if (path instanceof DirectoryPathNode directoryPath) {
@@ -234,24 +235,17 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 				DirectoryPathNode localPathNode = directoryPath.withDirectory(directoryName);
 
 				// Get existing tree node, or create child if non-existent
-				WorkspaceTreeNode childNode = null;
-				ObservableList<TreeItem<PathNode<?>>> children;
-				if (node instanceof FilterableTreeItem<?> filterableNode)
-					children = Unchecked.cast(filterableNode.getSourceChildren());
-				else
-					children = node.getChildren();
-				for (TreeItem<PathNode<?>> child : children)
-					if (child.getValue().equals(localPathNode)) {
-						childNode = (WorkspaceTreeNode) child;
-						break;
-					}
-				if (childNode == null) {
+				WorkspaceTreeNode childNode;
+				ObservableList<WorkspaceTreeNode> children = Unchecked.cast(node.getSourceChildren());
+				int index = binaryUnboxingSearch(children, localPathNode);
+				if (index >= 0)
+					childNode = children.get(index);
+				else {
 					childNode = new WorkspaceTreeNode(localPathNode);
-					if (sorted) {
+					if (sorted)
 						node.addPreSortedChild(childNode);
-					} else {
-						node.addAndSortChild(childNode);
-					}
+					else
+						node.addPreSortedChild(childNode, -(index + 1));
 				}
 
 				// Prepare for next directory path entry.
@@ -272,22 +266,39 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 		}
 
 		// Check if already inserted.
-		ObservableList<TreeItem<PathNode<?>>> children;
-		if (node instanceof FilterableTreeItem<?> filterableNode)
-			children = Unchecked.cast(filterableNode.getSourceChildren());
-		else
-			children = node.getChildren();
-		for (TreeItem<PathNode<?>> child : children)
-			if (path.equals(child.getValue()))
-				return (WorkspaceTreeNode) child;
+		ObservableList<WorkspaceTreeNode> children = Unchecked.cast(node.getSourceChildren());
+		WorkspaceTreeNode inserted;//= new WorkspaceTreeNode(path);
+		int index = binaryUnboxingSearch(children, path);
+		if (index >= 0)
+			return children.get(index);
+		inserted = new WorkspaceTreeNode(path);
 
 		// Not already inserted, create a new node and insert it.
-		WorkspaceTreeNode inserted = new WorkspaceTreeNode(path);
-		if (sorted) {
+		if (sorted)
 			node.addPreSortedChild(inserted);
-		} else {
-			node.addAndSortChild(inserted);
-		}
+		else
+			node.addPreSortedChild(inserted, -(index + 1));
+
 		return inserted;
+	}
+
+	/**
+	 * Binary search but using {@link PathNode#localCompare(software.coley.recaf.path.PathNode)}
+	 * rather than the standard {@link java.lang.Comparable#compareTo(java.lang.Object)}.
+	 */
+	private static int binaryUnboxingSearch(@Nonnull List<WorkspaceTreeNode> items, @Nonnull PathNode<?> target) {
+		int first = 0;
+		int last = items.size() - 1;
+		while (first <= last) {
+			int middle = (first + last) >>> 1;
+			int compResult = items.get(middle).getValue().localCompare(target);
+			if (compResult < 0)
+				first = middle + 1;
+			else if (compResult > 0)
+				last = middle - 1;
+			else
+				return middle;
+		}
+		return -(first + 1);
 	}
 }

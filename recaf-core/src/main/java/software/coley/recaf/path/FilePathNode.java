@@ -6,6 +6,7 @@ import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -103,5 +104,18 @@ public class FilePathNode extends AbstractPathNode<String, FileInfo> {
 			return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(name, otherName);
 		}
 		return 0;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		// If the file names are the same and the parent paths are also equal, then this path points to the same location.
+		if (o instanceof FilePathNode otherPath) {
+			String name = getValue().getName();
+			String otherName = otherPath.getValue().getName();
+			return name.hashCode() == otherName.hashCode() // Hash check first which is very fast, and the result is cached.
+					&& name.equals(otherName) // Sanity check for matching items to prevent hash collisions.
+					&& Objects.equals(getParent(), otherPath.getParent()); // Parents must also match.
+		}
+		return false;
 	}
 }

@@ -176,7 +176,28 @@ public class FilterableTreeItem<T> extends TreeItem<T> {
 	}
 
 	/**
-	 * Add an unfiltered unsorted child to this item.
+	 * Add an unfiltered sorted child to this item.
+	 * It is assumed the index provided will maintain sorted order when used with {@link List#add(int, Object)}.
+	 *
+	 * @param item
+	 * 		Child item to add.
+	 * @param index
+	 * 		Index to add the child at, assumed to maintain sorted order.
+	 */
+	public void addPreSortedChild(@Nonnull TreeItem<T> item, int index) {
+		synchronized (sourceChildren) {
+			if (sourceChildren.isEmpty())
+				sourceChildren.add(item);
+			else
+				sourceChildren.add(index, item);
+			if (item instanceof FilterableTreeItem<?> filterableItem)
+				filterableItem.sourceParent.set(Unchecked.cast(this));
+		}
+	}
+
+	/**
+	 * Add an unfiltered sorted child to this item.
+	 * It is assumed this method is used exclusively and all paths are added in sorted order.
 	 *
 	 * @param item
 	 * 		Child item to add.
