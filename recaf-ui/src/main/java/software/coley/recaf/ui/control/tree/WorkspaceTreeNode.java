@@ -291,7 +291,10 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 		int last = items.size() - 1;
 		while (first <= last) {
 			int middle = (first + last) >>> 1;
-			int compResult = items.get(middle).getValue().localCompare(target);
+			PathNode<?> item = items.get(middle).getValue();
+			int compResult = item.getClass() == target.getClass() ?
+					item.localCompare(target) :
+					item.compareTo(target);
 			if (compResult < 0)
 				first = middle + 1;
 			else if (compResult > 0)
