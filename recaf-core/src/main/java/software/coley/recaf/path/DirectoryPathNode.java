@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.Named;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
 import java.util.Objects;
@@ -126,7 +127,7 @@ public class DirectoryPathNode extends AbstractPathNode<Bundle, String> {
 		if (o instanceof DirectoryPathNode pathNode) {
 			String name = getValue();
 			String otherName = pathNode.getValue();
-			return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(name, otherName);
+			return Named.STRING_PATH_COMPARATOR.compare(name, otherName);
 		}
 		return 0;
 	}

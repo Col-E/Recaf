@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.tree;
 
+import javafx.scene.control.TreeItem;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.FilePathNode;
+import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.path.WorkspacePathNode;
@@ -31,6 +33,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -220,6 +223,40 @@ class WorkspaceTreeNodeTest {
 			assertTrue(root.removeNodeByPath(classPath));
 			assertNull(root.getNodeByPath(classPath), "Info not removed");
 		}
+	}
+
+	@Test
+	void nameCaseSensitivity() {
+		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
+		WorkspaceTreeNode bundle = root.getOrCreateNodeByPath(p3c);
+
+		// Add:
+		// - a
+		// - b
+		// - c (missing)
+		// - d
+		// - e
+		WorkspaceTreeNode a = root.getOrCreateNodeByPath(p3c.child("a"));
+		WorkspaceTreeNode b = root.getOrCreateNodeByPath(p3c.child("b"));
+		WorkspaceTreeNode d = root.getOrCreateNodeByPath(p3c.child("d"));
+		WorkspaceTreeNode e = root.getOrCreateNodeByPath(p3c.child("e"));
+		assertNotNull(a);
+		assertNotNull(b);
+		assertNotNull(d);
+		assertNotNull(e);
+
+		// Insert the missing "c" case
+		WorkspaceTreeNode c = root.getOrCreateNodeByPath(p3c.child("c"));
+		assertNotNull(c);
+
+		// Assert sorted order
+		List<TreeItem<PathNode<?>>> children = bundle.getSourceChildren();
+		assertArrayEquals(new Object[]{a, b, c, d, e}, children.toArray());
+
+		// Insert an upper-case "C" case, it should be before the lower "c"
+		WorkspaceTreeNode cu = root.getOrCreateNodeByPath(p3c.child("C"));
+		assertNotNull(cu);
+		assertArrayEquals(new Object[]{a, b, cu, c, d, e}, children.toArray());
 	}
 
 	@Test

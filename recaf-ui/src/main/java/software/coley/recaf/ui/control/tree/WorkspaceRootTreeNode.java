@@ -138,7 +138,7 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 		BundlePathNode bundlePath = containingResourcePath.child(bundle);
 
 		// Pre-sort classes to skip tree-building comparisons/synchronizations.
-		TreeSet<ClassInfo> sortedClasses = new TreeSet<>(Named.NAME_PATH_COMPARATOR);
+		TreeSet<ClassInfo> sortedClasses = new TreeSet<>(Named.NAMED_PATH_COMPARATOR);
 		sortedClasses.addAll(bundle.values());
 
 		// Add each class in sorted order.
@@ -176,7 +176,7 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 		BundlePathNode bundlePath = containingResourcePath.child(bundle);
 
 		// Pre-sort classes to skip tree-building comparisons/synchronizations.
-		TreeSet<FileInfo> sortedFiles = new TreeSet<>(Named.NAME_PATH_COMPARATOR);
+		TreeSet<FileInfo> sortedFiles = new TreeSet<>(Named.NAMED_PATH_COMPARATOR);
 		sortedFiles.addAll(bundle.values());
 
 		// Add each file in sorted order.

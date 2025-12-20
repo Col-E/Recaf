@@ -14,13 +14,10 @@ import java.util.Objects;
  */
 public interface Named {
 	/**
-	 * Comparator for {@link Named} items whose names represent file paths.
+	 * Comparator for {@link String} items whose content represent file paths.
 	 */
 	@SuppressWarnings("StringEquality")
-	Comparator<Named> NAME_PATH_COMPARATOR = (o1, o2) -> {
-		String a = o1.getName();
-		String b = o2.getName();
-
+	Comparator<String> STRING_PATH_COMPARATOR = (a, b) -> {
 		// Get parent directory path for each item.
 		String directoryPathA = StringUtil.cutOffAtLast(a, '/');
 		String directoryPathB = StringUtil.cutOffAtLast(b, '/');
@@ -39,8 +36,20 @@ public interface Named {
 				return -1;
 		}
 
-		// Fallback to natural string comparison.
-		return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(a, b);
+		// Fallback to natural string comparison, first case-insensitive but then case-sensitive to differentiate.
+		int cmp = CaseInsensitiveSimpleNaturalComparator.getInstance().compare(a, b);
+		if (cmp == 0)
+			cmp = a.compareTo(b);
+		return cmp;
+	};
+
+	/**
+	 * Comparator for {@link Named} items whose names represent file paths.
+	 */
+	Comparator<Named> NAMED_PATH_COMPARATOR = (o1, o2) -> {
+		String a = o1.getName();
+		String b = o2.getName();
+		return STRING_PATH_COMPARATOR.compare(a, b);
 	};
 
 	/**
