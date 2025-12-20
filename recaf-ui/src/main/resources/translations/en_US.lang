@@ -48,6 +48,7 @@ menu.edit.remove=Remove
 menu.edit.copy=Copy
 menu.edit.delete=Delete
 menu.edit.noop=Make no-op
+menu.edit.removevars=Prune variable info
 menu.edit.changeversion=Change class versions
 menu.edit.changeversion.up=Upgrade
 menu.edit.changeversion.down=Downgrade

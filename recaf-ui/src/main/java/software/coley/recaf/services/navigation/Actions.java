@@ -103,6 +103,7 @@ import software.coley.recaf.util.visitors.MemberStubAddingVisitor;
 import software.coley.recaf.util.visitors.MethodAnnotationRemovingVisitor;
 import software.coley.recaf.util.visitors.MethodNoopingVisitor;
 import software.coley.recaf.util.visitors.MethodPredicate;
+import software.coley.recaf.util.visitors.MethodVariableRemovingVisitor;
 import software.coley.recaf.workspace.PathExportingManager;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
@@ -2092,6 +2093,34 @@ public class Actions implements Service {
 		ClassReader reader = declaringClass.getClassReader();
 		ClassWriter writer = new ClassWriter(reader, 0);
 		MethodNoopingVisitor visitor = new MethodNoopingVisitor(writer, MethodPredicate.of(methods));
+		reader.accept(visitor, declaringClass.getClassReaderFlags());
+		bundle.put(declaringClass.toJvmClassBuilder()
+				.adaptFrom(writer.toByteArray())
+				.build());
+	}
+
+	/**
+	 * Removes variable debug info in the given methods.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Class declaring the methods.
+	 * @param methods
+	 * 		Methods to clean.
+	 */
+	public void removeMethodVariables(@Nonnull Workspace workspace,
+	                            @Nonnull WorkspaceResource resource,
+	                            @Nonnull JvmClassBundle bundle,
+	                            @Nonnull JvmClassInfo declaringClass,
+	                            @Nonnull Collection<MethodMember> methods) {
+		ClassReader reader = declaringClass.getClassReader();
+		ClassWriter writer = new ClassWriter(reader, 0);
+		MethodVariableRemovingVisitor visitor = new MethodVariableRemovingVisitor(writer, MethodPredicate.of(methods));
 		reader.accept(visitor, declaringClass.getClassReaderFlags());
 		bundle.put(declaringClass.toJvmClassBuilder()
 				.adaptFrom(writer.toByteArray())
