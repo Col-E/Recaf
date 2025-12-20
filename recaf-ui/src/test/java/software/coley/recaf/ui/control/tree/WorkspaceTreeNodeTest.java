@@ -8,6 +8,8 @@ import software.coley.collections.Unchecked;
 import software.coley.recaf.info.BasicFileInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.Named;
+import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.info.StubFileInfo;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.path.BundlePathNode;
@@ -33,6 +35,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -257,6 +260,33 @@ class WorkspaceTreeNodeTest {
 		WorkspaceTreeNode cu = root.getOrCreateNodeByPath(p3c.child("C"));
 		assertNotNull(cu);
 		assertArrayEquals(new Object[]{a, b, cu, c, d, e}, children.toArray());
+	}
+
+	/**
+	 * The named path sorter was getting confused when checking "does 'a' have 'b' as a parent-directory" if either
+	 * String was empty, which is the case for classes in the default package. This led to inconsistent return value
+	 * from the {@link Comparator#compare(Object, Object)} implementation which broke the binary search used in
+	 * {@link WorkspaceTreeNode}.
+	 *
+	 * @see Named#STRING_PATH_COMPARATOR
+	 */
+	@Test
+	void emptyDirDoesNotNamedPathSorting() {
+		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
+		WorkspaceTreeNode bundle = root.getOrCreateNodeByPath(p3c);
+
+		// Our 'WorkspaceRootTreeNode' pre-sorts paths so it will use this specific method and set 'sorted=true'
+		// which is not the default value. This covers a special case where the 'default package' / 'root directory'
+		// was throwing off tree sorting before we added a special case for it.
+		WorkspaceTreeNode empty = WorkspaceTreeNode.getOrInsertIntoTree(root, p3c.child("").child(new StubClassInfo("module-info")), true);
+		WorkspaceTreeNode ex1 = WorkspaceTreeNode.getOrInsertIntoTree(root, p3c.child("example").child(new StubClassInfo("Foo")), true);
+		WorkspaceTreeNode ex2 = WorkspaceTreeNode.getOrInsertIntoTree(root, p3c.child("example").child(new StubClassInfo("Bar")), true);
+
+		// The tree should have both example paths have the same parent "example" node.
+		// The bundle should see two children, the empty directory, and the "example" directory.
+		List<TreeItem<PathNode<?>>> children = bundle.getSourceChildren();
+		assertSame(ex1.getParent(), ex2.getParent());
+		assertEquals(2, children.size());
 	}
 
 	@Test

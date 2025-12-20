@@ -30,6 +30,13 @@ public interface Named {
 				return 1;
 
 			// We want subdirectories to be shown first over files in the directory.
+			// The top-level directory being an empty string is an edge case.
+			if (directoryPathA.isEmpty())
+				return -1;
+			else if (directoryPathB.isEmpty())
+				return 1;
+
+			// If neither are the top-level directory then check if one is a subdir of the other.
 			if (directoryPathB.startsWith(directoryPathA))
 				return 1;
 			else if (directoryPathA.startsWith(directoryPathB))
