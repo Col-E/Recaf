@@ -11,14 +11,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import org.kordamp.ikonli.Ikon;
 import software.coley.bentofx.Bento;
-import software.coley.bentofx.building.ContentWrapperFactory;
 import software.coley.bentofx.building.DockBuilding;
-import software.coley.bentofx.building.HeaderFactory;
-import software.coley.bentofx.building.HeadersFactory;
-import software.coley.bentofx.control.ContentWrapper;
-import software.coley.bentofx.control.Header;
-import software.coley.bentofx.control.HeaderPane;
-import software.coley.bentofx.control.Headers;
 import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.dockable.DockableIconFactory;
 import software.coley.bentofx.layout.container.DockContainerLeaf;
@@ -32,6 +25,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.docking.EmbeddedBento;
 
 import java.util.ArrayList;
@@ -84,7 +78,7 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 		dockable.setNode(displayWrapper);
 		dockable.setCanBeDragged(false);
 		dockable.setClosable(false);
-		dockable.setDragGroup(-1);
+		dockable.setDragGroupMask(DockingManager.GROUP_NEVER_RECEIVE);
 
 		// The display container contains the primary content display.
 		//
@@ -223,7 +217,7 @@ public abstract class AbstractContentPane<P extends PathNode<?>> extends BorderP
 	 */
 	public void addSideTab(@Nonnull ObservableValue<String> binding, @Nonnull DockableIconFactory iconFactory, @Nullable Node content) {
 		Dockable dockable = bento.dockBuilding().dockable();
-		dockable.setDragGroup(-1);// Prevent being used as a drag-drop target
+		dockable.setDragGroupMask(DockingManager.GROUP_NEVER_RECEIVE); // Prevent being used as a drag-drop target
 		dockable.setCanBeDragged(false); // Prevent being used as a drag-drop
 		dockable.setClosable(false);
 		dockable.setIconFactory(iconFactory);

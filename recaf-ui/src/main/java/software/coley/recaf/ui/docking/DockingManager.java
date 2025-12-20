@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.docking;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -8,19 +9,23 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Orientation;
 import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
+import javafx.stage.Stage;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.bentofx.Bento;
 import software.coley.bentofx.building.DockBuilding;
+import software.coley.bentofx.building.StageBuilding;
 import software.coley.bentofx.control.DragDropStage;
 import software.coley.bentofx.control.Headers;
 import software.coley.bentofx.dockable.Dockable;
 import software.coley.bentofx.dockable.DockableIconFactory;
+import software.coley.bentofx.dockable.DragDropBehavior;
 import software.coley.bentofx.layout.DockContainer;
 import software.coley.bentofx.layout.container.DockContainerBranch;
 import software.coley.bentofx.layout.container.DockContainerLeaf;
@@ -79,6 +84,10 @@ public class DockingManager {
 	public static final String ID_CONTAINER_WORKSPACE_PRIMARY = "layout-workspace-primary";
 	/** Bento group ID for tool tabs. */
 	public static final int GROUP_TOOLS = 1;
+	/** Bento group ID for things that can go anywhere, except for in {@link #GROUP_NEVER_RECEIVE}. */
+	public static final int GROUP_ANYWHERE = -1;
+	/** Bento group ID for things that can never have things dragged on them. */
+	public static final int GROUP_NEVER_RECEIVE = -25565;
 
 	private final Actions actions;
 	private final Instance<LoggingPane> loggingPaneProvider;
@@ -88,7 +97,57 @@ public class DockingManager {
 	private final ResourceSummaryServiceConfig resourceSummaryConfig;
 
 	// The primary bento instance
-	private final Bento bento = new Bento();
+	private final Bento bento = new Bento() {
+		@Nonnull
+		@Override
+		protected DockBuilding newDockBuilding() {
+			return new DockBuilding(this) {
+				@Nonnull
+				@Override
+				public DockContainerLeaf leaf(@Nonnull String identifier) {
+					DockContainerLeaf leaf = super.leaf(identifier);
+					leaf.setMenuFactory(DockingManager.this::buildMenu);
+					return leaf;
+				}
+			};
+		}
+
+		@Nonnull
+		@Override
+		protected StageBuilding newStageBuilding() {
+			return new StageBuilding(this) {
+				@Override
+				protected void initializeFromSource(@Nonnull Scene sourceScene, @Nonnull Scene newScene,
+				                                    @Nullable Stage sourceStage, @Nonnull DragDropStage newStage,
+				                                    boolean sourceIsOwner) {
+					// Always pass 'false' for 'sourceIsOwner'. Window ownership is generally something you would
+					// want to specify, but it makes the window behave like a dialog which cannot be minimized.
+					super.initializeFromSource(sourceScene, newScene, sourceStage, newStage, false);
+				}
+			};
+		}
+
+		@Nonnull
+		@Override
+		protected DragDropBehavior newDragDropBehavior() {
+			return new DragDropBehavior() {
+				@Override
+				public boolean canReceiveDockable(@Nonnull DockContainerLeaf targetContainer, @Nullable Side targetSide,
+				                                  @Nonnull Dockable dockable) {
+					// If we see the 'never receive' ID in a container then we bail.
+					if (targetContainer.getDockables().stream().anyMatch(d -> d.getDragGroupMask() == GROUP_NEVER_RECEIVE))
+						return false;
+
+					// If the dockable being dragged can go 'anywhere' then we let it go anywhere.
+					if (dockable.getDragGroupMask() == GROUP_ANYWHERE)
+						return true;
+
+					// Otherwise we fall back to the default behavior.
+					return super.canReceiveDockable(targetContainer, targetSide, dockable);
+				}
+			};
+		}
+	};
 
 	@Inject
 	public DockingManager(@Nonnull WorkspaceManager workspaceManager,
@@ -202,7 +261,7 @@ public class DockingManager {
 		dockable.setNode(content);
 		dockable.setIconFactory(iconFactory);
 		dockable.setClosable(false);
-		dockable.setDragGroup(GROUP_TOOLS);
+		dockable.setDragGroupMask(GROUP_TOOLS);
 		return dockable;
 	}
 
@@ -299,15 +358,33 @@ public class DockingManager {
 		return dockable;
 	}
 
+	/**
+	 * @return Newly created leaf container.
+	 */
+	@Nonnull
+	public DockContainerLeaf newLeafContainer() {
+		return newLeafContainer(UUID.randomUUID().toString());
+	}
+
+	/**
+	 * @param id
+	 * 		ID of the container to create.
+	 *
+	 * @return Newly created leaf container.
+	 */
+	@Nonnull
+	public DockContainerLeaf newLeafContainer(@Nonnull String id) {
+		return bento.dockBuilding().leaf(id);
+	}
+
 	@Nonnull
 	private DockContainerLeaf newWelcomeContainer() {
 		Dockable welcome = newTranslatableDockable("welcome.title", CarbonIcons.EARTH_FILLED, welcomePaneProvider.get());
 		welcome.setClosable(false);
 
-		DockContainerLeaf leaf = bento.dockBuilding().leaf(ID_CONTAINER_ROOT_TOP);
+		DockContainerLeaf leaf = newLeafContainer(ID_CONTAINER_ROOT_TOP);
 		leaf.setCanSplit(false);
 		leaf.setPruneWhenEmpty(false);
-		leaf.setMenuFactory(this::buildMenu);
 		leaf.addDockable(welcome);
 		return leaf;
 	}
@@ -316,17 +393,15 @@ public class DockingManager {
 	private DockContainerBranch newWorkspaceContainer() {
 		// Container to hold:
 		//  - Workspace explorer
-		DockContainerLeaf explorer = bento.dockBuilding().leaf(ID_CONTAINER_WORKSPACE_TOOLS);
-		explorer.setMenuFactory(this::buildMenu);
+		DockContainerLeaf explorer = newLeafContainer(ID_CONTAINER_WORKSPACE_TOOLS);
 		explorer.setCanSplit(false);
 		explorer.addDockables(newToolDockable("workspace.title", CarbonIcons.TREE_VIEW, workspaceExplorerProvider.get()));
 		SplitPane.setResizableWithParent(explorer.asRegion(), false);
 
 		// Container to hold:
 		//  - Tabs for displaying open classes/files in the workspace
-		DockContainerLeaf primary = bento.dockBuilding().leaf(ID_CONTAINER_WORKSPACE_PRIMARY);
+		DockContainerLeaf primary = newLeafContainer(ID_CONTAINER_WORKSPACE_PRIMARY);
 		primary.setPruneWhenEmpty(false);
-		primary.setMenuFactory(this::buildMenu);
 
 		// Combining the two into a branch
 		DockContainerBranch branch = bento.dockBuilding().branch(ID_CONTAINER_ROOT_TOP);
@@ -343,10 +418,9 @@ public class DockingManager {
 
 	@Nonnull
 	private DockContainerLeaf newBottomContainer() {
-		DockContainerLeaf leaf = bento.dockBuilding().leaf(ID_CONTAINER_ROOT_BOTTOM);
+		DockContainerLeaf leaf = newLeafContainer(ID_CONTAINER_ROOT_BOTTOM);
 		leaf.setCanSplit(false);
 		leaf.setSide(Side.BOTTOM);
-		leaf.setMenuFactory(this::buildMenu);
 		leaf.addDockables(newToolDockable("logging.title", CarbonIcons.TERMINAL, loggingPaneProvider.get()));
 		SplitPane.setResizableWithParent(leaf, false);
 		return leaf;

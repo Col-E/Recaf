@@ -2245,6 +2245,7 @@ public class Actions implements Service {
 			stage.show();
 			stage.requestFocus();
 		}
+		dockable.setDragGroupMask(DockingManager.GROUP_ANYWHERE);
 		dockable.addCloseListener((_, _) -> paneProvider.destroy(content));
 		dockable.setContextMenuFactory(d -> {
 			ContextMenu menu = new ContextMenu();
