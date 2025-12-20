@@ -1,6 +1,7 @@
 package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
+import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.Comparator;
@@ -39,7 +40,7 @@ public interface Named {
 		}
 
 		// Fallback to natural string comparison.
-		return a.compareTo(b);
+		return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(a, b);
 	};
 
 	/**
