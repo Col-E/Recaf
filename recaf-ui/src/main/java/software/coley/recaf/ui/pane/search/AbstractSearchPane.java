@@ -129,6 +129,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	@Nonnull
 	protected PathNodeTree newTree() {
 		PathNodeTree tree = new PathNodeTree(configurationService, actions);
+		tree.contextSourceObjectPropertyProperty().set(SearchContextSource.SEARCH_INSTANCE);
 		tree.setOnMousePressed(e -> {
 			if (e.getClickCount() == 2 && e.isPrimaryButtonDown()) {
 				var item = tree.getSelectionModel().getSelectedItem();

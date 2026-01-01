@@ -21,6 +21,7 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
+import software.coley.recaf.ui.pane.search.SearchContextSource;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
@@ -72,6 +73,11 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 						logger.error("Cannot go to method due to incomplete path", ex);
 					}
 				});
+
+				// Convenience for search results
+				if (source instanceof SearchContextSource) {
+					builder.item("menu.edit.assemble.method", EDIT, Unchecked.runnable(() -> actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method))));
+				}
 			} else {
 				// Edit menu
 				var edit = builder.submenu("menu.edit", EDIT);

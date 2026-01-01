@@ -24,6 +24,7 @@ import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
 import software.coley.recaf.ui.control.popup.ChangeClassVersionPopup;
 import software.coley.recaf.ui.pane.search.ClassReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
+import software.coley.recaf.ui.pane.search.SearchContextSource;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -143,6 +144,13 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 		var builder = new ContextMenuBuilder(menu, source).forInfo(workspace, resource, bundle, info);
 		if (source.isReference()) {
 			builder.infoItem("menu.goto.class", ARROW_RIGHT, actions::gotoDeclaration);
+
+			// Convenience for search results
+			if (source instanceof SearchContextSource) {
+				builder.item("menu.edit.assemble.class", EDIT, Unchecked.runnable(() ->
+						actions.openAssembler(PathNodes.classPath(workspace, resource, bundle, info))
+				));
+			}
 		} else if (source.isDeclaration()) {
 			// Edit menu
 			var edit = builder.submenu("menu.edit", EDIT);
