@@ -405,11 +405,10 @@ find.regexreplace=Replacement text
 ## Fields and methods
 fieldsandmethods.title=Fields & methods
 fieldsandmethods.empty=Class has no members
-fieldsandmethods.showoutlinedtypes=Show member types
 fieldsandmethods.showoutlinedsynths=Show synthetic (compiler-generated) members
 fieldsandmethods.showoutlinedvisibility=Filter by member visibility
 fieldsandmethods.showoutlinedmembertype=Filter by member type
-fieldsandmethods.outlinedvisibilityiconposition=Visibility icon position
+fieldsandmethods.nametypemode=Name/type display mode
 fieldsandmethods.sortalphabetically=Sort alphabetically
 fieldsandmethods.sortbyvisibility=Sort by visibility
 fieldsandmethods.filter.prompt=Filter: Field/Method name...

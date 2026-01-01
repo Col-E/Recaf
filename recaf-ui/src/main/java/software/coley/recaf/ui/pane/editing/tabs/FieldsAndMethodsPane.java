@@ -98,7 +98,10 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		//   wiring this local observable value into there feels wrong.
 		ObservableObject<Display> nameTypeDisplayConfig = displayFormatConfig.getNameTypeDisplay();
 		nameTypeDisplay.set(nameTypeDisplayConfig.getValue());
-		nameTypeDisplay.addListener((ob, old, cur) -> nameTypeDisplayConfig.setValue(cur));
+		nameTypeDisplay.addListener((ob, old, cur) -> {
+			nameTypeDisplayConfig.setValue(cur);
+			refreshTreeFilter();
+		});
 
 		// Configure tree.
 		tree.setShowRoot(false);
@@ -153,6 +156,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	 */
 	private void refreshTreeFilter() {
 		if (tree.getRoot() instanceof WorkspaceTreeNode root) {
+			root.predicateProperty().set(null); // Intermediate null step used to trigger cell redraw.
 			root.predicateProperty().set(item -> {
 				PathNode<?> path = item.getValue();
 
@@ -233,9 +237,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		filter.setMaxWidth(Integer.MAX_VALUE);
 		TreeFiltering.install(filter, tree);
 		nameFilter.bind(filter.textProperty());
-		filter.textProperty().addListener((observable, oldValue, newValue) -> {
-			refreshTreeFilter();
-		});
+		filter.textProperty().addListener((ob, old, cur) -> refreshTreeFilter());
 		HBox box = new HBox(
 				filter,
 				new BoundToggleIcon(new FontIconView(CarbonIcons.LETTER_CC), nameFilterCaseSensitivity).withTooltip("misc.casesensitive")
@@ -277,7 +279,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 					case NAME_ONLY -> new FontIconView(CarbonIcons.TEXT_FOOTNOTE);
 					case NAME_AND_RAW_DESCRIPTOR -> new FontIconView(CarbonIcons.TEXT_ALL_CAPS);
 					case NAME_AND_PRETTY_DESCRIPTOR -> new FontIconView(CarbonIcons.TEXT_SMALL_CAPS);
-				})
+				}).withTooltip("fieldsandmethods.nametypemode")
 		};
 		for (Button button : buttons)
 			button.setFocusTraversable(false);
@@ -334,6 +336,10 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 			FxThreadUtil.run(() -> {
 				isEmpty.set(root.getSourceChildren().isEmpty());
 				tree.setRoot(root);
+
+				// Restore existing filter/sorting after the tree is built.
+				refreshTreeFilter();
+				refreshTreeSort();
 			});
 		}
 	}

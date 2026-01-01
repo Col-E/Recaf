@@ -344,11 +344,9 @@ find.regexreplace=Tekst zastępczy
 
 ## Pola i metody
 fieldsandmethods.title=Pola i metody
-fieldsandmethods.showoutlinedtypes=Pokaż typy elementów
 fieldsandmethods.showoutlinedsynths=Pokaż elementy syntetyczne (wygenerowane przez kompilator)
 fieldsandmethods.showoutlinedvisibility=Filtruj według widoczności elementu
 fieldsandmethods.showoutlinedmembertype=Filtruj według typu elementu
-fieldsandmethods.outlinedvisibilityiconposition=Pozycja ikony widoczności
 fieldsandmethods.sortalphabetically=Sortuj alfabetycznie
 fieldsandmethods.sortbyvisibility=Sortuj według widoczności
 fieldsandmethods.filter.prompt=Filtruj: Nazwa pola/metody...

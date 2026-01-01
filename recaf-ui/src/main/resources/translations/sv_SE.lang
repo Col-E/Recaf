@@ -283,11 +283,9 @@ find.regexreplace=Text att ersätta med
 
 ## Fields and methods
 fieldsandmethods.title=Fält och metoder
-fieldsandmethods.showoutlinedtypes=Visa medlemstyper
 fieldsandmethods.showoutlinedsynths=Visa syntetiska (kompileringsgenererade) medlemmar
 fieldsandmethods.showoutlinedvisibility=Filtrera efter medlems synlighet
 fieldsandmethods.showoutlinedmembertype=Filtrera efter medlemstyp
-fieldsandmethods.outlinedvisibilityiconposition=Synlighetsikons placering
 fieldsandmethods.sortalphabetically=Sortera alfabetiskt
 fieldsandmethods.sortbyvisibility=Sortera efter synlighet
 fieldsandmethods.filter.prompt=Filter: Fält/metodnamn...

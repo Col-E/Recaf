@@ -374,11 +374,9 @@ find.regexreplace=置換するテキスト
 ## Fields and methods
 fieldsandmethods.title=フィールドとメソッド
 fieldsandmethods.empty=クラスにメンバがありません
-fieldsandmethods.showoutlinedtypes=メンバの種類を表示
 fieldsandmethods.showoutlinedsynths=コンパイラによって生成されたメンバを表示
 fieldsandmethods.showoutlinedvisibility=メンバの可視性でフィルタする
 fieldsandmethods.showoutlinedmembertype=メンバの種類でフィルタする
-fieldsandmethods.outlinedvisibilityiconposition=可視性アイコンの場所
 fieldsandmethods.sortalphabetically=アルファベット順でソート
 fieldsandmethods.sortbyvisibility=可視性順でソート
 fieldsandmethods.filter.prompt=フィルタ: メンバの名前や型を入力してください…

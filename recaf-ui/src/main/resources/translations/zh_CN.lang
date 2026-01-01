@@ -388,11 +388,9 @@ find.regexreplace=替换文本
 ## Fields and methods
 fieldsandmethods.title=字段和方法
 fieldsandmethods.empty=类没有成员
-fieldsandmethods.showoutlinedtypes=显示成员类型
 fieldsandmethods.showoutlinedsynths=显示合成(编译器生成)成员
 fieldsandmethods.showoutlinedvisibility=按成员可见性过滤
 fieldsandmethods.showoutlinedmembertype=按成员类型过滤
-fieldsandmethods.outlinedvisibilityiconposition=可见性图标位置
 fieldsandmethods.sortalphabetically=按字典序排序
 fieldsandmethods.sortbyvisibility=按可见性排序
 fieldsandmethods.filter.prompt=过滤:字段/方法名...
