@@ -10,6 +10,8 @@ import software.coley.recaf.workspace.model.resource.BasicWorkspaceResource;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -262,10 +264,18 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 
 	@Override
 	public void clear() {
+		Map<String, I> copy = new HashMap<>(backing);
+
 		removed.addAll(initialKeys);
 		backing.clear();
 		history.clear();
 		resetHash();
+
+		// Notify listeners
+		copy.forEach((keyStr, info) -> {
+			Unchecked.checkedForEach(listeners, listener -> listener.onRemoveItem(keyStr, info),
+					(listener, t) -> logger.error("Exception thrown when removing bundle item", t));
+		});
 	}
 
 	@Override
