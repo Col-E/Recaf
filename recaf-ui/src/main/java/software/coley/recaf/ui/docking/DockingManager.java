@@ -24,8 +24,8 @@ import software.coley.bentofx.building.StageBuilding;
 import software.coley.bentofx.control.DragDropStage;
 import software.coley.bentofx.control.Headers;
 import software.coley.bentofx.dockable.Dockable;
+import software.coley.bentofx.dockable.DockableDragDropBehavior;
 import software.coley.bentofx.dockable.DockableIconFactory;
-import software.coley.bentofx.dockable.DragDropBehavior;
 import software.coley.bentofx.layout.DockContainer;
 import software.coley.bentofx.layout.container.DockContainerBranch;
 import software.coley.bentofx.layout.container.DockContainerLeaf;
@@ -129,8 +129,8 @@ public class DockingManager {
 
 		@Nonnull
 		@Override
-		protected DragDropBehavior newDragDropBehavior() {
-			return new DragDropBehavior() {
+		protected DockableDragDropBehavior newDragDropBehavior() {
+			return new DockableDragDropBehavior() {
 				@Override
 				public boolean canReceiveDockable(@Nonnull DockContainerLeaf targetContainer, @Nullable Side targetSide,
 				                                  @Nonnull Dockable dockable) {
@@ -143,7 +143,7 @@ public class DockingManager {
 						return true;
 
 					// Otherwise we fall back to the default behavior.
-					return super.canReceiveDockable(targetContainer, targetSide, dockable);
+					return DockableDragDropBehavior.super.canReceiveDockable(targetContainer, targetSide, dockable);
 				}
 			};
 		}
