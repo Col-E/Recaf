@@ -326,7 +326,8 @@ public class AstService implements Service {
 		 */
 		@Nullable
 		private ClassEntry computeEntry(@Nonnull ClassInfo info, int ttl) {
-			ClassEntry entry = cache.get(info.getName());
+			String className = info.getName();
+			ClassEntry entry = cache.get(className);
 			if (entry != null)
 				return entry;
 
@@ -345,7 +346,9 @@ public class AstService implements Service {
 					.toList();
 			List<ClassEntry> innerClasses = new ArrayList<>();
 			List<ClassEntry> interfaces = new ArrayList<>();
-			entry = new BasicClassEntry(info.getName(), info.getAccess(), superClass, interfaces, innerClasses, fields, methods);
+			String outerClassName = info.getOuterClassName();
+			ClassEntry outerClass = outerClassName != null && outerClassName.startsWith(className + '$') ? cache.get(outerClassName) : null;
+			entry = new BasicClassEntry(className, info.getAccess(), superClass, interfaces, innerClasses, outerClass, fields, methods);
 			register(entry);
 
 			// Lists of other classes are populated after we put the entry in the pool to prevent entry building cycles.
