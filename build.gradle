@@ -1,12 +1,12 @@
 plugins {
     alias(libs.plugins.benmanes.versions) apply false
-    alias(libs.plugins.gradle.coverage.report.aggregator)
-    alias(libs.plugins.gradle.checker.processor) apply false
+    alias(libs.plugins.coverage.report.aggregator)
+    alias(libs.plugins.checker.processor) apply false
 }
 
 allprojects {
-    group 'software.coley'
-    version '4.0.0-SNAPSHOT'
+    group = 'software.coley'
+    version = '4.0.0-SNAPSHOT'
 }
 
 subprojects {
@@ -19,7 +19,7 @@ subprojects {
         mavenLocal()
         mavenCentral()
         google()
-        maven { url 'https://jitpack.io' }
+        maven { url = 'https://jitpack.io' }
     }
 
     // ======================= DEPENDENCIES ========================
