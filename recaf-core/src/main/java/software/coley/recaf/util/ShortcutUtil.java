@@ -29,6 +29,8 @@ public class ShortcutUtil {
 	/**
 	 * @param path
 	 * 		Path to follow.
+	 * @param followDepth
+	 * 		Maximum depth to follow symbolic links.
 	 *
 	 * @return Target of shortcut/symbolic link.
 	 *
@@ -36,15 +38,34 @@ public class ShortcutUtil {
 	 * 		When the shortcut could not be parsed.
 	 */
 	@Nonnull
-	public static Path follow(Path path) throws IOException {
+	public static Path follow(Path path, int followDepth) throws IOException {
 		try {
-			if (isPotentialValidLink(path)) {
+			// First check if it's a windows 'lnk' shortcut
+			if (isPotentialValidLink(path))
 				path = path.getFileSystem().getPath(new ShortcutUtil(path).getRealFilename());
-			}
+
+			// Then traverse any symbolic links up to the given depth
 			int symLevel = 0;
-			while (Files.isSymbolicLink(path) && symLevel < 5) {
-				path = Files.readSymbolicLink(path);
-				symLevel++;
+			while (true) {
+				boolean visited = false;
+
+				// Follow symbolic links
+				while (Files.isSymbolicLink(path) && symLevel < followDepth) {
+					path = Files.readSymbolicLink(path);
+					symLevel++;
+					visited = true;
+				}
+
+				// Follow symbolic links via real path resolution (as a fallback, since nio can be inconsistent)
+				// This is primarily observed to occur with directory links vs file links.
+				while (!path.equals(path.toRealPath())) {
+					path = path.toRealPath();
+					symLevel++;
+					visited = true;
+				}
+
+				if (!visited)
+					break;
 			}
 			return path;
 		} catch (ParseException ex) {
@@ -53,34 +74,30 @@ public class ShortcutUtil {
 	}
 
 	/**
-	 * Provides a quick test to see if this could be a valid link !
-	 * If you try to instantiate a new WindowShortcut and the link is not valid,
-	 * Exceptions may be thrown and Exceptions are extremely slow to generate,
-	 * therefore any code needing to loop through several files should first check this.
+	 * Provides a quick test to see if this could be a valid link.
 	 *
 	 * @param path
-	 * 		the potential link
+	 * 		The potential link
 	 *
-	 * @return true if may be a link, false otherwise
+	 * @return {@code true} if the path may be a link, {@code false} otherwise
 	 */
 	public static boolean isPotentialValidLink(final Path path) {
 		if (!Files.exists(path))
 			return false;
-		if (!IOUtil.getExtension(path).equals("lnk"))
+		String extension = IOUtil.getExtension(path);
+		if (!"lnk".equalsIgnoreCase(extension))
 			return false;
 		final int minimumLength = 0x64;
 		try (InputStream fis = Files.newInputStream(path)) {
-			if (fis.available() < minimumLength) {
+			if (fis.available() < minimumLength)
 				return false;
-			}
 			int bufSize = 64;
 			byte[] buf = new byte[bufSize];
 			int offset = 0;
 			while (bufSize != 0) {
 				int read = fis.read(buf, offset, bufSize);
-				if (read == -1) {
+				if (read == -1)
 					break;
-				}
 				bufSize -= read;
 				offset += read;
 			}

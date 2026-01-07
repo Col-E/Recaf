@@ -37,6 +37,7 @@ import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.ModulesIOUtil;
+import software.coley.recaf.util.ShortcutUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.android.DexIOUtil;
 import software.coley.recaf.util.io.ByteSource;
@@ -59,6 +60,7 @@ import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,10 +74,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 
 /**
  * Basic implementation of the resource importer.
@@ -85,6 +89,7 @@ import java.util.concurrent.ExecutorService;
 @ApplicationScoped
 public class BasicResourceImporter implements ResourceImporter, Service {
 	private static final Logger logger = Logging.get(BasicResourceImporter.class);
+	private static final int MAX_WALK_DEPTH = 100;
 	private final InfoImporter infoImporter;
 	private final ResourceImporterConfig config;
 
@@ -305,29 +310,27 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				ThreadPoolFactory.newFixedThreadPool("directory-import") :
 				ThreadPoolFactory.newSingleThreadExecutor("directory-import")) {
 			List<Callable<Void>> tasks = new ArrayList<>();
-			Files.walkFileTree(directoryPath, new SimpleFileVisitor<>() {
-				@Override
-				public FileVisitResult visitFile(@Nonnull Path file, @Nonnull BasicFileAttributes attrs) {
-					tasks.add(() -> {
-						try {
-							// Read info from file
-							ByteSource source = ByteSources.forPath(file);
-							String fileName = directoryPath.relativize(file).toString();
-							if (File.separator.equals("\\"))
-								fileName = fileName.replace('\\', '/');
-							Info info = infoImporter.readInfo(fileName, source);
+			Files.walkFileTree(directoryPath, Set.of(FileVisitOption.FOLLOW_LINKS), MAX_WALK_DEPTH, new SymlinkFollowingVisitor(directoryPath, MAX_WALK_DEPTH, path -> {
+				tasks.add(() -> {
+					try {
+						Path file = ShortcutUtil.follow(path, MAX_WALK_DEPTH);
 
-							// Add the info to the appropriate bundle
-							addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
-									source, fileName, info);
-						} catch (IOException ex) {
-							logger.error("IO error reading ZIP entry '{}' - skipping", file, ex);
-						}
-						return null;
-					});
-					return FileVisitResult.CONTINUE;
-				}
-			});
+						// Read info from file
+						ByteSource source = ByteSources.forPath(file);
+						String fileName = directoryPath.relativize(file).toString();
+						if (File.separator.equals("\\"))
+							fileName = fileName.replace('\\', '/');
+						Info info = infoImporter.readInfo(fileName, source);
+
+						// Add the info to the appropriate bundle
+						addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
+								source, fileName, info);
+					} catch (IOException ex) {
+						logger.error("IO error walking directory entry '{}' - skipping", path, ex);
+					}
+					return null;
+				});
+			}));
 			try {
 				service.invokeAll(tasks);
 			} catch (InterruptedException ex) {
@@ -749,6 +752,46 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	@Override
 	public ResourceImporterConfig getServiceConfig() {
 		return config;
+	}
+
+	/**
+	 * Using {@link FileVisitOption#FOLLOW_LINKS} doesn't actually work for directories that are symlinks.
+	 * This visitor implementation manually handles directory symlinks by resolving them to their real paths
+	 * and walking them separately.
+	 */
+	private static class SymlinkFollowingVisitor extends SimpleFileVisitor<Path> {
+		private final Path rootDir;
+		private final int maxDepthFromRoot;
+		private final Consumer<Path> filePathConsumer;
+
+		public SymlinkFollowingVisitor(@Nonnull Path rootDir, int maxDepthFromRoot, Consumer<Path> filePathConsumer) {
+			this.rootDir = rootDir;
+			this.maxDepthFromRoot = maxDepthFromRoot;
+			this.filePathConsumer = filePathConsumer;
+		}
+
+		@Override
+		public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+			if (!dir.equals(dir.toRealPath())) {
+				// Java NIO is stupid and will not follow symbolic links of directories.
+				int depth = rootDir.relativize(dir).getNameCount();
+				int newDepth = maxDepthFromRoot - depth;
+				if (newDepth > 0) {
+					Path realDir = dir.toRealPath();
+					Files.walkFileTree(realDir, Set.of(FileVisitOption.FOLLOW_LINKS), newDepth, new SymlinkFollowingVisitor(realDir, newDepth, filePathConsumer));
+					return FileVisitResult.SKIP_SUBTREE;
+				} else {
+					return FileVisitResult.SKIP_SUBTREE;
+				}
+			}
+			return FileVisitResult.CONTINUE;
+		}
+
+		@Override
+		public FileVisitResult visitFile(@Nonnull Path path, @Nonnull BasicFileAttributes attrs) {
+			filePathConsumer.accept(path);
+			return FileVisitResult.CONTINUE;
+		}
 	}
 
 	private record PathAndName(@Nullable Path path, @Nonnull String name) {
