@@ -10,21 +10,26 @@ import dev.xdark.blw.type.Type;
 import dev.xdark.blw.type.Types;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.ClassReader;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.assembler.ExpressionCompileException;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.Keywords;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.visitors.SkippingClassVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -114,6 +119,9 @@ public abstract class ClassStubGenerator {
 	 */
 	protected void appendClassStructure(@Nonnull StringBuilder code) {
 		// Class structure
+		InheritanceVertex classVertex = inheritanceGraph.getVertex(className);
+		if (classVertex != null && classVertex.getParents().stream().anyMatch(this::isSealedType))
+			code.append("non-sealed ");
 		code.append(AccessFlag.isEnum(classAccess) ? "enum " : getLocalModifier() + " class ").append(getLocalName());
 		if (superName != null && !superName.equals("java/lang/Object") && !superName.equals("java/lang/Enum"))
 			code.append(" extends ").append(superName.replace('/', '.'));
@@ -429,6 +437,26 @@ public abstract class ClassStubGenerator {
 			return false;
 		InstanceType fieldDesc = Types.instanceTypeFromDescriptor(field.getDescriptor());
 		return fieldDesc.internalName().equals(className);
+	}
+
+	/**
+	 * @param vertex
+	 * 		Inheritance vertex to check.
+	 *
+	 * @return {@code true} if the type is sealed <i>(Defines any permitted subclass)</i>.
+	 */
+	private boolean isSealedType(@Nonnull InheritanceVertex vertex) {
+		if (vertex.getValue() instanceof JvmClassInfo cls) {
+			AtomicBoolean result = new AtomicBoolean(false);
+			cls.getClassReader().accept(new SkippingClassVisitor() {
+				@Override
+				public void visitPermittedSubclass(String permittedSubclass) {
+					result.set(true);
+				}
+			}, ClassReader.SKIP_DEBUG);
+			return result.get();
+		}
+		return false;
 	}
 
 	/**

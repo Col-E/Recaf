@@ -21,6 +21,8 @@ import software.coley.recaf.test.dummy.ClassWithRequiredConstructor;
 import software.coley.recaf.test.dummy.ClassWithToString;
 import software.coley.recaf.test.dummy.DummyEnum;
 import software.coley.recaf.test.dummy.DummyRecord;
+import software.coley.recaf.test.dummy.SealedCircle;
+import software.coley.recaf.test.dummy.SealedOtherShape;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
@@ -177,6 +179,24 @@ class ExpressionCompilerTest extends TestBase {
 				System.out.println("bar: " + inner.bar);
 				inner.strings.add("something");
 				inner.innerToOuter();
+				""");
+		assertSuccess(result);
+	}
+
+	@Test
+	void sealedChild() throws IOException {
+		// Tests basic support for compiling within a child of a sealed type.
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(TestClassUtils.fromRuntimeClass(SealedOtherShape.class));
+		ExpressionResult result = compile(assembler, """
+				System.out.println("area: " + area());
+				""");
+		assertSuccess(result);
+
+		// Same test but in a record child.
+		assembler.setClassContext(TestClassUtils.fromRuntimeClass(SealedCircle.class));
+		  result = compile(assembler, """
+				System.out.println("area: " + area());
 				""");
 		assertSuccess(result);
 	}
