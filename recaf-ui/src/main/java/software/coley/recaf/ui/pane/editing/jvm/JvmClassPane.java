@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import javafx.scene.Node;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.ui.config.ClassEditingConfig;
 import software.coley.recaf.ui.pane.editing.ClassPane;
@@ -11,6 +12,7 @@ import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.binary.hex.HexAdapter;
 import software.coley.recaf.ui.pane.editing.binary.hex.HexConfig;
 import software.coley.recaf.ui.pane.editing.jvm.lowlevel.JvmLowLevelPane;
+import software.coley.recaf.util.SceneUtils;
 
 /**
  * Displays {@link JvmClassInfo} in a configurable manner.
@@ -74,5 +76,12 @@ public class JvmClassPane extends ClassPane {
 			case HEX -> setDisplay(new HexAdapter(hexConfig));
 			default -> throw new IllegalStateException("Unknown editor type: " + type.name());
 		}
+	}
+
+	@Override
+	public void requestFocus() {
+		Node display = getDisplay();
+		if (display != null)
+			display.requestFocus();
 	}
 }

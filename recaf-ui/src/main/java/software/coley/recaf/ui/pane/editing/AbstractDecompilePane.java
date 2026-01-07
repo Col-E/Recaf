@@ -51,6 +51,7 @@ import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.SceneUtils;
 import software.coley.recaf.util.StringDiff;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
@@ -139,6 +140,13 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	@Override
 	public void requestFocus(@Nonnull ClassMember member) {
 		contextActionSupport.select(member);
+		requestFocus();
+	}
+
+	@Override
+	public void requestFocus() {
+		// Delegate focus to the editor.
+		editor.getCodeArea().requestFocus();
 	}
 
 	@Nonnull

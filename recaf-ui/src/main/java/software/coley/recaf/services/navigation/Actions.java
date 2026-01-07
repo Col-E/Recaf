@@ -2114,10 +2114,10 @@ public class Actions implements Service {
 	 * 		Methods to clean.
 	 */
 	public void removeMethodVariables(@Nonnull Workspace workspace,
-	                            @Nonnull WorkspaceResource resource,
-	                            @Nonnull JvmClassBundle bundle,
-	                            @Nonnull JvmClassInfo declaringClass,
-	                            @Nonnull Collection<MethodMember> methods) {
+	                                  @Nonnull WorkspaceResource resource,
+	                                  @Nonnull JvmClassBundle bundle,
+	                                  @Nonnull JvmClassInfo declaringClass,
+	                                  @Nonnull Collection<MethodMember> methods) {
 		ClassReader reader = declaringClass.getClassReader();
 		ClassWriter writer = new ClassWriter(reader, 0);
 		MethodVariableRemovingVisitor visitor = new MethodVariableRemovingVisitor(writer, MethodPredicate.of(methods));
@@ -2374,11 +2374,12 @@ public class Actions implements Service {
 		Dockable dockable = dockingManager.newDockable(title, graphicFactory, node);
 		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
 			if (keybindingConfig.getCloseTab().match(e))
-				dockable.inContainer(DockContainerLeaf::closeDockable);
+				closeDockable(dockable);
 		});
 		if (container != null) {
 			container.addDockable(dockable);
 			container.selectDockable(dockable);
+			node.requestFocus();
 		}
 		return dockable;
 	}
@@ -2405,13 +2406,42 @@ public class Actions implements Service {
 		Dockable dockable = dockingManager.newTranslatableDockable(title, graphicFactory, node);
 		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
 			if (keybindingConfig.getCloseTab().match(e))
-				dockable.inContainer(DockContainerLeaf::closeDockable);
+				closeDockable(dockable);
 		});
 		if (container != null) {
 			container.addDockable(dockable);
 			container.selectDockable(dockable);
+			focusSelectedDockableContent(container);
 		}
 		return dockable;
+	}
+
+	/**
+	 * Close the given dockable.
+	 *
+	 * @param dockable
+	 * 		Dockable to close.
+	 */
+	private void closeDockable(@Nonnull Dockable dockable) {
+		dockable.inContainer(container -> {
+			container.closeDockable(dockable);
+			focusSelectedDockableContent(container);
+		});
+	}
+
+	/**
+	 * Focuses the content of the selected dockable in the given container.
+	 *
+	 * @param container
+	 * 		Container to focus selected dockable content in.
+	 */
+	private void focusSelectedDockableContent(@Nonnull DockContainerLeaf container) {
+		Dockable selectedDockable = container.getSelectedDockable();
+		if (selectedDockable != null) {
+			Node node = selectedDockable.getNode();
+			if (node != null)
+				node.requestFocus();
+		}
 	}
 
 	/**
@@ -2459,9 +2489,9 @@ public class Actions implements Service {
 	 * @param dockable
 	 * 		Dockable reference.
 	 */
-	private static void addCloseActions(@Nonnull ContextMenu menu, @Nonnull Dockable dockable) {
+	private void addCloseActions(@Nonnull ContextMenu menu, @Nonnull Dockable dockable) {
 		menu.getItems().addAll(
-				action("menu.tab.close", CarbonIcons.CLOSE, () -> dockable.inContainer(DockContainerLeaf::closeDockable)),
+				action("menu.tab.close", CarbonIcons.CLOSE, () -> closeDockable(dockable)),
 				action("menu.tab.closeothers", CarbonIcons.CLOSE, () -> {
 					dockable.inContainer(container -> {
 						Unchecked.checkedForEach(container.getDockables(), d -> {

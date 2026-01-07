@@ -214,13 +214,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		lateInit();
 	}
 
-	@Override
-	public void requestFocus() {
-		// The editor is not the first thing focused when added to the scene, so when it is added to the scene
-		// we'll want to manually focus it so that you can immediately use keybinds and navigate around.
-		SceneUtils.whenAddedToSceneConsume(editor.getCodeArea(), Node::requestFocus);
-	}
-
 	/**
 	 * Called by {@link #onUpdatePath(PathNode)} once before the {@link #path} is set for the first time.
 	 *
@@ -286,12 +279,19 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							CodeArea area = editor.getCodeArea();
 							area.moveTo(child.range().start());
 							area.showParagraphAtCenter(area.getCurrentParagraph());
+							requestFocus();
 							return;
 						}
 					}
 				}
 			}
 		}
+	}
+
+	@Override
+	public void requestFocus() {
+		// Delegate focus to the editor.
+		editor.getCodeArea().requestFocus();
 	}
 
 	@Override
