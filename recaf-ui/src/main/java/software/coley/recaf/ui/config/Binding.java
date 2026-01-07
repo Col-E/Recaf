@@ -5,7 +5,12 @@ import jakarta.annotation.Nullable;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,6 +36,28 @@ public class Binding extends ArrayList<String> {
 	@Nonnull
 	public String getId() {
 		return id;
+	}
+
+	/**
+	 * @param original
+	 * 		Original key to replace.
+	 * @param replacement
+	 * 		Replacement key.
+	 *
+	 * @return Copy of the binding with the given key replaced.
+	 */
+	@Nonnull
+	public Binding withReplacement(@Nonnull KeyCode original, @Nonnull KeyCode replacement) {
+		Binding copy = new Binding(id);
+		String toMatch = original.getName().toLowerCase();
+		String toReplace = replacement.getName().toLowerCase();
+		for (String item : this) {
+			if (item.equals(toMatch))
+				copy.add(toReplace);
+			else
+				copy.add(item);
+		}
+		return copy;
 	}
 
 	/**

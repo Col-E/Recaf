@@ -11,7 +11,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableMap;
-import software.coley.recaf.config.*;
+import software.coley.recaf.config.BasicConfigContainer;
+import software.coley.recaf.config.BasicMapConfigValue;
+import software.coley.recaf.config.ConfigContainer;
+import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.config.ConfigComponentManager;
 import software.coley.recaf.services.config.TypedConfigComponentFactory;
 import software.coley.recaf.services.json.GsonProvider;
@@ -24,7 +28,15 @@ import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.PlatformType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -47,7 +59,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 	private static final String ID_REPLACE = "editor.replace";
 	private static final String ID_SAVE = "editor.save";
 	private static final String ID_UNDO = "editor.undo";
-	private static final String ID_CLOSE_TAB= "editor.closetab";
+	private static final String ID_CLOSE_TAB = "editor.closetab";
 	private static final String ID_RENAME = "editor.rename";
 	private static final String ID_GOTO = "editor.goto";
 	private static final String ID_EXPORT = "workspace.export";
@@ -203,12 +215,15 @@ public class KeybindingConfig extends BasicConfigContainer {
 	 *
 	 * @return Binding for the current platform.
 	 */
-	private static Binding createBindForPlatform(String id, KeyCode... codes) {
+	@Nonnull
+	private static Binding createBindForPlatform(@Nonnull String id, KeyCode... codes) {
 		Binding defaultBind = newBind(id, codes);
 		// Swap out CONTROL for META on Mac.
-		if (defaultBind.contains(nameOf(CONTROL)))
-			return bindings(defaultBind, newOsBind(PlatformType.MAC, defaultBind))
+		if (defaultBind.contains(nameOf(CONTROL))) {
+			Binding macBinding = defaultBind.withReplacement(CONTROL, META);
+			return bindings(defaultBind, newOsBind(PlatformType.MAC, macBinding))
 					.buildKeyBindingForCurrentOS();
+		}
 		return defaultBind;
 	}
 

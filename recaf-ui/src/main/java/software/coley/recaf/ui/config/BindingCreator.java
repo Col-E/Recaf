@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.config;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.PlatformType;
 
 import java.util.Arrays;
@@ -16,7 +17,7 @@ public final class BindingCreator {
 	private final Binding defaultBinding;
 	private final Map<PlatformType, Binding> osBindings;
 
-	private BindingCreator(Binding defaultBinding, OSBinding... osBindings) {
+	private BindingCreator(@Nonnull Binding defaultBinding, OSBinding... osBindings) {
 		this.defaultBinding = defaultBinding;
 		this.osBindings = Arrays.stream(PlatformType.values())
 				.collect(Collectors.toMap(Function.identity(), os -> defaultBinding));
@@ -39,7 +40,8 @@ public final class BindingCreator {
 	 *
 	 * @return A KeybindingCreator instance.
 	 */
-	public static BindingCreator bindings(Binding defaultBinding, OSBinding... osBindings) {
+	@Nonnull
+	public static BindingCreator bindings(@Nonnull Binding defaultBinding, OSBinding... osBindings) {
 		return new BindingCreator(defaultBinding, osBindings);
 	}
 
@@ -48,6 +50,7 @@ public final class BindingCreator {
 	 *
 	 * @return A Binding instance.
 	 */
+	@Nonnull
 	public Binding buildKeyBindingForCurrentOS() {
 		return osBindings.getOrDefault(PlatformType.get(), defaultBinding);
 	}
@@ -59,7 +62,7 @@ public final class BindingCreator {
 		public PlatformType platform;
 		public Binding binding;
 
-		private OSBinding(PlatformType platform, Binding binding) {
+		private OSBinding(@Nonnull PlatformType platform, @Nonnull Binding binding) {
 			this.platform = platform;
 			this.binding = binding;
 		}
@@ -74,7 +77,8 @@ public final class BindingCreator {
 		 *
 		 * @return the instance of OSBinding.
 		 */
-		public static OSBinding newOsBind(PlatformType platform, Binding binding) {
+		@Nonnull
+		public static OSBinding newOsBind(@Nonnull PlatformType platform, @Nonnull Binding binding) {
 			return new OSBinding(platform, binding);
 		}
 	}
