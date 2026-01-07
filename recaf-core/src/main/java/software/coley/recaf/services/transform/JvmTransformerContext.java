@@ -7,6 +7,8 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.Frame;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
@@ -46,6 +48,7 @@ import java.util.function.Supplier;
  * @author Matt Coley
  */
 public class JvmTransformerContext {
+	private static final Logger logger = Logging.get(JvmTransformerContext.class);
 	private final Map<Class<? extends JvmClassTransformer>, JvmClassTransformer> transformerMap;
 	private final AggregatedMappings mappings;
 	private final Set<String> classesToRemove = ConcurrentHashMap.newKeySet();
@@ -58,6 +61,7 @@ public class JvmTransformerContext {
 	private Supplier<GetStaticLookup> getStaticLookupSupplier = BasicGetStaticLookup::new;
 	private Supplier<InvokeVirtualLookup> invokeVirtualLookupSupplier = BasicInvokeVirtualLookup::new;
 	private Supplier<InvokeStaticLookup> invokeStaticLookupSupplier = BasicInvokeStaticLookup::new;
+	private boolean dropFaultyClasses; // For debugging, not exposed publicly.
 
 	/**
 	 * Constructs a new context from an array of transformers.
@@ -115,8 +119,8 @@ public class JvmTransformerContext {
 				if (data.node != null) {
 					// Emit bytecode from the current node
 					boolean recompute = recomputeFrameClasses.contains(data.node.name);
-					int flags = recompute ? ClassWriter.COMPUTE_FRAMES : 0;
-					ClassReader reader = data.initialClass.getClassReader();
+					int flags = recompute && !dropFaultyClasses ? ClassWriter.COMPUTE_FRAMES : 0;
+					ClassReader reader = data.initialClass.getClassReader(); // Copy const-pool + bootstrap methods
 					ClassWriter writer = new WorkspaceClassWriter(inheritanceGraph, reader, flags);
 					try {
 						if (recompute)
@@ -134,6 +138,10 @@ public class JvmTransformerContext {
 								.child(modifiedClass);
 						map.put(classPath, modifiedClass);
 					} catch (Throwable t) {
+						if (dropFaultyClasses) {
+							logger.warn("Error writing class '{}', skipping", data.initialClass.getName(), t);
+							continue;
+						}
 						throw new TransformationException("ClassNode --> byte[] failed for class '" + data.node.name + "'", t);
 					}
 				} else {
