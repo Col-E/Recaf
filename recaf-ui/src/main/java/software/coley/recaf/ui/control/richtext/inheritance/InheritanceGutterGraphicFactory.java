@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.richtext.inheritance;
 
+import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,6 +20,7 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.SVG;
 
 import java.util.List;
@@ -102,7 +104,11 @@ public class InheritanceGutterGraphicFactory extends AbstractLineGraphicFactory 
 			node.setCursor(Cursor.HAND);
 			node.setOnMousePressed(e -> {
 				ContextMenu menu = new ContextMenu();
-				menu.getItems().add(new MenuItem("Parents:"));
+				MenuItem title = new MenuItem();
+				title.getStyleClass().addAll(Styles.TEXT_BOLD, Styles.BG_INSET);
+				title.setDisable(true);
+				title.textProperty().bind(Lang.getBinding("hierarchy.parents"));
+				menu.getItems().add(title);
 				menu.setAutoHide(true);
 				for (Inheritance.Parent parent : parents) {
 					ClassMemberPathNode parentPath = parent.path();
@@ -124,7 +130,11 @@ public class InheritanceGutterGraphicFactory extends AbstractLineGraphicFactory 
 			node.setCursor(Cursor.HAND);
 			node.setOnMousePressed(e -> {
 				ContextMenu menu = new ContextMenu();
-				menu.getItems().add(new MenuItem("Children:"));
+				MenuItem title = new MenuItem();
+				title.getStyleClass().addAll(Styles.TEXT_BOLD, Styles.BG_INSET);
+				title.setDisable(true);
+				title.textProperty().bind(Lang.getBinding("hierarchy.children"));
+				menu.getItems().add(title);
 				menu.setAutoHide(true);
 				for (Inheritance.Child child : children) {
 					ClassMemberPathNode childPath = child.path();
