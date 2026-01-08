@@ -223,7 +223,7 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 				Animations.animateFailure(javaEditor, 1000);
 				for (CompilerDiagnostic diagnostic : diagnostics) {
 					Problem problem = Problem.fromDiagnostic(diagnostic);
-					problemTracking.add(problem);
+					problemTracking.addItem(problem);
 				}
 				return;
 			}
@@ -232,7 +232,7 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 			ExpressionCompileException exception = result.getException();
 			if (exception != null) {
 				Animations.animateFailure(javaEditor, 1000);
-				problemTracking.add(new Problem(-1, -1, 0,
+				problemTracking.addItem(new Problem(-1, -1, 0,
 						ProblemLevel.ERROR, ProblemPhase.BUILD, StringUtil.traceToString(exception)));
 				return;
 			}

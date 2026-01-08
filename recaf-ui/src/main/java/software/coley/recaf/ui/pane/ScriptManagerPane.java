@@ -234,7 +234,7 @@ public class ScriptManagerPane extends BorderPane {
 					// Handle compile-result failure, or uncaught thrown exception.
 					if (result != null) {
 						for (CompilerDiagnostic diagnostic : result.diagnostics())
-							problemTracking.add(Problem.fromDiagnostic(diagnostic));
+							problemTracking.addItem(Problem.fromDiagnostic(diagnostic));
 					} else {
 						logger.error("Compilation encountered an error", throwable);
 					}
@@ -281,7 +281,7 @@ public class ScriptManagerPane extends BorderPane {
 									// Handle compile-result failure, or uncaught thrown exception.
 									if (result != null) {
 										for (CompilerDiagnostic diagnostic : result.getCompileDiagnostics())
-											problemTracking.add(Problem.fromDiagnostic(diagnostic));
+											problemTracking.addItem(Problem.fromDiagnostic(diagnostic));
 
 										// Display runtime error if given.
 										Throwable runtimeThrowable = result.getRuntimeThrowable();

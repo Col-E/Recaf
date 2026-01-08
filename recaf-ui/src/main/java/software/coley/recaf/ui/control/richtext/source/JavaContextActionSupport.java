@@ -24,11 +24,16 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.context.ContextMenuProviderService;
 import software.coley.recaf.services.cell.context.ContextSource;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.inheritance.InheritanceVertex;
+import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
@@ -40,6 +45,9 @@ import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
+import software.coley.recaf.ui.control.richtext.inheritance.Inheritance;
+import software.coley.recaf.ui.control.richtext.inheritance.InheritanceGutterGraphicFactory;
+import software.coley.recaf.ui.control.richtext.inheritance.InheritanceTracking;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerContextActionSupport;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
@@ -59,11 +67,15 @@ import software.coley.sourcesolver.resolve.result.MethodResolution;
 import software.coley.sourcesolver.util.Range;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -83,13 +95,17 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private final ExecutorService parseThreadPool = ThreadPoolFactory.newSingleThreadExecutor("java-parse");
 	private final NavigableMap<Integer, Integer> offsetMap = new TreeMap<>();
 	private final AstAvailabilityButton astAvailabilityButton = new AstAvailabilityButton();
+	private final InheritanceTracking inheritanceTracking = new InheritanceTracking();
+	private final InheritanceGutterGraphicFactory inheritanceGutterGraphicFactory;
 	private final CellConfigurationService cellConfigurationService;
 	private final JavaContextActionManager contextManager;
-	private final Workspace workspace;
 	private final AstService astService;
+	private final InheritanceGraph graph;
+	private final Workspace workspace;
 	private final Parser parser;
 	private Future<?> lastFuture;
 	private int lastSourceHash;
+	private long lastTextChangeTimestamp;
 	private ClassPathNode path;
 	private Runnable queuedSelectionTask;
 	private String className;
@@ -102,11 +118,15 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	public JavaContextActionSupport(@Nonnull CellConfigurationService cellConfigurationService,
 	                                @Nonnull JavaContextActionManager contextManager,
 	                                @Nonnull AstService astService,
-	                                @Nonnull WorkspaceManager workspace) {
+	                                @Nonnull InheritanceGraphService graphService,
+	                                @Nonnull Actions actions,
+	                                @Nonnull WorkspaceManager workspaceManager) {
+		this.inheritanceGutterGraphicFactory = new InheritanceGutterGraphicFactory(cellConfigurationService, actions);
 		this.cellConfigurationService = cellConfigurationService;
 		this.contextManager = contextManager;
 		this.astService = astService;
-		this.workspace = workspace.getCurrent();
+		this.workspace = workspaceManager.getCurrent();
+		this.graph = graphService.getOrCreateInheritanceGraph(workspace);
 		parser = astService.getSharedJavaParser();
 	}
 
@@ -245,17 +265,16 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	}
 
 	/**
-	 * Selects the range in the {@link #editor} on the FX thread.
+	 * Selects the range in the {@link #editor}.
+	 * Must be called on the FX thread.
 	 *
 	 * @param range
 	 * 		Range to select.
 	 */
 	private void selectRange(@Nonnull Range range) {
 		CodeArea area = editor.getCodeArea();
-		FxThreadUtil.run(() -> {
-			area.selectRange(range.end(), range.begin());
-			area.showParagraphAtCenter(area.getCurrentParagraph());
-		});
+		area.selectRange(range.end(), range.begin());
+		editor.showParagraphAtCenter(area.getCurrentParagraph());
 	}
 
 	/**
@@ -298,6 +317,21 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			int position = change.getPosition();
 			int offset = change.getNetLength();
 			offsetMap.merge(position, offset, Integer::sum);
+
+			// Record timestamp of last change.
+			long time = System.currentTimeMillis();
+			long lastTime = lastTextChangeTimestamp;
+			lastTextChangeTimestamp = time;
+
+			// Ideally this would be using a push-back mechanism instead of a basic time diff check...
+			// This method isn't perfect, but is sufficient to avoid excessive redraws.
+			//
+			// We should register this method as a text-change observer last so any system
+			// that will rely on accurate tracking state will have already updated before we redraw.
+			// As stated before this is not perfect and a final refresh should occur to ensure no de-syncs,
+			// but is sufficient for now.
+			if (time - lastTime > 100)
+				FxThreadUtil.run(() -> editor.redrawParagraphGraphics());
 		} catch (Throwable t) {
 			logger.error("Unhandled exception merging offset-maps with new text-change", t);
 		}
@@ -354,6 +388,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 
 					logger.warn("Could not create Java AST model from source of: {} after {}ms", classNameEsc, diffMs);
 					astAvailabilityButton.setUnavailable();
+					inheritanceTracking.clear();
 				} else {
 					unit = resultingUnit;
 					resolver = astService.newJavaResolver(workspace, resultingUnit);
@@ -361,9 +396,11 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 
 					logger.debugging(l -> l.info("AST parsed successfully, took {}ms", diffMs));
 					astAvailabilityButton.setAvailable();
+					populateInheritanceTracking();
 
-					// Run queued tasks
-					if (queuedSelectionTask != null) queuedSelectionTask.run();
+					// Run queued selection task
+					if (queuedSelectionTask != null)
+						FxThreadUtil.run(queuedSelectionTask);
 				}
 			} catch (Throwable ex) {
 				long diffMs = (System.currentTimeMillis() - start);
@@ -374,6 +411,77 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			// Wipe offset map now that we have a new AST
 			offsetMap.clear();
 		}));
+	}
+
+	/**
+	 * Parse the AST for method declarations and find inheritance relationships with parents/children.
+	 */
+	private void populateInheritanceTracking() {
+		Workspace localWorkspace = workspace;
+		CompilationUnitModel localUnit = unit;
+		if (workspace == null || localUnit == null || resolver == null)
+			return;
+		CompletableFuture.supplyAsync(() -> {
+			List<Inheritance> inheritances = new ArrayList<>();
+			List<ClassModel> classModels = localUnit.getRecursiveChildrenOfType(ClassModel.class);
+			for (ClassModel classModel : classModels) {
+				// Resolve what class each model represents.
+				AstResolveResult classResolutionResult = resolver.resolveThenAdapt(classModel.getRange().begin());
+				if (classResolutionResult == null || !(classResolutionResult.path() instanceof ClassPathNode resolvedClassPath))
+					continue;
+
+				// Get vertex in inheritance graph for the resolved class.
+				ClassInfo resolvedClass = resolvedClassPath.getValue();
+				InheritanceVertex resolvedVertex = graph.getVertex(resolvedClass.getName());
+				if (resolvedVertex == null)
+					continue;
+
+				// Gather parents and children from inheritance graph.
+				// - Note: The map values may be null if the class is not in the workspace.
+				Map<InheritanceVertex, ClassPathNode> children = resolvedVertex.allChildren()
+						.collect(IdentityHashMap::new, (m, v) -> m.put(v, workspace.findClass(v.getName())), IdentityHashMap::putAll);
+				Map<InheritanceVertex, ClassPathNode> parents = resolvedVertex.allParents()
+						.collect(IdentityHashMap::new, (m, v) -> m.put(v, workspace.findClass(v.getName())), IdentityHashMap::putAll);
+
+				// For all methods in this model, find matching methods in parents/children and track them.
+				for (MethodModel methodModel : classModel.getMethods()) {
+					int methodResolvePos = methodModel.getModifiers().getRange().end();
+					int methodLinePos = methodModel.getReturnType().getRange().end();
+					int line = 1 + editor.getCodeArea().offsetToPosition(methodLinePos, TwoDimensional.Bias.Forward).getMajor();
+
+					// Resolve what method each model represents.
+					// - Underlying model is funky and resolving the modifier position is the best programmatic way to resolve the method.
+					//   The method model's start position likely has an annotation or javadoc there that throws off resolution.
+					AstResolveResult methodResolutionResult = resolver.resolveThenAdapt(methodResolvePos);
+					if (methodResolutionResult == null || !(methodResolutionResult.path() instanceof ClassMemberPathNode resolvedMethodPath))
+						continue;
+					ClassMember resolvedMethod = resolvedMethodPath.getValue();
+
+					// Collect methods in parents/children.
+					String methodName = resolvedMethod.getName();
+					String methodDesc = resolvedMethod.getDescriptor();
+					children.forEach((child, childClassPath) -> {
+						if (child.hasMethod(methodName, methodDesc)) {
+							ClassMemberPathNode childMethodPath = childClassPath.child(methodName, methodDesc);
+							if (childMethodPath != null)
+								inheritances.add(new Inheritance.Child(line, childMethodPath));
+						}
+					});
+					parents.forEach((parent, parentClassPath) -> {
+						if (parent.hasMethod(methodName, methodDesc)) {
+							ClassMemberPathNode parentMethodPath = parentClassPath.child(methodName, methodDesc);
+							if (parentMethodPath != null)
+								inheritances.add(new Inheritance.Parent(line, parentMethodPath));
+						}
+					});
+				}
+			}
+			return inheritances;
+		}, ThreadUtil.executor()).thenAcceptAsync(items -> {
+			inheritanceTracking.clear();
+			inheritanceTracking.addItems(items);
+			editor.redrawParagraphGraphics();
+		}, FxThreadUtil.executor());
 	}
 
 	/**
@@ -398,10 +506,21 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	@Override
 	public void install(@Nonnull Editor editor) {
 		this.editor = editor;
+
+		// Setup inheritance tracking first. It will receive text change events before us.
+		inheritanceTracking.install(editor);
+
+		// Now we register our own text change listeners.
 		editor.getTextChangeEventStream()
 				.addObserver(this::handleShortDurationChange);
 		editor.getTextChangeEventStream().successionEnds(Duration.ofMillis(REPARSE_ELAPSED_TIME))
 				.addObserver(e -> handleLongDurationChange());
+
+		// Setup inheritance gutter graphics/tracking.
+		editor.setComponent(InheritanceTracking.COMPONENT_KEY, inheritanceTracking);
+		editor.getRootLineGraphicFactory().addLineGraphicFactory(inheritanceGutterGraphicFactory);
+
+		// Setup context-menu on right-click.
 		CodeArea area = editor.getCodeArea();
 		area.setOnContextMenuRequested(e -> {
 			// Close old menu
@@ -452,7 +571,10 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 
 	@Override
 	public void uninstall(@Nonnull Editor editor) {
+		inheritanceTracking.uninstall(editor);
+		editor.getRootLineGraphicFactory().removeLineGraphicFactory(inheritanceGutterGraphicFactory);
 		editor.getCodeArea().setOnContextMenuRequested(null);
+		editor.setComponent(InheritanceTracking.COMPONENT_KEY, null);
 		this.editor = null;
 	}
 

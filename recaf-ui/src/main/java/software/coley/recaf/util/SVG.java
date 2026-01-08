@@ -31,6 +31,10 @@ public class SVG {
 	public static final String REF_READ = "icons/read-access.svg";
 	public static final String REF_WRITE = "icons/write-access.svg";
 	public static final String TYPE_CONVERSION = "icons/type-conversion.svg";
+	public static final String METHOD_IMPLEMENTING = "icons/implementingMethod.svg";
+	public static final String METHOD_IMPLEMENTED = "icons/implementedMethod.svg";
+	public static final String METHOD_OVERRIDDEN = "icons/overriddenMethod.svg";
+	public static final String METHOD_OVERRIDING = "icons/overridingMethod.svg";
 	private static final Map<String, SVGDocument> DOCUMENT_CACHE = new ConcurrentHashMap<>();
 
 	static {

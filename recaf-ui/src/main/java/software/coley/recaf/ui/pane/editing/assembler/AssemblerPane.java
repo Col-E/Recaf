@@ -1,11 +1,9 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Side;
-import javafx.scene.Node;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTField;
@@ -54,7 +52,6 @@ import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.SceneUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
@@ -592,7 +589,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			int start = location == null ? 1 : location.column();
 			int length = location == null ? 1 : location.length();
 			Problem problem = new Problem(line, start, length, level, phase, error.getMessage());
-			problemTracking.add(problem);
+			problemTracking.addItem(problem);
 
 			// REMOVE IS TRACING PARSER ERRORS
 			/*

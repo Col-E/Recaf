@@ -310,11 +310,11 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 				// Handle compile-result failure, or uncaught thrown exception.
 				if (result != null) {
 					if (result.getDiagnostics().isEmpty() && result.getException() != null)
-						problemTracking.add(new Problem(-1, -1, 0,
+						problemTracking.addItem(new Problem(-1, -1, 0,
 								ProblemLevel.ERROR, ProblemPhase.BUILD, result.getException().toString()));
 
 					for (CompilerDiagnostic diagnostic : result.getDiagnostics())
-						problemTracking.add(Problem.fromDiagnostic(diagnostic));
+						problemTracking.addItem(Problem.fromDiagnostic(diagnostic));
 
 					// For first-timers (excluding when the tutorial is open), tell them you cannot save with errors.
 					if (!tutorialConfig.getAcknowledgedSaveWithErrors().getValue() && !(workspace instanceof TutorialWorkspace))

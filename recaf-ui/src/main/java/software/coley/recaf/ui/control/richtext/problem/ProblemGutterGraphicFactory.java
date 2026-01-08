@@ -48,7 +48,7 @@ public class ProblemGutterGraphicFactory extends AbstractLineGraphicFactory  {
 
 		// Add problem graphic overlay to lines with problems.
 		int line = paragraph + 1;
-		Problem problem = problemTracking.getFirstProblemOnLine(line);
+		Problem problem = problemTracking.getFirstItemOnLine(line);
 		if (problem != null) {
 			ProblemLevel level = problem.level();
 			Color levelColor = switch (level) {

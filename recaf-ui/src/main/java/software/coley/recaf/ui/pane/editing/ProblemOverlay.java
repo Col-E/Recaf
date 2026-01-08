@@ -66,7 +66,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			if (problemTracking == null) return;
 
 			// Skip if no problems
-			Collection<Problem> problems = problemTracking.getAllProblems();
+			Collection<Problem> problems = problemTracking.getAllItems();
 			if (problems.isEmpty()) return;
 
 			// Create vertical list
@@ -164,7 +164,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			// Show the count of each kind of problem
 			HBox wrapper = new HBox();
 			wrapper.setSpacing(5);
-			int info = tracking.getProblems(p -> p.level().ordinal() <= ProblemLevel.INFO.ordinal()).size();
+			int info = tracking.getItems(p -> p.level().ordinal() <= ProblemLevel.INFO.ordinal()).size();
 			int warn = tracking.getProblemsByLevel(ProblemLevel.WARN).size();
 			int error = tracking.getProblemsByLevel(ProblemLevel.ERROR).size();
 			if (info > 0) wrapper.getChildren().add(new Label(String.valueOf(info), iconInfo));
@@ -203,11 +203,11 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			// Go to previous line with a problem.
 			CodeArea codeArea = editor.getCodeArea();
 			int line = codeArea.getCurrentParagraph() + 1;
-			Integer prevLineWithError = tracking.getProblems().floorKey(line - 1);
+			Integer prevLineWithError = tracking.getItems().floorKey(line - 1);
 			if (prevLineWithError == null)
-				prevLineWithError = tracking.getProblems().floorKey(line);
+				prevLineWithError = tracking.getItems().floorKey(line);
 			if (prevLineWithError == null)
-				prevLineWithError = tracking.getProblems().firstKey();
+				prevLineWithError = tracking.getItems().firstKey();
 			if (prevLineWithError != null) {
 				codeArea.moveTo(prevLineWithError - 1, 0);
 				codeArea.selectLine();
@@ -223,11 +223,11 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			// Go to next line with a problem.
 			CodeArea codeArea = editor.getCodeArea();
 			int line = codeArea.getCurrentParagraph() + 1;
-			Integer nextLineWithError = tracking.getProblems().ceilingKey(line + 1);
+			Integer nextLineWithError = tracking.getItems().ceilingKey(line + 1);
 			if (nextLineWithError == null)
-				nextLineWithError = tracking.getProblems().ceilingKey(line);
+				nextLineWithError = tracking.getItems().ceilingKey(line);
 			if (nextLineWithError == null)
-				nextLineWithError = tracking.getProblems().firstKey();
+				nextLineWithError = tracking.getItems().firstKey();
 			if (nextLineWithError != null) {
 				codeArea.moveTo(nextLineWithError - 1, 0);
 				codeArea.selectLine();
@@ -258,7 +258,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			tracking.addListener(this);
 
 			// Initial value set to trigger a UI refresh.
-			problemCount.set(tracking.getAllProblems().size());
+			problemCount.set(tracking.getAllItems().size());
 
 			// Layout tweaks
 			StackPane.setAlignment(this, Pos.TOP_RIGHT);
@@ -288,7 +288,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 		ProblemTracking tracking = editor.getProblemTracking();
 		if (tracking != null)
 			FxThreadUtil.run(() -> {
-				problemCount.set(tracking.getAllProblems().size());
+				problemCount.set(tracking.getAllItems().size());
 				editor.redrawParagraphGraphics();
 			});
 	}

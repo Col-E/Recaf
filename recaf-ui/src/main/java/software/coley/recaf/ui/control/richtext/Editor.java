@@ -3,7 +3,6 @@ package software.coley.recaf.ui.control.richtext;
 import com.google.common.collect.EvictingQueue;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -53,9 +52,11 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -76,6 +77,7 @@ public class Editor extends BorderPane implements Closing {
 	public static final int SHORT_DELAY_MS = 150;
 	public static final int MEDIUM_DELAY_MS = 400;
 	private static final StyleResult FALLBACK_STYLE_RESULT = new StyleResult(StyleSpans.singleton(Collections.emptyList(), 0), 0);
+	private final Map<String, EditorComponent> components = new ConcurrentHashMap<>();
 	private final StackPane stackPane = new StackPane();
 	private final CodeArea codeArea = new SafeCodeArea();
 	private final VirtualizedScrollPaneWrapper<CodeArea> codeScrollWrapper;
@@ -86,6 +88,8 @@ public class Editor extends BorderPane implements Closing {
 	private final EventStream<Change<Integer>> caretPosEventStream;
 	private final EvictingQueue<KeyCode> recentKeys = EvictingQueue.create(5);
 	private ReadOnlyStyledDocument<Collection<String>, String, Collection<String>> lastDocumentSnapshot;
+	private ScrollReset lastScrollReset = null;
+	private CaretReset lastCaretReset = null;
 	private TabCompleter<?> tabCompleter;
 	private SyntaxHighlighter syntaxHighlighter;
 	private SelectedBracketTracking selectedBracketTracking;
@@ -134,9 +138,20 @@ public class Editor extends BorderPane implements Closing {
 		// which would be a huge pain in the ass.
 		codeArea.setUseInitialStyleForInsertion(false);
 
-		// Register a text change listener for recording state used for tab completion and updating problem locations.
+		// Register a text change listener for updating caret/scroll positions after text updates.
 		codeArea.plainTextChanges().addObserver(change -> {
-			// Do fine completion updates.
+			if (lastCaretReset != null) {
+				lastCaretReset.changed(change);
+				lastCaretReset = null;
+			}
+			if (lastScrollReset != null) {
+				lastScrollReset.changed(change);
+				lastScrollReset = null;
+			}
+		});
+
+		// Register a text change listener for recording state used for tab completion.
+		codeArea.plainTextChanges().addObserver(change -> {
 			try {
 				if (tabCompleter != null)
 					tabCompleter.onFineTextUpdate(change);
@@ -200,6 +215,43 @@ public class Editor extends BorderPane implements Closing {
 	}
 
 	/**
+	 * Immediately show the given paragraph at the top of the editor.
+	 * This is opposed to {@link CodeArea#showParagraphAtTop(int)} which operates on a slight delay.
+	 *
+	 * @param paragraph
+	 * 		Paragraph index.
+	 */
+	public void showParagraphAtTop(int paragraph) {
+		virtualFlow.showAsFirst(paragraph);
+	}
+
+	/**
+	 * Immediately show the given paragraph at the bottom of the editor.
+	 * This is opposed to {@link CodeArea#showParagraphAtTop(int)} which operates on a slight delay.
+	 *
+	 * @param paragraph
+	 * 		Paragraph index.
+	 */
+	public void showParagraphAtBottom(int paragraph) {
+		virtualFlow.showAsLast(paragraph);
+	}
+
+	/**
+	 * Immediately show the given paragraph at the center of the editor.
+	 * This is opposed to {@link CodeArea#showParagraphAtCenter(int)} which operates on a slight delay.
+	 *
+	 * @param paragraph
+	 * 		Paragraph index.
+	 */
+	public void showParagraphAtCenter(int paragraph) {
+		// Approximate center position.
+		// - Assuming all cells are the same height, we can compute the offset needed to center the paragraph.
+		int count = 1 + Math.max(virtualFlow.getLastVisibleIndex() - virtualFlow.getFirstVisibleIndex(), 0);
+		double paragraphHeight = getHeight() / count;
+		virtualFlow.showAtOffset(paragraph, count/2.0 * paragraphHeight/2.0);
+	}
+
+	/**
 	 * The passed inputs for the position will be modified as per
 	 * {@link SyntaxUtil#getRangeForRestyle(String, StyleSpans, SyntaxHighlighter, PlainTextChange)}.
 	 * For this reason, you do not have to be super exact with the given values.
@@ -211,6 +263,7 @@ public class Editor extends BorderPane implements Closing {
 	 *
 	 * @return Restyle future.
 	 */
+	@Nonnull
 	public CompletableFuture<Void> restyleAtPosition(int position, int length) {
 		if (syntaxHighlighter != null) {
 			return schedule(syntaxPool, FALLBACK_STYLE_RESULT, () -> {
@@ -288,8 +341,8 @@ public class Editor extends BorderPane implements Closing {
 			text = "";
 
 		// Prepare reset of caret/scroll position
-		codeArea.textProperty().addListener(new CaretReset(codeArea.getCaretPosition()));
-		codeArea.textProperty().addListener(new ScrollReset(virtualFlow.getFirstVisibleIndex()));
+		lastCaretReset = new CaretReset(codeArea.getCaretPosition());
+		lastScrollReset = new ScrollReset(virtualFlow.getFirstVisibleIndex());
 
 		// Replace the full text document
 		if (getTextLength() == 0) {
@@ -485,6 +538,30 @@ public class Editor extends BorderPane implements Closing {
 		this.tabCompleter = tabCompleter;
 		if (tabCompleter != null)
 			tabCompleter.install(this);
+	}
+
+	/**
+	 * @param key
+	 * 		Component key.
+	 *
+	 * @return Associated component if found.
+	 */
+	@Nullable
+	public EditorComponent getComponent(@Nonnull String key) {
+		return components.get(key);
+	}
+
+	/**
+	 * @param key
+	 * 		Component key.
+	 * @param component
+	 * 		Component to associate.
+	 */
+	public void setComponent(@Nonnull String key, @Nullable EditorComponent component) {
+		if (component == null)
+			components.remove(key);
+		else
+			components.put(key, component);
 	}
 
 	/**
@@ -851,20 +928,15 @@ public class Editor extends BorderPane implements Closing {
 	 *
 	 * @see #setText(String)
 	 */
-	private class ScrollReset implements ChangeListener<String> {
+	private class ScrollReset {
 		private final int firstIndex;
 
 		ScrollReset(int firstIndex) {
 			this.firstIndex = firstIndex;
 		}
 
-		@Override
-		public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-			// Of the multiple ways to reset scroll position, this seems to be the most reliable.
-			// It's not pixel perfect, but it shouldn't be too jarring since resetting content should
-			// not happen often.
-			virtualFlow.showAsFirst(firstIndex);
-			observable.removeListener(this);
+		private void changed(@Nonnull PlainTextChange change) {
+			showParagraphAtTop(firstIndex);
 		}
 	}
 
@@ -873,17 +945,15 @@ public class Editor extends BorderPane implements Closing {
 	 *
 	 * @see #setText(String)
 	 */
-	private class CaretReset implements ChangeListener<String> {
+	private class CaretReset {
 		private final int pos;
 
 		CaretReset(int pos) {
 			this.pos = pos;
 		}
 
-		@Override
-		public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+		private void changed(@Nonnull PlainTextChange change) {
 			codeArea.moveTo(Math.min(codeArea.getLength(), pos));
-			observable.removeListener(this);
 		}
 	}
 }

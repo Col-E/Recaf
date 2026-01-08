@@ -35,6 +35,10 @@ public interface LineGraphicFactory extends EditorComponent, Comparable<LineGrap
 	 */
 	int P_LINE_PROBLEM_SQUIGGLES = 101;
 	/**
+	 * Priority for {@link ProblemSquiggleGraphicFactory}.
+	 */
+	int P_LINE_INHERITANCES = 200;
+	/**
 	 * Priority for {@link BracketMatchGraphicFactory}.
 	 */
 	int P_BRACKET_MATCH = 1000;
@@ -55,7 +59,7 @@ public interface LineGraphicFactory extends EditorComponent, Comparable<LineGrap
 	void apply(@Nonnull LineContainer container, int paragraph);
 
 	@Override
-	default int compareTo(LineGraphicFactory o) {
+	default int compareTo(@Nonnull LineGraphicFactory o) {
 		return Integer.compare(priority(), o.priority());
 	}
 }
