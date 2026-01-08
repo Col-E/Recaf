@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.layout.HBox;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -99,9 +100,9 @@ public class InheritanceGutterGraphicFactory extends AbstractLineGraphicFactory 
 			boolean isInterface = Objects.requireNonNull(parents.getFirst().path().getParent()).getValue().hasInterfaceModifier();
 			Node node = SVG.ofIconFile(isInterface ? SVG.METHOD_IMPLEMENTING : SVG.METHOD_OVERRIDING);
 			node.setCursor(Cursor.HAND);
-			box.getChildren().add(node);
-			box.setOnMousePressed(e -> {
+			node.setOnMousePressed(e -> {
 				ContextMenu menu = new ContextMenu();
+				menu.getItems().add(new MenuItem("Parents:"));
 				menu.setAutoHide(true);
 				for (Inheritance.Parent parent : parents) {
 					ClassMemberPathNode parentPath = parent.path();
@@ -115,14 +116,15 @@ public class InheritanceGutterGraphicFactory extends AbstractLineGraphicFactory 
 				}
 				menu.show(box, e.getScreenX(), e.getScreenY());
 			});
+			box.getChildren().add(node);
 		}
 		if (!children.isEmpty()) {
 			boolean isInterface = Objects.requireNonNull(children.getFirst().path().getParent()).getValue().hasInterfaceModifier();
 			Node node = SVG.ofIconFile(isInterface ? SVG.METHOD_IMPLEMENTED : SVG.METHOD_OVERRIDDEN);
 			node.setCursor(Cursor.HAND);
-			box.getChildren().add(node);
-			box.setOnMousePressed(e -> {
+			node.setOnMousePressed(e -> {
 				ContextMenu menu = new ContextMenu();
+				menu.getItems().add(new MenuItem("Children:"));
 				menu.setAutoHide(true);
 				for (Inheritance.Child child : children) {
 					ClassMemberPathNode childPath = child.path();
@@ -136,6 +138,7 @@ public class InheritanceGutterGraphicFactory extends AbstractLineGraphicFactory 
 				}
 				menu.show(box, e.getScreenX(), e.getScreenY());
 			});
+			box.getChildren().add(node);
 		}
 
 		container.addHorizontal(box);
