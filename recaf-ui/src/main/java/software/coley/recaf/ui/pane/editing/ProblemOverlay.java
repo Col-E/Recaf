@@ -287,6 +287,9 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 	public void onProblemInvalidation() {
 		ProblemTracking tracking = editor.getProblemTracking();
 		if (tracking != null)
-			FxThreadUtil.run(() -> problemCount.set(tracking.getAllProblems().size()));
+			FxThreadUtil.run(() -> {
+				problemCount.set(tracking.getAllProblems().size());
+				editor.redrawParagraphGraphics();
+			});
 	}
 }
