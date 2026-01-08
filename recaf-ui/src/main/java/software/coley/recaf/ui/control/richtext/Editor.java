@@ -18,6 +18,7 @@ import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.GenericStyledArea;
+import org.fxmisc.richtext.StyleActions;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
 import org.fxmisc.richtext.model.StyleSpans;
@@ -177,7 +178,7 @@ public class Editor extends BorderPane implements Closing {
 									int start = range.start();
 									int end = range.end();
 									return new StyleResult(syntaxHighlighter.createStyleSpans(text, start, end), start);
-								}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
+								}, result -> setStyleSpans(result.position(), result.spans()));
 							}
 						}
 
@@ -248,7 +249,29 @@ public class Editor extends BorderPane implements Closing {
 		// - Assuming all cells are the same height, we can compute the offset needed to center the paragraph.
 		int count = 1 + Math.max(virtualFlow.getLastVisibleIndex() - virtualFlow.getFirstVisibleIndex(), 0);
 		double paragraphHeight = getHeight() / count;
-		virtualFlow.showAtOffset(paragraph, count/2.0 * paragraphHeight/2.0);
+		virtualFlow.showAtOffset(paragraph, count / 2.0 * paragraphHeight / 2.0);
+	}
+
+	/**
+	 * Delegates to {@link StyleActions#setStyleSpans(int, StyleSpans)} but with some scroll-position preservation logic.
+	 *
+	 * @param from
+	 * 		Text position to start applying styles at.
+	 * @param spans
+	 * 		Style spans to apply.
+	 */
+	private void setStyleSpans(int from, @Nonnull StyleSpans<Collection<String>> spans) {
+		// Updating the styles can cause the 'Navigator' to set its target position back to zero for... some reason.
+		// See Navigator:
+		//  - setTargetPosition
+		//  - scrollCurrentPositionBy
+		// To prevent jank, we record the first visible index before the update, and restore it after.
+		//
+		// We use the CodeArea's "showParagraphAtTop" instead of our direct one on the VirtualFlow, because the CodeArea's
+		// suspension handling is necessary to keep event ordering correct (where the restoration happens after the janky reset).
+		int virtualFlowFirst = virtualFlow.getFirstVisibleIndex();
+		codeArea.setStyleSpans(from, spans);
+		codeArea.showParagraphAtTop(virtualFlowFirst);
 	}
 
 	/**
@@ -272,7 +295,7 @@ public class Editor extends BorderPane implements Closing {
 				int start = range.start();
 				int end = range.end();
 				return new StyleResult(syntaxHighlighter.createStyleSpans(getText(), start, end), start);
-			}, result -> codeArea.setStyleSpans(result.position(), result.spans()));
+			}, result -> setStyleSpans(result.position(), result.spans()));
 		}
 		return CompletableFuture.completedFuture(null);
 	}
@@ -457,7 +480,7 @@ public class Editor extends BorderPane implements Closing {
 			syntaxHighlighter.install(this);
 			String text = getText();
 			if (!text.isBlank())
-				codeArea.setStyleSpans(0, syntaxHighlighter.createStyleSpans(text, 0, getTextLength()));
+				setStyleSpans(0, syntaxHighlighter.createStyleSpans(text, 0, getTextLength()));
 		}
 	}
 

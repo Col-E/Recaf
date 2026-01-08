@@ -96,7 +96,8 @@ public class InheritanceGutterGraphicFactory extends AbstractLineGraphicFactory 
 
 		// Add inheritance icons.
 		if (!parents.isEmpty()) {
-			Node node = SVG.ofIconFile(SVG.METHOD_IMPLEMENTING);
+			boolean isInterface = Objects.requireNonNull(parents.getFirst().path().getParent()).getValue().hasInterfaceModifier();
+			Node node = SVG.ofIconFile(isInterface ? SVG.METHOD_IMPLEMENTING : SVG.METHOD_OVERRIDING);
 			node.setCursor(Cursor.HAND);
 			box.getChildren().add(node);
 			box.setOnMousePressed(e -> {
@@ -116,7 +117,8 @@ public class InheritanceGutterGraphicFactory extends AbstractLineGraphicFactory 
 			});
 		}
 		if (!children.isEmpty()) {
-			Node node = SVG.ofIconFile(SVG.METHOD_OVERRIDDEN);
+			boolean isInterface = Objects.requireNonNull(children.getFirst().path().getParent()).getValue().hasInterfaceModifier();
+			Node node = SVG.ofIconFile(isInterface ? SVG.METHOD_IMPLEMENTED : SVG.METHOD_OVERRIDDEN);
 			node.setCursor(Cursor.HAND);
 			box.getChildren().add(node);
 			box.setOnMousePressed(e -> {
