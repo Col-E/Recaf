@@ -68,7 +68,8 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 		getStyleClass().add("background");
 
 		// Set up a "loading..." overlay while the summary is still being generated
-		VBox box = new VBox(new RingProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS),
+		RingProgressIndicator ring = new RingProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
+		VBox box = new VBox(ring,
 				new BoundLabel(Lang.getBinding("workspace.info-progress")));
 		box.setAlignment(Pos.CENTER);
 		box.setSpacing(20);
@@ -107,7 +108,16 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 
 		// When the summary is done, clear the "loading..." overlay.
 		CompletableFuture.allOf(summaryFutures.toArray(CompletableFuture[]::new))
-				.whenCompleteAsync((ignored, error) -> FxThreadUtil.delayedRun(100, () -> modal.hide(true)));
+				.whenCompleteAsync((ignored, error) -> FxThreadUtil.delayedRun(100, () -> {
+					modal.hide(true);
+
+					// AtlantaFX's ring progress in the 'indeterminate' state uses the JavaFX 'RotateTransition' animation
+					// which leaks memory if not explicitly stopped. This results in any workspace content never being GC'd.
+					//
+ 					// See: https://bsky.app/profile/mattcoley.bsky.social/post/3mbvlnisiys2z
+					ring.setProgress(0);
+					box.getChildren().clear();
+				}));
 	}
 
 	@Nonnull
