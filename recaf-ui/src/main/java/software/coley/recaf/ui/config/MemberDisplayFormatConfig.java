@@ -66,7 +66,7 @@ public class MemberDisplayFormatConfig extends BasicConfigContainer {
 		return switch (nameTypeDisplay.getValue()) {
 			case NAME_ONLY -> name;
 			case NAME_AND_RAW_DESCRIPTOR -> name + " " + desc;
-			case NAME_AND_PRETTY_DESCRIPTOR -> name + " " + Types.pretty(Type.getType(desc));
+			case NAME_AND_PRETTY_DESCRIPTOR -> name + " " + Types.pretty(desc);
 		};
 	}
 
@@ -75,7 +75,7 @@ public class MemberDisplayFormatConfig extends BasicConfigContainer {
 		return switch (nameTypeDisplay.getValue()) {
 			case NAME_ONLY -> name;
 			case NAME_AND_RAW_DESCRIPTOR -> name + desc;
-			case NAME_AND_PRETTY_DESCRIPTOR -> name + " " + Types.pretty(Type.getMethodType(desc));
+			case NAME_AND_PRETTY_DESCRIPTOR -> name + " " + Types.pretty(desc);
 		};
 	}
 
@@ -83,7 +83,7 @@ public class MemberDisplayFormatConfig extends BasicConfigContainer {
 	public String getDescriptorDisplay(@Nonnull String desc) {
 		return switch (nameTypeDisplay.getValue()) {
 			case NAME_ONLY, NAME_AND_RAW_DESCRIPTOR ->  desc;
-			case NAME_AND_PRETTY_DESCRIPTOR -> Types.pretty(Type.getType(desc));
+			case NAME_AND_PRETTY_DESCRIPTOR -> Types.pretty(desc);
 		};
 	}
 

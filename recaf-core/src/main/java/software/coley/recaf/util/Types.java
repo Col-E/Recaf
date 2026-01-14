@@ -250,7 +250,7 @@ public class Types {
 	public static Type fromArrayOpcode(int opcode) {
 		return switch (opcode) {
 			case Opcodes.ARRAYLENGTH, Opcodes.BALOAD, Opcodes.CALOAD, Opcodes.SALOAD, Opcodes.IALOAD,
-					Opcodes.BASTORE, Opcodes.CASTORE, Opcodes.SASTORE, Opcodes.IASTORE -> Type.INT_TYPE;
+			     Opcodes.BASTORE, Opcodes.CASTORE, Opcodes.SASTORE, Opcodes.IASTORE -> Type.INT_TYPE;
 			case Opcodes.AALOAD, Opcodes.AASTORE -> Types.OBJECT_TYPE;
 			case Opcodes.FALOAD, Opcodes.FASTORE -> Type.FLOAT_TYPE;
 			case Opcodes.DALOAD, Opcodes.DASTORE -> Type.DOUBLE_TYPE;
@@ -299,6 +299,29 @@ public class Types {
 			case -1 -> "<undefined>";
 			default -> "<unknown>";
 		};
+	}
+
+	/**
+	 * @param descriptor
+	 * 		Input descriptor.
+	 *
+	 * @return Pretty-printed type.
+	 */
+	@Nonnull
+	public static String pretty(@Nonnull String descriptor) {
+		try {
+			Type type;
+			if (descriptor.charAt(0) == '(') {
+				type = Type.getMethodType(descriptor);
+			} else {
+				type = Type.getType(descriptor);
+			}
+			return pretty(type);
+
+		} catch (Throwable t) {
+			// Invalid descriptor, return as-is.
+			return descriptor;
+		}
 	}
 
 	/**
