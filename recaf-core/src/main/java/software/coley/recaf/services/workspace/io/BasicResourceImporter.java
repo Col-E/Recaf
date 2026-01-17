@@ -315,9 +315,10 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					try {
 						Path file = ShortcutUtil.follow(path, MAX_WALK_DEPTH);
 
-						// Read info from file
+						// Read info from file (relative to the root directory)
+						// - NIO insists both paths be of the same kind (relative vs absolute) so make both absolute.
 						ByteSource source = ByteSources.forPath(file);
-						String fileName = directoryPath.relativize(file).toString();
+						String fileName = directoryPath.toAbsolutePath().relativize(file.toAbsolutePath()).toString();
 						if (File.separator.equals("\\"))
 							fileName = fileName.replace('\\', '/');
 						Info info = infoImporter.readInfo(fileName, source);
