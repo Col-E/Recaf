@@ -272,7 +272,7 @@ public class Main {
 		// Open initial file if found.
 		try {
 			File input = launchArgs.getInput();
-			if (input != null && input.isFile()) {
+			if (input != null && input.exists()) {
 				ResourceImporter importer = recaf.get(ResourceImporter.class);
 				WorkspaceManager workspaceManager = recaf.get(WorkspaceManager.class);
 				workspaceManager.setCurrent(new BasicWorkspace(importer.importResource(input)));
