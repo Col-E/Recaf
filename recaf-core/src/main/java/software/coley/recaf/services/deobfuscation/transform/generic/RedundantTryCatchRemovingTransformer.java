@@ -24,7 +24,6 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.value.ArrayValue;
@@ -49,6 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -68,15 +68,12 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 	private static final String EX_IMSE = "java/lang/IllegalMonitorStateException";
 	private static final String EX_CCE = "java/lang/ClassCastException";
 	private static final String EX_AE = "java/lang/ArithmeticException";
-	private final Map<String, Handling> doesHandleCache = new HashMap<>();
+	private final Map<String, Handling> doesHandleCache = new ConcurrentHashMap<>();
 	private final InheritanceGraphService graphService;
-	private final WorkspaceManager workspaceManager;
 	private InheritanceGraph inheritanceGraph;
 
 	@Inject
-	public RedundantTryCatchRemovingTransformer(@Nonnull WorkspaceManager workspaceManager,
-	                                            @Nonnull InheritanceGraphService graphService) {
-		this.workspaceManager = workspaceManager;
+	public RedundantTryCatchRemovingTransformer(@Nonnull InheritanceGraphService graphService) {
 		this.graphService = graphService;
 	}
 
