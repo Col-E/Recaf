@@ -46,6 +46,9 @@ public class DragAndDrop {
 	 * 		Drag event.
 	 */
 	private static void onDragOver(@Nonnull Region region, @Nonnull DragEvent event) {
+		// TODO: Some platforms may report files via 'text/uri-list'
+		//  - Hard to test due to diversity of linux desktop environments, but seems to only be reported on linux.
+		//  - In general we'd want to support 'hasUrl' as well here and below then map the uris to paths.
 		if (event.getGestureSource() != region && event.getDragboard().hasFiles()) {
 			event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
 			event.consume();
