@@ -41,6 +41,7 @@ public class LangConfig extends BasicConfigContainer {
 		de_DE,
 		en_US,
 		ja_JP,
+		ru_RU,
 		sv_SE,
 		zh_CN
 	}

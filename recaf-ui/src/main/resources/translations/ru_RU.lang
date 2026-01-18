@@ -1,0 +1,955 @@
+## Language name
+lang.name=Русский
+
+##### General items
+## Main and context menus
+menu.analysis=Анализ
+menu.analysis.summary=Просмотр сводки
+menu.analysis.deobfuscation=Деобфускация
+menu.analysis.list-comments=Просмотр комментариев
+menu.analysis.comment=Комментарий
+menu.association.override=Переопределить язык
+menu.association.none=Ассоциации не настроены
+menu.config=Настройки
+menu.config.edit=Редактировать
+menu.config.export=Экспорт
+menu.config.import=Импорт
+menu.file=Файл
+menu.file.attach=Подключиться к удалённому
+menu.file.addtoworkspace=Добавить в рабочее пространство
+menu.file.decompileall=Декомпилировать все классы
+menu.file.decompileall.path=Путь вывода:
+menu.file.openworkspace=Открыть рабочее пространство
+menu.file.openurl=Открыть по URL
+menu.file.exportapp=Экспорт приложения
+menu.file.exportworkspace=Экспорт конфигурации рабочего пространства
+menu.file.modifications=Просмотр изменений
+menu.file.recent=Недавние
+menu.file.close=Закрыть
+menu.file.quit=Выход
+menu.goto.class=Перейти к классу
+menu.goto.field=Перейти к полю
+menu.goto.method=Перейти к методу
+menu.goto.instruction=Перейти к инструкции
+menu.goto.file=Перейти к файлу
+menu.goto.label=Перейти к метке
+menu.edit=Редактировать
+menu.edit.add.field=Добавить поле
+menu.edit.add.method=Добавить метод
+menu.edit.add.annotation=Добавить аннотацию
+menu.edit.override.method=Переопределить метод
+menu.edit.remove.field=Удалить поля
+menu.edit.remove.method=Удалить методы
+menu.edit.remove.annotation=Удалить аннотации
+menu.edit.assemble.class=Редактировать класс в ассемблере
+menu.edit.assemble.field=Редактировать поле в ассемблере
+menu.edit.assemble.method=Редактировать метод в ассемблере
+menu.edit.remove=Удалить
+menu.edit.copy=Копировать
+menu.edit.delete=Удалить
+menu.edit.noop=Сделать no-op
+menu.edit.removevars=Очистить информацию о переменных
+menu.edit.changeversion=Изменить версии классов
+menu.edit.changeversion.up=Обновить
+menu.edit.changeversion.down=Понизить
+menu.edit.newclass=Новый класс
+menu.export.class=Экспорт класса
+menu.export.file=Экспорт файла
+menu.export.classes=Экспорт классов
+menu.export.files=Экспорт файлов
+menu.export.package=Экспорт пакета
+menu.export.directory=Экспорт директории
+menu.help=Справка
+menu.help.discord=Discord
+menu.help.docs=Онлайн документация пользователя
+menu.help.docsdev=Онлайн документация разработчика
+menu.help.github=Github
+menu.help.issues=Трекер проблем
+menu.help.sysinfo=Информация о системе
+menu.help.tutorial=Обучение
+menu.refactor=Рефакторинг
+menu.refactor.move=Переместить
+menu.refactor.rename=Переименовать
+menu.search=Поиск
+menu.search.string=Строки
+menu.search.number=Числа
+menu.search.class.member-declarations=Объявления членов
+menu.search.class.member-references=Ссылки на членов
+menu.search.class.type-references=Ссылки на типы
+menu.search.class.instruction=Дизассемблирование инструкций
+menu.search.method-overrides=Переопределения методов
+menu.search.method-references=Ссылки на методы
+menu.search.field-references=Ссылки на поля
+menu.search.noresults=Нет результатов
+menu.mappings=Маппинги
+menu.mappings.apply=Применить
+menu.mappings.apply-advanced=Расширенное применение
+menu.mappings.export=Экспорт
+menu.mappings.export.unsupported=%s (Не поддерживается)
+menu.mappings.generate=Сгенерировать
+menu.mappings.view=Текущие маппинги
+menu.scripting=Скрипты
+menu.scripting.list=Скрипты
+menu.scripting.none-found=Скрипты не найдены
+menu.scripting.manage=Управление скриптами
+menu.scripting.new=Новый скрипт
+menu.scripting.edit=Редактировать
+menu.scripting.browse=Просмотр скриптов
+menu.scripting.save=Сохранить скрипт
+menu.scripting.execute=Выполнить
+menu.scripting.editor=Редактор скриптов
+menu.scripting.author=Автор
+menu.scripting.version=Версия
+menu.view=Вид
+menu.view.hierarchy=Иерархия классов
+menu.view.hierarchy.children=Дочерние
+menu.view.hierarchy.parents=Родительские
+menu.view.methodcfg=Граф потока управления
+menu.view.methodcallgraph=Граф вызовов
+menu.view.methodcallgraph.calls=Вызовы
+menu.view.methodcallgraph.callers=Вызывающие
+menu.view.methodcallgraph.focus=Сфокусироваться на методе
+menu.tab.close=Закрыть
+menu.tab.closeothers=Закрыть остальные
+menu.tab.closeall=Закрыть все
+menu.tab.copypath=Копировать путь
+menu.image.resetscale=Сбросить масштаб
+menu.image.center=Центрировать изображение
+menu.hex.copyas=Копировать как...
+menu.mode=Изменить вид
+menu.mode.class.auto=Автоматически
+menu.mode.class.decompile=Декомпилировать
+menu.mode.class.low-level=Низкоуровневый
+menu.mode.file.auto=Автоматически
+menu.mode.file.text=Текст
+menu.mode.file.hex=Hex
+menu.mode.file.image=Изображение
+menu.mode.file.audio=Аудио
+menu.mode.file.video=Видео
+menu.mode.file.pe=Windows PE
+menu.mode.file.elf=ELF
+menu.mode.diff.decompile=Декомпилировать
+menu.mode.diff.disassemble=Дизассемблировать
+menu.vm=Виртуализировать
+menu.vm.optimize=Оптимизировать
+menu.vm.run=Запустить
+menu.plugin=Плагины
+menu.plugin.manage=Управление плагинами
+menu.plugin.installed=Установленные
+menu.plugin.remote=Удалённые
+menu.plugin.browse=Просмотр плагинов
+menu.plugin.enabled=Включено
+menu.plugin.uninstall=Удалить
+menu.plugin.uninstall.warning=Вы уверены, что хотите удалить этот плагин?
+
+##### Keybinds
+bind.inputprompt.initial=<ожидание>
+bind.inputprompt.finish=<ENTER для завершения>
+bind.editor.find=Найти
+bind.editor.goto=Перейти
+bind.editor.rename=Переименовать
+bind.editor.replace=Заменить
+bind.editor.save=Сохранить
+bind.editor.undo=Отменить
+bind.editor.closetab=Закрыть текущую вкладку
+bind.quicknav=Быстрая навигация
+bind.workspace.export=Экспорт рабочего пространства
+
+##### Dialog texts
+dialog.cancel=Отмена
+dialog.close=Закрыть
+dialog.confirm=Подтвердить
+dialog.finish=Завершить
+dialog.next=Далее
+dialog.previous=Назад
+dialog.dismiss=Отклонить
+dialog.configure=Настроить
+dialog.warning=Предупреждение
+dialog.restart=Для изменения этой опции конфигурации рекомендуется перезапуск.\nВы уверены, что хотите применить?
+dialog.unknownextension=Неизвестное расширение файла. Хотите настроить ассоциацию языка?
+
+## Search
+dialog.search.type=Имя типа
+dialog.search.member-owner=Тип владельца члена
+dialog.search.member-name=Имя члена
+dialog.search.member-descriptor=Дескриптор члена
+
+## File chooser
+dialog.title.primary=Основной ресурс
+dialog.title.supporting=Вспомогательные ресурсы
+dialog.title.nochanges=Экспорт без изменений?
+dialog.file.primary=Основной
+dialog.file.open=Открыть
+dialog.file.open.directory=Директории
+dialog.file.open.file=Файлы
+dialog.file.export=Экспорт
+dialog.file.save=Сохранить
+dialog.file.nothing=Ничего не выбрано
+dialog.file.nochanges=Вы хотите экспортировать приложение, даже если не было внесено изменений?
+dialog.filefilter.any=Любой тип
+dialog.filefilter.mapping=Маппинги
+dialog.filefilter.input=Приложения
+dialog.filefilter.workspace=Рабочие пространства
+
+## File drop items
+dialog.title.create-workspace=Создать рабочее пространство
+dialog.title.update-workspace=Обработать ввод рабочего пространства
+dialog.title.close-workspace=Закрыть рабочее пространство?
+dialog.option.create-workspace=Создать новое рабочее пространство
+dialog.option.update-workspace=Добавить в рабочее пространство
+
+## Select class/file
+dialog.title.select-class=Выбрать класс
+dialog.title.select-file=Выбрать файл
+
+## Create class/file
+dialog.title.create-class=Создать класс
+dialog.header.create-class-error=Имя класса уже существует.\nПожалуйста, выберите другое имя.
+
+
+## Copy class/file
+dialog.title.copy-class=Копировать класс
+dialog.title.copy-directory=Копировать директорию
+dialog.title.copy-package=Копировать пакет
+dialog.title.copy-field=Копировать поле
+dialog.title.copy-file=Копировать файл
+dialog.title.copy-method=Копировать метод
+dialog.header.copy-class=Укажите новое имя для копируемого класса.
+dialog.header.copy-directory=Укажите новое имя для копируемой директории.
+dialog.header.copy-package=Укажите новое имя для копируемого пакета.
+dialog.header.copy-field=Укажите новое имя для копируемого поля.
+dialog.header.copy-field-error=Имя поля уже существует.\nПожалуйста, выберите другое имя.
+dialog.header.copy-file=Укажите новое имя для копируемого файла.
+dialog.header.copy-method=Укажите новое имя для копируемого метода.
+dialog.header.copy-method-error=Имя метода уже существует.\nПожалуйста, выберите другое имя.
+
+## Delete class/file
+dialog.title.delete-class=Удалить класс
+dialog.title.delete-directory=Удалить директорию
+dialog.title.delete-field=Удалить поле
+dialog.title.delete-file=Удалить файл
+dialog.title.delete-method=Удалить метод
+dialog.title.delete-package=Удалить пакет
+dialog.title.delete-resource=Удалить ресурс
+dialog.header.delete-class=Вы уверены, что хотите удалить: %s?
+dialog.header.delete-directory=Вы уверены, что хотите удалить: %s?
+dialog.header.delete-field=Вы уверены, что хотите удалить: %s?
+dialog.header.delete-file=Вы уверены, что хотите удалить: %s?
+dialog.header.delete-method=Вы уверены, что хотите удалить: %s?
+dialog.header.delete-package=Вы уверены, что хотите удалить: %s?
+dialog.header.delete-resource=Вы уверены, что хотите удалить: %s?
+
+## Rename class/file
+dialog.title.rename-class=Переименовать класс
+dialog.title.rename-class-warning=Предупреждение
+dialog.title.rename-directory=Переименовать директорию
+dialog.title.rename-field=Переименовать поле
+dialog.title.rename-file=Переименовать файл
+dialog.title.rename-file-warning=Предупреждение
+dialog.title.rename-method=Переименовать метод
+dialog.title.rename-package=Переименовать пакет
+dialog.header.rename-class=Укажите новое имя для класса.
+dialog.header.rename-class-error=Имя класса уже существует.\nПожалуйста, выберите другое имя.
+dialog.header.rename-package=Укажите новое имя для пакета.
+dialog.header.rename-package-error=Имя пакета уже существует.\nПожалуйста, выберите другое имя.
+dialog.header.rename-package-warning=Имя пакета уже существует.\nЭто может перезаписать некоторые классы.
+dialog.header.rename-directory=Укажите новое имя для директории.
+dialog.header.rename-directory-error=Имя директории уже существует.\nПожалуйста, выберите другое имя.
+dialog.header.rename-directory-warning=Имя директории уже существует.\nЭто может перезаписать некоторые файлы.
+dialog.header.rename-field=Укажите новое имя для поля.
+dialog.header.rename-field-error=Имя поля уже существует.\nПожалуйста, выберите другое имя.
+dialog.header.rename-file=Укажите новое имя для файла.
+dialog.header.rename-file-error=Имя файла уже существует.\nПожалуйста, выберите другое имя.
+dialog.header.rename-method=Укажите новое имя для метода.
+dialog.header.rename-method-error=Имя метода уже существует.\nПожалуйста, выберите другое имя.
+
+## Move class/file
+dialog.title.move-class=Выберите пакет назначения
+dialog.title.move-directory=Выберите директорию назначения (родительскую)
+dialog.title.move-file=Выберите директорию назначения
+dialog.title.move-package=Выберите пакет назначения (родительский)
+dialog.header.move-class=Переместить класс в новый пакет.
+dialog.header.move-directory=Переместить директорию в новую родительскую директорию.
+dialog.header.move-file=Переместить файл в новую директорию.
+dialog.header.move-package=Переместить пакет в новый родительский пакет.
+
+## Add members
+dialog.title.add-field=Добавить поле
+dialog.title.add-method=Добавить метод
+dialog.title.override-method=Переопределить метод
+dialog.input.name=Имя
+dialog.input.desc=Дескриптор
+dialog.warn.illegal-name=Недопустимое имя
+dialog.warn.illegal-desc=Недопустимый формат дескриптора
+dialog.warn.field-conflict=Имя поля уже существует.\nПожалуйста, выберите другое имя.
+dialog.warn.method-conflict=Имя метода уже существует.\nПожалуйста, выберите другое имя.
+
+## VM actions
+dialog.title.vm-invoke-args=Виртуализировать вызов метода
+dialog.title.vm-peephole-invoke-args=Виртуализированная локальная оптимизация
+dialog.vm.execute=Выполнить
+dialog.vm.optimize=Оптимизировать
+dialog.vm.create-dummy=Использовать заглушку
+dialog.vm.create-null=Использовать null
+
+## Hex dialogs
+dialog.hex.title.insertcount=Вставить
+dialog.hex.header.insertcount=Сколько байт вставить?
+
+# Base Converter dialog
+dialog.conv.title.literal=Числовой литерал
+dialog.conv.title.expression=Числовое выражение
+
+## Quick nav
+dialog.quicknav=Быстрая навигация
+dialog.quicknav.tab.classes=Классы
+dialog.quicknav.tab.members=Члены
+dialog.quicknav.tab.files=Файлы
+dialog.quicknav.tab.text=Текст
+dialog.quicknav.tab.commented=Комментарии
+
+## Error dialog
+dialog.error.exportclass.title=Не удалось экспортировать класс
+dialog.error.exportclass.header=Произошла ошибка при записи в место назначения
+dialog.error.exportclass.content=Ошибка:
+dialog.error.exportfile.title=Не удалось экспортировать файл
+dialog.error.exportfile.header=Произошла ошибка при записи в место назначения
+dialog.error.exportfile.content=Ошибка:
+dialog.error.exportworkspace.title=Не удалось экспортировать рабочее пространство
+dialog.error.exportworkspace.header=Произошла ошибка при записи в место назначения
+dialog.error.exportworkspace.content=Ошибка:
+dialog.error.loadworkspace.title=Не удалось загрузить рабочее пространство
+dialog.error.loadworkspace.header=Произошла ошибка при чтении из выбранных файлов
+dialog.error.loadworkspace.content=Ошибка:
+dialog.error.loadsupport.title=Не удалось загрузить вспомогательные ресурсы
+dialog.error.loadsupport.header=Произошла ошибка при чтении из выбранных файлов
+dialog.error.loadsupport.content=Ошибка:
+dialog.error.attach.title=Не удалось подключиться к JVM
+dialog.error.attach.header=Произошла ошибка при подключении к удалённой JVM
+dialog.error.attach.content=Ошибка:
+
+##### Panels
+## Welcome
+welcome.title=Добро пожаловать
+welcome.links=Ссылки
+welcome.links.home=Recaf: Главная
+welcome.links.docs-user=Документация пользователя
+welcome.links.docs-dev=Документация разработчика
+welcome.links.github=Github: Исходный код + Трекер ошибок/функций
+welcome.links.discord=Discord
+welcome.links.jvms=Спецификация виртуальной машины Java
+welcome.links.jvms.class=Формат файла класса
+welcome.links.jvms.instructions=Набор инструкций JVM
+welcome.dnd=Вы можете перетащить файлы на этот экран, чтобы открыть их.
+welcome.tutorial=Вы не завершили обучение. Нажмите здесь, чтобы начать!
+welcome.dayssince=дней с момента сборки
+welcome.norecent=Нет недавних рабочих пространств
+
+
+## Workspace
+workspace.title=Рабочее пространство
+workspace.filter-prompt=Фильтр: Имя класса/файла...
+workspace.info=Информация
+workspace.info-progress=Анализ содержимого рабочего пространства...
+
+## Attach
+attach.unsupported=Не удалось инициализировать подключение
+attach.unsupported.detail=Агенту подключения не удалось самораспаковаться.
+attach.no-vms=Не найдено подключаемых JVM
+attach.no-vms.detail=В настоящее время нет доступных виртуальных машин Java для подключения.
+attach.problem.disable-attach=Если вы пытаетесь подключиться к процессу Java, использующему -XX:+DisableAttachMechanism, пожалуйста, см.:
+attach.problem.java-21=Если вы пытаетесь подключиться к процессу Java 21+, пожалуйста, см.:
+attach.connect=Подключиться
+attach.tab.properties=Свойства
+attach.tab.classloading=Классы
+attach.tab.compilation=Компиляция
+attach.tab.system=Система
+attach.tab.runtime=Среда выполнения
+attach.tab.thread=Потоки
+
+## Changes view
+modifications.none=Нет истории изменений для элемента
+modifications.title=Изменения
+
+## Java area
+java.decompiling=Декомпиляция класса...
+java.unparsable=SourceSolver не смог интерпретировать исходный код, контекстные действия доступны только во вкладке 'Поля и методы'
+java.parse-state.error=Ошибка парсера
+java.parse-state.error-details=Контекстные действия по правому клику недоступны, так как парсинг не удался.\nВы можете использовать вкладку 'Поля и методы' в это время.
+java.parse-state.initial=Парсинг в процессе...
+java.parse-state.initial-details=Контекстные действия по правому клику недоступны до завершения парсинга.\nВы можете использовать вкладку 'Поля и методы' в это время.
+java.parse-state.new-progress=Повторный парсинг...
+java.parse-state.new-progress-details=Были внесены изменения, поэтому выполняется новый парсинг.\nСтарая модель будет использоваться, пока строится новая.\nВы можете использовать вкладку 'Поля и методы' как альтернативу.
+java.parse-state.none=Нет содержимого для парсинга
+java.decompile-failure=Не удалось декомпилировать класс. Некоторые варианты:\n- Переключить декомпиляторы\n- Открыть класс в ассемблере или другом виде\n- Попробовать деобфусцировать класс и повторить попытку
+java.decompile-failure.brief=Не удалось декомпилировать класс
+java.savewitherrors=Похоже, это первый раз, когда ваши изменения привели к ошибкам.\nОбычно это результат того, что декомпилированный код не является семантически корректным Java.\nВы должны исправить эти ошибки перед сохранением изменений.\n\nНекоторые предложения:\n - Измените декомпиляторы в 'настройках' или внизу справа (i)\n - Наведите курсор на красные блоки ошибок или нажмите на блок ошибок вверху, чтобы увидеть ошибки\n - Используйте ассемблер вместо перекомпиляции для внесения изменений
+java.savewitherrors.title=Относительно ошибок перекомпиляции
+java.decompiler=Декомпилятор
+java.targetversion=Версия цели компиляции
+java.targetversion.notice.down=Понижение версии добавит заглушки классов для эмуляции отсутствующих API
+java.targetversion.auto=Соответствовать версии файла класса
+java.targetdownsampleversion=Версия цели понижения
+java.targetdownsampleversion.disabled=Отключено
+java.targetdebug=Компилировать с отладочной информацией
+java.info=Информация о классе
+java.info.version=Версия класса
+java.info.sourcefile=Имя исходного файла
+
+## Search bar
+find.replace=Заменить
+find.replaceall=Заменить все
+find.regexinvalid=Недопустимое регулярное выражение
+find.regexreplace=Текст замены
+
+## Fields and methods
+fieldsandmethods.title=Поля и методы
+fieldsandmethods.empty=Класс не имеет членов
+fieldsandmethods.showoutlinedsynths=Показать синтетические (сгенерированные компилятором) члены
+fieldsandmethods.showoutlinedvisibility=Фильтр по видимости члена
+fieldsandmethods.showoutlinedmembertype=Фильтр по типу члена
+fieldsandmethods.nametypemode=Режим отображения имени/типа
+fieldsandmethods.sortalphabetically=Сортировать по алфавиту
+fieldsandmethods.sortbyvisibility=Сортировать по видимости
+fieldsandmethods.filter.prompt=Фильтр: Имя поля/метода...
+
+## Hierarchy
+hierarchy.title=Наследование
+hierarchy.children=Дочерние
+hierarchy.parents=Родительские
+
+## Kotlin Metadata
+kotlinmetadata.title=@Metadata
+kotlinmetadata.orderwarning=Важно: Элементы не отображаются в том же порядке, что и определены в файле класса
+
+## Logging
+logging.title=Журналирование
+
+## Assembler
+assembler.problem.0=Нет проблем
+assembler.problem.1=1 проблема
+assembler.problem.N=N проблем
+assembler.title=Ассемблер
+assembler.analysis.title=Анализ
+assembler.analysis.stack=Стек
+assembler.analysis.variables=Переменные
+assembler.analysis.type=Тип
+assembler.analysis.value=Значение
+assembler.playground.title=Java в байткод
+assembler.playground.comment=// Напишите здесь код Java, чтобы автоматически преобразовать его в байткод\n// Вы можете обращаться к полям/методам текущего класса,\n// и к параметрам/переменным текущего метода.
+assembler.snippets.title=Фрагменты
+assembler.variables.title=Объявленные переменные
+assembler.variables.name=Имя переменной
+assembler.variables.type=Тип
+assembler.variables.usage=Использования
+assembler.variables.value=Значение
+assembler.variables.empty=<Требуется компиляция хотя бы один раз>
+assembler.variables.read-before-write=Прочитано до записи
+assembler.suggestions.none=Нет предложений
+
+## Comments
+comments.search.prompt=Поиск комментария...
+
+## Search
+search.run=Поиск
+search.results=Результаты
+search.text=Текстовое содержимое
+search.textmode=Режим совпадения текста
+search.number=Числовое значение
+search.numbermode=Режим совпадения числа
+search.refowner=Владелец члена
+search.refname=Имя члена
+search.refdesc=Дескриптор типа члена
+
+## Help
+help.system=Система
+help.system.sub=Информация об ОС
+help.java=Java
+help.java.sub=Информация о JVM
+help.javafx=JavaFX
+help.javafx.sub=Информация о JavaFX UI
+help.recaf=Recaf
+help.recaf.sub=Информация о Recaf
+help.copy=Копировать информацию в буфер обмена
+help.opendir=Открыть директорию Recaf
+
+## Deobfuscation
+deobf=Деобфускация
+deobf.selection.title=Выбрать трансформеры
+deobf.order.title=Порядок трансформеров
+deobf.order.hint=Выберите трансформеры слева\nИзмените их порядок, перетаскивая сюда
+deobf.order.pre=Отсутствуют рекомендуемые предшественники
+deobf.order.suc=Отсутствуют рекомендуемые последователи
+deobf.max-passes=Максимум проходов трансформации
+deobf.preview.title=Предпросмотр
+deobf.preview.pick=Выбрать класс для предпросмотра
+deobf.preview.toggle-mode=Переключить режим предпросмотра
+deobf.preview.noselection=// Класс не выбран, выберите класс для предпросмотра\n// трансформации до и после состояний
+deobf.tree.generic=Общие
+deobf.tree.generic.anticrasher=Anti-Crasher
+deobf.tree.generic.optimize=Оптимизация
+deobf.tree.generic.restoration=Восстановление
+deobf.tree.specific=Специфичные
+deobf.apply=Трансформировать рабочее пространство
+
+## Mapping application
+mapapply=Применить маппинги
+mapapply.pick.file=Выбрать файл маппингов
+mapapply.pick.dir=Выбрать директорию маппингов
+mapapply.settings.unique=Предполагать уникальные ключи, игнорировать наследование
+
+## Mapping generator
+mapgen=Генератор маппингов
+mapgen.genimpl=Соглашение об именовании
+mapgen.filter.name=Имя
+mapgen.filter.class-name=Имя класса
+mapgen.filter.owner-name=Имя владельца
+mapgen.filter.field-name=Имя поля
+mapgen.filter.method-name=Имя метода
+mapgen.filter.variable-name=Имя переменной
+mapgen.filters=Фильтры
+mapgen.filters.add=Добавить фильтр
+mapgen.filters.edit=Редактировать выбранное
+mapgen.filters.delete=Удалить выбранное
+mapgen.filters.type=Тип фильтра
+mapgen.filter.modifiers.tooltip=Модификаторы разделяются пробелами
+mapgen.filter.excludealreadymapped=Исключить уже замаппленные
+mapgen.filter.excludemodifier=Исключить модификаторы
+mapgen.filter.excludeclasses=Исключить классы
+mapgen.filter.excludename=Исключить имена
+mapgen.filter.excludeclass=Исключить на классах
+mapgen.filter.excludefield=Исключить на полях
+mapgen.filter.excludemethod=Исключить на методах
+mapgen.filter.includemodifier=Включить модификаторы
+mapgen.filter.includeclass=Включить на классах
+mapgen.filter.includefield=Включить на полях
+mapgen.filter.includemethod=Включить на методах
+mapgen.filter.includevariable=Включить на переменных
+mapgen.filter.includewhitespacenames=Включить пробелы
+mapgen.filter.includenonasciinames=Включить не-ASCII
+mapgen.filter.includekeywords=Включить ключевые слова
+mapgen.filter.includenonjavaidentifiers=Включить не-Java идентификаторы
+mapgen.filter.includelong=Включить длинные имена
+mapgen.filter.includename=Включить имена
+mapgen.filter.includeclasses=Включить классы
+mapgen.title.newfilter=Новый фильтр
+mapgen.header.newfilter=Введите содержимое фильтра
+mapgen.preview.empty=Здесь появятся статистики сгенерированных маппингов\n\n\n
+mapgen.configure=Настроить
+mapgen.configure.nothing=Нечего настраивать
+mapgen.generate=Сгенерировать
+mapgen.apply=Применить
+
+## Mapping view
+mapprog=Прогресс маппинга
+mapprog.metric.size=Размер файла класса
+mapprog.metric.membercount=Поля и методы класса
+
+##### Tree
+tree.classes=Классы
+tree.files=Файлы
+tree.defaultpackage=(Пакет по умолчанию)
+tree.defaultdirectory=(Корневая директория)
+tree.prompt=Перетащите ваши файлы сюда
+tree.hidelibs=Скрыть библиотеки
+tree.phantoms=Сгенерированные фантомы
+tree.embedded-resources=Встроенные
+
+##### Services
+service=Все сервисы
+service.analysis=Анализ
+service.analysis.comments-config=Комментарии
+service.analysis.comments-config.enable-display=Отображать комментарии при декомпиляции
+service.analysis.comments-config.word-wrapping-limit=Лимит переноса слов
+service.analysis.info-summary-config=Суммаризация рабочего пространства
+service.analysis.info-summary-config.summarize-on-open=Суммаризировать содержимое рабочего пространства при открытии
+service.analysis.graph-calls-config=Граф вызовов
+service.analysis.graph-inheritance-config=Граф наследования
+service.analysis.jphantom-generator-config=JPhantom
+service.analysis.jphantom-generator-config.generate-workspace-phantoms=Генерировать и добавлять фантомы в рабочие пространства
+service.analysis.search-config=Поиск
+service.analysis.entry-points=Точки входа
+service.analysis.entry-points.none=Точки входа не найдены
+service.analysis.anti-decompile=Анти-декомпиляция
+service.analysis.anti-decompile.illegal-attr=Недопустимые атрибуты
+service.analysis.anti-decompile.illegal-name=Недопустимые имена
+service.analysis.anti-decompile.label-patch=Исправить %d затронутых классов
+service.analysis.signature-info=Информация о сигнатуре
+service.assembler=Ассемблер
+service.assembler.assembler-pipeline.general-config=Общие
+service.assembler.assembler-pipeline.general-config.disassembly-ast-parse-delay=Задержка парсинга AST
+service.assembler.assembler-pipeline.general-config.disassembly-indent=Отступ
+service.assembler.assembler-pipeline.general-config.disassembly-whole-floating=Стандартная нотация чисел с плавающей точкой
+service.assembler.dalvik-assembler-config=Dalvik
+service.assembler.dalvik-assembler-config.value-analysis=Включить анализ значений
+service.assembler.dalvik-assembler-config.simulate-jvm-calls=Имитировать общие вызовы JVM
+service.assembler.jvm-assembler-config=JVM
+service.assembler.jvm-assembler-config.value-analysis=Включить анализ значений
+service.assembler.jvm-assembler-config.simulate-jvm-calls=Имитировать общие вызовы JVM
+service.assembler.jvm-assembler-config.try-range-comments=Выводить комментарии диапазонов try-catch
+service.assembler.flow-lines-config=Линии потока управления
+service.assembler.flow-lines-config.connection-mode=Режим линий
+service.assembler.flow-lines-config.render-mode=Режим отрисовки
+service.compile=Компиляция
+service.compile.java-compiler-config=Javac
+service.compile.java-compiler-config.generate-phantoms=Генерировать отсутствующие классы
+service.compile.java-compiler-config.default-emit-debug=По умолчанию включать отладку
+service.compile.java-compiler-config.default-compile-target-version=Версия цели компиляции по умолчанию
+service.compile.java-compiler-config.default-downsample-target-version=Версия цели понижения по умолчанию
+service.debug=Подключение/Отладка
+service.debug.attach-config=Конфигурация подключения
+service.debug.attach-config.attach-jmx-bean-agent=Подключить агент JMX bean
+service.debug.attach-config.passive-scanning=Состояние пассивного сканирования
+service.config-manager-config=Менеджер конфигурации
+service.decompile=Декомпиляция
+service.decompile.decompilers-config=Менеджер декомпиляции
+service.decompile.decompilers-config.pref-android-decompiler=Предпочитаемый декомпилятор Android
+service.decompile.decompilers-config.pref-jvm-decompiler=Предпочитаемый декомпилятор Java
+service.decompile.decompilers-config.cache-decompilations=Кэшировать декомпиляции
+service.decompile.decompilers-config.filter-annotations-duplicate=Фильтровать дублирующиеся аннотации
+service.decompile.decompilers-config.filter-annotations-illegal=Фильтровать недопустимые аннотации
+service.decompile.decompilers-config.filter-annotations-long=Фильтровать длинные аннотации
+service.decompile.decompilers-config.filter-annotations-long-limit=Лимит длинных аннотаций
+service.decompile.decompilers-config.filter-exceptions-long=Фильтровать длинные исключения
+service.decompile.decompilers-config.filter-exceptions-long-limit=Лимит длинных исключений
+service.decompile.decompilers-config.filter-hollow=Фильтровать содержимое класса (пустое)
+service.decompile.decompilers-config.filter-illegal-signatures=Фильтровать недопустимые сигнатуры
+service.decompile.decompilers-config.filter-synthetics=Фильтровать синтетические флаги
+service.decompile.decompilers-config.filter-names-ascii=Фильтровать не-ASCII имена
+service.decompile.decompilers-config.filter-strip-debug=Фильтровать отладочные данные (переменные, дженерики)
+service.decompile.impl=Реализации
+service.decompile.impl.decompiler-cfr-config=CFR
+service.decompile.impl.decompiler-cfr-config.aexagg=Пытаться расширять и объединять исключения более агрессивно
+service.decompile.impl.decompiler-cfr-config.aexagg2=Пытаться расширять и объединять исключения более агрессивно (может изменить семантику)
+service.decompile.impl.decompiler-cfr-config.aggressivedocopy=Клонировать код из невозможных переходов в циклы с тестом 'first'
+service.decompile.impl.decompiler-cfr-config.aggressivedoextension=Сворачивать невозможные переходы в циклы do с тестом 'first'
+service.decompile.impl.decompiler-cfr-config.aggressiveduff=Сворачивать переключатели в стиле duff device с дополнительным управлением
+service.decompile.impl.decompiler-cfr-config.aggressivesizethreshold=Количество опкодов, при котором запускаются агрессивные сокращения
+service.decompile.impl.decompiler-cfr-config.allowmalformedswitch=Разрешать потенциально некорректные операторы switch
+service.decompile.impl.decompiler-cfr-config.antiobf=Отменить различные обфускации
+service.decompile.impl.decompiler-cfr-config.arrayiter=Пересоздать итерацию на основе массивов
+service.decompile.impl.decompiler-cfr-config.collectioniter=Пересоздать итерацию на основе коллекций
+service.decompile.impl.decompiler-cfr-config.commentmonitors=Заменить мониторы комментариями - полезно, если мы полностью запутались
+service.decompile.impl.decompiler-cfr-config.comments=Выводить комментарии, описывающие статус декомпилятора, флаги отката и т.д.
+service.decompile.impl.decompiler-cfr-config.constobf=Отменить обфускацию констант
+service.decompile.impl.decompiler-cfr-config.decodeenumswitch=Пересоздать switch по enum
+service.decompile.impl.decompiler-cfr-config.decodefinally=Пересоздать операторы finally
+service.decompile.impl.decompiler-cfr-config.decodelambdas=Пересобрать лямбда-функции
+service.decompile.impl.decompiler-cfr-config.decodestringswitch=Пересоздать switch по String
+service.decompile.impl.decompiler-cfr-config.eclipse=Включить трансформации для лучшей обработки кода Eclipse
+service.decompile.impl.decompiler-cfr-config.elidescala=Пропускать вещи, которые не полезны в выводе scala (serialVersionUID, @ScalaSignature)
+service.decompile.impl.decompiler-cfr-config.forbidanonymousclasses=Не разрешать анонимные классы
+service.decompile.impl.decompiler-cfr-config.forbidmethodscopedclasses=Не разрешать классы с областью видимости метода
+service.decompile.impl.decompiler-cfr-config.forceclassfilever=Принудительно задать версию файла класса (и, следовательно, java), под которую декомпилируются файлы классов
+service.decompile.impl.decompiler-cfr-config.forcecondpropagate=Протянуть результаты детерминированных переходов назад через некоторые присваивания констант
+service.decompile.impl.decompiler-cfr-config.forceexceptionprune=Удалить вложенные обработчики исключений, если они не меняют семантику
+service.decompile.impl.decompiler-cfr-config.forcereturningifs=Переместить return к месту перехода
+service.decompile.impl.decompiler-cfr-config.forcetopsort=Принудительная сортировка базовых блоков. Обычно полезно только при наличии обфускации
+service.decompile.impl.decompiler-cfr-config.forcetopsortaggress=Принудительные дополнительные агрессивные опции topsort
+service.decompile.impl.decompiler-cfr-config.forcetopsortnopull=Принудительно не позволять topsort вытягивать блоки try
+service.decompile.impl.decompiler-cfr-config.forloopaggcapture=Разрешить циклам for агрессивно переносить мутации в секцию обновления, даже если они не кажутся связанными с предикатом
+service.decompile.impl.decompiler-cfr-config.hidebridgemethods=Скрывать мостовые методы
+service.decompile.impl.decompiler-cfr-config.hidelangimports=Скрывать импорты из java.lang
+service.decompile.impl.decompiler-cfr-config.hidelongstrings=Скрывать очень длинные строки - полезно, если обфускаторы поместили фальшивый код в строки
+service.decompile.impl.decompiler-cfr-config.hideutf=Скрывать UTF8 символы - цитировать их вместо показа сырых символов
+service.decompile.impl.decompiler-cfr-config.ignoreexceptions=Отбросить информацию об исключениях, если полностью застряли (ПРЕДУПРЕЖДЕНИЕ: меняет семантику, опасно!)
+service.decompile.impl.decompiler-cfr-config.ignoreexceptionsalways=Отбросить информацию об исключениях (ПРЕДУПРЕЖДЕНИЕ: меняет семантику, опасно!)
+service.decompile.impl.decompiler-cfr-config.innerclasses=Декомпилировать внутренние классы
+service.decompile.impl.decompiler-cfr-config.instanceofpattern=Пересоздать совпадения instanceof pattern
+service.decompile.impl.decompiler-cfr-config.j14classobj=Обратить построение объекта класса java 1.4
+service.decompile.impl.decompiler-cfr-config.labelledblocks=Разрешить код, использующий помеченные блоки (обработка необычных переходов вперёд)
+service.decompile.impl.decompiler-cfr-config.lenient=Быть немного более снисходительным в ситуациях, где обычно выбрасывается исключение
+service.decompile.impl.decompiler-cfr-config.liftconstructorinit=Поднять код инициализации, общий для всех конструкторов, в инициализацию членов
+service.decompile.impl.decompiler-cfr-config.obfattr=Отменить обфускацию атрибутов
+service.decompile.impl.decompiler-cfr-config.obfcontrol=Отменить обфускацию потока управления
+service.decompile.impl.decompiler-cfr-config.override=Генерировать аннотации @Override (если метод виден как реализующий метод интерфейса или переопределяющий метод базового класса)
+service.decompile.impl.decompiler-cfr-config.previewfeatures=Декомпилировать preview функции, если класс был скомпилирован с 'javac --enable-preview'
+service.decompile.impl.decompiler-cfr-config.pullcodecase=Агрессивно втягивать код в операторы case
+service.decompile.impl.decompiler-cfr-config.recordtypes=Пересоздать типы record
+service.decompile.impl.decompiler-cfr-config.recover=Разрешить установку всё более агрессивных опций, если декомпиляция не удалась
+service.decompile.impl.decompiler-cfr-config.recovertypeclash=Разделить время жизни там, где анализ вызвал конфликт типов
+service.decompile.impl.decompiler-cfr-config.recovertypehints=Восстановить подсказки типов для итераторов из первого прохода
+service.decompile.impl.decompiler-cfr-config.reducecondscope=Уменьшить область видимости условных операторов, возможно генерируя больше анонимных блоков
+service.decompile.impl.decompiler-cfr-config.relinkconst=Пересвязать константы - если есть встроенная ссылка на поле, попытаться де-инлайнить
+service.decompile.impl.decompiler-cfr-config.relinkconststring=Пересвязать строковые константы - если есть локальная ссылка на строку, совпадающую со static final, использовать static final
+service.decompile.impl.decompiler-cfr-config.removebadgenerics=Скрывать дженерики там, где мы явно ошиблись, и откатиться к не-дженерикам
+service.decompile.impl.decompiler-cfr-config.removeboilerplate=Удалить шаблонные функции - шаблоны конструкторов, десериализацию лямбд и т.д.
+service.decompile.impl.decompiler-cfr-config.removedeadconditionals=Удалить код, который не может быть выполнен
+service.decompile.impl.decompiler-cfr-config.removedeadmethods=Удалить бессмысленные методы - конструктор по умолчанию и т.д.
+service.decompile.impl.decompiler-cfr-config.removeinnerclasssynthetics=Удалить (где возможно) неявные ссылки на внешний класс во внутренних классах
+service.decompile.impl.decompiler-cfr-config.renamedupmembers=Переименовать неоднозначные/дублирующиеся поля
+service.decompile.impl.decompiler-cfr-config.renameenumidents=Переименовать идентификаторы ENUM, которые не соответствуют их 'ожидаемым' строковым именам
+service.decompile.impl.decompiler-cfr-config.renameillegalidents=Переименовать идентификаторы, которые не являются допустимыми java идентификаторами
+service.decompile.impl.decompiler-cfr-config.renamesmallmembers=Переименовать маленькие члены. Примечание - это СЛОМАЕТ доступ на основе рефлексии, поэтому не включено автоматически
+service.decompile.impl.decompiler-cfr-config.sealed=Декомпилировать конструкции 'sealed'
+service.decompile.impl.decompiler-cfr-config.showinferrable=Украсить методы явными типами, если они не подразумеваются аргументами
+service.decompile.impl.decompiler-cfr-config.showversion=Показать используемую версию CFR в заголовке (удобно отключить при регрессионном тестировании)
+service.decompile.impl.decompiler-cfr-config.skipbatchinnerclasses=При обработке многих файлов пропускать внутренние классы, так как они всё равно будут обработаны как часть внешних классов
+service.decompile.impl.decompiler-cfr-config.staticinitreturn=Попытаться удалить return из static init
+service.decompile.impl.decompiler-cfr-config.stringbuffer=Преобразовать new StringBuffer().append.append.append в string + string + string
+service.decompile.impl.decompiler-cfr-config.stringbuilder=Преобразовать new StringBuilder().append.append.append в string + string + string
+service.decompile.impl.decompiler-cfr-config.stringconcat=Преобразовать использования StringConcatFactor в string + string + string
+service.decompile.impl.decompiler-cfr-config.sugarasserts=Пересоздать вызовы assert
+service.decompile.impl.decompiler-cfr-config.sugarboxing=Где возможно, удалить бессмысленные обёртки боксинга
+service.decompile.impl.decompiler-cfr-config.sugarenums=Пересоздать enums
+service.decompile.impl.decompiler-cfr-config.sugarretrolambda=Где возможно, пересоздать использования retro lambda
+service.decompile.impl.decompiler-cfr-config.switchexpression=Пересоздать switch expression
+service.decompile.impl.decompiler-cfr-config.tidymonitors=Удалить поддерживающий код для мониторов - например, блоки catch только для выхода из монитора
+service.decompile.impl.decompiler-cfr-config.tryresources=Восстановить try-with-resources
+service.decompile.impl.decompiler-cfr-config.usenametable=Использовать таблицу имён локальных переменных, если присутствует
+service.decompile.impl.decompiler-cfr-config.usesignatures=Использовать сигнатуры в дополнение к дескрипторам (когда они не явно неверны)
+service.decompile.impl.decompiler-cfr-config.version=Показать текущую версию CFR
+service.decompile.impl.decompiler-procyon-config=Procyon
+service.decompile.impl.decompiler-procyon-config.alwaysGenerateExceptionVariableForCatchBlocks=Всегда генерировать блок catch
+service.decompile.impl.decompiler-procyon-config.arePreviewFeaturesEnabled=Включить preview функции языка
+service.decompile.impl.decompiler-procyon-config.bytecodeOutputOptions=Опции вывода байткода
+service.decompile.impl.decompiler-procyon-config.disableForEachTransforms=Отключить трансформации forEach(...)
+service.decompile.impl.decompiler-procyon-config.excludeNestedTypes=Исключить вложенные типы
+service.decompile.impl.decompiler-procyon-config.flattenSwitchBlocks=Сглаживать блоки switch
+service.decompile.impl.decompiler-procyon-config.forceExplicitImports=Принудительно явные импорты
+service.decompile.impl.decompiler-procyon-config.forceExplicitTypeArguments=Принудительно явные аргументы типов
+service.decompile.impl.decompiler-procyon-config.forceFullyQualifiedReferences=Принудительно полностью квалифицированные ссылки
+service.decompile.impl.decompiler-procyon-config.forcedCompilerTarget=Версия целевого языка
+service.decompile.impl.decompiler-procyon-config.includeErrorDiagnostics=Включать диагностику ошибок
+service.decompile.impl.decompiler-procyon-config.includeLineNumbersInBytecode=Показать номера строк отладки (байткод)
+service.decompile.impl.decompiler-procyon-config.isUnicodeOutputEnabled=Включить unicode в выводе
+service.decompile.impl.decompiler-procyon-config.languageTarget=Целевой язык
+service.decompile.impl.decompiler-procyon-config.mergeVariables=Объединять переменные, когда возможно
+service.decompile.impl.decompiler-procyon-config.retainPointlessSwitches=Сохранять бесполезные switch
+service.decompile.impl.decompiler-procyon-config.retainRedundantCasts=Сохранять бесполезные приведения
+service.decompile.impl.decompiler-procyon-config.showDebugLineNumbers=Показать номера строк отладки
+service.decompile.impl.decompiler-procyon-config.showSyntheticMembers=Показать синтетические члены
+service.decompile.impl.decompiler-procyon-config.simplifyMemberReferences=Упрощать ссылки на члены
+service.decompile.impl.decompiler-procyon-config.textBlockLineMinimum=Минимум строк текстового блока
+service.decompile.impl.decompiler-vineflower-config=Vineflower
+service.decompile.impl.decompiler-vineflower-config.logging-level=Уровень логирования
+service.decompile.impl.decompiler-vineflower-config.remove-bridge=Удалить мостовые методы
+service.decompile.impl.decompiler-vineflower-config.remove-synthetic=Удалить синтетические методы и поля
+service.decompile.impl.decompiler-vineflower-config.decompile-inner=Декомпилировать внутренние классы
+service.decompile.impl.decompiler-vineflower-config.decompile-java4=Декомпилировать ссылки на классы Java 4
+service.decompile.impl.decompiler-vineflower-config.decompile-assert=Декомпилировать утверждения
+service.decompile.impl.decompiler-vineflower-config.hide-empty-super=Скрывать пустой super()
+service.decompile.impl.decompiler-vineflower-config.hide-default-constructor=Скрывать конструктор по умолчанию
+service.decompile.impl.decompiler-vineflower-config.decompile-generics=Декомпилировать дженерики
+service.decompile.impl.decompiler-vineflower-config.incorporate-returns=Включать return в блоки try-catch
+service.decompile.impl.decompiler-vineflower-config.ensure-synchronized-monitors=Обеспечить полноту синхронизированных диапазонов
+service.decompile.impl.decompiler-vineflower-config.decompile-enums=Декомпилировать enums
+service.decompile.impl.decompiler-vineflower-config.decompile-preview=Декомпилировать Preview функции
+service.decompile.impl.decompiler-vineflower-config.remove-getclass=Удалить ссылку getClass()
+service.decompile.impl.decompiler-vineflower-config.keep-literals=Оставлять литералы как есть
+service.decompile.impl.decompiler-vineflower-config.boolean-as-int=Представлять boolean как 0/1
+service.decompile.impl.decompiler-vineflower-config.ascii-strings=ASCII символы строк
+service.decompile.impl.decompiler-vineflower-config.synthetic-not-set=Синтетический не установлен
+service.decompile.impl.decompiler-vineflower-config.undefined-as-object=Обрабатывать неопределённый тип параметра как Object
+service.decompile.impl.decompiler-vineflower-config.use-lvt-names=Использовать имена LVT
+service.decompile.impl.decompiler-vineflower-config.use-method-parameters=Использовать параметры метода
+service.decompile.impl.decompiler-vineflower-config.remove-empty-try-catch=Удалить пустые блоки try-catch
+service.decompile.impl.decompiler-vineflower-config.decompile-finally=Декомпилировать Finally
+service.decompile.impl.decompiler-vineflower-config.lambda-to-anonymous-class=Декомпилировать лямбды как анонимные классы
+service.decompile.impl.decompiler-vineflower-config.bytecode-source-mapping=Маппинг байткода в исходный код
+service.decompile.impl.decompiler-vineflower-config.__dump_original_lines__=Вывести строки кода
+service.decompile.impl.decompiler-vineflower-config.ignore-invalid-bytecode=Игнорировать недопустимый байткод
+service.decompile.impl.decompiler-vineflower-config.verify-anonymous-classes=Проверять анонимные классы
+service.decompile.impl.decompiler-vineflower-config.ternary-constant-simplification=Упрощение тернарных констант
+service.decompile.impl.decompiler-vineflower-config.pattern-matching=Сопоставление с образцом
+service.decompile.impl.decompiler-vineflower-config.try-loop-fix=Исправление Try-Loop
+service.decompile.impl.decompiler-vineflower-config.ternary-in-if=[Экспериментально] Тернарный оператор в условиях If
+service.decompile.impl.decompiler-vineflower-config.decompile-switch-expressions=Декомпилировать switch expressions
+service.decompile.impl.decompiler-vineflower-config.show-hidden-statements=[Отладка] Показать скрытые операторы
+service.decompile.impl.decompiler-vineflower-config.override-annotation=Аннотация Override
+service.decompile.impl.decompiler-vineflower-config.simplify-stack=Упрощение стека второго прохода
+service.decompile.impl.decompiler-vineflower-config.verify-merges=[Экспериментально] Проверять объединения переменных
+service.decompile.impl.decompiler-vineflower-config.include-classpath=Включить весь classpath
+service.decompile.impl.decompiler-vineflower-config.include-runtime=Включить Java Runtime
+service.decompile.impl.decompiler-vineflower-config.explicit-generics=Явные аргументы дженериков
+service.decompile.impl.decompiler-vineflower-config.inline-simple-lambdas=Инлайнить простые лямбды
+service.decompile.impl.decompiler-vineflower-config.log-level=Уровень логирования
+service.decompile.impl.decompiler-vineflower-config.max-time-per-method=[УСТАРЕЛО] Максимальное время обработки метода
+service.decompile.impl.decompiler-vineflower-config.rename-members=Переименовать члены
+service.decompile.impl.decompiler-vineflower-config.user-renamer-class=Класс переименования пользователя
+service.decompile.impl.decompiler-vineflower-config.new-line-separator=[УСТАРЕЛО] Разделитель новой строки
+service.decompile.impl.decompiler-vineflower-config.indent-string=Строка отступа
+service.decompile.impl.decompiler-vineflower-config.preferred-line-length=Предпочитаемая длина строки
+service.decompile.impl.decompiler-vineflower-config.banner=Баннер
+service.decompile.impl.decompiler-vineflower-config.error-message=Сообщение об ошибке
+service.decompile.impl.decompiler-vineflower-config.thread-count=Количество потоков
+service.decompile.impl.decompiler-vineflower-config.skip-extra-files=Пропускать дополнительные файлы
+service.decompile.impl.decompiler-vineflower-config.warn-inconsistent-inner-attributes=Предупреждать о несогласованных внутренних атрибутах
+service.decompile.impl.decompiler-vineflower-config.dump-bytecode-on-error=Вывести байткод при ошибке
+service.decompile.impl.decompiler-vineflower-config.dump-exception-on-error=Вывести исключения при ошибке
+service.decompile.impl.decompiler-vineflower-config.decompiler-comments=Комментарии декомпилятора
+service.decompile.impl.decompiler-vineflower-config.sourcefile-comments=Комментарии SourceFile
+service.decompile.impl.decompiler-vineflower-config.decompile-complex-constant-dynamic=Декомпилировать сложные выражения constant-dynamic
+service.decompile.impl.decompiler-vineflower-config.force-jsr-inline=Принудительно инлайнить JSR
+service.decompile.impl.decompiler-vineflower-config.dump-text-tokens=Вывести текстовые токены
+service.decompile.impl.decompiler-vineflower-config.remove-imports=Удалить импорты
+service.decompile.impl.decompiler-vineflower-config.mark-corresponding-synthetics=Пометить соответствующие синтетические
+service.io=Ввод-вывод
+service.io.directories-config=Директории
+service.io.export-config=Экспорт
+service.io.export-config.bundle-supporting-resources=Включать вспомогательные ресурсы в вывод
+service.io.export-config.compression=Стратегия сжатия содержимого вывода
+service.io.export-config.create-zip-dir-entries=Создавать записи 'директории' ZIP в выводе
+service.io.export-config.warn-no-changes=Предупреждать при экспорте без внесённых изменений
+service.io.gson-provider-config=Json
+service.io.gson-provider-config.pretty-print=Красивый вывод
+service.io.info-importer-config=Импорт содержимого
+service.io.info-importer-config.class-patch-mode=Режим патча класса
+service.io.recent-workspaces-config=Недавние рабочие пространства
+service.io.recent-workspaces-config.last-workspace-export-path=Последний путь экспорта рабочего пространства
+service.io.recent-workspaces-config.last-workspace-open-path=Последний путь открытия рабочего пространства
+service.io.recent-workspaces-config.max-recent-workspaces=Максимальная запись недавних путей
+service.io.recent-workspaces-config.recent-workspaces=Недавнее рабочее пространство
+service.io.recent-workspaces-config.last-class-export-path=Последний путь экспорта класса
+service.io.resource-importer-config=Импорт архивов
+service.io.resource-importer-config.zip-strategy=Стратегия парсинга ZIP
+service.io.resource-importer-config.allow-basic-base-offset-zero-check=По умолчанию проверять 0 как начало zip со стратегией JVM
+service.io.resource-importer-config.skip-revisited-cen-to-local-links=Пропускать дублирующиеся записи CEN-to-LFH со стратегией JVM
+service.io.resource-importer-config.ignore-file-lengths=Игнорировать заявленные длины файлов со стратегией Naive/Standard
+service.io.resource-importer-config.adapt-standard-cen-file-names=Принять имена файлов CEN со стратегией Standard
+service.io.resource-importer-config.max-embedded-zip-depth=Максимальная глубина обхода встроенных zip
+service.io.resource-importer-config.parallelize=Включить многопоточное чтение ввода
+service.mapping=Маппинг
+service.mapping.mapping-aggregator-config=Агрегация маппингов
+service.mapping.mapping-formats-config=Форматы маппингов
+service.mapping.mapping-generator-config=Генератор маппингов
+service.mapping.name-gen-provider=Генераторы имён
+service.mapping.name-gen-provider.alphabet=Алфавит
+service.mapping.name-gen-provider.alphabet.alphabet=Символы алфавита
+service.mapping.name-gen-provider.alphabet.length=Минимальная длина
+service.plugin=Плагины
+service.plugin.plugin-manager-config=Менеджер плагинов
+service.plugin.plugin-manager-config.scan-on-start=Загружать при запуске
+service.plugin.script-manager-config=Менеджер скриптов
+service.plugin.script-manager-config.file-watching=Пассивно сканировать директорию скриптов на изменения
+service.transform=Трансформация
+service.transform.transformation-applier-config=Применение трансформаций
+service.transform.transformation-applier-config.parallelize=Включить многопоточное применение трансформеров
+service.ui=Пользовательский интерфейс
+service.ui.bind-config=Привязки
+service.ui.bind-config.bundle=Пакет карты привязок
+service.ui.class-editing-config=Редактирование классов
+service.ui.class-editing-config.default-android-editor=Редактор по умолчанию для классов Android
+service.ui.class-editing-config.default-jvm-editor=Редактор по умолчанию для классов JVM
+service.ui.decompile-pane-config=Панель декомпиляции
+service.ui.decompile-pane-config.timeout-seconds=Таймаут декомпилятора (секунды)
+service.ui.decompile-pane-config.mapping-acceleration=Ускорить операции ремаппинга
+service.ui.hex-config=Hex редактор
+service.ui.hex-config.row-length=Столбцы
+service.ui.hex-config.row-split-interval=Интервал разделения столбцов
+service.ui.hex-config.show-address=Показать адрес
+service.ui.hex-config.show-ascii=Показать ASCII
+service.ui.member-format-config=Формат полей и методов
+service.ui.member-format-config.name-type-display=Отображение имени и типа
+service.ui.tab-completion-config=Автодополнение табуляцией
+service.ui.text-format-config=Формат текста
+service.ui.tab-completion-config.enabled-in-assembler=Включено в ассемблере
+service.ui.tab-completion-config.max-completion-length=Максимальная длина дополнения
+service.ui.tab-completion-config.max-completion-rows=Отображаемые строки дополнения
+service.ui.tab-completion-config.popup-position=Предпочитаемая позиция всплывающего окна дополнения относительно курсора
+service.ui.text-format-config.escape=Включить экранирование текста
+service.ui.text-format-config.max-length=Максимальная длина отображения текста
+service.ui.text-format-config.shorten=Включить сокращение текста
+service.ui.file-type-syntax-association-config=Ассоциации типов файлов
+service.ui.file-type-syntax-association-config.extensions-to-langs=Карта расширений на языки
+service.ui.snippets-config=Фрагменты
+service.ui.window-manager-config=Менеджер окон
+service.ui.window-scale-config=Масштабирование окна
+service.ui.window-scale-config.scale=Масштаб
+service.ui.workspace-explorer-config=Обозреватель рабочего пространства
+service.ui.workspace-explorer-config.drag-drop-action=Поведение перетаскивания
+service.ui.workspace-explorer-config.max-tree-dir-depth=Максимальная глубина дерева директорий
+service.ui.language-config=Язык
+service.ui.language-config.current=Текущий язык
+
+### Matcher translations
+number.match.equal=значение == n
+number.match.not=значение != n
+number.match.gt=значение > n
+number.match.gte=значение >= n
+number.match.lt=значение < n
+number.match.lte=значение <= n
+number.match.gt-lt=мин < значение < макс
+number.match.gte-lt=мин <= значение < макс
+number.match.gt-lte=мин < значение <= макс
+number.match.gte-lte=мин <= значение <= макс
+number.match.any-of=числа.contains(значение)
+string.match.anything=Всё
+string.match.zilch=Ничего
+string.match.contains=строка.contains(значение)
+string.match.contains-ic=строка.containsIgnoreCase(значение)
+string.match.ends=строка.endsWith(значение)
+string.match.ends-ic=строка.endsWithIgnoreCase(значение)
+string.match.equal=строка.equals(значение)
+string.match.equal-ic=строка.equalsIgnoreCase(значение)
+string.match.regex-full=строка.matches(значение)
+string.match.regex-partial=строка.matchesPartially(значение)
+string.match.starts=строка.startsWith(значение)
+string.match.starts-ic=строка.startsWithIgnoreCase(значение)
+
+### Misc stuff
+misc.acknowledge=Принять
+misc.all=Все
+misc.none=Нет
+misc.done=Готово
+misc.ignored=Игнорировано
+misc.enabled=Включено
+misc.disabled=Отключено
+misc.download=Скачать
+misc.download.invalid-url=Недопустимый URL
+misc.before=До
+misc.after=После
+misc.load=Загрузить
+misc.clear=Очистить
+misc.export=Экспорт
+misc.remove=Удалить
+misc.removed=Удалено
+misc.casesensitive=Учитывать регистр
+misc.path=Путь
+misc.regex=Регулярное выражение
+misc.member.field=Поле
+misc.member.method=Метод
+misc.member.field-n-method=Поле и метод
+misc.member.inner-class=Внутренний класс
+misc.member.inner-interface=Внутренний интерфейс
+misc.member.inner-enum=Внутренний enum
+misc.member.inner-annotation=Внутренняя аннотация
+misc.accessflag.visibility.public=Публичный
+misc.accessflag.visibility.protected=Защищённый
+misc.accessflag.visibility.private=Приватный
+misc.accessflag.visibility.package=Пакетный
+misc.direction.up=Вверх
+misc.direction.down=Вниз
+misc.direction.left=Влево
+misc.direction.right=Вправо
+misc.direction.top=Верх
+misc.direction.bottom=Низ
+misc.position.top=Верх
+misc.position.bottom=Низ
+misc.position.left=Слева
+misc.position.right=Справа
+misc.position.center=Центр
+misc.position.middle=Середина
+
+### Tutorial messages
+service.ui.tutorial-config=Обучение
+tutorial.1.class=Добро пожаловать в обучение Recaf!\n\nСледуйте комментариям в этом классе (и других), чтобы узнать о функциях Recaf.
+tutorial.1.field=Сейчас вы смотрите на декомпилированный код. Исходного кода нет, но для простого класса, как этот, декомпилятор должен дать вам почти идеальное представление о том, как выглядел бы исходный код.\n\nRecaf имеет несколько встроенных декомпиляторов:\n\n - CFR (по умолчанию)\n - Procyon\n - Vineflower (форк FernFlower, декомпилятора, встроенного в IntelliJ)\n\nВы можете переключаться между этими декомпиляторами, нажав кнопку шестерёнки внизу справа.
+tutorial.1.main=Если вы смотрите на обычный Java код (без обфускации, без сторонних языков типа Kotlin/Groovy/и т.д.), то вы можете редактировать этот декомпилированный код и нажать [Control + S], чтобы внести изменения в класс. Recaf не будет автоматически заменять файл на вашей локальной машине при этом, изменения остаются только в Recaf при успешном сохранении. Чтобы сохранить любые изменения, вам нужно перейти в меню 'Файл' и выбрать 'Экспорт приложения'.
+tutorial.1.run=Этот метод берёт поле 'String message', определённое выше, и выводит его.\n\nПопробуйте изменить строку, присвоенную полю, на что-то другое, кроме 'Hello World', и сохраните изменения.\n\nВы должны увидеть, как границы этой области мигают зелёным при успехе. Как только это произойдёт, следующая глава откроется автоматически.
+tutorial.2.class=Этот класс был изменён, чтобы скрыть секретный метод. Некоторые методы могут быть скрыты, если они помечены как автоматически сгенерированные компилятором. Это довольно распространено в коде, использующем лямбда-выражения. Кроме того, обфускаторы также могут помечать вещи как автоматически сгенерированные, чтобы скрыть их.
+tutorial.2.field=В этом классе есть больше, чем просто это поле.\n\nВверху справа есть вкладка 'Поля и методы'. Нажмите на неё, чтобы просмотреть объявленные поля и методы этого класса. Вы должны найти там скрытый метод.\nПопробуйте дважды кликнуть на него!
+tutorial.2.method=Рядом с вкладкой 'Поля и методы' находится вкладка 'Наследование'. По умолчанию она показывает, какие классы расширяют или реализуют текущий класс. Внизу панели есть кнопка, которая показывает, какой контент отображается. Вы можете нажать на неё, чтобы переключаться между показом родительских и дочерних классов. Эта панель покажет вам полное дерево наследования, так что если у вас 'A extends B, B extends C, C extends D', вы можете увидеть всю цепочку в панели.\n\nПопробуйте найти следующую главу в панели 'Наследование'.\nПравый клик на ней и выберите 'Перейти к классу'.
+tutorial.3.class=Этот класс также был изменён, чтобы скрыть секретное значение. Вы можете найти его, правым кликом на вкладке этого класса (вверху, она должна быть подчёркнута синим) и 'Изменить вид' на 'Низкоуровневый'. Этот низкоуровневый вид показывает больше 'низкоуровневых' деталей о файле класса. Он не будет абстрагировать детали, как другие функции Recaf. Посмотрите вокруг в поисках секретного ключа, и когда найдёте его, вернитесь и введите его в поле 'answer' ниже.
+tutorial.3.field=Поместите секретный текст сюда и сохраните через [Control + S].\n\nЕсли ваш ответ неверен, это перезапишет содержимое класса и сотрёт ключ. О нет!\n\nНе волнуйтесь, вы можете вернуться к более старым версиям классов и файлов через [Control + U]. Это вернёт файл к последнему состоянию, которое было до сохранения, то есть секрет вернётся на своё исходное место. Это не то же самое, что [Control + Z], который является обычной отменой текста.
+tutorial.3.method=Если вам нужна подсказка, секрет не ссылается ни на один исполняемый код. Где бы была определена такая константа?
+tutorial.4.class=На этот раз нет секретов. Всё, что вам нужно сделать, это решить эту математическую задачу.\n\nКакое итоговое значение передаётся в метод 'consume'?
+tutorial.4.field=Поместите целочисленное значение, которое передаётся в 'consume', сюда.
+tutorial.4.method=Это выглядит как много работы для ручного выполнения. Не волнуйтесь, Recaf делает это очень легко!\n\nВ байткод-ассемблере Recaf есть утилиты, которые могут помочь. Чтобы открыть ассемблер, правый клик на имени какого-либо объявленного класса, поля или метода, затем выберите 'Редактировать > Редактировать в ассемблере'. Вы также можете правым кликом на записях во вкладке 'Поля и методы' вверху справа.\n\nДля этого примера правый клик на имени этого метода (где написано "main").\nЗатем выберите 'Редактировать > Редактировать в ассемблере'.\n\nАссемблер покажет вам инструкции этого метода вместе с любой другой релевантной метаданной. Внизу ассемблера есть некоторые инструменты, которые можно открыть, кликнув на них. Откройте инструмент 'Анализ' и затем кликните на разные строки кода в методе. Вы должны довольно быстро выяснить значение, которое передаётся в 'consume'.
+tutorial.5.class=Этот класс обфусцирован! Если вы попытаетесь сохранить используя [Control + S] с этим декомпилированным кодом, вы увидите, как редактор мигает красным, и ошибки появятся слева как наложения поверх номеров строк.\n\nВы не можете сохранить, когда присутствуют ошибки.\n\nВ обфусцированном коде вы не должны использовать [Control + S] на декомпилированном коде.\nВместо этого используйте ассемблер и вносите изменения там. Сохранение в ассемблере позволяет вам вносить изменения, которые обычно не разрешены в исходном коде Java. Плюс, это гарантирует, что вы меняете только то, что действительно намереваетесь. Когда вы сохраняете декомпилированный код, вы можете непреднамеренно сохранить изменения, сделанные декомпилятором, которые не правильно представляют, как работает логика приложения.
+tutorial.5.main=В этой главе вам нужно открыть ассемблер на обфусцированном методе.\n\nИспользуйте вкладку 'Поля и методы' и правый клик на обфусцированном методе, затем откройте ассемблер.\n\nОбфусцированный метод в настоящее время реализован неправильно. Правильная реализация может быть найдена в комментарии ниже в следующем методе.\n\nСкопируйте код из того комментария.\n\nВ ассемблере для обфусцированного метода нажмите 'Java в байткод'. Слева редактор, который принимает исходный код Java. Справа редактор, который покажет вам эквивалентный байткод Java. Вставьте код, который вы скопировали, в левую сторону (заменив существующий код там и удалив '*' перед каждой строкой).\n\nПри правильном выполнении вы должны увидеть справа метод, содержащий байткод, сгенерированный из компиляции кода слева. Вы можете скопировать инструкции из этого сгенерированного метода и вставить их в ассемблер выше. Чтобы было ясно, вы копируете только инструкции, а не весь сгенерированный метод. Если вы правильно скопировали логику расшифровки и сохранили изменения в ассемблере, следующая глава будет раскрыта.
+tutorial.5.decrypt=int key = Thread.currentThread().getStackTrace()[1].getMethodName().hashCode();\nchar[] chars = text.toCharArray();\nfor (int i = 0; i < chars.length; i++) chars[i] ^= key;\nreturn String.valueOf(chars);
+tutorial.5.finished=Правый клик на типе возврата этого метода "Chapter6" и выберите 'Перейти к классу'.\n\nВы можете альтернативно использовать [Control + Click] на ссылках, чтобы избежать необходимости проходить через контекстное меню каждый раз.
+tutorial.6.class=Когда вы правым кликом на классе, поле или методе, вы можете увидеть, какой другой код ссылается на выбранную вами вещь.\n\n - Классы: Поиск > Ссылки на типы/члены\n - Поля: Ссылки на поля\n - Методы: Ссылки на методы\n\nВы можете найти эти опции поиска в меню 'Поиск' в строке меню вверху UI, вместе с другими вещами, такими как поиск строк и числовых литералов.
+tutorial.6.method=Попробуйте найти, что ссылается на этот метод.
+tutorial.7.class=Поздравляем, это конец обучения!\n\nНажмите [Control + S] ещё раз в последний раз, чтобы отметить обучение как завершённое.\n\nПозже будет добавлено больше в обучение, но это должно покрыть все самые важные функции для вашего обычного случая использования. В то же время, не стесняйтесь исследовать другие функции самостоятельно!
