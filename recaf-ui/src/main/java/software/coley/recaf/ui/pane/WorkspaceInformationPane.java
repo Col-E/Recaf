@@ -26,6 +26,7 @@ import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.info.summary.ResourceSummaryService;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.util.FxThreadUtil;
@@ -55,7 +56,8 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 	public WorkspaceInformationPane(@Nonnull TextProviderService textService,
 	                                @Nonnull IconProviderService iconService,
 	                                @Nonnull ResourceSummaryService summaryService,
-	                                @Nonnull Workspace workspace) {
+	                                @Nonnull WorkspaceManager workspaceManager) {
+		Workspace workspace = workspaceManager.getCurrent();
 		path = PathNodes.workspacePath(workspace);
 
 		// Adding content

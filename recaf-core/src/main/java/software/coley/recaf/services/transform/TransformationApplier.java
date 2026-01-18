@@ -1,7 +1,6 @@
 package software.coley.recaf.services.transform;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import software.coley.collections.Sets;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -101,15 +100,14 @@ public class TransformationApplier {
 	 */
 	@Nonnull
 	public JvmTransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses) throws TransformationException {
-		return transformJvm(transformerClasses, null);
+		return transformJvm(transformerClasses, TransformationFeedback.DEFAULT);
 	}
 
 	/**
 	 * @param transformerClasses
 	 * 		JVM class transformers to run.
-	 * @param predicate
-	 * 		Filter to control which JVM classes are transformed.
-	 * 		Can be {@code null} to transform all JVM classes.
+	 * @param feedback
+	 * 		Feedback to report transformation progress to, and control which JVM classes are transformed.
 	 *
 	 * @return Result container with details about the transformation, including any failures, the transformed classes,
 	 * and the option to apply the transformations to the workspace.
@@ -119,7 +117,7 @@ public class TransformationApplier {
 	 */
 	@Nonnull
 	public JvmTransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
-	                                       @Nullable JvmClassTransformerPredicate predicate) throws TransformationException {
+	                                       @Nonnull TransformationFeedback feedback) throws TransformationException {
 		// Build transformer visitation order.
 		TransformerQueue queue = buildQueue(cast(transformerClasses));
 
@@ -163,14 +161,19 @@ public class TransformationApplier {
 						tasks.clear();
 						for (JvmClassInfo cls : bundle)
 							tasks.add(() -> {
+								// Skip if transformation has been cancelled
+								if (feedback.hasRequestedCancellation())
+									return null;
+
 								// Skip if the class does not pass the predicate
-								if (predicate != null && !predicate.shouldTransform(workspace, resource, bundle, cls))
+								if (!feedback.shouldTransform(workspace, resource, bundle, cls, transformer, currentPass))
 									return null;
 
 								try {
 									context.resetTransformerTracking();
 									transformer.transform(context, workspace, resource, bundle, cls);
-									if (context.didTransformerDoWork()) {
+									boolean didWork = context.didTransformerDoWork();
+									if (didWork) {
 										// Transformer modified this class, record the interaction
 										anyWorkDone.set(true);
 										transformerWorkDone.set(true);
@@ -184,11 +187,16 @@ public class TransformationApplier {
 												paths.add(path);
 											}
 										}
+										feedback.onTransformed(workspace, resource, bundle, cls, transformer, currentPass);
+									} else {
+										feedback.onTransformedWithoutWork(workspace, resource, bundle, cls, transformer, currentPass);
 									}
 									logger.debugging(l -> l.debug("Pass {}: Transformer {} didWork={}",
-											currentPass, transformer.getClass().getSimpleName(), context.didTransformerDoWork()));
+											currentPass, transformer.getClass().getSimpleName(), didWork));
+
 								} catch (Throwable t) {
 									logger.error("Transformer '{}' failed on class '{}'", transformer.name(), cls.getName(), t);
+									feedback.onTransformFailure(workspace, resource, bundle, cls,  transformer,currentPass, t);
 									ClassPathNode path = bundlePathNode.child(cls.getPackageName()).child(cls);
 									var transformerToThrowable = transformJvmFailures.computeIfAbsent(path, p -> Collections.synchronizedMap(new IdentityHashMap<>()));
 									transformerToThrowable.put(transformer.getClass(), t);
@@ -219,6 +227,7 @@ public class TransformationApplier {
 						break;
 				}
 			});
+			feedback.onCompletion();
 		} catch (RuntimeException ex) {
 			// Handle the interrupt runtime exception seen a few lines up.
 			throw new TransformationException("Unexpected runtime exception", ex);

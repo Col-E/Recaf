@@ -100,7 +100,7 @@ public class SearchService implements Service {
 	 */
 	@Nonnull
 	public Results search(@Nonnull Workspace workspace, @Nonnull List<Query> queries) {
-		return search(workspace, queries, SearchFeedback.NO_OP);
+		return search(workspace, queries, SearchFeedback.DEFAULT);
 	}
 
 	/**

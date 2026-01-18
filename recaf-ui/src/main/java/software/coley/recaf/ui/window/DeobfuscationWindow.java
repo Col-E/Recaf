@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.window;
 
+import atlantafx.base.controls.ModalPane;
 import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
@@ -9,17 +10,21 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -27,6 +32,7 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -74,6 +80,7 @@ import software.coley.recaf.services.transform.JvmTransformResult;
 import software.coley.recaf.services.transform.TransformationApplier;
 import software.coley.recaf.services.transform.TransformationApplierService;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.services.transform.TransformationFeedback;
 import software.coley.recaf.services.transform.TransformationManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.LanguageStylesheets;
@@ -94,10 +101,16 @@ import software.coley.recaf.util.threading.Batch;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -135,6 +148,18 @@ public class DeobfuscationWindow extends RecafStage {
 		this.decompilerManager = decompilerManager;
 		this.assemblerPipelineManager = assemblerPipelineManager;
 
+		ObjectProperty<FullFeedback> transformFeedback = new SimpleObjectProperty<>();
+
+		// TODO: This UI could use some polish (Rewriting), but the core functionality is here.
+		//  - The initial size often leads to the transform preview being very small.
+		//  - The disassembler view in the preview pane isn't a full 'AssemblerPane' so it lacks features.
+		//    - ControlFlowLines cannot be installed because that requires an AssemblerPane.
+		//  - The preview pane's controls on the bottom are uniform sized which looks bad with text of different lengths.
+		//  - Later it would make sense to make config objects for some transformers.
+		//    - These would exist in the global config and would be editable there but should also be shown here.
+		//    - Currently there is nowhere to display this config in the UI as we already are tight on space.
+		//    - Examples:
+		//      - The CallInlineTransformer needs to have the simulation step max be configurable.
 		BorderPane transformerTreePane = new BorderPane();
 		{
 			BoundLabel title = new BoundLabel(Lang.getBinding("deobf.selection.title"));
@@ -371,7 +396,6 @@ public class DeobfuscationWindow extends RecafStage {
 				beforePreview.togglePreviewMode();
 				afterPreview.togglePreviewMode();
 			});
-			BooleanProperty working = new SimpleBooleanProperty();
 			Button applyToWorkspace = new ActionButton(CarbonIcons.PLAY, Lang.getBinding("deobf.apply"), () -> {
 				TransformationApplier applier = transformationApplierService.newApplierForCurrentWorkspace();
 				if (applier == null)
@@ -382,19 +406,22 @@ public class DeobfuscationWindow extends RecafStage {
 						.filter(JvmClassTransformer.class::isAssignableFrom)
 						.toList());
 				try {
-					working.set(true);
+					FullFeedback feedback = new FullFeedback();
+					transformFeedback.set(feedback);
 					applier.setMaxPasses(maxPasses.get());
-					JvmTransformResult result = applier.transformJvm(list);
-					result.apply();
-					FxThreadUtil.run(this::hide);
+					JvmTransformResult result = applier.transformJvm(list, feedback);
+					if (!feedback.hasRequestedCancellation()) {
+						result.apply();
+						FxThreadUtil.run(this::hide);
+					}
 				} catch (TransformationException e) {
 					// TODO: A tooltip or something showing would also be nice to have here since this is in a separate
 					//  window which could mean the user cannot see the logging pane output.
 					logger.error("Failed applying transformations to workspace", e);
 				}
-				working.set(false);
+				transformFeedback.set(null);
 			}).async();
-			applyToWorkspace.disableProperty().bind(hasSelection.not().or(working));
+			applyToWorkspace.disableProperty().bind(hasSelection.not().or(transformFeedback.isNotNull()));
 			transformerOrder.addListener((ListChangeListener<CategorizedTransformer>) change -> {
 				beforePreview.updatePreview();
 				afterPreview.updatePreview();
@@ -426,10 +453,62 @@ public class DeobfuscationWindow extends RecafStage {
 		transformerTreePane.setPadding(new Insets(4));
 		transformerOrderPane.setPadding(new Insets(4));
 		transformPreviewPane.setPadding(new Insets(4));
+		BorderPane inputPane = new BorderPane(split);
+
+		ModalPane modal = new ModalPane();
+		modal.setPersistent(true); // Prevent escape key from closing the dialog while transforming.
+		modal.setAlignment(Pos.CENTER);
+		transformFeedback.addListener((ob, oldFeedback, newFeedback) -> FxThreadUtil.run(() -> {
+			// The 'apply' button is configured to run asynchronously, so this callback is not on the FX thread.
+			// This is why we have the wrapping run call above.
+			if (newFeedback != null) {
+				// Basic progress bar + label to display how far along the transformation process is.
+				Button cancel = new ActionButton(CarbonIcons.CLOSE, Lang.getBinding("dialog.cancel"), newFeedback::cancel).once();
+				Label label = new Label();
+				label.setMinWidth(200);
+				ProgressBar progressBar = new ProgressBar(0);
+				progressBar.setMinWidth(250);
+
+				// Manually sizing the controls above is easier than messing with auto-sizing.
+				// I've tried various approaches with the GridPane, and it refuses to expand the progress bar properly.
+				GridPane content = new GridPane();
+				content.getStyleClass().addAll(Styles.BORDER_DEFAULT, Styles.BG_DEFAULT);
+				content.setAlignment(Pos.CENTER);
+				content.setPadding(new Insets(20));
+				content.setHgap(10);
+				content.setVgap(20);
+				content.add(progressBar, 0, 0, 2, 1);
+				content.add(label, 0, 1);
+				content.add(cancel, 1, 1);
+				content.setMinSize(400, 100);
+				newFeedback.observer = new FullFeedback.FeedbackObserver() {
+					long lastUpdate = 0;
+
+					@Override
+					public void update() {
+						long now = System.currentTimeMillis();
+						if (now - lastUpdate > 100) {
+							lastUpdate = now;
+							FxThreadUtil.run(() -> {
+								int classes = newFeedback.classesVisited.size();
+								int maxClasses = newFeedback.maxClasses;
+								progressBar.setProgress((double) classes / maxClasses);
+								label.setText(classes + " / " + maxClasses + " (Pass: " + newFeedback.currentPass + ")");
+							});
+						}
+					}
+				};
+				modal.show(new Group(content));
+			} else {
+				if (oldFeedback != null)
+					oldFeedback.observer = null;
+				modal.hide();
+			}
+		}));
 
 		// Window setup
 		titleProperty().bind(Lang.getBinding("deobf"));
-		setScene(new RecafScene(new BorderPane(split)));
+		setScene(new RecafScene(new StackPane(inputPane, modal)));
 		setWidth(900);
 		setHeight(600);
 	}
@@ -460,7 +539,8 @@ public class DeobfuscationWindow extends RecafStage {
 		private ClassInfo classInfo;
 
 		private TransformPreview(@Nonnull FileTypeSyntaxAssociationService languageAssociation,
-		                         @Nonnull Instance<SearchBar> searchBarProvider, boolean andApply) {
+		                         @Nonnull Instance<SearchBar> searchBarProvider,
+		                         boolean andApply) {
 			this.andApply = andApply;
 
 			editorDecompile = new Editor();
@@ -469,7 +549,6 @@ public class DeobfuscationWindow extends RecafStage {
 			editorDecompile.getCodeArea().setEditable(false);
 			languageAssociation.configureEditorSyntax("java", editorDecompile);
 
-			// TODO: Control flow lines would also be nice to have here
 			editorAssembly = new Editor();
 			editorAssembly.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
 			editorAssembly.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
@@ -551,6 +630,11 @@ public class DeobfuscationWindow extends RecafStage {
 				return;
 			}
 
+			// TODO: There are cases where the target class was not transformed, but an inner class was.
+			//  In these cases we should still be able to show the decompilation of the target class while
+			//  reflecting the inner class changes. However, our current decompiler API just pulls from the
+			//  workspace, which won't have the transformed inner class until after we apply.
+			//  - Will need to create a lightweight view of the workspace that overlays transformed classes for decompilation.
 			JvmClassInfo jvmClass = getProcessedClass();
 			if (jvmClass == null) return;
 
@@ -587,12 +671,16 @@ public class DeobfuscationWindow extends RecafStage {
 						throw new TransformationException("No workspace is open");
 					applier.setMaxPasses(maxPasses.get());
 					JvmTransformResult result = applier
-							.transformJvm(transformers, (_, _, _, targetClass) -> targetClass.getName().equals(classInfo.getName()));
+							.transformJvm(transformers, new PreviewFeedback(classInfo));
 					result.getTransformerFailures().forEach((_, map) -> map.forEach((transformer, error) -> {
 						logger.debugging(l -> l.warn("Transformer '{}' failure: ", transformer.getSimpleName(), error));
 					}));
-					if (!result.getTransformedClasses().isEmpty())
-						jvmClass = result.getTransformedClasses().values().iterator().next();
+					for (JvmClassInfo resultClass : result.getTransformedClasses().values()) {
+						if (resultClass.getName().equals(classInfo.getName())) {
+							jvmClass = resultClass;
+							break;
+						}
+					}
 				} catch (TransformationException e) {
 					FxThreadUtil.run(() -> editorDecompile.setText("// Failed to transform: " + e.getMessage() + "\n"
 							+ "// " + StringUtil.traceToString(e).replace("\n", "\n// ")));
@@ -601,6 +689,89 @@ public class DeobfuscationWindow extends RecafStage {
 			}
 
 			return jvmClass;
+		}
+	}
+
+	/**
+	 * Transformation feedback that tracks all classes transformed.
+	 */
+	private static class FullFeedback implements TransformationFeedback {
+		private final Set<ClassBundle<?>> targetBundles = Collections.newSetFromMap(new IdentityHashMap<>());
+		private final Set<String> classesVisited = Collections.newSetFromMap(new ConcurrentHashMap<>());
+		private int currentPass;
+		private int maxClasses;
+		private boolean cancelled;
+		private FeedbackObserver observer;
+
+		public void cancel() {
+			cancelled = true;
+		}
+
+		@Override
+		public boolean hasRequestedCancellation() {
+			return cancelled;
+		}
+
+		@Override
+		public void onTransformFailure(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
+		                               @Nonnull ClassBundle<?> bundle, @Nonnull ClassInfo classInfo,
+		                               @Nonnull ClassTransformer transformer,int pass,
+		                               @Nullable Throwable error) {
+			// TODO: In the UI we should show errors affecting classes grouped by transformer as they occur.
+			//  - Mainly so that users can report bugs on specific transformers when they run into issues.
+			onTransformed(workspace, resource, bundle, classInfo, transformer, pass);
+		}
+
+		@Override
+		public void onTransformedWithoutWork(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
+		                                     @Nonnull ClassBundle<?> bundle, @Nonnull ClassInfo classInfo,
+		                                     @Nonnull ClassTransformer transformer,int pass) {
+			onTransformed(workspace, resource, bundle, classInfo, transformer, pass);
+		}
+
+		@Override
+		public void onTransformed(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
+		                          @Nonnull ClassBundle<?> bundle, @Nonnull ClassInfo classInfo,
+		                          @Nonnull ClassTransformer transformer, int pass) {
+			// Reset per-pass tracking.
+			if (currentPass != pass) {
+				currentPass = pass;
+				classesVisited.clear();
+			}
+
+			// Update max class count based on unique bundles seen.
+			synchronized (targetBundles) {
+				if (targetBundles.add(bundle))
+					maxClasses += bundle.size();
+			}
+
+			// Track unique classes transformed this pass.
+			classesVisited.add(classInfo.getName());
+
+			// Notify observer of progress.
+			if (observer != null)
+				observer.update();
+		}
+
+		interface FeedbackObserver {
+			void update();
+		}
+	}
+
+	/**
+	 * Transformation feedback that filters to only the preview class <i>(and its inner classes)</i>.
+	 */
+	private static class PreviewFeedback implements TransformationFeedback {
+		private final ClassInfo targetClass;
+
+		public PreviewFeedback(@Nonnull ClassInfo targetClass) {
+			this.targetClass = targetClass;
+		}
+
+		@Override
+		public boolean shouldTransform(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
+		                               @Nonnull ClassBundle<?> bundle, @Nonnull ClassInfo classInfo,  @Nonnull ClassTransformer transformer,int pass) {
+			return classInfo.isInnerClassOf(targetClass.getName());
 		}
 	}
 
@@ -628,6 +799,7 @@ public class DeobfuscationWindow extends RecafStage {
 			return transformer.type() == cls;
 		}
 
+		@Nonnull
 		@Override
 		public String toString() {
 			return category().key() + ':' + transformer().type().getName();

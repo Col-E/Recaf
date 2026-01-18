@@ -20,7 +20,7 @@ public interface SearchFeedback {
 	/**
 	 * Default implementation that runs searches to completion, without any filtering.
 	 */
-	SearchFeedback NO_OP = new SearchFeedback() {
+	SearchFeedback DEFAULT = new SearchFeedback() {
 	};
 
 	/**
