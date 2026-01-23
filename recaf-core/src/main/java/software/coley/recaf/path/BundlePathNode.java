@@ -2,7 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
+import software.coley.recaf.info.Named;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
@@ -143,7 +143,7 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 						.map(Map.Entry::getKey)
 						.findFirst()
 						.orElse(null);
-				return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(dexName, otherDexName);
+				return Named.STRING_PATH_COMPARATOR.compare(dexName, otherDexName);
 			}
 		}
 		return 0;

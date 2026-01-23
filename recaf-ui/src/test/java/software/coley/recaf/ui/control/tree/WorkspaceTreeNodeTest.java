@@ -262,6 +262,30 @@ class WorkspaceTreeNodeTest {
 		assertArrayEquals(new Object[]{a, b, cu, c, d, e}, children.toArray());
 	}
 
+	@Test
+	void nameOverloadSensitivity() {
+		WorkspaceTreeNode root = new WorkspaceTreeNode(p5);
+		WorkspaceTreeNode bundle = root.getOrCreateNodeByPath(p3c);
+
+		// Adding classes with different capitalization should yield different nodes.
+		// Adding the same capitalization should yield the same node.
+		WorkspaceTreeNode a1 = root.getOrCreateNodeByPath(p3c.child("aaa"));
+		WorkspaceTreeNode a1_alt = root.getOrCreateNodeByPath(p3c.child("aaa"));
+		WorkspaceTreeNode a2 = root.getOrCreateNodeByPath(p3c.child("aaA"));
+		WorkspaceTreeNode a3 = root.getOrCreateNodeByPath(p3c.child("aAa"));
+		WorkspaceTreeNode a4 = root.getOrCreateNodeByPath(p3c.child("Aaa"));
+		WorkspaceTreeNode a5 = root.getOrCreateNodeByPath(p3c.child("AAA"));
+
+		// Same node check
+		assertSame(a1, a1_alt, "Same path yielded different node references");
+
+		// Different node check
+		List.of(a2,a3,a4,a5).forEach(n -> {
+			assertNotNull(n, "Expected node to be created");
+			assertNotSame(a1, n, "Different path yielded same node reference");
+		});
+	}
+
 	/**
 	 * The named path sorter was getting confused when checking "does 'a' have 'b' as a parent-directory" if either
 	 * String was empty, which is the case for classes in the default package. This led to inconsistent return value

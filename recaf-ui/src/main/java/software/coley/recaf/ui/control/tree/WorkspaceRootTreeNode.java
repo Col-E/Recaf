@@ -2,7 +2,6 @@ package software.coley.recaf.ui.control.tree;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
@@ -114,7 +113,7 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 		if (!embeddedResources.isEmpty()) {
 			EmbeddedResourceContainerPathNode containerPath = resourcePath.embeddedChildContainer();
 			embeddedResources.entrySet().stream() // Insert in sorted order of path name
-					.sorted((o1, o2) -> CaseInsensitiveSimpleNaturalComparator.getInstance().compare(o1.getKey(), o2.getKey()))
+					.sorted((o1, o2) -> Named.STRING_PATH_COMPARATOR.compare(o1.getKey(), o2.getKey()))
 					.map(Map.Entry::getValue)
 					.forEach(embeddedResource -> {
 						ResourcePathNode resourcePathEmbedded = containerPath.child(embeddedResource);

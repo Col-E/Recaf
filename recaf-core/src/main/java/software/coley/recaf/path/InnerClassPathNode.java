@@ -2,9 +2,9 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.info.Named;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 
 import java.util.Set;
@@ -31,7 +31,7 @@ public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassIn
 	 * @see ClassPathNode#child(InnerClassInfo)
 	 */
 	public InnerClassPathNode(@Nullable ClassPathNode parent,
-							  @Nonnull InnerClassInfo innerClass) {
+	                          @Nonnull InnerClassInfo innerClass) {
 		super(TYPE_ID, parent, innerClass);
 	}
 
@@ -64,7 +64,7 @@ public class InnerClassPathNode extends AbstractPathNode<ClassInfo, InnerClassIn
 		if (o instanceof InnerClassPathNode innerClassPathNode) {
 			String name = getValue().getInnerClassName();
 			String otherName = innerClassPathNode.getValue().getInnerClassName();
-			return CaseInsensitiveSimpleNaturalComparator.getInstance().compare(name, otherName);
+			return Named.STRING_PATH_COMPARATOR.compare(name, otherName);
 		}
 
 		// Show before members

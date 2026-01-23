@@ -14,6 +14,30 @@ import java.util.Objects;
  */
 public interface Named {
 	/**
+	 * Comparator for {@link String} items.
+	 * First compares case-insensitively with natural ordering, then falls back to case-sensitive comparison.
+	 */
+	Comparator<String> STRING_COMPARATOR = (a, b) -> {
+		// Fallback to natural string comparison, first case-insensitive but then case-sensitive to differentiate.
+		int cmp = CaseInsensitiveSimpleNaturalComparator.getInstance().compare(a, b);
+		if (cmp == 0)
+			cmp = a.compareTo(b);
+		return cmp;
+	};
+
+	/**
+	 * Comparator for {@link Named} items.
+	 * First compares case-insensitively with natural ordering, then falls back to case-sensitive comparison.
+	 *
+	 * @see #STRING_COMPARATOR
+	 */
+	Comparator<Named> NAMED_COMPARATOR = (o1, o2) -> {
+		String a = o1.getName();
+		String b = o2.getName();
+		return STRING_COMPARATOR.compare(a, b);
+	};
+
+	/**
 	 * Comparator for {@link String} items whose content represent file paths.
 	 */
 	@SuppressWarnings("StringEquality")
@@ -43,15 +67,13 @@ public interface Named {
 				return -1;
 		}
 
-		// Fallback to natural string comparison, first case-insensitive but then case-sensitive to differentiate.
-		int cmp = CaseInsensitiveSimpleNaturalComparator.getInstance().compare(a, b);
-		if (cmp == 0)
-			cmp = a.compareTo(b);
-		return cmp;
+		return STRING_COMPARATOR.compare(a, b);
 	};
 
 	/**
 	 * Comparator for {@link Named} items whose names represent file paths.
+	 *
+	 * @see #STRING_PATH_COMPARATOR
 	 */
 	Comparator<Named> NAMED_PATH_COMPARATOR = (o1, o2) -> {
 		String a = o1.getName();

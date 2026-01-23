@@ -5,7 +5,12 @@ import jakarta.annotation.Nullable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
-import javafx.scene.control.*;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -13,11 +18,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.collections.Lists;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.Named;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
@@ -38,7 +43,12 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -127,7 +137,6 @@ public class MethodCallGraphPane extends BorderPane implements ClassNavigable, U
 	 * Item of a class in the hierarchy.
 	 */
 	private static class CallGraphItem extends TreeItem<MethodMember> implements Comparable<CallGraphItem> {
-		private static final Comparator<String> comparator = CaseInsensitiveSimpleNaturalComparator.getInstance();
 		boolean recursive;
 
 		private CallGraphItem(@Nonnull MethodMember method, boolean recursive) {
@@ -150,11 +159,11 @@ public class MethodCallGraphPane extends BorderPane implements ClassNavigable, U
 			ClassInfo declaringClass = getDeclaringClass();
 			ClassInfo otherDeclaringClass = o.getDeclaringClass();
 			if (declaringClass != null)
-				cmp = comparator.compare(declaringClass.getName(), otherDeclaringClass.getName());
+				cmp = Named.STRING_PATH_COMPARATOR.compare(declaringClass.getName(), otherDeclaringClass.getName());
 			if (cmp == 0)
-				cmp = comparator.compare(method.getName(), otherMethod.getName());
+				cmp = Named.STRING_COMPARATOR.compare(method.getName(), otherMethod.getName());
 			if (cmp == 0)
-				cmp = comparator.compare(method.getDescriptor(), otherMethod.getDescriptor());
+				cmp = Named.STRING_COMPARATOR.compare(method.getDescriptor(), otherMethod.getDescriptor());
 			return cmp;
 		}
 	}

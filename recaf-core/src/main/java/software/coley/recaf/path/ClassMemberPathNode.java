@@ -2,9 +2,9 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.Named;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.LocalVariable;
@@ -195,7 +195,7 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 				// Just sort alphabetically if parent not known.
 				String key = member.getName() + member.getDescriptor();
 				String otherKey = otherMember.getName() + member.getDescriptor();
-				cmp = CaseInsensitiveSimpleNaturalComparator.getInstance().compare(key, otherKey);
+				cmp = Named.STRING_COMPARATOR.compare(key, otherKey);
 			}
 			return cmp;
 		}
