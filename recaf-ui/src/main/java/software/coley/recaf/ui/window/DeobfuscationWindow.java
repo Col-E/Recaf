@@ -771,7 +771,7 @@ public class DeobfuscationWindow extends RecafStage {
 		@Override
 		public boolean shouldTransform(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
 		                               @Nonnull ClassBundle<?> bundle, @Nonnull ClassInfo classInfo,  @Nonnull ClassTransformer transformer,int pass) {
-			return classInfo.isInnerClassOf(targetClass.getName());
+			return classInfo.getName().equals(targetClass.getName()) || classInfo.isInnerClassOf(targetClass.getName());
 		}
 	}
 
