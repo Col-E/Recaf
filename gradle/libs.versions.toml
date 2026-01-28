@@ -145,6 +145,8 @@ vineflower = { module = "org.vineflower:vineflower", version.ref = "vineflower" 
 
 sourcesolver = { module = "software.coley:source-solver", version.ref = "sourcesolver" }
 
+toml4j = { module = "io.hotmoka:toml4j", version = "0.7.3" }
+
 [bundles]
 asm = [
     "asm-core",

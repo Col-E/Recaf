@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.reactfx)
     implementation(libs.richtextfx)
     implementation(libs.treemapfx)
+    implementation(libs.toml4j)
 }
 
 application {
