@@ -152,8 +152,6 @@ public class ReFrame extends Frame<ReValue> {
 		ReValue top = stackSnapshot[stackSnapshotSize - 1];
 		if (top.hasKnownValue() && top instanceof IntValue intTop) {
 			Branching branching = predicate.test(intTop) ? Branching.TAKEN : Branching.NOT_TAKEN;
-			if (target == null) // Fall through is taken only if the branch predicate fails, so invert the test result.
-				branching = branching.invert();
 			analyzer.notifyJumpVisited(target, branching);
 		} else {
 			analyzer.notifyJumpVisited(target, Branching.UNKNOWN);
@@ -164,8 +162,6 @@ public class ReFrame extends Frame<ReValue> {
 		ReValue top = stackSnapshot[stackSnapshotSize - 1];
 		if (top instanceof ObjectValue objTop) {
 			Branching branching = predicate.compute(objTop);
-			if (target == null) // Fall through is taken only if the branch predicate fails, so invert the test result.
-				branching = branching.invert();
 			analyzer.notifyJumpVisited(target, branching);
 		} else {
 			analyzer.notifyJumpVisited(target, Branching.UNKNOWN);
@@ -178,8 +174,6 @@ public class ReFrame extends Frame<ReValue> {
 		if (topL.hasKnownValue() && topL instanceof IntValue intTopLeft &&
 				topR.hasKnownValue() && topR instanceof IntValue intTopRight) {
 			Branching branching = predicate.test(intTopLeft, intTopRight) ? Branching.TAKEN : Branching.NOT_TAKEN;
-			if (target == null) // Fall through is taken only if the branch predicate fails, so invert the test result.
-				branching = branching.invert();
 			analyzer.notifyJumpVisited(target, branching);
 		} else {
 			analyzer.notifyJumpVisited(target, Branching.UNKNOWN);
@@ -192,8 +186,6 @@ public class ReFrame extends Frame<ReValue> {
 		if (topL.hasKnownValue() && topL instanceof ObjectValue objTopLeft &&
 				topR.hasKnownValue() && topR instanceof ObjectValue objTopRight) {
 			Branching branching = predicate.compute(objTopLeft, objTopRight);
-			if (target == null) // Fall through is taken only if the branch predicate fails, so invert the test result.
-				branching = branching.invert();
 			analyzer.notifyJumpVisited(target, branching);
 		} else {
 			analyzer.notifyJumpVisited(target, Branching.UNKNOWN);
