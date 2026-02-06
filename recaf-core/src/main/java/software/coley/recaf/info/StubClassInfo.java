@@ -194,6 +194,11 @@ public class StubClassInfo implements ClassInfo {
 		return name.hashCode();
 	}
 
+	@Override
+	public String toString() {
+		return name;
+	}
+
 	private static class Android extends StubClassInfo implements AndroidClassInfo {
 		public Android(@Nonnull String name) {
 			super(name);

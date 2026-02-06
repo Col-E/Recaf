@@ -32,7 +32,6 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 /**
  * Workspace tree item subtype representing the root of the tree.
@@ -135,13 +134,7 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 	                            @Nonnull ClassBundle<?> bundle) {
 		Map<String, DirectoryPathNode> directories = new HashMap<>();
 		BundlePathNode bundlePath = containingResourcePath.child(bundle);
-
-		// Pre-sort classes to skip tree-building comparisons/synchronizations.
-		TreeSet<ClassInfo> sortedClasses = new TreeSet<>(Named.NAMED_PATH_COMPARATOR);
-		sortedClasses.addAll(bundle.values());
-
-		// Add each class in sorted order.
-		for (ClassInfo classInfo : sortedClasses) {
+		for (ClassInfo classInfo : bundle.values()) {
 			String packageName = interceptDirectoryName(classInfo.getPackageName());
 			DirectoryPathNode packagePath = directories.computeIfAbsent(packageName, bundlePath::child);
 			visitClass(packagePath, classInfo);
@@ -158,7 +151,7 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 	 */
 	protected void visitClass(@Nonnull DirectoryPathNode packagePath, @Nonnull ClassInfo classInfo) {
 		ClassPathNode classPath = packagePath.child(classInfo);
-		WorkspaceTreeNode.getOrInsertIntoTree(this, classPath, true);
+		WorkspaceTreeNode.getOrInsertIntoTree(this, classPath);
 	}
 
 	/**
@@ -173,13 +166,7 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 	                          @Nonnull FileBundle bundle) {
 		Map<String, DirectoryPathNode> directories = new HashMap<>();
 		BundlePathNode bundlePath = containingResourcePath.child(bundle);
-
-		// Pre-sort classes to skip tree-building comparisons/synchronizations.
-		TreeSet<FileInfo> sortedFiles = new TreeSet<>(Named.NAMED_PATH_COMPARATOR);
-		sortedFiles.addAll(bundle.values());
-
-		// Add each file in sorted order.
-		for (FileInfo fileInfo : sortedFiles) {
+		for (FileInfo fileInfo : bundle.values()) {
 			String directoryName = interceptDirectoryName(fileInfo.getDirectoryName());
 			DirectoryPathNode directoryPath = directories.computeIfAbsent(directoryName, bundlePath::child);
 			visitFile(directoryPath, fileInfo);
@@ -196,7 +183,7 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 	 */
 	protected void visitFile(@Nonnull DirectoryPathNode directoryPath, @Nonnull FileInfo fileInfo) {
 		FilePathNode filePath = directoryPath.child(fileInfo);
-		WorkspaceTreeNode.getOrInsertIntoTree(this, filePath, true);
+		WorkspaceTreeNode.getOrInsertIntoTree(this, filePath);
 	}
 
 	/**

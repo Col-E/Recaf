@@ -60,11 +60,22 @@ public interface Named {
 			else if (directoryPathB.isEmpty())
 				return 1;
 
-			// If neither are the top-level directory then check if one is a subdir of the other.
-			if (directoryPathB.startsWith(directoryPathA))
-				return 1;
-			else if (directoryPathA.startsWith(directoryPathB))
-				return -1;
+			// If both paths have the same number of separators, then we can do a normal string comparison on the directory paths.
+			// If they have different numbers of separators, then we want to check if one is a parent of the other (or vice versa).
+			int sectionCountA = StringUtil.count('/', directoryPathA);
+			int sectionCountB = StringUtil.count('/', directoryPathB);
+			if (sectionCountA == sectionCountB) {
+				// Compare directories as paths.
+				int cmp = STRING_COMPARATOR.compare(directoryPathA, directoryPathB);
+				if (cmp != 0)
+					return cmp;
+			} else {
+				// Check for parent-child relationship between the directory paths. The parent directory should be shown first.
+				if (directoryPathB.startsWith(directoryPathA))
+					return 1;
+				else if (directoryPathA.startsWith(directoryPathB))
+					return -1;
+			}
 		}
 
 		return STRING_COMPARATOR.compare(a, b);
