@@ -52,3 +52,5 @@ shadowJar {
         exclude(dependency(javaFxIncludeInDist ? 'invalid:invalid:invalid' : 'org.openjfx:.*:.*'))
     }
 }
+
+apply from: '../gradle/tasks.gradle'

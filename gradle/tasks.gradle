@@ -1,0 +1,436 @@
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+// Copies all project dependencies (including transitive) to the local Maven repository.
+// This is useful for offline development, or when IntelliJ fails to resolve sources automatically.
+// Yes, this is AI slop, but it works. Good lord, I could not bring myself to write this by hand.
+tasks.register('cacheToMavenLocal') {
+    description = 'Copies all project dependencies (including transitive) to the local Maven repository'
+    group = 'dependencies'
+
+    doLast {
+        def processedComponents = new HashSet()
+        def allComponentIds = new HashSet()
+        def allComponents = []
+        def componentRepositories = [:]  // Map component to repository URL
+
+        // Build a list of repository URLs from the project's configured repositories
+        def repositoryUrls = []
+        project.repositories.each { repo ->
+            if (repo.hasProperty('url') && repo.name != 'MavenLocal') {
+                def repoUrl = repo.url.toString()
+                if (!repoUrl.endsWith('/')) {
+                    repoUrl += '/'
+                }
+                repositoryUrls.add([name: repo.name, url: repoUrl])
+                println "Found repository: ${repo.name} -> ${repoUrl}"
+            }
+        }
+
+        // First pass: collect all component IDs and determine their origin repositories
+        configurations.each { configuration ->
+            if (configuration.canBeResolved) {
+                try {
+                    configuration.incoming.resolutionResult.allComponents.each { component ->
+                        if (component.moduleVersion) {
+                            allComponentIds.add(component.id)
+                            allComponents.add(component)
+
+                            def moduleVersion = component.moduleVersion
+                            def componentKey = "${moduleVersion.group}:${moduleVersion.name}:${moduleVersion.version}".toString()
+
+                            // Try to determine repository by checking which one has the artifact
+                            if (!componentRepositories.containsKey(componentKey)) {
+                                def group = moduleVersion.group
+                                def name = moduleVersion.name
+                                def version = moduleVersion.version
+                                def groupPath = group.replace('.', '/')
+                                def pomFileName = "${name}-${version}.pom"
+
+                                // First check local Maven repository - if it's there, we can skip remote checks
+                                def localMavenRepo = new File(System.getProperty('user.home'), '.m2/repository')
+                                def localArtifactDir = new File(localMavenRepo, "${groupPath}/${name}/${version}")
+                                def localPomFile = new File(localArtifactDir, pomFileName)
+                                if (localPomFile.exists()) {
+                                    processedComponents.add(componentKey)
+                                    componentRepositories.put(componentKey, [name: 'MavenLocal', url: null])
+                                    println "Detected ${componentKey} from MavenLocal (will skip)"
+                                    return
+                                } else {
+                                    localArtifactDir.mkdirs()
+                                }
+
+                                // Check each repository to see which one has this artifact
+                                for (repo in repositoryUrls) {
+                                    def repoUrl = repo.url
+                                    def pomUrl = "${repoUrl}${groupPath}/${name}/${version}/${pomFileName}"
+
+                                    try {
+                                        def url = new URL(pomUrl)
+                                        def connection = (HttpURLConnection) url.openConnection()
+                                        connection.setRequestMethod("GET")
+                                        connection.setConnectTimeout(2000)
+                                        connection.setReadTimeout(2000)
+                                        connection.setInstanceFollowRedirects(true)
+
+                                        def responseCode = connection.getResponseCode()
+                                        if (responseCode == 200 || responseCode == 301 || responseCode == 302) {
+                                            componentRepositories.put(componentKey, repo)
+                                            println "Detected ${componentKey} from repository: ${repoUrl}"
+
+                                            // Save the pom file
+                                            if (!localPomFile.exists() || localPomFile.length() != connection.getContentLengthLong()) {
+                                                println "Copying POM for ${componentKey} to local Maven repository"
+                                                localPomFile.withOutputStream { out ->
+                                                    out << connection.getInputStream()
+                                                }
+                                            } else {
+                                                println "Skipping POM for ${componentKey} - already exists"
+                                            }
+
+                                            break
+                                        }
+                                    } catch (Exception ignored) {
+                                        // This repository doesn't have it, try next one
+                                    }
+                                }
+
+                                // If we couldn't determine the repo, default to the first one (usually Maven Central)
+                                if (!componentRepositories.containsKey(componentKey) && !repositoryUrls.isEmpty()) {
+                                    println "Could not detect repository for ${componentKey}"
+                                }
+                            } else {
+                                println "Already detected repository for ${componentKey}, skipping detection"
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    println "Could not resolve configuration ${configuration.name}: ${e.message}"
+                }
+            }
+        }
+
+        println "Found ${allComponentIds.size()} unique components to process"
+
+        // Second pass: process all artifacts
+        configurations.each { configuration ->
+            if (configuration.canBeResolved) {
+                try {
+                    // Use resolvedConfiguration to get all dependencies including transitive ones
+                    configuration.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+                        def id = artifact.moduleVersion.id
+                        def componentKey = "${id.group}:${id.name}:${id.version}".toString()
+
+                        // Skip if we've already processed this component
+                        if (!processedComponents.add(componentKey))
+                            return
+
+                        def group = id.group
+                        def name = id.name
+                        def version = id.version
+
+                        // Define the local Maven repository path
+                        def localMavenRepo = new File(System.getProperty('user.home'), '.m2/repository')
+                        def groupPath = group.replace('.', '/')
+                        def artifactDir = new File(localMavenRepo, "${groupPath}/${name}/${version}")
+
+                        // Create directory structure
+                        artifactDir.mkdirs()
+
+                        // Copy the main artifact
+                        def artifactFile = artifact.file
+                        def fileName = artifactFile.name
+                        def targetFile = new File(artifactDir, fileName)
+
+                        if (!targetFile.exists() || targetFile.length() != artifactFile.length()) {
+                            println "Copying ${group}:${name}:${version} (${fileName}) to local Maven repository"
+                            Files.copy(
+                                    artifactFile.toPath(),
+                                    targetFile.toPath(),
+                                    StandardCopyOption.REPLACE_EXISTING
+                            )
+                        } else {
+                            println "Skipping ${group}:${name}:${version} (${fileName}) - already exists"
+                        }
+                    }
+                } catch (Exception e) {
+                    println "Could not resolve configuration ${configuration.name}: ${e.message}"
+                }
+            }
+        }
+
+        // Third pass: batch download sources and javadoc for all components
+        println "\nResolving sources and javadoc..."
+
+        def resolvedSources = new HashSet()
+
+        try {
+            def sourcesQuery = dependencies.createArtifactResolutionQuery()
+                    .forComponents(allComponentIds)
+                    .withArtifacts(JvmLibrary, SourcesArtifact)
+                    .execute()
+
+            sourcesQuery.resolvedComponents.each { componentResult ->
+                def id = componentResult.id
+                // Extract module info - handle different ComponentIdentifier types
+                def moduleId = null
+                if (id.hasProperty('moduleIdentifier')) {
+                    moduleId = id.moduleIdentifier
+                } else if (id.hasProperty('module')) {
+                    moduleId = id.module
+                }
+
+                if (moduleId) {
+                    def group = moduleId.group
+                    def name = moduleId.name
+                    def version = id.hasProperty('version') ? id.version : ''
+
+                    def localMavenRepo = new File(System.getProperty('user.home'), '.m2/repository')
+                    def groupPath = group.replace('.', '/')
+                    def artifactDir = new File(localMavenRepo, "${groupPath}/${name}/${version}")
+                    artifactDir.mkdirs()
+
+                    def sourceArtifacts = componentResult.getArtifacts(SourcesArtifact)
+                    sourceArtifacts.each { artifactResult ->
+                        if (artifactResult instanceof ResolvedArtifactResult) {
+                            def componentKey = "${group}:${name}:${version}".toString()
+                            resolvedSources.add(componentKey)
+
+                            def sourceFile = artifactResult.file
+                            def sourceFileName = "${name}-${version}-sources.jar"
+                            def targetFile = new File(artifactDir, sourceFileName)
+                            if (!targetFile.exists() || targetFile.length() != sourceFile.length()) {
+                                println "Copying ${group}:${name}:${version} sources to local Maven repository"
+                                Files.copy(
+                                        sourceFile.toPath(),
+                                        targetFile.toPath(),
+                                        StandardCopyOption.REPLACE_EXISTING
+                                )
+                            } else {
+                                println "Skipping ${group}:${name}:${version} sources - already exists"
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            println "Exception while resolving sources: ${ex.message}"
+        }
+
+        // Fallback: Try to download sources from the detected repository for components that weren't resolved
+        println "\nAttempting direct download for unresolved sources..."
+        allComponents.each { component ->
+            def moduleVersion = component.moduleVersion
+            if (moduleVersion) {
+                def group = moduleVersion.group
+                def name = moduleVersion.name
+                def version = moduleVersion.version
+                def componentKey = "${group}:${name}:${version}".toString()
+
+                if (!resolvedSources.contains(componentKey)) {
+                    def localMavenRepo = new File(System.getProperty('user.home'), '.m2/repository')
+                    def groupPath = group.replace('.', '/')
+                    def artifactDir = new File(localMavenRepo, "${groupPath}/${name}/${version}")
+                    artifactDir.mkdirs()
+
+                    def sourceFileName = "${name}-${version}-sources.jar"
+                    def targetFile = new File(artifactDir, sourceFileName)
+
+                    if (!targetFile.exists()) {
+                        // Get the repository this component came from
+                        def repo = componentRepositories.get(componentKey)
+
+                        if (repo) {
+                            def repoUrl = repo.url
+                            def artifactUrl = "${repoUrl}${groupPath}/${name}/${version}/${sourceFileName}"
+
+                            try {
+                                println "Attempting to download ${componentKey} sources from ${repoUrl}..."
+                                def url = new URL(artifactUrl)
+                                def connection = (HttpURLConnection) url.openConnection()
+                                connection.setRequestMethod("GET")
+                                connection.setConnectTimeout(5000)
+                                connection.setReadTimeout(30000)
+                                connection.setInstanceFollowRedirects(true)
+
+                                def responseCode = connection.getResponseCode()
+                                if (responseCode == 200) {
+                                    targetFile.withOutputStream { out ->
+                                        out << connection.getInputStream()
+                                    }
+                                    println "Downloaded ${componentKey} sources from ${repoUrl}"
+                                    resolvedSources.add(componentKey)
+                                } else if (responseCode == 301 || responseCode == 302) {
+                                    // Handle redirects
+                                    def newUrl = connection.getHeaderField("Location")
+                                    println "Redirected to ${newUrl}"
+                                    def redirectConnection = (HttpURLConnection) new URL(newUrl).openConnection()
+                                    redirectConnection.setRequestMethod("GET")
+                                    redirectConnection.setConnectTimeout(5000)
+                                    redirectConnection.setReadTimeout(30000)
+
+                                    if (redirectConnection.getResponseCode() == 200) {
+                                        targetFile.withOutputStream { out ->
+                                            out << redirectConnection.getInputStream()
+                                        }
+                                        println "Downloaded ${componentKey} sources from ${repo.name} (after redirect)"
+                                        resolvedSources.add(componentKey)
+                                    } else {
+                                        println "Sources not available for ${componentKey} at ${repo.name} (HTTP ${redirectConnection.getResponseCode()})"
+                                    }
+                                } else {
+                                    println "Sources not available for ${componentKey} at ${repo.name} (HTTP ${responseCode})"
+                                }
+                            } catch (Exception e) {
+                                println "Could not download sources for ${componentKey} from ${repo.name}: ${e.message}"
+                            }
+                        } else {
+                            println "Could not determine repository for ${componentKey}, skipping sources download"
+                        }
+                    } else {
+                        println "Skipping ${componentKey} sources - already exists"
+                        resolvedSources.add(componentKey)
+                    }
+                }
+            }
+        }
+
+        def resolvedJavadoc = new HashSet()
+
+        try {
+            def javadocQuery = dependencies.createArtifactResolutionQuery()
+                    .forComponents(allComponentIds)
+                    .withArtifacts(JvmLibrary, JavadocArtifact)
+                    .execute()
+
+            javadocQuery.resolvedComponents.each { componentResult ->
+                def id = componentResult.id
+                // Extract module info - handle different ComponentIdentifier types
+                def moduleId = null
+                if (id.hasProperty('moduleIdentifier')) {
+                    moduleId = id.moduleIdentifier
+                } else if (id.hasProperty('module')) {
+                    moduleId = id.module
+                }
+
+                if (moduleId) {
+                    def group = moduleId.group
+                    def name = moduleId.name
+                    def version = id.hasProperty('version') ? id.version : ''
+
+                    def localMavenRepo = new File(System.getProperty('user.home'), '.m2/repository')
+                    def groupPath = group.replace('.', '/')
+                    def artifactDir = new File(localMavenRepo, "${groupPath}/${name}/${version}")
+                    artifactDir.mkdirs()
+
+                    def javadocArtifacts = componentResult.getArtifacts(JavadocArtifact)
+                    javadocArtifacts.each { artifactResult ->
+                        if (artifactResult instanceof ResolvedArtifactResult) {
+                            def componentKey = "${group}:${name}:${version}".toString()
+                            resolvedJavadoc.add(componentKey)
+
+                            def javadocFile = artifactResult.file
+                            def javadocFileName = "${name}-${version}-javadoc.jar"
+                            def targetFile = new File(artifactDir, javadocFileName)
+                            if (!targetFile.exists() || targetFile.length() != javadocFile.length()) {
+                                println "Copying ${group}:${name}:${version} javadoc to local Maven repository"
+                                Files.copy(
+                                        javadocFile.toPath(),
+                                        targetFile.toPath(),
+                                        StandardCopyOption.REPLACE_EXISTING
+                                )
+                            } else {
+                                println "Skipping ${group}:${name}:${version} javadoc - already exists"
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            println "Exception while resolving javadoc: ${ex.message}"
+        }
+
+        // Fallback: Try to download javadoc from the detected repository for components that weren't resolved
+        println "\nAttempting direct download for unresolved javadoc..."
+        allComponents.each { component ->
+            def moduleVersion = component.moduleVersion
+            if (moduleVersion) {
+                def group = moduleVersion.group
+                def name = moduleVersion.name
+                def version = moduleVersion.version
+                def componentKey = "${group}:${name}:${version}".toString()
+
+                if (!resolvedJavadoc.contains(componentKey)) {
+                    def localMavenRepo = new File(System.getProperty('user.home'), '.m2/repository')
+                    def groupPath = group.replace('.', '/')
+                    def artifactDir = new File(localMavenRepo, "${groupPath}/${name}/${version}")
+                    artifactDir.mkdirs()
+
+                    def javadocFileName = "${name}-${version}-javadoc.jar"
+                    def targetFile = new File(artifactDir, javadocFileName)
+
+                    if (!targetFile.exists()) {
+                        // Get the repository this component came from
+                        def repo = componentRepositories.get(componentKey)
+
+                        if (repo) {
+                            def repoUrl = repo.url
+                            def artifactUrl = "${repoUrl}${groupPath}/${name}/${version}/${javadocFileName}"
+
+                            try {
+                                println "Attempting to download ${componentKey} javadoc from ${repo.name}..."
+                                def url = new URL(artifactUrl)
+                                def connection = (HttpURLConnection) url.openConnection()
+                                connection.setRequestMethod("GET")
+                                connection.setConnectTimeout(5000)
+                                connection.setReadTimeout(30000)
+                                connection.setInstanceFollowRedirects(true)
+
+                                def responseCode = connection.getResponseCode()
+                                if (responseCode == 200) {
+                                    targetFile.withOutputStream { out ->
+                                        out << connection.getInputStream()
+                                    }
+                                    println "Downloaded ${componentKey} javadoc from ${repo.name}"
+                                    resolvedJavadoc.add(componentKey)
+                                } else if (responseCode == 301 || responseCode == 302) {
+                                    // Handle redirects
+                                    def newUrl = connection.getHeaderField("Location")
+                                    println "Redirected to ${newUrl}"
+                                    def redirectConnection = (HttpURLConnection) new URL(newUrl).openConnection()
+                                    redirectConnection.setRequestMethod("GET")
+                                    redirectConnection.setConnectTimeout(5000)
+                                    redirectConnection.setReadTimeout(30000)
+
+                                    if (redirectConnection.getResponseCode() == 200) {
+                                        targetFile.withOutputStream { out ->
+                                            out << redirectConnection.getInputStream()
+                                        }
+                                        println "Downloaded ${componentKey} javadoc from ${repo.name} (after redirect)"
+                                        resolvedJavadoc.add(componentKey)
+                                    } else {
+                                        println "Javadoc not available for ${componentKey} at ${repo.name} (HTTP ${redirectConnection.getResponseCode()})"
+                                    }
+                                } else {
+                                    println "Javadoc not available for ${componentKey} at ${repo.name} (HTTP ${responseCode})"
+                                }
+                            } catch (Exception e) {
+                                println "Could not download javadoc for ${componentKey} from ${repo.name}: ${e.message}"
+                            }
+                        } else {
+                            println "Could not determine repository for ${componentKey}, skipping javadoc download"
+                        }
+                    } else {
+                        println "Skipping ${componentKey} javadoc - already exists"
+                        resolvedJavadoc.add(componentKey)
+                    }
+                }
+            }
+        }
+
+        println "\nAll dependencies (including transitive) and sources have been copied to the local Maven repository"
+        println "Total unique components processed: ${processedComponents.size()}"
+        println "Sources resolved: ${resolvedSources.size()}"
+        println "Javadoc resolved: ${resolvedJavadoc.size()}"
+    }
+}
