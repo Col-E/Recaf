@@ -11,13 +11,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.JumpInsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.LookupSwitchInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TableSwitchInsnNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.info.JvmClassInfo;
@@ -200,72 +194,6 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		}
 		if (dirty)
 			context.setNode(bundle, initialClassState, node);
-	}
-
-	/**
-	 * Populate control flow maps for the method.
-	 *
-	 * @param method
-	 * 		Method to analyze.
-	 * @param successorMap
-	 * 		Output successor map.
-	 * @param predecessorMap
-	 * 		Output predecessor map.
-	 */
-	@SuppressWarnings("StatementWithEmptyBody")
-	private static void populateFlowMaps(@Nonnull MethodNode method,
-	                                     @Nonnull Int2ObjectMap<List<Integer>> successorMap,
-	                                     @Nonnull Int2ObjectMap<List<Integer>> predecessorMap) {
-		InsnList instructions = method.instructions;
-		int size = instructions.size();
-		for (int i = 0; i < size; i++) {
-			AbstractInsnNode insn = instructions.get(i);
-			List<Integer> ss = new ArrayList<>();
-			int op = insn.getOpcode();
-			if (op >= IRETURN && op <= RETURN || op == ATHROW) {
-				// Terminal instructions, no successors.
-			} else if (insn instanceof JumpInsnNode jin) {
-				// Jump instructions have their target and fall-through (excluding goto/jsr) as successors.
-				int target = instructions.indexOf(jin.label);
-				ss.add(target);
-				if (op != GOTO && op != JSR)
-					if (i + 1 < size)
-						ss.add(i + 1);
-			} else if (insn instanceof TableSwitchInsnNode tsin) {
-				// Switch instructions have all their targets as successors.
-				ss.add(instructions.indexOf(tsin.dflt));
-				for (LabelNode l : tsin.labels)
-					ss.add(instructions.indexOf(l));
-			} else if (insn instanceof LookupSwitchInsnNode lsin) {
-				// Same as above.
-				ss.add(instructions.indexOf(lsin.dflt));
-				for (LabelNode lb : lsin.labels)
-					ss.add(instructions.indexOf(lb));
-			} else {
-				// All other instructions just flow to the next instruction.
-				if (i + 1 < size)
-					ss.add(i + 1);
-			}
-
-			// Add exception successors.
-			if (canThrow(insn)) {
-				// TODO: Used to filter if the contained instructions could actually throw the handled type.
-				//  IE, a block of 'nop' instructions wouldn't actually throw anything.
-				for (TryCatchBlockNode block : method.tryCatchBlocks) {
-					int start = instructions.indexOf(block.start);
-					int end = instructions.indexOf(block.end);
-					if (start <= i && i < end)
-						ss.add(instructions.indexOf(block.handler));
-				}
-			}
-			successorMap.put(i, ss);
-		}
-
-		// Populate predecessor map from successor map.
-		for (int i = 0; i < size; i++) {
-			for (int s : successorMap.getOrDefault(i, emptyList()))
-				predecessorMap.computeIfAbsent(s, _ -> new ArrayList<>()).add(i);
-		}
 	}
 
 	/**
@@ -530,28 +458,6 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 				iinc.var = slotX;
 			}
 		}
-	}
-
-	/**
-	 * @param insn
-	 * 		Instruction to check.
-	 *
-	 * @return {@code true} when the instruction can throw an exception.
-	 */
-	private static boolean canThrow(@Nonnull AbstractInsnNode insn) {
-		int op = insn.getOpcode();
-		if (op == ATHROW) // Obvious case
-			return true;
-		if (insn instanceof MethodInsnNode) // Method calls can throw.
-			return true;
-		// NullPointerException
-		return op == GETFIELD || op == PUTFIELD || op == ARRAYLENGTH ||
-				// NullPointerException, ArrayIndexOutOfBoundsException
-				(op >= IALOAD && op <= AASTORE) ||
-				// IllegalMonitorStateException
-				op == MONITORENTER || op == MONITOREXIT ||
-				// ArithmeticException
-				op == IDIV || op == IREM || op == LDIV || op == LREM;
 	}
 
 	/**

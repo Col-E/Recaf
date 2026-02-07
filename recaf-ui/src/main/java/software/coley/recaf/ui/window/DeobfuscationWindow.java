@@ -72,6 +72,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.StaticValue
 import software.coley.recaf.services.deobfuscation.transform.generic.UnknownAttributeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableTableNormalizingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.specific.DashOpaqueSeedFoldingTransformer;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.transform.ClassTransformer;
@@ -208,12 +209,15 @@ public class DeobfuscationWindow extends RecafStage {
 					restoration
 			);
 			TreeItem<Selection> specific = new TreeItem<>(new Selection.Category("deobf.tree.specific", CarbonIcons.CENTER_CIRCLE));
+			specific.getChildren().addAll(of(
+					// TODO: When we have more specific transformers, separate into sub-sections instead of putting them all flat here.
+					DashOpaqueSeedFoldingTransformer.class
+			));
 			root.getChildren().addAll(
 					generic,
 					specific
 			);
 			generic.setExpanded(true);
-			specific.setExpanded(true);
 
 			TreeView<Selection> transformerTree = new TreeView<>();
 			transformerTree.setCellFactory(view -> new TreeCell<>() {

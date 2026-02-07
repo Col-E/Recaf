@@ -1,5 +1,6 @@
 package software.coley.recaf.util;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import me.darknet.assembler.util.BlwOpcodes;
@@ -24,13 +25,18 @@ import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.Collections.emptyList;
 
 /**
  * ASM instruction utilities.
@@ -645,6 +651,31 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
+	 * Check if the given instruction can throw an exception.
+	 *
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} when the instruction can throw an exception.
+	 */
+	public static boolean canThrow(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op == ATHROW) // Obvious case
+			return true;
+		if (insn instanceof MethodInsnNode) // Method calls can throw.
+			return true;
+		// NullPointerException
+		return op == GETFIELD || op == PUTFIELD || op == ARRAYLENGTH ||
+				// NullPointerException, ArrayIndexOutOfBoundsException
+				(op >= IALOAD && op <= AASTORE) ||
+				// IllegalMonitorStateException
+				op == MONITORENTER || op == MONITOREXIT ||
+				// ArithmeticException
+				op == IDIV || op == IREM || op == LDIV || op == LREM;
+	}
+
+
+	/**
 	 * Check if the given block of instructions is referenced by explicit control flow instructions.
 	 * <p/>
 	 * This does not cover the following cases:
@@ -702,6 +733,107 @@ public class AsmInsnUtil implements Opcodes {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Populate control flow maps for a method.
+	 *
+	 * @param method
+	 * 		Method to analyze.
+	 * @param successorMap
+	 * 		Output successor map.
+	 * @param predecessorMap
+	 * 		Output predecessor map.
+	 */
+	@SuppressWarnings("StatementWithEmptyBody")
+	public static void populateFlowMaps(@Nonnull MethodNode method,
+	                                    @Nonnull Int2ObjectMap<List<Integer>> successorMap,
+	                                    @Nonnull Int2ObjectMap<List<Integer>> predecessorMap) {
+		InsnList instructions = method.instructions;
+		int size = instructions.size();
+		for (int i = 0; i < size; i++) {
+			AbstractInsnNode insn = instructions.get(i);
+			if (insn == null) // Sanity check, can happen if you don't use ASM the way it wants you to.
+				throw new IllegalStateException("You broke the method instruction list");
+			List<Integer> ss = new ArrayList<>();
+			int op = insn.getOpcode();
+			if (op >= IRETURN && op <= RETURN || op == ATHROW) {
+				// Terminal instructions, no successors.
+			} else if (insn instanceof JumpInsnNode jin) {
+				// Jump instructions have their target and fall-through (excluding goto/jsr) as successors.
+				int target = instructions.indexOf(jin.label);
+				ss.add(target);
+				if (op != GOTO && op != JSR)
+					if (i + 1 < size)
+						ss.add(i + 1);
+			} else if (insn instanceof TableSwitchInsnNode tswitch) {
+				// Switch instructions have all their targets as successors.
+				ss.add(instructions.indexOf(tswitch.dflt));
+				for (LabelNode label : tswitch.labels)
+					ss.add(instructions.indexOf(label));
+			} else if (insn instanceof LookupSwitchInsnNode lswitch) {
+				// Same as above.
+				ss.add(instructions.indexOf(lswitch.dflt));
+				for (LabelNode label : lswitch.labels)
+					ss.add(instructions.indexOf(label));
+			} else {
+				// All other instructions just flow to the next instruction.
+				if (i + 1 < size)
+					ss.add(i + 1);
+			}
+
+			// Add exception successors.
+			if (canThrow(insn)) {
+				// TODO: Used to filter if the contained instructions could actually throw the handled type.
+				//  IE, a block of 'nop' instructions wouldn't actually throw anything.
+				for (TryCatchBlockNode block : method.tryCatchBlocks) {
+					int start = instructions.indexOf(block.start);
+					int end = instructions.indexOf(block.end);
+					if (start <= i && i < end)
+						ss.add(instructions.indexOf(block.handler));
+				}
+			}
+			successorMap.put(i, ss);
+		}
+
+		// Populate predecessor map from successor map.
+		for (int i = 0; i < size; i++) {
+			for (int s : successorMap.getOrDefault(i, emptyList()))
+				predecessorMap.computeIfAbsent(s, _ -> new ArrayList<>()).add(i);
+		}
+	}
+
+	/**
+	 * Compute reachable instructions in a method.
+	 *
+	 * @param size
+	 * 		Size of {@link InsnList} for a method's instructions.
+	 * @param successors
+	 * 		Control flow successor map for the method. See {@link #populateFlowMaps(MethodNode, Int2ObjectMap, Int2ObjectMap)}
+	 *
+	 * @return BitSet of reachable instructions in the method.
+	 */
+	@Nonnull
+	public static BitSet computeReachable(int size, @Nonnull Int2ObjectMap<List<Integer>> successors) {
+		BitSet reachable = new BitSet(size);
+		if (size == 0)
+			return reachable;
+
+		// Compute reachable instructions. Start at the beginning.
+		Deque<Integer> unprocessed = new ArrayDeque<>();
+		reachable.set(0);
+		unprocessed.add(0);
+		while (!unprocessed.isEmpty()) {
+			// Follow successors.
+			int current = unprocessed.poll();
+			for (int s : successors.getOrDefault(current, List.of())) {
+				if (!reachable.get(s)) {
+					reachable.set(s);
+					unprocessed.add(s);
+				}
+			}
+		}
+		return reachable;
 	}
 
 	/**
