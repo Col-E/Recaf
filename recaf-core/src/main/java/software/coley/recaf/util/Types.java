@@ -261,6 +261,28 @@ public class Types {
 
 	/**
 	 * @param sort
+	 * 		Type sort.
+	 *
+	 * @return Primitive type for the given sort, or {@link #OBJECT_TYPE} if not a primitive.
+	 */
+	@Nonnull
+	public static Type fromSort(int sort) {
+		return switch (sort) {
+			case Type.VOID -> Type.VOID_TYPE;
+			case Type.BOOLEAN -> Type.BOOLEAN_TYPE;
+			case Type.CHAR -> Type.CHAR_TYPE;
+			case Type.BYTE -> Type.BYTE_TYPE;
+			case Type.SHORT -> Type.SHORT_TYPE;
+			case Type.INT -> Type.INT_TYPE;
+			case Type.FLOAT -> Type.FLOAT_TYPE;
+			case Type.LONG -> Type.LONG_TYPE;
+			case Type.DOUBLE -> Type.DOUBLE_TYPE;
+			default -> OBJECT_TYPE;
+		};
+	}
+
+	/**
+	 * @param sort
 	 * 		Some type sort.
 	 *
 	 * @return Normalized sort. This is in the context of runtime expectations.

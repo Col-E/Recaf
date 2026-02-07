@@ -2263,8 +2263,6 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
-	@Disabled
-	/** TODO: Enable after fixing {@link #doNotFoldVarUsedInComparisonIfOriginalPossiblyUpdates()} */
 	void foldVarWithRedundantCopyVariable() {
 		String asm = """
 				.method public example ()I {
@@ -2353,8 +2351,6 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
-	@Disabled
-	/** TODO: Enable after fixing {@link #doNotFoldVarUsedInComparisonIfOriginalPossiblyUpdates()} */
 	void foldVarWithWideRedundantCopyVariable() {
 		String asm = """
 				.method public static example (J)I {
@@ -2380,7 +2376,6 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
-	@Disabled
 	void doNotFoldVarUsedInComparisonIfOriginalPossiblyUpdates() {
 		String asm = """
 				.method public static example (I)I {
@@ -2408,7 +2403,6 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
-	@Disabled
 	void foldVarWithSeriesOfRedundantBackToBackCycledWrites() {
 		String asm = """
 				.method public example ()I {
@@ -2445,7 +2439,6 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
-	@Disabled
 	void foldVarRedundantInitialization() {
 		String asm = """
 				.method public static example (II)I {
@@ -2499,7 +2492,7 @@ public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(
+		validateAfterRepeatedAssembly(asm, List.of(
 				VariableFoldingTransformer.class,
 				OpaquePredicateFoldingTransformer.class,
 				OpaqueConstantFoldingTransformer.class,

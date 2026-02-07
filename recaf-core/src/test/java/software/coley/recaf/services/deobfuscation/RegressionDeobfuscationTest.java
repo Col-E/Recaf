@@ -11,12 +11,12 @@ import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredi
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
 import software.coley.recaf.util.AsmInsnUtil;
+import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -468,27 +468,34 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				    exceptions: { { B, C, D, Ljava/lang/Throwable; } },
 				    code: {
 				    A:
+				        // Redundant first assignment
 				        iconst_0
 				        istore xyz
 				    B:
+				        // Will always overwrite, throwing behavior impossible
 				        iconst_1
 				        istore xyz
 				    C:
 				        goto E
 				    D:
-				        // handler
+				        // Handler, not clear what should be folded here since the try block can't throw anything
+				        // making it impossible to actually end up here.
 				        pop
 				        iload xyz
 				        ireturn
 				    E:
+				        // Should always be "1" here since the try block can't throw anything
 				        iload xyz
 				        ireturn
 				    F:
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
-			assertFalse(dis.contains("xyz"), "Should have folded all variable stores/reads");
+		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertFalse(RegexUtil.matchesAny("iconst_0\\s+istore", dis), "Redundant var store should be folded");
+			assertTrue(RegexUtil.matchesAny("iconst_1\\s+istore", dis), "Final var store should be kept");
+			assertTrue(RegexUtil.matchesAny("E:\\s+iconst_1\\s+ireturn", dis), "E block should fold to iconst_1");
+			assertTrue(RegexUtil.matchesAny("D:\\s+//.+\\s+pop\\s+iload xyz\\s+ireturn", dis), "D block shouldn't fold since it's technically possible to end up here, even if it can't actually happen in practice");
 		});
 	}
 
@@ -528,7 +535,12 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class));
+		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertTrue(RegexUtil.matchesAny("iconst_0\\s+istore", dis), "Both var stores should be kept");
+			assertTrue(RegexUtil.matchesAny("iconst_1\\s+istore", dis), "Both var stores should be kept");
+			assertTrue(RegexUtil.matchesAny("E:\\s+iconst_1\\s+ireturn", dis), "E block should fold to iconst_1");
+			assertTrue(RegexUtil.matchesAny("D:\\s+//.+\\s+pop\\s+iload xyz\\s+ireturn", dis), "D block shouldn't fold since it can be either 0 or 1");
+		});
 	}
 
 	/**
@@ -573,7 +585,14 @@ public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class));
+		validateAfterRepeatedAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertTrue(RegexUtil.matchesAny("iconst_0\\s+istore", dis), "All var stores should be kept");
+			assertTrue(RegexUtil.matchesAny("iconst_1\\s+istore", dis), "All var stores should be kept");
+			assertTrue(RegexUtil.matchesAny("iconst_2\\s+istore", dis), "All var stores should be kept");
+			assertTrue(RegexUtil.matchesAny("iconst_3\\s+istore", dis), "All var stores should be kept");
+			assertTrue(RegexUtil.matchesAny("E:\\s+iconst_3\\s+ireturn", dis), "E block should fold to iconst_3");
+			assertTrue(RegexUtil.matchesAny("D:\\s+//.+\\s+pop\\s+iload xyz\\s+ireturn", dis), "D block shouldn't fold since it can be 0, 1, or 2");
+		});
 	}
 
 	/**
