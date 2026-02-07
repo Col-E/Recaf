@@ -28,6 +28,7 @@ import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.AutoScrollPane;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
@@ -65,7 +66,7 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 		Grid content = new Grid();
 		content.setPadding(new Insets(10));
 		content.prefWidthProperty().bind(widthProperty().subtract(10));
-		ScrollPane scroll = new ScrollPane(content);
+		ScrollPane scroll = new AutoScrollPane(content);
 		getChildren().addAll(modal, scroll);
 		getStyleClass().add("background");
 

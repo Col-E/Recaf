@@ -3,38 +3,24 @@ package software.coley.recaf.ui.control;
 import jakarta.annotation.Nonnull;
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Cursor;
-import javafx.scene.control.ScrollBar;
+import javafx.scene.Node;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Region;
-import org.fxmisc.flowless.Virtualized;
-import org.fxmisc.flowless.VirtualizedScrollPane;
-import org.reactfx.value.Var;
-import software.coley.collections.Unchecked;
 import software.coley.recaf.util.NodeEvents;
-import software.coley.recaf.util.ReflectUtil;
 
 /**
- * Wrapper for {@link VirtualizedScrollPane} to properly expose properties with JavaFX's property types instead of
- * {@link Var} which cannot be used in a number of scenarios.
- *
- * @param <V>
- * 		Node type.
+ * Scroll pane extension that adds support for middle-click auto-scrolling.
  *
  * @author Matt Coley
- * @see AutoScrollPane
+ * @see VirtualizedScrollPaneWrapper
  */
-public class VirtualizedScrollPaneWrapper<V extends Region & Virtualized> extends VirtualizedScrollPane<V> {
+public class AutoScrollPane extends ScrollPane {
 	private static final double AUTO_SCROLL_MULTIPLIER = 0.1;
 	private static final double AUTO_SCROLL_BUFFER_PX = 5;
-	private final DoubleProperty xScrollProperty = new SimpleDoubleProperty(0);
-	private final DoubleProperty yScrollProperty = new SimpleDoubleProperty(0);
 	private final BooleanProperty canAutoScroll = new SimpleBooleanProperty(true);
-	private final ScrollBar horizontalScrollbar;
-	private final ScrollBar verticalScrollbar;
 	private Cursor preAutoScrollCursor;
 	private boolean isAutoScrolling;
 	private double autoScrollStartY;
@@ -46,22 +32,8 @@ public class VirtualizedScrollPaneWrapper<V extends Region & Virtualized> extend
 		}
 	};
 
-	/**
-	 * @param content
-	 * 		Virtualized content.
-	 */
-	public VirtualizedScrollPaneWrapper(V content) {
+	public AutoScrollPane(@Nonnull Node content) {
 		super(content);
-
-		horizontalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(this, VirtualizedScrollPane.class.getDeclaredField("hbar")));
-		verticalScrollbar = Unchecked.get(() -> ReflectUtil.quietGet(this, VirtualizedScrollPane.class.getDeclaredField("vbar")));
-
-		setup();
-	}
-
-	private void setup() {
-		xScrollProperty.bind(estimatedScrollXProperty());
-		yScrollProperty.bind(estimatedScrollYProperty());
 
 		// Handle middle mouse press to start auto-scrolling.
 		// - Press initiates the auto-scroll
@@ -103,22 +75,23 @@ public class VirtualizedScrollPaneWrapper<V extends Region & Virtualized> extend
 
 	private void updateAutoScroll() {
 		double deltaY = autoScrollCurrentY - autoScrollStartY;
+		double viewportHeight = getHeight();
 
 		// Get current scroll values
-		double value = verticalScrollbar.getValue();
-		double min = verticalScrollbar.getMin();
-		double max = verticalScrollbar.getMax();
+		double contentSize = getContent() instanceof Region r ? r.getHeight() : viewportHeight;
+		double value = getVvalue();
+		double min = getVmin();
+		double max = getVmax();
 
 		// Calculate scroll amount based on viewport size
-		double viewportHeight = getHeight();
-		double scrollAmount = (deltaY * AUTO_SCROLL_MULTIPLIER);
-		if (Math.abs(scrollAmount) > 0.1) {
+		double scrollAmount = (deltaY * AUTO_SCROLL_MULTIPLIER) / contentSize;
+		if (Math.abs(scrollAmount) > 0) {
 			// Calculate new scroll position
 			double newValue = value + scrollAmount;
 			newValue = Math.max(min, Math.min(max, newValue));
 
 			// Update scroll position
-			verticalScrollbar.setValue(newValue);
+			setVvalue(newValue);
 		}
 	}
 
@@ -127,45 +100,5 @@ public class VirtualizedScrollPaneWrapper<V extends Region & Virtualized> extend
 	 */
 	public boolean isAutoScrolling() {
 		return isAutoScrolling;
-	}
-
-	/**
-	 * @return Horizontal scrollbar.
-	 */
-	@Nonnull
-	public ScrollBar getHorizontalScrollbar() {
-		return horizontalScrollbar;
-	}
-
-	/**
-	 * @return Vertical scrollbar.
-	 */
-	@Nonnull
-	public ScrollBar getVerticalScrollbar() {
-		return verticalScrollbar;
-	}
-
-	/**
-	 * @return Horizontal scroll property.
-	 */
-	@Nonnull
-	public DoubleProperty horizontalScrollProperty() {
-		return xScrollProperty;
-	}
-
-	/**
-	 * @return Vertical scroll property.
-	 */
-	@Nonnull
-	public DoubleProperty verticalScrollProperty() {
-		return yScrollProperty;
-	}
-
-	/**
-	 * @return Can auto-scroll property.
-	 */
-	@Nonnull
-	public BooleanProperty canAutoScrollProperty() {
-		return canAutoScroll;
 	}
 }
