@@ -50,7 +50,7 @@ import java.util.List;
  */
 @ApplicationScoped
 public class JarSigningSummarizer implements ResourceSummarizer {
-	private static final String MANIFEST_PATCH_PATTERN = "Name: [\\S\\s]+?[\\w-]+-Digest: .+\\s+?";
+	private static final String MANIFEST_PATCH_PATTERN = "^Name: [\\S\\s]+?[\\w-]+-Digest: .+\\s+?";
 	private static final CertificateFactory CERTIFICATE_FACTORY;
 
 	static {
