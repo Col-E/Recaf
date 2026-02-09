@@ -12,7 +12,7 @@ import software.coley.recaf.Bootstrap;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +28,7 @@ public class TransformationManager implements Service {
 	public static final String SERVICE_ID = "transformation-manager";
 	private static final Logger logger = Logging.get(TransformationManager.class);
 	private final Map<Class<? extends JvmClassTransformer>, Supplier<JvmClassTransformer>> jvmTransformerSuppliers = new IdentityHashMap<>();
-	private final Map<String, Class<? extends JvmClassTransformer>> nameToJvmTransformerClass = new HashMap<>();
+	private final Set<Class<? extends JvmClassTransformer>> thirdPartyJvmTransformers = new HashSet<>();
 	private final TransformationManagerConfig config;
 
 	/**
@@ -45,6 +45,9 @@ public class TransformationManager implements Service {
 		for (Instance.Handle<JvmClassTransformer> handle : jvmTransformers.handles()) {
 			Bean<JvmClassTransformer> bean = handle.getBean();
 			Class<? extends JvmClassTransformer> transformerClass = Unchecked.cast(bean.getBeanClass());
+
+			// To differentiate our built-in transformers from any plugin-provided ones, we register them directly here
+			// rather than using the register method below.
 			jvmTransformerSuppliers.put(transformerClass, () -> {
 				// Even though our transformers may be @Dependent scoped, we need to do a new lookup each time we want
 				// a new instance to get our desired scope behavior. If we re-use the instance handle that is injected
@@ -67,6 +70,8 @@ public class TransformationManager implements Service {
 	}
 
 	/**
+	 * Register a new {@link JvmClassTransformer}.
+	 *
 	 * @param transformerClass
 	 * 		Class of transformer to register.
 	 * @param transformerSupplier
@@ -75,17 +80,23 @@ public class TransformationManager implements Service {
 	 * 		Transformer type.
 	 */
 	public <T extends JvmClassTransformer> void registerJvmClassTransformer(@Nonnull Class<T> transformerClass, @Nonnull Supplier<T> transformerSupplier) {
-		jvmTransformerSuppliers.put(Unchecked.cast(transformerClass), Unchecked.cast(transformerSupplier));
+		// Only update the map if this is a new transformer.
+		if (thirdPartyJvmTransformers.add(transformerClass))
+			jvmTransformerSuppliers.put(transformerClass, Unchecked.cast(transformerSupplier));
 	}
 
 	/**
+	 * Unregister a previously-registered {@link JvmClassTransformer}.
+	 *
 	 * @param transformerClass
 	 * 		Class of transformer to unregister.
 	 * @param <T>
 	 * 		Transformer type.
 	 */
 	public <T extends JvmClassTransformer> void unregisterJvmClassTransformer(@Nonnull Class<T> transformerClass) {
-		jvmTransformerSuppliers.remove(Unchecked.cast(transformerClass));
+		// Only allow unregistering of third-party transformers.
+		if (thirdPartyJvmTransformers.remove(transformerClass))
+			jvmTransformerSuppliers.remove(transformerClass);
 	}
 
 	/**
@@ -94,6 +105,14 @@ public class TransformationManager implements Service {
 	@Nonnull
 	public Set<Class<? extends JvmClassTransformer>> getJvmClassTransformers() {
 		return jvmTransformerSuppliers.keySet();
+	}
+
+	/**
+	 * @return Set of third-party registered {@link JvmClassTransformer} classes.
+	 */
+	@Nonnull
+	public Set<Class<? extends JvmClassTransformer>> getThirdPartyJvmTransformers() {
+		return thirdPartyJvmTransformers;
 	}
 
 	@Nonnull

@@ -106,6 +106,7 @@ import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -213,11 +214,15 @@ public class DeobfuscationWindow extends RecafStage {
 					// TODO: When we have more specific transformers, separate into sub-sections instead of putting them all flat here.
 					DashOpaqueSeedFoldingTransformer.class
 			));
+			TreeItem<Selection> pluginProvided = new TreeItem<>(new Selection.Category("deobf.tree.plugin-provided", CarbonIcons.PLUG));
+			pluginProvided.getChildren().addAll(ofCollection(Unchecked.cast(transformationManager.getThirdPartyJvmTransformers())));
 			root.getChildren().addAll(
 					generic,
-					specific
+					specific,
+					pluginProvided
 			);
 			generic.setExpanded(true);
+			pluginProvided.setExpanded(true);
 
 			TreeView<Selection> transformerTree = new TreeView<>();
 			transformerTree.setCellFactory(view -> new TreeCell<>() {
@@ -517,9 +522,14 @@ public class DeobfuscationWindow extends RecafStage {
 		setHeight(600);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SafeVarargs
 	private List<TreeItem<Selection>> of(Class<? extends ClassTransformer>... transformerClasses) {
-		List<TreeItem<Selection>> results = new ArrayList<>(transformerClasses.length);
+		return ofCollection(List.of(transformerClasses));
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<TreeItem<Selection>> ofCollection(Collection<Class<? extends ClassTransformer>> transformerClasses) {
+		List<TreeItem<Selection>> results = new ArrayList<>(transformerClasses.size());
 		for (Class<? extends ClassTransformer> transformerClass : transformerClasses) {
 			try {
 				if (JvmClassTransformer.class.isAssignableFrom(transformerClass)) {

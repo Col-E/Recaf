@@ -490,6 +490,7 @@ deobf.tree.generic.anticrasher=Anti-Crasher
 deobf.tree.generic.optimize=Optimization
 deobf.tree.generic.restoration=Restoration
 deobf.tree.specific=Specific
+deobf.tree.plugin-provided=Plugin
 deobf.apply=Transform workspace
 
 ## Mapping application
