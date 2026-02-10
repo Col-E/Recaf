@@ -2437,11 +2437,18 @@ public class Actions implements Service {
 	 */
 	private void focusSelectedDockableContent(@Nonnull DockContainerLeaf container) {
 		Dockable selectedDockable = container.getSelectedDockable();
-		if (selectedDockable != null) {
-			Node node = selectedDockable.getNode();
-			if (node != null)
-				node.requestFocus();
-		}
+		if (selectedDockable == null)
+			return;
+
+		Node node = selectedDockable.getNode();
+		if (node == null)
+			return;
+
+		Scene scene = container.getScene();
+		if (scene != null && scene.getWindow() != null)
+			scene.getWindow().requestFocus();
+
+		node.requestFocus();
 	}
 
 	/**
