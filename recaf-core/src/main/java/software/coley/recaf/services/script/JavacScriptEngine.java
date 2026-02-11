@@ -3,17 +3,22 @@ package software.coley.recaf.services.script;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Type;
 import regexodus.Matcher;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.compile.*;
 import software.coley.recaf.services.plugin.CdiClassAllocator;
-import software.coley.recaf.util.ClassDefiner;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -73,7 +78,7 @@ public class JavacScriptEngine implements ScriptEngine {
 			"jakarta.inject.*",
 			"org.slf4j.Logger"
 	);
-	private final Map<Integer, GenerateResult> generateResultMap = new HashMap<>();
+	private final Map<Integer, ScriptTemplate> generateResultMap = new HashMap<>();
 	private final ExecutorService compileAndRunPool = ThreadPoolFactory.newSingleThreadExecutor("script-loader");
 	private final JavacCompiler compiler;
 	private final CdiClassAllocator allocator;
@@ -160,11 +165,11 @@ public class JavacScriptEngine implements ScriptEngine {
 		GenerateResult result;
 		if (RegexUtil.matchesAny(PATTERN_CLASS_NAME, script)) {
 			logger.debugging(l -> l.info("Compiling script as class"));
-			result = generateResultMap.computeIfAbsent(hash, n -> generateStandardClass(script));
+			result = generateResultMap.computeIfAbsent(hash, n -> generateStandardClass(script)).generateResult();
 		} else {
 			logger.debugging(l -> l.info("Compiling script as function"));
 			String className = "Script" + Math.abs(hash);
-			result = generateResultMap.computeIfAbsent(hash, n -> generateScriptClass(className, script));
+			result = generateResultMap.computeIfAbsent(hash, n -> generateScriptClass(className, script)).generateResult();
 		}
 		return result;
 	}
@@ -179,7 +184,7 @@ public class JavacScriptEngine implements ScriptEngine {
 	 * @return Compiler result wrapper containing the loaded class reference.
 	 */
 	@Nonnull
-	private GenerateResult generateStandardClass(@Nonnull String source) {
+	private ScriptTemplate generateStandardClass(@Nonnull String source) {
 		String originalSource = source;
 
 		// Extract package name
@@ -212,7 +217,7 @@ public class JavacScriptEngine implements ScriptEngine {
 			source = source.replace(" " + originalName + "(", " " + modifiedName + "(");
 			source = source.replace("\t" + originalName + "(", "\t" + modifiedName + "(");
 		} else {
-			return new GenerateResult(null, List.of(
+			return new ScriptTemplate.Failed(List.of(
 					new CompilerDiagnostic(-1, -1, 0,
 							"Could not determine name of class", CompilerDiagnostic.Level.ERROR)));
 		}
@@ -233,7 +238,7 @@ public class JavacScriptEngine implements ScriptEngine {
 	 * @return Compiler result wrapper containing the loaded class reference.
 	 */
 	@Nonnull
-	private GenerateResult generateScriptClass(@Nonnull String className, @Nonnull String script) {
+	private ScriptTemplate generateScriptClass(@Nonnull String className, @Nonnull String script) {
 		String originalSource = script;
 		Set<String> imports = new HashSet<>(DEFAULT_IMPORTS);
 		Matcher matcher = RegexUtil.getMatcher(PATTERN_IMPORT, script);
@@ -264,6 +269,24 @@ public class JavacScriptEngine implements ScriptEngine {
 		return generate(className, originalSource, code.toString());
 	}
 
+	@Nonnull
+	private byte[] postProcessClass(@Nonnull byte[] classBytes) {
+		ClassReader cr = new ClassReader(classBytes);
+		ClassWriter cw = new ClassWriter(cr, 0);
+		cr.accept(new InsertCancelSignalVisitor(cw), 0);
+		return cw.toByteArray();
+	}
+
+	private void injectClasses(@Nonnull Map<String, byte[]> classMap) {
+		for (Class<?> c : List.of(CancellationSingleton.class)) {
+			try (InputStream in = c.getClassLoader().getResourceAsStream(Type.getInternalName(c) + ".class")) {
+				classMap.put(c.getName(), in.readAllBytes());
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
+		}
+	}
+
 	/**
 	 * @param className
 	 * 		Name of the script class.
@@ -275,7 +298,7 @@ public class JavacScriptEngine implements ScriptEngine {
 	 * @return Compiler result wrapper containing the loaded class reference.
 	 */
 	@Nonnull
-	private GenerateResult generate(@Nonnull String className,
+	private ScriptTemplate generate(@Nonnull String className,
 									@Nonnull String originalSource,
 									@Nonnull String compileSource) {
 		JavacArguments args = new JavacArgumentsBuilder()
@@ -283,18 +306,14 @@ public class JavacScriptEngine implements ScriptEngine {
 				.withClassSource(compileSource)
 				.build();
 		CompilerResult result = compiler.compile(args, null, null);
+		List<CompilerDiagnostic> diagnostics = mapDiagnostics(originalSource, compileSource, result.getDiagnostics());
 		if (result.wasSuccess()) {
-			try {
-				Map<String, byte[]> classes = result.getCompilations().entrySet().stream()
-						.collect(Collectors.toMap(e -> e.getKey().replace('/', '.'), Map.Entry::getValue));
-				ClassDefiner definer = new ClassDefiner(classes);
-				Class<?> cls = definer.findClass(className.replace('/', '.'));
-				return new GenerateResult(cls, mapDiagnostics(originalSource, compileSource, result.getDiagnostics()));
-			} catch (Exception ex) {
-				logger.error("Failed to define generated script class", ex);
-			}
+			Map<String, byte[]> classes = result.getCompilations().entrySet().stream()
+					.collect(Collectors.toMap(e -> e.getKey().replace('/', '.'), e -> postProcessClass(e.getValue())));
+			injectClasses(classes);
+			return new ScriptTemplate.Generated(className.replace('/', '.'), Map.copyOf(classes), diagnostics);
 		}
-		return new GenerateResult(null, mapDiagnostics(originalSource, compileSource, result.getDiagnostics()));
+		return new ScriptTemplate.Failed(diagnostics);
 	}
 
 	/**
