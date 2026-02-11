@@ -6,8 +6,10 @@ import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.spi.*;
 import jakarta.inject.Inject;
 
-import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Allocator instance that ties into the CDI container.
@@ -16,7 +18,8 @@ import java.util.Map;
  */
 @ApplicationScoped
 public class CdiClassAllocator implements ClassAllocator {
-	private final Map<Class<?>, Bean<?>> classBeanMap = new IdentityHashMap<>();
+	private final Map<Class<?>, Bean<?>> classBeanMap = new WeakHashMap<>();
+	private final Lock lock = new ReentrantLock();
 	private final BeanManager beanManager;
 
 	@Inject
@@ -28,13 +31,16 @@ public class CdiClassAllocator implements ClassAllocator {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T instance(@Nonnull Class<T> cls) throws AllocationException {
+		lock.lock();
 		try {
 			// Create bean
 			Bean<T> bean = (Bean<T>) classBeanMap.computeIfAbsent(cls, c -> {
-				AnnotatedType<T> annotatedClass = beanManager.createAnnotatedType(cls);
+				// TODO bugged.
+				// Equivalence check is based on the class name and does not include the loader.
+				AnnotatedType<T> annotatedClass = beanManager.createAnnotatedType((Class<T>) c);
 				BeanAttributes<T> attributes = beanManager.createBeanAttributes(annotatedClass);
 				InjectionTargetFactory<T> factory = beanManager.getInjectionTargetFactory(annotatedClass);
-				return beanManager.createBean(attributes, cls, factory);
+				return beanManager.createBean(attributes, (Class<T>) c, factory);
 			});
 			CreationalContext<T> creationalContext = beanManager.createCreationalContext(bean);
 
@@ -42,6 +48,8 @@ public class CdiClassAllocator implements ClassAllocator {
 			return bean.create(creationalContext);
 		} catch (Throwable t) {
 			throw new AllocationException(cls, t);
+		} finally {
+			lock.unlock();
 		}
 	}
 }
