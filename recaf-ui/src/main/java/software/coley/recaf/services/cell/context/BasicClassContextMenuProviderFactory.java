@@ -186,9 +186,11 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 		});
 
 		// Refactor actions
-		var refactor = builder.submenu("menu.refactor", PAINT_BRUSH);
-		refactor.infoItem("menu.refactor.rename", TAG_EDIT, actions::renameClass);
-		refactor.infoItem("menu.refactor.move", STACKED_MOVE, actions::moveClass);
+		if (!resource.isInternal()) {
+			var refactor = builder.submenu("menu.refactor", PAINT_BRUSH);
+			refactor.infoItem("menu.refactor.rename", TAG_EDIT, actions::renameClass);
+			refactor.infoItem("menu.refactor.move", STACKED_MOVE, actions::moveClass);
+		}
 
 		// Copy path
 		builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(info));

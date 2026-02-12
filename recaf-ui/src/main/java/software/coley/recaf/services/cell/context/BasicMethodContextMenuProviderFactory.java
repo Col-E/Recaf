@@ -17,6 +17,8 @@ import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProvider;
 import software.coley.recaf.services.cell.text.TextProviderService;
+import software.coley.recaf.services.inheritance.InheritanceGraph;
+import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
@@ -41,11 +43,15 @@ import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
 public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuProviderFactory implements MethodContextMenuProviderFactory {
 	private static final Logger logger = Logging.get(BasicMethodContextMenuProviderFactory.class);
 
+	private final InheritanceGraphService graphService;
+
 	@Inject
-	public BasicMethodContextMenuProviderFactory(@Nonnull TextProviderService textService,
+	public BasicMethodContextMenuProviderFactory(@Nonnull InheritanceGraphService graphService,
+			@Nonnull TextProviderService textService,
 	                                             @Nonnull IconProviderService iconService,
 	                                             @Nonnull Actions actions) {
 		super(textService, iconService, actions);
+		this.graphService = graphService;
 	}
 
 	@Nonnull
@@ -57,6 +63,9 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 	                                                        @Nonnull ClassInfo declaringClass,
 	                                                        @Nonnull MethodMember method) {
 		return () -> {
+			InheritanceGraph inheritGraph = graphService.getCurrentWorkspaceInheritanceGraph();
+			boolean isLibrary = inheritGraph == null || inheritGraph.isLibraryMethod(declaringClass.getName(), method.getName(), method.getDescriptor());
+
 			TextProvider nameProvider = textService.getMethodMemberTextProvider(workspace, resource, bundle, declaringClass, method);
 			IconProvider iconProvider = iconService.getClassMemberIconProvider(workspace, resource, bundle, declaringClass, method);
 			ContextMenu menu = new ContextMenu();
@@ -78,7 +87,7 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 				if (source instanceof SearchContextSource) {
 					builder.item("menu.edit.assemble.method", EDIT, Unchecked.runnable(() -> actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method))));
 				}
-			} else {
+			} else if (!resource.isInternal()) {
 				// Edit menu
 				var edit = builder.submenu("menu.edit", EDIT);
 				edit.item("menu.edit.assemble.method", EDIT, Unchecked.runnable(() -> actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method))));
@@ -136,7 +145,8 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			builder.memberItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
 
 			// Refactor actions
-			builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameMethod); // TODO: Hide when a library method (like System.exit)
+			if (!resource.isInternal() && !isLibrary)
+				builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameMethod);
 
 			return menu;
 		};

@@ -81,7 +81,7 @@ public class InheritanceGraphService implements Service {
 			synchronized (this) {
 				if (currentWorkspaceGraph == null) {
 					InheritanceGraph graph = newInheritanceGraph(workspaceManager.getCurrent());
-					mappingListeners.addMappingApplicationListener(graph);
+					graph.installMappingListener(mappingListeners);
 					currentWorkspaceGraph = graph;
 				}
 			}
@@ -106,11 +106,7 @@ public class InheritanceGraphService implements Service {
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 			if (currentWorkspaceGraph != null) {
-				// Remove the graph as a listener so that it can be feed by the garbage collector.
-				mappingListeners.removeMappingApplicationListener(currentWorkspaceGraph);
-
-				// Notify the graph of closure, then purge the reference.
-				currentWorkspaceGraph.onWorkspaceClosed(workspace);
+				currentWorkspaceGraph.uninstallMappingListener(mappingListeners, true);
 				currentWorkspaceGraph = null;
 			}
 		}

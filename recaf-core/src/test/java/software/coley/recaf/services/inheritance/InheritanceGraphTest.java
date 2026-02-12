@@ -99,6 +99,20 @@ class InheritanceGraphTest extends TestBase {
 	}
 
 	@Test
+	void isLibraryMethod() {
+		String stringConsumerName = StringConsumer.class.getName().replace('.', '/');
+
+		// The bridge method defined in StringConsumer can technically be renamed since it is defined locally
+		// and is not an override of the Consumer<T> method which takes Object.
+		assertFalse(inheritanceGraph.isLibraryMethod(stringConsumerName, "accept", "(Ljava/lang/String;)V"),
+				"StringConsumer.accept(String) should not be a library method");
+
+		// Inherited method from java.util.function.Consumer so it should be marked as a library method.
+		assertTrue(inheritanceGraph.isLibraryMethod(stringConsumerName, "accept", "(Ljava/lang/Object;)V"),
+				"StringConsumer.accept(Object) should be a library method");
+	}
+
+	@Test
 	void getCommon() {
 		String edibleName = Inheritance.Edible.class.getName().replace('.', '/');
 		String appleName = Inheritance.Apple.class.getName().replace('.', '/');

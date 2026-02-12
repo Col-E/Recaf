@@ -9,6 +9,7 @@ import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.mapping.MappingApplicationListener;
+import software.coley.recaf.services.mapping.MappingListeners;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.workspace.model.Workspace;
@@ -39,14 +40,14 @@ import java.util.stream.Stream;
  *
  * @author Matt Coley
  */
-public class InheritanceGraph implements WorkspaceModificationListener, WorkspaceCloseListener,
-		ResourceJvmClassListener, ResourceAndroidClassListener, MappingApplicationListener {
+public class InheritanceGraph {
 	/** Vertex used for classes that are not found in the workspace. */
 	private static final InheritanceVertex STUB = new InheritanceStubVertex();
 	private static final String OBJECT = "java/lang/Object";
 	private final Map<String, Set<String>> parentToChild;
 	private final Map<String, InheritanceVertex> vertices;
 	private final Set<String> stubs = ConcurrentHashMap.newKeySet();
+	private final ListenerHost listener = new ListenerHost();
 	private final Workspace workspace;
 
 	/**
@@ -67,12 +68,39 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 
 		// Add listeners to primary resource so when classes update we keep our graph up to date.
 		WorkspaceResource primaryResource = workspace.getPrimaryResource();
-		primaryResource.addResourceJvmClassListener(this);
-		primaryResource.addResourceAndroidClassListener(this);
-		workspace.addWorkspaceModificationListener(this);
+		primaryResource.addResourceJvmClassListener(listener);
+		primaryResource.addResourceAndroidClassListener(listener);
+		workspace.addWorkspaceModificationListener(listener);
 
 		// Populate downwards (parent --> child) lookup
 		refreshChildLookup();
+	}
+
+	/**
+	 * Registers our graph's listener for mapping updates.
+	 *
+	 * @param mappingListeners
+	 * 		Listener service to register within.
+	 */
+	public void installMappingListener(@Nonnull MappingListeners mappingListeners) {
+		mappingListeners.addMappingApplicationListener(listener);
+	}
+
+	/**
+	 * Unregisters our graph's listener from mapping updates.
+	 *
+	 * @param mappingListeners
+	 * 		Listener service to unregister within.
+	 * @param purge
+	 *        {@code true} to also clear the graph of all data,
+	 *        {@code false} to just remove the listener and keep the graph data intact.
+	 */
+	public void uninstallMappingListener(@Nonnull MappingListeners mappingListeners, boolean purge) {
+		// Remove the graph as a listener so that it can be feed by the garbage collector.
+		mappingListeners.removeMappingApplicationListener(listener);
+
+		// Notify the graph of closure.
+		if (purge) listener.onWorkspaceClosed(workspace);
 	}
 
 	/**
@@ -388,6 +416,25 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 	}
 
 	/**
+	 * Check if the method is a library method. If the class is not found in the workspace, we assume it is a library method.
+	 *
+	 * @param name
+	 * 		Declaring class name.
+	 * @param methodName
+	 * 		Method name.
+	 * @param methodDesc
+	 * 		Method descriptor.
+	 *
+	 * @return {@code true} if the method is a library method, {@code false} otherwise.
+	 */
+	public boolean isLibraryMethod(@Nonnull String name, @Nonnull String methodName, @Nonnull String methodDesc) {
+		InheritanceVertex vertex = getVertex(name);
+		if (vertex == null)
+			return true; // Not in the workspace, so we assume it is a library method.
+		return vertex.isLibraryMethod(methodName, methodDesc);
+	}
+
+	/**
 	 * When {@link #STUB} is the return of this method, the class was not found.
 	 * <br>
 	 * When {@code null} is the return of this method, the class name is illegal.
@@ -452,101 +499,104 @@ public class InheritanceGraph implements WorkspaceModificationListener, Workspac
 			vertex.setValue(newValue);
 	}
 
+	private class ListenerHost implements WorkspaceModificationListener, WorkspaceCloseListener,
+			ResourceJvmClassListener, ResourceAndroidClassListener, MappingApplicationListener {
 
-	@Override
-	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
-		populateParentToChildLookup(cls);
-	}
+		@Override
+		public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
+			populateParentToChildLookup(cls);
+		}
 
-	@Override
-	public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
-		populateParentToChildLookup(cls);
-	}
+		@Override
+		public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
+			populateParentToChildLookup(cls);
+		}
 
-	@Override
-	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
-		onUpdateClassImpl(oldCls, newCls);
-	}
+		@Override
+		public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
+			onUpdateClassImpl(oldCls, newCls);
+		}
 
-	@Override
-	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls) {
-		onUpdateClassImpl(oldCls, newCls);
-	}
+		@Override
+		public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo oldCls, @Nonnull AndroidClassInfo newCls) {
+			onUpdateClassImpl(oldCls, newCls);
+		}
 
-	@Override
-	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
-		removeClass(cls);
-	}
+		@Override
+		public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
+			removeClass(cls);
+		}
 
-	@Override
-	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
-		removeClass(cls);
-	}
+		@Override
+		public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
+			removeClass(cls);
+		}
 
-	@Override
-	public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-		Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-		library.jvmClassBundleStreamRecursive()
-				.flatMap(Bundle::stream)
-				.forEach(c -> populateParentToChildLookup(c, visited));
-		library.androidClassBundleStreamRecursive()
-				.flatMap(Bundle::stream)
-				.forEach(c -> populateParentToChildLookup(c, visited));
-		refreshChildLookup();
-	}
+		@Override
+		public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+			Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+			library.jvmClassBundleStreamRecursive()
+					.flatMap(Bundle::stream)
+					.forEach(c -> populateParentToChildLookup(c, visited));
+			library.androidClassBundleStreamRecursive()
+					.flatMap(Bundle::stream)
+					.forEach(c -> populateParentToChildLookup(c, visited));
+			refreshChildLookup();
+		}
 
-	@Override
-	public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-		library.jvmClassBundleStreamRecursive()
-				.flatMap(Bundle::stream)
-				.forEach(this::removeClass);
-		library.androidClassBundleStreamRecursive()
-				.flatMap(Bundle::stream)
-				.forEach(this::removeClass);
-		refreshChildLookup();
-	}
+		@Override
+		public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
+			library.jvmClassBundleStreamRecursive()
+					.flatMap(Bundle::stream)
+					.forEach(InheritanceGraph.this::removeClass);
+			library.androidClassBundleStreamRecursive()
+					.flatMap(Bundle::stream)
+					.forEach(InheritanceGraph.this::removeClass);
+			refreshChildLookup();
+		}
 
-	@Override
-	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
-		parentToChild.clear();
-		vertices.clear();
-		stubs.clear();
-	}
+		@Override
+		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
+			parentToChild.clear();
+			vertices.clear();
+			stubs.clear();
+		}
 
-	@Override
-	public void onPreApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
-		// no-op
-	}
+		@Override
+		public void onPreApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
+			// no-op
+		}
 
-	@Override
-	public void onPostApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
-		// Must apply to the graph's associated workspace.
-		if (this.workspace != workspace)
-			return;
+		@Override
+		public void onPostApply(@Nonnull Workspace workspace, @Nonnull MappingResults mappingResults) {
+			// Must apply to the graph's associated workspace.
+			if (InheritanceGraph.this.workspace != workspace)
+				return;
 
-		// Remove vertices and lookups of items that no longer exist.
-		mappingResults.getPreMappingPaths().forEach((name, path) -> {
-			// If we see a 'stub' from the vertex creator, we know it is no longer
-			// in the workspace and should be removed from our cache.
-			InheritanceVertex vertex = createVertex(name);
-			if (vertex == STUB) {
-				vertices.remove(name);
+			// Remove vertices and lookups of items that no longer exist.
+			mappingResults.getPreMappingPaths().forEach((name, path) -> {
+				// If we see a 'stub' from the vertex creator, we know it is no longer
+				// in the workspace and should be removed from our cache.
+				InheritanceVertex vertex = createVertex(name);
+				if (vertex == STUB) {
+					vertices.remove(name);
+					parentToChild.remove(name);
+				}
+			});
+
+			// While applying mappings, the graph does not perfectly refresh, so we need to clear out some state
+			// so that when the graph is used again the correct information will be fetched.
+			Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+			mappingResults.getPostMappingPaths().forEach((name, path) -> {
+				// Stub information for classes we know exist in the workspace should be removed.
+				stubs.remove(name);
+
+				// Refresh the parent-->children mapping.
 				parentToChild.remove(name);
-			}
-		});
-
-		// While applying mappings, the graph does not perfectly refresh, so we need to clear out some state
-		// so that when the graph is used again the correct information will be fetched.
-		Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-		mappingResults.getPostMappingPaths().forEach((name, path) -> {
-			// Stub information for classes we know exist in the workspace should be removed.
-			stubs.remove(name);
-
-			// Refresh the parent-->children mapping.
-			parentToChild.remove(name);
-			ClassInfo postClass = path.getValue();
-			populateParentToChildLookup(postClass, visited);
-		});
+				ClassInfo postClass = path.getValue();
+				populateParentToChildLookup(postClass, visited);
+			});
+		}
 	}
 
 	private static class InheritanceStubVertex extends InheritanceVertex {

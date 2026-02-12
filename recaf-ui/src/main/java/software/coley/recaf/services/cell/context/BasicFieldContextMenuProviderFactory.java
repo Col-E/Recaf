@@ -79,7 +79,7 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 				if (source instanceof SearchContextSource) {
 					builder.item("menu.edit.assemble.field", EDIT, () -> Unchecked.runnable(() -> actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, field))).run());
 				}
-			} else {
+			} else if (!resource.isInternal()) {
 				// Edit menu
 				var edit = builder.submenu("menu.edit", EDIT);
 				edit.item("menu.edit.assemble.field", EDIT, () -> Unchecked.runnable(() -> actions.openAssembler(PathNodes.memberPath(workspace, resource, bundle, declaringClass, field))).run());
@@ -116,7 +116,8 @@ public class BasicFieldContextMenuProviderFactory extends AbstractContextMenuPro
 			builder.memberItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
 
 			// Refactor actions
-			builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameField);
+			if (!resource.isInternal())
+				builder.memberItem("menu.refactor.rename", TAG_EDIT, actions::renameField);
 
 			return menu;
 		};

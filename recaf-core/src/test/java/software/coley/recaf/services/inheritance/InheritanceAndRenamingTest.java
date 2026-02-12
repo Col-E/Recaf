@@ -51,7 +51,7 @@ class InheritanceAndRenamingTest extends TestBase {
 		BasicJvmClassBundle classes = TestClassUtils.fromClasses(generatedClasses);
 		Workspace workspace = TestClassUtils.fromBundle(classes);
 		InheritanceGraph inheritanceGraph = inheritanceGraphService.newInheritanceGraph(workspace);
-		mappingListeners.addMappingApplicationListener(inheritanceGraph);
+		inheritanceGraph.installMappingListener(mappingListeners);
 
 		// Verify initial state
 		for (int i = 1; i <= CLASS_COUNT; i++) {
