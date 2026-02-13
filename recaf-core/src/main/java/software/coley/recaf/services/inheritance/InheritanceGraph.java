@@ -319,7 +319,7 @@ public class InheritanceGraph {
 
 		// Lookup vertex for the child type, and see if any parent contains the supposed super/interface type.
 		InheritanceVertex secondVertex = getVertex(second);
-		if (secondVertex != null && secondVertex.hasParent(second))
+		if (secondVertex != null && secondVertex.hasParent(first))
 			return true;
 
 		// Lookup vertex for the parent type, and see if any child contains the supposed type.
