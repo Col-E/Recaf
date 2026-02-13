@@ -24,6 +24,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.util.Types;
+import software.coley.recaf.util.analysis.eval.InstancedObjectValue;
 import software.coley.recaf.util.analysis.lookup.GetFieldLookup;
 import software.coley.recaf.util.analysis.lookup.GetStaticLookup;
 import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
@@ -354,6 +355,8 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 				return IntValue.UNKNOWN;
 			case CHECKCAST:
 				Type targetType = Type.getObjectType(((TypeInsnNode) insn).desc);
+				if (value instanceof InstancedObjectValue<?> instancedValue && isAssignableFrom(targetType, instancedValue.type()))
+					return value;
 				return newValue(targetType);
 			case INSTANCEOF:
 				return IntValue.UNKNOWN;

@@ -24,8 +24,10 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.BlwUtil;
-import software.coley.recaf.util.analysis.ReEvaluationException;
-import software.coley.recaf.util.analysis.ReEvaluator;
+import software.coley.recaf.util.analysis.eval.EvaluationResult;
+import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
+import software.coley.recaf.util.analysis.eval.FieldCacheManager;
+import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
@@ -535,14 +537,15 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		// match the sequence length with a little leeway should be alright.
 		final int maxSteps = sequence.size() + 10;
 		ReFrame initialBlockFrame = (ReFrame) frames[Math.max(0, sequenceStartIndex)];
-		ReEvaluator evaluator = new ReEvaluator(context.getWorkspace(), context.newInterpreter(inheritanceGraph), maxSteps);
+		Evaluator evaluator = new Evaluator(context.getWorkspace(), context.newInterpreter(inheritanceGraph), new FieldCacheManager(), maxSteps, false);
 
 		// Evaluate the sequence and return the result.
-		try {
-			ReValue result = evaluator.evaluateBlock(block, initialBlockFrame, method.access);
-			if (Objects.equals(result.type(), topValue.type())) // Sanity check
-				return result;
-		} catch (ReEvaluationException ignored) {}
+		// If evaluation fails, return the original unknown top value.
+		EvaluationResult result = evaluator.evaluateBlock(block, initialBlockFrame, method.access);
+		if (result instanceof EvaluationYieldResult(ReValue value)) {
+			if (Objects.equals(value.type(), topValue.type())) // Sanity check
+				return value;
+		}
 
 		// Evaluation failed, this is to be expected as some cases cannot always be evaluated.
 		return topValue;

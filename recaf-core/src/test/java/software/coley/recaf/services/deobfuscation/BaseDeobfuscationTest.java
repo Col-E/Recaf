@@ -17,6 +17,10 @@ import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
 import software.coley.recaf.services.assembler.JvmAssemblerPipeline;
+import software.coley.recaf.services.compile.CompilerResult;
+import software.coley.recaf.services.compile.JavacArguments;
+import software.coley.recaf.services.compile.JavacArgumentsBuilder;
+import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.cfr.CfrConfig;
@@ -29,11 +33,14 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.workspace.model.BasicWorkspace;
+import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.resource.BasicWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -49,12 +56,14 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 	protected static final String EXCEPTION_NAME = "BogusException";
 	private static JvmAssemblerPipeline assembler;
 	private static TransformationApplierService transformationApplierService;
+	private static JavacCompiler javac;
 	private static JvmDecompiler decompiler;
 	private static Workspace workspace;
 
 	@BeforeAll
 	static void setupServices() {
 		transformationApplierService = recaf.get(TransformationApplierService.class);
+		javac = recaf.get(JavacCompiler.class);
 		decompiler = new CfrDecompiler(recaf.get(WorkspaceManager.class), new CfrConfig());
 	}
 
@@ -207,6 +216,27 @@ public abstract class BaseDeobfuscationTest extends TestBase {
 		if (result.getText() == null)
 			fail("Missing decompilation result");
 		return result.getText();
+	}
+
+	@Nonnull
+	protected String compile(@Nonnull String src, Class<?>... importedType) {
+		WorkspaceResource resource = new WorkspaceResourceBuilder().build();
+		JvmClassBundle bundle = resource.getJvmClassBundle();
+		Workspace workspace = new BasicWorkspace(resource);
+		JavacArguments args = new JavacArgumentsBuilder()
+				.withClassName(CLASS_NAME)
+				.withClassSource("%IMPORTS%\nclass %NAME% {\n%SRC%\n}"
+						.replace("%IMPORTS%", Arrays.stream(importedType).map(c -> "import " + c.getName() + ";").collect(Collectors.joining("\n")))
+						.replace("%NAME%", CLASS_NAME)
+						.replace("%SRC%", src))
+				.build();
+		CompilerResult result = javac.compile(args, workspace, null);
+		if (result.wasSuccess())
+			result.getCompilations().forEach((name, code) -> bundle.put(name, new JvmClassInfoBuilder(code).build()));
+		else
+			fail("Failed to compile test input");
+		JvmClassInfo cls = bundle.get(CLASS_NAME);
+		return assembler.disassemble(PathNodes.classPath(workspace, resource, bundle, cls)).get();
 	}
 
 	@Nonnull

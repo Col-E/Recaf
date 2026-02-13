@@ -21,8 +21,10 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.util.analysis.ReEvaluationException;
-import software.coley.recaf.util.analysis.ReEvaluator;
+import software.coley.recaf.util.analysis.eval.EvaluationResult;
+import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
+import software.coley.recaf.util.analysis.eval.FieldCacheManager;
+import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -45,8 +47,10 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 	private final static int MAX_STEPS = 20_000; // TODO: Make configurable
 	private final InheritanceGraphService graphService;
 	private final Object2BooleanMap<String> canBeEvaluatedMap = new Object2BooleanArrayMap<>();
+	private final FieldCacheManager fieldCacheManager = new FieldCacheManager();
+
 	private InheritanceGraph inheritanceGraph;
-	private ReEvaluator evaluator;
+	private Evaluator evaluator;
 
 	@Inject
 	public CallResultInliningTransformer(@Nonnull InheritanceGraphService graphService) {
@@ -56,7 +60,7 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
-		evaluator = new ReEvaluator(workspace, context.newInterpreter(inheritanceGraph), MAX_STEPS);
+		evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), new FieldCacheManager(), MAX_STEPS, false);
 	}
 
 	@Override
@@ -94,8 +98,12 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 					if (!canEvaluate(min))
 						continue;
 
-					try {
-						ReValue retVal = evaluator.evaluate(min.owner, min.name, min.desc, null, arguments);
+					// Reset instance support before each evaluation to prevent state pollution.
+					fieldCacheManager.reset();
+
+					// Attempt evaluation. If it yields a value, replace the call with the result.
+					EvaluationResult result = evaluator.evaluate(min.owner, min.name, min.desc, null, arguments);
+					if (result instanceof EvaluationYieldResult(ReValue retVal)) {
 						AbstractInsnNode replacement = OpaqueConstantFoldingTransformer.toInsn(retVal);
 						if (replacement != null) {
 							for (int arg = arguments.size() - 1; arg >= 0; arg--) {
@@ -108,8 +116,6 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 							instructions.set(min, replacement);
 							dirty = true;
 						}
-					} catch (ReEvaluationException ex) {
-						continue;
 					}
 				}
 			}

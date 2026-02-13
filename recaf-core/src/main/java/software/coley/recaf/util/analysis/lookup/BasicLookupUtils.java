@@ -31,6 +31,10 @@ import java.util.OptionalInt;
  * @author Matt Coley
  */
 public class BasicLookupUtils {
+	// TODO: These short-named methods are useful for code generation and should stay as-is,
+	//       But we should also expose the conversion logic in a more explicit way for plugin developers
+	//       to use when writing transformers or their own lookup implementations.
+
 	@SuppressWarnings("all")
 	protected static byte b(@Nonnull IntValue value) {return (byte) value.value().getAsInt();}
 
@@ -57,6 +61,11 @@ public class BasicLookupUtils {
 
 	@SuppressWarnings("all")
 	protected static String str(@Nonnull StringValue value) {return value.getText().get();}
+
+	protected static Object objl(@Nonnull ObjectValue value) {
+		// Yield object type literally instead of auto-casting at call-site with T.
+		return obj(value);
+	}
 
 	@SuppressWarnings("all")
 	protected static <T> T obj(@Nonnull ObjectValue value) {

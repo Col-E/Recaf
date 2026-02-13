@@ -6,6 +6,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.gen.LookupGenerator;
 import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.IllegalValueException;
 import software.coley.recaf.util.analysis.value.IntValue;
@@ -23,7 +24,7 @@ import java.util.Objects;
 /**
  * Basic implementation of {@link InvokeVirtualLookup} for common static fields.
  * <br>
- * Mostly auto-generated, see {@link BasicLookupGenerator#main(String[])}
+ * Mostly auto-generated, see {@link LookupGenerator#main(String[])}
  *
  * @author Matt Coley
  */
