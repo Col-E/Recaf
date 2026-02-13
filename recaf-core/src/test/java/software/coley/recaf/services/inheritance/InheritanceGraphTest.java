@@ -141,6 +141,10 @@ class InheritanceGraphTest extends TestBase {
 		// Apple.class.isAssignableFrom(Edible.class) --> false
 		assertFalse(inheritanceGraph.isAssignableFrom(appleName, edibleName), "Apple should not be assignable from Edible");
 		assertFalse(inheritanceGraph.isAssignableFrom(grapeName, edibleName), "Grape should not be assignable from Edible");
+
+		// Core Java types
+		assertTrue(inheritanceGraph.isAssignableFrom("java/lang/Throwable", "java/lang/Exception"), "Throwable should be assignable from Exception");
+		assertFalse(inheritanceGraph.isAssignableFrom("java/lang/Exception", "java/lang/Throwable"), "Exception should not be assignable from Throwable");
 	}
 
 	@Test
