@@ -2,6 +2,7 @@ package software.coley.recaf.ui.control;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -51,6 +52,17 @@ public class ActionButton extends Button implements Tooltipable {
 	 */
 	public ActionButton(@Nonnull Node graphic, @Nonnull Runnable action) {
 		setGraphic(graphic);
+		setOnAction(e -> wrap(e, action));
+	}
+
+	/**
+	 * @param graphic
+	 * 		Button display graphic property.
+	 * @param action
+	 * 		Action to run on-click.
+	 */
+	public ActionButton(@Nonnull ObjectProperty<Node> graphic, @Nonnull Runnable action) {
+		graphicProperty().bindBidirectional(graphic);
 		setOnAction(e -> wrap(e, action));
 	}
 
