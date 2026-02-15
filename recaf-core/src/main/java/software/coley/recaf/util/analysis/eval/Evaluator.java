@@ -101,23 +101,25 @@ public class Evaluator {
 	                           @Nonnull String methodName,
 	                           @Nonnull String methodDescriptor) {
 		String key = className + '.' + methodName + methodDescriptor;
-		return evaluationSupportCache.computeIfAbsent(key, k -> {
-			// Find class in workspace.
-			ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
-			if (classPath == null)
-				return false;
+		synchronized (evaluationSupportCache) {
+			return evaluationSupportCache.computeIfAbsent(key, k -> {
+				// Find class in workspace.
+				ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
+				if (classPath == null)
+					return false;
 
-			// Ensure method exists in class.
-			JvmClassInfo jvmClass = classPath.getValue().asJvmClass();
-			MethodMember method = jvmClass.getDeclaredMethod(methodName, methodDescriptor);
-			if (method == null)
-				return false;
+				// Ensure method exists in class.
+				JvmClassInfo jvmClass = classPath.getValue().asJvmClass();
+				MethodMember method = jvmClass.getDeclaredMethod(methodName, methodDescriptor);
+				if (method == null)
+					return false;
 
-			// Extract method-node model and delegate to evaluate check.
-			ClassNode node = new ClassNode();
-			jvmClass.getClassReader().accept(new MemberFilteringVisitor(node, method), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
-			return node.methods.size() == 1 && canEvaluate(node.methods.getFirst());
-		});
+				// Extract method-node model and delegate to evaluate check.
+				ClassNode node = new ClassNode();
+				jvmClass.getClassReader().accept(new MemberFilteringVisitor(node, method), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+				return node.methods.size() == 1 && canEvaluate(node.methods.getFirst());
+			});
+		}
 	}
 
 	/**
@@ -235,8 +237,11 @@ public class Evaluator {
 					+ methodType.getArgumentCount() + " but was given " + parameters.size() + " parameters");
 		Type[] argumentTypes = methodType.getArgumentTypes();
 		for (int i = 0; i < argumentTypes.length; i++) {
+			Type parameterType = parameters.get(i).type();
+			if (parameterType == null)
+				return EvaluationResult.cannotEvaluate("Unknown passed parameter type at index " + i);
 			int expectedSort = argumentTypes[i].getSort();
-			int actualSort = parameters.get(i).type().getSort();
+			int actualSort = parameterType.getSort();
 			if (expectedSort != actualSort && !(expectedSort <= Type.INT && actualSort < Type.INT))
 				return EvaluationResult.cannotEvaluate("Mismatched parameter type at index " + i);
 		}

@@ -3,9 +3,11 @@ package software.coley.recaf.util.analysis.eval;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.analysis.value.ReValue;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Support for tracking instance and static field values during evaluation.
@@ -14,9 +16,9 @@ import java.util.Map;
  */
 public class FieldCacheManager {
 	/** Maps instances to their field states. */
-	protected final Map<ReValue, FieldCache> instanceFields = new IdentityHashMap<>();
+	protected final Map<ReValue, FieldCache> instanceFields = Collections.synchronizedMap(new IdentityHashMap<>());
 	/** Maps class names to their static field states. */
-	protected final Map<String, FieldCache> staticFields = new HashMap<>();
+	protected final Map<String, FieldCache> staticFields = new ConcurrentHashMap<>();
 
 	/**
 	 * Clear all instance and static field caches.
