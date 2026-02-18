@@ -24,11 +24,11 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.BlwUtil;
+import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
-import software.coley.recaf.util.analysis.eval.FieldCacheManager;
 import software.coley.recaf.util.analysis.eval.Evaluator;
-import software.coley.recaf.util.analysis.ReFrame;
+import software.coley.recaf.util.analysis.eval.FieldCacheManager;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IntValue;
@@ -569,6 +569,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		// We don't know the result of the operation. But if it is something we know is redundant
 		// we will want to remove it anyways. For instance:
 		//  x * 1 = x
+		//  x / 1 = x
 		//  x + 0 = x
 		//  x | 0 = x
 		//  x & -1 = x
@@ -581,11 +582,12 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		int opcode = instruction.getOpcode();
 		int targetValue = switch (opcode) {
 			case IAND, LAND -> -1;
-			case IMUL, FMUL, DMUL, LMUL -> 1;
+			case IMUL, FMUL, DMUL, LMUL,
+			     IDIV, FDIV, DDIV, LDIV -> 1;
 			case IADD, FADD, DADD, LADD,
-					IOR, LOR,
-					IXOR, LXOR,
-					ISHL, ISHR, IUSHR, LSHL, LSHR, LUSHR -> 0;
+			     IOR, LOR,
+			     IXOR, LXOR,
+			     ISHL, ISHR, IUSHR, LSHL, LSHR, LUSHR -> 0;
 			default -> 25565;
 		};
 
