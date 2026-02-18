@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -255,6 +256,7 @@ public class TransformationApplier {
 			public Set<ClassPathNode> getClassesToRemove() {
 				return context.getClassesToRemove().stream()
 						.map(workspace::findJvmClass)
+						.filter(Objects::nonNull)
 						.collect(Collectors.toSet());
 			}
 
