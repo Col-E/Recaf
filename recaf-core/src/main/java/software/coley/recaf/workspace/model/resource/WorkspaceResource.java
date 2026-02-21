@@ -15,6 +15,7 @@ import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.stream.Stream;
@@ -139,6 +140,14 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	@Nonnull
 	default Stream<JvmClassBundle> jvmClassBundleStream() {
 		return of(getJvmClassBundle());
+	}
+
+	/**
+	 * @return Iterable of all immediate JVM class bundles in the resource.
+	 */
+	@Nonnull
+	default Iterable<JvmClassBundle> jvmClassBundles() {
+		return List.of(getJvmClassBundle());
 	}
 
 	/**

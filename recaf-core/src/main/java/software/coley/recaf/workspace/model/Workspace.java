@@ -23,12 +23,15 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Queue;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -187,26 +190,26 @@ public interface Workspace extends Closing {
 	 */
 	@Nullable
 	default ClassPathNode findJvmClass(boolean includeInternal, @Nonnull String name) {
-		Queue<WorkspaceResource> resourceQueue = new ArrayDeque<>(getAllResources(includeInternal));
-		while (!resourceQueue.isEmpty()) {
-			WorkspaceResource resource = resourceQueue.remove();
-
-			// Check JVM bundles for class by the given name
-			JvmClassInfo classInfo;
-			for (JvmClassBundle bundle : resource.jvmClassBundleStream().toList()) {
-				classInfo = bundle.get(name);
-				if (classInfo != null)
-					return PathNodes.classPath(this, resource, bundle, classInfo);
+		Queue<Collection<? extends WorkspaceResource>> resourceQueue = new ArrayDeque<>();
+		Collection<? extends WorkspaceResource> resources = getAllResources(includeInternal);
+		do {
+			for (WorkspaceResource resource : resources) {
+				// Check JVM bundles for class by the given name
+				JvmClassInfo classInfo;
+				for (JvmClassBundle bundle : resource.jvmClassBundles()) {
+					classInfo = bundle.get(name);
+					if (classInfo != null)
+						return PathNodes.classPath(this, resource, bundle, classInfo);
+				}
+				for (VersionedJvmClassBundle versionedBundle : resource.getVersionedJvmClassBundles().values()) {
+					classInfo = versionedBundle.get(name);
+					if (classInfo != null)
+						return PathNodes.classPath(this, resource, versionedBundle, classInfo);
+				}
+				// Queue up embedded resources
+				resourceQueue.add(resource.getEmbeddedResources().values());
 			}
-			for (VersionedJvmClassBundle versionedBundle : resource.versionedJvmClassBundleStream().toList()) {
-				classInfo = versionedBundle.get(name);
-				if (classInfo != null)
-					return PathNodes.classPath(this, resource, versionedBundle, classInfo);
-			}
-
-			// Queue up embedded resources
-			resourceQueue.addAll(resource.getEmbeddedResources().values());
-		}
+		} while ((resources = resourceQueue.poll()) != null);
 		return null;
 	}
 
@@ -241,24 +244,25 @@ public interface Workspace extends Closing {
 	@Nullable
 	default ClassPathNode findVersionedJvmClass(@Nonnull String name, int version) {
 		// Internal resources don't have versioned classes, so we won't iterate over those.
-		Queue<WorkspaceResource> resourceQueue = new ArrayDeque<>(getAllResources(false));
-		while (!resourceQueue.isEmpty()) {
-			WorkspaceResource resource = resourceQueue.remove();
+		Queue<Collection<? extends WorkspaceResource>> resourceQueue = new ArrayDeque<>();
+		Collection<? extends WorkspaceResource> resources = getAllResources(false);
+		do {
+			for (WorkspaceResource resource : resources) {
+				// Check versioned bundles for class by the given name, in descending order from the given version.
+				NavigableMap<Integer, VersionedJvmClassBundle> versionedBundleMap = resource.getVersionedJvmClassBundles();
+				Map.Entry<Integer, VersionedJvmClassBundle> entry = versionedBundleMap.floorEntry(version);
+				while (entry != null) {
+					VersionedJvmClassBundle versionedBundle = entry.getValue();
+					JvmClassInfo classInfo = versionedBundle.get(name);
+					if (classInfo != null)
+						return PathNodes.classPath(this, resource, versionedBundle, classInfo);
+					entry = versionedBundleMap.floorEntry(entry.getKey() - 1);
+				}
 
-			// Check versioned bundles for class by the given name, in descending order from the given version.
-			NavigableMap<Integer, VersionedJvmClassBundle> versionedBundleMap = resource.getVersionedJvmClassBundles();
-			Map.Entry<Integer, VersionedJvmClassBundle> entry = versionedBundleMap.floorEntry(version);
-			while (entry != null) {
-				VersionedJvmClassBundle versionedBundle = entry.getValue();
-				JvmClassInfo classInfo = versionedBundle.get(name);
-				if (classInfo != null)
-					return PathNodes.classPath(this, resource, versionedBundle, classInfo);
-				entry = versionedBundleMap.floorEntry(entry.getKey() - 1);
+				// Queue up embedded resources.
+				resourceQueue.add(resource.getEmbeddedResources().values());
 			}
-
-			// Queue up embedded resources.
-			resourceQueue.addAll(resource.getEmbeddedResources().values());
-		}
+		} while ((resources = resourceQueue.poll()) != null);
 		return null;
 	}
 
@@ -357,6 +361,11 @@ public interface Workspace extends Closing {
 		result.addAll(findJvmClasses(includeInternal, Unchecked.cast(filter)));
 		result.addAll(findAndroidClasses(Unchecked.cast(filter)));
 		return result;
+	}
+
+	default void forEachClass(boolean includeInternal, @Nonnull Consumer<? super ClassInfo> consumer) {
+		forEachJvmClass(includeInternal, consumer);
+		forEachAndroidClass(consumer);
 	}
 
 	/**
@@ -514,6 +523,12 @@ public interface Workspace extends Closing {
 				.collect(Collectors.toCollection(TreeSet::new));
 	}
 
+	default void forEachJvmClass(boolean includeInternal, @Nonnull Consumer<? super JvmClassInfo> consumer) {
+		jvmClassesStream(includeInternal)
+				.map(node -> (JvmClassInfo) node.getValue())
+				.forEach(consumer);
+	}
+
 	/**
 	 * @param filter
 	 * 		Android class filter.
@@ -525,6 +540,12 @@ public interface Workspace extends Closing {
 		return androidClassesStream()
 				.filter(node -> filter.test((AndroidClassInfo) node.getValue()))
 				.collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	default void forEachAndroidClass(@Nonnull Consumer<? super AndroidClassInfo> consumer) {
+		androidClassesStream()
+				.map(node -> (AndroidClassInfo) node.getValue())
+				.forEach(consumer);
 	}
 
 	/**
