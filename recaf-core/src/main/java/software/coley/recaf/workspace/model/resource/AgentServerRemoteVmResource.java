@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model.resource;
 
+import com.google.common.collect.Iterables;
 import com.sun.tools.attach.VirtualMachine;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -87,6 +88,12 @@ public class AgentServerRemoteVmResource extends BasicWorkspaceResource implemen
 	@Override
 	public Stream<JvmClassBundle> jvmClassBundleStream() {
 		return Stream.concat(super.jvmClassBundleStream(), new ArrayList<>(remoteBundleMap.values()).stream());
+	}
+
+	@Nonnull
+	@Override
+	public Iterable<JvmClassBundle> jvmClassBundles() {
+		return Iterables.concat(super.jvmClassBundles(), new ArrayList<>(remoteBundleMap.values()));
 	}
 
 	@Override
