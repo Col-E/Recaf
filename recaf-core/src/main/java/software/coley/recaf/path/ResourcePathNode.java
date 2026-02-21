@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.collections.Maps;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.info.Named;
+import software.coley.recaf.util.CollectionUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -142,7 +143,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 
 					// Show in order as in the workspace.
 					List<WorkspaceResource> resources = workspace.getAllResources(false);
-					return Integer.compare(resources.indexOf(resource), resources.indexOf(otherResource));
+					return Integer.compare(CollectionUtils.identityIndexOf(resources, resource), CollectionUtils.identityIndexOf(resources, otherResource));
 				} else {
 					// Enforce some ordering. Not ideal but works.
 					return Named.STRING_COMPARATOR.compare(

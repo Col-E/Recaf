@@ -28,6 +28,8 @@ public class BasicWorkspace implements Workspace {
 	private final WorkspaceResource primary;
 	private final List<WorkspaceResource> supporting = new ArrayList<>();
 	private final List<WorkspaceResource> internal;
+	private List<WorkspaceResource> cachedAllResourcesNoInternal;
+	private List<WorkspaceResource> cachedAllResources;
 
 	/**
 	 * @param primary
@@ -92,6 +94,7 @@ public class BasicWorkspace implements Workspace {
 
 	@Override
 	public void addSupportingResource(@Nonnull WorkspaceResource resource) {
+		cachedAllResources = null;
 		supporting.add(resource);
 		Unchecked.checkedForEach(modificationListeners, listener -> listener.onAddLibrary(this, resource),
 				(listener, t) -> logger.error("Exception thrown when adding supporting resource", t));
@@ -101,6 +104,7 @@ public class BasicWorkspace implements Workspace {
 	public boolean removeSupportingResource(@Nonnull WorkspaceResource resource) {
 		boolean remove = supporting.remove(resource);
 		if (remove) {
+			cachedAllResources = null;
 			Unchecked.checkedForEach(modificationListeners, listener -> listener.onRemoveLibrary(this, resource),
 					(listener, t) -> logger.error("Exception thrown when removing supporting resource", t));
 		}
@@ -121,6 +125,24 @@ public class BasicWorkspace implements Workspace {
 	@Override
 	public void removeWorkspaceModificationListener(@Nonnull WorkspaceModificationListener listener) {
 		modificationListeners.remove(listener);
+	}
+
+	@Nonnull
+	@Override
+	public List<WorkspaceResource> getAllResources(boolean includeInternal) {
+		// Cache the list of all resources since it is commonly used and the underlying stream
+		// collection in the base implementation is expensive to compute.
+		if (includeInternal) {
+			List<WorkspaceResource> cached = this.cachedAllResources;
+			if (cached != null)
+				return cached;
+			return this.cachedAllResources = Workspace.super.getAllResources(false);
+		} else {
+			List<WorkspaceResource> cached = this.cachedAllResourcesNoInternal;
+			if (cached != null)
+				return cached;
+			return this.cachedAllResourcesNoInternal = Workspace.super.getAllResources(false);
+		}
 	}
 
 	/**
