@@ -113,8 +113,8 @@ public class InheritanceGraph {
 		parentToChild.clear();
 
 		// Repopulate
-		Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>(16384));
-		ClassPathNodeProvider nodeProvider = ClassPathNodeProvider.cache(workspace);
+		ClassPathNodeProvider.Cached nodeProvider = ClassPathNodeProvider.cache(workspace);
+		Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>(nodeProvider.size() + 1024 /* leeway */));
 		workspace.forEachClass(false, cls -> {
 			populateParentToChildLookup(cls, visited, nodeProvider);
 		});

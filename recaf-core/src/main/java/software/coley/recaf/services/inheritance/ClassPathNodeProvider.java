@@ -14,7 +14,7 @@ sealed interface ClassPathNodeProvider {
 	@Nullable
 	ClassPathNode getNode(@Nonnull String name);
 
-	static ClassPathNodeProvider cache(Workspace workspace) {
+	static ClassPathNodeProvider.Cached cache(Workspace workspace) {
 		Stream<ClassPathNode> stream = workspace.classesStream();
 		Map<String, ClassPathNode> nodes = new HashMap<>(4096);
 		stream.forEach(classPathNode -> {
@@ -32,6 +32,10 @@ sealed interface ClassPathNodeProvider {
 	}
 
 	record Cached(Map<String, ClassPathNode> nodes) implements ClassPathNodeProvider {
+		int size() {
+			return nodes.size();
+		}
+
 		@Nullable
 		@Override
 		public ClassPathNode getNode(@Nonnull String name) {
