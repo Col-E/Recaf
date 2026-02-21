@@ -136,7 +136,7 @@ public class BasicWorkspace implements Workspace {
 			List<WorkspaceResource> cached = this.cachedAllResources;
 			if (cached != null)
 				return cached;
-			return this.cachedAllResources = Workspace.super.getAllResources(false);
+			return this.cachedAllResources = Workspace.super.getAllResources(true);
 		} else {
 			List<WorkspaceResource> cached = this.cachedAllResourcesNoInternal;
 			if (cached != null)
