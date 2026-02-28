@@ -96,7 +96,7 @@ public class CfrConfig extends BaseDecompilerConfig {
 	private final ObservableObject<BooleanOption> j14classobj = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> hidelangimports = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> renamedupmembers = new ObservableObject<>(BooleanOption.DEFAULT);
-	private final ObservableObject<BooleanOption> renamesmallmembers = new ObservableObject<>(BooleanOption.DEFAULT);
+	private final ObservableInteger renamesmallmembers = new ObservableInteger(0);
 	private final ObservableObject<BooleanOption> renameillegalidents = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> renameenumidents = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<TrooleanOption> removedeadconditionals = new ObservableObject<>(TrooleanOption.DEFAULT);
@@ -181,7 +181,7 @@ public class CfrConfig extends BaseDecompilerConfig {
 		addValue(new BasicConfigValue<>("j14classobj", BooleanOption.class, j14classobj));
 		addValue(new BasicConfigValue<>("hidelangimports", BooleanOption.class, hidelangimports));
 		addValue(new BasicConfigValue<>("renamedupmembers", BooleanOption.class, renamedupmembers));
-		addValue(new BasicConfigValue<>("renamesmallmembers", BooleanOption.class, renamesmallmembers));
+		addValue(new BasicConfigValue<>("renamesmallmembers", int.class, renamesmallmembers));
 		addValue(new BasicConfigValue<>("renameillegalidents", BooleanOption.class, renameillegalidents));
 		addValue(new BasicConfigValue<>("renameenumidents", BooleanOption.class, renameenumidents));
 		addValue(new BasicConfigValue<>("removedeadconditionals", TrooleanOption.class, removedeadconditionals));
@@ -617,7 +617,7 @@ public class CfrConfig extends BaseDecompilerConfig {
 	}
 
 	@Nonnull
-	public ObservableObject<BooleanOption> getRenamesmallmembers() {
+	public ObservableInteger getRenamesmallmembers() {
 		return renamesmallmembers;
 	}
 
