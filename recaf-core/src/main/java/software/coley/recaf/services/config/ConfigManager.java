@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import jakarta.annotation.Nonnull;
@@ -134,7 +135,7 @@ public class ConfigManager implements Service {
 					continue;
 
 				try {
-					loadValue(gson, value, json.get(id));
+					loadValue(gson, container, value, json.get(id));
 				} catch (IllegalArgumentException e) {
 					logger.error("Could not find adapter for type: {}", value.getType(), e);
 				} catch (Exception e) {
@@ -149,7 +150,35 @@ public class ConfigManager implements Service {
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private void loadValue(Gson gson, ConfigValue value, JsonElement element) {
+	private void loadValue(Gson gson, ConfigContainer container, ConfigValue value, JsonElement element) {
+		// Validate that the value type matches the element type before attempting to load it.
+		// This can happen if the config file is manually edited improperly, or if the config value type was changed between saves.
+		Class<?> valueType = value.getType();
+		if (element.isJsonPrimitive()) {
+			JsonPrimitive primitive = element.getAsJsonPrimitive();
+			if ((valueType == String.class && !primitive.isString())
+					|| (Number.class.isAssignableFrom(valueType) && !primitive.isNumber())
+					|| (int.class == valueType && !primitive.isNumber())
+					|| (long.class == valueType && !primitive.isNumber())
+					|| (float.class == valueType && !primitive.isNumber())
+					|| (double.class == valueType && !primitive.isNumber())
+					|| (valueType == Character.class && !primitive.isString())
+					|| (valueType == Boolean.class && !primitive.isBoolean())) {
+				logger.warn("Type mismatch for config value '{}.{}'. Expected {}, but found {}. Skipping value.",
+						container.getGroupAndId(), value.getId(), valueType.getSimpleName(), primitive);
+				return;
+			}
+		} else if (element.isJsonArray() && !valueType.isArray() && !Collection.class.isAssignableFrom(valueType)) {
+			logger.warn("Type mismatch for config value '{}.{}'. Expected {}, but found array. Skipping value.",
+					container.getGroupAndId(), value.getId(), valueType.getSimpleName());
+			return;
+		} else if (element.isJsonObject() && valueType.isPrimitive()) {
+			logger.warn("Type mismatch for config value '{}.{}'. Expected {}, but found object. Skipping value.",
+					container.getGroupAndId(), value.getId(), valueType.getSimpleName());
+			return;
+		}
+
+		// Now that we know the types are compatible, attempt to load the value.
 		if (value instanceof ConfigCollectionValue ccv) {
 			List<Object> list = new ArrayList<>();
 			JsonArray array = element.getAsJsonArray();
