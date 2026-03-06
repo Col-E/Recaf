@@ -1,6 +1,10 @@
 <code_scheme name="recaf" version="173">
   <JavaCodeStyleSettings>
     <option name="CLASS_NAMES_IN_JAVADOC" value="3" />
+    <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
+    <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
+      <value />
+    </option>
     <option name="JD_ADD_BLANK_AFTER_PARM_COMMENTS" value="true" />
     <option name="JD_ADD_BLANK_AFTER_RETURN" value="true" />
     <option name="JD_DO_NOT_WRAP_ONE_LINE_COMMENTS" value="true" />
@@ -11,8 +15,6 @@
       <ANNO name="jakarta.annotation.Nullable" />
       <ANNO name="javax.annotation.Nonnull" />
       <ANNO name="javax.annotation.Nullable" />
-      <ANNO name="org.jetbrains.annotations.NotNull" />
-      <ANNO name="org.jetbrains.annotations.Nullable" />
     </REPEAT_ANNOTATIONS>
   </JavaCodeStyleSettings>
   <JetCodeStyleSettings>
@@ -29,6 +31,7 @@
     <option name="KEEP_SIMPLE_CLASSES_IN_ONE_LINE" value="true" />
     <indentOptions>
       <option name="USE_TAB_CHARACTER" value="true" />
+      <option name="SMART_TABS" value="true" />
     </indentOptions>
     <arrangement>
       <groups>

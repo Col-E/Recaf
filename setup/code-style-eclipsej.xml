@@ -2,7 +2,7 @@
 <profiles version="21">
 	<profile kind="CodeFormatterProfile" name="recaf" version="21">
 		<setting id="org.eclipse.jdt.core.formatter.tabulation.char" value="mixed"/>
-		<setting id="org.eclipse.jdt.core.formatter.use_tabs_only_for_leading_indentations" value="false"/>
+		<setting id="org.eclipse.jdt.core.formatter.use_tabs_only_for_leading_indentations" value="true"/>
 		<setting id="org.eclipse.jdt.core.formatter.indentation.size" value="4"/>
 		<setting id="org.eclipse.jdt.core.formatter.tabulation.size" value="4"/>
 		<setting id="org.eclipse.jdt.core.formatter.text_block_indentation" value="0"/>
