@@ -9,7 +9,7 @@ import software.coley.recaf.info.builder.FileInfoBuilder;
  *
  * @author Matt Coley
  */
-public interface FileInfo extends Info, Named {
+public interface FileInfo extends Info {
 	/**
 	 * @return New builder wrapping this file information.
 	 */

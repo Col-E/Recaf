@@ -8,13 +8,7 @@ import software.coley.recaf.info.properties.PropertyContainer;
  *
  * @author Matt Coley
  */
-public interface Info extends PropertyContainer {
-	/**
-	 * @return Name.
-	 */
-	@Nonnull
-	String getName();
-
+public interface Info extends Named, PropertyContainer {
 	/**
 	 * @return Self cast to general class.
 	 */
