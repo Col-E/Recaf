@@ -213,7 +213,9 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
-	 * @param access Method access flags.
+	 * @param access
+	 * 		Method access flags.
+	 *
 	 * @return Invoke opcode for method with the given access flags.
 	 */
 	public static int getInvokeForMethod(int access) {
@@ -688,7 +690,6 @@ public class AsmInsnUtil implements Opcodes {
 				op == IDIV || op == IREM || op == LDIV || op == LREM;
 	}
 
-
 	/**
 	 * Check if the given block of instructions is referenced by explicit control flow instructions.
 	 * <p/>
@@ -763,6 +764,28 @@ public class AsmInsnUtil implements Opcodes {
 	public static void populateFlowMaps(@Nonnull MethodNode method,
 	                                    @Nonnull Int2ObjectMap<List<Integer>> successorMap,
 	                                    @Nonnull Int2ObjectMap<List<Integer>> predecessorMap) {
+		populateFlowMaps(method, successorMap, predecessorMap, true);
+	}
+
+	/**
+	 * Populate control flow maps for a method.
+	 *
+	 * @param method
+	 * 		Method to analyze.
+	 * @param successorMap
+	 * 		Output successor map.
+	 * @param predecessorMap
+	 * 		Output predecessor map.
+	 * @param followExceptionFlow
+	 * 		Flag to indicate whether to include exception flow in the maps.
+	 * 		When {@code true}, instructions that can throw exceptions will have their respective catch block handlers included as successors.
+	 * 		When {@code false}, exception flow is ignored and only explicit control flow instructions are considered.
+	 */
+	@SuppressWarnings("StatementWithEmptyBody")
+	public static void populateFlowMaps(@Nonnull MethodNode method,
+	                                    @Nonnull Int2ObjectMap<List<Integer>> successorMap,
+	                                    @Nonnull Int2ObjectMap<List<Integer>> predecessorMap,
+	                                    boolean followExceptionFlow) {
 		InsnList instructions = method.instructions;
 		int size = instructions.size();
 		for (int i = 0; i < size; i++) {
@@ -797,7 +820,7 @@ public class AsmInsnUtil implements Opcodes {
 			}
 
 			// Add exception successors.
-			if (canThrow(insn)) {
+			if (followExceptionFlow && canThrow(insn)) {
 				// TODO: Used to filter if the contained instructions could actually throw the handled type.
 				//  IE, a block of 'nop' instructions wouldn't actually throw anything.
 				for (TryCatchBlockNode block : method.tryCatchBlocks) {

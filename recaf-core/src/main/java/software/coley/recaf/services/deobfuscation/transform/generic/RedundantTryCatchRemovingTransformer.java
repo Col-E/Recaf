@@ -1,5 +1,7 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
@@ -34,9 +36,11 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -398,9 +402,16 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 		if (start >= end)
 			return false;
 
+		// Determine which instructions in the protected range are reachable by normal control-flow (ignoring exception edges).
+		boolean[] visited = computeVisitedInstructions(instructions, frames, start, end);
+
 		// Check each instruction in the protected range to see if any of them can
 		// throw an exception that would be caught by this try-catch block.
 		for (int i = start; i < end; i++) {
+			// not reachable by normal flow within the protected range
+			if (!visited[i])
+				continue;
+
 			// If there is no frame for this instruction, it means the instruction is unreachable, so we can skip it.
 			Frame<ReValue> frame = i < frames.length ? frames[i] : null;
 			if (frame == null)
@@ -418,6 +429,104 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 		}
 
 		return false;
+	}
+
+	/**
+	 * Compute which instructions in the protected range of a try-catch block
+	 * are reachable by normal control-flow <i>(ignoring exception edges)</i>.
+	 * <p>
+	 * This is necessary for some edge cases where the protected range may
+	 * include instructions that are not actually reachable without an exception being thrown.
+	 * For example, consider the following code snippet:
+	 * <pre>{@code
+	 * .method public static example ()V {
+	 *     exceptions: {
+	 *         { A, C, B, Ljava/lang/RuntimeException; }
+	 *      },
+	 *     code: {
+	 *     A:
+	 *         // try-start - protected by B and nothing in here can throw RuntimeException
+	 *         goto C
+	 *     B:
+	 *         // try-handler - but also inside the range A-C
+	 *         //               we should not consider any instruction here as reachable by normal flow
+	 *         dup
+	 *         invokevirtual java/lang/RuntimeException.printStackTrace ()V
+	 *         checkcast java/lang/Throwable
+	 *         athrow
+	 *     C:
+	 *         // try-end
+	 *         goto END
+	 *     END:
+	 *         return
+	 *     }
+	 * }
+	 * }</pre>
+	 *
+	 * @param instructions
+	 * 		Method instructions.
+	 * @param frames
+	 * 		Method stack frames.
+	 * @param start
+	 * 		Protected range start.
+	 * @param end
+	 * 		Protected range end.
+	 *
+	 * @return Boolean array of the same length as instructions,
+	 * where each index is the visited state within the protected range.
+	 */
+	private static boolean[] computeVisitedInstructions(@Nonnull InsnList instructions,
+	                                                    @Nonnull Frame<ReValue>[] frames,
+	                                                    int start, int end) {
+		// Build normal control-flow adjacency using the shared helper (no exception edges).
+		Int2ObjectMap<List<Integer>> successorMap = new Int2ObjectOpenHashMap<>();
+		Int2ObjectMap<List<Integer>> predecessorMap = new Int2ObjectOpenHashMap<>();
+
+		// Wrap instructions into a temporary MethodNode so populateFlowMaps can operate.
+		MethodNode temp = new MethodNode();
+		temp.instructions = instructions;
+		temp.tryCatchBlocks = Collections.emptyList();
+
+		// Populate flow maps without exception edges.
+		AsmInsnUtil.populateFlowMaps(temp, successorMap, predecessorMap, false);
+
+		// Determine entry nodes into the [start, end) range:
+		// any node in range that has a predecessor outside the range, or the range start itself.
+		int size = instructions.size();
+		Deque<Integer> queue = new ArrayDeque<>();
+		boolean[] visited = new boolean[size];
+		for (int i = start; i < end && i < size; i++) {
+			boolean hasOutsidePredecessor = false;
+			for (int predecessor : predecessorMap.getOrDefault(i, Collections.emptyList())) {
+				if (predecessor < start || predecessor >= end) {
+					hasOutsidePredecessor = true;
+					break;
+				}
+			}
+			if (hasOutsidePredecessor || i == start) {
+				queue.add(i);
+				visited[i] = true;
+			}
+		}
+
+		// If we found no entry but the start instruction is reachable according to frames, include it.
+		if (queue.isEmpty() && start < frames.length && frames[start] != null) {
+			queue.add(start);
+			visited[start] = true;
+		}
+
+		// BFS within the protected range following normal control-flow only.
+		while (!queue.isEmpty()) {
+			int cur = queue.removeFirst();
+			for (int to : successorMap.getOrDefault(cur, Collections.emptyList())) {
+				if (to >= start && to < end && !visited[to]) {
+					visited[to] = true;
+					queue.addLast(to);
+				}
+			}
+		}
+
+		return visited;
 	}
 
 	/**
