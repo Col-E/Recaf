@@ -48,7 +48,7 @@ public class ArrayValueImpl implements ArrayValue {
 
 	/**
 	 * New array value where we know the exact length.
-	 * <p/>
+	 * <p>
 	 * Array contents are filled with default {@link ReValue} instances for the element type.
 	 *
 	 * @param type
@@ -64,7 +64,7 @@ public class ArrayValueImpl implements ArrayValue {
 
 	/**
 	 * New array where we know the exact length and want to pre-populate values.
-	 * <p/>
+	 * <p>
 	 * Array contents are filled with what is provided by the index-value function.
 	 *
 	 * @param type

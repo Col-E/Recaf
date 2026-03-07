@@ -12,7 +12,7 @@ import java.util.Objects;
 
 /**
  * A visitor that strips long named exceptions from methods.
- * <p/>
+ * <p>
  * Not compatible with {@link ClassWriter#ClassWriter(ClassReader, int)} since exceptions get copied when you provide
  * an input reader to copy data from.
  *

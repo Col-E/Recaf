@@ -10,7 +10,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 /**
  * Outlines the base JVM transformation contract.
- * <p/>
+ * <p>
  * <b>NOTE:</b> Internal transformers must be {@link Dependent} scoped so that they do not get proxied by CDI.
  * See {@link JvmTransformerContext#getJvmTransformer(Class)}.
  *

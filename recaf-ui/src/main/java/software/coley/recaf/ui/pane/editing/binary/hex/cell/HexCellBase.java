@@ -156,7 +156,7 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 	/**
 	 * Updates the cell to have the {@code :edited} pseudo-state if the current value does not match the orignal value
 	 * of the hex content.
-	 * <p/>
+	 * <p>
 	 * Currently due to the way the hex rows are refreshed after edit commits are made, this only is called during
 	 * the initial construction of the cell.
 	 */

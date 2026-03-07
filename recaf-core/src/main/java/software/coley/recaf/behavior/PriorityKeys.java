@@ -2,7 +2,7 @@ package software.coley.recaf.behavior;
 
 /**
  * Default keys for {@link PrioritySortable} implementations.
- * <p/>
+ * <p>
  * Searching for usages of these keys will show what listeners/classes fire in which order.
  *
  * @author Matt Coley

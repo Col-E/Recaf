@@ -256,7 +256,7 @@ public class JvmTransformerContext {
 
 	/**
 	 * Gets the current ASM node representation of the given class.
-	 * <p/>
+	 * <p>
 	 * Transformers can update the <i>"current"</i> state of the node via
 	 * {@link #setBytecode(JvmClassBundle, JvmClassInfo, byte[])} or
 	 * {@link #setNode(JvmClassBundle, JvmClassInfo, ClassNode)}.
@@ -277,7 +277,7 @@ public class JvmTransformerContext {
 
 	/**
 	 * Gets the current bytecode of the given class.
-	 * <p/>
+	 * <p>
 	 * Transformers can update the <i>"current"</i> state of the bytecode via
 	 * {@link #setBytecode(JvmClassBundle, JvmClassInfo, byte[])} or
 	 * {@link #setNode(JvmClassBundle, JvmClassInfo, ClassNode)}.

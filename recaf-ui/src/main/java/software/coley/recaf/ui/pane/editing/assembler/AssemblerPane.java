@@ -137,7 +137,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	/**
 	 * Called by {@link #lateInitForClass(ClassPathNode)} or {@link #lateInitForMethod(ClassMemberPathNode)}.
-	 * <p/>
+	 * <p>
 	 * Does late initialization that couldn't be done in the constructor.
 	 */
 	private void lateInit() {
@@ -147,7 +147,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	/**
 	 * Called by {@link #onUpdatePath(PathNode)} once before the {@link #path} is set for the first time.
-	 * <p/>
+	 * <p>
 	 * Sets up {@link FieldsAndMethodsPane} as a side-tab and sets up notifications for {@link AssemblerToolTabs}
 	 * and its children when the selected {@link ClassMember} in the {@link #lastConcreteAst} changes.
 	 *

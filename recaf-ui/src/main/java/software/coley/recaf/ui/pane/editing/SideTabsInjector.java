@@ -46,7 +46,7 @@ public class SideTabsInjector {
 	/**
 	 * Registers a path update listener within the pane. Once a {@link AbstractContentPane#getPath() path} is
 	 * assigned to the pane the side-tabs appropriate for the given content will be added.
-	 * <p/>
+	 * <p>
 	 * <b>NOTE:</b> Because path update listeners are handled before paths are passed off to
 	 * {@link AbstractContentPane#getNavigableChildren()} we can add the side-tabs in the listener action
 	 * and still have them be notified of the path update handled in {@link AbstractContentPane#onUpdatePath(PathNode)}.

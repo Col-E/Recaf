@@ -35,7 +35,7 @@ import java.util.Map;
 
 /**
  * Workspace tree item subtype representing the root of the tree.
- * <p/>
+ * <p>
  * This root offers utilities for {@link #build() automatically building} a full representation of the workspace.
  * To filter what kinds of contents are inserted when building the model, you should override the {@code visitX}
  * methods in a child class.

@@ -11,7 +11,7 @@ import software.coley.recaf.behavior.PrioritySortable;
 public interface NavigableRemoveListener extends PrioritySortable {
 	/**
 	 * Called when the {@link NavigationManager} observes a {@link Navigable} is removed from the UI.
-	 * <p/>
+	 * <p>
 	 * Be wary that the same {@link Navigable} can technically be removed and added to the UI multiple times.
 	 *
 	 * @param navigable

@@ -81,7 +81,7 @@ public class ReAnalyzer extends Analyzer<ReValue> {
 	 * These templates exist so that {@code Analyzer#merge(int, Frame, Subroutine)}
 	 * will call the template frame's {@link Frame#merge(Frame, Interpreter)}
 	 * instead of creating a new frame.
-	 * <p/>
+	 * <p>
 	 * When we control the frame's merge function we can hint to the analyzer
 	 * that we should not process following instructions if merge yields {@code false}.
 	 * With this, we can track when the frames of jump destinations will never be visited

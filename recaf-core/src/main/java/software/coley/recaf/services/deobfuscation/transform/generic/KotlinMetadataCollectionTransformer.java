@@ -41,7 +41,7 @@ import java.util.function.Function;
 
 /**
  * A transformer that collects kotlin metadata and offers utilities to process it.
- * <p/>
+ * <p>
  * For deobfuscating descriptors it is recommended to use the following methods in order:
  * <ol>
  *     <li>{@link #mapKtDescriptor(KtType)} / {@link #mapKtDescriptor(KtFunction)}</li>

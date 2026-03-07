@@ -13,7 +13,7 @@ import software.coley.recaf.workspace.model.Workspace;
 
 /**
  * Field value lookup for items in a {@link Workspace}.
- * <p/>
+ * <p>
  * Its very basic, only looking at static fields default values.
  *
  * @author Matt Coley

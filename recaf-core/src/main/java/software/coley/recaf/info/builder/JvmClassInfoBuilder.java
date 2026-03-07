@@ -122,7 +122,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	/**
 	 * Copies over values by reading the contents of the class file in the reader.
 	 * Calls {@link #adaptFrom(byte[], int)} with {@code flags=0}.
-	 * <p/>
+	 * <p>
 	 * <b>IMPORTANT:</b> If {@link #skipValidationChecks(boolean)} is {@code false} and validation checks are active
 	 * extra steps are taken to ensure the class is fully ASM compliant. You will want to wrap this call in a try-catch
 	 * block handling {@link Throwable} to cover any potential ASM failure.
@@ -148,7 +148,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	/**
 	 * Copies over values by reading the contents of the class file in the reader.
 	 * Calls {@link #adaptFrom(ClassReader, int)} with {@code flags}.
-	 * <p/>
+	 * <p>
 	 * <b>IMPORTANT:</b> If {@link #skipValidationChecks(boolean)} is {@code false} and validation checks are active
 	 * extra steps are taken to ensure the class is fully ASM compliant. You will want to wrap this call in a try-catch
 	 * block handling {@link Throwable} to cover any potential ASM failure.
@@ -176,7 +176,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 	/**
 	 * Copies over values by reading the contents of the class file in the reader.
 	 * Calls {@link #adaptFrom(ClassReader, int)} with {@code flags=0}.
-	 * <p/>
+	 * <p>
 	 * <b>IMPORTANT:</b> If {@link #skipValidationChecks(boolean)} is {@code false} and validation checks are active
 	 * extra steps are taken to ensure the class is fully ASM compliant. You will want to wrap this call in a try-catch
 	 * block handling {@link Throwable} to cover any potential ASM failure.
@@ -201,7 +201,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 	/**
 	 * Copies over values by reading the contents of the class file in the reader.
-	 * <p/>
+	 * <p>
 	 * <b>IMPORTANT:</b> If {@link #skipValidationChecks(boolean)} is {@code false} and validation checks are active
 	 * extra steps are taken to ensure the class is fully ASM compliant. You will want to wrap this call in a try-catch
 	 * block handling {@link Throwable} to cover any potential ASM failure.

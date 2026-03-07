@@ -25,7 +25,7 @@ public class DeclarationQuery implements JvmClassQuery, AndroidClassQuery {
 
 	/**
 	 * Member declaration query.
-	 * <p/>
+	 * <p>
 	 * Do note that each target value is nullable/optional.
 	 * Including only the owner and {@code null} for the name/desc will yield declarations to all members in the class.
 	 * Including only the desc will yield declarations of all members with that desc in all classes.

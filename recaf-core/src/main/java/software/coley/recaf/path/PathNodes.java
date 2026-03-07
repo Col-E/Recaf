@@ -19,11 +19,11 @@ import java.util.Set;
 
 /**
  * Utility methods for constructing paths.
- * <p/>
+ * <p>
  * Generally you should use this only when the path creation is
  * a <i>"one time"</i> action. For instance, if you want to make a path to a single method, use
  * {@link #memberPath(Workspace, WorkspaceResource, Bundle, ClassInfo, ClassMember)}.
- * <p/>
+ * <p>
  * However, if you want to make a path to <i>all methods in a class</i> then you would use
  * {@link #classPath(Workspace, WorkspaceResource, Bundle, ClassInfo)} to get a {@link ClassPathNode}
  * and then use {@link ClassPathNode#child(ClassMember)} for each member. This reduces the number of redundant
@@ -352,7 +352,7 @@ public class PathNodes {
 
 	/**
 	 * A path node that just holds an arbitrary string.
-	 * <p/>
+	 * <p>
 	 * Intended for use in the UI where displayed panels are intended to be navigable for tracking, not actually
 	 * navigable in terms of their relationship to some location in a workspace.
 	 *

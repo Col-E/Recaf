@@ -154,7 +154,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 
 	/**
 	 * Handles updating the {@link ControlFlowLineFactory}.
-	 * <p/>
+	 * <p>
 	 * This logic is shoe-horned into here <i>(for now)</i> because
 	 * the variable tracking logic is internal to this class only.
 	 *

@@ -579,7 +579,7 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 
 	/**
 	 * {@inheritDoc}
-	 * <p/>
+	 * <p>
 	 * Implementation adapted from {@link SimpleVerifier}.
 	 *
 	 * @param value1

@@ -115,7 +115,7 @@ public class HexEditor extends BorderPane {
 	 * The view does not know anything about where the data originates, thus
 	 * it is the caller's responsibility to delegate 'commit' to update the
 	 * original data.
-	 * <p/>
+	 * <p>
 	 * The specified action will be passed the current state of the data as
 	 * seen in the hex-view when the user requests a save.
 	 *
@@ -128,7 +128,7 @@ public class HexEditor extends BorderPane {
 
 	/**
 	 * Called to 'commit' the changes.
-	 * <p/>
+	 * <p>
 	 * Delegates to the user provided action via {@link #setCommitAction(Consumer)}.
 	 */
 	public boolean commit() {

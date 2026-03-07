@@ -151,7 +151,7 @@ public abstract class AbstractSearchBar extends VBox {
 
 	/**
 	 * Lays out search bar controls.
-	 * <p/>
+	 * <p>
 	 * Called at the end of {@link #setup()}.
 	 */
 	protected void setupLayout() {

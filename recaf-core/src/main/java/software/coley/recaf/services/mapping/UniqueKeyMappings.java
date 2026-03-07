@@ -10,11 +10,11 @@ import java.util.Map;
 /**
  * A simple {@link Mappings} implementation that assumes all classes, fields, and methods are uniquely identified.
  * Mapping outputs are keyed to these unique identifiers, rather than a full {@code name + desc} pair.
- * <p/>
+ * <p>
  * This mappings implementation can be useful to pass to {@link MappingApplier} for some scenarios like
  * Minecraft mappings, where each class, field, and method are uniquely identified. Minecraft's Forge, Fabric-Yarn and
  * Mod-Coder-Pack all have <i>"intermediate"</i> names that follow this pattern.
- * <p/>
+ * <p>
  * Example use case:
  * <pre>{@code
  * MappingApplier applier = ...;

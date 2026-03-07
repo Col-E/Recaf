@@ -11,13 +11,13 @@ public enum WorkspaceOutputType {
 	/**
 	 * Output to a single file. The type of which is determined by the primary resource's
 	 * {@link WorkspaceFileResource#getFileInfo()} if available. Otherwise, defaults to ZIP/JAR.
-	 * <p/>
+	 * <p>
 	 * Delegates to {@link WorkspaceExportConsumer#write(byte[])}
 	 */
 	FILE,
 	/**
 	 * Output to a directory.
-	 * <p/>
+	 * <p>
 	 * Delegates to {@link WorkspaceExportConsumer#writeRelative(String, byte[])}
 	 */
 	DIRECTORY

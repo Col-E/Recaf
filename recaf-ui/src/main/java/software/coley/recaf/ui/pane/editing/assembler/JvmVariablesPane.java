@@ -199,7 +199,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 
 	/**
 	 * Handles updating the {@link VarHighlightLineFactory}.
-	 * <p/>
+	 * <p>
 	 * This logic is shoe-horned into here <i>(for now)</i> because
 	 * the variable tracking logic is internal to this class only.
 	 *

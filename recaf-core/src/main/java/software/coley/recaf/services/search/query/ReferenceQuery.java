@@ -69,7 +69,7 @@ public class ReferenceQuery implements JvmClassQuery {
 
 	/**
 	 * Member reference query.
-	 * <p/>
+	 * <p>
 	 * Do note that each target value is nullable/optional.
 	 * Including only the owner and {@code null} for the name/desc will yield references to all members in the class.
 	 * Including only the desc will yield references to all members of that desc in all classes.

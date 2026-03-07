@@ -279,7 +279,7 @@ public class MappingGenerator implements Service {
 
 	/**
 	 * Local record to use as set entries that are simpler than {@link ClassMember} implementations.
-	 * <p/>
+	 * <p>
 	 * Most importantly the {@link Object#hashCode()} of this type is based only on the name and descriptor.
 	 * This ensures additional data like local variable or generic signature data doesn't interfere with operations
 	 * such as {@link #generateFamilyMappings(MappingsAdapter, Set, NameGenerator, NameGeneratorFilter)}.

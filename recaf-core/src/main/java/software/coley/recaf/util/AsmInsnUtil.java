@@ -641,7 +641,7 @@ public class AsmInsnUtil implements Opcodes {
 
 	/**
 	 * Check if the given block of instructions has a catch block handler target.
-	 * <p/>
+	 * <p>
 	 * When {@code includeFirstInsn=true} this will include match the first instruction of the block if it is
 	 * the label outlined by {@link TryCatchBlockNode#handler}. Otherwise, if {@code false} is passed, then the handler
 	 * is somewhere in the middle of the block.
@@ -692,7 +692,7 @@ public class AsmInsnUtil implements Opcodes {
 
 	/**
 	 * Check if the given block of instructions is referenced by explicit control flow instructions.
-	 * <p/>
+	 * <p>
 	 * This does not cover the following cases:
 	 * <ul>
 	 *     <li>Linear control flow where the previous instruction continues normally to the next instruction.</li>

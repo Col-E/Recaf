@@ -38,21 +38,21 @@ public interface TabCompleter<T> extends EditorComponent {
 	/**
 	 * Called when the linked {@link Editor} has updated its text.
 	 * This is called for <i>ANY</i> and <i>ALL</i> changes.
-	 * <p/>
+	 * <p>
 	 * Implementations should update any state that is cheap to maintain in here.
 	 */
 	void onFineTextUpdate(@Nonnull PlainTextChange changes);
 
 	/**
 	 * Called when the linked {@link Editor} has updated its text, with reduced successions.
-	 * <p/>
+	 * <p>
 	 * Implementations should update any state that is expensive to maintain in here.
 	 */
 	void onRoughTextUpdate(@Nonnull List<PlainTextChange> changes);
 
 	/**
 	 * Called when the {@link CompletionPopupUpdater} observes a typed non-letter/non-digit {@link KeyCode}.
-	 * <p/>
+	 * <p>
 	 * Implementations can check for key-codes not covered by {@link KeyCode#isLetterKey()} and {@link KeyCode#isDigitKey()}
 	 * to support completion of additional characters. For example the {@code []} characters are not covered by default
 	 * and an implementation would need to explicitly support them via this method.

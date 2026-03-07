@@ -8,7 +8,7 @@ import software.coley.recaf.RecafConstants;
 
 /**
  * Method visitor which counts the instruction index is currently being visited.
- * <p/>
+ * <p>
  * When extending this type, you will want to access the current index before calling the super visit call.
  * For example:
  * <pre>

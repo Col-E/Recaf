@@ -13,7 +13,7 @@ import java.util.function.Consumer;
  * A <i>"modular"</i> value type for representing <i>"paths"</i> to content in a {@link Workspace}.
  * The path must contain all data in a <i>"chain"</i> such that it can have access from most specific portion
  * all the way up to the {@link Workspace} portion.
- * <p/>
+ * <p>
  * <b>NOTE: Regarding contents in embedded resources,</b> the path result of the methods like
  * {@link Workspace#findClass(String)} will contain the root {@link WorkspaceResource} but the exact {@link Bundle}.
  * To find the exact embedded resource of a result use {@link WorkspaceResource#resolveBundleContainer(Bundle)}.
@@ -44,7 +44,7 @@ public interface PathNode<V> extends Comparable<PathNode<?>> {
 	/**
 	 * Creates a copy of the path node with this child-most node's value being looked up for a newer
 	 * value in the associated workspace.
-	 * <p/>
+	 * <p>
 	 * <b>Note:</b> A {@link WorkspacePathNode} must be present.
 	 *
 	 * @return A new path node pointing to the same location,

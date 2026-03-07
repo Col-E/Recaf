@@ -14,7 +14,7 @@ import java.util.Set;
 
 /**
  * Utility to patch away access restrictions.
- * <p/>
+ * <p>
  * <b>You must initialize {@link ReflectUtil} first!</b>
  *
  * @author xDark

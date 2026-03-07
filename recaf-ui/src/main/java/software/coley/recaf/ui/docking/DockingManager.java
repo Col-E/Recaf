@@ -54,7 +54,7 @@ import java.util.UUID;
 
 /**
  * Facilitates creation, inspection, and updates of dockable UI content.
- * <p/>
+ * <p>
  * This currently covers:
  * <ul>
  *     <li>Displaying {@link WelcomePane} when no workspace is open</li>

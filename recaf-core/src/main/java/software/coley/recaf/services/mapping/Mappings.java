@@ -25,7 +25,7 @@ public interface Mappings {
 	 * Some mapping formats do not include field types since name overloading is illegal at the source level of Java.
 	 * It's valid in the bytecode but the mapping omits this info since it isn't necessary information for mapping
 	 * that does not support name overloading.
-	 * <p/>
+	 * <p>
 	 * This is mostly only relevant for usage of {@link MappingsAdapter} which
 	 *
 	 * @return {@code true} when field mappings include the type descriptor in their lookup information.

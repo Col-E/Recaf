@@ -13,7 +13,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 public interface ResourceSummarizer extends Comparable<ResourceSummarizer> {
 	/**
 	 * Computes summary information about the given workspace.
-	 * <p/>
+	 * <p>
 	 * When implementations of this method need to display output
 	 * all UI creation should be wrapped in {@link FxThreadUtil#run(Runnable)}.
 	 *

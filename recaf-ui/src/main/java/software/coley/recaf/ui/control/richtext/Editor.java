@@ -616,7 +616,7 @@ public class Editor extends BorderPane implements Closing {
 	 * <p>
 	 * Be <b>very aware</b> of when you call this. You may encounter unexpected values if invoked during early
 	 * layout of your node / scene.
-	 * <p/>
+	 * <p>
 	 * This method is why we have to do the {@link FxThreadUtil#delayedRun(long, Runnable)} call above.
 	 * Normally when you use {@code virtualFlow.getCellIfVisible(paragraph)} it lays out the nodes for
 	 * you so that you don't run into this problem. The problem is it lays out the whole {@code ParagraphBox}

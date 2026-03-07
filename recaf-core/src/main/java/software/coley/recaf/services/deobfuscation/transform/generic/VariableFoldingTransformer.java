@@ -198,7 +198,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 
 	/**
 	 * Populate variable liveness for the method.
-	 * <p/>
+	 * <p>
 	 * Liveness is the set of variables that are live at each instruction.
 	 * A good reference for this can be found <a href="https://users.cs.northwestern.edu/%7Esimonec/files/Teaching/CAT/slides/DFA_part1.pdf">here</a>.
 	 *
@@ -283,7 +283,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 
 	/**
 	 * Populate variable access states for the method.
-	 * <p/>
+	 * <p>
 	 * This tracks when variables are read from and written to, which is necessary
 	 * for determining when variable copies are redundant and can be folded.
 	 *
