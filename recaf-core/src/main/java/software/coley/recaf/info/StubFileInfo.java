@@ -2,6 +2,7 @@ package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.properties.Property;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 import software.coley.recaf.util.StringUtil;
 
 import java.nio.charset.Charset;
@@ -14,6 +15,7 @@ import java.util.Map;
  *
  * @author Matt Coley
  */
+@ExcludeFromJacocoGeneratedReport(justification = "Stub/placeholder type")
 public class StubFileInfo implements FileInfo {
 	private final String name;
 

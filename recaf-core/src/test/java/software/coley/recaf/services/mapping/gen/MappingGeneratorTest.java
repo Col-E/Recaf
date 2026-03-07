@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Opcodes;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.StubClassInfo;
+import software.coley.recaf.info.StubFieldMember;
+import software.coley.recaf.info.StubMethodMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
@@ -13,12 +16,21 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
+import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
+import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
 import software.coley.recaf.services.mapping.gen.filter.ExcludeClassesFilter;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeExistingMappedFilter;
 import software.coley.recaf.services.mapping.gen.filter.ExcludeModifiersNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.ExcludeNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeClassesFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeLongNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeModifiersNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeNonJavaIdentifierNameFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
 import software.coley.recaf.services.search.match.StringPredicate;
@@ -30,12 +42,15 @@ import software.coley.recaf.test.dummy.AccessibleMethods;
 import software.coley.recaf.test.dummy.AccessibleMethodsChild;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.test.dummy.StringConsumerUser;
+import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -272,6 +287,90 @@ public class MappingGeneratorTest extends TestBase {
 		}
 
 		@Test
+		void testExcludeNameFilter() {
+			// Filter to exclude:
+			// - Any class with 'Accessible' in the name
+			// - Any field with 'Field' in the name
+			// - Any method with 'Method' in the name
+			// - Any variable with 'args' in the name
+			// Each filter is independent, so if a class is named 'AccessibleThing' the class won't be renamed,
+			// but its fields/methods/variables will still be renamed as long as their names do not contain the excluded text.
+			ExcludeNameFilter filter = new ExcludeNameFilter(null,
+					strMatchProvider.newContainsPredicate("Accessible"), // Class filter
+					strMatchProvider.newContainsPredicate("Field"), // Field filter
+					strMatchProvider.newContainsPredicate("Method"), // Method filter
+					strMatchProvider.newContainsPredicate("args") // Variable filter
+			);
+
+			// Generate mappings
+			Mappings mappings = mappingGenerator.generate(workspace, resource, inheritanceGraph, nameGenerator, filter);
+			IntermediateMappings intermediate = mappings.exportIntermediate();
+
+			// Only StringConsumer and StringConsumerUser should be mapped since they do not have 'Accessible' in their name.
+			assertEquals(2, intermediate.getClasses().size());
+
+			// Only AccessibleFields has fields, but only the constant field will match since it is 'FIELD' in capital letters.
+			Map<String, List<FieldMapping>> classesWithMappedFields = intermediate.getFields();
+			List<FieldMapping> fieldMappings = classesWithMappedFields.get(AccessibleFields.class.getName().replace('.', '/'));
+			assertEquals(1, classesWithMappedFields.size());
+			assertEquals(1, fieldMappings.size());
+			assertEquals("CONSTANT_FIELD", fieldMappings.getFirst().getOldName());
+
+			// Only StringConsumer and StringConsumerUser will have mapped methods.
+			// The AccessibleMethods and AccessibleMethodsChild classes only have methods with 'Method' in the name, so they will be excluded.
+			Map<String, List<MethodMapping>> classesWithMappedMethods = intermediate.getMethods();
+			assertEquals(2, classesWithMappedMethods.size());
+			List<MethodMapping> consumerMethodMappings = classesWithMappedMethods.get(StringConsumer.class.getName().replace('.', '/'));
+			List<MethodMapping> consumerUserMethodMappings = classesWithMappedMethods.get(StringConsumerUser.class.getName().replace('.', '/'));
+			assertEquals(1, consumerMethodMappings.size());
+			assertEquals("accept", consumerMethodMappings.getFirst().getOldName());
+			assertEquals(1, consumerUserMethodMappings.size());
+			assertEquals("main", consumerUserMethodMappings.getFirst().getOldName());
+
+			// Nothing
+			assertEquals(0, intermediate.getVariables().size());
+		}
+
+		@Test
+		@SuppressWarnings("DataFlowIssue")
+		void testExcludeExistingMappedFilter() {
+			// Setup dummy aggregate mappings with some existing mappings to test against.
+			// Normally these would be filled with user mappings when using the UI.
+			AggregatedMappings aggregate = new AggregatedMappings(workspace);
+			aggregate.addClass("com/example/AccessibleFields", "mapped/MappedFields");
+			aggregate.addField("com/example/AccessibleFields", "I", "CONSTANT_FIELD", "MAPPED_FIELD");
+			aggregate.addClass("com/example/AccessibleMethods", "mapped/MappedMethods");
+			aggregate.addMethod("com/example/AccessibleMethods", "()V", "publicMethod", "mappedMethod");
+
+			// Now verify that if we feed it names of the mapped class and members, that the filter will exclude them from being mapped again.
+			ExcludeExistingMappedFilter filter = new ExcludeExistingMappedFilter(null, aggregate);
+			StubClassInfo preFieldsClass = new StubClassInfo("com/example/AccessibleFields",
+					List.of(new StubFieldMember("CONSTANT_FIELD", "I", 0)), List.of());
+			StubClassInfo preMethodsClass = new StubClassInfo("com/example/AccessibleMethods",
+					List.of(), List.of(new StubMethodMember("publicMethod", "()V", 0)));
+			StubClassInfo postFieldsClass = new StubClassInfo("mapped/MappedFields",
+					List.of(new StubFieldMember("MAPPED_FIELD", "I", 0)), List.of());
+			StubClassInfo postMethodsClass = new StubClassInfo("mapped/MappedMethods",
+					List.of(), List.of(new StubMethodMember("mappedMethod", "()V", 0)));
+
+			// Original names can be mapped because they are not the resulting names in the aggregate.
+			assertTrue(filter.shouldMapClass(preFieldsClass));
+			assertTrue(filter.shouldMapClass(preMethodsClass));
+
+			// Same idea for members, the original names can be mapped.
+			assertTrue(filter.shouldMapField(preFieldsClass, preFieldsClass.getFirstDeclaredFieldByName("CONSTANT_FIELD")));
+			assertTrue(filter.shouldMapMethod(preMethodsClass, preMethodsClass.getFirstDeclaredMethodByName("publicMethod")));
+
+			// Classes that are clearly mapped as a result of a prior operation (thus appearing in the aggregate) should not be mapped again.
+			assertFalse(filter.shouldMapClass(postFieldsClass));
+			assertFalse(filter.shouldMapClass(postMethodsClass));
+
+			// Same idea again for members, the mapped names should not be mapped again.
+			assertFalse(filter.shouldMapField(postFieldsClass, postFieldsClass.getFirstDeclaredFieldByName("MAPPED_FIELD")));
+			assertFalse(filter.shouldMapMethod(preMethodsClass, postMethodsClass.getFirstDeclaredMethodByName("mappedMethod")));
+		}
+
+		@Test
 		void testIncludeModifiers() {
 			// Filter to include only private methods
 			IncludeModifiersNameFilter filter =
@@ -330,6 +429,95 @@ public class MappingGeneratorTest extends TestBase {
 			List<MethodMapping> methodMappingsChild = intermediate.getMethods().get(keyChild);
 			assertEquals(workspace.findClass(key).getValue().getMethods().size() - 1, methodMappings.size()); // -1 because <init>
 			assertEquals(workspace.findClass(keyChild).getValue().getMethods().size() - 1, methodMappingsChild.size());
+		}
+
+		@Test
+		void testIncludeKeywordNameFilter() {
+			IncludeKeywordNameFilter filter = new IncludeKeywordNameFilter(null);
+
+			// Classes with keywords in their name should be mapped, even if the keyword is not a standalone part of the name.
+			assertTrue(filter.shouldMapClass(new StubClassInfo("com/example/void")));
+			assertTrue(filter.shouldMapClass(new StubClassInfo("com/void/Example")));
+			assertTrue(filter.shouldMapClass(new StubClassInfo("void/example/Example")));
+			assertTrue(filter.shouldMapClass(new StubClassInfo("void")));
+
+			// Edge case: 'package-info' and 'module-info' are not keywords, but they contain the keyword 'package' and 'module' respectively.
+			assertFalse(filter.shouldMapClass(new StubClassInfo("package-info")));
+			assertFalse(filter.shouldMapClass(new StubClassInfo("module-info")));
+		}
+
+		@Test
+		void testIncludeWhitespaceNameFilter() {
+			IncludeWhitespaceNameFilter filter = new IncludeWhitespaceNameFilter(null);
+
+			// Classes with spaces in their name should be mapped, even if the spaces are not a standalone part of the name.
+			Set<String> whitespaceStrings = EscapeUtil.getWhitespaceStrings();
+			assertFalse(whitespaceStrings.isEmpty(), "No whitespaces registered in EscapeUtil");
+			for (String space : whitespaceStrings) {
+				assertTrue(filter.shouldMapClass(new StubClassInfo("com/example/_".replace("_", space))));
+				assertTrue(filter.shouldMapClass(new StubClassInfo("com/_/Example".replace("_", space))));
+				assertTrue(filter.shouldMapClass(new StubClassInfo("_/example/Example".replace("_", space))));
+				assertTrue(filter.shouldMapClass(new StubClassInfo("_".replace("_", space))));
+			}
+		}
+
+		@Test
+		@SuppressWarnings("UnnecessaryUnicodeEscape")
+		void testIncludeNonAsciiNameFilter() {
+			IncludeNonAsciiNameFilter filter = new IncludeNonAsciiNameFilter(null);
+
+			// Base case, a normal Java identifier should not be mapped.
+		    assertFalse(filter.shouldMapClass(new StubClassInfo("com/example/Example")));
+
+			// A class with a non-ASCII character in the name should be mapped.
+			assertTrue(filter.shouldMapClass(new StubClassInfo("com/example/Exämple")));
+
+			// Big block of Unicode characters, should be mapped.
+			assertTrue(filter.shouldMapClass(new StubClassInfo("\u062a\u0634\u064a\u0632\u0020\u0628\u0631\u062c\u0631")));
+
+			// Technically in the ASCII set, but still non-ASCII in the sense of Java identifiers, should be mapped.
+			assertTrue(filter.shouldMapClass(new StubClassInfo("\0")));
+		}
+
+		@Test
+		void testIncludeNonJavaIdentifierNameFilter() {
+			IncludeNonJavaIdentifierNameFilter filter = new IncludeNonJavaIdentifierNameFilter(null);
+
+			// Base case, a normal Java identifier should not be mapped.
+			assertFalse(filter.shouldMapClass(new StubClassInfo("com/example/Example")));
+
+			// Slight change, adding a number to the front is invalid.
+			// A number at the end is fine, but not at the start.
+			assertTrue(filter.shouldMapClass(new StubClassInfo("com/example/1Example")));
+			assertFalse(filter.shouldMapClass(new StubClassInfo("com/example/Example1")));
+
+			// Zero-width package separator is not a valid Java identifier character, should be mapped.
+			assertFalse(filter.shouldMapClass(new StubClassInfo("com//Example")));
+
+			// A package part that starts with a number is not valid, should be mapped.
+			assertTrue(filter.shouldMapClass(new StubClassInfo("com/1A/Example")));
+			assertFalse(filter.shouldMapClass(new StubClassInfo("com/A1/Example")));
+
+			// Edge case: 'package-info' and 'module-info' are not valid Java identifiers, but they are exempt
+			// from this filter since they have special meaning in Java.
+			assertFalse(filter.shouldMapClass(new StubClassInfo("package-info")));
+			assertFalse(filter.shouldMapClass(new StubClassInfo("module-info")));
+		}
+
+		@Test
+		void testIncludeLongNameFilter() {
+			// Anything > 100 characters
+			IncludeLongNameFilter filter = new IncludeLongNameFilter(null, 100, true, true, true, true);
+
+			// 10 character name -> no
+			// 100 character name -> no
+			// 101 character name -> yes
+			// 110 character name -> yes
+			String name10 = "0123456789";
+			assertFalse(filter.shouldMapClass(new StubClassInfo(name10)));
+			assertFalse(filter.shouldMapClass(new StubClassInfo(name10.repeat(10))));
+			assertTrue(filter.shouldMapClass(new StubClassInfo(name10.repeat(10) + "0")));
+			assertTrue(filter.shouldMapClass(new StubClassInfo(name10.repeat(11))));
 		}
 	}
 }
