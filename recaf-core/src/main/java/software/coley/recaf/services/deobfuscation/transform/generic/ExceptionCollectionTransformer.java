@@ -39,6 +39,7 @@ public class ExceptionCollectionTransformer implements JvmClassTransformer, Opco
 	public ExceptionCollectionTransformer(@Nonnull InheritanceGraphService graphService) {
 		this.graphService = graphService;
 
+		// Base types which we assume are implicitly thrown.
 		thrownExceptions.add("java/lang/Throwable");
 		thrownExceptions.add("java/lang/Exception");
 	}

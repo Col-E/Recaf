@@ -184,7 +184,11 @@ public non-sealed interface LongValue extends ReValue {
 	default LongValue rem(@Nonnull LongValue other) {
 		OptionalLong value = value();
 		OptionalLong otherValue = other.value();
-		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsLong() % otherValue.getAsLong());
+		if (value.isPresent() && otherValue.isPresent()) {
+			long otherLiteral = otherValue.getAsLong();
+			if (otherLiteral == 0) return UNKNOWN; // We'll just pretend this works
+			return of(value.getAsLong() % otherLiteral);
+		}
 		if (other.isEqualTo(1)) return VAL_0;
 		return UNKNOWN;
 	}
@@ -212,7 +216,6 @@ public non-sealed interface LongValue extends ReValue {
 		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsLong() >> otherValue.getAsLong());
 		return UNKNOWN;
 	}
-
 
 	@Nonnull
 	default LongValue shr(@Nonnull IntValue other) {

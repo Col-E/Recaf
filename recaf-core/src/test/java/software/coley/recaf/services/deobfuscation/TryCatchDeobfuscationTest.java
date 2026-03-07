@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCatchMergingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
+import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.List;
@@ -89,6 +90,49 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
+	void mergeAdjacentRangesWithSameHandler() {
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				        { A, B, D, * },
+				        { B, C, D, * },
+				        { C, D, D, * },
+				        { E, F, D, * },
+				        { F, G, D, * },
+				        { G, END, D, * },
+				    },
+				    code: {
+				    A:
+				        invokestatic Foo.bar ()V
+				    B:
+				        invokestatic Foo.bar ()V
+				    C:
+				        invokestatic Foo.bar ()V
+				        goto E
+				    D:
+				        pop
+				        goto END
+				    E:
+				        invokestatic Foo.bar ()V
+				    F:
+				        invokestatic Foo.bar ()V
+				    G:
+				        invokestatic Foo.bar ()V
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+			// Regex match to ensure there are only two ranges now instead of 6, and that they are properly merged together.
+			assertTrue(RegexUtil.matchesAny("exceptions: \\{\\s+\\{\\s*\\w,\\s*\\w,\\s*\\w,\\s*\\*\\s*},\\s+\\{\\s*\\w,\\s*\\w,\\s*\\w,\\s*\\*\\s*}\\s+}", dis));
+
+			// Regex match to ensure the invokestatic instructions are grouped together in single blocks now.
+			assertTrue(RegexUtil.matchesAny("(invokestatic Foo\\.bar \\(\\)V\\s+){3}[\\s\\S]+(invokestatic Foo\\.bar \\(\\)V\\s+){3}", dis));
+		});
+	}
+
+	@Test
 	void removeCatchBlocksNotUsableAtRuntime() {
 		// The JVM will use the first of "duplicate" blocks like this.
 		// More details about this behavior can be found in the redundant catch removing transformer.
@@ -128,9 +172,137 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 	}
 
 	@Test
+	void removeSafeArrayStoreException() {
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				        { A, B, C, * }
+				    },
+				    code: {
+				    A:
+				        iconst_5
+				        newarray char
+						astore chars
+				        aload chars
+				        iconst_0
+				        bipush 65
+				        castore
+				    B:
+				        goto END
+				    C:
+				        pop
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		// Any exception in the code above will never be thrown at runtime, so our transformer
+		// should remove the exception block and cleanup any dead code as a result.
+		for (String ex : List.of("*",
+				"Ljava/lang/ArrayStoreException;",
+				"Ljava/lang/ArrayIndexOutOfBoundsException;",
+				"Ljava/lang/NullPointerException;")) {
+			String asmVariation = asm.replace("*", ex);
+			validateAfterAssembly(asmVariation, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+				assertEquals(0, StringUtil.count("exceptions:", dis), "Expected to remove exception block");
+				assertEquals(0, StringUtil.count("pop", dis), "Expected to remove catch block contents");
+				assertEquals(1, StringUtil.count("castore", dis), "Expected to keep array store");
+			});
+		}
+
+		// If the array index would be out of bounds then no transformation should occur.
+		asm = """
+				.method public static example ()V {
+					exceptions: {
+				        { A, B, C, * }
+				    },
+				    code: {
+				    A:
+				        iconst_1
+				        newarray char
+						astore chars
+				        aload chars
+				        iconst_5
+				        bipush 65
+				        castore
+				    B:
+				        goto END
+				    C:
+				        pop
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+
+		// If the array is null then no transformation should occur since it would throw a NPE.
+		asm = """
+				.method public static example ()V {
+					exceptions: {
+				        { A, B, C, * }
+				    },
+				    code: {
+				    A:
+				        aconst_null
+						astore chars
+				        aload chars
+				        iconst_0
+				        bipush 65
+				        castore
+				    B:
+				        goto END
+				    C:
+				        pop
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+	}
+
+	@Test
+	void removeSameTypeCheckcastCastException() {
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ClassCastException; }
+				    },
+				    code: {
+				    A:
+				        new Foo
+				        checkcast Foo
+				        pop
+				    B:
+				        goto END
+				    C:
+				        pop
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis ->{
+			assertEquals(0, StringUtil.count("exceptions:", dis), "Expected to remove exceptions");
+
+			// Keep pop after cast, but remove at handler block
+			assertEquals(1, StringUtil.count("pop", dis), "Expected to remove catch block pop contents");
+		});
+	}
+
+	@Test
 	@Disabled
 	void convertAlwaysThrowIntoDirectControlFlow() {
 		// TODO: Implement redundant transformer pass for this
+		//  - This is rather complex because code may utilize the exception object in the catch block, so we can't just convert the throw into a goto.
+		//  - But even if we did convert it to a goto, what would we do with the 'prepop' method call before the exception gets popped?
+		//    - We cant just remove the method due to side effects
+		//    - We want to get rid of the 'pop' here since the exception is unused
+		//  - Maybe we only allow this extra pass if the exception is not used in the catch block?
 		String asm = """
 				.method public static example ()V {
 					exceptions: {
@@ -152,9 +324,7 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
-
-		});
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {});
 	}
 
 	@Test
@@ -351,6 +521,33 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
 	}
 
+	@Test
+	void keepThrowingCheckcast() {
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ClassCastException; }
+				    },
+				    code: {
+				    A:
+				        // Cannot assume this cast will succeed since we don't know type hierarchy of 'Foo' and 'Bar'
+				        new Foo
+				        // Normally you would call the constructor here
+				        // but we skip this to limit the test case to just the 'checkcast' instruction which is what we care about.
+				        checkcast Bar
+				        pop
+				    B:
+				        goto END
+				    C:
+				        pop
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+	}
+
 	/** Ensures {@link RedundantTryCatchRemovingTransformer} is not too aggressive. */
 	@Test
 	void keepDivideByZeroExceptions() {
@@ -383,9 +580,9 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 				    },
 				    code: {
 				    A:
-				        fconst_0
-				        fconst_0
-				        fdiv
+				        iconst_0
+				        iconst_0
+				        irem
 				        pop
 				    B:
 				        goto END
@@ -427,6 +624,86 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 				    },
 				    code: {
 				    A:
+				        lconst_0
+				        lconst_0
+				        lrem
+				        pop2
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+	}
+
+	/**
+	 * For {@link #keepDivideByZeroExceptions()} we want to keep division by zero for int/long since it throws an exception
+	 * but for float/double it does not throw an exception and instead produces NaN or Infinity.
+	 */
+	@Test
+	void dropFloatingDivideByZero() {
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ArithmeticException; }
+				    },
+				    code: {
+				    A:
+				        fconst_0
+				        fconst_0
+				        fdiv
+				        pop
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+			assertFalse(dis.contains("exceptions:"), "Expected to remove exception block");
+			assertFalse(dis.contains("printStackTrace"), "Expected to remove catch block contents");
+		});
+		asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ArithmeticException; }
+				    },
+				    code: {
+				    A:
+				        fconst_0
+				        fconst_0
+				        frem
+				        pop
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+			assertFalse(dis.contains("exceptions:"), "Expected to remove exception block");
+			assertFalse(dis.contains("printStackTrace"), "Expected to remove catch block contents");
+		});
+		asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ArithmeticException; }
+				    },
+				    code: {
+				    A:
 				        dconst_0
 				        dconst_0
 				        ddiv
@@ -441,7 +718,35 @@ public class TryCatchDeobfuscationTest extends BaseDeobfuscationTest {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+			assertFalse(dis.contains("exceptions:"), "Expected to remove exception block");
+			assertFalse(dis.contains("printStackTrace"), "Expected to remove catch block contents");
+		});
+		asm = """
+				.method public static example ()V {
+					exceptions: {
+				       {  A,  B,  C, Ljava/lang/ArithmeticException; }
+				    },
+				    code: {
+				    A:
+				        dconst_0
+				        dconst_0
+				        drem
+				        pop2
+				    B:
+				        goto END
+				    C:
+				        invokevirtual java/lang/Throwable.printStackTrace ()V
+				        goto END
+				    END:
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(RedundantTryCatchRemovingTransformer.class), dis -> {
+			assertFalse(dis.contains("exceptions:"), "Expected to remove exception block");
+			assertFalse(dis.contains("printStackTrace"), "Expected to remove catch block contents");
+		});
 	}
 
 	/** Ensures {@link RedundantTryCatchRemovingTransformer} is not too aggressive. */

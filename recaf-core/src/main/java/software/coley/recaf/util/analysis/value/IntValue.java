@@ -267,7 +267,11 @@ public non-sealed interface IntValue extends ReValue {
 	default IntValue rem(@Nonnull IntValue other) {
 		OptionalInt value = value();
 		OptionalInt otherValue = other.value();
-		if (value.isPresent() && otherValue.isPresent()) return of(value.getAsInt() % otherValue.getAsInt());
+		if (value.isPresent() && otherValue.isPresent()) {
+			int otherLiteral = otherValue.getAsInt();
+			if (otherLiteral == 0) return UNKNOWN; // We'll just pretend this works
+			return of(value.getAsInt() % otherLiteral);
+		}
 		if (other.isEqualTo(1)) return VAL_0;
 		return UNKNOWN;
 	}
