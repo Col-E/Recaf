@@ -8,6 +8,7 @@ import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.util.DevDetection;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Config for in-application tutorials.
@@ -15,6 +16,7 @@ import software.coley.recaf.util.DevDetection;
  * @author Matt Coley
  */
 @ApplicationScoped
+@ExcludeFromJacocoGeneratedReport(justification = "Tutorial is for UI usage only, and is not testable in a meaningful way.")
 public class TutorialConfig extends BasicConfigContainer {
 	private final ObservableBoolean acknowledgedSaveWithErrors = new ObservableBoolean(DevDetection.isDevEnv());
 	private final ObservableBoolean finishedTutorial = new ObservableBoolean(DevDetection.isDevEnv());

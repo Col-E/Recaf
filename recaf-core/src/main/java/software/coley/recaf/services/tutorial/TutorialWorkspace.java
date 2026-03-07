@@ -1,6 +1,7 @@
 package software.coley.recaf.services.tutorial;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 
 /**
@@ -8,6 +9,7 @@ import software.coley.recaf.workspace.model.BasicWorkspace;
  *
  * @author Matt Coley
  */
+@ExcludeFromJacocoGeneratedReport(justification = "Tutorial is for UI usage only, and is not testable in a meaningful way.")
 public class TutorialWorkspace extends BasicWorkspace {
 	/**
 	 * @param primary

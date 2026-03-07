@@ -41,6 +41,7 @@ import software.coley.recaf.services.tutorial.content.Chapter7;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionManager;
 import software.coley.recaf.util.ClassDefiner;
+import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadUtil;
@@ -62,6 +63,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Matt Coley
  */
 @ApplicationScoped
+@ExcludeFromJacocoGeneratedReport(justification = "Tutorial is for UI usage only, and is not testable in a meaningful way.")
 public class TutorialWorkspaceBuilder {
 	private final CommentManager commentManager;
 	private final WorkspaceManager workspaceManager;
