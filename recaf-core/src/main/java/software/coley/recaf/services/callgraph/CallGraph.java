@@ -19,6 +19,8 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.MultiMap;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
@@ -229,12 +231,13 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 	                                 @Nonnull String name,
 	                                 @Nonnull String descriptor,
 	                                 @Nonnull MutableMethodVertex methodVertex) {
+		// Remove the method from the unresolved declarations map, since it is now resolved.
+		unresolvedDeclarations.remove(owner.getName(), methodVertex.getMethod());
+
 		// Skip if the unresolved references map does not contain the given class
 		// or if the set of unresolved calls to this class is empty.
 		String ownerName = owner.getName();
-		if (!unresolvedReferences.containsKey(ownerName))
-			return; // The 'get' does a compute-if-absent, so the contains-key saves us allocations.
-		Set<CallingContext> unresolvedCallsToThisClass = unresolvedReferences.get(ownerName);
+		Collection<CallingContext> unresolvedCallsToThisClass = unresolvedReferences.getIfPresent(ownerName);
 		if (unresolvedCallsToThisClass.isEmpty())
 			return;
 
@@ -245,10 +248,74 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 			MutableMethodVertex callingVertex = (MutableMethodVertex) callingContainer.getVertex(callingMethod.name(), callingMethod.desc());
 			if (callingVertex == null)
 				continue;
-			onMethodCalled(context.callingClass, callingVertex, context.opcode, ownerName, name, descriptor, context.itf);
+			onMethodCalled(context.callingClass(), callingVertex, context.opcode(), ownerName, name, descriptor, context.itf());
 		}
 	}
 
+	/**
+	 * Replace any unresolved calling contexts that reference an older instance (by name)
+	 * with contexts that reference the freshly provided class instance.
+	 *
+	 * @param updated
+	 * 		Updated class to normalize calling contexts for.
+	 */
+	private void normalizeCallingContexts(@Nonnull JvmClassInfo updated) {
+		String updatedName = updated.getName();
+
+		// Iterate over all owners in unresolvedReferences (callee class names) and update contexts
+		for (String owner : new HashSet<>(unresolvedReferences.keySet())) {
+			// Skip if the owner does not match the updated class's name.
+			Collection<CallingContext> contexts = unresolvedReferences.getIfPresent(owner);
+			if (contexts.isEmpty())
+				continue;
+
+			// For each calling context, if the calling class name matches the updated class's name,
+			// replace the context with a new one that references the fresh class instance.
+			Set<CallingContext> snapshot = new HashSet<>(contexts);
+			for (CallingContext ctx : snapshot) {
+				JvmClassInfo calling = ctx.callingClass();
+				if (calling != updated && updatedName.equals(calling.getName())) {
+					if (contexts.remove(ctx)) {
+						CallingContext newCtx = new CallingContext(updated, ctx.callingMethod(), ctx.opcode(), ctx.itf());
+						unresolvedReferences.put(owner, newCtx);
+					}
+				}
+			}
+
+			// If all contexts were removed, remove the owner from the map.
+			if (contexts.isEmpty())
+				unresolvedReferences.remove(owner);
+		}
+	}
+
+	/**
+	 * Remove any unresolved calling contexts that reference the exact removed instance.
+	 *
+	 * @param removed
+	 * 		Removed class to remove stale contexts for.
+	 */
+	private void removeStaleCallingContextsForRemovedClass(@Nonnull JvmClassInfo removed) {
+		for (String owner : new HashSet<>(unresolvedReferences.keySet())) {
+			// Skip if the owner does not match the removed class name.
+			Collection<CallingContext> contexts = unresolvedReferences.getIfPresent(owner);
+			if (contexts.isEmpty())
+				continue;
+
+			Set<CallingContext> snapshot = new HashSet<>(contexts);
+			boolean changed = false;
+			for (CallingContext ctx : snapshot) {
+				if (ctx.callingClass() == removed) {
+					if (contexts.remove(ctx))
+						changed = true;
+				}
+			}
+			if (contexts.isEmpty()) {
+				unresolvedReferences.remove(owner);
+			} else if (changed) {
+				// nothing else required - contexts collection already updated
+			}
+		}
+	}
 
 	/**
 	 * Called from the {@link ClassReader} in {@link #visit(JvmClassInfo)}.
@@ -297,17 +364,18 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 			resolvedMethodCallVertex.getCallers().add(callingVertex);
 
 			// Remove tracked unresolved call if any exist
-			Set<MethodRef> unresolvedWithinOwner = unresolvedDeclarations.get(owner);
+			Collection<MethodRef> unresolvedWithinOwner = unresolvedDeclarations.getIfPresent(owner);
 			if (unresolvedWithinOwner.remove(ref)) {
 				if (unresolvedWithinOwner.isEmpty()) unresolvedDeclarations.remove(owner);
 				logger.debugging(l -> l.info("Satisfy unresolved call {}", ref));
 			}
 
 			// Remove tracking of unresolved declarations/references
-			boolean resolvedPriorUnknown = false;
-			resolvedPriorUnknown |= unresolvedDeclarations.remove(owner, ref);
-			resolvedPriorUnknown |= unresolvedReferences.remove(owner, callContext);
-			if (resolvedPriorUnknown) logger.debugging(l -> l.warn("Found previous unresolved reference: {}", ref));
+			Collection<CallingContext> unresolvedRefsToOwner = unresolvedReferences.getIfPresent(owner);
+			if (unresolvedRefsToOwner.remove(callContext)) {
+				if (unresolvedRefsToOwner.isEmpty()) unresolvedReferences.remove(owner);
+				logger.debugging(l -> l.info("Satisfy unresolved reference from {} to {}", callContext.callingMethod(), ref));
+			}
 		} else {
 			unresolvedDeclarations.put(owner, ref);
 			unresolvedReferences.put(owner, callContext);
@@ -333,13 +401,10 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 	@Nonnull
 	public Result<Resolution<JvmClassInfo, MethodMember>> resolve(int opcode, @Nonnull String owner, @Nonnull String name,
 	                                                              @Nonnull String descriptor, boolean isInterface) {
-		JvmClassInfo ownerClass = lookup.apply(owner);
-
 		// Skip if we cannot resolve owner
-		if (ownerClass == null) {
-			unresolvedDeclarations.put(owner, new MethodRef(owner, name, descriptor));
+		JvmClassInfo ownerClass = lookup.apply(owner);
+		if (ownerClass == null)
 			return Result.error(ResolutionError.NO_SUCH_METHOD);
-		}
 
 		Result<Resolution<JvmClassInfo, MethodMember>> resolutionResult;
 		LinkedClass linkedOwnerClass = linked(ownerClass);
@@ -397,19 +462,44 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 	@Override
 	public void onUpdateClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo oldCls, @Nonnull JvmClassInfo newCls) {
 		onRemoveClass(resource, bundle, oldCls);
+		normalizeCallingContexts(newCls);
 		onNewClass(resource, bundle, newCls);
 	}
 
 	@Override
 	public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
-		// Prune vertex connections of all methods within the class
+		String clsName = cls.getName();
 		ClassMethodsContainer container = getClassMethodsContainer(cls);
-		Set<MethodRef> unresolvedWithinOwner = unresolvedDeclarations.get(cls.getName());
+		Set<MethodRef> unresolvedDeclarationsWithinOwner = unresolvedDeclarations.get(clsName);
 		for (MethodVertex vertex : container.getVertices()) {
 			MethodRef ref = vertex.getMethod();
-			if (vertex instanceof MutableMethodVertex) {
-				((MutableMethodVertex) vertex).prune();
-				unresolvedWithinOwner.add(ref);
+			if (vertex instanceof MutableMethodVertex mutableMethodVertex) {
+				MethodMember resolvedMethod = vertex.getResolvedMethod();
+				if (resolvedMethod != null) {
+					// Mark any inbound calls to the removed method as an unresolved references.
+					Collection<MethodVertex> callers = mutableMethodVertex.getCallers();
+					for (MethodVertex caller : callers) {
+						MethodRef callerRef = caller.getMethod();
+						String callerName = callerRef.owner();
+						ClassPathNode path = workspace.findClass(callerName);
+						if (path != null) {
+							// All callers to the removed method should be marked as an unresolved reference.
+							int op = AsmInsnUtil.getInvokeForMethod(resolvedMethod.getAccess());
+							CallingContext context = new CallingContext(path.getValue().asJvmClass(), callerRef, op, false);
+							unresolvedReferences.put(clsName, context);
+						}
+					}
+
+					// If the removed method is called, then we need to mark the method as an unresolved declaration.
+					if (!callers.isEmpty())
+						unresolvedDeclarations.put(clsName, ref);
+				}
+
+				// Prune connections to other vertices, since this method is now removed.
+				mutableMethodVertex.prune();
+
+				// Also mark the method as an unresolved declaration, since it is now removed.
+				unresolvedDeclarationsWithinOwner.add(ref);
 			} else {
 				logger.warn("Could not prune reference: {}", ref);
 			}
@@ -418,6 +508,9 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 		// Remove from maps
 		classToLinkerType.remove(cls);
 		classToMethodsContainer.remove(cls);
+
+		// Remove any unresolved calling contexts that reference the removed instance (stale data)
+		removeStaleCallingContextsForRemovedClass(cls);
 	}
 
 	/**
@@ -442,23 +535,7 @@ public class CallGraph implements WorkspaceModificationListener, ResourceJvmClas
 	 * 		The outgoing call {@code isInterface} flag.
 	 */
 	private record CallingContext(@Nonnull JvmClassInfo callingClass, @Nonnull MethodRef callingMethod,
-	                              int opcode, boolean itf) {
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-
-			// We only care about the reference equality
-			CallingContext other = (CallingContext) o;
-			return callingMethod.equals(other.callingMethod);
-		}
-
-		@Override
-		public int hashCode() {
-			// We only care about the reference hash
-			return callingMethod.hashCode();
-		}
-	}
+	                              int opcode, boolean itf) {}
 
 	/**
 	 * Mutable impl of {@link MethodVertex}.

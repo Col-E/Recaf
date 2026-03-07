@@ -3,15 +3,19 @@ package software.coley.recaf.services.callgraph;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import software.coley.observables.ObservableBoolean;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.StubMethodMember;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.test.dummy.StringConsumerUser;
+import software.coley.recaf.util.visitors.MemberFilteringVisitor;
+import software.coley.recaf.util.visitors.MemberPredicate;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
@@ -79,7 +83,7 @@ class CallGraphTest {
 		ClassMethodsContainer fooCaller = callGraph.getClassMethodsContainer(mainClass);
 		MethodVertex callVertex = fooCaller.getVertex("call", "(LFoo;)V");
 		assertNotNull(callVertex, "Missing method vertex for 'call'");
-		assertEquals(0, callVertex.getCalls().size());
+		assertEquals(0, callVertex.getCalls().size(), "Expected to have no resolved calls from call(Foo)");
 		assertEquals(1, callGraph.getUnresolvedDeclarations().get("Foo").size(), "Expected to have unresolved call to Foo.bar()");
 
 		// Add the missing Foo class to the workspace
@@ -89,8 +93,43 @@ class CallGraphTest {
 		assertEquals(1, callVertex.getCalls().size());
 		assertEquals(0, callGraph.getUnresolvedDeclarations().size(), "Expected to have resolved unresolved call to Foo.bar()");
 
-		// TODO: Make a similar test case, but in reverse.
-		//  We probably want to prune the call-graph model when things get removed.
+		// Updating the Foo class (with no real changes) should not cause the call to
+		// become unresolved again, assuming the method's code is unchanged.
+		workspace.getPrimaryResource().getJvmClassBundle().put(new JvmClassInfoBuilder(fooBytes).build());
+		assertEquals(1, callVertex.getCalls().size());
+		assertEquals(0, callGraph.getUnresolvedDeclarations().size(), "Expected to have resolved call to Foo.bar() after updating Foo class");
+
+		// Updating the FooCaller class (with no real changes) should also not cause the
+		// call to become unresolved again, assuming the method's code is unchanged.
+		// - Need to get new container/vertex references since the class is updated and the old ones will be stale.
+		// - Need to also update 'mainClass' to use the modified class reference since the old one will be stale.
+		workspace.getPrimaryResource().getJvmClassBundle().put(mainClass = new JvmClassInfoBuilder(fooCallerBytes).build());
+		fooCaller = callGraph.getClassMethodsContainer(mainClass);
+		callVertex = fooCaller.getVertex("call", "(LFoo;)V");
+		assertNotNull(callVertex, "Missing method vertex for 'call' after updating FooCaller class");
+		assertEquals(1, callVertex.getCalls().size());
+		assertEquals(0, callGraph.getUnresolvedDeclarations().size(), "Expected to have resolved call to Foo.bar() after updating FooCaller class");
+
+		// If we change the Foo class to remove the bar() method, the call should become unresolved again
+		// since the called method no longer exists in the class.
+		ClassWriter cw = new ClassWriter(0);
+		new ClassReader(fooBytes).accept(new MemberFilteringVisitor(cw, MemberPredicate.of(new StubMethodMember("", "", 0))), 0);
+		workspace.getPrimaryResource().getJvmClassBundle().put(new JvmClassInfoBuilder(cw.toByteArray()).build());
+		assertEquals(0, callVertex.getCalls().size());
+		assertEquals(1, callGraph.getUnresolvedDeclarations().get("Foo").size(), "Expected to have unresolved call to Foo.bar() after removing bar() method from Foo class");
+
+		// Put it back to resolve the call again (mainly to set up for the next part of the test)
+		workspace.getPrimaryResource().getJvmClassBundle().put(new JvmClassInfoBuilder(fooBytes).build());
+		assertEquals(1, callVertex.getCalls().size());
+		assertEquals(0, callGraph.getUnresolvedDeclarations().size(), "Expected to have resolved call to Foo.bar() after updating Foo class");
+
+		// Remove the Foo class again should cause the call to become unresolved again
+		workspace.getPrimaryResource().getJvmClassBundle().remove("Foo");
+		fooCaller = callGraph.getClassMethodsContainer(mainClass);
+		callVertex = fooCaller.getVertex("call", "(LFoo;)V");
+		assertNotNull(callVertex);
+		assertEquals(0, callVertex.getCalls().size());
+		assertEquals(1, callGraph.getUnresolvedDeclarations().get("Foo").size(), "Expected to have unresolved call to Foo.bar() after removing Foo class");
 	}
 
 	@Nonnull
@@ -120,6 +159,7 @@ class CallGraphTest {
 		cv.visitEnd();
 		fooBytes = cv.toByteArray();
 
+		cv = new ClassWriter(0);
 		cv.visit(V1_8, ACC_PUBLIC | ACC_STATIC, "FooCaller", null, "java/lang/Object", null);
 		mv = cv.visitMethod(0, "call", "(LFoo;)V", null, null);
 		mv.visitCode();

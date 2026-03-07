@@ -19,8 +19,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.slf4j.Logger;
 import software.coley.collections.Lists;
 import software.coley.collections.Unchecked;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Named;
 import software.coley.recaf.info.member.ClassMember;
@@ -59,6 +61,7 @@ import java.util.stream.Collectors;
  * @author Amejonah
  */
 public class MethodCallGraphPane extends BorderPane implements ClassNavigable, UpdatableNavigable {
+	private static final Logger logger = Logging.get(MethodCallGraphPane.class);
 	public static final int MAX_TREE_DEPTH = 20;
 	private final ObjectProperty<MethodMember> currentMethod = new SimpleObjectProperty<>();
 	private final CallGraphTreeView graphTreeView = new CallGraphTreeView();
@@ -122,6 +125,9 @@ public class MethodCallGraphPane extends BorderPane implements ClassNavigable, U
 		// no-op
 	}
 
+	/**
+	 * Mode of the call graph, determining the direction of the graph.
+	 */
 	public enum CallGraphMode {
 		CALLS(MethodVertex::getCalls),
 		CALLERS(MethodVertex::getCallers);
@@ -236,7 +242,7 @@ public class MethodCallGraphPane extends BorderPane implements ClassNavigable, U
 						try {
 							actions.gotoDeclaration(ownerPath).requestFocus(method);
 						} catch (IncompletePathException ex) {
-							// TODO: Log error
+							logger.error("Cannot go to method due to incomplete path", ex);
 						}
 					}
 				};

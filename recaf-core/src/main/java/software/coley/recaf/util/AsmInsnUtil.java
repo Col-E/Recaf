@@ -213,6 +213,20 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
+	 * @param access Method access flags.
+	 * @return Invoke opcode for method with the given access flags.
+	 */
+	public static int getInvokeForMethod(int access) {
+		if ((access & Opcodes.ACC_STATIC) != 0)
+			return INVOKESTATIC;
+		if ((access & Opcodes.ACC_INTERFACE) != 0)
+			return INVOKEINTERFACE;
+		if ((access & Opcodes.ACC_PRIVATE) != 0)
+			return INVOKESPECIAL;
+		return INVOKEVIRTUAL;
+	}
+
+	/**
 	 * Checks in the given method for local vars that have label references
 	 * that do not exist in the method's instructions list.
 	 *
