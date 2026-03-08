@@ -10,8 +10,11 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypePath;
+import software.coley.cafedude.classfile.attribute.AttributeContexts;
+import software.coley.cafedude.io.AttributeHolderType;
 import software.coley.recaf.info.BasicInnerClassInfo;
 import software.coley.recaf.info.BasicJvmClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
@@ -35,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -388,10 +392,21 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 		@Override
 		public void visitAttribute(Attribute attribute) {
+			validateAttribute(attribute, AttributeHolderType.CLASS);
 			if (classCustomAttributes == null)
 				classCustomAttributes = new ArrayList<>();
 			classCustomAttributes.add(attribute);
 			super.visitAttribute(attribute);
+		}
+
+		private void validateAttribute(@Nonnull Attribute attribute, @Nonnull AttributeHolderType context) {
+			if (!skipValidationChecks) {
+				// Check if this is a known attribute (allowed context is not empty)
+				// and if it is, check if it is allowed on the given context.
+				EnumSet<AttributeHolderType> allowedContexts = AttributeContexts.getAllowedContexts(attribute.type);
+				if (!allowedContexts.isEmpty() && !allowedContexts.contains(context))
+					throw new IllegalStateException("Invalid" + context.name().toLowerCase() + " attribute: " + attribute.type);
+			}
 		}
 
 		@Override
@@ -401,6 +416,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 				@Override
 				public void visitAttribute(Attribute attribute) {
+					validateAttribute(attribute, AttributeHolderType.FIELD);
 					fieldCustomAttributes.get(name).add(attribute);
 					super.visitAttribute(attribute);
 				}
@@ -422,6 +438,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 
 				@Override
 				public void visitAttribute(Attribute attribute) {
+					validateAttribute(attribute, AttributeHolderType.METHOD);
 					methodCustomAttributes.get(name).add(attribute);
 					super.visitAttribute(attribute);
 				}
@@ -432,6 +449,18 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 					if (methods == null)
 						methods = new ArrayList<>();
 					methods.add(getMethodMember());
+				}
+			};
+		}
+
+		@Override
+		public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+			RecordComponentVisitor rcv = super.visitRecordComponent(name, descriptor, signature);
+			return new RecordComponentVisitor(getAsmVersion(), rcv) {
+				@Override
+				public void visitAttribute(Attribute attribute) {
+					validateAttribute(attribute, AttributeHolderType.RECORD_COMPONENT);
+					super.visitAttribute(attribute);
 				}
 			};
 		}
