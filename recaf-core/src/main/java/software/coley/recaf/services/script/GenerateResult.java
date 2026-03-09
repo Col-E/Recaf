@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -22,5 +23,24 @@ public record GenerateResult(@Nullable Class<?> cls, @Nonnull List<CompilerDiagn
 	 */
 	public boolean wasSuccess() {
 		return cls != null;
+	}
+
+	/**
+	 * Attempts to stop the script. If the generation failed,
+	 * this method will do nothing.
+	 *
+	 * @throws IllegalStateException If something went wrong.
+	 */
+	public void requestStop() {
+		Class<?> cls = this.cls;
+		if (cls == null) return;
+		try {
+			Class<?> cancellationSingleton = cls.getClassLoader().loadClass(CancellationSingleton.class.getName());
+			cancellationSingleton.getDeclaredMethod("stop").invoke(null);
+		} catch (InvocationTargetException ex) {
+			throw new IllegalStateException(ex.getTargetException());
+		} catch (Exception ex) {
+			throw new IllegalStateException(ex);
+		}
 	}
 }
