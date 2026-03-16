@@ -8,6 +8,7 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
@@ -18,6 +19,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicAndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
+import software.coley.recaf.workspace.model.bundle.BasicVersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -27,7 +29,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.TreeMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatComparable;
@@ -316,6 +320,49 @@ class PathNodeTest {
 			assertThat(classB.isDescendantOf(classAA)).isFalse();
 			assertThat(classB.isDescendantOf(classAAA)).isFalse();
 			assertThat(classB.isDescendantOf(classB)).isTrue();
+		}
+
+		/**
+		 * When classes are in different versioned bundles, they should not be considered descendants of each other,
+		 * even if they have the same package and class name. In this scenario all versioned bundles will also have
+		 * map equality which is another problem case that this test is designed to catch (with how paths handle
+		 * value equality checks by default, and how bundle paths override that behavior to address this problem).
+		 */
+		@Test
+		void descendantOfDifferentVersionedClasses() {
+			int min = 9;
+			int max = 16;
+			NavigableMap<Integer, ClassPathNode> versionedClasses = new TreeMap<>();
+			NavigableMap<Integer, BundlePathNode> versionedBundles = new TreeMap<>();
+			for (int i = min; i < max; i++) {
+				BundlePathNode bundlePath = s4.child(new BasicVersionedJvmClassBundle(i));
+				ClassPathNode classPath = bundlePath.child(null).child(new StubClassInfo("Foo"));
+				versionedClasses.put(i, classPath);
+				versionedBundles.put(i, bundlePath);
+			}
+
+			// Validate that only classes from the same version are considered descendants of each other.
+			Integer previousVersion = null;
+			for (int a = min; a < max; a++) {
+				for (int b = min; b < max; b++) {
+					ClassPathNode classA = versionedClasses.get(a);
+					ClassPathNode classB = versionedClasses.get(b);
+					BundlePathNode bundleA = versionedBundles.get(a);
+					BundlePathNode bundleB = versionedBundles.get(b);
+
+					if (a == b) {
+						// Same version
+						assertThat(classA.isDescendantOf(classB)).isTrue();
+						assertThat(classA.isDescendantOf(bundleB)).isTrue();
+						assertThat(bundleA.isDescendantOf(bundleB)).isTrue();
+					} else {
+						// Different version
+						assertThat(classA.isDescendantOf(classB)).isFalse();
+						assertThat(classA.isDescendantOf(bundleB)).isFalse();
+						assertThat(bundleA.isDescendantOf(bundleB)).isFalse();
+					}
+				}
+			}
 		}
 	}
 

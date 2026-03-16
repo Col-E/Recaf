@@ -304,6 +304,11 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 	}
 
 	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[" + backing.size() + " items]";
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o)
 			return true;

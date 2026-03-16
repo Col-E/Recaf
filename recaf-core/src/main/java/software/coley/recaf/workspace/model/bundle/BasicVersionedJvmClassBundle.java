@@ -42,4 +42,9 @@ public class BasicVersionedJvmClassBundle extends BasicJvmClassBundle implements
 	public void onRemoveItem(@Nonnull String key, @Nonnull JvmClassInfo value) {
 		// no-op
 	}
+
+	@Override
+	public String toString() {
+		return super.toString() + " - version=" + version;
+	}
 }

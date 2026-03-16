@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.info.BasicFileInfo;
 import software.coley.recaf.info.FileInfo;
+import software.coley.recaf.info.JarFileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.Named;
 import software.coley.recaf.info.StubClassInfo;
@@ -22,15 +23,28 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.path.WorkspacePathNode;
+import software.coley.recaf.services.text.TextFormatConfig;
+import software.coley.recaf.services.workspace.io.BasicClassPatcher;
+import software.coley.recaf.services.workspace.io.BasicInfoImporter;
+import software.coley.recaf.services.workspace.io.BasicResourceImporter;
+import software.coley.recaf.services.workspace.io.InfoImporterConfig;
+import software.coley.recaf.services.workspace.io.ResourceImporter;
+import software.coley.recaf.services.workspace.io.ResourceImporterConfig;
+import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.AccessibleFields;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.test.dummy.VariedModifierFields;
+import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
+import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.io.ByteSource;
+import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResourceBuilder;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -39,10 +53,13 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -54,6 +71,8 @@ import static software.coley.recaf.ui.control.tree.WorkspaceTreeNode.getOrInsert
  * Tests for {@link WorkspaceTreeNode}.
  */
 class WorkspaceTreeNodeTest {
+	static ResourceImporter importer;
+	// Workspace model for testing - Used by multiple tests, but some will make their own.
 	static Workspace workspace;
 	static WorkspaceResource primaryResource;
 	static WorkspaceResource resourceWithEmbedded;
@@ -84,6 +103,11 @@ class WorkspaceTreeNodeTest {
 
 	@BeforeAll
 	static void setup() throws IOException {
+		importer = new BasicResourceImporter(
+				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
+				new ResourceImporterConfig()
+		);
+
 		BasicFileBundle fileBundle = new BasicFileBundle();
 
 		primaryJvmBundle = fromClasses(
@@ -347,6 +371,57 @@ class WorkspaceTreeNodeTest {
 			assertEquals(n2dir, children.get(2).getValue().getValue());
 			assertEquals(n3dir, children.get(3).getValue().getValue());
 		});
+	}
+
+	/**
+	 * While not an issue of name overloading in adjacent tree nodes, this test covers a case/regression where we
+	 * saw multiple classes with the same name in different versioned paths not being all shown.
+	 * This scenario has the effect of making all {@link VersionedJvmClassBundle} have map equality too which was
+	 * another issue with an older version of the path node path containment/equality logic.
+	 */
+	@Test
+	void multipleVersionedPaths() throws Exception {
+		String classPath = HelloWorld.class.getName().replace(".", "/");
+		String classPackage = classPath.substring(0, classPath.lastIndexOf('/'));
+		byte[] classBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+
+		// Create JAR with 'META-INF/versions/<dummyversion>/<dummypackage>/HelloWorld.class' for multiple versions.
+		byte[] zipBytes = ZipCreationUtils.builder()
+				.add(classPath + ".class", classBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + classPath + ".class", classBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "11/" + classPath + ".class", classBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "16/" + classPath + ".class", classBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "21/" + classPath + ".class", classBytes)
+				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "25/" + classPath + ".class", classBytes)
+				.bytes();
+		ByteSource zipSource = ByteSources.wrap(zipBytes);
+
+		// Build the workspace and validate the versioned bundles exist.
+		WorkspaceResource resource = importer.importResource(zipSource);
+		BasicWorkspace workspace = new BasicWorkspace(resource);
+		assertEquals(5, resource.getVersionedJvmClassBundles().size(), "Expected 5 versioned bundles: 9, 11, 16, 21, 25");
+
+		// Build the tree model.
+		WorkspacePathNode rootPath = PathNodes.workspacePath(workspace);
+		WorkspaceRootTreeNode root = new WorkspaceRootTreeNode(new WorkspaceExplorerConfig(), rootPath);
+		root.build();
+
+		// Iterate over all versions, validate the path to the versioned class exists and that no duplicate tree paths exist.
+		final int baseline = -1;
+		int[] versions = new int[]{baseline, 9, 11, 16, 21, 25};
+		Set<BundlePathNode> visitedNodes = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (int version : versions) {
+			String versionName = version == baseline ? "baseline" : String.valueOf(version);
+			ClassPathNode path = version == baseline ?
+					workspace.findJvmClass(classPath) :
+					workspace.findVersionedJvmClass(classPath, version);
+			assertNotNull(path, "Could not find class path for version: " + versionName);
+			WorkspaceTreeNode classNode = root.getNodeByPath(path);
+			assertNotNull(classNode, "Could not find tree node for class path for version: " + versionName);
+			BundlePathNode bundleNode = path.getParent().getParent();
+			assertTrue(visitedNodes.add(bundleNode), "Duplicate bundle node found for version: " + versionName);
+		}
+		assertEquals(6, visitedNodes.size(), "Expected 6 unique bundle nodes for versions: baseline, 9, 11, 16, 21, 25");
 	}
 
 	/**
