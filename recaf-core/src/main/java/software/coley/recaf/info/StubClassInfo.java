@@ -2,6 +2,8 @@ package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import me.darknet.dex.tree.definitions.ClassDefinition;
+import me.darknet.dex.tree.type.InstanceType;
 import org.objectweb.asm.ClassReader;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.annotation.TypeAnnotationInfo;
@@ -222,6 +224,16 @@ public class StubClassInfo implements ClassInfo {
 	private static class Android extends StubClassInfo implements AndroidClassInfo {
 		public Android(@Nonnull String name) {
 			super(name);
+		}
+
+		@Nonnull
+		@Override
+		public ClassDefinition getBackingDefinition() {
+			return new ClassDefinition(
+					new InstanceType("L" + getName() + ";"),
+					new InstanceType("L" + getSuperName() + ";"),
+					getAccess()
+			);
 		}
 
 		@Nonnull

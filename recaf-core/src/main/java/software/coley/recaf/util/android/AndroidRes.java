@@ -12,19 +12,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.android.xml.AndroidResourceProvider;
+import software.coley.recaf.util.collect.primitive.*;
 import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -83,8 +79,8 @@ public class AndroidRes implements AndroidResourceProvider {
 		List<Chunk> chunks = arsc.getChunks();
 
 		// Maps to collect data into.
-		Int2ObjectMap<String> resIdToName = new Int2ObjectOpenHashMap<>();
-		Object2IntMap<String> resNameToId = new Object2IntOpenHashMap<>();
+		Int2ObjectMap<String> resIdToName = new Int2ObjectMap<>();
+		Object2IntMap<String> resNameToId = new Object2IntMap<>();
 		Map<String, String> attrToFormat = new TreeMap<>();
 		Map<String, Object2LongMap<String>> attrToEnum = new TreeMap<>();
 		Map<String, Object2LongMap<String>> attrToFlags = new TreeMap<>();
@@ -187,11 +183,12 @@ public class AndroidRes implements AndroidResourceProvider {
 		Object2LongMap<String> values = attrToEnum.get(resName);
 		if (values == null)
 			return null;
-		return values.object2LongEntrySet().stream()
-				.filter(e -> e.getLongValue() == value)
-				.findFirst()
-				.map(Map.Entry::getKey)
-				.orElse(null);
+		String[] result = new String[1];
+		values.forEach((key, val) -> {
+			if (val == value)
+				result[0] = key;
+		});
+		return result[0];
 	}
 
 	/**
@@ -281,11 +278,12 @@ public class AndroidRes implements AndroidResourceProvider {
 		Object2LongMap<String> values = attrToFlags.get(resName);
 		if (values == null)
 			return "";
-		return values.object2LongEntrySet().stream()
-				.filter(e -> (mask & e.getLongValue()) != 0L)
-				.sorted(Comparator.comparingLong(Object2LongMap.Entry::getLongValue))
-				.map(Map.Entry::getKey)
-				.collect(Collectors.joining("|"));
+		List<String> matches = new ArrayList<>();
+		values.forEach((key, val) -> {
+			if ((mask & val) != 0L)
+				matches.add(key);
+		});
+		return String.join("|", matches);
 	}
 
 	private static final Gson GSON = new GsonBuilder().create();
@@ -295,8 +293,8 @@ public class AndroidRes implements AndroidResourceProvider {
 			// Parse res-map entries (hex=name)
 			String resMapText = new String(AndroidApiResource.class.getResourceAsStream("/android/res-map.txt").readAllBytes());
 			String[] resMapLines = resMapText.split("[\n\r]+");
-			Int2ObjectMap<String> resIdToName = new Int2ObjectOpenHashMap<>(resMapLines.length);
-			Object2IntMap<String> resNameToId = new Object2IntOpenHashMap<>(resMapLines.length);
+			Int2ObjectMap<String> resIdToName = new Int2ObjectMap<>(resMapLines.length);
+			Object2IntMap<String> resNameToId = new Object2IntMap<>(resMapLines.length);
 			for (String line : resMapLines) {
 				String[] kv = line.split("=");
 				int key = Integer.parseInt(kv[0], 16);
@@ -339,7 +337,7 @@ public class AndroidRes implements AndroidResourceProvider {
 			} else {
 				JsonElement flagNode = childObject.get("flag");
 				if (flagNode instanceof JsonArray flagArray) {
-					Object2LongMap<String> nameToValue = new Object2LongOpenHashMap<>();
+					Object2LongMap<String> nameToValue = new Object2LongMap<>();
 					for (JsonElement flagEntry : flagArray) {
 						JsonObject flagObject = flagEntry.getAsJsonObject();
 						String flagName = flagObject.get("name").getAsString();
@@ -354,7 +352,7 @@ public class AndroidRes implements AndroidResourceProvider {
 				} else {
 					JsonElement enumNode = node.get("enum");
 					if (enumNode instanceof JsonArray enumArray) {
-						Object2LongMap<String> nameToValue = new Object2LongOpenHashMap<>();
+						Object2LongMap<String> nameToValue = new Object2LongMap<>();
 						for (JsonElement flagEntry : enumArray) {
 							JsonObject flagObject = flagEntry.getAsJsonObject();
 							String enumName = flagObject.get("name").getAsString();

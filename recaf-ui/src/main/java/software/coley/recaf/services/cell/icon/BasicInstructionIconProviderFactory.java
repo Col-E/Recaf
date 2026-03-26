@@ -19,14 +19,27 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @ApplicationScoped
 public class BasicInstructionIconProviderFactory implements InstructionIconProviderFactory {
+	private static final Color INSN_COLOR = Color.web("rgb(0, 175, 255)");
+
 	@Nonnull
 	@Override
 	public IconProvider getInstructionIconProvider(@Nonnull Workspace workspace,
-												   @Nonnull WorkspaceResource resource,
-												   @Nonnull ClassBundle<? extends ClassInfo> bundle,
-												   @Nonnull ClassInfo declaringClass,
-												   @Nonnull MethodMember declaringMethod,
-												   @Nonnull Instruction instruction) {
-		return () -> new FontIconView(CarbonIcons.CODE, Color.web("rgb(0, 175, 255)"));
+	                                               @Nonnull WorkspaceResource resource,
+	                                               @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                               @Nonnull ClassInfo declaringClass,
+	                                               @Nonnull MethodMember declaringMethod,
+	                                               @Nonnull Instruction instruction) {
+		return () -> new FontIconView(CarbonIcons.CODE, INSN_COLOR);
+	}
+
+	@Nonnull
+	@Override
+	public IconProvider getInstructionIconProvider(@Nonnull Workspace workspace,
+	                                               @Nonnull WorkspaceResource resource,
+	                                               @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                               @Nonnull ClassInfo declaringClass,
+	                                               @Nonnull MethodMember declaringMethod,
+	                                               @Nonnull me.darknet.dex.tree.definitions.instructions.Instruction instruction) {
+		return () -> new FontIconView(CarbonIcons.CODE, INSN_COLOR);
 	}
 }

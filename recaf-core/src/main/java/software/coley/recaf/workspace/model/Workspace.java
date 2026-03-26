@@ -24,7 +24,6 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -363,6 +362,12 @@ public interface Workspace extends Closing {
 		return result;
 	}
 
+	/**
+	 * @param includeInternal
+	 * 		Flag to include internal supporting resources.
+	 * @param consumer
+	 * 		Consumer to pass each class to.
+	 */
 	default void forEachClass(boolean includeInternal, @Nonnull Consumer<? super ClassInfo> consumer) {
 		forEachJvmClass(includeInternal, consumer);
 		forEachAndroidClass(consumer);
@@ -523,6 +528,12 @@ public interface Workspace extends Closing {
 				.collect(Collectors.toCollection(TreeSet::new));
 	}
 
+	/**
+	 * @param includeInternal
+	 * 		Flag to include internal supporting resources.
+	 * @param consumer
+	 * 		Consumer to pass each class to.
+	 */
 	default void forEachJvmClass(boolean includeInternal, @Nonnull Consumer<? super JvmClassInfo> consumer) {
 		jvmClassesStream(includeInternal)
 				.map(node -> (JvmClassInfo) node.getValue())
@@ -542,6 +553,10 @@ public interface Workspace extends Closing {
 				.collect(Collectors.toCollection(TreeSet::new));
 	}
 
+	/**
+	 * @param consumer
+	 * 		Consumer to pass each class to.
+	 */
 	default void forEachAndroidClass(@Nonnull Consumer<? super AndroidClassInfo> consumer) {
 		androidClassesStream()
 				.map(node -> (AndroidClassInfo) node.getValue())

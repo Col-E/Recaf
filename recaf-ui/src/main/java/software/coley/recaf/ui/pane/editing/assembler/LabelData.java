@@ -1,6 +1,5 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTLabel;
@@ -8,6 +7,7 @@ import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
 import software.coley.collections.box.Box;
 import software.coley.collections.box.IntBox;
+import software.coley.recaf.util.collect.primitive.Int2IntMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,7 +40,7 @@ public record LabelData(@Nonnull String name, @Nonnull AstUsages usage,
 		return (ASTLabel) usage.readers().getFirst();
 	}
 
-	public long countRefsOnLine(int line) {
+	public int countRefsOnLine(int line) {
 		return linesOnLinesMap.computeIfAbsent(line,
 				l -> Math.toIntExact(usage.readersAndWriters()
 						.filter(i -> i.location().line() == line)

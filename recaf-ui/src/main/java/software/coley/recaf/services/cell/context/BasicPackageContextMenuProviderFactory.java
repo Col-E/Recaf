@@ -72,12 +72,13 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 						popup.show();
 					});
 
-					var refactor = jvmBuilder.submenu("menu.refactor", PAINT_BRUSH);
-					refactor.directoryItem("menu.refactor.move", STACKED_MOVE, actions::movePackage);
-					refactor.directoryItem("menu.refactor.rename", TAG_EDIT, actions::renamePackage);
 
 					jvmBuilder.directoryItem("menu.export.package", EXPORT, actions::exportPackage);
 				}
+
+				var refactor = builder.submenu("menu.refactor", PAINT_BRUSH);
+				refactor.directoryItem("menu.refactor.move", STACKED_MOVE, actions::movePackage);
+				refactor.directoryItem("menu.refactor.rename", TAG_EDIT, actions::renamePackage);
 			}
 
 			// Search actions
@@ -94,15 +95,13 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 			});
 
 			// Misc
-			if (bundle instanceof JvmClassBundle jvmBundle) {
-				builder.item("menu.file.decompileall", DOCUMENT_EXPORT, () -> {
-					DecompileAllPopup popup = decompileAllPaneProvider.get();
-					popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, e -> decompileAllPaneProvider.destroy(popup));
-					popup.setTargetBundle(jvmBundle);
-					popup.setNamePredicate(name -> name.startsWith(packageName));
-					popup.show();
-				});
-			}
+			builder.item("menu.file.decompileall", DOCUMENT_EXPORT, () -> {
+				DecompileAllPopup popup = decompileAllPaneProvider.get();
+				popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, e -> decompileAllPaneProvider.destroy(popup));
+				popup.setTargetBundle(bundle);
+				popup.setNamePredicate(name -> name.startsWith(packageName));
+				popup.show();
+			});
 
 			// Copy path
 			builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(packageName));

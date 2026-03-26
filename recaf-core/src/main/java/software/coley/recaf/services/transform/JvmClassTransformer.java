@@ -12,7 +12,6 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  * Outlines the base JVM transformation contract.
  * <p>
  * <b>NOTE:</b> Internal transformers must be {@link Dependent} scoped so that they do not get proxied by CDI.
- * See {@link JvmTransformerContext#getJvmTransformer(Class)}.
  *
  * @author Matt Coley
  */
@@ -29,7 +28,7 @@ public interface JvmClassTransformer extends ClassTransformer {
 
 	/**
 	 * Implementations can {@link #dependencies() depend on other transformers} and access them
-	 * via {@link JvmTransformerContext#getJvmTransformer(Class)}. This may be useful in cases where you want to have
+	 * via {@link AbstractTransformerContext#getTransformer(Class)}. This may be useful in cases where you want to have
 	 * one transformer act as a shared data-storage between multiple transformers.
 	 * <p>
 	 * To record changes to the given {@code classInfo} you can:

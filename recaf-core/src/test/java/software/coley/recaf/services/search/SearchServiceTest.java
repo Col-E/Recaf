@@ -1,5 +1,22 @@
 package software.coley.recaf.services.search;
 
+import me.darknet.dex.tree.definitions.MemberIdentifier;
+import me.darknet.dex.tree.definitions.annotation.Annotation;
+import me.darknet.dex.tree.definitions.annotation.AnnotationPart;
+import me.darknet.dex.tree.definitions.code.Code;
+import me.darknet.dex.tree.definitions.code.Handler;
+import me.darknet.dex.tree.definitions.code.TryCatch;
+import me.darknet.dex.tree.definitions.constant.AnnotationConstant;
+import me.darknet.dex.tree.definitions.constant.EnumConstant;
+import me.darknet.dex.tree.definitions.constant.MemberConstant;
+import me.darknet.dex.tree.definitions.constant.TypeConstant;
+import me.darknet.dex.tree.definitions.debug.DebugInformation;
+import me.darknet.dex.tree.definitions.instructions.Invoke;
+import me.darknet.dex.tree.definitions.instructions.Label;
+import me.darknet.dex.tree.definitions.instructions.NewInstanceInstruction;
+import me.darknet.dex.tree.definitions.instructions.ReturnInstruction;
+import me.darknet.dex.tree.type.InstanceType;
+import me.darknet.dex.tree.type.Types;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -7,10 +24,11 @@ import software.coley.recaf.info.BasicTextFileInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.AndroidInstructionPathNode;
 import software.coley.recaf.path.AnnotationPathNode;
 import software.coley.recaf.path.CatchPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
-import software.coley.recaf.path.InstructionPathNode;
+import software.coley.recaf.path.JvmInstructionPathNode;
 import software.coley.recaf.path.LocalVariablePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.ThrowsPathNode;
@@ -38,12 +56,15 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.objectweb.asm.Opcodes.BIPUSH;
+import static org.objectweb.asm.Opcodes.*;
 import static software.coley.recaf.test.TestClassUtils.*;
+import static software.coley.recaf.test.TestDexUtils.newAndroidClass;
+import static software.coley.recaf.test.TestDexUtils.newDexMethod;
 
 /**
  * Tests for {@link SearchService}
@@ -163,7 +184,7 @@ public class SearchServiceTest extends TestBase {
 			// 31 is used in generated hashCode() implementations
 			Results results = searchService.search(classesWorkspace, new NumberQuery(numMatchProvider.newEqualsPredicate(31)));
 			for (Result<?> result : results) {
-				if (result.getPath() instanceof InstructionPathNode instructionPath) {
+				if (result.getPath() instanceof JvmInstructionPathNode instructionPath) {
 					assertEquals(BIPUSH, instructionPath.getValue().getOpcode());
 
 					ClassMemberPathNode memberPath = instructionPath.getPathOfType(ClassMember.class);
@@ -279,7 +300,7 @@ public class SearchServiceTest extends TestBase {
 
 			// NEW instruction is used to create a NFE
 			Set<Result<?>> insnMatches = results.stream()
-					.filter(r -> r.getPath() instanceof InstructionPathNode)
+					.filter(r -> r.getPath() instanceof JvmInstructionPathNode)
 					.collect(Collectors.toSet());
 			assertEquals(1, insnMatches.size());
 
@@ -363,6 +384,152 @@ public class SearchServiceTest extends TestBase {
 
 			results = searchService.search(filesWorkspace, new StringQuery(strMatchProvider.newPartialRegexPredicate("\\w+\\s\\w+")));
 			assertEquals(1, results.size());
+		}
+	}
+
+	@Nested
+	class Android {
+		@Test
+		void testMemberReferenceSearchInvoke() {
+			// class AndroidCaller {
+			//     static void call() {
+			//         AndroidTarget.callee();
+			//     }
+			// }
+			Workspace workspace = fromBundle(fromClasses(
+					newAndroidClass("demo/AndroidCaller", newDexMethod("call", "()V", ACC_PUBLIC | ACC_STATIC, code -> code
+							.arguments(0, 0)
+							.registers(0)
+							.invoke(Invoke.STATIC, Types.instanceTypeFromInternalName("demo/AndroidTarget"), "callee",
+									Types.methodTypeFromDescriptor("()V"))
+							.return_void()
+					))
+			));
+
+			// Search for the 'AndroidTarget.callee()' reference.
+			Results results = searchService.search(workspace, new ReferenceQuery(
+					strMatchProvider.newEqualPredicate("demo/AndroidTarget"),
+					strMatchProvider.newEqualPredicate("callee"),
+					strMatchProvider.newEqualPredicate("()V")));
+			assertEquals(1, results.size());
+
+			// Should be a single result with a path to the invoke instruction.
+			Result<?> result = results.getFirst();
+			assertInstanceOf(AndroidInstructionPathNode.class, result.getPath());
+
+			// The path should indicate the result is from 'AndroidCaller.call()'.
+			ClassMemberPathNode memberPath = result.getPath().getPathOfType(ClassMember.class);
+			assertNotNull(memberPath);
+			assertEquals("call", memberPath.getValue().getName());
+			assertEquals("()V", memberPath.getValue().getDescriptor());
+		}
+
+		@Test
+		void testClassReferenceSearchTargetType() {
+			// class TargetType {}
+			// class AndroidReferenceHolder {
+			//     static void probe() throws TargetType {
+			//         new TargetType();
+			//     }
+			// }
+			String targetTypeName = "demo/TargetType";
+			InstanceType targetType = Types.instanceTypeFromInternalName(targetTypeName);
+			Label begin = new Label();
+			Label end = new Label();
+			Label handler = new Label();
+			Code code = new Code(0, 0, 1);
+			code.addInstruction(begin);
+			code.addInstruction(new NewInstanceInstruction(0, targetType));
+			code.addInstruction(end);
+			code.addInstruction(new ReturnInstruction());
+			code.addInstruction(handler);
+			code.addInstruction(new ReturnInstruction());
+			code.addTryCatch(new TryCatch(begin, end, List.of(new Handler(handler, targetType))));
+			code.setDebugInfo(new DebugInformation(
+					List.of(),
+					List.of(),
+					List.of(new DebugInformation.LocalVariable(0, "local", targetType, null, begin, end))
+			));
+			me.darknet.dex.tree.definitions.MethodMember method = newDexMethod("probe", "()V", ACC_PUBLIC | ACC_STATIC, code);
+			method.addThrownType(targetTypeName);
+			Workspace workspace = fromBundle(fromClasses(
+					newAndroidClass("demo/AndroidReferenceHolder", method)
+			));
+
+			// Search for references to 'TargetType'.
+			//  - Throws on method signature
+			//  - NEW instruction
+			//  - Catch block type
+			//  - Local variable type in catch block
+			Results results = searchService.search(workspace, new ReferenceQuery(
+					strMatchProvider.newEqualPredicate(targetTypeName)
+			));
+			assertEquals(4, results.size());
+			assertEquals(1, results.stream().filter(r -> r.getPath() instanceof ThrowsPathNode).count());
+			assertEquals(1, results.stream().filter(r -> r.getPath() instanceof AndroidInstructionPathNode).count());
+			assertEquals(1, results.stream().filter(r -> r.getPath() instanceof CatchPathNode).count());
+			assertEquals(1, results.stream().filter(r -> r.getPath() instanceof LocalVariablePathNode).count());
+		}
+
+		@Test
+		void testNestedAnnotationConstantReferences() {
+			// @OuterAnno(nested = @InnerAnno(
+			//    member = MemberOwner.helper(),
+			//    enumValue = EnumType.ENTRY,
+			//    typeValue = TypeRef.class
+			// ))
+			// class AndroidAnnotationHolder {}
+			Workspace workspace = fromBundle(fromClasses(
+					newAndroidClass("demo/AndroidAnnotationHolder", definition -> definition.addAnnotation(new Annotation(
+							(byte) Annotation.VISIBILITY_RUNTIME,
+							new AnnotationPart(
+									Types.instanceTypeFromInternalName("demo/OuterAnno"),
+									Map.of("nested", new AnnotationConstant(new AnnotationPart(
+											Types.instanceTypeFromInternalName("demo/InnerAnno"),
+											Map.of(
+													"member", new MemberConstant(
+															Types.instanceTypeFromInternalName("demo/MemberOwner"),
+															new MemberIdentifier("helper", "()V")),
+													"enumValue", new EnumConstant(
+															Types.instanceTypeFromInternalName("demo/EnumType"),
+															new MemberIdentifier("ENTRY", "Ldemo/EnumType;")),
+													"typeValue", new TypeConstant(
+															Types.instanceTypeFromInternalName("demo/TypeRef"))
+											))
+									))
+							)
+					)))
+			));
+
+			// Search for the nested annotation's 'MemberOwner.helper()' reference.
+			Results memberResults = searchService.search(workspace, new ReferenceQuery(
+					strMatchProvider.newEqualPredicate("demo/MemberOwner"),
+					strMatchProvider.newEqualPredicate("helper"),
+					strMatchProvider.newEqualPredicate("()V")));
+			assertEquals(1, memberResults.size());
+			assertInstanceOf(AnnotationPathNode.class, memberResults.getFirst().getPath());
+
+			// Search for the nested annotation's 'EnumType.ENTRY' reference.
+			Results enumResults = searchService.search(workspace, new ReferenceQuery(
+					strMatchProvider.newEqualPredicate("demo/EnumType"),
+					strMatchProvider.newEqualPredicate("ENTRY"),
+					strMatchProvider.newEqualPredicate("Ldemo/EnumType;")));
+			assertEquals(1, enumResults.size());
+			assertInstanceOf(AnnotationPathNode.class, enumResults.getFirst().getPath());
+
+			// Search for the nested annotation's 'TypeRef' reference.
+			Results typeResults = searchService.search(workspace, new ReferenceQuery(
+					strMatchProvider.newEqualPredicate("demo/TypeRef")
+			));
+			assertEquals(1, typeResults.size());
+			assertInstanceOf(AnnotationPathNode.class, typeResults.getFirst().getPath());
+
+			// Search for the nested annotation itself.
+			Results nestedAnnotationResults = searchService.search(workspace, new ReferenceQuery(
+					strMatchProvider.newEqualPredicate("demo/InnerAnno")
+			));
+			assertEquals(1, nestedAnnotationResults.size());
+			assertInstanceOf(AnnotationPathNode.class, nestedAnnotationResults.getFirst().getPath());
 		}
 	}
 }

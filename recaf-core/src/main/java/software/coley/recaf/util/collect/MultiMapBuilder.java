@@ -1,4 +1,4 @@
-package software.coley.recaf.util;
+package software.coley.recaf.util.collect;
 
 import java.util.*;
 import java.util.function.Supplier;

@@ -22,6 +22,7 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.text.TextFormatConfig;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
@@ -41,9 +42,11 @@ public class MethodCallGraphsPane extends TabPane implements ClassNavigable, Upd
 	private ClassPathNode path;
 
 	@Inject
-	public MethodCallGraphsPane(@Nonnull Workspace workspace, @Nonnull CallGraphService callGraphService,
+	public MethodCallGraphsPane(@Nonnull WorkspaceManager workspaceManager, @Nonnull CallGraphService callGraphService,
 	                            @Nonnull TextFormatConfig format, @Nonnull Actions actions,
 	                            @Nonnull CellConfigurationService configurationService) {
+		Workspace workspace = workspaceManager.getCurrent();
+
 		currentMethodInfo = new SimpleObjectProperty<>();
 
 		CallGraph callGraph = Objects.requireNonNull(callGraphService.getCurrentWorkspaceCallGraph(), "Graph not created");

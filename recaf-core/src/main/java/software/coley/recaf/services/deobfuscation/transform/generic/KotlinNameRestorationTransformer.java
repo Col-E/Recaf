@@ -34,7 +34,7 @@ public class KotlinNameRestorationTransformer implements JvmClassTransformer {
 	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
 		AggregatedMappings mappings = context.getMappings();
 		String ownerName = initialClassState.getName();
-		KotlinMetadataCollectionTransformer metadata = context.getJvmTransformer(KotlinMetadataCollectionTransformer.class);
+		KotlinMetadataCollectionTransformer metadata = context.getTransformer(KotlinMetadataCollectionTransformer.class);
 		KtClass ktClass = metadata.getKtClass(ownerName);
 		if (ktClass == null) {
 			// No metadata model, but see if we were able to extract a name from some other kind of data from

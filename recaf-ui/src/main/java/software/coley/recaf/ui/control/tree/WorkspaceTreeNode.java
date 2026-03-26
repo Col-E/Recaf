@@ -186,6 +186,9 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 	 */
 	@Nonnull
 	public static WorkspaceTreeNode getOrInsertIntoTree(@Nonnull WorkspaceTreeNode node, @Nonnull PathNode<?> path) {
+		// TODO: Make this method thread-safe since building huge trees on workspace-load is currently
+		//  single-threaded and can be a bottleneck.
+
 		// Edge case handling for directory nodes.
 		if (path instanceof DirectoryPathNode directoryPath) {
 			// If we have parent links in our path, insert those first.

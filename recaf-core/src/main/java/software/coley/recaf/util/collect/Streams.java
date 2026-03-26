@@ -1,5 +1,6 @@
-package software.coley.recaf.util;
+package software.coley.recaf.util.collect;
 
+import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.threading.CountDown;
 
 import java.util.ArrayDeque;

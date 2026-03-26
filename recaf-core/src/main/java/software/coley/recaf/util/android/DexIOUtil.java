@@ -1,8 +1,11 @@
 package software.coley.recaf.util.android;
 
-import com.android.tools.r8.graph.DexProgramClass;
 import jakarta.annotation.Nonnull;
-import software.coley.dextranslator.model.ApplicationData;
+import me.darknet.dex.file.DexHeader;
+import me.darknet.dex.file.DexMap;
+import me.darknet.dex.io.Input;
+import me.darknet.dex.tree.DexFile;
+import me.darknet.dex.tree.definitions.ClassDefinition;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 import software.coley.recaf.util.io.ByteSource;
@@ -42,12 +45,13 @@ public class DexIOUtil {
 	 */
 	@Nonnull
 	public static AndroidClassBundle read(@Nonnull byte[] dex) throws IOException {
-		// Read dex file content
-		ApplicationData data = ApplicationData.fromDex(dex);
+		DexHeader header = DexHeader.CODEC.read(Input.wrap(dex));
+		DexMap map = header.map();
+		DexFile dexFile = DexFile.CODEC.map(header, map);
 
 		// Populate bundle
-		BasicAndroidClassBundle classBundle = new BasicAndroidClassBundle();
-		for (DexProgramClass dexClass : data.getApplication().classes()) {
+		BasicAndroidClassBundle classBundle = new BasicAndroidClassBundle(header.version(), header.link());
+		for (ClassDefinition dexClass : dexFile.definitions()) {
 			AndroidClassInfo classInfo = new AndroidClassInfoBuilder()
 					.adaptFrom(dexClass)
 					.build();

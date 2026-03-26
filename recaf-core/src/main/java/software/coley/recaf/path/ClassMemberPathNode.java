@@ -2,6 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import me.darknet.dex.tree.definitions.instructions.Instruction;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Named;
@@ -119,12 +120,27 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 * @param index
 	 * 		Index of the instruction within the method code.
 	 *
-	 * @return Path node of instruction, with the current member as parent.
+	 * @return Path node of JVM instruction, with the current member as parent.
 	 */
 	@Nonnull
-	public InstructionPathNode childInsn(@Nonnull AbstractInsnNode insn, int index) {
+	public JvmInstructionPathNode childInsn(@Nonnull AbstractInsnNode insn, int index) {
 		if (isMethod())
-			return new InstructionPathNode(this, insn, index);
+			return new JvmInstructionPathNode(this, insn, index);
+		throw new IllegalStateException("Cannot make child for insn on non-method member");
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to wrap into node.
+	 * @param index
+	 * 		Index of the instruction within the method code.
+	 *
+	 * @return Path node of Android Dalvik instruction, with the current member as parent.
+	 */
+	@Nonnull
+	public AndroidInstructionPathNode childInsn(@Nonnull Instruction insn, int index) {
+		if (isMethod())
+			return new AndroidInstructionPathNode(this, insn, index);
 		throw new IllegalStateException("Cannot make child for insn on non-method member");
 	}
 

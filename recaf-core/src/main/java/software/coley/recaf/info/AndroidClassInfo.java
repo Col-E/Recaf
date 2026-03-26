@@ -1,6 +1,7 @@
 package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
+import me.darknet.dex.tree.definitions.ClassDefinition;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 
 import java.util.function.Consumer;
@@ -19,6 +20,12 @@ public interface AndroidClassInfo extends ClassInfo {
 	default boolean canMapToJvmClass() {
 		return false;
 	}
+
+	/**
+	 * @return Backing dex class definition.
+	 */
+	@Nonnull
+	ClassDefinition getBackingDefinition();
 
 	/**
 	 * @return New builder wrapping this class information.

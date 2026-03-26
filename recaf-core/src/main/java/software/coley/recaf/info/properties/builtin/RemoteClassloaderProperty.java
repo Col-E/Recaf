@@ -1,11 +1,10 @@
 package software.coley.recaf.info.properties.builtin;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.BasicProperty;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
 
 /**
@@ -15,7 +14,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceRemoteVmResource;
  * @author Matt Coley
  */
 public class RemoteClassloaderProperty extends BasicProperty<Integer> {
-	private static final Int2ObjectMap<RemoteClassloaderProperty> cache = new Int2ObjectArrayMap<>();
+	private static final Int2ObjectMap<RemoteClassloaderProperty> cache = new Int2ObjectMap<>();
 	public static final String KEY = "remote-classloader-id";
 
 	/**

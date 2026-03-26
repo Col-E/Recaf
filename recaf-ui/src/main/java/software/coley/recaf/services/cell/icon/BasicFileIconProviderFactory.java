@@ -2,6 +2,8 @@ package software.coley.recaf.services.cell.icon;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
+import software.coley.recaf.info.ArscFileInfo;
+import software.coley.recaf.info.BinaryXmlFileInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.Icons;
@@ -49,6 +51,8 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 			if (ext.equals("apk"))
 				return ANDROID;
 			return ZIP;
+		} else if (info instanceof ArscFileInfo || info instanceof BinaryXmlFileInfo) {
+			return ANDROID;
 		}
 
 		// Content match

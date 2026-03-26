@@ -462,4 +462,21 @@ public class NumberUtil {
 	public static boolean haveSameSign(int a, int b) {
 		return a * b > 0;
 	}
+
+	/**
+	 * @param v
+	 * 		Some value.
+	 *
+	 * @return Next power of two greater than or equal to {@code v}.
+	 */
+	public static int nextPowerOfTwo(int v) {
+		// Bit twiddling to round up to the next power of two.
+		v--;
+		v |= v >> 1;
+		v |= v >> 2;
+		v |= v >> 4;
+		v |= v >> 8;
+		v |= v >> 16;
+		return v + 1;
+	}
 }

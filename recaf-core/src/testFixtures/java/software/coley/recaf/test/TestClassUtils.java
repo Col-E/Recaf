@@ -6,12 +6,15 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.BasicAndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
@@ -20,6 +23,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -74,6 +79,20 @@ public class TestClassUtils {
 	}
 
 	/**
+	 * @param classes
+	 * 		Classes to put into the bundle.
+	 *
+	 * @return Class bundle of classes.
+	 */
+	@Nonnull
+	public static BasicAndroidClassBundle fromClasses(AndroidClassInfo... classes) {
+		BasicAndroidClassBundle bundle = new BasicAndroidClassBundle();
+		for (AndroidClassInfo cls : classes)
+			bundle.initialPut(cls);
+		return bundle;
+	}
+
+	/**
 	 * @param files
 	 * 		Files to put into the bundle.
 	 *
@@ -97,6 +116,20 @@ public class TestClassUtils {
 	public static Workspace fromBundle(@Nonnull JvmClassBundle classes) {
 		WorkspaceResource resource = new WorkspaceResourceBuilder()
 				.withJvmClassBundle(classes)
+				.build();
+		return new BasicWorkspace(resource);
+	}
+
+	/**
+	 * @param classes
+	 * 		Classes to put into the workspace.
+	 *
+	 * @return Workspace containing classes in single resource.
+	 */
+	@Nonnull
+	public static Workspace fromBundle(@Nonnull AndroidClassBundle classes) {
+		WorkspaceResource resource = new WorkspaceResourceBuilder()
+				.withAndroidClassBundles(Map.of("classes.dex", classes))
 				.build();
 		return new BasicWorkspace(resource);
 	}

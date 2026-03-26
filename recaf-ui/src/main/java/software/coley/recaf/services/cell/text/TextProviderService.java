@@ -3,6 +3,7 @@ package software.coley.recaf.services.cell.text;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import me.darknet.dex.tree.definitions.instructions.Instruction;
 import org.benf.cfr.reader.entities.annotations.ElementValue;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -20,6 +21,7 @@ import software.coley.recaf.ui.config.MemberDisplayFormatConfig;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
 import software.coley.recaf.util.BlwUtil;
+import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.Types;
@@ -226,12 +228,38 @@ public class TextProviderService implements Service {
 	 */
 	@Nonnull
 	public TextProvider getInstructionTextProvider(@Nonnull Workspace workspace,
-												   @Nonnull WorkspaceResource resource,
-												   @Nonnull ClassBundle<? extends ClassInfo> bundle,
-												   @Nonnull ClassInfo declaringClass,
-												   @Nonnull MethodMember declaringMethod,
-												   @Nonnull AbstractInsnNode insn) {
+	                                               @Nonnull WorkspaceResource resource,
+	                                               @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                               @Nonnull ClassInfo declaringClass,
+	                                               @Nonnull MethodMember declaringMethod,
+	                                               @Nonnull AbstractInsnNode insn) {
 		return () -> formatConfig.filterMaxLength(BlwUtil.toString(insn));
+	}
+
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param insn
+	 * 		Variable to get the text of.
+	 *
+	 * @return Text provider for the instruction.
+	 */
+	@Nonnull
+	public TextProvider getInstructionTextProvider(@Nonnull Workspace workspace,
+	                                               @Nonnull WorkspaceResource resource,
+	                                               @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                               @Nonnull ClassInfo declaringClass,
+	                                               @Nonnull MethodMember declaringMethod,
+	                                               @Nonnull Instruction insn) {
+		return () -> formatConfig.filter(insn.toString());
 	}
 
 	/**

@@ -34,6 +34,7 @@ public class AssemblerPipelineManager implements Service {
 	private final AndroidAssemblerPipelineConfig androidConfig;
 	private final AssemblerPipelineGeneralConfig config;
 	private JvmAssemblerPipeline currentJvmPipeline;
+	private AndroidAssemblerPipeline currentAndroidPipeline;
 
 	@Inject
 	public AssemblerPipelineManager(@Nonnull WorkspaceManager workspaceManager,
@@ -68,9 +69,11 @@ public class AssemblerPipelineManager implements Service {
 		if (info.isJvmClass()) {
 			Workspace workspace = Objects.requireNonNullElseGet(path.getValueOfType(Workspace.class), EmptyWorkspace::get);
 			return newJvmAssemblerPipeline(workspace);
+		} else if (info.isAndroidClass()) {
+			Workspace workspace = Objects.requireNonNullElseGet(path.getValueOfType(Workspace.class), EmptyWorkspace::get);
+			return newAndroidAssemblerPipeline(workspace);
 		} else {
-			// TODO: Implement when dalvik assembler pipeline is implemented
-			throw new UnsupportedOperationException("Dalvik assembler pipeline is not implemented");
+			throw new UnsupportedOperationException("Unknown class type: " + info.getClass().getSimpleName());
 		}
 	}
 
@@ -97,7 +100,11 @@ public class AssemblerPipelineManager implements Service {
 	 */
 	@Nonnull
 	public AndroidAssemblerPipeline newAndroidAssemblerPipeline(@Nonnull Workspace workspace) {
-		return new AndroidAssemblerPipeline(config, androidConfig);
+		if (currentAndroidPipeline != null && workspace == workspaceManager.getCurrent())
+			return currentAndroidPipeline;
+
+		InheritanceGraph graph = graphService.getOrCreateInheritanceGraph(workspace);
+		return new AndroidAssemblerPipeline(workspace, Objects.requireNonNull(graph), config, androidConfig);
 	}
 
 	@Nonnull
@@ -116,6 +123,7 @@ public class AssemblerPipelineManager implements Service {
 		@Override
 		public void onWorkspaceOpened(@Nonnull Workspace workspace) {
 			currentJvmPipeline = newJvmAssemblerPipeline(workspace);
+			currentAndroidPipeline = newAndroidAssemblerPipeline(workspace);
 		}
 
 		@Override
@@ -123,6 +131,10 @@ public class AssemblerPipelineManager implements Service {
 			if (currentJvmPipeline != null) {
 				currentJvmPipeline.close();
 				currentJvmPipeline = null;
+			}
+			if (currentAndroidPipeline != null) {
+				currentAndroidPipeline.close();
+				currentAndroidPipeline = null;
 			}
 		}
 	}

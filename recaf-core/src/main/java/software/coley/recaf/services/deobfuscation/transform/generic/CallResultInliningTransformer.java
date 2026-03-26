@@ -1,7 +1,5 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
-import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -28,6 +26,7 @@ import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.collect.primitive.Object2IntMap;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -46,7 +45,7 @@ import java.util.Set;
 public class CallResultInliningTransformer implements JvmClassTransformer {
 	private final static int MAX_STEPS = 20_000; // TODO: Make configurable
 	private final InheritanceGraphService graphService;
-	private final Object2BooleanMap<String> canBeEvaluatedMap = new Object2BooleanArrayMap<>();
+	private final Object2IntMap<String> canBeEvaluatedMap = new Object2IntMap<>();
 	private final FieldCacheManager fieldCacheManager = new FieldCacheManager();
 
 	private InheritanceGraph inheritanceGraph;
@@ -141,7 +140,7 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 	private boolean canEvaluate(@Nonnull MethodInsnNode min) {
 		String key = min.owner + "." + min.name + min.desc;
 		synchronized (canBeEvaluatedMap) {
-			return canBeEvaluatedMap.computeIfAbsent(key, k -> evaluator.canEvaluate(min.owner, min.name, min.desc));
+			return canBeEvaluatedMap.computeIfAbsent(key, k -> evaluator.canEvaluate(min.owner, min.name, min.desc) ? 1 : 0) != 0;
 		}
 	}
 }

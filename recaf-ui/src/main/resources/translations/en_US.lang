@@ -574,6 +574,7 @@ service.analysis.entry-points.none=No entries found
 service.analysis.hashing=Hashing
 service.analysis.hashing.type=Type
 service.analysis.hashing.value=Hash
+service.analysis.permissions=Permissions
 service.analysis.anti-decompile=Anti-Decompilation
 service.analysis.anti-decompile.illegal-attr=Illegal attributes
 service.analysis.anti-decompile.illegal-name=Illegal names

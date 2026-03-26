@@ -38,11 +38,6 @@ public class ResourceSummaryService implements Service {
 	                              @Nonnull Instance<ResourceSummarizer> summarizers) {
 		this.config = config;
 
-		// TODO: Summarizer for android
-		//  - Manifest
-		//    - Entry points (can update existing entry-point summarizer)
-		//    - Permissions (and their descriptions, level of concern perhaps?)
-
 		// Add discovered summarizers from classpath.
 		for (ResourceSummarizer summarizer : summarizers)
 			addSummarizer(summarizer);

@@ -76,6 +76,7 @@ public abstract class ObjectValueBoxImpl<T> extends ObjectValueImpl {
 
 	@Nonnull
 	@Override
+	@SuppressWarnings("unchecked")
 	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
 		if (other == UninitializedValue.UNINITIALIZED_VALUE)
 			return other;

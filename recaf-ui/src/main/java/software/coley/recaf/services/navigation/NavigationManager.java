@@ -349,7 +349,17 @@ public class NavigationManager implements Navigable, Service {
 
 		@Override
 		public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
-			// no-op
+			// Handle forwarding updates to remapped classes
+			MappingResults mappingResults = cls.getPropertyValueOrNull(RemapOriginTaskProperty.KEY);
+			if (mappingResults != null) {
+				ClassPathNode preMappingPath = mappingResults.getPreMappingPath(cls.getName());
+				if (preMappingPath != null) {
+					ClassPathNode postMappingPath = workspacePath.child(resource).child(bundle).child(cls.getPackageName()).child(cls);
+					for (Navigable navigable : getNavigableChildrenByPath(preMappingPath))
+						if (navigable instanceof UpdatableNavigable updatable)
+							updatable.onUpdatePath(postMappingPath);
+				}
+			}
 		}
 
 		@Override

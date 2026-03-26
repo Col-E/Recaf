@@ -288,11 +288,40 @@ public class IconProviderService implements Service {
 	 */
 	@Nonnull
 	public IconProvider getInstructionIconProvider(@Nonnull Workspace workspace,
-												   @Nonnull WorkspaceResource resource,
-												   @Nonnull ClassBundle<?> bundle,
-												   @Nonnull ClassInfo declaringClass,
-												   @Nonnull MethodMember declaringMethod,
-												   @Nonnull Instruction instruction) {
+	                                               @Nonnull WorkspaceResource resource,
+	                                               @Nonnull ClassBundle<?> bundle,
+	                                               @Nonnull ClassInfo declaringClass,
+	                                               @Nonnull MethodMember declaringMethod,
+	                                               @Nonnull Instruction instruction) {
+		InstructionIconProviderFactory factory = instructionIconOverride != null ? instructionIconOverride : instructionIconDefault;
+		return factory.getInstructionIconProvider(workspace, resource, bundle, declaringClass, declaringMethod, instruction);
+	}
+
+	/**
+	 * Delegates to {@link InstructionIconProviderFactory}.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param instruction
+	 * 		The instruction to create an icon for.
+	 *
+	 * @return Icon provider for the instruction.
+	 */
+	@Nonnull
+	public IconProvider getInstructionIconProvider(@Nonnull Workspace workspace,
+	                                               @Nonnull WorkspaceResource resource,
+	                                               @Nonnull ClassBundle<?> bundle,
+	                                               @Nonnull ClassInfo declaringClass,
+	                                               @Nonnull MethodMember declaringMethod,
+	                                               @Nonnull me.darknet.dex.tree.definitions.instructions.Instruction instruction) {
 		InstructionIconProviderFactory factory = instructionIconOverride != null ? instructionIconOverride : instructionIconDefault;
 		return factory.getInstructionIconProvider(workspace, resource, bundle, declaringClass, declaringMethod, instruction);
 	}

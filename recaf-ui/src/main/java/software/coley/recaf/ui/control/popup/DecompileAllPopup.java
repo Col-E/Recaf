@@ -18,6 +18,7 @@ import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
@@ -35,7 +36,7 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 
 import java.io.File;
@@ -61,7 +62,7 @@ public class DecompileAllPopup extends RecafStage {
 	private final ObservableObject<JvmDecompiler> decompilerProperty;
 	private final BooleanProperty inProgressProperty = new SimpleBooleanProperty();
 	private Predicate<String> namePredicate = name -> true;
-	private JvmClassBundle targetBundle;
+	private ClassBundle<?> targetBundle;
 
 	@Inject
 	public DecompileAllPopup(@Nonnull DecompilerManager decompilerManager,
@@ -98,7 +99,10 @@ public class DecompileAllPopup extends RecafStage {
 				inProgressProperty.setValue(true);
 				progress.setProgress(0);
 
-				// Determine which classes to decompile
+				// Determine which classes to decompile.
+				//
+				// We'll also map any class models in the bundle to JVM models (which will convert android classes if needed)
+				// since we only support decompilation of JVM classes.
 				List<JvmClassInfo> targetClasses = targetBundle.stream().filter(cls -> {
 					// Skip inner classes
 					if (cls.isInnerClass())
@@ -111,7 +115,7 @@ public class DecompileAllPopup extends RecafStage {
 
 					// Pass to name predicate for final say
 					return namePredicate.test(name);
-				}).toList();
+				}).map(ClassInfo::asJvmClass).toList();
 
 				// Determine delta of each decompilation
 				int targetCount = targetClasses.size();
@@ -204,7 +208,7 @@ public class DecompileAllPopup extends RecafStage {
 	 * @param targetBundle
 	 * 		Bundle to target for decompilation.
 	 */
-	public void setTargetBundle(@Nonnull JvmClassBundle targetBundle) {
+	public void setTargetBundle(@Nonnull ClassBundle<?> targetBundle) {
 		this.targetBundle = targetBundle;
 	}
 

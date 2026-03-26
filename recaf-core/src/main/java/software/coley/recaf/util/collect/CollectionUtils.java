@@ -1,4 +1,4 @@
-package software.coley.recaf.util;
+package software.coley.recaf.util.collect;
 
 import jakarta.annotation.Nonnull;
 

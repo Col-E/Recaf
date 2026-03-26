@@ -6,7 +6,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.path.ClassMemberPathNode;
-import software.coley.recaf.path.InstructionPathNode;
+import software.coley.recaf.path.JvmInstructionPathNode;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
 import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.util.BlwUtil;
@@ -62,7 +62,7 @@ public class InstructionQuery implements JvmClassQuery {
 
 					// Add result if we matched all predicates.
 					if (matched.size() == predicates.size()) {
-						InstructionPathNode path = memberPath.childInsn(method.instructions.get(i), i);
+						JvmInstructionPathNode path = memberPath.childInsn(method.instructions.get(i), i);
 						resultSink.accept(path, String.join("\n", matched));
 						matched.clear();
 					}

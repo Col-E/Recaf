@@ -17,6 +17,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @ApplicationScoped
 public class BasicCatchIconProviderFactory implements CatchIconProviderFactory {
+	private static final Color CATCH_COLOR = Color.web("rgb(0, 175, 255)");
+
 	@Nonnull
 	@Override
 	public IconProvider getCatchIconProvider(@Nonnull Workspace workspace,
@@ -27,7 +29,7 @@ public class BasicCatchIconProviderFactory implements CatchIconProviderFactory {
 											 @Nonnull String caughtType) {
 		return () -> {
 			Label label = new Label("catch");
-			label.setTextFill(Color.web("rgb(0, 175, 255)"));
+			label.setTextFill(CATCH_COLOR);
 			return label;
 		};
 	}

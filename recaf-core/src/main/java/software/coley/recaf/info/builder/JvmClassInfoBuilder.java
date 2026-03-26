@@ -32,7 +32,7 @@ import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.builtin.UnknownAttributesProperty;
-import software.coley.recaf.util.MultiMap;
+import software.coley.recaf.util.collect.MultiMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;

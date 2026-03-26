@@ -1,5 +1,6 @@
 package software.coley.recaf.info.builder;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.Accessed;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
@@ -45,7 +46,7 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 		// default
 	}
 
-	protected AbstractClassInfoBuilder(ClassInfo classInfo) {
+	protected AbstractClassInfoBuilder(@Nonnull ClassInfo classInfo) {
 		// copy state
 		withName(classInfo.getName());
 		withSuperName(classInfo.getSuperName());
@@ -64,8 +65,9 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 		withPropertyContainer(new BasicPropertyContainer(classInfo.getPersistentProperties()));
 	}
 
+	@Nonnull
 	@SuppressWarnings("unchecked")
-	public static <B extends AbstractClassInfoBuilder<?>> B forClass(ClassInfo info) {
+	public static <B extends AbstractClassInfoBuilder<?>> B forClass(@Nonnull ClassInfo info) {
 		if (info.isJvmClass()) {
 			return (B) new JvmClassInfoBuilder(info.asJvmClass());
 		} else if (info.isAndroidClass()) {

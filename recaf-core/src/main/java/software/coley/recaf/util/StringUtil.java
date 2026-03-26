@@ -1,12 +1,10 @@
 package software.coley.recaf.util;
 
-import it.unimi.dsi.fastutil.chars.Char2IntArrayMap;
-import it.unimi.dsi.fastutil.chars.Char2IntMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import regexodus.Matcher;
+import software.coley.recaf.util.collect.primitive.Int2IntMap;
+import software.coley.recaf.util.collect.primitive.IntList;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -69,7 +67,7 @@ public class StringUtil {
 	 * @return Array of indices in the input string where the char exists.
 	 */
 	public static int[] indicesOf(@Nonnull String input, char c) {
-		IntList list = new IntArrayList(5);
+		IntList list = new IntList(5);
 		int i = -1;
 		do {
 			i = input.indexOf(c, i);
@@ -78,7 +76,7 @@ public class StringUtil {
 				i++;
 			}
 		} while (i >= 0);
-		return list.toArray(EMPTY_INT_ARRAY);
+		return list.toArray();
 	}
 
 	/**
@@ -847,12 +845,12 @@ public class StringUtil {
 	public static double getEntropy(@Nullable String text) {
 		if (text == null || text.isEmpty())
 			return 0;
-		Char2IntMap charCountMap = new Char2IntArrayMap(64);
+		Int2IntMap charCountMap = new Int2IntMap(64);
 		for (char c : text.toCharArray())
-			charCountMap.mergeInt(c, 1, Integer::sum);
+			charCountMap.increment(c, 1);
 		int length = text.length();
 		final double[] entropy = {0.0};
-		charCountMap.values().forEach(value -> {
+		charCountMap.forEach((key, value) -> {
 			double freq = ((double) value) / length;
 			entropy[0] -= freq * (Math.log(freq) / Math.log(2));
 		});

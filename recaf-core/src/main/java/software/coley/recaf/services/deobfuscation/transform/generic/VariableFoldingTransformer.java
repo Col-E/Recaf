@@ -1,7 +1,5 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -24,6 +22,7 @@ import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -79,8 +78,8 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 				continue;
 
 			// Build successor and predecessor maps modeling control flow.
-			Int2ObjectMap<List<Integer>> successorMap = new Int2ObjectArrayMap<>();
-			Int2ObjectMap<List<Integer>> predecessorMap = new Int2ObjectArrayMap<>();
+			Int2ObjectMap<List<Integer>> successorMap = new Int2ObjectMap<>();
+			Int2ObjectMap<List<Integer>> predecessorMap = new Int2ObjectMap<>();
 			populateFlowMaps(method, successorMap, predecessorMap);
 
 			// Compute liveness using iterative backward data-flow analysis.
@@ -90,7 +89,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 			populateLiveness(method, inLive, outLive, successorMap, predecessorMap);
 
 			// Populate local access state.
-			Int2ObjectMap<LocalAccessState> accessStates = new Int2ObjectArrayMap<>();
+			Int2ObjectMap<LocalAccessState> accessStates = new Int2ObjectMap<>();
 			populateVariableAccessStates(method, accessStates);
 
 			// Fold in reverse order.
@@ -148,7 +147,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 			}
 
 			// Handle redundant variable copies.
-			int[] keys = accessStates.keySet().toIntArray();
+			int[] keys = accessStates.keys();
 			for (int keyY : keys) {
 				LocalAccessState stateY = accessStates.get(keyY);
 				int slotY = slotFromKey(keyY);

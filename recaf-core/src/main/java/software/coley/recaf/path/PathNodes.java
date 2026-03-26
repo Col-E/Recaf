@@ -211,13 +211,13 @@ public class PathNodes {
 	 * @return Path to instruction in the method.
 	 */
 	@Nonnull
-	public static InstructionPathNode instructionPath(@Nonnull Workspace workspace,
-	                                                  @Nonnull WorkspaceResource resource,
-	                                                  @Nonnull Bundle<?> bundle,
-	                                                  @Nonnull ClassInfo cls,
-	                                                  @Nonnull MethodMember method,
-	                                                  @Nonnull AbstractInsnNode insn,
-	                                                  int index) {
+	public static JvmInstructionPathNode instructionPath(@Nonnull Workspace workspace,
+	                                                     @Nonnull WorkspaceResource resource,
+	                                                     @Nonnull Bundle<?> bundle,
+	                                                     @Nonnull ClassInfo cls,
+	                                                     @Nonnull MethodMember method,
+	                                                     @Nonnull AbstractInsnNode insn,
+	                                                     int index) {
 		return memberPath(workspace, resource, bundle, cls, method).childInsn(insn, index);
 	}
 

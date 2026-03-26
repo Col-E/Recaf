@@ -1,12 +1,9 @@
 package software.coley.recaf.util;
 
-import it.unimi.dsi.fastutil.chars.Char2ObjectMap;
-import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.chars.CharSet;
-import it.unimi.dsi.fastutil.objects.Object2CharMap;
-import it.unimi.dsi.fastutil.objects.Object2CharOpenHashMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
+import software.coley.recaf.util.collect.primitive.Object2IntMap;
 
 import java.util.BitSet;
 import java.util.Set;
@@ -18,8 +15,8 @@ import java.util.TreeSet;
  * @author xDark
  */
 public final class EscapeUtil {
-	private static final Char2ObjectMap<String> WHITESPACE_TO_ESCAPE = new Char2ObjectOpenHashMap<>();
-	private static final Object2CharMap<String> ESCAPE_TO_WHITESPACE = new Object2CharOpenHashMap<>(); // TODO: Shouldn't we use this?
+	private static final Int2ObjectMap<String> WHITESPACE_TO_ESCAPE = new Int2ObjectMap<>();
+	private static final Object2IntMap<String> ESCAPE_TO_WHITESPACE = new Object2IntMap<>(); // TODO: Shouldn't we use this?
 	private static final Set<String> WHITESPACE_STRINGS = new TreeSet<>();
 	private static final BitSet WHITESPACE_LOOKUP = new BitSet(Character.MAX_VALUE + 1);
 	public static final char TERMINATOR = '\0';
@@ -58,20 +55,10 @@ public final class EscapeUtil {
 
 	/**
 	 * @return Set of strings representing various whitespaces.
-	 *
-	 * @see #getWhitespaceChars() Alternative offering the values as {@code char}
 	 */
 	@Nonnull
 	public static Set<String> getWhitespaceStrings() {
 		return WHITESPACE_STRINGS;
-	}
-
-	/**
-	 * @return Set of chars representing various whitespaces.
-	 */
-	@Nonnull
-	public static CharSet getWhitespaceChars() {
-		return WHITESPACE_TO_ESCAPE.keySet();
 	}
 
 	/**

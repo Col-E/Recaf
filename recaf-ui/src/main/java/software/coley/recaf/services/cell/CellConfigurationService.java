@@ -12,6 +12,7 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import me.darknet.dex.tree.definitions.instructions.Instruction;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.AndroidInstructionPathNode;
 import software.coley.recaf.path.AnnotationPathNode;
 import software.coley.recaf.path.AssemblerPathNode;
 import software.coley.recaf.path.BundlePathNode;
@@ -36,7 +38,7 @@ import software.coley.recaf.path.EmbeddedResourceContainerPathNode;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.InnerClassPathNode;
-import software.coley.recaf.path.InstructionPathNode;
+import software.coley.recaf.path.JvmInstructionPathNode;
 import software.coley.recaf.path.LineNumberPathNode;
 import software.coley.recaf.path.LocalVariablePathNode;
 import software.coley.recaf.path.PathNode;
@@ -313,7 +315,28 @@ public class CellConfigurationService implements Service {
 			return textService.getBundleTextProvider(workspace, resource, bundlePath.getValue()).makeText();
 		} else if (item instanceof ResourcePathNode) {
 			return textService.getResourceTextProvider(workspace, resource).makeText();
-		} else if (item instanceof InstructionPathNode instructionPath) {
+		} else if (item instanceof JvmInstructionPathNode instructionPath) {
+			ClassBundle<? extends ClassInfo> bundle = instructionPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Instruction path node missing bundle section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			ClassInfo declaringClass = instructionPath.getValueOfType(ClassInfo.class);
+			if (declaringClass == null) {
+				logger.error("Instruction path node missing class section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			MethodMember declaringMethod = instructionPath.getValueOfType(MethodMember.class);
+			if (declaringMethod == null) {
+				logger.error("Instruction path node missing method section: {}", item);
+				return UNKNOWN_TEXT;
+			}
+
+			return textService.getInstructionTextProvider(workspace, resource, bundle,
+					declaringClass, declaringMethod, instructionPath.getValue()).makeText();
+		} else if (item instanceof AndroidInstructionPathNode instructionPath) {
 			ClassBundle<? extends ClassInfo> bundle = instructionPath.getValueOfType(ClassBundle.class);
 			if (bundle == null) {
 				logger.error("Instruction path node missing bundle section: {}", item);
@@ -526,7 +549,7 @@ public class CellConfigurationService implements Service {
 			return iconService.getBundleIconProvider(workspace, resource, bundlePath.getValue()).makeIcon();
 		} else if (item instanceof ResourcePathNode) {
 			return iconService.getResourceIconProvider(workspace, resource).makeIcon();
-		} else if (item instanceof InstructionPathNode insnPath) {
+		} else if (item instanceof JvmInstructionPathNode insnPath) {
 			ClassBundle<?> bundle = insnPath.getValueOfType(ClassBundle.class);
 			if (bundle == null) {
 				logger.error("Instruction path node missing bundle section: {}", item);
@@ -546,6 +569,27 @@ public class CellConfigurationService implements Service {
 			}
 
 			AbstractInsnNode insn = insnPath.getValue();
+			return iconService.getInstructionIconProvider(workspace, resource, bundle, classInfo, method, insn).makeIcon();
+		}  else if (item instanceof AndroidInstructionPathNode insnPath) {
+			ClassBundle<?> bundle = insnPath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Instruction path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo classInfo = insnPath.getValueOfType(ClassInfo.class);
+			if (classInfo == null) {
+				logger.error("Instruction path node missing class section: {}", item);
+				return null;
+			}
+
+			MethodMember method = insnPath.getValueOfType(MethodMember.class);
+			if (method == null) {
+				logger.error("Instruction path node missing method section: {}", item);
+				return null;
+			}
+
+			Instruction insn = insnPath.getValue();
 			return iconService.getInstructionIconProvider(workspace, resource, bundle, classInfo, method, insn).makeIcon();
 		} else if (item instanceof LocalVariablePathNode varPath) {
 			ClassBundle<?> bundle = varPath.getValueOfType(ClassBundle.class);

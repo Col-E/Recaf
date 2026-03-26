@@ -1,7 +1,5 @@
 package software.coley.recaf.util;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
@@ -13,6 +11,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import software.coley.collections.Unchecked;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -26,7 +25,7 @@ import java.util.function.Predicate;
  * @author xDark
  */
 public class NodeEvents {
-	private static final Int2ObjectMap<KeyCode> charToKeycode = new Int2ObjectArrayMap<>();
+	private static final Int2ObjectMap<KeyCode> charToKeycode = new Int2ObjectMap<>();
 
 	static {
 		for (KeyCode code : KeyCode.values()) {

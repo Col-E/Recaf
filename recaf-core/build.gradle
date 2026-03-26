@@ -9,20 +9,18 @@ apply plugin: 'java-test-fixtures'
 
 dependencies {
     api(libs.bundles.asm)
+    api(libs.bundles.dex)
     api(libs.binary.resources)
     api(libs.cafedude)
     api(libs.bundles.cdi)
     api(libs.cfr)
-    api(libs.dex.translator) {
-        exclude group: 'com.android.tools'
-    }
     api(libs.diffutils)
     api(libs.bundles.downgrader) {
         exclude group: 'org.ow2.asm'
     }
     api(libs.extra.collections)
     api(libs.extra.observables)
-    api(libs.gson) // required by R8 (from dex-translator)
+    api(libs.gson)
     api(libs.instrument.server)
     api(libs.jelf)
     api(libs.jphantom)
@@ -35,7 +33,9 @@ dependencies {
     api(libs.procyon)
     api(libs.jlinker)
     api(libs.regex)
-    api(libs.bundles.jasm)
+    api(libs.bundles.jasm) {
+        exclude group: 'com.github.jumanji144.dex'
+    }
     api(libs.vineflower)
     api(libs.sourcesolver)
 

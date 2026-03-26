@@ -1,7 +1,15 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
+import me.darknet.dex.codecs.DexMapCodec;
+import me.darknet.dex.file.DexHeader;
+import me.darknet.dex.file.DexMap;
+import me.darknet.dex.file.DexMapBuilder;
+import me.darknet.dex.io.Output;
+import me.darknet.dex.tree.DexFile;
+import me.darknet.dex.tree.definitions.ClassDefinition;
 import software.coley.collections.Unchecked;
+import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
@@ -28,7 +36,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -232,7 +242,26 @@ public class WorkspaceExportOptions {
 
 			// Rebuild Android DEX files and place into map
 			for (Map.Entry<String, AndroidClassBundle> entry : resource.getAndroidClassBundles().entrySet()) {
-				// TODO: Need to write back DEX files
+				String dexName = entry.getKey();
+				AndroidClassBundle bundle = entry.getValue();
+				List<ClassDefinition> classDefinitions = bundle.values().stream()
+						.map(AndroidClassInfo::getBackingDefinition)
+						.toList();
+				DexFile dexFile = new DexFile(bundle.getVersion(), classDefinitions, bundle.getLinkData());
+				DexHeader header = DexFile.CODEC.unmap(dexFile, new DexMapBuilder());
+				Output output = Output.wrap();
+				try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+					DexHeader.CODEC.write(header, output);
+					output.pipe(baos);
+					map.put(dexName, baos.toByteArray());
+
+					// TODO: Also want to pull file properties from the original dex too
+					//  - updateProperties(dexName, bundle.getOriginalDexInfoOrSomething);
+					//  - we already store some info in the bundle, so we can probably give it a stub FileInfo with the original properties copied to it.
+					compression.put(dexName, DEFLATED);
+				} catch (IOException ex) {
+					throw new IllegalStateException("Failed to write dex file for export: " + dexName, ex);
+				}
 			}
 
 			// Place files into map

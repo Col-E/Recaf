@@ -1,16 +1,12 @@
 package software.coley.recaf.info;
 
-import com.android.tools.r8.graph.DexProgramClass;
 import jakarta.annotation.Nonnull;
+import me.darknet.dex.convert.DexConversionIr;
+import me.darknet.dex.convert.DexConversionSimple;
+import me.darknet.dex.tree.definitions.ClassDefinition;
 import org.objectweb.asm.ClassReader;
-import software.coley.dextranslator.Options;
-import software.coley.dextranslator.ir.ConversionException;
-import software.coley.dextranslator.model.ApplicationData;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
-
-import java.io.IOException;
-import java.util.Collections;
 
 /**
  * Basic Android class info implementation.
@@ -18,7 +14,7 @@ import java.util.Collections;
  * @author Matt Coley
  */
 public class BasicAndroidClassInfo extends BasicClassInfo implements AndroidClassInfo {
-	private final DexProgramClass dexClass;
+	private final ClassDefinition def;
 	private JvmClassInfo converted;
 
 	/**
@@ -27,7 +23,13 @@ public class BasicAndroidClassInfo extends BasicClassInfo implements AndroidClas
 	 */
 	public BasicAndroidClassInfo(@Nonnull AndroidClassInfoBuilder builder) {
 		super(builder);
-		dexClass = builder.getDexClass();
+		def = builder.getDef();
+	}
+
+	@Nonnull
+	@Override
+	public ClassDefinition getBackingDefinition() {
+		return def;
 	}
 
 	@Override
@@ -52,31 +54,20 @@ public class BasicAndroidClassInfo extends BasicClassInfo implements AndroidClas
 					return converted;
 				try {
 					String name = getName();
-					ApplicationData data = ApplicationData.fromProgramClasses(Collections.singleton(dexClass));
-					data.setOperationOptionsProvider(() -> new Options()
-							.enableLoadStoreOptimization()
-							.setLenient(true)
-							.setReplaceInvalidMethodBodies(true));
-					byte[] convertedBytecode = data.exportToJvmClass(name);
+					byte[] convertedBytecode = new DexConversionIr().toJavaClass(def);
 					if (convertedBytecode == null)
 						throw new IllegalStateException("Failed to convert Dalvik model of " + name + " to JVM bytecode, " +
 								"conversion results did not include type name.");
 					ClassReader reader = new ClassReader(convertedBytecode);
 					converted = new JvmClassInfoBuilder(reader).build();
-				} catch (ConversionException | IOException ex) {
+				} catch (IllegalStateException ex) {
+					throw ex;
+				} catch (Throwable ex) {
 					throw new IllegalStateException(ex);
 				}
 			}
 		}
 		return converted;
-	}
-
-	/**
-	 * @return Backing program class node.
-	 */
-	@Nonnull
-	public DexProgramClass getDexClass() {
-		return dexClass;
 	}
 
 	@Override

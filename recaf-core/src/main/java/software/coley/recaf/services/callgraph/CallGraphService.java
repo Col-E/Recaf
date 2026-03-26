@@ -65,6 +65,8 @@ public class CallGraphService implements Service {
 	@Nullable
 	public CallGraph getCurrentWorkspaceCallGraph() {
 		CallGraph graph = currentWorkspaceGraph;
+		if (graph == null)
+			return null;
 
 		// Lazily initialize the graph so that we don't do a full graph immediately when the workspace is opened.
 		// It will only initialize when a user needs to use it.

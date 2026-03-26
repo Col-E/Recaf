@@ -1,7 +1,6 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
 import atlantafx.base.controls.Spacer;
-import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -44,6 +43,7 @@ import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLi
 import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.util.Colors;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.collect.primitive.Int2IntMap;
 import software.coley.recaf.util.threading.ThreadUtil;
 
 import java.util.ArrayList;
@@ -230,7 +230,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		Map<String, AstUsages> labelUsages = collectLabelReferences();
 		model = labelUsages.entrySet().stream()
 				.filter(e -> !e.getValue().readers().isEmpty()) // Must have a label declaration
-				.map(e -> new LabelData(e.getKey(), e.getValue(), new Int2IntArrayMap(), new IntBox(-1), new Box<>()))
+				.map(e -> new LabelData(e.getKey(), e.getValue(), new Int2IntMap(), new IntBox(-1), new Box<>()))
 				.sorted(Comparator.comparing(LabelData::name))
 				.toList();
 		model.forEach(data -> {

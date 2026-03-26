@@ -1,7 +1,5 @@
 package software.coley.recaf.util.analysis.eval;
 
-import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
-import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
@@ -39,6 +37,7 @@ import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
+import software.coley.recaf.util.collect.primitive.Object2IntMap;
 import software.coley.recaf.util.visitors.MemberFilteringVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
@@ -55,7 +54,7 @@ import java.util.function.Predicate;
  * @author Matt Coley
  */
 public class Evaluator {
-	private static final Object2BooleanMap<String> evaluationSupportCache = new Object2BooleanOpenHashMap<>();
+	private static final Object2IntMap<String> evaluationSupportCache = new Object2IntMap<>();
 	private static final InstanceFactory instanceFactory = new InstanceFactory();
 	private final Workspace workspace;
 	private final ReInterpreter interpreter;
@@ -106,19 +105,19 @@ public class Evaluator {
 				// Find class in workspace.
 				ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
 				if (classPath == null)
-					return false;
+					return 0;
 
 				// Ensure method exists in class.
 				JvmClassInfo jvmClass = classPath.getValue().asJvmClass();
 				MethodMember method = jvmClass.getDeclaredMethod(methodName, methodDescriptor);
 				if (method == null)
-					return false;
+					return 0;
 
 				// Extract method-node model and delegate to evaluate check.
 				ClassNode node = new ClassNode();
 				jvmClass.getClassReader().accept(new MemberFilteringVisitor(node, method), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
-				return node.methods.size() == 1 && canEvaluate(node.methods.getFirst());
-			});
+				return (node.methods.size() == 1 && canEvaluate(node.methods.getFirst())) ? 1 : 0;
+			}) != 0;
 		}
 	}
 

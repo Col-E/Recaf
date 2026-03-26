@@ -1,6 +1,5 @@
 package software.coley.recaf.util;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import me.darknet.assembler.util.BlwOpcodes;
@@ -24,6 +23,7 @@ import org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

@@ -8,7 +8,7 @@ cafedude = "2.6.5"
 cdi-api = "4.1.0"
 cdi-impl = "6.0.2.Final"
 cfr = "0.152"
-dex-translator = "1.1.1"
+dex = "2b2cc7476f"
 diffutils = "4.16"
 docking = "0.15.1"
 downgrader = "1.3.3"
@@ -21,9 +21,9 @@ image-io-ext-ico = "3.0.2"
 instrument-server = "1.5.0"
 jackson = "2.18.2"
 jakarta-annotation = "3.0.0"
-jasm = "aacebfa8b0"
+jasm = "16de0499c3"
 jelf = "0.10.0"
-jlinker = "1.0.7" # We could update, but I don't feel like rewriting the callgraph
+jlinker = "3.0.1"
 jphantom = "1.4.4"
 junit = "5.13.4"
 junit-launch = "1.13.4"
@@ -74,7 +74,8 @@ cdi-impl = { module = "org.jboss.weld.se:weld-se-core", version.ref = "cdi-impl"
 
 cfr = { module = "org.benf:cfr", version.ref = "cfr" }
 
-dex-translator = { module = "software.coley:dex-translator", version.ref = "dex-translator" }
+dex-core = { module = "com.github.jumanji144.dex:dex-core", version.ref = "dex" }
+dex-convert = { module = "com.github.jumanji144.dex:dex-convert", version.ref = "dex" }
 
 diffutils = { module = "io.github.java-diff-utils:java-diff-utils", version.ref = "diffutils" }
 
@@ -100,6 +101,7 @@ jackson = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml", 
 
 jakarta-annotation = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation" }
 
+jasm-composistion-dalvik = { module = "com.github.jumanji144.Jasm:jasm-composition-dalvik", version.ref = "jasm" }
 jasm-composistion-jvm = { module = "com.github.jumanji144.Jasm:jasm-composition-jvm", version.ref = "jasm" }
 jasm-core = { module = "com.github.jumanji144.Jasm:jasm-core", version.ref = "jasm" }
 
@@ -153,8 +155,13 @@ asm = [
     "asm-tree",
     "asm-util",
 ]
+dex = [
+    "dex-core",
+    "dex-convert",
+]
 jasm = [
     "jasm-core",
+    "jasm-composistion-dalvik",
     "jasm-composistion-jvm",
 ]
 downgrader = [

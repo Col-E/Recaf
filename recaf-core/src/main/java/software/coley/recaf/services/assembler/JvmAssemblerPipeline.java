@@ -11,7 +11,6 @@ import me.darknet.assembler.compile.analysis.jvm.ValuedJvmAnalysisEngine;
 import me.darknet.assembler.compile.visitor.JavaCompileResult;
 import me.darknet.assembler.compiler.Compiler;
 import me.darknet.assembler.compiler.CompilerOptions;
-import me.darknet.assembler.compiler.InheritanceChecker;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.parser.BytecodeFormat;
 import me.darknet.assembler.parser.processor.ASTProcessor;
@@ -22,10 +21,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
-import software.coley.recaf.path.AnnotationPathNode;
-import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.workspace.model.Workspace;
@@ -49,7 +45,7 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	                            @Nonnull InheritanceGraph inheritanceGraph,
 	                            @Nonnull AssemblerPipelineGeneralConfig generalConfig,
 	                            @Nonnull JvmAssemblerPipelineConfig jvmConfig) {
-		super(generalConfig, jvmConfig);
+		super(generalConfig, jvmConfig, inheritanceGraph);
 		this.workspace = workspace;
 		this.inheritanceGraph = inheritanceGraph;
 	}
@@ -58,30 +54,6 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	@Override
 	public Result<List<ASTElement>> concreteParse(@Nonnull List<ASTElement> elements) {
 		return processor.processAST(elements);
-	}
-
-	@Nonnull
-	@Override
-	public Result<JavaCompileResult> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
-		return compile(elements, path);
-	}
-
-	@Nonnull
-	@Override
-	public Result<String> disassemble(@Nonnull ClassPathNode path) {
-		return classPrinter(path).map(this::print);
-	}
-
-	@Nonnull
-	@Override
-	public Result<String> disassemble(@Nonnull ClassMemberPathNode path) {
-		return memberPrinter(path).map(this::print);
-	}
-
-	@Nonnull
-	@Override
-	public Result<String> disassemble(@Nonnull AnnotationPathNode path) {
-		return annotationPrinter(path).map(this::print);
 	}
 
 	@Nonnull
@@ -110,22 +82,6 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	@Override
 	protected Compiler getCompiler() {
 		return new JvmCompiler();
-	}
-
-	@Nonnull
-	@Override
-	protected InheritanceChecker getInheritanceChecker() {
-		return new InheritanceChecker() {
-			@Override
-			public boolean isSubclassOf(String child, String parent) {
-				return inheritanceGraph.isAssignableFrom(parent, child);
-			}
-
-			@Override
-			public String getCommonSuperclass(String type1, String type2) {
-				return inheritanceGraph.getCommon(type1, type2);
-			}
-		};
 	}
 
 	@Override

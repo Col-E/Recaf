@@ -2,6 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import me.darknet.dex.tree.definitions.instructions.Instruction;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -9,15 +10,15 @@ import software.coley.recaf.info.member.MethodMember;
 import java.util.Set;
 
 /**
- * Path node for instructions within {@link MethodMember} instances.
+ * Path node for Dalvik instructions within {@link MethodMember} instances.
  *
  * @author Matt Coley
  */
-public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractInsnNode> {
+public class AndroidInstructionPathNode extends AbstractPathNode<ClassMember, Instruction> {
 	/**
 	 * Type identifier for instruction nodes.
 	 */
-	public static final String TYPE_ID = "instruction";
+	public static final String TYPE_ID = "dex-instruction";
 	private final int index;
 
 	/**
@@ -28,7 +29,7 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 	 * @param index
 	 * 		Index of the instruction within the method code.
 	 */
-	public InstructionPathNode(@Nonnull AbstractInsnNode insn, int index) {
+	public AndroidInstructionPathNode(@Nonnull Instruction insn, int index) {
 		this(null, insn, index);
 	}
 
@@ -42,9 +43,9 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 	 * @param index
 	 * 		Index of the instruction within the method code.
 	 *
-	 * @see ClassMemberPathNode#childInsn(AbstractInsnNode, int)
+	 * @see ClassMemberPathNode#childInsn(Instruction, int)
 	 */
-	public InstructionPathNode(@Nullable ClassMemberPathNode parent, @Nonnull AbstractInsnNode insn, int index) {
+	public AndroidInstructionPathNode(@Nullable ClassMemberPathNode parent, @Nonnull Instruction insn, int index) {
 		super(TYPE_ID, parent, insn);
 		this.index = index;
 	}
@@ -71,7 +72,7 @@ public class InstructionPathNode extends AbstractPathNode<ClassMember, AbstractI
 	public int localCompare(PathNode<?> o) {
 		if (this == o) return 0;
 
-		if (o instanceof InstructionPathNode node)
+		if (o instanceof AndroidInstructionPathNode node)
 			return Integer.compare(index, node.index);
 		else if (o instanceof ThrowsPathNode || o instanceof CatchPathNode || o instanceof LocalVariablePathNode)
 			return 1;

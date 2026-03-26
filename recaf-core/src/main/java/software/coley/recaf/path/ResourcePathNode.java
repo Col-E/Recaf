@@ -5,7 +5,7 @@ import jakarta.annotation.Nullable;
 import software.coley.collections.Maps;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.info.Named;
-import software.coley.recaf.util.CollectionUtils;
+import software.coley.recaf.util.collect.CollectionUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;

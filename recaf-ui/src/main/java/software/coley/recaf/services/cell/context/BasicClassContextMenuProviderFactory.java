@@ -241,19 +241,58 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 		//    - Remove fields
 		//    - Remove methods
 		//    - Remove annotations
-		//  - Copy
-		//  - Delete
-		//  - Refactor
-		//    - Rename
-		//    - Move
-		//  - Search references
+		//    - Copy
+		//    - Delete
 		//  - View
 		//    - Class hierarchy
 		//  - Deobfuscate
 		//    - Suggest class name / purpose
 		//    - Suggest method names / purposes (get/set)
-		ObservableList<MenuItem> items = menu.getItems();
-		items.add(action("menu.goto.class", CarbonIcons.ARROW_RIGHT,
-				() -> actions.gotoDeclaration(workspace, resource, bundle, info)));
+		var builder = new ContextMenuBuilder(menu, source).forInfo(workspace, resource, bundle, info);
+		if (source.isReference()) {
+			builder.infoItem("menu.goto.class", ARROW_RIGHT, actions::gotoDeclaration);
+
+			// Convenience for search results
+			if (source instanceof SearchContextSource) {
+				builder.item("menu.edit.assemble.class", EDIT, Unchecked.runnable(() ->
+						actions.openAssembler(PathNodes.classPath(workspace, resource, bundle, info))
+				));
+			}
+		} else if (source.isDeclaration()) {
+			// Edit menu
+			var edit = builder.submenu("menu.edit", EDIT);
+			edit.item("menu.edit.assemble.class", EDIT, Unchecked.runnable(() ->
+					actions.openAssembler(PathNodes.classPath(workspace, resource, bundle, info))
+			));
+
+			// TODO: Same edit options as JVM class
+			//  - Edit method contracts to operate on generic ClassInfo rather than JvmClassInfo
+		}
+
+		// Search actions
+		var search = builder.submenu("menu.search", SEARCH);
+		search.item("menu.search.class.member-references", CODE_REFERENCE, () -> {
+			MemberReferenceSearchPane pane = actions.openNewMemberReferenceSearch();
+			pane.ownerPredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
+			pane.ownerValueProperty().setValue(info.getName());
+		});
+		search.item("menu.search.class.type-references", CODE_REFERENCE, () -> {
+			ClassReferenceSearchPane pane = actions.openNewClassReferenceSearch();
+			pane.typePredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
+			pane.typeValueProperty().setValue(info.getName());
+		});
+
+		// Refactor actions
+		if (!resource.isInternal()) {
+			var refactor = builder.submenu("menu.refactor", PAINT_BRUSH);
+			refactor.infoItem("menu.refactor.rename", TAG_EDIT, actions::renameClass);
+			refactor.infoItem("menu.refactor.move", STACKED_MOVE, actions::moveClass);
+		}
+
+		// Copy path
+		builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(info));
+
+		// Documentation actions
+		builder.infoItem("menu.analysis.comment", ADD_COMMENT, actions::openCommentEditing);
 	}
 }

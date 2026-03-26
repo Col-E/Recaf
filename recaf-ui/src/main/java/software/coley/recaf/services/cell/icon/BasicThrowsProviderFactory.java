@@ -17,6 +17,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @ApplicationScoped
 public class BasicThrowsProviderFactory implements ThrowsIconProviderFactory {
+	private static final Color THROWS_COLOR = Color.web("rgb(0, 175, 255)");
+
 	@Nonnull
 	@Override
 	public IconProvider getThrowsIconProvider(@Nonnull Workspace workspace,
@@ -27,7 +29,7 @@ public class BasicThrowsProviderFactory implements ThrowsIconProviderFactory {
 											  @Nonnull String thrownType) {
 		return () -> {
 			Label label = new Label("throws");
-			label.setTextFill(Color.web("rgb(0, 175, 255)"));
+			label.setTextFill(THROWS_COLOR);
 			return label;
 		};
 	}

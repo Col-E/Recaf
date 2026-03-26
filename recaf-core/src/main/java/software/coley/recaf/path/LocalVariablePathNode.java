@@ -69,7 +69,7 @@ public class LocalVariablePathNode extends AbstractPathNode<ClassMember, LocalVa
 			return cmp;
 		} else if (o instanceof ThrowsPathNode || o instanceof CatchPathNode)
 			return 1;
-		else if (o instanceof InstructionPathNode)
+		else if (o instanceof JvmInstructionPathNode)
 			return -1;
 
 		return 0;

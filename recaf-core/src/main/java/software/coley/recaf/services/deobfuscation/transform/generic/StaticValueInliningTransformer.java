@@ -41,7 +41,7 @@ public class StaticValueInliningTransformer implements JvmClassTransformer {
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
-		var staticValueCollector = context.getJvmTransformer(StaticValueCollectionTransformer.class);
+		var staticValueCollector = context.getTransformer(StaticValueCollectionTransformer.class);
 
 		boolean dirty = false;
 		ClassNode node = context.getNode(bundle, initialClassState);

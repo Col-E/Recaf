@@ -114,11 +114,7 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			//    - Control flow graph
 			//    - Application flow graph
 			var view = builder.submenu("menu.view", VIEW);
-			if (declaringClass.isJvmClass()) {
-				JvmClassBundle jvmBundle = (JvmClassBundle) bundle;
-				JvmClassInfo declaringJvmClass = declaringClass.asJvmClass();
-				view.item("menu.view.methodcallgraph", FLOW, () -> actions.openMethodCallGraph(workspace, resource, jvmBundle, declaringJvmClass, method));
-			}
+			view.item("menu.view.methodcallgraph", FLOW, () -> actions.openMethodCallGraph(workspace, resource, bundle, declaringClass, method));
 
 			// TODO: implement additional operations
 			//  - Deobfuscate

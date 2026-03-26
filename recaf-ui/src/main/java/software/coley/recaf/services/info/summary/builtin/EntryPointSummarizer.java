@@ -1,6 +1,12 @@
 package software.coley.recaf.services.info.summary.builtin;
 
 import atlantafx.base.theme.Styles;
+import com.google.devrel.gmscore.tools.apk.arsc.BinaryResourceFile;
+import com.google.devrel.gmscore.tools.apk.arsc.Chunk;
+import com.google.devrel.gmscore.tools.apk.arsc.ChunkWithChunks;
+import com.google.devrel.gmscore.tools.apk.arsc.StringPoolChunk;
+import com.google.devrel.gmscore.tools.apk.arsc.XmlAttribute;
+import com.google.devrel.gmscore.tools.apk.arsc.XmlStartElementChunk;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -8,8 +14,12 @@ import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.BinaryXmlFileInfo;
+import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.info.summary.ResourceSummarizer;
@@ -20,6 +30,7 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.Batch;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayDeque;
@@ -62,7 +73,7 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 			consumer.appendSummary(title);
 		});
 
-		// Visit JVM classes
+		// Visit JVM classes, Android manifest for entry points.
 		int[] found = {0};
 		Queue<WorkspaceResource> resourceQueue = new ArrayDeque<>();
 		resourceQueue.add(resource);
@@ -109,6 +120,59 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 					}
 				});
 			});
+
+			// Look for Android entry points in the manifest.
+			FileInfo manifest = currentResource.getFileBundle().get("AndroidManifest.xml");
+			if (manifest instanceof BinaryXmlFileInfo manifestXmlInfo) {
+				BinaryResourceFile chunkModel = manifestXmlInfo.getChunkModel();
+
+				// Extract string pool chunk to pull values from.
+				StringPoolChunk stringChunk = manifestXmlInfo.getStringPoolChunk();
+				if (stringChunk == null)
+					continue;
+
+				// Walk chunks to find main activity and other entry points.
+				Queue<Chunk> chunkQueue = new ArrayDeque<>(chunkModel.getChunks());
+				while (!chunkQueue.isEmpty()) {
+					Chunk chunk = chunkQueue.remove();
+
+					// Look for activities in the manifest, as those are entry points.
+					if (chunk instanceof XmlStartElementChunk start && "activity".equals(start.getName())) {
+						for (XmlAttribute attribute : start.getAttributes()) {
+							String name = stringChunk.getString(attribute.nameIndex());
+							if (!"name".equals(name))
+								continue;
+							String activityName = stringChunk.getString(attribute.rawValueIndex()).replace('.', '/');
+							ClassPathNode activityPath = workspace.findAndroidClass(activityName);
+							if (activityPath == null)
+								continue;
+
+							found[0]++;
+							batch.add(() -> {
+								AndroidClassBundle bundle = activityPath.getValueOfType(AndroidClassBundle.class);
+								AndroidClassInfo cls = activityPath.getValue().asAndroidClass();
+								Supplier<AndroidClassInfo> classLookup = () -> Objects.requireNonNullElse(bundle.get(activityName), cls);
+
+								// Add entry for class
+								String classDisplay = textService.getAndroidClassInfoTextProvider(workspace, currentResource, bundle, cls).makeText();
+								Node classIcon = iconService.getAndroidClassInfoIconProvider(workspace, currentResource, bundle, cls).makeIcon();
+								Label classLabel = new Label(classDisplay, classIcon);
+								classLabel.setCursor(Cursor.HAND);
+								classLabel.setOnMouseEntered(e -> classLabel.getStyleClass().add(Styles.TEXT_UNDERLINED));
+								classLabel.setOnMouseExited(e -> classLabel.getStyleClass().remove(Styles.TEXT_UNDERLINED));
+								classLabel.setOnMouseClicked(e -> actions.gotoDeclaration(workspace, currentResource, bundle, classLookup.get()));
+								consumer.appendSummary(classLabel);
+							});
+						}
+					}
+
+					// Add children
+					if (chunk instanceof ChunkWithChunks chunkWithChunks)
+						chunkQueue.addAll(chunkWithChunks.getChunks().values());
+				}
+			}
+
+			// Queue up embedded resources.
 			resourceQueue.addAll(currentResource.getEmbeddedResources().values());
 		}
 

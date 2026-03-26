@@ -622,13 +622,13 @@ public class Actions implements Service {
 	 */
 	public void moveClass(@Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource,
-	                      @Nonnull JvmClassBundle bundle,
-	                      @Nonnull JvmClassInfo info) {
+	                      @Nonnull ClassBundle<?> bundle,
+	                      @Nonnull ClassInfo info) {
 		boolean isRootDirectory = isNullOrEmpty(info.getPackageName());
 		ItemTreeSelectionPopup.forPackageNames(bundle, packages -> {
 					// We only allow a single package, so the list should contain just one item.
 					String oldPackage = isRootDirectory ? "" : info.getPackageName() + "/";
-					String newPackage = packages.get(0);
+					String newPackage = packages.getFirst();
 					if (Objects.equals(oldPackage, newPackage)) return;
 					if (!newPackage.isEmpty()) newPackage += "/";
 
@@ -702,20 +702,22 @@ public class Actions implements Service {
 	 */
 	public void movePackage(@Nonnull Workspace workspace,
 	                        @Nonnull WorkspaceResource resource,
-	                        @Nonnull JvmClassBundle bundle,
+	                        @Nonnull ClassBundle<?> bundle,
 	                        @Nonnull String packageName) {
 		boolean isRootDirectory = packageName.isEmpty();
 		ItemTreeSelectionPopup.forPackageNames(bundle, chosenPackages -> {
-					if (chosenPackages.isEmpty()) return;
-					String newPackageName = chosenPackages.get(0);
-					if (packageName.equals(newPackageName)) return;
+					if (chosenPackages.isEmpty())
+						return;
+					String newPackageName = chosenPackages.getFirst();
+					if (packageName.equals(newPackageName))
+						return;
 
 					// Create mappings for classes in the given package.
 					IntermediateMappings mappings = new IntermediateMappings();
 					String newPrefix = (newPackageName.isEmpty() ? "" : newPackageName + "/") + shortenPath(packageName) + "/";
 					if (isRootDirectory) {
 						// Source is default package
-						for (JvmClassInfo info : bundle.values()) {
+						for (ClassInfo info : bundle.values()) {
 							String name = info.getName();
 							if (name.indexOf('/') != -1) {
 								mappings.addClass(name, newPrefix + name);
@@ -724,7 +726,7 @@ public class Actions implements Service {
 					} else {
 						// Source is another package
 						String oldPrefix = packageName + "/";
-						for (JvmClassInfo info : bundle.values()) {
+						for (ClassInfo info : bundle.values()) {
 							String name = info.getName();
 							if (newPackageName.isEmpty() && name.indexOf('/') == -1) {
 								// Target is default package
@@ -766,7 +768,7 @@ public class Actions implements Service {
 		String localDirectoryName = shortenPath(directoryName);
 		ItemTreeSelectionPopup.forDirectoryNames(bundle, chosenDirectories -> {
 					if (chosenDirectories.isEmpty()) return;
-					String newDirectoryName = chosenDirectories.get(0);
+					String newDirectoryName = chosenDirectories.getFirst();
 					if (directoryName.equals(newDirectoryName)) return;
 
 					String prefix = directoryName + "/";
@@ -1185,7 +1187,7 @@ public class Actions implements Service {
 	 */
 	public void renamePackage(@Nonnull Workspace workspace,
 	                          @Nonnull WorkspaceResource resource,
-	                          @Nonnull JvmClassBundle bundle,
+	                          @Nonnull ClassBundle<?> bundle,
 	                          @Nonnull String packageName) {
 		boolean isRootDirectory = packageName.isEmpty();
 		new NamePopup(newPackageName -> {
@@ -1193,7 +1195,7 @@ public class Actions implements Service {
 			String oldPrefix = isRootDirectory ? "" : packageName + "/";
 			String newPrefix = newPackageName + "/";
 			IntermediateMappings mappings = new IntermediateMappings();
-			for (JvmClassInfo info : bundle.valuesAsCopy()) {
+			for (ClassInfo info : bundle.valuesAsCopy()) {
 				String className = info.getName();
 				if (isRootDirectory) {
 					// Source is the default package
@@ -1514,7 +1516,6 @@ public class Actions implements Service {
 		});
 	}
 
-
 	/**
 	 * Exports a class, prompting the user to select a location to save the class to.
 	 *
@@ -1534,8 +1535,8 @@ public class Actions implements Service {
 	@Nonnull
 	public Navigable openMethodCallGraph(@Nonnull Workspace workspace,
 	                                     @Nonnull WorkspaceResource resource,
-	                                     @Nonnull JvmClassBundle bundle,
-	                                     @Nonnull JvmClassInfo declaringClass,
+	                                     @Nonnull ClassBundle<?> bundle,
+	                                     @Nonnull ClassInfo declaringClass,
 	                                     @Nonnull MethodMember method) {
 		return createContent(() -> {
 			// Create text/graphic for the tab to create.
@@ -2336,7 +2337,6 @@ public class Actions implements Service {
 			return menu;
 		});
 	}
-
 
 	/**
 	 * Selects the containing {@link Dockable} that contains the navigable content.

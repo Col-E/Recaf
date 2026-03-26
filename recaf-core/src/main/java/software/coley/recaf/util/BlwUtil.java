@@ -16,7 +16,7 @@ import dev.xdark.blw.code.instruction.VariableIncrementInstruction;
 import dev.xdark.blw.simulation.ExecutionEngines;
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.helper.Variables;
-import me.darknet.assembler.printer.InstructionPrinter;
+import me.darknet.assembler.printer.JvmInstructionPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -160,7 +160,7 @@ public class BlwUtil {
 		PrintContext<?> ctx = new PrintContext<>("");
 		ctx.setForceWholeNumberRepresentation(true);
 		Variables emptyVariables = new Variables(Collections.emptyNavigableMap(), Collections.emptyList());
-		InstructionPrinter printer = new InstructionPrinter(ctx.code(), null, emptyVariables, labelNames);
+		JvmInstructionPrinter printer = new JvmInstructionPrinter(ctx.code(), null, emptyVariables, labelNames);
 
 		int op = insn.opcode();
 		if (insn instanceof LabelInstruction label) {

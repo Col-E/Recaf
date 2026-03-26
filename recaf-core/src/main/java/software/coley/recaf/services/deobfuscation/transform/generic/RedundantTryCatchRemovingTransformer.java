@@ -1,7 +1,5 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
@@ -32,6 +30,7 @@ import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -89,7 +88,7 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
 		boolean dirty = false;
 		ClassNode node = context.getNode(bundle, initialClassState);
-		exceptionCollector = context.getJvmTransformer(ExceptionCollectionTransformer.class);
+		exceptionCollector = context.getTransformer(ExceptionCollectionTransformer.class);
 		for (MethodNode method : node.methods) {
 			// Skip methods that have no code or no try-catch blocks, as they can't have redundant entries.
 			if (method.instructions == null || method.instructions.size() == 0)
@@ -479,8 +478,8 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 	                                                    @Nonnull Frame<ReValue>[] frames,
 	                                                    int start, int end) {
 		// Build normal control-flow adjacency using the shared helper (no exception edges).
-		Int2ObjectMap<List<Integer>> successorMap = new Int2ObjectOpenHashMap<>();
-		Int2ObjectMap<List<Integer>> predecessorMap = new Int2ObjectOpenHashMap<>();
+		Int2ObjectMap<List<Integer>> successorMap = new Int2ObjectMap<>();
+		Int2ObjectMap<List<Integer>> predecessorMap = new Int2ObjectMap<>();
 
 		// Wrap instructions into a temporary MethodNode so populateFlowMaps can operate.
 		MethodNode temp = new MethodNode();
