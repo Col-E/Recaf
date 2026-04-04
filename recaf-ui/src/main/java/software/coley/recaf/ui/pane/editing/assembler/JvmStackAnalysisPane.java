@@ -33,6 +33,7 @@ import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.text.TextFormatConfig;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
@@ -58,7 +59,9 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 	@SuppressWarnings("unchecked")
 	public JvmStackAnalysisPane(@Nonnull CellConfigurationService cellConfigurationService,
 	                            @Nonnull TextFormatConfig formatConfig,
-	                            @Nonnull Workspace workspace) {
+	                            @Nonnull WorkspaceManager workspaceManager) {
+		Workspace workspace = workspaceManager.getCurrent();
+
 		TableColumn<JvmVariableState, String> columnName = new TableColumn<>(Lang.get("assembler.variables.name"));
 		TableColumn<JvmVariableState, ClassType> columnType = new TableColumn<>(Lang.get("assembler.variables.type"));
 		TableColumn<JvmVariableState, ValueTableCell.ValueWrapper> columnValue = new TableColumn<>(Lang.get("assembler.variables.value"));

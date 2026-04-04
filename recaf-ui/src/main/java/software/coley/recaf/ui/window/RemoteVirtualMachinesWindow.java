@@ -23,6 +23,7 @@ public class RemoteVirtualMachinesWindow extends AbstractIdentifiableStage {
 									   @Nonnull AttachManager attachManager,
 									   @Nonnull AttachManagerConfig attachManagerConfig) {
 		super(WindowManager.WIN_REMOTE_VMS);
+		hideOnEscape();
 
 		// Bind attach manager scanning state to the visibility of this window.
 		showingProperty().addListener((ob, old, showing) -> {

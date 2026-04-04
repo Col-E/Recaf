@@ -186,7 +186,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 	 * Display the workspace wizard.
 	 */
 	private void openWorkspace() {
-		Stage stage = new RecafStage();
+		RecafStage stage = new RecafStage().hideOnEscape();
 		WorkspaceBuilderPane root = new WorkspaceBuilderPane(pathLoadingManager, recentFilesConfig, () -> FxThreadUtil.run(stage::close));
 		stage.titleProperty().bind(Lang.getBinding("dialog.title.create-workspace"));
 		stage.setScene(new RecafScene(root));
@@ -202,7 +202,7 @@ public class FileMenu extends WorkspaceAwareMenu {
 	private void addToWorkspace() {
 		if (!workspaceManager.hasCurrentWorkspace())
 			return;
-		Stage stage = new RecafStage();
+		RecafStage stage = new RecafStage().hideOnEscape();
 		WorkspaceBuilderPane root = new WorkspaceBuilderPane(pathLoadingManager, recentFilesConfig, workspaceManager.getCurrent(), () -> FxThreadUtil.run(stage::close));
 		stage.titleProperty().bind(Lang.getBinding("menu.file.addtoworkspace"));
 		stage.setScene(new RecafScene(root));

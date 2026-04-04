@@ -38,6 +38,7 @@ import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.text.TextFormatConfig;
+import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.IconView;
@@ -80,7 +81,9 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	@SuppressWarnings("unchecked")
 	public JvmVariablesPane(@Nonnull CellConfigurationService cellConfigurationService,
 	                        @Nonnull TextFormatConfig formatConfig,
-	                        @Nonnull Workspace workspace) {
+	                        @Nonnull WorkspaceManager workspaceManager) {
+		Workspace workspace = workspaceManager.getCurrent();
+
 		TableColumn<VariableData, String> columnName = new TableColumn<>(Lang.get("assembler.variables.name"));
 		TableColumn<VariableData, ClassType> columnType = new TableColumn<>(Lang.get("assembler.variables.type"));
 		TableColumn<VariableData, AstUsages> columnUsage = new TableColumn<>(Lang.get("assembler.variables.usage"));

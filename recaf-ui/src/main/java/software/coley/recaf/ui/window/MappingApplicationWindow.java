@@ -24,10 +24,7 @@ public class MappingApplicationWindow extends RecafStage {
 		generatorPane.setApplyCallback(this::close);
 
 		// Add event filter to handle closing the window when escape is pressed.
-		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (e.getCode() == KeyCode.ESCAPE)
-				hide();
-		});
+		hideOnEscape();
 
 		// Layout
 		titleProperty().bind(Lang.getBinding("mapapply"));

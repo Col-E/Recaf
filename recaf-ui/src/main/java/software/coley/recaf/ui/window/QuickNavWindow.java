@@ -287,10 +287,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		tabs.getTabs().forEach(tab -> tab.setClosable(false));
 
 		// Add event filter to handle closing the window when escape is pressed.
-		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (e.getCode() == KeyCode.ESCAPE)
-				hide();
-		});
+		hideOnEscape();
 
 		// And event filter to tabs to handle "a-z" and "0-9" delegating to current displayed search input field.
 		for (Tab tab : tabs.getTabs()) {

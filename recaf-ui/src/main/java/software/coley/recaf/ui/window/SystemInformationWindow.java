@@ -20,6 +20,7 @@ public class SystemInformationWindow extends AbstractIdentifiableStage {
 	@Inject
 	public SystemInformationWindow(@Nonnull SystemInformationPane infoPane) {
 		super(WindowManager.WIN_INFO);
+		hideOnEscape();
 
 		// Layout
 		titleProperty().bind(Lang.getBinding("menu.help.sysinfo"));

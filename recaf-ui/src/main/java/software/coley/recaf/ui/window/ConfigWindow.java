@@ -19,6 +19,7 @@ public class ConfigWindow extends AbstractIdentifiableStage {
 	@Inject
 	public ConfigWindow(@Nonnull ConfigPane configPane) {
 		super(WindowManager.WIN_CONFIG);
+		hideOnEscape();
 
 		// Layout
 		titleProperty().bind(Lang.getBinding("menu.config"));

@@ -47,6 +47,7 @@ public class OpenUrlPopup extends RecafStage {
 
 	@Inject
 	public OpenUrlPopup(@Nonnull WorkspaceManager workspaceManager, @Nonnull ResourceImporter resourceImporter) {
+		hideOnEscape();
 		BooleanProperty isInvalidUrl = new SimpleBooleanProperty(true);
 		isInvalidUrl.bind(input.textProperty().map(text -> {
 			try {

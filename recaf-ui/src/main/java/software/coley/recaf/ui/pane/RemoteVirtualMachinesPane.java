@@ -24,6 +24,8 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -31,6 +33,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Window;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
@@ -51,6 +54,8 @@ import software.coley.recaf.util.DesktopUtil;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.NodeEvents;
+import software.coley.recaf.util.SceneUtils;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
@@ -378,6 +383,10 @@ public class RemoteVirtualMachinesPane extends BorderPane implements PostScanLis
 						propertyTable.setEditable(true);
 						propertyTable.getStyleClass().addAll(Styles.STRIPED, Tweaks.EDGE_TO_EDGE);
 						propertyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+						propertyTable.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+							if (e.getCode() == KeyCode.ESCAPE)
+								SceneUtils.forStage(propertyTable, Window::hide);
+						});
 						keyColumn.setMaxWidth(1f * Integer.MAX_VALUE * 25);
 						valueColumn.setMaxWidth(1f * Integer.MAX_VALUE * 75);
 						valueColumn.setEditable(true); // Allow double-clicking to allow interaction with the value text

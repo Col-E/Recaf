@@ -23,6 +23,22 @@ public class SceneUtils {
 	private SceneUtils() {}
 
 	/**
+	 * Run an action on a node's containing stage, if it has one.
+	 *
+	 * @param node
+	 * 		Node to find stage for.
+	 * @param consumer
+	 * 		Consumer to accept stage with.
+	 */
+	public static void forStage(@Nonnull Node node, @Nonnull Consumer<Stage> consumer) {
+		Scene scene = node.getScene();
+		if (scene == null)
+			return;
+		if (scene.getWindow() instanceof Stage stage)
+			consumer.accept(stage);
+	}
+
+	/**
 	 * @param scene
 	 * 		Scene to bring to front/focus.
 	 */
