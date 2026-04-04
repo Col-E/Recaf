@@ -447,6 +447,8 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 				for (MethodModel methodModel : classModel.getMethods()) {
 					int methodResolvePos = methodModel.getModifiers().getRange().end();
 					int methodLinePos = methodModel.getReturnType().getRange().end();
+					if (methodLinePos <= 0)
+						methodLinePos = methodResolvePos;
 					int line = 1 + editor.getCodeArea().offsetToPosition(methodLinePos, TwoDimensional.Bias.Forward).getMajor();
 
 					// Resolve what method each model represents.
