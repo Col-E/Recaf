@@ -2,7 +2,6 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.collections.Maps;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.info.Named;
 import software.coley.recaf.util.collect.CollectionUtils;
@@ -132,9 +131,9 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 
 			if (parent instanceof EmbeddedResourceContainerPathNode) {
 				PathNode<WorkspaceResource> parentOfParent = Unchecked.cast(parent.getParent());
-				Map<WorkspaceFileResource, String> lookup = Maps.reverse(parentOfParent.getValue().getEmbeddedResources());
-				String ourKey = lookup.getOrDefault(resource, "?");
-				String otherKey = lookup.getOrDefault(otherResource, "?");
+				Map<String, WorkspaceFileResource> embeddedResources = parentOfParent.getValue().getEmbeddedResources();
+				String ourKey = getEmbeddedResourceKey(embeddedResources, resource);
+				String otherKey = getEmbeddedResourceKey(embeddedResources, otherResource);
 				return Named.STRING_PATH_COMPARATOR.compare(ourKey, otherKey);
 			} else {
 				if (workspace != null) {
@@ -154,6 +153,15 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 			}
 		}
 		return 0;
+	}
+
+	@Nonnull
+	private static String getEmbeddedResourceKey(@Nonnull Map<String, WorkspaceFileResource> embeddedResources,
+	                                             @Nonnull WorkspaceResource resource) {
+		for (Map.Entry<String, WorkspaceFileResource> entry : embeddedResources.entrySet())
+			if (entry.getValue() == resource)
+				return entry.getKey();
+		return "?";
 	}
 
 	@Override

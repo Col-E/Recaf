@@ -55,6 +55,10 @@ public class EmbeddedResourceContainerPathNode extends AbstractPathNode<Workspac
 
 	@Override
 	public int localCompare(PathNode<?> o) {
+		// Embedded resource containers go after other bundles.
+		// We want to show bundles like 'classes' and 'files' in the UI first.
+		if (o instanceof BundlePathNode)
+			return 1;
 		return 0;
 	}
 }

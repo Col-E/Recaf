@@ -76,9 +76,9 @@ public class ClassSelectionPopup extends RecafStage {
 		// Setup tree contents
 		WorkspaceRootTreeNode rootItem = new WorkspaceRootTreeNode(explorerConfig, PathNodes.workspacePath(workspace)) {
 			@Override
-			protected void visitFiles(@Nonnull ResourcePathNode containingResourcePath, @Nonnull FileBundle bundle) {
+			protected boolean shouldIncludeFiles(@Nonnull ResourcePathNode containingResourcePath, @Nonnull FileBundle bundle) {
 				// Skip populating files in this tree.
-				return;
+				return false;
 			}
 		};
 		rootItem.build();

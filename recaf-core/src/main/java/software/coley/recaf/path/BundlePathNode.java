@@ -131,6 +131,11 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 		if (this == o)
 			return 0;
 
+		// Embedded resource containers go after other bundles.
+		// We want to show bundles like 'classes' and 'files' in the UI first.
+		if (o instanceof EmbeddedResourceContainerPathNode)
+			return -1;
+
 		if (o instanceof BundlePathNode bundlePathNode) {
 			// Quick check for bundle reference equality. If they are the same bundle, then they are the same path.
 			Bundle bundle = getValue();

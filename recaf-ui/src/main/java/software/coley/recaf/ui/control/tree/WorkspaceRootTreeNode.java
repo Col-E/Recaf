@@ -29,6 +29,7 @@ import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,7 @@ import java.util.Map;
  * Workspace tree item subtype representing the root of the tree.
  * <p>
  * This root offers utilities for {@link #build() automatically building} a full representation of the workspace.
- * To filter what kinds of contents are inserted when building the model, you should override the {@code visitX}
+ * To filter what kinds of contents are inserted when building the model, override the {@code shouldIncludeX}
  * methods in a child class.
  *
  * @author Matt Coley
@@ -66,9 +67,170 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 	 * Build the tree model from the associated {@link Workspace}.
 	 */
 	public void build() {
-		List<WorkspaceResource> resources = workspace.getAllResources(false);
-		for (WorkspaceResource resource : resources)
-			visitResource(resource);
+		getSourceChildren().clear();
+
+		// Collect resource nodes first so we can sort them before insertion to avoid multiple sorts.
+		//  - The 'buildX' methods defined here reduce redundant sorting operations otherwise done by 'visitX' methods.
+		//  - The 'visitX' methods are still used for dynamic updates to the tree, but the 'buildX' methods are used for the initial population of the tree.
+		List<WorkspaceTreeNode> resourceNodes = new ArrayList<>();
+		for (WorkspaceResource resource : workspace.getAllResources(false)) {
+			WorkspaceTreeNode resourceNode = buildResourceNode(rootPath.child(resource), resource, true);
+			if (resourceNode != null)
+				resourceNodes.add(resourceNode);
+		}
+
+		// Sort first then add in that exact order.
+		resourceNodes.sort(WorkspaceTreeNode::compareTo);
+		resourceNodes.forEach(this::addPreSortedChild);
+	}
+
+	@Nullable
+	private WorkspaceTreeNode buildResourceNode(@Nonnull ResourcePathNode resourcePath,
+	                                            @Nonnull WorkspaceResource resource,
+	                                            boolean includeEmbedded) {
+		// Skip filtered resources.
+		if (!shouldIncludeResource(resourcePath, resource))
+			return null;
+
+		// Collect tree nodes generated from bundles.
+		List<WorkspaceTreeNode> children = new ArrayList<>();
+		resource.classBundleStream()
+				.map(bundle -> buildClassBundleNode(resourcePath, bundle))
+				.forEach(node -> {
+					if (node != null)
+						children.add(node);
+				});
+		resource.fileBundleStream()
+				.map(bundle -> buildFileBundleNode(resourcePath, bundle))
+				.forEach(node -> {
+					if (node != null)
+						children.add(node);
+				});
+
+		// Also collect embedded bundle contents if not filtered out.
+		if (includeEmbedded && shouldIncludeEmbeddedResources(resourcePath, resource)) {
+			WorkspaceTreeNode embeddedContainerNode = buildEmbeddedResourceContainerNode(resourcePath, resource);
+			if (embeddedContainerNode != null)
+				children.add(embeddedContainerNode);
+		}
+
+		if (children.isEmpty())
+			return null;
+
+		// Sort the trees first, then add in that exact order.
+		WorkspaceTreeNode resourceNode = new WorkspaceTreeNode(resourcePath);
+		children.sort(WorkspaceTreeNode::compareTo);
+		children.forEach(resourceNode::addPreSortedChild);
+		return resourceNode;
+	}
+
+	@Nullable
+	private WorkspaceTreeNode buildEmbeddedResourceContainerNode(@Nonnull ResourcePathNode resourcePath,
+	                                                             @Nonnull WorkspaceResource resource) {
+		Map<String, WorkspaceFileResource> embeddedResources = resource.getEmbeddedResources();
+		if (embeddedResources.isEmpty())
+			return null;
+
+		// Collect tree nodes for embedded resources in sorted order.
+		EmbeddedResourceContainerPathNode containerPath = resourcePath.embeddedChildContainer();
+		List<WorkspaceTreeNode> embeddedResourceNodes = new ArrayList<>();
+		embeddedResources.entrySet().stream()
+				.sorted((o1, o2) -> Named.STRING_PATH_COMPARATOR.compare(o1.getKey(), o2.getKey()))
+				.forEach(entry -> {
+					WorkspaceFileResource embeddedResource = entry.getValue();
+					WorkspaceTreeNode embeddedResourceNode = buildResourceNode(containerPath.child(embeddedResource), embeddedResource, false);
+					if (embeddedResourceNode != null)
+						embeddedResourceNodes.add(embeddedResourceNode);
+				});
+
+		if (embeddedResourceNodes.isEmpty())
+			return null;
+
+		// Again, add them in exact order.
+		WorkspaceTreeNode containerNode = new WorkspaceTreeNode(containerPath);
+		embeddedResourceNodes.forEach(containerNode::addPreSortedChild);
+		return containerNode;
+	}
+
+	@Nullable
+	private WorkspaceTreeNode buildClassBundleNode(@Nonnull ResourcePathNode containingResourcePath,
+	                                               @Nonnull ClassBundle<?> bundle) {
+		if (bundle.isEmpty() || !shouldIncludeClasses(containingResourcePath, bundle))
+			return null;
+
+		// Collect tree nodes for classes in the bundle, grouped by package.
+		BundlePathNode bundlePath = containingResourcePath.child(bundle);
+		WorkspaceTreeNode bundleNode = new WorkspaceTreeNode(bundlePath);
+		Map<String, WorkspaceTreeNode> packages = new HashMap<>();
+		for (ClassInfo classInfo : bundle.values()) {
+			DirectoryPathNode packagePath = bundlePath.child(interceptDirectoryName(classInfo.getPackageName()));
+			if (!shouldIncludeClass(packagePath, classInfo))
+				continue;
+			WorkspaceTreeNode packageNode = getOrCreateDirectoryNode(bundleNode, packagePath, packages);
+			packageNode.addPreSortedChild(new WorkspaceTreeNode(packagePath.child(classInfo)));
+		}
+
+		if (bundleNode.isSourceLeaf())
+			return null;
+
+		// Sort this subtree and we're done.
+		sortTree(bundleNode);
+		return bundleNode;
+	}
+
+	@Nullable
+	private WorkspaceTreeNode buildFileBundleNode(@Nonnull ResourcePathNode containingResourcePath,
+	                                              @Nonnull FileBundle bundle) {
+		if (bundle.isEmpty() || !shouldIncludeFiles(containingResourcePath, bundle))
+			return null;
+
+		// Collect tree nodes for files in the bundle, grouped by directory.
+		BundlePathNode bundlePath = containingResourcePath.child(bundle);
+		WorkspaceTreeNode bundleNode = new WorkspaceTreeNode(bundlePath);
+		Map<String, WorkspaceTreeNode> directories = new HashMap<>();
+		for (FileInfo fileInfo : bundle.values()) {
+			DirectoryPathNode directoryPath = bundlePath.child(interceptDirectoryName(fileInfo.getDirectoryName()));
+			if (!shouldIncludeFile(directoryPath, fileInfo))
+				continue;
+			WorkspaceTreeNode directoryNode = getOrCreateDirectoryNode(bundleNode, directoryPath, directories);
+			directoryNode.addPreSortedChild(new WorkspaceTreeNode(directoryPath.child(fileInfo)));
+		}
+
+		if (bundleNode.isSourceLeaf())
+			return null;
+
+		// Sort this subtree and we're done.
+		sortTree(bundleNode);
+		return bundleNode;
+	}
+
+	@Nonnull
+	private WorkspaceTreeNode getOrCreateDirectoryNode(@Nonnull WorkspaceTreeNode bundleNode,
+	                                                   @Nonnull DirectoryPathNode directoryPath,
+	                                                   @Nonnull Map<String, WorkspaceTreeNode> directories) {
+		// Skip if already exists.
+		String fullDirectory = directoryPath.getValue();
+		WorkspaceTreeNode existingDirectoryNode = directories.get(fullDirectory);
+		if (existingDirectoryNode != null)
+			return existingDirectoryNode;
+
+		// Create nodes for each directory in the path if they don't already exist, and return the node for the full path.
+		WorkspaceTreeNode node = bundleNode;
+		String[] directoryParts = fullDirectory.split("/", -1);
+		StringBuilder directoryBuilder = new StringBuilder();
+		for (String directoryPart : directoryParts) {
+			directoryBuilder.append(directoryPart).append('/');
+			String directoryName = directoryBuilder.substring(0, directoryBuilder.length() - 1);
+
+			WorkspaceTreeNode childNode = directories.get(directoryName);
+			if (childNode == null) {
+				childNode = new WorkspaceTreeNode(directoryPath.withDirectory(directoryName));
+				directories.put(directoryName, childNode);
+				node.addPreSortedChild(childNode);
+			}
+			node = childNode;
+		}
+		return node;
 	}
 
 	/**
@@ -104,20 +266,33 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 	 */
 	protected void visitResource(@Nonnull WorkspaceResource resource) {
 		ResourcePathNode resourcePath = rootPath.child(resource);
-		resource.classBundleStream().forEach(bundle -> visitClasses(resourcePath, bundle));
-		resource.fileBundleStream().forEach(bundle -> visitFiles(resourcePath, bundle));
+		if (!shouldIncludeResource(resourcePath, resource))
+			return;
 
-		// Create sub-trees for embedded resources
+		resource.classBundleStream()
+				.filter(bundle -> shouldIncludeClasses(resourcePath, bundle))
+				.forEach(bundle -> visitClasses(resourcePath, bundle));
+		resource.fileBundleStream()
+				.filter(bundle -> shouldIncludeFiles(resourcePath, bundle))
+				.forEach(bundle -> visitFiles(resourcePath, bundle));
+
+		// Create subtrees for embedded resources
 		Map<String, WorkspaceFileResource> embeddedResources = resource.getEmbeddedResources();
-		if (!embeddedResources.isEmpty()) {
+		if (!embeddedResources.isEmpty() && shouldIncludeEmbeddedResources(resourcePath, resource)) {
 			EmbeddedResourceContainerPathNode containerPath = resourcePath.embeddedChildContainer();
 			embeddedResources.entrySet().stream() // Insert in sorted order of path name
 					.sorted((o1, o2) -> Named.STRING_PATH_COMPARATOR.compare(o1.getKey(), o2.getKey()))
 					.map(Map.Entry::getValue)
 					.forEach(embeddedResource -> {
 						ResourcePathNode resourcePathEmbedded = containerPath.child(embeddedResource);
-						embeddedResource.classBundleStream().forEach(bundle -> visitClasses(resourcePathEmbedded, bundle));
-						embeddedResource.fileBundleStream().forEach(bundle -> visitFiles(resourcePathEmbedded, bundle));
+						if (shouldIncludeResource(resourcePathEmbedded, embeddedResource)) {
+							embeddedResource.classBundleStream()
+									.filter(bundle -> shouldIncludeClasses(resourcePathEmbedded, bundle))
+									.forEach(bundle -> visitClasses(resourcePathEmbedded, bundle));
+							embeddedResource.fileBundleStream()
+									.filter(bundle -> shouldIncludeFiles(resourcePathEmbedded, bundle))
+									.forEach(bundle -> visitFiles(resourcePathEmbedded, bundle));
+						}
 					});
 		}
 	}
@@ -150,6 +325,8 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 	 * 		Class to insert into the tree.
 	 */
 	protected void visitClass(@Nonnull DirectoryPathNode packagePath, @Nonnull ClassInfo classInfo) {
+		if (!shouldIncludeClass(packagePath, classInfo))
+			return;
 		ClassPathNode classPath = packagePath.child(classInfo);
 		WorkspaceTreeNode.getOrInsertIntoTree(this, classPath);
 	}
@@ -182,8 +359,82 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 	 * 		File to insert into the tree.
 	 */
 	protected void visitFile(@Nonnull DirectoryPathNode directoryPath, @Nonnull FileInfo fileInfo) {
+		if (!shouldIncludeFile(directoryPath, fileInfo))
+			return;
 		FilePathNode filePath = directoryPath.child(fileInfo);
 		WorkspaceTreeNode.getOrInsertIntoTree(this, filePath);
+	}
+
+	/**
+	 * @param resourcePath
+	 * 		Resource path.
+	 * @param resource
+	 * 		Resource to include.
+	 *
+	 * @return {@code true} when the resource should be included in the tree.
+	 */
+	protected boolean shouldIncludeResource(@Nonnull ResourcePathNode resourcePath, @Nonnull WorkspaceResource resource) {
+		return true;
+	}
+
+	/**
+	 * @param containingResourcePath
+	 * 		Path to resource holding classes.
+	 * @param bundle
+	 * 		Bundle of classes to include.
+	 *
+	 * @return {@code true} when the class bundle should be included in the tree.
+	 */
+	protected boolean shouldIncludeClasses(@Nonnull ResourcePathNode containingResourcePath, @Nonnull ClassBundle<?> bundle) {
+		return true;
+	}
+
+	/**
+	 * @param packagePath
+	 * 		Path of the class's containing package.
+	 * @param classInfo
+	 * 		Class to include.
+	 *
+	 * @return {@code true} when the class should be included in the tree.
+	 */
+	protected boolean shouldIncludeClass(@Nonnull DirectoryPathNode packagePath, @Nonnull ClassInfo classInfo) {
+		return true;
+	}
+
+	/**
+	 * @param containingResourcePath
+	 * 		Path to resource holding files.
+	 * @param bundle
+	 * 		Bundle of files to include.
+	 *
+	 * @return {@code true} when the file bundle should be included in the tree.
+	 */
+	protected boolean shouldIncludeFiles(@Nonnull ResourcePathNode containingResourcePath, @Nonnull FileBundle bundle) {
+		return true;
+	}
+
+	/**
+	 * @param directoryPath
+	 * 		Path of the file's containing directory.
+	 * @param fileInfo
+	 * 		File to include.
+	 *
+	 * @return {@code true} when the file should be included in the tree.
+	 */
+	protected boolean shouldIncludeFile(@Nonnull DirectoryPathNode directoryPath, @Nonnull FileInfo fileInfo) {
+		return true;
+	}
+
+	/**
+	 * @param resourcePath
+	 * 		Resource path.
+	 * @param resource
+	 * 		Resource to include embedded resources from.
+	 *
+	 * @return {@code true} when the resource's embedded resources should be included in the tree.
+	 */
+	protected boolean shouldIncludeEmbeddedResources(@Nonnull ResourcePathNode resourcePath, @Nonnull WorkspaceResource resource) {
+		return true;
 	}
 
 	/**
@@ -231,6 +482,19 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 				return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Recursively sort the given tree node and all of its children.
+	 *
+	 * @param node
+	 * 		Tree node to sort.
+	 */
+	private static void sortTree(@Nonnull WorkspaceTreeNode node) {
+		node.sortChildren(WorkspaceTreeNode::compareTo);
+		for (var child : node.getSourceChildren())
+			if (child instanceof WorkspaceTreeNode childNode)
+				sortTree(childNode);
 	}
 
 	private class ListenerHost implements WorkspaceModificationListener, ResourceJvmClassListener, ResourceAndroidClassListener, ResourceFileListener {

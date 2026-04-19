@@ -18,6 +18,7 @@ import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.EmbeddedResourceContainerPathNode;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
@@ -45,6 +46,7 @@ import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
+import software.coley.recaf.workspace.model.resource.BasicWorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResourceBuilder;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -56,6 +58,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -195,6 +198,65 @@ class WorkspaceTreeNodeTest {
 		Object createdPathFile = child.getValue().getValue();
 		FileInfo file = default1.getValue();
 		assertEquals(file, createdPathFile, "File at end of path not the same");
+	}
+
+	@Test
+	void embeddedResourceOrderingFollowsPathNameInBulkBuild() {
+		// root:
+		//  a.jar/a.txt
+		//  z.jar/z.txt
+		WorkspaceFileResource zResource = embeddedResource("z.jar", "z.txt");
+		WorkspaceFileResource aResource = embeddedResource("a.jar", "a.txt");
+		Map<String, WorkspaceFileResource> embeddedResources = new LinkedHashMap<>();
+		embeddedResources.put("z.jar", zResource);
+		embeddedResources.put("a.jar", aResource);
+		WorkspaceResource hostResource = new WorkspaceResourceBuilder()
+				.withEmbeddedResources(embeddedResources)
+				.build();
+		Workspace workspace = new BasicWorkspace(hostResource);
+		WorkspacePathNode rootPath = PathNodes.workspacePath(workspace);
+		ResourcePathNode hostPath = rootPath.child(hostResource);
+		WorkspaceRootTreeNode root = new WorkspaceRootTreeNode(new WorkspaceExplorerConfig(), rootPath);
+
+		root.build();
+
+		// Embedded resources are listed after the resource's direct bundles.
+		WorkspaceTreeNode hostNode = root.getNodeByPath(hostPath);
+		assertNotNull(hostNode, "Could not find host resource");
+		List<TreeItem<PathNode<?>>> hostChildren = hostNode.getSourceChildren();
+		assertFalse(hostChildren.isEmpty(), "Host resource had no children");
+		assertTrue(hostChildren.getLast().getValue() instanceof EmbeddedResourceContainerPathNode,
+				"Embedded resources should be listed after resource bundles");
+
+		WorkspaceTreeNode containerNode = root.getNodeByPath(hostPath.embeddedChildContainer());
+		assertNotNull(containerNode, "Could not find embedded resource container");
+
+		// Resources should be sorted by their path name, regardless of insertion order.
+		List<TreeItem<PathNode<?>>> children = containerNode.getSourceChildren();
+		assertEquals(2, children.size(), "Expected two embedded resource nodes");
+		assertSame(aResource, children.get(0).getValue().getValue(), "Embedded resources not sorted by path name");
+		assertSame(zResource, children.get(1).getValue().getValue(), "Embedded resources not sorted by path name");
+	}
+
+	@Test
+	void embeddedResourceCompareDoesNotUseResourceEquality() {
+		WorkspaceFileResource aResource = equalityBombEmbeddedResource("a.jar", "a.txt");
+		WorkspaceFileResource bResource = equalityBombEmbeddedResource("b.jar", "b.txt");
+		Map<String, WorkspaceFileResource> embeddedResources = new LinkedHashMap<>();
+		embeddedResources.put("a.jar", aResource);
+		embeddedResources.put("b.jar", bResource);
+		WorkspaceResource hostResource = new WorkspaceResourceBuilder()
+				.withEmbeddedResources(embeddedResources)
+				.build();
+		Workspace workspace = new BasicWorkspace(hostResource);
+		EmbeddedResourceContainerPathNode embeddedContainer = PathNodes.workspacePath(workspace)
+				.child(hostResource)
+				.embeddedChildContainer();
+
+		// Local compare should bypass the equals()/hashCode() methods of the resources.
+		// We don't want to check contents for sorting, just the path name.
+		assertTrue(embeddedContainer.child(aResource).localCompare(embeddedContainer.child(bResource)) < 0);
+		assertTrue(embeddedContainer.child(bResource).localCompare(embeddedContainer.child(aResource)) > 0);
 	}
 
 	@Test
@@ -626,6 +688,42 @@ class WorkspaceTreeNodeTest {
 						.toList())
 						.map(ArrayList::new)
 						.peek(l -> l.addFirst(first)));
+	}
+
+	@Nonnull
+	private static WorkspaceFileResource embeddedResource(@Nonnull String sourceName, @Nonnull String fileName) {
+		BasicFileBundle fileBundle = new BasicFileBundle();
+		fileBundle.put(new StubFileInfo(fileName));
+		return new WorkspaceFileResourceBuilder(new BasicJvmClassBundle(), fileBundle)
+				.withFileInfo(new StubFileInfo(sourceName))
+				.build();
+	}
+
+	@Nonnull
+	private static WorkspaceFileResource equalityBombEmbeddedResource(@Nonnull String sourceName, @Nonnull String fileName) {
+		BasicFileBundle fileBundle = new BasicFileBundle();
+		fileBundle.put(new StubFileInfo(fileName));
+		return new EqualityBombWorkspaceFileResource(new WorkspaceFileResourceBuilder(new BasicJvmClassBundle(), fileBundle)
+				.withFileInfo(new StubFileInfo(sourceName)));
+	}
+
+	/**
+	 * A resource that throws an exception if its equality or hash code is checked.
+	 */
+	private static class EqualityBombWorkspaceFileResource extends BasicWorkspaceFileResource {
+		private EqualityBombWorkspaceFileResource(@Nonnull WorkspaceFileResourceBuilder builder) {
+			super(builder);
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			throw new AssertionError("Embedded resource comparison should not use equals");
+		}
+
+		@Override
+		public int hashCode() {
+			throw new AssertionError("Embedded resource comparison should not use hashCode");
+		}
 	}
 
 	@Nested
