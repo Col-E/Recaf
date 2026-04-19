@@ -1,12 +1,28 @@
 package software.coley.recaf.ui.pane.search;
 
+import atlantafx.base.controls.Popover;
+import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.StringProperty;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Control;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.reactfx.EventStreams;
+import software.coley.collections.Lists;
+import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
@@ -20,13 +36,20 @@ import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.result.Result;
 import software.coley.recaf.services.search.result.Results;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.ui.control.ActionButton;
+import software.coley.recaf.ui.control.BoundCheckBox;
+import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.BoundTextField;
 import software.coley.recaf.ui.control.PathNodeTree;
+import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.tree.TreeItems;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.Batch;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -44,8 +67,11 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	private final CellConfigurationService configurationService;
 	private final Actions actions;
 	private final WorkspacePathNode workspacePath;
+	private final SearchOptions searchOptions = new SearchOptions();
 	protected final PathNodeTree liveResultsTree;
 	protected final BooleanProperty liveResults = new SimpleBooleanProperty(true);
+	private ActionButton searchOptionsButton;
+	private Popover searchOptionsPopover;
 	private CancellableSearchFeedback lastSearchFeedback;
 
 	/**
@@ -108,19 +134,142 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	 * 		Node to handle user input.
 	 */
 	protected void setInputs(@Nonnull Node input) {
-		// TODO: It would be nice to have additional 'advanced' options
-		//  - Which could implement the search-feedback 'doVisitX' methods to allow skipping over unwanted content
+		Node liveResultsDisplay = createLiveResultsDisplay();
 
 		setTop(input);
-		setCenter(liveResultsTree);
+		setCenter(liveResultsDisplay);
 
 		liveResults.addListener((ob, old, cur) -> {
 			if (cur) {
-				setCenter(liveResultsTree);
+				setCenter(liveResultsDisplay);
 			} else {
 				setCenter(null);
 			}
 		});
+		setupSearchOptionsListener();
+	}
+
+	/**
+	 * @return {@code true} when this search type can visit files.
+	 */
+	protected boolean supportsFileSearchOptions() {
+		return false;
+	}
+
+	/**
+	 * @return Node wrapping the live results tree with overlay controls.
+	 */
+	@Nonnull
+	private Node createLiveResultsDisplay() {
+		if (!supportsFileSearchOptions())
+			searchOptions.searchFilesProperty().set(false);
+
+		searchOptionsButton = new ActionButton(CarbonIcons.SETTINGS, this::showSearchOptionsPopover);
+		searchOptionsButton.withTooltip("dialog.search.options");
+		searchOptionsButton.setFocusTraversable(false);
+		searchOptionsButton.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT);
+		StackPane.setAlignment(searchOptionsButton, Pos.BOTTOM_RIGHT);
+		StackPane.setMargin(searchOptionsButton, new Insets(7));
+
+		return new StackPane(liveResultsTree, searchOptionsButton);
+	}
+
+	/**
+	 * Refreshes search results when advanced options change.
+	 */
+	private void setupSearchOptionsListener() {
+		EventStreams.changesOf(searchOptions.searchClassesProperty()).map(unused -> new Object())
+				.or(EventStreams.changesOf(searchOptions.searchFilesProperty()).map(unused -> new Object()))
+				.or(EventStreams.changesOf(searchOptions.includedPackagesProperty()).map(unused -> new Object()))
+				.or(EventStreams.changesOf(searchOptions.excludedPackagesProperty()).map(unused -> new Object()))
+				.or(EventStreams.changesOf(searchOptions.includedDirectoriesProperty()).map(unused -> new Object()))
+				.or(EventStreams.changesOf(searchOptions.excludedDirectoriesProperty()).map(unused -> new Object()))
+				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS))
+				.addObserver(unused -> search());
+	}
+
+	/**
+	 * Shows the advanced search options popover.
+	 */
+	private void showSearchOptionsPopover() {
+		if (searchOptionsPopover == null) {
+			searchOptionsPopover = new Popover(createSearchOptionsContent());
+			searchOptionsPopover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);
+		}
+		searchOptionsPopover.show(searchOptionsButton);
+	}
+
+	/**
+	 * @return Content for the advanced search options popover.
+	 */
+	@Nonnull
+	private GridPane createSearchOptionsContent() {
+		GridPane content = new GridPane();
+		ColumnConstraints labelColumn = new ColumnConstraints();
+		ColumnConstraints controlColumn = new ColumnConstraints();
+		controlColumn.setFillWidth(true);
+		controlColumn.setHgrow(Priority.ALWAYS);
+		controlColumn.setHalignment(HPos.RIGHT);
+		content.getColumnConstraints().addAll(labelColumn, controlColumn);
+		content.setHgap(10);
+		content.setVgap(5);
+
+		int row = 0;
+		content.add(new BoundCheckBox(Lang.getBinding("dialog.search.options.search-classes"),
+				searchOptions.searchClassesProperty()), 0, row++, 2, 1);
+		row = addTextOption(content, row, "dialog.search.options.include-packages",
+				"dialog.search.options.package-prefixes.tooltip", searchOptions.includedPackagesProperty());
+		row = addTextOption(content, row, "dialog.search.options.exclude-packages",
+				"dialog.search.options.package-prefixes.tooltip", searchOptions.excludedPackagesProperty());
+
+		if (supportsFileSearchOptions()) {
+			content.add(new BoundCheckBox(Lang.getBinding("dialog.search.options.search-files"),
+					searchOptions.searchFilesProperty()), 0, row++, 2, 1);
+			row = addTextOption(content, row, "dialog.search.options.include-directories",
+					"dialog.search.options.directory-prefixes.tooltip", searchOptions.includedDirectoriesProperty());
+			row = addTextOption(content, row, "dialog.search.options.exclude-directories",
+					"dialog.search.options.directory-prefixes.tooltip", searchOptions.excludedDirectoriesProperty());
+		}
+
+		return content;
+	}
+
+	/**
+	 * @param content
+	 * 		Grid to add the option to.
+	 * @param row
+	 * 		Grid row to add the option to.
+	 * @param labelKey
+	 * 		Translation key for the option label.
+	 * @param tooltipKey
+	 * 		Translation key for the option tooltip.
+	 * @param property
+	 * 		Property to bind the option value to.
+	 *
+	 * @return Next row index after the added option.
+	 */
+	protected static int addTextOption(@Nonnull GridPane content,
+	                                   int row,
+	                                   @Nonnull String labelKey,
+	                                   @Nonnull String tooltipKey,
+	                                   @Nonnull StringProperty property) {
+		BoundTextField field = new BoundTextField(property).withTooltip(tooltipKey);
+		content.add(new BoundLabel(Lang.getBinding(labelKey)), 0, row);
+		content.add(fixed(field), 1, row);
+		return row + 1;
+	}
+
+	/**
+	 * @param control
+	 * 		Control to set to fill horizontal space.
+	 *
+	 * @return Given control with max width set to fill horizontal space.
+	 */
+	@Nonnull
+	protected static Control fixed(@Nonnull Control control) {
+		control.setMaxWidth(Double.MAX_VALUE);
+		GridPane.setFillWidth(control, true);
+		return control;
 	}
 
 	/**
@@ -180,15 +329,16 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 			return;
 
 		// Run new search.
+		SearchOptions.Snapshot optionsSnapshot = searchOptions.snapshot();
 		CancellableSearchFeedback feedback;
 		if (liveResults.get()) {
-			feedback = new LiveOnlySearchFeedback(result -> {
+			feedback = new LiveOnlySearchFeedback(optionsSnapshot, result -> {
 				WorkspaceTreeNode node = WorkspaceTreeNode.getOrInsertIntoTree(root, result.getPath());
 				TreeItems.expandParents(node);
 			});
 			CompletableFuture.runAsync(() -> searchService.search(workspace, query, feedback));
 		} else {
-			feedback = new CancellableSearchFeedback();
+			feedback = new FilteringSearchFeedback(optionsSnapshot);
 			CompletableFuture.supplyAsync(() -> searchService.search(workspace, query, feedback))
 					.thenAccept(this::handleSearchResults);
 		}
@@ -218,13 +368,34 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	}
 
 	/**
+	 * Feedback that filters which workspace items are visited.
+	 */
+	private static class FilteringSearchFeedback extends CancellableSearchFeedback {
+		private final SearchOptions.Snapshot optionsSnapshot;
+
+		private FilteringSearchFeedback(@Nonnull SearchOptions.Snapshot optionsSnapshot) {
+			this.optionsSnapshot = optionsSnapshot;
+		}
+
+		@Override
+		public boolean doVisitClass(@Nonnull ClassInfo cls) {
+			return optionsSnapshot.shouldVisitClass(cls);
+		}
+
+		@Override
+		public boolean doVisitFile(@Nonnull FileInfo file) {
+			return optionsSnapshot.shouldVisitFile(file);
+		}
+	}
+
+	/**
 	 * Feedback that incrementally updates the search results tree.
 	 * <br>
 	 * Disables the collection of results into a single wrapper at the end of a search.
 	 * Since this is for live-only feedback, we won't use the resulting collection anyways, so we don't need to do
 	 * the extra work.
 	 */
-	private static class LiveOnlySearchFeedback extends CancellableSearchFeedback {
+	private static class LiveOnlySearchFeedback extends FilteringSearchFeedback {
 		private final Batch batch = FxThreadUtil.batch();
 		private final AnimationTimer batchTimer = new AnimationTimer() {
 			private static final long BATCH_INTERVAL_MS = 1000 / 4;
@@ -240,7 +411,9 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		};
 		private final Consumer<Result<?>> resultConsumer;
 
-		private LiveOnlySearchFeedback(@Nonnull Consumer<Result<?>> resultConsumer) {
+		private LiveOnlySearchFeedback(@Nonnull SearchOptions.Snapshot optionsSnapshot,
+		                               @Nonnull Consumer<Result<?>> resultConsumer) {
+			super(optionsSnapshot);
 			this.resultConsumer = resultConsumer;
 			batchTimer.start();
 		}

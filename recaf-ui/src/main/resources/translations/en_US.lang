@@ -173,6 +173,15 @@ dialog.search.type=Type name
 dialog.search.member-owner=Member owner type
 dialog.search.member-name=Member name
 dialog.search.member-descriptor=Member descriptor
+dialog.search.options=Search options
+dialog.search.options.search-classes=Search classes
+dialog.search.options.search-files=Search files
+dialog.search.options.include-packages=Include packages
+dialog.search.options.exclude-packages=Exclude packages
+dialog.search.options.include-directories=Include directories
+dialog.search.options.exclude-directories=Exclude directories
+dialog.search.options.package-prefixes.tooltip=Comma-separated internal package prefixes. Blank includes all packages.
+dialog.search.options.directory-prefixes.tooltip=Comma-separated internal directory prefixes. Blank includes all directories.
 
 ## File chooser
 dialog.title.primary=Primary resource

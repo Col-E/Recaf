@@ -153,6 +153,11 @@ abstract class AbstractMemberSearchPane extends AbstractSearchPane {
 		return descValue;
 	}
 
+	@Override
+	protected boolean supportsFileSearchOptions() {
+		return false;
+	}
+
 	@Nullable
 	@Override
 	protected Query buildQuery() {

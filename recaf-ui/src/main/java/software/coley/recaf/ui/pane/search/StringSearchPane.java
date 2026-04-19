@@ -49,10 +49,10 @@ public class StringSearchPane extends AbstractSearchPane {
 
 	@Inject
 	public StringSearchPane(@Nonnull WorkspaceManager workspaceManager,
-							@Nonnull SearchService searchService,
-							@Nonnull CellConfigurationService configurationService,
-							@Nonnull Actions actions,
-							@Nonnull StringPredicateProvider stringPredicateProvider) {
+	                        @Nonnull SearchService searchService,
+	                        @Nonnull CellConfigurationService configurationService,
+	                        @Nonnull Actions actions,
+	                        @Nonnull StringPredicateProvider stringPredicateProvider) {
 		super(workspaceManager, searchService, configurationService, actions);
 
 		this.stringPredicateProvider = stringPredicateProvider;
@@ -99,6 +99,11 @@ public class StringSearchPane extends AbstractSearchPane {
 	@Nonnull
 	public StringProperty stringValueProperty() {
 		return stringValue;
+	}
+
+	@Override
+	protected boolean supportsFileSearchOptions() {
+		return true;
 	}
 
 	@Nullable
