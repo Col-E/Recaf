@@ -60,10 +60,12 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.Translatable;
+import software.coley.recaf.util.threading.ThreadUtil;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 /**
@@ -156,6 +158,10 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	 */
 	private void refreshTreeFilter() {
 		if (tree.getRoot() instanceof WorkspaceTreeNode root) {
+			// TODO: This predicate is re-computed for every single cell in the tree,
+			//  which can be expensive if there are many members.
+			//  - Caching isn't a fix since its the first time loading the panel that this noticeably freezes (even if the user does not interact with it)
+			//  - I don't want to have to implement a custom VirtualFlow just for this panel... but its probably the best solution :/
 			root.predicateProperty().set(null); // Intermediate null step used to trigger cell redraw.
 			root.predicateProperty().set(item -> {
 				PathNode<?> path = item.getValue();
@@ -318,29 +324,34 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
 		if (path instanceof ClassPathNode classPath) {
 			this.path = classPath;
-			WorkspaceTreeNode root = new WorkspaceTreeNode(classPath);
-			ClassInfo classInfo = classPath.getValue();
-			for (InnerClassInfo innerClass : classInfo.getInnerClasses()) {
-				if (innerClass.isExternalReference()) continue;
-				InnerClassPathNode innerNode = classPath.child(innerClass);
-				root.addAndSortChild(new WorkspaceTreeNode(innerNode));
-			}
-			for (FieldMember field : classInfo.getFields()) {
-				ClassMemberPathNode memberNode = classPath.child(field);
-				root.addAndSortChild(new WorkspaceTreeNode(memberNode));
-			}
-			for (MethodMember method : classInfo.getMethods()) {
-				ClassMemberPathNode memberNode = classPath.child(method);
-				root.addAndSortChild(new WorkspaceTreeNode(memberNode));
-			}
-			FxThreadUtil.run(() -> {
+
+			// Build tree in background to avoid blocking the FX thread.
+			// This is generally not an issue until a class decides to define Short.MAX_VALUE of fields/methods.
+			CompletableFuture.supplyAsync(() -> {
+				WorkspaceTreeNode root = new WorkspaceTreeNode(classPath);
+				ClassInfo classInfo = classPath.getValue();
+				for (InnerClassInfo innerClass : classInfo.getInnerClasses()) {
+					if (innerClass.isExternalReference()) continue;
+					InnerClassPathNode innerNode = classPath.child(innerClass);
+					root.addAndSortChild(new WorkspaceTreeNode(innerNode));
+				}
+				for (FieldMember field : classInfo.getFields()) {
+					ClassMemberPathNode memberNode = classPath.child(field);
+					root.addAndSortChild(new WorkspaceTreeNode(memberNode));
+				}
+				for (MethodMember method : classInfo.getMethods()) {
+					ClassMemberPathNode memberNode = classPath.child(method);
+					root.addAndSortChild(new WorkspaceTreeNode(memberNode));
+				}
+				return root;
+			}, ThreadUtil.executor()).thenAcceptAsync(root -> {
 				isEmpty.set(root.getSourceChildren().isEmpty());
 				tree.setRoot(root);
 
 				// Restore existing filter/sorting after the tree is built.
 				refreshTreeFilter();
 				refreshTreeSort();
-			});
+			}, FxThreadUtil.executor());
 		}
 	}
 
